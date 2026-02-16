@@ -1,0 +1,31 @@
+{
+  "name": "app-module",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development tsup --watch",
+    "build": "tsup"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "react": ">= 19",
+    "react-dom": ">= 19"
+  },
+  "devDependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tsup": "^8.3.6",
+    "typescript": "^5"
+  }
+}

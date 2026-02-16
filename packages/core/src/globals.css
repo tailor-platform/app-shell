@@ -1,0 +1,41 @@
+@import "tailwindcss" prefix(astw);
+@import "tw-animate-css";
+@import "./assets/theme.css";
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer base {
+  * {
+    @apply astw:border-border astw:outline-ring/50;
+  }
+  body {
+    @apply astw:font-sans astw:antialiased astw:bg-background astw:text-foreground;
+  }
+  ::-webkit-scrollbar {
+    @apply astw:w-2 astw:h-2 astw:bg-muted;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply astw:rounded astw:bg-muted-foreground;
+  }
+  ::-webkit-scrollbar-corner {
+    @apply astw:bg-muted-foreground;
+  }
+}
+
+

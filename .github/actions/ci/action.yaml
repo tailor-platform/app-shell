@@ -1,0 +1,22 @@
+name: Lint
+description: Run linter and type-checker and test
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      with:
+        run_install: false
+    - uses: actions/setup-node@v4
+      with:
+        cache: pnpm
+        cache-dependency-path: ./pnpm-lock.yaml
+        node-version-file: './package.json'
+    - name: Install dependencies
+      run: pnpm install
+      shell: bash
+    - name: Launch Turbo Remote Cache Server
+      uses: dtinth/setup-github-actions-caching-for-turbo@cc723b4600e40a6b8815b65701d8614b91e2669e #v1.3.0
+    - name: Run lint / test / type-check
+      run: npx turbo run lint test type-check
+      shell: bash

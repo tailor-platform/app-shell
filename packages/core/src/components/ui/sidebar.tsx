@@ -16,7 +16,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -391,7 +390,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "astw:hover:after:bg-sidebar-border astw:absolute astw:inset-y-0 astw:z-20 astw:hidden astw:w-4 astw:-translate-x-1/2 astw:transition-all astw:ease-linear astw:group-data-[side=left]:-right-4 astw:group-data-[side=right]:left-0 astw:after:absolute astw:after:inset-y-0 astw:after:left-1/2 astw:after:w-[2px] astw:sm:flex",
+        "astw:hover:after:bg-sidebar-border astw:absolute astw:inset-y-0 astw:z-20 astw:hidden astw:w-4 astw:-translate-x-1/2 astw:transition-all astw:ease-linear astw:group-data-[side=left]:-right-4 astw:group-data-[side=right]:left-0 astw:after:absolute astw:after:inset-y-0 astw:after:left-1/2 astw:after:w-0.5 astw:sm:flex",
         "astw:in-data-[side=left]:cursor-w-resize astw:in-data-[side=right]:cursor-e-resize",
         "astw:[[data-side=left][data-state=collapsed]_&]:cursor-e-resize astw:[[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "astw:hover:group-data-[collapsible=offcanvas]:bg-sidebar astw:group-data-[collapsible=offcanvas]:translate-x-0 astw:group-data-[collapsible=offcanvas]:after:left-full",
@@ -712,47 +711,6 @@ function SidebarMenuBadge({
   );
 }
 
-function SidebarMenuSkeleton({
-  className,
-  showIcon = false,
-  ...props
-}: React.ComponentProps<"div"> & {
-  showIcon?: boolean;
-}) {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  }, []);
-
-  return (
-    <div
-      data-slot="sidebar-menu-skeleton"
-      data-sidebar="menu-skeleton"
-      className={cn(
-        "astw:flex astw:h-8 astw:items-center astw:gap-2 astw:rounded-md astw:px-2",
-        className,
-      )}
-      {...props}
-    >
-      {showIcon && (
-        <Skeleton
-          className="astw:size-4 astw:rounded-md"
-          data-sidebar="menu-skeleton-icon"
-        />
-      )}
-      <Skeleton
-        className="astw:h-4 astw:max-w-(--skeleton-width) astw:flex-1"
-        data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
-      />
-    </div>
-  );
-}
-
 function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
   return (
     <ul
@@ -830,7 +788,6 @@ export {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSkeleton,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,

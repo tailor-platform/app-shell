@@ -4,7 +4,7 @@ import {
   ErrorBoundaryComponent,
   setContextData,
 } from "@/resource";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   AppShellConfigContext,
   AppShellDataContext,
@@ -13,6 +13,7 @@ import {
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { useIsClient } from "@/hooks/use-is-client";
 
 export type AppShellProps = React.PropsWithChildren<{
   /**
@@ -116,10 +117,7 @@ export type AppShellProps = React.PropsWithChildren<{
 }>;
 
 export const AppShell = (props: AppShellProps) => {
-  const [clientSide, useClientSide] = useState(false);
-  useEffect(function updateClientSideFlag() {
-    useClientSide(true);
-  }, []);
+  const clientSide = useIsClient();
 
   // Set context data for guards (module scope)
   const contextData = (props.contextData ?? {}) as ContextData;

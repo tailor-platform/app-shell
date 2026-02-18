@@ -85,7 +85,7 @@ describe("useCommandPalette", () => {
     it("should allow opening dialog", () => {
       const { result } = renderCommandPaletteHook();
       act(() => {
-        result.current.setOpen(true);
+        result.current.handleOpenChange(true);
       });
       expect(result.current.open).toBe(true);
     });
@@ -93,12 +93,12 @@ describe("useCommandPalette", () => {
     it("should reset search and selectedIndex when closing", () => {
       const { result } = renderCommandPaletteHook();
       act(() => {
-        result.current.setOpen(true);
+        result.current.handleOpenChange(true);
         result.current.setSearch("dash");
         result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
       });
       act(() => {
-        result.current.setOpen(false);
+        result.current.handleOpenChange(false);
       });
       expect(result.current.search).toBe("");
       expect(result.current.selectedIndex).toBe(0);
@@ -259,7 +259,7 @@ describe("useCommandPalette", () => {
     it("should close dialog after selection", () => {
       const { result } = renderCommandPaletteHook();
       act(() => {
-        result.current.setOpen(true);
+        result.current.handleOpenChange(true);
       });
       act(() => {
         result.current.handleSelect(result.current.filteredRoutes[0]);

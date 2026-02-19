@@ -1,7 +1,21 @@
 import "./globals.css";
 export { AppShell, type AppShellProps } from "./components/appshell";
-export { SidebarLayout, DefaultSidebar } from "./components/sidenav-layout";
+export { SidebarLayout, DefaultSidebar } from "./components/sidebar";
 export { CommandPalette } from "./components/command-palette";
+
+// Sidebar navigation components
+export {
+  SidebarItem,
+  SidebarGroup,
+  SidebarSeparator,
+  type SidebarItemProps,
+  type SidebarItemRenderProps,
+  type SidebarGroupProps,
+  type SidebarSeparatorProps,
+  type SidebarLayoutProps,
+  type DefaultSidebarProps,
+} from "./components/sidebar";
+
 export {
   useAppShell,
   useAppShellConfig,

@@ -234,9 +234,9 @@ export type Resource = CommonPageResource & {
 
 export type Modules = Array<Module>;
 
-type ResourceMetaProps = {
+type PageMeta = {
   /**
-   * Title of the resource used in navigation.
+   * Title of the page used in navigation.
    *
    * If not provided, the title will be generated from the path.
    */
@@ -245,7 +245,7 @@ type ResourceMetaProps = {
   icon?: ReactNode;
 
   /**
-   * Custom breadcrumb segment title for this resource. Can be a string or a function.
+   * Custom breadcrumb segment title for this page. Can be a string or a function.
    */
   breadcrumbTitle?: string | ((segment: string) => string);
 };
@@ -260,9 +260,9 @@ type CommonProps = {
   path: string;
 
   /**
-   * Metadata for the resource.
+   * Metadata for the page.
    */
-  meta?: ResourceMetaProps;
+  meta?: PageMeta;
 
   /**
    * Guards to control access to this module/resource.

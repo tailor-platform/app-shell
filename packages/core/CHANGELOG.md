@@ -1,5 +1,13 @@
 # @tailor-platform/app-shell
 
+## 0.26.3
+
+### Patch Changes
+
+- 2170b9e: Updated [oauth4webapi](https://www.npmjs.com/package/oauth4webapi) (^3.8.3 -> ^3.8.5)
+- 5aef4ad: Update auth-public-client to 0.4.1
+- 18f9b66: Updated [react-hook-form](https://www.npmjs.com/package/react-hook-form) (^7.54.2 -> ^7.71.1)
+
 ## 0.26.2
 
 ### Patch Changes

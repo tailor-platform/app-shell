@@ -183,9 +183,9 @@ const SidebarNav = (props: { items: Array<NavItem>; currentPath: string }) => {
                   </>
                 ) : (
                   <>
-                    <CollapsibleTrigger className="astw:flex astw:w-[100%] astw:[&[data-state=open]_.astw-rotate-target]:rotate-90">
+                    <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-state=open]_.astw-rotate-target]:rotate-90">
                       <SidebarMenuButton asChild tooltip={item.title}>
-                        <span className="astw:flex astw:w-[100%]">
+                        <span className="astw:flex astw:w-full">
                           {item.icon}
                           <span>{item.title}</span>
                         </span>
@@ -235,14 +235,14 @@ const SidebarNav = (props: { items: Array<NavItem>; currentPath: string }) => {
   );
 };
 
-const SidebarSkeleton = () => {
-  const widthsPx = [112, 96, 80, 104, 88, 100, 92, 84];
-  const shuffled = [...widthsPx].sort(() => Math.random() - 0.5);
+// Pre-shuffled widths for skeleton items (computed once at module load)
+const skeletonWidths = [104, 80, 112, 88, 96, 100, 84, 92];
 
+const SidebarSkeleton = () => {
   return (
     <SidebarGroup>
       <SidebarMenu className="astw:px-2">
-        {shuffled.map((width, idx) => (
+        {skeletonWidths.map((width, idx) => (
           <SidebarMenuItem key={idx}>
             <div className="astw:flex astw:items-center astw:gap-2 astw:py-1.5">
               <div className="astw:h-4 astw:w-4 astw:rounded-md astw:bg-muted" />

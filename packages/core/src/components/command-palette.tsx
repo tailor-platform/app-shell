@@ -71,7 +71,7 @@ export function navItemsToRoutes(
 
 export type UseCommandPaletteReturn = {
   open: boolean;
-  setOpen: (open: boolean) => void;
+  handleOpenChange: (open: boolean) => void;
   search: string;
   setSearch: (search: string) => void;
   selectedIndex: number;
@@ -87,13 +87,19 @@ export function useCommandPalette({
   const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearchInternal] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const filteredRoutes = useMemo(
     () => filterRoutes(routes, search),
     [routes, search]
   );
+
+  // Wrapper to reset selectedIndex when search changes
+  const setSearch = useCallback((newSearch: string) => {
+    setSearchInternal(newSearch);
+    setSelectedIndex(0);
+  }, []);
 
   // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
   useEffect(() => {
@@ -107,18 +113,14 @@ export function useCommandPalette({
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
 
-  // Reset selected index when filtered results change
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [filteredRoutes]);
-
-  // Reset search when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setSearch("");
+  // Handler for dialog open state changes
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearchInternal("");
       setSelectedIndex(0);
     }
-  }, [open]);
+  }, []);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -133,7 +135,7 @@ export function useCommandPalette({
     (route: NavigatableRoute) => {
       navigate(route.path);
       setOpen(false);
-      setSearch("");
+      setSearchInternal("");
     },
     [navigate]
   );
@@ -167,7 +169,7 @@ export function useCommandPalette({
 
   return {
     open,
-    setOpen,
+    handleOpenChange,
     search,
     setSearch,
     selectedIndex,
@@ -189,7 +191,7 @@ export function CommandPaletteContent({
   const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
   const {
     open,
-    setOpen,
+    handleOpenChange,
     search,
     setSearch,
     selectedIndex,
@@ -200,7 +202,7 @@ export function CommandPaletteContent({
   } = useCommandPalette({ routes });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="astw:p-0 astw:gap-0 astw:sm:max-w-2xl astw:overflow-hidden"
         onKeyDown={handleKeyDown}

@@ -117,11 +117,13 @@ export function Layout({
         if (!React.isValidElement(child)) return child;
         return React.cloneElement(child, {
           className: cn(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React child props type is not known
             (child.props as any).className,
             index === 0
               ? "astw:lg:flex-1" // First column: flexible
               : "astw:lg:min-w-[280px]" // Second column: fixed 280px
           ),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.cloneElement requires type assertion
         } as any);
       });
     } else if (columns === 3) {
@@ -130,6 +132,7 @@ export function Layout({
         if (!React.isValidElement(child)) return child;
         return React.cloneElement(child, {
           className: cn(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React child props type is not known
             (child.props as any).className,
             index === 0
               ? "astw:xl:min-w-[320px]" // First column: fixed 320px
@@ -137,6 +140,7 @@ export function Layout({
               ? "astw:xl:min-w-[280px]" // Third column: fixed 280px
               : "astw:xl:flex-1" // Middle column: flexible
           ),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.cloneElement requires type assertion
         } as any);
       });
     }

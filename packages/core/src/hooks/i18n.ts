@@ -19,7 +19,7 @@ export const useTitleResolver = () => {
 /**
  * Label value can be either a static string or a dynamic function that takes props.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Props type is inferred separately via TFunctionArgs
 type LabelValue = string | ((props: any) => string);
 
 type DynamicLocales<Def extends Record<string, LabelValue>> = {

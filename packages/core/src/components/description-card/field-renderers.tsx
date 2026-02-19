@@ -465,6 +465,7 @@ export function shouldHideField(field: ResolvedField): boolean {
  * Check if a field should span full width
  * Currently no fields are full-width by default - all render in the grid
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function isFullWidthField(_field: ResolvedField): boolean {
   return false;
 }

@@ -49,6 +49,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
 
       acc[module.path] = {
         title: moduleTitle,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- breadcrumbTitle exists at runtime but not in CommonPageResource type
         breadcrumbTitle: (module.meta as any).breadcrumbTitle,
       };
 
@@ -66,6 +67,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
           );
           acc[resourcePath] = {
             title: resourceTitle,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- breadcrumbTitle exists at runtime but not in CommonPageResource type
             breadcrumbTitle: (resource.meta as any).breadcrumbTitle,
           };
 

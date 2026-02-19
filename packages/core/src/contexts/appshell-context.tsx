@@ -19,6 +19,7 @@ import { DEFAULT_LOCALE, detectBrowserLocale } from "@/lib/i18n";
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intentionally empty for declaration merging
 export interface AppShellRegister {
   // contextData?: unknown;
 }

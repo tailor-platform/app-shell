@@ -11,7 +11,6 @@ export {
   type SidebarItemProps,
   type SidebarItemRenderProps,
   type SidebarGroupProps,
-  type SidebarSeparatorProps,
   type SidebarLayoutProps,
   type DefaultSidebarProps,
 } from "./components/sidebar";

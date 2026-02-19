@@ -1,7 +1,5 @@
 import { SidebarSeparator as ShadcnSidebarSeparator } from "@/components/ui/sidebar";
 
-export type SidebarSeparatorProps = Record<string, never>;
-
 /**
  * A visual divider for sidebar navigation.
  *
@@ -14,6 +12,6 @@ export type SidebarSeparatorProps = Record<string, never>;
  * </DefaultSidebar>
  * ```
  */
-export const SidebarSeparator = (_props: SidebarSeparatorProps) => {
+export const SidebarSeparator = () => {
   return <ShadcnSidebarSeparator />;
 };

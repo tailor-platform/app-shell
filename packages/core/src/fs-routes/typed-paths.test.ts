@@ -7,14 +7,16 @@ import { createTypedPaths } from "./typed-paths";
 
 describe("createTypedPaths", () => {
   // Define test routes
+  /* eslint-disable @typescript-eslint/no-empty-object-type */
   type TestRouteParams = {
-    "/": Record<string, never>;
-    "/dashboard": Record<string, never>;
-    "/orders": Record<string, never>;
+    "/": {};
+    "/dashboard": {};
+    "/orders": {};
     "/orders/:id": { id: string };
     "/orders/:orderId/items/:itemId": { orderId: string; itemId: string };
     "/docs/*slug": { slug: string };
   };
+  /* eslint-enable @typescript-eslint/no-empty-object-type */
 
   const paths = createTypedPaths<TestRouteParams>();
 

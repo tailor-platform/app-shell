@@ -8,9 +8,9 @@ import { createTypedPaths } from "./typed-paths";
 describe("createTypedPaths", () => {
   // Define test routes
   type TestRouteParams = {
-    "/": {};
-    "/dashboard": {};
-    "/orders": {};
+    "/": Record<string, never>;
+    "/dashboard": Record<string, never>;
+    "/orders": Record<string, never>;
     "/orders/:id": { id: string };
     "/orders/:orderId/items/:itemId": { orderId: string; itemId: string };
     "/docs/*slug": { slug: string };

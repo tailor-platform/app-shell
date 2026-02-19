@@ -251,7 +251,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
       <p 
         ref={textRef} 
-        className="astw:text-sm astw:font-medium astw:text-foreground astw:break-words astw:m-0"
+        className="astw:text-sm astw:font-medium astw:text-foreground astw:wrap-break-word astw:m-0"
         style={lineClampStyle}
       >
         {value}

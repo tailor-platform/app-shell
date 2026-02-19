@@ -223,7 +223,7 @@ export function CommandPaletteContent({
         </div>
         <div
           ref={listRef}
-          className="astw:max-h-[300px] astw:overflow-y-auto astw:overflow-x-hidden"
+          className="astw:max-h-75 astw:overflow-y-auto astw:overflow-x-hidden"
         >
           {filteredRoutes.length === 0 ? (
             <div className="astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground">

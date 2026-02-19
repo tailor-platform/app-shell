@@ -16,6 +16,14 @@ export {
   type DefaultSidebarProps,
 } from "./components/sidebar";
 
+// Guard component for conditional rendering
+export {
+  WithGuard,
+  type WithGuardProps,
+  type WithGuardComponentGuard as ComponentGuard,
+  type WithGuardContext as ComponentGuardContext,
+} from "./components/with-guard";
+
 export {
   useAppShell,
   useAppShellConfig,

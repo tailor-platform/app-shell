@@ -16,7 +16,6 @@ import { Link } from "@/components/ui/client-side-link";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
-import type { Guard } from "@/resource";
 
 export type SidebarGroupProps = {
   /**
@@ -39,13 +38,6 @@ export type SidebarGroupProps = {
    * @default true
    */
   defaultOpen?: boolean;
-
-  /**
-   * Guards for group visibility.
-   * When defined, evaluated before children. Group is hidden if guards return non-pass.
-   * When omitted, group is hidden only if all children are hidden.
-   */
-  guards?: Guard[];
 
   /**
    * Child items (SidebarItem, SidebarGroup, etc.)

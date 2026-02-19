@@ -4,7 +4,6 @@ import { ExternalLink } from "lucide-react";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Link } from "@/components/ui/client-side-link";
 import { usePageMeta } from "@/hooks/use-page-meta";
-import type { Guard } from "@/resource";
 
 export type SidebarItemRenderProps = {
   /** Title auto-resolved from resource meta */
@@ -48,14 +47,6 @@ export type SidebarItemProps = {
    * When specified, receives title/icon/isActive in render function for full customization.
    */
   render?: (props: SidebarItemRenderProps) => ReactNode;
-
-  /**
-   * Override guards for navigation visibility.
-   * - `undefined` = use resource guards (auto-resolved)
-   * - `[...guards]` = use specified guards instead
-   * - `[]` = always visible in nav (route still protected by resource guards)
-   */
-  guards?: Guard[];
 };
 
 /**

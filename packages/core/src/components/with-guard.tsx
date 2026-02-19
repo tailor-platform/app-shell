@@ -1,4 +1,4 @@
-import { type ReactNode, Suspense, useRef } from "react";
+import { type ReactNode, Suspense, useMemo } from "react";
 import { useAppShell, type ContextData } from "@/contexts/appshell-context";
 import type { GuardResult } from "@/resource";
 
@@ -137,31 +137,17 @@ export const WithGuard = (props: WithGuardProps) => {
   const { guards, children, fallback = null, loading = null } = props;
   const { contextData } = useAppShell();
 
-  // Use ref to cache the promise across re-renders
-  // This ensures the same promise instance is used for Suspense tracking
-  const promiseRef = useRef<{
-    guards: WithGuardComponentGuard[];
-    contextData: ContextData;
-    promise: Promise<GuardResult>;
-  } | null>(null);
-
-  // Create new promise only when guards or contextData changes
-  if (
-    !promiseRef.current ||
-    promiseRef.current.guards !== guards ||
-    promiseRef.current.contextData !== contextData
-  ) {
-    promiseRef.current = {
-      guards,
-      contextData,
-      promise: runComponentGuards(guards, contextData),
-    };
-  }
+  // Memoize the promise to ensure stable reference for Suspense tracking
+  // Creates new promise only when guards or contextData changes
+  const guardPromise = useMemo(
+    () => runComponentGuards(guards, contextData),
+    [guards, contextData],
+  );
 
   return (
     <Suspense fallback={loading}>
       <GuardResolver
-        guardPromise={promiseRef.current.promise}
+        guardPromise={guardPromise}
         children={children}
         fallback={fallback}
       />

@@ -5,6 +5,7 @@ import {
   setContextData,
 } from "@/resource";
 import { useMemo } from "react";
+import { type FC } from "react";
 import {
   AppShellConfigContext,
   AppShellDataContext,
@@ -14,8 +15,10 @@ import {
 import { RouterContainer } from "@/routing/router";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { useIsClient } from "@/hooks/use-is-client";
+import { convertPagesToModules } from "@/fs-routes/converter";
+import type { PageEntry } from "@/fs-routes/types";
 
-export type AppShellProps = React.PropsWithChildren<{
+type SharedAppShellProps = React.PropsWithChildren<{
   /**
    * App shell title
    */
@@ -41,11 +44,6 @@ export type AppShellProps = React.PropsWithChildren<{
    * ```
    */
   rootComponent?: () => React.ReactNode;
-
-  /**
-   * Navigation configuration
-   */
-  modules: Modules;
 
   /**
    * Settings resources to be included in the settings menu
@@ -116,6 +114,44 @@ export type AppShellProps = React.PropsWithChildren<{
   contextData?: ContextData;
 }>;
 
+/**
+ * Props for AppShell component.
+ *
+ * Routes can be configured in two ways:
+ * 1. **Automatic (recommended)**: Use the vite-plugin which automatically
+ *    configures pages via `AppShell.WithPages()`.
+ * 2. **Explicit modules**: Pass the `modules` prop for manual configuration.
+ *
+ * @example
+ * ```tsx
+ * // Automatic mode (configured by vite-plugin)
+ * import { AppShell } from "@tailor-platform/app-shell";
+ *
+ * <AppShell title="My App">
+ *   <SidebarLayout />
+ * </AppShell>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Explicit modules mode
+ * import { AppShell, defineModule } from "@tailor-platform/app-shell";
+ *
+ * <AppShell title="My App" modules={[...]}>
+ *   <SidebarLayout />
+ * </AppShell>
+ * ```
+ */
+export type AppShellProps = SharedAppShellProps & {
+  /**
+   * Navigation configuration.
+   *
+   * When using vite-plugin, this is automatically set via `AppShell.WithPages()`.
+   * For manual configuration, pass modules directly.
+   */
+  modules?: Modules;
+};
+
 export const AppShell = (props: AppShellProps) => {
   const clientSide = useIsClient();
 
@@ -123,18 +159,29 @@ export const AppShell = (props: AppShellProps) => {
   const contextData = (props.contextData ?? {}) as ContextData;
   setContextData(contextData);
 
+  // Validate that modules are configured
+  if (!props.modules) {
+    throw new Error(
+      "[AppShell] No routes configured. " +
+        "Either use the appShellRoutes() vite-plugin for automatic page configuration, " +
+        "or pass the 'modules' prop for manual configuration.",
+    );
+  }
+
+  const resolvedModules = props.modules;
+
   // Memoize configurations to prevent unnecessary re-renders
   const configurations = useMemo(
     () =>
       buildConfigurations({
-        modules: props.modules,
+        modules: resolvedModules,
         settingsResources: props.settingsResources,
         basePath: props.basePath,
         errorBoundary: props.errorBoundary,
         locale: props.locale,
       }),
     [
-      props.modules,
+      resolvedModules,
       props.settingsResources,
       props.basePath,
       props.errorBoundary,
@@ -167,3 +214,35 @@ export const AppShell = (props: AppShellProps) => {
     </AppShellConfigContext.Provider>
   );
 };
+
+function withPages(pages: PageEntry[]): FC<AppShellProps> {
+  // Convert pages to modules at component creation time (not render time)
+  const allModules = convertPagesToModules(pages);
+
+  // Extract root page (path="") and use it as rootComponent
+  const rootModule = allModules.find((m) => m.path === "");
+  const otherModules = allModules.filter((m) => m.path !== "");
+
+  const WrappedAppShell: FC<AppShellProps> = (props) => {
+    // Merge pre-configured modules with any additional props
+    return (
+      <AppShell
+        {...props}
+        modules={props.modules ?? otherModules}
+        rootComponent={props.rootComponent ?? rootModule?.component}
+      />
+    );
+  };
+
+  return WrappedAppShell;
+}
+
+/**
+ * Create an AppShell component with pages pre-configured.
+ *
+ * @internal
+ * This method is used internally by the vite-plugin to inject pages.
+ * Users should not call this directly. Use the vite-plugin for automatic
+ * page configuration, or pass the `modules` prop for manual configuration.
+ */
+AppShell.WithPages = withPages;

@@ -122,7 +122,7 @@ describe("createContentRoutes", () => {
     }
   });
 
-  it("attaches loader to parent route so guards apply to all descendants", () => {
+  it("attaches loader to index route only (no cascade to children)", () => {
     const module = defineModule({
       path: "protected",
       component: () => <div>Protected</div>,
@@ -145,17 +145,22 @@ describe("createContentRoutes", () => {
     const moduleContainer = routes[1];
     const moduleRoute = moduleContainer.children?.[0];
 
-    // Loader should be on the parent route, not just the index route
-    expect(moduleRoute?.loader).toBeDefined();
-    expect(typeof moduleRoute?.loader).toBe("function");
+    // Loader should be on the index route only (no cascade to children)
+    expect(moduleRoute?.loader).toBeUndefined();
 
-    // Index route should NOT have its own loader (it inherits from parent)
+    // Index route should have the loader for guards
     const indexRoute = moduleRoute?.children?.[0];
     expect(indexRoute?.index).toBe(true);
-    expect(indexRoute?.loader).toBeUndefined();
+    expect(indexRoute?.loader).toBeDefined();
+    expect(typeof indexRoute?.loader).toBe("function");
+
+    // Child resource should NOT have a loader (no inheritance from parent)
+    const childResource = moduleRoute?.children?.[1];
+    expect(childResource?.path).toBe("child");
+    expect(childResource?.loader).toBeUndefined();
   });
 
-  it("attaches loader to resource with guards so it applies to sub-resources", () => {
+  it("attaches loader to index route only for resource (no cascade to sub-resources)", () => {
     const module = defineModule({
       path: "dashboard",
       component: () => <div>Dashboard</div>,
@@ -182,17 +187,17 @@ describe("createContentRoutes", () => {
     const moduleRoute = moduleContainer.children?.[0];
     const protectedResource = moduleRoute?.children?.[1];
 
-    // Loader should be on the resource route with guards
+    // Loader should NOT be on the resource route (no cascade)
     expect(protectedResource?.path).toBe("protected-section");
-    expect(protectedResource?.loader).toBeDefined();
-    expect(typeof protectedResource?.loader).toBe("function");
+    expect(protectedResource?.loader).toBeUndefined();
 
-    // Index route of the protected resource should NOT have its own loader
+    // Index route of the protected resource should have the loader
     const indexRoute = protectedResource?.children?.[0];
     expect(indexRoute?.index).toBe(true);
-    expect(indexRoute?.loader).toBeUndefined();
+    expect(indexRoute?.loader).toBeDefined();
+    expect(typeof indexRoute?.loader).toBe("function");
 
-    // Sub-resource should also NOT have a loader (inherits from parent)
+    // Sub-resource should NOT have a loader (no inheritance)
     const subResource = protectedResource?.children?.[1];
     expect(subResource?.path).toBe("detail");
     expect(subResource?.loader).toBeUndefined();
@@ -261,7 +266,7 @@ describe("createContentRoutes", () => {
     expect(module.meta.menuItemClickable).toBe(true);
   });
 
-  it("preserves loader when module has guards but no component", () => {
+  it("includes guards in redirect loader when module has guards but no component", () => {
     const module = defineModule({
       path: "protected-reports",
       meta: {
@@ -280,13 +285,14 @@ describe("createContentRoutes", () => {
     const moduleRoute = moduleContainer.children?.[0];
 
     expect(moduleRoute?.path).toBe("protected-reports");
-    // Loader from guards should be preserved on the module route
-    expect(moduleRoute?.loader).toBeDefined();
-    expect(typeof moduleRoute?.loader).toBe("function");
+    // Module route should NOT have loader (no cascade)
+    expect(moduleRoute?.loader).toBeUndefined();
 
-    // First child should be the redirect index route
+    // Redirect index route should have loader that includes module guards
     const indexRoute = moduleRoute?.children?.[0];
     expect(indexRoute?.index).toBe(true);
+    expect(indexRoute?.loader).toBeDefined();
+    expect(typeof indexRoute?.loader).toBe("function");
 
     // Resource routes should still exist
     const salesRoute = moduleRoute?.children?.[1];

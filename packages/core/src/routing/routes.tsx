@@ -39,16 +39,17 @@ const createRoute = (
 ): RouteObject => {
   const effectiveErrorBoundary = source.errorBoundary || parentErrorBoundary;
 
+  // Guards are applied only to this route's index, not cascading to children
   const indexRoute: RouteObject | undefined = source.component
     ? {
         index: true,
         Component: source.component,
+        ...(source.loader && { loader: source.loader }),
       }
     : undefined;
 
   return {
     path: source.path,
-    ...(source.loader && { loader: source.loader }),
     ...(source.errorBoundary && {
       ErrorBoundary: wrapErrorBoundary(source.errorBoundary),
     }),
@@ -84,6 +85,15 @@ const createModuleRoute = (module: Module): RouteObject => {
       // even though the loader always redirects and this component will never render.
       Component: () => null,
       loader: async (args: LoaderFunctionArgs) => {
+        // First, check module's own guards (no cascade to children)
+        const moduleGuardResult = await runGuards(module.guards, args);
+        if (moduleGuardResult.type === "hidden") {
+          throw createNotFoundError();
+        }
+        if (moduleGuardResult.type === "redirect") {
+          return redirect(moduleGuardResult.to);
+        }
+
         // Find the first resource that is not hidden by guards
         for (const resource of module.resources) {
           const result = await runGuards(resource.guards, args);
@@ -99,7 +109,6 @@ const createModuleRoute = (module: Module): RouteObject => {
     const result: RouteObject = {
       path: baseRoute.path,
       children: [redirectRoute, ...(baseRoute.children ?? [])],
-      ...(baseRoute.loader && { loader: baseRoute.loader }),
     };
     if (baseRoute.ErrorBoundary) {
       result.ErrorBoundary = baseRoute.ErrorBoundary;

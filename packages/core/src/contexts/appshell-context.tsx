@@ -5,7 +5,7 @@ import { DEFAULT_LOCALE, detectBrowserLocale } from "@/lib/i18n";
 
 /**
  * Empty interface for module augmentation.
- * Users can extend this to define their own context data type.
+ * Users can extend this to define their own context data type and route parameters.
  *
  * @example
  * ```typescript
@@ -15,6 +15,11 @@ import { DEFAULT_LOCALE, detectBrowserLocale } from "@/lib/i18n";
  *       apiClient: ApiClient;
  *       currentUser: User;
  *     };
+ *     routeParams: {
+ *       "/": {};
+ *       "/dashboard": {};
+ *       "/orders/:id": { id: string };
+ *     };
  *   }
  * }
  * ```
@@ -22,6 +27,7 @@ import { DEFAULT_LOCALE, detectBrowserLocale } from "@/lib/i18n";
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intentionally empty for declaration merging
 export interface AppShellRegister {
   // contextData?: unknown;
+  // routeParams?: Record<string, Record<string, string>>;
 }
 
 /**
@@ -31,6 +37,15 @@ export interface AppShellRegister {
 export type ContextData = AppShellRegister extends { contextData: infer T }
   ? T
   : Record<string, unknown>;
+
+/**
+ * Route parameters type inferred from AppShellRegister.
+ * Falls back to Record<string, Record<string, string>> if not augmented.
+ * This is typically set by the generated routes file from vite-plugin.
+ */
+export type RouteParams = AppShellRegister extends { routeParams: infer T }
+  ? T
+  : Record<string, Record<string, string>>;
 
 export type RootConfiguration = {
   modules: Modules;

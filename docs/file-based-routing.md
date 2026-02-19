@@ -2,35 +2,6 @@
 
 File-based routing allows you to define pages by simply placing components in a directory structure, eliminating the need for explicit `defineModule()` and `defineResource()` calls.
 
-## Motivation
-
-### URL-First Design is Already the Norm
-
-In practice, most projects naturally align their module/resource hierarchy with URL paths. A "purchasing" module at `/purchasing` with an "orders" resource at `/purchasing/orders` is the intuitive, conventional choice. The previous API required developers to manually wire up this structure even though the mapping between code organization and URL paths was already implicit.
-
-### AI-Friendly Development
-
-In the era of AI-assisted development, well-known conventions significantly improve collaboration with AI tools. By adopting file-based routing patterns pioneered by Next.js:
-- AI tools can understand and navigate your codebase with less context
-- Code generation becomes more predictable and consistent
-- The established convention serves as shared knowledge between humans and AI
-
-This results in more stable, reliable AI-assisted workflows—whether generating new pages, refactoring routes, or understanding existing code.
-
-### Providing Rails, Not Just Flexibility
-
-The legacy `defineModule()`/`defineResource()` API gave flexibility but offered few conventions. Teams had to decide their own:
-- Directory structure for organizing page components
-- Parent-children hierarchy management
-- File naming conventions
-
-This lack of "rails" led to inconsistent patterns across projects. File-based routing provides an opinionated, battle-tested convention that eliminates these decisions.
-
-Importantly, file-based routing is implemented as a Vite plugin layer on top of the existing programmatic API. Internally, discovered pages are converted to the same `Module[]` structure used by `defineModule()`/`defineResource()`. This means:
-- The core routing logic remains filesystem-agnostic
-- Projects requiring non-standard routing can still use the programmatic API directly
-- The convention is assistance, not a constraint
-
 ## Overview
 
 Instead of manually assembling module/resource hierarchies, you define pages as files in a `pages/` directory. The path is automatically derived from the directory structure.

@@ -160,9 +160,7 @@ const AutoSidebarItems = (props: {
                             ? "astw:bg-sidebar-accent astw:font-medium"
                             : undefined
                         }
-                      >
-                        {null}
-                      </Link>
+                      />
                     }
                     tooltip={item.title}
                   >
@@ -216,9 +214,7 @@ const AutoSidebarItems = (props: {
                                   ? "astw:bg-sidebar-accent astw:font-medium"
                                   : undefined
                               }
-                            >
-                              {null}
-                            </Link>
+                            />
                           }
                         >
                           <span>{subItem.title}</span>

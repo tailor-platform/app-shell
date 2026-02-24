@@ -1,9 +1,9 @@
 import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { useRender } from "@base-ui/react/use-render";
 
 import { cn } from "@/lib/utils";
 import { Link } from "./client-side-link";
-import { renderOrDefault } from "@/lib/render-utils";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
@@ -26,7 +26,10 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-item"
-      className={cn("astw:inline-flex astw:items-center astw:gap-1.5", className)}
+      className={cn(
+        "astw:inline-flex astw:items-center astw:gap-1.5",
+        className,
+      )}
       {...props}
     />
   );
@@ -40,15 +43,28 @@ function BreadcrumbLink({
 }: React.ComponentProps<typeof Link> & {
   render?: React.ReactElement;
 }) {
-  return renderOrDefault(
-    render,
-    Link,
-    {
-      "data-slot": "breadcrumb-link",
-      className: cn("astw:hover:text-foreground astw:transition-colors", className),
-      ...props,
-    },
-    children,
+  const linkClassName = cn(
+    "astw:hover:text-foreground astw:transition-colors",
+    className,
+  );
+
+  if (render) {
+    return useRender({
+      defaultTagName: "a",
+      render,
+      props: {
+        "data-slot": "breadcrumb-link",
+        className: linkClassName,
+        children,
+        ...props,
+      },
+    });
+  }
+
+  return (
+    <Link data-slot="breadcrumb-link" className={linkClassName} {...props}>
+      {children}
+    </Link>
   );
 }
 
@@ -92,7 +108,10 @@ function BreadcrumbEllipsis({
       data-slot="breadcrumb-ellipsis"
       role="presentation"
       aria-hidden="true"
-      className={cn("astw:flex astw:size-9 astw:items-center astw:justify-center", className)}
+      className={cn(
+        "astw:flex astw:size-9 astw:items-center astw:justify-center",
+        className,
+      )}
       {...props}
     >
       <MoreHorizontal className="astw:size-4" />

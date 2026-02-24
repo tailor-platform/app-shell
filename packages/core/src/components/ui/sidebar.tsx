@@ -1,11 +1,11 @@
 import * as React from "react";
 import { VariantProps, cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
+import { useRender } from "@base-ui/react/use-render";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { cn } from "@/lib/utils";
-import { renderOrDefault } from "@/lib/render-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -507,10 +507,10 @@ function SidebarGroupLabel({
   children,
   ...props
 }: React.ComponentProps<"div"> & { render?: React.ReactElement }) {
-  return renderOrDefault(
+  return useRender({
+    defaultTagName: "div",
     render,
-    "div",
-    {
+    props: {
       "data-slot": "sidebar-group-label",
       "data-sidebar": "group-label",
       className: cn(
@@ -518,10 +518,10 @@ function SidebarGroupLabel({
         "astw:group-data-[collapsible=icon]:-mt-8 astw:group-data-[collapsible=icon]:opacity-0",
         className,
       ),
+      children,
       ...props,
     },
-    children,
-  );
+  });
 }
 
 function SidebarGroupAction({
@@ -530,10 +530,10 @@ function SidebarGroupAction({
   children,
   ...props
 }: React.ComponentProps<"button"> & { render?: React.ReactElement }) {
-  return renderOrDefault(
+  return useRender({
+    defaultTagName: "button",
     render,
-    "button",
-    {
+    props: {
       "data-slot": "sidebar-group-action",
       "data-sidebar": "group-action",
       className: cn(
@@ -543,10 +543,10 @@ function SidebarGroupAction({
         "astw:group-data-[collapsible=icon]:hidden",
         className,
       ),
+      children,
       ...props,
     },
-    children,
-  );
+  });
 }
 
 function SidebarGroupContent({
@@ -627,19 +627,19 @@ function SidebarMenuButton({
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { isMobile, state } = useSidebar();
 
-  const button = renderOrDefault(
+  const button = useRender({
+    defaultTagName: "button",
     render,
-    "button",
-    {
+    props: {
       "data-slot": "sidebar-menu-button",
       "data-sidebar": "menu-button",
       "data-size": size,
       "data-active": isActive,
       className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+      children,
       ...props,
     },
-    children,
-  );
+  });
 
   if (!tooltip) {
     return button;
@@ -674,10 +674,10 @@ function SidebarMenuAction({
   render?: React.ReactElement;
   showOnHover?: boolean;
 }) {
-  return renderOrDefault(
+  return useRender({
+    defaultTagName: "button",
     render,
-    "button",
-    {
+    props: {
       "data-slot": "sidebar-menu-action",
       "data-sidebar": "menu-action",
       className: cn(
@@ -692,10 +692,10 @@ function SidebarMenuAction({
           "astw:peer-data-[active=true]/menu-button:text-sidebar-accent-foreground astw:group-focus-within/menu-item:opacity-100 astw:group-hover/menu-item:opacity-100 astw:data-[state=open]:opacity-100 astw:md:opacity-0",
         className,
       ),
+      children,
       ...props,
     },
-    children,
-  );
+  });
 }
 
 function SidebarMenuBadge({
@@ -761,10 +761,10 @@ function SidebarMenuSubButton({
   size?: "sm" | "md";
   isActive?: boolean;
 }) {
-  return renderOrDefault(
+  return useRender({
+    defaultTagName: "a",
     render,
-    "a",
-    {
+    props: {
       "data-slot": "sidebar-menu-sub-button",
       "data-sidebar": "menu-sub-button",
       "data-size": size,
@@ -777,10 +777,10 @@ function SidebarMenuSubButton({
         "astw:group-data-[collapsible=icon]:hidden",
         className,
       ),
+      children,
       ...props,
     },
-    children,
-  );
+  });
 }
 
 export {

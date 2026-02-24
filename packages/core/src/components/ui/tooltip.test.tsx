@@ -68,8 +68,8 @@ describe("Tooltip", () => {
 
     render(
       <Tooltip>
-        <TooltipTrigger data-testid="trigger">
-          <button>Focus me</button>
+        <TooltipTrigger render={<button />} data-testid="trigger">
+          Focus me
         </TooltipTrigger>
         <TooltipContent data-testid="tooltip-content">
           Tooltip text

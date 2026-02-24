@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Badge } from "../ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Badge } from "../badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
 

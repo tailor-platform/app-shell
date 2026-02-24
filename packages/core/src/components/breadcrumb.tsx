@@ -1,9 +1,9 @@
 import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { useRender } from "@base-ui/react/use-render";
+import { Link } from "react-router";
 
 import { cn } from "@/lib/utils";
-import { Link } from "./client-side-link";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
@@ -39,7 +39,8 @@ function BreadcrumbLink({
   render,
   className,
   children,
-  ...props
+  to,
+  ...restProps
 }: React.ComponentProps<typeof Link> & {
   render?: React.ReactElement;
 }) {
@@ -48,24 +49,17 @@ function BreadcrumbLink({
     className,
   );
 
-  if (render) {
-    return useRender({
-      defaultTagName: "a",
-      render,
-      props: {
-        "data-slot": "breadcrumb-link",
-        className: linkClassName,
-        children,
-        ...props,
-      },
-    });
-  }
-
-  return (
-    <Link data-slot="breadcrumb-link" className={linkClassName} {...props}>
-      {children}
-    </Link>
-  );
+  return useRender({
+    defaultTagName: "a",
+    render: render ?? <Link to={to} />,
+    props: {
+      "data-slot": "breadcrumb-link",
+      className: linkClassName,
+      children,
+      to,
+      ...restProps,
+    },
+  });
 }
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {

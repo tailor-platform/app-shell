@@ -1,5 +1,5 @@
 import { useRouteError, isRouteErrorResponse } from "react-router";
-import { Button } from "./ui/button";
+import { Button } from "./button";
 import { AlertCircle } from "lucide-react";
 import { useT } from "@/i18n-labels";
 

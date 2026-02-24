@@ -71,7 +71,7 @@ export {
 export { useToast } from "./hooks/use-toast";
 
 // Badge component
-export { Badge, badgeVariants, type BadgeProps } from "./components/ui/badge";
+export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 
 // DescriptionCard
 export {

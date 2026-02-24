@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "../../lib/utils";
+import { cn } from "../lib/utils";
 
 const badgeVariants = cva(
   "astw:inline-flex astw:items-center astw:rounded-md astw:border astw:px-2 astw:py-0.5 astw:text-xs astw:font-medium astw:transition-colors astw:focus:outline-none astw:focus:ring-2 astw:focus:ring-ring astw:focus:ring-offset-2",
@@ -33,7 +33,7 @@ const badgeVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 // Status dot colors for outline variants
@@ -57,17 +57,15 @@ function StatusDot({ variant }: { variant: string }) {
 }
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, children, ...props }: BadgeProps) {
   const isOutline = variant?.toString().startsWith("outline-");
 
   return (
-    <div
-      className={cn(badgeVariants({ variant }), className)}
-      {...props}
-    >
+    <div className={cn(badgeVariants({ variant }), className)} {...props}>
       {isOutline && <StatusDot variant={variant as string} />}
       {children}
     </div>

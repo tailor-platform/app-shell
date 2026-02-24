@@ -5,7 +5,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/components/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -20,9 +20,9 @@ import {
   SidebarHeader,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/sidebar";
 import { useAppShellConfig } from "@/contexts/appshell-context";
-import { Link } from "@/components/ui/client-side-link";
+import { Link } from "react-router";
 import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
@@ -144,7 +144,11 @@ const AutoSidebarItems = (props: {
       <SidebarMenu>
         {props.items.map((item) => {
           return (
-            <Collapsible key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
+            <Collapsible
+              key={item.title}
+              render={<SidebarMenuItem />}
+              defaultOpen={true}
+            >
               {item.url ? (
                 <>
                   <SidebarMenuButton
@@ -179,7 +183,10 @@ const AutoSidebarItems = (props: {
               ) : (
                 <>
                   <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
-                    <SidebarMenuButton render={<span className="astw:flex astw:w-full" />} tooltip={item.title}>
+                    <SidebarMenuButton
+                      render={<span className="astw:flex astw:w-full" />}
+                      tooltip={item.title}
+                    >
                       {item.icon}
                       <span>{item.title}</span>
                     </SidebarMenuButton>

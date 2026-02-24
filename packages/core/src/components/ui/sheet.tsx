@@ -1,40 +1,40 @@
 import * as React from "react";
-import * as SheetPrimitive from "@radix-ui/react-dialog";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+function Sheet({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
+  return <BaseDialog.Root data-slot="sheet" {...props} />;
 }
 
 function SheetTrigger({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
-  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Trigger>) {
+  return <BaseDialog.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
 function SheetClose({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Close>) {
-  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Close>) {
+  return <BaseDialog.Close data-slot="sheet-close" {...props} />;
 }
 
 function SheetPortal({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
-  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Portal>) {
+  return <BaseDialog.Portal data-slot="sheet-portal" {...props} />;
 }
 
 function SheetOverlay({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
-    <SheetPrimitive.Overlay
+    <BaseDialog.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "astw:data-[state=open]:animate-in astw:data-[state=closed]:animate-out astw:data-[state=closed]:fade-out-0 astw:data-[state=open]:fade-in-0 astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
         className,
       )}
       {...props}
@@ -47,34 +47,34 @@ function SheetContent({
   children,
   side = "right",
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+}: React.ComponentProps<typeof BaseDialog.Popup> & {
   side?: "top" | "right" | "bottom" | "left";
 }) {
   return (
     <SheetPortal>
       <SheetOverlay />
-      <SheetPrimitive.Content
+      <BaseDialog.Popup
         data-slot="sheet-content"
         className={cn(
-          "astw:bg-background astw:data-[state=open]:animate-in astw:data-[state=closed]:animate-out astw:fixed astw:z-50 astw:flex astw:flex-col astw:gap-4 astw:shadow-lg astw:transition astw:ease-in-out astw:data-[state=closed]:duration-300 astw:data-[state=open]:duration-500",
+          "astw:bg-background astw:data-open:animate-in astw:data-ending-style:animate-out astw:fixed astw:z-50 astw:flex astw:flex-col astw:gap-4 astw:shadow-lg astw:transition astw:ease-in-out astw:data-ending-style:duration-300 astw:data-open:duration-500",
           side === "right" &&
-            "astw:data-[state=closed]:slide-out-to-right astw:data-[state=open]:slide-in-from-right astw:inset-y-0 astw:right-0 astw:h-full astw:w-3/4 astw:border-l astw:sm:max-w-sm",
+            "astw:data-ending-style:slide-out-to-right astw:data-open:slide-in-from-right astw:inset-y-0 astw:right-0 astw:h-full astw:w-3/4 astw:border-l astw:sm:max-w-sm",
           side === "left" &&
-            "astw:data-[state=closed]:slide-out-to-left astw:data-[state=open]:slide-in-from-left astw:inset-y-0 astw:left-0 astw:h-full astw:w-3/4 astw:border-r astw:sm:max-w-sm",
+            "astw:data-ending-style:slide-out-to-left astw:data-open:slide-in-from-left astw:inset-y-0 astw:left-0 astw:h-full astw:w-3/4 astw:border-r astw:sm:max-w-sm",
           side === "top" &&
-            "astw:data-[state=closed]:slide-out-to-top astw:data-[state=open]:slide-in-from-top astw:inset-x-0 astw:top-0 astw:h-auto astw:border-b",
+            "astw:data-ending-style:slide-out-to-top astw:data-open:slide-in-from-top astw:inset-x-0 astw:top-0 astw:h-auto astw:border-b",
           side === "bottom" &&
-            "astw:data-[state=closed]:slide-out-to-bottom astw:data-[state=open]:slide-in-from-bottom astw:inset-x-0 astw:bottom-0 astw:h-auto astw:border-t",
+            "astw:data-ending-style:slide-out-to-bottom astw:data-open:slide-in-from-bottom astw:inset-x-0 astw:bottom-0 astw:h-auto astw:border-t",
           className,
         )}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="astw:ring-offset-bg astw:focus:ring-ring astw:data-[state=open]:bg-secondary astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none">
+        <BaseDialog.Close className="astw:ring-offset-bg astw:focus:ring-ring astw:data-open:bg-secondary astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none">
           <XIcon className="astw:size-4" />
           <span className="astw:sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
+        </BaseDialog.Close>
+      </BaseDialog.Popup>
     </SheetPortal>
   );
 }
@@ -102,9 +102,9 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
 function SheetTitle({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+}: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
-    <SheetPrimitive.Title
+    <BaseDialog.Title
       data-slot="sheet-title"
       className={cn("astw:text-foreground astw:font-semibold", className)}
       {...props}
@@ -115,9 +115,9 @@ function SheetTitle({
 function SheetDescription({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Description>) {
+}: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
-    <SheetPrimitive.Description
+    <BaseDialog.Description
       data-slot="sheet-description"
       className={cn("astw:text-muted-foreground astw:text-sm", className)}
       {...props}

@@ -174,17 +174,19 @@ function CopyButton({ value }: { value: string }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          onClick={handleCopy}
-          className="astw:ml-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
-        >
-          {copied ? (
-            <Check className="astw:h-3 astw:w-3" strokeWidth={2.5} />
-          ) : (
-            <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
-          )}
-        </button>
+      <TooltipTrigger
+        render={
+          <button
+            onClick={handleCopy}
+            className="astw:ml-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
+          />
+        }
+      >
+        {copied ? (
+          <Check className="astw:h-3 astw:w-3" strokeWidth={2.5} />
+        ) : (
+          <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
+        )}
       </TooltipTrigger>
       <TooltipContent side="top">{copied ? "Copied!" : "Copy"}</TooltipContent>
     </Tooltip>
@@ -264,8 +266,8 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   if (truncateLines && isTruncated) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="astw:cursor-default">{content}</span>
+        <TooltipTrigger render={<span className="astw:cursor-default" />}>
+          {content}
         </TooltipTrigger>
         <TooltipContent side="bottom" style={{ maxWidth: 320 }}>
           <p className="astw:text-sm">{value}</p>

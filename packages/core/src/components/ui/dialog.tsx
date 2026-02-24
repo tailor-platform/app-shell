@@ -1,42 +1,42 @@
 import * as React from "react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 function Dialog({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Root>) {
+  return <BaseDialog.Root data-slot="dialog" {...props} />;
 }
 
 function DialogTrigger({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Trigger>) {
+  return <BaseDialog.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
 function DialogPortal({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Portal>) {
+  return <BaseDialog.Portal data-slot="dialog-portal" {...props} />;
 }
 
 function DialogClose({
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
+}: React.ComponentProps<typeof BaseDialog.Close>) {
+  return <BaseDialog.Close data-slot="dialog-close" {...props} />;
 }
 
 function DialogOverlay({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
-    <DialogPrimitive.Overlay
+    <BaseDialog.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "astw:data-[state=open]:animate-in astw:data-[state=closed]:animate-out astw:data-[state=closed]:fade-out-0 astw:data-[state=open]:fade-in-0 astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
         className,
       )}
       {...props}
@@ -48,24 +48,24 @@ function DialogContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: React.ComponentProps<typeof BaseDialog.Popup>) {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
-      <DialogPrimitive.Content
+      <BaseDialog.Popup
         data-slot="dialog-content"
         className={cn(
-          "astw:bg-background astw:data-[state=open]:animate-in astw:data-[state=closed]:animate-out astw:data-[state=closed]:fade-out-0 astw:data-[state=open]:fade-in-0 astw:data-[state=closed]:zoom-out-95 astw:data-[state=open]:zoom-in-95 astw:fixed astw:top-[50%] astw:left-[50%] astw:z-50 astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
+          "astw:bg-background astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fixed astw:top-[50%] astw:left-[50%] astw:z-50 astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
           className,
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="astw:ring-offset-bg astw:focus:ring-ring astw:data-[state=open]:bg-accent astw:data-[state=open]:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4">
+        <BaseDialog.Close className="astw:ring-offset-bg astw:focus:ring-ring astw:data-open:bg-accent astw:data-open:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4">
           <XIcon />
           <span className="astw:sr-only">Close</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
+        </BaseDialog.Close>
+      </BaseDialog.Popup>
     </DialogPortal>
   );
 }
@@ -96,9 +96,9 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 function DialogTitle({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+}: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
-    <DialogPrimitive.Title
+    <BaseDialog.Title
       data-slot="dialog-title"
       className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
       {...props}
@@ -109,9 +109,9 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+}: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
-    <DialogPrimitive.Description
+    <BaseDialog.Description
       data-slot="dialog-description"
       className={cn("astw:text-muted-foreground astw:text-sm", className)}
       {...props}

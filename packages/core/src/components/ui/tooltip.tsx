@@ -1,35 +1,41 @@
 import * as React from "react";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
 
 function TooltipProvider({
   delayDuration = 0,
+  children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+}: {
+  delayDuration?: number;
+  children: React.ReactNode;
+}) {
   return (
-    <TooltipPrimitive.Provider
+    <BaseTooltip.Provider
       data-slot="tooltip-provider"
-      delayDuration={delayDuration}
+      delay={delayDuration}
       {...props}
-    />
+    >
+      {children}
+    </BaseTooltip.Provider>
   );
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+function Tooltip({ children, ...props }: { children: React.ReactNode }) {
   return (
     <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+      <BaseTooltip.Root data-slot="tooltip" {...props}>
+        {children}
+      </BaseTooltip.Root>
     </TooltipProvider>
   );
 }
 
 function TooltipTrigger({
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
+}: React.ComponentProps<typeof BaseTooltip.Trigger>) {
+  return <BaseTooltip.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
 function TooltipContent({
@@ -37,22 +43,31 @@ function TooltipContent({
   sideOffset = 0,
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<typeof BaseTooltip.Popup> & {
+  sideOffset?: number;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+}) {
+  const { side = "top", align = "center", ...restProps } = props as {
+    side?: "top" | "right" | "bottom" | "left";
+    align?: "start" | "center" | "end";
+  };
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "astw:bg-primary astw:text-primary-foreground astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-[state=closed]:animate-out astw:data-[state=closed]:fade-out-0 astw:data-[state=closed]:zoom-out-95 astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2 astw:z-50 astw:w-fit astw:origin-(--radix-tooltip-content-transform-origin) astw:rounded-md astw:px-3 astw:py-1.5 astw:text-xs astw:text-balance",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        <TooltipPrimitive.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%_-_2px)] astw:rotate-45 astw:rounded-[2px]" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
+    <BaseTooltip.Portal>
+      <BaseTooltip.Positioner sideOffset={sideOffset} side={side} align={align}>
+        <BaseTooltip.Popup
+          data-slot="tooltip-content"
+          className={cn(
+            "astw:bg-primary astw:text-primary-foreground astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95 astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2 astw:z-50 astw:w-fit astw:origin-(--transform-origin) astw:rounded-md astw:px-3 astw:py-1.5 astw:text-xs astw:text-balance",
+            className,
+          )}
+          {...restProps}
+        >
+          {children}
+          <BaseTooltip.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%_-_2px)] astw:rotate-45 astw:rounded-[2px]" />
+        </BaseTooltip.Popup>
+      </BaseTooltip.Positioner>
+    </BaseTooltip.Portal>
   );
 }
 

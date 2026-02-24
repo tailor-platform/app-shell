@@ -1,11 +1,11 @@
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { cn } from "@/lib/utils";
+import { renderOrDefault } from "@/lib/render-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -503,45 +503,49 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
 
 function SidebarGroupLabel({
   className,
-  asChild = false,
+  render,
+  children,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "div";
-
-  return (
-    <Comp
-      data-slot="sidebar-group-label"
-      data-sidebar="group-label"
-      className={cn(
+}: React.ComponentProps<"div"> & { render?: React.ReactElement }) {
+  return renderOrDefault(
+    render,
+    "div",
+    {
+      "data-slot": "sidebar-group-label",
+      "data-sidebar": "group-label",
+      className: cn(
         "astw:text-sidebar-foreground/70 astw:ring-sidebar-ring astw:flex astw:h-8 astw:shrink-0 astw:items-center astw:rounded-md astw:px-2 astw:text-xs astw:font-medium astw:outline-hidden astw:transition-[margin,opacity] astw:duration-200 astw:ease-linear astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         "astw:group-data-[collapsible=icon]:-mt-8 astw:group-data-[collapsible=icon]:opacity-0",
         className,
-      )}
-      {...props}
-    />
+      ),
+      ...props,
+    },
+    children,
   );
 }
 
 function SidebarGroupAction({
   className,
-  asChild = false,
+  render,
+  children,
   ...props
-}: React.ComponentProps<"button"> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "button";
-
-  return (
-    <Comp
-      data-slot="sidebar-group-action"
-      data-sidebar="group-action"
-      className={cn(
+}: React.ComponentProps<"button"> & { render?: React.ReactElement }) {
+  return renderOrDefault(
+    render,
+    "button",
+    {
+      "data-slot": "sidebar-group-action",
+      "data-sidebar": "group-action",
+      className: cn(
         "astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:absolute astw:top-3.5 astw:right-3 astw:flex astw:aspect-square astw:w-5 astw:items-center astw:justify-center astw:rounded-md astw:p-0 astw:outline-hidden astw:transition-transform astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         // Increases the hit area of the button on mobile.
         "astw:after:absolute astw:after:-inset-2 astw:md:after:hidden",
         "astw:group-data-[collapsible=icon]:hidden",
         className,
-      )}
-      {...props}
-    />
+      ),
+      ...props,
+    },
+    children,
   );
 }
 
@@ -608,30 +612,33 @@ const sidebarMenuButtonVariants = cva(
 );
 
 function SidebarMenuButton({
-  asChild = false,
+  render,
   isActive = false,
   variant = "default",
   size = "default",
   tooltip,
   className,
+  children,
   ...props
 }: React.ComponentProps<"button"> & {
-  asChild?: boolean;
+  render?: React.ReactElement;
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
 
-  const button = (
-    <Comp
-      data-slot="sidebar-menu-button"
-      data-sidebar="menu-button"
-      data-size={size}
-      data-active={isActive}
-      className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-      {...props}
-    />
+  const button = renderOrDefault(
+    render,
+    "button",
+    {
+      "data-slot": "sidebar-menu-button",
+      "data-sidebar": "menu-button",
+      "data-size": size,
+      "data-active": isActive,
+      className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+      ...props,
+    },
+    children,
   );
 
   if (!tooltip) {
@@ -646,7 +653,7 @@ function SidebarMenuButton({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipTrigger render={button} />
       <TooltipContent
         side="right"
         align="center"
@@ -659,20 +666,21 @@ function SidebarMenuButton({
 
 function SidebarMenuAction({
   className,
-  asChild = false,
+  render,
   showOnHover = false,
+  children,
   ...props
 }: React.ComponentProps<"button"> & {
-  asChild?: boolean;
+  render?: React.ReactElement;
   showOnHover?: boolean;
 }) {
-  const Comp = asChild ? Slot : "button";
-
-  return (
-    <Comp
-      data-slot="sidebar-menu-action"
-      data-sidebar="menu-action"
-      className={cn(
+  return renderOrDefault(
+    render,
+    "button",
+    {
+      "data-slot": "sidebar-menu-action",
+      "data-sidebar": "menu-action",
+      className: cn(
         "astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:peer-hover/menu-button:text-sidebar-accent-foreground astw:absolute astw:top-1.5 astw:right-1 astw:flex astw:aspect-square astw:w-5 astw:items-center astw:justify-center astw:rounded-md astw:p-0 astw:outline-hidden astw:transition-transform astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         // Increases the hit area of the button on mobile.
         "astw:after:absolute astw:after:-inset-2 astw:md:after:hidden",
@@ -683,9 +691,10 @@ function SidebarMenuAction({
         showOnHover &&
           "astw:peer-data-[active=true]/menu-button:text-sidebar-accent-foreground astw:group-focus-within/menu-item:opacity-100 astw:group-hover/menu-item:opacity-100 astw:data-[state=open]:opacity-100 astw:md:opacity-0",
         className,
-      )}
-      {...props}
-    />
+      ),
+      ...props,
+    },
+    children,
   );
 }
 
@@ -741,34 +750,36 @@ function SidebarMenuSubItem({
 }
 
 function SidebarMenuSubButton({
-  asChild = false,
+  render,
   size = "md",
   isActive = false,
   className,
+  children,
   ...props
 }: React.ComponentProps<"a"> & {
-  asChild?: boolean;
+  render?: React.ReactElement;
   size?: "sm" | "md";
   isActive?: boolean;
 }) {
-  const Comp = asChild ? Slot : "a";
-
-  return (
-    <Comp
-      data-slot="sidebar-menu-sub-button"
-      data-sidebar="menu-sub-button"
-      data-size={size}
-      data-active={isActive}
-      className={cn(
+  return renderOrDefault(
+    render,
+    "a",
+    {
+      "data-slot": "sidebar-menu-sub-button",
+      "data-sidebar": "menu-sub-button",
+      "data-size": size,
+      "data-active": isActive,
+      className: cn(
         "astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:[&>svg]:text-sidebar-accent-foreground astw:flex astw:h-7 astw:min-w-0 astw:-translate-x-px astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:px-2 astw:outline-hidden astw:focus-visible:ring-2 astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:text-sidebar-accent-foreground",
         size === "sm" && "astw:text-xs",
         size === "md" && "astw:text-sm",
         "astw:group-data-[collapsible=icon]:hidden",
         className,
-      )}
-      {...props}
-    />
+      ),
+      ...props,
+    },
+    children,
   );
 }
 

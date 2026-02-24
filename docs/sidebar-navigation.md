@@ -11,20 +11,18 @@ AppShell provides flexible sidebar navigation with two modes:
 The simplest way to use the sidebar - navigation items are automatically generated from your module definitions:
 
 ```tsx
-import { AppShell, SidebarLayout, DefaultSidebar } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
 
 const App = () => (
   <AppShell modules={modules}>
-    <SidebarLayout>
-      <DefaultSidebar />
-    </SidebarLayout>
+    <SidebarLayout />
   </AppShell>
 );
 ```
 
 ### Composition Mode
 
-For full control over sidebar structure, pass children to `DefaultSidebar`:
+For full control over sidebar structure, pass children to `DefaultSidebar` via the `sidebar` prop:
 
 ```tsx
 import {
@@ -39,17 +37,19 @@ import { Package, Settings } from "lucide-react";
 
 const App = () => (
   <AppShell modules={modules}>
-    <SidebarLayout>
-      <DefaultSidebar>
-        <SidebarItem to="/dashboard" />
-        <SidebarSeparator />
-        <SidebarGroup title="Products" icon={<Package />}>
-          <SidebarItem to="/products/all" />
-          <SidebarItem to="/products/categories" />
-        </SidebarGroup>
-        <SidebarItem to="/settings" icon={<Settings />} />
-      </DefaultSidebar>
-    </SidebarLayout>
+    <SidebarLayout
+      sidebar={
+        <DefaultSidebar>
+          <SidebarItem to="/dashboard" />
+          <SidebarSeparator />
+          <SidebarGroup title="Products" icon={<Package />}>
+            <SidebarItem to="/products/all" />
+            <SidebarItem to="/products/categories" />
+          </SidebarGroup>
+          <SidebarItem to="/settings" icon={<Settings />} />
+        </DefaultSidebar>
+      }
+    />
   </AppShell>
 );
 ```

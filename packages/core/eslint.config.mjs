@@ -12,7 +12,9 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
-      project: "./tsconfig.json",
+      parserOptions: {
+        project: "./tsconfig.json",
+      },
     },
     plugins: {
       "react-hooks": reactHooks,

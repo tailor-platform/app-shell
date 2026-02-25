@@ -1,20 +1,21 @@
-import { defineConfig } from 'eslint/config'
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import tseslint from 'typescript-eslint'
+import { defineConfig } from "eslint/config";
+import js from "@eslint/js";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import tseslint from "typescript-eslint";
 
 export default defineConfig([
-  { ignores: ['dist'] },
+  { ignores: ["dist"] },
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      project: "./tsconfig.json",
     },
     plugins: {
-      'react-hooks': reactHooks,
+      "react-hooks": reactHooks,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -22,10 +23,10 @@ export default defineConfig([
   },
   // Relax rules for test files
   {
-    files: ['**/*.test.{ts,tsx}'],
+    files: ["**/*.test.{ts,tsx}"],
     rules: {
-      'react-hooks/rules-of-hooks': 'off',
-      'react-hooks/globals': 'off',
+      "react-hooks/rules-of-hooks": "off",
+      "react-hooks/globals": "off",
     },
   },
-])
+]);

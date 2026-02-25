@@ -159,8 +159,46 @@ export const AppShell = (props: AppShellProps) => {
   const contextData = (props.contextData ?? {}) as ContextData;
   setContextData(contextData);
 
+  const modules = props.modules;
+
+  // Memoize configurations to prevent unnecessary re-renders
+  // configurations will be null if modules is not provided
+  const configurations = useMemo(
+    () =>
+      modules
+        ? buildConfigurations({
+            modules: modules,
+            settingsResources: props.settingsResources,
+            basePath: props.basePath,
+            errorBoundary: props.errorBoundary,
+            locale: props.locale,
+          })
+        : null,
+    [
+      modules,
+      props.settingsResources,
+      props.basePath,
+      props.errorBoundary,
+      props.locale,
+    ],
+  );
+
+  // Memoize context values to prevent unnecessary re-renders
+  const configValue = useMemo(
+    () =>
+      configurations
+        ? { title: props.title, icon: props.icon, configurations }
+        : null,
+    [props.title, props.icon, configurations],
+  );
+
+  const dataValue = useMemo(
+    () => ({ contextData: (props.contextData ?? {}) as ContextData }),
+    [props.contextData],
+  );
+
   // Validate that modules are configured - render inline error instead of throwing
-  if (!props.modules) {
+  if (!modules || !configValue) {
     const errorMessage =
       "[AppShell] No routes configured. " +
       "Either use the appShellRoutes() vite-plugin for automatic page configuration, " +
@@ -183,38 +221,6 @@ export const AppShell = (props: AppShellProps) => {
       </div>
     );
   }
-
-  const resolvedModules = props.modules;
-
-  // Memoize configurations to prevent unnecessary re-renders
-  const configurations = useMemo(
-    () =>
-      buildConfigurations({
-        modules: resolvedModules,
-        settingsResources: props.settingsResources,
-        basePath: props.basePath,
-        errorBoundary: props.errorBoundary,
-        locale: props.locale,
-      }),
-    [
-      resolvedModules,
-      props.settingsResources,
-      props.basePath,
-      props.errorBoundary,
-      props.locale,
-    ],
-  );
-
-  // Memoize context values to prevent unnecessary re-renders
-  const configValue = useMemo(
-    () => ({ title: props.title, icon: props.icon, configurations }),
-    [props.title, props.icon, configurations],
-  );
-
-  const dataValue = useMemo(
-    () => ({ contextData: (props.contextData ?? {}) as ContextData }),
-    [props.contextData],
-  );
 
   if (!clientSide) return null;
 

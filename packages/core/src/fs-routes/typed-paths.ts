@@ -115,29 +115,23 @@ export function createTypedPaths<
   return {
     for(path, ...args) {
       const params = args[0] as Record<string, string> | undefined;
-
-      let result: string = path;
-      if (params) {
-        // Replace :param and *param patterns with actual values
-        result = path.replace(
-          /:([^/?]+)|\*([^/?]+)/g,
-          (_, dynamic, catchAll) => {
-            if (dynamic) {
-              // Dynamic segment: encode the entire value
-              return encodeURIComponent(params[dynamic] ?? "");
-            } else {
-              // Catch-all segment: encode each path segment individually, preserve slashes
-              const value = params[catchAll] ?? "";
-              return value
-                .split("/")
-                .map((segment) => encodeURIComponent(segment))
-                .join("/");
-            }
-          },
-        );
+      if (!params) {
+        return path;
       }
 
-      return result;
+      // Replace :param and *param patterns with actual values
+      return path.replace(/:([^/?]+)|\*([^/?]+)/g, (_, dynamic, catchAll) => {
+        if (dynamic) {
+          // Dynamic segment: encode the entire value
+          return encodeURIComponent(params[dynamic] ?? "");
+        }
+        // Catch-all segment: encode each path segment individually, preserve slashes
+        const value = params[catchAll] ?? "";
+        return value
+          .split("/")
+          .map((segment) => encodeURIComponent(segment))
+          .join("/");
+      });
     },
   };
 }

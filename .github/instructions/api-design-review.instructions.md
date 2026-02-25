@@ -18,7 +18,7 @@ description: Code review guidelines focused on API design consistency and identi
 | Severity | Description |
 |----------|-------------|
 | **High** | Breaking API changes, API inconsistency, critical runtime errors, significant performance degradation |
-| **Medium** | Memory leaks, lack of type safety, insufficient error handling, behavior not matching expectations |
+| **Medium** | Memory leaks, insufficient error handling, behavior not matching expectations |
 | **Low** | Insufficient tests, missing documentation, unnecessary complexity |
 
 # Skip Rules

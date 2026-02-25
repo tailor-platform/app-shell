@@ -159,12 +159,28 @@ export const AppShell = (props: AppShellProps) => {
   const contextData = (props.contextData ?? {}) as ContextData;
   setContextData(contextData);
 
-  // Validate that modules are configured
+  // Validate that modules are configured - render inline error instead of throwing
   if (!props.modules) {
-    throw new Error(
+    const errorMessage =
       "[AppShell] No routes configured. " +
-        "Either use the appShellRoutes() vite-plugin for automatic page configuration, " +
-        "or pass the 'modules' prop for manual configuration.",
+      "Either use the appShellRoutes() vite-plugin for automatic page configuration, " +
+      "or pass the 'modules' prop for manual configuration.";
+
+    // Log error for debugging
+    console.error(errorMessage);
+
+    // Render inline error UI instead of throwing
+    return (
+      <div className="astw:flex astw:min-h-screen astw:items-center astw:justify-center astw:bg-background astw:p-4">
+        <div className="astw:max-w-md astw:rounded-lg astw:border astw:border-destructive/50 astw:bg-destructive/10 astw:p-6 astw:text-center">
+          <h1 className="astw:mb-2 astw:text-lg astw:font-semibold astw:text-destructive">
+            Configuration Error
+          </h1>
+          <p className="astw:text-sm astw:text-muted-foreground">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
     );
   }
 

@@ -16,16 +16,12 @@ export type {
   AppShellRoutesPluginOptions,
   ValidationLevel,
   PathSegmentType,
-  ParsedSegment,
 } from "./types";
 
 // Converter
 export {
   convertPagesToModules,
   validateExclusiveRouteConfig,
-  parseSegment,
-  parsePath,
-  segmentsToPath,
 } from "./converter";
 
 // Typed paths

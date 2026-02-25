@@ -1,5 +1,8 @@
 import type { ParsedSegment } from "./types";
 
+// Re-export types for consumers
+export type { ParsedSegment };
+
 // ============================================
 // Path Parsing Utilities
 // ============================================
@@ -29,6 +32,16 @@ export function parseSegment(dirName: string): ParsedSegment {
       type: "group",
       original: dirName,
       converted: "",
+    };
+  }
+
+  // Catch-all: [...name]
+  if (dirName.startsWith("[...") && dirName.endsWith("]")) {
+    const paramName = dirName.slice(4, -1);
+    return {
+      type: "catchAll",
+      original: dirName,
+      converted: `*${paramName}`,
     };
   }
 

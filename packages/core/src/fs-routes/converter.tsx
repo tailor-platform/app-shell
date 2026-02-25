@@ -1,79 +1,9 @@
 import { capitalCase } from "change-case";
+import { parsePath } from "@tailor-platform/app-shell-vite-plugin/parser";
 import type { Module, Resource, Guard } from "@/resource";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import type { LocalizedString } from "@/lib/i18n";
-import type { PageEntry, PageComponent, ParsedSegment } from "./types";
-
-// ============================================
-// Path Parsing Utilities
-// ============================================
-
-/**
- * Parse a directory name into a path segment.
- *
- * Conversion rules:
- * - `orders` → static segment "orders"
- * - `[id]` → dynamic parameter ":id"
- * - `[...slug]` → catch-all "*slug"
- * - `(group)` → group (excluded from path)
- */
-export function parseSegment(dirName: string): ParsedSegment {
-  // Group: (name)
-  if (dirName.startsWith("(") && dirName.endsWith(")")) {
-    return {
-      type: "group",
-      original: dirName,
-      converted: "",
-    };
-  }
-
-  // Catch-all: [...name]
-  if (dirName.startsWith("[...") && dirName.endsWith("]")) {
-    const paramName = dirName.slice(4, -1);
-    return {
-      type: "catchAll",
-      original: dirName,
-      converted: `*${paramName}`,
-    };
-  }
-
-  // Dynamic: [name]
-  if (dirName.startsWith("[") && dirName.endsWith("]")) {
-    const paramName = dirName.slice(1, -1);
-    return {
-      type: "dynamic",
-      original: dirName,
-      converted: `:${paramName}`,
-    };
-  }
-
-  // Static
-  return {
-    type: "static",
-    original: dirName,
-    converted: dirName,
-  };
-}
-
-/**
- * Parse a full path like "/dashboard/orders/[id]" into segments.
- */
-export function parsePath(path: string): ParsedSegment[] {
-  const segments = path.split("/").filter((s) => s.length > 0);
-  return segments.map(parseSegment);
-}
-
-/**
- * Convert parsed segments back to a route path.
- * Groups are excluded from the output.
- */
-export function segmentsToPath(segments: ParsedSegment[]): string {
-  const pathParts = segments
-    .filter((s) => s.type !== "group")
-    .map((s) => s.converted);
-
-  return pathParts.length > 0 ? pathParts.join("/") : "";
-}
+import type { PageEntry, PageComponent } from "./types";
 
 // ============================================
 // Page Tree Building
@@ -92,7 +22,6 @@ type PageNode = {
 
 /**
  * Build a tree structure from flat page entries.
- * This allows us to properly inherit guards from parent pages.
  */
 function buildPageTree(pages: PageEntry[]): PageNode {
   const root: PageNode = {
@@ -131,19 +60,6 @@ function buildPageTree(pages: PageEntry[]): PageNode {
   }
 
   return root;
-}
-
-/**
- * Inherit guards from parent nodes to children.
- */
-function inheritGuards(node: PageNode, parentGuards: Guard[] = []): void {
-  // Merge parent guards with this node's guards
-  node.guards = [...parentGuards, ...node.guards];
-
-  // Recursively apply to children
-  for (const child of node.children.values()) {
-    inheritGuards(child, node.guards);
-  }
 }
 
 // ============================================
@@ -234,8 +150,10 @@ function nodeToModule(node: PageNode): Module {
  *
  * This function:
  * 1. Builds a tree structure from flat page entries
- * 2. Inherits guards from parent pages to children
- * 3. Converts the tree to Module[] format compatible with existing AppShell
+ * 2. Converts the tree to Module[] format compatible with existing AppShell
+ *
+ * Note: Guards are NOT inherited from parent pages. Each page must explicitly
+ * define its own guards.
  *
  * @example
  * ```tsx
@@ -253,9 +171,6 @@ export function convertPagesToModules(pages: PageEntry[]): Module[] {
 
   // Build tree structure
   const root = buildPageTree(pages);
-
-  // Inherit guards from parents to children
-  inheritGuards(root);
 
   // Handle root page specially
   const modules: Module[] = [];

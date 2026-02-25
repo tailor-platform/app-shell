@@ -68,10 +68,8 @@ describe("createTypedPaths", () => {
       );
     });
 
-    it("URL-encodes catch-all value", () => {
-      expect(paths.for("/docs/*slug", { slug: "a/b/c" })).toBe(
-        "/docs/a%2Fb%2Fc",
-      );
+    it("preserves slashes in catch-all value", () => {
+      expect(paths.for("/docs/*slug", { slug: "a/b/c" })).toBe("/docs/a/b/c");
     });
   });
 

@@ -122,8 +122,17 @@ export function createTypedPaths<
         result = path.replace(
           /:([^/?]+)|\*([^/?]+)/g,
           (_, dynamic, catchAll) => {
-            const key = dynamic || catchAll;
-            return encodeURIComponent(params[key] ?? "");
+            if (dynamic) {
+              // Dynamic segment: encode the entire value
+              return encodeURIComponent(params[dynamic] ?? "");
+            } else {
+              // Catch-all segment: encode each path segment individually, preserve slashes
+              const value = params[catchAll] ?? "";
+              return value
+                .split("/")
+                .map((segment) => encodeURIComponent(segment))
+                .join("/");
+            }
           },
         );
       }

@@ -6,6 +6,10 @@
     ".": {
       "types": "./dist/index.d.mts",
       "default": "./dist/index.mjs"
+    },
+    "./parser": {
+      "types": "./dist/parser.d.mts",
+      "default": "./dist/parser.mjs"
     }
   },
   "files": [

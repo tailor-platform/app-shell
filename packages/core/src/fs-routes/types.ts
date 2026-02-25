@@ -146,7 +146,8 @@ export type PathSegmentType =
   | "static" // Regular path segment (e.g., "orders")
   | "dynamic" // Dynamic parameter (e.g., "[id]" -> ":id")
   | "catchAll" // Catch-all parameter (e.g., "[...slug]" -> "*slug")
-  | "group"; // Route group (e.g., "(admin)" -> excluded from path)
+  | "group" // Route group (e.g., "(admin)" -> excluded from path)
+  | "ignored"; // Ignored segment (e.g., "_lib" -> excluded from routing)
 
 /**
  * Parsed path segment information.

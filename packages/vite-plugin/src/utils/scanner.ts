@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parseSegment, segmentsToPath } from "../converter";
+import { parseSegment, segmentsToPath } from "../parser";
 import { PAGE_FILE_NAME } from "../constants";
 
 // ============================================

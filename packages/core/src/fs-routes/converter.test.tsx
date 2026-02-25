@@ -1,92 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
-  parseSegment,
-  parsePath,
-  segmentsToPath,
   convertPagesToModules,
   validateExclusiveRouteConfig,
 } from "./converter";
 import type { PageEntry, PageComponent } from "./types";
-
-// ============================================
-// Path Parsing Tests
-// ============================================
-
-describe("parseSegment", () => {
-  it("parses static segments", () => {
-    expect(parseSegment("orders")).toEqual({
-      type: "static",
-      original: "orders",
-      converted: "orders",
-    });
-  });
-
-  it("parses dynamic segments", () => {
-    expect(parseSegment("[id]")).toEqual({
-      type: "dynamic",
-      original: "[id]",
-      converted: ":id",
-    });
-  });
-
-  it("parses catch-all segments", () => {
-    expect(parseSegment("[...slug]")).toEqual({
-      type: "catchAll",
-      original: "[...slug]",
-      converted: "*slug",
-    });
-  });
-
-  it("parses group segments", () => {
-    expect(parseSegment("(admin)")).toEqual({
-      type: "group",
-      original: "(admin)",
-      converted: "",
-    });
-  });
-});
-
-describe("parsePath", () => {
-  it("parses empty path", () => {
-    expect(parsePath("")).toEqual([]);
-  });
-
-  it("parses single segment", () => {
-    expect(parsePath("dashboard")).toHaveLength(1);
-    expect(parsePath("dashboard")[0].converted).toBe("dashboard");
-  });
-
-  it("parses multiple segments", () => {
-    const segments = parsePath("dashboard/orders/[id]");
-    expect(segments).toHaveLength(3);
-    expect(segments.map((s) => s.converted)).toEqual([
-      "dashboard",
-      "orders",
-      ":id",
-    ]);
-  });
-});
-
-describe("segmentsToPath", () => {
-  it("converts segments to path", () => {
-    const segments = parsePath("dashboard/orders/[id]");
-    expect(segmentsToPath(segments)).toBe("dashboard/orders/:id");
-  });
-
-  it("excludes group segments", () => {
-    const segments = parsePath("(admin)/settings/[id]");
-    expect(segmentsToPath(segments)).toBe("settings/:id");
-  });
-
-  it("returns empty string for empty segments", () => {
-    expect(segmentsToPath([])).toBe("");
-  });
-
-  it("returns empty string for only group segments", () => {
-    const segments = parsePath("(admin)");
-    expect(segmentsToPath(segments)).toBe("");
-  });
-});
 
 // ============================================
 // Converter Tests
@@ -144,7 +61,7 @@ describe("convertPagesToModules", () => {
     expect(modules[0].resources[0].subResources![0].path).toBe(":id");
   });
 
-  it("inherits guards from parent to children", () => {
+  it("does not inherit guards from parent to children", () => {
     const parentGuard = async () => ({ type: "pass" as const });
     const childGuard = async () => ({ type: "pass" as const });
 
@@ -158,10 +75,10 @@ describe("convertPagesToModules", () => {
     expect(modules[0].guards).toHaveLength(1);
     expect(modules[0].guards).toContain(parentGuard);
 
-    // Child has both parent and its own guard
-    expect(modules[0].resources[0].guards).toHaveLength(2);
-    expect(modules[0].resources[0].guards).toContain(parentGuard);
+    // Child has only its own guard (no inheritance)
+    expect(modules[0].resources[0].guards).toHaveLength(1);
     expect(modules[0].resources[0].guards).toContain(childGuard);
+    expect(modules[0].resources[0].guards).not.toContain(parentGuard);
   });
 
   it("handles multiple top-level modules", () => {

@@ -91,3 +91,56 @@ paths.for("/dashboard/orders/:id", { id: "123" });    // ✓ OK → "/dashboard/
 paths.for("/dashboard/orders/:id");                   // ✗ Error: missing 'id'
 paths.for("/invalid-route");                          // ✗ Error: route doesn't exist
 ```
+
+### Breaking Change: Guard/Loader Cascade Behavior
+
+In the legacy `defineModule()`/`defineResource()` API, guards and loaders defined at the module level were automatically cascaded to all child resources. With file-based routing, **guards and loaders are no longer automatically inherited**—each page must explicitly define its own guards and loaders.
+
+**Before (legacy API):**
+```tsx
+defineModule({
+  path: "/dashboard",
+  guards: [authGuard], // Applied to all child resources automatically
+  resources: [
+    defineResource({ path: "/orders", element: <Orders /> }),  // authGuard applied
+    defineResource({ path: "/reports", element: <Reports /> }), // authGuard applied
+  ],
+});
+```
+
+**After (file-based routing):**
+```tsx
+// src/pages/dashboard/orders/page.tsx
+OrdersPage.appShellPageProps = {
+  guards: [authGuard], // Must be explicitly defined
+} satisfies AppShellPageProps;
+
+// src/pages/dashboard/reports/page.tsx
+ReportsPage.appShellPageProps = {
+  guards: [authGuard], // Must be explicitly defined
+} satisfies AppShellPageProps;
+```
+
+**Rationale:** Explicit guard/loader definitions per page improve code clarity and make it easier to understand the security requirements of each route at a glance. This aligns with the file-based routing philosophy where each page is self-contained.
+
+**Migration tip:** If you need the previous cascading behavior, compose your guards array explicitly:
+
+```tsx
+// src/guards.ts
+export const requireAuth = [authGuard];
+export const requireAdmin = [authGuard, adminRoleGuard];
+
+// src/pages/dashboard/orders/page.tsx
+import { requireAuth } from '@/guards';
+
+OrdersPage.appShellPageProps = {
+  guards: [...requireAuth, canViewOrders],
+} satisfies AppShellPageProps;
+
+// src/pages/admin/users/page.tsx
+import { requireAdmin } from '@/guards';
+
+UsersPage.appShellPageProps = {
+  guards: [...requireAdmin],
+} satisfies AppShellPageProps;
+```

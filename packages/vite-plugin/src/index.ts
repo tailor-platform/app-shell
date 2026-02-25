@@ -27,4 +27,4 @@ export type {
 } from "./types";
 
 // Path utilities
-export { parseSegment, parsePath, segmentsToPath } from "./converter";
+export { parseSegment, parsePath, segmentsToPath } from "./parser";

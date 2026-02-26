@@ -318,7 +318,9 @@ type DefineModuleProps = CommonProps &
   CommonModuleProps & {
     /**
      * React component to render.
-     * If not provided, the module will redirect to the first resource.
+     *
+     * If not provided, a guard with `redirectTo()` must be used to redirect
+     * users to the appropriate resource.
      *
      * @example
      * ```tsx
@@ -357,10 +359,17 @@ export function defineModule(props: DefineModuleProps): Module {
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
 
+  if (!component && (!guards || guards.length === 0)) {
+    throw new Error(
+      `Module "${path}" has no component.` +
+        " Either provide a `component` or use `guards` with `redirectTo()` or `hidden()` to control access." +
+        " A guard that only returns `pass()` without a component will result in a blank page.",
+    );
+  }
+
   const loader =
     guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
 
-  // Build component only if provided
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) =>
         component({ title, resources }),

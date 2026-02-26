@@ -4,6 +4,27 @@
 
 Adds new Sidebar custom items API for flexible sidebar navigation customization.
 
+## Breaking Change: Module without component requires guards
+
+As part of the ongoing effort to decouple navigation and routing (aligned with file-based routing), the automatic redirect behavior for modules without a `component` has been removed.
+
+Previously, a module without a `component` would automatically redirect to the first visible resource. However, in file-based routing, the resource hierarchy is determined ad-hoc by the vite-plugin based on directory structure, making this implicit redirect behavior inconsistent and unpredictable. To maintain consistency across both explicit and file-based routing, this behavior has been removed.
+
+```tsx
+// Before: automatic redirect to first visible resource
+defineModule({
+  path: "reports",
+  resources: [salesResource, usersResource],
+});
+
+// After: explicit redirect via guards
+defineModule({
+  path: "reports",
+  guards: [() => redirectTo("sales")],
+  resources: [salesResource, usersResource],
+});
+```
+
 ## New Components
 
 - `SidebarItem` - Navigation item that auto-resolves title/icon from resource meta

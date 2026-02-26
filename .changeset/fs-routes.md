@@ -144,3 +144,24 @@ UsersPage.appShellPageProps = {
   guards: [...requireAdmin],
 } satisfies AppShellPageProps;
 ```
+
+### Breaking Change: Module Without Component No Longer Auto-Redirects
+
+Previously, a module without a `component` would automatically redirect to its first visible resource. This implicit redirect has been removed because in file-based routing, the resource hierarchy is determined ad-hoc by the vite-plugin based on directory structure, making this behavior inconsistent and unpredictable.
+
+If a module has no `component`, it must now specify `guards` with `redirectTo()` or `hidden()` to control access. An error is thrown at definition time if neither is provided.
+
+```tsx
+// Before: automatic redirect to first visible resource
+defineModule({
+  path: "reports",
+  resources: [salesResource, usersResource],
+});
+
+// After: explicit redirect via guards
+defineModule({
+  path: "reports",
+  guards: [() => redirectTo("sales")],
+  resources: [salesResource, usersResource],
+});
+```

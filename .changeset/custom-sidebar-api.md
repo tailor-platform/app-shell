@@ -13,7 +13,7 @@ Adds new Sidebar custom items API for flexible sidebar navigation customization.
 
 ## New Hook
 
-- `usePageMeta` - Hook to access current page metadata (title, icon, path segments)
+- `usePageMeta` - Hook to access current page metadata (title, icon)
 
 ## Usage
 
@@ -63,8 +63,8 @@ New `WithGuard` component for conditional rendering based on guard functions. Us
 import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 
 // Define a guard function
-const isAdminGuard = ({ contextData }) =>
-  contextData.currentUser.role === "admin" ? pass() : hidden();
+const isAdminGuard = ({ context }) =>
+  context.currentUser.role === "admin" ? pass() : hidden();
 
 // Wrap components with WithGuard
 <DefaultSidebar>
@@ -77,8 +77,8 @@ const isAdminGuard = ({ contextData }) =>
 </DefaultSidebar>
 
 // Curried guards for parameterized conditions
-const hasRole = (role: string) => ({ contextData }) =>
-  contextData.currentUser.role === role ? pass() : hidden();
+const hasRole = (role: string) => ({ context }) =>
+  context.currentUser.role === role ? pass() : hidden();
 
 <WithGuard guards={[hasRole("manager")]}>
   <SidebarItem to="/reports" />

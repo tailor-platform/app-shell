@@ -294,8 +294,8 @@ const adminModule = defineModule({
   meta: { title: "Admin" },
   // If this guard returns hidden(), the module won't appear in sidebar
   guards: [
-    ({ contextData }) =>
-      contextData.currentUser.role === "admin" ? pass() : hidden(),
+    ({ context }) =>
+      context.currentUser.role === "admin" ? pass() : hidden(),
   ],
   resources: [
     defineResource({
@@ -318,8 +318,8 @@ In composition mode, use the `WithGuard` component to control visibility of side
 import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 
 // Define a guard function
-const isAdminGuard = ({ contextData }) =>
-  contextData.currentUser.role === "admin" ? pass() : hidden();
+const isAdminGuard = ({ context }) =>
+  context.currentUser.role === "admin" ? pass() : hidden();
 
 <DefaultSidebar>
   <SidebarItem to="/dashboard" />
@@ -340,8 +340,8 @@ For parameterized guards, use the curried pattern:
 
 ```tsx
 // Define a curried guard factory
-const hasRole = (role: string) => ({ contextData }) =>
-  contextData.currentUser.role === role ? pass() : hidden();
+const hasRole = (role: string) => ({ context }) =>
+  context.currentUser.role === role ? pass() : hidden();
 
 <DefaultSidebar>
   <WithGuard guards={[hasRole("admin")]}>

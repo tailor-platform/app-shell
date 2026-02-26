@@ -13,6 +13,7 @@ type PromiseState<T> =
 
 type GuardCache = {
   contextData: ContextData;
+  guards: Guard[];
   promise: Promise<GuardResult>;
   state: PromiseState<GuardResult>;
 };
@@ -30,11 +31,13 @@ function useGuardCache(
 ): GuardCache {
   if (
     cacheRef.current === null ||
-    cacheRef.current.contextData !== contextData
+    cacheRef.current.contextData !== contextData ||
+    cacheRef.current.guards !== guards
   ) {
     const promise = runComponentGuards(guards, contextData);
     const entry: GuardCache = {
       contextData,
+      guards,
       promise,
       state: { status: "pending", promise },
     };

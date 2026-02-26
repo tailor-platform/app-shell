@@ -145,7 +145,7 @@ describe("usePageMeta", () => {
     expect(result.current?.title).toBe("Order Items");
   });
 
-  it("returns null when segment count does not match dynamic path", () => {
+  it("returns module meta when path matches module without dynamic segment", () => {
     const { result } = renderPageMeta("/orders");
 
     expect(result.current).not.toBeNull();

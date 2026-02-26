@@ -226,7 +226,7 @@ export type Resource = CommonPageResource & {
 
 export type Modules = Array<Module>;
 
-type PageMeta = {
+type ResourceMeta = {
   /**
    * Title of the page used in navigation.
    *
@@ -254,7 +254,7 @@ type CommonProps = {
   /**
    * Metadata for the page.
    */
-  meta?: PageMeta;
+  meta?: ResourceMeta;
 
   /**
    * Guards to control access to this module/resource.

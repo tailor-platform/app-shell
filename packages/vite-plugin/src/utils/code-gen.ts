@@ -1,3 +1,4 @@
+import { normalizePath } from "vite";
 import type { PageFile } from "./scanner";
 
 /**
@@ -8,7 +9,7 @@ export function generateVirtualModuleCode(pages: PageFile[]): string {
   const pageEntries: string[] = [];
 
   pages.forEach((page, index) => {
-    const importPath = page.filePath.replace(/\\/g, "/");
+    const importPath = `/@fs/${normalizePath(page.filePath)}`;
     imports.push(`import Page${index} from "${importPath}";`);
 
     const routePath = page.routePath ? `/${page.routePath}` : "/";

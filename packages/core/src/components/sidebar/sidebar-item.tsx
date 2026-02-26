@@ -42,6 +42,14 @@ export type SidebarItemProps = {
   external?: boolean;
 
   /**
+   * How to match the current path for active state.
+   * - "exact": Only highlight when the path matches exactly.
+   * - "prefix": Highlight when the current path starts with `to` (with segment boundary check).
+   * @default "prefix"
+   */
+  activeMatch?: "exact" | "prefix";
+
+  /**
    * Custom rendering function.
    * When omitted, title/icon are auto-resolved from resource meta and default UI is rendered.
    * When specified, receives title/icon/isActive in render function for full customization.
@@ -84,13 +92,17 @@ export const SidebarItem = (props: SidebarItemProps) => {
     to,
     external,
     render,
+    activeMatch = "prefix",
     title: titleOverride,
     icon: iconOverride,
   } = props;
   const { pathname: currentPath } = useLocation();
   const pageMeta = usePageMeta(to);
 
-  const isActive = currentPath === to;
+  const isActive =
+    activeMatch === "exact"
+      ? currentPath === to
+      : currentPath === to || currentPath.startsWith(`${to}/`);
   const title = titleOverride ?? pageMeta?.title ?? extractTitleFromUrl(to);
   const icon = iconOverride ?? pageMeta?.icon;
 

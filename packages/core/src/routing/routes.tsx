@@ -1,10 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import {
-  RouteObject,
-  Navigate,
-  redirect,
-  LoaderFunctionArgs,
-} from "react-router";
+import { RouteObject, Navigate, redirect } from "react-router";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import {
@@ -84,9 +79,9 @@ const createModuleRoute = (module: Module): RouteObject => {
       // Component is required to suppress React Router's warning about empty leaf routes,
       // even though the loader always redirects and this component will never render.
       Component: () => null,
-      loader: async (args: LoaderFunctionArgs) => {
+      loader: async () => {
         // First, check module's own guards (no cascade to children)
-        const moduleGuardResult = await runGuards(module.guards, args);
+        const moduleGuardResult = await runGuards(module.guards);
         if (moduleGuardResult.type === "hidden") {
           throw createNotFoundError();
         }
@@ -96,7 +91,7 @@ const createModuleRoute = (module: Module): RouteObject => {
 
         // Find the first resource that is not hidden by guards
         for (const resource of module.resources) {
-          const result = await runGuards(resource.guards, args);
+          const result = await runGuards(resource.guards);
           if (result.type === "pass") {
             return redirect(resource.path);
           }

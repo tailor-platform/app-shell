@@ -1,9 +1,9 @@
-import { type ReactNode, Suspense, useMemo } from "react";
+import { type ReactNode, Suspense, useRef } from "react";
 import { useAppShell, type ContextData } from "@/contexts/appshell-context";
-import type { GuardResult } from "@/resource";
+import type { Guard, GuardContext, GuardResult } from "@/resource";
 
 // ============================================
-// Promise state cache for Suspense integration
+// Guard evaluation cache for Suspense integration
 // ============================================
 
 type PromiseState<T> =
@@ -11,36 +11,52 @@ type PromiseState<T> =
   | { status: "fulfilled"; value: T }
   | { status: "rejected"; error: unknown };
 
-const promiseStateCache = new WeakMap<Promise<unknown>, PromiseState<unknown>>();
+type GuardCache = {
+  contextData: ContextData;
+  promise: Promise<GuardResult>;
+  state: PromiseState<GuardResult>;
+};
 
 /**
- * Track a promise and cache its state.
- * Returns cached result if already resolved, otherwise throws to suspend.
+ * Evaluate guards and return the result via Suspense.
+ * Re-evaluates only when contextData reference changes.
+ * The cache ref must be owned by a component outside the Suspense boundary
+ * so that it persists across suspensions.
  */
-function usePromiseValue<T>(promise: Promise<T>): T {
-  let state = promiseStateCache.get(promise) as PromiseState<T> | undefined;
-
-  if (!state) {
-    // First time seeing this promise - start tracking
-    state = { status: "pending", promise };
-    promiseStateCache.set(promise, state);
-
+function useGuardCache(
+  guards: Guard[],
+  contextData: ContextData,
+  cacheRef: React.RefObject<GuardCache | null>,
+): GuardCache {
+  if (
+    cacheRef.current === null ||
+    cacheRef.current.contextData !== contextData
+  ) {
+    const promise = runComponentGuards(guards, contextData);
+    const entry: GuardCache = {
+      contextData,
+      promise,
+      state: { status: "pending", promise },
+    };
     promise.then(
       (value) => {
-        if (state!.status === "pending") {
-          const fulfilledState: PromiseState<T> = { status: "fulfilled", value };
-          promiseStateCache.set(promise, fulfilledState);
-        }
+        entry.state = { status: "fulfilled", value };
       },
       (error) => {
-        if (state!.status === "pending") {
-          const rejectedState: PromiseState<T> = { status: "rejected", error };
-          promiseStateCache.set(promise, rejectedState);
-        }
+        entry.state = { status: "rejected", error };
       },
     );
+    cacheRef.current = entry;
   }
 
+  return cacheRef.current;
+}
+
+/**
+ * Read the guard result from the cache, suspending if still pending.
+ */
+function readGuardResult(cache: GuardCache): GuardResult {
+  const { state } = cache;
   switch (state.status) {
     case "fulfilled":
       return state.value;
@@ -51,27 +67,12 @@ function usePromiseValue<T>(promise: Promise<T>): T {
   }
 }
 
-/**
- * Context provided to component guards.
- * Simplified version of GuardContext for use outside of route loaders.
- */
-export type WithGuardContext = {
-  context: ContextData;
-};
-
-/**
- * Guard function type for WithGuard component.
- * Unlike route guards, this only receives contextData (no params/searchParams/signal).
- */
-export type WithGuardComponentGuard = (
-  ctx: WithGuardContext,
-) => Promise<GuardResult> | GuardResult;
-
 export type WithGuardProps = {
   /**
    * Guards to evaluate. All guards must pass for children to render.
+   * Uses the same Guard type as route guards for full reusability.
    */
-  guards: WithGuardComponentGuard[];
+  guards: Guard[];
 
   /**
    * Content to render when all guards pass.
@@ -137,33 +138,27 @@ export const WithGuard = (props: WithGuardProps) => {
   const { guards, children, fallback = null, loading = null } = props;
   const { contextData } = useAppShell();
 
-  // Memoize the promise to ensure stable reference for Suspense tracking
-  // Creates new promise only when guards or contextData changes
-  const guardPromise = useMemo(
-    () => runComponentGuards(guards, contextData),
-    [guards, contextData],
-  );
+  // Cache ref lives here (outside Suspense) so it persists across suspensions
+  const cacheRef = useRef<GuardCache | null>(null);
+  const cache = useGuardCache(guards, contextData, cacheRef);
 
   return (
     <Suspense fallback={loading}>
-      <GuardResolver
-        guardPromise={guardPromise}
-        children={children}
-        fallback={fallback}
-      />
+      <GuardResolver cache={cache} children={children} fallback={fallback} />
     </Suspense>
   );
 };
 
 /**
- * Internal component that resolves the guard promise using Suspense.
+ * Internal component that reads the guard result and renders children or fallback.
+ * Suspends while async guards are being evaluated.
  */
 const GuardResolver = (props: {
-  guardPromise: Promise<GuardResult>;
+  cache: GuardCache;
   children: ReactNode;
   fallback: ReactNode;
 }) => {
-  const result = usePromiseValue(props.guardPromise);
+  const result = readGuardResult(props.cache);
 
   if (result.type === "pass") {
     return <>{props.children}</>;
@@ -178,10 +173,10 @@ const GuardResolver = (props: {
  * Guards are executed in order; stops on first non-pass result.
  */
 const runComponentGuards = async (
-  guards: WithGuardComponentGuard[],
+  guards: Guard[],
   contextData: ContextData,
 ): Promise<GuardResult> => {
-  const ctx: WithGuardContext = { context: contextData };
+  const ctx: GuardContext = { context: contextData };
 
   for (const guard of guards) {
     const result = await guard(ctx);

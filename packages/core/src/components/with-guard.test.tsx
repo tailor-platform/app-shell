@@ -1,12 +1,12 @@
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
-import { WithGuard, type WithGuardComponentGuard } from "./with-guard";
+import { WithGuard } from "./with-guard";
 import {
   AppShellDataContext,
   AppShellConfigContext,
   type RootConfiguration,
 } from "@/contexts/appshell-context";
-import { pass, hidden, redirectTo } from "@/resource";
+import { pass, hidden, redirectTo, type Guard } from "@/resource";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
 afterEach(() => {
@@ -46,7 +46,7 @@ const renderWithProviders = (
 describe("WithGuard", () => {
   describe("synchronous guards", () => {
     it("renders children when guard passes", async () => {
-      const alwaysPass: WithGuardComponentGuard = () => pass();
+      const alwaysPass: Guard = () => pass();
 
       renderWithProviders(
         <WithGuard guards={[alwaysPass]}>
@@ -61,7 +61,7 @@ describe("WithGuard", () => {
     });
 
     it("renders fallback when guard returns hidden", async () => {
-      const alwaysHidden: WithGuardComponentGuard = () => hidden();
+      const alwaysHidden: Guard = () => hidden();
 
       renderWithProviders(
         <WithGuard guards={[alwaysHidden]} fallback={<div>Access Denied</div>}>
@@ -77,7 +77,7 @@ describe("WithGuard", () => {
     });
 
     it("renders nothing when guard returns hidden and no fallback provided", async () => {
-      const alwaysHidden: WithGuardComponentGuard = () => hidden();
+      const alwaysHidden: Guard = () => hidden();
 
       const { container } = renderWithProviders(
         <WithGuard guards={[alwaysHidden]}>
@@ -93,7 +93,7 @@ describe("WithGuard", () => {
     });
 
     it("evaluates contextData in guard", async () => {
-      const isAdmin: WithGuardComponentGuard = ({ context }) => {
+      const isAdmin: Guard = ({ context }) => {
         const ctx = context as TestContextData;
         return ctx.currentUser.role === "admin" ? pass() : hidden();
       };
@@ -126,9 +126,9 @@ describe("WithGuard", () => {
     });
 
     it("stops on first non-pass guard", async () => {
-      const guard1: WithGuardComponentGuard = () => pass();
-      const guard2: WithGuardComponentGuard = () => hidden();
-      const guard3: WithGuardComponentGuard = () => pass();
+      const guard1: Guard = () => pass();
+      const guard2: Guard = () => hidden();
+      const guard3: Guard = () => pass();
 
       renderWithProviders(
         <WithGuard
@@ -149,7 +149,7 @@ describe("WithGuard", () => {
 
   describe("asynchronous guards", () => {
     it("renders children when async guard passes", async () => {
-      const asyncPass: WithGuardComponentGuard = async () => {
+      const asyncPass: Guard = async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         return pass();
       };
@@ -167,7 +167,7 @@ describe("WithGuard", () => {
     });
 
     it("renders fallback when async guard returns hidden", async () => {
-      const asyncHidden: WithGuardComponentGuard = async () => {
+      const asyncHidden: Guard = async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         return hidden();
       };
@@ -187,7 +187,7 @@ describe("WithGuard", () => {
 
     it("shows loading state while evaluating async guards", async () => {
       let resolveGuard: () => void;
-      const slowGuard: WithGuardComponentGuard = () =>
+      const slowGuard: Guard = () =>
         new Promise((resolve) => {
           resolveGuard = () => resolve(pass());
         });
@@ -216,7 +216,7 @@ describe("WithGuard", () => {
   describe("curried guards (parameterized)", () => {
     it("works with curried guard functions", async () => {
       const isOwner =
-        (resourceId: string): WithGuardComponentGuard =>
+        (resourceId: string): Guard =>
         ({ context }) => {
           const ctx = context as TestContextData;
           return resourceId === ctx.currentUser.id ? pass() : hidden();
@@ -252,10 +252,13 @@ describe("WithGuard", () => {
 
   describe("redirectTo handling", () => {
     it("treats redirectTo as hidden (renders fallback)", async () => {
-      const redirectGuard: WithGuardComponentGuard = () => redirectTo("/login");
+      const redirectGuard: Guard = () => redirectTo("/login");
 
       renderWithProviders(
-        <WithGuard guards={[redirectGuard]} fallback={<div>Redirecting...</div>}>
+        <WithGuard
+          guards={[redirectGuard]}
+          fallback={<div>Redirecting...</div>}
+        >
           <div>Protected</div>
         </WithGuard>,
         { currentUser: { id: "1", role: "user" } },

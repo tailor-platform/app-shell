@@ -6,7 +6,7 @@ import {
   type ContextData,
 } from "./contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "./lib/i18n";
-import { redirect, type LoaderFunctionArgs, type Params } from "react-router";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 
 // ============================================
 // Context Data (module scope)
@@ -30,9 +30,6 @@ export const setContextData = (data: ContextData) => {
  * Context provided to guard functions
  */
 export type GuardContext = {
-  params: Params;
-  searchParams: URLSearchParams;
-  signal: AbortSignal;
   context: ContextData;
 };
 
@@ -144,15 +141,10 @@ export const createNotFoundError = () =>
  */
 export const runGuards = async (
   guards: Guard[] | undefined,
-  args: LoaderFunctionArgs,
 ): Promise<GuardResult> => {
   if (!guards || guards.length === 0) return { type: "pass" };
 
-  const url = new URL(args.request.url);
   const ctx: GuardContext = {
-    params: args.params,
-    searchParams: url.searchParams,
-    signal: args.request.signal,
     context: _contextData,
   };
 
@@ -177,7 +169,7 @@ const withGuardsLoader = (
   baseLoader?: LoaderHandler,
 ) => {
   return async (args: LoaderFunctionArgs) => {
-    const result = await runGuards(guards, args);
+    const result = await runGuards(guards);
     switch (result.type) {
       case "hidden":
         throw createNotFoundError();

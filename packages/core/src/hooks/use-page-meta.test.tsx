@@ -7,7 +7,7 @@ import {
 } from "@/contexts/appshell-context";
 import { usePageMeta } from "./use-page-meta";
 import { defineModule, defineResource } from "@/resource";
-import { Folder, Home, Settings } from "lucide-react";
+import { Folder, Home, Settings, ShoppingCart } from "lucide-react";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
 const createTestModules = () => [
@@ -42,6 +42,25 @@ const createTestModules = () => [
             path: "archived",
             meta: { title: "Archived" },
             component: () => <div>Archived</div>,
+          }),
+        ],
+      }),
+    ],
+  }),
+  defineModule({
+    path: "orders",
+    meta: { title: "Orders", icon: <ShoppingCart /> },
+    component: () => <div>Orders Root</div>,
+    resources: [
+      defineResource({
+        path: ":id",
+        meta: { title: "Order Detail" },
+        component: () => <div>Order Detail</div>,
+        subResources: [
+          defineResource({
+            path: "items",
+            meta: { title: "Order Items" },
+            component: () => <div>Order Items</div>,
           }),
         ],
       }),
@@ -110,5 +129,26 @@ describe("usePageMeta", () => {
 
     expect(result.current).not.toBeNull();
     expect(result.current?.title).toBe("Products");
+  });
+
+  it("matches dynamic segment in resource path", () => {
+    const { result } = renderPageMeta("/orders/123");
+
+    expect(result.current).not.toBeNull();
+    expect(result.current?.title).toBe("Order Detail");
+  });
+
+  it("matches sub-resource under dynamic segment", () => {
+    const { result } = renderPageMeta("/orders/456/items");
+
+    expect(result.current).not.toBeNull();
+    expect(result.current?.title).toBe("Order Items");
+  });
+
+  it("returns null when segment count does not match dynamic path", () => {
+    const { result } = renderPageMeta("/orders");
+
+    expect(result.current).not.toBeNull();
+    expect(result.current?.title).toBe("Orders");
   });
 });

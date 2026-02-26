@@ -52,7 +52,7 @@ const findPageMeta = (
     const modulePath = normalizePath(module.path);
 
     // Check if target matches module path
-    if (normalizedTarget === modulePath) {
+    if (matchesPath(normalizedTarget, modulePath)) {
       return {
         title: resolve(module.meta.title, module.path),
         icon: module.meta.icon,
@@ -72,6 +72,27 @@ const findPageMeta = (
   }
 
   return null;
+};
+
+/**
+ * Check if a target path matches a pattern path, supporting dynamic segments.
+ * Dynamic segments (e.g., ":id") match any non-empty path segment.
+ *
+ * @example
+ * matchesPath("/orders/123", "/orders/:id") // true
+ * matchesPath("/orders/123", "/orders/456") // false
+ * matchesPath("/orders", "/orders")         // true
+ */
+const matchesPath = (target: string, pattern: string): boolean => {
+  if (target === pattern) return true;
+
+  const targetSegments = target.split("/");
+  const patternSegments = pattern.split("/");
+  if (targetSegments.length !== patternSegments.length) return false;
+
+  return patternSegments.every(
+    (seg, i) => seg.startsWith(":") || seg === targetSegments[i],
+  );
 };
 
 /**
@@ -100,7 +121,7 @@ const findInResources = (
   for (const resource of resources) {
     const resourcePath = `${basePath}/${resource.path}`;
 
-    if (targetPath === resourcePath) {
+    if (matchesPath(targetPath, resourcePath)) {
       return {
         title: resolve(resource.meta.title, resource.path),
         icon: resource.meta.icon,

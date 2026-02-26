@@ -16,12 +16,7 @@ export {
 } from "./components/sidebar";
 
 // Guard component for conditional rendering
-export {
-  WithGuard,
-  type WithGuardProps,
-  type WithGuardComponentGuard as ComponentGuard,
-  type WithGuardContext as ComponentGuardContext,
-} from "./components/with-guard";
+export { WithGuard, type WithGuardProps } from "./components/with-guard";
 
 export {
   useAppShell,

@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - '.changeset/*.md'
+  workflow_dispatch:
   skip-if-match: 'is:pr is:open in:title "[docs-update]"'
 permissions:
   contents: read

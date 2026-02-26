@@ -28,7 +28,7 @@ src/pages/
 // vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { appShellRoutes } from '@tailor-platform/vite-plugin';
+import { appShellRoutes } from '@tailor-platform/app-shell-vite-plugin';
 
 export default defineConfig({
   plugins: [
@@ -233,7 +233,7 @@ export default OrderDetailPage;
 | `path` property | Directory name | Auto-derived |
 | `component` property | `page.tsx` default export | File convention |
 | `meta` property | `Page.appShellPageProps.meta` | Static field |
-| `guards` property | `Page.appShellPageProps.guards` | Static field + auto-inheritance |
+| `guards` property | `Page.appShellPageProps.guards` | Static field (no inheritance) |
 | `subResources` property | Subdirectories | Auto-derived |
 
 ## Compatibility
@@ -273,7 +273,7 @@ To migrate from `defineModule`/`defineResource` to file-based routing:
 1. **Add Vite Plugin**
    ```typescript
    // vite.config.ts
-   import { appShellRoutes } from '@tailor-platform/vite-plugin';
+   import { appShellRoutes } from '@tailor-platform/app-shell-vite-plugin';
    
    export default defineConfig({
      plugins: [

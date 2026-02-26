@@ -1,11 +1,11 @@
-# @tailor-platform/vite-plugin
+# @tailor-platform/app-shell-vite-plugin
 
 Vite plugin for file-based routing in AppShell applications.
 
 ## Installation
 
 ```bash
-pnpm add @tailor-platform/vite-plugin
+pnpm add @tailor-platform/app-shell-vite-plugin
 ```
 
 ## Usage
@@ -14,7 +14,7 @@ pnpm add @tailor-platform/vite-plugin
 // vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { appShellRoutes } from '@tailor-platform/vite-plugin';
+import { appShellRoutes } from '@tailor-platform/app-shell-vite-plugin';
 
 export default defineConfig({
   plugins: [

@@ -246,11 +246,10 @@ function withPages(pages: PageEntry[]): FC<AppShellProps> {
   const otherModules = allModules.filter((m) => m.path !== "");
 
   const WrappedAppShell: FC<AppShellProps> = (props) => {
-    // Merge pre-configured modules with any additional props
     return (
       <AppShell
         {...props}
-        modules={props.modules ?? otherModules}
+        modules={otherModules}
         rootComponent={props.rootComponent ?? rootModule?.component}
       />
     );

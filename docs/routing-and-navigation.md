@@ -97,3 +97,116 @@ The CommandPalette automatically:
 5. Press Enter to navigate to selected page
 
 No configuration needed - it just works!
+
+## Type-Safe Navigation with Generated Routes
+
+When using file-based routing with the vite-plugin, you can enable automatic generation of type-safe route helpers. This provides compile-time checking for route paths and their parameters.
+
+### Setup
+
+Enable `generateTypedRoutes` in your vite config:
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+
+export default defineConfig({
+  plugins: [
+    react(),
+    appShellRoutes({
+      pagesDir: "src/pages",
+      // Enable with default output path ("src/routes.generated.ts")
+      generateTypedRoutes: true,
+      // Or customize output path:
+      // generateTypedRoutes: { output: "src/my-routes.ts" },
+    }),
+  ],
+});
+```
+
+This generates a `src/routes.generated.ts` file containing type definitions for all your routes.
+
+### Generated File
+
+The generated file exports a `paths` helper with a type-safe `for()` method:
+
+```ts
+// src/routes.generated.ts (auto-generated)
+import { createTypedPaths } from "@tailor-platform/app-shell";
+
+type RouteParams = {
+  "/": {};
+  "/dashboard": {};
+  "/orders": {};
+  "/orders/:id": { id: string };
+  "/orders/:orderId/items/:itemId": { orderId: string; itemId: string };
+};
+
+export const paths = createTypedPaths<RouteParams>();
+
+export type { RouteParams };
+```
+
+### Usage
+
+```tsx
+import { useNavigate } from "@tailor-platform/app-shell";
+import { paths } from "./routes.generated";
+
+const MyComponent = () => {
+  const navigate = useNavigate();
+
+  // ✅ Static route - no params needed
+  const goToDashboard = () => {
+    navigate(paths.for("/dashboard"));
+  };
+
+  // ✅ Dynamic route - params required and type-checked
+  const goToOrder = (orderId: string) => {
+    navigate(paths.for("/orders/:id", { id: orderId }));
+  };
+
+  // ✅ Multiple params
+  const goToOrderItem = (orderId: string, itemId: string) => {
+    navigate(paths.for("/orders/:orderId/items/:itemId", { orderId, itemId }));
+  };
+
+  // ✅ Query string passthrough
+  const goToOrderWithTab = (orderId: string) => {
+    navigate(paths.for("/orders/:id?tab=details", { id: orderId }));
+  };
+
+  // ✅ Dynamic query values via template literal
+  const goToOrderWithDynamicQuery = (orderId: string, tab: string) => {
+    navigate(paths.for(`/orders/:id?tab=${tab}`, { id: orderId }));
+  };
+
+  // ❌ TypeScript error: missing required params
+  // navigate(paths.for("/orders/:id"));
+
+  // ❌ TypeScript error: invalid path
+  // navigate(paths.for("/invalid/path"));
+
+  return <button onClick={goToDashboard}>Go to Dashboard</button>;
+};
+```
+
+### Opt-In Design
+
+This feature is opt-in. If you don't enable `generateTypedRoutes`, you can continue building paths dynamically:
+
+```tsx
+// Still works without typed routes
+navigate(`/orders/${orderId}`);
+```
+
+### HMR Support
+
+The generated file is automatically regenerated when:
+- A new `page.tsx` is added
+- A `page.tsx` is deleted
+- The dev server starts
+
+

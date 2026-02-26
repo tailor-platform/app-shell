@@ -25,6 +25,7 @@ export type { AuthClient } from "@tailor-platform/auth-public-client";
 export {
   type AppShellRegister,
   type ContextData,
+  type RouteParams,
 } from "./contexts/appshell-context";
 export {
   defineModule,
@@ -65,3 +66,9 @@ export {
 
 // Layout component
 export { Layout, type LayoutProps } from "./components/layout";
+
+// File-based routing types
+export type { AppShellPageProps, PageComponent } from "./fs-routes/types";
+
+// Typed paths utility
+export { createTypedPaths } from "./fs-routes/typed-paths";

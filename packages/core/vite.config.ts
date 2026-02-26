@@ -34,7 +34,10 @@ export default defineConfig(({ mode }) => ({
   publicDir: "src/assets",
   build: {
     lib: {
-      entry: "src/index.ts",
+      entry: {
+        "app-shell": "src/index.ts",
+        "vite-plugin": "src/vite-plugin.ts",
+      },
       formats: ["es"],
     },
     target: "es2020",

@@ -43,17 +43,17 @@ Key points for this workflow:
 
 ### Step 1: Identify new changesets
 
-Find which `.changeset/*.md` files (excluding `README.md` and `config.json`) were added or modified in this push. Use the GitHub API to get the commits in this push event and their changed files, or run:
+List all `.changeset/*.md` files (excluding `README.md`). These are unreleased changesets — they are automatically deleted when a release is published, so everything present represents pending changes.
 
 ```bash
-git diff HEAD~1 --name-only --diff-filter=A -- '.changeset/*.md' | grep -v README.md
+ls .changeset/*.md | grep -v README.md
 ```
 
-If no new changeset files are found, call the `noop` safe output and stop.
+If no changeset files exist, call the `noop` safe output and stop.
 
 ### Step 2: Read and filter changesets
 
-Read each new changeset file. Changeset files have YAML frontmatter specifying the package name and semver bump type, followed by a markdown description of the change.
+Read each changeset file. Changeset files have YAML frontmatter specifying the package name and semver bump type, followed by a markdown description of the change.
 
 **Only proceed with changesets that describe user-facing API changes.** Skip any changeset that is:
 - A dependency version bump (e.g., "Updated package-name (v1.0.0 -> v2.0.0)")

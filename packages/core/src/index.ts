@@ -9,7 +9,6 @@ export {
   SidebarGroup,
   SidebarSeparator,
   type SidebarItemProps,
-  type SidebarItemRenderProps,
   type SidebarGroupProps,
   type SidebarLayoutProps,
   type DefaultSidebarProps,
@@ -88,3 +87,6 @@ export type { AppShellPageProps, PageComponent } from "./fs-routes/types";
 
 // Typed paths utility
 export { createTypedPaths } from "./fs-routes/typed-paths";
+
+// Page meta hook
+export { usePageMeta, type PageMeta } from "./hooks/use-page-meta";

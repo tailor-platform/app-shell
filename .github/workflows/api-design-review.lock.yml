@@ -23,24 +23,19 @@
 #
 # Reviews pull requests for API design consistency, potential footguns, and TypeScript/React best practices in the AppShell core package.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"b22dcc098c30f72edab00a234640d9ff596b68a066fab5c1073cbcac8c3f0921","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"46aa90f7ac38dd664609eeae52ee7cb5e9c2bef2f78587f32af433deaa817a3b","compiler_version":"v0.50.4"}
 
 name: "API Design Review"
 "on":
-  pull_request:
-    paths:
-    - packages/**/*.ts
-    - packages/**/*.tsx
-    - packages/**/package.json
+  issue_comment:
     types:
-    - opened
-    - synchronize
+    - created
+    - edited
 
 permissions: {}
 
 concurrency:
-  group: "gh-aw-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
-  cancel-in-progress: true
+  group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}"
 
 run-name: "API Design Review"
 
@@ -48,14 +43,19 @@ jobs:
   activation:
     needs: pre_activation
     if: >
-      (needs.pre_activation.outputs.activated == 'true') && ((github.event_name != 'pull_request') || (github.event.pull_request.head.repo.id == github.repository_id))
+      (needs.pre_activation.outputs.activated == 'true') && ((github.event_name == 'issue_comment') && (((startsWith(github.event.comment.body, '/review ')) ||
+      (github.event.comment.body == '/review')) && (github.event.issue.pull_request != null)))
     runs-on: ubuntu-slim
     permissions:
       contents: read
+      discussions: write
+      issues: write
+      pull-requests: write
     outputs:
       body: ${{ steps.sanitized.outputs.body }}
       comment_id: ""
       comment_repo: ""
+      slash_command: ${{ needs.pre_activation.outputs.matched_command }}
       text: ${{ steps.sanitized.outputs.text }}
       title: ${{ steps.sanitized.outputs.title }}
     steps:
@@ -110,6 +110,7 @@ jobs:
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
+          GH_AW_IS_PR_COMMENT: ${{ github.event.issue.pull_request && 'true' || '' }}
         run: |
           bash /opt/gh-aw/actions/create_prompt_first.sh
           {
@@ -153,6 +154,9 @@ jobs:
           </github-context>
           
           GH_AW_PROMPT_EOF
+          if [ "$GITHUB_EVENT_NAME" = "issue_comment" ] && [ -n "$GH_AW_IS_PR_COMMENT" ] || [ "$GITHUB_EVENT_NAME" = "pull_request_review_comment" ] || [ "$GITHUB_EVENT_NAME" = "pull_request_review" ]; then
+            cat "/opt/gh-aw/prompts/pr_context_prompt.md"
+          fi
           cat << 'GH_AW_PROMPT_EOF'
           </system>
           GH_AW_PROMPT_EOF
@@ -182,7 +186,9 @@ jobs:
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
+          GH_AW_IS_PR_COMMENT: ${{ github.event.issue.pull_request && 'true' || '' }}
           GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED: ${{ needs.pre_activation.outputs.activated }}
+          GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_MATCHED_COMMAND: ${{ needs.pre_activation.outputs.matched_command }}
         with:
           script: |
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
@@ -202,7 +208,9 @@ jobs:
                 GH_AW_GITHUB_REPOSITORY: process.env.GH_AW_GITHUB_REPOSITORY,
                 GH_AW_GITHUB_RUN_ID: process.env.GH_AW_GITHUB_RUN_ID,
                 GH_AW_GITHUB_WORKSPACE: process.env.GH_AW_GITHUB_WORKSPACE,
-                GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED: process.env.GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED
+                GH_AW_IS_PR_COMMENT: process.env.GH_AW_IS_PR_COMMENT,
+                GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED: process.env.GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED,
+                GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_MATCHED_COMMAND: process.env.GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_MATCHED_COMMAND
               }
             });
       - name: Validate prompt placeholders
@@ -767,6 +775,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,raw.githubusercontent.com,registry.npmjs.org,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
+          GH_AW_COMMAND: review
         with:
           script: |
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
@@ -1047,17 +1056,36 @@ jobs:
             await main();
 
   pre_activation:
-    if: (github.event_name != 'pull_request') || (github.event.pull_request.head.repo.id == github.repository_id)
+    if: >
+      (github.event_name == 'issue_comment') && (((startsWith(github.event.comment.body, '/review ')) || (github.event.comment.body == '/review')) &&
+      (github.event.issue.pull_request != null))
     runs-on: ubuntu-slim
+    permissions:
+      discussions: write
+      issues: write
+      pull-requests: write
     outputs:
-      activated: ${{ steps.check_membership.outputs.is_team_member == 'true' }}
-      matched_command: ''
+      activated: ${{ (steps.check_membership.outputs.is_team_member == 'true') && (steps.check_command_position.outputs.command_position_ok == 'true') }}
+      matched_command: ${{ steps.check_command_position.outputs.matched_command }}
     steps:
       - name: Setup Scripts
         uses: github/gh-aw/actions/setup@90ebf8057e8e005103b8d123732d2c64c30e9b27 # v0.50.4
         with:
           destination: /opt/gh-aw/actions
-      - name: Check team membership for workflow
+      - name: Add eyes reaction for immediate feedback
+        id: react
+        if: github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment' || github.event_name == 'discussion' || github.event_name == 'discussion_comment' || (github.event_name == 'pull_request') && (github.event.pull_request.head.repo.id == github.repository_id)
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          GH_AW_REACTION: "eyes"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/add_reaction.cjs');
+            await main();
+      - name: Check team membership for command workflow
         id: check_membership
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
@@ -1068,6 +1096,17 @@ jobs:
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
             setupGlobals(core, github, context, exec, io);
             const { main } = require('/opt/gh-aw/actions/check_membership.cjs');
+            await main();
+      - name: Check command position
+        id: check_command_position
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          GH_AW_COMMANDS: "[\"review\"]"
+        with:
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/check_command_position.cjs');
             await main();
 
   safe_outputs:

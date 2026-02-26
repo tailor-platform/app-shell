@@ -3,12 +3,9 @@ description: >
   Reviews pull requests for API design consistency, potential footguns,
   and TypeScript/React best practices in the AppShell core package.
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - "packages/**/*.ts"
-      - "packages/**/*.tsx"
-      - "packages/**/package.json"
+  slash_command:
+    name: review
+    events: [pull_request_comment]
 permissions:
   contents: read
   pull-requests: read
@@ -72,16 +69,6 @@ When reviewing changes to public exports in `packages/core/src/index.ts`, ensure
 2. **Leverage TypeScript type inference** — Let consumers infer nested types from component props rather than exporting them separately.
 3. **Type guards and utilities** — Only export if essential for common consumer use cases; simple checks like `field.type === "divider"` are preferred.
 4. **Component export pattern** — Follow the minimal pattern: `export { ComponentName, type ComponentNameProps }`.
-
-## Component Styling Rules
-
-Flag violations of these styling rules:
-
-- **DO** use Tailwind CSS v4 native utility classes (prefixed with `astw:`).
-- **DO NOT** inject CSS via `<style>` tags, `dangerouslySetInnerHTML`, or CSS-in-JS.
-- **DO NOT** add `@source` directives to `globals.css`.
-- **DO NOT** add framework-specific directives like `"use client"` unless absolutely necessary.
-- **DO** keep styles scoped to components via Tailwind classes.
 
 ## Safe Outputs
 

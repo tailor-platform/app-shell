@@ -25,9 +25,6 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Authentication](./docs/authentication.md)** - Setting up user authentication
 - **[Styles](./docs/styles.md)** - Theming and styling configuration
 
-### Development
-- **[Development Guide](./docs/development.md)** - Contributing and developing AppShell itself
-
 ## Key Architecture Points (LLM Orientation)
 
 ### Monorepo Structure
@@ -65,9 +62,26 @@ cd packages/core && pnpm test
 pnpm type-check
 ```
 
+## Local Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start dev server (opens localhost:3000 with example app)
+pnpm dev
+```
+
 ## Versioning & Publishing
 
-Uses changesets for version management - see [Development Guide](./docs/development.md) for detailed process.
+Uses changesets for version management.
+
+### Publishing Process
+
+1. Run `npx changeset` and follow the prompts (select "@tailor-platform/app-shell" as the package)
+2. Edit the new file created in `.changeset/` to describe your change (changeset will remove it when making its automatic PR; the description is saved in CHANGELOG.md and the GitHub Release)
+3. Open a PR to `main` from your feature branch
+4. Changeset will open a PR for the release — merging it publishes the new version to NPM
 
 ### When to Create Changesets
 

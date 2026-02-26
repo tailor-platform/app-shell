@@ -39,7 +39,7 @@ export type AppShellPageProps = {
 
   /**
    * Guards to control access to this page.
-   * Guards are executed in order and inherited from parent pages.
+   * Guards are executed in order. Each page must define its own guards explicitly.
    *
    * @example
    * ```tsx

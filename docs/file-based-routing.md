@@ -126,17 +126,9 @@ src/pages/
     └── helpers.ts            # Not routed (shared utilities)
 ```
 
-## Guards Inheritance
+## Guards
 
-Guards defined on parent pages are automatically inherited by child pages:
-
-```
-/dashboard          guards: [authGuard]
-/dashboard/orders   guards: [authGuard] (inherited)
-/dashboard/orders/:id  guards: [authGuard] (inherited)
-```
-
-When a child page defines additional guards, they are merged with parent guards:
+Guards are **not** automatically inherited from parent pages. Each page must explicitly define its own guards:
 
 ```tsx
 // /dashboard/page.tsx
@@ -144,11 +136,25 @@ DashboardPage.appShellPageProps = {
   guards: [authGuard],
 } satisfies AppShellPageProps;
 
-// /dashboard/admin/page.tsx
+// /dashboard/admin/page.tsx — must include authGuard explicitly
 AdminPage.appShellPageProps = {
-  guards: [adminGuard],
+  guards: [authGuard, adminGuard],
 } satisfies AppShellPageProps;
-// → Effective guards: [authGuard, adminGuard]
+```
+
+To share common guards across pages, compose them from a shared module:
+
+```tsx
+// src/guards.ts
+export const requireAuth = [authGuard];
+export const requireAdmin = [authGuard, adminGuard];
+
+// src/pages/dashboard/orders/page.tsx
+import { requireAuth } from '@/guards';
+
+OrdersPage.appShellPageProps = {
+  guards: [...requireAuth],
+} satisfies AppShellPageProps;
 ```
 
 ## Typed Routes

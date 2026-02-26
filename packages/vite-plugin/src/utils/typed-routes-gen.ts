@@ -6,6 +6,7 @@ import type { PageFile } from "./scanner";
  * @example
  * extractParams("/orders/:id") → ["id"]
  * extractParams("/orders/:orderId/items/:itemId") → ["orderId", "itemId"]
+ * extractParams("/docs/*slug") → ["slug"]
  * extractParams("/dashboard") → []
  */
 export function extractParams(routePath: string): string[] {
@@ -14,6 +15,12 @@ export function extractParams(routePath: string): string[] {
   // Match :param patterns (dynamic segments)
   const dynamicMatches = routePath.matchAll(/:([^/?]+)/g);
   for (const match of dynamicMatches) {
+    params.push(match[1]);
+  }
+
+  // Match *param patterns (catch-all segments)
+  const catchAllMatches = routePath.matchAll(/\*([^/?]+)/g);
+  for (const match of catchAllMatches) {
     params.push(match[1]);
   }
 

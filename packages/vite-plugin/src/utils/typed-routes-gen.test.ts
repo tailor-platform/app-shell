@@ -34,6 +34,14 @@ describe("extractParams", () => {
     // Note: query string is handled at runtime, not in type generation
     expect(extractParams("/orders/:id?tab=details")).toEqual(["id"]);
   });
+
+  it("extracts catch-all parameter", () => {
+    expect(extractParams("/docs/*slug")).toEqual(["slug"]);
+  });
+
+  it("extracts both dynamic and catch-all parameters", () => {
+    expect(extractParams("/org/:orgId/docs/*slug")).toEqual(["orgId", "slug"]);
+  });
 });
 
 // ============================================
@@ -111,6 +119,18 @@ describe("generateTypedRoutesCode", () => {
     expect(code).toContain(
       '"/orders/:orderId/items/:itemId": { orderId: string; itemId: string };',
     );
+  });
+
+  it("generates code for catch-all routes", () => {
+    const pages: PageFile[] = [
+      {
+        filePath: "/src/pages/docs/[...slug]/page.tsx",
+        relativePath: "docs/[...slug]",
+        routePath: "docs/*slug",
+      },
+    ];
+    const code = generateTypedRoutesCode(pages);
+    expect(code).toContain('"/docs/*slug": { slug: string };');
   });
 
   it("sorts routes alphabetically", () => {

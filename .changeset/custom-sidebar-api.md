@@ -97,32 +97,3 @@ const DashboardPage = () => (
   </div>
 );
 ```
-
-## Breaking Change: Module without component requires guards
-
-As part of the ongoing effort to decouple navigation and routing (aligned with file-based routing), the automatic redirect behavior for modules without a `component` has been removed.
-
-Previously, a module without a `component` would automatically redirect to the first visible resource. However, in file-based routing, the resource hierarchy is determined ad-hoc by the vite-plugin based on directory structure, making this implicit redirect behavior inconsistent and unpredictable. To maintain consistency across both explicit and file-based routing, this behavior has been removed.
-
-If a module is defined without both `component` and `guards`, an error will be thrown at runtime. You must provide at least one of them.
-
-```tsx
-// Before: automatic redirect to first visible resource
-defineModule({
-  path: "reports",
-  resources: [salesResource, usersResource],
-});
-
-// After: explicit redirect via guards
-defineModule({
-  path: "reports",
-  guards: [() => redirectTo("sales")],
-  resources: [salesResource, usersResource],
-});
-
-// Error: defining a module without both component and guards will throw
-defineModule({
-  path: "reports",
-  resources: [salesResource, usersResource],
-}); // => throws an error
-```

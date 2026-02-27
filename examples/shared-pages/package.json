@@ -1,0 +1,22 @@
+{
+  "name": "shared-pages",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "react": ">= 19",
+    "react-dom": ">= 19"
+  },
+  "devDependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

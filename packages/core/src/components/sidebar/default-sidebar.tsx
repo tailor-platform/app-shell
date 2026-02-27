@@ -1,14 +1,14 @@
+import { Suspense } from "react";
+import { Await, useLocation } from "react-router";
+import { ChevronRight } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Await, useLocation, useMatch } from "react-router";
 import {
   Sidebar,
-  SidebarProvider,
   SidebarContent,
-  SidebarInset,
   SidebarGroup,
   SidebarMenu,
   SidebarMenuItem,
@@ -21,82 +21,52 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ChevronRight, SunIcon } from "lucide-react";
-import { Suspense } from "react";
 import { useAppShellConfig } from "@/contexts/appshell-context";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "./ui/breadcrumb";
-import { AppShellOutlet } from "./content";
-import { processPathSegments } from "@/routing/path";
-import { Button } from "./ui/button";
-import { useTheme } from "@/contexts/theme-context";
-import { Link } from "./ui/client-side-link";
+import { Link } from "@/components/ui/client-side-link";
 import { useT } from "@/i18n-labels";
-import { useNavItems, type NavItem } from "../routing/navigation";
+import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
 
-export type SidebarLayoutProps = {
-  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
-  sidebar?: React.ReactNode;
-};
-
-const HidableSidebarTrigger = () => {
-  const { open, isIconMode } = useSidebar();
-
-  // Hide trigger when sidebar is open (desktop), but show it in icon mode
-  return (
-    <div className={open && !isIconMode ? "astw:md:hidden" : undefined}>
-      <SidebarTrigger className="astw:-ml-2.5" />
-    </div>
-  );
-};
-
-export const SidebarLayout = (props: SidebarLayoutProps) => {
-  const Children = props.children
-    ? props.children({ Outlet: AppShellOutlet })
-    : null;
-  const themeContext = useTheme();
-  const toggleTheme = () => {
-    themeContext.setTheme(themeContext.theme === "dark" ? "light" : "dark");
-  };
-
-  return (
-    <SidebarProvider className="astw:flex astw:flex-col">
-      <div className="astw:flex astw:flex-1">
-        {props.sidebar ?? <DefaultSidebar />}
-        <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">
-          <header className="astw:flex astw:h-14 astw:shrink-0 astw:items-center astw:gap-2 astw:transition-[width,height] astw:ease-linear astw:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="astw:flex astw:w-full astw:items-center astw:justify-between">
-              <div className="astw:flex astw:items-center astw:gap-2">
-                <HidableSidebarTrigger />
-                <DynamicBreadcrumb />
-              </div>
-              <div className="astw:flex astw:items-center astw:gap-2">
-                <Button variant="outline" size="icon" onClick={toggleTheme}>
-                  <SunIcon />
-                </Button>
-              </div>
-            </div>
-          </header>
-          <div className="astw:flex astw:flex-col astw:gap-4 astw:flex-1 astw:min-h-0">
-            {Children ?? <AppShellOutlet />}
-          </div>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
-  );
-};
-
-type DefaultSidebarProps = {
+export type DefaultSidebarProps = {
+  /**
+   * Header content.
+   */
   header?: React.ReactNode;
+
+  /**
+   * Footer content.
+   */
   footer?: React.ReactNode;
+
+  /**
+   * When provided, enables explicit sidebar composition using React components.
+   * Auto-generation is completely disabled when children is specified.
+   */
+  children?: React.ReactNode;
 };
 
+/**
+ * Default sidebar component with auto-generated navigation items.
+ *
+ * It works in both auto-generation mode and composition mode.
+ * - Auto-generation mode: when no children are provided, it automatically generates sidebar items based on the application's resource definitions.
+ * - Composition mode: when children are provided, it allows developers to manually define the sidebar structure using SidebarItem, SidebarGroup, and other components.
+ *
+ * @example
+ * ```tsx
+ * // Auto-generation mode
+ * <DefaultSidebar />
+ *
+ * // Composition mode
+ * <DefaultSidebar>
+ *   <SidebarItem to="/dashboard" />
+ *   <SidebarGroup title="products">
+ *     <SidebarItem to="/products/all" />
+ *   </SidebarGroup>
+ *   <SidebarSeparator />
+ * </DefaultSidebar>
+ * ```
+ */
 export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const { title, icon } = useAppShellConfig();
   const { pathname: currentPath } = useLocation();
@@ -128,26 +98,45 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
         </div>
       )}
       <SidebarContent>
-        <Suspense fallback={<SidebarSkeleton />}>
-          <AwaitNavItems currentPath={currentPath} />
-        </Suspense>
+        {props.children ? (
+          // New API: children-based explicit definition
+          <SidebarGroup>
+            <SidebarMenu>{props.children}</SidebarMenu>
+          </SidebarGroup>
+        ) : (
+          // Existing behavior: auto-generation from resources
+          <Suspense fallback={<SidebarSkeleton />}>
+            <AutoSidebar currentPath={currentPath} />
+          </Suspense>
+        )}
       </SidebarContent>
       {props.footer ?? DefaultFooter}
     </Sidebar>
   );
 };
 
-const AwaitNavItems = ({ currentPath }: { currentPath: string }) => {
+/**
+ * Component boundary to resolve and render automatic sidebar items.
+ */
+const AutoSidebar = ({ currentPath }: { currentPath: string }) => {
   const navItems = useNavItems();
 
   return (
     <Await resolve={navItems}>
-      {(items) => <SidebarNav items={items ?? []} currentPath={currentPath} />}
+      {(items) => (
+        <AutoSidebarItems items={items ?? []} currentPath={currentPath} />
+      )}
     </Await>
   );
 };
 
-const SidebarNav = (props: { items: Array<NavItem>; currentPath: string }) => {
+/**
+ * Automatically generates sidebar items from navigation data.
+ */
+const AutoSidebarItems = (props: {
+  items: Array<NavItem>;
+  currentPath: string;
+}) => {
   const t = useT();
 
   return (
@@ -255,62 +244,5 @@ const SidebarSkeleton = () => {
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  );
-};
-
-/**
- * Hook to retrieve the current path segments and their corresponding titles.
- */
-const usePathSegments = () => {
-  const { configurations } = useAppShellConfig();
-  const location = useLocation();
-
-  return processPathSegments(
-    location.pathname,
-    configurations.basePath,
-    configurations.modules,
-    configurations.locale,
-  );
-};
-
-export const DynamicBreadcrumb = () => {
-  const { segments } = usePathSegments();
-  const isSettings = useMatch("/:prefix/settings/:suffix");
-  const t = useT();
-
-  if (isSettings) {
-    return (
-      <Breadcrumb>
-        <BreadcrumbList>
-          <div className="astw:inline-flex astw:items-center astw:gap-3 astw:last:text-foreground">
-            <BreadcrumbItem>
-              <BreadcrumbLink to={`/${isSettings.params.prefix}/settings`}>
-                {t("settings")}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </div>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {segments.map((segmentInfo, index) => (
-          <div
-            className="astw:inline-flex astw:items-center astw:gap-3 astw:last:text-foreground"
-            key={index}
-          >
-            <BreadcrumbItem>
-              <BreadcrumbLink to={segmentInfo.path}>
-                {segmentInfo.title}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            {index < segments.length - 1 && <BreadcrumbSeparator />}
-          </div>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
   );
 };

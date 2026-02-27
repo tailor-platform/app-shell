@@ -1,20 +1,13 @@
 import type { ComponentType, ReactNode } from "react";
-import {
-  RouteObject,
-  Navigate,
-  redirect,
-  LoaderFunctionArgs,
-} from "react-router";
+import { RouteObject, Navigate } from "react-router";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import {
   Modules,
-  Module,
   Resource,
   ErrorBoundaryComponent,
   createNotFoundError,
   LoaderHandler,
-  runGuards,
 } from "@/resource";
 
 export type RootComponentOption = () => ReactNode;
@@ -70,57 +63,10 @@ const createRoute = (
   };
 };
 
-/**
- * Creates a route for a module, handling the case where
- * the module has no component (redirects to first visible resource).
- */
-const createModuleRoute = (module: Module): RouteObject => {
-  const baseRoute = createRoute(module, module.resources, module.errorBoundary);
-
-  // If module has no component but has resources, add a redirect to the first visible resource
-  if (!module.component && module.resources.length > 0) {
-    const redirectRoute: RouteObject = {
-      index: true,
-      // Component is required to suppress React Router's warning about empty leaf routes,
-      // even though the loader always redirects and this component will never render.
-      Component: () => null,
-      loader: async (args: LoaderFunctionArgs) => {
-        // First, check module's own guards (no cascade to children)
-        const moduleGuardResult = await runGuards(module.guards, args);
-        if (moduleGuardResult.type === "hidden") {
-          throw createNotFoundError();
-        }
-        if (moduleGuardResult.type === "redirect") {
-          return redirect(moduleGuardResult.to);
-        }
-
-        // Find the first resource that is not hidden by guards
-        for (const resource of module.resources) {
-          const result = await runGuards(resource.guards, args);
-          if (result.type === "pass") {
-            return redirect(resource.path);
-          }
-        }
-        // If all resources are hidden, hide the module itself
-        throw createNotFoundError();
-      },
-    };
-    // Explicitly construct the route to avoid index property conflicts
-    const result: RouteObject = {
-      path: baseRoute.path,
-      children: [redirectRoute, ...(baseRoute.children ?? [])],
-    };
-    if (baseRoute.ErrorBoundary) {
-      result.ErrorBoundary = baseRoute.ErrorBoundary;
-    }
-    return result;
-  }
-
-  return baseRoute;
-};
-
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) => createModuleRoute(module));
+  modules.map((module) =>
+    createRoute(module, module.resources, module.errorBoundary),
+  );
 
 type CreateContentRoutesParams = {
   modules: Modules;

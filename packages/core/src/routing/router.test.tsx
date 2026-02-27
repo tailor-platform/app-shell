@@ -11,7 +11,6 @@ import {
   defineResource,
   redirectTo,
   setContextData,
-  hidden,
   type Module,
   type Resource,
 } from "@/resource";
@@ -339,69 +338,5 @@ describe("RouterContainer (memory)", () => {
     });
 
     expect(await screen.findByText("Protected Content")).toBeDefined();
-  });
-
-  it("redirects to second resource when module has no component and first resource is hidden", async () => {
-    const hiddenResource = defineResource({
-      path: "hidden",
-      component: () => <div>Hidden Resource</div>,
-      meta: { title: "Hidden" },
-      guards: [() => hidden()],
-    });
-
-    const visibleResource = defineResource({
-      path: "visible",
-      component: () => <div>Visible Resource</div>,
-      meta: { title: "Visible" },
-    });
-
-    const module = defineModule({
-      path: "reports",
-      meta: { title: "Reports" },
-      // No component - should redirect to first visible resource
-      resources: [hiddenResource, visibleResource],
-    });
-
-    renderWithConfig({
-      modules: [module],
-      initialEntries: ["/reports"],
-    });
-
-    // Should redirect to visible resource instead of showing 404
-    expect(await screen.findByText("Visible Resource")).toBeDefined();
-  });
-
-  it("shows 404 when module has no component and all resources are hidden", async () => {
-    const hiddenResource1 = defineResource({
-      path: "hidden1",
-      component: () => <div>Hidden Resource 1</div>,
-      meta: { title: "Hidden 1" },
-      guards: [() => hidden()],
-    });
-
-    const hiddenResource2 = defineResource({
-      path: "hidden2",
-      component: () => <div>Hidden Resource 2</div>,
-      meta: { title: "Hidden 2" },
-      guards: [() => hidden()],
-    });
-
-    const module = defineModule({
-      path: "reports",
-      meta: { title: "Reports" },
-      // No component and all resources are hidden - should show 404
-      resources: [hiddenResource1, hiddenResource2],
-    });
-
-    renderWithConfig({
-      modules: [module],
-      initialEntries: ["/reports"],
-    });
-
-    // Should show 404 error
-    expect(
-      await screen.findByRole("alert", { name: "default-error-boundary" }),
-    ).toBeDefined();
-    expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 });

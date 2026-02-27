@@ -94,7 +94,7 @@ paths.for("/invalid-route");                          // ✗ Error: route doesn'
 
 ### Breaking Change: Guard/Loader Cascade Behavior
 
-In the legacy `defineModule()`/`defineResource()` API, guards and loaders defined at the module level were automatically cascaded to all child resources. With file-based routing, **guards and loaders are no longer automatically inherited**—each page must explicitly define its own guards and loaders.
+In the legacy `defineModule()`/`defineResource()` API, guards and loaders defined at the module level were automatically cascaded to all child resources. This automatic cascade behavior has been removed in both the legacy API and file-based routing—**guards and loaders are no longer automatically inherited**. Each resource or page must explicitly define its own guards and loaders.
 
 **Before (legacy API):**
 ```tsx
@@ -108,7 +108,20 @@ defineModule({
 });
 ```
 
-**After (file-based routing):**
+**After (legacy API):**
+```tsx
+defineModule({
+  path: "/dashboard",
+  guards: [authGuard],
+  resources: [
+    defineResource({ path: "/orders", guards: [authGuard], element: <Orders /> }),  // Must be explicitly defined
+    defineResource({ path: "/reports", guards: [authGuard], element: <Reports /> }), // Must be explicitly defined
+  ],
+});
+```
+
+Note: File-based routing, introduced in this release, also does not support guard/loader cascading. Each page must define its own guards and loaders explicitly:
+
 ```tsx
 // src/pages/dashboard/orders/page.tsx
 OrdersPage.appShellPageProps = {
@@ -121,7 +134,7 @@ ReportsPage.appShellPageProps = {
 } satisfies AppShellPageProps;
 ```
 
-**Rationale:** Explicit guard/loader definitions per page improve code clarity and make it easier to understand the security requirements of each route at a glance. This aligns with the file-based routing philosophy where each page is self-contained.
+**Rationale:** Explicit guard/loader definitions per resource/page improve code clarity and make it easier to understand the security requirements of each route at a glance.
 
 **Migration tip:** If you need the previous cascading behavior, compose your guards array explicitly:
 
@@ -143,4 +156,33 @@ import { requireAdmin } from '@/guards';
 UsersPage.appShellPageProps = {
   guards: [...requireAdmin],
 } satisfies AppShellPageProps;
+```
+
+## Breaking Change: Module without component requires guards
+
+As part of the ongoing effort to decouple navigation and routing (aligned with file-based routing), the automatic redirect behavior for modules without a `component` has been removed.
+
+Previously, a module without a `component` would automatically redirect to the first visible resource. However, in file-based routing, the resource hierarchy is determined ad-hoc by the vite-plugin based on directory structure, making this implicit redirect behavior inconsistent and unpredictable. To maintain consistency across both explicit and file-based routing, this behavior has been removed.
+
+If a module is defined without both `component` and `guards`, an error will be thrown at runtime. You must provide at least one of them.
+
+```tsx
+// Before: automatic redirect to first visible resource
+defineModule({
+  path: "reports",
+  resources: [salesResource, usersResource],
+});
+
+// After: explicit redirect via guards
+defineModule({
+  path: "reports",
+  guards: [() => redirectTo("sales")],
+  resources: [salesResource, usersResource],
+});
+
+// Error: defining a module without both component and guards will throw
+defineModule({
+  path: "reports",
+  resources: [salesResource, usersResource],
+}); // => throws an error
 ```

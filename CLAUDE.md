@@ -20,6 +20,7 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[API Reference](./docs/api.md)** - Complete API documentation for all components, hooks, and functions
 - **[Module & Resource Definition](./docs/module-resource-definition.md)** - How to structure your application using modules and resources
 - **[Routing & Navigation](./docs/routing-and-navigation.md)** - Understanding AppShell's routing system
+- **[Sidebar Navigation](./docs/sidebar-navigation.md)** - Customizing sidebar with SidebarItem, SidebarGroup components
 
 ### Setup & Configuration  
 - **[Authentication](./docs/authentication.md)** - Setting up user authentication

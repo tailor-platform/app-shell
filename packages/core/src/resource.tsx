@@ -6,7 +6,7 @@ import {
   type ContextData,
 } from "./contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "./lib/i18n";
-import { redirect, type LoaderFunctionArgs, type Params } from "react-router";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 
 // ============================================
 // Context Data (module scope)
@@ -30,9 +30,6 @@ export const setContextData = (data: ContextData) => {
  * Context provided to guard functions
  */
 export type GuardContext = {
-  params: Params;
-  searchParams: URLSearchParams;
-  signal: AbortSignal;
   context: ContextData;
 };
 
@@ -144,15 +141,10 @@ export const createNotFoundError = () =>
  */
 export const runGuards = async (
   guards: Guard[] | undefined,
-  args: LoaderFunctionArgs,
 ): Promise<GuardResult> => {
   if (!guards || guards.length === 0) return { type: "pass" };
 
-  const url = new URL(args.request.url);
   const ctx: GuardContext = {
-    params: args.params,
-    searchParams: url.searchParams,
-    signal: args.request.signal,
     context: _contextData,
   };
 
@@ -177,7 +169,7 @@ const withGuardsLoader = (
   baseLoader?: LoaderHandler,
 ) => {
   return async (args: LoaderFunctionArgs) => {
-    const result = await runGuards(guards, args);
+    const result = await runGuards(guards);
     switch (result.type) {
       case "hidden":
         throw createNotFoundError();
@@ -234,9 +226,9 @@ export type Resource = CommonPageResource & {
 
 export type Modules = Array<Module>;
 
-type ResourceMetaProps = {
+type ResourceMeta = {
   /**
-   * Title of the resource used in navigation.
+   * Title of the page used in navigation.
    *
    * If not provided, the title will be generated from the path.
    */
@@ -245,7 +237,7 @@ type ResourceMetaProps = {
   icon?: ReactNode;
 
   /**
-   * Custom breadcrumb segment title for this resource. Can be a string or a function.
+   * Custom breadcrumb segment title for this page. Can be a string or a function.
    */
   breadcrumbTitle?: string | ((segment: string) => string);
 };
@@ -260,9 +252,9 @@ type CommonProps = {
   path: string;
 
   /**
-   * Metadata for the resource.
+   * Metadata for the page.
    */
-  meta?: ResourceMetaProps;
+  meta?: ResourceMeta;
 
   /**
    * Guards to control access to this module/resource.
@@ -326,7 +318,9 @@ type DefineModuleProps = CommonProps &
   CommonModuleProps & {
     /**
      * React component to render.
-     * If not provided, the module will redirect to the first resource.
+     *
+     * If not provided, a guard with `redirectTo()` must be used to redirect
+     * users to the appropriate resource.
      *
      * @example
      * ```tsx
@@ -365,10 +359,17 @@ export function defineModule(props: DefineModuleProps): Module {
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
 
+  if (!component && (!guards || guards.length === 0)) {
+    throw new Error(
+      `Module "${path}" has no component.` +
+        " Either provide a `component` or use `guards` with `redirectTo()` or `hidden()` to control access." +
+        " A guard that only returns `pass()` without a component will result in a blank page.",
+    );
+  }
+
   const loader =
     guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
 
-  // Build component only if provided
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) =>
         component({ title, resources }),

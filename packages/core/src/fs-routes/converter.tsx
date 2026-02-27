@@ -114,9 +114,14 @@ function nodeToResource(node: PageNode): Resource {
  */
 function nodeToModule(node: PageNode): Module {
   const Component = node.component;
+  if (!Component) {
+    throw new Error(
+      `Module "${node.path}" must have a component. Add a page file (e.g., page.tsx) to the module directory.`,
+    );
+  }
   const title = getTitle(Component, node.path);
-  const icon = Component?.appShellPageProps?.meta?.icon;
-  const loader = Component?.appShellPageProps?.loader;
+  const icon = Component.appShellPageProps?.meta?.icon;
+  const loader = Component.appShellPageProps?.loader;
 
   // Convert children to resources
   const resources: Resource[] = [];
@@ -133,7 +138,7 @@ function nodeToModule(node: PageNode): Module {
       icon,
       menuItemClickable: Component !== undefined,
     },
-    component: Component ? () => <Component /> : undefined,
+    component: () => <Component />,
     resources,
     errorBoundary: <DefaultErrorBoundary />,
     guards: node.guards,

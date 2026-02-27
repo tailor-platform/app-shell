@@ -1,7 +1,22 @@
 import "./globals.css";
 export { AppShell, type AppShellProps } from "./components/appshell";
-export { SidebarLayout, DefaultSidebar } from "./components/sidenav-layout";
+export { SidebarLayout, DefaultSidebar } from "./components/sidebar";
 export { CommandPalette } from "./components/command-palette";
+
+// Sidebar navigation components
+export {
+  SidebarItem,
+  SidebarGroup,
+  SidebarSeparator,
+  type SidebarItemProps,
+  type SidebarGroupProps,
+  type SidebarLayoutProps,
+  type DefaultSidebarProps,
+} from "./components/sidebar";
+
+// Guard component for conditional rendering
+export { WithGuard, type WithGuardProps } from "./components/with-guard";
+
 export {
   useAppShell,
   useAppShellConfig,
@@ -72,3 +87,6 @@ export type { AppShellPageProps, PageComponent } from "./fs-routes/types";
 
 // Typed paths utility
 export { createTypedPaths } from "./fs-routes/typed-paths";
+
+// Page meta hook
+export { usePageMeta, type PageMeta } from "./hooks/use-page-meta";

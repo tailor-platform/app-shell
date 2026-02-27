@@ -1,6 +1,6 @@
 import { Modules, runGuards, Resource } from "@/resource";
 import type { ReactNode } from "react";
-import { LoaderFunctionArgs, useRouteLoaderData } from "react-router";
+import { useRouteLoaderData } from "react-router";
 import { Table } from "lucide-react";
 import { buildTitleResolver, LocalizedString } from "@/lib/i18n";
 
@@ -27,8 +27,8 @@ const loaderID = "appshell-root-nav";
 export const createNavItemsLoader = (props: BuildNavItemsProps) => {
   return {
     loaderID,
-    loader: async (args: LoaderFunctionArgs) => {
-      return { navItems: buildNavItems(props, args) };
+    loader: async () => {
+      return { navItems: buildNavItems(props) };
     },
   };
 };
@@ -55,10 +55,7 @@ type BuildNavItemsProps = {
  * Build navigation items from modules and their resources considering guards.
  * Excludes routes with param segments (e.g., :id) as they cannot be navigated directly.
  */
-const buildNavItems = async (
-  props: BuildNavItemsProps,
-  args: LoaderFunctionArgs,
-) => {
+const buildNavItems = async (props: BuildNavItemsProps) => {
   const resolveTitle = buildTitleResolver(props.locale);
 
   const resolvedModules = await Promise.all(
@@ -66,13 +63,12 @@ const buildNavItems = async (
       // Skip param routes at module level
       if (module.path.startsWith(":")) return null;
 
-      const guardResult = await runGuards(module.guards, args);
+      const guardResult = await runGuards(module.guards);
       if (guardResult.type !== "pass") return null;
 
       const visibleResources = await filterVisibleResources(
         module.resources,
         module.path,
-        args,
         resolveTitle,
       );
       if (visibleResources.length === 0) return null;
@@ -96,7 +92,6 @@ const buildNavItems = async (
 const filterVisibleResources = async (
   resources: Array<Resource>,
   basePath: string,
-  args: LoaderFunctionArgs,
   resolveTitle: (title: LocalizedString, path: string) => string,
 ): Promise<Array<NavItemResource>> => {
   const results = await Promise.all(
@@ -104,7 +99,7 @@ const filterVisibleResources = async (
       // Skip param routes (paths starting with ":")
       if (resource.path.startsWith(":")) return null;
 
-      const guardResult = await runGuards(resource.guards, args);
+      const guardResult = await runGuards(resource.guards);
       if (guardResult.type !== "pass") return null;
 
       const resourcePath = `${basePath}/${resource.path}`;
@@ -115,7 +110,6 @@ const filterVisibleResources = async (
         ? await filterVisibleResources(
             resource.subResources,
             resourcePath,
-            args,
             resolveTitle,
           )
         : undefined;

@@ -102,6 +102,7 @@ In the PR body, list:
 - **Changesets are context, source code is truth**: Use changeset descriptions to understand intent, but always verify against actual source code for accuracy.
 - **Conservative updates**: Only modify sections directly affected by the changesets. Do not rewrite unrelated sections.
 - **No internal content**: Do not add architecture explanations, design decisions, or implementation details. Document only what library consumers need to know.
+- **No breaking changes**: Do not add "Breaking Changes" sections or document breaking changes in the documentation. Breaking changes should be documented in CHANGELOGs and release notes, not in user-facing documentation files.
 
 ## Safe Outputs
 

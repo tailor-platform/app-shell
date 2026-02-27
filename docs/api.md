@@ -10,6 +10,7 @@
   - [redirectTo](#redirectto)
 - [SidebarLayout](#sidebarlayout)
 - [DefaultSidebar](#defaultsidebar)
+- [WithGuard](#withguard)
 - [CommandPalette](#commandpalette)
 - [Badge](#badge)
 - [DescriptionCard](#descriptioncard)
@@ -17,6 +18,7 @@
 - [useAppShell](#useappshell)
 - [useAppShellConfig](#useappshellconfig)
 - [useAppShellData](#useappshelldata)
+- [usePageMeta](#usepagemeta)
 - [useTheme](#usetheme)
 - [useRouteError](#userouteerror)
 - [defineI18nLabels](#definei18nlabels)
@@ -460,6 +462,72 @@ const CustomLayout = () => (
 );
 ```
 
+## WithGuard
+
+Conditionally renders children based on guard evaluation. Use this component to control visibility of UI elements (e.g., sidebar items) based on the same guard logic used in route definitions.
+
+### Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `guards` | `Guard[]` | Yes | Array of guard functions. All must pass for children to render |
+| `children` | `React.ReactNode` | Yes | Content to render when all guards pass |
+| `fallback` | `React.ReactNode` | No | Content to render when any guard returns `hidden()` (default: `null`) |
+| `loading` | `React.ReactNode` | No | Content to render while async guards are being evaluated (default: `null`) |
+
+### Behavior
+
+- Guards are evaluated in order
+- If any guard returns `hidden()`, the fallback is rendered instead of children
+- Supports async guards with Suspense integration
+- Unlike route guards, `redirectTo()` is not supported in `WithGuard`
+- Use `hidden()` with a fallback that handles navigation if needed
+
+### Example
+
+```tsx
+import { WithGuard, pass, hidden, DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
+import { Shield } from "lucide-react";
+
+// Define guard functions
+const isAdminGuard = ({ context }) =>
+  context.currentUser.role === "admin" ? pass() : hidden();
+
+const hasRole = (role: string) => ({ context }) =>
+  context.currentUser.role === role ? pass() : hidden();
+
+// Use in sidebar
+<DefaultSidebar>
+  <SidebarItem to="/dashboard" />
+  
+  <WithGuard guards={[isAdminGuard]}>
+    <SidebarItem to="/admin" />
+  </WithGuard>
+  
+  <WithGuard guards={[hasRole("manager")]}>
+    <SidebarItem to="/reports" />
+  </WithGuard>
+</DefaultSidebar>
+
+// Use in page components with fallback
+<WithGuard guards={[isAdminGuard]} fallback={<UpgradePrompt />}>
+  <AdminPanel />
+</WithGuard>
+
+// With loading state for async guards
+<WithGuard 
+  guards={[checkSubscription]} 
+  loading={<Spinner />}
+  fallback={<UpgradePrompt />}
+>
+  <PremiumFeature />
+</WithGuard>
+```
+
+**See also:**
+- [Sidebar Navigation - Access Control](./sidebar-navigation.md#access-control) for sidebar-specific usage
+- [Route Guards](#route-guards) for guard function reference
+
 ## CommandPalette
 
 Keyboard-driven quick navigation component for searching and navigating between pages.
@@ -772,6 +840,71 @@ const UserProfile = () => {
   );
 };
 ```
+
+## usePageMeta
+
+Hook to retrieve page metadata (title and icon) for a given URL path. Useful for building custom navigation components or displaying page information.
+
+### Signature
+
+```typescript
+const usePageMeta: (path: string) => PageMeta | null;
+
+type PageMeta = {
+  title: string;
+  icon?: ReactNode;
+};
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `path` | `string` | URL path to find meta for (e.g., "/products/all") |
+
+### Returns
+
+| Type | Description |
+|------|-------------|
+| `PageMeta \| null` | Object containing `title` and optional `icon` if found, or `null` for external links or when path is not found |
+
+### Example
+
+```tsx
+import { usePageMeta } from "@tailor-platform/app-shell";
+
+// Display current page metadata
+const PageHeader = () => {
+  const location = useLocation();
+  const pageMeta = usePageMeta(location.pathname);
+  
+  if (!pageMeta) {
+    return <h1>Unknown Page</h1>;
+  }
+  
+  return (
+    <h1>
+      {pageMeta.icon}
+      {pageMeta.title}
+    </h1>
+  );
+};
+
+// Custom navigation item
+const CustomNavItem = ({ to }: { to: string }) => {
+  const pageMeta = usePageMeta(to);
+  
+  return (
+    <Link to={to}>
+      {pageMeta?.icon}
+      <span>{pageMeta?.title || to}</span>
+    </Link>
+  );
+};
+```
+
+**See also:**
+- [Sidebar Navigation - SidebarItem](./sidebar-navigation.md#sidebaritem) which uses this hook internally
 
 ## useTheme
 

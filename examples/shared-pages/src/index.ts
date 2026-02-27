@@ -23,6 +23,3 @@ export {
   type Role,
   type RoleSwitcherContextType,
 } from "./role-switcher";
-
-// i18n
-export { labels, useT } from "./i18n-labels";

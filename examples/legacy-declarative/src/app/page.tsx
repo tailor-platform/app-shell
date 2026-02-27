@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 const Page = () => {
-  redirect("/dashboard/projects");
+  redirect("/dashboard/demo/projects");
 };
 
 export default Page;

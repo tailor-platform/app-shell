@@ -16,7 +16,6 @@ import {
   SidebarMenu,
   useRoleSwitcher,
   FolderIcon,
-  CheckSquareIcon,
   LayoutIcon,
 } from "shared-pages";
 
@@ -30,7 +29,7 @@ const adminOnlyGuard: Guard = ({ context }) => {
 const App = () => {
   const { role } = useRoleSwitcher();
   const appShellConfig: AppShellProps = {
-    title: "Project Manager",
+    title: "AppShell Demo",
     contextData: {
       role,
     },
@@ -43,23 +42,20 @@ const App = () => {
           sidebar={
             <DefaultSidebar footer={<SidebarMenu />}>
               <SidebarGroup
-                title="Projects"
+                title="Demo"
                 icon={<FolderIcon width={16} height={16} />}
-                to="/projects"
               >
                 <SidebarItem
                   to="/projects"
-                  title="All Projects"
-                  activeMatch="exact"
+                  title="Projects"
                 />
+                <WithGuard guards={[adminOnlyGuard]}>
+                  <SidebarItem
+                    to="/tasks"
+                    title="Tasks"
+                  />
+                </WithGuard>
               </SidebarGroup>
-              <WithGuard guards={[adminOnlyGuard]}>
-                <SidebarItem
-                  to="/tasks"
-                  title="Tasks"
-                  icon={<CheckSquareIcon width={16} height={16} />}
-                />
-              </WithGuard>
               <SidebarGroup
                 title="Components"
                 icon={<LayoutIcon width={16} height={16} />}

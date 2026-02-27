@@ -1,16 +1,8 @@
 {
   "name": "shared-pages",
   "private": true,
-  "main": "index.js",
-  "scripts": {
-    "dev": "NODE_ENV=development tsup --watch",
-    "build": "tsup"
-  },
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
-    }
+    ".": "./src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +17,6 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "tsup": "^8.3.6",
     "typescript": "^5"
   }
 }

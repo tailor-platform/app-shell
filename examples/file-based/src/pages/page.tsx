@@ -7,7 +7,7 @@ const HomePage = () => {
       <h1
         style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}
       >
-        Project Manager
+        AppShell Demo
       </h1>
       <p
         style={{

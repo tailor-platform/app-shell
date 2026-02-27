@@ -20,7 +20,6 @@ import {
   ProjectDetailPage,
   FolderIcon,
   TaskListPage,
-  CheckSquareIcon,
   DescriptionCardDemoPage,
   OneColumnLayoutPage,
   TwoColumnLayoutPage,
@@ -48,30 +47,33 @@ const adminOnlyGuard: Guard = ({ context }) => {
 const projectDetailResource = defineResource({
   path: ":id",
   meta: { title: "Project Detail" },
-  component: () => <ProjectDetailPage backTo="/dashboard/projects" />,
+  component: () => <ProjectDetailPage backTo="/demo/projects" />,
 });
 
-const projectsModule = defineModule({
+const projectsResource = defineResource({
   path: "projects",
-  meta: {
-    title: "Projects",
-    icon: <FolderIcon width={16} height={16} />,
-  },
+  meta: { title: "Projects" },
   component: () => (
-    <ProjectListPage linkTo={(id) => `/dashboard/projects/${id}`} />
+    <ProjectListPage linkTo={(id) => `/demo/projects/${id}`} />
   ),
-  resources: [projectDetailResource],
+  subResources: [projectDetailResource],
 });
 
-const tasksModule = defineModule({
+const tasksResource = defineResource({
   path: "tasks",
-  meta: {
-    title: "Tasks",
-    icon: <CheckSquareIcon width={16} height={16} />,
-  },
+  meta: { title: "Tasks" },
   guards: [adminOnlyGuard],
   component: () => <TaskListPage />,
-  resources: [],
+});
+
+const demoModule = defineModule({
+  path: "demo",
+  meta: {
+    title: "Demo",
+    icon: <FolderIcon width={16} height={16} />,
+  },
+  guards: [() => redirectTo("projects")],
+  resources: [projectsResource, tasksResource],
 });
 
 const descriptionCardResource = defineResource({
@@ -129,9 +131,9 @@ const profileResource = defineResource({
 const App = () => {
   const { role } = useRoleSwitcher();
   const appShellConfig: AppShellProps = {
-    title: "Project Manager",
+    title: "AppShell Demo",
     basePath: "dashboard",
-    modules: [projectsModule, tasksModule, componentsModule],
+    modules: [demoModule, componentsModule],
     settingsResources: [profileResource],
     contextData: {
       role,

@@ -68,7 +68,6 @@
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
-    "globals": "catalog:",
     "happy-dom": "^20.6.2",
     "postcss": "^8",
     "prettier": "^3.8.1",

@@ -64,7 +64,7 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
       if (module.path.startsWith(":")) return null;
 
       const guardResult = await runGuards(module.guards);
-      if (guardResult.type !== "pass") return null;
+      if (guardResult.type === "hidden") return null;
 
       const visibleResources = await filterVisibleResources(
         module.resources,
@@ -100,7 +100,7 @@ const filterVisibleResources = async (
       if (resource.path.startsWith(":")) return null;
 
       const guardResult = await runGuards(resource.guards);
-      if (guardResult.type !== "pass") return null;
+      if (guardResult.type === "hidden") return null;
 
       const resourcePath = `${basePath}/${resource.path}`;
       const resourceTitle = resolveTitle(resource.meta.title, resource.path);

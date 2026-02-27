@@ -39,7 +39,15 @@ const createRoute = (
         Component: source.component,
         ...(source.loader && { loader: source.loader }),
       }
-    : undefined;
+    : source.loader
+      ? {
+          index: true,
+          loader: source.loader,
+          // Component is required to suppress React Router's warning about empty leaf routes,
+          // even though the loader always redirects/throws and this component will never render.
+          Component: () => null,
+        }
+      : undefined;
 
   return {
     path: source.path,

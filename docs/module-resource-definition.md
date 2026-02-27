@@ -5,7 +5,7 @@ AppShell will render the sidebar navigation, breadcrumbs and handle routing base
 Modules and Resources both share core interface. Of interest:
 
 - `path: string` - the path segment 
-- `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional for modules - will auto-redirect to first resource if omitted)
+- `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional for modules if guards are provided)
 - `guards?: Guard[]` - optional array of guard functions to control access based on permissions or feature flags
 
 A trivial `modules` example:
@@ -48,9 +48,10 @@ const appShellPropModule = [
       // ...
     ]
   }),
-  // Module without component - automatically redirects to first resource
+  // Module without component - requires guards that handle redirection
   defineModule({
     path: "dashboard",
+    guards: [() => redirectTo("overview")],
     resources: [
       defineResource({
         path: "overview",
@@ -95,7 +96,113 @@ Modules show as top-level menu items and resources are the sub-menu items.  Sub-
 
 In the example above, clicking the 'Orders' menu item above will take you to `/{basePath}/purchasing/orders` and render the OrdersPage page. If you browse, either by direct request or via client-side navigation to `/{basePath}/purchasing/orders/1234`, AppShell will render OrderDetailPage with 'id' available via useParams
 
-Providing a `component` for a Module is optional. If omitted, the module will automatically redirect to its first resource. This is useful for modules that serve as containers for multiple resources without needing their own landing page.
+Providing a `component` for a Module is optional if `guards` are provided. If neither `component` nor `guards` are provided, a runtime error will be thrown. This ensures explicit control over module behavior.
+
+For modules that serve as containers without their own landing page, use a redirect guard:
+
+```tsx
+import { defineModule, redirectTo } from "@tailor-platform/app-shell";
+
+defineModule({
+  path: "reports",
+  guards: [() => redirectTo("sales")],
+  resources: [salesResource, usersResource],
+});
+```
+
+> Read more about [client-side navigation](./routing-and-navigation.md) in AppShell apps
+
+---
+
+## Breaking Changes
+
+### Guard and Loader Cascade Removed
+
+**Changed in:** File-based routing release
+
+Guards and loaders defined at the module level are **no longer automatically cascaded** to child resources. Each resource must explicitly define its own guards and loaders.
+
+**Before:**
+```tsx
+defineModule({
+  path: "/dashboard",
+  guards: [authGuard], // Applied to all child resources automatically
+  resources: [
+    defineResource({ path: "/orders", element: <Orders /> }),  // authGuard applied
+    defineResource({ path: "/reports", element: <Reports /> }), // authGuard applied
+  ],
+});
+```
+
+**After:**
+```tsx
+defineModule({
+  path: "/dashboard",
+  guards: [authGuard],
+  resources: [
+    defineResource({ 
+      path: "/orders", 
+      guards: [authGuard], // Must be explicitly defined
+      element: <Orders /> 
+    }),
+    defineResource({ 
+      path: "/reports", 
+      guards: [authGuard], // Must be explicitly defined
+      element: <Reports /> 
+    }),
+  ],
+});
+```
+
+**Rationale:** Explicit guard/loader definitions per resource improve code clarity and make it easier to understand the security requirements of each route at a glance.
+
+**Migration tip:** For shared guard sets, compose them from a shared module:
+
+```tsx
+// src/guards.ts
+export const requireAuth = [authGuard];
+export const requireAdmin = [authGuard, adminRoleGuard];
+
+// In your module definitions
+defineResource({ 
+  path: "/orders", 
+  guards: [...requireAuth, canViewOrders],
+  component: OrdersPage 
+}),
+```
+
+### Module Without Component Requires Guards
+
+**Changed in:** File-based routing release
+
+Modules defined without a `component` now **must** provide `guards`. The automatic redirect to the first visible resource has been removed.
+
+**Before:**
+```tsx
+// Automatically redirected to first resource
+defineModule({
+  path: "reports",
+  resources: [salesResource, usersResource],
+});
+```
+
+**After:**
+```tsx
+// Explicit redirect via guards
+defineModule({
+  path: "reports",
+  guards: [() => redirectTo("sales")],
+  resources: [salesResource, usersResource],
+});
+
+// Error: defining a module without both component and guards will throw
+defineModule({
+  path: "reports",
+  resources: [salesResource, usersResource],
+}); // => Runtime error
+```
+
+**Rationale:** In file-based routing, the resource hierarchy is determined by directory structure, making implicit redirect behavior inconsistent. To maintain consistency across both explicit and file-based routing, this behavior has been removed.
 
 > Read more about [client-side navigation](./routing-and-navigation.md) in AppShell apps
 

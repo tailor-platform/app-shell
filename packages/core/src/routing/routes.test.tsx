@@ -233,7 +233,7 @@ describe("createContentRoutes", () => {
     expect(typeof loader).toBe("function");
 
     // Execute the loader - it should return a redirect
-    const result = await (loader as Function)({} as never);
+    const result = await (loader as (...args: unknown[]) => unknown)({} as never);
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(302);
     expect((result as Response).headers.get("Location")).toBe("/dashboard");

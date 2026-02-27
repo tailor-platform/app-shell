@@ -4,7 +4,6 @@ import { EmptyOutlet, SettingsWrapper } from "@/components/content";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import {
   Modules,
-  Module,
   Resource,
   ErrorBoundaryComponent,
   createNotFoundError,

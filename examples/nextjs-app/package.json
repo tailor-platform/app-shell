@@ -5,7 +5,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "oxlint",
+    "lint": "oxlint -c .oxlintrc.jsonc",
     "type-check": "tsc --incremental"
   },
   "dependencies": {

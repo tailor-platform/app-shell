@@ -28,7 +28,7 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
-    "lint": "oxlint",
+    "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
     "type-check": "tsc --incremental"
   },

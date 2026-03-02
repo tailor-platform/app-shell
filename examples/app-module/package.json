@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsup --watch",
     "build": "tsup",
-    "lint": "oxlint"
+    "lint": "oxlint -c .oxlintrc.jsonc"
   },
   "exports": {
     ".": {

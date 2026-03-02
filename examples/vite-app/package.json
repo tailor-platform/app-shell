@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint -c .oxlintrc.jsonc",
     "preview": "vite preview",
     "type-check": "tsc --incremental"
   },

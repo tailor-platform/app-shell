@@ -24,4 +24,3 @@ We've made sensible default choices so you can focus on what matters most — bu
 
 - [Quick Start](https://github.com/tailor-platform/app-shell/blob/main/docs/quickstart.md) — Installation, setup, and first steps
 - [API Reference](https://github.com/tailor-platform/app-shell/blob/main/docs/api.md) — Complete reference for all components, hooks, and functions
-- [Full documentation](https://github.com/tailor-platform/app-shell#documentation) — All guides and references

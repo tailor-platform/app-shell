@@ -56,8 +56,7 @@ function BreadcrumbLink({
       "data-slot": "breadcrumb-link",
       className: linkClassName,
       children,
-      to,
-      ...restProps,
+      ...(render ? restProps : { to, ...restProps }),
     },
   });
 }

@@ -2,6 +2,14 @@
   "name": "@tailor-platform/app-shell",
   "version": "0.27.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tailor-platform/app-shell",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./styles": "./dist/app-shell.css",
     "./theme.css": "./dist/theme.css",

@@ -25,12 +25,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: ./pnpm-lock.yaml
           node-version-file: "./package.json"
-
-      # require latest npm to get version above 11.5.1 for trusted publishing
-      # will not be necessary once we start using node 24
-      - name: Install latest npm
-        run: npm install -g npm@latest
-
       - run: pnpm install
       - uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.10
         with:

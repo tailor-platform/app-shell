@@ -1,6 +1,6 @@
 import "./globals.css";
 export { AppShell, type AppShellProps } from "./components/appshell";
-export { SidebarLayout, DefaultSidebar } from "./components/sidebar";
+export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 
 // Sidebar navigation components
@@ -12,7 +12,7 @@ export {
   type SidebarGroupProps,
   type SidebarLayoutProps,
   type DefaultSidebarProps,
-} from "./components/sidebar";
+} from "./components/sidebar/index";
 
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
@@ -71,7 +71,7 @@ export {
 export { useToast } from "./hooks/use-toast";
 
 // Badge component
-export { Badge, badgeVariants, type BadgeProps } from "./components/ui/badge";
+export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 
 // DescriptionCard
 export {

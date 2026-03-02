@@ -8,8 +8,8 @@ import {
 } from "react";
 import { useNavigate, Await } from "react-router";
 import { SearchIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogTitle } from "@/components/dialog";
+import { Input } from "@/components/input";
 
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
@@ -25,14 +25,14 @@ export type UseCommandPaletteOptions = {
  * Recursively processes subResources to include nested routes.
  */
 export function navItemsToRoutes(
-  navItems: Array<NavItem>
+  navItems: Array<NavItem>,
 ): Array<NavigatableRoute> {
   const routes: Array<NavigatableRoute> = [];
 
   const processResourceItems = (
     items: Array<NavItemResource>,
     parentIcon: React.ReactNode,
-    parentBreadcrumb: Array<string>
+    parentBreadcrumb: Array<string>,
   ) => {
     items.forEach((item) => {
       const breadcrumb = [...parentBreadcrumb, item.title];
@@ -92,7 +92,7 @@ export function useCommandPalette({
 
   const filteredRoutes = useMemo(
     () => filterRoutes(routes, search),
-    [routes, search]
+    [routes, search],
   );
 
   // Wrapper to reset selectedIndex when search changes
@@ -137,7 +137,7 @@ export function useCommandPalette({
       setOpen(false);
       setSearchInternal("");
     },
-    [navigate]
+    [navigate],
   );
 
   const handleKeyDown = useCallback(
@@ -149,7 +149,7 @@ export function useCommandPalette({
         case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev < filteredRoutes.length - 1 ? prev + 1 : prev
+            prev < filteredRoutes.length - 1 ? prev + 1 : prev,
           );
           break;
         case "ArrowUp":
@@ -164,7 +164,7 @@ export function useCommandPalette({
           break;
       }
     },
-    [filteredRoutes, selectedIndex, handleSelect]
+    [filteredRoutes, selectedIndex, handleSelect],
   );
 
   return {
@@ -240,7 +240,7 @@ export function CommandPaletteContent({
                     "astw:relative astw:flex astw:flex-col astw:w-full astw:cursor-pointer astw:select-none astw:items-start astw:rounded-sm astw:px-2 astw:py-2 astw:text-sm astw:outline-none astw:text-left",
                     index === selectedIndex
                       ? "astw:bg-accent astw:text-accent-foreground"
-                      : "astw:hover:bg-accent astw:hover:text-accent-foreground"
+                      : "astw:hover:bg-accent astw:hover:text-accent-foreground",
                   )}
                 >
                   <span className="astw:truncate astw:w-full astw:text-left">

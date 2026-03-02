@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TooltipProvider } from "../ui/tooltip";
+import { TooltipProvider } from "../tooltip";
 import { cn } from "../../lib/utils";
 
 import type {
@@ -26,7 +26,7 @@ import {
 function resolveField(
   fieldDef: FieldDefinition,
   data: Record<string, unknown>,
-  index: number
+  index: number,
 ): ResolvedField {
   // Get value from data using the key path
   const value = getNestedValue(data, fieldDef.key);
@@ -55,7 +55,7 @@ interface FieldSection {
  */
 function resolveFieldsWithSections(
   fieldConfigs: FieldConfig[],
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): FieldSection[] {
   const sections: FieldSection[] = [];
   let currentSection: ResolvedField[] = [];
@@ -66,7 +66,10 @@ function resolveFieldsWithSections(
     if (isDivider(config)) {
       // Push current section if it has fields
       if (currentSection.length > 0) {
-        sections.push({ id: `section-${sectionIndex}`, fields: currentSection });
+        sections.push({
+          id: `section-${sectionIndex}`,
+          fields: currentSection,
+        });
         sectionIndex++;
         currentSection = [];
       }
@@ -102,7 +105,7 @@ function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
     <div
       className={cn(
         "astw:flex astw:flex-col astw:gap-1 astw:min-w-0 astw:py-2",
-        fullWidth && "astw:col-span-full"
+        fullWidth && "astw:col-span-full",
       )}
     >
       <p className="astw:text-sm astw:font-medium astw:text-muted-foreground astw:leading-none">
@@ -161,7 +164,7 @@ export function DescriptionCard({
       ? // 4-column mode: 1 → 2 → 3 → 4 columns
         "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3 astw:@[800px]:grid-cols-4"
       : // 3-column mode: 1 → 2 → 3 columns
-        "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3"
+        "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3",
   );
 
   // Render a single section
@@ -201,12 +204,14 @@ export function DescriptionCard({
       <div
         className={cn(
           "astw:@container astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",
-          className
+          className,
         )}
       >
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
-          <h3 className="astw:text-lg astw:font-semibold astw:leading-none">{title}</h3>
+          <h3 className="astw:text-lg astw:font-semibold astw:leading-none">
+            {title}
+          </h3>
           {headerAction && <div>{headerAction}</div>}
         </div>
 
@@ -222,7 +227,10 @@ export function DescriptionCard({
                 <React.Fragment key={section.id}>
                   {/* Divider between sections (except before first) */}
                   {index > 0 && (
-                    <div className="astw:h-px astw:bg-border" role="separator" />
+                    <div
+                      className="astw:h-px astw:bg-border"
+                      role="separator"
+                    />
                   )}
                   {renderSection(section)}
                 </React.Fragment>

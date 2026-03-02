@@ -18,6 +18,10 @@
     },
     "test": {
       "dependsOn": ["^build"]
-    }
+    },
+    "fmt": {
+      "cache": false
+    },
+    "fmt:check": {}
   }
 }

@@ -26,7 +26,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "lint": "exit 0",
+    "lint": "oxlint",
     "test": "vitest run",
     "type-check": "tsc --incremental"
   },

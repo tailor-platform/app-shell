@@ -32,14 +32,28 @@ const createRoute = (
 ): RouteObject => {
   const effectiveErrorBoundary = source.errorBoundary || parentErrorBoundary;
 
-  // Guards are applied only to this route's index, not cascading to children
+  // Guards are applied only to this route's index, not cascading to children.
+  //
+  // When `source.loader` exists without a component, it means guards were attached
+  // via `withGuardsLoader()`. In that case we still need an index route so the loader
+  // can run (e.g. to redirect or throw 404). `source.loader` is currently only set
+  // by `withGuardsLoader()` when guards are present — if that coupling changes in the
+  // future this condition should be revisited.
   const indexRoute: RouteObject | undefined = source.component
     ? {
         index: true,
         Component: source.component,
         ...(source.loader && { loader: source.loader }),
       }
-    : undefined;
+    : source.loader
+      ? {
+          index: true,
+          loader: source.loader,
+          // Component is required to suppress React Router's warning about empty leaf routes,
+          // even though the loader always redirects/throws and this component will never render.
+          Component: () => null,
+        }
+      : undefined;
 
   return {
     path: source.path,

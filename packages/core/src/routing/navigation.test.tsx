@@ -2,7 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { AppShell } from "../components/appshell";
 import { useNavItems } from "./navigation";
-import { defineModule, defineResource, hidden } from "@/resource";
+import { defineModule, defineResource, hidden, redirectTo } from "@/resource";
 
 const renderNavItems = (
   modules: Array<ReturnType<typeof defineModule>>,
@@ -224,6 +224,115 @@ describe("useNavItems", () => {
     expect(resources).toHaveLength(2);
     expect(resources.map((r) => r.title)).toEqual(["List", "Settings"]);
     expect(resources.map((r) => r.url)).not.toContain("users/:id");
+  });
+
+  it("keeps modules with redirectTo guards visible in navigation", async () => {
+    const modules = [
+      defineModule({
+        path: "redirected",
+        meta: { title: "Redirected Module" },
+        resources: [
+          defineResource({
+            path: "target",
+            component: () => <div>Target</div>,
+          }),
+        ],
+        guards: [() => redirectTo("/other")],
+      }),
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard" },
+        component: () => <div>Dashboard Root</div>,
+        resources: [
+          defineResource({
+            path: "overview",
+            component: () => <div>Overview</div>,
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/dashboard/overview");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(2);
+    });
+
+    const navItems = await result.current!;
+    expect(navItems.map((i) => i.title)).toEqual([
+      "Redirected Module",
+      "Dashboard",
+    ]);
+  });
+
+  it("keeps resources with redirectTo guards visible in navigation", async () => {
+    const modules = [
+      defineModule({
+        path: "workspace",
+        meta: { title: "Workspace" },
+        component: () => <div>Workspace Root</div>,
+        resources: [
+          defineResource({
+            path: "visible",
+            component: () => <div>Visible</div>,
+          }),
+          defineResource({
+            path: "redirected",
+            component: () => <div>Redirected</div>,
+            guards: [() => redirectTo("/other")],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/workspace/visible");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(1);
+    });
+
+    const navItems = await result.current!;
+    const resources = navItems[0].items;
+    expect(resources).toHaveLength(2);
+    expect(resources.map((r) => r.title)).toEqual(["Visible", "Redirected"]);
+  });
+
+  it("keeps subResources with redirectTo guards visible in navigation", async () => {
+    const modules = [
+      defineModule({
+        path: "admin",
+        meta: { title: "Admin" },
+        component: () => <div>Admin Root</div>,
+        resources: [
+          defineResource({
+            path: "panel",
+            component: () => <div>Panel</div>,
+            subResources: [
+              defineResource({
+                path: "visible",
+                component: () => <div>Visible</div>,
+              }),
+              defineResource({
+                path: "redirected",
+                component: () => <div>Redirected</div>,
+                guards: [() => redirectTo("/other")],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/admin/panel");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(1);
+    });
+
+    const navItems = await result.current!;
+    const subItems = navItems[0].items[0].items!;
+    expect(subItems).toHaveLength(2);
+    expect(subItems.map((s) => s.title)).toEqual(["Visible", "Redirected"]);
   });
 
   it("filters out hidden subResources by guards", async () => {

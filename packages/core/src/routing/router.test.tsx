@@ -262,6 +262,43 @@ describe("RouterContainer (memory)", () => {
     expect(await screen.findByText("Overview")).toBeDefined();
   });
 
+  it("redirects when module has no component and only redirectTo guard", async () => {
+    const dashboardModule = defineModule({
+      path: "dashboard",
+      component: () => <div>Dashboard</div>,
+      meta: { title: "Dashboard" },
+      resources: [
+        defineResource({
+          path: "overview",
+          component: () => <div>Overview</div>,
+          meta: { title: "Overview" },
+        }),
+      ],
+    });
+
+    // Module without component — only redirectTo guard
+    const redirectModule = defineModule({
+      path: "redirect-only",
+      meta: { title: "Redirect Only" },
+      guards: [() => redirectTo("/dashboard/overview")],
+      resources: [
+        defineResource({
+          path: "child",
+          component: () => <div>Child</div>,
+          meta: { title: "Child" },
+        }),
+      ],
+    });
+
+    renderWithConfig({
+      modules: [dashboardModule, redirectModule],
+      initialEntries: ["/redirect-only"],
+    });
+
+    // Should redirect to dashboard/overview, not render a blank page
+    expect(await screen.findByText("Overview")).toBeDefined();
+  });
+
   it("redirects resource when guard returns redirectTo", async () => {
     const dashboardModule = defineModule({
       path: "dashboard",

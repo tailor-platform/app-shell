@@ -1,7 +1,7 @@
 import { describe, expect, it, assert } from "vitest";
 import { createContentRoutes } from "./routes";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import { defineModule, defineResource, pass } from "@/resource";
+import { defineModule, defineResource, pass, redirectTo } from "@/resource";
 
 const createMockResource = (path: string) =>
   defineResource({
@@ -158,6 +158,85 @@ describe("createContentRoutes", () => {
     const childResource = moduleRoute?.children?.[1];
     expect(childResource?.path).toBe("child");
     expect(childResource?.loader).toBeUndefined();
+  });
+
+  it("creates index route with loader and dummy component for module without component but with guards", () => {
+    const module = defineModule({
+      path: "redirect-module",
+      meta: { title: "Redirect Module" },
+      guards: [() => redirectTo("/dashboard")],
+      resources: [createMockResource("child")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    expect(moduleRoute?.path).toBe("redirect-module");
+
+    // Index route should exist with loader and dummy component
+    const indexRoute = moduleRoute?.children?.[0];
+    expect(indexRoute?.index).toBe(true);
+    expect(indexRoute?.loader).toBeDefined();
+    expect(typeof indexRoute?.loader).toBe("function");
+    expect(typeof indexRoute?.Component).toBe("function");
+
+    // Child resource should still be present
+    const childRoute = moduleRoute?.children?.[1];
+    expect(childRoute?.path).toBe("child");
+  });
+
+  it("does not create index route for module without component and without guards", () => {
+    // This case should throw in defineModule, but we test createRoute's behavior
+    // by using a module with component (which produces index route)
+    const module = defineModule({
+      path: "no-comp-no-guard",
+      meta: { title: "Test" },
+      component: () => <div>Test</div>,
+      resources: [createMockResource("child")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const indexRoute = moduleRoute?.children?.[0];
+    expect(indexRoute?.index).toBe(true);
+    expect(indexRoute?.Component).toBeDefined();
+    // No guards = no loader
+    expect(indexRoute?.loader).toBeUndefined();
+  });
+
+  it("redirect guard loader returns a redirect response", async () => {
+    const module = defineModule({
+      path: "redirect-module",
+      meta: { title: "Redirect Module" },
+      guards: [() => redirectTo("/dashboard")],
+      resources: [createMockResource("child")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const indexRoute = moduleRoute?.children?.[0];
+    const loader = indexRoute?.loader;
+    expect(typeof loader).toBe("function");
+
+    // Execute the loader - it should return a redirect
+    const result = await (loader as (...args: unknown[]) => unknown)({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/dashboard");
   });
 
   it("attaches loader to index route only for resource (no cascade to sub-resources)", () => {

@@ -41,17 +41,15 @@ function TooltipTrigger({
 function TooltipContent({
   className,
   sideOffset = 0,
+  side = "top",
+  align = "center",
   children,
-  ...props
+  ...restProps
 }: React.ComponentProps<typeof BaseTooltip.Popup> & {
   sideOffset?: number;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
 }) {
-  const { side = "top", align = "center", ...restProps } = props as {
-    side?: "top" | "right" | "bottom" | "left";
-    align?: "start" | "center" | "end";
-  };
   return (
     <BaseTooltip.Portal>
       <BaseTooltip.Positioner sideOffset={sideOffset} side={side} align={align}>

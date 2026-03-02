@@ -8,9 +8,9 @@ An opinionated React application framework for creating applications on Tailor P
 
 ## Why AppShell?
 
-We've made sensible default choices so you can focus on what matters most — building business-level screens. The alternative is implementing authentication, routing, navigation, layouts, and theming all by yourself. AppShell handles all of that out of the box, while remaining portable to any React-based application (Next.js, Vite, Remix, etc.).
+We've made sensible default choices so you can focus on what matters most — building business-level screens. The alternative is implementing authentication, routing, navigation, layouts, and theming all by yourself. AppShell handles all of that out of the box, designed primarily for Vite-based React applications that can be deployed to Tailor Platform's static hosting.
 
-- **Declarative app structure** — Define modules and resources, get routing, sidebar navigation, and breadcrumbs automatically
+- **Routing** — Declarative module/resource definitions or [file-based routing](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin) with automatic sidebar navigation and breadcrumbs
 - **Authentication** — Built-in OAuth2/OIDC integration with Tailor Platform
 - **Responsive layouts** — Sidebar, column layouts (1/2/3), and mobile support out of the box
 - **Command Palette** — Keyboard-driven quick navigation (`Cmd+K`)

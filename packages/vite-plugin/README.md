@@ -1,6 +1,10 @@
 # @tailor-platform/app-shell-vite-plugin
 
-Vite plugin for file-based routing in AppShell applications.
+[![npm version](https://img.shields.io/npm/v/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin)
+[![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE.md)
+
+Vite plugin for file-based routing in AppShell applications. Define pages by placing components in a directory structure instead of assembling explicit module/resource hierarchies.
 
 ## Installation
 
@@ -33,57 +37,13 @@ export default defineConfig({
 | `logLevel` | `'info' \| 'debug' \| 'off'` | `'info'` | Plugin log level |
 
 ```typescript
-// vite.config.ts
 appShellRoutes({
-  pagesDir: 'src/pages', // default
-})
-```
-
-## Typed Routes Generation
-
-Enable `generateTypedRoutes` to generate a TypeScript file with type-safe route helpers:
-
-```typescript
-// vite.config.ts
-appShellRoutes({
+  pagesDir: 'src/pages',
   generateTypedRoutes: true, // outputs to src/routes.generated.ts
-  // or with custom path:
-  // generateTypedRoutes: { output: 'src/lib/routes.ts' },
 })
 ```
 
-### Generated File
-
-```typescript
-// src/routes.generated.ts (auto-generated)
-import { createTypedPaths } from "@tailor-platform/app-shell";
-
-type RouteParams = {
-  "/": {};
-  "/dashboard": {};
-  "/dashboard/orders": {};
-  "/dashboard/orders/:id": { id: string };
-};
-
-export const paths = createTypedPaths<RouteParams>();
-```
-
-### Usage
-
-```tsx
-import { paths } from './routes.generated';
-import { Link } from '@tailor-platform/app-shell';
-
-// Static routes - no params needed
-<Link to={paths.for("/dashboard")}>Dashboard</Link>
-
-// Dynamic routes - params are type-checked
-<Link to={paths.for("/dashboard/orders/:id", { id: orderId })}>Order Detail</Link>
-
-// TypeScript errors:
-paths.for("/dashboard/orders/:id"); // Error: missing required param 'id'
-paths.for("/invalid-route");        // Error: route doesn't exist
-```
+For comprehensive usage guide including page conventions, path rules, guards, typed routes, and migration from the legacy API, see the [File-Based Routing documentation](https://github.com/tailor-platform/app-shell/blob/main/docs/file-based-routing.md).
 
 ---
 

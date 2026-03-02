@@ -7,6 +7,9 @@
     "url": "https://github.com/tailor-platform/app-shell",
     "directory": "packages/core"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./styles": "./dist/app-shell.css",
     "./theme.css": "./dist/theme.css",

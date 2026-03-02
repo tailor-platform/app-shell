@@ -2,7 +2,7 @@ import { render, screen, within, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider, SidebarMenu } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarMenu } from "@/components/sidebar";
 import {
   AppShellConfigContext,
   type RootConfiguration,

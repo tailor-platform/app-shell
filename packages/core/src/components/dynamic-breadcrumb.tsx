@@ -6,7 +6,7 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@/components/breadcrumb";
 import { processPathSegments } from "@/routing/path";
 import { useT } from "@/i18n-labels";
 

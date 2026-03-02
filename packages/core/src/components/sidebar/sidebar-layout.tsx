@@ -3,10 +3,10 @@ import {
   SidebarInset,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/sidebar";
 import { SunIcon } from "lucide-react";
 import { AppShellOutlet } from "@/components/content";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/button";
 import { useTheme } from "@/contexts/theme-context";
 import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";

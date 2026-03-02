@@ -1,18 +1,17 @@
 import type { ReactNode } from "react";
-import { useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/components/collapsible";
 import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
-} from "@/components/ui/sidebar";
-import { Link } from "@/components/ui/client-side-link";
+} from "@/components/sidebar";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
@@ -85,55 +84,55 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   // Render with clickable header (has `to` prop)
   if (to) {
     return (
-      <Collapsible asChild defaultOpen={defaultOpen}>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild tooltip={resolvedTitle}>
+      <Collapsible render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
+        <SidebarMenuButton
+          render={
             <Link
               to={to}
               className={
                 isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
               }
-            >
-              {icon}
-              <span>{resolvedTitle}</span>
-            </Link>
-          </SidebarMenuButton>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuAction className="astw:data-[state=open]:rotate-90">
-              <ChevronRight />
-              <span className="astw:sr-only">{t("toggle")}</span>
-            </SidebarMenuAction>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <SidebarMenuSub>{children}</SidebarMenuSub>
-          </CollapsibleContent>
-        </SidebarMenuItem>
+            />
+          }
+          tooltip={resolvedTitle}
+        >
+          {icon}
+          <span>{resolvedTitle}</span>
+        </SidebarMenuButton>
+        <CollapsibleTrigger
+          render={
+            <SidebarMenuAction className="astw:data-panel-open:rotate-90" />
+          }
+        >
+          <ChevronRight />
+          <span className="astw:sr-only">{t("toggle")}</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>{children}</SidebarMenuSub>
+        </CollapsibleContent>
       </Collapsible>
     );
   }
 
   // Render with non-clickable header (no `to` prop)
   return (
-    <Collapsible asChild defaultOpen={defaultOpen}>
-      <SidebarMenuItem>
-        <CollapsibleTrigger className="astw:flex astw:w-[100%] astw:[&[data-state=open]_.astw-rotate-target]:rotate-90">
-          <SidebarMenuButton asChild tooltip={resolvedTitle}>
-            <span className="astw:flex astw:w-[100%]">
-              {icon}
-              <span>{resolvedTitle}</span>
-            </span>
-          </SidebarMenuButton>
-          <SidebarMenuAction className="astw-rotate-target" asChild>
-            <span>
-              <ChevronRight />
-              <span className="astw:sr-only">{t("toggle")}</span>
-            </span>
-          </SidebarMenuAction>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>{children}</SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
+    <Collapsible render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
+      <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
+        <SidebarMenuButton
+          render={<span className="astw:flex astw:w-full" />}
+          tooltip={resolvedTitle}
+        >
+          {icon}
+          <span>{resolvedTitle}</span>
+        </SidebarMenuButton>
+        <SidebarMenuAction className="astw-rotate-target" render={<span />}>
+          <ChevronRight />
+          <span className="astw:sr-only">{t("toggle")}</span>
+        </SidebarMenuAction>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub>{children}</SidebarMenuSub>
+      </CollapsibleContent>
     </Collapsible>
   );
 };

@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@tailor-platform/app-shell)](https://www.npmjs.com/package/@tailor-platform/app-shell)
 [![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/app-shell)](https://www.npmjs.com/package/@tailor-platform/app-shell)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/tailor-platform/app-shell/blob/main/LICENSE.md)
 
 An opinionated React application framework for creating applications on Tailor Platform.
 

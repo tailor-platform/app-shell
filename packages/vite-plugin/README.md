@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin)
 [![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/tailor-platform/app-shell/blob/main/LICENSE.md)
 
 Vite plugin for file-based routing in AppShell applications. Define pages by placing components in a directory structure instead of assembling explicit module/resource hierarchies.
 

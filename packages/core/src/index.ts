@@ -93,59 +93,20 @@ export { usePageMeta, type PageMeta } from "./hooks/use-page-meta";
 
 // === Primitive UI Components ===
 
-// Button
 export { Button, buttonVariants } from "./components/button";
-
-// Input
 export { Input } from "./components/input";
-
-// Skeleton
-export { Skeleton } from "./components/skeleton";
-
-// Table
 export { Table } from "./components/table";
-
-// Dialog
 export { Dialog } from "./components/dialog";
-
-// Tooltip
 export { Tooltip } from "./components/tooltip";
-
-// Collapsible
 export { Collapsible } from "./components/collapsible";
-
-// Breadcrumb
 export { Breadcrumb } from "./components/breadcrumb";
-
-// Separator
 export { Separator } from "./components/separator";
-
-// Label
 export { Label } from "./components/label";
-
-// Checkbox
 export { Checkbox } from "./components/checkbox";
-
-// Switch
 export { Switch } from "./components/switch";
-
-// Progress
 export { Progress } from "./components/progress";
-
-// Meter
 export { Meter } from "./components/meter";
-
-// Toggle
 export { Toggle, toggleVariants } from "./components/toggle";
-
-// Fieldset
 export { Fieldset } from "./components/fieldset";
-
-// Spinner
-export { Spinner } from "./components/spinner";
-
-// Avatar
 export { Avatar } from "./components/avatar";
-
-// PreviewCard
 export { PreviewCard } from "./components/preview-card";

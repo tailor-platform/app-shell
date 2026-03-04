@@ -10,16 +10,18 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 ## Commands
 
-**📋 For complete development commands and setup instructions, see:** [README.md - Development Commands](./README.md#development-commands)
+**📋 For development commands, see:** [README.md - Development](./README.md#development)
 
 ## Documentation Index
 
 This project has comprehensive documentation organized in the `docs/` directory:
 
 ### Core Documentation
+- **[Quick Start](./docs/quickstart.md)** - Installation, setup, and first steps
 - **[API Reference](./docs/api.md)** - Complete API documentation for all components, hooks, and functions
 - **[Module & Resource Definition](./docs/module-resource-definition.md)** - How to structure your application using modules and resources
-- **[Routing & Navigation](./docs/routing-and-navigation.md)** - Understanding AppShell's routing system
+- **[File-Based Routing](./docs/file-based-routing.md)** - Defining pages via directory structure with vite plugin
+- **[Routing & Navigation](./docs/routing-and-navigation.md)** - Client-side navigation hooks and Command Palette
 - **[Sidebar Navigation](./docs/sidebar-navigation.md)** - Customizing sidebar with SidebarItem, SidebarGroup components
 
 ### Setup & Configuration  

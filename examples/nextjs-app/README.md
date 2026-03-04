@@ -1,9 +1,11 @@
-# Next.js example with AppShell
+# Next.js Example
 
-## Run 
+Example AppShell application using Next.js App Router.
+
+## Run
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the result.

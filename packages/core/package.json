@@ -1,6 +1,21 @@
 {
   "name": "@tailor-platform/app-shell",
   "version": "0.27.1",
+  "description": "An opinionated React application framework for building ERP applications on Tailor Platform",
+  "keywords": [
+    "react",
+    "app-shell",
+    "tailor-platform",
+    "erp",
+    "vite",
+    "sidebar",
+    "routing"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/tailor-platform"
+  },
   "type": "module",
   "repository": {
     "type": "git",

@@ -1,6 +1,19 @@
 {
   "name": "@tailor-platform/app-shell-vite-plugin",
   "version": "0.1.0",
+  "description": "Vite plugin for file-based routing in AppShell applications",
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "file-based-routing",
+    "tailor-platform",
+    "app-shell"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/vite-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/tailor-platform"
+  },
   "type": "module",
   "repository": {
     "type": "git",

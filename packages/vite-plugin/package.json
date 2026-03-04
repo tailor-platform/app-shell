@@ -37,7 +37,7 @@
     "ts-morph": "^27.0.2"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^25",
     "tsdown": "^0.20.3",
     "typescript": "^5",
     "vite": "^7.3.1",

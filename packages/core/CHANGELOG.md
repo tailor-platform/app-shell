@@ -1,5 +1,13 @@
 # @tailor-platform/app-shell
 
+## 0.27.2
+
+### Patch Changes
+
+- b01718f: Updated [graphql](https://www.npmjs.com/package/graphql) (^16.12.0 -> ^16.13.0)
+- ed5f14f: Fixed incorrect `types` path in `package.json` exports. The `"."` entry was pointing to `./dist/index.d.ts` which does not exist. Updated to `./dist/app-shell.d.ts` to match the actual build output.
+- d0dc61b: Reorganized README and documentation structure for public-facing clarity. Added `docs/quickstart.md`, created NPM-facing `packages/core/README.md` with motivation and feature highlights, and ensured each documentation layer (root README, package READMEs, docs/) serves a distinct purpose.
+
 ## 0.27.1
 
 ### Patch Changes

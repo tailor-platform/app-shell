@@ -64,7 +64,7 @@ describe("Tabs", () => {
     });
   });
 
-  it("marks the active trigger with data-selected", async () => {
+  it("marks the active trigger with data-active", async () => {
     render(
       <Tabs.Root defaultValue="tab1">
         <Tabs.List>
@@ -81,6 +81,7 @@ describe("Tabs", () => {
     );
 
     const trigger1 = screen.getByTestId("trigger-1");
+    expect(trigger1.hasAttribute("data-active")).toBe(true);
     expect(trigger1.getAttribute("aria-selected")).toBe("true");
   });
 

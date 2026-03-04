@@ -42,7 +42,7 @@ function TabsTrigger({
       className={cn(
         "astw:inline-flex astw:items-center astw:justify-center astw:gap-1.5 astw:whitespace-nowrap astw:rounded-md astw:px-2.5 astw:py-1 astw:text-sm astw:font-medium astw:outline-none astw:transition-all",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
-        "astw:data-selected:bg-background astw:data-selected:text-foreground astw:data-selected:shadow-sm",
+        "astw:data-active:bg-background astw:data-active:text-foreground astw:data-active:shadow-sm",
         "astw:disabled:pointer-events-none astw:disabled:opacity-50",
         "astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:[&_svg]:shrink-0",
         className,

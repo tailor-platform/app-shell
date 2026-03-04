@@ -447,6 +447,135 @@ const MultipleComboboxDemo = () => {
   );
 };
 
+interface Country {
+  name: string;
+  code: string;
+  flag: string;
+}
+
+const AsyncComboboxDemo = () => {
+  const countries = Combobox.useAsync<Country>({
+    fetcher: async (query, { signal }) => {
+      const res = await fetch(
+        `https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,cca2,flag`,
+        { signal },
+      );
+      if (!res.ok) return [];
+      const data = (await res.json()) as {
+        name: { common: string };
+        cca2: string;
+        flag: string;
+      }[];
+      return data.map((c) => ({
+        name: c.name.common,
+        code: c.cca2,
+        flag: c.flag,
+      }));
+    },
+    debounceMs: 300,
+  });
+
+  return (
+    <Combobox.Root
+      items={countries.items}
+      filter={null}
+      onInputValueChange={countries.onInputValueChange}
+      itemToStringLabel={(country: Country) =>
+        `${country.flag} ${country.name}`
+      }
+    >
+      <Combobox.InputGroup>
+        <Combobox.Input placeholder="Search countries..." />
+        <Combobox.Clear />
+        <Combobox.Trigger />
+      </Combobox.InputGroup>
+      <Combobox.Content>
+        <Combobox.List>
+          {(country: Country) => (
+            <Combobox.Item key={country.code} value={country}>
+              {country.flag} {country.name}
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+        <Combobox.Empty>
+          {countries.loading
+            ? "Loading..."
+            : countries.query
+              ? "No results found."
+              : "Type to search countries."}
+        </Combobox.Empty>
+        <Combobox.Status>
+          {countries.loading
+            ? "Loading results..."
+            : "Type to search countries."}
+        </Combobox.Status>
+      </Combobox.Content>
+    </Combobox.Root>
+  );
+};
+
+const AsyncAutocompleteDemo = () => {
+  const countries = Autocomplete.useAsync<Country>({
+    fetcher: async (query, { signal }) => {
+      const res = await fetch(
+        `https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,cca2,flag`,
+        { signal },
+      );
+      if (!res.ok) return [];
+      const data = (await res.json()) as {
+        name: { common: string };
+        cca2: string;
+        flag: string;
+      }[];
+      return data.map((c) => ({
+        name: c.name.common,
+        code: c.cca2,
+        flag: c.flag,
+      }));
+    },
+    debounceMs: 300,
+  });
+
+  return (
+    <Autocomplete.Root
+      items={countries.items}
+      value={countries.query}
+      onValueChange={countries.onValueChange}
+      filter={null}
+      itemToStringValue={(country: Country) => country.name}
+    >
+      <Autocomplete.InputGroup>
+        <Autocomplete.Input placeholder="Search countries..." />
+        <Autocomplete.Clear />
+        <Autocomplete.Trigger />
+      </Autocomplete.InputGroup>
+      <Autocomplete.Content>
+        <Autocomplete.List>
+          {(country: Country) => (
+            <Autocomplete.Item key={country.code} value={country}>
+              {country.flag} {country.name}
+            </Autocomplete.Item>
+          )}
+        </Autocomplete.List>
+        <Autocomplete.Empty>
+          {countries.loading
+            ? "Loading..."
+            : countries.query
+              ? "No results found."
+              : "Type to search countries."}
+        </Autocomplete.Empty>
+        <Autocomplete.Status>
+          {countries.loading
+            ? "Loading results..."
+            : countries.items.length > 0
+              ? `${countries.items.length} results available.`
+              : "Type to search countries."}
+        </Autocomplete.Status>
+      </Autocomplete.Content>
+    </Autocomplete.Root>
+  );
+};
+
 const CreatableComboboxDemo = () => {
   const [labels, setLabels] = useState<LabelItem[]>(initialLabels);
   const [dialogState, setDialogState] = useState<{
@@ -1078,31 +1207,6 @@ const ComponentsShowcasePage = () => {
           </Section>
 
           {/* ================================================================
-              BREADCRUMB
-              ================================================================ */}
-          <Section title="Breadcrumb">
-            <Breadcrumb.Root>
-              <Breadcrumb.List>
-                <Breadcrumb.Item>
-                  <Breadcrumb.Link to="/">Home</Breadcrumb.Link>
-                </Breadcrumb.Item>
-                <Breadcrumb.Separator />
-                <Breadcrumb.Item>
-                  <Breadcrumb.Link to="/custom-page">Modules</Breadcrumb.Link>
-                </Breadcrumb.Item>
-                <Breadcrumb.Separator />
-                <Breadcrumb.Item>
-                  <Breadcrumb.Ellipsis />
-                </Breadcrumb.Item>
-                <Breadcrumb.Separator />
-                <Breadcrumb.Item>
-                  <Breadcrumb.Page>Components Showcase</Breadcrumb.Page>
-                </Breadcrumb.Item>
-              </Breadcrumb.List>
-            </Breadcrumb.Root>
-          </Section>
-
-          {/* ================================================================
               SEPARATOR
               ================================================================ */}
           <Section title="Separator">
@@ -1433,6 +1537,22 @@ const ComponentsShowcasePage = () => {
                 </span>
                 <CreatableComboboxDemo />
               </div>
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#888",
+                    marginBottom: "0.5rem",
+                    display: "block",
+                  }}
+                >
+                  Async (REST Countries API)
+                </span>
+                <AsyncComboboxDemo />
+              </div>
             </div>
           </Section>
 
@@ -1523,6 +1643,23 @@ const ComponentsShowcasePage = () => {
                     <Autocomplete.Empty>No produce found.</Autocomplete.Empty>
                   </Autocomplete.Content>
                 </Autocomplete.Root>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#888",
+                    marginBottom: "0.5rem",
+                    display: "block",
+                  }}
+                >
+                  Async (REST Countries API)
+                </span>
+                <AsyncAutocompleteDemo />
               </div>
             </div>
           </Section>

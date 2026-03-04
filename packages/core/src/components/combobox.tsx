@@ -4,6 +4,11 @@ import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAsyncItems } from "@/hooks/use-async-items";
+import type {
+  UseAsyncItemsOptions,
+  UseAsyncItemsReturn,
+} from "@/hooks/use-async-items";
 
 function ComboboxRoot<Value, Multiple extends boolean | undefined = false>({
   ...props
@@ -256,6 +261,19 @@ function ComboboxValue({
   ...props
 }: React.ComponentProps<typeof BaseCombobox.Value>) {
   return <BaseCombobox.Value data-slot="combobox-value" {...props} />;
+}
+
+function ComboboxStatus({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Status>) {
+  return (
+    <BaseCombobox.Status
+      data-slot="combobox-status"
+      className={cn("astw:sr-only", className)}
+      {...props}
+    />
+  );
 }
 
 function ComboboxCollection({
@@ -580,6 +598,47 @@ function useCreatable<T extends object>(
   };
 }
 
+// ============================================================================
+// useAsync hook
+// ============================================================================
+
+/**
+ * Hook that encapsulates the async combobox pattern — debounced fetching,
+ * request cancellation via `AbortController`, and loading state.
+ *
+ * Pass `filter={null}` to `<Combobox.Root>` to disable internal filtering
+ * since items are already filtered by the remote source.
+ *
+ * @example
+ * ```tsx
+ * const countries = Combobox.useAsync({
+ *   fetcher: async (query, { signal }) => {
+ *     const res = await fetch(
+ *       `https://restcountries.com/v3.1/name/${query}`,
+ *       { signal },
+ *     );
+ *     if (!res.ok) return [];
+ *     return res.json();
+ *   },
+ *   debounceMs: 300,
+ * });
+ *
+ * <Combobox.Root
+ *   items={countries.items}
+ *   filter={null}
+ *   onInputValueChange={countries.onInputValueChange}
+ * >
+ *   ...
+ *   <Combobox.Empty>
+ *     {countries.loading ? "Loading..." : "No results."}
+ *   </Combobox.Empty>
+ * </Combobox.Root>
+ * ```
+ */
+function useAsync<T>(options: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
+  return useAsyncItems(options);
+}
+
 const Combobox = {
   Root: ComboboxRoot,
   InputGroup: ComboboxInputGroup,
@@ -597,8 +656,10 @@ const Combobox = {
   ChipRemove: ComboboxChipRemove,
   Value: ComboboxValue,
   Collection: ComboboxCollection,
+  Status: ComboboxStatus,
   useFilter: BaseCombobox.useFilter,
   useCreatable,
+  useAsync,
 };
 
 export { Combobox };

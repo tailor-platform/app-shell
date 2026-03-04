@@ -4,6 +4,11 @@ import type { AutocompleteRootProps } from "@base-ui/react/autocomplete";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAsyncItems } from "@/hooks/use-async-items";
+import type {
+  UseAsyncItemsOptions,
+  UseAsyncItemsReturn,
+} from "@/hooks/use-async-items";
 
 function AutocompleteRoot<Value>(props: AutocompleteRootProps<Value>) {
   return (
@@ -205,6 +210,87 @@ function AutocompleteCollection({
   );
 }
 
+function AutocompleteStatus({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Status>) {
+  return (
+    <BaseAutocomplete.Status
+      data-slot="autocomplete-status"
+      className={cn("astw:sr-only", className)}
+      {...props}
+    />
+  );
+}
+
+// ============================================================================
+// useAsync hook
+// ============================================================================
+
+export interface AutocompleteUseAsyncReturn<T> {
+  /** Fetched items — pass to the Root `items` prop */
+  items: T[];
+  /** Whether a fetch is currently in-flight */
+  loading: boolean;
+  /** Current input query string */
+  query: string;
+  /**
+   * Value change handler — pass to the Root `onValueChange` prop.
+   *
+   * Internally filters out `item-press` events so that selecting an item does
+   * not trigger a redundant refetch.
+   */
+  onValueChange: (value: string) => void;
+}
+
+/**
+ * Hook that encapsulates the async autocomplete pattern — debounced fetching,
+ * request cancellation via `AbortController`, and loading state.
+ *
+ * Pass `filter={null}` to `<Autocomplete.Root>` to disable internal filtering
+ * since items are already filtered by the remote source.
+ *
+ * Unlike `Combobox.useAsync`, Autocomplete's value is always the input text
+ * (there is no separate `inputValue` prop), so you must pass `value` and
+ * `onValueChange` instead of `onInputValueChange`.
+ *
+ * @example
+ * ```tsx
+ * const movies = Autocomplete.useAsync({
+ *   fetcher: async (query, { signal }) => {
+ *     const res = await fetch(`/api/movies?q=${query}`, { signal });
+ *     if (!res.ok) return [];
+ *     return res.json();
+ *   },
+ *   debounceMs: 300,
+ * });
+ *
+ * <Autocomplete.Root
+ *   items={movies.items}
+ *   value={movies.query}
+ *   onValueChange={movies.onValueChange}
+ *   filter={null}
+ * >
+ *   ...
+ *   <Autocomplete.Empty>
+ *     {movies.loading ? "Loading..." : "No results."}
+ *   </Autocomplete.Empty>
+ * </Autocomplete.Root>
+ * ```
+ */
+function useAsync<T>(
+  options: UseAsyncItemsOptions<T>,
+): AutocompleteUseAsyncReturn<T> {
+  const { items, loading, query, onInputValueChange } = useAsyncItems(options);
+
+  return {
+    items,
+    loading,
+    query,
+    onValueChange: onInputValueChange,
+  };
+}
+
 const Autocomplete = {
   Root: AutocompleteRoot,
   Value: AutocompleteValue,
@@ -219,7 +305,9 @@ const Autocomplete = {
   Group: AutocompleteGroup,
   GroupLabel: AutocompleteGroupLabel,
   Collection: AutocompleteCollection,
+  Status: AutocompleteStatus,
   useFilter: BaseAutocomplete.useFilter,
+  useAsync,
 };
 
 export { Autocomplete };

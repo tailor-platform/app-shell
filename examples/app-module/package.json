@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development tsup --watch",
-    "build": "tsup"
+    "build": "tsup",
+    "lint": "oxlint -c .oxlintrc.jsonc"
   },
   "exports": {
     ".": {

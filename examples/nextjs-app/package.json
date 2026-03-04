@@ -5,7 +5,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "oxlint -c .oxlintrc.jsonc",
     "type-check": "tsc --incremental"
   },
   "dependencies": {
@@ -20,8 +20,6 @@
     "@types/node": "^22",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "eslint": "catalog:",
-    "eslint-config-next": "^16.1.6",
     "postcss": "^8",
     "tailwindcss": "^4.2.1",
     "tw-animate-css": "^1.4.0",

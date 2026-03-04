@@ -8,12 +8,17 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "type-check": "turbo type-check",
+    "lint": "turbo lint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
     "changeset:publish": "pnpm build && changeset publish"
   },
   "packageManager": "pnpm@10.24.0",
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "oxlint": "catalog:",
+    "oxfmt": "catalog:",
     "turbo": "^2.8.10"
   }
 }

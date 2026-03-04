@@ -153,8 +153,7 @@ export function Layout({
     <div className="astw:flex astw:flex-col">
       {hasHeader && (
         <header
-          className="astw:w-full astw:flex astw:justify-between astw:items-center"
-          style={{ padding: "1.5rem", paddingBottom: "1rem" }}
+          className="astw:w-full astw:flex astw:justify-between astw:items-center astw:pt-6 astw:pb-4"
         >
           {title && (
             <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>
@@ -168,10 +167,8 @@ export function Layout({
           )}
         </header>
       )}
-      <div style={{ padding: hasHeader ? "0 1.5rem 1.5rem 1.5rem" : "1.5rem" }}>
-        <div className={containerClasses}>
-          {childrenWithStyles}
-        </div>
+      <div className={cn(hasHeader ? "astw:pb-6" : "astw:py-6", containerClasses)}>
+        {childrenWithStyles}
       </div>
     </div>
   );

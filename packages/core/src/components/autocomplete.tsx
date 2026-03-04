@@ -2,13 +2,9 @@ import * as React from "react";
 import { Autocomplete as BaseAutocomplete } from "@base-ui/react/autocomplete";
 import type { AutocompleteRootProps } from "@base-ui/react/autocomplete";
 import { ChevronDownIcon, XIcon } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
-import type {
-  UseAsyncItemsOptions,
-  UseAsyncItemsReturn,
-} from "@/hooks/use-async-items";
+import type { UseAsyncItemsOptions } from "@/hooks/use-async-items";
 
 function AutocompleteRoot<Value>(props: AutocompleteRootProps<Value>) {
   return (

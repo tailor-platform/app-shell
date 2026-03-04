@@ -2,7 +2,6 @@ import * as React from "react";
 import { useState, useMemo, useCallback } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
 import type {

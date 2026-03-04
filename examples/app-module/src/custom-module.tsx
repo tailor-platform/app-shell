@@ -11,7 +11,6 @@ import {
   hiddenResource,
   adminOnlyResource,
 } from "./sub-pages";
-import { componentsShowcaseResource } from "./components-showcase";
 
 const ZapIcon = (props: SVGProps<SVGSVGElement>) => {
   return (
@@ -54,17 +53,6 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
-              to="/custom-page/components-showcase"
-              style={{
-                color: "hsl(var(--primary))",
-                textDecoration: "underline",
-              }}
-            >
-              🧩 Components Showcase (All UI Components)
-            </Link>
-          </p>
-          <p>
-            <Link
               to="/custom-page/admin-only"
               style={{
                 color: "hsl(var(--destructive))",
@@ -82,10 +70,5 @@ export const customPageModule = defineModule({
     title: labels.t("customPageTitle"),
     icon: <ZapIcon />,
   },
-  resources: [
-    subPageResource,
-    hiddenResource,
-    adminOnlyResource,
-    componentsShowcaseResource,
-  ],
+  resources: [subPageResource, hiddenResource, adminOnlyResource],
 });

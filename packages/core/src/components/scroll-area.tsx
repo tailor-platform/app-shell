@@ -37,7 +37,7 @@ function ScrollBar({
       data-slot="scroll-bar"
       orientation={orientation}
       className={cn(
-        "astw:flex astw:touch-none astw:p-px astw:transition-colors",
+        "astw:flex astw:touch-none astw:p-px astw:transition-colors astw:z-20",
         orientation === "vertical" &&
           "astw:h-full astw:w-2.5 astw:border-l astw:border-l-transparent",
         orientation === "horizontal" &&

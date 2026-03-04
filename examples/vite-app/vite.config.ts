@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
+import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
 
 // https://vite.dev/config/
 export default defineConfig({

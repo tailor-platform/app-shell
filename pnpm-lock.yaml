@@ -131,6 +131,9 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1
     devDependencies:
+      '@tailor-platform/app-shell-vite-plugin':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin
       '@tailwindcss/vite':
         specifier: ^4.2.1
         version: 4.2.1(vite@7.3.1(@types/node@22.13.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.7.0))

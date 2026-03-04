@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 
@@ -53,6 +54,28 @@ function ComboboxTrigger({
   );
 }
 
+function ComboboxInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="combobox-input-group"
+      className={cn("astw:relative astw:flex astw:items-center", className)}
+      {...props}
+    >
+      {children ?? (
+        <>
+          <ComboboxInput />
+          <ComboboxClear />
+          <ComboboxTrigger />
+        </>
+      )}
+    </div>
+  );
+}
+
 function ComboboxContent({
   className,
   ...props
@@ -63,7 +86,7 @@ function ComboboxContent({
         <BaseCombobox.Popup
           data-slot="combobox-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:w-[var(--anchor-width)] astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
             className,
           )}
           {...props}
@@ -120,7 +143,7 @@ function ComboboxEmpty({
     <BaseCombobox.Empty
       data-slot="combobox-empty"
       className={cn(
-        "astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground",
+        "astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground astw:empty:hidden",
         className,
       )}
       {...props}
@@ -170,8 +193,396 @@ function ComboboxClear({
   );
 }
 
+function ComboboxChips({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Chips>) {
+  return (
+    <BaseCombobox.Chips
+      data-slot="combobox-chips"
+      className={cn(
+        "astw:border-input astw:bg-background astw:flex astw:min-h-9 astw:w-full astw:flex-wrap astw:items-center astw:gap-1 astw:rounded-md astw:border astw:px-1.5 astw:py-1 astw:text-sm astw:shadow-xs",
+        "astw:focus-within:border-ring astw:focus-within:ring-ring/50 astw:focus-within:ring-[3px]",
+        // Strip standalone styles from nested Input
+        "astw:[&_[data-slot=combobox-input]]:border-0 astw:[&_[data-slot=combobox-input]]:bg-transparent astw:[&_[data-slot=combobox-input]]:shadow-none astw:[&_[data-slot=combobox-input]]:ring-0",
+        "astw:[&_[data-slot=combobox-input]]:h-auto astw:[&_[data-slot=combobox-input]]:min-w-20 astw:[&_[data-slot=combobox-input]]:flex-1 astw:[&_[data-slot=combobox-input]]:px-1.5 astw:[&_[data-slot=combobox-input]]:py-0",
+        "astw:[&_[data-slot=combobox-input]]:focus-visible:border-transparent astw:[&_[data-slot=combobox-input]]:focus-visible:ring-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function ComboboxChip({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Chip>) {
+  return (
+    <BaseCombobox.Chip
+      data-slot="combobox-chip"
+      className={cn(
+        "astw:bg-secondary astw:text-secondary-foreground astw:flex astw:cursor-default astw:items-center astw:gap-1 astw:rounded-md astw:px-1.5 astw:py-0.5 astw:text-sm astw:outline-none",
+        "astw:data-highlighted:bg-primary astw:data-highlighted:text-primary-foreground",
+        "astw:focus-within:bg-primary astw:focus-within:text-primary-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function ComboboxChipRemove({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.ChipRemove>) {
+  return (
+    <BaseCombobox.ChipRemove
+      data-slot="combobox-chip-remove"
+      className={cn(
+        "astw:rounded-sm astw:p-0.5 astw:text-inherit astw:outline-none",
+        "astw:hover:bg-secondary-foreground/20",
+        className,
+      )}
+      {...props}
+    >
+      {children ?? <XIcon className="astw:size-3" />}
+    </BaseCombobox.ChipRemove>
+  );
+}
+
+function ComboboxValue({
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Value>) {
+  return <BaseCombobox.Value data-slot="combobox-value" {...props} />;
+}
+
+function ComboboxCollection({
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Collection>) {
+  return <BaseCombobox.Collection data-slot="combobox-collection" {...props} />;
+}
+
+// ============================================================================
+// useCreatable hook
+// ============================================================================
+
+const defaultFormatCreateLabel = (value: string) => `Create "${value}"`;
+
+interface UseCreatableOptionsBase<T extends object> {
+  /** Current items list (managed externally since items may come from API) */
+  items: T[];
+  /** Extract display label from an item */
+  getLabel: (item: T) => string;
+  /** Factory to create a new item from user input string */
+  createItem: (value: string) => T;
+  /**
+   * Called when a new item is created via the "create" option.
+   *
+   * Two patterns are supported:
+   *
+   * **Resolve callback** — receives a `resolve` callback for sync or deferred flows:
+   * - Call `resolve()` or `resolve(true)` to accept the item into the selection
+   * - Call `resolve(false)` to cancel (item is NOT selected)
+   *
+   * **Promise** — return a `Promise` for async workflows (API calls, etc.):
+   * - Promise fulfillment accepts the item (unless resolved value is `false`)
+   * - Promise rejection cancels the creation
+   *
+   * If not provided, created items are added to the selection immediately.
+   */
+  onItemCreated?:
+    | ((item: T, resolve: (accept?: boolean) => void) => void)
+    | ((item: T) => Promise<void | boolean>);
+  /**
+   * Format the label for the "create" option in the dropdown.
+   * Useful for i18n (e.g. Japanese: `(v) => \`「${v}」を作成\``).
+   * @default (value) => \`Create "${value}"\`
+   */
+  formatCreateLabel?: (value: string) => string;
+}
+
+interface UseCreatableOptionsMultiple<
+  T extends object,
+> extends UseCreatableOptionsBase<T> {
+  multiple: true;
+  defaultValue?: T[];
+  /** Called when selection changes (sentinel items are already excluded) */
+  onValueChange?: (value: T[]) => void;
+}
+
+interface UseCreatableOptionsSingle<
+  T extends object,
+> extends UseCreatableOptionsBase<T> {
+  multiple?: false | undefined;
+  defaultValue?: T | null;
+  /** Called when selection changes */
+  onValueChange?: (value: T | null) => void;
+}
+
+interface UseCreatableReturnBase<T> {
+  /** Items list with "create" sentinel appended when query has no exact match */
+  items: T[];
+  /** Current input query — pass to `Combobox.Root inputValue` */
+  inputValue: string;
+  /** Input change handler — pass to `Combobox.Root onInputValueChange` */
+  onInputValueChange: (value: string) => void;
+  /** Check if an item is the "create" sentinel */
+  isCreateItem: (item: T) => boolean;
+  /** Get the original input value from a sentinel item */
+  getCreateLabel: (item: T) => string | undefined;
+  /** The active formatCreateLabel function */
+  formatCreateLabel: (value: string) => string;
+}
+
+interface UseCreatableReturnMultiple<T> extends UseCreatableReturnBase<T> {
+  /** Current selected values */
+  value: T[];
+  /** Value change handler — pass to `Combobox.Root onValueChange` */
+  onValueChange: (value: T[]) => void;
+  multiple: true;
+}
+
+interface UseCreatableReturnSingle<T> extends UseCreatableReturnBase<T> {
+  /** Current selected value */
+  value: T | null;
+  /** Value change handler — pass to `Combobox.Root onValueChange` */
+  onValueChange: (value: T | null) => void;
+  multiple: false;
+}
+
+/**
+ * Hook that encapsulates the "creatable" combobox pattern — allowing users
+ * to create new items on-the-fly from the dropdown.
+ *
+ * Manages selected value, input query, and sentinel item injection internally.
+ * Supports both single and multiple select.
+ *
+ * `onItemCreated` supports two patterns — a `resolve` callback for sync or
+ * deferred flows, and a `Promise` return for async workflows:
+ *
+ * @example
+ * ```tsx
+ * // Sync — call resolve() immediately
+ * onItemCreated: (item, resolve) => {
+ *   setItems((prev) => [...prev, item]);
+ *   resolve();
+ * }
+ *
+ * // Async API call — return a Promise (no resolve arg)
+ * onItemCreated: async (item) => {
+ *   await api.create(item);
+ *   setItems((prev) => [...prev, item]);
+ *   // auto-accept on fulfillment, auto-cancel on rejection
+ * }
+ *
+ * // Confirmation dialog — defer resolve() to user action
+ * onItemCreated: (item, resolve) => {
+ *   setDialogState({
+ *     item,
+ *     onConfirm: () => { setItems(p => [...p, item]); resolve(); },
+ *     onCancel: () => resolve(false),
+ *   });
+ * }
+ * ```
+ */
+function useCreatable<T extends object>(
+  options: UseCreatableOptionsMultiple<T>,
+): UseCreatableReturnMultiple<T>;
+function useCreatable<T extends object>(
+  options: UseCreatableOptionsSingle<T>,
+): UseCreatableReturnSingle<T>;
+function useCreatable<T extends object>(
+  options: UseCreatableOptionsMultiple<T> | UseCreatableOptionsSingle<T>,
+): UseCreatableReturnMultiple<T> | UseCreatableReturnSingle<T> {
+  const {
+    items,
+    getLabel,
+    createItem,
+    onItemCreated,
+    formatCreateLabel: userFormatLabel = defaultFormatCreateLabel,
+  } = options;
+
+  const isMultiple = "multiple" in options && options.multiple === true;
+
+  // --- Managed state ---
+  const [multiValue, setMultiValue] = useState<T[]>(
+    () =>
+      (isMultiple
+        ? ((options as UseCreatableOptionsMultiple<T>).defaultValue ?? [])
+        : []) as T[],
+  );
+  const [singleValue, setSingleValue] = useState<T | null>(() =>
+    !isMultiple
+      ? ((options as UseCreatableOptionsSingle<T>).defaultValue ?? null)
+      : null,
+  );
+  const [query, setQuery] = useState("");
+
+  const onValueChange = options.onValueChange;
+
+  const trimmed = query.trim();
+  const lowered = trimmed.toLocaleLowerCase();
+  const exactExists =
+    trimmed !== "" &&
+    items.some((item) => getLabel(item).trim().toLocaleLowerCase() === lowered);
+
+  // --- Sentinel: the "Create X" option appended to the items list ---
+  const sentinel = useMemo<{ item: T; label: string } | null>(() => {
+    if (trimmed === "" || exactExists) return null;
+    return { item: createItem(trimmed), label: trimmed };
+  }, [trimmed, exactExists, createItem]);
+
+  const augmentedItems = useMemo(() => {
+    if (!sentinel) return items;
+    return [...items, sentinel.item];
+  }, [items, sentinel]);
+
+  const isCreateItem = useCallback(
+    (item: T): boolean => sentinel !== null && item === sentinel.item,
+    [sentinel],
+  );
+
+  const getCreateLabelFn = useCallback(
+    (item: T): string | undefined =>
+      sentinel !== null && item === sentinel.item ? sentinel.label : undefined,
+    [sentinel],
+  );
+
+  // --- Create logic (supports sync and deferred resolution via callback) ---
+  const performCreate = useCallback(
+    (value: string, baseMultiValue?: T[]) => {
+      const newItem = createItem(value);
+
+      const applySelection = () => {
+        if (isMultiple) {
+          const base = baseMultiValue ?? [];
+          const next = [...base, newItem];
+          setMultiValue(next);
+          (
+            onValueChange as
+              | UseCreatableOptionsMultiple<T>["onValueChange"]
+              | undefined
+          )?.(next);
+        } else {
+          setSingleValue(newItem);
+          (
+            onValueChange as
+              | UseCreatableOptionsSingle<T>["onValueChange"]
+              | undefined
+          )?.(newItem);
+        }
+        setQuery("");
+      };
+
+      if (!onItemCreated) {
+        applySelection();
+        return;
+      }
+
+      let resolved = false;
+      const resolve = (accept?: boolean) => {
+        if (resolved) return;
+        resolved = true;
+        if (accept !== false) applySelection();
+        else setQuery("");
+      };
+
+      // Detect pattern: Promise-returning (1 arg) vs resolve callback (2 args)
+      const result = (onItemCreated as Function)(newItem, resolve);
+
+      // If callback returned a Promise, auto-resolve on settle
+      if (
+        result != null &&
+        typeof (result as Promise<unknown>).then === "function"
+      ) {
+        (result as Promise<void | boolean>).then(
+          (value) => {
+            if (!resolved) resolve(value !== false ? true : false);
+          },
+          () => {
+            if (!resolved) resolve(false);
+          },
+        );
+      }
+    },
+    [isMultiple, createItem, onItemCreated, onValueChange],
+  );
+
+  // --- Value change handlers ---
+  const handleMultipleValueChange = useCallback(
+    (next: T[]) => {
+      const creatableItem = next.find(
+        (item) => sentinel !== null && item === sentinel.item,
+      );
+      if (creatableItem && sentinel) {
+        const label = sentinel.label;
+        const cleaned = next.filter(
+          (item) => !(sentinel !== null && item === sentinel.item),
+        );
+        performCreate(label, cleaned);
+        return;
+      }
+      setMultiValue(next);
+      (
+        onValueChange as
+          | UseCreatableOptionsMultiple<T>["onValueChange"]
+          | undefined
+      )?.(next);
+      setQuery("");
+    },
+    [performCreate, onValueChange, sentinel],
+  );
+
+  const handleSingleValueChange = useCallback(
+    (next: T | null) => {
+      if (next && sentinel !== null && next === sentinel.item) {
+        const label = sentinel.label;
+        performCreate(label);
+        return;
+      }
+      setSingleValue(next);
+      (
+        onValueChange as
+          | UseCreatableOptionsSingle<T>["onValueChange"]
+          | undefined
+      )?.(next);
+      setQuery("");
+    },
+    [performCreate, onValueChange, sentinel],
+  );
+
+  // --- Return ---
+  const base: UseCreatableReturnBase<T> = {
+    items: augmentedItems,
+    inputValue: query,
+    onInputValueChange: setQuery,
+    isCreateItem,
+    getCreateLabel: getCreateLabelFn,
+    formatCreateLabel: userFormatLabel,
+  };
+
+  if (isMultiple) {
+    return {
+      ...base,
+      value: multiValue,
+      onValueChange: handleMultipleValueChange,
+      multiple: true as const,
+    };
+  }
+
+  return {
+    ...base,
+    value: singleValue,
+    onValueChange: handleSingleValueChange,
+    multiple: false as const,
+  };
+}
+
 const Combobox = {
   Root: ComboboxRoot,
+  InputGroup: ComboboxInputGroup,
   Input: ComboboxInput,
   Trigger: ComboboxTrigger,
   Content: ComboboxContent,
@@ -181,6 +592,13 @@ const Combobox = {
   Group: ComboboxGroup,
   GroupLabel: ComboboxGroupLabel,
   Clear: ComboboxClear,
+  Chips: ComboboxChips,
+  Chip: ComboboxChip,
+  ChipRemove: ComboboxChipRemove,
+  Value: ComboboxValue,
+  Collection: ComboboxCollection,
+  useFilter: BaseCombobox.useFilter,
+  useCreatable,
 };
 
 export { Combobox };

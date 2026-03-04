@@ -17,6 +17,7 @@
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
+    "@tailor-platform/app-shell-vite-plugin": "workspace:*",
     "@tailwindcss/vite": "^4.2.1",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

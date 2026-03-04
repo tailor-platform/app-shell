@@ -63,6 +63,28 @@ function AutocompleteTrigger({
   );
 }
 
+function AutocompleteInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="autocomplete-input-group"
+      className={cn("astw:relative astw:flex astw:items-center", className)}
+      {...props}
+    >
+      {children ?? (
+        <>
+          <AutocompleteInput />
+          <AutocompleteClear />
+          <AutocompleteTrigger />
+        </>
+      )}
+    </div>
+  );
+}
+
 function AutocompleteContent({
   className,
   ...props
@@ -73,7 +95,7 @@ function AutocompleteContent({
         <BaseAutocomplete.Popup
           data-slot="autocomplete-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:w-[var(--anchor-width)] astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
             className,
           )}
           {...props}
@@ -122,7 +144,7 @@ function AutocompleteEmpty({
     <BaseAutocomplete.Empty
       data-slot="autocomplete-empty"
       className={cn(
-        "astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground",
+        "astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground astw:empty:hidden",
         className,
       )}
       {...props}
@@ -150,9 +172,43 @@ function AutocompleteClear({
   );
 }
 
+function AutocompleteGroup({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Group>) {
+  return <BaseAutocomplete.Group data-slot="autocomplete-group" {...props} />;
+}
+
+function AutocompleteGroupLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.GroupLabel>) {
+  return (
+    <BaseAutocomplete.GroupLabel
+      data-slot="autocomplete-group-label"
+      className={cn(
+        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AutocompleteCollection({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Collection>) {
+  return (
+    <BaseAutocomplete.Collection
+      data-slot="autocomplete-collection"
+      {...props}
+    />
+  );
+}
+
 const Autocomplete = {
   Root: AutocompleteRoot,
   Value: AutocompleteValue,
+  InputGroup: AutocompleteInputGroup,
   Input: AutocompleteInput,
   Trigger: AutocompleteTrigger,
   Content: AutocompleteContent,
@@ -160,6 +216,10 @@ const Autocomplete = {
   Item: AutocompleteItem,
   Empty: AutocompleteEmpty,
   Clear: AutocompleteClear,
+  Group: AutocompleteGroup,
+  GroupLabel: AutocompleteGroupLabel,
+  Collection: AutocompleteCollection,
+  useFilter: BaseAutocomplete.useFilter,
 };
 
 export { Autocomplete };

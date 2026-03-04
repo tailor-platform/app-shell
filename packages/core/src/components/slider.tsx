@@ -19,10 +19,31 @@ function SliderRoot({
       )}
       {...props}
     >
-      <SliderTrack>
-        <SliderThumb />
-      </SliderTrack>
+      <SliderControl>
+        <SliderTrack>
+          <SliderThumb />
+        </SliderTrack>
+      </SliderControl>
     </BaseSlider.Root>
+  );
+}
+
+function SliderControl({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseSlider.Control>) {
+  return (
+    <BaseSlider.Control
+      data-slot="slider-control"
+      className={cn(
+        "astw:relative astw:flex astw:w-full astw:items-center",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </BaseSlider.Control>
   );
 }
 
@@ -35,7 +56,7 @@ function SliderTrack({
     <BaseSlider.Track
       data-slot="slider-track"
       className={cn(
-        "astw:bg-primary/20 astw:relative astw:h-1.5 astw:w-full astw:grow astw:overflow-hidden astw:rounded-full",
+        "astw:bg-primary/20 astw:relative astw:h-1.5 astw:w-full astw:grow astw:rounded-full",
         className,
       )}
       {...props}
@@ -69,6 +90,7 @@ function SliderThumb({
 
 const Slider = {
   Root: SliderRoot,
+  Control: SliderControl,
   Track: SliderTrack,
   Thumb: SliderThumb,
 };

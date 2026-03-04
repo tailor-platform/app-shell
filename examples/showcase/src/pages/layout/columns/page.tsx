@@ -4,7 +4,7 @@ import {
   DescriptionCard,
   Tabs,
 } from "@tailor-platform/app-shell";
-import { mockOrder, Section } from "../../../shared";
+import { mockOrder } from "../../../shared";
 
 const generalFields = [
   {

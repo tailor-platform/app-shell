@@ -327,6 +327,93 @@ const initialLabels: LabelItem[] = [
 ];
 
 // ============================================================================
+// Select Pattern Demos
+// ============================================================================
+
+interface ShippingMethod {
+  id: string;
+  label: string;
+  description: string;
+  price: string;
+}
+
+const shippingMethods: ShippingMethod[] = [
+  {
+    id: "standard",
+    label: "Standard",
+    description: "Delivers in 4-6 business days",
+    price: "$4.99",
+  },
+  {
+    id: "express",
+    label: "Express",
+    description: "Delivers in 2-3 business days",
+    price: "$9.99",
+  },
+  {
+    id: "overnight",
+    label: "Overnight",
+    description: "Delivers next business day",
+    price: "$19.99",
+  },
+];
+
+const MultipleSelectDemo = () => {
+  return (
+    <Select.Root multiple>
+      <Select.Trigger>
+        <Select.Value placeholder="Select languages..." />
+      </Select.Trigger>
+      <Select.Content>
+        {programmingLanguages.map((lang) => (
+          <Select.Item key={lang} value={lang}>
+            {lang}
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Root>
+  );
+};
+
+const ObjectValueSelectDemo = () => {
+  const items = shippingMethods.map((m) => ({
+    label: m.label,
+    value: m.id,
+  }));
+
+  return (
+    <Select.Root items={items}>
+      <Select.Trigger>
+        <Select.Value placeholder="Select shipping method...">
+          {(value: string) => {
+            const method = shippingMethods.find((m) => m.id === value);
+            return method ? method.label : value;
+          }}
+        </Select.Value>
+      </Select.Trigger>
+      <Select.Content>
+        {shippingMethods.map((method) => (
+          <Select.Item key={method.id} value={method.id}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.125rem",
+              }}
+            >
+              <span>{method.label}</span>
+              <span className="astw:text-xs astw:text-muted-foreground">
+                {method.description} ({method.price})
+              </span>
+            </div>
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Root>
+  );
+};
+
+// ============================================================================
 // Combobox Pattern Demos
 // ============================================================================
 
@@ -492,7 +579,6 @@ const ComponentsShowcasePage = () => {
   const [radioValue, setRadioValue] = useState("option1");
   const [checkboxA, setCheckboxA] = useState(false);
   const [checkboxB, setCheckboxB] = useState(true);
-  const [selectValue, setSelectValue] = useState("apple");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -1100,7 +1186,7 @@ const ComponentsShowcasePage = () => {
           {/* ================================================================
               FORM CONTROLS
               ================================================================ */}
-          <Section title="Form Controls (Field / Fieldset / Form / Input / NumberField / Label / Select)">
+          <Section title="Form Controls (Field / Fieldset / Form / Input / NumberField / Label)">
             <Form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1144,35 +1230,91 @@ const ComponentsShowcasePage = () => {
                       </NumberField.Group>
                     </NumberField.Root>
                   </Field.Root>
-
-                  <Field.Root>
-                    <Field.Label>Category</Field.Label>
-                    <Select.Root
-                      value={selectValue}
-                      onValueChange={(value) => setSelectValue(value as string)}
-                    >
-                      <Select.Trigger>
-                        <Select.Value placeholder="Select a category" />
-                      </Select.Trigger>
-                      <Select.Content>
-                        <Select.Group>
-                          <Select.GroupLabel>Fruits</Select.GroupLabel>
-                          <Select.Item value="apple">Apple</Select.Item>
-                          <Select.Item value="banana">Banana</Select.Item>
-                          <Select.Item value="orange">Orange</Select.Item>
-                        </Select.Group>
-                        <Select.Separator />
-                        <Select.Group>
-                          <Select.GroupLabel>Vegetables</Select.GroupLabel>
-                          <Select.Item value="carrot">Carrot</Select.Item>
-                          <Select.Item value="broccoli">Broccoli</Select.Item>
-                        </Select.Group>
-                      </Select.Content>
-                    </Select.Root>
-                  </Field.Root>
                 </div>
               </Fieldset.Root>
             </Form>
+          </Section>
+
+          {/* ================================================================
+              SELECT
+              ================================================================ */}
+          <Section title="Select">
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1.5rem",
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#888",
+                    marginBottom: "0.5rem",
+                    display: "block",
+                  }}
+                >
+                  Basic
+                </span>
+                <Select.Root defaultValue="apple">
+                  <Select.Trigger>
+                    <Select.Value placeholder="Select a fruit..." />
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Group>
+                      <Select.GroupLabel>Fruits</Select.GroupLabel>
+                      <Select.Item value="apple">Apple</Select.Item>
+                      <Select.Item value="banana">Banana</Select.Item>
+                      <Select.Item value="orange">Orange</Select.Item>
+                    </Select.Group>
+                    <Select.Separator />
+                    <Select.Group>
+                      <Select.GroupLabel>Vegetables</Select.GroupLabel>
+                      <Select.Item value="carrot">Carrot</Select.Item>
+                      <Select.Item value="broccoli">Broccoli</Select.Item>
+                    </Select.Group>
+                  </Select.Content>
+                </Select.Root>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#888",
+                    marginBottom: "0.5rem",
+                    display: "block",
+                  }}
+                >
+                  Multiple
+                </span>
+                <MultipleSelectDemo />
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#888",
+                    marginBottom: "0.5rem",
+                    display: "block",
+                  }}
+                >
+                  Object Values
+                </span>
+                <ObjectValueSelectDemo />
+              </div>
+            </div>
           </Section>
 
           {/* ================================================================

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useNavigate, Await } from "react-router";
 import { SearchIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/dialog";
+import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
 
 import { useT } from "@/i18n-labels";
@@ -202,15 +202,15 @@ export function CommandPaletteContent({
   } = useCommandPalette({ routes });
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Content
         className="astw:p-0 astw:gap-0 astw:sm:max-w-2xl astw:overflow-hidden"
         onKeyDown={handleKeyDown}
         aria-describedby={undefined}
       >
-        <DialogTitle className="astw:sr-only">
+        <Dialog.Title className="astw:sr-only">
           {t("commandPaletteSearch")}
-        </DialogTitle>
+        </Dialog.Title>
         <div className="astw:flex astw:items-center astw:border-b astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
           <Input
@@ -254,8 +254,8 @@ export function CommandPaletteContent({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 

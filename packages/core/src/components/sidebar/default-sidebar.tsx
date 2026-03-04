@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import { Await, useLocation } from "react-router";
 import { ChevronRight } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/collapsible";
+import { Collapsible } from "@/components/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -144,7 +140,7 @@ const AutoSidebarItems = (props: {
       <SidebarMenu>
         {props.items.map((item) => {
           return (
-            <Collapsible
+            <Collapsible.Root
               key={item.title}
               render={<SidebarMenuItem />}
               defaultOpen={true}
@@ -168,19 +164,19 @@ const AutoSidebarItems = (props: {
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                   {!!item.items?.length && (
-                    <CollapsibleTrigger
+                    <Collapsible.Trigger
                       render={
                         <SidebarMenuAction className="astw:data-panel-open:rotate-90" />
                       }
                     >
                       <ChevronRight />
                       <span className="astw:sr-only">{t("toggle")}</span>
-                    </CollapsibleTrigger>
+                    </Collapsible.Trigger>
                   )}
                 </>
               ) : (
                 <>
-                  <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
+                  <Collapsible.Trigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
                     <SidebarMenuButton
                       render={<span className="astw:flex astw:w-full" />}
                       tooltip={item.title}
@@ -197,11 +193,11 @@ const AutoSidebarItems = (props: {
                         <span className="astw:sr-only">{t("toggle")}</span>
                       </SidebarMenuAction>
                     )}
-                  </CollapsibleTrigger>
+                  </Collapsible.Trigger>
                 </>
               )}
               {!!item.items?.length && (
-                <CollapsibleContent>
+                <Collapsible.Content>
                   <SidebarMenuSub>
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
@@ -222,9 +218,9 @@ const AutoSidebarItems = (props: {
                       </SidebarMenuSubItem>
                     ))}
                   </SidebarMenuSub>
-                </CollapsibleContent>
+                </Collapsible.Content>
               )}
-            </Collapsible>
+            </Collapsible.Root>
           );
         })}
       </SidebarMenu>

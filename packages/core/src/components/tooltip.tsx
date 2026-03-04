@@ -22,7 +22,7 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({ children, ...props }: { children: React.ReactNode }) {
+function TooltipRoot({ children, ...props }: { children: React.ReactNode }) {
   return (
     <TooltipProvider>
       <BaseTooltip.Root data-slot="tooltip" {...props}>
@@ -69,4 +69,11 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+const Tooltip = {
+  Root: TooltipRoot,
+  Provider: TooltipProvider,
+  Trigger: TooltipTrigger,
+  Content: TooltipContent,
+};
+
+export { Tooltip };

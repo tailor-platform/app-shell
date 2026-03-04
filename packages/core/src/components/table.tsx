@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function TableRoot({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
@@ -10,7 +10,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
+        className={cn(
+          "astw:w-full astw:caption-bottom astw:text-sm",
+          className,
+        )}
         {...props}
       />
     </div>
@@ -96,19 +99,24 @@ function TableCaption({
   return (
     <caption
       data-slot="table-caption"
-      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-sm", className)}
+      className={cn(
+        "astw:text-muted-foreground astw:mt-4 astw:text-sm",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
+const Table = {
+  Root: TableRoot,
+  Header: TableHeader,
+  Body: TableBody,
+  Footer: TableFooter,
+  Head: TableHead,
+  Row: TableRow,
+  Cell: TableCell,
+  Caption: TableCaption,
 };
+
+export { Table };

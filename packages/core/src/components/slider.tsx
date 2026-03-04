@@ -14,7 +14,7 @@ function SliderRoot({
       defaultValue={defaultValue}
       className={cn(
         "astw:relative astw:flex astw:w-full astw:touch-none astw:items-center astw:select-none",
-        "astw:data-[disabled]:opacity-50",
+        "astw:data-disabled:opacity-50",
         className,
       )}
       {...props}

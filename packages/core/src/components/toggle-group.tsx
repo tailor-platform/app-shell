@@ -7,8 +7,6 @@ import { toggleVariants } from "@/components/toggle";
 
 function ToggleGroup({
   className,
-  variant,
-  size,
   children,
   ...props
 }: React.ComponentProps<typeof BaseToggleGroup> &

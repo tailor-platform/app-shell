@@ -52,7 +52,7 @@ function SelectContent({
         <BaseSelect.Popup
           data-slot="select-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:min-w-[8rem] astw:origin-[var(--transform-origin)] astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
             className,
           )}
           {...props}
@@ -73,7 +73,7 @@ function SelectItem({
       className={cn(
         "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-8 astw:pl-2 astw:text-sm astw:outline-hidden astw:select-none",
         "astw:focus:bg-accent astw:focus:text-accent-foreground",
-        "astw:data-[disabled]:pointer-events-none astw:data-[disabled]:opacity-50",
+        "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         "astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:[&_svg]:shrink-0",
         className,
       )}

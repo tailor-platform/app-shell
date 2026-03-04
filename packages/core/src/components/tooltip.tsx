@@ -62,7 +62,7 @@ function TooltipContent({
           {...restProps}
         >
           {children}
-          <BaseTooltip.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%_-_2px)] astw:rotate-45 astw:rounded-[2px]" />
+          <BaseTooltip.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%-2px)] astw:rotate-45 astw:rounded-[2px]" />
         </BaseTooltip.Popup>
       </BaseTooltip.Positioner>
     </BaseTooltip.Portal>

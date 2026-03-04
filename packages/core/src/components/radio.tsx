@@ -36,7 +36,7 @@ function Radio({
       className={cn(
         "astw:group astw:peer astw:size-4 astw:shrink-0 astw:rounded-full astw:border astw:border-input astw:shadow-xs astw:outline-none astw:transition-colors",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
-        "astw:data-[checked]:bg-primary astw:data-[checked]:border-primary astw:data-[checked]:text-primary-foreground",
+        "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
         "astw:aria-invalid:ring-destructive/20 astw:dark:aria-invalid:ring-destructive/40 astw:aria-invalid:border-destructive",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         className,

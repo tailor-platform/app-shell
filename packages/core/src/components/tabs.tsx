@@ -24,7 +24,7 @@ function TabsList({
     <BaseTabs.List
       data-slot="tabs-list"
       className={cn(
-        "astw:bg-muted astw:text-muted-foreground astw:inline-flex astw:h-9 astw:w-fit astw:items-center astw:justify-center astw:rounded-lg astw:p-[3px]",
+        "astw:bg-muted astw:text-muted-foreground astw:inline-flex astw:h-9 astw:w-fit astw:items-center astw:justify-center astw:rounded-lg astw:p-0.75",
         className,
       )}
       {...props}
@@ -42,7 +42,7 @@ function TabsTrigger({
       className={cn(
         "astw:inline-flex astw:items-center astw:justify-center astw:gap-1.5 astw:whitespace-nowrap astw:rounded-md astw:px-2.5 astw:py-1 astw:text-sm astw:font-medium astw:outline-none astw:transition-all",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
-        "astw:data-[selected]:bg-background astw:data-[selected]:text-foreground astw:data-[selected]:shadow-sm",
+        "astw:data-selected:bg-background astw:data-selected:text-foreground astw:data-selected:shadow-sm",
         "astw:disabled:pointer-events-none astw:disabled:opacity-50",
         "astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:[&_svg]:shrink-0",
         className,

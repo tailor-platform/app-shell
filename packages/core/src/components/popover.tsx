@@ -28,7 +28,7 @@ function PopoverContent({
         <BasePopover.Popup
           data-slot="popover-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:w-72 astw:origin-[var(--transform-origin)] astw:rounded-md astw:border astw:p-4 astw:shadow-md astw:outline-hidden",
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:w-72 astw:origin-(--transform-origin) astw:rounded-md astw:border astw:p-4 astw:shadow-md astw:outline-hidden",
             className,
           )}
           {...props}

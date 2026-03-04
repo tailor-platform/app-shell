@@ -51,7 +51,7 @@ function StatusDot({ variant }: { variant: string }) {
 
   return (
     <div className="astw:size-3 astw:shrink-0 astw:flex astw:items-center astw:justify-center">
-      <div className={cn("astw:size-[7px] astw:rounded-full", dotColor)} />
+      <div className={cn("astw:size-1.75 astw:rounded-full", dotColor)} />
     </div>
   );
 }

@@ -1,8 +1,22 @@
 import * as React from "react";
 import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
+import { CheckboxGroup as BaseCheckboxGroup } from "@base-ui/react/checkbox-group";
 import { CheckIcon, MinusIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+function CheckboxGroup({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCheckboxGroup>) {
+  return (
+    <BaseCheckboxGroup
+      data-slot="checkbox-group"
+      className={cn("astw:grid astw:gap-3", className)}
+      {...props}
+    />
+  );
+}
 
 function CheckboxIndicator() {
   return (
@@ -39,4 +53,4 @@ function Checkbox({
   );
 }
 
-export { Checkbox };
+export { Checkbox, CheckboxGroup };

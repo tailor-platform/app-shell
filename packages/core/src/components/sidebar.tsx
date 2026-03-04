@@ -9,13 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Separator } from "@/components/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/sheet";
+import { Sheet } from "@/components/sheet";
 import { Tooltip } from "@/components/tooltip";
 
 const SIDEBAR_WIDTH = "16rem";
@@ -208,8 +202,8 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
+      <Sheet.Root open={openMobile} onOpenChange={setOpenMobile} {...props}>
+        <Sheet.Content
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
@@ -221,13 +215,13 @@ function Sidebar({
           }
           side={side}
         >
-          <SheetHeader className="astw:sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
+          <Sheet.Header className="astw:sr-only">
+            <Sheet.Title>Sidebar</Sheet.Title>
+            <Sheet.Description>Displays the mobile sidebar.</Sheet.Description>
+          </Sheet.Header>
           <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+        </Sheet.Content>
+      </Sheet.Root>
     );
   }
 
@@ -274,8 +268,12 @@ function Sidebar({
           </div>
         </div>
         {/* Overlay sidebar when opened */}
-        <Sheet open={openIconMode} onOpenChange={setOpenIconMode} {...props}>
-          <SheetContent
+        <Sheet.Root
+          open={openIconMode}
+          onOpenChange={setOpenIconMode}
+          {...props}
+        >
+          <Sheet.Content
             data-sidebar="sidebar"
             data-slot="sidebar-overlay"
             data-icon-mode="true"
@@ -287,13 +285,15 @@ function Sidebar({
             }
             side={side}
           >
-            <SheetHeader className="astw:sr-only">
-              <SheetTitle>Sidebar</SheetTitle>
-              <SheetDescription>Displays the sidebar overlay.</SheetDescription>
-            </SheetHeader>
+            <Sheet.Header className="astw:sr-only">
+              <Sheet.Title>Sidebar</Sheet.Title>
+              <Sheet.Description>
+                Displays the sidebar overlay.
+              </Sheet.Description>
+            </Sheet.Header>
             <div className="flex h-full w-full flex-col">{children}</div>
-          </SheetContent>
-        </Sheet>
+          </Sheet.Content>
+        </Sheet.Root>
       </>
     );
   }

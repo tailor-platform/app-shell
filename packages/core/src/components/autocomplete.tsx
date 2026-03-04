@@ -1,0 +1,165 @@
+import * as React from "react";
+import { Autocomplete as BaseAutocomplete } from "@base-ui/react/autocomplete";
+import type { AutocompleteRootProps } from "@base-ui/react/autocomplete";
+import { ChevronDownIcon, XIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+function AutocompleteRoot<Value>(props: AutocompleteRootProps<Value>) {
+  return (
+    <BaseAutocomplete.Root
+      data-slot="autocomplete"
+      {...(props as AutocompleteRootProps<unknown>)}
+    />
+  );
+}
+
+function AutocompleteValue({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Value>) {
+  return <BaseAutocomplete.Value data-slot="autocomplete-value" {...props} />;
+}
+
+function AutocompleteInput({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Input>) {
+  return (
+    <BaseAutocomplete.Input
+      data-slot="autocomplete-input"
+      className={cn(
+        "astw:border-input astw:bg-background astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-sm astw:shadow-xs astw:outline-none astw:transition-colors",
+        "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
+        "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AutocompleteTrigger({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Trigger>) {
+  return (
+    <BaseAutocomplete.Trigger
+      data-slot="autocomplete-trigger"
+      className={cn(
+        "astw:absolute astw:inset-y-0 astw:right-0 astw:flex astw:items-center astw:px-2 astw:text-muted-foreground astw:outline-none",
+        "astw:hover:text-foreground",
+        "astw:disabled:pointer-events-none astw:disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    >
+      {children ?? (
+        <BaseAutocomplete.Icon>
+          <ChevronDownIcon className="astw:size-4" />
+        </BaseAutocomplete.Icon>
+      )}
+    </BaseAutocomplete.Trigger>
+  );
+}
+
+function AutocompleteContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Popup>) {
+  return (
+    <BaseAutocomplete.Portal>
+      <BaseAutocomplete.Positioner>
+        <BaseAutocomplete.Popup
+          data-slot="autocomplete-content"
+          className={cn(
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-50 astw:min-w-[8rem] astw:origin-[var(--transform-origin)] astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+            className,
+          )}
+          {...props}
+        />
+      </BaseAutocomplete.Positioner>
+    </BaseAutocomplete.Portal>
+  );
+}
+
+function AutocompleteList({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.List>) {
+  return (
+    <BaseAutocomplete.List
+      data-slot="autocomplete-list"
+      className={cn("astw:max-h-60 astw:overflow-y-auto astw:p-1", className)}
+      {...props}
+    />
+  );
+}
+
+function AutocompleteItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Item>) {
+  return (
+    <BaseAutocomplete.Item
+      data-slot="autocomplete-item"
+      className={cn(
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:px-2 astw:text-sm astw:outline-hidden astw:select-none",
+        "astw:data-[highlighted]:bg-accent astw:data-[highlighted]:text-accent-foreground",
+        "astw:data-[disabled]:pointer-events-none astw:data-[disabled]:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AutocompleteEmpty({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Empty>) {
+  return (
+    <BaseAutocomplete.Empty
+      data-slot="autocomplete-empty"
+      className={cn(
+        "astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AutocompleteClear({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Clear>) {
+  return (
+    <BaseAutocomplete.Clear
+      data-slot="autocomplete-clear"
+      className={cn(
+        "astw:absolute astw:inset-y-0 astw:right-6 astw:flex astw:items-center astw:px-1 astw:text-muted-foreground astw:outline-none",
+        "astw:hover:text-foreground",
+        className,
+      )}
+      {...props}
+    >
+      {children ?? <XIcon className="astw:size-3.5" />}
+    </BaseAutocomplete.Clear>
+  );
+}
+
+const Autocomplete = {
+  Root: AutocompleteRoot,
+  Value: AutocompleteValue,
+  Input: AutocompleteInput,
+  Trigger: AutocompleteTrigger,
+  Content: AutocompleteContent,
+  List: AutocompleteList,
+  Item: AutocompleteItem,
+  Empty: AutocompleteEmpty,
+  Clear: AutocompleteClear,
+};
+
+export { Autocomplete };

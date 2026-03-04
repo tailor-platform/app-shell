@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Sheet({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
+function SheetRoot({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root data-slot="sheet" {...props} />;
 }
 
@@ -93,7 +93,10 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn("astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:p-4", className)}
+      className={cn(
+        "astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:p-4",
+        className,
+      )}
       {...props}
     />
   );
@@ -125,13 +128,15 @@ function SheetDescription({
   );
 }
 
-export {
-  Sheet,
-  SheetTrigger,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
-  SheetDescription,
+const Sheet = {
+  Root: SheetRoot,
+  Trigger: SheetTrigger,
+  Close: SheetClose,
+  Content: SheetContent,
+  Header: SheetHeader,
+  Footer: SheetFooter,
+  Title: SheetTitle,
+  Description: SheetDescription,
 };
+
+export { Sheet };

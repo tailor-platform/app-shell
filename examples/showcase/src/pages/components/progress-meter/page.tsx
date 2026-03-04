@@ -1,16 +1,9 @@
 import { Progress, Meter } from "@tailor-platform/app-shell";
-import { Section, SectionLabel } from "../../../shared";
+import { PageContainer, Section, SectionLabel } from "../../../shared";
 
 const ProgressMeterPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Progress & Meter">
         <div
           style={{
@@ -63,7 +56,7 @@ const ProgressMeterPage = () => {
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

@@ -4,18 +4,11 @@ import {
   Collapsible,
   Button,
 } from "@tailor-platform/app-shell";
-import { Section, ChevronsUpDownIcon } from "../../../shared";
+import { PageContainer, Section, ChevronsUpDownIcon } from "../../../shared";
 
 const AccordionTabsPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Accordion">
         <Accordion.Root>
           <Accordion.Item value="item-1">
@@ -96,7 +89,7 @@ const AccordionTabsPage = () => {
           </Collapsible.Content>
         </Collapsible.Root>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

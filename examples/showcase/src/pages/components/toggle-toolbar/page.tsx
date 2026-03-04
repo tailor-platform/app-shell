@@ -1,9 +1,6 @@
+import { Toggle, ToggleGroup, Toolbar } from "@tailor-platform/app-shell";
 import {
-  Toggle,
-  ToggleGroup,
-  Toolbar,
-} from "@tailor-platform/app-shell";
-import {
+  PageContainer,
   Section,
   SectionLabel,
   BoldIcon,
@@ -16,14 +13,7 @@ import {
 
 const ToggleToolbarPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Toggle & ToggleGroup">
         <div
           style={{
@@ -100,7 +90,7 @@ const ToggleToolbarPage = () => {
           <Toolbar.Link href="#">Help</Toolbar.Link>
         </Toolbar.Root>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

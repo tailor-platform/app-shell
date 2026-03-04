@@ -1,16 +1,9 @@
 import { Avatar, Separator } from "@tailor-platform/app-shell";
-import { Section } from "../../../shared";
+import { PageContainer, Section } from "../../../shared";
 
 const AvatarSeparatorPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Avatar">
         <div
           style={{
@@ -20,10 +13,7 @@ const AvatarSeparatorPage = () => {
           }}
         >
           <Avatar.Root>
-            <Avatar.Image
-              src="https://github.com/github.png"
-              alt="GitHub"
-            />
+            <Avatar.Image src="https://github.com/github.png" alt="GitHub" />
             <Avatar.Fallback>GH</Avatar.Fallback>
           </Avatar.Root>
           <Avatar.Root>
@@ -56,7 +46,7 @@ const AvatarSeparatorPage = () => {
           <span className="astw:text-sm">Right</span>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

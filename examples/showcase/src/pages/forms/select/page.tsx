@@ -1,5 +1,6 @@
 import { Select } from "@tailor-platform/app-shell";
 import {
+  PageContainer,
   Section,
   programmingLanguages,
   shippingMethods,
@@ -62,14 +63,7 @@ const ObjectValueSelectDemo = () => {
 
 const SelectPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Select">
         <div
           style={{
@@ -148,7 +142,7 @@ const SelectPage = () => {
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

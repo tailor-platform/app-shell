@@ -7,7 +7,7 @@ import {
   Checkbox,
   CheckboxGroup,
 } from "@tailor-platform/app-shell";
-import { Section, SectionLabel } from "../../../shared";
+import { PageContainer, Section, SectionLabel } from "../../../shared";
 
 const SwitchSliderRadioPage = () => {
   const [switchChecked, setSwitchChecked] = useState(false);
@@ -16,14 +16,7 @@ const SwitchSliderRadioPage = () => {
   const [checkboxB, setCheckboxB] = useState(true);
 
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Switch / Slider / Radio / Checkbox">
         <div
           style={{
@@ -150,16 +143,14 @@ const SwitchSliderRadioPage = () => {
                     checked={checkboxB}
                     onCheckedChange={(val) => setCheckboxB(val as boolean)}
                   />
-                  <span className="astw:text-sm">
-                    Subscribe to newsletter
-                  </span>
+                  <span className="astw:text-sm">Subscribe to newsletter</span>
                 </label>
               </div>
             </CheckboxGroup>
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

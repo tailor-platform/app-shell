@@ -10,21 +10,14 @@ import {
   Field,
   Input,
 } from "@tailor-platform/app-shell";
-import { Section, InfoIcon } from "../../../shared";
+import { PageContainer, Section, InfoIcon } from "../../../shared";
 
 const OverlaysPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Overlay Components">
         <div
           style={{
@@ -67,9 +60,7 @@ const OverlaysPage = () => {
                 >
                   <Field.Root>
                     <Field.Label>Name</Field.Label>
-                    <Field.Control
-                      render={<Input defaultValue="John Doe" />}
-                    />
+                    <Field.Control render={<Input defaultValue="John Doe" />} />
                   </Field.Root>
                   <Field.Root>
                     <Field.Label>Email</Field.Label>
@@ -164,15 +155,11 @@ const OverlaysPage = () => {
                 >
                   <Field.Root>
                     <Field.Label>Display Name</Field.Label>
-                    <Field.Control
-                      render={<Input defaultValue="John Doe" />}
-                    />
+                    <Field.Control render={<Input defaultValue="John Doe" />} />
                   </Field.Root>
                   <Field.Root>
                     <Field.Label>Username</Field.Label>
-                    <Field.Control
-                      render={<Input defaultValue="@johndoe" />}
-                    />
+                    <Field.Control render={<Input defaultValue="@johndoe" />} />
                   </Field.Root>
                 </div>
                 <Sheet.Footer>
@@ -221,15 +208,11 @@ const OverlaysPage = () => {
                   >
                     <Field.Root>
                       <Field.Label>Width</Field.Label>
-                      <Field.Control
-                        render={<Input defaultValue="100%" />}
-                      />
+                      <Field.Control render={<Input defaultValue="100%" />} />
                     </Field.Root>
                     <Field.Root>
                       <Field.Label>Height</Field.Label>
-                      <Field.Control
-                        render={<Input defaultValue="25px" />}
-                      />
+                      <Field.Control render={<Input defaultValue="25px" />} />
                     </Field.Root>
                   </div>
                 </div>
@@ -312,7 +295,7 @@ const OverlaysPage = () => {
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

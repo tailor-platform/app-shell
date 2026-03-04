@@ -1,16 +1,9 @@
 import { Button, Badge, Separator } from "@tailor-platform/app-shell";
-import { Section, InfoIcon } from "../../../shared";
+import { PageContainer, Section, InfoIcon } from "../../../shared";
 
 const ButtonsBadgesPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Button">
         <div
           style={{
@@ -82,7 +75,7 @@ const ButtonsBadgesPage = () => {
           <span className="astw:text-sm">Right</span>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

@@ -1,11 +1,7 @@
 import { useState, Fragment } from "react";
+import { Combobox, Button, Dialog, Input } from "@tailor-platform/app-shell";
 import {
-  Combobox,
-  Button,
-  Dialog,
-  Input,
-} from "@tailor-platform/app-shell";
-import {
+  PageContainer,
   Section,
   frameworks,
   frameworkGroups,
@@ -245,14 +241,7 @@ const CreatableComboboxDemo = () => {
 
 const ComboboxPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Combobox">
         <div
           style={{
@@ -384,7 +373,7 @@ const ComboboxPage = () => {
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

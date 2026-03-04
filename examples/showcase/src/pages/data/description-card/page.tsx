@@ -1,16 +1,9 @@
 import { DescriptionCard } from "@tailor-platform/app-shell";
-import { Section, mockOrder } from "../../../shared";
+import { PageContainer, Section, mockOrder } from "../../../shared";
 
 const DescriptionCardPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="DescriptionCard">
         <div
           style={{
@@ -143,7 +136,7 @@ const DescriptionCardPage = () => {
           />
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

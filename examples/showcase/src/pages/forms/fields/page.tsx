@@ -6,18 +6,11 @@ import {
   Input,
   NumberField,
 } from "@tailor-platform/app-shell";
-import { Section } from "../../../shared";
+import { PageContainer, Section } from "../../../shared";
 
 const FieldsPage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Form Controls (Field / Fieldset / Form / Input / NumberField / Label)">
         <Form
           onSubmit={(e) => {
@@ -46,9 +39,7 @@ const FieldsPage = () => {
               <Field.Root>
                 <Field.Label>Email</Field.Label>
                 <Field.Control
-                  render={
-                    <Input type="email" placeholder="john@example.com" />
-                  }
+                  render={<Input type="email" placeholder="john@example.com" />}
                 />
               </Field.Root>
 
@@ -69,7 +60,7 @@ const FieldsPage = () => {
           </div>
         </Form>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

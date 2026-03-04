@@ -1,5 +1,6 @@
 import { Autocomplete } from "@tailor-platform/app-shell";
 import {
+  PageContainer,
   Section,
   fruits,
   produceGroups,
@@ -76,14 +77,7 @@ const AsyncAutocompleteDemo = () => {
 
 const AutocompletePage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Autocomplete">
         <div
           style={{
@@ -146,10 +140,7 @@ const AutocompletePage = () => {
               <Autocomplete.Content>
                 <Autocomplete.List>
                   {(group: ProduceGroupItem) => (
-                    <Autocomplete.Group
-                      key={group.value}
-                      items={group.items}
-                    >
+                    <Autocomplete.Group key={group.value} items={group.items}>
                       <Autocomplete.GroupLabel>
                         {group.value}
                       </Autocomplete.GroupLabel>
@@ -186,7 +177,7 @@ const AutocompletePage = () => {
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

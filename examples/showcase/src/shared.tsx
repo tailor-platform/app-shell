@@ -153,6 +153,23 @@ export const ChevronsUpDownIcon = (props: SVGProps<SVGSVGElement>) => (
 );
 
 // ============================================================================
+// Page container
+// ============================================================================
+
+export const PageContainer = ({ children }: { children: React.ReactNode }) => (
+  <div
+    style={{
+      paddingTop: "1.5rem",
+      display: "flex",
+      flexDirection: "column",
+      gap: "1.5rem",
+    }}
+  >
+    {children}
+  </div>
+);
+
+// ============================================================================
 // Section wrapper
 // ============================================================================
 

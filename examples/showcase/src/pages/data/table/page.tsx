@@ -1,16 +1,9 @@
 import { Table } from "@tailor-platform/app-shell";
-import { Section, invoices } from "../../../shared";
+import { PageContainer, Section, invoices } from "../../../shared";
 
 const TablePage = () => {
   return (
-    <div
-      style={{
-        padding: "1.5rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
+    <PageContainer>
       <Section title="Table + ScrollArea">
         <Table.Root
           containerStyle={{
@@ -47,7 +40,7 @@ const TablePage = () => {
           </Table.Footer>
         </Table.Root>
       </Section>
-    </div>
+    </PageContainer>
   );
 };
 

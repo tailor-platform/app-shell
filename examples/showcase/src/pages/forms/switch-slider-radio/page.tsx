@@ -118,6 +118,7 @@ const SwitchSliderRadioPage = () => {
                 }}
               >
                 <label
+                  htmlFor="checkbox-terms"
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -125,6 +126,7 @@ const SwitchSliderRadioPage = () => {
                   }}
                 >
                   <Checkbox
+                    id="checkbox-terms"
                     checked={checkboxA}
                     onCheckedChange={(val) => setCheckboxA(val as boolean)}
                   />
@@ -133,6 +135,7 @@ const SwitchSliderRadioPage = () => {
                   </span>
                 </label>
                 <label
+                  htmlFor="checkbox-newsletter"
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -140,6 +143,7 @@ const SwitchSliderRadioPage = () => {
                   }}
                 >
                   <Checkbox
+                    id="checkbox-newsletter"
                     checked={checkboxB}
                     onCheckedChange={(val) => setCheckboxB(val as boolean)}
                   />

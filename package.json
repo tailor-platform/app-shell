@@ -5,7 +5,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "turbo watch dev --filter='./examples/*'",
     "build": "turbo build",
     "type-check": "turbo type-check",
     "lint": "turbo lint",

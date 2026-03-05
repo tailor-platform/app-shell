@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Dialog({
+function DialogRoot({
   ...props
 }: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root data-slot="dialog" {...props} />;
@@ -74,7 +74,10 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("astw:flex astw:flex-col astw:gap-2 astw:text-center astw:sm:text-left", className)}
+      className={cn(
+        "astw:flex astw:flex-col astw:gap-2 astw:text-center astw:sm:text-left",
+        className,
+      )}
       {...props}
     />
   );
@@ -100,7 +103,10 @@ function DialogTitle({
   return (
     <BaseDialog.Title
       data-slot="dialog-title"
-      className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
+      className={cn(
+        "astw:text-lg astw:leading-none astw:font-semibold",
+        className,
+      )}
       {...props}
     />
   );
@@ -119,15 +125,17 @@ function DialogDescription({
   );
 }
 
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
+const Dialog = {
+  Root: DialogRoot,
+  Trigger: DialogTrigger,
+  Portal: DialogPortal,
+  Close: DialogClose,
+  Overlay: DialogOverlay,
+  Content: DialogContent,
+  Header: DialogHeader,
+  Footer: DialogFooter,
+  Title: DialogTitle,
+  Description: DialogDescription,
 };
+
+export { Dialog };

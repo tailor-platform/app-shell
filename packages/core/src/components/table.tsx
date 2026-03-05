@@ -1,19 +1,29 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "./scroll-area";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function TableRoot({
+  className,
+  containerClassName,
+  containerStyle,
+  ...props
+}: React.ComponentProps<"table"> & {
+  containerClassName?: string;
+  containerStyle?: React.CSSProperties;
+}) {
   return (
-    <div
+    <ScrollArea.Root
       data-slot="table-container"
-      className="astw:relative astw:w-full astw:overflow-x-auto"
+      className={cn("astw:relative astw:w-full", containerClassName)}
+      style={containerStyle}
     >
       <table
         data-slot="table"
-        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
+        className={cn("astw:w-full astw:text-sm", className)}
         {...props}
       />
-    </div>
+    </ScrollArea.Root>
   );
 }
 
@@ -21,7 +31,10 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("astw:[&_tr]:border-b", className)}
+      className={cn(
+        "astw:[&_tr]:border-b astw:sticky astw:top-0 astw:z-10 astw:bg-background",
+        className,
+      )}
       {...props}
     />
   );
@@ -42,7 +55,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "astw:bg-muted/50 astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0",
+        "astw:bg-muted astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0 astw:sticky astw:bottom-0 astw:z-10",
         className,
       )}
       {...props}
@@ -68,7 +81,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:[&>[role=checkbox]]:translate-y-[2px]",
+        "astw:text-foreground astw:h-10 astw:px-2 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:*:[[role=checkbox]]:translate-y-0.5",
         className,
       )}
       {...props}
@@ -81,7 +94,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "astw:p-2 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:[&>[role=checkbox]]:translate-y-[2px]",
+        "astw:p-2 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:*:[[role=checkbox]]:translate-y-0.5",
         className,
       )}
       {...props}
@@ -89,26 +102,14 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   );
 }
 
-function TableCaption({
-  className,
-  ...props
-}: React.ComponentProps<"caption">) {
-  return (
-    <caption
-      data-slot="table-caption"
-      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-sm", className)}
-      {...props}
-    />
-  );
-}
-
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
+const Table = {
+  Root: TableRoot,
+  Header: TableHeader,
+  Body: TableBody,
+  Footer: TableFooter,
+  Head: TableHead,
+  Row: TableRow,
+  Cell: TableCell,
 };
+
+export { Table };

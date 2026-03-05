@@ -14,13 +14,16 @@ export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
     return (
       <div
         ref={ref}
-        className={cn("astw:min-w-0 astw:flex astw:flex-col astw:gap-4", className)}
+        className={cn(
+          "astw:min-w-0 astw:flex astw:flex-col astw:gap-4",
+          className,
+        )}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 Column.displayName = "Layout.Column";
 
@@ -69,7 +72,7 @@ export function Layout({
     if (columnCount !== columns) {
       throw new Error(
         `Layout: Expected exactly ${columns} Layout.Column child${columns === 1 ? "" : "ren"}, but found ${columnCount}. ` +
-        `Please ensure the number of <Layout.Column> children matches the \`columns={${columns}}\` prop.`
+          `Please ensure the number of <Layout.Column> children matches the \`columns={${columns}}\` prop.`,
       );
     }
   }
@@ -79,10 +82,10 @@ export function Layout({
     gap === 4
       ? "astw:gap-4"
       : gap === 6
-      ? "astw:gap-6"
-      : gap === 8
-      ? "astw:gap-8"
-      : "astw:gap-4"; // default to 4 (16px)
+        ? "astw:gap-6"
+        : gap === 8
+          ? "astw:gap-8"
+          : "astw:gap-4"; // default to 4 (16px)
 
   // Build flexbox classes based on column count
   // Similar to omakase's approach: simple flexbox with viewport breakpoints
@@ -93,17 +96,11 @@ export function Layout({
     columns === 1 && "astw:flex-col",
     // 2 columns: Stack on mobile, side-by-side on desktop (lg: ≥1024px)
     // Main column flexible, side column fixed 360px
-    columns === 2 && [
-      "astw:flex-col",
-      "astw:lg:flex-row",
-    ],
+    columns === 2 && ["astw:flex-col", "astw:lg:flex-row"],
     // 3 columns: Stack on mobile, 3 columns side-by-side on desktop (xl: ≥1280px)
     // Outer columns fixed 360px, middle column flexible
-    columns === 3 && [
-      "astw:flex-col",
-      "astw:xl:flex-row",
-    ],
-    className
+    columns === 3 && ["astw:flex-col", "astw:xl:flex-row"],
+    className,
   );
 
   // Apply width constraints to columns
@@ -121,7 +118,7 @@ export function Layout({
             (child.props as any).className,
             index === 0
               ? "astw:lg:flex-1" // First column: flexible
-              : "astw:lg:min-w-[280px]" // Second column: fixed 280px
+              : "astw:lg:min-w-[280px]", // Second column: fixed 280px
           ),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.cloneElement requires type assertion
         } as any);
@@ -137,8 +134,8 @@ export function Layout({
             index === 0
               ? "astw:xl:min-w-[320px]" // First column: fixed 320px
               : index === 2
-              ? "astw:xl:min-w-[280px]" // Third column: fixed 280px
-              : "astw:xl:flex-1" // Middle column: flexible
+                ? "astw:xl:min-w-[280px]" // Third column: fixed 280px
+                : "astw:xl:flex-1", // Middle column: flexible
           ),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.cloneElement requires type assertion
         } as any);
@@ -152,10 +149,7 @@ export function Layout({
   return (
     <div className="astw:flex astw:flex-col">
       {hasHeader && (
-        <header
-          className="astw:w-full astw:flex astw:justify-between astw:items-center"
-          style={{ padding: "1.5rem", paddingBottom: "1rem" }}
-        >
+        <header className="astw:w-full astw:flex astw:justify-between astw:items-center astw:pt-6 astw:pb-4">
           {title && (
             <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>
           )}
@@ -168,10 +162,10 @@ export function Layout({
           )}
         </header>
       )}
-      <div style={{ padding: hasHeader ? "0 1.5rem 1.5rem 1.5rem" : "1.5rem" }}>
-        <div className={containerClasses}>
-          {childrenWithStyles}
-        </div>
+      <div
+        className={cn(hasHeader ? "astw:pb-6" : "astw:py-6", containerClasses)}
+      >
+        {childrenWithStyles}
       </div>
     </div>
   );

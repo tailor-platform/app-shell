@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/collapsible";
+import { Collapsible } from "@/components/collapsible";
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -84,7 +80,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   // Render with clickable header (has `to` prop)
   if (to) {
     return (
-      <Collapsible render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
+      <Collapsible.Root render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
         <SidebarMenuButton
           render={
             <Link
@@ -99,25 +95,25 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           {icon}
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
-        <CollapsibleTrigger
+        <Collapsible.Trigger
           render={
             <SidebarMenuAction className="astw:data-panel-open:rotate-90" />
           }
         >
           <ChevronRight />
           <span className="astw:sr-only">{t("toggle")}</span>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
+        </Collapsible.Trigger>
+        <Collapsible.Content>
           <SidebarMenuSub>{children}</SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
+        </Collapsible.Content>
+      </Collapsible.Root>
     );
   }
 
   // Render with non-clickable header (no `to` prop)
   return (
-    <Collapsible render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
-      <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
+    <Collapsible.Root render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
+      <Collapsible.Trigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
         <SidebarMenuButton
           render={<span className="astw:flex astw:w-full" />}
           tooltip={resolvedTitle}
@@ -129,10 +125,10 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           <ChevronRight />
           <span className="astw:sr-only">{t("toggle")}</span>
         </SidebarMenuAction>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
+      </Collapsible.Trigger>
+      <Collapsible.Content>
         <SidebarMenuSub>{children}</SidebarMenuSub>
-      </CollapsibleContent>
-    </Collapsible>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 };

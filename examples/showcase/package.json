@@ -1,0 +1,27 @@
+{
+  "name": "showcase",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint -c .oxlintrc.jsonc",
+    "preview": "vite preview",
+    "type-check": "tsc --incremental"
+  },
+  "dependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.1"
+  },
+  "devDependencies": {
+    "@tailor-platform/app-shell-vite-plugin": "workspace:*",
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "~5.9.3",
+    "vite": "catalog:"
+  }
+}

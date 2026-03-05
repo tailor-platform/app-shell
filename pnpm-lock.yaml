@@ -113,6 +113,43 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  examples/showcase:
+    dependencies:
+      '@tailor-platform/app-shell':
+        specifier: workspace:*
+        version: link:../../packages/core
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+      tailwindcss:
+        specifier: ^4.2.1
+        version: 4.2.1
+    devDependencies:
+      '@tailor-platform/app-shell-vite-plugin':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin
+      '@tailwindcss/vite':
+        specifier: ^4.2.1
+        version: 4.2.1(vite@7.3.1(@types/node@22.13.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.7.0))
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.13
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.13)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 5.1.2(vite@7.3.1(@types/node@22.13.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.7.0))
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: 'catalog:'
+        version: 7.3.1(@types/node@22.13.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.7.0)
+
   examples/vite-app:
     dependencies:
       '@tailor-platform/app-shell':
@@ -131,6 +168,9 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1
     devDependencies:
+      '@tailor-platform/app-shell-vite-plugin':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin
       '@tailwindcss/vite':
         specifier: ^4.2.1
         version: 4.2.1(vite@7.3.1(@types/node@22.13.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.7.0))

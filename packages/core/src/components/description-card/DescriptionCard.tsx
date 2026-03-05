@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TooltipProvider } from "../tooltip";
+import { Tooltip } from "../tooltip";
 import { cn } from "../../lib/utils";
 
 import type {
@@ -200,7 +200,7 @@ export function DescriptionCard({
   };
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <Tooltip.Provider delayDuration={300}>
       <div
         className={cn(
           "astw:@container astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",
@@ -239,7 +239,7 @@ export function DescriptionCard({
           )}
         </div>
       </div>
-    </TooltipProvider>
+    </Tooltip.Provider>
   );
 }
 

@@ -22,7 +22,7 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({ children, ...props }: { children: React.ReactNode }) {
+function TooltipRoot({ children, ...props }: { children: React.ReactNode }) {
   return (
     <TooltipProvider>
       <BaseTooltip.Root data-slot="tooltip" {...props}>
@@ -62,11 +62,18 @@ function TooltipContent({
           {...restProps}
         >
           {children}
-          <BaseTooltip.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%_-_2px)] astw:rotate-45 astw:rounded-[2px]" />
+          <BaseTooltip.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%-2px)] astw:rotate-45 astw:rounded-[2px]" />
         </BaseTooltip.Popup>
       </BaseTooltip.Positioner>
     </BaseTooltip.Portal>
   );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+const Tooltip = {
+  Root: TooltipRoot,
+  Provider: TooltipProvider,
+  Trigger: TooltipTrigger,
+  Content: TooltipContent,
+};
+
+export { Tooltip };

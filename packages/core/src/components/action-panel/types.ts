@@ -20,6 +20,8 @@ export interface ActionItem {
   href?: string;
   /** Optional; disable the row */
   disabled?: boolean;
+  /** When true, show loading indicator in the row and make it non-interactive (e.g. while executing) */
+  loading?: boolean;
 }
 
 // ============================================================================

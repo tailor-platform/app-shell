@@ -277,7 +277,6 @@ describe("createContentRoutes", () => {
   });
 
   it("calls loader after all guards pass", async () => {
-    const loader = vi.fn().mockResolvedValue({ data: "loaded" });
     const guard1 = vi.fn().mockReturnValue(pass());
     const guard2 = vi.fn().mockReturnValue(pass());
 
@@ -288,9 +287,6 @@ describe("createContentRoutes", () => {
       guards: [guard1, guard2],
       resources: [],
     });
-
-    // Manually set loader to simulate fs-routes guard+loader co-existence
-    module.guardLoader = module.guardLoader;
 
     const routes = createContentRoutes({
       modules: [module],

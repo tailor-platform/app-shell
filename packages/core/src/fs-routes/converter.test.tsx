@@ -77,10 +77,12 @@ describe("convertPagesToModules", () => {
   });
 
   it("generates guardLoader when guards and loader co-exist", async () => {
-    const guard = async () => ({ type: "pass" as const });
-    const loader = async () => ({ data: "test" });
-
-    const pages = [createMockPage("/dashboard", { guards: [guard], loader })];
+    const pages = [
+      createMockPage("/dashboard", {
+        guards: [async () => ({ type: "pass" as const })],
+        loader: async () => ({ data: "test" }),
+      }),
+    ];
     const modules = convertPagesToModules(pages);
 
     // guardLoader should be generated (wraps guards + baseLoader)
@@ -96,12 +98,12 @@ describe("convertPagesToModules", () => {
   });
 
   it("generates guardLoader for resource when guards and loader co-exist", async () => {
-    const guard = async () => ({ type: "pass" as const });
-    const loader = async () => ({ items: [1, 2, 3] });
-
     const pages = [
       createMockPage("/dashboard"),
-      createMockPage("/dashboard/orders", { guards: [guard], loader }),
+      createMockPage("/dashboard/orders", {
+        guards: [async () => ({ type: "pass" as const })],
+        loader: async () => ({ items: [1, 2, 3] }),
+      }),
     ];
     const modules = convertPagesToModules(pages);
 

@@ -41,9 +41,11 @@ type SharedAppShellProps = React.PropsWithChildren<{
   rootComponent?: () => React.ReactNode;
 
   /**
-   * Settings resources to be included in the settings menu
+   * Settings resources to be included in the settings menu.
+   * Settings resources always require a `component` since they are rendered
+   * directly without the route resolution logic used by module resources.
    */
-  settingsResources?: Array<Resource>;
+  settingsResources?: Array<Resource & { component: NonNullable<Resource["component"]> }>;
 
   /**
    * Locale code used for built-in UI strings.

@@ -2,6 +2,36 @@ import { cn } from "../../lib/utils";
 import type { ActionPanelProps, ActionItem } from "./types";
 
 // ============================================================================
+// SPINNER (loading indicator for icon slot)
+// ============================================================================
+
+const ActionSpinner = () => (
+  <span
+    className="astw:flex astw:size-4 astw:items-center astw:justify-center"
+    aria-hidden
+    data-testid="action-panel-spinner"
+  >
+    <svg
+      className="astw:size-4 astw:animate-spin"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle
+        cx="8"
+        cy="8"
+        r="6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray="24 24"
+        strokeDashoffset="8"
+      />
+    </svg>
+  </span>
+);
+
+// ============================================================================
 // ACTION ROW
 // ============================================================================
 
@@ -14,13 +44,13 @@ const actionRowInteractiveClasses =
 const actionRowDisabledClasses = "astw:pointer-events-none astw:opacity-50";
 
 function ActionRow({ action }: { action: ActionItem }) {
-  const { key, label, icon, onClick, href, disabled } = action;
-  const isDisabled = Boolean(disabled);
+  const { key, label, icon, onClick, href, disabled, loading } = action;
+  const isDisabled = Boolean(disabled) || Boolean(loading);
 
   const content = (
     <>
       <span className="astw:flex astw:size-4 astw:items-center astw:justify-center" aria-hidden>
-        {icon}
+        {loading ? <ActionSpinner /> : icon}
       </span>
       <span className="astw:min-w-0 astw:truncate">{label}</span>
     </>
@@ -51,6 +81,7 @@ function ActionRow({ action }: { action: ActionItem }) {
       onClick={isDisabled ? undefined : onClick}
       disabled={isDisabled}
       aria-disabled={isDisabled}
+      aria-busy={loading}
       data-slot="action-panel-item"
       data-key={key}
     >
@@ -70,6 +101,9 @@ function ActionRow({ action }: { action: ActionItem }) {
  * and is triggered by onClick (button) or href (link). Use `astw:w-full` so the panel fills
  * the width of its parent container.
  *
+ * When an action has `loading: true`, the row shows a spinner in the icon slot and is
+ * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).
+ *
  * @example
  * ```tsx
  * <ActionPanel
@@ -77,6 +111,7 @@ function ActionRow({ action }: { action: ActionItem }) {
  *   actions={[
  *     { key: "1", label: "Create invoice", icon: <ReceiptIcon />, onClick: () => openModal() },
  *     { key: "2", label: "View docs", icon: <DocIcon />, href: "/docs" },
+ *     { key: "3", label: "Saving…", icon: <SaveIcon />, onClick: () => {}, loading: true },
  *   ]}
  * />
  * ```
@@ -89,17 +124,19 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
         className,
       )}
     >
-      {/* Header */}
-      <div className="astw:px-6 astw:py-5">
-        <h3 className="astw:text-lg astw:font-semibold astw:leading-none">{title}</h3>
+      {/* Header: same horizontal padding as list; title aligns with action row icon (pl-3 matches row px-3) */}
+      <div className="astw:px-4 astw:pt-6 astw:pb-2">
+        <h3 className="astw:mb-2 astw:text-lg astw:font-semibold astw:leading-none astw:pl-3">
+          {title}
+        </h3>
       </div>
 
       {/* Action list */}
-      <div className="astw:px-6 astw:pb-4">
+      <div className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
           <p className="astw:text-sm astw:text-muted-foreground">No actions available</p>
         ) : (
-          <div className="astw:flex astw:flex-col astw:gap-1" role="list">
+          <div className="astw:flex astw:flex-col astw:gap-0" role="list">
             {actions.map((action) => (
               <div key={action.key} role="listitem">
                 <ActionRow action={action} />

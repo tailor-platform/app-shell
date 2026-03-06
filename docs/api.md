@@ -767,6 +767,7 @@ Card component with a title and a vertical list of actions (icon + label). Each 
 | `onClick` | `() => void \| Promise<void>`  | Called when the row is clicked (run a function, modal, navigate, etc.) |
 | `href`    | `string`                       | If set, row renders as `<a>` for navigation                              |
 | `disabled`| `boolean`                      | Optional; disable the row                                               |
+| `loading` | `boolean`                      | Optional; show spinner and make row non-interactive (e.g. while executing) |
 
 Use either `onClick` or `href` per action. Icons are swappable (pass any component or SVG).
 

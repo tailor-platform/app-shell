@@ -664,6 +664,38 @@ const twoColumnLayoutResource = defineResource({
     title: "2 Columns",
   },
   component: () => {
+    const [loadingKey, setLoadingKey] = React.useState<string | null>(null);
+
+    const handleCreateInvoice = () => {
+      setLoadingKey("create-invoice");
+      setTimeout(() => {
+        setLoadingKey(null);
+        alert("Create invoice clicked");
+      }, 1500);
+    };
+
+    const actions = [
+      {
+        key: "create-invoice",
+        label: "Create new sales invoice",
+        icon: <ReceiptIcon />,
+        onClick: handleCreateInvoice,
+        loading: loadingKey === "create-invoice",
+      },
+      {
+        key: "delivery-note",
+        label: "Create new delivery note",
+        icon: <FileTextIcon />,
+        onClick: () => alert("Create delivery note clicked"),
+      },
+      {
+        key: "view-po-demo",
+        label: "View Purchase Order Demo (link)",
+        icon: <ExternalLinkIcon />,
+        href: "/custom-page/purchase-order-demo",
+      },
+    ];
+
     return (
       <Layout
         columns={2}
@@ -739,29 +771,7 @@ const twoColumnLayoutResource = defineResource({
           />
         </Layout.Column>
         <Layout.Column>
-          <ActionPanel
-            title="Actions"
-            actions={[
-              {
-                key: "create-invoice",
-                label: "Create new sales invoice",
-                icon: <ReceiptIcon />,
-                onClick: () => alert("Create invoice clicked"),
-              },
-              {
-                key: "delivery-note",
-                label: "Create new delivery note",
-                icon: <FileTextIcon />,
-                onClick: () => alert("Create delivery note clicked"),
-              },
-              {
-                key: "view-po-demo",
-                label: "View Purchase Order Demo (link)",
-                icon: <ExternalLinkIcon />,
-                href: "/custom-page/purchase-order-demo",
-              },
-            ]}
-          />
+          <ActionPanel title="Actions" actions={actions} />
         </Layout.Column>
       </Layout>
     );

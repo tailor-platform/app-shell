@@ -83,4 +83,61 @@ describe("ActionPanel", () => {
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain("custom-panel");
   });
+
+  it("loading row is non-interactive and has aria-busy", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(
+      <ActionPanel
+        title="Actions"
+        actions={[
+          { key: "1", label: "Submit", icon: <MockIcon />, onClick, loading: true },
+        ]}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Submit" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button).toHaveProperty("disabled", true);
+
+    await user.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("loading row shows spinner in icon slot", () => {
+    render(
+      <ActionPanel
+        title="Actions"
+        actions={[
+          { key: "1", label: "Saving", icon: <MockIcon />, onClick: () => {}, loading: true },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("action-panel-spinner")).toBeDefined();
+    expect(screen.queryByTestId("mock-icon")).toBeNull();
+  });
+
+  it("disabled and loading row is non-interactive", () => {
+    render(
+      <ActionPanel
+        title="Actions"
+        actions={[
+          {
+            key: "1",
+            label: "Action",
+            icon: <MockIcon />,
+            onClick: () => {},
+            disabled: true,
+            loading: true,
+          },
+        ]}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Action" });
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button).toHaveProperty("disabled", true);
+  });
 });

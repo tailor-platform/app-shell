@@ -57,20 +57,15 @@ const resolveIndexRoute = (source: RouteSource): RouteObject | null => {
       },
     };
   }
-  return notFoundIndexRoute;
-};
-
-/**
- * A 404 index route injected when a route has no component or guard loader.
- * Without this, React Router matches the parent route and renders nothing
- * — the catch-all 404 is never reached, resulting in a blank page.
- */
-const notFoundIndexRoute: RouteObject = {
-  index: true,
-  Component: () => null,
-  loader: () => {
-    throw createNotFoundError();
-  },
+  // No component or guard loader — inject a 404 index route so React Router
+  // doesn't match the parent and render nothing (blank page).
+  return {
+    index: true,
+    Component: () => null,
+    loader: () => {
+      throw createNotFoundError();
+    },
+  };
 };
 
 const createRoute = (

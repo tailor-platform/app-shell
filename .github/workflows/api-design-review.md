@@ -31,6 +31,11 @@ Review the pull request diff for **API consistency and potential present/future 
 
 Only review code that was **changed in this PR**. Do not comment on unchanged code.
 
+### Review Depth
+
+- **Trace all affected code paths**: Do not limit your review to the changed lines. Follow the impact of each change through the codebase — if a changed function is called elsewhere, or if a changed type flows into other modules, review those paths too.
+- **Evaluate proposed fixes holistically**: When suggesting a fix, also analyze what new edge cases or failure modes that fix would introduce. Flag those in the same comment rather than deferring to a follow-up review round.
+
 ### What to Flag
 
 Report up to **10 issues**, sorted by severity (High → Medium → Low). Use this format for each comment:

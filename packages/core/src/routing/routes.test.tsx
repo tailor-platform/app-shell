@@ -1,7 +1,13 @@
 import { describe, expect, it, assert } from "vitest";
 import { createContentRoutes } from "./routes";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import { defineModule, defineResource, pass, redirectTo } from "@/resource";
+import {
+  defineModule,
+  defineResource,
+  pass,
+  redirectTo,
+  hidden,
+} from "@/resource";
 
 const createMockResource = (path: string) =>
   defineResource({
@@ -130,7 +136,11 @@ describe("createContentRoutes", () => {
         title: "Protected",
       },
       guards: [() => pass()],
-      resources: [createMockResourceWithSubResources("child", [createMockResource("grandchild")])],
+      resources: [
+        createMockResourceWithSubResources("child", [
+          createMockResource("grandchild"),
+        ]),
+      ],
     });
 
     const routes = createContentRoutes({
@@ -298,5 +308,45 @@ describe("createContentRoutes", () => {
       expect(error).toBeInstanceOf(Response);
       expect((error as Response).status).toBe(404);
     }
+  });
+
+  it("throws 404 when hidden() guard on module without component", async () => {
+    const module = defineModule({
+      path: "admin",
+      meta: { title: "Admin" },
+      guards: [() => hidden()],
+      resources: [createMockResource("users")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const indexRoute = moduleRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    assert(typeof indexRoute?.loader === "function");
+
+    try {
+      await indexRoute.loader({} as never);
+      expect.unreachable("Loader should throw for hidden()");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Response);
+      expect((error as Response).status).toBe(404);
+    }
+  });
+
+  it("throws error when defining module with no component and no resources", () => {
+    expect(() =>
+      defineModule({
+        path: "admin",
+        meta: { title: "Admin" },
+        resources: [],
+      }),
+    ).toThrow('Module "admin" has no component and no resources');
   });
 });

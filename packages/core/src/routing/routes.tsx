@@ -12,7 +12,9 @@ import {
 
 export type RootComponentOption = () => ReactNode;
 
-export const wrapErrorBoundary = (element: ErrorBoundaryComponent): ComponentType => {
+export const wrapErrorBoundary = (
+  element: ErrorBoundaryComponent,
+): ComponentType => {
   return () => <>{element}</>;
 };
 
@@ -26,16 +28,14 @@ type RouteSource = {
 /**
  * Resolve the final index route for a given route source.
  *
- * Covers four cases explicitly:
+ * Covers three cases explicitly:
  * 1. has component         → renders the component (with optional guard loader)
  * 2. loader only           → runs guards (e.g. redirectTo); falls back to 404
  *                            if all guards pass
- * 3. no component/loader + children exist → 404 index route to prevent a blank
- *                                           page (React Router would otherwise
- *                                           match the parent and render nothing)
- * 4. no component/loader + no children    → null (index route unnecessary)
+ * 3. no component/loader   → 404 index route (React Router would otherwise
+ *                            match the parent and render nothing)
  */
-const resolveIndexRoute = (source: RouteSource, childRoutes: RouteObject[]): RouteObject | null => {
+const resolveIndexRoute = (source: RouteSource): RouteObject | null => {
   if (source.component) {
     return {
       index: true,
@@ -57,17 +57,13 @@ const resolveIndexRoute = (source: RouteSource, childRoutes: RouteObject[]): Rou
       },
     };
   }
-  if (childRoutes.length > 0) {
-    return notFoundIndexRoute;
-  }
-  return null;
+  return notFoundIndexRoute;
 };
 
 /**
- * A 404 index route injected when a route has children but no component or
- * guard loader. Without this, React Router matches the parent (which has
- * children) but renders nothing at the index — the catch-all 404 is never
- * reached, resulting in a blank page.
+ * A 404 index route injected when a route has no component or guard loader.
+ * Without this, React Router matches the parent route and renders nothing
+ * — the catch-all 404 is never reached, resulting in a blank page.
  */
 const notFoundIndexRoute: RouteObject = {
   index: true,
@@ -86,7 +82,7 @@ const createRoute = (
   const childRoutes = (children ?? []).map((child) =>
     createRoute(child, child.subResources, effectiveErrorBoundary),
   );
-  const indexRoute = resolveIndexRoute(source, childRoutes);
+  const indexRoute = resolveIndexRoute(source);
   const allChildren = [...(indexRoute ? [indexRoute] : []), ...childRoutes];
 
   return {
@@ -99,7 +95,9 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
+  modules.map((module) =>
+    createRoute(module, module.resources, module.errorBoundary),
+  );
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -123,18 +121,35 @@ export const createContentRoutes = ({
           {
             path: "settings",
             index: true,
-            Component: () => <Navigate to={settingsResources[0].path} relative="path" replace />,
+            Component: () => (
+              <Navigate
+                to={settingsResources[0].path}
+                relative="path"
+                replace
+              />
+            ),
           },
           {
             path: "settings",
             Component: SettingsWrapper,
-            children: settingsResources.map((resource) => ({
-              path: resource.path,
-              Component: resource.component,
-              ...(resource.errorBoundary && {
-                ErrorBoundary: wrapErrorBoundary(resource.errorBoundary),
-              }),
-            })),
+            children: settingsResources.map((resource) => {
+              // Settings resources are rendered directly without the route
+              // resolution logic (resolveIndexRoute), so they always require
+              // a component — a component-less settings resource would silently
+              // produce a blank page.
+              if (!resource.component) {
+                throw new Error(
+                  `Settings resource "${resource.path}" must have a component.`,
+                );
+              }
+              return {
+                path: resource.path,
+                Component: resource.component,
+                ...(resource.errorBoundary && {
+                  ErrorBoundary: wrapErrorBoundary(resource.errorBoundary),
+                }),
+              };
+            }),
           },
         ]
       : [];

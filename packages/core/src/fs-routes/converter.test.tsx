@@ -101,6 +101,43 @@ describe("convertPagesToModules", () => {
     expect(modules[0].resources.map((r) => r.path).sort()).toEqual(["roles", "users"]);
   });
 
+  it("resource directory without page.tsx has undefined component", () => {
+    const pages = [
+      createMockPage("/dashboard"),
+      createMockPage("/dashboard/namespace/page-a"),
+      createMockPage("/dashboard/namespace/page-b"),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules).toHaveLength(1);
+    const namespaceResource = modules[0].resources[0];
+    expect(namespaceResource.path).toBe("namespace");
+    expect(namespaceResource.component).toBeUndefined();
+    expect(namespaceResource.subResources).toHaveLength(2);
+    expect(namespaceResource.subResources!.map((r) => r.path).sort()).toEqual(["page-a", "page-b"]);
+  });
+
+  it("resource directory without page.tsx produces a 404 index route", () => {
+    const pages = [createMockPage("/dashboard"), createMockPage("/dashboard/namespace/page-a")];
+    const modules = convertPagesToModules(pages);
+
+    const routes = createContentRoutes({ modules, settingsResources: [] });
+    const moduleRoute = routes[1].children?.[0]; // "dashboard"
+    const namespaceRoute = moduleRoute?.children?.[1]; // "namespace"
+    expect(namespaceRoute?.path).toBe("namespace");
+
+    const indexRoute = namespaceRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    expect(typeof indexRoute?.Component).toBe("function");
+    expect(typeof indexRoute?.loader).toBe("function"); // 404 loader
+
+    // Sub-resource should still be accessible
+    const subResource = namespaceRoute?.children?.find((r) => r.path === "page-a");
+    expect(subResource).toBeDefined();
+  });
+
   it("module directory without page.tsx produces a 404 index route", () => {
     const pages = [createMockPage("/admin/users"), createMockPage("/admin/roles")];
     const modules = convertPagesToModules(pages);

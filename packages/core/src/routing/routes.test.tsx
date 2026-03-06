@@ -25,6 +25,18 @@ const createMockResourceWithSubResources = (
     subResources,
   });
 
+const createMockResourceWithoutComponent = (
+  path: string,
+  subResources: ReturnType<typeof defineResource>[],
+) =>
+  defineResource({
+    path,
+    meta: {
+      title: path,
+    },
+    subResources,
+  });
+
 describe("createContentRoutes", () => {
   it("uses EmptyOutlet when no root component is provided", () => {
     const routes = createContentRoutes({
@@ -328,6 +340,111 @@ describe("createContentRoutes", () => {
       expect(error).toBeInstanceOf(Response);
       expect((error as Response).status).toBe(404);
     }
+  });
+
+  it("creates resource without component (sub-resources only, path returns 404)", () => {
+    const module = defineModule({
+      path: "dashboard",
+      component: () => <div>Dashboard</div>,
+      meta: { title: "Dashboard" },
+      resources: [
+        createMockResourceWithoutComponent("namespace", [
+          createMockResource("page-a"),
+          createMockResource("page-b"),
+        ]),
+      ],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const namespaceRoute = moduleRoute?.children?.[1];
+    expect(namespaceRoute?.path).toBe("namespace");
+
+    // Should have a 404 index route (no component)
+    const indexRoute = namespaceRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    expect(typeof indexRoute?.Component).toBe("function");
+    expect(typeof indexRoute?.loader).toBe("function");
+
+    // Sub-resources should still be present
+    expect(namespaceRoute?.children).toHaveLength(3); // index + 2 sub-resources
+    expect(namespaceRoute?.children?.[1].path).toBe("page-a");
+    expect(namespaceRoute?.children?.[2].path).toBe("page-b");
+  });
+
+  it("resource without component returns 404 from index loader", async () => {
+    const module = defineModule({
+      path: "dashboard",
+      component: () => <div>Dashboard</div>,
+      meta: { title: "Dashboard" },
+      resources: [createMockResourceWithoutComponent("namespace", [createMockResource("child")])],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const namespaceRoute = moduleRoute?.children?.[1];
+    const indexRoute = namespaceRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    assert(typeof indexRoute?.loader === "function");
+
+    try {
+      await indexRoute.loader({} as never);
+      expect.unreachable("Loader should throw a Response for 404");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Response);
+      expect((error as Response).status).toBe(404);
+    }
+  });
+
+  it("resource without component but with guards uses guard loader", async () => {
+    const module = defineModule({
+      path: "dashboard",
+      component: () => <div>Dashboard</div>,
+      meta: { title: "Dashboard" },
+      resources: [
+        defineResource({
+          path: "legacy",
+          meta: { title: "Legacy" },
+          guards: [() => redirectTo("/dashboard/new")],
+          subResources: [createMockResource("child")],
+        }),
+      ],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const legacyRoute = moduleRoute?.children?.[1];
+    expect(legacyRoute?.path).toBe("legacy");
+
+    const indexRoute = legacyRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    assert(typeof indexRoute?.loader === "function");
+
+    const result = await indexRoute.loader({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/dashboard/new");
   });
 
   it("path-only module (no component, no resources, no guards) falls through to catch-all 404", () => {

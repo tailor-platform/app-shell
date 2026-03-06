@@ -12,7 +12,9 @@ import {
 
 export type RootComponentOption = () => ReactNode;
 
-export const wrapErrorBoundary = (element: ErrorBoundaryComponent): ComponentType => {
+export const wrapErrorBoundary = (
+  element: ErrorBoundaryComponent,
+): ComponentType => {
   return () => <>{element}</>;
 };
 
@@ -20,6 +22,7 @@ type RouteSource = {
   path: string;
   component?: () => ReactNode;
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
   errorBoundary?: ErrorBoundaryComponent;
 };
 
@@ -31,24 +34,19 @@ const createRoute = (
   const effectiveErrorBoundary = source.errorBoundary || parentErrorBoundary;
 
   // Guards are applied only to this route's index, not cascading to children.
-  //
-  // When `source.loader` exists without a component, it means guards were attached
-  // via `withGuardsLoader()`. In that case we still need an index route so the loader
-  // can run (e.g. to redirect or throw 404). `source.loader` is currently only set
-  // by `withGuardsLoader()` when guards are present — if that coupling changes in the
-  // future this condition should be revisited.
+  const effectiveLoader = source.guardLoader ?? source.loader;
   const indexRoute: RouteObject | undefined = source.component
     ? {
         index: true,
         Component: source.component,
-        ...(source.loader && { loader: source.loader }),
+        ...(effectiveLoader && { loader: effectiveLoader }),
       }
-    : source.loader
+    : effectiveLoader
       ? {
           index: true,
-          loader: source.loader,
+          loader: effectiveLoader,
           // Component is required to suppress React Router's warning about empty leaf routes.
-          // The loader is expected to redirect, throw 404, or throw a not-found error
+          // The loader is expected to handle access control (redirect/404) or data loading
           // before this component renders.
           Component: () => null,
         }
@@ -77,7 +75,9 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
+  modules.map((module) =>
+    createRoute(module, module.resources, module.errorBoundary),
+  );
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -101,7 +101,13 @@ export const createContentRoutes = ({
           {
             path: "settings",
             index: true,
-            Component: () => <Navigate to={settingsResources[0].path} relative="path" replace />,
+            Component: () => (
+              <Navigate
+                to={settingsResources[0].path}
+                relative="path"
+                replace
+              />
+            ),
           },
           {
             path: "settings",

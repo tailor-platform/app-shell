@@ -163,7 +163,7 @@ export const runGuards = async (guards: Guard[] | undefined): Promise<GuardResul
  *   When false and guards pass, throws 404 instead of rendering a blank page.
  * @param options.baseLoader - Optional base loader to run after guards pass.
  */
-const withGuardsLoader = (
+export const withGuardsLoader = (
   guards: Guard[] | undefined,
   options?: { hasComponent?: boolean; baseLoader?: LoaderHandler },
 ) => {
@@ -208,6 +208,7 @@ export type Module = Omit<CommonPageResource, "meta"> & {
   errorBoundary: ErrorBoundaryComponent;
   guards?: Guard[];
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
 };
 
 /**
@@ -222,6 +223,7 @@ export type Resource = CommonPageResource & {
   errorBoundary: ErrorBoundaryComponent;
   guards?: Guard[];
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
 };
 
 export type Modules = Array<Module>;
@@ -367,7 +369,7 @@ export function defineModule(props: DefineModuleProps): Module {
     );
   }
 
-  const loader =
+  const guardLoader =
     guards && guards.length > 0
       ? withGuardsLoader(guards, { hasComponent: !!component })
       : undefined;
@@ -381,7 +383,7 @@ export function defineModule(props: DefineModuleProps): Module {
     type: "component" as const,
     _type: "module" as const,
     component: wrappedComponent,
-    loader,
+    guardLoader,
     meta: {
       title: metaTitle,
       ...(meta?.breadcrumbTitle !== undefined ? { breadcrumbTitle: meta.breadcrumbTitle } : {}),
@@ -447,7 +449,7 @@ export function defineResource(props: DefineResourceProps): Resource {
   const { path, component, subResources, meta, errorBoundary, guards } = props;
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
-  const loader =
+  const guardLoader =
     guards && guards.length > 0 ? withGuardsLoader(guards, { hasComponent: true }) : undefined;
 
   return {
@@ -465,6 +467,6 @@ export function defineResource(props: DefineResourceProps): Resource {
     subResources,
     errorBoundary: errorBoundary ?? <DefaultErrorBoundary />,
     guards,
-    loader,
+    guardLoader,
   };
 }

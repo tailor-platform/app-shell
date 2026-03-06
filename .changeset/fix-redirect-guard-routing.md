@@ -6,6 +6,8 @@ Fixed `redirectTo()` guard not working on modules/resources without a component.
 
 Fixed auto-generated sidebar navigation hiding modules/resources that use `redirectTo()` guards. Navigation filtering now only excludes `hidden()` guards, so redirect-guarded items remain visible in the sidebar. This only affects the auto-generation mode of `SidebarLayout`; composition mode (where children are explicitly provided) is not affected.
 
+Fixed a component-less module with a mixed guard (one that sometimes returns `pass()`) rendering a blank page. When guards pass on a route without a component, a 404 error is now thrown instead of rendering an empty page.
+
 ### Guard result types and their effect on navigation visibility
 
 | Guard result       | Nav visibility | Routing behaviour               |

@@ -1,7 +1,10 @@
 import { ReactNode } from "react";
 import { capitalCase } from "change-case";
 import { DefaultErrorBoundary } from "./components/default-error-boundary";
-import { useAppShellConfig, type ContextData } from "./contexts/appshell-context";
+import {
+  useAppShellConfig,
+  type ContextData,
+} from "./contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "./lib/i18n";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
@@ -127,7 +130,8 @@ export type ErrorBoundaryComponent = ReactNode;
  * Used to indicate a 404 Not Found error in access control or loaders.
  * Returns a new Response instance each time to avoid "body stream already read" errors.
  */
-export const createNotFoundError = () => new Response("Not Found", { status: 404 });
+export const createNotFoundError = () =>
+  new Response("Not Found", { status: 404 });
 
 /**
  * Run guards for a resource with given loader args.
@@ -135,7 +139,9 @@ export const createNotFoundError = () => new Response("Not Found", { status: 404
  * Guards are executed in order. If any guard returns non-pass result,
  * execution stops and that result is returned.
  */
-export const runGuards = async (guards: Guard[] | undefined): Promise<GuardResult> => {
+export const runGuards = async (
+  guards: Guard[] | undefined,
+): Promise<GuardResult> => {
   if (!guards || guards.length === 0) return { type: "pass" };
 
   const ctx: GuardContext = {
@@ -158,7 +164,10 @@ export const runGuards = async (guards: Guard[] | undefined): Promise<GuardResul
  * If guards deny access, throws createNotFoundError or redirects.
  * Otherwise, runs the base loader if provided.
  */
-const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: LoaderHandler) => {
+const withGuardsLoader = (
+  guards: Guard[] | undefined,
+  baseLoader?: LoaderHandler,
+) => {
   return async (args: LoaderFunctionArgs) => {
     const result = await runGuards(guards);
     switch (result.type) {
@@ -181,7 +190,9 @@ type CommonPageResource = {
   };
 };
 
-export type LoaderHandler = (args: LoaderFunctionArgs) => Promise<unknown> | unknown;
+export type LoaderHandler = (
+  args: LoaderFunctionArgs,
+) => Promise<unknown> | unknown;
 
 /**
  * A resource that can be included in the root-level content in the navigation.
@@ -350,13 +361,27 @@ type DefineModuleProps = CommonProps &
  */
 export function defineModule(props: DefineModuleProps): Module {
   const { path, meta, component, resources, errorBoundary, guards } = props;
+
+  // Unlike defineResource (where component is required), defineModule allows
+  // component to be omitted. However, without both a component and resources,
+  // the route has nothing to render and no children — resulting in a blank page
+  // rather than a 404, because notFoundIndex is only injected when children exist.
+  if (!component && resources.length === 0) {
+    throw new Error(
+      `Module "${path}" has no component and no resources. Either provide a component or at least one resource.`,
+    );
+  }
+
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
 
-  const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
+  const loader =
+    guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
 
   const wrappedComponent = component
-    ? makeComponent({ metaTitle, fallbackTitle }, (title) => component({ title, resources }))
+    ? makeComponent({ metaTitle, fallbackTitle }, (title) =>
+        component({ title, resources }),
+      )
     : undefined;
 
   return {
@@ -367,7 +392,9 @@ export function defineModule(props: DefineModuleProps): Module {
     loader,
     meta: {
       title: metaTitle,
-      ...(meta?.breadcrumbTitle !== undefined ? { breadcrumbTitle: meta.breadcrumbTitle } : {}),
+      ...(meta?.breadcrumbTitle !== undefined
+        ? { breadcrumbTitle: meta.breadcrumbTitle }
+        : {}),
       ...meta,
       menuItemClickable: component !== undefined,
       icon: props.meta?.icon,
@@ -430,7 +457,8 @@ export function defineResource(props: DefineResourceProps): Resource {
   const { path, component, subResources, meta, errorBoundary, guards } = props;
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
-  const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
+  const loader =
+    guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
 
   return {
     _type: "resource" as const,
@@ -439,7 +467,9 @@ export function defineResource(props: DefineResourceProps): Resource {
     meta: {
       title: metaTitle,
       icon: meta?.icon,
-      ...(meta?.breadcrumbTitle !== undefined ? { breadcrumbTitle: meta.breadcrumbTitle } : {}),
+      ...(meta?.breadcrumbTitle !== undefined
+        ? { breadcrumbTitle: meta.breadcrumbTitle }
+        : {}),
     },
     component: makeComponent({ metaTitle, fallbackTitle }, (title) =>
       component({ title, resources: subResources }),

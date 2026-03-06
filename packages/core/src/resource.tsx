@@ -308,8 +308,13 @@ type DefineModuleProps = CommonProps &
     /**
      * React component to render.
      *
-     * If not provided, a guard with `redirectTo()` must be used to redirect
-     * users to the appropriate resource.
+     * If not provided and no guards are given, the module path will return a 404
+     * response while child resources remain accessible.
+     *
+     * If guards are provided, they take precedence: for example, a guard using
+     * `redirectTo()` will redirect instead of returning 404. If all guards
+     * return `pass()`, the module path will still return a 404 since there is
+     * no component to render.
      *
      * @example
      * ```tsx
@@ -347,14 +352,6 @@ export function defineModule(props: DefineModuleProps): Module {
   const { path, meta, component, resources, errorBoundary, guards } = props;
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
-
-  if (!component && (!guards || guards.length === 0)) {
-    throw new Error(
-      `Module "${path}" has no component.` +
-        " Either provide a `component` or use `guards` with `redirectTo()` or `hidden()` to control access." +
-        " A guard that only returns `pass()` without a component will result in a blank page.",
-    );
-  }
 
   const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
 

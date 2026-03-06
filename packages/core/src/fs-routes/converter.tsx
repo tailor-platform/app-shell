@@ -1,6 +1,7 @@
 import { capitalCase } from "change-case";
 import { parsePath } from "@tailor-platform/app-shell-vite-plugin/parser";
 import type { Module, Resource, Guard } from "@/resource";
+import { withGuardsLoader } from "@/resource";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import type { LocalizedString } from "@/lib/i18n";
 import type { PageEntry, PageComponent } from "./types";
@@ -86,6 +87,11 @@ function nodeToResource(node: PageNode): Resource {
     subResources.push(nodeToResource(child));
   }
 
+  const hasGuards = node.guards.length > 0;
+  const guardLoader = hasGuards
+    ? withGuardsLoader(node.guards, { hasComponent: true, baseLoader: loader })
+    : undefined;
+
   return {
     _type: "resource",
     type: "component",
@@ -98,7 +104,8 @@ function nodeToResource(node: PageNode): Resource {
     subResources: subResources.length > 0 ? subResources : undefined,
     errorBoundary: <DefaultErrorBoundary />,
     guards: node.guards,
-    loader,
+    loader: hasGuards ? undefined : loader,
+    guardLoader,
   };
 }
 
@@ -122,6 +129,11 @@ function nodeToModule(node: PageNode): Module {
     resources.push(nodeToResource(child));
   }
 
+  const hasGuards = node.guards.length > 0;
+  const guardLoader = hasGuards
+    ? withGuardsLoader(node.guards, { hasComponent: true, baseLoader: loader })
+    : undefined;
+
   return {
     _type: "module",
     type: "component",
@@ -135,7 +147,8 @@ function nodeToModule(node: PageNode): Module {
     resources,
     errorBoundary: <DefaultErrorBoundary />,
     guards: node.guards,
-    loader,
+    loader: hasGuards ? undefined : loader,
+    guardLoader,
   };
 }
 

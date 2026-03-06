@@ -1,7 +1,7 @@
-import { describe, expect, it, assert } from "vitest";
+import { describe, expect, it, assert, vi } from "vitest";
 import { createContentRoutes } from "./routes";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import { defineModule, defineResource, pass } from "@/resource";
+import { defineModule, defineResource, pass, hidden, redirectTo } from "@/resource";
 
 const createMockResource = (path: string) =>
   defineResource({
@@ -156,6 +156,83 @@ describe("createContentRoutes", () => {
     expect(childResource?.loader).toBeUndefined();
   });
 
+  it("creates index route with loader and dummy component for module without component but with guards", () => {
+    const module = defineModule({
+      path: "redirect-module",
+      meta: { title: "Redirect Module" },
+      guards: [() => redirectTo("/dashboard")],
+      resources: [createMockResource("child")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    expect(moduleRoute?.path).toBe("redirect-module");
+
+    // Index route should exist with loader and dummy component
+    const indexRoute = moduleRoute?.children?.[0];
+    expect(indexRoute?.index).toBe(true);
+    expect(indexRoute?.loader).toBeDefined();
+    expect(typeof indexRoute?.loader).toBe("function");
+    expect(typeof indexRoute?.Component).toBe("function");
+
+    // Child resource should still be present
+    const childRoute = moduleRoute?.children?.[1];
+    expect(childRoute?.path).toBe("child");
+  });
+
+  it("creates index route with Component but no loader for a module with component and no guards", () => {
+    const module = defineModule({
+      path: "no-comp-no-guard",
+      meta: { title: "Test" },
+      component: () => <div>Test</div>,
+      resources: [createMockResource("child")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const indexRoute = moduleRoute?.children?.[0];
+    expect(indexRoute?.index).toBe(true);
+    expect(indexRoute?.Component).toBeDefined();
+    // No guards = no loader
+    expect(indexRoute?.loader).toBeUndefined();
+  });
+
+  it("redirect guard loader returns a redirect response", async () => {
+    const module = defineModule({
+      path: "redirect-module",
+      meta: { title: "Redirect Module" },
+      guards: [() => redirectTo("/dashboard")],
+      resources: [createMockResource("child")],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    const indexRoute = moduleRoute?.children?.[0];
+    const loader = indexRoute?.loader;
+    expect(typeof loader).toBe("function");
+
+    // Execute the loader - it should return a redirect
+    const result = await (loader as (...args: unknown[]) => unknown)({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/dashboard");
+  });
+
   it("attaches loader to index route only for resource (no cascade to sub-resources)", () => {
     const module = defineModule({
       path: "dashboard",
@@ -197,5 +274,61 @@ describe("createContentRoutes", () => {
     const subResource = protectedResource?.children?.[1];
     expect(subResource?.path).toBe("detail");
     expect(subResource?.loader).toBeUndefined();
+  });
+
+  it("calls loader after all guards pass", async () => {
+    const guard1 = vi.fn().mockReturnValue(pass());
+    const guard2 = vi.fn().mockReturnValue(pass());
+
+    const module = defineModule({
+      path: "multi-guard",
+      component: () => <div>Multi Guard</div>,
+      meta: { title: "Multi Guard" },
+      guards: [guard1, guard2],
+      resources: [],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleRoute = routes[1].children?.[0];
+    const indexRoute = moduleRoute?.children?.[0];
+    const routeLoader = indexRoute?.loader;
+    expect(typeof routeLoader).toBe("function");
+
+    const result = await (routeLoader as (...args: unknown[]) => unknown)({} as never);
+    expect(guard1).toHaveBeenCalled();
+    expect(guard2).toHaveBeenCalled();
+    // All guards passed, loader returns null (no baseLoader in defineModule)
+    expect(result).toBeNull();
+  });
+
+  it("does not call loader when a guard returns hidden", async () => {
+    const module = defineModule({
+      path: "hidden-module",
+      component: () => <div>Hidden</div>,
+      meta: { title: "Hidden" },
+      guards: [() => pass(), () => hidden()],
+      resources: [],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleRoute = routes[1].children?.[0];
+    const indexRoute = moduleRoute?.children?.[0];
+    const routeLoader = indexRoute?.loader;
+
+    try {
+      await (routeLoader as (...args: unknown[]) => unknown)({} as never);
+      expect.unreachable("Loader should throw for hidden guard");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Response);
+      expect((error as Response).status).toBe(404);
+    }
   });
 });

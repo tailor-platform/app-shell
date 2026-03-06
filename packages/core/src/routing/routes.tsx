@@ -20,6 +20,7 @@ type RouteSource = {
   path: string;
   component?: () => ReactNode;
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
   errorBoundary?: ErrorBoundaryComponent;
 };
 
@@ -30,14 +31,24 @@ const createRoute = (
 ): RouteObject => {
   const effectiveErrorBoundary = source.errorBoundary || parentErrorBoundary;
 
-  // Guards are applied only to this route's index, not cascading to children
+  // Guards are applied only to this route's index, not cascading to children.
+  const effectiveLoader = source.guardLoader ?? source.loader;
   const indexRoute: RouteObject | undefined = source.component
     ? {
         index: true,
         Component: source.component,
-        ...(source.loader && { loader: source.loader }),
+        ...(effectiveLoader && { loader: effectiveLoader }),
       }
-    : undefined;
+    : effectiveLoader
+      ? {
+          index: true,
+          loader: effectiveLoader,
+          // Component is required to suppress React Router's warning about empty leaf routes.
+          // The loader is expected to handle access control (redirect/404) or data loading
+          // before this component renders.
+          Component: () => null,
+        }
+      : undefined;
 
   return {
     path: source.path,

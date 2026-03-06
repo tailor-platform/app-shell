@@ -40,6 +40,7 @@ Mount AppShell's Tailwind theme in your CSS:
 ```
 
 This gives you:
+
 - Sidebar navigation with "Products" as a menu item
 - Routing to `/dashboard/products` and `/dashboard/products/:id`
 - Breadcrumb trail navigation

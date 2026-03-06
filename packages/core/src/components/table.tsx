@@ -4,10 +4,7 @@ import { cn } from "@/lib/utils";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div
-      data-slot="table-container"
-      className="astw:relative astw:w-full astw:overflow-x-auto"
-    >
+    <div data-slot="table-container" className="astw:relative astw:w-full astw:overflow-x-auto">
       <table
         data-slot="table"
         className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
@@ -19,11 +16,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
-    <thead
-      data-slot="table-header"
-      className={cn("astw:[&_tr]:border-b", className)}
-      {...props}
-    />
+    <thead data-slot="table-header" className={cn("astw:[&_tr]:border-b", className)} {...props} />
   );
 }
 
@@ -89,10 +82,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   );
 }
 
-function TableCaption({
-  className,
-  ...props
-}: React.ComponentProps<"caption">) {
+function TableCaption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption
       data-slot="table-caption"
@@ -102,13 +92,4 @@ function TableCaption({
   );
 }
 
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-};
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };

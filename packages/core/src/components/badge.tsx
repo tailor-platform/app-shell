@@ -57,9 +57,7 @@ function StatusDot({ variant }: { variant: string }) {
 }
 
 export interface BadgeProps
-  extends
-    React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, children, ...props }: BadgeProps) {
   const isOutline = variant?.toString().startsWith("outline-");

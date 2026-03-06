@@ -3,11 +3,7 @@ import path from "node:path";
 import type { Plugin } from "vite";
 import { Project } from "ts-morph";
 import type { PluginContext } from "../plugin";
-import {
-  VIRTUAL_MODULE_ID,
-  RESOLVED_VIRTUAL_MODULE_ID,
-  PAGE_FILE_NAME,
-} from "../constants";
+import { VIRTUAL_MODULE_ID, RESOLVED_VIRTUAL_MODULE_ID, PAGE_FILE_NAME } from "../constants";
 import { scanPages } from "../utils/scanner";
 import { generateVirtualModuleCode } from "../utils/code-gen";
 import { formatRoutesTable } from "../utils/logger";
@@ -25,10 +21,7 @@ import { appShellPagePropsSchema } from "../schema";
 /**
  * Validate appShellPageProps in a page file using ts-morph AST analysis.
  */
-function validatePageFile(
-  filePath: string,
-  content: string,
-): ValidationWarning[] {
+function validatePageFile(filePath: string, content: string): ValidationWarning[] {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile("temp.tsx", content);
 
@@ -37,11 +30,7 @@ function validatePageFile(
     return [];
   }
 
-  return validateAppShellPageProps(
-    appShellPagePropsNode,
-    appShellPagePropsSchema,
-    filePath,
-  );
+  return validateAppShellPageProps(appShellPagePropsNode, appShellPagePropsSchema, filePath);
 }
 
 /**
@@ -91,9 +80,7 @@ export function createVirtualPagesPlugin(ctx: PluginContext): Plugin {
 
       const invalidateVirtualModule = () => {
         state.cachedPages = null;
-        const mod = devServer.moduleGraph.getModuleById(
-          RESOLVED_VIRTUAL_MODULE_ID,
-        );
+        const mod = devServer.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID);
         if (mod) {
           devServer.moduleGraph.invalidateModule(mod);
           devServer.ws.send({ type: "full-reload" });
@@ -101,19 +88,13 @@ export function createVirtualPagesPlugin(ctx: PluginContext): Plugin {
       };
 
       watcher.on("add", (file) => {
-        if (
-          file.startsWith(state.resolvedPagesDir) &&
-          file.endsWith(PAGE_FILE_NAME)
-        ) {
+        if (file.startsWith(state.resolvedPagesDir) && file.endsWith(PAGE_FILE_NAME)) {
           invalidateVirtualModule();
         }
       });
 
       watcher.on("unlink", (file) => {
-        if (
-          file.startsWith(state.resolvedPagesDir) &&
-          file.endsWith(PAGE_FILE_NAME)
-        ) {
+        if (file.startsWith(state.resolvedPagesDir) && file.endsWith(PAGE_FILE_NAME)) {
           invalidateVirtualModule();
         }
       });
@@ -133,10 +114,7 @@ export function createVirtualPagesPlugin(ctx: PluginContext): Plugin {
 
         // Scan pages if not cached
         if (!state.cachedPages) {
-          state.cachedPages = scanPages(
-            state.resolvedPagesDir,
-            state.resolvedPagesDir,
-          );
+          state.cachedPages = scanPages(state.resolvedPagesDir, state.resolvedPagesDir);
           log.debug("Scanned pages:", state.cachedPages);
 
           // Log routes table at info level

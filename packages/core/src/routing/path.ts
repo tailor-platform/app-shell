@@ -18,14 +18,14 @@ export type NavigatableRoute = {
  */
 export function filterRoutes(
   routes: Array<NavigatableRoute>,
-  search: string
+  search: string,
 ): Array<NavigatableRoute> {
   if (!search.trim()) return routes;
   const lowerSearch = search.toLowerCase();
   return routes.filter(
     (route) =>
       route.title.toLowerCase().includes(lowerSearch) ||
-      route.path.toLowerCase().includes(lowerSearch)
+      route.path.toLowerCase().includes(lowerSearch),
   );
 }
 
@@ -43,7 +43,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
           breadcrumbTitle?: string | ((segment: string) => string);
         }
       >,
-      module
+      module,
     ) => {
       const moduleTitle = resolveTitle(module.meta.title, module.path);
 
@@ -53,18 +53,12 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
         breadcrumbTitle: (module.meta as any).breadcrumbTitle,
       };
 
-      const buildResourceMappingRecursively = (
-        resources: Array<Resource>,
-        basePath: string
-      ) => {
+      const buildResourceMappingRecursively = (resources: Array<Resource>, basePath: string) => {
         if (!resources || resources.length === 0) return;
 
         resources.forEach((resource) => {
           const resourcePath = `${basePath}/${resource.path}`;
-          const resourceTitle = resolveTitle(
-            resource.meta.title,
-            resource.path
-          );
+          const resourceTitle = resolveTitle(resource.meta.title, resource.path);
           acc[resourcePath] = {
             title: resourceTitle,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- breadcrumbTitle exists at runtime but not in CommonPageResource type
@@ -72,10 +66,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
           };
 
           if (resource.subResources && resource.subResources.length > 0) {
-            buildResourceMappingRecursively(
-              resource.subResources,
-              resourcePath
-            );
+            buildResourceMappingRecursively(resource.subResources, resourcePath);
           }
         });
       };
@@ -86,7 +77,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
 
       return acc;
     },
-    {}
+    {},
   );
 };
 
@@ -97,17 +88,12 @@ export function processPathSegments(
   pathname: string,
   basePath: string | undefined,
   modules: Array<Module>,
-  locale: string
+  locale: string,
 ) {
-  const rawSegments = pathname
-    .split("/")
-    .filter((segment: string) => segment !== "");
+  const rawSegments = pathname.split("/").filter((segment: string) => segment !== "");
 
   // Drop configured basePath if it prefixes the pathname (basename handling)
-  const segments =
-    basePath && rawSegments[0] === basePath
-      ? rawSegments.slice(1)
-      : rawSegments;
+  const segments = basePath && rawSegments[0] === basePath ? rawSegments.slice(1) : rawSegments;
 
   const pathTitleMapping = buildPathTitleMapping(modules, locale);
   const segmentsWithTitle = segments.map((segment, index) => {
@@ -115,17 +101,15 @@ export function processPathSegments(
 
     let mapping = pathTitleMapping[currentPath];
     if (!mapping) {
-      const tokenMatchedMapping = Object.entries(pathTitleMapping).find(
-        ([path]) => {
-          // Replace ":variable" segments with a regex pattern to match any non-slash sequence
-          const regexPattern = path
-            .split("/")
-            .map((part) => (part.startsWith(":") ? "[^/]+" : part))
-            .join("/");
-          const regex = new RegExp(`^${regexPattern}$`);
-          return regex.test(currentPath);
-        }
-      )?.[1];
+      const tokenMatchedMapping = Object.entries(pathTitleMapping).find(([path]) => {
+        // Replace ":variable" segments with a regex pattern to match any non-slash sequence
+        const regexPattern = path
+          .split("/")
+          .map((part) => (part.startsWith(":") ? "[^/]+" : part))
+          .join("/");
+        const regex = new RegExp(`^${regexPattern}$`);
+        return regex.test(currentPath);
+      })?.[1];
       if (tokenMatchedMapping) mapping = tokenMatchedMapping;
     }
     let title: string;

@@ -8,28 +8,19 @@ function Sheet({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root data-slot="sheet" {...props} />;
 }
 
-function SheetTrigger({
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Trigger>) {
+function SheetTrigger({ ...props }: React.ComponentProps<typeof BaseDialog.Trigger>) {
   return <BaseDialog.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
-function SheetClose({
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Close>) {
+function SheetClose({ ...props }: React.ComponentProps<typeof BaseDialog.Close>) {
   return <BaseDialog.Close data-slot="sheet-close" {...props} />;
 }
 
-function SheetPortal({
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Portal>) {
+function SheetPortal({ ...props }: React.ComponentProps<typeof BaseDialog.Portal>) {
   return <BaseDialog.Portal data-slot="sheet-portal" {...props} />;
 }
 
-function SheetOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
+function SheetOverlay({ className, ...props }: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
     <BaseDialog.Backdrop
       data-slot="sheet-overlay"
@@ -99,10 +90,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function SheetTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Title>) {
+function SheetTitle({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
     <BaseDialog.Title
       data-slot="sheet-title"

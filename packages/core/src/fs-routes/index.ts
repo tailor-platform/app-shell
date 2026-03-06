@@ -19,10 +19,7 @@ export type {
 } from "./types";
 
 // Converter
-export {
-  convertPagesToModules,
-  validateExclusiveRouteConfig,
-} from "./converter";
+export { convertPagesToModules, validateExclusiveRouteConfig } from "./converter";
 
 // Typed paths
 export { createTypedPaths } from "./typed-paths";

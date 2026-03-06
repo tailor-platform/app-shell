@@ -122,21 +122,19 @@ export const SidebarItem = (props: SidebarItemProps) => {
               href={to}
               target="_blank"
               rel="noopener noreferrer"
-              className={
-                isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
-              }
+              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
             />
           }
           tooltip={title}
         >
-            {render ? (
-              render(renderProps)
-            ) : (
-              <>
-                {icon ?? <ExternalLink className="astw:size-4" />}
-                <span>{title}</span>
-              </>
-            )}
+          {render ? (
+            render(renderProps)
+          ) : (
+            <>
+              {icon ?? <ExternalLink className="astw:size-4" />}
+              <span>{title}</span>
+            </>
+          )}
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
@@ -149,21 +147,19 @@ export const SidebarItem = (props: SidebarItemProps) => {
         render={
           <Link
             to={to}
-            className={
-              isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
-            }
+            className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
           />
         }
         tooltip={title}
       >
-          {render ? (
-            render(renderProps)
-          ) : (
-            <>
-              {icon}
-              <span>{title}</span>
-            </>
-          )}
+        {render ? (
+          render(renderProps)
+        ) : (
+          <>
+            {icon}
+            <span>{title}</span>
+          </>
+        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

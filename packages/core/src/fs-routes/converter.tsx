@@ -39,9 +39,7 @@ function buildPageTree(pages: PageEntry[]): PageNode {
     for (const segment of segments) {
       if (segment.type === "group") continue;
 
-      currentPath = currentPath
-        ? `${currentPath}/${segment.converted}`
-        : segment.converted;
+      currentPath = currentPath ? `${currentPath}/${segment.converted}` : segment.converted;
 
       if (!current.children.has(segment.converted)) {
         current.children.set(segment.converted, {
@@ -69,13 +67,8 @@ function buildPageTree(pages: PageEntry[]): PageNode {
 /**
  * Get title from page component or generate from path.
  */
-function getTitle(
-  component: PageComponent | undefined,
-  path: string,
-): LocalizedString {
-  return (
-    component?.appShellPageProps?.meta?.title ?? capitalCase(path || "home")
-  );
+function getTitle(component: PageComponent | undefined, path: string): LocalizedString {
+  return component?.appShellPageProps?.meta?.title ?? capitalCase(path || "home");
 }
 
 /**
@@ -203,10 +196,7 @@ export function convertPagesToModules(pages: PageEntry[]): Module[] {
  *
  * @throws Error if both are provided
  */
-export function validateExclusiveRouteConfig(
-  hasPages: boolean,
-  hasModules: boolean,
-): void {
+export function validateExclusiveRouteConfig(hasPages: boolean, hasModules: boolean): void {
   if (hasPages && hasModules) {
     throw new Error(
       "[app-shell] Cannot use both file-based pages (via Vite plugin) and explicit modules prop. " +

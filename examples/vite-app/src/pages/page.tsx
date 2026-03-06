@@ -4,9 +4,7 @@ import { paths } from "../routes.generated";
 const HomePage = () => {
   return (
     <div style={{ padding: "1.5rem" }}>
-      <h1
-        style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}
-      >
+      <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>
         Welcome to App Shell
       </h1>
       <p

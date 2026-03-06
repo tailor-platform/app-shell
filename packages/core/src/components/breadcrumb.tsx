@@ -26,10 +26,7 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-item"
-      className={cn(
-        "astw:inline-flex astw:items-center astw:gap-1.5",
-        className,
-      )}
+      className={cn("astw:inline-flex astw:items-center astw:gap-1.5", className)}
       {...props}
     />
   );
@@ -44,10 +41,7 @@ function BreadcrumbLink({
 }: React.ComponentProps<typeof Link> & {
   render?: React.ReactElement;
 }) {
-  const linkClassName = cn(
-    "astw:hover:text-foreground astw:transition-colors",
-    className,
-  );
+  const linkClassName = cn("astw:hover:text-foreground astw:transition-colors", className);
 
   return useRender({
     defaultTagName: "a",
@@ -74,11 +68,7 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
-function BreadcrumbSeparator({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"li">) {
+function BreadcrumbSeparator({ children, className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-separator"
@@ -92,19 +82,13 @@ function BreadcrumbSeparator({
   );
 }
 
-function BreadcrumbEllipsis({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
+function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="breadcrumb-ellipsis"
       role="presentation"
       aria-hidden="true"
-      className={cn(
-        "astw:flex astw:size-9 astw:items-center astw:justify-center",
-        className,
-      )}
+      className={cn("astw:flex astw:size-9 astw:items-center astw:justify-center", className)}
       {...props}
     >
       <MoreHorizontal className="astw:size-4" />

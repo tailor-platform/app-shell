@@ -33,8 +33,7 @@ export const detectBrowserLocale = (): string => {
 };
 
 export const buildLocaleResolver =
-  (locale: string) =>
-  (value: LocalizedString | undefined, fallback: string) => {
+  (locale: string) => (value: LocalizedString | undefined, fallback: string) => {
     if (!value) return fallback;
     if (typeof value === "string") return value;
     return value(locale) ?? fallback;

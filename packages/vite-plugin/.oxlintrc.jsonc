@@ -3,7 +3,7 @@
   "plugins": ["typescript", "unicorn", "oxc"],
   "categories": {
     "correctness": "error",
-    "suspicious": "warn"
+    "suspicious": "warn",
   },
-  "ignorePatterns": ["dist", "node_modules"]
+  "ignorePatterns": ["dist", "node_modules"],
 }

@@ -268,18 +268,14 @@ describe("defineI18nLabels", () => {
       const { result } = renderHook(() => dynamicLabels.useT(), {
         wrapper: createWrapper("en"),
       });
-      expect(result.current("welcome", { name: "John" })).toBe(
-        "Welcome, John!",
-      );
+      expect(result.current("welcome", { name: "John" })).toBe("Welcome, John!");
     });
 
     it("resolves dynamic label with props in Japanese", () => {
       const { result } = renderHook(() => dynamicLabels.useT(), {
         wrapper: createWrapper("ja"),
       });
-      expect(result.current("welcome", { name: "太郎" })).toBe(
-        "ようこそ、太郎さん！",
-      );
+      expect(result.current("welcome", { name: "太郎" })).toBe("ようこそ、太郎さん！");
     });
 
     it("resolves dynamic label with number props", () => {
@@ -301,25 +297,19 @@ describe("defineI18nLabels", () => {
       const { result } = renderHook(() => dynamicLabels.useT(), {
         wrapper: createWrapper("fr"),
       });
-      expect(result.current("welcome", { name: "Pierre" })).toBe(
-        "Welcome, Pierre!",
-      );
+      expect(result.current("welcome", { name: "Pierre" })).toBe("Welcome, Pierre!");
     });
 
     describe("labels.t() with dynamic labels", () => {
       it("resolves dynamic label with props for English locale", () => {
         const titleFn = dynamicLabels.t("welcome", { name: "John" });
         expect(typeof titleFn).toBe("function");
-        expect((titleFn as (locale: string) => string)("en")).toBe(
-          "Welcome, John!",
-        );
+        expect((titleFn as (locale: string) => string)("en")).toBe("Welcome, John!");
       });
 
       it("resolves dynamic label with props for Japanese locale", () => {
         const titleFn = dynamicLabels.t("welcome", { name: "太郎" });
-        expect((titleFn as (locale: string) => string)("ja")).toBe(
-          "ようこそ、太郎さん！",
-        );
+        expect((titleFn as (locale: string) => string)("ja")).toBe("ようこそ、太郎さん！");
       });
 
       it("resolves dynamic label with number props", () => {
@@ -330,9 +320,7 @@ describe("defineI18nLabels", () => {
 
       it("falls back to English for dynamic labels when locale is not defined", () => {
         const titleFn = dynamicLabels.t("welcome", { name: "Pierre" });
-        expect((titleFn as (locale: string) => string)("fr")).toBe(
-          "Welcome, Pierre!",
-        );
+        expect((titleFn as (locale: string) => string)("fr")).toBe("Welcome, Pierre!");
       });
     });
   });

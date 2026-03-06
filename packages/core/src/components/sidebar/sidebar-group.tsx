@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/collapsible";
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -89,9 +85,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           render={
             <Link
               to={to}
-              className={
-                isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
-              }
+              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
             />
           }
           tooltip={resolvedTitle}
@@ -100,9 +94,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
         <CollapsibleTrigger
-          render={
-            <SidebarMenuAction className="astw:data-panel-open:rotate-90" />
-          }
+          render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
         >
           <ChevronRight />
           <span className="astw:sr-only">{t("toggle")}</span>

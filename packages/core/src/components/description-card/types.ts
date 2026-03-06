@@ -5,14 +5,7 @@
 /**
  * Supported field types for DescriptionCard
  */
-export type FieldType =
-  | "text"
-  | "badge"
-  | "money"
-  | "date"
-  | "link"
-  | "address"
-  | "reference";
+export type FieldType = "text" | "badge" | "money" | "date" | "link" | "address" | "reference";
 
 /**
  * Badge variant mapping for automatic status coloring

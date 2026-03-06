@@ -1,10 +1,6 @@
 import type { Plugin } from "vite";
 import type { PluginContext } from "../plugin";
-import {
-  VIRTUAL_MODULE_ID,
-  APP_SHELL_PACKAGE,
-  VIRTUAL_PROXY_ID,
-} from "../constants";
+import { VIRTUAL_MODULE_ID, APP_SHELL_PACKAGE, VIRTUAL_PROXY_ID } from "../constants";
 
 /**
  * Create the auto-inject plugin.

@@ -345,9 +345,7 @@ const adminOnlyResource = defineResource({
               color: "hsl(var(--primary))",
             }}
           />
-          <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-            Admin Only Page
-          </h1>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Admin Only Page</h1>
         </div>
         <div
           style={{
@@ -361,8 +359,8 @@ const adminOnlyResource = defineResource({
             🎉 <strong>Congratulations!</strong> You have admin access.
           </p>
           <p style={{ marginBottom: "0.75rem" }}>
-            This page is only visible when you select <strong>"Admin"</strong>{" "}
-            role from the sidebar.
+            This page is only visible when you select <strong>"Admin"</strong> role from the
+            sidebar.
           </p>
           <p
             style={{
@@ -370,8 +368,8 @@ const adminOnlyResource = defineResource({
               fontSize: "0.875rem",
             }}
           >
-            Try switching to "Staff" role - this page will disappear from the
-            navigation and become inaccessible.
+            Try switching to "Staff" role - this page will disappear from the navigation and become
+            inaccessible.
           </p>
         </div>
         <div style={{ marginTop: "1.5rem" }}>
@@ -440,9 +438,7 @@ const adminOnlyResource = defineResource({
               </code>{" "}
               for non-admins
             </li>
-            <li>
-              The navigation automatically hides resources that are guarded
-            </li>
+            <li>The navigation automatically hides resources that are guarded</li>
           </ul>
         </div>
       </div>
@@ -460,10 +456,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { className = "", variant = "default", size = "default", ...props },
-    ref,
-  ) => {
+  ({ className = "", variant = "default", size = "default", ...props }, ref) => {
     const baseClasses =
       "astw:inline-flex astw:items-center astw:justify-center astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]";
 
@@ -473,9 +466,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         : "astw:bg-primary astw:text-primary-foreground astw:shadow-xs astw:hover:bg-primary/90";
 
     const sizeClasses =
-      size === "sm"
-        ? "astw:h-8 astw:gap-1.5 astw:px-3"
-        : "astw:h-9 astw:gap-2 astw:px-4 astw:py-2";
+      size === "sm" ? "astw:h-8 astw:gap-1.5 astw:px-3" : "astw:h-9 astw:gap-2 astw:px-4 astw:py-2";
 
     return (
       <button
@@ -770,9 +761,7 @@ export const customPageModule = defineModule({
             <Link to="/custom-page/sub1/sub1-1">{t("goToSub1-1")}</Link>
           </p>
           <p>
-            <Link to="/custom-page/sub1/sub1-1/123">
-              {t("goToDynamicPage")}
-            </Link>
+            <Link to="/custom-page/sub1/sub1-1/123">{t("goToDynamicPage")}</Link>
           </p>
           <p>
             <Link

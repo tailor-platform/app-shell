@@ -3,7 +3,7 @@ name: Release preview
 on:
   push:
     paths:
-      - 'packages/**'
+      - "packages/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,7 +24,7 @@ jobs:
         with:
           cache: pnpm
           cache-dependency-path: ./pnpm-lock.yaml
-          node-version-file: './package.json'
+          node-version-file: "./package.json"
       - run: pnpm install
       - run: pnpm build
       - run: pnpm dlx pkg-pr-new publish "./packages/*"

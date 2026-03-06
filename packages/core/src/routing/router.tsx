@@ -1,15 +1,6 @@
 import { PropsWithChildren } from "react";
-import {
-  Outlet,
-  createMemoryRouter,
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router";
-import {
-  createContentRoutes,
-  RootComponentOption,
-  wrapErrorBoundary,
-} from "./routes";
+import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
+import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
 
@@ -26,9 +17,7 @@ export type RouterContainerProps =
       initialEntries: Array<string>;
     } & RouterContainerPropsCommon);
 
-export const RouterContainer = (
-  props: PropsWithChildren<RouterContainerProps>,
-) => {
+export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
   const { configurations } = useAppShellConfig();
   const { rootComponent, children } = props;
   const contentRoutes = createContentRoutes({
@@ -63,16 +52,12 @@ export const RouterContainer = (
     },
   ];
 
-  const basename = configurations.basePath
-    ? "/" + configurations.basePath
-    : undefined;
+  const basename = configurations.basePath ? "/" + configurations.basePath : undefined;
 
   const router = props.memory
     ? createMemoryRouter(routes, {
         basename,
-        ...(props.initialEntries
-          ? { initialEntries: props.initialEntries }
-          : {}),
+        ...(props.initialEntries ? { initialEntries: props.initialEntries } : {}),
       })
     : createBrowserRouter(routes, {
         basename,

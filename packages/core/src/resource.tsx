@@ -447,17 +447,8 @@ export function defineResource(props: DefineResourceProps): Resource {
   const { path, component, subResources, meta, errorBoundary, guards } = props;
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
-<<<<<<< HEAD
-  const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
-||||||| parent of a2497a6 (fix: throw 404 when guards pass on component-less route)
   const loader =
-    guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
-=======
-  const loader =
-    guards && guards.length > 0
-      ? withGuardsLoader(guards, { hasComponent: true })
-      : undefined;
->>>>>>> a2497a6 (fix: throw 404 when guards pass on component-less route)
+    guards && guards.length > 0 ? withGuardsLoader(guards, { hasComponent: true }) : undefined;
 
   return {
     _type: "resource" as const,

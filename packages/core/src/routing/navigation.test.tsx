@@ -259,10 +259,7 @@ describe("useNavItems", () => {
     });
 
     const navItems = await result.current!;
-    expect(navItems.map((i) => i.title)).toEqual([
-      "Redirected Module",
-      "Dashboard",
-    ]);
+    expect(navItems.map((i) => i.title)).toEqual(["Redirected Module", "Dashboard"]);
   });
 
   it("keeps resources with redirectTo guards visible in navigation", async () => {

@@ -1,5 +1,5 @@
 ---
-"@tailor-platform/app-shell": patch
+"@tailor-platform/app-shell": minor
 ---
 
 Fixed `redirectTo()` guard not working on modules/resources without a component. Index routes are now created for loader-only routes, enabling redirect guards to execute properly.

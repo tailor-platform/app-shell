@@ -300,6 +300,7 @@ type ErrorBoundaryProps = {
   /**
    * Error boundary component for this module/resource and its children.
    * When an error occurs, this component will render.
+   * Overrides any parent-level (module or global) error boundary.
    * Use the `useRouteError` hook to access error details within the component.
    */
   errorBoundary?: ErrorBoundaryComponent;

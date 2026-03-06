@@ -23,67 +23,78 @@ type RouteSource = {
   errorBoundary?: ErrorBoundaryComponent;
 };
 
+/**
+ * Resolve the final index route for a given route source.
+ *
+ * Covers four cases explicitly:
+ * 1. has component         → renders the component (with optional guard loader)
+ * 2. loader only           → runs guards (e.g. redirectTo); falls back to 404
+ *                            if all guards pass
+ * 3. no component/loader + children exist → 404 index route to prevent a blank
+ *                                           page (React Router would otherwise
+ *                                           match the parent and render nothing)
+ * 4. no component/loader + no children    → null (index route unnecessary)
+ */
+const resolveIndexRoute = (source: RouteSource, childRoutes: RouteObject[]): RouteObject | null => {
+  if (source.component) {
+    return {
+      index: true,
+      Component: source.component,
+      ...(source.loader && { loader: source.loader }),
+    };
+  }
+  if (source.loader) {
+    return {
+      index: true,
+      // No-op component to suppress React Router's warning about a matched
+      // leaf route without an element. The loader always throws (404) or
+      // returns a redirect Response, so this component never actually renders.
+      Component: () => null,
+      loader: async (args: Parameters<LoaderHandler>[0]) => {
+        const result = await source.loader!(args);
+        if (result instanceof Response) return result;
+        throw createNotFoundError();
+      },
+    };
+  }
+  if (childRoutes.length > 0) {
+    return notFoundIndexRoute;
+  }
+  return null;
+};
+
+/**
+ * A 404 index route injected when a route has children but no component or
+ * guard loader. Without this, React Router matches the parent (which has
+ * children) but renders nothing at the index — the catch-all 404 is never
+ * reached, resulting in a blank page.
+ */
+const notFoundIndexRoute: RouteObject = {
+  index: true,
+  Component: () => null,
+  loader: () => {
+    throw createNotFoundError();
+  },
+};
+
 const createRoute = (
   source: RouteSource,
   children: Array<Resource> | undefined,
   parentErrorBoundary?: ErrorBoundaryComponent,
 ): RouteObject => {
   const effectiveErrorBoundary = source.errorBoundary || parentErrorBoundary;
-
-  // Guards are applied only to this route's index, not cascading to children
-  const indexRoute: RouteObject | undefined = source.component
-    ? {
-        index: true,
-        Component: source.component,
-        ...(source.loader && { loader: source.loader }),
-      }
-    : undefined;
-
-  // When there's no component but children exist, add a 404 index route
-  // so navigating to the parent path returns 404 instead of a blank page.
-  // If a loader (e.g. from guards) exists, run it first so guards like
-  // redirectTo() still work. If the guard passes (returns non-Response),
-  // fall back to 404 since there's no component to render.
-  const notFoundIndex: RouteObject | undefined =
-    !indexRoute && children && children.length > 0
-      ? {
-          index: true,
-          // Provide a no-op Component to suppress React Router's warning about
-          // a matched leaf route without an element. The loader always throws
-          // (404) or redirects, so this component never actually renders.
-          Component: () => null,
-          loader: source.loader
-            ? async (args: Parameters<LoaderHandler>[0]) => {
-                const result = await source.loader!(args);
-                if (result instanceof Response) return result;
-                throw createNotFoundError();
-              }
-            : () => {
-                throw createNotFoundError();
-              },
-        }
-      : undefined;
+  const childRoutes = (children ?? []).map((child) =>
+    createRoute(child, child.subResources, effectiveErrorBoundary),
+  );
+  const indexRoute = resolveIndexRoute(source, childRoutes);
+  const allChildren = [...(indexRoute ? [indexRoute] : []), ...childRoutes];
 
   return {
     path: source.path,
     ...(source.errorBoundary && {
       ErrorBoundary: wrapErrorBoundary(source.errorBoundary),
     }),
-    ...(children && children.length > 0
-      ? {
-          children: [
-            ...(indexRoute ? [indexRoute] : []),
-            ...(notFoundIndex ? [notFoundIndex] : []),
-            ...children.map((child) =>
-              createRoute(child, child.subResources, effectiveErrorBoundary),
-            ),
-          ],
-        }
-      : indexRoute
-        ? {
-            children: [indexRoute],
-          }
-        : {}),
+    ...(allChildren.length > 0 ? { children: allChildren } : {}),
   };
 };
 

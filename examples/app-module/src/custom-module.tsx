@@ -7,6 +7,7 @@ import {
   hidden,
   pass,
   DescriptionCard,
+  ActionPanel,
   Layout,
   type Guard,
 } from "@tailor-platform/app-shell";
@@ -32,6 +33,73 @@ const ZapIcon = (props: SVGProps<SVGSVGElement>) => {
     </svg>
   );
 };
+
+// Small icons for ActionPanel demo (16px)
+const ReceiptIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+    <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+    <path d="M12 17.5v-11" />
+  </svg>
+);
+const FileTextIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" x2="8" y1="13" y2="13" />
+    <line x1="16" x2="8" y1="17" y2="17" />
+    <line x1="10" x2="8" y1="9" y2="9" />
+  </svg>
+);
+const ExternalLinkIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" x2="21" y1="14" y2="3" />
+  </svg>
+);
+
+// ============================================================================
+// DEMO: Action Panel Page
+// ============================================================================
+
+const ActionPanelDemoPage = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", width: "100%", maxWidth: "480px" }}>
+    <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Action Panel Demo</h1>
+    <p style={{ color: "var(--muted-foreground)", fontSize: "0.875rem" }}>
+      This panel fills the width of its container. Actions can use <code>onClick</code> or <code>href</code>.
+    </p>
+    <ActionPanel
+      title="Actions"
+      actions={[
+        {
+          key: "create-invoice",
+          label: "Create new sales invoice",
+          icon: <ReceiptIcon />,
+          onClick: () => alert("Create invoice clicked"),
+        },
+        {
+          key: "delivery-note",
+          label: "Create new delivery note",
+          icon: <FileTextIcon />,
+          onClick: () => alert("Create delivery note clicked"),
+        },
+        {
+          key: "view-po-demo",
+          label: "View Purchase Order Demo (link)",
+          icon: <ExternalLinkIcon />,
+          href: "/custom-page/purchase-order-demo",
+        },
+      ]}
+    />
+  </div>
+);
+
+const actionPanelDemoResource = defineResource({
+  path: "action-panel-demo",
+  meta: { title: "Action Panel Demo" },
+  component: ActionPanelDemoPage,
+});
 
 // ============================================================================
 // DEMO: Purchase Order Detail Page
@@ -671,7 +739,29 @@ const twoColumnLayoutResource = defineResource({
           />
         </Layout.Column>
         <Layout.Column>
-          <Placeholder columnNumber={2} />
+          <ActionPanel
+            title="Actions"
+            actions={[
+              {
+                key: "create-invoice",
+                label: "Create new sales invoice",
+                icon: <ReceiptIcon />,
+                onClick: () => alert("Create invoice clicked"),
+              },
+              {
+                key: "delivery-note",
+                label: "Create new delivery note",
+                icon: <FileTextIcon />,
+                onClick: () => alert("Create delivery note clicked"),
+              },
+              {
+                key: "view-po-demo",
+                label: "View Purchase Order Demo (link)",
+                icon: <ExternalLinkIcon />,
+                href: "/custom-page/purchase-order-demo",
+              },
+            ]}
+          />
         </Layout.Column>
       </Layout>
     );
@@ -776,6 +866,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/action-panel-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              View Action Panel Demo
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/layout-1-column"
               style={{
                 color: "hsl(var(--primary))",
@@ -831,6 +932,7 @@ export const customPageModule = defineModule({
     hiddenResource,
     adminOnlyResource,
     purchaseOrderDemoResource,
+    actionPanelDemoResource,
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,

@@ -15,6 +15,7 @@
 - [CommandPalette](#commandpalette)
 - [Badge](#badge)
 - [DescriptionCard](#descriptioncard)
+- [ActionPanel](#actionpanel)
 - [Layout](#layout)
 - [useAppShell](#useappshell)
 - [useAppShellConfig](#useappshellconfig)
@@ -738,6 +739,57 @@ const OrderDetails = ({ order }) => (
         key: "shippingAddress",
         label: "Shipping Address",
         type: "address",
+      },
+    ]}
+  />
+);
+```
+
+## ActionPanel
+
+Card component with a title and a vertical list of actions (icon + label). Each row is either a button (when using `onClick`) or a link (when using `href`). The panel uses full width of its parent by default (`w-full`).
+
+### Props
+
+| Prop        | Type           | Required | Description                           |
+| ----------- | -------------- | -------- | ------------------------------------- |
+| `title`     | `string`       | Yes      | Card title (e.g. "Actions")            |
+| `actions`   | `ActionItem[]` | Yes      | List of actions to render             |
+| `className` | `string`       | No       | Additional CSS for the card container |
+
+**ActionItem** (per action row):
+
+| Property  | Type                          | Description                                                             |
+| --------- | ------------------------------ | ----------------------------------------------------------------------- |
+| `key`     | `string`                       | Unique key for React                                                    |
+| `label`   | `string`                       | Visible label                                                           |
+| `icon`    | `React.ReactNode`              | Icon (component or SVG); rendered in a 16px slot                       |
+| `onClick` | `() => void \| Promise<void>`  | Called when the row is clicked (run a function, modal, navigate, etc.) |
+| `href`    | `string`                       | If set, row renders as `<a>` for navigation                              |
+| `disabled`| `boolean`                      | Optional; disable the row                                               |
+
+Use either `onClick` or `href` per action. Icons are swappable (pass any component or SVG).
+
+### Example
+
+```tsx
+import { ActionPanel } from "@tailor-platform/app-shell";
+
+const MyActions = () => (
+  <ActionPanel
+    title="Actions"
+    actions={[
+      {
+        key: "create",
+        label: "Create new invoice",
+        icon: <ReceiptIcon />,
+        onClick: () => openCreateModal(),
+      },
+      {
+        key: "docs",
+        label: "View documentation",
+        icon: <DocIcon />,
+        href: "/docs",
       },
     ]}
   />

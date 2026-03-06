@@ -447,7 +447,7 @@ describe("createContentRoutes", () => {
     expect((result as Response).headers.get("Location")).toBe("/dashboard/new");
   });
 
-  it("path-only module (no component, no resources, no guards) falls through to catch-all 404", () => {
+  it("path-only module (no component, no resources, no guards) returns 404", async () => {
     const module = defineModule({
       path: "empty",
       meta: { title: "Empty" },
@@ -462,8 +462,20 @@ describe("createContentRoutes", () => {
     const moduleContainer = routes[1];
     const moduleRoute = moduleContainer.children?.[0];
     expect(moduleRoute?.path).toBe("empty");
-    // No index route or children — catch-all * route handles 404
-    expect(moduleRoute?.children).toBeUndefined();
+
+    const indexRoute = moduleRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    assert(typeof indexRoute?.loader === "function");
+
+    try {
+      await indexRoute.loader({} as never);
+      expect.unreachable("Loader should throw 404");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Response);
+      expect((error as Response).status).toBe(404);
+    }
   });
 
   it("allows guard-only module (no component, no resources) for redirect", async () => {

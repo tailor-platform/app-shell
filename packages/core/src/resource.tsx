@@ -158,8 +158,18 @@ export const runGuards = async (guards: Guard[] | undefined): Promise<GuardResul
  *
  * If guards deny access, throws createNotFoundError or redirects.
  * Otherwise, runs the base loader if provided.
+ *
+ * @param guards - Guards to evaluate
+ * @param options.hasComponent - Whether the route has a component to render.
+ *   When false and guards pass, throws 404 instead of rendering a blank page.
+ * @param options.baseLoader - Optional base loader to run after guards pass.
  */
-export const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: LoaderHandler) => {
+export const withGuardsLoader = (
+  guards: Guard[] | undefined,
+  options?: { hasComponent?: boolean; baseLoader?: LoaderHandler },
+) => {
+  const { hasComponent, baseLoader } = options ?? {};
+
   return async (args: LoaderFunctionArgs) => {
     const result = await runGuards(guards);
     switch (result.type) {
@@ -168,7 +178,9 @@ export const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: Loade
       case "redirect":
         return redirect(result.to);
       case "pass":
-        return baseLoader ? baseLoader(args) : null;
+        if (baseLoader) return baseLoader(args);
+        if (!hasComponent) throw createNotFoundError();
+        return null;
     }
   };
 };
@@ -209,6 +221,7 @@ export type Module = Omit<CommonPageResource, "meta"> & {
   errorBoundary: ErrorBoundaryComponent;
   guards?: Guard[];
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
 };
 
 /**
@@ -225,6 +238,7 @@ export type Resource = CommonPageResource & {
   errorBoundary: ErrorBoundaryComponent;
   guards?: Guard[];
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
 };
 
 export type Modules = Array<Module>;
@@ -373,7 +387,10 @@ export function defineModule(props: DefineModuleProps): Module {
   const { path, meta, component, resources, errorBoundary, guards } = props;
   const metaTitle: LocalizedString = meta?.title ?? titleFromPath(path);
   const fallbackTitle = titleFromPath(path);
-  const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
+  const guardLoader =
+    guards && guards.length > 0
+      ? withGuardsLoader(guards, { hasComponent: !!component })
+      : undefined;
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) => component({ title, resources }))
     : undefined;
@@ -384,7 +401,7 @@ export function defineModule(props: DefineModuleProps): Module {
     // oxlint-disable-next-line no-underscore-dangle
     _type: "module" as const,
     component: wrappedComponent,
-    loader,
+    guardLoader,
     meta: {
       title: metaTitle,
       ...(meta?.breadcrumbTitle !== undefined ? { breadcrumbTitle: meta.breadcrumbTitle } : {}),
@@ -473,7 +490,8 @@ export function defineResource(props: DefineResourceProps): Resource {
   const { path, component, subResources, meta, errorBoundary, guards } = props;
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
-  const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
+  const guardLoader =
+    guards && guards.length > 0 ? withGuardsLoader(guards, { hasComponent: true }) : undefined;
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) =>
         component({ title, resources: subResources }),
@@ -494,6 +512,6 @@ export function defineResource(props: DefineResourceProps): Resource {
     subResources,
     errorBoundary: errorBoundary ?? <DefaultErrorBoundary />,
     guards,
-    loader,
+    guardLoader,
   };
 }

@@ -18,6 +18,7 @@ type RouteSource = {
   path: string;
   component?: () => ReactNode;
   loader?: LoaderHandler;
+  guardLoader?: LoaderHandler;
   errorBoundary?: ErrorBoundaryComponent;
 };
 
@@ -32,14 +33,16 @@ type RouteSource = {
  *                            match the parent and render nothing)
  */
 const resolveIndexRoute = (source: RouteSource): RouteObject => {
+  const effectiveLoader = source.guardLoader ?? source.loader;
+
   if (source.component) {
     return {
       index: true,
       Component: source.component,
-      ...(source.loader && { loader: source.loader }),
+      ...(effectiveLoader && { loader: effectiveLoader }),
     };
   }
-  if (source.loader) {
+  if (effectiveLoader) {
     return {
       index: true,
       // No-op component to suppress React Router's warning about a matched
@@ -47,7 +50,7 @@ const resolveIndexRoute = (source: RouteSource): RouteObject => {
       // returns a redirect Response, so this component never actually renders.
       Component: () => null,
       loader: async (args: Parameters<LoaderHandler>[0]) => {
-        const result = await source.loader!(args);
+        const result = await effectiveLoader(args);
         if (result instanceof Response) return result;
         throw createNotFoundError();
       },
@@ -86,7 +89,9 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
+  modules.map((module) =>
+    createRoute(module, module.resources, module.errorBoundary),
+  );
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -114,7 +119,13 @@ export const createContentRoutes = ({
           {
             path: "settings",
             index: true,
-            Component: () => <Navigate to={settingsResources[0].path} relative="path" replace />,
+            Component: () => (
+              <Navigate
+                to={settingsResources[0].path}
+                relative="path"
+                replace
+              />
+            ),
           },
           {
             path: "settings",

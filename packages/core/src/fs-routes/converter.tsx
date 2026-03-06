@@ -79,16 +79,18 @@ function nodeToResource(node: PageNode): Resource {
   const title = getTitle(Component, node.path);
   const icon = Component?.appShellPageProps?.meta?.icon;
   const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
-  const explicitLoader = Component?.appShellPageProps?.loader;
-  const loader =
-    explicitLoader ??
-    (node.guards && node.guards.length > 0 ? withGuardsLoader(node.guards) : undefined);
+  const loader = Component?.appShellPageProps?.loader;
 
   // Recursively convert children to subResources
   const subResources: Resource[] = [];
   for (const child of node.children.values()) {
     subResources.push(nodeToResource(child));
   }
+
+  const hasGuards = node.guards.length > 0;
+  const guardLoader = hasGuards
+    ? withGuardsLoader(node.guards, { hasComponent: !!Component, baseLoader: loader })
+    : undefined;
 
   return {
     // oxlint-disable-next-line no-underscore-dangle
@@ -104,7 +106,8 @@ function nodeToResource(node: PageNode): Resource {
     subResources: subResources.length > 0 ? subResources : undefined,
     errorBoundary: <DefaultErrorBoundary />,
     guards: node.guards,
-    loader,
+    loader: hasGuards ? undefined : loader,
+    guardLoader,
   };
 }
 
@@ -116,16 +119,18 @@ function nodeToModule(node: PageNode): Module {
   const title = getTitle(Component, node.path);
   const icon = Component?.appShellPageProps?.meta?.icon;
   const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
-  const explicitLoader = Component?.appShellPageProps?.loader;
-  const loader =
-    explicitLoader ??
-    (node.guards && node.guards.length > 0 ? withGuardsLoader(node.guards) : undefined);
+  const loader = Component?.appShellPageProps?.loader;
 
   // Convert children to resources
   const resources: Resource[] = [];
   for (const child of node.children.values()) {
     resources.push(nodeToResource(child));
   }
+
+  const hasGuards = node.guards.length > 0;
+  const guardLoader = hasGuards
+    ? withGuardsLoader(node.guards, { hasComponent: !!Component, baseLoader: loader })
+    : undefined;
 
   return {
     // oxlint-disable-next-line no-underscore-dangle
@@ -142,7 +147,8 @@ function nodeToModule(node: PageNode): Module {
     resources,
     errorBoundary: <DefaultErrorBoundary />,
     guards: node.guards,
-    loader,
+    loader: hasGuards ? undefined : loader,
+    guardLoader,
   };
 }
 

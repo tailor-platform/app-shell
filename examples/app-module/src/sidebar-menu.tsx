@@ -6,7 +6,7 @@ export const SidebarMenu = () => {
   return (
     <div
       style={{
-        borderTop: "1px solid #e5e7eb",
+        borderTop: "1px solid var(--sidebar-border)",
         padding: "12px",
       }}
     >
@@ -30,9 +30,10 @@ export const SidebarMenu = () => {
             flex: 1,
             fontSize: "14px",
             padding: "4px 8px",
-            border: "1px solid #e5e7eb",
+            border: "1px solid var(--sidebar-border)",
             borderRadius: "4px",
-            backgroundColor: "#fafafa",
+            backgroundColor: "var(--sidebar-accent)",
+            color: "var(--sidebar-foreground)",
           }}
         >
           <option value="admin">Admin</option>

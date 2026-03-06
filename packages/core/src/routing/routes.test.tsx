@@ -130,11 +130,7 @@ describe("createContentRoutes", () => {
         title: "Protected",
       },
       guards: [() => pass()],
-      resources: [
-        createMockResourceWithSubResources("child", [
-          createMockResource("grandchild"),
-        ]),
-      ],
+      resources: [createMockResourceWithSubResources("child", [createMockResource("grandchild")])],
     });
 
     const routes = createContentRoutes({

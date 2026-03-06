@@ -41,23 +41,31 @@ Report up to **10 issues**, sorted by severity (High → Medium → Low). Use th
 
 #### Severity Levels
 
-| Severity | Description |
-|----------|-------------|
-| **High** | Breaking API changes, API inconsistency, critical runtime errors, significant performance degradation |
-| **Medium** | Memory leaks, insufficient error handling, behavior not matching expectations |
-| **Low** | Insufficient tests, missing documentation, unnecessary complexity |
+| Severity   | Description                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| **High**   | Breaking API changes, API inconsistency, critical runtime errors, significant performance degradation |
+| **Medium** | Memory leaks, insufficient error handling, behavior not matching expectations                         |
+| **Low**    | Insufficient tests, missing documentation, unnecessary complexity                                     |
 
 ### What NOT to Flag (Out of Scope)
 
 These are **out of scope** and must NOT be flagged:
 
+**Internal (non-exported) components:**
+
+- Changes to components that are **not exported** from `packages/core/src/index.ts` are internal implementation details. Do NOT flag them as breaking API changes, missing exports, or public API concerns.
+- Before flagging a component change as a "breaking API change," **verify that the component is actually exported** from `index.ts`. If it is not exported, the change has no public API impact.
+- Do NOT suggest exporting internal components. Components may be intentionally kept internal. Only flag missing exports if there is clear evidence the component was previously exported and was accidentally removed.
+
 **Detectable by linter/type-check:**
+
 - Code style and formatting issues
 - React hooks rule violations (conditional calls, missing dependencies)
 - Prohibited type usage (e.g., explicit `any`)
 - Import ordering
 
 **Subjective/Ad-hoc:**
+
 - Naming convention preferences
 - Minor refactoring suggestions without clear justification
 

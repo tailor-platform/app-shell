@@ -1,11 +1,8 @@
 import { render, screen, cleanup } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import {
-  AppShellConfigContext,
-  type RootConfiguration,
-} from "@/contexts/appshell-context";
+import { SidebarProvider } from "@/components/sidebar";
+import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { DefaultSidebar } from "./default-sidebar";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
@@ -55,10 +52,7 @@ const testConfig: RootConfiguration = {
 /**
  * Wrapper to render DefaultSidebar with all required providers.
  */
-const renderDefaultSidebar = (
-  children: React.ReactNode,
-  initialPath = "/dashboard/overview",
-) => {
+const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboard/overview") => {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <AppShellConfigContext.Provider value={{ configurations: testConfig }}>

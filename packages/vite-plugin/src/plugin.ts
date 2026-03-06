@@ -41,9 +41,7 @@ export type PluginContext = {
 /**
  * Create plugin context from user options.
  */
-function createPluginContext(
-  userOptions: AppShellRoutesPluginOptions,
-): PluginContext {
+function createPluginContext(userOptions: AppShellRoutesPluginOptions): PluginContext {
   const typedRoutesConfig = userOptions.generateTypedRoutes;
   const generateTypedRoutes = Boolean(typedRoutesConfig);
   const typedRoutesOutput =
@@ -97,15 +95,10 @@ function createPluginContext(
  * });
  * ```
  */
-export function appShellRoutes(
-  options: AppShellRoutesPluginOptions = {},
-): Plugin[] {
+export function appShellRoutes(options: AppShellRoutesPluginOptions = {}): Plugin[] {
   const ctx = createPluginContext(options);
 
-  const plugins: Plugin[] = [
-    createVirtualPagesPlugin(ctx),
-    createAutoInjectPlugin(ctx),
-  ];
+  const plugins: Plugin[] = [createVirtualPagesPlugin(ctx), createAutoInjectPlugin(ctx)];
 
   if (ctx.options.generateTypedRoutes) {
     plugins.push(createTypedRoutesPlugin(ctx));

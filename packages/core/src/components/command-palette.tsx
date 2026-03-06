@@ -1,15 +1,8 @@
-import {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  useRef,
-  Suspense,
-} from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
 import { SearchIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogTitle } from "@/components/dialog";
+import { Input } from "@/components/input";
 
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
@@ -24,15 +17,13 @@ export type UseCommandPaletteOptions = {
  * Convert NavItems (from navigation loader with access control) to NavigableRoutes.
  * Recursively processes subResources to include nested routes.
  */
-export function navItemsToRoutes(
-  navItems: Array<NavItem>
-): Array<NavigatableRoute> {
+export function navItemsToRoutes(navItems: Array<NavItem>): Array<NavigatableRoute> {
   const routes: Array<NavigatableRoute> = [];
 
   const processResourceItems = (
     items: Array<NavItemResource>,
     parentIcon: React.ReactNode,
-    parentBreadcrumb: Array<string>
+    parentBreadcrumb: Array<string>,
   ) => {
     items.forEach((item) => {
       const breadcrumb = [...parentBreadcrumb, item.title];
@@ -81,19 +72,14 @@ export type UseCommandPaletteReturn = {
   listRef: React.RefObject<HTMLDivElement | null>;
 };
 
-export function useCommandPalette({
-  routes,
-}: UseCommandPaletteOptions): UseCommandPaletteReturn {
+export function useCommandPalette({ routes }: UseCommandPaletteOptions): UseCommandPaletteReturn {
   const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearchInternal] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const filteredRoutes = useMemo(
-    () => filterRoutes(routes, search),
-    [routes, search]
-  );
+  const filteredRoutes = useMemo(() => filterRoutes(routes, search), [routes, search]);
 
   // Wrapper to reset selectedIndex when search changes
   const setSearch = useCallback((newSearch: string) => {
@@ -137,7 +123,7 @@ export function useCommandPalette({
       setOpen(false);
       setSearchInternal("");
     },
-    [navigate]
+    [navigate],
   );
 
   const handleKeyDown = useCallback(
@@ -148,9 +134,7 @@ export function useCommandPalette({
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev < filteredRoutes.length - 1 ? prev + 1 : prev
-          );
+          setSelectedIndex((prev) => (prev < filteredRoutes.length - 1 ? prev + 1 : prev));
           break;
         case "ArrowUp":
           e.preventDefault();
@@ -164,7 +148,7 @@ export function useCommandPalette({
           break;
       }
     },
-    [filteredRoutes, selectedIndex, handleSelect]
+    [filteredRoutes, selectedIndex, handleSelect],
   );
 
   return {
@@ -184,9 +168,7 @@ type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
 };
 
-export function CommandPaletteContent({
-  navItems,
-}: CommandPaletteContentProps) {
+export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
   const t = useT();
   const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
   const {
@@ -208,9 +190,7 @@ export function CommandPaletteContent({
         onKeyDown={handleKeyDown}
         aria-describedby={undefined}
       >
-        <DialogTitle className="astw:sr-only">
-          {t("commandPaletteSearch")}
-        </DialogTitle>
+        <DialogTitle className="astw:sr-only">{t("commandPaletteSearch")}</DialogTitle>
         <div className="astw:flex astw:items-center astw:border-b astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
           <Input
@@ -221,10 +201,7 @@ export function CommandPaletteContent({
             autoFocus
           />
         </div>
-        <div
-          ref={listRef}
-          className="astw:max-h-75 astw:overflow-y-auto astw:overflow-x-hidden"
-        >
+        <div ref={listRef} className="astw:max-h-75 astw:overflow-y-auto astw:overflow-x-hidden">
           {filteredRoutes.length === 0 ? (
             <div className="astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground">
               {t("commandPaletteNoResults")}
@@ -240,7 +217,7 @@ export function CommandPaletteContent({
                     "astw:relative astw:flex astw:flex-col astw:w-full astw:cursor-pointer astw:select-none astw:items-start astw:rounded-sm astw:px-2 astw:py-2 astw:text-sm astw:outline-none astw:text-left",
                     index === selectedIndex
                       ? "astw:bg-accent astw:text-accent-foreground"
-                      : "astw:hover:bg-accent astw:hover:text-accent-foreground"
+                      : "astw:hover:bg-accent astw:hover:text-accent-foreground",
                   )}
                 >
                   <span className="astw:truncate astw:w-full astw:text-left">

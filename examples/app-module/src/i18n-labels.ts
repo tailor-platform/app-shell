@@ -7,8 +7,7 @@ export const labels = defineI18nLabels({
     goToDynamicPage: "Go to dynamic page",
     customPageTitle: "Custom Page",
     dynamicPageTitle: "Dynamic Page",
-    dynamicPageDescription: (args: { id: string }) =>
-      `This is a dynamic page with ID: ${args.id}`,
+    dynamicPageDescription: (args: { id: string }) => `This is a dynamic page with ID: ${args.id}`,
     subPageTitle: "Sub Page",
     subPageDescription: "This is a sub page",
     subSubPageTitle: "Sub Sub Page",
@@ -20,8 +19,7 @@ export const labels = defineI18nLabels({
     goToDynamicPage: "動的ページへ移動",
     customPageTitle: "カスタムページ",
     dynamicPageTitle: "動的ページ",
-    dynamicPageDescription: (args: { id: string }) =>
-      `これはID: ${args.id}の動的ページです`,
+    dynamicPageDescription: (args: { id: string }) => `これはID: ${args.id}の動的ページです`,
     subPageTitle: "サブページ",
     subPageDescription: "これはサブページです",
     subSubPageTitle: "サブサブページ",

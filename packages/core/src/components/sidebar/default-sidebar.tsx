@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import { Await, useLocation } from "react-router";
 import { ChevronRight } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -20,9 +16,9 @@ import {
   SidebarHeader,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/sidebar";
 import { useAppShellConfig } from "@/contexts/appshell-context";
-import { Link } from "@/components/ui/client-side-link";
+import { Link } from "react-router";
 import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
@@ -75,12 +71,7 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const DefaultHeader = (
     <SidebarHeader>
       {icon}
-      <h1
-        className={cn(
-          "astw:text-sm astw:mb-2 astw:mt-2 astw:px-2",
-          isIconMode && "astw:hidden",
-        )}
-      >
+      <h1 className={cn("astw:text-sm astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}>
         {title}
       </h1>
     </SidebarHeader>
@@ -123,9 +114,7 @@ const AutoSidebar = ({ currentPath }: { currentPath: string }) => {
 
   return (
     <Await resolve={navItems}>
-      {(items) => (
-        <AutoSidebarItems items={items ?? []} currentPath={currentPath} />
-      )}
+      {(items) => <AutoSidebarItems items={items ?? []} currentPath={currentPath} />}
     </Await>
   );
 };
@@ -133,10 +122,7 @@ const AutoSidebar = ({ currentPath }: { currentPath: string }) => {
 /**
  * Automatically generates sidebar items from navigation data.
  */
-const AutoSidebarItems = (props: {
-  items: Array<NavItem>;
-  currentPath: string;
-}) => {
+const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string }) => {
   const t = useT();
 
   return (
@@ -144,11 +130,11 @@ const AutoSidebarItems = (props: {
       <SidebarMenu>
         {props.items.map((item) => {
           return (
-            <Collapsible key={item.title} asChild defaultOpen={true}>
-              <SidebarMenuItem>
-                {item.url ? (
-                  <>
-                    <SidebarMenuButton asChild tooltip={item.title}>
+            <Collapsible key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
+              {item.url ? (
+                <>
+                  <SidebarMenuButton
+                    render={
                       <Link
                         to={item.url as string}
                         className={
@@ -156,49 +142,48 @@ const AutoSidebarItems = (props: {
                             ? "astw:bg-sidebar-accent astw:font-medium"
                             : undefined
                         }
-                      >
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
+                      />
+                    }
+                    tooltip={item.title}
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                  {!!item.items?.length && (
+                    <CollapsibleTrigger
+                      render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
+                    >
+                      <ChevronRight />
+                      <span className="astw:sr-only">{t("toggle")}</span>
+                    </CollapsibleTrigger>
+                  )}
+                </>
+              ) : (
+                <>
+                  <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
+                    <SidebarMenuButton
+                      render={<span className="astw:flex astw:w-full" />}
+                      tooltip={item.title}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
                     </SidebarMenuButton>
                     {!!item.items?.length && (
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuAction className="astw:data-[state=open]:rotate-90">
-                          <ChevronRight />
-                          <span className="astw:sr-only">{t("toggle")}</span>
-                        </SidebarMenuAction>
-                      </CollapsibleTrigger>
+                      <SidebarMenuAction className="astw-rotate-target" render={<span />}>
+                        <ChevronRight />
+                        <span className="astw:sr-only">{t("toggle")}</span>
+                      </SidebarMenuAction>
                     )}
-                  </>
-                ) : (
-                  <>
-                    <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-state=open]_.astw-rotate-target]:rotate-90">
-                      <SidebarMenuButton asChild tooltip={item.title}>
-                        <span className="astw:flex astw:w-full">
-                          {item.icon}
-                          <span>{item.title}</span>
-                        </span>
-                      </SidebarMenuButton>
-                      {!!item.items?.length && (
-                        <SidebarMenuAction
-                          className="astw-rotate-target"
-                          asChild
-                        >
-                          <span>
-                            <ChevronRight />
-                            <span className="astw:sr-only">{t("toggle")}</span>
-                          </span>
-                        </SidebarMenuAction>
-                      )}
-                    </CollapsibleTrigger>
-                  </>
-                )}
-                {!!item.items?.length && (
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
+                  </CollapsibleTrigger>
+                </>
+              )}
+              {!!item.items?.length && (
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items?.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          render={
                             <Link
                               to={subItem.url}
                               className={
@@ -206,16 +191,16 @@ const AutoSidebarItems = (props: {
                                   ? "astw:bg-sidebar-accent astw:font-medium"
                                   : undefined
                               }
-                            >
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                )}
-              </SidebarMenuItem>
+                            />
+                          }
+                        >
+                          <span>{subItem.title}</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              )}
             </Collapsible>
           );
         })}

@@ -2,11 +2,8 @@ import { render, screen, within, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider, SidebarMenu } from "@/components/ui/sidebar";
-import {
-  AppShellConfigContext,
-  type RootConfiguration,
-} from "@/contexts/appshell-context";
+import { SidebarProvider, SidebarMenu } from "@/components/sidebar";
+import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
 import { SidebarSeparator } from "./sidebar-separator";
@@ -55,10 +52,7 @@ const testConfig: RootConfiguration = {
 /**
  * Wrapper to render sidebar components with all required providers.
  */
-const renderWithProviders = (
-  ui: React.ReactNode,
-  initialPath = "/dashboard/overview",
-) => {
+const renderWithProviders = (ui: React.ReactNode, initialPath = "/dashboard/overview") => {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
@@ -94,9 +88,7 @@ describe("SidebarItem", () => {
     );
 
     const menu = getSidebarMenu();
-    expect(menu.getByTestId("custom").textContent).toContain(
-      "Dashboard Custom",
-    );
+    expect(menu.getByTestId("custom").textContent).toContain("Dashboard Custom");
   });
 
   it("renders external link with target blank", () => {
@@ -117,10 +109,7 @@ describe("SidebarItem", () => {
   });
 
   it("shows active state when path matches", () => {
-    renderWithProviders(
-      <SidebarItem to="/dashboard/overview" />,
-      "/dashboard/overview",
-    );
+    renderWithProviders(<SidebarItem to="/dashboard/overview" />, "/dashboard/overview");
 
     const menu = getSidebarMenu();
     const link = menu.getByRole("link");
@@ -150,10 +139,7 @@ describe("SidebarGroup", () => {
 
   it("renders group with icon", () => {
     renderWithProviders(
-      <SidebarGroup
-        title="Products"
-        icon={<Package data-testid="group-icon" />}
-      >
+      <SidebarGroup title="Products" icon={<Package data-testid="group-icon" />}>
         <SidebarItem to="/products/all" />
       </SidebarGroup>,
     );
@@ -172,15 +158,12 @@ describe("SidebarGroup", () => {
     const menu = getSidebarMenu();
     // Check that the group header is a link with the correct href
     const links = menu.getAllByRole("link");
-    const headerLink = links.find(
-      (l) => l.getAttribute("href") === "/products",
-    );
+    const headerLink = links.find((l) => l.getAttribute("href") === "/products");
     expect(headerLink).toBeDefined();
   });
 
   it("supports localized title function", () => {
-    const localizedTitle = (locale: string) =>
-      locale === "ja" ? "製品" : "Localized Products";
+    const localizedTitle = (locale: string) => (locale === "ja" ? "製品" : "Localized Products");
 
     renderWithProviders(
       <SidebarGroup title={localizedTitle}>

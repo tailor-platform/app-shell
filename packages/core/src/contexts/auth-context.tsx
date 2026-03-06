@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useSyncExternalStore,
-  useCallback,
-} from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore, useCallback } from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
@@ -120,10 +114,7 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
       return appUri;
     },
 
-    async getAuthHeadersForQuery(
-      path: string = "/query",
-      method: string = "POST",
-    ) {
+    async getAuthHeadersForQuery(path: string = "/query", method: string = "POST") {
       const url = `${appUri}${path}`;
       return baseClient.getAuthHeaders(url, method);
     },
@@ -243,9 +234,7 @@ type AuthProviderProps = {
  * }
  * ```
  */
-export const AuthProvider = (
-  props: React.PropsWithChildren<AuthProviderProps>,
-) => {
+export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
   // Subscribe to client state changes for useSyncExternalStore
@@ -275,9 +264,7 @@ export const AuthProvider = (
         try {
           await client.handleCallback();
           // Clean up URL - remove only OAuth-related params, preserve others
-          const cleanUrl = buildCleanOAuthCallbackUrl(
-            new URL(window.location.href),
-          );
+          const cleanUrl = buildCleanOAuthCallbackUrl(new URL(window.location.href));
           window.history.replaceState({}, "", cleanUrl);
         } catch (error) {
           console.error("Failed to handle callback:", error);
@@ -338,9 +325,7 @@ export const AuthProvider = (
 const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error(
-      "useAuth/useAuthSuspense must be used within an AuthProvider",
-    );
+    throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
   }
   return context;
 };

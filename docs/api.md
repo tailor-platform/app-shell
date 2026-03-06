@@ -1,6 +1,7 @@
 # AppShell API
 
 ## Table of Contents
+
 - [AppShell](#appshell)
 - [defineModule](#definemodule)
 - [defineResource](#defineresource)
@@ -31,19 +32,20 @@ The root level component that works as a React Provider. This component is expec
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `title` | `string` | No | App shell title |
-| `icon` | `React.ReactNode` | No | App shell icon |
-| `basePath` | `string` | No | Base path for the app shell |
-| `modules` | `Module[]` | Yes | Navigation configuration |
-| `settingsResources` | `Resource[]` | No | Resources that appear only in Settings menu |
-| `locale` | `string` | No | Locale code for built-in UI strings (accepts any string, e.g., "en", "ja", "fr"). Built-in translations available for "en" and "ja" only. Auto-detects from browser if not provided, defaults to "en" |
-| `contextData` | `ContextData` | No | Custom context data passed to guards and accessible via `useAppShell()`. Use TypeScript module augmentation with `AppShellRegister` to define the type |
-| `errorBoundary` | `React.ReactNode` | No | Global error boundary (auto-applied by default, pass `null` to disable) |
-| `children` | `React.ReactNode` | No | Layout components (e.g., SidebarLayout) |
+| Prop                | Type              | Required | Description                                                                                                                                                                                           |
+| ------------------- | ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`             | `string`          | No       | App shell title                                                                                                                                                                                       |
+| `icon`              | `React.ReactNode` | No       | App shell icon                                                                                                                                                                                        |
+| `basePath`          | `string`          | No       | Base path for the app shell                                                                                                                                                                           |
+| `modules`           | `Module[]`        | Yes      | Navigation configuration                                                                                                                                                                              |
+| `settingsResources` | `Resource[]`      | No       | Resources that appear only in Settings menu                                                                                                                                                           |
+| `locale`            | `string`          | No       | Locale code for built-in UI strings (accepts any string, e.g., "en", "ja", "fr"). Built-in translations available for "en" and "ja" only. Auto-detects from browser if not provided, defaults to "en" |
+| `contextData`       | `ContextData`     | No       | Custom context data passed to guards and accessible via `useAppShell()`. Use TypeScript module augmentation with `AppShellRegister` to define the type                                                |
+| `errorBoundary`     | `React.ReactNode` | No       | Global error boundary (auto-applied by default, pass `null` to disable)                                                                                                                               |
+| `children`          | `React.ReactNode` | No       | Layout components (e.g., SidebarLayout)                                                                                                                                                               |
 
 ### Example
+
 ```tsx
 import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
 
@@ -72,6 +74,7 @@ const App = () => {
 ```
 
 **See also:**
+
 - [Context Data](#context-data) for type-safe context data usage
 - [Route Guards](#route-guards) for accessing context in guards
 
@@ -81,29 +84,37 @@ Creates a top-level module that appears in the main navigation. Modules contain 
 
 ### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `path` | `string` | Yes | URL path for the module |
-| `meta` | `object` | No | Metadata configuration |
-| `meta.title` | `string` | No | Display title (defaults to path in capital case) |
-| `meta.icon` | `React.ReactNode` | No | Icon displayed in navigation |
-| `meta.breadcrumbTitle` | `string \| function` | No | Custom breadcrumb title |
-| `resources` | `Resource[]` | Yes | [sub-resources](#defineresource) within this module |
-| `component` | `function` | No | Landing page component (receives ResourceComponentProps). Optional - if omitted, module redirects to first resource |
-| `errorBoundary` | `React.ReactNode` | No | Error boundary for this module and its resources |
-| `guards` | `Guard[]` | No | Array of guard functions to control access. See [Route Guards](#route-guards) |
+| Parameter              | Type                 | Required | Description                                                                                                         |
+| ---------------------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `path`                 | `string`             | Yes      | URL path for the module                                                                                             |
+| `meta`                 | `object`             | No       | Metadata configuration                                                                                              |
+| `meta.title`           | `string`             | No       | Display title (defaults to path in capital case)                                                                    |
+| `meta.icon`            | `React.ReactNode`    | No       | Icon displayed in navigation                                                                                        |
+| `meta.breadcrumbTitle` | `string \| function` | No       | Custom breadcrumb title                                                                                             |
+| `resources`            | `Resource[]`         | Yes      | [sub-resources](#defineresource) within this module                                                                 |
+| `component`            | `function`           | No       | Landing page component (receives ResourceComponentProps). Optional - if omitted, module redirects to first resource |
+| `errorBoundary`        | `React.ReactNode`    | No       | Error boundary for this module and its resources                                                                    |
+| `guards`               | `Guard[]`            | No       | Array of guard functions to control access. See [Route Guards](#route-guards)                                       |
 
 **ResourceComponentProps:**
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `title` | `string` | Title of the resource |
-| `icon` | `React.ReactNode \| undefined` | Optional icon |
-| `resources` | `Resource[] \| undefined` | Optional sub-resources |
+| Prop        | Type                           | Description            |
+| ----------- | ------------------------------ | ---------------------- |
+| `title`     | `string`                       | Title of the resource  |
+| `icon`      | `React.ReactNode \| undefined` | Optional icon          |
+| `resources` | `Resource[] \| undefined`      | Optional sub-resources |
 
 ### Example
+
 ```tsx
-import { defineModule, defineResource, ResourceComponentProps, pass, hidden, redirectTo } from "@tailor-platform/app-shell";
+import {
+  defineModule,
+  defineResource,
+  ResourceComponentProps,
+  pass,
+  hidden,
+  redirectTo,
+} from "@tailor-platform/app-shell";
 import { Package } from "lucide-react";
 
 // Module with component
@@ -119,7 +130,7 @@ const productModule = defineModule({
       <p>Total resources: {resources?.length || 0}</p>
     </div>
   ),
-  resources: [inventoryPage, categoriesPage], 
+  resources: [inventoryPage, categoriesPage],
 });
 
 // Module without component - automatically redirects to first resource
@@ -133,13 +144,13 @@ const reportsModule = defineModule({
   resources: [
     defineResource({
       path: "sales",
-      component: () => <SalesReport />
+      component: () => <SalesReport />,
     }),
     defineResource({
       path: "users",
-      component: () => <UserReport />
-    })
-  ]
+      component: () => <UserReport />,
+    }),
+  ],
 });
 
 // Module with guards for access control
@@ -156,8 +167,8 @@ const adminModule = defineModule({
         return hidden(); // Shows 404
       }
       return pass();
-    }
-  ]
+    },
+  ],
 });
 
 // Module with redirect guard
@@ -166,10 +177,10 @@ const settingsModule = defineModule({
   resources: [
     defineResource({
       path: "general",
-      component: () => <GeneralSettings />
-    })
+      component: () => <GeneralSettings />,
+    }),
   ],
-  guards: [() => redirectTo("settings/general")]
+  guards: [() => redirectTo("settings/general")],
 });
 ```
 
@@ -183,16 +194,16 @@ Route guards control access to modules and resources. Guards are executed in ord
 type Guard = (context: GuardContext) => GuardResult | Promise<GuardResult>;
 
 type GuardContext = {
-  params: Record<string, string>;    // URL parameters
-  searchParams: URLSearchParams;     // Query parameters
-  signal: AbortSignal;               // For canceling async operations
-  context: ContextData;              // Custom context data from AppShell
+  params: Record<string, string>; // URL parameters
+  searchParams: URLSearchParams; // Query parameters
+  signal: AbortSignal; // For canceling async operations
+  context: ContextData; // Custom context data from AppShell
 };
 
-type GuardResult = 
-  | { type: "pass" }      // Allow access
-  | { type: "hidden" }    // Deny access (shows 404)
-  | { type: "redirect", to: string };  // Redirect to another path
+type GuardResult =
+  | { type: "pass" } // Allow access
+  | { type: "hidden" } // Deny access (shows 404)
+  | { type: "redirect"; to: string }; // Redirect to another path
 ```
 
 ### pass
@@ -249,19 +260,20 @@ Creates a resource that can be nested within modules or other resources. Resourc
 
 ### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `path` | `string` | Yes | URL path (supports dynamic segments like :id) |
-| `component` | `function` | Yes | Component to render (receives ResourceComponentProps) |
-| `meta` | `object` | No | Metadata configuration |
-| `meta.title` | `string` | No | Display title (defaults to path in capital case) |
-| `meta.icon` | `React.ReactNode` | No | Icon for navigation |
-| `meta.breadcrumbTitle` | `string \| function` | No | Custom breadcrumb title |
-| `subResources` | `Resource[]` | No | Nested resources |
-| `errorBoundary` | `React.ReactNode` | No | Error boundary for this resource (overrides module/global) |
-| `guards` | `Guard[]` | No | Array of guard functions to control access. See [Route Guards](#route-guards) |
+| Parameter              | Type                 | Required | Description                                                                   |
+| ---------------------- | -------------------- | -------- | ----------------------------------------------------------------------------- |
+| `path`                 | `string`             | Yes      | URL path (supports dynamic segments like :id)                                 |
+| `component`            | `function`           | Yes      | Component to render (receives ResourceComponentProps)                         |
+| `meta`                 | `object`             | No       | Metadata configuration                                                        |
+| `meta.title`           | `string`             | No       | Display title (defaults to path in capital case)                              |
+| `meta.icon`            | `React.ReactNode`    | No       | Icon for navigation                                                           |
+| `meta.breadcrumbTitle` | `string \| function` | No       | Custom breadcrumb title                                                       |
+| `subResources`         | `Resource[]`         | No       | Nested resources                                                              |
+| `errorBoundary`        | `React.ReactNode`    | No       | Error boundary for this resource (overrides module/global)                    |
+| `guards`               | `Guard[]`            | No       | Array of guard functions to control access. See [Route Guards](#route-guards) |
 
 ### Example
+
 ```tsx
 const productResource = defineResource({
   path: "products",
@@ -273,9 +285,9 @@ const productResource = defineResource({
   subResources: [
     defineResource({
       path: ":productSlug",
-      meta: { 
+      meta: {
         title: "Product Details",
-        breadcrumbTitle: (productSlug) => `Product ${productSlug}`
+        breadcrumbTitle: (productSlug) => `Product ${productSlug}`,
       },
       component: () => {
         const { productSlug } = useParams();
@@ -285,11 +297,11 @@ const productResource = defineResource({
         defineResource({
           path: "edit",
           meta: { title: "Edit Product" },
-          component: () => <ProductEditForm />
-        })
-      ]
-    })
-  ]
+          component: () => <ProductEditForm />,
+        }),
+      ],
+    }),
+  ],
 });
 ```
 
@@ -299,13 +311,14 @@ Default layout component that provides sidebar navigation and header. Should be 
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `children` | `function` | No | Render prop that receives `{ Outlet }` |
-| `sidebar` | `React.ReactNode` | No | Custom sidebar component (defaults to DefaultSidebar) |
-| `header` | `React.ReactNode` | No | Custom header component |
+| Prop       | Type              | Required | Description                                           |
+| ---------- | ----------------- | -------- | ----------------------------------------------------- |
+| `children` | `function`        | No       | Render prop that receives `{ Outlet }`                |
+| `sidebar`  | `React.ReactNode` | No       | Custom sidebar component (defaults to DefaultSidebar) |
+| `header`   | `React.ReactNode` | No       | Custom header component                               |
 
 ### Example
+
 ```tsx
 // Simple usage with defaults
 <AppShell {...config}>
@@ -338,21 +351,21 @@ Responsive column layout component that automatically handles 1, 2, or 3 column 
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `columns` | `1 \| 2 \| 3` | Yes | Number of columns |
-| `title` | `string` | No | Optional header title displayed above the layout |
-| `actions` | `React.ReactNode[]` | No | Optional array of action buttons displayed in the header (e.g., Save, Cancel) |
-| `className` | `string` | No | Additional CSS classes |
-| `gap` | `4 \| 6 \| 8` | No | Gap between columns in Tailwind units (default: 4 = 16px, 6 = 24px, 8 = 32px) |
-| `children` | `React.ReactNode` | Yes | Should be `Layout.Column` components |
+| Prop        | Type                | Required | Description                                                                   |
+| ----------- | ------------------- | -------- | ----------------------------------------------------------------------------- |
+| `columns`   | `1 \| 2 \| 3`       | Yes      | Number of columns                                                             |
+| `title`     | `string`            | No       | Optional header title displayed above the layout                              |
+| `actions`   | `React.ReactNode[]` | No       | Optional array of action buttons displayed in the header (e.g., Save, Cancel) |
+| `className` | `string`            | No       | Additional CSS classes                                                        |
+| `gap`       | `4 \| 6 \| 8`       | No       | Gap between columns in Tailwind units (default: 4 = 16px, 6 = 24px, 8 = 32px) |
+| `children`  | `React.ReactNode`   | Yes      | Should be `Layout.Column` components                                          |
 
 ### Responsive Behavior
 
 **Note:** The Layout component responds to its container width, not the viewport width. This ensures it works correctly when placed inside narrow containers or single columns.
 
 - **1 Column**: Always displays as 1 column at all container sizes
-- **2 Columns**: 
+- **2 Columns**:
   - Container width < 1024px: Both columns stack vertically
   - Container width ≥ 1024px: 2 columns side-by-side
     - First column: Minimum 560px, flexible (grows to fill remaining space)
@@ -384,8 +397,8 @@ import { Layout } from "@tailor-platform/app-shell";
 </Layout>
 
 // With header title and action buttons
-<Layout 
-  columns={2} 
+<Layout
+  columns={2}
   title="Edit Product"
   actions={[
     <Button key="cancel" variant="secondary">Cancel</Button>,
@@ -434,8 +447,8 @@ defineResource({
         <div>Right Panel</div>
       </Layout.Column>
     </Layout>
-  )
-})
+  ),
+});
 ```
 
 ## DefaultSidebar
@@ -444,22 +457,17 @@ The default sidebar component that renders navigation items from the AppShell co
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `header` | `React.ReactNode` | No | Custom header content |
-| `footer` | `React.ReactNode` | No | Custom footer content |
+| Prop     | Type              | Required | Description           |
+| -------- | ----------------- | -------- | --------------------- |
+| `header` | `React.ReactNode` | No       | Custom header content |
+| `footer` | `React.ReactNode` | No       | Custom footer content |
 
 ### Example
 
 ```tsx
 import { DefaultSidebar } from "@tailor-platform/app-shell";
 
-const CustomLayout = () => (
-  <DefaultSidebar 
-    header={<CompanyLogo />}
-    footer={<UserProfile />}
-  />
-);
+const CustomLayout = () => <DefaultSidebar header={<CompanyLogo />} footer={<UserProfile />} />;
 ```
 
 ## WithGuard
@@ -468,12 +476,12 @@ Conditionally renders children based on guard evaluation. Use this component to 
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `guards` | `Guard[]` | Yes | Array of guard functions. All must pass for children to render |
-| `children` | `React.ReactNode` | Yes | Content to render when all guards pass |
-| `fallback` | `React.ReactNode` | No | Content to render when any guard returns `hidden()` (default: `null`) |
-| `loading` | `React.ReactNode` | No | Content to render while async guards are being evaluated (default: `null`) |
+| Prop       | Type              | Required | Description                                                                |
+| ---------- | ----------------- | -------- | -------------------------------------------------------------------------- |
+| `guards`   | `Guard[]`         | Yes      | Array of guard functions. All must pass for children to render             |
+| `children` | `React.ReactNode` | Yes      | Content to render when all guards pass                                     |
+| `fallback` | `React.ReactNode` | No       | Content to render when any guard returns `hidden()` (default: `null`)      |
+| `loading`  | `React.ReactNode` | No       | Content to render while async guards are being evaluated (default: `null`) |
 
 ### Behavior
 
@@ -499,11 +507,11 @@ const hasRole = (role: string) => ({ context }) =>
 // Use in sidebar
 <DefaultSidebar>
   <SidebarItem to="/dashboard" />
-  
+
   <WithGuard guards={[isAdminGuard]}>
     <SidebarItem to="/admin" />
   </WithGuard>
-  
+
   <WithGuard guards={[hasRole("manager")]}>
     <SidebarItem to="/reports" />
   </WithGuard>
@@ -515,8 +523,8 @@ const hasRole = (role: string) => ({ context }) =>
 </WithGuard>
 
 // With loading state for async guards
-<WithGuard 
-  guards={[checkSubscription]} 
+<WithGuard
+  guards={[checkSubscription]}
   loading={<Spinner />}
   fallback={<UpgradePrompt />}
 >
@@ -525,6 +533,7 @@ const hasRole = (role: string) => ({ context }) =>
 ```
 
 **See also:**
+
 - [Sidebar Navigation - Access Control](./sidebar-navigation.md#access-control) for sidebar-specific usage
 - [Route Guards](#route-guards) for guard function reference
 
@@ -565,13 +574,14 @@ Status badge component with semantic variants for displaying tags, statuses, and
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `variant` | `BadgeVariant` | No | Badge style variant (defaults to "default") |
-| `children` | `React.ReactNode` | Yes | Badge content |
-| `className` | `string` | No | Additional CSS classes |
+| Prop        | Type              | Required | Description                                 |
+| ----------- | ----------------- | -------- | ------------------------------------------- |
+| `variant`   | `BadgeVariant`    | No       | Badge style variant (defaults to "default") |
+| `children`  | `React.ReactNode` | Yes      | Badge content                               |
+| `className` | `string`          | No       | Additional CSS classes                      |
 
 **Available Variants:**
+
 - `default` - Primary color badge
 - `success` - Green background, white text
 - `warning` - Yellow background, white text
@@ -604,14 +614,14 @@ Card component for displaying structured key-value information, commonly used in
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `data` | `Record<string, unknown>` | Yes | Raw data object containing field values |
-| `title` | `string` | Yes | Card title displayed in header |
-| `fields` | `FieldConfig[]` | Yes | Array of field configurations and dividers |
-| `columns` | `3 \| 4` | No | Number of columns on desktop (defaults to 3) |
-| `className` | `string` | No | Additional CSS classes |
-| `headerAction` | `React.ReactNode` | No | Action button/component in card header (e.g., edit button) |
+| Prop           | Type                      | Required | Description                                                |
+| -------------- | ------------------------- | -------- | ---------------------------------------------------------- |
+| `data`         | `Record<string, unknown>` | Yes      | Raw data object containing field values                    |
+| `title`        | `string`                  | Yes      | Card title displayed in header                             |
+| `fields`       | `FieldConfig[]`           | Yes      | Array of field configurations and dividers                 |
+| `columns`      | `3 \| 4`                  | No       | Number of columns on desktop (defaults to 3)               |
+| `className`    | `string`                  | No       | Additional CSS classes                                     |
+| `headerAction` | `React.ReactNode`         | No       | Action button/component in card header (e.g., edit button) |
 
 **FieldConfig Types:**
 
@@ -631,18 +641,18 @@ Divider:
 
 **FieldMeta Options:**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `copyable` | `boolean` | Show copy button for this field |
-| `badgeVariantMap` | `Record<string, BadgeVariant>` | Map field values to badge variants |
-| `currencyKey` | `string` | Path to currency code in data (for money fields) |
-| `hrefKey` | `string` | Path to URL in data (for link fields) |
-| `external` | `boolean` | Open link in new tab (for link fields) |
-| `dateFormat` | `"short" \| "medium" \| "long" \| "relative"` | Date display format |
-| `referenceIdKey` | `string` | Path to reference document ID |
-| `referenceUrlPattern` | `string` | URL pattern for reference links (use {id} placeholder) |
-| `tooltip` | `string` | Tooltip text |
-| `truncateLines` | `number` | Truncate text after N lines (shows tooltip with full text) |
+| Property              | Type                                          | Description                                                |
+| --------------------- | --------------------------------------------- | ---------------------------------------------------------- |
+| `copyable`            | `boolean`                                     | Show copy button for this field                            |
+| `badgeVariantMap`     | `Record<string, BadgeVariant>`                | Map field values to badge variants                         |
+| `currencyKey`         | `string`                                      | Path to currency code in data (for money fields)           |
+| `hrefKey`             | `string`                                      | Path to URL in data (for link fields)                      |
+| `external`            | `boolean`                                     | Open link in new tab (for link fields)                     |
+| `dateFormat`          | `"short" \| "medium" \| "long" \| "relative"` | Date display format                                        |
+| `referenceIdKey`      | `string`                                      | Path to reference document ID                              |
+| `referenceUrlPattern` | `string`                                      | URL pattern for reference links (use {id} placeholder)     |
+| `tooltip`             | `string`                                      | Tooltip text                                               |
+| `truncateLines`       | `number`                                      | Truncate text after N lines (shows tooltip with full text) |
 
 ### Features
 
@@ -678,14 +688,14 @@ const OrderDetails = ({ order }) => (
           },
         },
       },
-      
+
       // Text field with copy button
       {
         key: "orderNumber",
         label: "Order #",
         meta: { copyable: true },
       },
-      
+
       // Money field with currency
       {
         key: "total",
@@ -693,7 +703,7 @@ const OrderDetails = ({ order }) => (
         type: "money",
         meta: { currencyKey: "currency" },
       },
-      
+
       // Date field with format
       {
         key: "createdAt",
@@ -701,10 +711,10 @@ const OrderDetails = ({ order }) => (
         type: "date",
         meta: { dateFormat: "medium" },
       },
-      
+
       // Section divider
       { type: "divider" },
-      
+
       // Reference field with link
       {
         key: "customer.name",
@@ -715,14 +725,14 @@ const OrderDetails = ({ order }) => (
           referenceUrlPattern: "/customers/{id}",
         },
       },
-      
+
       // Text field with truncation
       {
         key: "notes",
         label: "Notes",
         meta: { truncateLines: 2 },
       },
-      
+
       // Address field (full width)
       {
         key: "shippingAddress",
@@ -740,29 +750,30 @@ React hook to access AppShell context data including navigation items, configura
 
 ### Returns
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `title` | `string \| undefined` | App title |
-| `icon` | `React.ReactNode \| undefined` | App icon |
-| `configurations` | `object` | Configuration object |
-| `configurations.basePath` | `string \| undefined` | Base path |
-| `configurations.modules` | `Module[]` | Registered modules |
-| `configurations.settingsResources` | `Resource[]` | Resources that appear only in Settings menu |
-| `navItems` | `NavItem[]` | Processed navigation items |
-| `navItems[].title` | `string` | Item title |
-| `navItems[].url` | `string \| undefined` | Item URL |
-| `navItems[].icon` | `React.ReactNode` | Item icon |
-| `navItems[].isActive` | `boolean` | Whether item is active |
-| `navItems[].items` | `Array<{title, url}>` | Sub-items |
-| `contextData` | `ContextData` | Custom context data passed to AppShell (type-safe via `AppShellRegister`) |
+| Property                           | Type                           | Description                                                               |
+| ---------------------------------- | ------------------------------ | ------------------------------------------------------------------------- |
+| `title`                            | `string \| undefined`          | App title                                                                 |
+| `icon`                             | `React.ReactNode \| undefined` | App icon                                                                  |
+| `configurations`                   | `object`                       | Configuration object                                                      |
+| `configurations.basePath`          | `string \| undefined`          | Base path                                                                 |
+| `configurations.modules`           | `Module[]`                     | Registered modules                                                        |
+| `configurations.settingsResources` | `Resource[]`                   | Resources that appear only in Settings menu                               |
+| `navItems`                         | `NavItem[]`                    | Processed navigation items                                                |
+| `navItems[].title`                 | `string`                       | Item title                                                                |
+| `navItems[].url`                   | `string \| undefined`          | Item URL                                                                  |
+| `navItems[].icon`                  | `React.ReactNode`              | Item icon                                                                 |
+| `navItems[].isActive`              | `boolean`                      | Whether item is active                                                    |
+| `navItems[].items`                 | `Array<{title, url}>`          | Sub-items                                                                 |
+| `contextData`                      | `ContextData`                  | Custom context data passed to AppShell (type-safe via `AppShellRegister`) |
 
 ### Example
+
 ```tsx
 import { useAppShell } from "@tailor-platform/app-shell";
 
 const CustomNavigation = () => {
   const { navItems, title, configurations, contextData } = useAppShell();
-  
+
   return (
     <nav>
       <h1>{title}</h1>
@@ -791,21 +802,22 @@ React hook to access only the AppShell configuration (title, icon, basePath, mod
 
 ### Returns
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `title` | `string \| undefined` | App title |
-| `icon` | `React.ReactNode \| undefined` | App icon |
-| `basePath` | `string \| undefined` | Base path |
-| `modules` | `Module[]` | Registered modules |
-| `settingsResources` | `Resource[]` | Resources that appear only in Settings menu |
+| Property            | Type                           | Description                                 |
+| ------------------- | ------------------------------ | ------------------------------------------- |
+| `title`             | `string \| undefined`          | App title                                   |
+| `icon`              | `React.ReactNode \| undefined` | App icon                                    |
+| `basePath`          | `string \| undefined`          | Base path                                   |
+| `modules`           | `Module[]`                     | Registered modules                          |
+| `settingsResources` | `Resource[]`                   | Resources that appear only in Settings menu |
 
 ### Example
+
 ```tsx
 import { useAppShellConfig } from "@tailor-platform/app-shell";
 
 const AppInfo = () => {
   const { title, basePath } = useAppShellConfig();
-  
+
   return (
     <div>
       <h2>{title}</h2>
@@ -821,17 +833,18 @@ React hook to access only the custom context data. This is a lighter alternative
 
 ### Returns
 
-| Type | Description |
-|------|-------------|
+| Type          | Description                                                               |
+| ------------- | ------------------------------------------------------------------------- |
 | `ContextData` | Custom context data passed to AppShell (type-safe via `AppShellRegister`) |
 
 ### Example
+
 ```tsx
 import { useAppShellData } from "@tailor-platform/app-shell";
 
 const UserProfile = () => {
   const contextData = useAppShellData();
-  
+
   return (
     <div>
       <p>Welcome, {contextData.currentUser?.name}</p>
@@ -858,14 +871,14 @@ type PageMeta = {
 
 ### Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `path` | `string` | URL path to find meta for (e.g., "/products/all") |
+| Parameter | Type     | Description                                       |
+| --------- | -------- | ------------------------------------------------- |
+| `path`    | `string` | URL path to find meta for (e.g., "/products/all") |
 
 ### Returns
 
-| Type | Description |
-|------|-------------|
+| Type               | Description                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `PageMeta \| null` | Object containing `title` and optional `icon` if found, or `null` for external links or when path is not found |
 
 ### Example
@@ -877,11 +890,11 @@ import { usePageMeta } from "@tailor-platform/app-shell";
 const PageHeader = () => {
   const location = useLocation();
   const pageMeta = usePageMeta(location.pathname);
-  
+
   if (!pageMeta) {
     return <h1>Unknown Page</h1>;
   }
-  
+
   return (
     <h1>
       {pageMeta.icon}
@@ -893,7 +906,7 @@ const PageHeader = () => {
 // Custom navigation item
 const CustomNavItem = ({ to }: { to: string }) => {
   const pageMeta = usePageMeta(to);
-  
+
   return (
     <Link to={to}>
       {pageMeta?.icon}
@@ -904,6 +917,7 @@ const CustomNavItem = ({ to }: { to: string }) => {
 ```
 
 **See also:**
+
 - [Sidebar Navigation - SidebarItem](./sidebar-navigation.md#sidebaritem) which uses this hook internally
 
 ## useTheme
@@ -912,19 +926,20 @@ Hook for managing application theme (light/dark/system).
 
 ### Returns
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `theme` | `"dark" \| "light" \| "system"` | Current theme setting |
-| `resolvedTheme` | `"dark" \| "light"` | Actual theme after system resolution |
-| `setTheme` | `function` | Function to update theme |
+| Property        | Type                            | Description                          |
+| --------------- | ------------------------------- | ------------------------------------ |
+| `theme`         | `"dark" \| "light" \| "system"` | Current theme setting                |
+| `resolvedTheme` | `"dark" \| "light"`             | Actual theme after system resolution |
+| `setTheme`      | `function`                      | Function to update theme             |
 
 ### Example
+
 ```tsx
 import { useTheme } from "@tailor-platform/app-shell";
 
 const CustomThemeToggle = () => {
   const { theme, resolvedTheme, setTheme } = useTheme();
-  
+
   return (
     <div>
       <p>Current theme: {theme}</p>
@@ -943,11 +958,12 @@ Hook to access error details within a custom error boundary component. Re-export
 
 ### Returns
 
-| Type | Description |
-|------|-------------|
+| Type      | Description                                                                  |
+| --------- | ---------------------------------------------------------------------------- |
 | `unknown` | The error that was thrown (typically `Error` object or route error response) |
 
 ### Example
+
 ```tsx
 import { useRouteError } from "@tailor-platform/app-shell";
 
@@ -985,20 +1001,21 @@ Function for defining internationalization labels for multiple locales with type
 
 ### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `labels` | `object` | Yes | Object with locale keys (`en` required) containing label definitions |
+| Parameter | Type     | Required | Description                                                          |
+| --------- | -------- | -------- | -------------------------------------------------------------------- |
+| `labels`  | `object` | Yes      | Object with locale keys (`en` required) containing label definitions |
 
 Each locale object can contain:
+
 - Static string labels: `key: "Label text"`
 - Dynamic function labels: `key: (args: T) => string`
 
 ### Returns
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `useT` | `function` | React hook that returns a translator function for use in components |
-| `t` | `function` | Function to get a `LocalizedString` for use in module/resource meta.title |
+| Property | Type       | Description                                                               |
+| -------- | ---------- | ------------------------------------------------------------------------- |
+| `useT`   | `function` | React hook that returns a translator function for use in components       |
+| `t`      | `function` | Function to get a `LocalizedString` for use in module/resource meta.title |
 
 ### Example
 
@@ -1030,12 +1047,12 @@ import { useT } from "./i18n-labels";
 
 const MyComponent = () => {
   const t = useT();
-  
+
   return (
     <div>
       {/* Static label */}
       <h1>{t("welcome")}</h1>
-      
+
       {/* Dynamic label with type-safe props */}
       <p>{t("greeting", { name: "John" })}</p>
       <p>{t("itemCount", { count: 42 })}</p>
@@ -1053,11 +1070,11 @@ import { useT } from "./i18n-labels";
 
 const MyComponent = ({ employeeType }: { employeeType: string }) => {
   const t = useT();
-  
+
   // First define labels with the possible keys:
   // en: { "employees.STAFF": "Staff", "employees.MANAGER": "Manager", ... }
   // ja: { "employees.STAFF": "スタッフ", "employees.MANAGER": "マネージャー", ... }
-  
+
   return (
     <div>
       {/* Dynamic key resolution with fallback */}
@@ -1094,7 +1111,7 @@ const dashboardModule = defineModule({
         title: labels.t("settings"),
       },
       component: SettingsPage,
-    })
+    }),
   ],
 });
 ```
@@ -1181,14 +1198,14 @@ import { useAppShell, useAppShellData } from "@tailor-platform/app-shell";
 // Using useAppShell (returns all AppShell data including contextData)
 function MyComponent() {
   const { contextData } = useAppShell();
-  
+
   return <div>Welcome, {contextData.currentUser?.name}</div>;
 }
 
 // Using useAppShellData (returns only contextData, lighter alternative)
 function UserProfile() {
   const contextData = useAppShellData();
-  
+
   return (
     <div>
       <p>User: {contextData.currentUser?.name}</p>
@@ -1225,7 +1242,7 @@ AppShell provides three ways to configure the locale:
 ```tsx
 const App = () => {
   const [locale, setLocale] = useState<"en" | "ja">("en");
-  
+
   return (
     <>
       {/* Locale switcher UI */}
@@ -1233,7 +1250,7 @@ const App = () => {
         <option value="en">English</option>
         <option value="ja">日本語</option>
       </select>
-      
+
       <AppShell modules={modules} locale={locale}>
         <SidebarLayout />
       </AppShell>
@@ -1243,6 +1260,7 @@ const App = () => {
 ```
 
 The locale setting affects:
+
 - Built-in UI strings in AppShell components (CommandPalette, navigation, etc.)
 - Resolution of `LocalizedString` values in module/resource titles
 - Labels defined via `defineI18nLabels`
@@ -1253,17 +1271,18 @@ Provides OAuth2/OIDC authentication using Tailor Platform's Auth service. Suppor
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `apiEndpoint` | `string` | Yes | Your Tailor Platform application URL (no `/query` suffix needed) |
-| `clientId` | `string` | Yes | OAuth2 client ID from Tailor Platform console |
-| `redirectUri` | `string` | No | OAuth2 redirect URI (defaults to `window.location.origin`) |
-| `meQuery` | `string \| DocumentNode` | No | Custom GraphQL query to fetch current user (see below for default) |
-| `autoLogin` | `boolean` | No | Enable automatic login on initialization |
-| `guardComponent` | `() => React.ReactNode` | No | Component to render while loading or unauthenticated |
-| `children` | `React.ReactNode` | Yes | Child components |
+| Prop             | Type                     | Required | Description                                                        |
+| ---------------- | ------------------------ | -------- | ------------------------------------------------------------------ |
+| `apiEndpoint`    | `string`                 | Yes      | Your Tailor Platform application URL (no `/query` suffix needed)   |
+| `clientId`       | `string`                 | Yes      | OAuth2 client ID from Tailor Platform console                      |
+| `redirectUri`    | `string`                 | No       | OAuth2 redirect URI (defaults to `window.location.origin`)         |
+| `meQuery`        | `string \| DocumentNode` | No       | Custom GraphQL query to fetch current user (see below for default) |
+| `autoLogin`      | `boolean`                | No       | Enable automatic login on initialization                           |
+| `guardComponent` | `() => React.ReactNode`  | No       | Component to render while loading or unauthenticated               |
+| `children`       | `React.ReactNode`        | Yes      | Child components                                                   |
 
 **Default meQuery:**
+
 ```graphql
 query {
   me {
@@ -1347,16 +1366,16 @@ Hook to access authentication methods and state when using AuthProvider.
 
 ### Returns
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `authState` | `AuthState<User>` | Current authentication state |
-| `authState.isLoading` | `boolean` | Whether auth status is being checked |
-| `authState.isAuthenticated` | `boolean` | Whether user is authenticated |
-| `authState.user` | `User \| null` | Current user object (null if not authenticated) |
-| `login` | `() => Promise<void>` | Initiate OAuth2 login flow |
-| `logout` | `() => Promise<void>` | Logout and clear tokens |
-| `checkAuthStatus` | `() => Promise<AuthState<User>>` | Manually verify authentication status |
-| `handleCallback` | `() => Promise<void>` | Handle OAuth callback (typically used in callback route) |
+| Property                    | Type                             | Description                                              |
+| --------------------------- | -------------------------------- | -------------------------------------------------------- |
+| `authState`                 | `AuthState<User>`                | Current authentication state                             |
+| `authState.isLoading`       | `boolean`                        | Whether auth status is being checked                     |
+| `authState.isAuthenticated` | `boolean`                        | Whether user is authenticated                            |
+| `authState.user`            | `User \| null`                   | Current user object (null if not authenticated)          |
+| `login`                     | `() => Promise<void>`            | Initiate OAuth2 login flow                               |
+| `logout`                    | `() => Promise<void>`            | Logout and clear tokens                                  |
+| `checkAuthStatus`           | `() => Promise<AuthState<User>>` | Manually verify authentication status                    |
+| `handleCallback`            | `() => Promise<void>`            | Handle OAuth callback (typically used in callback route) |
 
 ### Example
 
@@ -1365,15 +1384,15 @@ import { useAuth } from "@tailor-platform/app-shell";
 
 const UserProfile = () => {
   const { authState, login, logout } = useAuth();
-  
+
   if (authState.isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   if (!authState.isAuthenticated) {
     return <button onClick={login}>Sign In</button>;
   }
-  
+
   return (
     <div>
       <p>Welcome, {authState.user.name || authState.user.email}!</p>
@@ -1392,13 +1411,13 @@ import { useEffect } from "react";
 
 const CallbackPage = () => {
   const { handleCallback } = useAuth();
-  
+
   useEffect(() => {
     handleCallback().catch((error) => {
       console.error("Auth callback failed:", error);
     });
   }, [handleCallback]);
-  
+
   return <div>Processing authentication...</div>;
 };
 ```

@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "jsx-a11y", "typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+  },
+  "rules": {
+    // React 19's JSX Transform handles React imports automatically
+    "react/react-in-jsx-scope": "off",
+  },
+  "ignorePatterns": ["dist", "node_modules"],
+}

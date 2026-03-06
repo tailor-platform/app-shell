@@ -3,11 +3,8 @@ packages:
   - packages/**
 
 catalog:
-  eslint: ^9.0.0
-  "@eslint/js": ^10.0.1
-  eslint-plugin-react-hooks: ^7.0.1
-  globals: ^15.15.0
-  typescript-eslint: ^8.55.0
+  oxlint: ^1.0.0
+  oxfmt: ^0.36.0
   "@types/react": ^19
   "@types/react-dom": ^19
   "@vitejs/plugin-react": ^5.1.2

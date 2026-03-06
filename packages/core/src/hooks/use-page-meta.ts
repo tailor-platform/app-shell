@@ -37,11 +37,7 @@ const isExternalUrl = (url: string): boolean => {
 /**
  * Find page meta by searching modules and resources.
  */
-const findPageMeta = (
-  targetPath: string,
-  modules: Modules,
-  locale: string,
-): PageMeta | null => {
+const findPageMeta = (targetPath: string, modules: Modules, locale: string): PageMeta | null => {
   const resolve = buildLocaleResolver(locale);
 
   // Normalize target path (ensure leading slash, remove trailing slash)
@@ -60,12 +56,7 @@ const findPageMeta = (
     }
 
     // Search in module's resources
-    const pageMeta = findInResources(
-      normalizedTarget,
-      modulePath,
-      module.resources,
-      resolve,
-    );
+    const pageMeta = findInResources(normalizedTarget, modulePath, module.resources, resolve);
     if (pageMeta) {
       return pageMeta;
     }
@@ -90,9 +81,7 @@ const matchesPath = (target: string, pattern: string): boolean => {
   const patternSegments = pattern.split("/");
   if (targetSegments.length !== patternSegments.length) return false;
 
-  return patternSegments.every(
-    (seg, i) => seg.startsWith(":") || seg === targetSegments[i],
-  );
+  return patternSegments.every((seg, i) => seg.startsWith(":") || seg === targetSegments[i]);
 };
 
 /**
@@ -130,12 +119,7 @@ const findInResources = (
 
     // Search in sub-resources
     if (resource.subResources) {
-      const subMeta = findInResources(
-        targetPath,
-        resourcePath,
-        resource.subResources,
-        resolve,
-      );
+      const subMeta = findInResources(targetPath, resourcePath, resource.subResources, resolve);
       if (subMeta) {
         return subMeta;
       }

@@ -29,9 +29,5 @@ const getServerSnapshot = () => false;
  * ```
  */
 export function useIsClient(): boolean {
-  return useSyncExternalStore(
-    subscribeToNothing,
-    getClientSnapshot,
-    getServerSnapshot
-  );
+  return useSyncExternalStore(subscribeToNothing, getClientSnapshot, getServerSnapshot);
 }

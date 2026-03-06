@@ -9,10 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CommandPaletteContent } from "./command-palette";
-import {
-  AppShellConfigContext,
-  AppShellDataContext,
-} from "@/contexts/appshell-context";
+import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
 import { MemoryRouter } from "react-router";
 import type { Resource } from "@/resource";
 import type { NavItem } from "../routing/navigation";
@@ -117,9 +114,7 @@ describe("CommandPaletteContent Integration", () => {
       fireEvent.keyDown(document, { key: "k", metaKey: true });
       await screen.findByPlaceholderText("Search pages...");
 
-      const analyticsButton = screen
-        .getByText("Dashboard > Analytics")
-        .closest("button");
+      const analyticsButton = screen.getByText("Dashboard > Analytics").closest("button");
       await user.click(analyticsButton!);
 
       await vi.waitFor(() => {

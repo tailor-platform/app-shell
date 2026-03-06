@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 import { ExternalLink } from "lucide-react";
-import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { Link } from "@/components/ui/client-side-link";
+import { SidebarMenuItem, SidebarMenuButton } from "@/components/sidebar";
 import { usePageMeta } from "@/hooks/use-page-meta";
 
 export type SidebarItemRenderProps = {
@@ -117,24 +116,25 @@ export const SidebarItem = (props: SidebarItemProps) => {
   if (external || isExternalUrl(to)) {
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild tooltip={title}>
-          <a
-            href={to}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={
-              isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
-            }
-          >
-            {render ? (
-              render(renderProps)
-            ) : (
-              <>
-                {icon ?? <ExternalLink className="astw:size-4" />}
-                <span>{title}</span>
-              </>
-            )}
-          </a>
+        <SidebarMenuButton
+          render={
+            <a
+              href={to}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
+            />
+          }
+          tooltip={title}
+        >
+          {render ? (
+            render(renderProps)
+          ) : (
+            <>
+              {icon ?? <ExternalLink className="astw:size-4" />}
+              <span>{title}</span>
+            </>
+          )}
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
@@ -143,22 +143,23 @@ export const SidebarItem = (props: SidebarItemProps) => {
   // Internal link
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild tooltip={title}>
-        <Link
-          to={to}
-          className={
-            isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
-          }
-        >
-          {render ? (
-            render(renderProps)
-          ) : (
-            <>
-              {icon}
-              <span>{title}</span>
-            </>
-          )}
-        </Link>
+      <SidebarMenuButton
+        render={
+          <Link
+            to={to}
+            className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
+          />
+        }
+        tooltip={title}
+      >
+        {render ? (
+          render(renderProps)
+        ) : (
+          <>
+            {icon}
+            <span>{title}</span>
+          </>
+        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

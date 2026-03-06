@@ -26,9 +26,9 @@ src/pages/
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { appShellRoutes } from '@tailor-platform/app-shell-vite-plugin';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
 
 export default defineConfig({
   plugins: [
@@ -42,7 +42,7 @@ export default defineConfig({
 
 ```tsx
 // App.tsx
-import { AppShell, SidebarLayout, DefaultSidebar } from '@tailor-platform/app-shell';
+import { AppShell, SidebarLayout, DefaultSidebar } from "@tailor-platform/app-shell";
 
 const App = () => {
   return (
@@ -72,17 +72,17 @@ Use `appShellPageProps` static field to configure page metadata and guards:
 
 ```tsx
 // src/pages/dashboard/page.tsx
-import type { AppShellPageProps } from '@tailor-platform/app-shell';
-import { authGuard } from '../guards';
-import { DashboardIcon } from '../icons';
+import type { AppShellPageProps } from "@tailor-platform/app-shell";
+import { authGuard } from "../guards";
+import { DashboardIcon } from "../icons";
 
 const DashboardPage = () => {
   return <div>Dashboard Content</div>;
 };
 
 DashboardPage.appShellPageProps = {
-  meta: { 
-    title: "Dashboard", 
+  meta: {
+    title: "Dashboard",
     icon: <DashboardIcon />,
   },
   guards: [authGuard],
@@ -102,12 +102,12 @@ type AppShellPageProps = {
 
 ## Path Conventions
 
-| Directory Name | Converts To | Description |
-|----------------|-------------|-------------|
-| `orders` | `orders` | Static segment |
-| `[id]` | `:id` | Dynamic parameter |
-| `(group)` | (excluded) | Grouping only (not in path) |
-| `_lib` | (ignored) | Not routed (for shared logic) |
+| Directory Name | Converts To | Description                   |
+| -------------- | ----------- | ----------------------------- |
+| `orders`       | `orders`    | Static segment                |
+| `[id]`         | `:id`       | Dynamic parameter             |
+| `(group)`      | (excluded)  | Grouping only (not in path)   |
+| `_lib`         | (ignored)   | Not routed (for shared logic) |
 
 ### Examples
 
@@ -150,7 +150,7 @@ export const requireAuth = [authGuard];
 export const requireAdmin = [authGuard, adminGuard];
 
 // src/pages/dashboard/orders/page.tsx
-import { requireAuth } from '@/guards';
+import { requireAuth } from "@/guards";
 
 OrdersPage.appShellPageProps = {
   guards: [...requireAuth],
@@ -165,7 +165,7 @@ Enable `generateTypedRoutes` in the Vite plugin to generate type-safe route help
 // vite.config.ts
 appShellRoutes({
   generateTypedRoutes: true,
-})
+});
 ```
 
 This generates `src/routes.generated.ts` with a `paths` helper:
@@ -191,17 +191,17 @@ paths.for("/invalid");              // Error: route doesn't exist
 
 ```tsx
 const orderDetailResource = defineResource({ path: ":id", component: OrderDetail });
-const ordersResource = defineResource({ 
-  path: "orders", 
+const ordersResource = defineResource({
+  path: "orders",
   component: OrdersList,
   subResources: [orderDetailResource],
 });
-const purchasingModule = defineModule({ 
-  path: "purchasing", 
+const purchasingModule = defineModule({
+  path: "purchasing",
   resources: [ordersResource],
 });
 
-<AppShell modules={[purchasingModule]} />
+<AppShell modules={[purchasingModule]} />;
 ```
 
 ### After: File-Based Pages
@@ -224,17 +224,17 @@ export default OrderDetailPage;
 
 ### Concept Mapping
 
-| Legacy API | File-Based | Notes |
-|------------|------------|-------|
-| `Module` | — | First-level directory |
-| `Resource` | — | Directory structure |
-| `defineModule()` | — | Not needed |
-| `defineResource()` | — | Not needed |
-| `path` property | Directory name | Auto-derived |
-| `component` property | `page.tsx` default export | File convention |
-| `meta` property | `Page.appShellPageProps.meta` | Static field |
-| `guards` property | `Page.appShellPageProps.guards` | Static field (no inheritance) |
-| `subResources` property | Subdirectories | Auto-derived |
+| Legacy API              | File-Based                      | Notes                         |
+| ----------------------- | ------------------------------- | ----------------------------- |
+| `Module`                | —                               | First-level directory         |
+| `Resource`              | —                               | Directory structure           |
+| `defineModule()`        | —                               | Not needed                    |
+| `defineResource()`      | —                               | Not needed                    |
+| `path` property         | Directory name                  | Auto-derived                  |
+| `component` property    | `page.tsx` default export       | File convention               |
+| `meta` property         | `Page.appShellPageProps.meta`   | Static field                  |
+| `guards` property       | `Page.appShellPageProps.guards` | Static field (no inheritance) |
+| `subResources` property | Subdirectories                  | Auto-derived                  |
 
 ## Compatibility
 
@@ -271,15 +271,13 @@ File-based pages and explicit `modules` prop are **mutually exclusive**.
 To migrate from `defineModule`/`defineResource` to file-based routing:
 
 1. **Add Vite Plugin**
+
    ```typescript
    // vite.config.ts
-   import { appShellRoutes } from '@tailor-platform/app-shell-vite-plugin';
-   
+   import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+
    export default defineConfig({
-     plugins: [
-       react(),
-       appShellRoutes(),
-     ],
+     plugins: [react(), appShellRoutes()],
    });
    ```
 
@@ -289,9 +287,10 @@ To migrate from `defineModule`/`defineResource` to file-based routing:
    - Use `[param]` for dynamic segments
 
 3. **Move component and metadata**
+
    ```tsx
    // Before: defineResource({ path: "orders", component: Orders, meta: {...} })
-   
+
    // After: src/pages/orders/page.tsx
    const OrdersPage = () => <Orders />;
    OrdersPage.appShellPageProps = { meta: {...} };

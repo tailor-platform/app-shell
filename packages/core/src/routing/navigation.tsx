@@ -40,9 +40,7 @@ type NavItemsLoaderData = { navItems?: Promise<Array<NavItem>> };
  * Returns undefined if the loader data is not available (e.g., in test environments).
  */
 export const useNavItems = () => {
-  const loaderData = useRouteLoaderData(loaderID) as
-    | NavItemsLoaderData
-    | undefined;
+  const loaderData = useRouteLoaderData(loaderID) as NavItemsLoaderData | undefined;
   return loaderData?.navItems;
 };
 
@@ -114,11 +112,7 @@ const filterVisibleResources = async (
 
       // Recursively process subResources
       const subItems = resource.subResources
-        ? await filterVisibleResources(
-            resource.subResources,
-            resourcePath,
-            resolveTitle,
-          )
+        ? await filterVisibleResources(resource.subResources, resourcePath, resolveTitle)
         : undefined;
 
       return {

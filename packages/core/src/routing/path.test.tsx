@@ -92,12 +92,7 @@ describe.concurrent("processPathSegments", () => {
   const mockModules = createMockModules();
 
   it("should process basic path segments", () => {
-    const result = processPathSegments(
-      "/dashboard",
-      undefined,
-      mockModules,
-      "en"
-    );
+    const result = processPathSegments("/dashboard", undefined, mockModules, "en");
 
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(1);
@@ -109,12 +104,7 @@ describe.concurrent("processPathSegments", () => {
   });
 
   it("should process path with multiple segments", () => {
-    const result = processPathSegments(
-      "/dashboard/analytics",
-      undefined,
-      mockModules,
-      "en"
-    );
+    const result = processPathSegments("/dashboard/analytics", undefined, mockModules, "en");
 
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(2);
@@ -131,12 +121,7 @@ describe.concurrent("processPathSegments", () => {
   });
 
   it("should process path with sub-resources", () => {
-    const result = processPathSegments(
-      "/dashboard/settings/profile",
-      undefined,
-      mockModules,
-      "en"
-    );
+    const result = processPathSegments("/dashboard/settings/profile", undefined, mockModules, "en");
 
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(3);
@@ -158,12 +143,7 @@ describe.concurrent("processPathSegments", () => {
   });
 
   it("should handle paths with basePath", () => {
-    const result = processPathSegments(
-      "/dashboard/users",
-      "dashboard",
-      mockModules,
-      "en"
-    );
+    const result = processPathSegments("/dashboard/users", "dashboard", mockModules, "en");
 
     expect(result.basePath).toBe("dashboard");
     expect(result.segments).toHaveLength(1);
@@ -175,12 +155,7 @@ describe.concurrent("processPathSegments", () => {
   });
 
   it("should use segment name as title when mapping does not exist", () => {
-    const result = processPathSegments(
-      "/unknown-path",
-      undefined,
-      mockModules,
-      "en"
-    );
+    const result = processPathSegments("/unknown-path", undefined, mockModules, "en");
 
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(1);

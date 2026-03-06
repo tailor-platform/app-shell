@@ -1,24 +1,20 @@
 {
   "name": "app-module",
   "private": true,
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.js",
-  "scripts": {
-    "dev": "NODE_ENV=development tsup --watch",
-    "build": "tsup"
-  },
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     }
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "peerDependencies": {
-    "@tailor-platform/app-shell": "workspace:*",
-    "react": ">= 19",
-    "react-dom": ">= 19"
+  "scripts": {
+    "dev": "NODE_ENV=development tsup --watch",
+    "build": "tsup",
+    "lint": "oxlint -c .oxlintrc.jsonc"
   },
   "devDependencies": {
     "@tailor-platform/app-shell": "workspace:*",
@@ -27,5 +23,10 @@
     "@types/react-dom": "^19",
     "tsup": "^8.3.6",
     "typescript": "^5"
+  },
+  "peerDependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "react": ">= 19",
+    "react-dom": ">= 19"
   }
 }

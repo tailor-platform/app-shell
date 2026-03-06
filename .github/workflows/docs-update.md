@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.changeset/*.md'
+      - ".changeset/*.md"
   workflow_dispatch:
   skip-if-match: 'is:pr is:open in:title "[docs-update]"'
 permissions:
@@ -33,10 +33,12 @@ This is the **Tailor Platform AppShell** project — a React-based framework for
 ### Repository Structure
 
 Read `CLAUDE.md` at the repository root for a comprehensive overview of the project structure, core package layout, and documentation index. Pay special attention to:
+
 - **Core Package Structure** table — maps source paths to their descriptions
 - **Documentation Index** — lists all doc files and their purposes
 
 Key points for this workflow:
+
 - `packages/core/src/index.ts` is the **source of truth** for the public API surface
 - All files under `docs/` are user-facing documentation and should be updated when the public API changes
 
@@ -57,6 +59,7 @@ If no changeset files exist, call the `noop` safe output and stop.
 Read each changeset file. Changeset files have YAML frontmatter specifying the package name and semver bump type, followed by a markdown description of the change.
 
 **Only proceed with changesets that describe user-facing API changes.** Skip any changeset that is:
+
 - A dependency version bump (e.g., "Updated package-name (v1.0.0 -> v2.0.0)")
 - Internal refactoring that does not change public behavior
 - Build or tooling changes
@@ -69,6 +72,7 @@ If all changesets are filtered out, call the `noop` safe output explaining that 
 ### Step 3: Read source code and existing docs
 
 For each relevant changeset:
+
 1. Read `packages/core/src/index.ts` to understand the current public API surface
 2. Read the source files for affected components, hooks, or utilities to get accurate type signatures, props, and behavior
 3. Read the relevant documentation files under `docs/` that need updating
@@ -78,6 +82,7 @@ For each relevant changeset:
 Edit documentation files to reflect the API changes. **Prefer updating existing files** — refer to the Documentation Index in `CLAUDE.md` to identify which doc file each change belongs to.
 
 If the changeset introduces an **entirely new concept** that does not fit naturally into any existing doc file (e.g., a new subsystem, a new integration pattern, or a new cross-cutting feature), you may create a new markdown file under `docs/`. When doing so:
+
 - Use kebab-case filenames (e.g., `docs/module-federation.md`)
 - Follow the same heading structure and formatting conventions used in other doc files
 - Add the new file to the Documentation Index in `CLAUDE.md` under the appropriate section
@@ -85,11 +90,13 @@ If the changeset introduces an **entirely new concept** that does not fit natura
 ### Step 5: Create a pull request
 
 Create a PR with the doc updates. Use this title format:
+
 ```
 [docs-update] Update docs for <brief summary of changes>
 ```
 
 In the PR body, list:
+
 - Which changesets prompted the update
 - Which doc files were modified and why
 

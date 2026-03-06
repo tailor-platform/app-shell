@@ -4,13 +4,7 @@ import { SyntaxKind, type ObjectLiteralExpression, type Node } from "ts-morph";
 // Schema Types
 // ============================================
 
-export type SchemaType =
-  | "object"
-  | "array"
-  | "string"
-  | "number"
-  | "boolean"
-  | "any";
+export type SchemaType = "object" | "array" | "string" | "number" | "boolean" | "any";
 
 export type Schema = {
   type: SchemaType;
@@ -194,17 +188,9 @@ function validateObjectNode(
     const propSchema = schema.properties[keyName];
     if (propSchema?.type === "object" && propSchema.properties) {
       const initializer = propAssignment.getInitializer();
-      if (
-        initializer &&
-        initializer.getKind() === SyntaxKind.ObjectLiteralExpression
-      ) {
+      if (initializer && initializer.getKind() === SyntaxKind.ObjectLiteralExpression) {
         const nestedObj = initializer as ObjectLiteralExpression;
-        warnings.push(
-          ...validateObjectNode(nestedObj, propSchema, filePath, [
-            ...path,
-            keyName,
-          ]),
-        );
+        warnings.push(...validateObjectNode(nestedObj, propSchema, filePath, [...path, keyName]));
       }
     }
   }
@@ -231,21 +217,15 @@ export function validateAppShellPageProps(
 /**
  * Find appShellPageProps assignment in a source file and return the node.
  */
-export function findAppShellPagePropsNode(
-  sourceFile: Node,
-): ObjectLiteralExpression | null {
-  const binaryExpressions = sourceFile.getDescendantsOfKind(
-    SyntaxKind.BinaryExpression,
-  );
+export function findAppShellPagePropsNode(sourceFile: Node): ObjectLiteralExpression | null {
+  const binaryExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.BinaryExpression);
 
   for (const expr of binaryExpressions) {
     const left = expr.getLeft();
 
     if (left.getKind() !== SyntaxKind.PropertyAccessExpression) continue;
 
-    const propertyAccess = left.asKindOrThrow(
-      SyntaxKind.PropertyAccessExpression,
-    );
+    const propertyAccess = left.asKindOrThrow(SyntaxKind.PropertyAccessExpression);
     if (propertyAccess.getName() !== "appShellPageProps") continue;
 
     const right = expr.getRight();

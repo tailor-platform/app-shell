@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { useRender } from "@base-ui/react/use-render";
+import { Link } from "react-router";
 
 import { cn } from "@/lib/utils";
-import { Link } from "./client-side-link";
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
@@ -33,25 +33,26 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 function BreadcrumbLink({
-  asChild,
+  render,
   className,
   children,
-  ...props
-}: React.ComponentProps<"a"> & {
-  to: string;
-  asChild?: boolean;
+  to,
+  ...restProps
+}: React.ComponentProps<typeof Link> & {
+  render?: React.ReactElement;
 }) {
-  const Comp = asChild ? Slot : Link;
+  const linkClassName = cn("astw:hover:text-foreground astw:transition-colors", className);
 
-  return (
-    <Comp
-      data-slot="breadcrumb-link"
-      className={cn("astw:hover:text-foreground astw:transition-colors", className)}
-      {...props}
-    >
-      {children}
-    </Comp>
-  );
+  return useRender({
+    defaultTagName: "a",
+    render: render ?? <Link to={to} />,
+    props: {
+      "data-slot": "breadcrumb-link",
+      className: linkClassName,
+      children,
+      ...(render ? restProps : { to, ...restProps }),
+    },
+  });
 }
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
@@ -67,11 +68,7 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
-function BreadcrumbSeparator({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"li">) {
+function BreadcrumbSeparator({ children, className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-separator"
@@ -85,10 +82,7 @@ function BreadcrumbSeparator({
   );
 }
 
-function BreadcrumbEllipsis({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
+function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="breadcrumb-ellipsis"

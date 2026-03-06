@@ -39,6 +39,7 @@ Find the above values in Tailor Console:
   - Must match the redirect URI configured in your Tailor Platform Auth settings
 
 The above code will:
+
 - Automatically redirect unauthenticated users to the login page (if `autoLogin` is true)
 - Show the `guardComponent` while loading or when unauthenticated
 - Handle token management and session persistence automatically
@@ -54,15 +55,15 @@ import { useAuth } from "@tailor-platform/app-shell";
 
 const UserProfile = () => {
   const { authState, login, logout } = useAuth();
-  
+
   if (authState.isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   if (!authState.isAuthenticated) {
     return <button onClick={login}>Sign In</button>;
   }
-  
+
   return (
     <div>
       <p>Welcome, {authState.user.name || authState.user.email}!</p>
@@ -77,17 +78,18 @@ const UserProfile = () => {
 
 The `authState` object contains:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `isLoading` | `boolean` | Whether auth status is being checked |
-| `isAuthenticated` | `boolean` | Whether user is authenticated |
-| `user` | `User \| null` | Current user object (null if not authenticated) |
+| Property          | Type           | Description                                     |
+| ----------------- | -------------- | ----------------------------------------------- |
+| `isLoading`       | `boolean`      | Whether auth status is being checked            |
+| `isAuthenticated` | `boolean`      | Whether user is authenticated                   |
+| `user`            | `User \| null` | Current user object (null if not authenticated) |
 
 See the [API](./api.md#useauth) for more details.
 
 ## Extending User Type
 
 By default, the user object has these fields:
+
 - `id: string`
 - `email: string`
 - `name?: string`
@@ -144,12 +146,12 @@ import { useAuth } from "@tailor-platform/app-shell";
 
 const MyComponent = () => {
   const { authState } = useAuth();
-  
+
   // TypeScript knows these properties exist
   console.log(authState.user.roles); // Array<string>
   console.log(authState.user.organizationId); // string
   console.log(authState.user.email); // string (from DefaultUser)
-  
+
   return <div>...</div>;
 };
 ```
@@ -164,7 +166,7 @@ import { useEffect } from "react";
 
 const CallbackPage = () => {
   const { handleCallback } = useAuth();
-  
+
   useEffect(() => {
     handleCallback()
       .then(() => {
@@ -175,7 +177,7 @@ const CallbackPage = () => {
         console.error("Auth callback failed:", error);
       });
   }, [handleCallback]);
-  
+
   return <div>Processing authentication...</div>;
 };
 ```

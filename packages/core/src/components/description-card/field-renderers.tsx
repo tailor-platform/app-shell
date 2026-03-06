@@ -1,12 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Badge } from "../ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../ui/tooltip";
+import { Badge } from "../badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
 
@@ -17,10 +13,7 @@ import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
 /**
  * Get a value from a nested object using dot notation
  */
-export function getNestedValue(
-  obj: Record<string, unknown>,
-  path: string
-): unknown {
+export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((acc, key) => {
     if (acc && typeof acc === "object" && key in acc) {
       return (acc as Record<string, unknown>)[key];
@@ -101,8 +94,7 @@ function formatDate(value: unknown, format: DateFormat = "medium"): string {
 function formatMoney(value: unknown, currencyCode?: string): string {
   if (isEmpty(value)) return "";
 
-  const numValue =
-    typeof value === "number" ? value : parseFloat(String(value));
+  const numValue = typeof value === "number" ? value : parseFloat(String(value));
 
   if (isNaN(numValue)) return String(value);
 
@@ -137,11 +129,7 @@ function formatAddress(value: unknown): string[] {
     if (addr.line1) lines.push(String(addr.line1));
     if (addr.line2) lines.push(String(addr.line2));
 
-    const cityStateZip = [
-      addr.city,
-      addr.state || addr.province,
-      addr.zip || addr.postalCode,
-    ]
+    const cityStateZip = [addr.city, addr.state || addr.province, addr.zip || addr.postalCode]
       .filter(Boolean)
       .join(", ");
 
@@ -174,17 +162,19 @@ function CopyButton({ value }: { value: string }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          onClick={handleCopy}
-          className="astw:ml-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
-        >
-          {copied ? (
-            <Check className="astw:h-3 astw:w-3" strokeWidth={2.5} />
-          ) : (
-            <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
-          )}
-        </button>
+      <TooltipTrigger
+        render={
+          <button
+            onClick={handleCopy}
+            className="astw:ml-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
+          />
+        }
+      >
+        {copied ? (
+          <Check className="astw:h-3 astw:w-3" strokeWidth={2.5} />
+        ) : (
+          <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
+        )}
       </TooltipTrigger>
       <TooltipContent side="top">{copied ? "Copied!" : "Copy"}</TooltipContent>
     </Tooltip>
@@ -237,20 +227,21 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   }, [value, truncateLines]);
 
   // Line clamp - use inline style for arbitrary values to ensure it works with prefix
-  const lineClampStyle = truncateLines && truncateLines > 0 
-    ? { 
-        display: "-webkit-box",
-        WebkitLineClamp: truncateLines,
-        WebkitBoxOrient: "vertical" as const,
-        overflow: "hidden",
-      }
-    : undefined;
+  const lineClampStyle =
+    truncateLines && truncateLines > 0
+      ? {
+          display: "-webkit-box",
+          WebkitLineClamp: truncateLines,
+          WebkitBoxOrient: "vertical" as const,
+          overflow: "hidden",
+        }
+      : undefined;
 
   // Always render the same structure, conditionally wrap with tooltip
   const content = (
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
-      <p 
-        ref={textRef} 
+      <p
+        ref={textRef}
         className="astw:text-sm astw:font-medium astw:text-foreground astw:wrap-break-word astw:m-0"
         style={lineClampStyle}
       >
@@ -264,9 +255,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   if (truncateLines && isTruncated) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="astw:cursor-default">{content}</span>
-        </TooltipTrigger>
+        <TooltipTrigger render={<span className="astw:cursor-default" />}>{content}</TooltipTrigger>
         <TooltipContent side="bottom" style={{ maxWidth: 320 }}>
           <p className="astw:text-sm">{value}</p>
         </TooltipContent>
@@ -342,9 +331,7 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   }
 
   const hrefKey = field.meta?.hrefKey;
-  const href = hrefKey
-    ? (getNestedValue(field.data, hrefKey) as string)
-    : undefined;
+  const href = hrefKey ? (getNestedValue(field.data, hrefKey) as string) : undefined;
   const isExternal = field.meta?.external ?? false;
   const value = String(field.value);
 
@@ -403,9 +390,7 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
 
   const idKey = field.meta?.referenceIdKey;
   const urlPattern = field.meta?.referenceUrlPattern;
-  const id = idKey
-    ? (getNestedValue(field.data, idKey) as string)
-    : undefined;
+  const id = idKey ? (getNestedValue(field.data, idKey) as string) : undefined;
   const value = String(field.value);
 
   if (!id || !urlPattern) {

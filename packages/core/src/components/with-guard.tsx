@@ -156,11 +156,7 @@ export const WithGuard = (props: WithGuardProps) => {
  * Internal component that reads the guard result and renders children or fallback.
  * Suspends while async guards are being evaluated.
  */
-const GuardResolver = (props: {
-  cache: GuardCache;
-  children: ReactNode;
-  fallback: ReactNode;
-}) => {
+const GuardResolver = (props: { cache: GuardCache; children: ReactNode; fallback: ReactNode }) => {
   const result = readGuardResult(props.cache);
 
   if (result.type === "pass") {

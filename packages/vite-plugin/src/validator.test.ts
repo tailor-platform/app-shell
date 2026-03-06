@@ -264,11 +264,7 @@ describe("validateAppShellPageProps", () => {
       export default Page;
     `);
     const node = findAppShellPagePropsNode(sourceFile);
-    const warnings = validateAppShellPageProps(
-      node!,
-      testSchema,
-      "/path/to/page.tsx",
-    );
+    const warnings = validateAppShellPageProps(node!, testSchema, "/path/to/page.tsx");
 
     expect(warnings[0].file).toBe("/path/to/page.tsx");
   });

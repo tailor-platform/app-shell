@@ -6,10 +6,7 @@ import { MemoryRouter } from "react-router";
 import { ReactNode } from "react";
 
 // Helper to create a mock React.KeyboardEvent
-const createKeyboardEvent = (
-  key: string,
-  isComposing = false
-): React.KeyboardEvent => {
+const createKeyboardEvent = (key: string, isComposing = false): React.KeyboardEvent => {
   const preventDefault = vi.fn();
   return {
     key,
@@ -45,9 +42,7 @@ vi.mock("react-router", async (importOriginal) => {
 });
 
 // Wrapper for hooks that need router context
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <MemoryRouter>{children}</MemoryRouter>
-);
+const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
 
 describe("useCommandPalette", () => {
   const renderCommandPaletteHook = (routes = createTestRoutes()) => {
@@ -111,9 +106,7 @@ describe("useCommandPalette", () => {
       expect(result.current.open).toBe(false);
 
       act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "k", metaKey: true })
-        );
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
       });
 
       expect(result.current.open).toBe(true);
@@ -124,9 +117,7 @@ describe("useCommandPalette", () => {
       expect(result.current.open).toBe(false);
 
       act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "k", ctrlKey: true })
-        );
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
       });
 
       expect(result.current.open).toBe(true);
@@ -136,16 +127,12 @@ describe("useCommandPalette", () => {
       const { result } = renderCommandPaletteHook();
 
       act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "k", metaKey: true })
-        );
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
       });
       expect(result.current.open).toBe(true);
 
       act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "k", metaKey: true })
-        );
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
       });
       expect(result.current.open).toBe(false);
     });

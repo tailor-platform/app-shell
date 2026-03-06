@@ -12,9 +12,7 @@ import {
 
 export type RootComponentOption = () => ReactNode;
 
-export const wrapErrorBoundary = (
-  element: ErrorBoundaryComponent,
-): ComponentType => {
+export const wrapErrorBoundary = (element: ErrorBoundaryComponent): ComponentType => {
   return () => <>{element}</>;
 };
 
@@ -95,9 +93,7 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) =>
-    createRoute(module, module.resources, module.errorBoundary),
-  );
+  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -121,35 +117,18 @@ export const createContentRoutes = ({
           {
             path: "settings",
             index: true,
-            Component: () => (
-              <Navigate
-                to={settingsResources[0].path}
-                relative="path"
-                replace
-              />
-            ),
+            Component: () => <Navigate to={settingsResources[0].path} relative="path" replace />,
           },
           {
             path: "settings",
             Component: SettingsWrapper,
-            children: settingsResources.map((resource) => {
-              // Settings resources are rendered directly without the route
-              // resolution logic (resolveIndexRoute), so they always require
-              // a component — a component-less settings resource would silently
-              // produce a blank page.
-              if (!resource.component) {
-                throw new Error(
-                  `Settings resource "${resource.path}" must have a component.`,
-                );
-              }
-              return {
-                path: resource.path,
-                Component: resource.component,
-                ...(resource.errorBoundary && {
-                  ErrorBoundary: wrapErrorBoundary(resource.errorBoundary),
-                }),
-              };
-            }),
+            children: settingsResources.map((resource) => ({
+              path: resource.path,
+              Component: resource.component,
+              ...(resource.errorBoundary && {
+                ErrorBoundary: wrapErrorBoundary(resource.errorBoundary),
+              }),
+            })),
           },
         ]
       : [];

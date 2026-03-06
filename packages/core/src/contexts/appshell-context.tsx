@@ -67,9 +67,7 @@ export type ConfigurationOptions = {
  * Builds a RootConfiguration object from the provided options.
  * Uses browser locale detection when locale is not specified.
  */
-export const buildConfigurations = (
-  options: ConfigurationOptions,
-): RootConfiguration => ({
+export const buildConfigurations = (options: ConfigurationOptions): RootConfiguration => ({
   modules: options.modules,
   settingsResources: options.settingsResources ?? [],
   errorBoundary: options.errorBoundary ?? <DefaultErrorBoundary />,

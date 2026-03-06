@@ -69,25 +69,16 @@ export function formatRoutesTable(pages: PageFile[], pagesDir: string): string {
   });
 
   // Calculate column widths
-  const routes = sortedPages.map((p) =>
-    p.routePath ? `/${p.routePath}` : "/",
-  );
+  const routes = sortedPages.map((p) => (p.routePath ? `/${p.routePath}` : "/"));
   const paths = sortedPages.map(
-    (p) =>
-      pagesDir + (p.relativePath ? `/${p.relativePath}` : "") + "/page.tsx",
+    (p) => pagesDir + (p.relativePath ? `/${p.relativePath}` : "") + "/page.tsx",
   );
 
   const routeHeader = "route";
   const pathHeader = "path";
 
-  const maxRouteWidth = Math.max(
-    routeHeader.length,
-    ...routes.map((r) => r.length),
-  );
-  const maxPathWidth = Math.max(
-    pathHeader.length,
-    ...paths.map((p) => p.length),
-  );
+  const maxRouteWidth = Math.max(routeHeader.length, ...routes.map((r) => r.length));
+  const maxPathWidth = Math.max(pathHeader.length, ...paths.map((p) => p.length));
 
   // Build table
   const lines: string[] = [];

@@ -1,10 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router";
-import {
-  AppShellConfigContext,
-  type RootConfiguration,
-} from "@/contexts/appshell-context";
+import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { usePageMeta } from "./use-page-meta";
 import { defineModule, defineResource } from "@/resource";
 import { Folder, Home, Settings, ShoppingCart } from "lucide-react";

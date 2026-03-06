@@ -12,8 +12,7 @@ export const useTitleResolver = () => {
   const { configurations } = useAppShellConfig();
   const resolve = buildLocaleResolver(configurations.locale);
 
-  return (value: LocalizedString | undefined, fallback: string) =>
-    resolve(value, fallback);
+  return (value: LocalizedString | undefined, fallback: string) => resolve(value, fallback);
 };
 
 /**
@@ -31,9 +30,7 @@ type DynamicLocales<Def extends Record<string, LabelValue>> = {
  * For dynamic labels (functions), the props type must match.
  */
 type LabelDefinition<Def extends Record<string, LabelValue>> = {
-  [K in keyof Def]: Def[K] extends (props: infer P) => string
-    ? (props: P) => string
-    : string;
+  [K in keyof Def]: Def[K] extends (props: infer P) => string ? (props: P) => string : string;
 };
 
 export type I18nLabels<
@@ -84,22 +81,16 @@ export const defineI18nLabels = <
   type T = keyof Def & string;
 
   const resolveLabel = (locale: string) => (key: T) =>
-    (labels[locale] as LabelDefinition<Def> | undefined)?.[key] ??
-    labels.en[key];
+    (labels[locale] as LabelDefinition<Def> | undefined)?.[key] ?? labels.en[key];
 
   /**
    * Type helper to determine if props are required for a given key.
    * If the label is a function, props are required with the correct type.
    * If the label is a string, props should not be passed.
    */
-  type TFunctionArgs<K extends T> = Def[K] extends (props: infer P) => string
-    ? [props: P]
-    : [];
+  type TFunctionArgs<K extends T> = Def[K] extends (props: infer P) => string ? [props: P] : [];
 
-  type TFunction = (<K extends T>(
-    key: K,
-    ...args: TFunctionArgs<K>
-  ) => string) & {
+  type TFunction = (<K extends T>(key: K, ...args: TFunctionArgs<K>) => string) & {
     /**
      * Resolve a label with a dynamic key.
      * This is useful when the key is constructed at runtime.
@@ -152,11 +143,8 @@ export const defineI18nLabels = <
 
       tFunction.dynamic = (key: string, fallback: string) => {
         const label =
-          (
-            labels[configurations.locale] as
-              | Record<string, LabelValue>
-              | undefined
-          )?.[key] ?? (labels.en as Record<string, LabelValue>)[key];
+          (labels[configurations.locale] as Record<string, LabelValue> | undefined)?.[key] ??
+          (labels.en as Record<string, LabelValue>)[key];
         if (label === undefined || typeof label === "function") {
           return fallback;
         }

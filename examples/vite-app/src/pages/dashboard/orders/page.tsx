@@ -10,14 +10,8 @@ const OrdersPage = () => {
 
   return (
     <div style={{ padding: "1.5rem" }}>
-      <h1
-        style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}
-      >
-        Orders
-      </h1>
-      <p
-        style={{ marginBottom: "1rem", color: "hsl(var(--muted-foreground))" }}
-      >
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}>Orders</h1>
+      <p style={{ marginBottom: "1rem", color: "hsl(var(--muted-foreground))" }}>
         This page is at <code>src/pages/dashboard/orders/page.tsx</code>
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>

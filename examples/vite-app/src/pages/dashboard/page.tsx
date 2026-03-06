@@ -20,11 +20,7 @@ const ZapIcon = () => (
 const DashboardPage = () => {
   return (
     <div style={{ padding: "1.5rem" }}>
-      <h1
-        style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}
-      >
-        Dashboard
-      </h1>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}>Dashboard</h1>
       <p style={{ marginBottom: "1rem" }}>
         Welcome to the file-based routing demo! This page is located at{" "}
         <code

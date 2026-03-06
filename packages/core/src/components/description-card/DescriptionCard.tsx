@@ -2,19 +2,9 @@ import * as React from "react";
 import { TooltipProvider } from "../tooltip";
 import { cn } from "../../lib/utils";
 
-import type {
-  DescriptionCardProps,
-  FieldConfig,
-  FieldDefinition,
-  ResolvedField,
-} from "./types";
+import type { DescriptionCardProps, FieldConfig, FieldDefinition, ResolvedField } from "./types";
 import { isDivider, isFieldDefinition } from "./types";
-import {
-  renderField,
-  shouldHideField,
-  isFullWidthField,
-  getNestedValue,
-} from "./field-renderers";
+import { renderField, shouldHideField, isFullWidthField, getNestedValue } from "./field-renderers";
 
 // ============================================================================
 // FIELD RESOLVER
@@ -209,29 +199,20 @@ export function DescriptionCard({
       >
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
-          <h3 className="astw:text-lg astw:font-semibold astw:leading-none">
-            {title}
-          </h3>
+          <h3 className="astw:text-lg astw:font-semibold astw:leading-none">{title}</h3>
           {headerAction && <div>{headerAction}</div>}
         </div>
 
         {/* Content */}
         <div className="astw:px-6 astw:pb-4">
           {!hasContent ? (
-            <p className="astw:text-sm astw:text-muted-foreground">
-              No information available
-            </p>
+            <p className="astw:text-sm astw:text-muted-foreground">No information available</p>
           ) : (
             <div className="astw:space-y-4">
               {sections.map((section, index) => (
                 <React.Fragment key={section.id}>
                   {/* Divider between sections (except before first) */}
-                  {index > 0 && (
-                    <div
-                      className="astw:h-px astw:bg-border"
-                      role="separator"
-                    />
-                  )}
+                  {index > 0 && <div className="astw:h-px astw:bg-border" role="separator" />}
                   {renderSection(section)}
                 </React.Fragment>
               ))}

@@ -3,28 +3,28 @@
   "version": "0.27.2",
   "description": "An opinionated React application framework for building ERP applications on Tailor Platform",
   "keywords": [
-    "react",
     "app-shell",
-    "tailor-platform",
     "erp",
-    "vite",
+    "react",
+    "routing",
     "sidebar",
-    "routing"
+    "tailor-platform",
+    "vite"
   ],
-  "license": "MIT",
   "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/core#readme",
   "bugs": {
     "url": "https://github.com/tailor-platform"
   },
-  "type": "module",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/tailor-platform/app-shell",
     "directory": "packages/core"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+  "files": [
+    "dist/**"
+  ],
+  "type": "module",
   "exports": {
     "./styles": "./dist/app-shell.css",
     "./theme.css": "./dist/theme.css",
@@ -37,9 +37,9 @@
       "default": "./dist/vite-plugin.js"
     }
   },
-  "files": [
-    "dist/**"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
@@ -47,13 +47,9 @@
     "test": "vitest run",
     "type-check": "tsc --incremental"
   },
-  "peerDependencies": {
-    "react": ">= 19",
-    "react-dom": ">= 19"
-  },
   "dependencies": {
-    "@tailor-platform/app-shell-vite-plugin": "workspace:*",
     "@base-ui/react": "^1.2.0",
+    "@tailor-platform/app-shell-vite-plugin": "workspace:*",
     "@tailor-platform/auth-public-client": "^0.4.1",
     "@tanstack/react-table": "^8.21.3",
     "change-case": "^5.4.4",
@@ -89,5 +85,9 @@
     "vite-plugin-externalize-deps": "^0.10.0",
     "vite-tsconfig-paths": "^6.0.4",
     "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "react": ">= 19",
+    "react-dom": ">= 19"
   }
 }

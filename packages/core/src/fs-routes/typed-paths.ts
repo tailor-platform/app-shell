@@ -30,9 +30,7 @@
 /**
  * Extract base path (before ?) from a path that may include query string.
  */
-type ExtractBasePath<T extends string> = T extends `${infer Base}?${string}`
-  ? Base
-  : T;
+type ExtractBasePath<T extends string> = T extends `${infer Base}?${string}` ? Base : T;
 
 /**
  * Check if an object type has no keys.
@@ -68,9 +66,7 @@ type TypedPaths<TRoutes extends Record<string, Record<string, string>>> = {
    * paths.for("/items/:id?tab=details", { id: "456" }); // → "/items/456?tab=details"
    * ```
    */
-  for<
-    T extends (keyof TRoutes & string) | `${keyof TRoutes & string}?${string}`,
-  >(
+  for<T extends (keyof TRoutes & string) | `${keyof TRoutes & string}?${string}`>(
     path: T,
     ...params: ExtractBasePath<T> extends keyof TRoutes
       ? IsEmptyObject<TRoutes[ExtractBasePath<T>]> extends true

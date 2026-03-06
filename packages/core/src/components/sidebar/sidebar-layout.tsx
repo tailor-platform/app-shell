@@ -1,9 +1,4 @@
-import {
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
 import { SunIcon } from "lucide-react";
 import { AppShellOutlet } from "@/components/content";
 import { Button } from "@/components/button";
@@ -54,9 +49,7 @@ const HidableSidebarTrigger = () => {
 };
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
-  const Children = props.children
-    ? props.children({ Outlet: AppShellOutlet })
-    : null;
+  const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
   const themeContext = useTheme();
   const toggleTheme = () => {
     themeContext.setTheme(themeContext.theme === "dark" ? "light" : "dark");

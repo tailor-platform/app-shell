@@ -1,8 +1,4 @@
-import {
-  useParams,
-  Link,
-  type AppShellPageProps,
-} from "@tailor-platform/app-shell";
+import { useParams, Link, type AppShellPageProps } from "@tailor-platform/app-shell";
 import { paths } from "../../../../routes.generated";
 
 const OrderDetailPage = () => {
@@ -10,14 +6,10 @@ const OrderDetailPage = () => {
 
   return (
     <div style={{ padding: "1.5rem" }}>
-      <h1
-        style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}
-      >
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}>
         Order Detail: {id}
       </h1>
-      <p
-        style={{ marginBottom: "1rem", color: "hsl(var(--muted-foreground))" }}
-      >
+      <p style={{ marginBottom: "1rem", color: "hsl(var(--muted-foreground))" }}>
         This page is at <code>src/pages/dashboard/orders/[id]/page.tsx</code>
       </p>
       <div

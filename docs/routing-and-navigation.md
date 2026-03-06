@@ -18,31 +18,26 @@ AppShell re-exports the following hooks from `react-router` for use in your comp
 ### Example Usage
 
 ```tsx
-import { 
-  useNavigate, 
-  useParams, 
-  useLocation,
-  Link 
-} from "@tailor-platform/app-shell";
+import { useNavigate, useParams, useLocation, Link } from "@tailor-platform/app-shell";
 
 const MyComponent = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
-  
+
   const handleClick = () => {
     // Navigate programmatically
     navigate("/dashboard/overview");
   };
-  
+
   return (
     <div>
       <p>Current path: {location.pathname}</p>
       <p>Route param ID: {id}</p>
-      
+
       {/* Client-side link */}
       <Link to="/products">View Products</Link>
-      
+
       <button onClick={handleClick}>Go to Dashboard</button>
     </div>
   );
@@ -66,11 +61,7 @@ AppShell includes a `CommandPalette` component that provides keyboard-driven qui
 Add the `CommandPalette` component to your AppShell layout:
 
 ```tsx
-import { 
-  AppShell, 
-  SidebarLayout, 
-  CommandPalette 
-} from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout, CommandPalette } from "@tailor-platform/app-shell";
 
 const App = () => (
   <AppShell modules={modules} locale="en">
@@ -83,6 +74,7 @@ const App = () => (
 ```
 
 The CommandPalette automatically:
+
 - Collects all navigable routes from your module definitions
 - Respects `accessControl` settings (hidden modules/resources won't appear)
 - Updates when navigation items change
@@ -205,8 +197,7 @@ navigate(`/orders/${orderId}`);
 ### HMR Support
 
 The generated file is automatically regenerated when:
+
 - A new `page.tsx` is added
 - A `page.tsx` is deleted
 - The dev server starts
-
-

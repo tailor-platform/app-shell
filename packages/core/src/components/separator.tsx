@@ -21,9 +21,7 @@ function Separator({
       data-orientation={orientation}
       className={cn(
         "astw:bg-border astw:shrink-0",
-        orientation === "horizontal"
-          ? "astw:h-px astw:w-full"
-          : "astw:h-full astw:w-px",
+        orientation === "horizontal" ? "astw:h-px astw:w-full" : "astw:h-full astw:w-px",
         className,
       )}
       {...props}

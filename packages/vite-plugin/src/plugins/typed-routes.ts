@@ -30,10 +30,7 @@ export function createTypedRoutesPlugin(ctx: PluginContext): Plugin {
   function writeRoutesFile(): void {
     // Ensure pages are scanned
     if (!state.cachedPages) {
-      state.cachedPages = scanPages(
-        state.resolvedPagesDir,
-        state.resolvedPagesDir,
-      );
+      state.cachedPages = scanPages(state.resolvedPagesDir, state.resolvedPagesDir);
     }
 
     const code = generateTypedRoutesCode(state.cachedPages);
@@ -45,9 +42,7 @@ export function createTypedRoutesPlugin(ctx: PluginContext): Plugin {
     }
 
     // Write file only if content changed
-    const existingContent = fs.existsSync(outputPath)
-      ? fs.readFileSync(outputPath, "utf-8")
-      : "";
+    const existingContent = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, "utf-8") : "";
 
     if (existingContent !== code) {
       fs.writeFileSync(outputPath, code, "utf-8");
@@ -82,19 +77,13 @@ export function createTypedRoutesPlugin(ctx: PluginContext): Plugin {
       };
 
       watcher.on("add", (file) => {
-        if (
-          file.startsWith(state.resolvedPagesDir) &&
-          file.endsWith(PAGE_FILE_NAME)
-        ) {
+        if (file.startsWith(state.resolvedPagesDir) && file.endsWith(PAGE_FILE_NAME)) {
           regenerateRoutes();
         }
       });
 
       watcher.on("unlink", (file) => {
-        if (
-          file.startsWith(state.resolvedPagesDir) &&
-          file.endsWith(PAGE_FILE_NAME)
-        ) {
+        if (file.startsWith(state.resolvedPagesDir) && file.endsWith(PAGE_FILE_NAME)) {
           regenerateRoutes();
         }
       });

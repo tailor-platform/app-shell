@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { RouterContainer } from "./router";
-import {
-  AppShellConfigContext,
-  AppShellDataContext,
-} from "@/contexts/appshell-context";
+import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
@@ -47,11 +44,7 @@ const renderWithConfig = ({
   render(
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData }}>
-        <RouterContainer
-          memory
-          rootComponent={rootComponent}
-          initialEntries={initialEntries}
-        >
+        <RouterContainer memory rootComponent={rootComponent} initialEntries={initialEntries}>
           <Outlet />
         </RouterContainer>
       </AppShellDataContext.Provider>
@@ -200,9 +193,7 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard"],
       });
 
-      expect(
-        await screen.findByRole("alert", { name: "default-error-boundary" }),
-      ).toBeDefined();
+      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
 
       cleanup();
 
@@ -211,9 +202,7 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard/overview"],
       });
 
-      expect(
-        await screen.findByRole("alert", { name: "default-error-boundary" }),
-      ).toBeDefined();
+      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
     } finally {
       consoleSpy.mockRestore();
     }
@@ -225,9 +214,7 @@ describe("RouterContainer (memory)", () => {
       initialEntries: ["/unknown-path"],
     });
 
-    expect(
-      await screen.findByRole("alert", { name: "default-error-boundary" }),
-    ).toBeDefined();
+    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
     expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 

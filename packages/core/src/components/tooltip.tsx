@@ -12,11 +12,7 @@ function TooltipProvider({
   children: React.ReactNode;
 }) {
   return (
-    <BaseTooltip.Provider
-      data-slot="tooltip-provider"
-      delay={delayDuration}
-      {...props}
-    >
+    <BaseTooltip.Provider data-slot="tooltip-provider" delay={delayDuration} {...props}>
       {children}
     </BaseTooltip.Provider>
   );
@@ -32,9 +28,7 @@ function Tooltip({ children, ...props }: { children: React.ReactNode }) {
   );
 }
 
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof BaseTooltip.Trigger>) {
+function TooltipTrigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
   return <BaseTooltip.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 

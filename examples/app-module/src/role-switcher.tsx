@@ -75,11 +75,7 @@ export const RoleSwitcherProvider = ({
     setRole,
   };
 
-  return (
-    <RoleSwitcherContext.Provider value={value}>
-      {children}
-    </RoleSwitcherContext.Provider>
-  );
+  return <RoleSwitcherContext.Provider value={value}>{children}</RoleSwitcherContext.Provider>;
 };
 
 // ============================================================================
@@ -89,9 +85,7 @@ export const RoleSwitcherProvider = ({
 export const useRoleSwitcher = (): RoleSwitcherContextType => {
   const context = useContext(RoleSwitcherContext);
   if (!context) {
-    throw new Error(
-      "useRoleSwitcher must be used within a RoleSwitcherProvider",
-    );
+    throw new Error("useRoleSwitcher must be used within a RoleSwitcherProvider");
   }
   return context;
 };

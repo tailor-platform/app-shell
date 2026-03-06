@@ -1,10 +1,10 @@
 # Module and Resource Definition
 
-AppShell will render the sidebar navigation, breadcrumbs and handle routing based on structured configuration of modules and resources (and sub-resources, sub-sub-resources and so on). 
+AppShell will render the sidebar navigation, breadcrumbs and handle routing based on structured configuration of modules and resources (and sub-resources, sub-sub-resources and so on).
 
 Modules and Resources both share core interface. Of interest:
 
-- `path: string` - the path segment 
+- `path: string` - the path segment
 - `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional for modules - will auto-redirect to first resource if omitted)
 - `guards?: Guard[]` - optional array of guard functions to control access based on permissions or feature flags
 
@@ -33,8 +33,7 @@ const appShellPropModule = [
         component: PurchaseInvoicesPage,
         // ...
       }),
-  
-    ]
+    ],
   }),
   defineModule({
     path: "sales",
@@ -46,7 +45,7 @@ const appShellPropModule = [
         // ...
       }),
       // ...
-    ]
+    ],
   }),
   // Module without component - automatically redirects to first resource
   defineModule({
@@ -60,7 +59,7 @@ const appShellPropModule = [
         path: "analytics",
         component: DashboardAnalytics,
       }),
-    ]
+    ],
   }),
   // Module with guards for access control
   defineModule({
@@ -73,10 +72,10 @@ const appShellPropModule = [
           signal,
         }).then((r) => r.ok);
         return ok ? pass() : hidden();
-      }
+      },
     ],
   }),
-]
+];
 ```
 
 Produces the following navigation menu:
@@ -91,7 +90,7 @@ Produces the following navigation menu:
 › Reports  (only visible if user has reports permission)
 ```
 
-Modules show as top-level menu items and resources are the sub-menu items.  Sub-resources do not show up on the side navigation menu, but will be available via other navigation and show in breadcrumbs.
+Modules show as top-level menu items and resources are the sub-menu items. Sub-resources do not show up on the side navigation menu, but will be available via other navigation and show in breadcrumbs.
 
 In the example above, clicking the 'Orders' menu item above will take you to `/{basePath}/purchasing/orders` and render the OrdersPage page. If you browse, either by direct request or via client-side navigation to `/{basePath}/purchasing/orders/1234`, AppShell will render OrderDetailPage with 'id' available via useParams
 
@@ -126,7 +125,7 @@ const reportsModule = defineModule({
         signal,
       }).then((r) => r.ok);
       return ok ? pass() : hidden();
-    }
+    },
   ],
 });
 ```
@@ -144,7 +143,7 @@ const betaFeaturesModule = defineModule({
     async ({ context }) => {
       const enabled = await checkFeatureFlag("beta-features");
       return enabled ? pass() : hidden();
-    }
+    },
   ],
 });
 ```
@@ -162,7 +161,7 @@ const billingModule = defineModule({
     async ({ context }) => {
       const plan = await getCurrentTenantPlan();
       return plan === "enterprise" ? pass() : hidden();
-    }
+    },
   ],
 });
 ```
@@ -179,7 +178,7 @@ defineResource({
     async ({ context, signal }) => {
       const user = await getCurrentUser({ signal });
       return user.role === "admin" ? pass() : hidden();
-    }
+    },
   ],
 });
 ```
@@ -213,6 +212,7 @@ defineResource({
 ```
 
 When a module or resource is hidden via guards, it will:
+
 - Not appear in navigation menus
 - Not be accessible via direct URL navigation
 - Not appear in CommandPalette search results

@@ -49,23 +49,17 @@ describe("createTypedPaths", () => {
     });
 
     it("URL-encodes parameter values", () => {
-      expect(paths.for("/orders/:id", { id: "hello world" })).toBe(
-        "/orders/hello%20world",
-      );
+      expect(paths.for("/orders/:id", { id: "hello world" })).toBe("/orders/hello%20world");
     });
 
     it("handles special characters in parameters", () => {
-      expect(paths.for("/orders/:id", { id: "a/b/c" })).toBe(
-        "/orders/a%2Fb%2Fc",
-      );
+      expect(paths.for("/orders/:id", { id: "a/b/c" })).toBe("/orders/a%2Fb%2Fc");
     });
   });
 
   describe("catch-all routes", () => {
     it("replaces catch-all parameter", () => {
-      expect(paths.for("/docs/*slug", { slug: "getting-started" })).toBe(
-        "/docs/getting-started",
-      );
+      expect(paths.for("/docs/*slug", { slug: "getting-started" })).toBe("/docs/getting-started");
     });
 
     it("preserves slashes in catch-all value", () => {
@@ -75,21 +69,17 @@ describe("createTypedPaths", () => {
 
   describe("query string passthrough", () => {
     it("preserves query string on static route", () => {
-      expect(paths.for("/dashboard?tab=overview")).toBe(
-        "/dashboard?tab=overview",
-      );
+      expect(paths.for("/dashboard?tab=overview")).toBe("/dashboard?tab=overview");
     });
 
     it("preserves query string on dynamic route", () => {
-      expect(paths.for("/orders/:id?tab=details", { id: "123" })).toBe(
-        "/orders/123?tab=details",
-      );
+      expect(paths.for("/orders/:id?tab=details", { id: "123" })).toBe("/orders/123?tab=details");
     });
 
     it("preserves complex query string", () => {
-      expect(
-        paths.for("/orders/:id?tab=details&sort=asc&page=1", { id: "456" }),
-      ).toBe("/orders/456?tab=details&sort=asc&page=1");
+      expect(paths.for("/orders/:id?tab=details&sort=asc&page=1", { id: "456" })).toBe(
+        "/orders/456?tab=details&sort=asc&page=1",
+      );
     });
   });
 });

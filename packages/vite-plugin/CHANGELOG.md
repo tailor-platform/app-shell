@@ -39,7 +39,6 @@
   ```
 
   Under the hood, the plugin:
-
   1. **Scans pages** - Finds `page.tsx` files in `src/pages` and builds a route tree
   2. **Generates virtual module** - Creates `virtual:app-shell-pages` with all discovered pages
   3. **Auto-injects pages** - Intercepts `@tailor-platform/app-shell` imports and wraps `AppShell` with `AppShell.WithPages(pages)`
@@ -72,7 +71,6 @@
   ```
 
   When enabled, the plugin generates `src/routes.generated.ts` containing:
-
   - `GeneratedRouteParams` type mapping all routes to their parameter types
   - `paths` helper with a type-safe `for()` method for building URLs
   - Module augmentation to register route types with app-shell

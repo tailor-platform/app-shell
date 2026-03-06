@@ -3,7 +3,7 @@
   "plugins": ["react", "jsx-a11y", "typescript", "unicorn", "oxc"],
   "categories": {
     "correctness": "error",
-    "suspicious": "warn"
+    "suspicious": "warn",
   },
   "rules": {
     // React 19's JSX Transform handles React imports automatically
@@ -12,7 +12,7 @@
     "react/no-children-prop": "warn",
     "jsx-a11y/no-autofocus": "warn",
     "jsx-a11y/prefer-tag-over-role": "warn",
-    "jsx-a11y/anchor-has-content": "warn"
+    "jsx-a11y/anchor-has-content": "warn",
   },
-  "ignorePatterns": ["dist", "node_modules"]
+  "ignorePatterns": ["dist", "node_modules"],
 }

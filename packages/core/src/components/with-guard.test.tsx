@@ -30,15 +30,10 @@ const testConfig: RootConfiguration = {
 /**
  * Wrapper to render WithGuard with required providers.
  */
-const renderWithProviders = (
-  ui: React.ReactNode,
-  contextData: TestContextData,
-) => {
+const renderWithProviders = (ui: React.ReactNode, contextData: TestContextData) => {
   return render(
     <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
-      <AppShellDataContext.Provider value={{ contextData }}>
-        {ui}
-      </AppShellDataContext.Provider>
+      <AppShellDataContext.Provider value={{ contextData }}>{ui}</AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>,
   );
 };
@@ -131,10 +126,7 @@ describe("WithGuard", () => {
       const guard3: Guard = () => pass();
 
       renderWithProviders(
-        <WithGuard
-          guards={[guard1, guard2, guard3]}
-          fallback={<div>Blocked</div>}
-        >
+        <WithGuard guards={[guard1, guard2, guard3]} fallback={<div>Blocked</div>}>
           <div>Protected Content</div>
         </WithGuard>,
         { currentUser: { id: "1", role: "user" } },
@@ -255,10 +247,7 @@ describe("WithGuard", () => {
       const redirectGuard: Guard = () => redirectTo("/login");
 
       renderWithProviders(
-        <WithGuard
-          guards={[redirectGuard]}
-          fallback={<div>Redirecting...</div>}
-        >
+        <WithGuard guards={[redirectGuard]} fallback={<div>Redirecting...</div>}>
           <div>Protected</div>
         </WithGuard>,
         { currentUser: { id: "1", role: "user" } },

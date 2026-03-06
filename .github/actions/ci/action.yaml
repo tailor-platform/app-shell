@@ -11,7 +11,7 @@ runs:
       with:
         cache: pnpm
         cache-dependency-path: ./pnpm-lock.yaml
-        node-version-file: './package.json'
+        node-version-file: "./package.json"
     - name: Install dependencies
       run: pnpm install
       shell: bash

@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  convertPagesToModules,
-  validateExclusiveRouteConfig,
-} from "./converter";
+import { convertPagesToModules, validateExclusiveRouteConfig } from "./converter";
 import type { PageEntry, PageComponent } from "./types";
 
 // ============================================
@@ -35,9 +32,7 @@ describe("convertPagesToModules", () => {
   });
 
   it("converts single module page", () => {
-    const pages = [
-      createMockPage("/dashboard", { meta: { title: "Dashboard" } }),
-    ];
+    const pages = [createMockPage("/dashboard", { meta: { title: "Dashboard" } })];
     const modules = convertPagesToModules(pages);
 
     expect(modules).toHaveLength(1);
@@ -90,11 +85,7 @@ describe("convertPagesToModules", () => {
     const modules = convertPagesToModules(pages);
 
     expect(modules).toHaveLength(3);
-    expect(modules.map((m) => m.path).sort()).toEqual([
-      "dashboard",
-      "profile",
-      "settings",
-    ]);
+    expect(modules.map((m) => m.path).sort()).toEqual(["dashboard", "profile", "settings"]);
   });
 });
 
@@ -104,15 +95,11 @@ describe("convertPagesToModules", () => {
 
 describe("validateExclusiveRouteConfig", () => {
   it("throws when both pages and modules are provided", () => {
-    expect(() => validateExclusiveRouteConfig(true, true)).toThrow(
-      "Cannot use both",
-    );
+    expect(() => validateExclusiveRouteConfig(true, true)).toThrow("Cannot use both");
   });
 
   it("throws when neither pages nor modules are provided", () => {
-    expect(() => validateExclusiveRouteConfig(false, false)).toThrow(
-      "No routes configured",
-    );
+    expect(() => validateExclusiveRouteConfig(false, false)).toThrow("No routes configured");
   });
 
   it("does not throw when only pages are provided", () => {

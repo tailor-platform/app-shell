@@ -1,13 +1,7 @@
 import { describe, expect, it, assert } from "vitest";
 import { createContentRoutes } from "./routes";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import {
-  defineModule,
-  defineResource,
-  pass,
-  redirectTo,
-  hidden,
-} from "@/resource";
+import { defineModule, defineResource, pass, redirectTo, hidden } from "@/resource";
 
 const createMockResource = (path: string) =>
   defineResource({
@@ -137,11 +131,7 @@ describe("createContentRoutes", () => {
         title: "Protected",
       },
       guards: [() => pass()],
-      resources: [
-        createMockResourceWithSubResources("child", [
-          createMockResource("grandchild"),
-        ]),
-      ],
+      resources: [createMockResourceWithSubResources("child", [createMockResource("grandchild")])],
     });
 
     const routes = createContentRoutes({

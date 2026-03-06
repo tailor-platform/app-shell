@@ -206,7 +206,7 @@ export type Module = Omit<CommonPageResource, "meta"> & {
  */
 export type Resource = CommonPageResource & {
   _type: "resource";
-  component: () => ReactNode;
+  component?: () => ReactNode;
   subResources?: Array<Resource>;
   errorBoundary: ErrorBoundaryComponent;
   guards?: Guard[];
@@ -267,13 +267,6 @@ export type ResourceComponentProps = {
   resources?: Array<Resource>;
 };
 
-type ReactResourceProps = {
-  /**
-   * React component to render.
-   */
-  component: (props: ResourceComponentProps) => ReactNode;
-};
-
 /**
  * Create a component that has resolved props by AppShell configurations.
  */
@@ -303,8 +296,18 @@ type CommonModuleProps = {
   };
 };
 
+type ErrorBoundaryProps = {
+  /**
+   * Error boundary component for this module/resource and its children.
+   * When an error occurs, this component will render.
+   * Use the `useRouteError` hook to access error details within the component.
+   */
+  errorBoundary?: ErrorBoundaryComponent;
+};
+
 type DefineModuleProps = CommonProps &
-  CommonModuleProps & {
+  CommonModuleProps &
+  ErrorBoundaryProps & {
     /**
      * React component to render.
      *
@@ -326,12 +329,6 @@ type DefineModuleProps = CommonProps &
      * ```
      */
     component?: (props: ResourceComponentProps) => ReactNode;
-    /**
-     * Error boundary component for this module and its child resources.
-     * When an error occurs in this module or its resources, this component will render.
-     * Use the `useRouteError` hook to access error details within the component.
-     */
-    errorBoundary?: ErrorBoundaryComponent;
   };
 
 /**
@@ -384,28 +381,40 @@ export function defineModule(props: DefineModuleProps): Module {
 }
 
 type DefineResourceProps = CommonProps &
-  ReactResourceProps & {
+  ErrorBoundaryProps & {
+    /**
+     * React component to render.
+     *
+     * If not provided and no guards are given, the resource path will return a 404
+     * response while sub-resources remain accessible.
+     *
+     * If `subResources` is non-empty and guards are provided, guards take precedence
+     * over the default 404: for example, `redirectTo()` will redirect instead of
+     * returning 404. If all guards return `pass()`, the resource path still returns
+     * a 404 since there is no component to render.
+     */
+    component?: (props: ResourceComponentProps) => ReactNode;
     /**
      * Sub-resources of the resource.
      */
     subResources?: Array<Resource>;
-    /**
-     * Error boundary component for this resource and its sub-resources.
-     * When an error occurs in this resource, this component will render.
-     * Overrides module-level or global error boundaries.
-     * Use the `useRouteError` hook to access error details within the component.
-     */
-    errorBoundary?: ErrorBoundaryComponent;
   };
 
 /**
  * Define a resource that renders a React component.
  *
+ * A resource can be configured in several ways:
+ * - **With component**: renders the component at the resource path.
+ * - **Without component, with subResources**: sub-resources are accessible,
+ *   but navigating to the resource path itself returns a 404.
+ * - **With guards only**: useful for redirect-only paths.
+ *   The guard loader runs and can redirect; if all guards pass, the path returns 404.
+ *
  * This resource can be used as a sub-resource of a module or as a root-level resource.
  *
  * @example
  * ```
- * // Define a minimal resource
+ * // Resource with component and sub-resources
  * defineResource({
  *   path: "custom-page",
  *   component: () => {
@@ -428,6 +437,17 @@ type DefineResourceProps = CommonProps &
  *     }),
  *   ]
  * });
+ *
+ * // Resource without component (sub-resources only, path returns 404)
+ * defineResource({
+ *   path: "namespace",
+ *   subResources: [
+ *     defineResource({
+ *       path: "page-a",
+ *       component: () => <div>Page A</div>,
+ *     }),
+ *   ]
+ * });
  * ```
  *
  */
@@ -436,6 +456,11 @@ export function defineResource(props: DefineResourceProps): Resource {
   const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
   const fallbackTitle = capitalCase(path);
   const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
+  const wrappedComponent = component
+    ? makeComponent({ metaTitle, fallbackTitle }, (title) =>
+        component({ title, resources: subResources }),
+      )
+    : undefined;
 
   return {
     _type: "resource" as const,
@@ -446,9 +471,7 @@ export function defineResource(props: DefineResourceProps): Resource {
       icon: meta?.icon,
       ...(meta?.breadcrumbTitle !== undefined ? { breadcrumbTitle: meta.breadcrumbTitle } : {}),
     },
-    component: makeComponent({ metaTitle, fallbackTitle }, (title) =>
-      component({ title, resources: subResources }),
-    ),
+    component: wrappedComponent,
     subResources,
     errorBoundary: errorBoundary ?? <DefaultErrorBoundary />,
     guards,

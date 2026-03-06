@@ -94,7 +94,7 @@ function nodeToResource(node: PageNode): Resource {
       title,
       icon,
     },
-    component: Component ? () => <Component /> : () => null,
+    component: Component ? () => <Component /> : undefined,
     subResources: subResources.length > 0 ? subResources : undefined,
     errorBoundary: <DefaultErrorBoundary />,
     guards: node.guards,

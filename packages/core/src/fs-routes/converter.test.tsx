@@ -76,6 +76,43 @@ describe("convertPagesToModules", () => {
     expect(modules[0].resources[0].guards).not.toContain(parentGuard);
   });
 
+  it("generates guardLoader when guards and loader co-exist", async () => {
+    const guard = async () => ({ type: "pass" as const });
+    const loader = async () => ({ data: "test" });
+
+    const pages = [createMockPage("/dashboard", { guards: [guard], loader })];
+    const modules = convertPagesToModules(pages);
+
+    // guardLoader should be generated (wraps guards + baseLoader)
+    expect(modules[0].guardLoader).toBeDefined();
+    expect(typeof modules[0].guardLoader).toBe("function");
+
+    // loader should be cleared since guardLoader takes over
+    expect(modules[0].loader).toBeUndefined();
+
+    // Execute the guardLoader — guard passes, so baseLoader should run
+    const result = await modules[0].guardLoader!({} as never);
+    expect(result).toEqual({ data: "test" });
+  });
+
+  it("generates guardLoader for resource when guards and loader co-exist", async () => {
+    const guard = async () => ({ type: "pass" as const });
+    const loader = async () => ({ items: [1, 2, 3] });
+
+    const pages = [
+      createMockPage("/dashboard"),
+      createMockPage("/dashboard/orders", { guards: [guard], loader }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    const resource = modules[0].resources[0];
+    expect(resource.guardLoader).toBeDefined();
+    expect(resource.loader).toBeUndefined();
+
+    const result = await resource.guardLoader!({} as never);
+    expect(result).toEqual({ items: [1, 2, 3] });
+  });
+
   it("handles multiple top-level modules", () => {
     const pages = [
       createMockPage("/dashboard"),

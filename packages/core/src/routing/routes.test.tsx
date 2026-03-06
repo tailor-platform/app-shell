@@ -330,13 +330,55 @@ describe("createContentRoutes", () => {
     }
   });
 
-  it("throws error when defining module with no component and no resources", () => {
-    expect(() =>
-      defineModule({
-        path: "admin",
-        meta: { title: "Admin" },
-        resources: [],
-      }),
-    ).toThrow('Module "admin" has no component and no resources');
+  it("path-only module (no component, no resources, no guards) falls through to catch-all 404", () => {
+    const module = defineModule({
+      path: "empty",
+      meta: { title: "Empty" },
+      resources: [],
+    });
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    expect(moduleRoute?.path).toBe("empty");
+    // No index route or children — catch-all * route handles 404
+    expect(moduleRoute?.children).toBeUndefined();
+  });
+
+  it("allows guard-only module (no component, no resources) for redirect", async () => {
+    const module = defineModule({
+      path: "old-dashboard",
+      meta: { title: "Old Dashboard" },
+      guards: [() => redirectTo("/dashboard")],
+      resources: [],
+    });
+
+    expect(module.component).toBeUndefined();
+    expect(module.meta.menuItemClickable).toBe(false);
+
+    const routes = createContentRoutes({
+      modules: [module],
+      settingsResources: [],
+    });
+
+    const moduleContainer = routes[1];
+    const moduleRoute = moduleContainer.children?.[0];
+    expect(moduleRoute?.path).toBe("old-dashboard");
+
+    // Guard-only module should have an index route with the guard loader
+    const indexRoute = moduleRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    assert(typeof indexRoute?.loader === "function");
+
+    const result = await indexRoute.loader({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/dashboard");
   });
 });

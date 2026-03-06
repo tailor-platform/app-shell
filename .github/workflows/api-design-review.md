@@ -35,6 +35,9 @@ Only review code that was **changed in this PR**. Do not comment on unchanged co
 
 - **Trace all affected code paths**: Do not limit your review to the changed lines. Follow the impact of each change through the codebase — if a changed function is called elsewhere, or if a changed type flows into other modules, review those paths too.
 - **Evaluate proposed fixes holistically**: When suggesting a fix, also analyze what new edge cases or failure modes that fix would introduce. Flag those in the same comment rather than deferring to a follow-up review round.
+- **Verify documentation-implementation consistency**: When a PR changes type signatures (e.g., making a field optional), check that JSDoc comments, default behaviors, and all call sites reflect the same semantics. Flag mismatches as a single issue rather than discovering them incrementally.
+- **Assess test quality, not just coverage**: When new behavior is introduced, check that existing tests verify **runtime behavior** (e.g., calling a loader and asserting the response), not just data structure (e.g., checking that a property is `undefined`). Structure-only tests can miss real bugs.
+- **Trace type narrowing impact**: When a type change widens possibilities (e.g., `component` becoming optional), trace all consumers that previously assumed the narrower type and flag any that would silently break or produce unexpected behavior.
 
 ### What to Flag
 
@@ -50,7 +53,7 @@ Report up to **10 issues**, sorted by severity (High → Medium → Low). Use th
 | ---------- | ----------------------------------------------------------------------------------------------------- |
 | **High**   | Breaking API changes, API inconsistency, critical runtime errors, significant performance degradation |
 | **Medium** | Memory leaks, insufficient error handling, behavior not matching expectations                         |
-| **Low**    | Insufficient tests, missing documentation, unnecessary complexity                                     |
+| **Low**    | Insufficient tests, missing documentation, unnecessary complexity, JSDoc-implementation mismatch      |
 
 ### What NOT to Flag (Out of Scope)
 

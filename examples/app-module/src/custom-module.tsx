@@ -706,7 +706,7 @@ const twoColumnLayoutResource = defineResource({
       },
       {
         key: "view-po-demo",
-        label: "View Purchase Order Demo (link)",
+        label: "View Purchase Order",
         icon: <ExternalLinkIcon />,
         href: "/custom-page/purchase-order-demo",
       },
@@ -765,6 +765,10 @@ const twoColumnLayoutResource = defineResource({
         </Layout.Column>
         <Layout.Column>
           <ActionPanel title="Actions" actions={actions} />
+          <ActionPanel
+            title="Additional actions"
+            actions={[]}
+          />
         </Layout.Column>
       </Layout>
     );

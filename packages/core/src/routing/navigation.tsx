@@ -26,7 +26,7 @@ const loaderID = "appshell-root-nav";
  */
 export const createNavItemsLoader = (props: BuildNavItemsProps) => {
   return {
-    loaderID: loaderID,
+    loaderID,
     loader: async () => {
       return { navItems: buildNavItems(props) };
     },

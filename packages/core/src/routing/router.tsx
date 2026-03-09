@@ -1,20 +1,8 @@
 import { PropsWithChildren } from "react";
-import {
-  Outlet,
-  createMemoryRouter,
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router";
+import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
-import {
-  createContentRoutes,
-  RootComponentOption,
-  wrapErrorBoundary,
-} from "./routes";
-import {
-  useAppShellConfig,
-  type RootConfiguration,
-} from "@/contexts/appshell-context";
+import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
+import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
 import type { Guard } from "@/resource";
 import { useAuthLoader } from "@/contexts/auth-context";
@@ -65,9 +53,7 @@ export type RouterContainerProps =
       initialEntries: Array<string>;
     } & RouterContainerPropsCommon);
 
-export const RouterContainer = (
-  props: PropsWithChildren<RouterContainerProps>,
-) => {
+export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
   const { configurations } = useAppShellConfig();
   const authLoader = useAuthLoader();
   const { rootComponent, children } = props;
@@ -100,15 +86,11 @@ export const RouterContainer = (
       HydrateFallback: () => null,
     },
   ];
-  const basename = configurations.basePath
-    ? "/" + configurations.basePath
-    : undefined;
+  const basename = configurations.basePath ? "/" + configurations.basePath : undefined;
   const router = props.memory
     ? createMemoryRouter(routes, {
         basename,
-        ...(props.initialEntries
-          ? { initialEntries: props.initialEntries }
-          : {}),
+        ...(props.initialEntries ? { initialEntries: props.initialEntries } : {}),
       })
     : createBrowserRouter(routes, {
         basename,

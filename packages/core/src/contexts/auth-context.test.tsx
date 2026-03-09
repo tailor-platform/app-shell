@@ -162,9 +162,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuthLoader(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       expect(result.current).not.toBeNull();
@@ -192,15 +190,11 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuthLoader(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       expect(result.current).not.toBeNull();
-      const response = await result.current!(
-        new URL("http://localhost/?code=auth-code-123"),
-      );
+      const response = await result.current!(new URL("http://localhost/?code=auth-code-123"));
       expect(mockHandleCallback).toHaveBeenCalled();
       expect(response).not.toBeNull();
       expect(response!.status).toBe(302);
@@ -222,9 +216,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -250,9 +242,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -280,9 +270,7 @@ describe("AuthProvider", () => {
       const mockClient = createMockAuthClient(state);
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -309,9 +297,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -339,9 +325,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -401,9 +385,7 @@ describe("AuthProvider", () => {
     });
 
     it("should resolve suspense when auth becomes ready", async () => {
-      let authEventListener:
-        | ((event: { type: string; data?: unknown }) => void)
-        | undefined;
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
 
       const mockAddEventListener = vi.fn(
         (listener: (event: { type: string; data?: unknown }) => void) => {
@@ -430,12 +412,7 @@ describe("AuthProvider", () => {
 
       const TestComponent = () => {
         const { isAuthenticated } = useAuthSuspense();
-        return (
-          <div>
-            Content Loaded:{" "}
-            {isAuthenticated ? "authenticated" : "not authenticated"}
-          </div>
-        );
+        return <div>Content Loaded: {isAuthenticated ? "authenticated" : "not authenticated"}</div>;
       };
 
       render(
@@ -479,11 +456,7 @@ describe("AuthProvider", () => {
 
       const TestComponent = () => {
         const { isAuthenticated } = useAuthSuspense();
-        return (
-          <div>
-            Loaded: {isAuthenticated ? "authenticated" : "unauthenticated"}
-          </div>
-        );
+        return <div>Loaded: {isAuthenticated ? "authenticated" : "unauthenticated"}</div>;
       };
 
       render(
@@ -591,9 +564,7 @@ describe("AuthProvider", () => {
 
   describe("event listeners", () => {
     it("should listen to auth state changes via useSyncExternalStore", async () => {
-      let authEventListener:
-        | ((event: { type: string; data?: unknown }) => void)
-        | undefined;
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
 
       const mockAddEventListener = vi.fn(
         (listener: (event: { type: string; data?: unknown }) => void) => {
@@ -617,9 +588,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -662,9 +631,7 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient}>{children}</AuthProvider>
-        ),
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
       await waitFor(() => {
@@ -692,19 +659,13 @@ describe("buildCleanOAuthCallbackUrl", () => {
   });
 
   it("removes both code and state parameters", () => {
-    const url = new URL(
-      "https://example.com/dashboard?code=abc123&state=xyz789",
-    );
+    const url = new URL("https://example.com/dashboard?code=abc123&state=xyz789");
     expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
   });
 
   it("preserves other query parameters", () => {
-    const url = new URL(
-      "https://example.com/dashboard?code=abc123&tab=settings&view=list",
-    );
-    expect(buildCleanOAuthCallbackUrl(url)).toBe(
-      "/dashboard?tab=settings&view=list",
-    );
+    const url = new URL("https://example.com/dashboard?code=abc123&tab=settings&view=list");
+    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard?tab=settings&view=list");
   });
 
   it("preserves hash fragments", () => {
@@ -716,9 +677,7 @@ describe("buildCleanOAuthCallbackUrl", () => {
     const url = new URL(
       "https://example.com/dashboard?code=abc123&state=xyz&tab=settings#section1",
     );
-    expect(buildCleanOAuthCallbackUrl(url)).toBe(
-      "/dashboard?tab=settings#section1",
-    );
+    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard?tab=settings#section1");
   });
 
   it("handles URL with no query parameters", () => {
@@ -732,12 +691,8 @@ describe("buildCleanOAuthCallbackUrl", () => {
   });
 
   it("handles nested paths", () => {
-    const url = new URL(
-      "https://example.com/app/users/123?code=abc&filter=active",
-    );
-    expect(buildCleanOAuthCallbackUrl(url)).toBe(
-      "/app/users/123?filter=active",
-    );
+    const url = new URL("https://example.com/app/users/123?code=abc&filter=active");
+    expect(buildCleanOAuthCallbackUrl(url)).toBe("/app/users/123?filter=active");
   });
 
   it("handles root path", () => {

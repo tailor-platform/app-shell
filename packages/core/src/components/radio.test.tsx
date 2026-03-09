@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Radio, RadioGroup } from "./radio";
+import { Radio } from "./radio";
 
 afterEach(() => {
   cleanup();
@@ -10,10 +10,10 @@ afterEach(() => {
 describe("Radio", () => {
   it("renders radio buttons", () => {
     render(
-      <RadioGroup>
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group>
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     expect(screen.getByTestId("radio-a")).toBeDefined();
@@ -24,10 +24,10 @@ describe("Radio", () => {
     const user = userEvent.setup();
 
     render(
-      <RadioGroup>
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group>
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     const radioA = screen.getByTestId("radio-a");
@@ -44,10 +44,10 @@ describe("Radio", () => {
     const user = userEvent.setup();
 
     render(
-      <RadioGroup>
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group>
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     const radioA = screen.getByTestId("radio-a");
@@ -70,10 +70,10 @@ describe("Radio", () => {
     const onValueChange = vi.fn();
 
     render(
-      <RadioGroup onValueChange={onValueChange}>
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group onValueChange={onValueChange}>
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     await user.click(screen.getByTestId("radio-a"));
@@ -85,10 +85,10 @@ describe("Radio", () => {
 
   it("renders with a default value", () => {
     render(
-      <RadioGroup defaultValue="b">
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group defaultValue="b">
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     expect(screen.getByTestId("radio-b").hasAttribute("data-checked")).toBe(true);
@@ -97,19 +97,19 @@ describe("Radio", () => {
 
   it("supports controlled value", () => {
     const { rerender } = render(
-      <RadioGroup value="a">
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group value="a">
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(true);
 
     rerender(
-      <RadioGroup value="b">
-        <Radio data-testid="radio-a" value="a" />
-        <Radio data-testid="radio-b" value="b" />
-      </RadioGroup>,
+      <Radio.Group value="b">
+        <Radio.Root data-testid="radio-a" value="a" />
+        <Radio.Root data-testid="radio-b" value="b" />
+      </Radio.Group>,
     );
 
     expect(screen.getByTestId("radio-b").hasAttribute("data-checked")).toBe(true);
@@ -118,9 +118,9 @@ describe("Radio", () => {
 
   it("is disabled when disabled prop is set", () => {
     render(
-      <RadioGroup disabled>
-        <Radio data-testid="radio-a" value="a" />
-      </RadioGroup>,
+      <Radio.Group disabled>
+        <Radio.Root data-testid="radio-a" value="a" />
+      </Radio.Group>,
     );
 
     expect(screen.getByTestId("radio-a").hasAttribute("data-disabled")).toBe(true);
@@ -128,9 +128,9 @@ describe("Radio", () => {
 
   it("applies custom className", () => {
     render(
-      <RadioGroup data-testid="group" className="custom-class">
-        <Radio value="a" />
-      </RadioGroup>,
+      <Radio.Group data-testid="group" className="custom-class">
+        <Radio.Root value="a" />
+      </Radio.Group>,
     );
 
     expect(screen.getByTestId("group").classList.contains("custom-class")).toBe(true);

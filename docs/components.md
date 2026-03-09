@@ -32,13 +32,11 @@ AppShell provides a set of pre-styled UI components. All components use the `ast
 - [Select](#select)
 - [Separator](#separator)
 - [Sheet](#sheet)
-- [Skeleton](#skeleton)
 - [Slider](#slider)
 - [Switch](#switch)
 - [Table](#table)
 - [Tabs](#tabs)
 - [Toggle](#toggle)
-- [ToggleGroup](#togglegroup)
 - [Toolbar](#toolbar)
 - [Tooltip](#tooltip)
 
@@ -332,26 +330,26 @@ import { Link } from "react-router";
 
 Checkbox input with indeterminate state support.
 
-### Exports
+### Parts
 
-| Export | Description |
-|--------|-------------|
-| `Checkbox` | Single checkbox (includes check/minus indicator) |
-| `CheckboxGroup` | Groups related checkboxes |
+| Part | Description |
+|------|-------------|
+| `Checkbox.Root` | Single checkbox (includes check/minus indicator) |
+| `Checkbox.Group` | Groups related checkboxes |
 
 ### Example
 
 ```tsx
-import { Checkbox, CheckboxGroup } from "@tailor-platform/app-shell";
+import { Checkbox } from "@tailor-platform/app-shell";
 
 {/* Single checkbox */}
-<Checkbox />
+<Checkbox.Root />
 
 {/* Group of checkboxes */}
-<CheckboxGroup>
-  <label><Checkbox /> Option A</label>
-  <label><Checkbox /> Option B</label>
-</CheckboxGroup>
+<Checkbox.Group>
+  <label><Checkbox.Root /> Option A</label>
+  <label><Checkbox.Root /> Option B</label>
+</Checkbox.Group>
 ```
 
 ---
@@ -1036,23 +1034,23 @@ import { Progress } from "@tailor-platform/app-shell";
 
 Radio button input.
 
-### Exports
+### Parts
 
-| Export | Description |
-|--------|-------------|
-| `Radio` | Single radio button (includes indicator) |
-| `RadioGroup` | Groups related radio buttons |
+| Part | Description |
+|------|-------------|
+| `Radio.Root` | Single radio button (includes indicator) |
+| `Radio.Group` | Groups related radio buttons |
 
 ### Example
 
 ```tsx
-import { Radio, RadioGroup } from "@tailor-platform/app-shell";
+import { Radio } from "@tailor-platform/app-shell";
 
-<RadioGroup defaultValue="option-1">
-  <label><Radio value="option-1" /> Option 1</label>
-  <label><Radio value="option-2" /> Option 2</label>
-  <label><Radio value="option-3" /> Option 3</label>
-</RadioGroup>
+<Radio.Group defaultValue="option-1">
+  <label><Radio.Root value="option-1" /> Option 1</label>
+  <label><Radio.Root value="option-2" /> Option 2</label>
+  <label><Radio.Root value="option-3" /> Option 3</label>
+</Radio.Group>
 ```
 
 ---
@@ -1187,21 +1185,6 @@ import { Sheet, Button } from "@tailor-platform/app-shell";
 
 ---
 
-## Skeleton
-
-Loading placeholder with pulse animation.
-
-### Example
-
-```tsx
-import { Skeleton } from "@tailor-platform/app-shell";
-
-<Skeleton className="h-4 w-[250px]" />
-<Skeleton className="h-12 w-12 rounded-full" />
-```
-
----
-
 ## Slider
 
 Range slider input.
@@ -1324,7 +1307,14 @@ import { Tabs } from "@tailor-platform/app-shell";
 
 Pressable toggle button.
 
-### Props
+### Parts
+
+| Part | Description |
+|------|-------------|
+| `Toggle.Root` | Single toggle button |
+| `Toggle.Group` | Groups related toggle buttons |
+
+### Props (Toggle.Root)
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -1335,30 +1325,19 @@ Pressable toggle button.
 
 ```tsx
 import { Toggle } from "@tailor-platform/app-shell";
-import { Bold } from "lucide-react";
-
-<Toggle aria-label="Toggle bold">
-  <Bold className="size-4" />
-</Toggle>
-```
-
----
-
-## ToggleGroup
-
-Groups related toggle buttons.
-
-### Example
-
-```tsx
-import { ToggleGroup, Toggle } from "@tailor-platform/app-shell";
 import { Bold, Italic, Underline } from "lucide-react";
 
-<ToggleGroup>
-  <Toggle aria-label="Bold"><Bold className="size-4" /></Toggle>
-  <Toggle aria-label="Italic"><Italic className="size-4" /></Toggle>
-  <Toggle aria-label="Underline"><Underline className="size-4" /></Toggle>
-</ToggleGroup>
+{/* Single toggle */}
+<Toggle.Root aria-label="Toggle bold">
+  <Bold className="size-4" />
+</Toggle.Root>
+
+{/* Toggle group */}
+<Toggle.Group>
+  <Toggle.Root aria-label="Bold"><Bold className="size-4" /></Toggle.Root>
+  <Toggle.Root aria-label="Italic"><Italic className="size-4" /></Toggle.Root>
+  <Toggle.Root aria-label="Underline"><Underline className="size-4" /></Toggle.Root>
+</Toggle.Group>
 ```
 
 ---

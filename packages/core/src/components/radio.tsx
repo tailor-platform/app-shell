@@ -42,4 +42,9 @@ function Radio({ className, ...props }: React.ComponentProps<typeof BaseRadio.Ro
   );
 }
 
-export { Radio, RadioGroup };
+const RadioNamespace = {
+  Root: Radio,
+  Group: RadioGroup,
+};
+
+export { RadioNamespace as Radio };

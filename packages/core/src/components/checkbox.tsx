@@ -47,4 +47,9 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof BaseCheck
   );
 }
 
-export { Checkbox, CheckboxGroup };
+const CheckboxNamespace = {
+  Root: Checkbox,
+  Group: CheckboxGroup,
+};
+
+export { CheckboxNamespace as Checkbox };

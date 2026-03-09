@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe("Toggle", () => {
   it("renders as not pressed by default", () => {
-    render(<Toggle data-testid="toggle">Bold</Toggle>);
+    render(<Toggle.Root data-testid="toggle">Bold</Toggle.Root>);
 
     const toggle = screen.getByTestId("toggle");
     expect(toggle).toBeDefined();
@@ -18,9 +18,9 @@ describe("Toggle", () => {
 
   it("renders as pressed when defaultPressed is true", () => {
     render(
-      <Toggle data-testid="toggle" defaultPressed>
+      <Toggle.Root data-testid="toggle" defaultPressed>
         Bold
-      </Toggle>,
+      </Toggle.Root>,
     );
 
     const toggle = screen.getByTestId("toggle");
@@ -30,7 +30,7 @@ describe("Toggle", () => {
   it("toggles pressed state on click", async () => {
     const user = userEvent.setup();
 
-    render(<Toggle data-testid="toggle">Bold</Toggle>);
+    render(<Toggle.Root data-testid="toggle">Bold</Toggle.Root>);
 
     const toggle = screen.getByTestId("toggle");
     expect(toggle.hasAttribute("data-pressed")).toBe(false);
@@ -53,9 +53,9 @@ describe("Toggle", () => {
     const onPressedChange = vi.fn();
 
     render(
-      <Toggle data-testid="toggle" onPressedChange={onPressedChange}>
+      <Toggle.Root data-testid="toggle" onPressedChange={onPressedChange}>
         Bold
-      </Toggle>,
+      </Toggle.Root>,
     );
 
     await user.click(screen.getByTestId("toggle"));
@@ -68,18 +68,18 @@ describe("Toggle", () => {
 
   it("supports controlled pressed state", () => {
     const { rerender } = render(
-      <Toggle data-testid="toggle" pressed={false}>
+      <Toggle.Root data-testid="toggle" pressed={false}>
         Bold
-      </Toggle>,
+      </Toggle.Root>,
     );
 
     const toggle = screen.getByTestId("toggle");
     expect(toggle.hasAttribute("data-pressed")).toBe(false);
 
     rerender(
-      <Toggle data-testid="toggle" pressed={true}>
+      <Toggle.Root data-testid="toggle" pressed={true}>
         Bold
-      </Toggle>,
+      </Toggle.Root>,
     );
 
     expect(toggle.hasAttribute("data-pressed")).toBe(true);
@@ -87,9 +87,9 @@ describe("Toggle", () => {
 
   it("is disabled when disabled prop is set", () => {
     render(
-      <Toggle data-testid="toggle" disabled>
+      <Toggle.Root data-testid="toggle" disabled>
         Bold
-      </Toggle>,
+      </Toggle.Root>,
     );
 
     const toggle = screen.getByTestId("toggle");
@@ -101,9 +101,9 @@ describe("Toggle", () => {
     const onPressedChange = vi.fn();
 
     render(
-      <Toggle data-testid="toggle" disabled onPressedChange={onPressedChange}>
+      <Toggle.Root data-testid="toggle" disabled onPressedChange={onPressedChange}>
         Bold
-      </Toggle>,
+      </Toggle.Root>,
     );
 
     await user.click(screen.getByTestId("toggle"));

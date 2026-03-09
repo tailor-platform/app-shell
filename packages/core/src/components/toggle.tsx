@@ -3,6 +3,7 @@ import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
+import { ToggleGroup } from "@/components/toggle-group";
 
 const toggleVariants = cva(
   "astw:inline-flex astw:items-center astw:justify-center astw:gap-2 astw:rounded-md astw:text-sm astw:font-medium astw:outline-none astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:[&_svg]:shrink-0 astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
@@ -42,4 +43,9 @@ function Toggle({
   );
 }
 
-export { Toggle, toggleVariants };
+const ToggleNamespace = {
+  Root: Toggle,
+  Group: ToggleGroup,
+};
+
+export { ToggleNamespace as Toggle, toggleVariants };

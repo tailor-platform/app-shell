@@ -19,7 +19,8 @@ This project has comprehensive documentation organized in the `docs/` directory:
 ### Core Documentation
 
 - **[Quick Start](./docs/quickstart.md)** - Installation, setup, and first steps
-- **[API Reference](./docs/api.md)** - Complete API documentation for all components, hooks, and functions
+- **[API Reference](./docs/api.md)** - Complete API documentation for hooks, providers, and functions
+- **[Components](./docs/components.md)** - UI component reference (Badge, Button, Dialog, Select, etc.)
 - **[Module & Resource Definition](./docs/module-resource-definition.md)** - How to structure your application using modules and resources
 - **[File-Based Routing](./docs/file-based-routing.md)** - Defining pages via directory structure with vite plugin
 - **[Routing & Navigation](./docs/routing-and-navigation.md)** - Client-side navigation hooks and Command Palette

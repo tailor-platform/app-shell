@@ -120,13 +120,13 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
   return (
     <div
       className={cn(
-        "astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:shadow-xs",
+        "astw:min-w-[320px] astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:shadow-xs",
         className,
       )}
     >
       {/* Header: same horizontal padding as list; title aligns with action row icon (pl-3 matches row px-3) */}
-      <div className="astw:px-4 astw:pt-6 astw:pb-2">
-        <h3 className="astw:mb-2 astw:text-lg astw:font-semibold astw:leading-none astw:pl-3">
+      <div className="astw:px-4 astw:pt-6 astw:pb-4">
+        <h3 className="astw:text-lg astw:font-semibold astw:leading-none astw:pl-3">
           {title}
         </h3>
       </div>
@@ -134,7 +134,7 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
       {/* Action list */}
       <div className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
-          <p className="astw:text-sm astw:text-muted-foreground">No actions available</p>
+          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">No actions available</p>
         ) : (
           <div className="astw:flex astw:flex-col astw:gap-0" role="list">
             {actions.map((action) => (

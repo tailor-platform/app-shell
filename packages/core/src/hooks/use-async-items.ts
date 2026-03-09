@@ -30,6 +30,8 @@ export interface UseAsyncItemsReturn<T> {
   loading: boolean;
   /** Current input query string */
   query: string;
+  /** The error thrown by the last fetch, if any */
+  error: unknown;
   /** Input change handler — pass to the Root `onInputValueChange` prop */
   onInputValueChange: (value: string) => void;
 }
@@ -48,6 +50,7 @@ export function useAsyncItems<T>({
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [error, setError] = useState<unknown>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,6 +71,7 @@ export function useAsyncItems<T>({
         abortControllerRef.current?.abort();
         abortControllerRef.current = null;
         setItems([]);
+        setError(undefined);
         setLoading(false);
         return;
       }
@@ -85,11 +89,13 @@ export function useAsyncItems<T>({
           });
           if (!controller.signal.aborted) {
             setItems(result);
+            setError(undefined);
           }
         } catch (e) {
           if (e instanceof DOMException && e.name === "AbortError") return;
           if (!controller.signal.aborted) {
             setItems([]);
+            setError(e);
           }
         } finally {
           if (!controller.signal.aborted) {
@@ -109,5 +115,5 @@ export function useAsyncItems<T>({
     };
   }, []);
 
-  return { items, loading, query, onInputValueChange };
+  return { items, loading, query, error, onInputValueChange };
 }

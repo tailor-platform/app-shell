@@ -215,8 +215,10 @@ export interface AutocompleteUseAsyncReturn<T> {
   items: T[];
   /** Whether a fetch is currently in-flight */
   loading: boolean;
-  /** Current input query string */
-  query: string;
+  /** Current input value — pass to the Root `value` prop */
+  value: string;
+  /** The error thrown by the last fetch, if any */
+  error: unknown;
   /**
    * Value change handler — pass to the Root `onValueChange` prop.
    *
@@ -250,7 +252,7 @@ export interface AutocompleteUseAsyncReturn<T> {
  *
  * <Autocomplete.Root
  *   items={movies.items}
- *   value={movies.query}
+ *   value={movies.value}
  *   onValueChange={movies.onValueChange}
  *   filter={null}
  * >
@@ -262,12 +264,13 @@ export interface AutocompleteUseAsyncReturn<T> {
  * ```
  */
 function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncReturn<T> {
-  const { items, loading, query, onInputValueChange } = useAsyncItems(options);
+  const { items, loading, query, error, onInputValueChange } = useAsyncItems(options);
 
   return {
     items,
     loading,
-    query,
+    value: query,
+    error,
     onValueChange: onInputValueChange,
   };
 }

@@ -188,7 +188,7 @@ const movies = Autocomplete.useAsync({
 
 <Autocomplete.Root
   items={movies.items}
-  value={movies.query}
+  value={movies.value}
   onValueChange={movies.onValueChange}
   filter={null}
 >

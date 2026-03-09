@@ -392,7 +392,7 @@ describe("RouterContainer with AuthProvider", () => {
       isReady: true,
     });
     const authClient = createMockAuthClient(
-      { isAuthenticated: true, error: null, isReady: true },
+      { isAuthenticated: false, error: null, isReady: false },
       { checkAuthStatus: mockCheckAuthStatus },
     );
 
@@ -447,7 +447,7 @@ describe("RouterContainer with AuthProvider", () => {
       isReady: true,
     });
     const authClient = createMockAuthClient(
-      { isAuthenticated: false, error: null, isReady: true },
+      { isAuthenticated: false, error: null, isReady: false },
       {
         login: mockLogin,
         checkAuthStatus: mockCheckAuthStatus,
@@ -475,7 +475,7 @@ describe("RouterContainer with AuthProvider", () => {
       isReady: true,
     });
     const authClient = createMockAuthClient(
-      { isAuthenticated: false, error: null, isReady: true },
+      { isAuthenticated: false, error: null, isReady: false },
       {
         login: mockLogin,
         checkAuthStatus: mockCheckAuthStatus,

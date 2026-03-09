@@ -8,6 +8,8 @@ import {
   pass,
   DescriptionCard,
   Layout,
+  LayoutHeader,
+  LayoutV2,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -745,6 +747,112 @@ const threeColumnLayoutResource = defineResource({
   },
 });
 
+// ============================================================================
+// DEMO: LayoutV2 (slot-based layout)
+// ============================================================================
+
+const layoutV2DemoResource = defineResource({
+  path: "layout-v2-demo",
+  meta: {
+    title: "Layout V2 Demo",
+  },
+  component: () => {
+    const orderOverviewFields = [
+      { key: "docNumber", label: "PO Number", meta: { copyable: true } },
+      { key: "externalReference", label: "External Ref", meta: { copyable: true } },
+      { key: "supplierName", label: "Supplier" },
+      { type: "divider" as const },
+      {
+        key: "expectedDeliveryDate",
+        label: "Expected Delivery",
+        type: "date" as const,
+        meta: { dateFormat: "medium" as const },
+      },
+      {
+        key: "confirmedAt",
+        label: "Confirmed",
+        type: "date" as const,
+        meta: { dateFormat: "medium" as const },
+      },
+      {
+        key: "createdAt",
+        label: "Created",
+        type: "date" as const,
+        meta: { dateFormat: "relative" as const },
+      },
+      { key: "shipToLocation.name", label: "Warehouse" },
+      { type: "divider" as const },
+      {
+        key: "shipToLocation.address",
+        label: "Shipping Address",
+        type: "address" as const,
+        meta: { copyable: true },
+      },
+      { key: "note", label: "Notes", meta: { truncateLines: 3 } },
+    ];
+    return (
+      <div className="astw:flex astw:flex-col astw:gap-8">
+        <LayoutHeader
+          title="Layout V2 Demo"
+          actions={[
+            <Button key="action" size="sm" onClick={() => alert("Action!")}>
+              Action
+            </Button>,
+          ]}
+        />
+        <LayoutV2 main={<Placeholder columnNumber={1} />} />
+        <LayoutV2
+          columnLeft={<Placeholder columnNumber={1} />}
+          main={<Placeholder columnNumber={2} />}
+        />
+        <LayoutV2
+          main={
+            <DescriptionCard
+              data={mockPurchaseOrder}
+              title="Order Overview"
+              columns={4}
+              fields={orderOverviewFields}
+            />
+          }
+          columnRight={<Placeholder columnNumber={2} />}
+        />
+        <LayoutV2
+          columnLeft={<Placeholder columnNumber={1} />}
+          main={<Placeholder columnNumber={2} />}
+          columnRight={<Placeholder columnNumber={3} />}
+        />
+        <LayoutV2
+          columnLeft={<Placeholder columnNumber={1} />}
+          main={<Placeholder columnNumber={2} />}
+          gap="32px"
+          columnLeftWidth="280px"
+        />
+        <LayoutV2
+          main={<Placeholder columnNumber={1} />}
+          columnRight={
+            <DescriptionCard
+              data={mockPurchaseOrder}
+              title="Order Overview"
+              columns={4}
+              fields={orderOverviewFields}
+            />
+          }
+          columnRightWidth="360px"
+          columnRightMaxWidth="400px"
+        />
+        <LayoutV2
+          columnLeft={<Placeholder columnNumber={1} />}
+          main={<Placeholder columnNumber={2} />}
+          columnRight={<Placeholder columnNumber={3} />}
+          columnLeftWidth="280px"
+          columnRightWidth="360px"
+          mainMinWidth="400px"
+        />
+      </div>
+    );
+  },
+});
+
 export const customPageModule = defineModule({
   path: "custom-page",
   component: (pageProps: ResourceComponentProps) => {
@@ -809,6 +917,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/layout-v2-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              View Layout V2 Demo
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/admin-only"
               style={{
                 color: "hsl(var(--destructive))",
@@ -834,5 +953,6 @@ export const customPageModule = defineModule({
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,
+    layoutV2DemoResource,
   ],
 });

@@ -1,8 +1,54 @@
 import { PropsWithChildren } from "react";
-import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
-import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
-import { useAppShellConfig } from "@/contexts/appshell-context";
+import {
+  Outlet,
+  createMemoryRouter,
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
+import {
+  createContentRoutes,
+  RootComponentOption,
+  wrapErrorBoundary,
+} from "./routes";
+import {
+  useAppShellConfig,
+  type RootConfiguration,
+} from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
+import { useAuthLoader } from "@/contexts/auth-context";
+
+/**
+ * Create a root loader that combines auth callback handling with navigation loading.
+ *
+ * When AuthProvider wraps AppShell, authLoader is available via useAuthLoader and
+ * handles OAuth callback processing and auth status checks before rendering any
+ * routes. This runs outside React's lifecycle, avoiding strict mode
+ * double-invocation issues.
+ *
+ * When AuthProvider is not used, authLoader is null and the loader only
+ * builds navigation items.
+ */
+const createRootLoader = (
+  configurations: RootConfiguration,
+  authLoader: ((requestUrl: URL) => Promise<Response | null>) | null,
+) => {
+  const { loaderID, loader: navLoader } = createNavItemsLoader({
+    modules: configurations.modules,
+    locale: configurations.locale,
+  });
+
+  return {
+    loaderID,
+    loader: async (args: LoaderFunctionArgs) => {
+      if (authLoader) {
+        const result = await authLoader(new URL(args.request.url));
+        if (result) return result;
+      }
+      return navLoader();
+    },
+  };
+};
 
 type RouterContainerPropsCommon = {
   rootComponent?: RootComponentOption;
@@ -17,8 +63,11 @@ export type RouterContainerProps =
       initialEntries: Array<string>;
     } & RouterContainerPropsCommon);
 
-export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
+export const RouterContainer = (
+  props: PropsWithChildren<RouterContainerProps>,
+) => {
   const { configurations } = useAppShellConfig();
+  const authLoader = useAuthLoader();
   const { rootComponent, children } = props;
   const contentRoutes = createContentRoutes({
     modules: configurations.modules,
@@ -26,10 +75,7 @@ export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) 
     rootComponent,
   });
   const globalErrorBoundary = configurations.errorBoundary;
-  const { loaderID, loader } = createNavItemsLoader({
-    modules: configurations.modules,
-    locale: configurations.locale,
-  });
+  const { loaderID, loader } = createRootLoader(configurations, authLoader);
   const routes = [
     {
       id: loaderID,
@@ -51,16 +97,19 @@ export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) 
       HydrateFallback: () => null,
     },
   ];
-
-  const basename = configurations.basePath ? "/" + configurations.basePath : undefined;
-
+  const basename = configurations.basePath
+    ? "/" + configurations.basePath
+    : undefined;
   const router = props.memory
     ? createMemoryRouter(routes, {
         basename,
-        ...(props.initialEntries ? { initialEntries: props.initialEntries } : {}),
+        ...(props.initialEntries
+          ? { initialEntries: props.initialEntries }
+          : {}),
       })
     : createBrowserRouter(routes, {
         basename,
       });
+
   return <RouterProvider router={router} />;
 };

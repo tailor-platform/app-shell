@@ -18,7 +18,7 @@ export type NavItemResource = {
   items?: Array<NavItemResource>;
 };
 
-const loaderID = "appshell-root-nav";
+const navLoaderID = "appshell-root-nav";
 
 /**
  * Create a loader for navigation items from modules.
@@ -26,7 +26,7 @@ const loaderID = "appshell-root-nav";
  */
 export const createNavItemsLoader = (props: BuildNavItemsProps) => {
   return {
-    loaderID,
+    loaderID: navLoaderID,
     loader: async () => {
       return { navItems: buildNavItems(props) };
     },
@@ -40,7 +40,9 @@ type NavItemsLoaderData = { navItems?: Promise<Array<NavItem>> };
  * Returns undefined if the loader data is not available (e.g., in test environments).
  */
 export const useNavItems = () => {
-  const loaderData = useRouteLoaderData(loaderID) as NavItemsLoaderData | undefined;
+  const loaderData = useRouteLoaderData(navLoaderID) as
+    | NavItemsLoaderData
+    | undefined;
   return loaderData?.navItems;
 };
 
@@ -105,7 +107,11 @@ const filterVisibleResources = async (
 
       // Recursively process subResources
       const subItems = resource.subResources
-        ? await filterVisibleResources(resource.subResources, resourcePath, resolveTitle)
+        ? await filterVisibleResources(
+            resource.subResources,
+            resourcePath,
+            resolveTitle,
+          )
         : undefined;
 
       return {

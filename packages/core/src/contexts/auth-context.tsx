@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useSyncExternalStore, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useSyncExternalStore,
+  useCallback,
+} from "react";
+import { replace } from "react-router";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
@@ -173,6 +179,55 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Internal context to expose the raw EnhancedAuthClient instance
+ * and provider configuration.
+ * Used by RouterContainer to run callback handling in a loader.
+ * @internal
+ */
+type AuthClientContextType = {
+  client: EnhancedAuthClient;
+  autoLogin?: boolean;
+};
+
+const AuthClientContext = createContext<AuthClientContextType | null>(null);
+
+export type AuthLoader = (requestUrl: URL) => Promise<Response | null>;
+
+/**
+ * Internal hook that returns a loader function for handling OAuth callbacks
+ * and auth status checks, or null if AuthProvider is not present.
+ *
+ * The returned loader is intended to be called from a react-router loader,
+ * which runs outside React's lifecycle and is therefore unaffected by strict
+ * mode double-invocation.
+ *
+ * @returns A loader function, or null if not inside an AuthProvider.
+ * @internal
+ */
+export const useAuthLoader = (): AuthLoader | null => {
+  const authClientCtx = useContext(AuthClientContext);
+  if (!authClientCtx) return null;
+
+  const { client, autoLogin } = authClientCtx;
+  return async (requestUrl: URL): Promise<Response | null> => {
+    if (requestUrl.searchParams.has("code")) {
+      try {
+        await client.handleCallback();
+        return replace(buildCleanOAuthCallbackUrl(requestUrl));
+      } catch (error) {
+        console.error("Failed to handle callback:", error);
+      }
+    } else {
+      const state = await client.checkAuthStatus();
+      if (autoLogin && !state.isAuthenticated) {
+        await client.login();
+      }
+    }
+    return null;
+  };
+};
+
 type AuthProviderProps = {
   /**
    * The EnhancedAuthClient instance created with createAuthClient from @tailor-platform/app-shell.
@@ -217,7 +272,9 @@ type AuthProviderProps = {
  * }
  * ```
  */
-export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
+export const AuthProvider = (
+  props: React.PropsWithChildren<AuthProviderProps>,
+) => {
   const client = props.client;
 
   // Subscribe to client state changes for useSyncExternalStore
@@ -238,46 +295,6 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribe, getSnapshot);
 
-  // Initialize authentication on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      // Check if we're returning from OAuth callback
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("code")) {
-        try {
-          await client.handleCallback();
-          // Clean up URL - remove only OAuth-related params, preserve others
-          const cleanUrl = buildCleanOAuthCallbackUrl(new URL(window.location.href));
-          window.history.replaceState({}, "", cleanUrl);
-        } catch (error) {
-          console.error("Failed to handle callback:", error);
-        }
-      } else {
-        // Check authentication status
-        await client.checkAuthStatus();
-      }
-    };
-
-    initAuth();
-  }, [client]);
-
-  /**
-   * Initialize login if the user is not authenticated
-   *
-   * If `autoLogin` is set to false, or the user is already authenticated, do nothing.
-   */
-  useEffect(() => {
-    if (!props.autoLogin) {
-      return;
-    }
-
-    if (!authState.isReady || authState.isAuthenticated) {
-      return;
-    }
-
-    client.login();
-  }, [authState.isReady, authState.isAuthenticated, props.autoLogin, client]);
-
   const isAuthenticated = authState.isAuthenticated;
 
   const contents =
@@ -288,17 +305,19 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     );
 
   return (
-    <AuthContext.Provider
-      value={{
-        authState,
-        login: () => client.login(),
-        logout: () => client.logout(),
-        checkAuthStatus: () => client.checkAuthStatus(),
-        ready: () => client.ready(),
-      }}
-    >
-      {contents}
-    </AuthContext.Provider>
+    <AuthClientContext.Provider value={{ client, autoLogin: props.autoLogin }}>
+      <AuthContext.Provider
+        value={{
+          authState,
+          login: () => client.login(),
+          logout: () => client.logout(),
+          checkAuthStatus: () => client.checkAuthStatus(),
+          ready: () => client.ready(),
+        }}
+      >
+        {contents}
+      </AuthContext.Provider>
+    </AuthClientContext.Provider>
   );
 };
 
@@ -308,7 +327,9 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
+    throw new Error(
+      "useAuth/useAuthSuspense must be used within an AuthProvider",
+    );
   }
   return context;
 };

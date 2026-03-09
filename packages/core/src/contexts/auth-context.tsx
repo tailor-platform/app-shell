@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useSyncExternalStore, useCallback } from "react";
+import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
 } from "@tailor-platform/auth-public-client";
+import { RootRouteContext } from "@/contexts/root-route-context";
 
 // ============================================================================
 // Auth Client
@@ -173,6 +174,25 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Guard component that shows a fallback UI while auth is not ready or
+ * not authenticated. Defined here so that the router layer does not
+ * need to depend on useAuth.
+ */
+const AuthGuard = ({
+  guardComponent,
+  children,
+}: {
+  guardComponent: () => React.ReactNode;
+  children: React.ReactNode;
+}) => {
+  const { isReady, isAuthenticated } = useAuth();
+  if (!isReady || !isAuthenticated) {
+    return guardComponent();
+  }
+  return children;
+};
+
 type AuthProviderProps = {
   /**
    * The EnhancedAuthClient instance created with createAuthClient from @tailor-platform/app-shell.
@@ -238,67 +258,72 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribe, getSnapshot);
 
-  // Initialize authentication on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      // Check if we're returning from OAuth callback
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("code")) {
+  // Build the root loader inside AuthProvider so that the router layer
+  // never needs to know about EnhancedAuthClient internals.
+  const authLoader = useCallback(
+    async (requestUrl: URL): Promise<Response | null> => {
+      // The "code" query parameter indicates a redirect back from the OAuth provider.
+      // handleCallback() internally cleans up the OAuth-related query parameters
+      // from the URL, so no additional URL cleanup is needed here.
+      if (requestUrl.searchParams.has("code")) {
         try {
           await client.handleCallback();
-          // Clean up URL - remove only OAuth-related params, preserve others
-          const cleanUrl = buildCleanOAuthCallbackUrl(new URL(window.location.href));
-          window.history.replaceState({}, "", cleanUrl);
         } catch (error) {
           console.error("Failed to handle callback:", error);
         }
-      } else {
-        // Check authentication status
-        await client.checkAuthStatus();
       }
-    };
 
-    initAuth();
-  }, [client]);
+      // Only check auth status on first load (when isReady is false).
+      // Subsequent navigations skip this because the client already holds
+      // the cached auth state via useSyncExternalStore.
+      if (!client.getState().isReady) {
+        try {
+          await client.checkAuthStatus();
+        } catch (error) {
+          // Intentionally swallow errors to avoid rendering the error boundary
+          // on transient failures (e.g. network timeouts). The next navigation
+          // will re-run this loader and retry automatically.
+          console.error("Failed to check auth status:", error);
+        }
+      }
 
-  /**
-   * Initialize login if the user is not authenticated
-   *
-   * If `autoLogin` is set to false, or the user is already authenticated, do nothing.
-   */
-  useEffect(() => {
-    if (!props.autoLogin) {
-      return;
-    }
+      // autoLogin is evaluated separately from checkAuthStatus so that it
+      // still fires after handleCallback updates the internal state via
+      // getState() (e.g. setting isAuthenticated to true on success).
+      if (props.autoLogin && !client.getState().isAuthenticated) {
+        try {
+          await client.login();
+        } catch (error) {
+          console.error("Failed to login:", error);
+        }
+      }
 
-    if (!authState.isReady || authState.isAuthenticated) {
-      return;
-    }
+      return null;
+    },
+    [client, props.autoLogin],
+  );
 
-    client.login();
-  }, [authState.isReady, authState.isAuthenticated, props.autoLogin, client]);
-
-  const isAuthenticated = authState.isAuthenticated;
-
-  const contents =
-    props.guardComponent && (!authState.isReady || !isAuthenticated) ? (
-      <props.guardComponent />
-    ) : (
-      props.children
-    );
+  const guardComponent = props.guardComponent;
+  const guardComponentWrapper = guardComponent
+    ? (children: React.ReactNode) => (
+        <AuthGuard guardComponent={guardComponent}>{children}</AuthGuard>
+      )
+    : undefined;
 
   return (
-    <AuthContext.Provider
-      value={{
-        authState,
-        login: () => client.login(),
-        logout: () => client.logout(),
-        checkAuthStatus: () => client.checkAuthStatus(),
-        ready: () => client.ready(),
-      }}
-    >
-      {contents}
-    </AuthContext.Provider>
+    <RootRouteContext.Provider value={{ loader: authLoader, wrapComponent: guardComponentWrapper }}>
+      <AuthContext.Provider
+        value={{
+          authState,
+          login: () => client.login(),
+          logout: () => client.logout(),
+          checkAuthStatus: () => client.checkAuthStatus(),
+          ready: () => client.ready(),
+        }}
+      >
+        {props.children}
+      </AuthContext.Provider>
+    </RootRouteContext.Provider>
   );
 };
 

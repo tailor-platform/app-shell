@@ -8,13 +8,8 @@ vi.mock("@tailor-platform/auth-public-client", () => ({
   createAuthClient: vi.fn(),
 }));
 
-import {
-  AuthProvider,
-  useAuth,
-  useAuthSuspense,
-  buildCleanOAuthCallbackUrl,
-  type EnhancedAuthClient,
-} from "./auth-context";
+import { AuthProvider, useAuth, useAuthSuspense, type EnhancedAuthClient } from "./auth-context";
+import { useRootRouteContext } from "./root-route-context";
 
 afterEach(() => {
   cleanup();
@@ -78,7 +73,7 @@ describe("AuthProvider", () => {
       expect(screen.getByText("Test Content")).toBeDefined();
     });
 
-    it("should show guard component when not ready", () => {
+    it("should always render children even with guardComponent when not ready", () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -92,11 +87,11 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       );
 
-      expect(screen.getByText("Loading...")).toBeDefined();
-      expect(screen.queryByText("Protected Content")).toBeNull();
+      // AuthProvider always renders children; guard rendering is handled by the router
+      expect(screen.getByText("Protected Content")).toBeDefined();
     });
 
-    it("should show guard component when not authenticated", async () => {
+    it("should always render children even with guardComponent when not authenticated", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -110,10 +105,8 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       );
 
-      await waitFor(() => {
-        expect(screen.getByText("Please log in")).toBeDefined();
-      });
-      expect(screen.queryByText("Protected Content")).toBeNull();
+      // AuthProvider always renders children; guard rendering is handled by the router
+      expect(screen.getByText("Protected Content")).toBeDefined();
     });
 
     it("should show children when authenticated", async () => {
@@ -144,11 +137,11 @@ describe("AuthProvider", () => {
   });
 
   describe("authentication flow", () => {
-    it("should check auth status on mount", async () => {
+    it("should check auth status via useRootRouteContext", async () => {
       const state = {
-        isAuthenticated: true,
+        isAuthenticated: false,
         error: null,
-        isReady: true,
+        isReady: false,
       };
       const mockCheckAuthStatus = vi.fn().mockResolvedValue({
         isAuthenticated: true,
@@ -160,58 +153,38 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      render(
-        <AuthProvider client={mockClient}>
-          <div>Content</div>
-        </AuthProvider>,
-      );
-
-      await waitFor(() => {
-        expect(mockCheckAuthStatus).toHaveBeenCalled();
+      const { result } = renderHook(() => useRootRouteContext(), {
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
+
+      expect(result.current).not.toBeNull();
+      const response = await result.current!.loader(new URL("http://localhost/"));
+      expect(mockCheckAuthStatus).toHaveBeenCalled();
+      expect(response).toBeNull();
     });
 
-    it("should handle OAuth callback on mount when code is present", async () => {
+    it("should handle OAuth callback via useRootRouteContext when code is present", async () => {
       const state = {
         isAuthenticated: true,
         error: null,
         isReady: true,
       };
       const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
-      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
-        isAuthenticated: true,
-        error: null,
-        isReady: true,
-      });
 
       const mockClient = createMockAuthClient(state, {
         handleCallback: mockHandleCallback,
-        checkAuthStatus: mockCheckAuthStatus,
       });
 
-      // Mock URL with code parameter
-      vi.stubGlobal("location", {
-        ...window.location,
-        href: "http://localhost/?code=auth-code-123",
-        search: "?code=auth-code-123",
-        pathname: "/",
-        hash: "",
+      const { result } = renderHook(() => useRootRouteContext(), {
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
       });
 
-      const replaceStateSpy = vi.spyOn(window.history, "replaceState");
-
-      render(
-        <AuthProvider client={mockClient}>
-          <div>Content</div>
-        </AuthProvider>,
+      expect(result.current).not.toBeNull();
+      const response = await result.current!.loader(
+        new URL("http://localhost/?code=auth-code-123"),
       );
-
-      await waitFor(() => {
-        expect(mockHandleCallback).toHaveBeenCalled();
-        expect(replaceStateSpy).toHaveBeenCalled();
-      });
-
-      replaceStateSpy.mockRestore();
+      expect(mockHandleCallback).toHaveBeenCalled();
+      expect(response).toBeNull();
     });
 
     it("should be authenticated when logged in", async () => {
@@ -488,26 +461,35 @@ describe("AuthProvider", () => {
   });
 
   describe("autoLogin", () => {
-    it("should automatically login when autoLogin is true and user is not authenticated", async () => {
+    it("should automatically login via useRootRouteContext when autoLogin is true and user is not authenticated", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
-        isReady: true,
+        isReady: false,
       };
       const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      });
       const mockClient = createMockAuthClient(state, {
         login: mockLogin,
+        checkAuthStatus: mockCheckAuthStatus,
       });
 
-      render(
-        <AuthProvider client={mockClient} autoLogin={true}>
-          <div>Content</div>
-        </AuthProvider>,
-      );
-
-      await waitFor(() => {
-        expect(mockLogin).toHaveBeenCalled();
+      const { result } = renderHook(() => useRootRouteContext(), {
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient} autoLogin={true}>
+            {children}
+          </AuthProvider>
+        ),
       });
+
+      expect(result.current).not.toBeNull();
+      await result.current!.loader(new URL("http://localhost/"));
+      expect(mockCheckAuthStatus).toHaveBeenCalled();
+      expect(mockLogin).toHaveBeenCalled();
     });
 
     it("should not login when autoLogin is false", async () => {
@@ -648,59 +630,5 @@ describe("AuthProvider", () => {
       expect(authState.isReady).toBe(true);
       expect(authState.error).toBeNull();
     });
-  });
-});
-
-describe("buildCleanOAuthCallbackUrl", () => {
-  it("removes code parameter", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("removes state parameter", () => {
-    const url = new URL("https://example.com/dashboard?state=xyz789");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("removes both code and state parameters", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123&state=xyz789");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("preserves other query parameters", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123&tab=settings&view=list");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard?tab=settings&view=list");
-  });
-
-  it("preserves hash fragments", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123#section1");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard#section1");
-  });
-
-  it("preserves both query parameters and hash fragments", () => {
-    const url = new URL(
-      "https://example.com/dashboard?code=abc123&state=xyz&tab=settings#section1",
-    );
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard?tab=settings#section1");
-  });
-
-  it("handles URL with no query parameters", () => {
-    const url = new URL("https://example.com/dashboard");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("handles URL with only hash fragment", () => {
-    const url = new URL("https://example.com/dashboard#section1");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard#section1");
-  });
-
-  it("handles nested paths", () => {
-    const url = new URL("https://example.com/app/users/123?code=abc&filter=active");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/app/users/123?filter=active");
-  });
-
-  it("handles root path", () => {
-    const url = new URL("https://example.com/?code=abc123");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/");
   });
 });

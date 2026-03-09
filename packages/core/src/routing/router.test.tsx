@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterContainer } from "./router";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
 import { Link, Outlet, useNavigate } from "react-router";
@@ -13,6 +13,7 @@ import {
 } from "@/resource";
 import type { ReactNode } from "react";
 import type { ContextData } from "@/contexts/appshell-context";
+import { AuthProvider, type EnhancedAuthClient } from "@/contexts/auth-context";
 
 afterEach(() => {
   cleanup();
@@ -24,12 +25,18 @@ const renderWithConfig = ({
   rootComponent,
   initialEntries,
   contextData = {},
+  authClient,
+  autoLogin,
+  guardComponent,
 }: {
   modules?: Array<Module>;
   basePath?: string;
   rootComponent?: () => ReactNode;
   initialEntries: Array<string>;
   contextData?: ContextData;
+  authClient?: EnhancedAuthClient;
+  autoLogin?: boolean;
+  guardComponent?: () => React.ReactNode;
 }) => {
   const configurations = {
     modules,
@@ -41,14 +48,24 @@ const renderWithConfig = ({
 
   setContextData(contextData);
 
-  render(
+  const tree = (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData }}>
         <RouterContainer memory rootComponent={rootComponent} initialEntries={initialEntries}>
           <Outlet />
         </RouterContainer>
       </AppShellDataContext.Provider>
-    </AppShellConfigContext.Provider>,
+    </AppShellConfigContext.Provider>
+  );
+
+  render(
+    authClient ? (
+      <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
+        {tree}
+      </AuthProvider>
+    ) : (
+      tree
+    ),
   );
 };
 
@@ -368,5 +385,460 @@ describe("RouterContainer (memory)", () => {
     });
 
     expect(await screen.findByText("Users Page")).toBeDefined();
+  });
+});
+
+// Mock auth-public-client for integration tests
+vi.mock("@tailor-platform/auth-public-client", () => ({
+  createAuthClient: vi.fn(),
+}));
+
+const createMockAuthClient = (
+  initialState?: {
+    isAuthenticated: boolean;
+    error: string | null;
+    isReady: boolean;
+  },
+  overrides?: Partial<EnhancedAuthClient>,
+): EnhancedAuthClient => {
+  const state = initialState ?? {
+    isAuthenticated: false,
+    error: null,
+    isReady: false,
+  };
+
+  return {
+    getState: vi.fn(() => state),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAuthUrl: vi.fn(),
+    handleCallback: vi.fn(),
+    checkAuthStatus: vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    }),
+    refreshTokens: vi.fn(),
+    ready: vi.fn(() => Promise.resolve()),
+    configure: vi.fn(),
+    addEventListener: vi.fn(() => () => {}),
+    getAuthHeaders: vi.fn(),
+    getAppUri: vi.fn(() => "https://api.test.com"),
+    getAuthHeadersForQuery: vi.fn(),
+    ...overrides,
+  } as EnhancedAuthClient;
+};
+
+describe("RouterContainer with AuthProvider", () => {
+  it("calls checkAuthStatus via loader on initial load", async () => {
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: false, error: null, isReady: false },
+      { checkAuthStatus: mockCheckAuthStatus },
+    );
+
+    renderWithConfig({
+      modules: [
+        defineModule({
+          path: "dashboard",
+          component: () => <div>Dashboard</div>,
+          meta: { title: "Dashboard" },
+          resources: [],
+        }),
+      ],
+      initialEntries: ["/dashboard"],
+      authClient,
+    });
+
+    await screen.findByText("Dashboard");
+    expect(mockCheckAuthStatus).toHaveBeenCalled();
+  });
+
+  it("handles OAuth callback and redirects to clean URL", async () => {
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      {
+        handleCallback: mockHandleCallback,
+        checkAuthStatus: mockCheckAuthStatus,
+      },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/?code=auth-code-123&state=abc"],
+      authClient,
+    });
+
+    await screen.findByText("Home");
+    expect(mockHandleCallback).toHaveBeenCalled();
+  });
+
+  it("calls login automatically when autoLogin is enabled and not authenticated", async () => {
+    const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: false, error: null, isReady: false },
+      {
+        login: mockLogin,
+        checkAuthStatus: mockCheckAuthStatus,
+      },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      autoLogin: true,
+    });
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalled();
+    });
+  });
+
+  it("does not call login when autoLogin is disabled", async () => {
+    const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: false, error: null, isReady: false },
+      {
+        login: mockLogin,
+        checkAuthStatus: mockCheckAuthStatus,
+      },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+    });
+
+    await screen.findByText("Home");
+    expect(mockLogin).not.toHaveBeenCalled();
+  });
+
+  it("shows guard component when not ready", async () => {
+    const authClient = createMockAuthClient({
+      isAuthenticated: false,
+      error: null,
+      isReady: false,
+    });
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Loading...</div>,
+    });
+
+    expect(await screen.findByText("Loading...")).toBeDefined();
+    expect(screen.queryByText("Home")).toBeNull();
+  });
+
+  it("shows guard component when not authenticated", async () => {
+    const authClient = createMockAuthClient({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Please log in</div>,
+    });
+
+    expect(await screen.findByText("Please log in")).toBeDefined();
+    expect(screen.queryByText("Home")).toBeNull();
+  });
+
+  it("shows children when authenticated with guardComponent", async () => {
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      { checkAuthStatus: mockCheckAuthStatus },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Please log in</div>,
+    });
+
+    expect(await screen.findByText("Home")).toBeDefined();
+    expect(screen.queryByText("Please log in")).toBeNull();
+  });
+
+  it("transitions from guard to children when auth state changes", async () => {
+    // Mutable snapshot; initially not ready, not authenticated.
+    // The loader calls checkAuthStatus, but the mock does NOT update the
+    // snapshot during the loader — so the guard is shown on first render.
+    let snapshot = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: false,
+    };
+
+    // Collect listeners so we can trigger state change notifications
+    const listeners: Array<(event: { type: string }) => void> = [];
+
+    // checkAuthStatus resolves without updating snapshot, mimicking a
+    // still-pending auth check from the guard's perspective.
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+
+    const authClient = createMockAuthClient(snapshot, {
+      checkAuthStatus: mockCheckAuthStatus,
+      // Return the same reference until we reassign snapshot (required by useSyncExternalStore)
+      getState: vi.fn(() => snapshot),
+      addEventListener: vi.fn((listener) => {
+        listeners.push(listener);
+        return () => {
+          const idx = listeners.indexOf(listener);
+          if (idx >= 0) listeners.splice(idx, 1);
+        };
+      }),
+    });
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Loading...</div>,
+    });
+
+    // Initially the guard should be shown
+    expect(await screen.findByText("Loading...")).toBeDefined();
+    expect(screen.queryByText("Home")).toBeNull();
+
+    // Simulate auth state becoming ready and authenticated (e.g. token refresh
+    // or login flow completing outside the loader).
+    act(() => {
+      snapshot = {
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      };
+      for (const listener of listeners) {
+        listener({ type: "auth_state_changed" });
+      }
+    });
+
+    // After auth state transitions, children should replace the guard
+    expect(await screen.findByText("Home")).toBeDefined();
+    expect(screen.queryByText("Loading...")).toBeNull();
+  });
+
+  it("allows navigation between routes after authentication", async () => {
+    const authClient = createMockAuthClient({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+
+    const dashboardModule = defineModule({
+      path: "dashboard",
+      component: () => {
+        const navigate = useNavigate();
+        return (
+          <div>
+            <h1>Dashboard</h1>
+            <button type="button" onClick={() => navigate("/settings")}>
+              Go to Settings
+            </button>
+            <Outlet />
+          </div>
+        );
+      },
+      meta: { title: "Dashboard" },
+      resources: [],
+    });
+
+    const settingsModule = defineModule({
+      path: "settings",
+      component: () => <div>Settings Page</div>,
+      meta: { title: "Settings" },
+      resources: [],
+    });
+
+    renderWithConfig({
+      modules: [dashboardModule, settingsModule],
+      initialEntries: ["/dashboard"],
+      authClient,
+      guardComponent: () => <div>Loading...</div>,
+    });
+
+    expect(await screen.findByText("Dashboard")).toBeDefined();
+    expect(screen.queryByText("Loading...")).toBeNull();
+
+    const button = await screen.findByRole("button", {
+      name: "Go to Settings",
+    });
+    fireEvent.click(button);
+
+    expect(await screen.findByText("Settings Page")).toBeDefined();
+  });
+
+  it("renders the correct page after OAuth callback with a specific path", async () => {
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      { handleCallback: mockHandleCallback },
+    );
+
+    renderWithConfig({
+      modules: [
+        defineModule({
+          path: "dashboard",
+          component: () => <div>Dashboard</div>,
+          meta: { title: "Dashboard" },
+          resources: [],
+        }),
+      ],
+      initialEntries: ["/dashboard?code=auth-code-123&state=abc"],
+      authClient,
+    });
+
+    expect(await screen.findByText("Dashboard")).toBeDefined();
+    expect(mockHandleCallback).toHaveBeenCalled();
+  });
+
+  it("applies both auth guard and route-level guards correctly", async () => {
+    let snapshot = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: false,
+    };
+    const listeners: Array<(event: { type: string }) => void> = [];
+
+    const authClient = createMockAuthClient(snapshot, {
+      getState: vi.fn(() => snapshot),
+      addEventListener: vi.fn((listener) => {
+        listeners.push(listener);
+        return () => {
+          const idx = listeners.indexOf(listener);
+          if (idx >= 0) listeners.splice(idx, 1);
+        };
+      }),
+    });
+
+    const publicModule = defineModule({
+      path: "public",
+      component: () => <div>Public Page</div>,
+      meta: { title: "Public" },
+      resources: [],
+    });
+
+    const restrictedModule = defineModule({
+      path: "restricted",
+      component: () => <div>Restricted Page</div>,
+      meta: { title: "Restricted" },
+      guards: [() => redirectTo("/public")],
+      resources: [],
+    });
+
+    renderWithConfig({
+      modules: [publicModule, restrictedModule],
+      initialEntries: ["/restricted"],
+      authClient,
+      guardComponent: () => <div>Auth Loading...</div>,
+    });
+
+    // Auth guard should be shown first (auth not ready)
+    expect(await screen.findByText("Auth Loading...")).toBeDefined();
+    expect(screen.queryByText("Public Page")).toBeNull();
+    expect(screen.queryByText("Restricted Page")).toBeNull();
+
+    // Simulate auth becoming ready and authenticated
+    act(() => {
+      snapshot = {
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      };
+      for (const listener of listeners) {
+        listener({ type: "auth_state_changed" });
+      }
+    });
+
+    // After auth resolves, route-level guard should redirect to /public
+    expect(await screen.findByText("Public Page")).toBeDefined();
+    expect(screen.queryByText("Restricted Page")).toBeNull();
+    expect(screen.queryByText("Auth Loading...")).toBeNull();
+  });
+
+  it("works without AuthProvider (no regression)", async () => {
+    const dashboardModule = defineModule({
+      path: "dashboard",
+      component: () => {
+        const navigate = useNavigate();
+        return (
+          <div>
+            <h1>Dashboard</h1>
+            <button type="button" onClick={() => navigate("/dashboard/settings")}>
+              Go to Settings
+            </button>
+            <Outlet />
+          </div>
+        );
+      },
+      meta: { title: "Dashboard" },
+      resources: [
+        defineResource({
+          path: "settings",
+          component: () => <div>Settings Resource</div>,
+          meta: { title: "Settings" },
+        }),
+      ],
+    });
+
+    // No authClient — AuthProvider is not used
+    renderWithConfig({
+      modules: [dashboardModule],
+      initialEntries: ["/dashboard"],
+    });
+
+    expect(await screen.findByText("Dashboard")).toBeDefined();
+
+    const button = await screen.findByRole("button", {
+      name: "Go to Settings",
+    });
+    fireEvent.click(button);
+
+    expect(await screen.findByText("Settings Resource")).toBeDefined();
   });
 });

@@ -5,12 +5,10 @@ import type { ActionPanelProps, ActionItem } from "./types";
 // SPINNER (loading indicator for icon slot)
 // ============================================================================
 
+const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
+
 const ActionSpinner = () => (
-  <span
-    className="astw:flex astw:size-4 astw:items-center astw:justify-center"
-    aria-hidden
-    data-testid="action-panel-spinner"
-  >
+  <span className={iconSlotClasses} aria-hidden data-testid="action-panel-spinner">
     <svg
       className="astw:size-4 astw:animate-spin"
       viewBox="0 0 16 16"
@@ -35,8 +33,11 @@ const ActionSpinner = () => (
 // ACTION ROW
 // ============================================================================
 
-const actionRowBaseClasses =
-  "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:border astw:border-transparent astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0";
+const actionRowBaseClasses = cn(
+  "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2",
+  "astw:text-sm astw:font-medium astw:transition-colors astw:border astw:border-transparent",
+  "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
+);
 
 const actionRowInteractiveClasses =
   "astw:hover:bg-accent astw:hover:text-accent-foreground astw:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring astw:focus-visible:ring-offset-2";
@@ -49,7 +50,7 @@ function ActionRow({ action }: { action: ActionItem }) {
 
   const content = (
     <>
-      <span className="astw:flex astw:size-4 astw:items-center astw:justify-center" aria-hidden>
+      <span className={iconSlotClasses} aria-hidden>
         {loading ? <ActionSpinner /> : icon}
       </span>
       <span className="astw:min-w-0 astw:truncate">{label}</span>
@@ -91,7 +92,7 @@ function ActionRow({ action }: { action: ActionItem }) {
 }
 
 // ============================================================================
-// MAIN COMPONENT
+// ACTION PANEL
 // ============================================================================
 
 /**
@@ -124,17 +125,14 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
         className,
       )}
     >
-      {/* Header: same horizontal padding as list; title aligns with action row icon (pl-3 matches row px-3) */}
       <div className="astw:px-4 astw:pt-6 astw:pb-4">
-        <h3 className="astw:text-lg astw:font-semibold astw:leading-none astw:pl-3">
-          {title}
-        </h3>
+        <h3 className="astw:text-lg astw:font-semibold astw:leading-none astw:pl-3">{title}</h3>
       </div>
-
-      {/* Action list */}
       <div className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
-          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">No actions available</p>
+          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">
+            No actions available
+          </p>
         ) : (
           <div className="astw:flex astw:flex-col astw:gap-0" role="list">
             {actions.map((action) => (
@@ -148,5 +146,9 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
     </div>
   );
 }
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
 
 export default ActionPanel;

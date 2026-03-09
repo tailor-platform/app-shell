@@ -4,23 +4,34 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Dialog({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
+function DialogRoot({
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({ ...props }: React.ComponentProps<typeof BaseDialog.Trigger>) {
+function DialogTrigger({
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Trigger>) {
   return <BaseDialog.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({ ...props }: React.ComponentProps<typeof BaseDialog.Portal>) {
+function DialogPortal({
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Portal>) {
   return <BaseDialog.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({ ...props }: React.ComponentProps<typeof BaseDialog.Close>) {
+function DialogClose({
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Close>) {
   return <BaseDialog.Close data-slot="dialog-close" {...props} />;
 }
 
-function DialogOverlay({ className, ...props }: React.ComponentProps<typeof BaseDialog.Backdrop>) {
+function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
     <BaseDialog.Backdrop
       data-slot="dialog-overlay"
@@ -85,11 +96,17 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function DialogTitle({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
+function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
     <BaseDialog.Title
       data-slot="dialog-title"
-      className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
+      className={cn(
+        "astw:text-lg astw:leading-none astw:font-semibold",
+        className,
+      )}
       {...props}
     />
   );
@@ -108,15 +125,17 @@ function DialogDescription({
   );
 }
 
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
+const Dialog = {
+  Root: DialogRoot,
+  Trigger: DialogTrigger,
+  Portal: DialogPortal,
+  Close: DialogClose,
+  Overlay: DialogOverlay,
+  Content: DialogContent,
+  Header: DialogHeader,
+  Footer: DialogFooter,
+  Title: DialogTitle,
+  Description: DialogDescription,
 };
+
+export { Dialog };

@@ -1,27 +1,19 @@
 import * as React from "react";
+import { Separator as BaseSeparator } from "@base-ui/react/separator";
 
 import { cn } from "@/lib/utils";
 
-type SeparatorProps = React.ComponentProps<"div"> & {
-  orientation?: "horizontal" | "vertical";
-  decorative?: boolean;
-};
-
 function Separator({
   className,
-  orientation = "horizontal",
-  decorative = true,
   ...props
-}: SeparatorProps) {
+}: React.ComponentProps<typeof BaseSeparator>) {
   return (
-    <div
+    <BaseSeparator
       data-slot="separator-root"
-      role={decorative ? "none" : "separator"}
-      aria-orientation={decorative ? undefined : orientation}
-      data-orientation={orientation}
       className={cn(
         "astw:bg-border astw:shrink-0",
-        orientation === "horizontal" ? "astw:h-px astw:w-full" : "astw:h-full astw:w-px",
+        "astw:data-[orientation=horizontal]:h-px astw:data-[orientation=horizontal]:w-full",
+        "astw:data-[orientation=vertical]:h-full astw:data-[orientation=vertical]:w-px",
         className,
       )}
       {...props}

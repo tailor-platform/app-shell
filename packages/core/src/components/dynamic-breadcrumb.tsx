@@ -1,12 +1,6 @@
 import { useLocation, useMatch } from "react-router";
 import { useAppShellConfig } from "@/contexts/appshell-context";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/breadcrumb";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { processPathSegments } from "@/routing/path";
 import { useT } from "@/i18n-labels";
 
@@ -32,35 +26,37 @@ export const DynamicBreadcrumb = () => {
 
   if (isSettings) {
     return (
-      <Breadcrumb>
-        <BreadcrumbList>
+      <Breadcrumb.Root>
+        <Breadcrumb.List>
           <div className="astw:inline-flex astw:items-center astw:gap-3 astw:last:text-foreground">
-            <BreadcrumbItem>
-              <BreadcrumbLink to={`/${isSettings.params.prefix}/settings`}>
+            <Breadcrumb.Item>
+              <Breadcrumb.Link to={`/${isSettings.params.prefix}/settings`}>
                 {t("settings")}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
+              </Breadcrumb.Link>
+            </Breadcrumb.Item>
           </div>
-        </BreadcrumbList>
-      </Breadcrumb>
+        </Breadcrumb.List>
+      </Breadcrumb.Root>
     );
   }
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
+    <Breadcrumb.Root>
+      <Breadcrumb.List>
         {segments.map((segmentInfo, index) => (
           <div
             className="astw:inline-flex astw:items-center astw:gap-3 astw:last:text-foreground"
             key={index}
           >
-            <BreadcrumbItem>
-              <BreadcrumbLink to={segmentInfo.path}>{segmentInfo.title}</BreadcrumbLink>
-            </BreadcrumbItem>
-            {index < segments.length - 1 && <BreadcrumbSeparator />}
+            <Breadcrumb.Item>
+              <Breadcrumb.Link to={segmentInfo.path}>
+                {segmentInfo.title}
+              </Breadcrumb.Link>
+            </Breadcrumb.Item>
+            {index < segments.length - 1 && <Breadcrumb.Separator />}
           </div>
         ))}
-      </BreadcrumbList>
-    </Breadcrumb>
+      </Breadcrumb.List>
+    </Breadcrumb.Root>
   );
 };

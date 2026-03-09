@@ -1,16 +1,28 @@
 import * as React from "react";
 import { Collapsible as BaseCollapsible } from "@base-ui/react/collapsible";
 
-function Collapsible({ ...props }: React.ComponentProps<typeof BaseCollapsible.Root>) {
+function CollapsibleRoot({
+  ...props
+}: React.ComponentProps<typeof BaseCollapsible.Root>) {
   return <BaseCollapsible.Root data-slot="collapsible" {...props} />;
 }
 
-function CollapsibleTrigger({ ...props }: React.ComponentProps<typeof BaseCollapsible.Trigger>) {
+function CollapsibleTrigger({
+  ...props
+}: React.ComponentProps<typeof BaseCollapsible.Trigger>) {
   return <BaseCollapsible.Trigger data-slot="collapsible-trigger" {...props} />;
 }
 
-function CollapsibleContent({ ...props }: React.ComponentProps<typeof BaseCollapsible.Panel>) {
+function CollapsibleContent({
+  ...props
+}: React.ComponentProps<typeof BaseCollapsible.Panel>) {
   return <BaseCollapsible.Panel data-slot="collapsible-content" {...props} />;
 }
 
-export { Collapsible, CollapsibleTrigger, CollapsibleContent };
+const Collapsible = {
+  Root: CollapsibleRoot,
+  Trigger: CollapsibleTrigger,
+  Content: CollapsibleContent,
+};
+
+export { Collapsible };

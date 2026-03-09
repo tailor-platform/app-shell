@@ -22,7 +22,6 @@ const createMockPage = (
 };
 
 describe("convertPagesToModules", () => {
-
   it("returns empty array for empty pages", () => {
     expect(convertPagesToModules([])).toEqual([]);
   });
@@ -62,7 +61,6 @@ describe("convertPagesToModules", () => {
   });
 
   it("does not inherit guards from parent to children", () => {
-
     const pages = [
       createMockPage("/dashboard", { guards: [parentGuard] }),
       createMockPage("/dashboard/orders", { guards: [childGuard] }),

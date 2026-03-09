@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 function SliderRoot({
   className,
   defaultValue,
+  children,
   ...props
 }: React.ComponentProps<typeof BaseSlider.Root>) {
   return (
@@ -19,11 +20,13 @@ function SliderRoot({
       )}
       {...props}
     >
-      <SliderControl>
-        <SliderTrack>
-          <SliderThumb />
-        </SliderTrack>
-      </SliderControl>
+      {children ?? (
+        <SliderControl>
+          <SliderTrack>
+            <SliderThumb />
+          </SliderTrack>
+        </SliderControl>
+      )}
     </BaseSlider.Root>
   );
 }

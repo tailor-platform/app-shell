@@ -81,7 +81,7 @@ export { Autocomplete } from "./components/autocomplete";
 export { Avatar } from "./components/avatar";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { Breadcrumb } from "./components/breadcrumb";
-export { Button, buttonVariants } from "./components/button";
+export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Checkbox } from "./components/checkbox";
 export { Collapsible } from "./components/collapsible";
 export { Combobox } from "./components/combobox";

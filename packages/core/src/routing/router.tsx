@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
-import { useAuthLoader } from "@/contexts/auth-context";
+import { useAuthLoader, type AuthLoader } from "@/contexts/auth-context";
 
 /**
  * Create a root loader that combines auth callback handling with navigation loading.
@@ -17,10 +17,7 @@ import { useAuthLoader } from "@/contexts/auth-context";
  * When AuthProvider is not used, authLoader is null and the loader only
  * builds navigation items.
  */
-const createRootLoader = (
-  configurations: RootConfiguration,
-  authLoader: ((requestUrl: URL) => Promise<Response | null>) | null,
-) => {
+const createRootLoader = (configurations: RootConfiguration, authLoader: AuthLoader | null) => {
   const { loaderID, loader: navLoader } = createNavItemsLoader({
     modules: configurations.modules,
     locale: configurations.locale,

@@ -48,12 +48,12 @@ Collapsible content sections.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Accordion.Root` | Container for all accordion items |
-| `Accordion.Item` | Individual collapsible section |
+| Part                | Description                                             |
+| ------------------- | ------------------------------------------------------- |
+| `Accordion.Root`    | Container for all accordion items                       |
+| `Accordion.Item`    | Individual collapsible section                          |
 | `Accordion.Trigger` | Button that toggles the section (includes chevron icon) |
-| `Accordion.Content` | Collapsible panel content |
+| `Accordion.Content` | Collapsible panel content                               |
 
 ### Example
 
@@ -69,7 +69,7 @@ import { Accordion } from "@tailor-platform/app-shell";
     <Accordion.Trigger>Section 2</Accordion.Trigger>
     <Accordion.Content>Content for section 2</Accordion.Content>
   </Accordion.Item>
-</Accordion.Root>
+</Accordion.Root>;
 ```
 
 ---
@@ -80,17 +80,17 @@ Modal dialog requiring user confirmation.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `AlertDialog.Root` | Root provider |
-| `AlertDialog.Trigger` | Button that opens the dialog |
-| `AlertDialog.Content` | Dialog content (includes overlay and portal) |
-| `AlertDialog.Header` | Header container |
-| `AlertDialog.Footer` | Footer container (action buttons) |
-| `AlertDialog.Title` | Dialog title |
-| `AlertDialog.Description` | Dialog description text |
-| `AlertDialog.Action` | Confirm action button |
-| `AlertDialog.Cancel` | Cancel button (closes dialog) |
+| Part                      | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| `AlertDialog.Root`        | Root provider                                |
+| `AlertDialog.Trigger`     | Button that opens the dialog                 |
+| `AlertDialog.Content`     | Dialog content (includes overlay and portal) |
+| `AlertDialog.Header`      | Header container                             |
+| `AlertDialog.Footer`      | Footer container (action buttons)            |
+| `AlertDialog.Title`       | Dialog title                                 |
+| `AlertDialog.Description` | Dialog description text                      |
+| `AlertDialog.Action`      | Confirm action button                        |
+| `AlertDialog.Cancel`      | Cancel button (closes dialog)                |
 
 ### Example
 
@@ -102,16 +102,14 @@ import { AlertDialog } from "@tailor-platform/app-shell";
   <AlertDialog.Content>
     <AlertDialog.Header>
       <AlertDialog.Title>Are you sure?</AlertDialog.Title>
-      <AlertDialog.Description>
-        This action cannot be undone.
-      </AlertDialog.Description>
+      <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action onClick={handleDelete}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
-</AlertDialog.Root>
+</AlertDialog.Root>;
 ```
 
 ---
@@ -122,43 +120,43 @@ Text input with suggestion dropdown.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Autocomplete.Root` | Root provider (accepts `items`, `value`, `onValueChange`, `filter`) |
+| Part                      | Description                                                             |
+| ------------------------- | ----------------------------------------------------------------------- |
+| `Autocomplete.Root`       | Root provider (accepts `items`, `value`, `onValueChange`, `filter`)     |
 | `Autocomplete.InputGroup` | Container for input + trigger + clear (renders defaults if no children) |
-| `Autocomplete.Input` | Text input |
-| `Autocomplete.Trigger` | Dropdown toggle button |
-| `Autocomplete.Clear` | Clear button |
-| `Autocomplete.Content` | Dropdown popup (includes portal and positioner) |
-| `Autocomplete.List` | Scrollable item list |
-| `Autocomplete.Item` | Individual option |
-| `Autocomplete.Empty` | Shown when no items match |
-| `Autocomplete.Group` | Groups related items |
-| `Autocomplete.GroupLabel` | Label for a group |
-| `Autocomplete.Value` | Renders the selected value |
-| `Autocomplete.Collection` | Server-side collection renderer |
-| `Autocomplete.Status` | Screen-reader status (sr-only) |
+| `Autocomplete.Input`      | Text input                                                              |
+| `Autocomplete.Trigger`    | Dropdown toggle button                                                  |
+| `Autocomplete.Clear`      | Clear button                                                            |
+| `Autocomplete.Content`    | Dropdown popup (includes portal and positioner)                         |
+| `Autocomplete.List`       | Scrollable item list                                                    |
+| `Autocomplete.Item`       | Individual option                                                       |
+| `Autocomplete.Empty`      | Shown when no items match                                               |
+| `Autocomplete.Group`      | Groups related items                                                    |
+| `Autocomplete.GroupLabel` | Label for a group                                                       |
+| `Autocomplete.Value`      | Renders the selected value                                              |
+| `Autocomplete.Collection` | Server-side collection renderer                                         |
+| `Autocomplete.Status`     | Screen-reader status (sr-only)                                          |
 
 ### Root Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `items` | `Value[]` | — | Items to display in the list |
-| `value` | `string` | — | Controlled input value |
-| `defaultValue` | `string` | — | Initial uncontrolled input value |
-| `onValueChange` | `(value: string, details) => void` | — | Called when input value changes |
-| `filter` | `FilterFunction \| null` | built-in | Client-side filter. Pass `null` to disable (e.g. for async sources) |
-| `mode` | `"list" \| "both" \| "inline" \| "none"` | `"list"` | Controls filtering and inline autocompletion behavior |
-| `autoHighlight` | `boolean \| "always"` | `false` | Auto-highlight first matching item |
-| `openOnInputClick` | `boolean` | `false` | Open popup when clicking the input |
-| `itemToStringValue` | `(value: Value) => string` | — | Convert object values to string for display and form submission |
+| Prop                | Type                                     | Default  | Description                                                         |
+| ------------------- | ---------------------------------------- | -------- | ------------------------------------------------------------------- |
+| `items`             | `Value[]`                                | —        | Items to display in the list                                        |
+| `value`             | `string`                                 | —        | Controlled input value                                              |
+| `defaultValue`      | `string`                                 | —        | Initial uncontrolled input value                                    |
+| `onValueChange`     | `(value: string, details) => void`       | —        | Called when input value changes                                     |
+| `filter`            | `FilterFunction \| null`                 | built-in | Client-side filter. Pass `null` to disable (e.g. for async sources) |
+| `mode`              | `"list" \| "both" \| "inline" \| "none"` | `"list"` | Controls filtering and inline autocompletion behavior               |
+| `autoHighlight`     | `boolean \| "always"`                    | `false`  | Auto-highlight first matching item                                  |
+| `openOnInputClick`  | `boolean`                                | `false`  | Open popup when clicking the input                                  |
+| `itemToStringValue` | `(value: Value) => string`               | —        | Convert object values to string for display and form submission     |
 
 ### Hooks
 
-| Hook | Description |
-|------|-------------|
-| `Autocomplete.useFilter` | Client-side filtering hook (from Base UI) |
-| `Autocomplete.useAsync` | Async fetching with debounce and abort support |
+| Hook                     | Description                                    |
+| ------------------------ | ---------------------------------------------- |
+| `Autocomplete.useFilter` | Client-side filtering hook (from Base UI)      |
+| `Autocomplete.useAsync`  | Async fetching with debounce and abort support |
 
 ### Example
 
@@ -170,12 +168,10 @@ const fruits = ["Apple", "Banana", "Cherry", "Date"];
 <Autocomplete.Root items={fruits}>
   <Autocomplete.InputGroup />
   <Autocomplete.Content>
-    <Autocomplete.List>
-      {(item) => <Autocomplete.Item>{item}</Autocomplete.Item>}
-    </Autocomplete.List>
+    <Autocomplete.List>{(item) => <Autocomplete.Item>{item}</Autocomplete.Item>}</Autocomplete.List>
     <Autocomplete.Empty>No results found.</Autocomplete.Empty>
   </Autocomplete.Content>
-</Autocomplete.Root>
+</Autocomplete.Root>;
 ```
 
 ### Async Example
@@ -201,11 +197,9 @@ const movies = Autocomplete.useAsync({
     <Autocomplete.List>
       {(item) => <Autocomplete.Item>{item.title}</Autocomplete.Item>}
     </Autocomplete.List>
-    <Autocomplete.Empty>
-      {movies.loading ? "Loading..." : "No results."}
-    </Autocomplete.Empty>
+    <Autocomplete.Empty>{movies.loading ? "Loading..." : "No results."}</Autocomplete.Empty>
   </Autocomplete.Content>
-</Autocomplete.Root>
+</Autocomplete.Root>;
 ```
 
 ---
@@ -216,11 +210,11 @@ User avatar with image and fallback.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Avatar.Root` | Circular container (default: 32×32px) |
-| `Avatar.Image` | Avatar image |
-| `Avatar.Fallback` | Shown when image fails to load |
+| Part              | Description                           |
+| ----------------- | ------------------------------------- |
+| `Avatar.Root`     | Circular container (default: 32×32px) |
+| `Avatar.Image`    | Avatar image                          |
+| `Avatar.Fallback` | Shown when image fails to load        |
 
 ### Example
 
@@ -230,7 +224,7 @@ import { Avatar } from "@tailor-platform/app-shell";
 <Avatar.Root>
   <Avatar.Image src="/avatar.jpg" alt="User" />
   <Avatar.Fallback>JD</Avatar.Fallback>
-</Avatar.Root>
+</Avatar.Root>;
 ```
 
 ---
@@ -241,11 +235,11 @@ Status badge component with semantic variants.
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `BadgeVariant` | `"default"` | Badge style variant |
-| `children` | `React.ReactNode` | — | Badge content |
-| `className` | `string` | — | Additional CSS classes |
+| Prop        | Type              | Default     | Description            |
+| ----------- | ----------------- | ----------- | ---------------------- |
+| `variant`   | `BadgeVariant`    | `"default"` | Badge style variant    |
+| `children`  | `React.ReactNode` | —           | Badge content          |
+| `className` | `string`          | —           | Additional CSS classes |
 
 **Variants:** `default`, `success`, `warning`, `error`, `neutral`, `outline-success`, `outline-warning`, `outline-error`, `outline-info`, `outline-neutral`
 
@@ -266,15 +260,15 @@ Navigation breadcrumb trail.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Breadcrumb.Root` | Nav container (`<nav>`) |
-| `Breadcrumb.List` | Ordered list |
-| `Breadcrumb.Item` | Individual breadcrumb item |
-| `Breadcrumb.Link` | Clickable link (uses react-router `Link`) |
-| `Breadcrumb.Page` | Current page (non-clickable) |
+| Part                   | Description                                |
+| ---------------------- | ------------------------------------------ |
+| `Breadcrumb.Root`      | Nav container (`<nav>`)                    |
+| `Breadcrumb.List`      | Ordered list                               |
+| `Breadcrumb.Item`      | Individual breadcrumb item                 |
+| `Breadcrumb.Link`      | Clickable link (uses react-router `Link`)  |
+| `Breadcrumb.Page`      | Current page (non-clickable)               |
 | `Breadcrumb.Separator` | Separator between items (default: chevron) |
-| `Breadcrumb.Ellipsis` | Ellipsis for collapsed items |
+| `Breadcrumb.Ellipsis`  | Ellipsis for collapsed items               |
 
 ### Example
 
@@ -295,7 +289,7 @@ import { Breadcrumb } from "@tailor-platform/app-shell";
       <Breadcrumb.Page>Current Page</Breadcrumb.Page>
     </Breadcrumb.Item>
   </Breadcrumb.List>
-</Breadcrumb.Root>
+</Breadcrumb.Root>;
 ```
 
 ---
@@ -306,11 +300,11 @@ Button component with multiple variants and sizes. Supports polymorphic renderin
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"default" \| "destructive" \| "outline" \| "secondary" \| "ghost" \| "link"` | `"default"` | Visual style |
-| `size` | `"default" \| "sm" \| "lg" \| "icon"` | `"default"` | Button size |
-| `render` | `React.ReactElement` | — | Render as a different element (e.g., `<Link>`) |
+| Prop      | Type                                                                          | Default     | Description                                    |
+| --------- | ----------------------------------------------------------------------------- | ----------- | ---------------------------------------------- |
+| `variant` | `"default" \| "destructive" \| "outline" \| "secondary" \| "ghost" \| "link"` | `"default"` | Visual style                                   |
+| `size`    | `"default" \| "sm" \| "lg" \| "icon"`                                         | `"default"` | Button size                                    |
+| `render`  | `React.ReactElement`                                                          | —           | Render as a different element (e.g., `<Link>`) |
 
 ### Example
 
@@ -332,24 +326,32 @@ Checkbox input with indeterminate state support.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Checkbox.Root` | Single checkbox (includes check/minus indicator) |
-| `Checkbox.Group` | Groups related checkboxes |
+| Part             | Description                                      |
+| ---------------- | ------------------------------------------------ |
+| `Checkbox.Root`  | Single checkbox (includes check/minus indicator) |
+| `Checkbox.Group` | Groups related checkboxes                        |
 
 ### Example
 
 ```tsx
 import { Checkbox } from "@tailor-platform/app-shell";
 
-{/* Single checkbox */}
-<Checkbox.Root />
+{
+  /* Single checkbox */
+}
+<Checkbox.Root />;
 
-{/* Group of checkboxes */}
+{
+  /* Group of checkboxes */
+}
 <Checkbox.Group>
-  <label><Checkbox.Root /> Option A</label>
-  <label><Checkbox.Root /> Option B</label>
-</Checkbox.Group>
+  <label>
+    <Checkbox.Root /> Option A
+  </label>
+  <label>
+    <Checkbox.Root /> Option B
+  </label>
+</Checkbox.Group>;
 ```
 
 ---
@@ -360,10 +362,10 @@ Expandable/collapsible content section.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Collapsible.Root` | Root provider |
-| `Collapsible.Trigger` | Toggle button |
+| Part                  | Description       |
+| --------------------- | ----------------- |
+| `Collapsible.Root`    | Root provider     |
+| `Collapsible.Trigger` | Toggle button     |
 | `Collapsible.Content` | Collapsible panel |
 
 ### Example
@@ -373,10 +375,8 @@ import { Collapsible } from "@tailor-platform/app-shell";
 
 <Collapsible.Root>
   <Collapsible.Trigger>Toggle</Collapsible.Trigger>
-  <Collapsible.Content>
-    Collapsible content here.
-  </Collapsible.Content>
-</Collapsible.Root>
+  <Collapsible.Content>Collapsible content here.</Collapsible.Content>
+</Collapsible.Root>;
 ```
 
 ---
@@ -387,50 +387,50 @@ Searchable select input with keyboard navigation. Supports single/multi-select, 
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Combobox.Root` | Root provider (accepts `items`, `value`, `onValueChange`, `filter`) |
+| Part                  | Description                                                             |
+| --------------------- | ----------------------------------------------------------------------- |
+| `Combobox.Root`       | Root provider (accepts `items`, `value`, `onValueChange`, `filter`)     |
 | `Combobox.InputGroup` | Container for input + trigger + clear (renders defaults if no children) |
-| `Combobox.Input` | Text input |
-| `Combobox.Trigger` | Dropdown toggle button |
-| `Combobox.Clear` | Clear button |
-| `Combobox.Content` | Dropdown popup (includes portal and positioner) |
-| `Combobox.List` | Scrollable item list |
-| `Combobox.Item` | Individual option (includes check indicator) |
-| `Combobox.Empty` | Shown when no items match |
-| `Combobox.Group` | Groups related items |
-| `Combobox.GroupLabel` | Label for a group |
-| `Combobox.Chips` | Multi-select chip container |
-| `Combobox.Chip` | Individual chip |
-| `Combobox.ChipRemove` | Remove button on a chip |
-| `Combobox.Value` | Renders selected value text |
-| `Combobox.Collection` | Server-side collection |
-| `Combobox.Status` | Screen-reader status (sr-only) |
+| `Combobox.Input`      | Text input                                                              |
+| `Combobox.Trigger`    | Dropdown toggle button                                                  |
+| `Combobox.Clear`      | Clear button                                                            |
+| `Combobox.Content`    | Dropdown popup (includes portal and positioner)                         |
+| `Combobox.List`       | Scrollable item list                                                    |
+| `Combobox.Item`       | Individual option (includes check indicator)                            |
+| `Combobox.Empty`      | Shown when no items match                                               |
+| `Combobox.Group`      | Groups related items                                                    |
+| `Combobox.GroupLabel` | Label for a group                                                       |
+| `Combobox.Chips`      | Multi-select chip container                                             |
+| `Combobox.Chip`       | Individual chip                                                         |
+| `Combobox.ChipRemove` | Remove button on a chip                                                 |
+| `Combobox.Value`      | Renders selected value text                                             |
+| `Combobox.Collection` | Server-side collection                                                  |
+| `Combobox.Status`     | Screen-reader status (sr-only)                                          |
 
 ### Root Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `items` | `Value[]` | — | Items to display |
-| `multiple` | `boolean` | `false` | Enable multi-select mode (`value` becomes `Value[]`) |
-| `value` | `Value \| Value[] \| null` | — | Controlled selected value (array when `multiple`) |
-| `defaultValue` | `Value \| Value[] \| null` | — | Initial uncontrolled value |
-| `onValueChange` | `(value, details) => void` | — | Called when selection changes |
-| `inputValue` | `string` | — | Controlled input text |
-| `onInputValueChange` | `(value: string, details) => void` | — | Called when input text changes |
-| `filter` | `FilterFunction \| null` | built-in | Client-side filter. Pass `null` for async/server-filtered data |
-| `itemToStringLabel` | `(value: Value) => string` | — | Convert object values to display string in input |
-| `itemToStringValue` | `(value: Value) => string` | — | Convert object values for form submission |
-| `isItemEqualToValue` | `(a: Value, b: Value) => boolean` | `Object.is` | Custom equality check for object values |
-| `autoHighlight` | `boolean` | `false` | Auto-highlight first match while filtering |
+| Prop                 | Type                               | Default     | Description                                                    |
+| -------------------- | ---------------------------------- | ----------- | -------------------------------------------------------------- |
+| `items`              | `Value[]`                          | —           | Items to display                                               |
+| `multiple`           | `boolean`                          | `false`     | Enable multi-select mode (`value` becomes `Value[]`)           |
+| `value`              | `Value \| Value[] \| null`         | —           | Controlled selected value (array when `multiple`)              |
+| `defaultValue`       | `Value \| Value[] \| null`         | —           | Initial uncontrolled value                                     |
+| `onValueChange`      | `(value, details) => void`         | —           | Called when selection changes                                  |
+| `inputValue`         | `string`                           | —           | Controlled input text                                          |
+| `onInputValueChange` | `(value: string, details) => void` | —           | Called when input text changes                                 |
+| `filter`             | `FilterFunction \| null`           | built-in    | Client-side filter. Pass `null` for async/server-filtered data |
+| `itemToStringLabel`  | `(value: Value) => string`         | —           | Convert object values to display string in input               |
+| `itemToStringValue`  | `(value: Value) => string`         | —           | Convert object values for form submission                      |
+| `isItemEqualToValue` | `(a: Value, b: Value) => boolean`  | `Object.is` | Custom equality check for object values                        |
+| `autoHighlight`      | `boolean`                          | `false`     | Auto-highlight first match while filtering                     |
 
 ### Hooks
 
-| Hook | Description |
-|------|-------------|
-| `Combobox.useFilter` | Client-side filtering hook (from Base UI) |
+| Hook                    | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| `Combobox.useFilter`    | Client-side filtering hook (from Base UI)          |
 | `Combobox.useCreatable` | Enables on-the-fly item creation from the dropdown |
-| `Combobox.useAsync` | Async fetching with debounce and abort support |
+| `Combobox.useAsync`     | Async fetching with debounce and abort support     |
 
 ### Example
 
@@ -446,13 +446,11 @@ const fruits = [
   <Combobox.InputGroup />
   <Combobox.Content>
     <Combobox.List>
-      {(item) => (
-        <Combobox.Item key={item.value}>{item.label}</Combobox.Item>
-      )}
+      {(item) => <Combobox.Item key={item.value}>{item.label}</Combobox.Item>}
     </Combobox.List>
     <Combobox.Empty>No results found.</Combobox.Empty>
   </Combobox.Content>
-</Combobox.Root>
+</Combobox.Root>;
 ```
 
 ### Multi-Select Example
@@ -478,13 +476,11 @@ const fruits = [
   </Combobox.Chips>
   <Combobox.Content>
     <Combobox.List>
-      {(item) => (
-        <Combobox.Item key={item.value}>{item.label}</Combobox.Item>
-      )}
+      {(item) => <Combobox.Item key={item.value}>{item.label}</Combobox.Item>}
     </Combobox.List>
     <Combobox.Empty>No results found.</Combobox.Empty>
   </Combobox.Content>
-</Combobox.Root>
+</Combobox.Root>;
 ```
 
 ### Creatable Example
@@ -520,21 +516,21 @@ const creatable = Combobox.useCreatable({
     </Combobox.List>
     <Combobox.Empty>No results found.</Combobox.Empty>
   </Combobox.Content>
-</Combobox.Root>
+</Combobox.Root>;
 ```
 
 #### `useCreatable` Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `items` | `T[]` | Current items list |
-| `getLabel` | `(item: T) => string` | Extract display label from an item |
-| `createItem` | `(value: string) => T` | Factory to create a new item from user input |
-| `multiple` | `boolean` | Enable multi-select mode (default: `false`) |
-| `defaultValue` | `T \| T[] \| null` | Initial selected value |
-| `onValueChange` | `(value) => void` | Called when selection changes |
-| `onItemCreated` | `(item, resolve?) => void \| Promise` | Called when a new item is created (see patterns below) |
-| `formatCreateLabel` | `(value: string) => string` | Customize the "Create X" label (default: `` `Create "${value}"` ``) |
+| Option              | Type                                  | Description                                                         |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------- |
+| `items`             | `T[]`                                 | Current items list                                                  |
+| `getLabel`          | `(item: T) => string`                 | Extract display label from an item                                  |
+| `createItem`        | `(value: string) => T`                | Factory to create a new item from user input                        |
+| `multiple`          | `boolean`                             | Enable multi-select mode (default: `false`)                         |
+| `defaultValue`      | `T \| T[] \| null`                    | Initial selected value                                              |
+| `onValueChange`     | `(value) => void`                     | Called when selection changes                                       |
+| `onItemCreated`     | `(item, resolve?) => void \| Promise` | Called when a new item is created (see patterns below)              |
+| `formatCreateLabel` | `(value: string) => string`           | Customize the "Create X" label (default: `` `Create "${value}"` ``) |
 
 #### `onItemCreated` Patterns
 
@@ -543,22 +539,25 @@ const creatable = Combobox.useCreatable({
 onItemCreated: (item, resolve) => {
   setItems((prev) => [...prev, item]);
   resolve();
-}
+};
 
 // Async — return a Promise
 onItemCreated: async (item) => {
   await api.create(item);
   setItems((prev) => [...prev, item]);
   // auto-accept on fulfillment, auto-cancel on rejection
-}
+};
 
 // Deferred — resolve later (e.g. confirmation dialog)
 onItemCreated: (item, resolve) => {
   showDialog({
-    onConfirm: () => { setItems(p => [...p, item]); resolve(); },
+    onConfirm: () => {
+      setItems((p) => [...p, item]);
+      resolve();
+    },
     onCancel: () => resolve(false),
   });
-}
+};
 ```
 
 ### Creatable Multi-Select Example
@@ -603,7 +602,7 @@ const creatable = Combobox.useCreatable({
       )}
     </Combobox.List>
   </Combobox.Content>
-</Combobox.Root>
+</Combobox.Root>;
 ```
 
 ### Async Example
@@ -624,10 +623,8 @@ const countries = Combobox.useAsync({
   onInputValueChange={countries.onInputValueChange}
 >
   {/* ... */}
-  <Combobox.Empty>
-    {countries.loading ? "Loading..." : "No results."}
-  </Combobox.Empty>
-</Combobox.Root>
+  <Combobox.Empty>{countries.loading ? "Loading..." : "No results."}</Combobox.Empty>
+</Combobox.Root>;
 ```
 
 ---
@@ -638,14 +635,14 @@ Card component for displaying structured key-value information, commonly used in
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `data` | `Record<string, unknown>` | Yes | Raw data object containing field values |
-| `title` | `string` | Yes | Card title displayed in header |
-| `fields` | `FieldConfig[]` | Yes | Array of field configurations and dividers |
-| `columns` | `3 \| 4` | No | Number of columns on desktop (defaults to 3) |
-| `className` | `string` | No | Additional CSS classes |
-| `headerAction` | `React.ReactNode` | No | Action button/component in card header |
+| Prop           | Type                      | Required | Description                                  |
+| -------------- | ------------------------- | -------- | -------------------------------------------- |
+| `data`         | `Record<string, unknown>` | Yes      | Raw data object containing field values      |
+| `title`        | `string`                  | Yes      | Card title displayed in header               |
+| `fields`       | `FieldConfig[]`           | Yes      | Array of field configurations and dividers   |
+| `columns`      | `3 \| 4`                  | No       | Number of columns on desktop (defaults to 3) |
+| `className`    | `string`                  | No       | Additional CSS classes                       |
+| `headerAction` | `React.ReactNode`         | No       | Action button/component in card header       |
 
 **Field Types:** `text`, `badge`, `money`, `date`, `link`, `address`, `reference`
 
@@ -689,7 +686,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
       },
     },
   ]}
-/>
+/>;
 ```
 
 ---
@@ -700,18 +697,18 @@ Modal dialog with overlay.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Dialog.Root` | Root provider |
-| `Dialog.Trigger` | Open trigger |
-| `Dialog.Portal` | Portal container |
-| `Dialog.Close` | Close button |
-| `Dialog.Overlay` | Background overlay |
-| `Dialog.Content` | Dialog content (includes overlay, portal, and close button) |
-| `Dialog.Header` | Header container |
-| `Dialog.Footer` | Footer container |
-| `Dialog.Title` | Dialog title |
-| `Dialog.Description` | Dialog description |
+| Part                 | Description                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| `Dialog.Root`        | Root provider                                               |
+| `Dialog.Trigger`     | Open trigger                                                |
+| `Dialog.Portal`      | Portal container                                            |
+| `Dialog.Close`       | Close button                                                |
+| `Dialog.Overlay`     | Background overlay                                          |
+| `Dialog.Content`     | Dialog content (includes overlay, portal, and close button) |
+| `Dialog.Header`      | Header container                                            |
+| `Dialog.Footer`      | Footer container                                            |
+| `Dialog.Title`       | Dialog title                                                |
+| `Dialog.Description` | Dialog description                                          |
 
 ### Example
 
@@ -725,9 +722,7 @@ import { Dialog, Button } from "@tailor-platform/app-shell";
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title>Edit Profile</Dialog.Title>
-      <Dialog.Description>
-        Make changes to your profile here.
-      </Dialog.Description>
+      <Dialog.Description>Make changes to your profile here.</Dialog.Description>
     </Dialog.Header>
     {/* form content */}
     <Dialog.Footer>
@@ -735,7 +730,7 @@ import { Dialog, Button } from "@tailor-platform/app-shell";
       <Button>Save</Button>
     </Dialog.Footer>
   </Dialog.Content>
-</Dialog.Root>
+</Dialog.Root>;
 ```
 
 ---
@@ -746,13 +741,13 @@ Form field with label, description, and error message.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Field.Root` | Container with flex-col layout |
-| `Field.Label` | Label text |
-| `Field.Control` | Wraps the input control |
-| `Field.Error` | Validation error message |
-| `Field.Description` | Help text |
+| Part                | Description                    |
+| ------------------- | ------------------------------ |
+| `Field.Root`        | Container with flex-col layout |
+| `Field.Label`       | Label text                     |
+| `Field.Control`     | Wraps the input control        |
+| `Field.Error`       | Validation error message       |
+| `Field.Description` | Help text                      |
 
 ### Example
 
@@ -764,7 +759,7 @@ import { Field, Input } from "@tailor-platform/app-shell";
   <Field.Control render={<Input type="email" />} />
   <Field.Description>We'll never share your email.</Field.Description>
   <Field.Error>Please enter a valid email.</Field.Error>
-</Field.Root>
+</Field.Root>;
 ```
 
 ---
@@ -775,10 +770,10 @@ Groups related form fields with a legend.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Fieldset.Root` | Fieldset container |
-| `Fieldset.Legend` | Legend text |
+| Part              | Description        |
+| ----------------- | ------------------ |
+| `Fieldset.Root`   | Fieldset container |
+| `Fieldset.Legend` | Legend text        |
 
 ### Example
 
@@ -795,7 +790,7 @@ import { Fieldset, Field, Input } from "@tailor-platform/app-shell";
     <Field.Label>City</Field.Label>
     <Field.Control render={<Input />} />
   </Field.Root>
-</Fieldset.Root>
+</Fieldset.Root>;
 ```
 
 ---
@@ -815,7 +810,7 @@ import { Form, Field, Input, Button } from "@tailor-platform/app-shell";
     <Field.Control render={<Input />} />
   </Field.Root>
   <Button type="submit">Submit</Button>
-</Form>
+</Form>;
 ```
 
 ---
@@ -849,7 +844,7 @@ Standalone label component.
 ```tsx
 import { Label } from "@tailor-platform/app-shell";
 
-<Label>Username</Label>
+<Label>Username</Label>;
 ```
 
 ---
@@ -860,13 +855,13 @@ Responsive column layout component. Responds to container width (not viewport). 
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `columns` | `1 \| 2 \| 3` | — | Number of columns |
-| `title` | `string` | — | Optional header title |
-| `actions` | `React.ReactNode[]` | — | Action buttons in header |
-| `gap` | `4 \| 6 \| 8` | `4` | Gap between columns (Tailwind units) |
-| `className` | `string` | — | Additional CSS classes |
+| Prop        | Type                | Default | Description                          |
+| ----------- | ------------------- | ------- | ------------------------------------ |
+| `columns`   | `1 \| 2 \| 3`       | —       | Number of columns                    |
+| `title`     | `string`            | —       | Optional header title                |
+| `actions`   | `React.ReactNode[]` | —       | Action buttons in header             |
+| `gap`       | `4 \| 6 \| 8`       | `4`     | Gap between columns (Tailwind units) |
+| `className` | `string`            | —       | Additional CSS classes               |
 
 ### Example
 
@@ -876,7 +871,7 @@ import { Layout } from "@tailor-platform/app-shell";
 <Layout columns={2} title="Edit Product" actions={[<Button key="save">Save</Button>]}>
   <Layout.Column>Main content</Layout.Column>
   <Layout.Column>Side panel</Layout.Column>
-</Layout>
+</Layout>;
 ```
 
 ---
@@ -887,18 +882,18 @@ Meter/gauge indicator.
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
+| Prop    | Type     | Description   |
+| ------- | -------- | ------------- |
 | `value` | `number` | Current value |
-| `min` | `number` | Minimum value |
-| `max` | `number` | Maximum value |
+| `min`   | `number` | Minimum value |
+| `max`   | `number` | Maximum value |
 
 ### Example
 
 ```tsx
 import { Meter } from "@tailor-platform/app-shell";
 
-<Meter value={75} min={0} max={100} />
+<Meter value={75} min={0} max={100} />;
 ```
 
 ---
@@ -909,13 +904,13 @@ Numeric input with increment/decrement buttons.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `NumberField.Root` | Root provider (accepts `value`, `onValueChange`, `min`, `max`, `step`, etc.) |
-| `NumberField.Input` | Numeric input |
-| `NumberField.Group` | Container for input + buttons |
-| `NumberField.Increment` | Increment button (includes chevron icon) |
-| `NumberField.Decrement` | Decrement button (includes chevron icon) |
+| Part                    | Description                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `NumberField.Root`      | Root provider (accepts `value`, `onValueChange`, `min`, `max`, `step`, etc.) |
+| `NumberField.Input`     | Numeric input                                                                |
+| `NumberField.Group`     | Container for input + buttons                                                |
+| `NumberField.Increment` | Increment button (includes chevron icon)                                     |
+| `NumberField.Decrement` | Decrement button (includes chevron icon)                                     |
 
 ### Example
 
@@ -928,7 +923,7 @@ import { NumberField } from "@tailor-platform/app-shell";
     <NumberField.Increment />
     <NumberField.Decrement />
   </NumberField.Group>
-</NumberField.Root>
+</NumberField.Root>;
 ```
 
 ---
@@ -939,19 +934,19 @@ Floating content anchored to a trigger.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Popover.Root` | Root provider |
-| `Popover.Trigger` | Trigger element |
+| Part              | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| `Popover.Root`    | Root provider                                     |
+| `Popover.Trigger` | Trigger element                                   |
 | `Popover.Content` | Floating content (includes portal and positioner) |
-| `Popover.Close` | Close button |
-| `Popover.Arrow` | Arrow pointing to trigger |
+| `Popover.Close`   | Close button                                      |
+| `Popover.Arrow`   | Arrow pointing to trigger                         |
 
 ### Props (`Popover.Content`)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `sideOffset` | `number` | `4` | Distance from trigger |
+| Prop         | Type     | Default | Description           |
+| ------------ | -------- | ------- | --------------------- |
+| `sideOffset` | `number` | `4`     | Distance from trigger |
 
 ### Example
 
@@ -965,7 +960,7 @@ import { Popover, Button } from "@tailor-platform/app-shell";
   <Popover.Content>
     <p>Popover content here.</p>
   </Popover.Content>
-</Popover.Root>
+</Popover.Root>;
 ```
 
 ---
@@ -976,20 +971,20 @@ Hover card that shows a preview.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `PreviewCard.Root` | Root provider |
-| `PreviewCard.Trigger` | Hover trigger |
-| `PreviewCard.Content` | Preview content popup |
-| `PreviewCard.Arrow` | Arrow pointing to trigger |
+| Part                  | Description               |
+| --------------------- | ------------------------- |
+| `PreviewCard.Root`    | Root provider             |
+| `PreviewCard.Trigger` | Hover trigger             |
+| `PreviewCard.Content` | Preview content popup     |
+| `PreviewCard.Arrow`   | Arrow pointing to trigger |
 
 ### Props (`PreviewCard.Content`)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `sideOffset` | `number` | `4` | Distance from trigger |
-| `side` | `"top" \| "right" \| "bottom" \| "left"` | `"bottom"` | Preferred side |
-| `align` | `"start" \| "center" \| "end"` | `"center"` | Alignment |
+| Prop         | Type                                     | Default    | Description           |
+| ------------ | ---------------------------------------- | ---------- | --------------------- |
+| `sideOffset` | `number`                                 | `4`        | Distance from trigger |
+| `side`       | `"top" \| "right" \| "bottom" \| "left"` | `"bottom"` | Preferred side        |
+| `align`      | `"start" \| "center" \| "end"`           | `"center"` | Alignment             |
 
 ### Example
 
@@ -1003,7 +998,7 @@ import { PreviewCard } from "@tailor-platform/app-shell";
   <PreviewCard.Content>
     <p>John Doe - Software Engineer</p>
   </PreviewCard.Content>
-</PreviewCard.Root>
+</PreviewCard.Root>;
 ```
 
 ---
@@ -1014,18 +1009,18 @@ Determinate progress bar.
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
+| Prop    | Type     | Description            |
+| ------- | -------- | ---------------------- |
 | `value` | `number` | Current progress value |
-| `min` | `number` | Minimum value |
-| `max` | `number` | Maximum value |
+| `min`   | `number` | Minimum value          |
+| `max`   | `number` | Maximum value          |
 
 ### Example
 
 ```tsx
 import { Progress } from "@tailor-platform/app-shell";
 
-<Progress value={60} />
+<Progress value={60} />;
 ```
 
 ---
@@ -1036,10 +1031,10 @@ Radio button input.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Radio.Root` | Single radio button (includes indicator) |
-| `Radio.Group` | Groups related radio buttons |
+| Part          | Description                              |
+| ------------- | ---------------------------------------- |
+| `Radio.Root`  | Single radio button (includes indicator) |
+| `Radio.Group` | Groups related radio buttons             |
 
 ### Example
 
@@ -1047,10 +1042,16 @@ Radio button input.
 import { Radio } from "@tailor-platform/app-shell";
 
 <Radio.Group defaultValue="option-1">
-  <label><Radio.Root value="option-1" /> Option 1</label>
-  <label><Radio.Root value="option-2" /> Option 2</label>
-  <label><Radio.Root value="option-3" /> Option 3</label>
-</Radio.Group>
+  <label>
+    <Radio.Root value="option-1" /> Option 1
+  </label>
+  <label>
+    <Radio.Root value="option-2" /> Option 2
+  </label>
+  <label>
+    <Radio.Root value="option-3" /> Option 3
+  </label>
+</Radio.Group>;
 ```
 
 ---
@@ -1061,10 +1062,10 @@ Custom scrollable container with styled scrollbars.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `ScrollArea.Root` | Scrollable container (includes viewport, scrollbars, and corner) |
-| `ScrollArea.ScrollBar` | Individual scrollbar (vertical or horizontal) |
+| Part                   | Description                                                      |
+| ---------------------- | ---------------------------------------------------------------- |
+| `ScrollArea.Root`      | Scrollable container (includes viewport, scrollbars, and corner) |
+| `ScrollArea.ScrollBar` | Individual scrollbar (vertical or horizontal)                    |
 
 ### Example
 
@@ -1072,10 +1073,8 @@ Custom scrollable container with styled scrollbars.
 import { ScrollArea } from "@tailor-platform/app-shell";
 
 <ScrollArea.Root className="h-72 w-48">
-  <div>
-    {/* Long content */}
-  </div>
-</ScrollArea.Root>
+  <div>{/* Long content */}</div>
+</ScrollArea.Root>;
 ```
 
 ---
@@ -1086,16 +1085,16 @@ Dropdown select input.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Select.Root` | Root provider |
-| `Select.Trigger` | Trigger button (includes chevron icon) |
-| `Select.Value` | Displays selected value |
-| `Select.Content` | Dropdown content (includes portal and positioner) |
-| `Select.Item` | Individual option (includes check indicator) |
-| `Select.Group` | Groups related options |
-| `Select.GroupLabel` | Label for a group |
-| `Select.Separator` | Visual separator between items |
+| Part                | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `Select.Root`       | Root provider                                     |
+| `Select.Trigger`    | Trigger button (includes chevron icon)            |
+| `Select.Value`      | Displays selected value                           |
+| `Select.Content`    | Dropdown content (includes portal and positioner) |
+| `Select.Item`       | Individual option (includes check indicator)      |
+| `Select.Group`      | Groups related options                            |
+| `Select.GroupLabel` | Label for a group                                 |
+| `Select.Separator`  | Visual separator between items                    |
 
 ### Example
 
@@ -1112,7 +1111,7 @@ import { Select } from "@tailor-platform/app-shell";
     <Select.Separator />
     <Select.Item value="cherry">Cherry</Select.Item>
   </Select.Content>
-</Select.Root>
+</Select.Root>;
 ```
 
 ---
@@ -1123,8 +1122,8 @@ Visual separator line.
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop          | Type                         | Default        | Description         |
+| ------------- | ---------------------------- | -------------- | ------------------- |
 | `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Separator direction |
 
 ### Example
@@ -1144,21 +1143,21 @@ Side panel that slides in from the edge.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Sheet.Root` | Root provider |
-| `Sheet.Trigger` | Open trigger |
-| `Sheet.Close` | Close button |
-| `Sheet.Content` | Slide-in panel (includes overlay and close button) |
-| `Sheet.Header` | Header container |
-| `Sheet.Footer` | Footer container |
-| `Sheet.Title` | Sheet title |
-| `Sheet.Description` | Sheet description |
+| Part                | Description                                        |
+| ------------------- | -------------------------------------------------- |
+| `Sheet.Root`        | Root provider                                      |
+| `Sheet.Trigger`     | Open trigger                                       |
+| `Sheet.Close`       | Close button                                       |
+| `Sheet.Content`     | Slide-in panel (includes overlay and close button) |
+| `Sheet.Header`      | Header container                                   |
+| `Sheet.Footer`      | Footer container                                   |
+| `Sheet.Title`       | Sheet title                                        |
+| `Sheet.Description` | Sheet description                                  |
 
 ### Props (`Sheet.Content`)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop   | Type                                     | Default   | Description              |
+| ------ | ---------------------------------------- | --------- | ------------------------ |
 | `side` | `"top" \| "right" \| "bottom" \| "left"` | `"right"` | Which edge to slide from |
 
 ### Example
@@ -1180,7 +1179,7 @@ import { Sheet, Button } from "@tailor-platform/app-shell";
       <Button>Save</Button>
     </Sheet.Footer>
   </Sheet.Content>
-</Sheet.Root>
+</Sheet.Root>;
 ```
 
 ---
@@ -1191,19 +1190,19 @@ Range slider input.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Slider.Root` | Root provider with built-in track and thumb (accepts `defaultValue`, `min`, `max`, `step`) |
-| `Slider.Control` | Slider control container |
-| `Slider.Track` | Track with range indicator |
-| `Slider.Thumb` | Draggable thumb |
+| Part             | Description                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| `Slider.Root`    | Root provider with built-in track and thumb (accepts `defaultValue`, `min`, `max`, `step`) |
+| `Slider.Control` | Slider control container                                                                   |
+| `Slider.Track`   | Track with range indicator                                                                 |
+| `Slider.Thumb`   | Draggable thumb                                                                            |
 
 ### Example
 
 ```tsx
 import { Slider } from "@tailor-platform/app-shell";
 
-<Slider.Root defaultValue={[50]} min={0} max={100} step={1} />
+<Slider.Root defaultValue={[50]} min={0} max={100} step={1} />;
 ```
 
 ---
@@ -1233,22 +1232,22 @@ Data table components.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Table.Root` | Table container with scroll area |
+| Part           | Description                      |
+| -------------- | -------------------------------- |
+| `Table.Root`   | Table container with scroll area |
 | `Table.Header` | Table header (`<thead>`, sticky) |
-| `Table.Body` | Table body (`<tbody>`) |
+| `Table.Body`   | Table body (`<tbody>`)           |
 | `Table.Footer` | Table footer (`<tfoot>`, sticky) |
-| `Table.Row` | Table row (`<tr>`) |
-| `Table.Head` | Header cell (`<th>`) |
-| `Table.Cell` | Data cell (`<td>`) |
+| `Table.Row`    | Table row (`<tr>`)               |
+| `Table.Head`   | Header cell (`<th>`)             |
+| `Table.Cell`   | Data cell (`<td>`)               |
 
 ### Props (`Table.Root`)
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `containerClassName` | `string` | CSS classes for scroll container |
-| `containerStyle` | `React.CSSProperties` | Inline styles for scroll container |
+| Prop                 | Type                  | Description                        |
+| -------------------- | --------------------- | ---------------------------------- |
+| `containerClassName` | `string`              | CSS classes for scroll container   |
+| `containerStyle`     | `React.CSSProperties` | Inline styles for scroll container |
 
 ### Example
 
@@ -1268,7 +1267,7 @@ import { Table } from "@tailor-platform/app-shell";
       <Table.Cell>john@example.com</Table.Cell>
     </Table.Row>
   </Table.Body>
-</Table.Root>
+</Table.Root>;
 ```
 
 ---
@@ -1279,12 +1278,12 @@ Tabbed navigation.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Tabs.Root` | Root provider |
-| `Tabs.List` | Tab button container |
+| Part           | Description           |
+| -------------- | --------------------- |
+| `Tabs.Root`    | Root provider         |
+| `Tabs.List`    | Tab button container  |
 | `Tabs.Trigger` | Individual tab button |
-| `Tabs.Content` | Tab panel content |
+| `Tabs.Content` | Tab panel content     |
 
 ### Example
 
@@ -1298,7 +1297,7 @@ import { Tabs } from "@tailor-platform/app-shell";
   </Tabs.List>
   <Tabs.Content value="tab1">General settings...</Tabs.Content>
   <Tabs.Content value="tab2">Security settings...</Tabs.Content>
-</Tabs.Root>
+</Tabs.Root>;
 ```
 
 ---
@@ -1309,17 +1308,17 @@ Pressable toggle button.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Toggle.Root` | Single toggle button |
+| Part           | Description                   |
+| -------------- | ----------------------------- |
+| `Toggle.Root`  | Single toggle button          |
 | `Toggle.Group` | Groups related toggle buttons |
 
 ### Props (Toggle.Root)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"default" \| "outline"` | `"default"` | Visual style |
-| `size` | `"default" \| "sm" \| "lg"` | `"default"` | Button size |
+| Prop      | Type                        | Default     | Description  |
+| --------- | --------------------------- | ----------- | ------------ |
+| `variant` | `"default" \| "outline"`    | `"default"` | Visual style |
+| `size`    | `"default" \| "sm" \| "lg"` | `"default"` | Button size  |
 
 ### Example
 
@@ -1327,17 +1326,27 @@ Pressable toggle button.
 import { Toggle } from "@tailor-platform/app-shell";
 import { Bold, Italic, Underline } from "lucide-react";
 
-{/* Single toggle */}
+{
+  /* Single toggle */
+}
 <Toggle.Root aria-label="Toggle bold">
   <Bold className="size-4" />
-</Toggle.Root>
+</Toggle.Root>;
 
-{/* Toggle group */}
+{
+  /* Toggle group */
+}
 <Toggle.Group>
-  <Toggle.Root aria-label="Bold"><Bold className="size-4" /></Toggle.Root>
-  <Toggle.Root aria-label="Italic"><Italic className="size-4" /></Toggle.Root>
-  <Toggle.Root aria-label="Underline"><Underline className="size-4" /></Toggle.Root>
-</Toggle.Group>
+  <Toggle.Root aria-label="Bold">
+    <Bold className="size-4" />
+  </Toggle.Root>
+  <Toggle.Root aria-label="Italic">
+    <Italic className="size-4" />
+  </Toggle.Root>
+  <Toggle.Root aria-label="Underline">
+    <Underline className="size-4" />
+  </Toggle.Root>
+</Toggle.Group>;
 ```
 
 ---
@@ -1348,13 +1357,13 @@ Horizontal toolbar with buttons, separators, and groups.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Toolbar.Root` | Toolbar container |
-| `Toolbar.Button` | Toolbar button |
-| `Toolbar.Separator` | Vertical separator |
-| `Toolbar.Group` | Groups related buttons |
-| `Toolbar.Link` | Toolbar link |
+| Part                | Description            |
+| ------------------- | ---------------------- |
+| `Toolbar.Root`      | Toolbar container      |
+| `Toolbar.Button`    | Toolbar button         |
+| `Toolbar.Separator` | Vertical separator     |
+| `Toolbar.Group`     | Groups related buttons |
+| `Toolbar.Link`      | Toolbar link           |
 
 ### Example
 
@@ -1369,7 +1378,7 @@ import { Toolbar } from "@tailor-platform/app-shell";
   </Toolbar.Group>
   <Toolbar.Separator />
   <Toolbar.Link href="/help">Help</Toolbar.Link>
-</Toolbar.Root>
+</Toolbar.Root>;
 ```
 
 ---
@@ -1380,19 +1389,19 @@ Informational tooltip on hover.
 
 ### Parts
 
-| Part | Description |
-|------|-------------|
-| `Tooltip.Root` | Root provider (includes TooltipProvider) |
-| `Tooltip.Trigger` | Hover target |
-| `Tooltip.Content` | Tooltip content popup (includes arrow) |
+| Part              | Description                              |
+| ----------------- | ---------------------------------------- |
+| `Tooltip.Root`    | Root provider (includes TooltipProvider) |
+| `Tooltip.Trigger` | Hover target                             |
+| `Tooltip.Content` | Tooltip content popup (includes arrow)   |
 
 ### Props (`Tooltip.Content`)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `sideOffset` | `number` | `0` | Distance from trigger |
-| `side` | `"top" \| "right" \| "bottom" \| "left"` | `"top"` | Preferred side |
-| `align` | `"start" \| "center" \| "end"` | `"center"` | Alignment |
+| Prop         | Type                                     | Default    | Description           |
+| ------------ | ---------------------------------------- | ---------- | --------------------- |
+| `sideOffset` | `number`                                 | `0`        | Distance from trigger |
+| `side`       | `"top" \| "right" \| "bottom" \| "left"` | `"top"`    | Preferred side        |
+| `align`      | `"start" \| "center" \| "end"`           | `"center"` | Alignment             |
 
 ### Example
 
@@ -1404,5 +1413,5 @@ import { Tooltip, Button } from "@tailor-platform/app-shell";
     <Button variant="outline">Hover me</Button>
   </Tooltip.Trigger>
   <Tooltip.Content>This is a tooltip</Tooltip.Content>
-</Tooltip.Root>
+</Tooltip.Root>;
 ```

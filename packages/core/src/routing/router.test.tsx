@@ -1,7 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { RouterContainer } from "./router";
-import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
+import {
+  AppShellConfigContext,
+  AppShellDataContext,
+} from "@/contexts/appshell-context";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
@@ -13,6 +22,7 @@ import {
 } from "@/resource";
 import type { ReactNode } from "react";
 import type { ContextData } from "@/contexts/appshell-context";
+import { AuthProvider, type EnhancedAuthClient } from "@/contexts/auth-context";
 
 afterEach(() => {
   cleanup();
@@ -24,12 +34,16 @@ const renderWithConfig = ({
   rootComponent,
   initialEntries,
   contextData = {},
+  authClient,
+  autoLogin,
 }: {
   modules?: Array<Module>;
   basePath?: string;
   rootComponent?: () => ReactNode;
   initialEntries: Array<string>;
   contextData?: ContextData;
+  authClient?: EnhancedAuthClient;
+  autoLogin?: boolean;
 }) => {
   const configurations = {
     modules,
@@ -41,14 +55,28 @@ const renderWithConfig = ({
 
   setContextData(contextData);
 
-  render(
+  const tree = (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData }}>
-        <RouterContainer memory rootComponent={rootComponent} initialEntries={initialEntries}>
+        <RouterContainer
+          memory
+          rootComponent={rootComponent}
+          initialEntries={initialEntries}
+        >
           <Outlet />
         </RouterContainer>
       </AppShellDataContext.Provider>
-    </AppShellConfigContext.Provider>,
+    </AppShellConfigContext.Provider>
+  );
+
+  render(
+    authClient ? (
+      <AuthProvider client={authClient} autoLogin={autoLogin}>
+        {tree}
+      </AuthProvider>
+    ) : (
+      tree
+    ),
   );
 };
 
@@ -193,7 +221,9 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard"],
       });
 
-      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+      expect(
+        await screen.findByRole("alert", { name: "default-error-boundary" }),
+      ).toBeDefined();
 
       cleanup();
 
@@ -202,7 +232,9 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard/overview"],
       });
 
-      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+      expect(
+        await screen.findByRole("alert", { name: "default-error-boundary" }),
+      ).toBeDefined();
     } finally {
       consoleSpy.mockRestore();
     }
@@ -214,7 +246,9 @@ describe("RouterContainer (memory)", () => {
       initialEntries: ["/unknown-path"],
     });
 
-    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+    expect(
+      await screen.findByRole("alert", { name: "default-error-boundary" }),
+    ).toBeDefined();
     expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 
@@ -325,5 +359,156 @@ describe("RouterContainer (memory)", () => {
     });
 
     expect(await screen.findByText("Protected Content")).toBeDefined();
+  });
+});
+
+// Mock auth-public-client for integration tests
+vi.mock("@tailor-platform/auth-public-client", () => ({
+  createAuthClient: vi.fn(),
+}));
+
+const createMockAuthClient = (
+  initialState?: {
+    isAuthenticated: boolean;
+    error: string | null;
+    isReady: boolean;
+  },
+  overrides?: Partial<EnhancedAuthClient>,
+): EnhancedAuthClient => {
+  const state = initialState ?? {
+    isAuthenticated: false,
+    error: null,
+    isReady: false,
+  };
+
+  return {
+    getState: vi.fn(() => state),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAuthUrl: vi.fn(),
+    handleCallback: vi.fn(),
+    checkAuthStatus: vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    }),
+    refreshTokens: vi.fn(),
+    ready: vi.fn(() => Promise.resolve()),
+    configure: vi.fn(),
+    addEventListener: vi.fn(() => () => {}),
+    getAuthHeaders: vi.fn(),
+    getAppUri: vi.fn(() => "https://api.test.com"),
+    getAuthHeadersForQuery: vi.fn(),
+    ...overrides,
+  } as EnhancedAuthClient;
+};
+
+describe("RouterContainer with AuthProvider", () => {
+  it("calls checkAuthStatus via loader on initial load", async () => {
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      { checkAuthStatus: mockCheckAuthStatus },
+    );
+
+    renderWithConfig({
+      modules: [
+        defineModule({
+          path: "dashboard",
+          component: () => <div>Dashboard</div>,
+          meta: { title: "Dashboard" },
+          resources: [],
+        }),
+      ],
+      initialEntries: ["/dashboard"],
+      authClient,
+    });
+
+    await screen.findByText("Dashboard");
+    expect(mockCheckAuthStatus).toHaveBeenCalled();
+  });
+
+  it("handles OAuth callback and redirects to clean URL", async () => {
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      {
+        handleCallback: mockHandleCallback,
+        checkAuthStatus: mockCheckAuthStatus,
+      },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/?code=auth-code-123&state=abc"],
+      authClient,
+    });
+
+    await screen.findByText("Home");
+    expect(mockHandleCallback).toHaveBeenCalled();
+  });
+
+  it("calls login automatically when autoLogin is enabled and not authenticated", async () => {
+    const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: false, error: null, isReady: true },
+      {
+        login: mockLogin,
+        checkAuthStatus: mockCheckAuthStatus,
+      },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      autoLogin: true,
+    });
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalled();
+    });
+  });
+
+  it("does not call login when autoLogin is disabled", async () => {
+    const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: false, error: null, isReady: true },
+      {
+        login: mockLogin,
+        checkAuthStatus: mockCheckAuthStatus,
+      },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+    });
+
+    await screen.findByText("Home");
+    expect(mockLogin).not.toHaveBeenCalled();
   });
 });

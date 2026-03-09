@@ -9,8 +9,7 @@ function ToggleGroup({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof BaseToggleGroup> &
-  VariantProps<typeof toggleVariants>) {
+}: React.ComponentProps<typeof BaseToggleGroup> & VariantProps<typeof toggleVariants>) {
   return (
     <BaseToggleGroup
       data-slot="toggle-group"

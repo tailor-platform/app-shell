@@ -3,15 +3,11 @@ import { Popover as BasePopover } from "@base-ui/react/popover";
 
 import { cn } from "@/lib/utils";
 
-function PopoverRoot({
-  ...props
-}: React.ComponentProps<typeof BasePopover.Root>) {
+function PopoverRoot({ ...props }: React.ComponentProps<typeof BasePopover.Root>) {
   return <BasePopover.Root data-slot="popover" {...props} />;
 }
 
-function PopoverTrigger({
-  ...props
-}: React.ComponentProps<typeof BasePopover.Trigger>) {
+function PopoverTrigger({ ...props }: React.ComponentProps<typeof BasePopover.Trigger>) {
   return <BasePopover.Trigger data-slot="popover-trigger" {...props} />;
 }
 
@@ -38,23 +34,15 @@ function PopoverContent({
   );
 }
 
-function PopoverClose({
-  ...props
-}: React.ComponentProps<typeof BasePopover.Close>) {
+function PopoverClose({ ...props }: React.ComponentProps<typeof BasePopover.Close>) {
   return <BasePopover.Close data-slot="popover-close" {...props} />;
 }
 
-function PopoverArrow({
-  className,
-  ...props
-}: React.ComponentProps<typeof BasePopover.Arrow>) {
+function PopoverArrow({ className, ...props }: React.ComponentProps<typeof BasePopover.Arrow>) {
   return (
     <BasePopover.Arrow
       data-slot="popover-arrow"
-      className={cn(
-        "astw:fill-popover astw:stroke-border astw:stroke-1",
-        className,
-      )}
+      className={cn("astw:fill-popover astw:stroke-border astw:stroke-1", className)}
       {...props}
     />
   );

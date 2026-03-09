@@ -48,9 +48,7 @@ describe("Checkbox", () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
 
-    render(
-      <Checkbox data-testid="checkbox" onCheckedChange={onCheckedChange} />,
-    );
+    render(<Checkbox data-testid="checkbox" onCheckedChange={onCheckedChange} />);
 
     await user.click(screen.getByTestId("checkbox"));
 
@@ -61,9 +59,7 @@ describe("Checkbox", () => {
   });
 
   it("supports controlled checked state", () => {
-    const { rerender } = render(
-      <Checkbox data-testid="checkbox" checked={false} />,
-    );
+    const { rerender } = render(<Checkbox data-testid="checkbox" checked={false} />);
 
     const checkbox = screen.getByTestId("checkbox");
     expect(checkbox.hasAttribute("data-checked")).toBe(false);
@@ -91,13 +87,7 @@ describe("Checkbox", () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
 
-    render(
-      <Checkbox
-        data-testid="checkbox"
-        disabled
-        onCheckedChange={onCheckedChange}
-      />,
-    );
+    render(<Checkbox data-testid="checkbox" disabled onCheckedChange={onCheckedChange} />);
 
     await user.click(screen.getByTestId("checkbox"));
 

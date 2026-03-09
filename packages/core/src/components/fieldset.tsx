@@ -3,10 +3,7 @@ import { Fieldset as BaseFieldset } from "@base-ui/react/fieldset";
 
 import { cn } from "@/lib/utils";
 
-function FieldsetRoot({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseFieldset.Root>) {
+function FieldsetRoot({ className, ...props }: React.ComponentProps<typeof BaseFieldset.Root>) {
   return (
     <BaseFieldset.Root
       data-slot="fieldset"
@@ -16,10 +13,7 @@ function FieldsetRoot({
   );
 }
 
-function FieldsetLegend({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseFieldset.Legend>) {
+function FieldsetLegend({ className, ...props }: React.ComponentProps<typeof BaseFieldset.Legend>) {
   return (
     <BaseFieldset.Legend
       data-slot="fieldset-legend"

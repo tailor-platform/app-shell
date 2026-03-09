@@ -116,9 +116,7 @@ describe("Popover", () => {
     await user.click(screen.getByTestId("trigger"));
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("content").classList.contains("custom-class"),
-      ).toBe(true);
+      expect(screen.getByTestId("content").classList.contains("custom-class")).toBe(true);
     });
   });
 });

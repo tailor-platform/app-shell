@@ -1,12 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  renderHook,
-  act,
-} from "@testing-library/react";
+import { cleanup, render, screen, waitFor, renderHook, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Combobox } from "./combobox";
 
@@ -94,9 +87,7 @@ describe("Combobox", () => {
       </Combobox.Root>,
     );
 
-    expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(true);
   });
 
   it("renders groups with labels", async () => {
@@ -200,18 +191,14 @@ describe("Combobox.useCreatable", () => {
     };
 
     it("returns items unchanged when inputValue is empty", () => {
-      const { result } = renderHook(() =>
-        Combobox.useCreatable(defaultOptions),
-      );
+      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
       expect(result.current.items).toBe(initialTags);
       expect(result.current.value).toEqual([]);
       expect(result.current.multiple).toBe(true);
     });
 
     it("appends a sentinel item when query has no exact match", () => {
-      const { result } = renderHook(() =>
-        Combobox.useCreatable(defaultOptions),
-      );
+      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("Svelte");
@@ -219,15 +206,11 @@ describe("Combobox.useCreatable", () => {
 
       expect(result.current.items).toHaveLength(4);
       expect(result.current.isCreateItem(result.current.items[3])).toBe(true);
-      expect(result.current.getCreateLabel(result.current.items[3])).toBe(
-        "Svelte",
-      );
+      expect(result.current.getCreateLabel(result.current.items[3])).toBe("Svelte");
     });
 
     it("does not append sentinel when query exactly matches an item (case-insensitive)", () => {
-      const { result } = renderHook(() =>
-        Combobox.useCreatable(defaultOptions),
-      );
+      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("react");
@@ -237,9 +220,7 @@ describe("Combobox.useCreatable", () => {
     });
 
     it("creates item immediately with sync onItemCreated", () => {
-      const onItemCreated = vi.fn(
-        (_item: Tag, resolve: (accept?: boolean) => void) => resolve(),
-      );
+      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => resolve());
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -256,9 +237,7 @@ describe("Combobox.useCreatable", () => {
       });
 
       // Find and select the sentinel
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       // Simulate selecting it
       act(() => {
@@ -269,9 +248,7 @@ describe("Combobox.useCreatable", () => {
         expect.objectContaining({ name: "Svelte" }),
         expect.any(Function),
       );
-      expect(onValueChange).toHaveBeenCalledWith([
-        expect.objectContaining({ name: "Svelte" }),
-      ]);
+      expect(onValueChange).toHaveBeenCalledWith([expect.objectContaining({ name: "Svelte" })]);
       expect(result.current.value).toHaveLength(1);
       expect(result.current.inputValue).toBe("");
     });
@@ -291,9 +268,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       act(() => {
         result.current.onValueChange([sentinel]);
@@ -305,11 +280,9 @@ describe("Combobox.useCreatable", () => {
 
     it("defers creation until resolve callback is called", () => {
       let savedResolve!: (accept?: boolean) => void;
-      const onItemCreated = vi.fn(
-        (_item: Tag, resolve: (accept?: boolean) => void) => {
-          savedResolve = resolve;
-        },
-      );
+      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => {
+        savedResolve = resolve;
+      });
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -324,9 +297,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       act(() => {
         result.current.onValueChange([sentinel]);
@@ -341,9 +312,7 @@ describe("Combobox.useCreatable", () => {
         savedResolve();
       });
 
-      expect(onValueChange).toHaveBeenCalledWith([
-        expect.objectContaining({ name: "Svelte" }),
-      ]);
+      expect(onValueChange).toHaveBeenCalledWith([expect.objectContaining({ name: "Svelte" })]);
       expect(result.current.value).toHaveLength(1);
     });
 
@@ -365,9 +334,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       act(() => {
         result.current.onValueChange([sentinel]);
@@ -399,17 +366,13 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       await act(async () => {
         result.current.onValueChange([sentinel]);
       });
 
-      expect(onValueChange).toHaveBeenCalledWith([
-        expect.objectContaining({ name: "Svelte" }),
-      ]);
+      expect(onValueChange).toHaveBeenCalledWith([expect.objectContaining({ name: "Svelte" })]);
       expect(result.current.value).toHaveLength(1);
     });
 
@@ -430,9 +393,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       await act(async () => {
         result.current.onValueChange([sentinel]);
@@ -459,9 +420,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       await act(async () => {
         result.current.onValueChange([sentinel]);
@@ -486,10 +445,7 @@ describe("Combobox.useCreatable", () => {
       });
 
       expect(result.current.value).toEqual([initialTags[0], initialTags[1]]);
-      expect(onValueChange).toHaveBeenCalledWith([
-        initialTags[0],
-        initialTags[1],
-      ]);
+      expect(onValueChange).toHaveBeenCalledWith([initialTags[0], initialTags[1]]);
     });
 
     it("respects defaultValue", () => {
@@ -511,9 +467,7 @@ describe("Combobox.useCreatable", () => {
         }),
       );
 
-      expect(result.current.formatCreateLabel("テスト")).toBe(
-        "「テスト」を作成",
-      );
+      expect(result.current.formatCreateLabel("テスト")).toBe("「テスト」を作成");
     });
   });
 
@@ -525,18 +479,14 @@ describe("Combobox.useCreatable", () => {
     };
 
     it("returns value as null initially", () => {
-      const { result } = renderHook(() =>
-        Combobox.useCreatable(defaultOptions),
-      );
+      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
 
       expect(result.current.value).toBeNull();
       expect(result.current.multiple).toBe(false);
     });
 
     it("creates and selects item for single select", () => {
-      const onItemCreated = vi.fn(
-        (_item: Tag, resolve: (accept?: boolean) => void) => resolve(),
-      );
+      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => resolve());
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -551,9 +501,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       act(() => {
         result.current.onValueChange(sentinel);
@@ -563,12 +511,8 @@ describe("Combobox.useCreatable", () => {
         expect.objectContaining({ name: "Svelte" }),
         expect.any(Function),
       );
-      expect(onValueChange).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Svelte" }),
-      );
-      expect(result.current.value).toEqual(
-        expect.objectContaining({ name: "Svelte" }),
-      );
+      expect(onValueChange).toHaveBeenCalledWith(expect.objectContaining({ name: "Svelte" }));
+      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
     });
 
     it("passes through normal selection in single mode", () => {
@@ -610,11 +554,9 @@ describe("Combobox.useCreatable", () => {
 
     it("defers creation in single mode until resolve is called", () => {
       let savedResolve!: (accept?: boolean) => void;
-      const onItemCreated = vi.fn(
-        (_item: Tag, resolve: (accept?: boolean) => void) => {
-          savedResolve = resolve;
-        },
-      );
+      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => {
+        savedResolve = resolve;
+      });
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -629,9 +571,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       act(() => {
         result.current.onValueChange(sentinel);
@@ -644,9 +584,7 @@ describe("Combobox.useCreatable", () => {
       });
 
       expect(onItemCreated).toHaveBeenCalled();
-      expect(result.current.value).toEqual(
-        expect.objectContaining({ name: "Svelte" }),
-      );
+      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
     });
 
     it("cancels single creation when resolve is called with false", () => {
@@ -664,9 +602,7 @@ describe("Combobox.useCreatable", () => {
         result.current.onInputValueChange("Svelte");
       });
 
-      const sentinel = result.current.items.find((item) =>
-        result.current.isCreateItem(item),
-      )!;
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
 
       act(() => {
         result.current.onValueChange(sentinel);

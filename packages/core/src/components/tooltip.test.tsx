@@ -26,9 +26,7 @@ describe("Tooltip", () => {
     render(
       <Tooltip.Root>
         <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
-        <Tooltip.Content data-testid="tooltip-content">
-          Tooltip text
-        </Tooltip.Content>
+        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
       </Tooltip.Root>,
     );
 
@@ -46,9 +44,7 @@ describe("Tooltip", () => {
     render(
       <Tooltip.Root>
         <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
-        <Tooltip.Content data-testid="tooltip-content">
-          Tooltip text
-        </Tooltip.Content>
+        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
       </Tooltip.Root>,
     );
 
@@ -71,9 +67,7 @@ describe("Tooltip", () => {
         <Tooltip.Trigger render={<button />} data-testid="trigger">
           Focus me
         </Tooltip.Trigger>
-        <Tooltip.Content data-testid="tooltip-content">
-          Tooltip text
-        </Tooltip.Content>
+        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
       </Tooltip.Root>,
     );
 

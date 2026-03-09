@@ -33,9 +33,7 @@ describe("AlertDialog", () => {
         <AlertDialog.Content>
           <AlertDialog.Header>
             <AlertDialog.Title>Are you sure?</AlertDialog.Title>
-            <AlertDialog.Description>
-              This action cannot be undone.
-            </AlertDialog.Description>
+            <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>
           </AlertDialog.Header>
         </AlertDialog.Content>
       </AlertDialog.Root>,
@@ -131,9 +129,7 @@ describe("AlertDialog", () => {
     await user.click(screen.getByTestId("trigger"));
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("content").classList.contains("custom-class"),
-      ).toBe(true);
+      expect(screen.getByTestId("content").classList.contains("custom-class")).toBe(true);
     });
   });
 });

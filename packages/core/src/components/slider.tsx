@@ -36,10 +36,7 @@ function SliderControl({
   return (
     <BaseSlider.Control
       data-slot="slider-control"
-      className={cn(
-        "astw:relative astw:flex astw:w-full astw:items-center",
-        className,
-      )}
+      className={cn("astw:relative astw:flex astw:w-full astw:items-center", className)}
       {...props}
     >
       {children}
@@ -70,10 +67,7 @@ function SliderTrack({
   );
 }
 
-function SliderThumb({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseSlider.Thumb>) {
+function SliderThumb({ className, ...props }: React.ComponentProps<typeof BaseSlider.Thumb>) {
   return (
     <BaseSlider.Thumb
       data-slot="slider-thumb"

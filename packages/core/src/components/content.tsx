@@ -34,9 +34,7 @@ export const SettingsWrapper = () => {
     <div className="astw:mx-auto astw:flex-col astw:flex astw:md:flex-row astw:max-w-5xl astw:gap-2.5 astw:w-full">
       <div>
         <nav className="astw:bg-card astw:md:w-xs astw:rounded-md astw:border astw:p-3 astw:shadow-xs">
-          <h2 className="astw:text-sm astw:leading-9 astw:mb-2 astw:font-bold ">
-            {t("settings")}
-          </h2>
+          <h2 className="astw:text-sm astw:leading-9 astw:mb-2 astw:font-bold ">{t("settings")}</h2>
           <ul className="astw:flex astw:flex-col astw:gap-1">
             {configurations.settingsResources.map((resource) => (
               <li key={resource.path}>

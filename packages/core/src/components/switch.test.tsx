@@ -59,9 +59,7 @@ describe("Switch", () => {
   });
 
   it("supports controlled checked state", () => {
-    const { rerender } = render(
-      <Switch data-testid="switch" checked={false} />,
-    );
+    const { rerender } = render(<Switch data-testid="switch" checked={false} />);
 
     const sw = screen.getByTestId("switch");
     expect(sw.hasAttribute("data-checked")).toBe(false);
@@ -82,13 +80,7 @@ describe("Switch", () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
 
-    render(
-      <Switch
-        data-testid="switch"
-        disabled
-        onCheckedChange={onCheckedChange}
-      />,
-    );
+    render(<Switch data-testid="switch" disabled onCheckedChange={onCheckedChange} />);
 
     await user.click(screen.getByTestId("switch"));
 

@@ -14,10 +14,7 @@ function ScrollAreaRoot({
       className={cn("astw:relative astw:overflow-hidden", className)}
       {...props}
     >
-      <BaseScrollArea.Viewport
-        data-slot="scroll-area-viewport"
-        className="astw:h-full astw:w-full"
-      >
+      <BaseScrollArea.Viewport data-slot="scroll-area-viewport" className="astw:h-full astw:w-full">
         <BaseScrollArea.Content>{children}</BaseScrollArea.Content>
       </BaseScrollArea.Viewport>
       <ScrollBar orientation="vertical" />

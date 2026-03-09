@@ -12,15 +12,11 @@ describe("Accordion", () => {
     render(
       <Accordion.Root>
         <Accordion.Item>
-          <Accordion.Trigger data-testid="trigger-1">
-            Section 1
-          </Accordion.Trigger>
+          <Accordion.Trigger data-testid="trigger-1">Section 1</Accordion.Trigger>
           <Accordion.Content>Content 1</Accordion.Content>
         </Accordion.Item>
         <Accordion.Item>
-          <Accordion.Trigger data-testid="trigger-2">
-            Section 2
-          </Accordion.Trigger>
+          <Accordion.Trigger data-testid="trigger-2">Section 2</Accordion.Trigger>
           <Accordion.Content>Content 2</Accordion.Content>
         </Accordion.Item>
       </Accordion.Root>,
@@ -102,15 +98,11 @@ describe("Accordion", () => {
     render(
       <Accordion.Root multiple>
         <Accordion.Item>
-          <Accordion.Trigger data-testid="trigger-1">
-            Section 1
-          </Accordion.Trigger>
+          <Accordion.Trigger data-testid="trigger-1">Section 1</Accordion.Trigger>
           <Accordion.Content>Content 1</Accordion.Content>
         </Accordion.Item>
         <Accordion.Item>
-          <Accordion.Trigger data-testid="trigger-2">
-            Section 2
-          </Accordion.Trigger>
+          <Accordion.Trigger data-testid="trigger-2">Section 2</Accordion.Trigger>
           <Accordion.Content>Content 2</Accordion.Content>
         </Accordion.Item>
       </Accordion.Root>,
@@ -135,8 +127,6 @@ describe("Accordion", () => {
       </Accordion.Root>,
     );
 
-    expect(screen.getByTestId("root").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("root").classList.contains("custom-class")).toBe(true);
   });
 });

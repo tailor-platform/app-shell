@@ -3,18 +3,12 @@ import { PreviewCard as BasePreviewCard } from "@base-ui/react/preview-card";
 
 import { cn } from "@/lib/utils";
 
-function PreviewCardRoot({
-  ...props
-}: React.ComponentProps<typeof BasePreviewCard.Root>) {
+function PreviewCardRoot({ ...props }: React.ComponentProps<typeof BasePreviewCard.Root>) {
   return <BasePreviewCard.Root data-slot="preview-card" {...props} />;
 }
 
-function PreviewCardTrigger({
-  ...props
-}: React.ComponentProps<typeof BasePreviewCard.Trigger>) {
-  return (
-    <BasePreviewCard.Trigger data-slot="preview-card-trigger" {...props} />
-  );
+function PreviewCardTrigger({ ...props }: React.ComponentProps<typeof BasePreviewCard.Trigger>) {
+  return <BasePreviewCard.Trigger data-slot="preview-card-trigger" {...props} />;
 }
 
 function PreviewCardContent({
@@ -30,11 +24,7 @@ function PreviewCardContent({
 }) {
   return (
     <BasePreviewCard.Portal>
-      <BasePreviewCard.Positioner
-        sideOffset={sideOffset}
-        side={side}
-        align={align}
-      >
+      <BasePreviewCard.Positioner sideOffset={sideOffset} side={side} align={align}>
         <BasePreviewCard.Popup
           data-slot="preview-card-content"
           className={cn(

@@ -3,10 +3,7 @@ import { Field } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
 
-function Label({
-  className,
-  ...props
-}: React.ComponentProps<typeof Field.Label>) {
+function Label({ className, ...props }: React.ComponentProps<typeof Field.Label>) {
   return (
     <Field.Label
       data-slot="label"

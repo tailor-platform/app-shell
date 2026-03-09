@@ -91,12 +91,8 @@ describe("Radio", () => {
       </RadioGroup>,
     );
 
-    expect(screen.getByTestId("radio-b").hasAttribute("data-checked")).toBe(
-      true,
-    );
-    expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(
-      false,
-    );
+    expect(screen.getByTestId("radio-b").hasAttribute("data-checked")).toBe(true);
+    expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(false);
   });
 
   it("supports controlled value", () => {
@@ -107,9 +103,7 @@ describe("Radio", () => {
       </RadioGroup>,
     );
 
-    expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(true);
 
     rerender(
       <RadioGroup value="b">
@@ -118,12 +112,8 @@ describe("Radio", () => {
       </RadioGroup>,
     );
 
-    expect(screen.getByTestId("radio-b").hasAttribute("data-checked")).toBe(
-      true,
-    );
-    expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(
-      false,
-    );
+    expect(screen.getByTestId("radio-b").hasAttribute("data-checked")).toBe(true);
+    expect(screen.getByTestId("radio-a").hasAttribute("data-checked")).toBe(false);
   });
 
   it("is disabled when disabled prop is set", () => {
@@ -133,9 +123,7 @@ describe("Radio", () => {
       </RadioGroup>,
     );
 
-    expect(screen.getByTestId("radio-a").hasAttribute("data-disabled")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("radio-a").hasAttribute("data-disabled")).toBe(true);
   });
 
   it("applies custom className", () => {
@@ -145,8 +133,6 @@ describe("Radio", () => {
       </RadioGroup>,
     );
 
-    expect(screen.getByTestId("group").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("group").classList.contains("custom-class")).toBe(true);
   });
 });

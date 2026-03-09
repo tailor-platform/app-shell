@@ -128,8 +128,6 @@ describe("NumberField", () => {
       </NumberField.Root>,
     );
 
-    expect(screen.getByTestId("root").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("root").classList.contains("custom-class")).toBe(true);
   });
 });

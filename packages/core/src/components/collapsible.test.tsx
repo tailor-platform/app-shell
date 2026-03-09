@@ -26,9 +26,7 @@ describe("Collapsible", () => {
     render(
       <Collapsible.Root defaultOpen={false}>
         <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
-        <Collapsible.Content data-testid="content">
-          Hidden Content
-        </Collapsible.Content>
+        <Collapsible.Content data-testid="content">Hidden Content</Collapsible.Content>
       </Collapsible.Root>,
     );
 

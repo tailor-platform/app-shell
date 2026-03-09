@@ -4,9 +4,7 @@ import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function SelectRoot({
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Root>) {
+function SelectRoot({ ...props }: React.ComponentProps<typeof BaseSelect.Root>) {
   return <BaseSelect.Root data-slot="select" {...props} />;
 }
 
@@ -36,16 +34,11 @@ function SelectTrigger({
   );
 }
 
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Value>) {
+function SelectValue({ ...props }: React.ComponentProps<typeof BaseSelect.Value>) {
   return <BaseSelect.Value data-slot="select-value" {...props} />;
 }
 
-function SelectContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Popup>) {
+function SelectContent({ className, ...props }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
     <BaseSelect.Portal>
       <BaseSelect.Positioner>
@@ -89,9 +82,7 @@ function SelectItem({
   );
 }
 
-function SelectGroup({
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Group>) {
+function SelectGroup({ ...props }: React.ComponentProps<typeof BaseSelect.Group>) {
   return <BaseSelect.Group data-slot="select-group" {...props} />;
 }
 

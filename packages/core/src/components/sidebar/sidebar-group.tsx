@@ -85,9 +85,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           render={
             <Link
               to={to}
-              className={
-                isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined
-              }
+              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
             />
           }
           tooltip={resolvedTitle}
@@ -96,9 +94,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
         <Collapsible.Trigger
-          render={
-            <SidebarMenuAction className="astw:data-panel-open:rotate-90" />
-          }
+          render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
         >
           <ChevronRight />
           <span className="astw:sr-only">{t("toggle")}</span>

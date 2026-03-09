@@ -18,11 +18,7 @@ function TableRoot({
       className={cn("astw:relative astw:w-full", containerClassName)}
       style={containerStyle}
     >
-      <table
-        data-slot="table"
-        className={cn("astw:w-full astw:text-sm", className)}
-        {...props}
-      />
+      <table data-slot="table" className={cn("astw:w-full astw:text-sm", className)} {...props} />
     </ScrollArea.Root>
   );
 }

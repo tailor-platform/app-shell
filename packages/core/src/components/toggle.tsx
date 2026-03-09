@@ -32,8 +32,7 @@ function Toggle({
   variant,
   size,
   ...props
-}: React.ComponentProps<typeof BaseToggle> &
-  VariantProps<typeof toggleVariants>) {
+}: React.ComponentProps<typeof BaseToggle> & VariantProps<typeof toggleVariants>) {
   return (
     <BaseToggle
       data-slot="toggle"

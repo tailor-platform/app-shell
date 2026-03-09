@@ -5,10 +5,7 @@ import { CheckIcon, MinusIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function CheckboxGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCheckboxGroup>) {
+function CheckboxGroup({ className, ...props }: React.ComponentProps<typeof BaseCheckboxGroup>) {
   return (
     <BaseCheckboxGroup
       data-slot="checkbox-group"
@@ -30,10 +27,7 @@ function CheckboxIndicator() {
   );
 }
 
-function Checkbox({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCheckbox.Root>) {
+function Checkbox({ className, ...props }: React.ComponentProps<typeof BaseCheckbox.Root>) {
   return (
     <BaseCheckbox.Root
       data-slot="checkbox"

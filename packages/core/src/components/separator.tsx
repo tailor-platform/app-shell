@@ -3,10 +3,7 @@ import { Separator as BaseSeparator } from "@base-ui/react/separator";
 
 import { cn } from "@/lib/utils";
 
-function Separator({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseSeparator>) {
+function Separator({ className, ...props }: React.ComponentProps<typeof BaseSeparator>) {
   return (
     <BaseSeparator
       data-slot="separator-root"

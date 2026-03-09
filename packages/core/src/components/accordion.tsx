@@ -4,10 +4,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function AccordionRoot({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseAccordion.Root>) {
+function AccordionRoot({ className, ...props }: React.ComponentProps<typeof BaseAccordion.Root>) {
   return (
     <BaseAccordion.Root
       data-slot="accordion"
@@ -17,10 +14,7 @@ function AccordionRoot({
   );
 }
 
-function AccordionItem({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseAccordion.Item>) {
+function AccordionItem({ className, ...props }: React.ComponentProps<typeof BaseAccordion.Item>) {
   return (
     <BaseAccordion.Item
       data-slot="accordion-item"

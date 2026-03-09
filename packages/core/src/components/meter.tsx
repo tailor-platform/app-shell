@@ -3,11 +3,7 @@ import { Meter as BaseMeter } from "@base-ui/react/meter";
 
 import { cn } from "@/lib/utils";
 
-function Meter({
-  className,
-  value,
-  ...props
-}: React.ComponentProps<typeof BaseMeter.Root>) {
+function Meter({ className, value, ...props }: React.ComponentProps<typeof BaseMeter.Root>) {
   return (
     <BaseMeter.Root
       data-slot="meter"

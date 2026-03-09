@@ -99,9 +99,7 @@ describe("Autocomplete", () => {
       </Autocomplete.Root>,
     );
 
-    expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(true);
   });
 
   it("renders the trigger with default icon", () => {

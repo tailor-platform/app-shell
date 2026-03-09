@@ -3,10 +3,7 @@ import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 
 import { cn } from "@/lib/utils";
 
-function AvatarRoot({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseAvatar.Root>) {
+function AvatarRoot({ className, ...props }: React.ComponentProps<typeof BaseAvatar.Root>) {
   return (
     <BaseAvatar.Root
       data-slot="avatar"
@@ -19,26 +16,17 @@ function AvatarRoot({
   );
 }
 
-function AvatarImage({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseAvatar.Image>) {
+function AvatarImage({ className, ...props }: React.ComponentProps<typeof BaseAvatar.Image>) {
   return (
     <BaseAvatar.Image
       data-slot="avatar-image"
-      className={cn(
-        "astw:aspect-square astw:size-full astw:object-cover",
-        className,
-      )}
+      className={cn("astw:aspect-square astw:size-full astw:object-cover", className)}
       {...props}
     />
   );
 }
 
-function AvatarFallback({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseAvatar.Fallback>) {
+function AvatarFallback({ className, ...props }: React.ComponentProps<typeof BaseAvatar.Fallback>) {
   return (
     <BaseAvatar.Fallback
       data-slot="avatar-fallback"

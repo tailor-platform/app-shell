@@ -3,10 +3,7 @@ import { Toolbar as BaseToolbar } from "@base-ui/react/toolbar";
 
 import { cn } from "@/lib/utils";
 
-function ToolbarRoot({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseToolbar.Root>) {
+function ToolbarRoot({ className, ...props }: React.ComponentProps<typeof BaseToolbar.Root>) {
   return (
     <BaseToolbar.Root
       data-slot="toolbar"
@@ -19,10 +16,7 @@ function ToolbarRoot({
   );
 }
 
-function ToolbarButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseToolbar.Button>) {
+function ToolbarButton({ className, ...props }: React.ComponentProps<typeof BaseToolbar.Button>) {
   return (
     <BaseToolbar.Button
       data-slot="toolbar-button"
@@ -45,19 +39,13 @@ function ToolbarSeparator({
   return (
     <BaseToolbar.Separator
       data-slot="toolbar-separator"
-      className={cn(
-        "astw:mx-1 astw:h-5 astw:w-px astw:shrink-0 astw:bg-border",
-        className,
-      )}
+      className={cn("astw:mx-1 astw:h-5 astw:w-px astw:shrink-0 astw:bg-border", className)}
       {...props}
     />
   );
 }
 
-function ToolbarGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseToolbar.Group>) {
+function ToolbarGroup({ className, ...props }: React.ComponentProps<typeof BaseToolbar.Group>) {
   return (
     <BaseToolbar.Group
       data-slot="toolbar-group"
@@ -67,10 +55,7 @@ function ToolbarGroup({
   );
 }
 
-function ToolbarLink({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseToolbar.Link>) {
+function ToolbarLink({ className, ...props }: React.ComponentProps<typeof BaseToolbar.Link>) {
   return (
     <BaseToolbar.Link
       data-slot="toolbar-link"

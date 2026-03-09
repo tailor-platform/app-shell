@@ -3,11 +3,7 @@ import { Progress as BaseProgress } from "@base-ui/react/progress";
 
 import { cn } from "@/lib/utils";
 
-function Progress({
-  className,
-  value,
-  ...props
-}: React.ComponentProps<typeof BaseProgress.Root>) {
+function Progress({ className, value, ...props }: React.ComponentProps<typeof BaseProgress.Root>) {
   return (
     <BaseProgress.Root
       data-slot="progress"

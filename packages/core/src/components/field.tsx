@@ -3,10 +3,7 @@ import { Field as BaseField } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
 
-function FieldRoot({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Root>) {
+function FieldRoot({ className, ...props }: React.ComponentProps<typeof BaseField.Root>) {
   return (
     <BaseField.Root
       data-slot="field"
@@ -16,10 +13,7 @@ function FieldRoot({
   );
 }
 
-function FieldLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Label>) {
+function FieldLabel({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
   return (
     <BaseField.Label
       data-slot="field-label"
@@ -33,23 +27,15 @@ function FieldLabel({
   );
 }
 
-function FieldControl({
-  ...props
-}: React.ComponentProps<typeof BaseField.Control>) {
+function FieldControl({ ...props }: React.ComponentProps<typeof BaseField.Control>) {
   return <BaseField.Control data-slot="field-control" {...props} />;
 }
 
-function FieldError({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Error>) {
+function FieldError({ className, ...props }: React.ComponentProps<typeof BaseField.Error>) {
   return (
     <BaseField.Error
       data-slot="field-error"
-      className={cn(
-        "astw:text-destructive astw:text-sm astw:font-medium",
-        className,
-      )}
+      className={cn("astw:text-destructive astw:text-sm astw:font-medium", className)}
       {...props}
     />
   );

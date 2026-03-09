@@ -113,8 +113,6 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
 
-    expect(screen.getByTestId("list").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("list").classList.contains("custom-class")).toBe(true);
   });
 });

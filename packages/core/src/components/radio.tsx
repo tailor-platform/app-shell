@@ -4,10 +4,7 @@ import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 
 import { cn } from "@/lib/utils";
 
-function RadioGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseRadioGroup>) {
+function RadioGroup({ className, ...props }: React.ComponentProps<typeof BaseRadioGroup>) {
   return (
     <BaseRadioGroup
       data-slot="radio-group"
@@ -26,10 +23,7 @@ function RadioIndicator() {
   );
 }
 
-function Radio({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseRadio.Root>) {
+function Radio({ className, ...props }: React.ComponentProps<typeof BaseRadio.Root>) {
   return (
     <BaseRadio.Root
       data-slot="radio"

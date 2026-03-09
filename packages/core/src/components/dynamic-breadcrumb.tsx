@@ -49,9 +49,7 @@ export const DynamicBreadcrumb = () => {
             key={index}
           >
             <Breadcrumb.Item>
-              <Breadcrumb.Link to={segmentInfo.path}>
-                {segmentInfo.title}
-              </Breadcrumb.Link>
+              <Breadcrumb.Link to={segmentInfo.path}>{segmentInfo.title}</Breadcrumb.Link>
             </Breadcrumb.Item>
             {index < segments.length - 1 && <Breadcrumb.Separator />}
           </div>

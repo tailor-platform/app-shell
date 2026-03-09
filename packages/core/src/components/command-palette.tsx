@@ -198,6 +198,7 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("commandPaletteSearch")}
             className="astw:flex astw:h-10 astw:w-full astw:rounded-md astw:bg-transparent astw:py-3 astw:text-sm astw:outline-none astw:border-0 astw:shadow-none astw:focus-visible:ring-0 astw:placeholder:text-muted-foreground astw:disabled:cursor-not-allowed astw:disabled:opacity-50"
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- intentional: command palette should auto-focus the search input when opened
             autoFocus
           />
         </div>

@@ -25,6 +25,8 @@ const createMockResourceWithSubResources = (
     subResources,
   });
 
+const RootComponent = () => <div>Root</div>;
+
 describe("createContentRoutes", () => {
   it("uses EmptyOutlet when no root component is provided", () => {
     const routes = createContentRoutes({
@@ -36,7 +38,6 @@ describe("createContentRoutes", () => {
   });
 
   it("uses provided root component", () => {
-    const RootComponent = () => <div>Root</div>;
     const routes = createContentRoutes({
       modules: [],
       settingsResources: [],

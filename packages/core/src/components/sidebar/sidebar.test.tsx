@@ -124,6 +124,8 @@ describe("SidebarItem", () => {
   });
 });
 
+const localizedTitle = (locale: string) => (locale === "ja" ? "製品" : "Localized Products");
+
 describe("SidebarGroup", () => {
   it("renders group with title and children", () => {
     renderWithProviders(
@@ -163,8 +165,6 @@ describe("SidebarGroup", () => {
   });
 
   it("supports localized title function", () => {
-    const localizedTitle = (locale: string) => (locale === "ja" ? "製品" : "Localized Products");
-
     renderWithProviders(
       <SidebarGroup title={localizedTitle}>
         <SidebarItem to="/products/all" />

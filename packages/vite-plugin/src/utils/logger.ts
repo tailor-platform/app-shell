@@ -56,7 +56,7 @@ export function formatRoutesTable(pages: PageFile[], pagesDir: string): string {
   }
 
   // Sort pages: root first, then nested alphabetically
-  const sortedPages = [...pages].sort((a, b) => {
+  const sortedPages = pages.toSorted((a, b) => {
     const routeA = a.routePath ? `/${a.routePath}` : "/";
     const routeB = b.routePath ? `/${b.routePath}` : "/";
 

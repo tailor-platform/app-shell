@@ -6,17 +6,22 @@ import type { PageEntry, PageComponent } from "./types";
 // Converter Tests
 // ============================================
 
+const parentGuard = async () => ({ type: "pass" as const });
+const childGuard = async () => ({ type: "pass" as const });
+
+const createMockPage = (
+  path: string,
+  appShellPageProps?: PageComponent["appShellPageProps"],
+): PageEntry => {
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const component: PageComponent = () => null;
+  if (appShellPageProps) {
+    component.appShellPageProps = appShellPageProps;
+  }
+  return { path, component };
+};
+
 describe("convertPagesToModules", () => {
-  const createMockPage = (
-    path: string,
-    appShellPageProps?: PageComponent["appShellPageProps"],
-  ): PageEntry => {
-    const component: PageComponent = () => null;
-    if (appShellPageProps) {
-      component.appShellPageProps = appShellPageProps;
-    }
-    return { path, component };
-  };
 
   it("returns empty array for empty pages", () => {
     expect(convertPagesToModules([])).toEqual([]);
@@ -57,8 +62,6 @@ describe("convertPagesToModules", () => {
   });
 
   it("does not inherit guards from parent to children", () => {
-    const parentGuard = async () => ({ type: "pass" as const });
-    const childGuard = async () => ({ type: "pass" as const });
 
     const pages = [
       createMockPage("/dashboard", { guards: [parentGuard] }),
@@ -85,7 +88,7 @@ describe("convertPagesToModules", () => {
     const modules = convertPagesToModules(pages);
 
     expect(modules).toHaveLength(3);
-    expect(modules.map((m) => m.path).sort()).toEqual(["dashboard", "profile", "settings"]);
+    expect(modules.map((m) => m.path).toSorted()).toEqual(["dashboard", "profile", "settings"]);
   });
 });
 

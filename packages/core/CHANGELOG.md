@@ -1,5 +1,12 @@
 # @tailor-platform/app-shell
 
+## 0.27.3
+
+### Patch Changes
+
+- 10cb588: Remove horizontal padding in Layout component
+- 24f8eb1: Updated [es-toolkit](https://www.npmjs.com/package/es-toolkit) (^1.44.0 -> ^1.45.1)
+
 ## 0.27.2
 
 ### Patch Changes
@@ -15,6 +22,7 @@
 - e1a12c8: Migrated internal UI primitives from Radix UI/shadcn to Base UI.
 
   **Updated dependencies:**
+
   - Removed: `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-label`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-popover`, `@radix-ui/react-separator`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`
   - Added: `@base-ui/react` (^1.2.0)
 
@@ -27,12 +35,14 @@
 - a7f686f: Adds new Sidebar custom items API for flexible sidebar navigation customization.
 
   ## New Components
+
   - `SidebarItem` - Navigation item that auto-resolves title/icon from resource meta
   - `SidebarGroup` - Collapsible group for organizing navigation items
   - `SidebarSeparator` - Visual separator between sidebar sections
   - `WithGuard` - Conditional rendering wrapper based on guard functions
 
   ## New Hook
+
   - `usePageMeta` - Hook to access current page metadata (title, icon)
 
   ## Usage
@@ -83,7 +93,8 @@
   import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 
   // Define a guard function
-  const isAdminGuard = ({ context }) => (context.currentUser.role === "admin" ? pass() : hidden());
+  const isAdminGuard = ({ context }) =>
+    context.currentUser.role === "admin" ? pass() : hidden();
 
   // Wrap components with WithGuard
   <DefaultSidebar>
@@ -154,6 +165,7 @@
   ```
 
   Under the hood, the plugin:
+
   1. **Scans pages** - Finds `page.tsx` files in `src/pages` and builds a route tree
   2. **Generates virtual module** - Creates `virtual:app-shell-pages` with all discovered pages
   3. **Auto-injects pages** - Intercepts `@tailor-platform/app-shell` imports and wraps `AppShell` with `AppShell.WithPages(pages)`
@@ -186,6 +198,7 @@
   ```
 
   When enabled, the plugin generates `src/routes.generated.ts` containing:
+
   - `GeneratedRouteParams` type mapping all routes to their parameter types
   - `paths` helper with a type-safe `for()` method for building URLs
   - Module augmentation to register route types with app-shell
@@ -358,6 +371,7 @@
   To address this cross-browser compatibility issue, we have migrated to `@tailor-platform/auth-public-client`, which uses DPoP (Demonstrating Proof of Possession) token binding with IndexedDB storage instead of cookies. This approach works reliably across all major browsers (including Safari 14+ and Brave) regardless of their privacy settings.
 
   ## Key Changes
+
   - **Cross-browser Compatibility**: Works reliably on Safari, Brave, and other browsers with strict privacy settings
   - **Suspense Support**: Added `useAuthSuspense` hook for React Suspense integration
   - **Module-level Client**: Auth client can now be created at module level and shared across the app
@@ -367,32 +381,38 @@
   The underlying authentication package has been replaced with `@tailor-platform/auth-public-client` v0.3.1, which uses DPoP (Demonstrating Proof of Possession) token binding.
 
   ### AuthProvider API Changes
+
   - `AuthProvider` now requires a `client` prop created with `createAuthClient` from `@tailor-platform/app-shell`
   - The `apiEndpoint` prop has been removed - the client automatically uses the `appUri` provided during creation
   - You must use the wrapped `createAuthClient` from `@tailor-platform/app-shell` (not the original from `@tailor-platform/auth-public-client`)
 
   ### Hook Return Value Changes
+
   - **`useAuth`**: Now returns `{ isAuthenticated, error, isReady, login, logout, checkAuthStatus }` directly instead of `{ authState, ... }`
   - **`useAuthSuspense`**: Returns `{ isAuthenticated, error, login, logout, checkAuthStatus }` (no `isReady` since Suspense handles loading)
 
   ### Removed Exports
+
   - `DefaultUser` and `AuthRegister` types are no longer exported
   - `user` property removed from `AuthState` (see "Removed: Built-in User Fetching" below)
 
   ### Removed: Built-in User Fetching (meQuery)
 
   The previous implementation fetched user information internally using a simple `fetch` call to the `/query` endpoint. This design had several issues:
+
   1. **Caching conflicts**: When applications use GraphQL client libraries (urql, Apollo, etc.) with sophisticated caching mechanisms, having a separate internal fetch for user data creates inconsistencies and bypasses the cache.
   2. **Inflexibility**: Applications couldn't customize the user query or integrate it with their existing data fetching patterns.
   3. **Mixed responsibilities**: The auth provider was handling both authentication AND user data fetching, which are separate concerns.
 
   **The new design focuses solely on authentication responsibilities:**
+
   - Token management (access tokens, refresh tokens)
   - Login/logout flows
   - OAuth callback handling
   - Authentication state (`isAuthenticated`, `error`, `isReady`)
 
   **User information should now be fetched by your application** using your preferred GraphQL client library, which gives you:
+
   - Full control over caching behavior
   - Ability to customize the user query
   - Consistent data fetching patterns across your app
@@ -421,7 +441,8 @@
     const { authState, login, logout } = useAuth();
 
     if (authState.isLoading) return <div>Loading...</div>;
-    if (!authState.isAuthenticated) return <button onClick={login}>Log In</button>;
+    if (!authState.isAuthenticated)
+      return <button onClick={login}>Log In</button>;
 
     // User was available from authState
     return <div>Welcome, {authState.user?.email}!</div>;
@@ -431,7 +452,11 @@
   ### After (v0.23.0+)
 
   ```tsx
-  import { createAuthClient, AuthProvider, useAuth } from "@tailor-platform/app-shell";
+  import {
+    createAuthClient,
+    AuthProvider,
+    useAuth,
+  } from "@tailor-platform/app-shell";
 
   // Create auth client outside component (module level)
   const authClient = createAuthClient({
@@ -471,7 +496,11 @@
   ### Basic Authentication
 
   ```tsx
-  import { createAuthClient, AuthProvider, useAuth } from "@tailor-platform/app-shell";
+  import {
+    createAuthClient,
+    AuthProvider,
+    useAuth,
+  } from "@tailor-platform/app-shell";
 
   const authClient = createAuthClient({
     clientId: "your-client-id",
@@ -505,7 +534,11 @@
 
   ```tsx
   import { Suspense } from "react";
-  import { createAuthClient, AuthProvider, useAuthSuspense } from "@tailor-platform/app-shell";
+  import {
+    createAuthClient,
+    AuthProvider,
+    useAuthSuspense,
+  } from "@tailor-platform/app-shell";
 
   const authClient = createAuthClient({
     clientId: "your-client-id",
@@ -619,6 +652,7 @@
 - 10b521d: Fix module redirect to skip hidden resources
 
   When a module has no `component` and redirects to its first resource, the redirect now correctly skips resources that are hidden by guards. If all resources are hidden, the module itself returns a 404.
+
   - Redirects to the first visible (non-hidden) resource instead of always redirecting to the first resource
   - Returns 404 when all resources in the module are hidden by guards
 
@@ -638,6 +672,7 @@
   ```
 
 - 193afe9: Make `component` optional in `defineModule`
+
   - `defineModule` now accepts an optional `component` prop
   - When `component` is omitted, the module acts as a container for resources and automatically redirects to the first resource
   - `menuItemClickable` is set to `false` for modules without a component
@@ -669,6 +704,7 @@
   #### Route Guards
 
   Inspired by Angular Route Guards, this feature introduces a middleware-like pattern for route access control.
+
   - **Composable**: Guards can be combined in an array, promoting separation of concerns and reusability
   - **Semantic Constraints**: Guard results are limited to `pass`, `hidden`, or `redirect`, making behavior predictable and explicit
   - **Reusable**: Define guards once and share them across multiple routes
@@ -676,11 +712,13 @@
   #### Context Data
 
   Provides a type-safe dependency injection mechanism for passing data from the application root to guards and components.
+
   - **Type-Safe**: Module augmentation ensures `contextData` is fully typed throughout the application
   - **Centralized**: Manage API clients, user state, and feature flags in one place
   - **Testable**: Easy to mock and inject different contexts for testing
 
   ### Breaking Changes
+
   - **`accessControl` is replaced by `guards`**: The `accessControl` option in `defineModule` and `defineResource` has been replaced with a more flexible `guards` array.
   - **`RedirectConfig` and `redirectToResource` are removed**: Use `guards` with `redirectTo()` instead.
 
@@ -691,7 +729,13 @@
   Guards are functions that control access to routes. They are executed in order, and the first non-`pass` result stops the chain.
 
   ```tsx
-  import { defineResource, pass, hidden, redirectTo, type Guard } from "@tailor-platform/app-shell";
+  import {
+    defineResource,
+    pass,
+    hidden,
+    redirectTo,
+    type Guard,
+  } from "@tailor-platform/app-shell";
 
   // Reusable guards
   const requireAuth: Guard = ({ context }) => {
@@ -848,6 +892,7 @@
   ```
 
   ### New Exports
+
   - `Guard` - Guard function type
   - `GuardContext` - Context passed to guards (`params`, `searchParams`, `signal`, `context`)
   - `GuardResult` - Result type (`pass`, `hidden`, or `redirect`)
@@ -866,6 +911,7 @@
 ### Minor Changes
 
 - 3f42257: Add Layout component for responsive column layouts
+
   - `Layout` - Responsive column layout component with automatic responsive behavior
   - `Layout.Column` - Sub-component for wrapping individual column content
   - Support for 1, 2, and 3 column layouts with automatic responsive stacking
@@ -899,6 +945,7 @@
 ### Minor Changes
 
 - b09e30d: Add DescriptionCard component for ERP document display
+
   - `DescriptionCard` - Card component for structured key-value information
   - `Badge` - Status badge component with semantic variants (success, warning, error, etc.)
   - 7 field types: text, badge, money, date, link, address, reference
@@ -970,6 +1017,7 @@
 ### Patch Changes
 
 - 2418378: Improve CommandPalette UI with hierarchical path display
+
   - Display module/resource hierarchy as breadcrumb format (e.g., "Dashboard > Analytics")
   - Widen the dialog width for better readability
   - Show URL path below the breadcrumb in smaller text
@@ -985,6 +1033,7 @@
   The CommandPalette provides a keyboard-driven interface (Cmd+K / Ctrl+K) for searching and navigating between pages in your application. It automatically collects navigable routes from your module definitions and supports both English and Japanese locales.
 
   ## Features
+
   - Global keyboard shortcut: `Cmd+K` (Mac) / `Ctrl+K` (Windows)
   - Fuzzy search by page title or path
   - Keyboard navigation with arrow keys and Enter
@@ -994,7 +1043,11 @@
   The `CommandPalette` component is designed to be used within an `AppShell` context. It automatically reads module configurations and provides navigation capabilities.
 
   ```tsx
-  import { AppShell, CommandPalette, SidebarLayout } from "@tailor-platform/app-shell";
+  import {
+    AppShell,
+    CommandPalette,
+    SidebarLayout,
+  } from "@tailor-platform/app-shell";
 
   const App = () => (
     <AppShell modules={modules} locale="en">
@@ -1026,6 +1079,7 @@
   ## Component
 
   **`AuthProvider`** - New props:
+
   - `meQuery`: Custom GraphQL query to fetch the current authenticated user. If you override `AuthRegister["user"]`, make sure to have the fields match your custom user type.
   - `autoLogin`: Enable automatic login on initialization
   - `guardComponent`: Component to render while loading or unauthenticated
@@ -1033,6 +1087,7 @@
   ## Hook
 
   **`useAuth`** - New returns:
+
   - `authState`: Current auth state (`isLoading`, `isAuthenticated`, `user`)
   - `checkAuthStatus()`: Manually verify authentication status
   - `handleCallback()`: Handle OAuth callback
@@ -1073,7 +1128,11 @@
   The `meQuery` prop defines the GraphQL query used to fetch the authenticated user. **The fields in your query must match the fields defined in your custom user type.**
 
   ```tsx
-  import { AppShell, AuthProvider, SidebarLayout } from "@tailor-platform/app-shell";
+  import {
+    AppShell,
+    AuthProvider,
+    SidebarLayout,
+  } from "@tailor-platform/app-shell";
 
   const App = () => (
     <AppShell>
@@ -1122,13 +1181,17 @@
   # Migration
 
   Key changes:
+
   - `BuiltinIdPAuthProvider` is removed. Use `AuthProvider` instead.
   - `useBuiltinIdpAuth` is removed. Use `useAuth` instead.
   - Utility functions (`buildAuthorizationUrl`, `exchangeCodeForToken`, `prepareLogin`, `handleOAuthCallback`) are no longer exported.
 
   ```tsx
   // Before
-  import { BuiltinIdPAuthProvider, useBuiltinIdpAuth } from "@tailor-platform/app-shell";
+  import {
+    BuiltinIdPAuthProvider,
+    useBuiltinIdpAuth,
+  } from "@tailor-platform/app-shell";
 
   <BuiltinIdPAuthProvider apiEndpoint="..." clientId="...">
     {children}
@@ -1139,7 +1202,11 @@
   // After
   import { AuthProvider, useAuth } from "@tailor-platform/app-shell";
 
-  <AuthProvider apiEndpoint="..." clientId="..." guardComponent={() => <Loading />}>
+  <AuthProvider
+    apiEndpoint="..."
+    clientId="..."
+    guardComponent={() => <Loading />}
+  >
     {children}
   </AuthProvider>;
 
@@ -1153,6 +1220,7 @@
 - 91bfc1f: Add `defineI18nLabels` function for internationalization support.
 
   `defineI18nLabels` defines internationalization labels for multiple locales with `en` as the required default locale, and returns an object with:
+
   - `useT`: A hook to get the translated label resolver function for use in React components
   - `t`: A function to get a `LocalizedString` for a specific label key, useful for `meta.title` in module/resource definitions
 
@@ -1355,7 +1423,11 @@
   ## Example
 
   ```tsx
-  import { AppShell, AppShellProps, SidebarLayoutContainer } from "@tailor-platform/app-shell";
+  import {
+    AppShell,
+    AppShellProps,
+    SidebarLayoutContainer,
+  } from "@tailor-platform/app-shell";
   import { exampleModule } from "./resource/example";
 
   const App = () => {
@@ -1485,6 +1557,7 @@
 ### Minor Changes
 
 - c857b7e: Adds support for consumer applications to customize the UI
+
   - Customize icon for module:
 
     Optionally include an `icon` property within the defineModule meta property to render a custom icon, rather than using the default Table one.
@@ -1536,7 +1609,10 @@
   Instead of that, the page title can be accessible through props given to the resoure component for more layout flexibility.
 
   ```tsx
-  import { defineResource, ResourceComponentProps } from "@tailor-platform/app-shell";
+  import {
+    defineResource,
+    ResourceComponentProps,
+  } from "@tailor-platform/app-shell";
 
   const Page = (pageProps: ResourceComponentProps) => (
     <div>

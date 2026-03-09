@@ -209,10 +209,14 @@ export const useAuthLoader = (): AuthLoader | null => {
     if (requestUrl.searchParams.has("code")) {
       try {
         await client.handleCallback();
-        return replace(buildCleanOAuthCallbackUrl(requestUrl));
       } catch (error) {
         console.error("Failed to handle callback:", error);
       }
+      // Always clean up the ?code= parameter from the URL regardless of
+      // success or failure. Leaving it would cause the loader to re-attempt
+      // handleCallback with an already-consumed/expired code on the next
+      // navigation or page refresh, resulting in an unrecoverable error loop.
+      return replace(buildCleanOAuthCallbackUrl(requestUrl));
     } else {
       const state = await client.checkAuthStatus();
       if (autoLogin && !state.isAuthenticated) {

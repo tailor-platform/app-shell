@@ -13,7 +13,6 @@ import {
   useAuth,
   useAuthSuspense,
   useAuthLoader,
-  buildCleanOAuthCallbackUrl,
   type EnhancedAuthClient,
 } from "./auth-context";
 
@@ -147,9 +146,9 @@ describe("AuthProvider", () => {
   describe("authentication flow", () => {
     it("should check auth status via useAuthLoader", async () => {
       const state = {
-        isAuthenticated: true,
+        isAuthenticated: false,
         error: null,
-        isReady: true,
+        isReady: false,
       };
       const mockCheckAuthStatus = vi.fn().mockResolvedValue({
         isAuthenticated: true,
@@ -178,15 +177,9 @@ describe("AuthProvider", () => {
         isReady: true,
       };
       const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
-      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
-        isAuthenticated: true,
-        error: null,
-        isReady: true,
-      });
 
       const mockClient = createMockAuthClient(state, {
         handleCallback: mockHandleCallback,
-        checkAuthStatus: mockCheckAuthStatus,
       });
 
       const { result } = renderHook(() => useAuthLoader(), {
@@ -196,9 +189,7 @@ describe("AuthProvider", () => {
       expect(result.current).not.toBeNull();
       const response = await result.current!(new URL("http://localhost/?code=auth-code-123"));
       expect(mockHandleCallback).toHaveBeenCalled();
-      expect(response).not.toBeNull();
-      expect(response!.status).toBe(302);
-      expect(response!.headers.get("Location")).toBe("/");
+      expect(response).toBeNull();
     });
 
     it("should be authenticated when logged in", async () => {
@@ -479,7 +470,7 @@ describe("AuthProvider", () => {
       const state = {
         isAuthenticated: false,
         error: null,
-        isReady: true,
+        isReady: false,
       };
       const mockLogin = vi.fn().mockResolvedValue(undefined);
       const mockCheckAuthStatus = vi.fn().mockResolvedValue({
@@ -644,59 +635,5 @@ describe("AuthProvider", () => {
       expect(authState.isReady).toBe(true);
       expect(authState.error).toBeNull();
     });
-  });
-});
-
-describe("buildCleanOAuthCallbackUrl", () => {
-  it("removes code parameter", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("removes state parameter", () => {
-    const url = new URL("https://example.com/dashboard?state=xyz789");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("removes both code and state parameters", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123&state=xyz789");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("preserves other query parameters", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123&tab=settings&view=list");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard?tab=settings&view=list");
-  });
-
-  it("preserves hash fragments", () => {
-    const url = new URL("https://example.com/dashboard?code=abc123#section1");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard#section1");
-  });
-
-  it("preserves both query parameters and hash fragments", () => {
-    const url = new URL(
-      "https://example.com/dashboard?code=abc123&state=xyz&tab=settings#section1",
-    );
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard?tab=settings#section1");
-  });
-
-  it("handles URL with no query parameters", () => {
-    const url = new URL("https://example.com/dashboard");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard");
-  });
-
-  it("handles URL with only hash fragment", () => {
-    const url = new URL("https://example.com/dashboard#section1");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/dashboard#section1");
-  });
-
-  it("handles nested paths", () => {
-    const url = new URL("https://example.com/app/users/123?code=abc&filter=active");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/app/users/123?filter=active");
-  });
-
-  it("handles root path", () => {
-    const url = new URL("https://example.com/?code=abc123");
-    expect(buildCleanOAuthCallbackUrl(url)).toBe("/");
   });
 });

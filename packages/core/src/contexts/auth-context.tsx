@@ -1,5 +1,9 @@
-import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
-import { replace } from "react-router";
+import {
+  createContext,
+  useContext,
+  useSyncExternalStore,
+  useCallback,
+} from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
@@ -187,6 +191,7 @@ type AuthClientContextType = {
 
 const AuthClientContext = createContext<AuthClientContextType | null>(null);
 
+/** @internal */
 export type AuthLoader = (requestUrl: URL) => Promise<Response | null>;
 
 /**
@@ -206,23 +211,42 @@ export const useAuthLoader = (): AuthLoader | null => {
 
   const { client, autoLogin } = authClientCtx;
   return async (requestUrl: URL): Promise<Response | null> => {
+    // The "code" query parameter indicates a redirect back from the OAuth provider.
+    // handleCallback() internally cleans up the OAuth-related query parameters
+    // from the URL, so no additional URL cleanup is needed here.
     if (requestUrl.searchParams.has("code")) {
       try {
         await client.handleCallback();
       } catch (error) {
         console.error("Failed to handle callback:", error);
       }
-      // Always clean up the ?code= parameter from the URL regardless of
-      // success or failure. Leaving it would cause the loader to re-attempt
-      // handleCallback with an already-consumed/expired code on the next
-      // navigation or page refresh, resulting in an unrecoverable error loop.
-      return replace(buildCleanOAuthCallbackUrl(requestUrl));
-    } else {
-      const state = await client.checkAuthStatus();
-      if (autoLogin && !state.isAuthenticated) {
-        await client.login();
+    }
+
+    // Only check auth status on first load (when isReady is false).
+    // Subsequent navigations skip this because the client already holds
+    // the cached auth state via useSyncExternalStore.
+    if (!client.getState().isReady) {
+      try {
+        await client.checkAuthStatus();
+      } catch (error) {
+        // Intentionally swallow errors to avoid rendering the error boundary
+        // on transient failures (e.g. network timeouts). The next navigation
+        // will re-run this loader and retry automatically.
+        console.error("Failed to check auth status:", error);
       }
     }
+
+    // autoLogin is evaluated separately from checkAuthStatus so that it
+    // still fires after handleCallback updates the internal state via
+    // getState() (e.g. setting isAuthenticated to true on success).
+    if (autoLogin && !client.getState().isAuthenticated) {
+      try {
+        await client.login();
+      } catch (error) {
+        console.error("Failed to login:", error);
+      }
+    }
+
     return null;
   };
 };
@@ -271,7 +295,9 @@ type AuthProviderProps = {
  * }
  * ```
  */
-export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
+export const AuthProvider = (
+  props: React.PropsWithChildren<AuthProviderProps>,
+) => {
   const client = props.client;
 
   // Subscribe to client state changes for useSyncExternalStore
@@ -291,7 +317,6 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribe, getSnapshot);
-
   const isAuthenticated = authState.isAuthenticated;
 
   const contents =
@@ -324,7 +349,9 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
+    throw new Error(
+      "useAuth/useAuthSuspense must be used within an AuthProvider",
+    );
   }
   return context;
 };

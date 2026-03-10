@@ -91,7 +91,6 @@ export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";
 export { Form } from "./components/form";
 export { Input } from "./components/input";
-export { Label } from "./components/label";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Meter } from "./components/meter";
 export { NumberField } from "./components/number-field";

@@ -99,7 +99,7 @@ describe("convertPagesToModules", () => {
     expect(modules[0].component).toBeUndefined();
     expect(modules[0].meta.menuItemClickable).toBe(false);
     expect(modules[0].resources).toHaveLength(2);
-    expect(modules[0].resources.map((r) => r.path).sort()).toEqual(["roles", "users"]);
+    expect(modules[0].resources.map((r) => r.path).toSorted()).toEqual(["roles", "users"]);
   });
 
   it("resource directory without page.tsx has undefined component", () => {
@@ -115,7 +115,10 @@ describe("convertPagesToModules", () => {
     expect(namespaceResource.path).toBe("namespace");
     expect(namespaceResource.component).toBeUndefined();
     expect(namespaceResource.subResources).toHaveLength(2);
-    expect(namespaceResource.subResources!.map((r) => r.path).sort()).toEqual(["page-a", "page-b"]);
+    expect(namespaceResource.subResources!.map((r) => r.path).toSorted()).toEqual([
+      "page-a",
+      "page-b",
+    ]);
   });
 
   it("resource directory without page.tsx produces a 404 index route", () => {

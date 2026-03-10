@@ -28,27 +28,12 @@ export interface EnhancedAuthClient extends AuthClient {
    * Get the appUri used to create this client
    */
   getAppUri(): string;
-}
 
-/**
- * Build a clean URL by removing OAuth-related parameters (code, state)
- * while preserving other query parameters and hash fragments.
- *
- * @param url - The URL to clean
- * @returns The cleaned URL string
- *
- * @example
- * ```ts
- * buildCleanOAuthCallbackUrl(new URL('https://example.com/dashboard?code=xxx&state=yyy&tab=settings#section1'))
- * // => '/dashboard?tab=settings#section1'
- * ```
- */
-export function buildCleanOAuthCallbackUrl(url: URL): string {
-  const params = new URLSearchParams(url.search);
-  params.delete("code");
-  params.delete("state");
-  const newSearch = params.toString();
-  return url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
+  /**
+   * Authenticated fetch with built-in DPoP proof generation and token refresh.
+   * Same signature as the standard `fetch` API.
+   */
+  fetch: AuthClient["fetch"];
 }
 
 /**
@@ -98,6 +83,27 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
   };
 
   return enhancedClient;
+}
+
+/**
+ * Build a clean URL by removing OAuth-related parameters (code, state)
+ * while preserving other query parameters and hash fragments.
+ *
+ * @param url - The URL to clean
+ * @returns The cleaned URL string
+ *
+ * @example
+ * ```ts
+ * buildCleanOAuthCallbackUrl(new URL('https://example.com/dashboard?code=xxx&state=yyy&tab=settings#section1'))
+ * // => '/dashboard?tab=settings#section1'
+ * ```
+ */
+export function buildCleanOAuthCallbackUrl(url: URL): string {
+  const params = new URLSearchParams(url.search);
+  params.delete("code");
+  params.delete("state");
+  const newSearch = params.toString();
+  return url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
 }
 
 // ============================================================================

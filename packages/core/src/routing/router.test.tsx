@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterContainer } from "./router";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
 import { Link, Outlet, useNavigate } from "react-router";
@@ -27,6 +27,7 @@ const renderWithConfig = ({
   contextData = {},
   authClient,
   autoLogin,
+  guardComponent,
 }: {
   modules?: Array<Module>;
   basePath?: string;
@@ -35,6 +36,7 @@ const renderWithConfig = ({
   contextData?: ContextData;
   authClient?: EnhancedAuthClient;
   autoLogin?: boolean;
+  guardComponent?: () => React.ReactNode;
 }) => {
   const configurations = {
     modules,
@@ -58,7 +60,7 @@ const renderWithConfig = ({
 
   render(
     authClient ? (
-      <AuthProvider client={authClient} autoLogin={autoLogin}>
+      <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
         {tree}
       </AuthProvider>
     ) : (
@@ -491,5 +493,130 @@ describe("RouterContainer with AuthProvider", () => {
 
     await screen.findByText("Home");
     expect(mockLogin).not.toHaveBeenCalled();
+  });
+
+  it("shows guard component when not ready", async () => {
+    const authClient = createMockAuthClient({
+      isAuthenticated: false,
+      error: null,
+      isReady: false,
+    });
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Loading...</div>,
+    });
+
+    expect(await screen.findByText("Loading...")).toBeDefined();
+    expect(screen.queryByText("Home")).toBeNull();
+  });
+
+  it("shows guard component when not authenticated", async () => {
+    const authClient = createMockAuthClient({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Please log in</div>,
+    });
+
+    expect(await screen.findByText("Please log in")).toBeDefined();
+    expect(screen.queryByText("Home")).toBeNull();
+  });
+
+  it("shows children when authenticated with guardComponent", async () => {
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      { checkAuthStatus: mockCheckAuthStatus },
+    );
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Please log in</div>,
+    });
+
+    expect(await screen.findByText("Home")).toBeDefined();
+    expect(screen.queryByText("Please log in")).toBeNull();
+  });
+
+  it("transitions from guard to children when auth state changes", async () => {
+    // Mutable snapshot; initially not ready, not authenticated.
+    // The loader calls checkAuthStatus, but the mock does NOT update the
+    // snapshot during the loader — so the guard is shown on first render.
+    let snapshot = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: false,
+    };
+
+    // Collect listeners so we can trigger state change notifications
+    const listeners: Array<(event: { type: string }) => void> = [];
+
+    // checkAuthStatus resolves without updating snapshot, mimicking a
+    // still-pending auth check from the guard's perspective.
+    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+
+    const authClient = createMockAuthClient(snapshot, {
+      checkAuthStatus: mockCheckAuthStatus,
+      // Return the same reference until we reassign snapshot (required by useSyncExternalStore)
+      getState: vi.fn(() => snapshot),
+      addEventListener: vi.fn((listener) => {
+        listeners.push(listener);
+        return () => {
+          const idx = listeners.indexOf(listener);
+          if (idx >= 0) listeners.splice(idx, 1);
+        };
+      }),
+    });
+
+    renderWithConfig({
+      modules: [],
+      rootComponent: () => <div>Home</div>,
+      initialEntries: ["/"],
+      authClient,
+      guardComponent: () => <div>Loading...</div>,
+    });
+
+    // Initially the guard should be shown
+    expect(await screen.findByText("Loading...")).toBeDefined();
+    expect(screen.queryByText("Home")).toBeNull();
+
+    // Simulate auth state becoming ready and authenticated (e.g. token refresh
+    // or login flow completing outside the loader).
+    act(() => {
+      snapshot = {
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      };
+      for (const listener of listeners) {
+        listener({ type: "auth_state_changed" });
+      }
+    });
+
+    // After auth state transitions, children should replace the guard
+    expect(await screen.findByText("Home")).toBeDefined();
+    expect(screen.queryByText("Loading...")).toBeNull();
   });
 });

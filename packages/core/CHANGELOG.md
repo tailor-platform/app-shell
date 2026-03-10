@@ -1,5 +1,26 @@
 # @tailor-platform/app-shell
 
+## 0.28.0
+
+### Minor Changes
+
+- 4cb5295: Replaced `getAuthHeadersForQuery` with `auth-public-client` 0.5.0's built-in `fetch()` method.
+
+  **Breaking change:** `EnhancedAuthClient.getAuthHeadersForQuery()` has been removed. Use `authClient.fetch` instead, which transparently handles DPoP proof generation and token refresh.
+
+  **Migration:**
+
+  ```diff
+   const urqlClient = createClient({
+     url: `${authClient.getAppUri()}/query`,
+  -  fetchOptions: async () => {
+  -    const headers = await authClient.getAuthHeadersForQuery();
+  -    return { headers };
+  -  },
+  +  fetch: authClient.fetch,
+   });
+  ```
+
 ## 0.27.3
 
 ### Patch Changes

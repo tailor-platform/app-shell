@@ -835,20 +835,6 @@ import { Input } from "@tailor-platform/app-shell";
 
 ---
 
-## Label
-
-Standalone label component.
-
-### Example
-
-```tsx
-import { Label } from "@tailor-platform/app-shell";
-
-<Label>Username</Label>;
-```
-
----
-
 ## Layout
 
 Responsive column layout component. Responds to container width (not viewport). See the [API Reference](./api.md#layout) for detailed responsive behavior.
@@ -880,7 +866,15 @@ import { Layout } from "@tailor-platform/app-shell";
 
 Meter/gauge indicator.
 
-### Props
+### Parts
+
+| Part              | Description         |
+| ----------------- | ------------------- |
+| `Meter.Root`      | Root provider       |
+| `Meter.Track`     | Track container     |
+| `Meter.Indicator` | Value indicator bar |
+
+### Props (`Meter.Root`)
 
 | Prop    | Type     | Description   |
 | ------- | -------- | ------------- |
@@ -893,7 +887,15 @@ Meter/gauge indicator.
 ```tsx
 import { Meter } from "@tailor-platform/app-shell";
 
-<Meter value={75} min={0} max={100} />;
+// Simple usage (default Track + Indicator)
+<Meter.Root value={75} min={0} max={100} />
+
+// Composable usage
+<Meter.Root value={75} min={0} max={100}>
+  <Meter.Track>
+    <Meter.Indicator />
+  </Meter.Track>
+</Meter.Root>
 ```
 
 ---
@@ -1007,7 +1009,15 @@ import { PreviewCard } from "@tailor-platform/app-shell";
 
 Determinate progress bar.
 
-### Props
+### Parts
+
+| Part                 | Description         |
+| -------------------- | ------------------- |
+| `Progress.Root`      | Root provider       |
+| `Progress.Track`     | Track container     |
+| `Progress.Indicator` | Value indicator bar |
+
+### Props (`Progress.Root`)
 
 | Prop    | Type     | Description            |
 | ------- | -------- | ---------------------- |
@@ -1020,7 +1030,15 @@ Determinate progress bar.
 ```tsx
 import { Progress } from "@tailor-platform/app-shell";
 
-<Progress value={60} />;
+// Simple usage (default Track + Indicator)
+<Progress.Root value={60} />
+
+// Composable usage
+<Progress.Root value={60}>
+  <Progress.Track>
+    <Progress.Indicator />
+  </Progress.Track>
+</Progress.Root>
 ```
 
 ---
@@ -1220,8 +1238,8 @@ Standard switch props: `checked`, `onCheckedChange`, `disabled`, etc.
 ```tsx
 import { Switch } from "@tailor-platform/app-shell";
 
-<Switch />
-<Switch defaultChecked />
+<Switch.Root />
+<Switch.Root defaultChecked />
 ```
 
 ---

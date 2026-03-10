@@ -22,6 +22,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const LoadingGuard = () => <div>Loading...</div>;
+const LoginGuard = () => <div>Please log in</div>;
+
 describe("AuthProvider", () => {
   // Create a mock auth client with a stable state object
   // useSyncExternalStore requires getSnapshot to return the same reference if the state hasn't changed
@@ -82,10 +85,9 @@ describe("AuthProvider", () => {
         isReady: false,
       };
       const mockClient = createMockAuthClient(state);
-      const GuardComponent = () => <div>Loading...</div>;
 
       render(
-        <AuthProvider client={mockClient} guardComponent={GuardComponent}>
+        <AuthProvider client={mockClient} guardComponent={LoadingGuard}>
           <div>Protected Content</div>
         </AuthProvider>,
       );
@@ -101,10 +103,9 @@ describe("AuthProvider", () => {
         isReady: true,
       };
       const mockClient = createMockAuthClient(state);
-      const GuardComponent = () => <div>Please log in</div>;
 
       render(
-        <AuthProvider client={mockClient} guardComponent={GuardComponent}>
+        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
           <div>Protected Content</div>
         </AuthProvider>,
       );
@@ -128,10 +129,9 @@ describe("AuthProvider", () => {
           isReady: true,
         }),
       });
-      const GuardComponent = () => <div>Please log in</div>;
 
       render(
-        <AuthProvider client={mockClient} guardComponent={GuardComponent}>
+        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
           <div>Protected Content</div>
         </AuthProvider>,
       );

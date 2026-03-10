@@ -118,6 +118,7 @@ export const SidebarItem = (props: SidebarItemProps) => {
       <SidebarMenuItem>
         <SidebarMenuButton
           render={
+            // oxlint-disable-next-line jsx-a11y/anchor-has-content -- content is provided by SidebarMenuButton's children
             <a
               href={to}
               target="_blank"

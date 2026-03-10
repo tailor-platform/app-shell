@@ -82,12 +82,12 @@ function SidebarProvider({
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
     if (isMobile) {
-      return setOpenMobile((open) => !open);
+      return setOpenMobile((prev) => !prev);
     } else if (isIconMode) {
       // In icon mode, use overlay (similar to mobile)
-      return setOpenIconMode((open) => !open);
+      return setOpenIconMode((prev) => !prev);
     } else {
-      return setOpen((open) => !open);
+      return setOpen((prev) => !prev);
     }
   }, [isMobile, isIconMode, setOpen, setOpenMobile]);
 

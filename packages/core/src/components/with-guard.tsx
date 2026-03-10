@@ -147,7 +147,9 @@ export const WithGuard = (props: WithGuardProps) => {
 
   return (
     <Suspense fallback={loading}>
-      <GuardResolver cache={cache} children={children} fallback={fallback} />
+      <GuardResolver cache={cache} fallback={fallback}>
+        {children}
+      </GuardResolver>
     </Suspense>
   );
 };

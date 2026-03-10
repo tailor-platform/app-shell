@@ -2,3 +2,5 @@ node_modules
 dist
 .turbo
 *.tsbuildinfo
+.DS_Store
+.cursor/

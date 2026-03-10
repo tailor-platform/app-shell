@@ -73,7 +73,7 @@ export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 
 // ActionPanel
-export { ActionPanel, type ActionPanelProps, type ActionItem } from "./components/action-panel";
+export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
 
 // Layout component
 export { Layout, type LayoutProps } from "./components/layout/Layout";

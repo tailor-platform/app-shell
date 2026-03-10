@@ -48,19 +48,6 @@ describe("ActionPanel", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it("renders action as link when href is provided", () => {
-    render(
-      <ActionPanel
-        title="Actions"
-        actions={[{ key: "1", label: "View docs", icon: <MockIcon />, href: "/docs" }]}
-      />,
-    );
-
-    const link = screen.getByRole("link", { name: "View docs" });
-    expect(link).toBeDefined();
-    expect(link.getAttribute("href")).toBe("/docs");
-  });
-
   it("applies disabled state to button action", () => {
     render(
       <ActionPanel

@@ -45,7 +45,7 @@ const actionRowInteractiveClasses =
 const actionRowDisabledClasses = "astw:pointer-events-none astw:opacity-50";
 
 function ActionRow({ action }: { action: ActionItem }) {
-  const { key, label, icon, onClick, href, disabled, loading } = action;
+  const { key, label, icon, onClick, disabled, loading } = action;
   const isDisabled = Boolean(disabled) || Boolean(loading);
 
   const content = (
@@ -61,19 +61,6 @@ function ActionRow({ action }: { action: ActionItem }) {
     actionRowBaseClasses,
     isDisabled ? actionRowDisabledClasses : actionRowInteractiveClasses,
   );
-
-  if (href && !isDisabled) {
-    return (
-      <a
-        href={href}
-        className={rowClasses}
-        data-slot="action-panel-item"
-        data-key={key}
-      >
-        {content}
-      </a>
-    );
-  }
 
   return (
     <button
@@ -98,20 +85,21 @@ function ActionRow({ action }: { action: ActionItem }) {
 /**
  * ActionPanel — Card with title and list of actions (icon + label).
  *
- * Renders a card with a title and vertical list of action rows. Each row has an icon and label,
- * and is triggered by onClick (button) or href (link). Use `astw:w-full` so the panel fills
- * the width of its parent container.
+ * Each row has an icon and label and is triggered by onClick. For navigation, use
+ * useNavigate() inside the callback (e.g. onClick: () => navigate("/path")).
+ * Use `astw:w-full` so the panel fills the width of its parent container.
  *
  * When an action has `loading: true`, the row shows a spinner in the icon slot and is
  * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).
  *
  * @example
  * ```tsx
+ * const navigate = useNavigate();
  * <ActionPanel
  *   title="Actions"
  *   actions={[
  *     { key: "1", label: "Create invoice", icon: <ReceiptIcon />, onClick: () => openModal() },
- *     { key: "2", label: "View docs", icon: <DocIcon />, href: "/docs" },
+ *     { key: "2", label: "View docs", icon: <DocIcon />, onClick: () => navigate("/docs") },
  *     { key: "3", label: "Saving…", icon: <SaveIcon />, onClick: () => {}, loading: true },
  *   ]}
  * />

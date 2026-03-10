@@ -3,7 +3,7 @@ import { Switch as BaseSwitch } from "@base-ui/react/switch";
 
 import { cn } from "@/lib/utils";
 
-function Switch({ className, ...props }: React.ComponentProps<typeof BaseSwitch.Root>) {
+function SwitchRoot({ className, ...props }: React.ComponentProps<typeof BaseSwitch.Root>) {
   return (
     <BaseSwitch.Root
       data-slot="switch"
@@ -27,5 +27,9 @@ function Switch({ className, ...props }: React.ComponentProps<typeof BaseSwitch.
     </BaseSwitch.Root>
   );
 }
+
+const Switch = {
+  Root: SwitchRoot,
+};
 
 export { Switch };

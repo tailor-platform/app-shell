@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe("Switch", () => {
   it("renders as unchecked by default", () => {
-    render(<Switch data-testid="switch" />);
+    render(<Switch.Root data-testid="switch" />);
 
     const sw = screen.getByTestId("switch");
     expect(sw).toBeDefined();
@@ -17,7 +17,7 @@ describe("Switch", () => {
   });
 
   it("renders as checked when defaultChecked is true", () => {
-    render(<Switch data-testid="switch" defaultChecked />);
+    render(<Switch.Root data-testid="switch" defaultChecked />);
 
     const sw = screen.getByTestId("switch");
     expect(sw.hasAttribute("data-checked")).toBe(true);
@@ -26,7 +26,7 @@ describe("Switch", () => {
   it("toggles checked state on click", async () => {
     const user = userEvent.setup();
 
-    render(<Switch data-testid="switch" />);
+    render(<Switch.Root data-testid="switch" />);
 
     const sw = screen.getByTestId("switch");
     expect(sw.hasAttribute("data-checked")).toBe(false);
@@ -48,7 +48,7 @@ describe("Switch", () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
 
-    render(<Switch data-testid="switch" onCheckedChange={onCheckedChange} />);
+    render(<Switch.Root data-testid="switch" onCheckedChange={onCheckedChange} />);
 
     await user.click(screen.getByTestId("switch"));
 
@@ -59,18 +59,18 @@ describe("Switch", () => {
   });
 
   it("supports controlled checked state", () => {
-    const { rerender } = render(<Switch data-testid="switch" checked={false} />);
+    const { rerender } = render(<Switch.Root data-testid="switch" checked={false} />);
 
     const sw = screen.getByTestId("switch");
     expect(sw.hasAttribute("data-checked")).toBe(false);
 
-    rerender(<Switch data-testid="switch" checked={true} />);
+    rerender(<Switch.Root data-testid="switch" checked={true} />);
 
     expect(sw.hasAttribute("data-checked")).toBe(true);
   });
 
   it("is disabled when disabled prop is set", () => {
-    render(<Switch data-testid="switch" disabled />);
+    render(<Switch.Root data-testid="switch" disabled />);
 
     const sw = screen.getByTestId("switch");
     expect(sw.hasAttribute("data-disabled")).toBe(true);
@@ -80,7 +80,7 @@ describe("Switch", () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
 
-    render(<Switch data-testid="switch" disabled onCheckedChange={onCheckedChange} />);
+    render(<Switch.Root data-testid="switch" disabled onCheckedChange={onCheckedChange} />);
 
     await user.click(screen.getByTestId("switch"));
 
@@ -88,7 +88,7 @@ describe("Switch", () => {
   });
 
   it("renders thumb element", () => {
-    render(<Switch data-testid="switch" />);
+    render(<Switch.Root data-testid="switch" />);
 
     const sw = screen.getByTestId("switch");
     const thumb = sw.querySelector("[data-slot='switch-thumb']");

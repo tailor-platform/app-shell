@@ -59,8 +59,8 @@ describe("AuthProvider", () => {
       configure: vi.fn(),
       addEventListener: vi.fn(() => () => {}),
       getAuthHeaders: vi.fn(),
+      fetch: vi.fn(),
       getAppUri: vi.fn(() => "https://api.test.com"),
-      getAuthHeadersForQuery: vi.fn(),
       ...overrides,
     } as EnhancedAuthClient;
   };

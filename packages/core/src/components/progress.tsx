@@ -3,7 +3,12 @@ import { Progress as BaseProgress } from "@base-ui/react/progress";
 
 import { cn } from "@/lib/utils";
 
-function Progress({ className, value, ...props }: React.ComponentProps<typeof BaseProgress.Root>) {
+function ProgressRoot({
+  className,
+  value,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseProgress.Root>) {
   return (
     <BaseProgress.Root
       data-slot="progress"
@@ -11,17 +16,51 @@ function Progress({ className, value, ...props }: React.ComponentProps<typeof Ba
       className={cn("astw:relative astw:w-full", className)}
       {...props}
     >
-      <BaseProgress.Track
-        data-slot="progress-track"
-        className="astw:bg-primary/20 astw:relative astw:h-2 astw:w-full astw:overflow-hidden astw:rounded-full"
-      >
-        <BaseProgress.Indicator
-          data-slot="progress-indicator"
-          className="astw:bg-primary astw:h-full astw:rounded-full astw:transition-all"
-        />
-      </BaseProgress.Track>
+      {children ?? (
+        <ProgressTrack>
+          <ProgressIndicator />
+        </ProgressTrack>
+      )}
     </BaseProgress.Root>
   );
 }
+
+function ProgressTrack({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseProgress.Track>) {
+  return (
+    <BaseProgress.Track
+      data-slot="progress-track"
+      className={cn(
+        "astw:bg-primary/20 astw:relative astw:h-2 astw:w-full astw:overflow-hidden astw:rounded-full",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function ProgressIndicator({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseProgress.Indicator>) {
+  return (
+    <BaseProgress.Indicator
+      data-slot="progress-indicator"
+      className={cn(
+        "astw:bg-primary astw:h-full astw:rounded-full astw:transition-all",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+const Progress = {
+  Root: ProgressRoot,
+  Track: ProgressTrack,
+  Indicator: ProgressIndicator,
+};
 
 export { Progress };

@@ -28,21 +28,6 @@ export interface EnhancedAuthClient extends AuthClient {
    * Get the appUri used to create this client
    */
   getAppUri(): string;
-
-  /**
-   * Get Authorization and DPoP headers for protected resource requests.
-   * This version automatically uses the appUri for the /query endpoint.
-   *
-   * @param path - Optional path to append to appUri (default: "/query")
-   * @param method - HTTP method (default: "POST")
-   */
-  getAuthHeadersForQuery(
-    path?: string,
-    method?: string,
-  ): Promise<{
-    Authorization: string;
-    DPoP: string;
-  }>;
 }
 
 /**
@@ -62,13 +47,10 @@ export interface EnhancedAuthClient extends AuthClient {
  *   appUri: 'https://xyz.erp.dev',
  * });
  *
- * // Create urql client using the wrapped getAuthHeadersForQuery
+ * // Create urql client using the auth client's fetch
  * const urqlClient = createClient({
  *   url: `${authClient.getAppUri()}/query`,
- *   fetchOptions: async () => {
- *     const headers = await authClient.getAuthHeadersForQuery();
- *     return { headers };
- *   },
+ *   fetch: authClient.fetch,
  * });
  *
  * function App() {
@@ -112,11 +94,6 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
 
     getAppUri(): string {
       return appUri;
-    },
-
-    async getAuthHeadersForQuery(path: string = "/query", method: string = "POST") {
-      const url = `${appUri}${path}`;
-      return baseClient.getAuthHeaders(url, method);
     },
   };
 

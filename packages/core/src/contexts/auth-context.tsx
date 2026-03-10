@@ -31,6 +31,27 @@ export interface EnhancedAuthClient extends AuthClient {
 }
 
 /**
+ * Build a clean URL by removing OAuth-related parameters (code, state)
+ * while preserving other query parameters and hash fragments.
+ *
+ * @param url - The URL to clean (defaults to window.location)
+ * @returns The cleaned URL string
+ *
+ * @example
+ * ```ts
+ * buildCleanOAuthCallbackUrl(new URL('https://example.com/dashboard?code=xxx&state=yyy&tab=settings#section1'))
+ * // => '/dashboard?tab=settings#section1'
+ * ```
+ */
+export function buildCleanOAuthCallbackUrl(url: URL): string {
+  const params = new URLSearchParams(url.search);
+  params.delete("code");
+  params.delete("state");
+  const newSearch = params.toString();
+  return url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
+}
+
+/**
  * Create an enhanced authentication client.
  *
  * This wrapper around the original createAuthClient adds convenience methods
@@ -64,27 +85,6 @@ export interface EnhancedAuthClient extends AuthClient {
  * }
  * ```
  */
-/**
- * Build a clean URL by removing OAuth-related parameters (code, state)
- * while preserving other query parameters and hash fragments.
- *
- * @param url - The URL to clean (defaults to window.location)
- * @returns The cleaned URL string
- *
- * @example
- * ```ts
- * buildCleanOAuthCallbackUrl(new URL('https://example.com/dashboard?code=xxx&state=yyy&tab=settings#section1'))
- * // => '/dashboard?tab=settings#section1'
- * ```
- */
-export function buildCleanOAuthCallbackUrl(url: URL): string {
-  const params = new URLSearchParams(url.search);
-  params.delete("code");
-  params.delete("state");
-  const newSearch = params.toString();
-  return url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
-}
-
 export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
   const baseClient = createAuthClientOriginal(config);
   const { appUri } = config;

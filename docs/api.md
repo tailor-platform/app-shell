@@ -25,6 +25,7 @@
 - [defineI18nLabels](#definei18nlabels)
 - [AuthProvider](#authprovider)
 - [useAuth](#useauth)
+- [createAuthClient](#createauthclient)
 
 ## AppShell
 
@@ -1420,4 +1421,58 @@ const CallbackPage = () => {
 
   return <div>Processing authentication...</div>;
 };
+```
+
+## createAuthClient
+
+Creates an enhanced authentication client to pass to `AuthProvider`. Returns an `EnhancedAuthClient` that wraps the underlying `AuthClient` with additional helpers.
+
+### Parameters
+
+| Parameter     | Type               | Required | Description                                               |
+| ------------- | ------------------ | -------- | --------------------------------------------------------- |
+| `config`      | `AuthClientConfig` | Yes      | Configuration object (see below)                          |
+
+**`AuthClientConfig`:**
+
+| Property      | Type     | Required | Description                                               |
+| ------------- | -------- | -------- | --------------------------------------------------------- |
+| `clientId`    | `string` | Yes      | OAuth2 client ID from Tailor Platform console             |
+| `appUri`      | `string` | Yes      | Your Tailor Platform application URL                      |
+| `redirectUri` | `string` | No       | OAuth2 redirect URI (defaults to `window.location.origin`) |
+
+### Returns
+
+An `EnhancedAuthClient` with the following methods and properties:
+
+| Method / Property | Type           | Description                                                             |
+| ----------------- | -------------- | ----------------------------------------------------------------------- |
+| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                         |
+| `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation and token refresh |
+
+### Example
+
+```tsx
+import { createAuthClient, AuthProvider } from "@tailor-platform/app-shell";
+import { createClient, Provider } from "urql";
+
+const authClient = createAuthClient({
+  clientId: "your-client-id",
+  appUri: "https://xyz.erp.dev",
+});
+
+const urqlClient = createClient({
+  url: `${authClient.getAppUri()}/query`,
+  fetch: authClient.fetch,
+});
+
+function App() {
+  return (
+    <AuthProvider client={authClient} autoLogin={true}>
+      <Provider value={urqlClient}>
+        <YourAppComponents />
+      </Provider>
+    </AuthProvider>
+  );
+}
 ```

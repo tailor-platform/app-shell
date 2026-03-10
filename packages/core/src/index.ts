@@ -75,10 +75,7 @@ export { DescriptionCard, type DescriptionCardProps } from "./components/descrip
 // Layout component
 export { Layout, type LayoutProps } from "./components/layout";
 
-// LayoutV2 (slot-based layout)
-export { LayoutV2, type LayoutV2Props } from "./components/layout-v2";
-
-// LayoutHeader (standalone; compose with Layout or LayoutV2)
+// LayoutHeader (standalone; compose with Layout)
 export { LayoutHeader, type LayoutHeaderProps } from "./components/layout-header";
 
 // File-based routing types

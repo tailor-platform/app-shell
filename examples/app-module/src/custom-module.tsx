@@ -9,7 +9,6 @@ import {
   DescriptionCard,
   Layout,
   LayoutHeader,
-  LayoutV2,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -538,8 +537,8 @@ const oneColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <Layout columns={1} title="1 Column">
-        <Layout.Column>
+      <Layout>
+        <Layout.Main>
           <DescriptionCard
             data={mockPurchaseOrder}
             title="Order Overview"
@@ -586,7 +585,7 @@ const oneColumnLayoutResource = defineResource({
               { key: "note", label: "Notes", meta: { truncateLines: 3 } },
             ]}
           />
-        </Layout.Column>
+        </Layout.Main>
       </Layout>
     );
   },
@@ -599,83 +598,85 @@ const twoColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <Layout
-        columns={2}
-        title="2 Columns"
-        actions={[
-          <Button
-            key="cancel"
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              alert("Secondary button clicked!");
-            }}
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="action"
-            size="sm"
-            onClick={() => {
-              alert("Primary button clicked!");
-            }}
-          >
-            Action
-          </Button>,
-        ]}
-      >
-        <Layout.Column>
-          <DescriptionCard
-            data={mockPurchaseOrder}
-            title="Order Overview"
-            columns={4}
-            fields={[
-              {
-                key: "docNumber",
-                label: "PO Number",
-                meta: { copyable: true },
-              },
-              {
-                key: "externalReference",
-                label: "External Ref",
-                meta: { copyable: true },
-              },
-              { key: "supplierName", label: "Supplier" },
-              { type: "divider" },
-              {
-                key: "expectedDeliveryDate",
-                label: "Expected Delivery",
-                type: "date",
-                meta: { dateFormat: "medium" },
-              },
-              {
-                key: "confirmedAt",
-                label: "Confirmed",
-                type: "date",
-                meta: { dateFormat: "medium" },
-              },
-              {
-                key: "createdAt",
-                label: "Created",
-                type: "date",
-                meta: { dateFormat: "relative" },
-              },
-              { key: "shipToLocation.name", label: "Warehouse" },
-              { type: "divider" },
-              {
-                key: "shipToLocation.address",
-                label: "Shipping Address",
-                type: "address",
-                meta: { copyable: true },
-              },
-              { key: "note", label: "Notes", meta: { truncateLines: 3 } },
-            ]}
-          />
-        </Layout.Column>
-        <Layout.Column>
-          <Placeholder columnNumber={2} />
-        </Layout.Column>
-      </Layout>
+      <>
+        <LayoutHeader
+          title="2 Columns"
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  alert("Secondary button clicked!");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  alert("Primary button clicked!");
+                }}
+              >
+                Action
+              </Button>
+            </>
+          }
+        />
+        <Layout>
+          <Layout.Main>
+            <DescriptionCard
+              data={mockPurchaseOrder}
+              title="Order Overview"
+              columns={4}
+              fields={[
+                {
+                  key: "docNumber",
+                  label: "PO Number",
+                  meta: { copyable: true },
+                },
+                {
+                  key: "externalReference",
+                  label: "External Ref",
+                  meta: { copyable: true },
+                },
+                { key: "supplierName", label: "Supplier" },
+                { type: "divider" },
+                {
+                  key: "expectedDeliveryDate",
+                  label: "Expected Delivery",
+                  type: "date",
+                  meta: { dateFormat: "medium" },
+                },
+                {
+                  key: "confirmedAt",
+                  label: "Confirmed",
+                  type: "date",
+                  meta: { dateFormat: "medium" },
+                },
+                {
+                  key: "createdAt",
+                  label: "Created",
+                  type: "date",
+                  meta: { dateFormat: "relative" },
+                },
+                { key: "shipToLocation.name", label: "Warehouse" },
+                { type: "divider" },
+                {
+                  key: "shipToLocation.address",
+                  label: "Shipping Address",
+                  type: "address",
+                  meta: { copyable: true },
+                },
+                { key: "note", label: "Notes", meta: { truncateLines: 3 } },
+              ]}
+            />
+          </Layout.Main>
+          <Layout.Right>
+            <Placeholder columnNumber={2} />
+          </Layout.Right>
+        </Layout>
+      </>
     );
   },
 });
@@ -687,11 +688,11 @@ const threeColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <Layout columns={3} title="3 Columns">
-        <Layout.Column>
+      <Layout>
+        <Layout.Left>
           <Placeholder columnNumber={1} />
-        </Layout.Column>
-        <Layout.Column>
+        </Layout.Left>
+        <Layout.Main>
           <DescriptionCard
             data={mockPurchaseOrder}
             title="Order Overview"
@@ -738,119 +739,106 @@ const threeColumnLayoutResource = defineResource({
               { key: "note", label: "Notes", meta: { truncateLines: 3 } },
             ]}
           />
-        </Layout.Column>
-        <Layout.Column>
+        </Layout.Main>
+        <Layout.Right>
           <Placeholder columnNumber={3} />
-        </Layout.Column>
+        </Layout.Right>
       </Layout>
     );
   },
 });
 
 // ============================================================================
-// DEMO: LayoutV2 (slot-based layout)
+// DEMO: Layout Slots (composition API)
 // ============================================================================
 
-const layoutV2DemoResource = defineResource({
-  path: "layout-v2-demo",
+const orderOverviewFields = [
+  { key: "docNumber", label: "PO Number", meta: { copyable: true } },
+  { key: "externalReference", label: "External Ref", meta: { copyable: true } },
+  { key: "supplierName", label: "Supplier" },
+  { type: "divider" as const },
+  {
+    key: "expectedDeliveryDate",
+    label: "Expected Delivery",
+    type: "date" as const,
+    meta: { dateFormat: "medium" as const },
+  },
+  {
+    key: "confirmedAt",
+    label: "Confirmed",
+    type: "date" as const,
+    meta: { dateFormat: "medium" as const },
+  },
+  {
+    key: "createdAt",
+    label: "Created",
+    type: "date" as const,
+    meta: { dateFormat: "relative" as const },
+  },
+  { key: "shipToLocation.name", label: "Warehouse" },
+  { type: "divider" as const },
+  {
+    key: "shipToLocation.address",
+    label: "Shipping Address",
+    type: "address" as const,
+    meta: { copyable: true },
+  },
+  { key: "note", label: "Notes", meta: { truncateLines: 3 } },
+];
+
+const layoutSlotsDemoResource = defineResource({
+  path: "layout-slots-demo",
   meta: {
-    title: "Layout V2 Demo",
+    title: "Layout Slots Demo",
   },
-  component: () => {
-    const orderOverviewFields = [
-      { key: "docNumber", label: "PO Number", meta: { copyable: true } },
-      { key: "externalReference", label: "External Ref", meta: { copyable: true } },
-      { key: "supplierName", label: "Supplier" },
-      { type: "divider" as const },
-      {
-        key: "expectedDeliveryDate",
-        label: "Expected Delivery",
-        type: "date" as const,
-        meta: { dateFormat: "medium" as const },
-      },
-      {
-        key: "confirmedAt",
-        label: "Confirmed",
-        type: "date" as const,
-        meta: { dateFormat: "medium" as const },
-      },
-      {
-        key: "createdAt",
-        label: "Created",
-        type: "date" as const,
-        meta: { dateFormat: "relative" as const },
-      },
-      { key: "shipToLocation.name", label: "Warehouse" },
-      { type: "divider" as const },
-      {
-        key: "shipToLocation.address",
-        label: "Shipping Address",
-        type: "address" as const,
-        meta: { copyable: true },
-      },
-      { key: "note", label: "Notes", meta: { truncateLines: 3 } },
-    ];
-    return (
-      <div className="astw:flex astw:flex-col astw:gap-8">
-        <LayoutHeader
-          title="Layout V2 Demo"
-          actions={[
-            <Button key="action" size="sm" onClick={() => alert("Action!")}>
-              Action
-            </Button>,
-          ]}
-        />
-        <LayoutV2 main={<Placeholder columnNumber={1} />} />
-        <LayoutV2
-          columnLeft={<Placeholder columnNumber={1} />}
-          main={<Placeholder columnNumber={2} />}
-        />
-        <LayoutV2
-          main={
-            <DescriptionCard
-              data={mockPurchaseOrder}
-              title="Order Overview"
-              columns={4}
-              fields={orderOverviewFields}
-            />
-          }
-          columnRight={<Placeholder columnNumber={2} />}
-        />
-        <LayoutV2
-          columnLeft={<Placeholder columnNumber={1} />}
-          main={<Placeholder columnNumber={2} />}
-          columnRight={<Placeholder columnNumber={3} />}
-        />
-        <LayoutV2
-          columnLeft={<Placeholder columnNumber={1} />}
-          main={<Placeholder columnNumber={2} />}
-          gap="32px"
-          columnLeftWidth="280px"
-        />
-        <LayoutV2
-          main={<Placeholder columnNumber={1} />}
-          columnRight={
-            <DescriptionCard
-              data={mockPurchaseOrder}
-              title="Order Overview"
-              columns={4}
-              fields={orderOverviewFields}
-            />
-          }
-          columnRightWidth="360px"
-          columnRightMaxWidth="400px"
-        />
-        <LayoutV2
-          columnLeft={<Placeholder columnNumber={1} />}
-          main={<Placeholder columnNumber={2} />}
-          columnRight={<Placeholder columnNumber={3} />}
-          columnLeftWidth="280px"
-          columnRightWidth="360px"
-          mainMinWidth="400px"
-        />
-      </div>
-    );
-  },
+  component: () => (
+    <div className="astw:flex astw:flex-col astw:gap-4">
+      <LayoutHeader
+        title="Layout Slots Demo"
+        actions={
+          <Button size="sm" onClick={() => alert("Action!")}>
+            Action
+          </Button>
+        }
+      />
+
+      {/* 1 column */}
+      <Layout>
+        <Layout.Main>
+          <DescriptionCard
+            data={mockPurchaseOrder}
+            title="Order Overview"
+            columns={4}
+            fields={orderOverviewFields}
+          />
+        </Layout.Main>
+      </Layout>
+
+      {/* 2 columns */}
+      <Layout>
+        <Layout.Left>
+          <Placeholder columnNumber={1} />
+        </Layout.Left>
+        <Layout.Main>
+          <Placeholder columnNumber={2} />
+        </Layout.Main>
+      </Layout>
+
+      {/* 3 columns */}
+      <Layout>
+        <Layout.Left>
+          <Placeholder columnNumber={1} />
+        </Layout.Left>
+        <Layout.Main>
+          <Placeholder columnNumber={2} />
+        </Layout.Main>
+        <Layout.Right>
+          <Placeholder columnNumber={3} />
+        </Layout.Right>
+      </Layout>
+
+    </div>
+  ),
 });
 
 export const customPageModule = defineModule({
@@ -917,13 +905,13 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
-              to="/custom-page/layout-v2-demo"
+              to="/custom-page/layout-slots-demo"
               style={{
                 color: "hsl(var(--primary))",
                 textDecoration: "underline",
               }}
             >
-              View Layout V2 Demo
+              View Layout Slots Demo
             </Link>
           </p>
           <p>
@@ -953,6 +941,6 @@ export const customPageModule = defineModule({
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,
-    layoutV2DemoResource,
+    layoutSlotsDemoResource,
   ],
 });

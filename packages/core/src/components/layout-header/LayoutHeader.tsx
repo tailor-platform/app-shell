@@ -1,4 +1,3 @@
-import * as React from "react";
 import type { LayoutHeaderProps } from "./types";
 
 // ============================================================================
@@ -8,11 +7,11 @@ import type { LayoutHeaderProps } from "./types";
 /**
  * LayoutHeader - Standalone header for page title and actions.
  *
- * Compose above Layout or LayoutV2 as a sibling. Title on the left, actions on the right.
+ * Compose above Layout as a sibling. Title on the left, actions on the right.
  * Children render full-width below the title/actions row (e.g. tabs).
  */
 export function LayoutHeader({ title, actions, children }: LayoutHeaderProps) {
-  const hasTitleRow = title || (actions && actions.length > 0);
+  const hasTitleRow = title || (actions != null && actions !== false);
 
   return (
     <header className="astw:flex astw:w-full astw:flex-col">
@@ -23,11 +22,9 @@ export function LayoutHeader({ title, actions, children }: LayoutHeaderProps) {
               {title}
             </h1>
           )}
-          {actions && actions.length > 0 && (
+          {actions != null && actions !== false && (
             <div className="astw:flex astw:gap-2 astw:items-center">
-              {actions.map((action, index) => (
-                <React.Fragment key={index}>{action}</React.Fragment>
-              ))}
+              {actions}
             </div>
           )}
         </div>

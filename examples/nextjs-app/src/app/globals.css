@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../../../examples/app-module/src";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -61,6 +62,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,

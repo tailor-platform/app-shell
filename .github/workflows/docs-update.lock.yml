@@ -23,7 +23,7 @@
 #
 # Updates documentation under docs/ to align with the latest public API when new changesets are merged to main.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"adcf81aa3ff6a1265945a778cd49305ddc3d346c0f8d6fbb2c9bdfb13d6b97a3","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"260178bc4099384e2686f01dd9ed543976f3fa9b9de5830156754d8f642015a3","compiler_version":"v0.50.4"}
 
 name: "Documentation Updater"
 "on":

@@ -1429,25 +1429,25 @@ Creates an enhanced authentication client to pass to `AuthProvider`. Returns an 
 
 ### Parameters
 
-| Parameter     | Type               | Required | Description                                               |
-| ------------- | ------------------ | -------- | --------------------------------------------------------- |
-| `config`      | `AuthClientConfig` | Yes      | Configuration object (see below)                          |
+| Parameter | Type               | Required | Description                      |
+| --------- | ------------------ | -------- | -------------------------------- |
+| `config`  | `AuthClientConfig` | Yes      | Configuration object (see below) |
 
 **`AuthClientConfig`:**
 
-| Property      | Type     | Required | Description                                               |
-| ------------- | -------- | -------- | --------------------------------------------------------- |
-| `clientId`    | `string` | Yes      | OAuth2 client ID from Tailor Platform console             |
-| `appUri`      | `string` | Yes      | Your Tailor Platform application URL                      |
+| Property      | Type     | Required | Description                                                |
+| ------------- | -------- | -------- | ---------------------------------------------------------- |
+| `clientId`    | `string` | Yes      | OAuth2 client ID from Tailor Platform console              |
+| `appUri`      | `string` | Yes      | Your Tailor Platform application URL                       |
 | `redirectUri` | `string` | No       | OAuth2 redirect URI (defaults to `window.location.origin`) |
 
 ### Returns
 
 An `EnhancedAuthClient` with the following methods and properties:
 
-| Method / Property | Type           | Description                                                             |
-| ----------------- | -------------- | ----------------------------------------------------------------------- |
-| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                         |
+| Method / Property | Type           | Description                                                               |
+| ----------------- | -------------- | ------------------------------------------------------------------------- |
+| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                           |
 | `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation and token refresh |
 
 ### Example

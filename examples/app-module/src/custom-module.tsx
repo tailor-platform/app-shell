@@ -3,6 +3,7 @@ import {
   defineResource,
   Link,
   ResourceComponentProps,
+  useNavigate,
   useParams,
   hidden,
   pass,
@@ -63,37 +64,40 @@ const ExternalLinkIcon = (props: SVGProps<SVGSVGElement>) => (
 // DEMO: Action Panel Page
 // ============================================================================
 
-const ActionPanelDemoPage = () => (
-  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", width: "100%", maxWidth: "480px" }}>
-    <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Action Panel Demo</h1>
-    <p style={{ color: "var(--muted-foreground)", fontSize: "0.875rem" }}>
-      This panel fills the width of its container. Actions can use <code>onClick</code> or <code>href</code>.
-    </p>
-    <ActionPanel
-      title="Actions"
-      actions={[
-        {
-          key: "create-invoice",
-          label: "Create new sales invoice",
-          icon: <ReceiptIcon />,
-          onClick: () => alert("Create invoice clicked"),
-        },
-        {
-          key: "delivery-note",
-          label: "Create new delivery note",
-          icon: <FileTextIcon />,
-          onClick: () => alert("Create delivery note clicked"),
-        },
-        {
-          key: "view-po-demo",
-          label: "View Purchase Order Demo (link)",
-          icon: <ExternalLinkIcon />,
-          href: "/custom-page/purchase-order-demo",
-        },
-      ]}
-    />
-  </div>
-);
+const ActionPanelDemoPage = () => {
+  const navigate = useNavigate();
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem", width: "100%", maxWidth: "480px" }}>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Action Panel Demo</h1>
+      <p style={{ color: "var(--muted-foreground)", fontSize: "0.875rem" }}>
+        This panel fills the width of its container. All actions use <code>onClick</code>; for navigation use <code>useNavigate()</code> inside the callback.
+      </p>
+      <ActionPanel
+        title="Actions"
+        actions={[
+          {
+            key: "create-invoice",
+            label: "Create new sales invoice",
+            icon: <ReceiptIcon />,
+            onClick: () => alert("Create invoice clicked"),
+          },
+          {
+            key: "delivery-note",
+            label: "Create new delivery note",
+            icon: <FileTextIcon />,
+            onClick: () => alert("Create delivery note clicked"),
+          },
+          {
+            key: "view-po-demo",
+            label: "View Purchase Order Demo",
+            icon: <ExternalLinkIcon />,
+            onClick: () => navigate("/custom-page/purchase-order-demo"),
+          },
+        ]}
+      />
+    </div>
+  );
+};
 
 const actionPanelDemoResource = defineResource({
   path: "action-panel-demo",
@@ -680,6 +684,7 @@ const twoColumnLayoutResource = defineResource({
     title: "2 Columns",
   },
   component: () => {
+    const navigate = useNavigate();
     const [loadingKey, setLoadingKey] = React.useState<string | null>(null);
 
     const handleCreateInvoice = () => {
@@ -708,7 +713,7 @@ const twoColumnLayoutResource = defineResource({
         key: "view-po-demo",
         label: "View Purchase Order",
         icon: <ExternalLinkIcon />,
-        href: "/custom-page/purchase-order-demo",
+        onClick: () => navigate("/custom-page/purchase-order-demo"),
       },
     ];
 

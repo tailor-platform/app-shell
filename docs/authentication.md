@@ -182,6 +182,65 @@ const CallbackPage = () => {
 };
 ```
 
+## Auth Client
+
+Use `createAuthClient` to create an authentication client that you pass to `AuthProvider`. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
+
+```tsx
+import { createAuthClient } from "@tailor-platform/app-shell";
+
+const authClient = createAuthClient({
+  clientId: "your-client-id",
+  appUri: "https://xyz.erp.dev",
+});
+```
+
+### Using `authClient.fetch` with a GraphQL Client
+
+Pass `authClient.fetch` directly to your GraphQL client (e.g., urql). It transparently handles DPoP proof generation and token refresh on every request:
+
+```tsx
+import { createAuthClient, AuthProvider } from "@tailor-platform/app-shell";
+import { createClient, Provider } from "urql";
+
+const authClient = createAuthClient({
+  clientId: "your-client-id",
+  appUri: "https://xyz.erp.dev",
+});
+
+const urqlClient = createClient({
+  url: `${authClient.getAppUri()}/query`,
+  fetch: authClient.fetch,
+});
+
+function App() {
+  return (
+    <AuthProvider client={authClient} autoLogin={true}>
+      <Provider value={urqlClient}>
+        <YourAppComponents />
+      </Provider>
+    </AuthProvider>
+  );
+}
+```
+
+### `AuthClientConfig`
+
+| Property      | Type     | Required | Description                                               |
+| ------------- | -------- | -------- | --------------------------------------------------------- |
+| `clientId`    | `string` | Yes      | OAuth2 client ID from Tailor Platform console             |
+| `appUri`      | `string` | Yes      | Your Tailor Platform application URL                      |
+| `redirectUri` | `string` | No       | OAuth2 redirect URI (defaults to `window.location.origin`) |
+
+### `EnhancedAuthClient` Methods
+
+| Method / Property | Type                              | Description                                                                         |
+| ----------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `getAppUri()`     | `() => string`                    | Returns the `appUri` used to create this client                                     |
+| `fetch`           | `typeof fetch`                    | Authenticated fetch with built-in DPoP proof generation and token refresh           |
+
+See the [API](./api.md#createauthclient) for more details.
+
 ## Integration with AppShell
 
 The authentication provider works seamlessly with AppShell's data layer, automatically handling:

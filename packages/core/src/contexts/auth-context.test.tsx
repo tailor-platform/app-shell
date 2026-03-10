@@ -78,7 +78,7 @@ describe("AuthProvider", () => {
       expect(screen.getByText("Test Content")).toBeDefined();
     });
 
-    it("should show guard component when not ready", () => {
+    it("should always render children even with guardComponent when not ready", () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -92,11 +92,11 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       );
 
-      expect(screen.getByText("Loading...")).toBeDefined();
-      expect(screen.queryByText("Protected Content")).toBeNull();
+      // AuthProvider always renders children; guard rendering is handled by the router
+      expect(screen.getByText("Protected Content")).toBeDefined();
     });
 
-    it("should show guard component when not authenticated", async () => {
+    it("should always render children even with guardComponent when not authenticated", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -110,10 +110,8 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       );
 
-      await waitFor(() => {
-        expect(screen.getByText("Please log in")).toBeDefined();
-      });
-      expect(screen.queryByText("Protected Content")).toBeNull();
+      // AuthProvider always renders children; guard rendering is handled by the router
+      expect(screen.getByText("Protected Content")).toBeDefined();
     });
 
     it("should show children when authenticated", async () => {
@@ -165,7 +163,7 @@ describe("AuthProvider", () => {
       });
 
       expect(result.current).not.toBeNull();
-      const response = await result.current!(new URL("http://localhost/"));
+      const response = await result.current!.loader(new URL("http://localhost/"));
       expect(mockCheckAuthStatus).toHaveBeenCalled();
       expect(response).toBeNull();
     });
@@ -187,7 +185,9 @@ describe("AuthProvider", () => {
       });
 
       expect(result.current).not.toBeNull();
-      const response = await result.current!(new URL("http://localhost/?code=auth-code-123"));
+      const response = await result.current!.loader(
+        new URL("http://localhost/?code=auth-code-123"),
+      );
       expect(mockHandleCallback).toHaveBeenCalled();
       expect(response).toBeNull();
     });
@@ -492,7 +492,7 @@ describe("AuthProvider", () => {
       });
 
       expect(result.current).not.toBeNull();
-      await result.current!(new URL("http://localhost/"));
+      await result.current!.loader(new URL("http://localhost/"));
       expect(mockCheckAuthStatus).toHaveBeenCalled();
       expect(mockLogin).toHaveBeenCalled();
     });

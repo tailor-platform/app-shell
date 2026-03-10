@@ -12,9 +12,7 @@ import {
 
 export type RootComponentOption = () => ReactNode;
 
-export const wrapErrorBoundary = (
-  element: ErrorBoundaryComponent,
-): ComponentType => {
+export const wrapErrorBoundary = (element: ErrorBoundaryComponent): ComponentType => {
   return () => <>{element}</>;
 };
 
@@ -90,9 +88,7 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) =>
-    createRoute(module, module.resources, module.errorBoundary),
-  );
+  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -116,13 +112,7 @@ export const createContentRoutes = ({
           {
             path: "settings",
             index: true,
-            Component: () => (
-              <Navigate
-                to={settingsResources[0].path}
-                relative="path"
-                replace
-              />
-            ),
+            Component: () => <Navigate to={settingsResources[0].path} relative="path" replace />,
           },
           {
             path: "settings",
@@ -133,9 +123,7 @@ export const createContentRoutes = ({
               // a component — a component-less settings resource would silently
               // produce a blank page.
               if (!resource.component) {
-                throw new Error(
-                  `Settings resource "${resource.path}" must have a component.`,
-                );
+                throw new Error(`Settings resource "${resource.path}" must have a component.`);
               }
               return {
                 path: resource.path,

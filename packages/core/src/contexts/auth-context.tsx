@@ -34,7 +34,7 @@ export interface EnhancedAuthClient extends AuthClient {
  * Build a clean URL by removing OAuth-related parameters (code, state)
  * while preserving other query parameters and hash fragments.
  *
- * @param url - The URL to clean (defaults to window.location)
+ * @param url - The URL to clean
  * @returns The cleaned URL string
  *
  * @example

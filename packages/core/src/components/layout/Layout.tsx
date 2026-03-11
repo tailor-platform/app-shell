@@ -79,7 +79,7 @@ Column.displayName = "Layout.Column";
  * </Layout>
  * ```
  */
-function Header({ title, actions, children }: LayoutHeaderProps) {
+export function Header({ title, actions, children }: LayoutHeaderProps) {
   const hasTitleRow = title || (actions != null && actions !== false);
 
   return (

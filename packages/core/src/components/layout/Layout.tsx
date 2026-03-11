@@ -98,10 +98,11 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
 }
 Header.displayName = "Layout.Header";
 
-// ============================================================================
-// AREA VALIDATION
-// ============================================================================
-
+/**
+ * Validates that `area` props on column children are consistent.
+ * Returns `"area"` if all columns have valid, unique area values;
+ * otherwise falls back to `"position"` mode with a console warning.
+ */
 const VALID_AREAS: ColumnArea[] = ["left", "main", "right"];
 
 function validateAreas(columnChildren: React.ReactElement[]): "position" | "area" {
@@ -136,10 +137,10 @@ function validateAreas(columnChildren: React.ReactElement[]): "position" | "area
   return "area";
 }
 
-// ============================================================================
-// AREA-BASED WIDTH CLASSES
-// ============================================================================
-
+/**
+ * Returns the Tailwind width class for a given column area and column count.
+ * Uses `xl:` breakpoint for 3-column layouts, `lg:` for 2-column.
+ */
 function getAreaWidthClass(area: ColumnArea, columnCount: number): string {
   if (columnCount === 3) {
     switch (area) {
@@ -161,9 +162,58 @@ function getAreaWidthClass(area: ColumnArea, columnCount: number): string {
   }
 }
 
-// ============================================================================
-// MAIN LAYOUT COMPONENT
-// ============================================================================
+/**
+ * Applies responsive width classes to column children based on column count
+ * and area/position mode. Returns a new array of cloned elements with the
+ * appropriate `className` merged in.
+ */
+function applyColumnStyles(
+  effectiveColumns: React.ReactElement[],
+  columnCount: number,
+  areaMode: "position" | "area",
+): React.ReactElement[] {
+  if (columnCount === 1) {
+    return effectiveColumns;
+  }
+
+  if (areaMode === "area") {
+    return effectiveColumns.map((child) => {
+      const area = (child.props as ColumnProps).area!;
+      return React.cloneElement(child, {
+        className: cn((child.props as ColumnProps).className, getAreaWidthClass(area, columnCount)),
+      } as Partial<ColumnProps>);
+    });
+  }
+
+  // Position-based (default)
+  if (columnCount === 2) {
+    return effectiveColumns.map((child, index) => {
+      return React.cloneElement(child, {
+        className: cn(
+          (child.props as ColumnProps).className,
+          index === 0 ? "astw:lg:flex-1" : "astw:lg:w-[280px] astw:lg:shrink-0",
+        ),
+      } as Partial<ColumnProps>);
+    });
+  }
+
+  if (columnCount === 3) {
+    return effectiveColumns.map((child, index) => {
+      return React.cloneElement(child, {
+        className: cn(
+          (child.props as ColumnProps).className,
+          index === 0
+            ? "astw:xl:w-[320px] astw:xl:shrink-0"
+            : index === 2
+              ? "astw:xl:w-[280px] astw:xl:shrink-0"
+              : "astw:xl:flex-1",
+        ),
+      } as Partial<ColumnProps>);
+    });
+  }
+
+  return effectiveColumns;
+}
 
 /**
  * Layout - Responsive column layout component
@@ -242,52 +292,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   );
 
   // Apply width constraints to columns
-  const childrenWithStyles = React.useMemo(() => {
-    if (columnCount === 1) {
-      return effectiveColumns;
-    }
-
-    if (areaMode === "area") {
-      return effectiveColumns.map((child) => {
-        const area = (child.props as ColumnProps).area!;
-        return React.cloneElement(child, {
-          className: cn(
-            (child.props as ColumnProps).className,
-            getAreaWidthClass(area, columnCount),
-          ),
-        } as Partial<ColumnProps>);
-      });
-    }
-
-    // Position-based (default)
-    if (columnCount === 2) {
-      return effectiveColumns.map((child, index) => {
-        return React.cloneElement(child, {
-          className: cn(
-            (child.props as ColumnProps).className,
-            index === 0 ? "astw:lg:flex-1" : "astw:lg:w-[280px] astw:lg:shrink-0",
-          ),
-        } as Partial<ColumnProps>);
-      });
-    }
-
-    if (columnCount === 3) {
-      return effectiveColumns.map((child, index) => {
-        return React.cloneElement(child, {
-          className: cn(
-            (child.props as ColumnProps).className,
-            index === 0
-              ? "astw:xl:w-[320px] astw:xl:shrink-0"
-              : index === 2
-                ? "astw:xl:w-[280px] astw:xl:shrink-0"
-                : "astw:xl:flex-1",
-          ),
-        } as Partial<ColumnProps>);
-      });
-    }
-
-    return effectiveColumns;
-  }, [columnChildren, columnCount, areaMode]);
+  const childrenWithStyles = applyColumnStyles(effectiveColumns, columnCount, areaMode);
 
   // Header: prefer Layout.Header child, fall back to title/actions props
   const hasLegacyHeader = title || (actions != null && actions !== false);
@@ -320,10 +325,6 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
 // Attach sub-components
 Layout.Column = Column;
 Layout.Header = Header;
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
 
 export default Layout;
 export type { LayoutProps } from "./types";

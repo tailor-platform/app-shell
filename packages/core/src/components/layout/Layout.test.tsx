@@ -97,10 +97,7 @@ describe("Layout", () => {
 
     it("legacy title and actions props", () => {
       const { container } = render(
-        <Layout
-          title="Legacy Title"
-          actions={[<button key="save">Save</button>]}
-        >
+        <Layout title="Legacy Title" actions={[<button key="save">Save</button>]}>
           <Layout.Column>Content</Layout.Column>
         </Layout>,
       );
@@ -124,10 +121,7 @@ describe("Layout", () => {
   it("prefers Layout.Header over legacy title/actions props", () => {
     render(
       <Layout title="Legacy" actions={[<button key="a">Legacy Action</button>]}>
-        <Layout.Header
-          title="New Title"
-          actions={<button>New Action</button>}
-        />
+        <Layout.Header title="New Title" actions={<button>New Action</button>} />
         <Layout.Column>Content</Layout.Column>
       </Layout>,
     );
@@ -145,9 +139,7 @@ describe("Layout", () => {
         <Layout.Column>Main</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("must be specified on all"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("must be specified on all"));
     // Verify it fell back to position-based (same structure as area-less 2-col)
     expect(container.innerHTML).toMatchSnapshot();
     warnSpy.mockRestore();
@@ -176,9 +168,7 @@ describe("Layout", () => {
         <Layout.Column>Four</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Maximum of 3"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Maximum of 3"));
     expect(screen.getByText("One")).toBeDefined();
     expect(screen.getByText("Two")).toBeDefined();
     expect(screen.getByText("Three")).toBeDefined();
@@ -194,9 +184,7 @@ describe("Layout", () => {
         <Layout.Column>Content</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Unsupported child type"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Unsupported child type"));
     expect(screen.getByText("Content")).toBeDefined();
     warnSpy.mockRestore();
   });

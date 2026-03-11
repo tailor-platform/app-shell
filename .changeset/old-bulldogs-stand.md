@@ -53,10 +53,10 @@ The current `Layout` component requires a `columns` prop that must exactly match
 
 ## Sub-components
 
-| Component | Status | Props |
-|---|---|---|
+| Component       | Status   | Props                                                           |
+| --------------- | -------- | --------------------------------------------------------------- |
 | `Layout.Column` | Retained | `area?: "left" \| "main" \| "right"`, `className?`, `children?` |
-| `Layout.Header` | **New** | `title?`, `actions?: ReactNode`, `children?: ReactNode` |
+| `Layout.Header` | **New**  | `title?`, `actions?: ReactNode`, `children?: ReactNode`         |
 
 ## Children Rules
 
@@ -69,19 +69,18 @@ The current `Layout` component requires a `columns` prop that must exactly match
 
 ### Position-based (no `area`, unchanged from current API)
 
-| Column Count | Responsive Behavior | Width Distribution |
-|---|---|---|
-| 1 | Always stacked vertically | Full width |
-| 2 | < 1024px: stacked / ≥ 1024px: side-by-side | 1st flex-1, 2nd fixed 280px |
-| 3 | < 1280px: stacked / ≥ 1280px: side-by-side | 1st fixed 320px, 2nd flex-1, 3rd fixed 280px |
+| Column Count | Responsive Behavior                        | Width Distribution                           |
+| ------------ | ------------------------------------------ | -------------------------------------------- |
+| 1            | Always stacked vertically                  | Full width                                   |
+| 2            | < 1024px: stacked / ≥ 1024px: side-by-side | 1st flex-1, 2nd fixed 280px                  |
+| 3            | < 1280px: stacked / ≥ 1280px: side-by-side | 1st fixed 320px, 2nd flex-1, 3rd fixed 280px |
 
 ### Area-based (with `area` prop)
 
-| Area | Width |
-|---|---|
-| `left` | Fixed 320px |
-| `main` | flex-1 |
+| Area    | Width       |
+| ------- | ----------- |
+| `left`  | Fixed 320px |
+| `main`  | flex-1      |
 | `right` | Fixed 280px |
 
 Responsive behavior is the same: 2 columns break at 1024px, 3 columns break at 1280px.
-

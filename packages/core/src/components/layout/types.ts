@@ -5,43 +5,70 @@ import type { ReactNode } from "react";
 // ============================================================================
 
 /**
- * Props for the Layout component.
- * Composition only: children must be Layout.Left, Layout.Main, and/or Layout.Right.
- * Column dimensions via className on each slot.
+ * Supported column count options
+ */
+export type ColumnCount = 1 | 2 | 3;
+
+/**
+ * Supported area values for Layout.Column
+ */
+export type ColumnArea = "left" | "main" | "right";
+
+/**
+ * Props for the Layout component
  */
 export interface LayoutProps {
-  /** Additional CSS classes for the flex container */
+  /**
+   * Number of columns (1, 2, or 3).
+   *
+   * @deprecated Auto-detected from Layout.Column children count when omitted.
+   */
+  columns?: ColumnCount;
+  /** Additional CSS classes */
   className?: string;
+  /**
+   * Gap between columns (default: 4 = 16px)
+   *
+   * @deprecated Use className (e.g. className="gap-6") instead.
+   */
+  gap?: number;
+  /** Header title - displayed at the top of the layout */
+  title?: string;
+  /** Header actions - array of action components (e.g., buttons) displayed on the right side of the header.
+   * Layout and spacing are handled automatically. */
+  actions?: ReactNode[];
+  /** Child elements - Layout.Header and/or Layout.Column components */
+  children: ReactNode;
 }
 
 /**
- * Props for Layout.Left (composition API)
+ * Props for individual Layout.Column component
  */
-export interface LayoutLeftProps {
-  /** Column content */
-  children?: ReactNode;
-  /** CSS classes for the left column wrapper (e.g. width overrides) */
+export interface ColumnProps {
+  /** Additional CSS classes */
   className?: string;
+  /**
+   * Column area role. When specified on all columns, determines width template
+   * based on role rather than position.
+   * - "left": fixed 320px
+   * - "main": flex-1
+   * - "right": fixed 280px
+   */
+  area?: ColumnArea;
+  /** Child content */
+  children?: ReactNode;
 }
 
 /**
- * Props for Layout.Main (composition API)
+ * Props for Layout.Header component
  */
-export interface LayoutMainProps {
-  /** Column content */
+export interface LayoutHeaderProps {
+  /** Page title (left side) */
+  title?: string;
+  /** Action buttons or nodes (right side). Use ReactNode (e.g. Fragment or single element). */
+  actions?: ReactNode;
+  /** Renders full-width below the title/actions row (e.g. tabs) */
   children?: ReactNode;
-  /** CSS classes for the main column wrapper */
-  className?: string;
-}
-
-/**
- * Props for Layout.Right (composition API)
- */
-export interface LayoutRightProps {
-  /** Column content */
-  children?: ReactNode;
-  /** CSS classes for the right column wrapper (e.g. width overrides) */
-  className?: string;
 }
 
 /**
@@ -49,5 +76,5 @@ export interface LayoutRightProps {
  */
 export interface ResourceLayoutConfig {
   /** Number of columns for documentation purposes */
-  columns: 1 | 2 | 3;
+  columns: ColumnCount;
 }

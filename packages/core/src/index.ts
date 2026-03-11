@@ -17,7 +17,11 @@ export {
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
 
-export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/appshell-context";
+export {
+  useAppShell,
+  useAppShellConfig,
+  useAppShellData,
+} from "./contexts/appshell-context";
 export { useTheme } from "./contexts/theme-context";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
 export {
@@ -70,13 +74,13 @@ export { useToast } from "./hooks/use-toast";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 
 // DescriptionCard
-export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
+export {
+  DescriptionCard,
+  type DescriptionCardProps,
+} from "./components/description-card";
 
 // Layout component
-export { Layout, type LayoutProps } from "./components/layout";
-
-// LayoutHeader (standalone; compose with Layout)
-export { LayoutHeader, type LayoutHeaderProps } from "./components/layout-header";
+export { Layout, type LayoutProps } from "./components/layout/Layout";
 
 // File-based routing types
 export type { AppShellPageProps, PageComponent } from "./fs-routes/types";

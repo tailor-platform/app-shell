@@ -8,7 +8,6 @@ import {
   pass,
   DescriptionCard,
   Layout,
-  LayoutHeader,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -346,7 +345,9 @@ const adminOnlyResource = defineResource({
               color: "hsl(var(--primary))",
             }}
           />
-          <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Admin Only Page</h1>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+            Admin Only Page
+          </h1>
         </div>
         <div
           style={{
@@ -360,8 +361,8 @@ const adminOnlyResource = defineResource({
             🎉 <strong>Congratulations!</strong> You have admin access.
           </p>
           <p style={{ marginBottom: "0.75rem" }}>
-            This page is only visible when you select <strong>"Admin"</strong> role from the
-            sidebar.
+            This page is only visible when you select <strong>"Admin"</strong>{" "}
+            role from the sidebar.
           </p>
           <p
             style={{
@@ -369,8 +370,8 @@ const adminOnlyResource = defineResource({
               fontSize: "0.875rem",
             }}
           >
-            Try switching to "Staff" role - this page will disappear from the navigation and become
-            inaccessible.
+            Try switching to "Staff" role - this page will disappear from the
+            navigation and become inaccessible.
           </p>
         </div>
         <div style={{ marginTop: "1.5rem" }}>
@@ -439,7 +440,9 @@ const adminOnlyResource = defineResource({
               </code>{" "}
               for non-admins
             </li>
-            <li>The navigation automatically hides resources that are guarded</li>
+            <li>
+              The navigation automatically hides resources that are guarded
+            </li>
           </ul>
         </div>
       </div>
@@ -457,7 +460,10 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = "", variant = "default", size = "default", ...props }, ref) => {
+  (
+    { className = "", variant = "default", size = "default", ...props },
+    ref,
+  ) => {
     const baseClasses =
       "astw:inline-flex astw:items-center astw:justify-center astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]";
 
@@ -467,7 +473,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         : "astw:bg-primary astw:text-primary-foreground astw:shadow-xs astw:hover:bg-primary/90";
 
     const sizeClasses =
-      size === "sm" ? "astw:h-8 astw:gap-1.5 astw:px-3" : "astw:h-9 astw:gap-2 astw:px-4 astw:py-2";
+      size === "sm"
+        ? "astw:h-8 astw:gap-1.5 astw:px-3"
+        : "astw:h-9 astw:gap-2 astw:px-4 astw:py-2";
 
     return (
       <button
@@ -538,7 +546,7 @@ const oneColumnLayoutResource = defineResource({
   component: () => {
     return (
       <Layout>
-        <Layout.Main>
+        <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
             title="Order Overview"
@@ -585,7 +593,7 @@ const oneColumnLayoutResource = defineResource({
               { key: "note", label: "Notes", meta: { truncateLines: 3 } },
             ]}
           />
-        </Layout.Main>
+        </Layout.Column>
       </Layout>
     );
   },
@@ -598,8 +606,8 @@ const twoColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <>
-        <LayoutHeader
+      <Layout>
+        <Layout.Header
           title="2 Columns"
           actions={
             <>
@@ -623,76 +631,7 @@ const twoColumnLayoutResource = defineResource({
             </>
           }
         />
-        <Layout>
-          <Layout.Main>
-            <DescriptionCard
-              data={mockPurchaseOrder}
-              title="Order Overview"
-              columns={4}
-              fields={[
-                {
-                  key: "docNumber",
-                  label: "PO Number",
-                  meta: { copyable: true },
-                },
-                {
-                  key: "externalReference",
-                  label: "External Ref",
-                  meta: { copyable: true },
-                },
-                { key: "supplierName", label: "Supplier" },
-                { type: "divider" },
-                {
-                  key: "expectedDeliveryDate",
-                  label: "Expected Delivery",
-                  type: "date",
-                  meta: { dateFormat: "medium" },
-                },
-                {
-                  key: "confirmedAt",
-                  label: "Confirmed",
-                  type: "date",
-                  meta: { dateFormat: "medium" },
-                },
-                {
-                  key: "createdAt",
-                  label: "Created",
-                  type: "date",
-                  meta: { dateFormat: "relative" },
-                },
-                { key: "shipToLocation.name", label: "Warehouse" },
-                { type: "divider" },
-                {
-                  key: "shipToLocation.address",
-                  label: "Shipping Address",
-                  type: "address",
-                  meta: { copyable: true },
-                },
-                { key: "note", label: "Notes", meta: { truncateLines: 3 } },
-              ]}
-            />
-          </Layout.Main>
-          <Layout.Right>
-            <Placeholder columnNumber={2} />
-          </Layout.Right>
-        </Layout>
-      </>
-    );
-  },
-});
-
-const threeColumnLayoutResource = defineResource({
-  path: "layout-3-columns",
-  meta: {
-    title: "3 Columns",
-  },
-  component: () => {
-    return (
-      <Layout>
-        <Layout.Left>
-          <Placeholder columnNumber={1} />
-        </Layout.Left>
-        <Layout.Main>
+        <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
             title="Order Overview"
@@ -739,10 +678,77 @@ const threeColumnLayoutResource = defineResource({
               { key: "note", label: "Notes", meta: { truncateLines: 3 } },
             ]}
           />
-        </Layout.Main>
-        <Layout.Right>
+        </Layout.Column>
+        <Layout.Column>
+          <Placeholder columnNumber={2} />
+        </Layout.Column>
+      </Layout>
+    );
+  },
+});
+
+const threeColumnLayoutResource = defineResource({
+  path: "layout-3-columns",
+  meta: {
+    title: "3 Columns",
+  },
+  component: () => {
+    return (
+      <Layout>
+        <Layout.Column>
+          <Placeholder columnNumber={1} />
+        </Layout.Column>
+        <Layout.Column>
+          <DescriptionCard
+            data={mockPurchaseOrder}
+            title="Order Overview"
+            columns={4}
+            fields={[
+              {
+                key: "docNumber",
+                label: "PO Number",
+                meta: { copyable: true },
+              },
+              {
+                key: "externalReference",
+                label: "External Ref",
+                meta: { copyable: true },
+              },
+              { key: "supplierName", label: "Supplier" },
+              { type: "divider" },
+              {
+                key: "expectedDeliveryDate",
+                label: "Expected Delivery",
+                type: "date",
+                meta: { dateFormat: "medium" },
+              },
+              {
+                key: "confirmedAt",
+                label: "Confirmed",
+                type: "date",
+                meta: { dateFormat: "medium" },
+              },
+              {
+                key: "createdAt",
+                label: "Created",
+                type: "date",
+                meta: { dateFormat: "relative" },
+              },
+              { key: "shipToLocation.name", label: "Warehouse" },
+              { type: "divider" },
+              {
+                key: "shipToLocation.address",
+                label: "Shipping Address",
+                type: "address",
+                meta: { copyable: true },
+              },
+              { key: "note", label: "Notes", meta: { truncateLines: 3 } },
+            ]}
+          />
+        </Layout.Column>
+        <Layout.Column>
           <Placeholder columnNumber={3} />
-        </Layout.Right>
+        </Layout.Column>
       </Layout>
     );
   },
@@ -793,50 +799,51 @@ const layoutSlotsDemoResource = defineResource({
   },
   component: () => (
     <div className="astw:flex astw:flex-col astw:gap-4">
-      <LayoutHeader
-        title="Layout Slots Demo"
-        actions={
-          <Button size="sm" onClick={() => alert("Action!")}>
-            Action
-          </Button>
-        }
-      />
+      <Layout>
+        <Layout.Header
+          title="Layout Slots Demo"
+          actions={
+            <Button size="sm" onClick={() => alert("Action!")}>
+              Action
+            </Button>
+          }
+        />
+      </Layout>
 
       {/* 1 column */}
       <Layout>
-        <Layout.Main>
+        <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
             title="Order Overview"
             columns={4}
             fields={orderOverviewFields}
           />
-        </Layout.Main>
+        </Layout.Column>
       </Layout>
 
-      {/* 2 columns */}
+      {/* 2 columns (area: left + main) */}
       <Layout>
-        <Layout.Left>
+        <Layout.Column area="left">
           <Placeholder columnNumber={1} />
-        </Layout.Left>
-        <Layout.Main>
+        </Layout.Column>
+        <Layout.Column area="main">
           <Placeholder columnNumber={2} />
-        </Layout.Main>
+        </Layout.Column>
       </Layout>
 
       {/* 3 columns */}
       <Layout>
-        <Layout.Left>
+        <Layout.Column>
           <Placeholder columnNumber={1} />
-        </Layout.Left>
-        <Layout.Main>
+        </Layout.Column>
+        <Layout.Column>
           <Placeholder columnNumber={2} />
-        </Layout.Main>
-        <Layout.Right>
+        </Layout.Column>
+        <Layout.Column>
           <Placeholder columnNumber={3} />
-        </Layout.Right>
+        </Layout.Column>
       </Layout>
-
     </div>
   ),
 });
@@ -857,7 +864,9 @@ export const customPageModule = defineModule({
             <Link to="/custom-page/sub1/sub1-1">{t("goToSub1-1")}</Link>
           </p>
           <p>
-            <Link to="/custom-page/sub1/sub1-1/123">{t("goToDynamicPage")}</Link>
+            <Link to="/custom-page/sub1/sub1-1/123">
+              {t("goToDynamicPage")}
+            </Link>
           </p>
           <p>
             <Link

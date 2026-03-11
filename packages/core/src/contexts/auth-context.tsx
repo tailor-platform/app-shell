@@ -30,19 +30,10 @@ export interface EnhancedAuthClient extends AuthClient {
   getAppUri(): string;
 
   /**
-   * Get Authorization and DPoP headers for protected resource requests.
-   * This version automatically uses the appUri for the /query endpoint.
-   *
-   * @param path - Optional path to append to appUri (default: "/query")
-   * @param method - HTTP method (default: "POST")
+   * Authenticated fetch with built-in DPoP proof generation and token refresh.
+   * Same signature as the standard `fetch` API.
    */
-  getAuthHeadersForQuery(
-    path?: string,
-    method?: string,
-  ): Promise<{
-    Authorization: string;
-    DPoP: string;
-  }>;
+  fetch: AuthClient["fetch"];
 }
 
 /**
@@ -62,13 +53,10 @@ export interface EnhancedAuthClient extends AuthClient {
  *   appUri: 'https://xyz.erp.dev',
  * });
  *
- * // Create urql client using the wrapped getAuthHeadersForQuery
+ * // Create urql client using the auth client's fetch
  * const urqlClient = createClient({
  *   url: `${authClient.getAppUri()}/query`,
- *   fetchOptions: async () => {
- *     const headers = await authClient.getAuthHeadersForQuery();
- *     return { headers };
- *   },
+ *   fetch: authClient.fetch,
  * });
  *
  * function App() {
@@ -82,11 +70,26 @@ export interface EnhancedAuthClient extends AuthClient {
  * }
  * ```
  */
+export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
+  const baseClient = createAuthClientOriginal(config);
+  const { appUri } = config;
+
+  const enhancedClient: EnhancedAuthClient = {
+    ...baseClient,
+
+    getAppUri(): string {
+      return appUri;
+    },
+  };
+
+  return enhancedClient;
+}
+
 /**
  * Build a clean URL by removing OAuth-related parameters (code, state)
  * while preserving other query parameters and hash fragments.
  *
- * @param url - The URL to clean (defaults to window.location)
+ * @param url - The URL to clean
  * @returns The cleaned URL string
  *
  * @example
@@ -101,26 +104,6 @@ export function buildCleanOAuthCallbackUrl(url: URL): string {
   params.delete("state");
   const newSearch = params.toString();
   return url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
-}
-
-export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
-  const baseClient = createAuthClientOriginal(config);
-  const { appUri } = config;
-
-  const enhancedClient: EnhancedAuthClient = {
-    ...baseClient,
-
-    getAppUri(): string {
-      return appUri;
-    },
-
-    async getAuthHeadersForQuery(path: string = "/query", method: string = "POST") {
-      const url = `${appUri}${path}`;
-      return baseClient.getAuthHeaders(url, method);
-    },
-  };
-
-  return enhancedClient;
 }
 
 // ============================================================================

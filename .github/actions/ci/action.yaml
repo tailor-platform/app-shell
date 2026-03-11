@@ -15,8 +15,7 @@ runs:
     - name: Install dependencies
       run: pnpm install
       shell: bash
-    - name: Launch Turbo Remote Cache Server
-      uses: dtinth/setup-github-actions-caching-for-turbo@cc723b4600e40a6b8815b65701d8614b91e2669e #v1.3.0
-    - name: Run lint / test / type-check
-      run: npx turbo run lint test type-check
+    - run: pnpm fmt:check
+      shell: bash
+    - run: npx turbo run lint test type-check
       shell: bash

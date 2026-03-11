@@ -54,7 +54,7 @@ export function generateTypedRoutesCode(pages: PageFile[]): string {
   const routeEntries: string[] = [];
 
   // Sort pages by route path for consistent output
-  const sortedPages = [...pages].sort((a, b) => {
+  const sortedPages = pages.toSorted((a, b) => {
     const pathA = a.routePath || "";
     const pathB = b.routePath || "";
     return pathA.localeCompare(pathB);

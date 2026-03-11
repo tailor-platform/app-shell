@@ -133,7 +133,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
       {hasHeader && (
         <header
           className="astw:w-full astw:flex astw:justify-between astw:items-center"
-          style={{ padding: "1.5rem", paddingBottom: "1rem" }}
+          style={{ paddingTop: "1rem", paddingBottom: "1rem" }}
         >
           {title && <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>}
           {actions && actions.length > 0 && (
@@ -145,7 +145,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
           )}
         </header>
       )}
-      <div style={{ padding: hasHeader ? "0 1.5rem 1.5rem 1.5rem" : "1.5rem" }}>
+      <div style={{ padding: hasHeader ? "0 0 1rem 0" : "1rem 0 1rem 0" }}>
         <div className={containerClasses}>{childrenWithStyles}</div>
       </div>
     </div>

@@ -211,7 +211,7 @@ describe("validateAppShellPageProps", () => {
     const warnings = validateAppShellPageProps(node!, testSchema, "test.tsx");
 
     expect(warnings).toHaveLength(2);
-    expect(warnings.map((w) => w.key).sort()).toEqual(["baz", "foo"]);
+    expect(warnings.map((w) => w.key).toSorted()).toEqual(["baz", "foo"]);
   });
 
   it("handles empty appShellPageProps", () => {

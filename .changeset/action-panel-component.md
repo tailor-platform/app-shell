@@ -4,7 +4,7 @@
 
 Add ActionPanel component for ERP-style action lists.
 
-**ActionPanel** — Card with a title and vertical list of actions (icon + label). Each row is either a button (`onClick`) or a link (`href`). The panel uses full width of its parent by default.
+**ActionPanel** — Card with a title and vertical list of actions (icon + label). Each row is a button triggered via `onClick`. The panel uses full width of its parent by default.
 
 ### Example
 
@@ -24,7 +24,7 @@ import { ActionPanel } from "@tailor-platform/app-shell";
       key: "docs",
       label: "View documentation",
       icon: <DocIcon />,
-      href: "/docs",
+      onClick: () => window.open("/docs", "_blank", "noopener,noreferrer"),
     },
   ]}
 />

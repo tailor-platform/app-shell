@@ -1,6 +1,6 @@
 # ActionPanel
 
-A presentational card component that renders a title and a vertical list of actions. Each action is a row with an icon and label, triggered by `onClick` (button) or `href` (link). Designed for document-detail and sidebar layouts in ERP-style applications where the list of actions is often **backend-driven** and **status-dependent**.
+A presentational card component that renders a title and a vertical list of actions. Each action is a row with an icon and label, triggered by `onClick` (button). Designed for document-detail and sidebar layouts in ERP-style applications where the list of actions is often **backend-driven** and **status-dependent**.
 
 ---
 
@@ -23,7 +23,7 @@ A presentational card component that renders a title and a vertical list of acti
 **ActionPanel** is a presentational component with no internal business logic. It does not know about “documents,” APIs, or mutations. The parent is responsible for:
 
 - Deciding **which** actions to show (e.g. from backend or from business logic).
-- Deciding **what** each action does (via `onClick` or `href`).
+- Deciding **what** each action does (via `onClick`).
 - Setting **loading** and **disabled** state when executing async work.
 
 This keeps the component simple, testable, and easy to use from both hand-written code and AI-generated code. It also fits the industry-standard pattern where the **backend** owns “which actions are available” and the **frontend** owns “how to render and execute” them.
@@ -38,10 +38,10 @@ We chose a **flat list of items** (`ActionItem[]`) instead of a document-scoped 
 
 **Why:**
 
-- **Simplicity:** The contract is “an array of { key, label, icon, onClick or href }.” No providers, no render props, no generic document type to thread through.
+- **Simplicity:** The contract is “an array of { key, label, icon, onClick }.” No providers, no render props, no generic document type to thread through.
 - **Flexibility:** The parent can close over the current document (or anything else) when building the list: `onClick: () => confirmOrder(doc)`.
 - **Backend-driven:** When the API returns “available action keys,” the app can resolve them with a registry and pass a resolved list. The component does not need to know where the list came from.
-- **AI-friendly:** Generating a list of items with `onClick`/`href` is straightforward; generating correct provider/render-props code is error-prone.
+- **AI-friendly:** Generating a list of items with `onClick` is straightforward; generating correct provider/render-props code is error-prone.
 
 So: the component stays **presentational**; “document scope” and “which actions” live in the parent or in app-level conventions (e.g. a registry + hook).
 
@@ -59,8 +59,6 @@ When `loading` is true:
 
 - The icon slot shows a small inline spinner (same 16px size so layout does not shift).
 - The row is non-clickable and uses the same disabled styling as `disabled`.
-- For links (`href`), the row is rendered as a disabled button with `aria-busy` instead of an `<a>`, so the user cannot navigate while the action is in progress.
-
 ### 3. No secondary actions (split-button) in the first version
 
 We did not add a “secondary action” (e.g. a small icon button beside the main action) to keep the API small and the implementation simple. If needed later, `ActionItem` can be extended with something like `secondaryAction?: { icon, onClick, title }` and the row layout updated.
@@ -89,21 +87,20 @@ We did not add a “secondary action” (e.g. a small icon button beside the mai
 | `key`      | `string`        | Yes      | Unique key for React (and for stable identity when merging backend + extensions) |
 | `label`    | `string`        | Yes      | Visible label                                                               |
 | `icon`     | `ReactNode`     | Yes      | Icon; rendered in a 16px slot (e.g. `<ReceiptIcon />`)                       |
-| `onClick`  | `() => void \| Promise<void>` | No | Called when the row is clicked (button only; ignored when `href` is set)   |
-| `href`     | `string`        | No       | If set, the row renders as `<a href={href}>` for navigation                 |
+| `onClick`  | `() => void \| Promise<void>` | No | Called when the row is clicked                                               |
 | `disabled` | `boolean`       | No       | When true, row is non-interactive and styled as disabled                    |
 | `loading`  | `boolean`       | No       | When true, row shows spinner in icon slot and is non-interactive            |
 
 **Rules:**
 
-- Use **either** `onClick` **or** `href` per action (not both in a meaningful way; `href` takes precedence when the row is not disabled/loading).
-- When `loading` or `disabled` is true, the row is non-interactive and does not fire `onClick` or navigate via `href`.
+- Provide `onClick` for interactive actions.
+- When `loading` or `disabled` is true, the row is non-interactive and does not fire `onClick`.
 
 ---
 
 ## Usage
 
-### Basic: static list with onClick and href
+### Basic: static list with onClick
 
 ```tsx
 import { ActionPanel } from "@tailor-platform/app-shell";
@@ -121,7 +118,7 @@ import { ActionPanel } from "@tailor-platform/app-shell";
       key: "view-docs",
       label: "View documentation",
       icon: <ExternalLinkIcon />,
-      href: "/docs",
+      onClick: () => window.open("/docs", "_blank", "noopener,noreferrer"),
     },
   ]}
 />
@@ -198,7 +195,7 @@ Some codebases use a pattern where:
 | Aspect              | ActionPanel (this component)     | Provider-based (e.g. Omakase)        |
 | ------------------- | --------------------------------- | ------------------------------------ |
 | Document            | Parent closes over doc in onClick | Component receives `document` prop   |
-| Execution           | Parent passes `onClick` / `href`  | Each action has `ExecuteProvider`   |
+| Execution           | Parent passes `onClick`            | Each action has `ExecuteProvider`   |
 | Loading             | Parent sets `loading` on item     | Provider exposes `isLoading`        |
 | Complexity          | Low (flat data)                   | Higher (providers, render props)     |
 | Best for            | Any app; backend-driven lists     | Large apps with heavy encapsulation  |
@@ -214,9 +211,9 @@ For **Tailor Platform**, we chose the presentational + registry pattern so that:
 ## Accessibility and behavior
 
 - **List structure:** The action list uses `role="list"` and each row wrapper uses `role="listitem"`.
-- **Buttons and links:** Rows are either `<button type="button">` or `<a>` so they are focusable and keyboard-activatable. Focus visible ring is applied via Tailwind.
+- **Buttons:** Rows are rendered as `<button type="button">` so they are focusable and keyboard-activatable. Focus visible ring is applied via Tailwind.
 - **Loading:** When `loading` is true, the row is a disabled button with `aria-busy="true"`. The spinner in the icon slot is `aria-hidden` so the row’s `aria-busy` is the only loading announcement.
-- **Disabled:** When `disabled` is true, the row has `aria-disabled="true"` and the button is `disabled` (or the link is not rendered; a disabled-style button is shown instead when there is an `href` and loading/disabled).
+- **Disabled:** When `disabled` is true, the row has `aria-disabled="true"` and the button is `disabled`.
 - **Data attributes:** Each row has `data-slot="action-panel-item"` and `data-key={key}` for testing and tooling.
 
 ---
@@ -242,7 +239,7 @@ All styling uses Tailwind v4 with the `astw:` prefix so it works in the AppShell
   title="Actions"
   actions={[
     { key: "1", label: "Create invoice", icon: <ReceiptIcon />, onClick: () => openModal() },
-    { key: "2", label: "View docs", icon: <DocIcon />, href: "/docs" },
+    { key: "2", label: "View docs", icon: <DocIcon />, onClick: () => window.open("/docs", "_blank", "noopener,noreferrer") },
     { key: "3", label: "Saving…", icon: <SaveIcon />, onClick: () => {}, loading: true },
   ]}
 />
@@ -250,7 +247,7 @@ All styling uses Tailwind v4 with the `astw:` prefix so it works in the AppShell
 
 ### Live demo in this repo
 
-- **Action Panel Demo page:** `examples/app-module` defines a dedicated “Action Panel Demo” resource that shows a simple list with `onClick` and `href`.
+- **Action Panel Demo page:** `examples/app-module` defines a dedicated “Action Panel Demo” resource that shows a simple list with `onClick`.
 - **2-column layout:** The “2 Columns” layout page includes an ActionPanel in the second column with a **loading example:** “Create new sales invoice” sets `loading: true` for 1.5 seconds on click, then shows an alert. This demonstrates how to wire loading state from the parent.
 
 Run the example app (e.g. `pnpm dev` from the repo root) and open the Custom Page → Action Panel Demo and Layout → 2 Columns to see the component in use.
@@ -260,6 +257,6 @@ Run the example app (e.g. `pnpm dev` from the repo root) and open the Custom Pag
 ## Summary
 
 - **ActionPanel** is a presentational card that renders a title and a list of actions (icon + label).
-- Each action is either a button (`onClick`) or a link (`href`). Optional `disabled` and `loading` per action.
+- Each action is a button row triggered via `onClick`. Optional `disabled` and `loading` per action.
 - Designed for **backend-driven** lists: parent (or app convention) builds the list from API + registry and passes a resolved `ActionItem[]`.
 - Keeps the library simple, scalable for ERP-style UIs, and easy to use for both developers and AI-generated code. For more detail on the public API, see the main [API docs](../../../../docs/api.md#actionpanel).

@@ -8,25 +8,24 @@ import type { ActionPanelProps, ActionItem } from "./types";
 const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
 
 const ActionSpinner = () => (
-  <span className={iconSlotClasses} aria-hidden data-testid="action-panel-spinner">
-    <svg
-      className="astw:size-4 astw:animate-spin"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle
-        cx="8"
-        cy="8"
-        r="6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeDasharray="24 24"
-        strokeDashoffset="8"
-      />
-    </svg>
-  </span>
+  <svg
+    className="astw:size-4 astw:animate-spin"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    data-testid="action-panel-spinner"
+  >
+    <circle
+      cx="8"
+      cy="8"
+      r="6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeDasharray="24 24"
+      strokeDashoffset="8"
+    />
+  </svg>
 );
 
 // ============================================================================

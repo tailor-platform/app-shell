@@ -87,7 +87,15 @@ If the changeset introduces an **entirely new concept** that does not fit natura
 - Follow the same heading structure and formatting conventions used in other doc files
 - Add the new file to the Documentation Index in `CLAUDE.md` under the appropriate section
 
-### Step 5: Create a pull request
+### Step 5: Format
+
+After updating documentation files, run the following command at the repository root to format them:
+
+```bash
+pnpm format
+```
+
+### Step 6: Create a pull request
 
 Create a PR with the doc updates. Use this title format:
 

@@ -34,9 +34,12 @@ export interface LayoutProps {
   gap?: number;
   /** Header title - displayed at the top of the layout */
   title?: string;
-  /** Header actions - array of action components (e.g., buttons) displayed on the right side of the header.
-   * Layout and spacing are handled automatically. */
-  actions?: ReactNode[];
+  /** Header actions displayed on the right side of the header.
+   * Accepts a single element, Fragment, or array. Layout and spacing are handled automatically.
+   *
+   * @deprecated Use `<Layout.Header actions={...}>` instead.
+   */
+  actions?: ReactNode;
   /** Child elements - Layout.Header and/or Layout.Column components */
   children: ReactNode;
 }

@@ -2,12 +2,36 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./types";
 
-// ============================================================================
-// COLUMN COMPONENT
-// ============================================================================
-
 /**
- * Individual column component - wraps content for a single column
+ * Layout.Column — A single column within `<Layout>`.
+ *
+ * Wrap each logical section of the page in a `<Layout.Column>`.
+ * The parent `<Layout>` automatically sizes columns based on the number of
+ * children and, optionally, the `area` prop.
+ *
+ * **Area mode** — Give every column an `area` prop to opt into role-based
+ * widths instead of position-based widths:
+ *
+ * | area     | width          |
+ * | -------- | -------------- |
+ * | `"left"`  | fixed 320 px   |
+ * | `"main"`  | flexible (1fr) |
+ * | `"right"` | fixed 280 px   |
+ *
+ * @example
+ * ```tsx
+ * // Position-based (default)
+ * <Layout>
+ *   <Layout.Column>Main content</Layout.Column>
+ *   <Layout.Column>Side panel</Layout.Column>
+ * </Layout>
+ *
+ * // Area-based
+ * <Layout>
+ *   <Layout.Column area="left">Sidebar</Layout.Column>
+ *   <Layout.Column area="main">Content</Layout.Column>
+ * </Layout>
+ * ```
  */
 export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
   ({ className, children, ...props }, ref) => {
@@ -24,18 +48,38 @@ export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
 );
 Column.displayName = "Layout.Column";
 
-// ============================================================================
-// HEADER COMPONENT
-// ============================================================================
-
 /**
- * Layout.Header - Header for page title and actions.
+ * Layout.Header — Page-level header with title, actions, and an optional
+ * full-width slot.
  *
- * Compose inside Layout above Layout.Column children.
- * Title on the left, actions on the right.
- * Children render full-width below the title/actions row (e.g. tabs).
+ * Place this as a direct child of `<Layout>`, above any `<Layout.Column>`
+ * children. The header spans the full width of the layout regardless of
+ * column count.
+ *
+ * - **title** — Rendered as an `<h1>` on the left side.
+ * - **actions** — Rendered on the right side (e.g. save / cancel buttons).
+ * - **children** — Rendered full-width below the title/actions row.
+ *   Useful for tabs, breadcrumbs, or other secondary navigation.
+ *
+ * @example
+ * ```tsx
+ * <Layout>
+ *   <Layout.Header
+ *     title="Purchase Orders"
+ *     actions={<Button>Create</Button>}
+ *   >
+ *     <Tabs value={tab} onValueChange={setTab}>
+ *       <TabsList>
+ *         <TabsTrigger value="all">All</TabsTrigger>
+ *         <TabsTrigger value="open">Open</TabsTrigger>
+ *       </TabsList>
+ *     </Tabs>
+ *   </Layout.Header>
+ *   <Layout.Column>…</Layout.Column>
+ * </Layout>
+ * ```
  */
-function LayoutHeader({ title, actions, children }: LayoutHeaderProps) {
+function Header({ title, actions, children }: LayoutHeaderProps) {
   const hasTitleRow = title || (actions != null && actions !== false);
 
   return (
@@ -52,7 +96,7 @@ function LayoutHeader({ title, actions, children }: LayoutHeaderProps) {
     </header>
   );
 }
-LayoutHeader.displayName = "Layout.Header";
+Header.displayName = "Layout.Header";
 
 // ============================================================================
 // AREA VALIDATION
@@ -97,14 +141,23 @@ function validateAreas(columnChildren: React.ReactElement[]): "position" | "area
 // ============================================================================
 
 function getAreaWidthClass(area: ColumnArea, columnCount: number): string {
-  const breakpointPrefix = columnCount === 3 ? "astw:xl:" : "astw:lg:";
+  if (columnCount === 3) {
+    switch (area) {
+      case "left":
+        return "astw:xl:w-[320px] astw:xl:shrink-0";
+      case "main":
+        return "astw:xl:flex-1";
+      case "right":
+        return "astw:xl:w-[280px] astw:xl:shrink-0";
+    }
+  }
   switch (area) {
     case "left":
-      return `${breakpointPrefix}min-w-[320px]`;
+      return "astw:lg:w-[320px] astw:lg:shrink-0";
     case "main":
-      return `${breakpointPrefix}flex-1`;
+      return "astw:lg:flex-1";
     case "right":
-      return `${breakpointPrefix}min-w-[280px]`;
+      return "astw:lg:w-[280px] astw:lg:shrink-0";
   }
 }
 
@@ -139,7 +192,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   const headerChild: React.ReactElement | null = (() => {
     let found: React.ReactElement | null = null;
     React.Children.forEach(children, (child) => {
-      if (React.isValidElement(child) && child.type === LayoutHeader) {
+      if (React.isValidElement(child) && child.type === Header) {
         found = child;
       }
     });
@@ -151,7 +204,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
     if (!React.isValidElement(child)) return;
     if (child.type === Column) {
       columnChildren.push(child);
-    } else if (child.type !== LayoutHeader) {
+    } else if (child.type !== Header) {
       console.warn(
         "Layout: Unsupported child type detected. Only Layout.Header and Layout.Column are allowed as children.",
       );
@@ -210,7 +263,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
         return React.cloneElement(child, {
           className: cn(
             (child.props as ColumnProps).className,
-            index === 0 ? "astw:lg:flex-1" : "astw:lg:min-w-[280px]",
+            index === 0 ? "astw:lg:flex-1" : "astw:lg:w-[280px] astw:lg:shrink-0",
           ),
         } as Partial<ColumnProps>);
       });
@@ -222,9 +275,9 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
           className: cn(
             (child.props as ColumnProps).className,
             index === 0
-              ? "astw:xl:min-w-[320px]"
+              ? "astw:xl:w-[320px] astw:xl:shrink-0"
               : index === 2
-                ? "astw:xl:min-w-[280px]"
+                ? "astw:xl:w-[280px] astw:xl:shrink-0"
                 : "astw:xl:flex-1",
           ),
         } as Partial<ColumnProps>);
@@ -268,7 +321,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
 
 // Attach sub-components
 Layout.Column = Column;
-Layout.Header = LayoutHeader;
+Layout.Header = Header;
 
 // ============================================================================
 // EXPORTS

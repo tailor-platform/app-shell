@@ -1,3 +1,8 @@
+---
+title: File-Based Routing
+description: Define pages via directory structure using the Vite plugin instead of explicit module configuration
+---
+
 # File-Based Routing
 
 File-based routing allows you to define pages by simply placing components in a directory structure, eliminating the need for explicit `defineModule()` and `defineResource()` calls.

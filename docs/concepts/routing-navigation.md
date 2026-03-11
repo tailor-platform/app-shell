@@ -1,4 +1,9 @@
-# Client-side Navigation
+---
+title: Routing and Navigation
+description: Learn how to navigate between pages using React Router hooks and components re-exported from AppShell
+---
+
+# Routing and Navigation
 
 Because AppShell manages routing internally, it has its own instance of the RouterProvider from `react-router`.
 

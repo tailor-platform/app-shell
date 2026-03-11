@@ -1,6 +1,11 @@
-# Module and Resource Definition
+---
+title: Modules and Resources
+description: Learn how to structure your AppShell application using modules and resources for automatic routing, navigation, and breadcrumbs
+---
 
-AppShell will render the sidebar navigation, breadcrumbs and handle routing based on structured configuration of modules and resources (and sub-resources, sub-sub-resources and so on).
+# Modules and Resources
+
+AppShell renders sidebar navigation, breadcrumbs, and handles routing based on a structured configuration of modules and resources (and sub-resources, sub-sub-resources, and so on).
 
 Modules and Resources both share core interface. Of interest:
 

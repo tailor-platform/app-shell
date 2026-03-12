@@ -274,6 +274,13 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   // gracefully (useMemo returns an empty array and nothing renders).
   const columnCount = columns ?? effectiveColumns.length;
 
+  if (columns !== undefined && columns !== effectiveColumns.length) {
+    console.warn(
+      `Layout: \`columns\` prop (${columns}) does not match Layout.Column child count (${effectiveColumns.length}). ` +
+        "The `columns` prop is deprecated; remove it to use auto-detection.",
+    );
+  }
+
   // Determine area mode
   const areaMode = validateAreas(effectiveColumns);
 

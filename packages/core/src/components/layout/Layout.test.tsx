@@ -189,6 +189,31 @@ describe("Layout", () => {
     warnSpy.mockRestore();
   });
 
+  it("applies area-based width class for left column in 2-col layout", () => {
+    render(
+      <Layout>
+        <Layout.Column area="left">Sidebar</Layout.Column>
+        <Layout.Column area="main">Content</Layout.Column>
+      </Layout>,
+    );
+    const sidebar = screen.getByText("Sidebar").closest("div");
+    expect(sidebar?.className).toContain("w-[320px]");
+  });
+
+  it("applies area-based width class for right column in 3-col layout", () => {
+    render(
+      <Layout>
+        <Layout.Column area="left">Left</Layout.Column>
+        <Layout.Column area="main">Center</Layout.Column>
+        <Layout.Column area="right">Right</Layout.Column>
+      </Layout>,
+    );
+    const right = screen.getByText("Right").closest("div");
+    expect(right?.className).toContain("w-[280px]");
+    const left = screen.getByText("Left").closest("div");
+    expect(left?.className).toContain("w-[320px]");
+  });
+
   it("warns when deprecated columns prop doesn't match child count", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(

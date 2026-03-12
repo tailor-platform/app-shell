@@ -318,12 +318,11 @@ export function Layout({ columns, className, gap, title, actions, children }: La
     className,
   );
 
-  // Apply width constraints to columns
-  const childrenWithStyles = React.useMemo(
-    () => applyColumnStyles(effectiveColumns, columnCount, areaMode),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [children, columnCount, areaMode],
-  );
+  // Apply width constraints to columns.
+  // No useMemo — the computation is trivial (mapping over at most 3 elements)
+  // and `effectiveColumns` is a new array ref every render (from .slice()),
+  // which would invalidate any memo anyway.
+  const childrenWithStyles = applyColumnStyles(effectiveColumns, columnCount, areaMode);
 
   // Header: prefer Layout.Header child, fall back to title/actions props
   const hasLegacyHeader = title || (actions != null && actions.length > 0);
@@ -346,11 +345,7 @@ export function Layout({ columns, className, gap, title, actions, children }: La
           )}
         </header>
       )}
-      <div
-        style={{
-          padding: headerChild || hasLegacyHeader ? "0 0 1rem 0" : "1rem 0 1rem 0",
-        }}
-      >
+      <div className={cn(headerChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4")}>
         <div className={containerClasses}>{childrenWithStyles}</div>
       </div>
     </div>

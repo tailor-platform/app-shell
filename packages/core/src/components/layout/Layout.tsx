@@ -295,7 +295,7 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   const childrenWithStyles = applyColumnStyles(effectiveColumns, columnCount, areaMode);
 
   // Header: prefer Layout.Header child, fall back to title/actions props
-  const hasLegacyHeader = title || (actions != null && actions !== false);
+  const hasLegacyHeader = title || (actions != null && actions.length > 0);
 
   return (
     <div className="astw:flex astw:flex-col">
@@ -306,8 +306,12 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
           style={{ paddingTop: "1rem", paddingBottom: "1rem" }}
         >
           {title && <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>}
-          {actions != null && actions !== false && (
-            <div className="astw:flex astw:gap-2 astw:items-center">{actions}</div>
+          {actions != null && actions.length > 0 && (
+            <div className="astw:flex astw:gap-2 astw:items-center">
+              {actions.map((action, i) => (
+                <React.Fragment key={i}>{action}</React.Fragment>
+              ))}
+            </div>
           )}
         </header>
       )}

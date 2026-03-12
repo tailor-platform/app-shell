@@ -3,12 +3,18 @@ import { AlertDialog as BaseAlertDialog } from "@base-ui/react/alert-dialog";
 
 import { cn } from "@/lib/utils";
 
-function AlertDialogRoot({ ...props }: React.ComponentProps<typeof BaseAlertDialog.Root>) {
+function AlertDialogRoot({
+  ...props
+}: React.ComponentProps<typeof BaseAlertDialog.Root>) {
   return <BaseAlertDialog.Root data-slot="alert-dialog" {...props} />;
 }
 
-function AlertDialogTrigger({ ...props }: React.ComponentProps<typeof BaseAlertDialog.Trigger>) {
-  return <BaseAlertDialog.Trigger data-slot="alert-dialog-trigger" {...props} />;
+function AlertDialogTrigger({
+  ...props
+}: React.ComponentProps<typeof BaseAlertDialog.Trigger>) {
+  return (
+    <BaseAlertDialog.Trigger data-slot="alert-dialog-trigger" {...props} />
+  );
 }
 
 function AlertDialogContent({
@@ -36,7 +42,10 @@ function AlertDialogContent({
   );
 }
 
-function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function AlertDialogHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-header"
@@ -49,7 +58,10 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
   );
 }
 
-function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+function AlertDialogFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-footer"
@@ -69,7 +81,10 @@ function AlertDialogTitle({
   return (
     <BaseAlertDialog.Title
       data-slot="alert-dialog-title"
-      className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
+      className={cn(
+        "astw:text-lg astw:leading-none astw:font-semibold",
+        className,
+      )}
       {...props}
     />
   );
@@ -88,9 +103,12 @@ function AlertDialogDescription({
   );
 }
 
-function AlertDialogAction({ className, ...props }: React.ComponentProps<"button">) {
+function AlertDialogAction({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseAlertDialog.Close>) {
   return (
-    <button
+    <BaseAlertDialog.Close
       data-slot="alert-dialog-action"
       className={cn(
         "astw:inline-flex astw:items-center astw:justify-center astw:gap-2 astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:outline-none astw:transition-colors",

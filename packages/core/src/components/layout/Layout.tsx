@@ -197,7 +197,7 @@ function applyColumnStyles(
         key: child.key ?? index,
         className: cn(
           (child.props as ColumnProps).className,
-          index === 0 ? "astw:lg:flex-1" : "astw:lg:w-[280px] astw:lg:shrink-0",
+          index === 0 ? "astw:lg:flex-1" : "astw:lg:min-w-[280px]",
         ),
       } as Partial<ColumnProps>);
     });
@@ -210,9 +210,9 @@ function applyColumnStyles(
         className: cn(
           (child.props as ColumnProps).className,
           index === 0
-            ? "astw:xl:w-[320px] astw:xl:shrink-0"
+            ? "astw:xl:min-w-[320px]"
             : index === 2
-              ? "astw:xl:w-[280px] astw:xl:shrink-0"
+              ? "astw:xl:min-w-[280px]"
               : "astw:xl:flex-1",
         ),
       } as Partial<ColumnProps>);
@@ -244,7 +244,7 @@ function applyColumnStyles(
  * </Layout>
  * ```
  */
-export function Layout({ columns, className, gap = 4, title, actions, children }: LayoutProps) {
+export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
   // Parse children into header and column children
   const headerChild: React.ReactElement | null = (() => {
     let found: React.ReactElement | null = null;
@@ -298,7 +298,15 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
 
   // Gap mapping: 4 = gap-4 (16px), 6 = gap-6 (24px), 8 = gap-8 (32px)
   const gapClass =
-    gap === 4 ? "astw:gap-4" : gap === 6 ? "astw:gap-6" : gap === 8 ? "astw:gap-8" : "astw:gap-4";
+    gap === undefined
+      ? "astw:gap-4"
+      : gap === 4
+        ? "astw:gap-4"
+        : gap === 6
+          ? "astw:gap-6"
+          : gap === 8
+            ? "astw:gap-8"
+            : "astw:gap-4";
 
   // Build flexbox classes based on column count
   const containerClasses = cn(

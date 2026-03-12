@@ -17,7 +17,7 @@ The current `Layout` component requires a `columns` prop that must exactly match
 - **`Layout.Header`**: Compose inside `Layout` for title, actions, and extra content (e.g. tabs) above columns.
 - **`Layout.Column` `area` prop**: Declare column roles (`left`, `main`, `right`) for area-based width templates, enabling layouts like left sidebar + main that were previously not possible.
 - **`columns` and `gap` props are deprecated**: Column count is auto-detected from children; use `className` for gap.
-- **No breaking changes** — existing code continues to work as-is.
+- **No runtime breaking changes** — existing code continues to work as-is. Note: `columns` is now optional, so code that directly reads `LayoutProps["columns"]` as a non-optional type will need adjustment.
 
 ## Usage
 

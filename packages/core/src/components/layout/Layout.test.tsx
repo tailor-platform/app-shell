@@ -188,4 +188,15 @@ describe("Layout", () => {
     expect(screen.getByText("Content")).toBeDefined();
     warnSpy.mockRestore();
   });
+
+  it("warns when deprecated columns prop doesn't match child count", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    render(
+      <Layout columns={2}>
+        <Layout.Column>Only one</Layout.Column>
+      </Layout>,
+    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("does not match"));
+    warnSpy.mockRestore();
+  });
 });

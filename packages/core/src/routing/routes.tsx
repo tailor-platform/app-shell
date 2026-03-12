@@ -33,7 +33,7 @@ type RouteSource = {
  * 3. no component/loader   → 404 index route (React Router would otherwise
  *                            match the parent and render nothing)
  */
-const resolveIndexRoute = (source: RouteSource): RouteObject | null => {
+const resolveIndexRoute = (source: RouteSource): RouteObject => {
   if (source.component) {
     return {
       index: true,
@@ -76,7 +76,7 @@ const createRoute = (
     createRoute(child, child.subResources, effectiveErrorBoundary),
   );
   const indexRoute = resolveIndexRoute(source);
-  const allChildren = [...(indexRoute ? [indexRoute] : []), ...childRoutes];
+  const allChildren = [indexRoute, ...childRoutes];
 
   return {
     path: source.path,

@@ -4,7 +4,10 @@ import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
-import type { UseAsyncItemsOptions, UseAsyncItemsReturn } from "@/hooks/use-async-items";
+import type {
+  UseAsyncItemsOptions,
+  UseAsyncItemsReturn,
+} from "@/hooks/use-async-items";
 
 function ComboboxRoot<Value, Multiple extends boolean | undefined = false>({
   ...props
@@ -12,7 +15,10 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false>({
   return <BaseCombobox.Root data-slot="combobox" {...props} />;
 }
 
-function ComboboxInput({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Input>) {
+function ComboboxInput({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Input>) {
   return (
     <BaseCombobox.Input
       data-slot="combobox-input"
@@ -52,7 +58,11 @@ function ComboboxTrigger({
   );
 }
 
-function ComboboxInputGroup({ className, children, ...props }: React.ComponentProps<"div">) {
+function ComboboxInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="combobox-input-group"
@@ -70,7 +80,10 @@ function ComboboxInputGroup({ className, children, ...props }: React.ComponentPr
   );
 }
 
-function ComboboxContent({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Popup>) {
+function ComboboxContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Popup>) {
   return (
     <BaseCombobox.Portal>
       <BaseCombobox.Positioner>
@@ -87,7 +100,10 @@ function ComboboxContent({ className, ...props }: React.ComponentProps<typeof Ba
   );
 }
 
-function ComboboxList({ className, ...props }: React.ComponentProps<typeof BaseCombobox.List>) {
+function ComboboxList({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.List>) {
   return (
     <BaseCombobox.List
       data-slot="combobox-list"
@@ -123,7 +139,10 @@ function ComboboxItem({
   );
 }
 
-function ComboboxEmpty({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Empty>) {
+function ComboboxEmpty({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Empty>) {
   return (
     <BaseCombobox.Empty
       data-slot="combobox-empty"
@@ -136,7 +155,9 @@ function ComboboxEmpty({ className, ...props }: React.ComponentProps<typeof Base
   );
 }
 
-function ComboboxGroup({ ...props }: React.ComponentProps<typeof BaseCombobox.Group>) {
+function ComboboxGroup({
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Group>) {
   return <BaseCombobox.Group data-slot="combobox-group" {...props} />;
 }
 
@@ -176,7 +197,10 @@ function ComboboxClear({
   );
 }
 
-function ComboboxChips({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Chips>) {
+function ComboboxChips({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Chips>) {
   return (
     <BaseCombobox.Chips
       data-slot="combobox-chips"
@@ -194,7 +218,10 @@ function ComboboxChips({ className, ...props }: React.ComponentProps<typeof Base
   );
 }
 
-function ComboboxChip({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Chip>) {
+function ComboboxChip({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Chip>) {
   return (
     <BaseCombobox.Chip
       data-slot="combobox-chip"
@@ -229,11 +256,16 @@ function ComboboxChipRemove({
   );
 }
 
-function ComboboxValue({ ...props }: React.ComponentProps<typeof BaseCombobox.Value>) {
+function ComboboxValue({
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Value>) {
   return <BaseCombobox.Value data-slot="combobox-value" {...props} />;
 }
 
-function ComboboxStatus({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Status>) {
+function ComboboxStatus({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Status>) {
   return (
     <BaseCombobox.Status
       data-slot="combobox-status"
@@ -243,7 +275,9 @@ function ComboboxStatus({ className, ...props }: React.ComponentProps<typeof Bas
   );
 }
 
-function ComboboxCollection({ ...props }: React.ComponentProps<typeof BaseCombobox.Collection>) {
+function ComboboxCollection({
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Collection>) {
   return <BaseCombobox.Collection data-slot="combobox-collection" {...props} />;
 }
 
@@ -286,14 +320,18 @@ interface UseCreatableOptionsBase<T extends object> {
   formatCreateLabel?: (value: string) => string;
 }
 
-interface UseCreatableOptionsMultiple<T extends object> extends UseCreatableOptionsBase<T> {
+interface UseCreatableOptionsMultiple<
+  T extends object,
+> extends UseCreatableOptionsBase<T> {
   multiple: true;
   defaultValue?: T[];
   /** Called when selection changes (sentinel items are already excluded) */
   onValueChange?: (value: T[]) => void;
 }
 
-interface UseCreatableOptionsSingle<T extends object> extends UseCreatableOptionsBase<T> {
+interface UseCreatableOptionsSingle<
+  T extends object,
+> extends UseCreatableOptionsBase<T> {
   multiple?: false | undefined;
   defaultValue?: T | null;
   /** Called when selection changes */
@@ -388,10 +426,14 @@ function useCreatable<T extends object>(
   // --- Managed state ---
   const [multiValue, setMultiValue] = useState<T[]>(
     () =>
-      (isMultiple ? ((options as UseCreatableOptionsMultiple<T>).defaultValue ?? []) : []) as T[],
+      (isMultiple
+        ? ((options as UseCreatableOptionsMultiple<T>).defaultValue ?? [])
+        : []) as T[],
   );
   const [singleValue, setSingleValue] = useState<T | null>(() =>
-    !isMultiple ? ((options as UseCreatableOptionsSingle<T>).defaultValue ?? null) : null,
+    !isMultiple
+      ? ((options as UseCreatableOptionsSingle<T>).defaultValue ?? null)
+      : null,
   );
   const [query, setQuery] = useState("");
 
@@ -400,7 +442,8 @@ function useCreatable<T extends object>(
   const trimmed = query.trim();
   const lowered = trimmed.toLocaleLowerCase();
   const exactExists =
-    trimmed !== "" && items.some((item) => getLabel(item).trim().toLocaleLowerCase() === lowered);
+    trimmed !== "" &&
+    items.some((item) => getLabel(item).trim().toLocaleLowerCase() === lowered);
 
   // --- Sentinel: the "Create X" option appended to the items list ---
   const sentinel = useMemo<{ item: T; label: string } | null>(() => {
@@ -434,10 +477,18 @@ function useCreatable<T extends object>(
           const base = baseMultiValue ?? [];
           const next = [...base, newItem];
           setMultiValue(next);
-          (onValueChange as UseCreatableOptionsMultiple<T>["onValueChange"] | undefined)?.(next);
+          (
+            onValueChange as
+              | UseCreatableOptionsMultiple<T>["onValueChange"]
+              | undefined
+          )?.(next);
         } else {
           setSingleValue(newItem);
-          (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(newItem);
+          (
+            onValueChange as
+              | UseCreatableOptionsSingle<T>["onValueChange"]
+              | undefined
+          )?.(newItem);
         }
         setQuery("");
       };
@@ -456,13 +507,24 @@ function useCreatable<T extends object>(
       };
 
       // Detect pattern: Promise-returning (1 arg) vs resolve callback (2 args)
-      const result = (onItemCreated as Function)(newItem, resolve);
+      const result =
+        onItemCreated.length >= 2
+          ? (
+              onItemCreated as (
+                item: T,
+                resolve: (accept?: boolean) => void,
+              ) => void
+            )(newItem, resolve)
+          : (onItemCreated as (item: T) => Promise<void | boolean>)(newItem);
 
       // If callback returned a Promise, auto-resolve on settle
-      if (result != null && typeof (result as Promise<unknown>).then === "function") {
+      if (
+        result != null &&
+        typeof (result as Promise<unknown>).then === "function"
+      ) {
         (result as Promise<void | boolean>).then(
-          (value) => {
-            if (!resolved) resolve(value !== false ? true : false);
+          (resolvedValue) => {
+            if (!resolved) resolve(resolvedValue !== false);
           },
           () => {
             if (!resolved) resolve(false);
@@ -476,15 +538,23 @@ function useCreatable<T extends object>(
   // --- Value change handlers ---
   const handleMultipleValueChange = useCallback(
     (next: T[]) => {
-      const creatableItem = next.find((item) => sentinel !== null && item === sentinel.item);
+      const creatableItem = next.find(
+        (item) => sentinel !== null && item === sentinel.item,
+      );
       if (creatableItem && sentinel) {
         const label = sentinel.label;
-        const cleaned = next.filter((item) => !(sentinel !== null && item === sentinel.item));
+        const cleaned = next.filter(
+          (item) => !(sentinel !== null && item === sentinel.item),
+        );
         performCreate(label, cleaned);
         return;
       }
       setMultiValue(next);
-      (onValueChange as UseCreatableOptionsMultiple<T>["onValueChange"] | undefined)?.(next);
+      (
+        onValueChange as
+          | UseCreatableOptionsMultiple<T>["onValueChange"]
+          | undefined
+      )?.(next);
       setQuery("");
     },
     [performCreate, onValueChange, sentinel],
@@ -498,7 +568,11 @@ function useCreatable<T extends object>(
         return;
       }
       setSingleValue(next);
-      (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(next);
+      (
+        onValueChange as
+          | UseCreatableOptionsSingle<T>["onValueChange"]
+          | undefined
+      )?.(next);
       setQuery("");
     },
     [performCreate, onValueChange, sentinel],

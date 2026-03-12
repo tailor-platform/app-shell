@@ -61,13 +61,7 @@ This project has comprehensive documentation organized in the `docs/` directory:
 
 ## Testing & Quality
 
-```bash
-# Run tests in core package
-cd packages/core && pnpm test
-
-# Type checking
-pnpm type-check
-```
+**📋 For formatting, type-check, and lint procedures, see:** [Quality Check Skill](./.agents/skills/quality-check/SKILL.md)
 
 ## Local Development
 

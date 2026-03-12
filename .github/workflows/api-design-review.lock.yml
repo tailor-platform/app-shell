@@ -23,7 +23,13 @@
 #
 # Reviews pull requests for API design consistency, potential footguns, and TypeScript/React best practices in the AppShell core package.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"46aa90f7ac38dd664609eeae52ee7cb5e9c2bef2f78587f32af433deaa817a3b","compiler_version":"v0.50.4"}
+# Resolved workflow manifest:
+#   Imports:
+#     - ../agents/api-design-reviewer.md
+#   Includes:
+#     - /Users/izumisy/Devs/app-shell/.github/agents/api-design-reviewer.md
+#
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"dc2afebfa47507b8946ebd1ef9bf31640e88da62ec786140a28e46972a3a6a99","compiler_version":"v0.50.4"}
 
 name: "API Design Review"
 "on":
@@ -161,6 +167,9 @@ jobs:
           </system>
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
+          {{#runtime-import .github/agents/api-design-reviewer.md}}
+          GH_AW_PROMPT_EOF
+          cat << 'GH_AW_PROMPT_EOF'
           {{#runtime-import .github/workflows/api-design-review.md}}
           GH_AW_PROMPT_EOF
           } > "$GH_AW_PROMPT"
@@ -264,6 +273,17 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+      - name: Merge remote .github folder
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          GH_AW_AGENT_FILE: ".github/agents/api-design-reviewer.md"
+          GH_AW_AGENT_IMPORT_SPEC: "../agents/api-design-reviewer.md"
+        with:
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/merge_remote_agent_github_folder.cjs');
+            await main();
       - name: Create gh-aw temp directory
         run: bash /opt/gh-aw/actions/create_gh_aw_tmp_dir.sh
       - name: Configure Git credentials

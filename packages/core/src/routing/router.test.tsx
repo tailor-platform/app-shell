@@ -326,4 +326,47 @@ describe("RouterContainer (memory)", () => {
 
     expect(await screen.findByText("Protected Content")).toBeDefined();
   });
+
+  it("shows 404 when navigating to module without component", async () => {
+    const adminModule = defineModule({
+      path: "admin",
+      meta: { title: "Admin" },
+      resources: [
+        defineResource({
+          path: "users",
+          component: () => <div>Users Page</div>,
+          meta: { title: "Users" },
+        }),
+      ],
+    });
+
+    renderWithConfig({
+      modules: [adminModule],
+      initialEntries: ["/admin"],
+    });
+
+    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+    expect(await screen.findByText("404 Not Found")).toBeDefined();
+  });
+
+  it("renders child resource of module without component", async () => {
+    const adminModule = defineModule({
+      path: "admin",
+      meta: { title: "Admin" },
+      resources: [
+        defineResource({
+          path: "users",
+          component: () => <div>Users Page</div>,
+          meta: { title: "Users" },
+        }),
+      ],
+    });
+
+    renderWithConfig({
+      modules: [adminModule],
+      initialEntries: ["/admin/users"],
+    });
+
+    expect(await screen.findByText("Users Page")).toBeDefined();
+  });
 });

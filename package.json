@@ -6,6 +6,7 @@
     "build": "turbo build",
     "type-check": "turbo type-check",
     "lint": "turbo lint",
+    "test": "turbo test",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",

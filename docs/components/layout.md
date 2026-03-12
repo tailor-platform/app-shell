@@ -38,7 +38,7 @@ The column count is auto-detected from the number of `Layout.Column` children:
 | ----------- | ------------------- | ------------ | ------------------------------------------------------------------------------- |
 | `className` | `string`            | -            | Additional CSS classes for container                                            |
 | `children`  | `Layout.Column[]`   | **Required** | `Layout.Header` and/or `Layout.Column` components                               |
-| `columns`   | `1 \| 2 \| 3`      | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted |
+| `columns`   | `1 \| 2 \| 3`       | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted |
 | `title`     | `string`            | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                      |
 | `actions`   | `React.ReactNode[]` | -            | **(Deprecated)** Use `<Layout.Header actions={[...]}>` instead                  |
 | `gap`       | `number`            | `4`          | **(Deprecated)** Use `className` (e.g. `className="gap-6"`) instead             |
@@ -55,11 +55,11 @@ The column count is auto-detected from the number of `Layout.Column` children:
 
 ### Layout.Column Props
 
-| Prop        | Type                              | Default | Description                                                               |
-| ----------- | --------------------------------- | ------- | ------------------------------------------------------------------------- |
-| `className` | `string`                          | -       | Additional CSS classes                                                    |
-| `area`      | `"left" \| "main" \| "right"`    | -       | Column area role for explicit width control (see [Area Mode](#area-mode)) |
-| `children`  | `React.ReactNode`                 | -       | Column content                                                            |
+| Prop        | Type                          | Default | Description                                                               |
+| ----------- | ----------------------------- | ------- | ------------------------------------------------------------------------- |
+| `className` | `string`                      | -       | Additional CSS classes                                                    |
+| `area`      | `"left" \| "main" \| "right"` | -       | Column area role for explicit width control (see [Area Mode](#area-mode)) |
+| `children`  | `React.ReactNode`             | -       | Column content                                                            |
 
 ## Column Configurations
 

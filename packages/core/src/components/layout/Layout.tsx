@@ -299,7 +299,11 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   );
 
   // Apply width constraints to columns
-  const childrenWithStyles = applyColumnStyles(effectiveColumns, columnCount, areaMode);
+  const childrenWithStyles = React.useMemo(
+    () => applyColumnStyles(effectiveColumns, columnCount, areaMode),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [children, columnCount, areaMode],
+  );
 
   // Header: prefer Layout.Header child, fall back to title/actions props
   const hasLegacyHeader = title || (actions != null && actions.length > 0);

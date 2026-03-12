@@ -3,18 +3,12 @@ import { AlertDialog as BaseAlertDialog } from "@base-ui/react/alert-dialog";
 
 import { cn } from "@/lib/utils";
 
-function AlertDialogRoot({
-  ...props
-}: React.ComponentProps<typeof BaseAlertDialog.Root>) {
+function AlertDialogRoot({ ...props }: React.ComponentProps<typeof BaseAlertDialog.Root>) {
   return <BaseAlertDialog.Root data-slot="alert-dialog" {...props} />;
 }
 
-function AlertDialogTrigger({
-  ...props
-}: React.ComponentProps<typeof BaseAlertDialog.Trigger>) {
-  return (
-    <BaseAlertDialog.Trigger data-slot="alert-dialog-trigger" {...props} />
-  );
+function AlertDialogTrigger({ ...props }: React.ComponentProps<typeof BaseAlertDialog.Trigger>) {
+  return <BaseAlertDialog.Trigger data-slot="alert-dialog-trigger" {...props} />;
 }
 
 function AlertDialogContent({
@@ -42,10 +36,7 @@ function AlertDialogContent({
   );
 }
 
-function AlertDialogHeader({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-header"
@@ -58,10 +49,7 @@ function AlertDialogHeader({
   );
 }
 
-function AlertDialogFooter({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-footer"
@@ -81,10 +69,7 @@ function AlertDialogTitle({
   return (
     <BaseAlertDialog.Title
       data-slot="alert-dialog-title"
-      className={cn(
-        "astw:text-lg astw:leading-none astw:font-semibold",
-        className,
-      )}
+      className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
       {...props}
     />
   );

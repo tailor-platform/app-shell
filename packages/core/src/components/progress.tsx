@@ -25,10 +25,7 @@ function ProgressRoot({
   );
 }
 
-function ProgressTrack({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseProgress.Track>) {
+function ProgressTrack({ className, ...props }: React.ComponentProps<typeof BaseProgress.Track>) {
   return (
     <BaseProgress.Track
       data-slot="progress-track"
@@ -48,10 +45,7 @@ function ProgressIndicator({
   return (
     <BaseProgress.Indicator
       data-slot="progress-indicator"
-      className={cn(
-        "astw:bg-primary astw:h-full astw:rounded-full astw:transition-all",
-        className,
-      )}
+      className={cn("astw:bg-primary astw:h-full astw:rounded-full astw:transition-all", className)}
       {...props}
     />
   );

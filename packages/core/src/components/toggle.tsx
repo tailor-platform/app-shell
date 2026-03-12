@@ -28,8 +28,7 @@ const toggleVariants = cva(
   },
 );
 
-type ToggleProps = React.ComponentProps<typeof BaseToggle> &
-  VariantProps<typeof toggleVariants>;
+type ToggleProps = React.ComponentProps<typeof BaseToggle> & VariantProps<typeof toggleVariants>;
 
 function Toggle({ className, variant, size, ...props }: ToggleProps) {
   return (

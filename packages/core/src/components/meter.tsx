@@ -38,17 +38,11 @@ function MeterTrack({ className, ...props }: React.ComponentProps<typeof BaseMet
   );
 }
 
-function MeterIndicator({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseMeter.Indicator>) {
+function MeterIndicator({ className, ...props }: React.ComponentProps<typeof BaseMeter.Indicator>) {
   return (
     <BaseMeter.Indicator
       data-slot="meter-indicator"
-      className={cn(
-        "astw:bg-primary astw:h-full astw:rounded-full astw:transition-all",
-        className,
-      )}
+      className={cn("astw:bg-primary astw:h-full astw:rounded-full astw:transition-all", className)}
       {...props}
     />
   );

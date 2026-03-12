@@ -196,16 +196,16 @@ All `Layout.Column` children must have an `area` prop, or none — mixing is not
 
 ```tsx
 <Layout>
-  <Layout.Column area="main">
-    <h2>Content</h2>
-  </Layout.Column>
   <Layout.Column area="left">
     <nav>Sidebar</nav>
+  </Layout.Column>
+  <Layout.Column area="main">
+    <h2>Content</h2>
   </Layout.Column>
 </Layout>
 ```
 
-With area mode, the visual order is always left → main → right regardless of source order.
+Columns are rendered in source order — place them in the visual order you want.
 
 ## Gap Spacing
 
@@ -406,7 +406,7 @@ The Layout component automatically handles responsive breakpoints:
 **2 Columns (Desktop):**
 
 - Column 1: Flexible (takes remaining space)
-- Column 2: Fixed 280px minimum
+- Column 2: Fixed 280px
 
 **3 Columns (Desktop):**
 

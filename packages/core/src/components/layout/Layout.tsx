@@ -248,11 +248,16 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   // Parse children into header and column children
   const headerChild: React.ReactElement | null = (() => {
     let found: React.ReactElement | null = null;
+    let headerCount = 0;
     React.Children.forEach(children, (child) => {
       if (React.isValidElement(child) && child.type === Header) {
-        found = child;
+        headerCount++;
+        if (!found) found = child;
       }
     });
+    if (headerCount > 1) {
+      console.warn("Layout: Only one Layout.Header is allowed. Extra headers will be ignored.");
+    }
     return found;
   })();
 

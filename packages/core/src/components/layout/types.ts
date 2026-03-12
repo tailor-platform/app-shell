@@ -32,7 +32,10 @@ export interface LayoutProps {
    * @deprecated Use className (e.g. className="gap-6") instead.
    */
   gap?: number;
-  /** Header title - displayed at the top of the layout */
+  /** Header title - displayed at the top of the layout
+   *
+   * @deprecated Use `<Layout.Header title="...">` instead.
+   */
   title?: string;
   /** Header actions displayed on the right side of the header.
    * Layout and spacing are handled automatically.

@@ -15,8 +15,10 @@ import { Layout } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
+The column count is auto-detected from the number of `Layout.Column` children:
+
 ```tsx
-<Layout columns={2}>
+<Layout>
   <Layout.Column>
     <h2>Main Content</h2>
     <p>Your main content goes here...</p>
@@ -32,21 +34,32 @@ import { Layout } from "@tailor-platform/app-shell";
 
 ### Layout Props
 
-| Prop        | Type                | Default      | Description                                     |
-| ----------- | ------------------- | ------------ | ----------------------------------------------- |
-| `columns`   | `1 \| 2 \| 3`       | **Required** | Number of columns in the layout                 |
-| `title`     | `string`            | -            | Optional page title displayed above columns     |
-| `actions`   | `React.ReactNode[]` | -            | Optional action buttons in header               |
-| `gap`       | `4 \| 6 \| 8`       | `4`          | Gap between columns (in Tailwind spacing units) |
-| `className` | `string`            | -            | Additional CSS classes for container            |
-| `children`  | `Layout.Column[]`   | **Required** | Column components (must match `columns` count)  |
+| Prop        | Type                | Default      | Description                                                                     |
+| ----------- | ------------------- | ------------ | ------------------------------------------------------------------------------- |
+| `className` | `string`            | -            | Additional CSS classes for container                                            |
+| `children`  | `Layout.Column[]`   | **Required** | `Layout.Header` and/or `Layout.Column` components                               |
+| `columns`   | `1 \| 2 \| 3`      | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted |
+| `title`     | `string`            | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                      |
+| `actions`   | `React.ReactNode[]` | -            | **(Deprecated)** Use `<Layout.Header actions={[...]}>` instead                  |
+| `gap`       | `number`            | `4`          | **(Deprecated)** Use `className` (e.g. `className="gap-6"`) instead             |
+
+### Layout.Header Props
+
+`Layout.Header` is a compound sub-component for page-level headers. Place it as a direct child of `<Layout>`, above any `<Layout.Column>` children.
+
+| Prop       | Type                | Default | Description                                                |
+| ---------- | ------------------- | ------- | ---------------------------------------------------------- |
+| `title`    | `string`            | -       | Page title (left side, rendered as `<h1>`)                 |
+| `actions`  | `React.ReactNode[]` | -       | Action buttons or nodes (right side)                       |
+| `children` | `React.ReactNode`   | -       | Full-width content below the title/actions row (e.g. tabs) |
 
 ### Layout.Column Props
 
-| Prop        | Type              | Default | Description            |
-| ----------- | ----------------- | ------- | ---------------------- |
-| `className` | `string`          | -       | Additional CSS classes |
-| `children`  | `React.ReactNode` | -       | Column content         |
+| Prop        | Type                              | Default | Description                                                               |
+| ----------- | --------------------------------- | ------- | ------------------------------------------------------------------------- |
+| `className` | `string`                          | -       | Additional CSS classes                                                    |
+| `area`      | `"left" \| "main" \| "right"`    | -       | Column area role for explicit width control (see [Area Mode](#area-mode)) |
+| `children`  | `React.ReactNode`                 | -       | Column content                                                            |
 
 ## Column Configurations
 
@@ -55,7 +68,7 @@ import { Layout } from "@tailor-platform/app-shell";
 Full-width layout, always stacks vertically:
 
 ```tsx
-<Layout columns={1}>
+<Layout>
   <Layout.Column>
     <DescriptionCard data={data} fields={fields} />
   </Layout.Column>
@@ -71,7 +84,7 @@ Full-width layout, always stacks vertically:
 Main content with sidebar:
 
 ```tsx
-<Layout columns={2}>
+<Layout>
   <Layout.Column>
     {/* Main content - flexible width */}
     <DescriptionCard data={orderData} fields={orderFields} />
@@ -100,7 +113,7 @@ Main content with sidebar:
 Left sidebar, main content, right sidebar:
 
 ```tsx
-<Layout columns={3}>
+<Layout>
   <Layout.Column>
     {/* Left sidebar - fixed 320px */}
     <Navigation />
@@ -129,19 +142,19 @@ Left sidebar, main content, right sidebar:
 
 ## Header
 
-Add a title and actions to create a page header:
+Use `Layout.Header` to add a page-level header with title, actions, and optional full-width content:
 
 ```tsx
-<Layout
-  columns={2}
-  title="Order #12345"
-  actions={[
-    <Button key="edit">Edit</Button>,
-    <Button key="delete" variant="destructive">
-      Delete
-    </Button>,
-  ]}
->
+<Layout>
+  <Layout.Header
+    title="Order #12345"
+    actions={[
+      <Button key="edit">Edit</Button>,
+      <Button key="delete" variant="destructive">
+        Delete
+      </Button>,
+    ]}
+  />
   <Layout.Column>{/* ... */}</Layout.Column>
   <Layout.Column>{/* ... */}</Layout.Column>
 </Layout>
@@ -149,27 +162,59 @@ Add a title and actions to create a page header:
 
 The header displays:
 
-- **Title** on the left (large, bold)
+- **Title** on the left (rendered as `<h1>`, large and bold)
 - **Actions** on the right (buttons, dropdowns, etc.)
+- **Children** (optional) full-width below the title/actions row
+
+### Header with Tabs
+
+```tsx
+<Layout>
+  <Layout.Header title="Purchase Orders" actions={[<Button key="create">Create</Button>]}>
+    <Tabs value={tab} onValueChange={setTab}>
+      <TabsList>
+        <TabsTrigger value="all">All</TabsTrigger>
+        <TabsTrigger value="open">Open</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  </Layout.Header>
+  <Layout.Column>…</Layout.Column>
+</Layout>
+```
+
+## Area Mode
+
+By default, column widths are determined by position (first, second, third). You can use the `area` prop on `Layout.Column` to explicitly assign roles:
+
+| Area      | Width          |
+| --------- | -------------- |
+| `"left"`  | Fixed 320px    |
+| `"main"`  | Flexible (1fr) |
+| `"right"` | Fixed 280px    |
+
+All `Layout.Column` children must have an `area` prop, or none — mixing is not supported.
+
+```tsx
+<Layout>
+  <Layout.Column area="main">
+    <h2>Content</h2>
+  </Layout.Column>
+  <Layout.Column area="left">
+    <nav>Sidebar</nav>
+  </Layout.Column>
+</Layout>
+```
+
+With area mode, the visual order is always left → main → right regardless of source order.
 
 ## Gap Spacing
 
-Control the space between columns:
+Use `className` to control the space between columns:
 
 ```tsx
-// Small gap (16px)
-<Layout columns={2} gap={4}>
-  {/* ... */}
-</Layout>
-
-// Medium gap (24px)
-<Layout columns={2} gap={6}>
-  {/* ... */}
-</Layout>
-
-// Large gap (32px)
-<Layout columns={2} gap={8}>
-  {/* ... */}
+<Layout className="astw:gap-6">
+  <Layout.Column>{/* ... */}</Layout.Column>
+  <Layout.Column>{/* ... */}</Layout.Column>
 </Layout>
 ```
 
@@ -183,16 +228,16 @@ function OrderDetailPage() {
   const order = useOrder(id);
 
   return (
-    <Layout
-      columns={2}
-      title={`Order #${order.orderNumber}`}
-      actions={[
-        <Button key="print" variant="outline">
-          Print
-        </Button>,
-        <Button key="edit">Edit Order</Button>,
-      ]}
-    >
+    <Layout>
+      <Layout.Header
+        title={`Order #${order.orderNumber}`}
+        actions={[
+          <Button key="print" variant="outline">
+            Print
+          </Button>,
+          <Button key="edit">Edit Order</Button>,
+        ]}
+      />
       <Layout.Column>
         <DescriptionCard
           data={order}
@@ -227,7 +272,8 @@ function OrderDetailPage() {
 ```tsx
 function Dashboard() {
   return (
-    <Layout columns={3} title="Dashboard">
+    <Layout>
+      <Layout.Header title="Dashboard" />
       <Layout.Column>
         <Card>
           <h3>Navigation</h3>
@@ -266,16 +312,16 @@ function ProductEditor() {
   const [product, setProduct] = useState(initialProduct);
 
   return (
-    <Layout
-      columns={2}
-      title="Edit Product"
-      actions={[
-        <Button key="cancel" variant="outline">
-          Cancel
-        </Button>,
-        <Button key="save">Save Changes</Button>,
-      ]}
-    >
+    <Layout>
+      <Layout.Header
+        title="Edit Product"
+        actions={[
+          <Button key="cancel" variant="outline">
+            Cancel
+          </Button>,
+          <Button key="save">Save Changes</Button>,
+        ]}
+      />
       <Layout.Column>
         <Card>
           <h3>Product Details</h3>
@@ -308,10 +354,32 @@ function ProductEditor() {
 }
 ```
 
+### Area-Based Layout
+
+```tsx
+function EditorPage() {
+  return (
+    <Layout>
+      <Layout.Header title="Editor" />
+      <Layout.Column area="left">
+        <FileTree />
+      </Layout.Column>
+      <Layout.Column area="main">
+        <CodeEditor />
+      </Layout.Column>
+      <Layout.Column area="right">
+        <PropertiesPanel />
+      </Layout.Column>
+    </Layout>
+  );
+}
+```
+
 ### Single Column with Header
 
 ```tsx
-<Layout columns={1} title="Settings" actions={[<Button key="save">Save Changes</Button>]}>
+<Layout>
+  <Layout.Header title="Settings" actions={[<Button key="save">Save Changes</Button>]} />
   <Layout.Column>
     <Card>
       <h3>Account Settings</h3>
@@ -348,29 +416,12 @@ The Layout component automatically handles responsive breakpoints:
 
 ## Validation
 
-The Layout component validates that the number of `Layout.Column` children matches the `columns` prop:
+The Layout component validates its children:
 
-```tsx
-// ✅ Correct - 2 columns with 2 children
-<Layout columns={2}>
-  <Layout.Column>A</Layout.Column>
-  <Layout.Column>B</Layout.Column>
-</Layout>
-
-// ❌ Error - 2 columns with 3 children
-<Layout columns={2}>
-  <Layout.Column>A</Layout.Column>
-  <Layout.Column>B</Layout.Column>
-  <Layout.Column>C</Layout.Column> {/* Error! */}
-</Layout>
-```
-
-Error message:
-
-```
-Layout: Expected exactly 2 Layout.Column children, but found 3.
-Please ensure the number of <Layout.Column> children matches the `columns={2}` prop.
-```
+- Only `Layout.Header` and `Layout.Column` are allowed as direct children
+- Maximum of 3 `Layout.Column` children (extra columns are ignored with a warning)
+- When using `area` mode, all columns must have an `area` prop (or none)
+- Duplicate `area` values produce a warning and fall back to position-based layout
 
 ## Styling
 
@@ -379,15 +430,13 @@ Please ensure the number of <Layout.Column> children matches the `columns={2}` p
 Add custom classes to the layout container:
 
 ```tsx
-<Layout columns={2} className="astw:bg-gray-50 astw:p-8 astw:rounded-lg">
-  {/* ... */}
-</Layout>
+<Layout className="astw:bg-gray-50 astw:p-8 astw:rounded-lg">{/* ... */}</Layout>
 ```
 
 Add custom classes to individual columns:
 
 ```tsx
-<Layout columns={2}>
+<Layout>
   <Layout.Column className="astw:bg-white astw:shadow-sm">
     {/* Main content with background */}
   </Layout.Column>

@@ -274,8 +274,8 @@ export function Layout({ columns, className, gap = 4, title, actions, children }
   const effectiveColumns = columnChildren.slice(0, 3);
 
   // Determine column count: explicit prop (deprecated) or auto-detect.
-  // May be 0 when no Layout.Column children exist; downstream logic handles it
-  // gracefully (useMemo returns an empty array and nothing renders).
+  // May be 0 when no Layout.Column children exist; applyColumnStyles returns []
+  // and the inner container renders as an empty flex div.
   const columnCount = columns ?? effectiveColumns.length;
 
   if (columns !== undefined && columns !== effectiveColumns.length) {

@@ -34,7 +34,7 @@ import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./
  * ```
  */
 export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
-  ({ className, children, area, ...props }, ref) => {
+  ({ className, children, area: _area, ...props }, ref) => {
     return (
       <div
         ref={ref}

@@ -29,7 +29,7 @@
 #   Includes:
 #     - /Users/izumisy/Devs/app-shell/.github/agents/api-design-reviewer.md
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"99156ba55e5183ca2c0da55cca2fe8c38b2d132fe79e88de5ddab7126f9a6d3d","compiler_version":"v0.50.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"dc2afebfa47507b8946ebd1ef9bf31640e88da62ec786140a28e46972a3a6a99","compiler_version":"v0.50.4"}
 
 name: "API Design Review"
 "on":

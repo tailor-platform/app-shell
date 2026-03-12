@@ -66,7 +66,7 @@ Column.displayName = "Layout.Column";
  * <Layout>
  *   <Layout.Header
  *     title="Purchase Orders"
- *     actions={<Button>Create</Button>}
+ *     actions={[<Button key="create">Create</Button>]}
  *   >
  *     <Tabs value={tab} onValueChange={setTab}>
  *       <TabsList>
@@ -80,15 +80,19 @@ Column.displayName = "Layout.Column";
  * ```
  */
 export function Header({ title, actions, children }: LayoutHeaderProps) {
-  const hasTitleRow = title || (actions != null && actions !== false);
+  const hasTitleRow = title || (actions != null && actions.length > 0);
 
   return (
     <header className="astw:flex astw:w-full astw:flex-col">
       {hasTitleRow && (
         <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:py-4">
           {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
-          {actions != null && actions !== false && (
-            <div className="astw:flex astw:gap-2 astw:items-center">{actions}</div>
+          {actions != null && actions.length > 0 && (
+            <div className="astw:flex astw:gap-2 astw:items-center">
+              {actions.map((action, i) => (
+                <React.Fragment key={i}>{action}</React.Fragment>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -225,7 +229,7 @@ function applyColumnStyles(
  * ```tsx
  * // With Layout.Header
  * <Layout>
- *   <Layout.Header title="Page Title" actions={<Button>Save</Button>} />
+ *   <Layout.Header title="Page Title" actions={[<Button key="save">Save</Button>]} />
  *   <Layout.Column>Main content</Layout.Column>
  *   <Layout.Column>Side panel</Layout.Column>
  * </Layout>

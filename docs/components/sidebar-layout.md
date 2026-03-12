@@ -28,6 +28,7 @@ function App() {
 ```
 
 This gives you:
+
 - ✅ Responsive sidebar with auto-generated navigation from modules
 - ✅ Breadcrumb navigation
 - ✅ Theme toggle (light/dark mode)
@@ -36,6 +37,7 @@ This gives you:
 ## Props
 
 ### children
+
 - **Type:** `(props: { Outlet: () => React.ReactNode }) => React.ReactNode` (optional)
 - **Description:** Custom content renderer for adding headers, footers, or wrapping the outlet
 
@@ -54,6 +56,7 @@ This gives you:
 The `Outlet` component renders your current route's component.
 
 ### sidebar
+
 - **Type:** `React.ReactNode` (optional)
 - **Default:** `<DefaultSidebar />`
 - **Description:** Custom sidebar content
@@ -67,7 +70,7 @@ import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app
       <SidebarItem label="Custom Link" href="/custom" />
     </DefaultSidebar>
   }
-/>
+/>;
 ```
 
 ## Features
@@ -80,6 +83,7 @@ The sidebar automatically adapts to different screen sizes:
 - **Tablet/Mobile** (< 768px): Collapsible sidebar with hamburger menu
 
 Users can toggle the sidebar using:
+
 - Hamburger menu button (top left)
 - Keyboard shortcut: `Cmd + B` / `Ctrl + B`
 
@@ -111,9 +115,7 @@ const CustomHeader = () => (
 );
 
 const CustomFooter = () => (
-  <footer className="astw:p-4 astw:text-sm astw:text-gray-600">
-    © 2026 My Company
-  </footer>
+  <footer className="astw:p-4 astw:text-sm astw:text-gray-600">© 2026 My Company</footer>
 );
 
 function App() {
@@ -198,9 +200,7 @@ function App() {
   {({ Outlet }) => (
     <>
       <div className="astw:bg-yellow-100 astw:border-b astw:border-yellow-200 astw:p-3 astw:text-center">
-        <p className="astw:text-sm">
-          🎉 New features available! Check out our latest updates.
-        </p>
+        <p className="astw:text-sm">🎉 New features available! Check out our latest updates.</p>
       </div>
       <Outlet />
     </>
@@ -246,6 +246,7 @@ The sidebar and layout use Tailwind CSS classes prefixed with `astw:` to avoid c
 To customize the appearance, you can:
 
 1. **Override CSS variables** in your theme.css:
+
    ```css
    :root {
      --sidebar-width: 280px; /* Default: 256px */

@@ -12,7 +12,7 @@ React hook to display toast notifications for user feedback.
 ```typescript
 const useToast: () => {
   toast: (props: ToastProps) => void;
-}
+};
 ```
 
 ## Parameters

@@ -14,16 +14,18 @@ const useAppShell: () => {
   context: ContextData;
   contextData: ContextData;
   configurations: AppShellConfig;
-}
+};
 ```
 
 ## Return Value
 
 ### `context` / `contextData`
+
 - **Type:** `ContextData`
 - **Description:** Custom context data passed to AppShell. Same as the `contextData` prop.
 
 ### `configurations`
+
 - **Type:** `AppShellConfig`
 - **Description:** AppShell configuration (locale, basePath, etc.)
 

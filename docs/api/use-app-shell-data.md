@@ -10,7 +10,7 @@ React hook to access only the custom context data. This is a lighter alternative
 ## Signature
 
 ```typescript
-const useAppShellData: () => ContextData
+const useAppShellData: () => ContextData;
 ```
 
 ## Return Value
@@ -111,9 +111,9 @@ Now `useAppShellData()` returns fully typed data:
 
 ```typescript
 const data = useAppShellData();
-data.currentUser    // Type: User | null
-data.permissions    // Type: string[]
-data.featureFlags   // Type: { newEditor: boolean, betaDashboard: boolean }
+data.currentUser; // Type: User | null
+data.permissions; // Type: string[]
+data.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
 ```
 
 ## When to Use
@@ -130,11 +130,11 @@ const { context } = useAppShell();
 
 ## Comparison with Other Hooks
 
-| Hook                 | Returns                     | Use When                  |
-| -------------------- | --------------------------- | ------------------------- |
-| `useAppShellData`    | Context data only           | Need custom context       |
-| `useAppShellConfig`  | Configuration only          | Need config data          |
-| `useAppShell`        | Both config + context       | Need both                 |
+| Hook                | Returns               | Use When            |
+| ------------------- | --------------------- | ------------------- |
+| `useAppShellData`   | Context data only     | Need custom context |
+| `useAppShellConfig` | Configuration only    | Need config data    |
+| `useAppShell`       | Both config + context | Need both           |
 
 ## Related
 

@@ -48,7 +48,7 @@ npm install tailwindcss@next @tailwindcss/postcss@next
 // postcss.config.mjs
 export default {
   plugins: {
-    '@tailwindcss/postcss': {},
+    "@tailwindcss/postcss": {},
   },
 };
 ```
@@ -78,11 +78,7 @@ const dashboardModule = defineModule({
 
 function App() {
   return (
-    <AppShell
-      title="My ERP App"
-      basePath="/app"
-      modules={[dashboardModule]}
-    >
+    <AppShell title="My ERP App" basePath="/app" modules={[dashboardModule]}>
       <SidebarLayout />
     </AppShell>
   );
@@ -99,13 +95,13 @@ Vite works out of the box. Ensure your `vite.config.ts` includes PostCSS:
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   css: {
-    postcss: './postcss.config.mjs',
+    postcss: "./postcss.config.mjs",
   },
 });
 ```
@@ -113,13 +109,10 @@ export default defineConfig({
 **Optional: File-Based Routing**
 
 ```typescript
-import { appShellVitePlugin } from '@tailor-platform/app-shell/vite-plugin';
+import { appShellVitePlugin } from "@tailor-platform/app-shell/vite-plugin";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    appShellVitePlugin(),
-  ],
+  plugins: [react(), appShellVitePlugin()],
 });
 ```
 
@@ -131,16 +124,12 @@ Add `'use client'` directive to your AppShell layout:
 
 ```tsx
 // app/app/layout.tsx
-'use client';
+"use client";
 
 import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
 import { modules } from "@/modules";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppShell title="My App" basePath="/app" modules={modules}>
       <SidebarLayout>{children}</SidebarLayout>
@@ -162,7 +151,7 @@ npm install --save-dev craco @craco/craco
 module.exports = {
   style: {
     postcss: {
-      plugins: [require('@tailwindcss/postcss')],
+      plugins: [require("@tailwindcss/postcss")],
     },
   },
 };
@@ -200,6 +189,7 @@ npm run dev
 ```
 
 Visit `http://localhost:3000/app/dashboard` - you should see:
+
 - Sidebar navigation
 - Your dashboard page
 - Breadcrumb navigation

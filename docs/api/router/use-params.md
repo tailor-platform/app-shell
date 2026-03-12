@@ -10,7 +10,7 @@ React Router hook to access dynamic route parameters from the URL. Re-exported f
 ## Signature
 
 ```typescript
-const useParams: <T extends Record<string, string>>() => T
+const useParams: <T extends Record<string, string>>() => T;
 ```
 
 ## Usage

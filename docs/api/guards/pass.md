@@ -10,13 +10,15 @@ Returns a guard result that allows access and continues to the next guard in the
 ## Signature
 
 ```typescript
-function pass(): GuardResult
+function pass(): GuardResult;
 ```
 
 ## Return Type
 
 ```typescript
-{ type: "pass" }
+{
+  type: "pass";
+}
 ```
 
 ## Usage
@@ -32,6 +34,7 @@ const allowAccess: Guard = () => {
 ## When to Use
 
 Use `pass()` when:
+
 - ✅ Access should be granted
 - ✅ User meets the required conditions
 - ✅ You want to continue to the next guard
@@ -69,12 +72,14 @@ const requireAdmin: Guard = ({ context }) => {
 ### Permission Check
 
 ```typescript
-const requirePermission = (perm: string): Guard => ({ context }) => {
-  if (context.permissions.includes(perm)) {
-    return pass(); // User has permission
-  }
-  return hidden();
-};
+const requirePermission =
+  (perm: string): Guard =>
+  ({ context }) => {
+    if (context.permissions.includes(perm)) {
+      return pass(); // User has permission
+    }
+    return hidden();
+  };
 ```
 
 ### Multiple Conditions
@@ -82,11 +87,7 @@ const requirePermission = (perm: string): Guard => ({ context }) => {
 ```typescript
 const complexGuard: Guard = ({ context }) => {
   // Check multiple conditions
-  if (
-    context.currentUser &&
-    context.currentUser.active &&
-    !context.currentUser.suspended
-  ) {
+  if (context.currentUser && context.currentUser.active && !context.currentUser.suspended) {
     return pass(); // All conditions met
   }
   return hidden();
@@ -114,7 +115,7 @@ guards: [
   guardA, // Returns pass() → Continue to guardB
   guardB, // Returns pass() → Continue to guardC
   guardC, // Returns pass() → Grant access
-]
+];
 ```
 
 If all guards return `pass()`, access is granted.

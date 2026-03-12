@@ -18,8 +18,7 @@ import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 ```tsx
 import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 
-const isAdmin = ({ context }) =>
-  context.currentUser?.role === "admin" ? pass() : hidden();
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
 function AdminPanel() {
   return (
@@ -38,12 +37,12 @@ If the user is not an admin, the button won't render.
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `guards` | `Guard[]` | **Required** | Array of guard functions to evaluate |
-| `children` | `React.ReactNode` | **Required** | Content to render when all guards pass |
-| `fallback` | `React.ReactNode` | `null` | Content to render when any guard returns `hidden()` |
-| `loading` | `React.ReactNode` | `null` | Content to show while async guards are evaluating |
+| Prop       | Type              | Default      | Description                                         |
+| ---------- | ----------------- | ------------ | --------------------------------------------------- |
+| `guards`   | `Guard[]`         | **Required** | Array of guard functions to evaluate                |
+| `children` | `React.ReactNode` | **Required** | Content to render when all guards pass              |
+| `fallback` | `React.ReactNode` | `null`       | Content to render when any guard returns `hidden()` |
+| `loading`  | `React.ReactNode` | `null`       | Content to show while async guards are evaluating   |
 
 ## Guard Functions
 
@@ -53,8 +52,8 @@ WithGuard uses the same `Guard` type as route guards:
 type Guard = (ctx: GuardContext) => GuardResult | Promise<GuardResult>;
 
 type GuardResult =
-  | { type: "pass" }     // Allow rendering
-  | { type: "hidden" };  // Hide content (render fallback)
+  | { type: "pass" } // Allow rendering
+  | { type: "hidden" }; // Hide content (render fallback)
 ```
 
 **Note:** Unlike route guards, `redirectTo()` is **not supported** in WithGuard. Use `hidden()` with a fallback that handles navigation if needed.
@@ -79,9 +78,11 @@ const hasPermission: Guard = async ({ context }) => {
 };
 
 // Parameterized guard (curried function)
-const isOwner = (resourceId: string): Guard => ({ context }) => {
-  return context.currentUser?.id === resourceId ? pass() : hidden();
-};
+const isOwner =
+  (resourceId: string): Guard =>
+  ({ context }) => {
+    return context.currentUser?.id === resourceId ? pass() : hidden();
+  };
 ```
 
 ## Examples
@@ -89,12 +90,11 @@ const isOwner = (resourceId: string): Guard => ({ context }) => {
 ### Simple Role Check
 
 ```tsx
-const isAdmin = ({ context }) =>
-  context.currentUser?.role === "admin" ? pass() : hidden();
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
 <WithGuard guards={[isAdmin]}>
   <Button>Admin Settings</Button>
-</WithGuard>
+</WithGuard>;
 ```
 
 ### With Fallback
@@ -102,10 +102,7 @@ const isAdmin = ({ context }) =>
 Show alternative content when guard fails:
 
 ```tsx
-<WithGuard
-  guards={[isAdmin]}
-  fallback={<p>You need admin access to view this.</p>}
->
+<WithGuard guards={[isAdmin]} fallback={<p>You need admin access to view this.</p>}>
   <AdminPanel />
 </WithGuard>
 ```
@@ -120,13 +117,9 @@ const checkPermission: Guard = async ({ context }) => {
   return allowed ? pass() : hidden();
 };
 
-<WithGuard
-  guards={[checkPermission]}
-  loading={<Spinner />}
-  fallback={<UpgradePrompt />}
->
+<WithGuard guards={[checkPermission]} loading={<Spinner />} fallback={<UpgradePrompt />}>
   <PremiumFeature />
-</WithGuard>
+</WithGuard>;
 ```
 
 ### Multiple Guards
@@ -134,15 +127,13 @@ const checkPermission: Guard = async ({ context }) => {
 All guards must pass for content to render:
 
 ```tsx
-const isAdmin = ({ context }) =>
-  context.currentUser?.role === "admin" ? pass() : hidden();
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
-const hasFeatureFlag = ({ context }) =>
-  context.featureFlags?.betaFeatures ? pass() : hidden();
+const hasFeatureFlag = ({ context }) => (context.featureFlags?.betaFeatures ? pass() : hidden());
 
 <WithGuard guards={[isAdmin, hasFeatureFlag]}>
   <BetaAdminFeature />
-</WithGuard>
+</WithGuard>;
 ```
 
 ### Parameterized Guards
@@ -150,9 +141,11 @@ const hasFeatureFlag = ({ context }) =>
 Use curried functions to create reusable parameterized guards:
 
 ```tsx
-const isOwner = (resourceId: string): Guard => ({ context }) => {
-  return context.currentUser?.id === resourceId ? pass() : hidden();
-};
+const isOwner =
+  (resourceId: string): Guard =>
+  ({ context }) => {
+    return context.currentUser?.id === resourceId ? pass() : hidden();
+  };
 
 function ResourceActions({ resourceId }) {
   return (
@@ -171,8 +164,7 @@ Conditionally show navigation items:
 ```tsx
 import { DefaultSidebar, SidebarItem, WithGuard } from "@tailor-platform/app-shell";
 
-const isAdmin = ({ context }) =>
-  context.currentUser?.role === "admin" ? pass() : hidden();
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
 <DefaultSidebar>
   <SidebarItem to="/dashboard" />
@@ -182,7 +174,7 @@ const isAdmin = ({ context }) =>
     <SidebarItem to="/admin" />
     <SidebarItem to="/settings" />
   </WithGuard>
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 ### Feature Flags
@@ -190,15 +182,11 @@ const isAdmin = ({ context }) =>
 Toggle features based on flags:
 
 ```tsx
-const hasBetaFeature = ({ context }) =>
-  context.featureFlags?.newDashboard ? pass() : hidden();
+const hasBetaFeature = ({ context }) => (context.featureFlags?.newDashboard ? pass() : hidden());
 
-<WithGuard
-  guards={[hasBetaFeature]}
-  fallback={<OldDashboard />}
->
+<WithGuard guards={[hasBetaFeature]} fallback={<OldDashboard />}>
   <NewDashboard />
-</WithGuard>
+</WithGuard>;
 ```
 
 ### Subscription Tiers
@@ -220,7 +208,7 @@ const isPremium = ({ context }) =>
   }
 >
   <AdvancedAnalytics />
-</WithGuard>
+</WithGuard>;
 ```
 
 ### Dynamic Permissions
@@ -228,21 +216,20 @@ const isPremium = ({ context }) =>
 Check permissions from API:
 
 ```tsx
-const canDeleteOrder = (orderId: string): Guard => async ({ context }) => {
-  const response = await fetch(`/api/orders/${orderId}/permissions`);
-  const { canDelete } = await response.json();
-  return canDelete ? pass() : hidden();
-};
+const canDeleteOrder =
+  (orderId: string): Guard =>
+  async ({ context }) => {
+    const response = await fetch(`/api/orders/${orderId}/permissions`);
+    const { canDelete } = await response.json();
+    return canDelete ? pass() : hidden();
+  };
 
 function OrderActions({ orderId }) {
   return (
     <div>
       <Button>View</Button>
       <Button>Edit</Button>
-      <WithGuard
-        guards={[canDeleteOrder(orderId)]}
-        loading={<Spinner size="sm" />}
-      >
+      <WithGuard guards={[canDeleteOrder(orderId)]} loading={<Spinner size="sm" />}>
         <Button variant="destructive">Delete</Button>
       </WithGuard>
     </div>
@@ -272,9 +259,11 @@ const adminModule = defineModule({
 });
 
 // component.tsx
-<WithGuard guards={[requireAuth, isAdmin]}> {/* UI-level */}
+<WithGuard guards={[requireAuth, isAdmin]}>
+  {" "}
+  {/* UI-level */}
   <AdminSettings />
-</WithGuard>
+</WithGuard>;
 ```
 
 ## Guard Evaluation
@@ -287,7 +276,7 @@ const guards = [guardA, guardB, guardC];
 // If guardA returns hidden(), guardB and guardC are NOT evaluated
 <WithGuard guards={guards}>
   <Content />
-</WithGuard>
+</WithGuard>;
 ```
 
 ## Performance
@@ -295,12 +284,14 @@ const guards = [guardA, guardB, guardC];
 ### Caching
 
 WithGuard caches guard results based on `contextData` reference:
+
 - Guards re-evaluate when `contextData` changes
 - Guards do NOT re-evaluate when props change (except `guards` array)
 
 ### Suspense Integration
 
 Async guards use React Suspense:
+
 - Shows `loading` prop while evaluating
 - Renders `children` or `fallback` when complete
 - Automatically suspends during evaluation
@@ -322,26 +313,29 @@ declare module "@tailor-platform/app-shell" {
 }
 
 // Use in guards
-const hasPermission = (perm: string): Guard => ({ context }) => {
-  return context.permissions.includes(perm) ? pass() : hidden();
-};
+const hasPermission =
+  (perm: string): Guard =>
+  ({ context }) => {
+    return context.permissions.includes(perm) ? pass() : hidden();
+  };
 ```
 
 ## Comparison: WithGuard vs Route Guards
 
-| Feature | WithGuard | Route Guards |
-|---------|-----------|--------------|
-| **Purpose** | Conditional UI rendering | Route access control |
-| **Location** | Inside components | Module/resource definitions |
-| **Supports `pass()`** | ✅ Yes | ✅ Yes |
-| **Supports `hidden()`** | ✅ Yes | ✅ Yes |
-| **Supports `redirectTo()`** | ❌ No | ✅ Yes |
-| **Async guards** | ✅ Yes | ✅ Yes |
-| **Reusable** | ✅ Yes | ✅ Yes |
+| Feature                     | WithGuard                | Route Guards                |
+| --------------------------- | ------------------------ | --------------------------- |
+| **Purpose**                 | Conditional UI rendering | Route access control        |
+| **Location**                | Inside components        | Module/resource definitions |
+| **Supports `pass()`**       | ✅ Yes                   | ✅ Yes                      |
+| **Supports `hidden()`**     | ✅ Yes                   | ✅ Yes                      |
+| **Supports `redirectTo()`** | ❌ No                    | ✅ Yes                      |
+| **Async guards**            | ✅ Yes                   | ✅ Yes                      |
+| **Reusable**                | ✅ Yes                   | ✅ Yes                      |
 
 ## Best Practices
 
 ### Do:
+
 - ✅ Reuse guards between routes and UI
 - ✅ Use descriptive guard names (`isAdmin`, `canEdit`)
 - ✅ Provide fallback for better UX
@@ -349,6 +343,7 @@ const hasPermission = (perm: string): Guard => ({ context }) => {
 - ✅ Cache expensive permission checks
 
 ### Don't:
+
 - ❌ Use `redirectTo()` in WithGuard (not supported)
 - ❌ Make guards too complex (extract to functions)
 - ❌ Forget to handle loading states
@@ -390,6 +385,7 @@ const guardProps: WithGuardProps = {
 **Problem:** Guard doesn't update when data changes
 
 **Solution:** Ensure `contextData` reference changes:
+
 ```tsx
 // ❌ Bad - mutating object
 context.currentUser.role = "admin";
@@ -406,6 +402,7 @@ setContextData({
 **Problem:** Loading state never resolves
 
 **Solution:** Ensure async guards return a result:
+
 ```tsx
 // ❌ Bad - no return
 const checkPermission: Guard = async ({ context }) => {
@@ -415,7 +412,7 @@ const checkPermission: Guard = async ({ context }) => {
 
 // ✅ Good - returns result
 const checkPermission: Guard = async ({ context }) => {
-  const allowed = await fetch("/api/check").then(r => r.json());
+  const allowed = await fetch("/api/check").then((r) => r.json());
   return allowed ? pass() : hidden();
 };
 ```

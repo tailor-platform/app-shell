@@ -14,21 +14,25 @@ AppShell is a React-based framework that provides the foundation for building cu
 ### Key Features
 
 #### 🚀 Module-based Routing
+
 Define routes through modules and resources instead of file-based routing. Get automatic sidebar navigation and breadcrumbs out of the box.
 
 → [Learn about Modules & Resources](./concepts/modules-and-resources.md)
 
 #### 🔒 Built-in Authentication
+
 OAuth2/OIDC integration with Tailor Platform's Auth service. Supports any configured IdP including Google, Okta, and Auth0.
 
 → [Authentication Guide](./concepts/authentication.md)
 
 #### 🎨 Beautiful UI Components
+
 Responsive layouts, description cards, command palette, and more. Built with Tailwind CSS v4 and shadcn/ui principles.
 
 → [Component Library](./components/app-shell.md)
 
 #### 🔌 ERP Module Integration
+
 Connect compatible ERP modules like PIM, SO, MO with automatic data provider to Tailor's application gateway.
 
 → [Installation Guide](./installation.md)
@@ -72,11 +76,7 @@ const dashboardModule = defineModule({
 
 const App = () => {
   return (
-    <AppShell
-      title="My ERP App"
-      basePath="app"
-      modules={[dashboardModule]}
-    >
+    <AppShell title="My ERP App" basePath="app" modules={[dashboardModule]}>
       <SidebarLayout />
     </AppShell>
   );
@@ -92,6 +92,7 @@ export default App;
 ```
 
 That's it! AppShell will:
+
 - ✅ Render your module in the sidebar navigation
 - ✅ Handle routing to `/app/dashboard`
 - ✅ Display breadcrumb navigation
@@ -100,15 +101,18 @@ That's it! AppShell will:
 ## Next Steps
 
 **Get Started**
+
 - [Quick Start](./quickstart.md) - Get up and running with AppShell in under 5 minutes
 - [Installation](./installation.md) - Detailed installation guide with peer dependencies and configuration
 
 **Learn Core Concepts**
+
 - [Modules & Resources](./concepts/modules-and-resources.md) - Understand the module system
 - [Authentication](./concepts/authentication.md) - Set up user authentication
 - [Routing & Navigation](./concepts/routing-navigation.md) - Navigate between pages
 
 **Explore Components**
+
 - [AppShell Component](./components/app-shell.md) - Root component API
 - [Component Library](./components/sidebar-layout.md) - All available components
 

@@ -10,7 +10,7 @@ React Router hook to access error details within a custom error boundary compone
 ## Signature
 
 ```typescript
-const useRouteError: () => unknown
+const useRouteError: () => unknown;
 ```
 
 ## Return Value
@@ -199,6 +199,7 @@ import { useRouteError } from "react-router";
 ### Error Boundaries Don't Catch
 
 Error boundaries do **not** catch:
+
 - Errors in event handlers (use try/catch)
 - Async errors (use try/catch with async/await)
 - Server-side rendering errors

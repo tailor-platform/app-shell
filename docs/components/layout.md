@@ -32,21 +32,21 @@ import { Layout } from "@tailor-platform/app-shell";
 
 ### Layout Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `columns` | `1 \| 2 \| 3` | **Required** | Number of columns in the layout |
-| `title` | `string` | - | Optional page title displayed above columns |
-| `actions` | `React.ReactNode[]` | - | Optional action buttons in header |
-| `gap` | `4 \| 6 \| 8` | `4` | Gap between columns (in Tailwind spacing units) |
-| `className` | `string` | - | Additional CSS classes for container |
-| `children` | `Layout.Column[]` | **Required** | Column components (must match `columns` count) |
+| Prop        | Type                | Default      | Description                                     |
+| ----------- | ------------------- | ------------ | ----------------------------------------------- |
+| `columns`   | `1 \| 2 \| 3`       | **Required** | Number of columns in the layout                 |
+| `title`     | `string`            | -            | Optional page title displayed above columns     |
+| `actions`   | `React.ReactNode[]` | -            | Optional action buttons in header               |
+| `gap`       | `4 \| 6 \| 8`       | `4`          | Gap between columns (in Tailwind spacing units) |
+| `className` | `string`            | -            | Additional CSS classes for container            |
+| `children`  | `Layout.Column[]`   | **Required** | Column components (must match `columns` count)  |
 
 ### Layout.Column Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `className` | `string` | - | Additional CSS classes |
-| `children` | `React.ReactNode` | - | Column content |
+| Prop        | Type              | Default | Description            |
+| ----------- | ----------------- | ------- | ---------------------- |
+| `className` | `string`          | -       | Additional CSS classes |
+| `children`  | `React.ReactNode` | -       | Column content         |
 
 ## Column Configurations
 
@@ -63,6 +63,7 @@ Full-width layout, always stacks vertically:
 ```
 
 **Responsive behavior:**
+
 - All screens: 1 column (full width)
 
 ### 2 Columns
@@ -84,10 +85,12 @@ Main content with sidebar:
 ```
 
 **Responsive behavior:**
+
 - Mobile (< 1024px): Stacks vertically
 - Desktop (≥ 1024px): First column flexible, second column 280px
 
 **Use cases:**
+
 - Detail pages with sidebar
 - Forms with preview
 - Main content + related items
@@ -114,10 +117,12 @@ Left sidebar, main content, right sidebar:
 ```
 
 **Responsive behavior:**
+
 - Mobile (< 1280px): Stacks vertically
 - Desktop (≥ 1280px): Left 320px, middle flexible, right 280px
 
 **Use cases:**
+
 - Dashboards with multiple panels
 - Complex detail pages
 - Editor with navigation and preview
@@ -132,7 +137,9 @@ Add a title and actions to create a page header:
   title="Order #12345"
   actions={[
     <Button key="edit">Edit</Button>,
-    <Button key="delete" variant="destructive">Delete</Button>,
+    <Button key="delete" variant="destructive">
+      Delete
+    </Button>,
   ]}
 >
   <Layout.Column>{/* ... */}</Layout.Column>
@@ -141,6 +148,7 @@ Add a title and actions to create a page header:
 ```
 
 The header displays:
+
 - **Title** on the left (large, bold)
 - **Actions** on the right (buttons, dropdowns, etc.)
 
@@ -179,7 +187,9 @@ function OrderDetailPage() {
       columns={2}
       title={`Order #${order.orderNumber}`}
       actions={[
-        <Button key="print" variant="outline">Print</Button>,
+        <Button key="print" variant="outline">
+          Print
+        </Button>,
         <Button key="edit">Edit Order</Button>,
       ]}
     >
@@ -260,7 +270,9 @@ function ProductEditor() {
       columns={2}
       title="Edit Product"
       actions={[
-        <Button key="cancel" variant="outline">Cancel</Button>,
+        <Button key="cancel" variant="outline">
+          Cancel
+        </Button>,
         <Button key="save">Save Changes</Button>,
       ]}
     >
@@ -299,11 +311,7 @@ function ProductEditor() {
 ### Single Column with Header
 
 ```tsx
-<Layout
-  columns={1}
-  title="Settings"
-  actions={[<Button key="save">Save Changes</Button>]}
->
+<Layout columns={1} title="Settings" actions={[<Button key="save">Save Changes</Button>]}>
   <Layout.Column>
     <Card>
       <h3>Account Settings</h3>
@@ -319,19 +327,21 @@ The Layout component automatically handles responsive breakpoints:
 
 ### Breakpoints
 
-| Screen Size | 1 Column | 2 Columns | 3 Columns |
-|-------------|----------|-----------|-----------|
-| Mobile (< 1024px) | Full width | Stacked | Stacked |
-| Desktop (1024px - 1280px) | Full width | Side-by-side | Stacked |
-| Large (≥ 1280px) | Full width | Side-by-side | Side-by-side |
+| Screen Size               | 1 Column   | 2 Columns    | 3 Columns    |
+| ------------------------- | ---------- | ------------ | ------------ |
+| Mobile (< 1024px)         | Full width | Stacked      | Stacked      |
+| Desktop (1024px - 1280px) | Full width | Side-by-side | Stacked      |
+| Large (≥ 1280px)          | Full width | Side-by-side | Side-by-side |
 
 ### Column Widths
 
 **2 Columns (Desktop):**
+
 - Column 1: Flexible (takes remaining space)
 - Column 2: Fixed 280px minimum
 
 **3 Columns (Desktop):**
+
 - Column 1: Fixed 320px
 - Column 2: Flexible (takes remaining space)
 - Column 3: Fixed 280px
@@ -356,6 +366,7 @@ The Layout component validates that the number of `Layout.Column` children match
 ```
 
 Error message:
+
 ```
 Layout: Expected exactly 2 Layout.Column children, but found 3.
 Please ensure the number of <Layout.Column> children matches the `columns={2}` prop.
@@ -368,10 +379,7 @@ Please ensure the number of <Layout.Column> children matches the `columns={2}` p
 Add custom classes to the layout container:
 
 ```tsx
-<Layout
-  columns={2}
-  className="astw:bg-gray-50 astw:p-8 astw:rounded-lg"
->
+<Layout columns={2} className="astw:bg-gray-50 astw:p-8 astw:rounded-lg">
   {/* ... */}
 </Layout>
 ```
@@ -383,15 +391,14 @@ Add custom classes to individual columns:
   <Layout.Column className="astw:bg-white astw:shadow-sm">
     {/* Main content with background */}
   </Layout.Column>
-  <Layout.Column className="astw:space-y-4">
-    {/* Sidebar with extra spacing */}
-  </Layout.Column>
+  <Layout.Column className="astw:space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
 </Layout>
 ```
 
 ## Best Practices
 
 ### Do:
+
 - ✅ Use 2 columns for detail pages with sidebar
 - ✅ Use 3 columns for dashboards and complex layouts
 - ✅ Add meaningful titles to pages
@@ -399,6 +406,7 @@ Add custom classes to individual columns:
 - ✅ Keep sidebars focused (5-7 items max)
 
 ### Don't:
+
 - ❌ Use 3 columns for mobile-first designs (too complex)
 - ❌ Mix Layout with other layout systems (conflicts)
 - ❌ Put too many actions in header (use dropdown menus)

@@ -20,7 +20,7 @@ const orderData = {
   orderNumber: "ORD-12345",
   customer: "Acme Corporation",
   status: "shipped",
-  totalAmount: 15750.00,
+  totalAmount: 15750.0,
   currency: "USD",
   orderDate: "2026-03-01T10:00:00Z",
 };
@@ -34,17 +34,17 @@ const orderData = {
     { key: "totalAmount", label: "Total", type: "money", meta: { currencyKey: "currency" } },
     { key: "orderDate", label: "Order Date", type: "date" },
   ]}
-/>
+/>;
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `data` | `Record<string, unknown>` | **Required** | Data object containing field values |
-| `fields` | `FieldConfig[]` | **Required** | Array of field configurations or dividers |
-| `columns` | `2 \| 3 \| 4` | `3` | Number of columns in the grid |
-| `className` | `string` | - | Additional CSS classes |
+| Prop        | Type                      | Default      | Description                               |
+| ----------- | ------------------------- | ------------ | ----------------------------------------- |
+| `data`      | `Record<string, unknown>` | **Required** | Data object containing field values       |
+| `fields`    | `FieldConfig[]`           | **Required** | Array of field configurations or dividers |
+| `columns`   | `2 \| 3 \| 4`             | `3`          | Number of columns in the grid             |
+| `className` | `string`                  | -            | Additional CSS classes                    |
 
 ## Field Types
 
@@ -119,6 +119,7 @@ Formats date/time values with multiple format options.
 ```
 
 Format examples:
+
 - `short`: 3/6/2026
 - `medium`: Mar 6, 2026
 - `long`: March 6, 2026 at 2:30 PM
@@ -232,7 +233,7 @@ const data = {
     { key: "customer.name", label: "Customer Name" },
     { key: "customer.contact.email", label: "Email" },
   ]}
-/>
+/>;
 ```
 
 ## Column Layouts
@@ -251,6 +252,7 @@ Choose between 2, 3, or 4 column layouts:
 ```
 
 The component is fully responsive:
+
 - **Mobile (< 400px)**: 1 column
 - **Tablet (400-600px)**: 2 columns
 - **Desktop (600-800px)**: 3 columns
@@ -275,9 +277,9 @@ const orderData = {
   },
 
   // Financial
-  subtotal: 14000.00,
-  tax: 1750.00,
-  total: 15750.00,
+  subtotal: 14000.0,
+  tax: 1750.0,
+  total: 15750.0,
   currency: "USD",
 
   // Shipping
@@ -420,6 +422,7 @@ The component uses container queries for responsive layouts:
 ## Best Practices
 
 ### Do:
+
 - ✅ Group related fields with dividers
 - ✅ Use appropriate field types for data
 - ✅ Enable `copyable` for IDs and codes
@@ -427,6 +430,7 @@ The component uses container queries for responsive layouts:
 - ✅ Provide `badgeVariantMap` for status fields
 
 ### Don't:
+
 - ❌ Put too many fields (consider splitting into tabs)
 - ❌ Use more than 4 columns (hard to read)
 - ❌ Mix unrelated data without dividers

@@ -22,21 +22,21 @@ import { DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
   <SidebarItem to="/dashboard" />
   <SidebarItem to="/products" />
   <SidebarItem to="/orders" />
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 When you only provide `to`, the title and icon are automatically resolved from the matching resource's `meta` property.
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `to` | `string` | **Required** | Target URL (internal or external) |
-| `title` | `string` | Auto-resolved | Override the display title |
-| `icon` | `React.ReactNode` | Auto-resolved | Override the icon |
-| `external` | `boolean` | `false` | Opens link in new tab with external icon |
-| `activeMatch` | `"exact" \| "prefix"` | `"prefix"` | How to match the current path for active state |
-| `render` | `(props) => ReactNode` | - | Custom render function for full control |
+| Prop          | Type                   | Default       | Description                                    |
+| ------------- | ---------------------- | ------------- | ---------------------------------------------- |
+| `to`          | `string`               | **Required**  | Target URL (internal or external)              |
+| `title`       | `string`               | Auto-resolved | Override the display title                     |
+| `icon`        | `React.ReactNode`      | Auto-resolved | Override the icon                              |
+| `external`    | `boolean`              | `false`       | Opens link in new tab with external icon       |
+| `activeMatch` | `"exact" \| "prefix"`  | `"prefix"`    | How to match the current path for active state |
+| `render`      | `(props) => ReactNode` | -             | Custom render function for full control        |
 
 ## Auto-Resolution
 
@@ -55,7 +55,7 @@ const dashboardModule = defineModule({
 });
 
 // In sidebar - no title needed!
-<SidebarItem to="/dashboard" />
+<SidebarItem to="/dashboard" />;
 // Renders as: Dashboard
 ```
 
@@ -86,7 +86,7 @@ const modules = [
 <DefaultSidebar>
   <SidebarItem to="/dashboard" /> {/* Shows Home icon */}
   <SidebarItem to="/products" /> {/* Shows Package icon */}
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 ## Manual Override
@@ -108,7 +108,7 @@ import { Home } from "lucide-react";
 <SidebarItem
   to="/dashboard"
   icon={<Home />} // Override auto-resolved icon
-/>
+/>;
 ```
 
 ### Both Title and Icon
@@ -116,11 +116,7 @@ import { Home } from "lucide-react";
 ```tsx
 import { Settings } from "lucide-react";
 
-<SidebarItem
-  to="/settings"
-  title="Settings"
-  icon={<Settings />}
-/>
+<SidebarItem to="/settings" title="Settings" icon={<Settings />} />;
 ```
 
 ## External Links
@@ -135,7 +131,7 @@ import { ExternalLink } from "lucide-react";
   title="Documentation"
   icon={<ExternalLink />}
   external
-/>
+/>;
 ```
 
 The external link icon is automatically added to the end of the item.
@@ -194,10 +190,10 @@ The render function receives:
 
 ```typescript
 type SidebarItemRenderProps = {
-  title: string;        // Auto-resolved or overridden
-  url: string;          // The `to` prop value
-  icon?: ReactNode;     // Auto-resolved or overridden
-  isActive: boolean;    // Whether this item matches the current route
+  title: string; // Auto-resolved or overridden
+  url: string; // The `to` prop value
+  icon?: ReactNode; // Auto-resolved or overridden
+  isActive: boolean; // Whether this item matches the current route
 };
 ```
 
@@ -224,7 +220,7 @@ import { Home, Package, ShoppingCart, Users } from "lucide-react";
   <SidebarItem to="/products" title="Products" icon={<Package />} />
   <SidebarItem to="/orders" title="Orders" icon={<ShoppingCart />} />
   <SidebarItem to="/customers" title="Customers" icon={<Users />} />
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 ### With External Links
@@ -238,19 +234,9 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
 
   <SidebarSeparator />
 
-  <SidebarItem
-    to="https://docs.example.com"
-    title="Documentation"
-    icon={<FileText />}
-    external
-  />
-  <SidebarItem
-    to="https://support.example.com"
-    title="Support"
-    icon={<HelpCircle />}
-    external
-  />
-</DefaultSidebar>
+  <SidebarItem to="https://docs.example.com" title="Documentation" icon={<FileText />} external />
+  <SidebarItem to="https://support.example.com" title="Support" icon={<HelpCircle />} external />
+</DefaultSidebar>;
 ```
 
 ### With Notification Badge
@@ -276,9 +262,7 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
   render={({ title, icon, isActive }) => (
     <>
       {icon}
-      <span className={isActive ? "astw:font-bold" : undefined}>
-        {title}
-      </span>
+      <span className={isActive ? "astw:font-bold" : undefined}>{title}</span>
       {isActive && <span className="astw:ml-auto">•</span>}
     </>
   )}
@@ -302,8 +286,7 @@ Without `activeMatch="exact"`, the root item would be active on all pages since 
 ```tsx
 import { WithGuard } from "@tailor-platform/app-shell";
 
-const isAdmin = ({ context }) =>
-  context.currentUser?.role === "admin" ? pass() : hidden();
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
 <DefaultSidebar>
   <SidebarItem to="/dashboard" />
@@ -312,7 +295,7 @@ const isAdmin = ({ context }) =>
   <WithGuard guards={[isAdmin]}>
     <SidebarItem to="/admin" title="Admin Panel" />
   </WithGuard>
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 ### In SidebarGroup
@@ -325,7 +308,7 @@ import { Package } from "lucide-react";
   <SidebarItem to="/products/all" />
   <SidebarItem to="/products/categories" />
   <SidebarItem to="/products/brands" />
-</SidebarGroup>
+</SidebarGroup>;
 ```
 
 ## Styling
@@ -350,10 +333,12 @@ Add custom classes via the `render` prop:
 <SidebarItem
   to="/special"
   render={({ title, icon, isActive }) => (
-    <div className={cn(
-      "astw:flex astw:items-center astw:gap-2",
-      isActive && "astw:border-l-4 astw:border-primary"
-    )}>
+    <div
+      className={cn(
+        "astw:flex astw:items-center astw:gap-2",
+        isActive && "astw:border-l-4 astw:border-primary",
+      )}
+    >
       {icon}
       {title}
     </div>
@@ -372,6 +357,7 @@ Add custom classes via the `render` prop:
 ## Best Practices
 
 ### Do:
+
 - ✅ Let AppShell auto-resolve title/icon when possible
 - ✅ Use `external` for links outside your app
 - ✅ Use `exact` match for root routes
@@ -379,6 +365,7 @@ Add custom classes via the `render` prop:
 - ✅ Keep item labels short (1-2 words)
 
 ### Don't:
+
 - ❌ Hardcode titles that exist in resource meta
 - ❌ Forget `external` for external links
 - ❌ Use prefix match for root route (`/`)
@@ -387,13 +374,13 @@ Add custom classes via the `render` prop:
 
 ## Comparison: Auto vs Manual
 
-| Aspect | Auto-Resolved | Manual Override |
-|--------|---------------|-----------------|
-| **Title** | From resource `meta.title` | Specify `title` prop |
-| **Icon** | From module `meta.icon` | Specify `icon` prop |
-| **Effort** | Less code, DRY | More flexible |
-| **Maintenance** | Single source of truth | Must update in 2 places |
-| **Use When** | Standard navigation | Custom items, external links |
+| Aspect          | Auto-Resolved              | Manual Override              |
+| --------------- | -------------------------- | ---------------------------- |
+| **Title**       | From resource `meta.title` | Specify `title` prop         |
+| **Icon**        | From module `meta.icon`    | Specify `icon` prop          |
+| **Effort**      | Less code, DRY             | More flexible                |
+| **Maintenance** | Single source of truth     | Must update in 2 places      |
+| **Use When**    | Standard navigation        | Custom items, external links |
 
 ## TypeScript
 
@@ -423,6 +410,7 @@ const customRender = (props: SidebarItemRenderProps) => {
 **Problem:** SidebarItem doesn't display title or icon
 
 **Solutions:**
+
 1. Check that the resource has `meta.title` defined
 2. Verify the `to` prop matches the resource path exactly
 3. Ensure the module has `meta.icon` for icon display
@@ -433,6 +421,7 @@ const customRender = (props: SidebarItemRenderProps) => {
 **Problem:** Item isn't highlighted when on that page
 
 **Solutions:**
+
 1. Check that the `to` prop matches the current route
 2. Use `exact` match for root routes (`/`)
 3. Use `prefix` match for parent routes with children
@@ -443,6 +432,7 @@ const customRender = (props: SidebarItemRenderProps) => {
 **Problem:** External link opens in same tab
 
 **Solution:** Add `external` prop:
+
 ```tsx
 <SidebarItem to="https://..." external />
 ```

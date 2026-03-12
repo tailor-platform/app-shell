@@ -25,18 +25,18 @@ import { Package } from "lucide-react";
     <SidebarItem to="/products/categories" />
     <SidebarItem to="/products/brands" />
   </SidebarGroup>
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `title` | `string \| LocalizedString` | **Required** | Group title (supports i18n) |
-| `icon` | `React.ReactNode` | - | Icon displayed next to title |
-| `to` | `string` | - | Makes title clickable (navigates to URL) |
-| `defaultOpen` | `boolean` | `true` | Initial expanded/collapsed state |
-| `children` | `React.ReactNode` | **Required** | Child items (SidebarItem, nested groups, etc.) |
+| Prop          | Type                        | Default      | Description                                    |
+| ------------- | --------------------------- | ------------ | ---------------------------------------------- |
+| `title`       | `string \| LocalizedString` | **Required** | Group title (supports i18n)                    |
+| `icon`        | `React.ReactNode`           | -            | Icon displayed next to title                   |
+| `to`          | `string`                    | -            | Makes title clickable (navigates to URL)       |
+| `defaultOpen` | `boolean`                   | `true`       | Initial expanded/collapsed state               |
+| `children`    | `React.ReactNode`           | **Required** | Child items (SidebarItem, nested groups, etc.) |
 
 ## Features
 
@@ -52,6 +52,7 @@ Groups can be expanded or collapsed by clicking the chevron icon:
 ```
 
 Click the chevron (▶/▼) to toggle:
+
 - **Expanded:** Shows all child items
 - **Collapsed:** Hides child items, shows only title
 
@@ -71,6 +72,7 @@ Make the group title a clickable link:
 ```
 
 When `to` is provided:
+
 - Title is a clickable link
 - Chevron still collapses/expands children
 - Useful for groups with a landing page
@@ -132,7 +134,7 @@ const labels = defineI18nLabels({
 
 <SidebarGroup title={labels.t("products")} icon={<Package />}>
   <SidebarItem to="/products/all" />
-</SidebarGroup>
+</SidebarGroup>;
 ```
 
 ## Examples
@@ -146,7 +148,7 @@ import { Package } from "lucide-react";
   <SidebarItem to="/products/all" />
   <SidebarItem to="/products/categories" />
   <SidebarItem to="/products/brands" />
-</SidebarGroup>
+</SidebarGroup>;
 ```
 
 ### Clickable Group with Landing Page
@@ -159,7 +161,7 @@ import { Settings } from "lucide-react";
   <SidebarItem to="/settings/security" />
   <SidebarItem to="/settings/notifications" />
   <SidebarItem to="/settings/billing" />
-</SidebarGroup>
+</SidebarGroup>;
 ```
 
 Clicking "Settings" navigates to `/settings`, while child items navigate to their specific pages.
@@ -194,7 +196,7 @@ import { Package, ShoppingCart, Users, Settings } from "lucide-react";
     <SidebarItem to="/settings/profile" />
     <SidebarItem to="/settings/billing" />
   </SidebarGroup>
-</DefaultSidebar>
+</DefaultSidebar>;
 ```
 
 ### Nested Groups
@@ -215,7 +217,7 @@ import { FolderIcon } from "lucide-react";
     <SidebarItem to="/documents/archives/2023" />
     <SidebarItem to="/documents/archives/2022" />
   </SidebarGroup>
-</SidebarGroup>
+</SidebarGroup>;
 ```
 
 ### Collapsed by Default
@@ -229,6 +231,7 @@ import { FolderIcon } from "lucide-react";
 ```
 
 Useful for:
+
 - Less frequently used sections
 - Admin panels
 - Advanced features
@@ -239,8 +242,7 @@ Useful for:
 ```tsx
 import { WithGuard } from "@tailor-platform/app-shell";
 
-const isAdmin = ({ context }) =>
-  context.currentUser?.role === "admin" ? pass() : hidden();
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
 <SidebarGroup title="Settings" icon={<Settings />}>
   <SidebarItem to="/settings/profile" />
@@ -250,7 +252,7 @@ const isAdmin = ({ context }) =>
     <SidebarItem to="/settings/users" />
     <SidebarItem to="/settings/permissions" />
   </WithGuard>
-</SidebarGroup>
+</SidebarGroup>;
 ```
 
 ### With External Links
@@ -260,19 +262,9 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
 
 <SidebarGroup title="Help" icon={<HelpCircle />}>
   <SidebarItem to="/help/faq" />
-  <SidebarItem
-    to="https://docs.example.com"
-    title="Documentation"
-    icon={<FileText />}
-    external
-  />
-  <SidebarItem
-    to="https://support.example.com"
-    title="Support"
-    icon={<ExternalLink />}
-    external
-  />
-</SidebarGroup>
+  <SidebarItem to="https://docs.example.com" title="Documentation" icon={<FileText />} external />
+  <SidebarItem to="https://support.example.com" title="Support" icon={<ExternalLink />} external />
+</SidebarGroup>;
 ```
 
 ### With Custom Separator
@@ -305,6 +297,7 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
 ```
 
 When collapsed:
+
 ```
 ▶ Products                    ← Collapsed group
 ```
@@ -312,6 +305,7 @@ When collapsed:
 ## Active State
 
 When a child item is active, the group:
+
 - Remains expanded (if it was collapsed)
 - Group title gets highlighted (if `to` is provided and matches current route)
 
@@ -331,10 +325,7 @@ When a child item is active, the group:
 ### Custom Icon Styling
 
 ```tsx
-<SidebarGroup
-  title="Products"
-  icon={<Package className="astw:text-blue-500" />}
->
+<SidebarGroup title="Products" icon={<Package className="astw:text-blue-500" />}>
   {/* ... */}
 </SidebarGroup>
 ```
@@ -362,6 +353,7 @@ The title styling is controlled by AppShell's theme. You can customize via CSS:
 ## Best Practices
 
 ### Do:
+
 - ✅ Group related items logically
 - ✅ Use clear, descriptive group titles
 - ✅ Provide icons for visual recognition
@@ -369,6 +361,7 @@ The title styling is controlled by AppShell's theme. You can customize via CSS:
 - ✅ Keep groups shallow (max 2 levels of nesting)
 
 ### Don't:
+
 - ❌ Create groups with only 1 item (use SidebarItem directly)
 - ❌ Nest more than 2 levels deep (hard to navigate)
 - ❌ Use very long group titles (keep to 1-2 words)
@@ -378,26 +371,28 @@ The title styling is controlled by AppShell's theme. You can customize via CSS:
 ## When to Use
 
 **Use SidebarGroup when:**
+
 - You have 3+ related navigation items
 - Items share a common category or theme
 - You want to organize a large navigation menu
 - Users need to focus on specific sections
 
 **Use SidebarItem directly when:**
+
 - You have standalone top-level navigation
 - Items don't fit into logical groups
 - You want a flat, simple navigation structure
 
 ## Comparison
 
-| Feature | SidebarGroup | SidebarItem |
-|---------|-------------|-------------|
-| **Purpose** | Organize related items | Individual link |
-| **Collapsible** | ✅ Yes | ❌ No |
-| **Contains** | Multiple items | Self (link) |
-| **Icon** | Group identifier | Link identifier |
-| **Clickable** | Optional (`to` prop) | Always |
-| **Nesting** | Can contain groups | Leaf node |
+| Feature         | SidebarGroup           | SidebarItem     |
+| --------------- | ---------------------- | --------------- |
+| **Purpose**     | Organize related items | Individual link |
+| **Collapsible** | ✅ Yes                 | ❌ No           |
+| **Contains**    | Multiple items         | Self (link)     |
+| **Icon**        | Group identifier       | Link identifier |
+| **Clickable**   | Optional (`to` prop)   | Always          |
+| **Nesting**     | Can contain groups     | Leaf node       |
 
 ## TypeScript
 
@@ -422,6 +417,7 @@ const groupProps: SidebarGroupProps = {
 **Problem:** Clicking chevron doesn't toggle group
 
 **Solution:**
+
 1. Check browser console for errors
 2. Ensure children are valid React elements
 3. Verify AppShell is properly configured
@@ -431,6 +427,7 @@ const groupProps: SidebarGroupProps = {
 **Problem:** Clicking title doesn't navigate
 
 **Solution:** Add the `to` prop:
+
 ```tsx
 <SidebarGroup title="Settings" to="/settings">
   {/* ... */}
@@ -444,6 +441,7 @@ Without `to`, only the chevron is clickable (for expand/collapse).
 **Problem:** Icon doesn't appear
 
 **Solution:**
+
 1. Check that icon is a valid React element
 2. Import the icon correctly
 3. Verify icon library is installed

@@ -50,28 +50,28 @@ Outlined badges with colored status dots for subtle emphasis:
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `BadgeVariant` | `"default"` | Visual style variant |
-| `className` | `string` | - | Additional CSS classes |
-| `children` | `React.ReactNode` | - | Badge content |
+| Prop        | Type              | Default     | Description            |
+| ----------- | ----------------- | ----------- | ---------------------- |
+| `variant`   | `BadgeVariant`    | `"default"` | Visual style variant   |
+| `className` | `string`          | -           | Additional CSS classes |
+| `children`  | `React.ReactNode` | -           | Badge content          |
 
 ### Badge Variants
 
 ```typescript
 type BadgeVariant =
   // Solid variants
-  | "default"     // Primary color
-  | "success"     // Green
-  | "warning"     // Yellow
-  | "error"       // Red/destructive
-  | "neutral"     // Gray/secondary
+  | "default" // Primary color
+  | "success" // Green
+  | "warning" // Yellow
+  | "error" // Red/destructive
+  | "neutral" // Gray/secondary
   // Outline variants with status dots
   | "outline-success"
   | "outline-warning"
   | "outline-error"
   | "outline-info"
-  | "outline-neutral"
+  | "outline-neutral";
 ```
 
 ## Examples
@@ -88,11 +88,7 @@ function OrderStatus({ status }: { status: string }) {
     cancelled: "outline-error",
   };
 
-  return (
-    <Badge variant={variantMap[status] || "neutral"}>
-      {status.toUpperCase()}
-    </Badge>
-  );
+  return <Badge variant={variantMap[status] || "neutral"}>{status.toUpperCase()}</Badge>;
 }
 ```
 
@@ -103,7 +99,7 @@ const priorities = [
   { label: "Low", variant: "outline-neutral" },
   { label: "Medium", variant: "outline-info" },
   { label: "High", variant: "outline-warning" },
-  { label: "Critical", variant="error" },
+  { label: "Critical", variant = "error" },
 ];
 
 <div className="astw:flex astw:gap-2">
@@ -112,7 +108,7 @@ const priorities = [
       {p.label}
     </Badge>
   ))}
-</div>
+</div>;
 ```
 
 ### With Icons
@@ -133,7 +129,7 @@ import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
     <XCircle className="astw:w-3 astw:h-3 astw:mr-1" />
     Blocked
   </Badge>
-</div>
+</div>;
 ```
 
 ### Dynamic Variant Selection
@@ -153,21 +149,14 @@ function ProductBadge({ product }: { product: Product }) {
     variant = "warning";
   }
 
-  return (
-    <Badge variant={variant}>
-      {product.stock} in stock
-    </Badge>
-  );
+  return <Badge variant={variant}>{product.stock} in stock</Badge>;
 }
 ```
 
 ### Custom Styling
 
 ```tsx
-<Badge
-  variant="success"
-  className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase"
->
+<Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
   Premium
 </Badge>
 ```
@@ -176,23 +165,23 @@ function ProductBadge({ product }: { product: Product }) {
 
 ### Solid Variants
 
-| Variant | Preview | Use Case |
-|---------|---------|----------|
-| `default` | ![Blue badge] | Primary actions, default status |
-| `success` | ![Green badge] | Completed, approved, active |
+| Variant   | Preview         | Use Case                               |
+| --------- | --------------- | -------------------------------------- |
+| `default` | ![Blue badge]   | Primary actions, default status        |
+| `success` | ![Green badge]  | Completed, approved, active            |
 | `warning` | ![Yellow badge] | Pending, in progress, attention needed |
-| `error` | ![Red badge] | Failed, rejected, critical |
-| `neutral` | ![Gray badge] | Draft, inactive, disabled |
+| `error`   | ![Red badge]    | Failed, rejected, critical             |
+| `neutral` | ![Gray badge]   | Draft, inactive, disabled              |
 
 ### Outline Variants
 
-| Variant | Preview | Use Case |
-|---------|---------|----------|
-| `outline-success` | ![Green dot + outline] | Active, available, healthy |
-| `outline-warning` | ![Orange dot + outline] | In progress, scheduled |
-| `outline-error` | ![Red dot + outline] | Error, unavailable, down |
-| `outline-info` | ![Blue dot + outline] | Information, processing |
-| `outline-neutral` | ![Gray dot + outline] | Neutral state, inactive |
+| Variant           | Preview                 | Use Case                   |
+| ----------------- | ----------------------- | -------------------------- |
+| `outline-success` | ![Green dot + outline]  | Active, available, healthy |
+| `outline-warning` | ![Orange dot + outline] | In progress, scheduled     |
+| `outline-error`   | ![Red dot + outline]    | Error, unavailable, down   |
+| `outline-info`    | ![Blue dot + outline]   | Information, processing    |
+| `outline-neutral` | ![Gray dot + outline]   | Neutral state, inactive    |
 
 ## Accessibility
 
@@ -224,7 +213,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
       },
     },
   ]}
-/>
+/>;
 ```
 
 [Learn more about DescriptionCard →](./description-card.md)
@@ -232,12 +221,14 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
 ## Best Practices
 
 ### Do:
+
 - ✅ Use consistent variants for the same meaning across your app
 - ✅ Keep badge text short (1-2 words)
 - ✅ Use outline variants for subtle emphasis
 - ✅ Use solid variants for important status indicators
 
 ### Don't:
+
 - ❌ Use too many different badge colors (stick to semantic colors)
 - ❌ Put long text in badges (use tooltips instead)
 - ❌ Make badges clickable without visual indication
@@ -260,7 +251,5 @@ Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
 import { badgeVariants } from "@tailor-platform/app-shell";
 import { cn } from "@/lib/utils";
 
-<div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>
-  Custom Badge
-</div>
+<div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>Custom Badge</div>;
 ```

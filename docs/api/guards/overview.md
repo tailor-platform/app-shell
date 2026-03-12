@@ -10,6 +10,7 @@ Guards are functions that control access to routes and UI elements in AppShell. 
 ## How Guards Work
 
 Guards are executed sequentially and can return one of three results:
+
 - **`pass()`** - Allow access, continue to next guard
 - **`hidden()`** - Deny access, return 404
 - **`redirectTo(path)`** - Redirect to another page
@@ -25,15 +26,13 @@ type GuardContext = {
   context: ContextData; // Your custom context from AppShell
 };
 
-type GuardResult =
-  | { type: "pass" }
-  | { type: "hidden" }
-  | { type: "redirect"; to: string };
+type GuardResult = { type: "pass" } | { type: "hidden" } | { type: "redirect"; to: string };
 ```
 
 ## Guard Functions
 
 ### pass()
+
 Allows access and continues to the next guard.
 
 ```typescript
@@ -45,6 +44,7 @@ const allowAll: Guard = () => pass();
 [Full Reference →](./pass.md)
 
 ### hidden()
+
 Denies access and shows 404 Not Found.
 
 ```typescript
@@ -56,6 +56,7 @@ const denyAll: Guard = () => hidden();
 [Full Reference →](./hidden.md)
 
 ### redirectTo(path)
+
 Redirects to another page.
 
 ```typescript
@@ -80,9 +81,7 @@ const adminModule = defineModule({
   component: AdminPage,
   guards: [
     ({ context }) => {
-      return context.currentUser?.role === "admin"
-        ? pass()
-        : hidden();
+      return context.currentUser?.role === "admin" ? pass() : hidden();
     },
   ],
 });
@@ -168,26 +167,30 @@ const requireAdmin: Guard = ({ context }) => {
 ### Permission-Based Access
 
 ```typescript
-const requirePermission = (permission: string): Guard => ({ context }) => {
-  if (!context.permissions.includes(permission)) {
-    return hidden();
-  }
-  return pass();
-};
+const requirePermission =
+  (permission: string): Guard =>
+  ({ context }) => {
+    if (!context.permissions.includes(permission)) {
+      return hidden();
+    }
+    return pass();
+  };
 
 // Usage
-guards: [requirePermission("users:delete")]
+guards: [requirePermission("users:delete")];
 ```
 
 ### Feature Flags
 
 ```typescript
-const requireFeature = (flag: string): Guard => ({ context }) => {
-  if (!context.featureFlags[flag]) {
-    return hidden();
-  }
-  return pass();
-};
+const requireFeature =
+  (flag: string): Guard =>
+  ({ context }) => {
+    if (!context.featureFlags[flag]) {
+      return hidden();
+    }
+    return pass();
+  };
 ```
 
 ### Async Permission Check
@@ -220,13 +223,17 @@ export const requireAuth: Guard = ({ context }) => {
   return context.currentUser ? pass() : redirectTo("/login");
 };
 
-export const requireRole = (role: string): Guard => ({ context }) => {
-  return context.currentUser?.role === role ? pass() : hidden();
-};
+export const requireRole =
+  (role: string): Guard =>
+  ({ context }) => {
+    return context.currentUser?.role === role ? pass() : hidden();
+  };
 
-export const requirePermission = (perm: string): Guard => ({ context }) => {
-  return context.permissions.includes(perm) ? pass() : hidden();
-};
+export const requirePermission =
+  (perm: string): Guard =>
+  ({ context }) => {
+    return context.permissions.includes(perm) ? pass() : hidden();
+  };
 
 // Usage across application
 import { requireAuth, requireRole } from "./guards";
@@ -242,7 +249,7 @@ defineModule({
 Guards are executed sequentially in the order they're defined:
 
 ```typescript
-guards: [guardA, guardB, guardC]
+guards: [guardA, guardB, guardC];
 
 // Execution:
 // 1. guardA runs → if not pass(), stop
@@ -254,12 +261,14 @@ guards: [guardA, guardB, guardC]
 ## Navigation Behavior
 
 When guards return `hidden()`:
+
 - Route returns 404 Not Found
 - Item hidden from sidebar navigation
 - Item hidden from CommandPalette
 - Breadcrumbs don't show the page
 
 When guards return `redirectTo()`:
+
 - User is redirected immediately
 - Original URL is not accessible
 - Useful for login flows
@@ -267,6 +276,7 @@ When guards return `redirectTo()`:
 ## Best Practices
 
 ### Do:
+
 - ✅ Keep guards simple and focused
 - ✅ Reuse guards across routes and components
 - ✅ Use descriptive names (requireAuth, not guard1)
@@ -274,6 +284,7 @@ When guards return `redirectTo()`:
 - ✅ Cache expensive checks when possible
 
 ### Don't:
+
 - ❌ Make guards too complex (extract logic)
 - ❌ Have side effects in guards (logging OK)
 - ❌ Duplicate guard logic (DRY principle)
@@ -302,6 +313,7 @@ const asyncGuard: Guard = async (ctx): Promise<GuardResult> => {
 ## Performance
 
 ### Sync Guards (Fast)
+
 ```typescript
 const isAdmin: Guard = ({ context }) => {
   return context.currentUser?.role === "admin" ? pass() : hidden();
@@ -310,6 +322,7 @@ const isAdmin: Guard = ({ context }) => {
 ```
 
 ### Async Guards (Slower)
+
 ```typescript
 const checkPermission: Guard = async ({ context }) => {
   const allowed = await fetch("/api/check");
@@ -322,14 +335,14 @@ const checkPermission: Guard = async ({ context }) => {
 
 ## Comparison: Route vs Component Guards
 
-| Aspect | Route Guards | Component Guards (WithGuard) |
-|--------|--------------|------------------------------|
-| **Location** | defineModule/defineResource | WithGuard component |
-| **Supports pass()** | ✅ Yes | ✅ Yes |
-| **Supports hidden()** | ✅ Yes | ✅ Yes |
-| **Supports redirectTo()** | ✅ Yes | ❌ No |
-| **Execution** | Before route loads | During render |
-| **Use Case** | Page access control | UI element visibility |
+| Aspect                    | Route Guards                | Component Guards (WithGuard) |
+| ------------------------- | --------------------------- | ---------------------------- |
+| **Location**              | defineModule/defineResource | WithGuard component          |
+| **Supports pass()**       | ✅ Yes                      | ✅ Yes                       |
+| **Supports hidden()**     | ✅ Yes                      | ✅ Yes                       |
+| **Supports redirectTo()** | ✅ Yes                      | ❌ No                        |
+| **Execution**             | Before route loads          | During render                |
+| **Use Case**              | Page access control         | UI element visibility        |
 
 ## Related
 

@@ -10,12 +10,13 @@ Creates a top-level module that appears in the main navigation. Modules can cont
 ## Signature
 
 ```typescript
-function defineModule(props: DefineModuleProps): Module
+function defineModule(props: DefineModuleProps): Module;
 ```
 
 ## Parameters
 
 ### `path`
+
 - **Type:** `string`
 - **Required:** Yes
 - **Description:** URL path segment for the module
@@ -23,15 +24,17 @@ function defineModule(props: DefineModuleProps): Module
 ```typescript
 defineModule({
   path: "products", // URL: /products
-})
+});
 ```
 
 ### `component`
+
 - **Type:** `(props: ResourceComponentProps) => React.ReactNode`
 - **Required:** No
 - **Description:** Landing page component for the module. If omitted, module redirects to first resource.
 
 **ResourceComponentProps:**
+
 ```typescript
 {
   title: string;          // Resolved title
@@ -41,29 +44,35 @@ defineModule({
 ```
 
 ### `resources`
+
 - **Type:** `Resource[]`
 - **Required:** Yes
 - **Description:** Array of resources within this module. Define using `defineResource()`.
 
 ### `meta`
+
 - **Type:** `object`
 - **Required:** No
 - **Description:** Metadata configuration for the module
 
 **meta.title**
+
 - **Type:** `string | LocalizedString`
 - **Default:** Capitalized `path`
 - **Description:** Display title in navigation and breadcrumbs
 
 **meta.icon**
+
 - **Type:** `React.ReactNode`
 - **Description:** Icon displayed in sidebar navigation
 
 **meta.breadcrumbTitle**
+
 - **Type:** `string | ((segment: string) => string)`
 - **Description:** Custom breadcrumb segment title override
 
 ### `guards`
+
 - **Type:** `Guard[]`
 - **Required:** No
 - **Description:** Access control guards executed in order. If any guard returns non-pass, access is denied.
@@ -71,11 +80,13 @@ defineModule({
 See [Guards Overview](./guards/overview.md) for details.
 
 ### `errorBoundary`
+
 - **Type:** `React.ReactNode`
 - **Required:** No
 - **Description:** Error boundary component for this module and its child resources. Use `useRouteError` hook to access error details.
 
 ### `loader`
+
 - **Type:** `(args: LoaderFunctionArgs) => Promise<unknown> | unknown`
 - **Required:** No
 - **Description:** React Router loader function for data fetching
@@ -83,7 +94,7 @@ See [Guards Overview](./guards/overview.md) for details.
 ## Return Type
 
 ```typescript
-Module
+Module;
 ```
 
 A module object that can be passed to the `modules` prop of `AppShell`.
@@ -167,9 +178,7 @@ const adminModule = defineModule({
   resources: [adminResources],
   guards: [
     ({ context }) => {
-      return context.currentUser?.role === "admin"
-        ? pass()
-        : hidden();
+      return context.currentUser?.role === "admin" ? pass() : hidden();
     },
   ],
 });

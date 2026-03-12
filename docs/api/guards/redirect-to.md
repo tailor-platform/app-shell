@@ -10,12 +10,13 @@ Returns a guard result that redirects the user to a different URL. Used primaril
 ## Signature
 
 ```typescript
-function redirectTo(to: string): GuardResult
+function redirectTo(to: string): GuardResult;
 ```
 
 ## Parameters
 
 ### `to`
+
 - **Type:** `string`
 - **Required:** Yes
 - **Description:** Target URL path to redirect to
@@ -23,7 +24,10 @@ function redirectTo(to: string): GuardResult
 ## Return Type
 
 ```typescript
-{ type: "redirect"; to: string }
+{
+  type: "redirect";
+  to: string;
+}
 ```
 
 ## Usage
@@ -39,6 +43,7 @@ const redirectToLogin: Guard = () => {
 ## When to Use
 
 Use `redirectTo()` when:
+
 - ✅ User needs authentication (redirect to login)
 - ✅ User needs to complete setup (redirect to onboarding)
 - ✅ Access denied but you want to show why (redirect to error page)
@@ -151,13 +156,13 @@ const asyncRedirect: Guard = async ({ context }) => {
 
 ## vs hidden()
 
-| Aspect | redirectTo() | hidden() |
-|--------|--------------|----------|
-| **Result** | Redirect to URL | 404 Not Found |
-| **User Experience** | Clear (shows why denied) | Silent (no explanation) |
-| **URL Changes** | Yes | No |
-| **Navigation Impact** | No effect | Hides from navigation |
-| **Use Case** | Login flows, errors | Permission hiding |
+| Aspect                | redirectTo()             | hidden()                |
+| --------------------- | ------------------------ | ----------------------- |
+| **Result**            | Redirect to URL          | 404 Not Found           |
+| **User Experience**   | Clear (shows why denied) | Silent (no explanation) |
+| **URL Changes**       | Yes                      | No                      |
+| **Navigation Impact** | No effect                | Hides from navigation   |
+| **Use Case**          | Login flows, errors      | Permission hiding       |
 
 ### Example: When to Use Each
 

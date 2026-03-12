@@ -14,20 +14,23 @@ const useTheme: () => {
   theme: "light" | "dark" | "system";
   setTheme: (theme: "light" | "dark" | "system") => void;
   systemTheme: "light" | "dark";
-}
+};
 ```
 
 ## Return Value
 
 ### `theme`
+
 - **Type:** `"light" | "dark" | "system"`
 - **Description:** Current theme setting
 
 ### `setTheme()`
+
 - **Type:** `(theme: "light" | "dark" | "system") => void`
 - **Description:** Set the theme. Persisted to localStorage.
 
 ### `systemTheme`
+
 - **Type:** `"light" | "dark"`
 - **Description:** System preference (from OS settings)
 

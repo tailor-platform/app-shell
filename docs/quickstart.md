@@ -47,11 +47,7 @@ const dashboardModule = defineModule({
 
 function App() {
   return (
-    <AppShell
-      title="My ERP App"
-      basePath="/app"
-      modules={[dashboardModule]}
-    >
+    <AppShell title="My ERP App" basePath="/app" modules={[dashboardModule]}>
       <SidebarLayout />
     </AppShell>
   );
@@ -110,6 +106,7 @@ export const dashboardModule = defineModule({
 ```
 
 This creates:
+
 - `/app/dashboard` - Dashboard
 - `/app/dashboard/orders` - Orders list
 - `/app/dashboard/orders/123` - Order detail
@@ -119,24 +116,29 @@ AppShell automatically generates sidebar navigation, breadcrumbs, and provides C
 ## What's Included
 
 **Core Components:**
+
 - `AppShell` - Root provider
 - `SidebarLayout` / `DefaultSidebar` - Layouts
 - `CommandPalette` - Quick navigation (`Cmd+K`)
 
 **UI Components:**
+
 - `Layout` - Responsive columns (1/2/3)
 - `Badge` - Status badges
 - `DescriptionCard` - Field-value display
 
 **Structure:**
+
 - `defineModule` / `defineResource` - Declarative routing
 - `SidebarItem` / `SidebarGroup` - Custom navigation
 
 **Authentication:**
+
 - `AuthProvider` / `useAuth` - OAuth2/OIDC
 - Route Guards - `pass()`, `hidden()`, `redirectTo()`
 
 **Utilities:**
+
 - `defineI18nLabels` - Internationalization
 - `useTheme` - Light/dark mode
 - React Router hooks - `useNavigate`, `useParams`, `useLocation`
@@ -144,15 +146,18 @@ AppShell automatically generates sidebar navigation, breadcrumbs, and provides C
 ## Next Steps
 
 **Core Concepts:**
+
 - [Modules & Resources](./concepts/modules-and-resources.md) - App structure
 - [Routing & Navigation](./concepts/routing-navigation.md) - Navigation
 - [Authentication](./concepts/authentication.md) - User auth
 
 **Components:**
+
 - [AppShell](./components/app-shell.md) - Root component
 - [All Components](./components/sidebar-layout.md) - Component library
 
 **API Reference:**
+
 - [defineModule](./api/define-module.md) - Module API
 - [defineResource](./api/define-resource.md) - Resource API
 - [All Hooks](./api/use-app-shell.md) - Hooks reference

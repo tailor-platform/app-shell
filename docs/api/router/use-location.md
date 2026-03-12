@@ -10,18 +10,18 @@ React Router hook to access the current location object. Re-exported from `react
 ## Signature
 
 ```typescript
-const useLocation: () => Location
+const useLocation: () => Location;
 ```
 
 ## Return Type
 
 ```typescript
 interface Location {
-  pathname: string;       // Current path: "/products/123"
-  search: string;         // Query string: "?sort=name&page=2"
-  hash: string;           // Hash: "#details"
-  state: any;             // State passed via navigate()
-  key: string;            // Unique key for this location
+  pathname: string; // Current path: "/products/123"
+  search: string; // Query string: "?sort=name&page=2"
+  hash: string; // Hash: "#details"
+  state: any; // State passed via navigate()
+  key: string; // Unique key for this location
 }
 ```
 

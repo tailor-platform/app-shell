@@ -10,29 +10,32 @@ Creates a nested resource (page) within a module. Resources represent individual
 ## Signature
 
 ```typescript
-function defineResource(props: DefineResourceProps): Resource
+function defineResource(props: DefineResourceProps): Resource;
 ```
 
 ## Parameters
 
 ### `path`
+
 - **Type:** `string`
 - **Required:** Yes
 - **Description:** URL path segment for the resource. Supports dynamic parameters with `:param` syntax.
 
 ```typescript
 defineResource({
-  path: ":id",        // Dynamic: /products/:id
+  path: ":id", // Dynamic: /products/:id
   path: "categories", // Static: /products/categories
-})
+});
 ```
 
 ### `component`
+
 - **Type:** `(props: ResourceComponentProps) => React.ReactNode`
 - **Required:** Yes
 - **Description:** Page component to render
 
 **ResourceComponentProps:**
+
 ```typescript
 {
   title: string;          // Resolved title
@@ -42,29 +45,35 @@ defineResource({
 ```
 
 ### `meta`
+
 - **Type:** `object`
 - **Required:** No
 - **Description:** Metadata configuration
 
 **meta.title**
+
 - **Type:** `string | LocalizedString`
 - **Default:** Capitalized `path`
 - **Description:** Display title in navigation and breadcrumbs
 
 **meta.icon**
+
 - **Type:** `React.ReactNode`
 - **Description:** Icon override (inherits from module by default)
 
 **meta.breadcrumbTitle**
+
 - **Type:** `string | ((segment: string) => string)`
 - **Description:** Custom breadcrumb segment title
 
 ### `subResources`
+
 - **Type:** `Resource[]`
 - **Required:** No
 - **Description:** Nested resources within this resource
 
 ### `guards`
+
 - **Type:** `Guard[]`
 - **Required:** No
 - **Description:** Access control guards
@@ -72,11 +81,13 @@ defineResource({
 See [Guards Overview](./guards/overview.md) for details.
 
 ### `errorBoundary`
+
 - **Type:** `React.ReactNode`
 - **Required:** No
 - **Description:** Error boundary component for this resource
 
 ### `loader`
+
 - **Type:** `(args: LoaderFunctionArgs) => Promise<unknown> | unknown`
 - **Required:** No
 - **Description:** React Router loader function
@@ -84,7 +95,7 @@ See [Guards Overview](./guards/overview.md) for details.
 ## Return Type
 
 ```typescript
-Resource
+Resource;
 ```
 
 A resource object used in the `resources` array of `defineModule`.
@@ -167,9 +178,7 @@ const adminSettingsResource = defineResource({
   component: AdminSettingsPage,
   guards: [
     ({ context }) => {
-      return context.currentUser?.role === "admin"
-        ? pass()
-        : hidden();
+      return context.currentUser?.role === "admin" ? pass() : hidden();
     },
   ],
 });
@@ -249,6 +258,7 @@ const productsModule = defineModule({
 ## Navigation Behavior
 
 Resources appear in:
+
 - ✅ Sidebar navigation (top-level resources only)
 - ✅ Breadcrumbs (all levels)
 - ✅ CommandPalette search (all levels)
@@ -280,12 +290,14 @@ defineModule({
 ```
 
 **Sidebar:**
+
 ```
 › Products
   - All Products
 ```
 
 **Breadcrumbs (on edit page):**
+
 ```
 Products > Product Details > Edit
 ```

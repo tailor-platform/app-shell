@@ -13,12 +13,13 @@ React hook to resolve page metadata (title, icon) from a route path.
 const usePageMeta: (path: string) => {
   title: string;
   icon?: React.ReactNode;
-} | null
+} | null;
 ```
 
 ## Parameters
 
 ### `path`
+
 - **Type:** `string`
 - **Required:** Yes
 - **Description:** Route path to look up metadata for

@@ -28,11 +28,7 @@ const modules = [
 
 function App() {
   return (
-    <AppShell
-      title="My ERP App"
-      basePath="/app"
-      modules={modules}
-    >
+    <AppShell title="My ERP App" basePath="/app" modules={modules}>
       <SidebarLayout />
     </AppShell>
   );
@@ -42,6 +38,7 @@ function App() {
 ## Props
 
 ### title
+
 - **Type:** `string` (optional)
 - **Description:** Application title displayed in the sidebar header
 
@@ -52,22 +49,20 @@ function App() {
 ```
 
 ### icon
+
 - **Type:** `React.ReactNode` (optional)
 - **Description:** Application icon displayed in the sidebar header
 
 ```tsx
 import { Building } from "lucide-react";
 
-<AppShell
-  title="My App"
-  icon={<Building />}
-  modules={modules}
->
+<AppShell title="My App" icon={<Building />} modules={modules}>
   {/* ... */}
-</AppShell>
+</AppShell>;
 ```
 
 ### basePath
+
 - **Type:** `string` (optional)
 - **Default:** `""`
 - **Description:** Base path prefix for all routes
@@ -85,6 +80,7 @@ import { Building } from "lucide-react";
 ```
 
 ### modules
+
 - **Type:** `Module[]` (required when not using file-based routing)
 - **Description:** Array of module definitions that define your application structure
 
@@ -106,23 +102,18 @@ const modules = [
   }),
 ];
 
-<AppShell modules={modules}>
-  {/* ... */}
-</AppShell>
+<AppShell modules={modules}>{/* ... */}</AppShell>;
 ```
 
 [Learn more about Modules and Resources →](../concepts/modules-and-resources.md)
 
 ### rootComponent
+
 - **Type:** `() => React.ReactNode` (optional)
 - **Description:** Component to render at the root path (e.g., `/app/`)
 
 ```tsx
-<AppShell
-  basePath="/app"
-  modules={modules}
-  rootComponent={() => <HomePage />}
->
+<AppShell basePath="/app" modules={modules} rootComponent={() => <HomePage />}>
   {/* ... */}
 </AppShell>
 ```
@@ -132,16 +123,13 @@ const modules = [
 ```tsx
 import { redirectTo } from "@tailor-platform/app-shell";
 
-<AppShell
-  basePath="/app"
-  modules={modules}
-  rootComponent={() => redirectTo("/app/dashboard")}
->
+<AppShell basePath="/app" modules={modules} rootComponent={() => redirectTo("/app/dashboard")}>
   {/* ... */}
-</AppShell>
+</AppShell>;
 ```
 
 ### settingsResources
+
 - **Type:** `Resource[]` (optional)
 - **Description:** Resources to include in the settings menu dropdown
 
@@ -161,17 +149,15 @@ const settingsResources = [
   }),
 ];
 
-<AppShell
-  modules={modules}
-  settingsResources={settingsResources}
->
+<AppShell modules={modules} settingsResources={settingsResources}>
   {/* ... */}
-</AppShell>
+</AppShell>;
 ```
 
 Settings appear in a dropdown menu in the sidebar header, accessible via the settings icon.
 
 ### locale
+
 - **Type:** `string` (optional)
 - **Default:** Auto-detected from browser, falls back to `"en"`
 - **Description:** Locale code for built-in UI strings
@@ -187,6 +173,7 @@ Supported locales: `en`, `ja`
 [Learn more about Internationalization →](../guides/internationalization.md)
 
 ### errorBoundary
+
 - **Type:** `ErrorBoundaryComponent` (optional)
 - **Description:** Global error boundary component applied to all routes
 
@@ -197,25 +184,21 @@ const GlobalErrorBoundary = () => {
   const error = useRouteError() as Error;
   return (
     <div className="astw:p-8">
-      <h1 className="astw:text-xl astw:font-bold astw:mb-4">
-        Something went wrong
-      </h1>
+      <h1 className="astw:text-xl astw:font-bold astw:mb-4">Something went wrong</h1>
       <p className="astw:text-red-600">{error.message}</p>
     </div>
   );
 };
 
-<AppShell
-  modules={modules}
-  errorBoundary={GlobalErrorBoundary}
->
+<AppShell modules={modules} errorBoundary={GlobalErrorBoundary}>
   {/* ... */}
-</AppShell>
+</AppShell>;
 ```
 
 > **Note:** Module and resource-level error boundaries take precedence over the global error boundary.
 
 ### contextData
+
 - **Type:** `ContextData` (optional)
 - **Description:** Custom context data accessible from guards and components via `useAppShell()`
 
@@ -280,6 +263,7 @@ const requireAuth: Guard = ({ context }) => {
 ```
 
 ### children
+
 - **Type:** `React.ReactNode` (required)
 - **Description:** Layout component that renders your application content
 
@@ -290,7 +274,7 @@ import { SidebarLayout } from "@tailor-platform/app-shell";
 
 <AppShell modules={modules}>
   <SidebarLayout />
-</AppShell>
+</AppShell>;
 ```
 
 Or create a custom layout:
@@ -315,7 +299,7 @@ import { AppShell } from "@tailor-platform/app-shell";
 // No need to pass modules prop
 <AppShell.WithPages title="My App" basePath="/app">
   <SidebarLayout />
-</AppShell.WithPages>
+</AppShell.WithPages>;
 ```
 
 [Learn more about File-Based Routing →](../concepts/file-based-routing.md)

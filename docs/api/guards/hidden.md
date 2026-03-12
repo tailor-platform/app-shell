@@ -10,13 +10,15 @@ Returns a guard result that denies access and makes the route return 404 Not Fou
 ## Signature
 
 ```typescript
-function hidden(): GuardResult
+function hidden(): GuardResult;
 ```
 
 ## Return Type
 
 ```typescript
-{ type: "hidden" }
+{
+  type: "hidden";
+}
 ```
 
 ## Usage
@@ -32,6 +34,7 @@ const denyAccess: Guard = () => {
 ## When to Use
 
 Use `hidden()` when:
+
 - ✅ Access should be denied
 - ✅ User doesn't have required permissions
 - ✅ You want to hide the page completely (404)
@@ -40,6 +43,7 @@ Use `hidden()` when:
 ## Effects
 
 When `hidden()` is returned:
+
 - 🚫 Route returns **404 Not Found**
 - 🚫 Hidden from **sidebar navigation**
 - 🚫 Hidden from **CommandPalette** search
@@ -68,12 +72,14 @@ const adminOnly: Guard = ({ context }) => {
 ### Permission-Based Hiding
 
 ```typescript
-const requirePermission = (perm: string): Guard => ({ context }) => {
-  if (!context.permissions.includes(perm)) {
-    return hidden(); // No permission → 404
-  }
-  return pass();
-};
+const requirePermission =
+  (perm: string): Guard =>
+  ({ context }) => {
+    if (!context.permissions.includes(perm)) {
+      return hidden(); // No permission → 404
+    }
+    return pass();
+  };
 ```
 
 ### Feature Flag
@@ -103,11 +109,7 @@ const premiumOnly: Guard = ({ context }) => {
 ```typescript
 const conditionalHide: Guard = ({ context }) => {
   // Multiple conditions
-  if (
-    !context.currentUser ||
-    context.currentUser.suspended ||
-    !context.currentUser.emailVerified
-  ) {
+  if (!context.currentUser || context.currentUser.suspended || !context.currentUser.emailVerified) {
     return hidden();
   }
   return pass();
@@ -128,12 +130,12 @@ const asyncHide: Guard = async ({ context }) => {
 
 ## vs redirectTo()
 
-| Aspect | hidden() | redirectTo() |
-|--------|----------|--------------|
-| **Result** | 404 Not Found | Redirect to page |
-| **URL** | Stays same | Changes to new URL |
-| **Navigation** | Hidden | Not affected |
-| **Use Case** | Deny access silently | Send to login/error page |
+| Aspect         | hidden()             | redirectTo()             |
+| -------------- | -------------------- | ------------------------ |
+| **Result**     | 404 Not Found        | Redirect to page         |
+| **URL**        | Stays same           | Changes to new URL       |
+| **Navigation** | Hidden               | Not affected             |
+| **Use Case**   | Deny access silently | Send to login/error page |
 
 ### Example: When to Use Each
 

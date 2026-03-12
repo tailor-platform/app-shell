@@ -17,32 +17,38 @@ const useAuth: () => {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<AuthState>;
-}
+};
 ```
 
 ## Return Value
 
 ### `error`
+
 - **Type:** `string | null`
 - **Description:** Error message if authentication failed
 
 ### `isAuthenticated`
+
 - **Type:** `boolean`
 - **Description:** Whether the user is currently authenticated
 
 ### `isReady`
+
 - **Type:** `boolean`
 - **Description:** Whether the initial auth check has completed. Always check this before rendering authenticated content to avoid flashing unauthenticated state.
 
 ### `login()`
+
 - **Type:** `() => Promise<void>`
 - **Description:** Initiates the login process. Redirects to Tailor Platform authentication page.
 
 ### `logout()`
+
 - **Type:** `() => Promise<void>`
 - **Description:** Logs out the current user. Clears tokens and session.
 
 ### `checkAuthStatus()`
+
 - **Type:** `() => Promise<AuthState>`
 - **Description:** Checks current auth status. Makes network request to verify and refresh tokens if needed.
 

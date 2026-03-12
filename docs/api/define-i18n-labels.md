@@ -11,13 +11,14 @@ Creates internationalized labels that automatically resolve based on the current
 
 ```typescript
 function defineI18nLabels<T extends Record<string, Record<string, string>>>(
-  labels: T
-): I18nLabels<T>
+  labels: T,
+): I18nLabels<T>;
 ```
 
 ## Parameters
 
 ### `labels`
+
 - **Type:** `Record<string, Record<string, string>>`
 - **Required:** Yes
 - **Description:** Object mapping label keys to locale-specific strings
@@ -132,7 +133,7 @@ const labels = defineI18nLabels({
 });
 
 labels.t("dashboard"); // ✅ Valid
-labels.t("invalid");   // ❌ Type error
+labels.t("invalid"); // ❌ Type error
 ```
 
 ## Related

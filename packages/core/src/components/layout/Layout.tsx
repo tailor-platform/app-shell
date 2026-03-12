@@ -181,9 +181,10 @@ function applyColumnStyles(
   }
 
   if (areaMode === "area") {
-    return effectiveColumns.map((child) => {
+    return effectiveColumns.map((child, index) => {
       const area = (child.props as ColumnProps).area!;
       return React.cloneElement(child, {
+        key: child.key ?? index,
         className: cn((child.props as ColumnProps).className, getAreaWidthClass(area, columnCount)),
       } as Partial<ColumnProps>);
     });
@@ -193,6 +194,7 @@ function applyColumnStyles(
   if (columnCount === 2) {
     return effectiveColumns.map((child, index) => {
       return React.cloneElement(child, {
+        key: child.key ?? index,
         className: cn(
           (child.props as ColumnProps).className,
           index === 0 ? "astw:lg:flex-1" : "astw:lg:w-[280px] astw:lg:shrink-0",
@@ -204,6 +206,7 @@ function applyColumnStyles(
   if (columnCount === 3) {
     return effectiveColumns.map((child, index) => {
       return React.cloneElement(child, {
+        key: child.key ?? index,
         className: cn(
           (child.props as ColumnProps).className,
           index === 0

@@ -109,6 +109,22 @@ type AppShellPageProps = {
 | `(group)`      | (excluded)  | Grouping only (not in path)   |
 | `_lib`         | (ignored)   | Not routed (for shared logic) |
 
+### Directories Without `page.tsx`
+
+A directory without a `page.tsx` file creates a path prefix that returns a 404, while child pages remain accessible. This is useful for grouping related pages under a shared URL namespace without a landing page.
+
+```
+src/pages/
+├── admin/
+│   ├── users/
+│   │   └── page.tsx   # /admin/users → renders this
+│   └── roles/
+│       └── page.tsx   # /admin/roles → renders this
+│   (no page.tsx)      # /admin → 404
+```
+
+Guards defined on a child page still execute as normal. Guards are not inherited from parent directories.
+
 ### Examples
 
 ```

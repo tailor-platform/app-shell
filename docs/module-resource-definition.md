@@ -5,7 +5,7 @@ AppShell will render the sidebar navigation, breadcrumbs and handle routing base
 Modules and Resources both share core interface. Of interest:
 
 - `path: string` - the path segment
-- `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional for modules - will auto-redirect to first resource if omitted)
+- `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional — if omitted, the path returns a 404 while child routes remain accessible)
 - `guards?: Guard[]` - optional array of guard functions to control access based on permissions or feature flags
 
 A trivial `modules` example:
@@ -47,7 +47,7 @@ const appShellPropModule = [
       // ...
     ],
   }),
-  // Module without component - automatically redirects to first resource
+  // Module without component — child resources are accessible, but /dashboard returns 404
   defineModule({
     path: "dashboard",
     resources: [
@@ -94,7 +94,34 @@ Modules show as top-level menu items and resources are the sub-menu items. Sub-r
 
 In the example above, clicking the 'Orders' menu item above will take you to `/{basePath}/purchasing/orders` and render the OrdersPage page. If you browse, either by direct request or via client-side navigation to `/{basePath}/purchasing/orders/1234`, AppShell will render OrderDetailPage with 'id' available via useParams
 
-Providing a `component` for a Module is optional. If omitted, the module will automatically redirect to its first resource. This is useful for modules that serve as containers for multiple resources without needing their own landing page.
+Providing a `component` for a Module is optional. If omitted, the module path itself returns a 404 response while its child resources remain accessible under their own paths. This is useful for grouping related resources under a shared path prefix without needing a landing page.
+
+Providing a `component` for a Resource (via `defineResource()`) is also optional. Similarly, omitting it causes the resource path to return a 404, while any `subResources` remain accessible.
+
+When guards are present on a component-less module or resource, they execute as expected. For example, a `redirectTo()` guard fires before the 404. If all guards return `pass()`, the path falls back to a 404.
+
+```tsx
+// Module without component — groups child resources under /admin
+defineModule({
+  path: "admin",
+  meta: { title: "Admin" },
+  resources: [
+    defineResource({ path: "users", component: () => <Users /> }),
+    defineResource({ path: "roles", component: () => <Roles /> }),
+  ],
+});
+// /admin → 404
+// /admin/users → renders Users
+// /admin/roles → renders Roles
+
+// Resource without component — groups sub-resources under a namespace
+defineResource({
+  path: "namespace",
+  subResources: [defineResource({ path: "page-a", component: () => <div>Page A</div> })],
+});
+// /namespace → 404
+// /namespace/page-a → renders Page A
+```
 
 > Read more about [client-side navigation](./routing-and-navigation.md) in AppShell apps
 

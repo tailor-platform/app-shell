@@ -1,3 +1,8 @@
+---
+title: Sidebar Navigation
+description: Learn how to customize sidebar navigation with auto-generation or composition mode
+---
+
 # Sidebar Navigation
 
 AppShell provides flexible sidebar navigation with two modes:

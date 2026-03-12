@@ -1,3 +1,8 @@
+---
+title: Authentication
+description: Set up OAuth2/OIDC authentication with Tailor Platform's Auth service using the AuthProvider component
+---
+
 # Authentication
 
 AppShell provides built-in OAuth2/OIDC authentication through the `AuthProvider` component, which integrates seamlessly with Tailor Platform's Auth service. The provider supports any IdP configured in your Tailor Platform application (built-in IdP, Google, Okta, Auth0, etc.).

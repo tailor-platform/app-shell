@@ -1,6 +1,11 @@
-# Styles
+---
+title: Styling and Theming
+description: Learn how to style your AppShell application using Tailwind CSS v4 and customize the theme
+---
 
-Styling is done using Tailwind v4. AppShell exports a theme.css file which includes Tailor's preferred color palette and CSS variables.
+# Styling and Theming
+
+Styling is done using Tailwind CSS v4. AppShell exports a `theme.css` file which includes Tailor's preferred color palette and CSS variables.
 
 To configure in your AppShell application, in your global.css or top-level tailwind css file, include this theme.css
 

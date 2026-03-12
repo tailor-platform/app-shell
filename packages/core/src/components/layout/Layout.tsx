@@ -1,6 +1,11 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./types";
+import type {
+  LayoutProps,
+  ColumnProps,
+  LayoutHeaderProps,
+  ColumnArea,
+} from "./types";
 
 /**
  * Layout.Column — A single column within `<Layout>`.
@@ -38,7 +43,10 @@ export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
     return (
       <div
         ref={ref}
-        className={cn("astw:min-w-0 astw:flex astw:flex-col astw:gap-4", className)}
+        className={cn(
+          "astw:min-w-0 astw:flex astw:flex-col astw:gap-4",
+          className,
+        )}
         {...props}
       >
         {children}
@@ -86,7 +94,11 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
     <header className="astw:flex astw:w-full astw:flex-col">
       {hasTitleRow && (
         <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:py-4">
-          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
+          {title && (
+            <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">
+              {title}
+            </h1>
+          )}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -96,7 +108,9 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
           )}
         </div>
       )}
-      {children != null && children !== false && <div className="astw:w-full">{children}</div>}
+      {children != null && children !== false && (
+        <div className="astw:w-full">{children}</div>
+      )}
     </header>
   );
 }
@@ -109,8 +123,12 @@ Header.displayName = "Layout.Header";
  */
 const VALID_AREAS: ColumnArea[] = ["left", "main", "right"];
 
-function validateAreas(columnChildren: React.ReactElement[]): "position" | "area" {
-  const areas = columnChildren.map((child) => (child.props as ColumnProps).area);
+function validateAreas(
+  columnChildren: React.ReactElement[],
+): "position" | "area" {
+  const areas = columnChildren.map(
+    (child) => (child.props as ColumnProps).area,
+  );
   const withArea = areas.filter((a) => a != null);
 
   if (withArea.length === 0) return "position";
@@ -124,7 +142,9 @@ function validateAreas(columnChildren: React.ReactElement[]): "position" | "area
 
   const uniqueAreas = new Set(withArea);
   if (uniqueAreas.size !== withArea.length) {
-    console.warn("Layout: Duplicate `area` values found. Falling back to position-based layout.");
+    console.warn(
+      "Layout: Duplicate `area` values found. Falling back to position-based layout.",
+    );
     return "position";
   }
 
@@ -149,20 +169,20 @@ function getAreaWidthClass(area: ColumnArea, columnCount: number): string {
   if (columnCount === 3) {
     switch (area) {
       case "left":
-        return "astw:xl:w-[320px] astw:xl:shrink-0";
+        return "astw:xl:min-w-[320px]";
       case "main":
         return "astw:xl:flex-1";
       case "right":
-        return "astw:xl:w-[280px] astw:xl:shrink-0";
+        return "astw:xl:min-w-[280px]";
     }
   }
   switch (area) {
     case "left":
-      return "astw:lg:w-[320px] astw:lg:shrink-0";
+      return "astw:lg:min-w-[320px]";
     case "main":
       return "astw:lg:flex-1";
     case "right":
-      return "astw:lg:w-[280px] astw:lg:shrink-0";
+      return "astw:lg:min-w-[280px]";
   }
 }
 
@@ -185,7 +205,10 @@ function applyColumnStyles(
       const area = (child.props as ColumnProps).area!;
       return React.cloneElement(child, {
         key: child.key ?? index,
-        className: cn((child.props as ColumnProps).className, getAreaWidthClass(area, columnCount)),
+        className: cn(
+          (child.props as ColumnProps).className,
+          getAreaWidthClass(area, columnCount),
+        ),
       } as Partial<ColumnProps>);
     });
   }
@@ -244,7 +267,14 @@ function applyColumnStyles(
  * </Layout>
  * ```
  */
-export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
+export function Layout({
+  columns,
+  className,
+  gap,
+  title,
+  actions,
+  children,
+}: LayoutProps) {
   // Parse children into header and column children
   const headerChild: React.ReactElement | null = (() => {
     let found: React.ReactElement | null = null;
@@ -256,7 +286,9 @@ export function Layout({ columns, className, gap, title, actions, children }: La
       }
     });
     if (headerCount > 1) {
-      console.warn("Layout: Only one Layout.Header is allowed. Extra headers will be ignored.");
+      console.warn(
+        "Layout: Only one Layout.Header is allowed. Extra headers will be ignored.",
+      );
     }
     return found;
   })();
@@ -322,7 +354,11 @@ export function Layout({ columns, className, gap, title, actions, children }: La
   // No useMemo — the computation is trivial (mapping over at most 3 elements)
   // and `effectiveColumns` is a new array ref every render (from .slice()),
   // which would invalidate any memo anyway.
-  const childrenWithStyles = applyColumnStyles(effectiveColumns, columnCount, areaMode);
+  const childrenWithStyles = applyColumnStyles(
+    effectiveColumns,
+    columnCount,
+    areaMode,
+  );
 
   // Header: prefer Layout.Header child, fall back to title/actions props
   const hasLegacyHeader = title || (actions != null && actions.length > 0);
@@ -335,7 +371,9 @@ export function Layout({ columns, className, gap, title, actions, children }: La
           className="astw:w-full astw:flex astw:justify-between astw:items-center"
           style={{ paddingTop: "1rem", paddingBottom: "1rem" }}
         >
-          {title && <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>}
+          {title && (
+            <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>
+          )}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -345,7 +383,11 @@ export function Layout({ columns, className, gap, title, actions, children }: La
           )}
         </header>
       )}
-      <div className={cn(headerChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4")}>
+      <div
+        className={cn(
+          headerChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4",
+        )}
+      >
         <div className={containerClasses}>{childrenWithStyles}</div>
       </div>
     </div>
@@ -356,5 +398,4 @@ export function Layout({ columns, className, gap, title, actions, children }: La
 Layout.Column = Column;
 Layout.Header = Header;
 
-export default Layout;
 export type { LayoutProps } from "./types";

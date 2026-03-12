@@ -226,18 +226,18 @@ function App() {
 
 ### `AuthClientConfig`
 
-| Property      | Type     | Required | Description                                               |
-| ------------- | -------- | -------- | --------------------------------------------------------- |
-| `clientId`    | `string` | Yes      | OAuth2 client ID from Tailor Platform console             |
-| `appUri`      | `string` | Yes      | Your Tailor Platform application URL                      |
+| Property      | Type     | Required | Description                                                |
+| ------------- | -------- | -------- | ---------------------------------------------------------- |
+| `clientId`    | `string` | Yes      | OAuth2 client ID from Tailor Platform console              |
+| `appUri`      | `string` | Yes      | Your Tailor Platform application URL                       |
 | `redirectUri` | `string` | No       | OAuth2 redirect URI (defaults to `window.location.origin`) |
 
 ### `EnhancedAuthClient` Methods
 
-| Method / Property | Type                              | Description                                                                         |
-| ----------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
-| `getAppUri()`     | `() => string`                    | Returns the `appUri` used to create this client                                     |
-| `fetch`           | `typeof fetch`                    | Authenticated fetch with built-in DPoP proof generation and token refresh           |
+| Method / Property | Type           | Description                                                               |
+| ----------------- | -------------- | ------------------------------------------------------------------------- |
+| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                           |
+| `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation and token refresh |
 
 See the [API](./api.md#createauthclient) for more details.
 

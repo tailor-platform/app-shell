@@ -28,12 +28,10 @@ const toggleVariants = cva(
   },
 );
 
-function Toggle({
-  className,
-  variant,
-  size,
-  ...props
-}: React.ComponentProps<typeof BaseToggle> & VariantProps<typeof toggleVariants>) {
+type ToggleProps = React.ComponentProps<typeof BaseToggle> &
+  VariantProps<typeof toggleVariants>;
+
+function Toggle({ className, variant, size, ...props }: ToggleProps) {
   return (
     <BaseToggle
       data-slot="toggle"
@@ -48,4 +46,4 @@ const ToggleNamespace = {
   Group: ToggleGroup,
 };
 
-export { ToggleNamespace as Toggle, toggleVariants };
+export { ToggleNamespace as Toggle, toggleVariants, type ToggleProps };

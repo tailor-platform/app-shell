@@ -85,7 +85,10 @@ export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Checkbox } from "./components/checkbox";
 export { Collapsible } from "./components/collapsible";
 export { Combobox } from "./components/combobox";
-export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
+export {
+  DescriptionCard,
+  type DescriptionCardProps,
+} from "./components/description-card";
 export { Dialog } from "./components/dialog";
 export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";
@@ -106,6 +109,6 @@ export { Slider } from "./components/slider";
 export { Switch } from "./components/switch";
 export { Table } from "./components/table";
 export { Tabs } from "./components/tabs";
-export { Toggle, toggleVariants } from "./components/toggle";
+export { Toggle, toggleVariants, type ToggleProps } from "./components/toggle";
 export { Toolbar } from "./components/toolbar";
 export { Tooltip } from "./components/tooltip";

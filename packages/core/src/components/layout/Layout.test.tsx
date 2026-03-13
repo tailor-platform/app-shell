@@ -86,10 +86,7 @@ describe("Layout", () => {
     it("Layout.Header with title, actions, and children", () => {
       const { container } = render(
         <Layout>
-          <Layout.Header
-            title="Edit"
-            actions={[<button key="save">Save</button>]}
-          >
+          <Layout.Header title="Edit" actions={[<button key="save">Save</button>]}>
             <div>Tabs</div>
           </Layout.Header>
           <Layout.Column>Content</Layout.Column>
@@ -100,10 +97,7 @@ describe("Layout", () => {
 
     it("legacy title and actions props", () => {
       const { container } = render(
-        <Layout
-          title="Legacy Title"
-          actions={[<button key="save">Save</button>]}
-        >
+        <Layout title="Legacy Title" actions={[<button key="save">Save</button>]}>
           <Layout.Column>Content</Layout.Column>
         </Layout>,
       );
@@ -127,10 +121,7 @@ describe("Layout", () => {
   it("prefers Layout.Header over legacy title/actions props", () => {
     render(
       <Layout title="Legacy" actions={[<button key="a">Legacy Action</button>]}>
-        <Layout.Header
-          title="New Title"
-          actions={[<button key="new">New Action</button>]}
-        />
+        <Layout.Header title="New Title" actions={[<button key="new">New Action</button>]} />
         <Layout.Column>Content</Layout.Column>
       </Layout>,
     );
@@ -191,9 +182,7 @@ describe("Layout", () => {
       </Layout>,
     );
     const grid = container.firstElementChild as HTMLElement;
-    expect(grid.style.getPropertyValue("--layout-cols")).toBe(
-      "320px 1fr 280px",
-    );
+    expect(grid.style.getPropertyValue("--layout-cols")).toBe("320px 1fr 280px");
   });
 
   it("warns when deprecated columns prop doesn't match child count", () => {
@@ -203,9 +192,7 @@ describe("Layout", () => {
         <Layout.Column>Only one</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("does not match"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("does not match"));
     warnSpy.mockRestore();
   });
 });

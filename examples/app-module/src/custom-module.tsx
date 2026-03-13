@@ -529,6 +529,28 @@ const Placeholder = ({ columnNumber }: { columnNumber: number }) => {
 // DEMO: Layout Component Examples
 // ============================================================================
 
+const layoutHeaderActions = [
+  <Button
+    key="cancel"
+    variant="secondary"
+    size="sm"
+    onClick={() => {
+      alert("Secondary button clicked!");
+    }}
+  >
+    Cancel
+  </Button>,
+  <Button
+    key="action"
+    size="sm"
+    onClick={() => {
+      alert("Primary button clicked!");
+    }}
+  >
+    Action
+  </Button>,
+];
+
 const oneColumnLayoutResource = defineResource({
   path: "layout-1-column",
   meta: {
@@ -537,6 +559,7 @@ const oneColumnLayoutResource = defineResource({
   component: () => {
     return (
       <Layout>
+        <Layout.Header title="1 Column" actions={layoutHeaderActions} />
         <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
@@ -598,30 +621,7 @@ const twoColumnLayoutResource = defineResource({
   component: () => {
     return (
       <Layout>
-        <Layout.Header
-          title="2 Columns"
-          actions={[
-            <Button
-              key="cancel"
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                alert("Secondary button clicked!");
-              }}
-            >
-              Cancel
-            </Button>,
-            <Button
-              key="action"
-              size="sm"
-              onClick={() => {
-                alert("Primary button clicked!");
-              }}
-            >
-              Action
-            </Button>,
-          ]}
-        />
+        <Layout.Header title="2 Columns" actions={layoutHeaderActions} />
         <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
@@ -686,6 +686,7 @@ const threeColumnLayoutResource = defineResource({
   component: () => {
     return (
       <Layout>
+        <Layout.Header title="3 Columns" actions={layoutHeaderActions} />
         <Layout.Column>
           <Placeholder columnNumber={1} />
         </Layout.Column>
@@ -790,6 +791,7 @@ const layoutSlotsDemoResource = defineResource({
   },
   component: () => (
     <div className="astw:flex astw:flex-col astw:gap-4">
+      {/* 1 column */}
       <Layout>
         <Layout.Header
           title="Layout Slots Demo"
@@ -799,10 +801,6 @@ const layoutSlotsDemoResource = defineResource({
             </Button>,
           ]}
         />
-      </Layout>
-
-      {/* 1 column */}
-      <Layout>
         <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}

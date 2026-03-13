@@ -1,11 +1,6 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import type {
-  LayoutProps,
-  ColumnProps,
-  LayoutHeaderProps,
-  ColumnArea,
-} from "./types";
+import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./types";
 
 /**
  * Layout.Column — A single column within `<Layout>`.
@@ -64,10 +59,7 @@ export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
         ref={ref}
         data-layout-column=""
         {...(area ? { "data-area": area } : {})}
-        className={cn(
-          "astw:min-w-0 astw:flex astw:flex-col astw:gap-4",
-          className,
-        )}
+        className={cn("astw:min-w-0 astw:flex astw:flex-col astw:gap-4", className)}
         {...props}
       >
         {children}
@@ -120,17 +112,10 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
   const hasTitleRow = title || (actions != null && actions.length > 0);
 
   return (
-    <header
-      data-layout-header=""
-      className="astw:flex astw:w-full astw:flex-col"
-    >
+    <header data-layout-header="" className="astw:flex astw:w-full astw:flex-col">
       {hasTitleRow && (
         <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:pt-4">
-          {title && (
-            <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">
-              {title}
-            </h1>
-          )}
+          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
           {actions != null && actions.length > 0 && (
             <div className="astw:ml-auto astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -140,9 +125,7 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
           )}
         </div>
       )}
-      {children != null && children !== false && (
-        <div className="astw:w-full">{children}</div>
-      )}
+      {children != null && children !== false && <div className="astw:w-full">{children}</div>}
     </header>
   );
 }
@@ -198,14 +181,7 @@ const POSITION_TEMPLATES: Record<number, string> = {
  * </Layout>
  * ```
  */
-export function Layout({
-  columns,
-  className,
-  gap,
-  title,
-  actions,
-  children,
-}: LayoutProps) {
+export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
   let columnCount = 0;
   let hasHeaderChild = false;
   const areas: (ColumnArea | undefined)[] = [];
@@ -236,8 +212,7 @@ export function Layout({
       gridTemplate = areas.map((a) => (a ? AREA_WIDTHS[a] : "1fr")).join(" ");
     } else {
       gridTemplate =
-        POSITION_TEMPLATES[effectiveColumnCount] ??
-        `repeat(${effectiveColumnCount}, 1fr)`;
+        POSITION_TEMPLATES[effectiveColumnCount] ?? `repeat(${effectiveColumnCount}, 1fr)`;
     }
   }
 
@@ -252,8 +227,7 @@ export function Layout({
             ? "astw:gap-8"
             : "astw:gap-4";
 
-  const hasLegacyHeader =
-    !hasHeaderChild && (title || (actions != null && actions.length > 0));
+  const hasLegacyHeader = !hasHeaderChild && (title || (actions != null && actions.length > 0));
 
   // Filter to recognized children; only the first Layout.Header is kept
   let headerSeen = false;
@@ -273,31 +247,19 @@ export function Layout({
         "astw:grid astw:grid-cols-1 astw:w-full",
         hasHeaderChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4",
         gapClass,
-        "[&>[data-layout-header]]:astw:col-span-full",
-        effectiveColumnCount === 2 &&
-          gridTemplate &&
-          "astw:lg:grid-cols-[var(--layout-cols)]",
-        effectiveColumnCount >= 3 &&
-          gridTemplate &&
-          "astw:xl:grid-cols-[var(--layout-cols)]",
+        "astw:[&>[data-layout-header]]:col-span-full",
+        effectiveColumnCount === 2 && gridTemplate && "astw:lg:grid-cols-[var(--layout-cols)]",
+        effectiveColumnCount >= 3 && gridTemplate && "astw:xl:grid-cols-[var(--layout-cols)]",
         className,
       )}
-      style={
-        gridTemplate
-          ? ({ "--layout-cols": gridTemplate } as React.CSSProperties)
-          : undefined
-      }
+      style={gridTemplate ? ({ "--layout-cols": gridTemplate } as React.CSSProperties) : undefined}
     >
       {hasLegacyHeader && (
         <header
           data-layout-header=""
           className="astw:w-full astw:flex astw:justify-between astw:items-center astw:pt-4"
         >
-          {title && (
-            <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">
-              {title}
-            </h1>
-          )}
+          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (

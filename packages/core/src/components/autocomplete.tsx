@@ -15,7 +15,9 @@ function AutocompleteRoot<Value>(props: AutocompleteRootProps<Value>) {
   );
 }
 
-function AutocompleteValue({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Value>) {
+function AutocompleteValue({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Value>) {
   return <BaseAutocomplete.Value data-slot="autocomplete-value" {...props} />;
 }
 
@@ -62,7 +64,11 @@ function AutocompleteTrigger({
   );
 }
 
-function AutocompleteInputGroup({ className, children, ...props }: React.ComponentProps<"div">) {
+function AutocompleteInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="autocomplete-input-group"
@@ -167,7 +173,9 @@ function AutocompleteClear({
   );
 }
 
-function AutocompleteGroup({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Group>) {
+function AutocompleteGroup({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Group>) {
   return <BaseAutocomplete.Group data-slot="autocomplete-group" {...props} />;
 }
 
@@ -190,7 +198,12 @@ function AutocompleteGroupLabel({
 function AutocompleteCollection({
   ...props
 }: React.ComponentProps<typeof BaseAutocomplete.Collection>) {
-  return <BaseAutocomplete.Collection data-slot="autocomplete-collection" {...props} />;
+  return (
+    <BaseAutocomplete.Collection
+      data-slot="autocomplete-collection"
+      {...props}
+    />
+  );
 }
 
 function AutocompleteStatus({
@@ -263,8 +276,11 @@ export interface AutocompleteUseAsyncReturn<T> {
  * </Autocomplete.Root>
  * ```
  */
-function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncReturn<T> {
-  const { items, loading, query, error, onInputValueChange } = useAsyncItems(options);
+function useAsync<T>(
+  options: UseAsyncItemsOptions<T>,
+): AutocompleteUseAsyncReturn<T> {
+  const { items, loading, query, error, onInputValueChange } =
+    useAsyncItems(options);
 
   return {
     items,
@@ -275,7 +291,11 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncRetu
   };
 }
 
-const Autocomplete = {
+// ============================================================================
+// Export
+// ============================================================================
+
+const AutocompleteParts = {
   Root: AutocompleteRoot,
   Value: AutocompleteValue,
   InputGroup: AutocompleteInputGroup,
@@ -294,4 +314,21 @@ const Autocomplete = {
   useAsync,
 };
 
-export { Autocomplete };
+type AutocompleteParts = typeof AutocompleteParts;
+
+export {
+  AutocompleteRoot,
+  AutocompleteInputGroup,
+  AutocompleteInput,
+  AutocompleteTrigger,
+  AutocompleteContent,
+  AutocompleteList,
+  AutocompleteItem,
+  AutocompleteEmpty,
+  AutocompleteClear,
+  AutocompleteGroup,
+  AutocompleteGroupLabel,
+  AutocompleteCollection,
+  AutocompleteParts,
+  useAsync,
+};

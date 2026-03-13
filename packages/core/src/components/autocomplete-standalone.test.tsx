@@ -29,13 +29,7 @@ describe("Autocomplete (standalone)", () => {
 
   it("shows empty text when no items match", async () => {
     const user = userEvent.setup();
-    render(
-      <Autocomplete
-        items={suggestions}
-        placeholder="Type..."
-        emptyText="Nothing found"
-      />,
-    );
+    render(<Autocomplete items={suggestions} placeholder="Type..." emptyText="Nothing found" />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await user.type(input, "zzz");
@@ -48,11 +42,7 @@ describe("Autocomplete (standalone)", () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <Autocomplete
-        items={suggestions}
-        placeholder="Type..."
-        onValueChange={onValueChange}
-      />,
+      <Autocomplete items={suggestions} placeholder="Type..." onValueChange={onValueChange} />,
     );
     const input = screen.getByRole("combobox");
     await user.click(input);
@@ -68,13 +58,7 @@ describe("Autocomplete (standalone)", () => {
       { id: 2, name: "Blue" },
     ];
     const user = userEvent.setup();
-    render(
-      <Autocomplete
-        items={items}
-        getLabel={(item) => item.name}
-        placeholder="Pick color"
-      />,
-    );
+    render(<Autocomplete items={items} getLabel={(item) => item.name} placeholder="Pick color" />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await user.type(input, "R");
@@ -89,9 +73,7 @@ describe("Autocomplete (standalone)", () => {
       <Autocomplete
         items={suggestions}
         placeholder="Type..."
-        renderItem={(item) => (
-          <span data-testid={`custom-${item}`}>{item}!</span>
-        )}
+        renderItem={(item) => <span data-testid={`custom-${item}`}>{item}!</span>}
       />,
     );
     const input = screen.getByRole("combobox");
@@ -103,36 +85,22 @@ describe("Autocomplete (standalone)", () => {
   });
 
   it("supports controlled value", () => {
-    render(
-      <Autocomplete items={suggestions} value="Cherry" placeholder="Type..." />,
-    );
+    render(<Autocomplete items={suggestions} value="Cherry" placeholder="Type..." />);
     const input = screen.getByRole("combobox") as HTMLInputElement;
     expect(input.value).toBe("Cherry");
   });
 
   it("supports defaultValue", () => {
-    render(
-      <Autocomplete
-        items={suggestions}
-        defaultValue="Date"
-        placeholder="Type..."
-      />,
-    );
+    render(<Autocomplete items={suggestions} defaultValue="Date" placeholder="Type..." />);
     const input = screen.getByRole("combobox") as HTMLInputElement;
     expect(input.value).toBe("Date");
   });
 
   it("applies className to container", () => {
     const { container } = render(
-      <Autocomplete
-        items={suggestions}
-        className="my-class"
-        placeholder="Type..."
-      />,
+      <Autocomplete items={suggestions} className="my-class" placeholder="Type..." />,
     );
-    expect(
-      (container.firstChild as HTMLElement).classList.contains("my-class"),
-    ).toBe(true);
+    expect((container.firstChild as HTMLElement).classList.contains("my-class")).toBe(true);
   });
 });
 
@@ -157,15 +125,9 @@ describe("Autocomplete.Async (standalone)", () => {
   it("applies className", () => {
     const fetcher = vi.fn().mockResolvedValue([]);
     const { container } = render(
-      <Autocomplete.Async
-        fetcher={fetcher}
-        className="async-class"
-        placeholder="Search..."
-      />,
+      <Autocomplete.Async fetcher={fetcher} className="async-class" placeholder="Search..." />,
     );
-    expect(
-      (container.firstChild as HTMLElement).classList.contains("async-class"),
-    ).toBe(true);
+    expect((container.firstChild as HTMLElement).classList.contains("async-class")).toBe(true);
   });
 
   it("calls onValueChange when input changes", async () => {

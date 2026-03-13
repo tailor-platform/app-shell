@@ -41,13 +41,7 @@ describe("Combobox (standalone)", () => {
 
   it("shows empty text when no items match", async () => {
     const user = userEvent.setup();
-    render(
-      <Combobox
-        items={fruits}
-        placeholder="Search..."
-        emptyText="Nothing here"
-      />,
-    );
+    render(<Combobox items={fruits} placeholder="Search..." emptyText="Nothing here" />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await user.type(input, "zzz");
@@ -59,13 +53,7 @@ describe("Combobox (standalone)", () => {
   it("calls onValueChange when an item is selected", async () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Combobox
-        items={fruits}
-        placeholder="Search..."
-        onValueChange={onValueChange}
-      />,
-    );
+    render(<Combobox items={fruits} placeholder="Search..." onValueChange={onValueChange} />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await user.type(input, "Ban");
@@ -82,13 +70,7 @@ describe("Combobox (standalone)", () => {
       { id: 2, name: "Blue" },
     ];
     const user = userEvent.setup();
-    render(
-      <Combobox
-        items={items}
-        getLabel={(item) => item.name}
-        placeholder="Pick color"
-      />,
-    );
+    render(<Combobox items={items} getLabel={(item) => item.name} placeholder="Pick color" />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await waitFor(() => {
@@ -103,9 +85,7 @@ describe("Combobox (standalone)", () => {
       <Combobox
         items={fruits}
         placeholder="Search..."
-        renderItem={(item) => (
-          <span data-testid={`custom-${item}`}>{item}!</span>
-        )}
+        renderItem={(item) => <span data-testid={`custom-${item}`}>{item}!</span>}
       />,
     );
     const input = screen.getByRole("combobox");
@@ -122,9 +102,7 @@ describe("Combobox (standalone)", () => {
   });
 
   it("supports defaultValue", () => {
-    render(
-      <Combobox items={fruits} defaultValue="Date" placeholder="Search..." />,
-    );
+    render(<Combobox items={fruits} defaultValue="Date" placeholder="Search..." />);
     const input = screen.getByRole("combobox") as HTMLInputElement;
     expect(input.value).toBe("Date");
   });
@@ -133,9 +111,7 @@ describe("Combobox (standalone)", () => {
     const { container } = render(
       <Combobox items={fruits} className="my-class" placeholder="Search..." />,
     );
-    expect(
-      (container.firstChild as HTMLElement).classList.contains("my-class"),
-    ).toBe(true);
+    expect((container.firstChild as HTMLElement).classList.contains("my-class")).toBe(true);
   });
 });
 
@@ -150,12 +126,7 @@ describe("Combobox (standalone, multiple)", () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <Combobox
-        items={fruits}
-        multiple
-        placeholder="Pick fruits"
-        onValueChange={onValueChange}
-      />,
+      <Combobox items={fruits} multiple placeholder="Pick fruits" onValueChange={onValueChange} />,
     );
     const input = screen.getByRole("combobox");
     await user.click(input);
@@ -196,13 +167,7 @@ describe("Combobox.Async (standalone)", () => {
     const user = userEvent.setup();
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    render(
-      <Combobox.Async
-        fetcher={fetcher}
-        placeholder="Search..."
-        loadingText="Fetching..."
-      />,
-    );
+    render(<Combobox.Async fetcher={fetcher} placeholder="Search..." loadingText="Fetching..." />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await user.type(input, "q");
@@ -218,31 +183,20 @@ describe("Combobox.Async (standalone)", () => {
   it("applies className", () => {
     const fetcher = vi.fn().mockResolvedValue([]);
     const { container } = render(
-      <Combobox.Async
-        fetcher={fetcher}
-        className="async-class"
-        placeholder="Search..."
-      />,
+      <Combobox.Async fetcher={fetcher} className="async-class" placeholder="Search..." />,
     );
-    expect(
-      (container.firstChild as HTMLElement).classList.contains("async-class"),
-    ).toBe(true);
+    expect((container.firstChild as HTMLElement).classList.contains("async-class")).toBe(true);
   });
 
   it("renders multiple mode", () => {
     const fetcher = vi.fn().mockResolvedValue([]);
-    render(
-      <Combobox.Async fetcher={fetcher} multiple placeholder="Search..." />,
-    );
+    render(<Combobox.Async fetcher={fetcher} multiple placeholder="Search..." />);
     expect(screen.getByRole("combobox")).toBeDefined();
   });
 });
 
 type Item = { label: string };
-const creatableItems: Item[] = [
-  { label: "Existing A" },
-  { label: "Existing B" },
-];
+const creatableItems: Item[] = [{ label: "Existing A" }, { label: "Existing B" }];
 const getItemLabel = (item: Item) => item.label;
 const createItem = (value: string) => ({ label: value });
 
@@ -312,11 +266,7 @@ describe("Combobox.Creatable (standalone)", () => {
         placeholder="Search..."
       />,
     );
-    expect(
-      (container.firstChild as HTMLElement).classList.contains(
-        "creatable-class",
-      ),
-    ).toBe(true);
+    expect((container.firstChild as HTMLElement).classList.contains("creatable-class")).toBe(true);
   });
 
   it("supports multiple mode", async () => {
@@ -378,13 +328,7 @@ describe("Combobox (standalone, grouped)", () => {
   it("calls onValueChange when an item is selected", async () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
-    render(
-      <Combobox
-        items={groups}
-        placeholder="Search..."
-        onValueChange={onValueChange}
-      />,
-    );
+    render(<Combobox items={groups} placeholder="Search..." onValueChange={onValueChange} />);
     const input = screen.getByRole("combobox");
     await user.click(input);
     await waitFor(() => expect(screen.getByText("Carrot")).toBeDefined());
@@ -396,12 +340,7 @@ describe("Combobox (standalone, grouped)", () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <Combobox
-        items={groups}
-        multiple
-        placeholder="Pick items"
-        onValueChange={onValueChange}
-      />,
+      <Combobox items={groups} multiple placeholder="Pick items" onValueChange={onValueChange} />,
     );
     const input = screen.getByRole("combobox");
     await user.click(input);

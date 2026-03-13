@@ -53,7 +53,13 @@ describe("ActionPanel", () => {
       <ActionPanel
         title="Actions"
         actions={[
-          { key: "1", label: "Disabled action", icon: <MockIcon />, onClick: () => {}, disabled: true },
+          {
+            key: "1",
+            label: "Disabled action",
+            icon: <MockIcon />,
+            onClick: () => {},
+            disabled: true,
+          },
         ]}
       />,
     );
@@ -77,9 +83,7 @@ describe("ActionPanel", () => {
     render(
       <ActionPanel
         title="Actions"
-        actions={[
-          { key: "1", label: "Submit", icon: <MockIcon />, onClick, loading: true },
-        ]}
+        actions={[{ key: "1", label: "Submit", icon: <MockIcon />, onClick, loading: true }]}
       />,
     );
 

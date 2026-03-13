@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Badge } from "../badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
+import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
 
@@ -161,8 +161,8 @@ function CopyButton({ value }: { value: string }) {
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger
+    <Tooltip.Root>
+      <Tooltip.Trigger
         render={
           <button
             onClick={handleCopy}
@@ -175,9 +175,9 @@ function CopyButton({ value }: { value: string }) {
         ) : (
           <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
         )}
-      </TooltipTrigger>
-      <TooltipContent side="top">{copied ? "Copied!" : "Copy"}</TooltipContent>
-    </Tooltip>
+      </Tooltip.Trigger>
+      <Tooltip.Content side="top">{copied ? "Copied!" : "Copy"}</Tooltip.Content>
+    </Tooltip.Root>
   );
 }
 
@@ -254,12 +254,14 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   // Wrap in tooltip only if actually truncated
   if (truncateLines && isTruncated) {
     return (
-      <Tooltip>
-        <TooltipTrigger render={<span className="astw:cursor-default" />}>{content}</TooltipTrigger>
-        <TooltipContent side="bottom" style={{ maxWidth: 320 }}>
+      <Tooltip.Root>
+        <Tooltip.Trigger render={<span className="astw:cursor-default" />}>
+          {content}
+        </Tooltip.Trigger>
+        <Tooltip.Content side="bottom" style={{ maxWidth: 320 }}>
           <p className="astw:text-sm">{value}</p>
-        </TooltipContent>
-      </Tooltip>
+        </Tooltip.Content>
+      </Tooltip.Root>
     );
   }
 

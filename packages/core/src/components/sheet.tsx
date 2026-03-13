@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Sheet({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
+function SheetRoot({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root data-slot="sheet" {...props} />;
 }
 
@@ -113,13 +113,15 @@ function SheetDescription({
   );
 }
 
-export {
-  Sheet,
-  SheetTrigger,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
-  SheetDescription,
+const Sheet = {
+  Root: SheetRoot,
+  Trigger: SheetTrigger,
+  Close: SheetClose,
+  Content: SheetContent,
+  Header: SheetHeader,
+  Footer: SheetFooter,
+  Title: SheetTitle,
+  Description: SheetDescription,
 };
+
+export { Sheet };

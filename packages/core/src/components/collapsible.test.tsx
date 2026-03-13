@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";
+import { Collapsible } from "./collapsible";
 
 afterEach(() => {
   cleanup();
@@ -10,10 +10,10 @@ afterEach(() => {
 describe("Collapsible", () => {
   it("renders trigger and content", () => {
     render(
-      <Collapsible>
-        <CollapsibleTrigger data-testid="trigger">Toggle</CollapsibleTrigger>
-        <CollapsibleContent data-testid="content">Content</CollapsibleContent>
-      </Collapsible>,
+      <Collapsible.Root>
+        <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
+        <Collapsible.Content data-testid="content">Content</Collapsible.Content>
+      </Collapsible.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -24,10 +24,10 @@ describe("Collapsible", () => {
     const user = userEvent.setup();
 
     render(
-      <Collapsible defaultOpen={false}>
-        <CollapsibleTrigger data-testid="trigger">Toggle</CollapsibleTrigger>
-        <CollapsibleContent data-testid="content">Hidden Content</CollapsibleContent>
-      </Collapsible>,
+      <Collapsible.Root defaultOpen={false}>
+        <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
+        <Collapsible.Content data-testid="content">Hidden Content</Collapsible.Content>
+      </Collapsible.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");
@@ -45,10 +45,10 @@ describe("Collapsible", () => {
     const user = userEvent.setup();
 
     render(
-      <Collapsible defaultOpen={true}>
-        <CollapsibleTrigger data-testid="trigger">Toggle</CollapsibleTrigger>
-        <CollapsibleContent data-testid="content">Content</CollapsibleContent>
-      </Collapsible>,
+      <Collapsible.Root defaultOpen={true}>
+        <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
+        <Collapsible.Content data-testid="content">Content</Collapsible.Content>
+      </Collapsible.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");
@@ -66,10 +66,10 @@ describe("Collapsible", () => {
     const onOpenChange = vi.fn();
 
     render(
-      <Collapsible defaultOpen={false} onOpenChange={onOpenChange}>
-        <CollapsibleTrigger data-testid="trigger">Toggle</CollapsibleTrigger>
-        <CollapsibleContent>Content</CollapsibleContent>
-      </Collapsible>,
+      <Collapsible.Root defaultOpen={false} onOpenChange={onOpenChange}>
+        <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
+        <Collapsible.Content>Content</Collapsible.Content>
+      </Collapsible.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");
@@ -87,10 +87,10 @@ describe("Collapsible", () => {
     const onOpenChange = vi.fn();
 
     const { rerender } = render(
-      <Collapsible open={false} onOpenChange={onOpenChange}>
-        <CollapsibleTrigger data-testid="trigger">Toggle</CollapsibleTrigger>
-        <CollapsibleContent>Content</CollapsibleContent>
-      </Collapsible>,
+      <Collapsible.Root open={false} onOpenChange={onOpenChange}>
+        <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
+        <Collapsible.Content>Content</Collapsible.Content>
+      </Collapsible.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");
@@ -103,10 +103,10 @@ describe("Collapsible", () => {
 
     // Simulate parent updating the state
     rerender(
-      <Collapsible open={true} onOpenChange={onOpenChange}>
-        <CollapsibleTrigger data-testid="trigger">Toggle</CollapsibleTrigger>
-        <CollapsibleContent>Content</CollapsibleContent>
-      </Collapsible>,
+      <Collapsible.Root open={true} onOpenChange={onOpenChange}>
+        <Collapsible.Trigger data-testid="trigger">Toggle</Collapsible.Trigger>
+        <Collapsible.Content>Content</Collapsible.Content>
+      </Collapsible.Root>,
     );
 
     expect(trigger.hasAttribute("data-panel-open")).toBe(true);

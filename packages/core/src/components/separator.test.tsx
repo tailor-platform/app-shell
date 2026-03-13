@@ -29,16 +29,8 @@ describe("Separator", () => {
     expect(separator.className).toContain("custom-class");
   });
 
-  it("sets decorative by default", () => {
+  it("has separator role", () => {
     render(<Separator data-testid="separator" />);
-
-    const separator = screen.getByTestId("separator");
-    // When decorative is true, role is "none"
-    expect(separator.getAttribute("role")).toBe("none");
-  });
-
-  it("has separator role when not decorative", () => {
-    render(<Separator data-testid="separator" decorative={false} />);
 
     const separator = screen.getByTestId("separator");
     expect(separator.getAttribute("role")).toBe("separator");

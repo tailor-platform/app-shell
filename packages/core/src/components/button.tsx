@@ -35,17 +35,12 @@ const buttonVariants = cva(
   },
 );
 
-function Button({
-  className,
-  variant,
-  size,
-  render,
-  children,
-  ...props
-}: React.ComponentProps<"button"> &
+type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     render?: React.ReactElement;
-  }) {
+  };
+
+function Button({ className, variant, size, render, children, ...props }: ButtonProps) {
   return useRender({
     defaultTagName: "button",
     render,
@@ -58,4 +53,4 @@ function Button({
   });
 }
 
-export { Button, buttonVariants };
+export { Button, buttonVariants, type ButtonProps };

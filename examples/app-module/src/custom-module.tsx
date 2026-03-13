@@ -76,14 +76,7 @@ const PurchaseOrderDetailPage = () => {
   const purchaseOrder = mockPurchaseOrder;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        padding: "1.5rem",
-      }}
-    >
+    <Layout>
       <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
         Purchase Order: {purchaseOrder.docNumber}
       </h1>
@@ -205,7 +198,7 @@ const PurchaseOrderDetailPage = () => {
           { key: "currency.code", label: "Currency" },
         ]}
       />
-    </div>
+    </Layout>
   );
 };
 
@@ -785,34 +778,15 @@ const orderOverviewFields = [
 ];
 
 const layoutSlotsDemoResource = defineResource({
-  path: "layout-slots-demo",
+  path: "layout-patterns",
   meta: {
-    title: "Layout Slots Demo",
+    title: "Layout Patterns Demo",
   },
   component: () => (
     <div className="astw:flex astw:flex-col astw:gap-4">
-      {/* 1 column */}
-      <Layout>
-        <Layout.Header
-          title="Layout Slots Demo"
-          actions={[
-            <Button key="action" size="sm" onClick={() => alert("Action!")}>
-              Action
-            </Button>,
-          ]}
-        />
-        <Layout.Column>
-          <DescriptionCard
-            data={mockPurchaseOrder}
-            title="Order Overview"
-            columns={4}
-            fields={orderOverviewFields}
-          />
-        </Layout.Column>
-      </Layout>
-
       {/* 2 columns (area: left + main) */}
       <Layout>
+        <Layout.Header title="2 Columns with Left + Main Areas" />
         <Layout.Column area="left">
           <Placeholder columnNumber={1} />
         </Layout.Column>
@@ -821,8 +795,9 @@ const layoutSlotsDemoResource = defineResource({
         </Layout.Column>
       </Layout>
 
-      {/* 3 columns */}
+      {/* More than 3 columns */}
       <Layout>
+        <Layout.Header title="More than 3 Columns" />
         <Layout.Column>
           <Placeholder columnNumber={1} />
         </Layout.Column>
@@ -831,6 +806,9 @@ const layoutSlotsDemoResource = defineResource({
         </Layout.Column>
         <Layout.Column>
           <Placeholder columnNumber={3} />
+        </Layout.Column>
+        <Layout.Column>
+          <Placeholder columnNumber={4} />
         </Layout.Column>
       </Layout>
     </div>

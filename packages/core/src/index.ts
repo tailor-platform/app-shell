@@ -73,7 +73,7 @@ export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 
 // Layout component
-export { Layout, type LayoutProps } from "./components/layout";
+export { Layout, type LayoutProps } from "./components/layout/Layout";
 
 // File-based routing types
 export type { AppShellPageProps, PageComponent } from "./fs-routes/types";

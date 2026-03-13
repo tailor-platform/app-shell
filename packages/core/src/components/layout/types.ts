@@ -10,26 +10,41 @@ import type { ReactNode } from "react";
 export type ColumnCount = 1 | 2 | 3;
 
 /**
+ * Supported area values for Layout.Column
+ */
+export type ColumnArea = "left" | "main" | "right";
+
+/**
  * Props for the Layout component
  */
 export interface LayoutProps {
   /**
    * Number of columns (1, 2, or 3).
    *
-   * **Required.** Must match the exact number of `Layout.Column` children.
-   * The component will throw an error in development if there's a mismatch.
+   * @deprecated Auto-detected from Layout.Column children count when omitted.
    */
-  columns: ColumnCount;
+  columns?: ColumnCount;
   /** Additional CSS classes */
   className?: string;
-  /** Gap between columns (default: 4 = 16px) */
+  /**
+   * Gap between columns (default: 4 = 16px)
+   *
+   * @deprecated Remove the `gap` prop and use `className` with the `astw:` prefix
+   * (e.g. `className="astw:gap-6"`) to override the default gap.
+   */
   gap?: number;
-  /** Header title - displayed at the top of the layout */
+  /** Header title - displayed at the top of the layout
+   *
+   * @deprecated Use `<Layout.Header title="...">` instead.
+   */
   title?: string;
-  /** Header actions - array of action components (e.g., buttons) displayed on the right side of the header.
-   * Layout and spacing are handled automatically. */
+  /** Header actions displayed on the right side of the header.
+   * Layout and spacing are handled automatically.
+   *
+   * @deprecated Use `<Layout.Header actions={...}>` instead.
+   */
   actions?: ReactNode[];
-  /** Child elements - must be exactly `columns` number of Layout.Column components */
+  /** Child elements - Layout.Header and/or Layout.Column components */
   children: ReactNode;
 }
 
@@ -39,7 +54,27 @@ export interface LayoutProps {
 export interface ColumnProps {
   /** Additional CSS classes */
   className?: string;
+  /**
+   * Column area role. When specified on all columns, determines width template
+   * based on role rather than position.
+   * - "left": fixed 320px
+   * - "main": flex-1
+   * - "right": fixed 280px
+   */
+  area?: ColumnArea;
   /** Child content */
+  children?: ReactNode;
+}
+
+/**
+ * Props for Layout.Header component
+ */
+export interface LayoutHeaderProps {
+  /** Page title (left side) */
+  title?: string;
+  /** Action buttons or nodes (right side) */
+  actions?: ReactNode[];
+  /** Renders full-width below the title/actions row (e.g. tabs) */
   children?: ReactNode;
 }
 

@@ -76,14 +76,7 @@ const PurchaseOrderDetailPage = () => {
   const purchaseOrder = mockPurchaseOrder;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        padding: "1.5rem",
-      }}
-    >
+    <Layout>
       <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
         Purchase Order: {purchaseOrder.docNumber}
       </h1>
@@ -205,7 +198,7 @@ const PurchaseOrderDetailPage = () => {
           { key: "currency.code", label: "Currency" },
         ]}
       />
-    </div>
+    </Layout>
   );
 };
 
@@ -529,6 +522,28 @@ const Placeholder = ({ columnNumber }: { columnNumber: number }) => {
 // DEMO: Layout Component Examples
 // ============================================================================
 
+const layoutHeaderActions = [
+  <Button
+    key="cancel"
+    variant="secondary"
+    size="sm"
+    onClick={() => {
+      alert("Secondary button clicked!");
+    }}
+  >
+    Cancel
+  </Button>,
+  <Button
+    key="action"
+    size="sm"
+    onClick={() => {
+      alert("Primary button clicked!");
+    }}
+  >
+    Action
+  </Button>,
+];
+
 const oneColumnLayoutResource = defineResource({
   path: "layout-1-column",
   meta: {
@@ -536,7 +551,8 @@ const oneColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <Layout columns={1} title="1 Column">
+      <Layout>
+        <Layout.Header title="1 Column" actions={layoutHeaderActions} />
         <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
@@ -597,31 +613,8 @@ const twoColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <Layout
-        columns={2}
-        title="2 Columns"
-        actions={[
-          <Button
-            key="cancel"
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              alert("Secondary button clicked!");
-            }}
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="action"
-            size="sm"
-            onClick={() => {
-              alert("Primary button clicked!");
-            }}
-          >
-            Action
-          </Button>,
-        ]}
-      >
+      <Layout>
+        <Layout.Header title="2 Columns" actions={layoutHeaderActions} />
         <Layout.Column>
           <DescriptionCard
             data={mockPurchaseOrder}
@@ -685,7 +678,8 @@ const threeColumnLayoutResource = defineResource({
   },
   component: () => {
     return (
-      <Layout columns={3} title="3 Columns">
+      <Layout>
+        <Layout.Header title="3 Columns" actions={layoutHeaderActions} />
         <Layout.Column>
           <Placeholder columnNumber={1} />
         </Layout.Column>
@@ -743,6 +737,48 @@ const threeColumnLayoutResource = defineResource({
       </Layout>
     );
   },
+});
+
+// ============================================================================
+// DEMO: Layout Slots (composition API)
+// ============================================================================
+
+const layoutSlotsDemoResource = defineResource({
+  path: "layout-patterns",
+  meta: {
+    title: "Layout Patterns Demo",
+  },
+  component: () => (
+    <div className="astw:flex astw:flex-col astw:gap-4">
+      {/* 2 columns (area: left + main) */}
+      <Layout>
+        <Layout.Header title="2 Columns with Left + Main Areas" />
+        <Layout.Column area="left">
+          <Placeholder columnNumber={1} />
+        </Layout.Column>
+        <Layout.Column area="main">
+          <Placeholder columnNumber={2} />
+        </Layout.Column>
+      </Layout>
+
+      {/* More than 3 columns */}
+      <Layout>
+        <Layout.Header title="More than 3 Columns" />
+        <Layout.Column>
+          <Placeholder columnNumber={1} />
+        </Layout.Column>
+        <Layout.Column>
+          <Placeholder columnNumber={2} />
+        </Layout.Column>
+        <Layout.Column>
+          <Placeholder columnNumber={3} />
+        </Layout.Column>
+        <Layout.Column>
+          <Placeholder columnNumber={4} />
+        </Layout.Column>
+      </Layout>
+    </div>
+  ),
 });
 
 export const customPageModule = defineModule({
@@ -809,6 +845,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/layout-slots-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              View Layout Slots Demo
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/admin-only"
               style={{
                 color: "hsl(var(--destructive))",
@@ -834,5 +881,6 @@ export const customPageModule = defineModule({
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,
+    layoutSlotsDemoResource,
   ],
 });

@@ -585,6 +585,7 @@ function SidebarMenuButton({
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(event);
+      if (event.defaultPrevented) return;
       if (isMobile) {
         setOpenMobile(false);
       } else if (openIconMode) {
@@ -729,6 +730,7 @@ function SidebarMenuSubButton({
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
       onClick?.(event);
+      if (event.defaultPrevented) return;
       if (isMobile) {
         setOpenMobile(false);
       } else if (openIconMode) {

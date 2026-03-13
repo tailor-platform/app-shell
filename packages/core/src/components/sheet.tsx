@@ -15,29 +15,65 @@ const sideToSwipeDirection: Record<Side, "up" | "right" | "down" | "left"> = {
 
 const SheetContext = React.createContext<Side>("right");
 
-function Root({
-  side = "right",
-  ...props
-}: React.ComponentProps<typeof Drawer.Root> & { side?: Side }) {
+// Only the props relevant to the Sheet abstraction are picked from Drawer.Root.
+// Drawer-specific props (e.g. snapPoints, dismissThreshold) are intentionally excluded
+// because Sheet is not a general-purpose drawer.
+type SheetRootProps = Pick<
+  React.ComponentProps<typeof Drawer.Root>,
+  "open" | "defaultOpen" | "onOpenChange" | "modal"
+> & {
+  children: React.ReactNode;
+  side?: Side;
+};
+
+/**
+ * The root component that manages sheet open/close state.
+ * The `side` prop controls which edge of the screen the sheet slides in from.
+ *
+ * @example
+ * ```tsx
+ * <Sheet.Root side="right">
+ *   <Sheet.Trigger render={<Button />}>Open</Sheet.Trigger>
+ *   <Sheet.Content>
+ *     <Sheet.Header>
+ *       <Sheet.Title>Settings</Sheet.Title>
+ *       <Sheet.Description>Manage your preferences.</Sheet.Description>
+ *     </Sheet.Header>
+ *     <Sheet.Footer>
+ *       <Button>Save</Button>
+ *     </Sheet.Footer>
+ *   </Sheet.Content>
+ * </Sheet.Root>
+ * ```
+ */
+function Root({ side = "right", ...props }: SheetRootProps) {
   return (
     <SheetContext.Provider value={side}>
       <Drawer.Root data-slot="sheet" swipeDirection={sideToSwipeDirection[side]} {...props} />
     </SheetContext.Provider>
   );
 }
+Root.displayName = "Sheet.Root";
 
+/** The element that opens the sheet when clicked. */
 function Trigger({ ...props }: React.ComponentProps<typeof Drawer.Trigger>) {
   return <Drawer.Trigger data-slot="sheet-trigger" {...props} />;
 }
+Trigger.displayName = "Sheet.Trigger";
 
+/** A button that closes the sheet. */
 function Close({ ...props }: React.ComponentProps<typeof Drawer.Close>) {
   return <Drawer.Close data-slot="sheet-close" {...props} />;
 }
+Close.displayName = "Sheet.Close";
 
+/** @internal Renders sheet content into a React portal. */
 function Portal({ ...props }: React.ComponentProps<typeof Drawer.Portal>) {
   return <Drawer.Portal data-slot="sheet-portal" {...props} />;
 }
+Portal.displayName = "Sheet.Portal";
 
+/** The backdrop overlay that appears behind the sheet. */
 function Overlay({ className, ...props }: React.ComponentProps<typeof Drawer.Backdrop>) {
   return (
     <Drawer.Backdrop
@@ -50,17 +86,12 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof Drawer.Bac
     />
   );
 }
+Overlay.displayName = "Sheet.Overlay";
 
-function Content({
-  className,
-  children,
-  side: sideProp,
-  ...props
-}: React.ComponentProps<typeof Drawer.Popup> & {
-  side?: Side;
-}) {
-  const sideFromContext = React.useContext(SheetContext);
-  const side = sideProp ?? sideFromContext;
+/** The main sheet panel. The `side` is inherited from `Sheet.Root` via context. */
+function Content({ className, children, ...props }: React.ComponentProps<typeof Drawer.Popup>) {
+  // `side` is controlled by `Root` via context, not accepted as a prop, to keep swipe direction and CSS position in sync.
+  const side = React.useContext(SheetContext);
 
   return (
     <Portal>
@@ -104,7 +135,9 @@ function Content({
     </Portal>
   );
 }
+Content.displayName = "Sheet.Content";
 
+/** A layout wrapper for the sheet title and description. */
 function Header({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -114,7 +147,9 @@ function Header({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+Header.displayName = "Sheet.Header";
 
+/** A layout wrapper for sheet action buttons, typically placed at the bottom. */
 function Footer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -124,7 +159,9 @@ function Footer({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+Footer.displayName = "Sheet.Footer";
 
+/** The title of the sheet, announced by screen readers. */
 function Title({ className, ...props }: React.ComponentProps<typeof Drawer.Title>) {
   return (
     <Drawer.Title
@@ -134,7 +171,9 @@ function Title({ className, ...props }: React.ComponentProps<typeof Drawer.Title
     />
   );
 }
+Title.displayName = "Sheet.Title";
 
+/** A description that provides additional context for the sheet. */
 function Description({ className, ...props }: React.ComponentProps<typeof Drawer.Description>) {
   return (
     <Drawer.Description
@@ -144,6 +183,7 @@ function Description({ className, ...props }: React.ComponentProps<typeof Drawer
     />
   );
 }
+Description.displayName = "Sheet.Description";
 
 export const Sheet = {
   Root,

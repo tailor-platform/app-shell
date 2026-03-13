@@ -3,11 +3,12 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
 
+/** Provides shared delay configuration for nested tooltips. */
 function Provider({
   delayDuration = 0,
   children,
   ...props
-}: {
+}: Omit<React.ComponentProps<typeof BaseTooltip.Provider>, "delay"> & {
   delayDuration?: number;
   children: React.ReactNode;
 }) {
@@ -17,21 +18,47 @@ function Provider({
     </BaseTooltip.Provider>
   );
 }
+Provider.displayName = "Tooltip.Provider";
 
-function Root({ children, ...props }: { children: React.ReactNode }) {
+// Only the props relevant to the Tooltip abstraction are picked from BaseTooltip.Root.
+// Base UI-internal props (e.g. trackCursorAxis, hoverable) are intentionally excluded
+// so that upstream changes don't leak as breaking changes to consumers.
+type TooltipRootProps = Pick<
+  React.ComponentProps<typeof BaseTooltip.Root>,
+  "open" | "defaultOpen" | "onOpenChange"
+> & {
+  children: React.ReactNode;
+};
+
+/**
+ * The root component that manages tooltip open/close state.
+ *
+ * @example
+ * ```tsx
+ * <Tooltip.Root>
+ *   <Tooltip.Trigger render={<Button variant="outline" />}>
+ *     Hover me
+ *   </Tooltip.Trigger>
+ *   <Tooltip.Content>Helpful information</Tooltip.Content>
+ * </Tooltip.Root>
+ * ```
+ */
+function Root({ children, ...props }: TooltipRootProps) {
   return (
-    <Provider>
-      <BaseTooltip.Root data-slot="tooltip" {...props}>
-        {children}
-      </BaseTooltip.Root>
-    </Provider>
+    <BaseTooltip.Root data-slot="tooltip" {...props}>
+      {children}
+    </BaseTooltip.Root>
   );
 }
+Root.displayName = "Tooltip.Root";
 
+/** The element that triggers the tooltip on hover or focus. */
 function Trigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
   return <BaseTooltip.Trigger data-slot="tooltip-trigger" {...props} />;
 }
+Trigger.displayName = "Tooltip.Trigger";
 
+/** The tooltip popup that displays additional information. */
 function Content({
   className,
   sideOffset = 0,
@@ -62,6 +89,7 @@ function Content({
     </BaseTooltip.Portal>
   );
 }
+Content.displayName = "Tooltip.Content";
 
 export const Tooltip = {
   Root,

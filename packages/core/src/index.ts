@@ -79,7 +79,7 @@ export { DescriptionCard, type DescriptionCardProps } from "./components/descrip
 export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
-export { Input } from "./components/input";
+export { Input, type InputProps } from "./components/input";
 export { Table } from "./components/table";
 export { Dialog } from "./components/dialog";
 export { Sheet } from "./components/sheet";

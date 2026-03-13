@@ -40,6 +40,18 @@ type ButtonProps = React.ComponentProps<"button"> &
     render?: React.ReactElement;
   };
 
+/**
+ * A styled button component with multiple variants and sizes.
+ *
+ * @example
+ * ```tsx
+ * import { Button } from "@tailor-platform/app-shell";
+ *
+ * <Button variant="default">Click me</Button>
+ * <Button variant="outline" size="sm">Small</Button>
+ * <Button variant="destructive">Delete</Button>
+ * ```
+ */
 function Button({ className, variant, size, render, children, ...props }: ButtonProps) {
   return useRender({
     defaultTagName: "button",

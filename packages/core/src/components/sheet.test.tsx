@@ -129,9 +129,9 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet.Root>
+      <Sheet.Root side="left">
         <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
-        <Sheet.Content side="left" data-testid="content">
+        <Sheet.Content data-testid="content">
           <Sheet.Header>
             <Sheet.Title>Sheet Title</Sheet.Title>
           </Sheet.Header>

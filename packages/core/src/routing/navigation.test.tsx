@@ -263,4 +263,79 @@ describe("useNavItems", () => {
     expect(resources[0].items).toHaveLength(1);
     expect(resources[0].items![0].title).toBe("Visible");
   });
+
+  it("excludes componentless resources without sub-resources", async () => {
+    const modules = [
+      defineModule({
+        path: "app",
+        meta: { title: "App" },
+        component: () => <div>App Root</div>,
+        resources: [
+          defineResource({
+            path: "dashboard",
+            component: () => <div>Dashboard</div>,
+          }),
+          defineResource({
+            path: "namespace",
+            // no component, no subResources → dead-end
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/app/dashboard");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(1);
+    });
+
+    const navItems = await result.current!;
+    const resources = navItems[0].items;
+    expect(resources).toHaveLength(1);
+    expect(resources[0].title).toBe("Dashboard");
+    expect(resources[0].url).toBe("app/dashboard");
+  });
+
+  it("keeps componentless resources with sub-resources but sets url to undefined", async () => {
+    const modules = [
+      defineModule({
+        path: "app",
+        meta: { title: "App" },
+        component: () => <div>App Root</div>,
+        resources: [
+          defineResource({
+            path: "settings",
+            // no component
+            subResources: [
+              defineResource({
+                path: "general",
+                component: () => <div>General</div>,
+              }),
+              defineResource({
+                path: "advanced",
+                component: () => <div>Advanced</div>,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/app/settings/general");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(1);
+    });
+
+    const navItems = await result.current!;
+    const resources = navItems[0].items;
+    expect(resources).toHaveLength(1);
+    expect(resources[0].title).toBe("Settings");
+    expect(resources[0].url).toBeUndefined();
+    expect(resources[0].items).toHaveLength(2);
+    expect(resources[0].items![0].title).toBe("General");
+    expect(resources[0].items![0].url).toBe("app/settings/general");
+    expect(resources[0].items![1].title).toBe("Advanced");
+    expect(resources[0].items![1].url).toBe("app/settings/advanced");
+  });
 });

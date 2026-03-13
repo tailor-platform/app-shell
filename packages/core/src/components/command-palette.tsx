@@ -28,14 +28,17 @@ export function navItemsToRoutes(navItems: Array<NavItem>): Array<NavigatableRou
     items.forEach((item) => {
       const breadcrumb = [...parentBreadcrumb, item.title];
 
-      routes.push({
-        path: item.url,
-        title: item.title,
-        icon: parentIcon,
-        breadcrumb,
-      });
+      // Only add navigable routes (componentless resources have no url)
+      if (item.url) {
+        routes.push({
+          path: item.url,
+          title: item.title,
+          icon: parentIcon,
+          breadcrumb,
+        });
+      }
 
-      // Recursively process sub-items
+      // Recursively process sub-items even if parent has no url
       if (item.items && item.items.length > 0) {
         processResourceItems(item.items, parentIcon, breadcrumb);
       }

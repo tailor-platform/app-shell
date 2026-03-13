@@ -180,24 +180,26 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
               {!!item.items?.length && (
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton
-                          render={
-                            <Link
-                              to={subItem.url}
-                              className={
-                                subItem.url === props.currentPath
-                                  ? "astw:bg-sidebar-accent astw:font-medium"
-                                  : undefined
-                              }
-                            />
-                          }
-                        >
-                          <span>{subItem.title}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
+                    {item.items
+                      ?.filter((subItem) => subItem.url)
+                      .map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton
+                            render={
+                              <Link
+                                to={subItem.url!}
+                                className={
+                                  subItem.url === props.currentPath
+                                    ? "astw:bg-sidebar-accent astw:font-medium"
+                                    : undefined
+                                }
+                              />
+                            }
+                          >
+                            <span>{subItem.title}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
                   </SidebarMenuSub>
                 </CollapsibleContent>
               )}

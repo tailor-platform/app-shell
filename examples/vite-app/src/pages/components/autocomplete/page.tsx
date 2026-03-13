@@ -109,161 +109,102 @@ const fakeMovieFetcher = async (query: string, { signal }: { signal: AbortSignal
 function BasicAutocomplete() {
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Autocomplete.Root>
-        <Autocomplete.InputGroup>
-          <Autocomplete.Input placeholder="Type a fruit..." />
-          <Autocomplete.Clear />
-          <Autocomplete.Trigger />
-        </Autocomplete.InputGroup>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            {fruits.map((f) => (
-              <Autocomplete.Item key={f} value={f}>
-                {f}
-              </Autocomplete.Item>
-            ))}
-            <Autocomplete.Empty>No suggestions.</Autocomplete.Empty>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>
+      <Autocomplete.Parts.Root items={fruits}>
+        <Autocomplete.Parts.InputGroup>
+          <Autocomplete.Parts.Input placeholder="Type a fruit..." />
+          <Autocomplete.Parts.Clear />
+          <Autocomplete.Parts.Trigger />
+        </Autocomplete.Parts.InputGroup>
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.Empty>No suggestions.</Autocomplete.Parts.Empty>
+          <Autocomplete.Parts.List>
+            {(item) => <Autocomplete.Parts.Item>{item}</Autocomplete.Parts.Item>}
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>
     </div>
   );
 }
+
+interface LanguageGroup {
+  value: string;
+  items: string[];
+}
+
+const groupedLanguages: LanguageGroup[] = [
+  {
+    value: "Popular",
+    items: ["JavaScript", "TypeScript", "Python", "Go", "Rust"],
+  },
+  {
+    value: "Others",
+    items: programmingLanguages.filter(
+      (l) => !["JavaScript", "TypeScript", "Python", "Go", "Rust"].includes(l),
+    ),
+  },
+];
 
 /** 2. Grouped Autocomplete */
 function GroupedAutocomplete() {
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Autocomplete.Root>
-        <Autocomplete.InputGroup>
-          <Autocomplete.Input placeholder="Search languages..." />
-          <Autocomplete.Clear />
-          <Autocomplete.Trigger />
-        </Autocomplete.InputGroup>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            <Autocomplete.Group>
-              <Autocomplete.GroupLabel>Popular</Autocomplete.GroupLabel>
-              {["JavaScript", "TypeScript", "Python", "Go", "Rust"].map((lang) => (
-                <Autocomplete.Item key={lang} value={lang}>
-                  {lang}
-                </Autocomplete.Item>
-              ))}
-            </Autocomplete.Group>
-            <Autocomplete.Group>
-              <Autocomplete.GroupLabel>Others</Autocomplete.GroupLabel>
-              {programmingLanguages
-                .filter((l) => !["JavaScript", "TypeScript", "Python", "Go", "Rust"].includes(l))
-                .map((lang) => (
-                  <Autocomplete.Item key={lang} value={lang}>
-                    {lang}
-                  </Autocomplete.Item>
-                ))}
-            </Autocomplete.Group>
-            <Autocomplete.Empty>No suggestions.</Autocomplete.Empty>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>
+      <Autocomplete.Parts.Root items={groupedLanguages}>
+        <Autocomplete.Parts.InputGroup>
+          <Autocomplete.Parts.Input placeholder="Search languages..." />
+          <Autocomplete.Parts.Clear />
+          <Autocomplete.Parts.Trigger />
+        </Autocomplete.Parts.InputGroup>
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.Empty>No suggestions.</Autocomplete.Parts.Empty>
+          <Autocomplete.Parts.List>
+            {(group: LanguageGroup) => (
+              <Autocomplete.Parts.Group key={group.value} items={group.items}>
+                <Autocomplete.Parts.GroupLabel>{group.value}</Autocomplete.Parts.GroupLabel>
+                <Autocomplete.Parts.Collection>
+                  {(lang: string) => (
+                    <Autocomplete.Parts.Item key={lang} value={lang}>
+                      {lang}
+                    </Autocomplete.Parts.Item>
+                  )}
+                </Autocomplete.Parts.Collection>
+              </Autocomplete.Parts.Group>
+            )}
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>
     </div>
   );
 }
 
-/** 3. Autocomplete with custom filter */
-function CustomFilterAutocomplete() {
-  const filter = Autocomplete.useFilter({ sensitivity: "base" });
-
-  return (
-    <div style={{ maxWidth: "20rem" }}>
-      <Autocomplete.Root filter={filter.contains}>
-        <Autocomplete.InputGroup>
-          <Autocomplete.Input placeholder="Case-insensitive search..." />
-          <Autocomplete.Clear />
-          <Autocomplete.Trigger />
-        </Autocomplete.InputGroup>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            {fruits.map((f) => (
-              <Autocomplete.Item key={f} value={f}>
-                {f}
-              </Autocomplete.Item>
-            ))}
-            <Autocomplete.Empty>No suggestions.</Autocomplete.Empty>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>
-    </div>
-  );
-}
-
-/** 4. Async Autocomplete */
+/** 3. Async Autocomplete */
 function AsyncAutocomplete() {
-  const movies = Autocomplete.useAsync({
+  const movies = Autocomplete.Parts.useAsync({
     fetcher: fakeMovieFetcher,
     debounceMs: 300,
   });
 
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Autocomplete.Root
+      <Autocomplete.Parts.Root
         items={movies.items}
         value={movies.value}
         onValueChange={movies.onValueChange}
         filter={null}
       >
-        <Autocomplete.InputGroup>
-          <Autocomplete.Input placeholder="Search movies..." />
-          <Autocomplete.Clear />
-          <Autocomplete.Trigger />
-        </Autocomplete.InputGroup>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            {movies.items.map((movie) => (
-              <Autocomplete.Item key={movie} value={movie}>
-                {movie}
-              </Autocomplete.Item>
-            ))}
-            <Autocomplete.Empty>
-              {movies.loading ? "Loading..." : "No results. Start typing to search."}
-            </Autocomplete.Empty>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>
-    </div>
-  );
-}
-
-/** 5. Free-form Autocomplete (highlights that value = input text) */
-function FreeFormAutocomplete() {
-  return (
-    <div style={{ maxWidth: "20rem" }}>
-      <Autocomplete.Root>
-        <Autocomplete.InputGroup>
-          <Autocomplete.Input placeholder="Type anything or pick a suggestion..." />
-          <Autocomplete.Clear />
-          <Autocomplete.Trigger />
-        </Autocomplete.InputGroup>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            {fruits.map((f) => (
-              <Autocomplete.Item key={f} value={f}>
-                {f}
-              </Autocomplete.Item>
-            ))}
-            <Autocomplete.Empty>
-              No suggestions — your typed value is still kept.
-            </Autocomplete.Empty>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>
-      <p
-        style={{
-          fontSize: "0.75rem",
-          color: "hsl(var(--muted-foreground))",
-          marginTop: "0.5rem",
-        }}
-      >
-        Unlike Combobox, Autocomplete keeps free-form text as its value.
-      </p>
+        <Autocomplete.Parts.InputGroup>
+          <Autocomplete.Parts.Input placeholder="Search movies..." />
+          <Autocomplete.Parts.Clear />
+          <Autocomplete.Parts.Trigger />
+        </Autocomplete.Parts.InputGroup>
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.Empty>
+            {movies.loading ? "Loading..." : "No results. Start typing to search."}
+          </Autocomplete.Parts.Empty>
+          <Autocomplete.Parts.List>
+            {(item) => <Autocomplete.Parts.Item>{item}</Autocomplete.Parts.Item>}
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>
     </div>
   );
 }
@@ -315,29 +256,12 @@ const AutocompleteShowcasePage = () => {
         >
           Suggestions organised into labelled groups using{" "}
           <span style={code}>Autocomplete.Group</span> and{" "}
-          <span style={code}>Autocomplete.GroupLabel</span>.
+          <span style={code}>Autocomplete.Parts.GroupLabel</span>.
         </p>
         <GroupedAutocomplete />
       </div>
 
-      {/* 3. Custom Filter */}
-      <div style={section}>
-        <h2 style={sectionTitle}>Custom Filter (useFilter)</h2>
-        <p
-          style={{
-            fontSize: "0.8125rem",
-            color: "hsl(var(--muted-foreground))",
-            marginBottom: "0.75rem",
-          }}
-        >
-          Uses <span style={code}>Autocomplete.useFilter</span> with{" "}
-          <span style={code}>{'{ sensitivity: "base" }'}</span> for locale-aware case-insensitive
-          matching.
-        </p>
-        <CustomFilterAutocomplete />
-      </div>
-
-      {/* 4. Async */}
+      {/* 3. Async */}
       <div style={section}>
         <h2 style={sectionTitle}>Async</h2>
         <p
@@ -347,28 +271,12 @@ const AutocompleteShowcasePage = () => {
             marginBottom: "0.75rem",
           }}
         >
-          Server-side search with <span style={code}>Autocomplete.useAsync</span>. Passes{" "}
+          Server-side search with <span style={code}>Autocomplete.Parts.useAsync</span>. Passes{" "}
           <span style={code}>value</span> and <span style={code}>onValueChange</span> (not{" "}
           <span style={code}>onInputValueChange</span>) since Autocomplete's value IS the input
           text.
         </p>
         <AsyncAutocomplete />
-      </div>
-
-      {/* 5. Free-form */}
-      <div style={section}>
-        <h2 style={sectionTitle}>Free-form Text</h2>
-        <p
-          style={{
-            fontSize: "0.8125rem",
-            color: "hsl(var(--muted-foreground))",
-            marginBottom: "0.75rem",
-          }}
-        >
-          Demonstrates the key difference from Combobox: users can type arbitrary text. The
-          suggestions are hints, not a closed set.
-        </p>
-        <FreeFormAutocomplete />
       </div>
     </div>
   );

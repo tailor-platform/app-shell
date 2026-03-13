@@ -477,21 +477,21 @@ const ComponentsPage = () => {
       <div style={section}>
         <h2 style={sectionTitle}>Select</h2>
         <div style={{ maxWidth: "16rem" }}>
-          <Select.Root>
-            <Select.Trigger>
-              <Select.Value placeholder="Select a fruit..." />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Group>
-                <Select.GroupLabel>Fruits</Select.GroupLabel>
+          <Select.Parts.Root>
+            <Select.Parts.Trigger>
+              <Select.Parts.Value placeholder="Select a fruit..." />
+            </Select.Parts.Trigger>
+            <Select.Parts.Content>
+              <Select.Parts.Group>
+                <Select.Parts.GroupLabel>Fruits</Select.Parts.GroupLabel>
                 {fruits.map((f) => (
-                  <Select.Item key={f.value} value={f.value}>
+                  <Select.Parts.Item key={f.value} value={f.value}>
                     {f.label}
-                  </Select.Item>
+                  </Select.Parts.Item>
                 ))}
-              </Select.Group>
-            </Select.Content>
-          </Select.Root>
+              </Select.Parts.Group>
+            </Select.Parts.Content>
+          </Select.Parts.Root>
         </div>
       </div>
 
@@ -625,23 +625,23 @@ const ComponentsPage = () => {
         <div style={{ marginBottom: "1.5rem" }}>
           <p style={label}>Combobox (basic)</p>
           <div style={{ maxWidth: "16rem" }}>
-            <Combobox.Root>
-              <Combobox.InputGroup>
-                <Combobox.Input placeholder="Search fruits..." />
-                <Combobox.Clear />
-                <Combobox.Trigger />
-              </Combobox.InputGroup>
-              <Combobox.Content>
-                <Combobox.List>
+            <Combobox.Parts.Root>
+              <Combobox.Parts.InputGroup>
+                <Combobox.Parts.Input placeholder="Search fruits..." />
+                <Combobox.Parts.Clear />
+                <Combobox.Parts.Trigger />
+              </Combobox.Parts.InputGroup>
+              <Combobox.Parts.Content>
+                <Combobox.Parts.List>
                   {fruits.map((f) => (
-                    <Combobox.Item key={f.value} value={f.value}>
+                    <Combobox.Parts.Item key={f.value} value={f.value}>
                       {f.label}
-                    </Combobox.Item>
+                    </Combobox.Parts.Item>
                   ))}
-                  <Combobox.Empty>No results.</Combobox.Empty>
-                </Combobox.List>
-              </Combobox.Content>
-            </Combobox.Root>
+                  <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+                </Combobox.Parts.List>
+              </Combobox.Parts.Content>
+            </Combobox.Parts.Root>
           </div>
         </div>
 
@@ -649,23 +649,23 @@ const ComponentsPage = () => {
         <div>
           <p style={label}>Autocomplete (basic)</p>
           <div style={{ maxWidth: "16rem" }}>
-            <Autocomplete.Root>
-              <Autocomplete.InputGroup>
-                <Autocomplete.Input placeholder="Type a fruit..." />
-                <Autocomplete.Clear />
-                <Autocomplete.Trigger />
-              </Autocomplete.InputGroup>
-              <Autocomplete.Content>
-                <Autocomplete.List>
+            <Autocomplete.Parts.Root>
+              <Autocomplete.Parts.InputGroup>
+                <Autocomplete.Parts.Input placeholder="Type a fruit..." />
+                <Autocomplete.Parts.Clear />
+                <Autocomplete.Parts.Trigger />
+              </Autocomplete.Parts.InputGroup>
+              <Autocomplete.Parts.Content>
+                <Autocomplete.Parts.List>
                   {fruits.map((f) => (
-                    <Autocomplete.Item key={f.value} value={f.label}>
+                    <Autocomplete.Parts.Item key={f.value} value={f.label}>
                       {f.label}
-                    </Autocomplete.Item>
+                    </Autocomplete.Parts.Item>
                   ))}
-                  <Autocomplete.Empty>No suggestions.</Autocomplete.Empty>
-                </Autocomplete.List>
-              </Autocomplete.Content>
-            </Autocomplete.Root>
+                  <Autocomplete.Parts.Empty>No suggestions.</Autocomplete.Parts.Empty>
+                </Autocomplete.Parts.List>
+              </Autocomplete.Parts.Content>
+            </Autocomplete.Parts.Root>
           </div>
         </div>
       </div>

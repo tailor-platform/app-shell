@@ -28,7 +28,12 @@ const code: React.CSSProperties = {
 // ---------------------------------------------------------------------------
 // Data
 // ---------------------------------------------------------------------------
-const fruits = [
+interface Fruit {
+  label: string;
+  value: string;
+}
+
+const fruits: Fruit[] = [
   { label: "Apple", value: "apple" },
   { label: "Banana", value: "banana" },
   { label: "Cherry", value: "cherry" },
@@ -117,122 +122,156 @@ const fakeCountryFetcher = async (query: string, { signal }: { signal: AbortSign
 function BasicCombobox() {
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Combobox.Root>
-        <Combobox.InputGroup>
-          <Combobox.Input placeholder="Search fruits..." />
-          <Combobox.Clear />
-          <Combobox.Trigger />
-        </Combobox.InputGroup>
-        <Combobox.Content>
-          <Combobox.List>
-            {fruits.map((f) => (
-              <Combobox.Item key={f.value} value={f.value}>
-                {f.label}
-              </Combobox.Item>
-            ))}
-            <Combobox.Empty>No results.</Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+      <Combobox.Parts.Root items={fruits} itemToStringLabel={(item: Fruit) => item.label}>
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Input placeholder="Search fruits..." />
+          <Combobox.Parts.Clear />
+          <Combobox.Parts.Trigger />
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(item) => (
+              <Combobox.Parts.Item key={item.value} value={item}>
+                {item.label}
+              </Combobox.Parts.Item>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
     </div>
   );
 }
+
+const citrusFruits: Fruit[] = [
+  { label: "Lemon", value: "lemon" },
+  { label: "Orange", value: "orange" },
+  { label: "Lime", value: "lime" },
+];
+
+const berryFruits: Fruit[] = [
+  { label: "Strawberry", value: "strawberry" },
+  { label: "Blueberry", value: "blueberry" },
+  { label: "Raspberry", value: "raspberry" },
+];
+
+interface FruitGroup {
+  value: string;
+  items: Fruit[];
+}
+
+const groupedFruits: FruitGroup[] = [
+  { value: "Citrus", items: citrusFruits },
+  { value: "Berries", items: berryFruits },
+];
 
 /** 2. Combobox with Groups */
 function GroupedCombobox() {
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Combobox.Root>
-        <Combobox.InputGroup>
-          <Combobox.Input placeholder="Search..." />
-          <Combobox.Clear />
-          <Combobox.Trigger />
-        </Combobox.InputGroup>
-        <Combobox.Content>
-          <Combobox.List>
-            <Combobox.Group>
-              <Combobox.GroupLabel>Citrus</Combobox.GroupLabel>
-              <Combobox.Item value="lemon">Lemon</Combobox.Item>
-              <Combobox.Item value="orange">Orange</Combobox.Item>
-              <Combobox.Item value="lime">Lime</Combobox.Item>
-            </Combobox.Group>
-            <Combobox.Group>
-              <Combobox.GroupLabel>Berries</Combobox.GroupLabel>
-              <Combobox.Item value="strawberry">Strawberry</Combobox.Item>
-              <Combobox.Item value="blueberry">Blueberry</Combobox.Item>
-              <Combobox.Item value="raspberry">Raspberry</Combobox.Item>
-            </Combobox.Group>
-            <Combobox.Empty>No results.</Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+      <Combobox.Parts.Root items={groupedFruits} itemToStringLabel={(item: Fruit) => item.label}>
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Input placeholder="Search..." />
+          <Combobox.Parts.Clear />
+          <Combobox.Parts.Trigger />
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(group: FruitGroup) => (
+              <Combobox.Parts.Group key={group.value} items={group.items}>
+                <Combobox.Parts.GroupLabel>{group.value}</Combobox.Parts.GroupLabel>
+                <Combobox.Parts.Collection>
+                  {(item: Fruit) => (
+                    <Combobox.Parts.Item key={item.value} value={item}>
+                      {item.label}
+                    </Combobox.Parts.Item>
+                  )}
+                </Combobox.Parts.Collection>
+              </Combobox.Parts.Group>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
     </div>
   );
 }
 
 /** 3. Multiple Selection */
 function MultipleCombobox() {
-  const [selected, setSelected] = useState<string[]>([]);
-
   return (
     <div style={{ maxWidth: "24rem" }}>
-      <Combobox.Root<string, true> multiple value={selected} onValueChange={setSelected}>
-        <Combobox.Chips>
-          {selected.map((v) => (
-            <Combobox.Chip key={v}>
-              {fruits.find((f) => f.value === v)?.label ?? v}
-              <Combobox.ChipRemove />
-            </Combobox.Chip>
-          ))}
-          <Combobox.Input placeholder="Select multiple fruits..." />
-        </Combobox.Chips>
-        <Combobox.Content>
-          <Combobox.List>
-            {fruits.map((f) => (
-              <Combobox.Item key={f.value} value={f.value}>
-                {f.label}
-              </Combobox.Item>
-            ))}
-            <Combobox.Empty>No results.</Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+      <Combobox.Parts.Root<Fruit, true>
+        multiple
+        items={fruits}
+        itemToStringLabel={(item: Fruit) => item.label}
+      >
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Chips>
+            <Combobox.Parts.Value>
+              {(value: Fruit[]) => (
+                <>
+                  {value.map((v) => (
+                    <Combobox.Parts.Chip key={v.value} aria-label={v.label}>
+                      {v.label}
+                      <Combobox.Parts.ChipRemove />
+                    </Combobox.Parts.Chip>
+                  ))}
+                  <Combobox.Parts.Input
+                    placeholder={value.length > 0 ? "" : "Select multiple fruits..."}
+                  />
+                </>
+              )}
+            </Combobox.Parts.Value>
+          </Combobox.Parts.Chips>
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(item) => (
+              <Combobox.Parts.Item key={item.value} value={item}>
+                {item.label}
+              </Combobox.Parts.Item>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
     </div>
   );
 }
 
 /** 4. Async Combobox */
 function AsyncCombobox() {
-  const countries = Combobox.useAsync({
+  const countries = Combobox.Parts.useAsync({
     fetcher: fakeCountryFetcher,
     debounceMs: 300,
   });
 
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Combobox.Root
+      <Combobox.Parts.Root
         items={countries.items}
         filter={null}
         onInputValueChange={countries.onInputValueChange}
       >
-        <Combobox.InputGroup>
-          <Combobox.Input placeholder="Search countries..." />
-          <Combobox.Clear />
-          <Combobox.Trigger />
-        </Combobox.InputGroup>
-        <Combobox.Content>
-          <Combobox.List>
-            {countries.items.map((country) => (
-              <Combobox.Item key={country} value={country}>
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Input placeholder="Search countries..." />
+          <Combobox.Parts.Clear />
+          <Combobox.Parts.Trigger />
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>
+            {countries.loading ? "Loading..." : "No results. Start typing to search."}
+          </Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(country) => (
+              <Combobox.Parts.Item key={country} value={country}>
                 {country}
-              </Combobox.Item>
-            ))}
-            <Combobox.Empty>
-              {countries.loading ? "Loading..." : "No results. Start typing to search."}
-            </Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+              </Combobox.Parts.Item>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
     </div>
   );
 }
@@ -245,7 +284,7 @@ function CreatableSingleCombobox() {
     { id: "3", name: "Tailwind" },
   ]);
 
-  const creatable = Combobox.useCreatable({
+  const creatable = Combobox.Parts.useCreatable({
     items: tags,
     getLabel: (tag) => tag.name,
     createItem: (value) => ({ id: crypto.randomUUID(), name: value }),
@@ -257,7 +296,7 @@ function CreatableSingleCombobox() {
 
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Combobox.Root
+      <Combobox.Parts.Root
         items={creatable.items}
         value={creatable.value}
         onValueChange={creatable.onValueChange}
@@ -266,24 +305,27 @@ function CreatableSingleCombobox() {
         itemToStringLabel={creatable.itemToStringLabel}
         itemToStringValue={creatable.itemToStringValue}
       >
-        <Combobox.InputGroup>
-          <Combobox.Input placeholder="Search or create a tag..." />
-          <Combobox.Clear />
-          <Combobox.Trigger />
-        </Combobox.InputGroup>
-        <Combobox.Content>
-          <Combobox.List>
-            {creatable.items.map((tag) => (
-              <Combobox.Item key={creatable.isCreateItem(tag) ? "__create__" : tag.id} value={tag}>
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Input placeholder="Search or create a tag..." />
+          <Combobox.Parts.Clear />
+          <Combobox.Parts.Trigger />
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(tag) => (
+              <Combobox.Parts.Item
+                key={creatable.isCreateItem(tag) ? "__create__" : tag.id}
+                value={tag}
+              >
                 {creatable.isCreateItem(tag)
                   ? creatable.formatCreateLabel(creatable.getCreateLabel(tag) ?? "")
                   : tag.name}
-              </Combobox.Item>
-            ))}
-            <Combobox.Empty>No results.</Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+              </Combobox.Parts.Item>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
       {creatable.value && (
         <p
           style={{
@@ -308,7 +350,7 @@ function CreatableMultipleCombobox() {
     { id: "4", name: "Design" },
   ]);
 
-  const creatable = Combobox.useCreatable({
+  const creatable = Combobox.Parts.useCreatable({
     items: tags,
     multiple: true,
     getLabel: (tag) => tag.name,
@@ -321,7 +363,7 @@ function CreatableMultipleCombobox() {
 
   return (
     <div style={{ maxWidth: "24rem" }}>
-      <Combobox.Root<Tag, true>
+      <Combobox.Parts.Root<Tag, true>
         multiple
         items={creatable.items}
         value={creatable.value}
@@ -331,28 +373,41 @@ function CreatableMultipleCombobox() {
         itemToStringLabel={creatable.itemToStringLabel}
         itemToStringValue={creatable.itemToStringValue}
       >
-        <Combobox.Chips>
-          {creatable.value.map((tag) => (
-            <Combobox.Chip key={tag.id}>
-              {tag.name}
-              <Combobox.ChipRemove />
-            </Combobox.Chip>
-          ))}
-          <Combobox.Input placeholder="Search or create tags..." />
-        </Combobox.Chips>
-        <Combobox.Content>
-          <Combobox.List>
-            {creatable.items.map((tag) => (
-              <Combobox.Item key={creatable.isCreateItem(tag) ? "__create__" : tag.id} value={tag}>
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Chips>
+            <Combobox.Parts.Value>
+              {(value: Tag[]) => (
+                <>
+                  {value.map((tag) => (
+                    <Combobox.Parts.Chip key={tag.id} aria-label={tag.name}>
+                      {tag.name}
+                      <Combobox.Parts.ChipRemove />
+                    </Combobox.Parts.Chip>
+                  ))}
+                  <Combobox.Parts.Input
+                    placeholder={value.length > 0 ? "" : "Search or create tags..."}
+                  />
+                </>
+              )}
+            </Combobox.Parts.Value>
+          </Combobox.Parts.Chips>
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(tag) => (
+              <Combobox.Parts.Item
+                key={creatable.isCreateItem(tag) ? "__create__" : tag.id}
+                value={tag}
+              >
                 {creatable.isCreateItem(tag)
                   ? creatable.formatCreateLabel(creatable.getCreateLabel(tag) ?? "")
                   : tag.name}
-              </Combobox.Item>
-            ))}
-            <Combobox.Empty>No results.</Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+              </Combobox.Parts.Item>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
     </div>
   );
 }
@@ -366,7 +421,7 @@ function CreatableAsyncCombobox() {
   ]);
   const [saving, setSaving] = useState(false);
 
-  const creatable = Combobox.useCreatable({
+  const creatable = Combobox.Parts.useCreatable({
     items: tags,
     getLabel: (tag) => tag.name,
     createItem: (value) => ({ id: crypto.randomUUID(), name: value }),
@@ -381,7 +436,7 @@ function CreatableAsyncCombobox() {
 
   return (
     <div style={{ maxWidth: "20rem" }}>
-      <Combobox.Root
+      <Combobox.Parts.Root
         items={creatable.items}
         value={creatable.value}
         onValueChange={creatable.onValueChange}
@@ -390,24 +445,27 @@ function CreatableAsyncCombobox() {
         itemToStringLabel={creatable.itemToStringLabel}
         itemToStringValue={creatable.itemToStringValue}
       >
-        <Combobox.InputGroup>
-          <Combobox.Input placeholder="Search or create labels..." />
-          <Combobox.Clear />
-          <Combobox.Trigger />
-        </Combobox.InputGroup>
-        <Combobox.Content>
-          <Combobox.List>
-            {creatable.items.map((tag) => (
-              <Combobox.Item key={creatable.isCreateItem(tag) ? "__create__" : tag.id} value={tag}>
+        <Combobox.Parts.InputGroup>
+          <Combobox.Parts.Input placeholder="Search or create labels..." />
+          <Combobox.Parts.Clear />
+          <Combobox.Parts.Trigger />
+        </Combobox.Parts.InputGroup>
+        <Combobox.Parts.Content>
+          <Combobox.Parts.Empty>No results.</Combobox.Parts.Empty>
+          <Combobox.Parts.List>
+            {(tag) => (
+              <Combobox.Parts.Item
+                key={creatable.isCreateItem(tag) ? "__create__" : tag.id}
+                value={tag}
+              >
                 {creatable.isCreateItem(tag)
                   ? creatable.formatCreateLabel(creatable.getCreateLabel(tag) ?? "")
                   : tag.name}
-              </Combobox.Item>
-            ))}
-            <Combobox.Empty>No results.</Combobox.Empty>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>
+              </Combobox.Parts.Item>
+            )}
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>
       {saving && (
         <p
           style={{
@@ -469,7 +527,7 @@ const ComboboxShowcasePage = () => {
           }}
         >
           Items organised into labelled groups using <span style={code}>Combobox.Group</span> and{" "}
-          <span style={code}>Combobox.GroupLabel</span>.
+          <span style={code}>Combobox.Parts.GroupLabel</span>.
         </p>
         <GroupedCombobox />
       </div>
@@ -484,9 +542,10 @@ const ComboboxShowcasePage = () => {
             marginBottom: "0.75rem",
           }}
         >
-          Multi-select mode with chip display. Uses <span style={code}>Combobox.Chips</span>,{" "}
-          <span style={code}>Combobox.Chip</span>, and <span style={code}>Combobox.ChipRemove</span>
-          .
+          Multi-select mode with chip display. Uses <span style={code}>Combobox.Parts.Chips</span>,{" "}
+          <span style={code}>Combobox.Parts.Value</span>,{" "}
+          <span style={code}>Combobox.Parts.Chip</span>, and{" "}
+          <span style={code}>Combobox.Parts.ChipRemove</span>.
         </p>
         <MultipleCombobox />
       </div>
@@ -501,8 +560,8 @@ const ComboboxShowcasePage = () => {
             marginBottom: "0.75rem",
           }}
         >
-          Server-side search with <span style={code}>Combobox.useAsync</span>. Includes debounce
-          (300ms) and automatic request cancellation.
+          Server-side search with <span style={code}>Combobox.Parts.useAsync</span>. Includes
+          debounce (300ms) and automatic request cancellation.
         </p>
         <AsyncCombobox />
       </div>
@@ -518,7 +577,7 @@ const ComboboxShowcasePage = () => {
           }}
         >
           Users can create new items on-the-fly. Uses{" "}
-          <span style={code}>Combobox.useCreatable</span> with sync{" "}
+          <span style={code}>Combobox.Parts.useCreatable</span> with sync{" "}
           <span style={code}>resolve()</span> callback.
         </p>
         <CreatableSingleCombobox />

@@ -3,7 +3,7 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
 
-function TooltipProvider({
+function Provider({
   delayDuration = 0,
   children,
   ...props
@@ -18,21 +18,21 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({ children, ...props }: { children: React.ReactNode }) {
+function Root({ children, ...props }: { children: React.ReactNode }) {
   return (
-    <TooltipProvider>
+    <Provider>
       <BaseTooltip.Root data-slot="tooltip" {...props}>
         {children}
       </BaseTooltip.Root>
-    </TooltipProvider>
+    </Provider>
   );
 }
 
-function TooltipTrigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
+function Trigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
   return <BaseTooltip.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
-function TooltipContent({
+function Content({
   className,
   sideOffset = 0,
   side = "top",
@@ -63,4 +63,9 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export const Tooltip = {
+  Root,
+  Trigger,
+  Content,
+  Provider,
+};

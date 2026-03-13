@@ -83,3 +83,4 @@ export { Input } from "./components/input";
 export { Table } from "./components/table";
 export { Dialog } from "./components/dialog";
 export { Sheet } from "./components/sheet";
+export { Tooltip } from "./components/tooltip";

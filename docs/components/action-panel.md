@@ -47,14 +47,14 @@ import { ActionPanel } from "@tailor-platform/app-shell";
 
 ### ActionItem
 
-| Property   | Type                          | Default      | Description                                        |
-| ---------- | ----------------------------- | ------------ | -------------------------------------------------- |
-| `key`      | `string`                      | **Required** | Unique key for stable rendering                    |
-| `label`    | `string`                      | **Required** | Action label shown to users                        |
+| Property   | Type                          | Default      | Description                                       |
+| ---------- | ----------------------------- | ------------ | ------------------------------------------------- |
+| `key`      | `string`                      | **Required** | Unique key for stable rendering                   |
+| `label`    | `string`                      | **Required** | Action label shown to users                       |
 | `icon`     | `ReactNode`                   | **Required** | Icon rendered in a fixed 16px slot                |
-| `onClick`  | `() => void \| Promise<void>` | -            | Click handler for the action                       |
-| `disabled` | `boolean`                     | `false`      | Disables interaction and applies disabled styling  |
-| `loading`  | `boolean`                     | `false`      | Shows spinner, disables interaction, sets busy UI  |
+| `onClick`  | `() => void \| Promise<void>` | -            | Click handler for the action                      |
+| `disabled` | `boolean`                     | `false`      | Disables interaction and applies disabled styling |
+| `loading`  | `boolean`                     | `false`      | Shows spinner, disables interaction, sets busy UI |
 
 ## Behavior
 

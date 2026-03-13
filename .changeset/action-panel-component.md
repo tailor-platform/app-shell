@@ -27,5 +27,5 @@ import { ActionPanel } from "@tailor-platform/app-shell";
       onClick: () => window.open("/docs", "_blank", "noopener,noreferrer"),
     },
   ]}
-/>
+/>;
 ```

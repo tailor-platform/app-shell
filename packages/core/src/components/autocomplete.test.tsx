@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor, renderHook, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Autocomplete } from "./autocomplete";
+import { AutocompleteParts } from "./autocomplete";
+
+const Autocomplete = { Parts: AutocompleteParts };
 
 afterEach(() => {
   cleanup();
@@ -15,23 +17,23 @@ function SimpleAutocomplete(props: {
   value?: string;
 }) {
   return (
-    <Autocomplete.Root {...props}>
-      <Autocomplete.Input data-testid="input" placeholder="Type a fruit..." />
-      <Autocomplete.Content>
-        <Autocomplete.List>
+    <Autocomplete.Parts.Root {...props}>
+      <Autocomplete.Parts.Input data-testid="input" placeholder="Type a fruit..." />
+      <Autocomplete.Parts.Content>
+        <Autocomplete.Parts.List>
           {suggestions.map((s) => (
-            <Autocomplete.Item key={s} value={s}>
+            <Autocomplete.Parts.Item key={s} value={s}>
               {s}
-            </Autocomplete.Item>
+            </Autocomplete.Parts.Item>
           ))}
-          <Autocomplete.Empty>No suggestions</Autocomplete.Empty>
-        </Autocomplete.List>
-      </Autocomplete.Content>
-    </Autocomplete.Root>
+          <Autocomplete.Parts.Empty>No suggestions</Autocomplete.Parts.Empty>
+        </Autocomplete.Parts.List>
+      </Autocomplete.Parts.Content>
+    </Autocomplete.Parts.Root>
   );
 }
 
-describe("Autocomplete", () => {
+describe("Autocomplete.Parts", () => {
   it("renders the input with placeholder", () => {
     render(<SimpleAutocomplete />);
 
@@ -89,14 +91,14 @@ describe("Autocomplete", () => {
 
   it("applies custom className to input", () => {
     render(
-      <Autocomplete.Root>
-        <Autocomplete.Input data-testid="input" className="custom-class" />
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            <Autocomplete.Item value="a">Apple</Autocomplete.Item>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>,
+      <Autocomplete.Parts.Root>
+        <Autocomplete.Parts.Input data-testid="input" className="custom-class" />
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.List>
+            <Autocomplete.Parts.Item value="a">Apple</Autocomplete.Parts.Item>
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>,
     );
 
     expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(true);
@@ -104,17 +106,17 @@ describe("Autocomplete", () => {
 
   it("renders the trigger with default icon", () => {
     render(
-      <Autocomplete.Root>
+      <Autocomplete.Parts.Root>
         <div style={{ position: "relative" }}>
-          <Autocomplete.Input data-testid="input" />
-          <Autocomplete.Trigger data-testid="trigger" />
+          <Autocomplete.Parts.Input data-testid="input" />
+          <Autocomplete.Parts.Trigger data-testid="trigger" />
         </div>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            <Autocomplete.Item value="a">Apple</Autocomplete.Item>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>,
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.List>
+            <Autocomplete.Parts.Item value="a">Apple</Autocomplete.Parts.Item>
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -122,17 +124,17 @@ describe("Autocomplete", () => {
 
   it("renders the clear button", () => {
     render(
-      <Autocomplete.Root defaultValue="Apple">
+      <Autocomplete.Parts.Root defaultValue="Apple">
         <div style={{ position: "relative" }}>
-          <Autocomplete.Input data-testid="input" />
-          <Autocomplete.Clear data-testid="clear" />
+          <Autocomplete.Parts.Input data-testid="input" />
+          <Autocomplete.Parts.Clear data-testid="clear" />
         </div>
-        <Autocomplete.Content>
-          <Autocomplete.List>
-            <Autocomplete.Item value="Apple">Apple</Autocomplete.Item>
-          </Autocomplete.List>
-        </Autocomplete.Content>
-      </Autocomplete.Root>,
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.List>
+            <Autocomplete.Parts.Item value="Apple">Apple</Autocomplete.Parts.Item>
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>,
     );
 
     expect(screen.getByTestId("clear")).toBeDefined();
@@ -143,5 +145,155 @@ describe("Autocomplete", () => {
 
     const input = screen.getByTestId("input") as HTMLInputElement;
     expect(input.value).toBe("Cherry");
+  });
+});
+
+// ============================================================================
+// Autocomplete.Parts.useAsync tests
+// ============================================================================
+
+describe("Autocomplete.Parts.useAsync", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Advance timers and flush microtasks. */
+  async function advanceAndFlush(ms: number) {
+    await act(async () => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+
+  it("returns correct shape with mapped property names", () => {
+    const fetcher = vi.fn(async () => []);
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    // Should use `value` (not `query`) and `onValueChange` (not `onInputValueChange`)
+    expect(result.current).toHaveProperty("items");
+    expect(result.current).toHaveProperty("loading");
+    expect(result.current).toHaveProperty("value");
+    expect(result.current).toHaveProperty("error");
+    expect(result.current).toHaveProperty("onValueChange");
+    expect(result.current).not.toHaveProperty("query");
+    expect(result.current).not.toHaveProperty("onInputValueChange");
+  });
+
+  it("maps value from internal query state", () => {
+    const fetcher = vi.fn(async () => []);
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onValueChange("hello");
+    });
+
+    expect(result.current.value).toBe("hello");
+  });
+
+  it("fetches items after debounce", async () => {
+    const items = ["Apple", "Apricot"];
+    const fetcher = vi.fn(async () => items);
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onValueChange("ap");
+    });
+
+    expect(result.current.loading).toBe(true);
+
+    await advanceAndFlush(300);
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "ap",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(result.current.items).toEqual(items);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("respects custom debounceMs", async () => {
+    const fetcher = vi.fn(async () => ["a"]);
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher, debounceMs: 500 }));
+
+    act(() => {
+      result.current.onValueChange("test");
+    });
+
+    await advanceAndFlush(300);
+    expect(fetcher).not.toHaveBeenCalled();
+
+    await advanceAndFlush(200);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it("clears items when value is empty", async () => {
+    const fetcher = vi.fn(async () => ["a", "b"]);
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onValueChange("test");
+    });
+    await advanceAndFlush(300);
+    expect(result.current.items).toEqual(["a", "b"]);
+
+    act(() => {
+      result.current.onValueChange("");
+    });
+    expect(result.current.items).toEqual([]);
+  });
+
+  it("captures fetcher errors", async () => {
+    const error = new Error("Network error");
+    const fetcher = vi.fn(async () => {
+      throw error;
+    });
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onValueChange("test");
+    });
+    await advanceAndFlush(300);
+
+    expect(result.current.error).toBe(error);
+    expect(result.current.items).toEqual([]);
+  });
+
+  it("cancels previous request on new input", async () => {
+    let capturedSignals: AbortSignal[] = [];
+    const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+      capturedSignals.push(opts.signal);
+      return new Promise<string[]>((resolve) => {
+        setTimeout(() => resolve([_q]), 200);
+      });
+    });
+
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onValueChange("first");
+    });
+    await advanceAndFlush(300);
+
+    act(() => {
+      result.current.onValueChange("second");
+    });
+    await advanceAndFlush(300);
+
+    expect(capturedSignals[0].aborted).toBe(true);
+  });
+
+  it("does not fetch for whitespace-only input", async () => {
+    const fetcher = vi.fn(async () => []);
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onValueChange("   ");
+    });
+    await advanceAndFlush(300);
+
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });

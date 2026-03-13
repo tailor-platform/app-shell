@@ -4,7 +4,9 @@ import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function SelectRoot({ ...props }: React.ComponentProps<typeof BaseSelect.Root>) {
+function SelectRoot<Value, Multiple extends boolean | undefined = false>({
+  ...props
+}: React.ComponentProps<typeof BaseSelect.Root<Value, Multiple>>) {
   return <BaseSelect.Root data-slot="select" {...props} />;
 }
 
@@ -112,7 +114,7 @@ function SelectSeparator({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-const Select = {
+const SelectParts = {
   Root: SelectRoot,
   Trigger: SelectTrigger,
   Value: SelectValue,
@@ -123,4 +125,16 @@ const Select = {
   Separator: SelectSeparator,
 };
 
-export { Select };
+type SelectParts = typeof SelectParts;
+
+export {
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+  SelectGroupLabel,
+  SelectSeparator,
+  SelectParts,
+};

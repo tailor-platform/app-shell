@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Select } from "./select";
+import { SelectParts as Select } from "./select";
 
 afterEach(() => {
   cleanup();

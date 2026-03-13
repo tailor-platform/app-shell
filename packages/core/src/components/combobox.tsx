@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -52,9 +52,13 @@ function ComboboxTrigger({
   );
 }
 
-function ComboboxInputGroup({ className, children, ...props }: React.ComponentProps<"div">) {
+function ComboboxInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.InputGroup>) {
   return (
-    <div
+    <BaseCombobox.InputGroup
       data-slot="combobox-input-group"
       className={cn("astw:relative astw:flex astw:items-center", className)}
       {...props}
@@ -66,7 +70,7 @@ function ComboboxInputGroup({ className, children, ...props }: React.ComponentPr
           <ComboboxTrigger />
         </>
       )}
-    </div>
+    </BaseCombobox.InputGroup>
   );
 }
 
@@ -307,6 +311,10 @@ interface UseCreatableReturnBase<T> {
   inputValue: string;
   /** Input change handler — pass to `Combobox.Root onInputValueChange` */
   onInputValueChange: (value: string) => void;
+  /** Converts item to display label — pass to `Combobox.Root itemToStringLabel` */
+  itemToStringLabel: (item: T) => string;
+  /** Converts item to form value — pass to `Combobox.Root itemToStringValue` */
+  itemToStringValue: (item: T) => string;
   /** Check if an item is the "create" sentinel */
   isCreateItem: (item: T) => boolean;
   /** Get the original input value from a sentinel item */
@@ -395,6 +403,11 @@ function useCreatable<T extends object>(
   );
   const [query, setQuery] = useState("");
 
+  // Tracks the label being created during an async onItemCreated flow.
+  // While set, onInputValueChange ignores base-ui's close-handler clearing
+  // the input so the user sees the typed value instead of a brief empty flash.
+  const pendingCreateLabelRef = useRef<string | null>(null);
+
   const onValueChange = options.onValueChange;
 
   const trimmed = query.trim();
@@ -424,6 +437,26 @@ function useCreatable<T extends object>(
     [sentinel],
   );
 
+  const itemToStringLabelFn = useCallback(
+    (item: T): string => {
+      if (sentinel !== null && item === sentinel.item) {
+        return userFormatLabel(sentinel.label);
+      }
+      return getLabel(item);
+    },
+    [sentinel, getLabel, userFormatLabel],
+  );
+
+  const itemToStringValueFn = useCallback(
+    (item: T): string => {
+      if (sentinel !== null && item === sentinel.item) {
+        return "";
+      }
+      return getLabel(item);
+    },
+    [sentinel, getLabel],
+  );
+
   // --- Create logic (supports sync and deferred resolution via callback) ---
   const performCreate = useCallback(
     (value: string, baseMultiValue?: T[]) => {
@@ -439,7 +472,7 @@ function useCreatable<T extends object>(
           setSingleValue(newItem);
           (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(newItem);
         }
-        setQuery("");
+        setQuery(isMultiple ? "" : getLabel(newItem));
       };
 
       if (!onItemCreated) {
@@ -447,10 +480,17 @@ function useCreatable<T extends object>(
         return;
       }
 
+      // Keep the typed value visible in the input while the async create is in flight
+      if (!isMultiple) {
+        pendingCreateLabelRef.current = value;
+        setQuery(value);
+      }
+
       let resolved = false;
       const resolve = (accept?: boolean) => {
         if (resolved) return;
         resolved = true;
+        pendingCreateLabelRef.current = null;
         if (accept !== false) applySelection();
         else setQuery("");
       };
@@ -476,7 +516,7 @@ function useCreatable<T extends object>(
         );
       }
     },
-    [isMultiple, createItem, onItemCreated, onValueChange],
+    [isMultiple, createItem, onItemCreated, onValueChange, getLabel],
   );
 
   // --- Value change handlers ---
@@ -514,7 +554,14 @@ function useCreatable<T extends object>(
   const base: UseCreatableReturnBase<T> = {
     items: augmentedItems,
     inputValue: query,
-    onInputValueChange: setQuery,
+    onInputValueChange: useCallback((v: string) => {
+      // While an async create is pending, ignore base-ui's close-handler
+      // trying to clear the input so the typed value stays visible.
+      if (pendingCreateLabelRef.current !== null && v === "") return;
+      setQuery(v);
+    }, []),
+    itemToStringLabel: itemToStringLabelFn,
+    itemToStringValue: itemToStringValueFn,
     isCreateItem,
     getCreateLabel: getCreateLabelFn,
     formatCreateLabel: userFormatLabel,
@@ -578,7 +625,11 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
   return useAsyncItems(options);
 }
 
-const Combobox = {
+// ============================================================================
+// Export
+// ============================================================================
+
+const ComboboxParts = {
   Root: ComboboxRoot,
   InputGroup: ComboboxInputGroup,
   Input: ComboboxInput,
@@ -601,4 +652,29 @@ const Combobox = {
   useAsync,
 };
 
-export { Combobox };
+type ComboboxParts = typeof ComboboxParts;
+
+export {
+  ComboboxRoot,
+  ComboboxInputGroup,
+  ComboboxInput,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxGroupLabel,
+  ComboboxClear,
+  ComboboxChips,
+  ComboboxChip,
+  ComboboxChipRemove,
+  ComboboxValue,
+  ComboboxCollection,
+  ComboboxStatus,
+  ComboboxParts,
+  useCreatable,
+  useAsync,
+};
+
+export type { UseCreatableOptionsBase };

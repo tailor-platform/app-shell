@@ -275,7 +275,11 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncRetu
   };
 }
 
-const Autocomplete = {
+// ============================================================================
+// Export
+// ============================================================================
+
+const AutocompleteParts = {
   Root: AutocompleteRoot,
   Value: AutocompleteValue,
   InputGroup: AutocompleteInputGroup,
@@ -294,4 +298,21 @@ const Autocomplete = {
   useAsync,
 };
 
-export { Autocomplete };
+type AutocompleteParts = typeof AutocompleteParts;
+
+export {
+  AutocompleteRoot,
+  AutocompleteInputGroup,
+  AutocompleteInput,
+  AutocompleteTrigger,
+  AutocompleteContent,
+  AutocompleteList,
+  AutocompleteItem,
+  AutocompleteEmpty,
+  AutocompleteClear,
+  AutocompleteGroup,
+  AutocompleteGroupLabel,
+  AutocompleteCollection,
+  AutocompleteParts,
+  useAsync,
+};

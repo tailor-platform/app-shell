@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, renderHook, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Combobox } from "./combobox";
+import { ComboboxParts } from "./combobox";
+
+const Combobox = { Parts: ComboboxParts };
 
 afterEach(() => {
   cleanup();
@@ -15,23 +17,23 @@ function SimpleCombobox(props: {
   value?: string;
 }) {
   return (
-    <Combobox.Root {...props}>
-      <Combobox.Input data-testid="input" placeholder="Search fruits..." />
-      <Combobox.Content>
-        <Combobox.List>
+    <Combobox.Parts.Root {...props}>
+      <Combobox.Parts.Input data-testid="input" placeholder="Search fruits..." />
+      <Combobox.Parts.Content>
+        <Combobox.Parts.List>
           {fruits.map((fruit) => (
-            <Combobox.Item key={fruit} value={fruit}>
+            <Combobox.Parts.Item key={fruit} value={fruit}>
               {fruit}
-            </Combobox.Item>
+            </Combobox.Parts.Item>
           ))}
-          <Combobox.Empty>No results found</Combobox.Empty>
-        </Combobox.List>
-      </Combobox.Content>
-    </Combobox.Root>
+          <Combobox.Parts.Empty>No results found</Combobox.Parts.Empty>
+        </Combobox.Parts.List>
+      </Combobox.Parts.Content>
+    </Combobox.Parts.Root>
   );
 }
 
-describe("Combobox", () => {
+describe("Combobox.Parts", () => {
   it("renders the input with placeholder", () => {
     render(<SimpleCombobox />);
 
@@ -77,14 +79,14 @@ describe("Combobox", () => {
 
   it("applies custom className to input", () => {
     render(
-      <Combobox.Root>
-        <Combobox.Input data-testid="input" className="custom-class" />
-        <Combobox.Content>
-          <Combobox.List>
-            <Combobox.Item value="a">Apple</Combobox.Item>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>,
+      <Combobox.Parts.Root>
+        <Combobox.Parts.Input data-testid="input" className="custom-class" />
+        <Combobox.Parts.Content>
+          <Combobox.Parts.List>
+            <Combobox.Parts.Item value="a">Apple</Combobox.Parts.Item>
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>,
     );
 
     expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(true);
@@ -94,17 +96,17 @@ describe("Combobox", () => {
     const user = userEvent.setup();
 
     render(
-      <Combobox.Root>
-        <Combobox.Input data-testid="input" />
-        <Combobox.Content>
-          <Combobox.List>
-            <Combobox.Group>
-              <Combobox.GroupLabel>Fruits</Combobox.GroupLabel>
-              <Combobox.Item value="apple">Apple</Combobox.Item>
-            </Combobox.Group>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>,
+      <Combobox.Parts.Root>
+        <Combobox.Parts.Input data-testid="input" />
+        <Combobox.Parts.Content>
+          <Combobox.Parts.List>
+            <Combobox.Parts.Group>
+              <Combobox.Parts.GroupLabel>Fruits</Combobox.Parts.GroupLabel>
+              <Combobox.Parts.Item value="apple">Apple</Combobox.Parts.Item>
+            </Combobox.Parts.Group>
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>,
     );
 
     const input = screen.getByTestId("input");
@@ -126,17 +128,17 @@ describe("Combobox", () => {
 
   it("renders the trigger with default icon", () => {
     render(
-      <Combobox.Root>
+      <Combobox.Parts.Root>
         <div style={{ position: "relative" }}>
-          <Combobox.Input data-testid="input" />
-          <Combobox.Trigger data-testid="trigger" />
+          <Combobox.Parts.Input data-testid="input" />
+          <Combobox.Parts.Trigger data-testid="trigger" />
         </div>
-        <Combobox.Content>
-          <Combobox.List>
-            <Combobox.Item value="a">Apple</Combobox.Item>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>,
+        <Combobox.Parts.Content>
+          <Combobox.Parts.List>
+            <Combobox.Parts.Item value="a">Apple</Combobox.Parts.Item>
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -144,17 +146,17 @@ describe("Combobox", () => {
 
   it("renders the clear button", () => {
     render(
-      <Combobox.Root defaultValue="Apple">
+      <Combobox.Parts.Root defaultValue="Apple">
         <div style={{ position: "relative" }}>
-          <Combobox.Input data-testid="input" />
-          <Combobox.Clear data-testid="clear" />
+          <Combobox.Parts.Input data-testid="input" />
+          <Combobox.Parts.Clear data-testid="clear" />
         </div>
-        <Combobox.Content>
-          <Combobox.List>
-            <Combobox.Item value="Apple">Apple</Combobox.Item>
-          </Combobox.List>
-        </Combobox.Content>
-      </Combobox.Root>,
+        <Combobox.Parts.Content>
+          <Combobox.Parts.List>
+            <Combobox.Parts.Item value="Apple">Apple</Combobox.Parts.Item>
+          </Combobox.Parts.List>
+        </Combobox.Parts.Content>
+      </Combobox.Parts.Root>,
     );
 
     expect(screen.getByTestId("clear")).toBeDefined();
@@ -181,7 +183,7 @@ const createTag = (value: string): Tag => ({
   name: value,
 });
 
-describe("Combobox.useCreatable", () => {
+describe("Combobox.Parts.useCreatable", () => {
   describe("multiple mode", () => {
     const defaultOptions = {
       items: initialTags,
@@ -191,14 +193,14 @@ describe("Combobox.useCreatable", () => {
     };
 
     it("returns items unchanged when inputValue is empty", () => {
-      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
       expect(result.current.items).toBe(initialTags);
       expect(result.current.value).toEqual([]);
       expect(result.current.multiple).toBe(true);
     });
 
     it("appends a sentinel item when query has no exact match", () => {
-      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("Svelte");
@@ -210,7 +212,7 @@ describe("Combobox.useCreatable", () => {
     });
 
     it("does not append sentinel when query exactly matches an item (case-insensitive)", () => {
-      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("react");
@@ -224,7 +226,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -257,7 +259,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated: (_item, resolve) => resolve(false),
           onValueChange,
@@ -286,7 +288,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -321,7 +323,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated: (_item, resolve) => {
             savedResolve = resolve;
@@ -353,7 +355,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated: async (_item: Tag) => {
             // Simulate API call
@@ -380,7 +382,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated: async (_item: Tag) => {
             return false;
@@ -407,7 +409,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated: async (_item: Tag) => {
             throw new Error("API error");
@@ -434,7 +436,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onValueChange,
         }),
@@ -450,7 +452,7 @@ describe("Combobox.useCreatable", () => {
 
     it("respects defaultValue", () => {
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           defaultValue: [initialTags[0]],
         }),
@@ -461,7 +463,7 @@ describe("Combobox.useCreatable", () => {
 
     it("uses custom formatCreateLabel", () => {
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           formatCreateLabel: (v) => `「${v}」を作成`,
         }),
@@ -479,7 +481,7 @@ describe("Combobox.useCreatable", () => {
     };
 
     it("returns value as null initially", () => {
-      const { result } = renderHook(() => Combobox.useCreatable(defaultOptions));
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
 
       expect(result.current.value).toBeNull();
       expect(result.current.multiple).toBe(false);
@@ -490,7 +492,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -519,7 +521,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onValueChange,
         }),
@@ -537,7 +539,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           defaultValue: initialTags[0],
           onValueChange,
@@ -560,7 +562,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -591,7 +593,7 @@ describe("Combobox.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           onItemCreated: (_item, resolve) => resolve(false),
           onValueChange,
@@ -614,7 +616,7 @@ describe("Combobox.useCreatable", () => {
 
     it("respects defaultValue in single mode", () => {
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           ...defaultOptions,
           defaultValue: initialTags[1],
         }),
@@ -627,7 +629,7 @@ describe("Combobox.useCreatable", () => {
   describe("isCreateItem / getCreateLabel", () => {
     it("correctly identifies sentinel vs regular items", () => {
       const { result } = renderHook(() =>
-        Combobox.useCreatable({
+        Combobox.Parts.useCreatable({
           items: initialTags,
           multiple: true,
           getLabel: (item: Tag) => item.name,
@@ -653,5 +655,529 @@ describe("Combobox.useCreatable", () => {
       // Regular items still return false
       expect(result.current.isCreateItem(result.current.items[0])).toBe(false);
     });
+  });
+
+  // =========================================================================
+  // Edge cases — whitespace & trimming
+  // =========================================================================
+
+  describe("whitespace and trimming", () => {
+    const defaultOptions = {
+      items: initialTags,
+      multiple: true as const,
+      getLabel: (item: Tag) => item.name,
+      createItem: createTag,
+    };
+
+    it("trims leading/trailing whitespace for sentinel check", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      act(() => {
+        result.current.onInputValueChange("  Svelte  ");
+      });
+
+      // Sentinel should appear with trimmed label
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item));
+      expect(sentinel).toBeDefined();
+      expect(result.current.getCreateLabel(sentinel!)).toBe("Svelte");
+    });
+
+    it("does not append sentinel for whitespace-only input", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      act(() => {
+        result.current.onInputValueChange("   ");
+      });
+
+      expect(result.current.items).toHaveLength(3); // unchanged
+    });
+
+    it("matches exact item even with leading/trailing spaces in query", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      act(() => {
+        result.current.onInputValueChange("  React  ");
+      });
+
+      // No sentinel — exact match exists
+      expect(result.current.items).toHaveLength(3);
+    });
+  });
+
+  // =========================================================================
+  // Edge cases — resolve idempotency
+  // =========================================================================
+
+  describe("resolve idempotency", () => {
+    it("ignores duplicate resolve() calls", () => {
+      let savedResolve!: (accept?: boolean) => void;
+      const onValueChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          multiple: true as const,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item, resolve) => {
+            savedResolve = resolve;
+          },
+          onValueChange,
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange([sentinel]);
+      });
+
+      // First resolve → accept
+      act(() => {
+        savedResolve();
+      });
+      expect(onValueChange).toHaveBeenCalledTimes(1);
+
+      // Second resolve → ignored
+      act(() => {
+        savedResolve();
+      });
+      expect(onValueChange).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores resolve(false) after resolve(true)", () => {
+      let savedResolve!: (accept?: boolean) => void;
+      const onValueChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item, resolve) => {
+            savedResolve = resolve;
+          },
+          onValueChange,
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      act(() => {
+        savedResolve(true);
+      });
+      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
+
+      // Second call with false is ignored
+      act(() => {
+        savedResolve(false);
+      });
+      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
+    });
+  });
+
+  // =========================================================================
+  // Edge cases — pendingCreateLabelRef (input preserved during async)
+  // =========================================================================
+
+  describe("pendingCreateLabelRef (single mode async)", () => {
+    it("preserves input value during deferred creation in single mode", () => {
+      let savedResolve!: (accept?: boolean) => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item, resolve) => {
+            savedResolve = resolve;
+          },
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      // Input should show "Svelte" while pending
+      expect(result.current.inputValue).toBe("Svelte");
+
+      // Trying to clear input while pending should be ignored
+      act(() => {
+        result.current.onInputValueChange("");
+      });
+      expect(result.current.inputValue).toBe("Svelte");
+
+      // Resolve → clears pending flag
+      act(() => {
+        savedResolve();
+      });
+
+      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
+    });
+
+    it("clears input when deferred creation is cancelled in single mode", () => {
+      let savedResolve!: (accept?: boolean) => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item, resolve) => {
+            savedResolve = resolve;
+          },
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      act(() => {
+        savedResolve(false);
+      });
+
+      expect(result.current.inputValue).toBe("");
+      expect(result.current.value).toBeNull();
+    });
+  });
+
+  // =========================================================================
+  // Edge cases — itemToStringLabel / itemToStringValue
+  // =========================================================================
+
+  describe("itemToStringLabel / itemToStringValue", () => {
+    const defaultOptions = {
+      items: initialTags,
+      getLabel: (item: Tag) => item.name,
+      createItem: createTag,
+    };
+
+    it("returns formatted create label for sentinel item", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+      expect(result.current.itemToStringLabel(sentinel)).toBe('Create "Svelte"');
+    });
+
+    it("returns getLabel for regular items", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      expect(result.current.itemToStringLabel(initialTags[0])).toBe("React");
+    });
+
+    it("returns empty string for sentinel itemToStringValue", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+      expect(result.current.itemToStringValue(sentinel)).toBe("");
+    });
+
+    it("returns getLabel for regular items in itemToStringValue", () => {
+      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+
+      expect(result.current.itemToStringValue(initialTags[0])).toBe("React");
+    });
+  });
+
+  // =========================================================================
+  // Edge cases — mixed workflow (multiple mode)
+  // =========================================================================
+
+  describe("mixed workflow (multiple mode)", () => {
+    it("select normal items then create a new one", () => {
+      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => resolve());
+      const onValueChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          multiple: true as const,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated,
+          onValueChange,
+        }),
+      );
+
+      // Select existing items first
+      act(() => {
+        result.current.onValueChange([initialTags[0], initialTags[1]]);
+      });
+
+      expect(result.current.value).toEqual([initialTags[0], initialTags[1]]);
+
+      // Now type and create
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      // Select sentinel along with existing selections
+      act(() => {
+        result.current.onValueChange([initialTags[0], initialTags[1], sentinel]);
+      });
+
+      expect(onItemCreated).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Svelte" }),
+        expect.any(Function),
+      );
+      // After create, value includes existing + new
+      expect(result.current.value).toHaveLength(3);
+    });
+
+    it("clears input after creating in multiple mode", () => {
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          multiple: true as const,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item, resolve) => resolve(),
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange([sentinel]);
+      });
+
+      expect(result.current.inputValue).toBe("");
+    });
+  });
+
+  // =========================================================================
+  // Edge cases — no onItemCreated (immediate creation)
+  // =========================================================================
+
+  describe("no onItemCreated (immediate creation)", () => {
+    it("creates item immediately without onItemCreated callback in single mode", () => {
+      const onValueChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onValueChange,
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      expect(onValueChange).toHaveBeenCalledWith(expect.objectContaining({ name: "Svelte" }));
+      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
+    });
+
+    it("creates item immediately without onItemCreated callback in multiple mode", () => {
+      const onValueChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          multiple: true as const,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onValueChange,
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange([sentinel]);
+      });
+
+      expect(onValueChange).toHaveBeenCalledWith([expect.objectContaining({ name: "Svelte" })]);
+      expect(result.current.value).toHaveLength(1);
+    });
+  });
+});
+
+// ============================================================================
+// Combobox.Parts.useAsync tests
+// ============================================================================
+
+describe("Combobox.Parts.useAsync", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Advance timers and flush microtasks. */
+  async function advanceAndFlush(ms: number) {
+    await act(async () => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+
+  it("returns correct shape", () => {
+    const fetcher = vi.fn(async () => []);
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+
+    expect(result.current).toHaveProperty("items");
+    expect(result.current).toHaveProperty("loading");
+    expect(result.current).toHaveProperty("query");
+    expect(result.current).toHaveProperty("error");
+    expect(result.current).toHaveProperty("onInputValueChange");
+  });
+
+  it("fetches items after debounce", async () => {
+    const items = [{ id: 1, name: "React" }];
+    const fetcher = vi.fn(async () => items);
+
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("react");
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(true);
+
+    await advanceAndFlush(300);
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "react",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(result.current.items).toEqual(items);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("updates query on input change", () => {
+    const fetcher = vi.fn(async () => []);
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("hello");
+    });
+
+    expect(result.current.query).toBe("hello");
+  });
+
+  it("respects custom debounceMs", async () => {
+    const fetcher = vi.fn(async () => ["a"]);
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher, debounceMs: 100 }));
+
+    act(() => {
+      result.current.onInputValueChange("test");
+    });
+
+    await advanceAndFlush(50);
+    expect(fetcher).not.toHaveBeenCalled();
+
+    await advanceAndFlush(50);
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it("clears items when input is empty", async () => {
+    const fetcher = vi.fn(async () => ["a", "b"]);
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("test");
+    });
+    await advanceAndFlush(300);
+    expect(result.current.items).toEqual(["a", "b"]);
+
+    act(() => {
+      result.current.onInputValueChange("");
+    });
+    expect(result.current.items).toEqual([]);
+  });
+
+  it("captures fetcher errors", async () => {
+    const error = new Error("API error");
+    const fetcher = vi.fn(async () => {
+      throw error;
+    });
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("test");
+    });
+    await advanceAndFlush(300);
+
+    expect(result.current.error).toBe(error);
+    expect(result.current.items).toEqual([]);
+  });
+
+  it("cancels previous request on new input", async () => {
+    let capturedSignals: AbortSignal[] = [];
+    const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+      capturedSignals.push(opts.signal);
+      return new Promise<string[]>((resolve) => {
+        setTimeout(() => resolve([_q]), 200);
+      });
+    });
+
+    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("first");
+    });
+    await advanceAndFlush(300);
+
+    act(() => {
+      result.current.onInputValueChange("second");
+    });
+    await advanceAndFlush(300);
+
+    expect(capturedSignals[0].aborted).toBe(true);
   });
 });

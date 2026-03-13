@@ -4,23 +4,23 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Dialog({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
+function Root({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({ ...props }: React.ComponentProps<typeof BaseDialog.Trigger>) {
+function Trigger({ ...props }: React.ComponentProps<typeof BaseDialog.Trigger>) {
   return <BaseDialog.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({ ...props }: React.ComponentProps<typeof BaseDialog.Portal>) {
+function Portal({ ...props }: React.ComponentProps<typeof BaseDialog.Portal>) {
   return <BaseDialog.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({ ...props }: React.ComponentProps<typeof BaseDialog.Close>) {
+function Close({ ...props }: React.ComponentProps<typeof BaseDialog.Close>) {
   return <BaseDialog.Close data-slot="dialog-close" {...props} />;
 }
 
-function DialogOverlay({ className, ...props }: React.ComponentProps<typeof BaseDialog.Backdrop>) {
+function Overlay({ className, ...props }: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
     <BaseDialog.Backdrop
       data-slot="dialog-overlay"
@@ -33,14 +33,10 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Base
   );
 }
 
-function DialogContent({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Popup>) {
+function Content({ className, children, ...props }: React.ComponentProps<typeof BaseDialog.Popup>) {
   return (
-    <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+    <Portal data-slot="dialog-portal">
+      <Overlay />
       <BaseDialog.Popup
         data-slot="dialog-content"
         className={cn(
@@ -55,11 +51,11 @@ function DialogContent({
           <span className="astw:sr-only">Close</span>
         </BaseDialog.Close>
       </BaseDialog.Popup>
-    </DialogPortal>
+    </Portal>
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function Header({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
@@ -72,7 +68,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+function Footer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-footer"
@@ -85,7 +81,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function DialogTitle({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
+function Title({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
     <BaseDialog.Title
       data-slot="dialog-title"
@@ -95,10 +91,7 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof BaseDi
   );
 }
 
-function DialogDescription({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Description>) {
+function Description({ className, ...props }: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
     <BaseDialog.Description
       data-slot="dialog-description"
@@ -108,15 +101,15 @@ function DialogDescription({
   );
 }
 
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
+export const Dialog = {
+  Root,
+  Close,
+  Content,
+  Description,
+  Footer,
+  Header,
+  Overlay,
+  Portal,
+  Title,
+  Trigger,
 };

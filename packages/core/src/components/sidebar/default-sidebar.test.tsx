@@ -1,13 +1,15 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { DefaultSidebar } from "./default-sidebar";
+import { SidebarLayout } from "./sidebar-layout";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
 import { SidebarSeparator } from "./sidebar-separator";
 import { defineModule, defineResource } from "@/resource";
+import { AppShell } from "@/components/appshell";
 import { Home, Package } from "lucide-react";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
@@ -95,5 +97,66 @@ describe("DefaultSidebar", () => {
     expect(screen.getByText("Settings")).toBeDefined();
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /products/i })).toBeDefined();
+  });
+});
+
+describe("DefaultSidebar auto-generation", () => {
+  it("excludes componentless resources from sidebar links", async () => {
+    const modules = [
+      defineModule({
+        path: "app",
+        meta: { title: "App" },
+        component: () => <div>App Root</div>,
+        resources: [
+          defineResource({
+            path: "dashboard",
+            component: () => <div>Dashboard</div>,
+          }),
+          defineResource({
+            path: "settings",
+            // no component, but has sub-resources
+            subResources: [
+              defineResource({
+                path: "general",
+                component: () => <div>General</div>,
+              }),
+            ],
+          }),
+          defineResource({
+            path: "orphan",
+            // no component, no sub-resources → excluded entirely
+          }),
+        ],
+      }),
+    ];
+
+    window.history.pushState({}, "", "/app/dashboard");
+    render(
+      <AppShell title="Test" modules={modules}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    // Wait for auto-generated sidebar items to render
+    await waitFor(() => {
+      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+    });
+
+    // Collect all links from the sidebar
+    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+    const links = sidebar.querySelectorAll("a");
+    const linkTexts = Array.from(links).map((link) => link.textContent);
+
+    // Dashboard should be a navigable link in the sidebar
+    expect(linkTexts).toContain("Dashboard");
+
+    // "Orphan" (componentless, no sub-resources) should not appear at all
+    expect(sidebar.textContent).not.toContain("Orphan");
+
+    // "Settings" (componentless, has sub-resources) is filtered out from sub-item links
+    // because the sidebar filters subItems by url, and componentless resources have url: undefined.
+    // Its children ("General") are not rendered either since the sidebar doesn't recurse.
+    expect(linkTexts).not.toContain("Settings");
+    expect(linkTexts).not.toContain("General");
   });
 });

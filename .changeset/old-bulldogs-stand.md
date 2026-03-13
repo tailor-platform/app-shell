@@ -60,10 +60,10 @@ The current `Layout` component requires a `columns` prop that must exactly match
 
 ## Children Rules
 
-- **`Layout.Header`** — At most one. Placed above Columns.
-- **`Layout.Column`** — Maximum of 3. If more than 3 are provided, only the first 3 are rendered and a `console.warn` is emitted.
-- **`area` prop** — All-or-nothing: either every Column specifies `area`, or none do. Partial specification, duplicate areas, or invalid values emit a `console.warn` and fall back to position-based behavior.
-- **Anything else** — Not rendered. A `console.warn` is emitted.
+- **`Layout.Header`** — At most one. If multiple are provided, only the first is rendered.
+- **`Layout.Column`** — 1–3 columns use position-based or area-based width templates. 4+ columns use equal-width (`repeat(N, 1fr)`).
+- **`area` prop** — When any column specifies `area`, all columns switch to area-based widths. Columns without `area` default to `1fr`.
+- **Anything else** — Silently filtered out (not rendered).
 
 ## Width Templates
 

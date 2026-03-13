@@ -159,6 +159,7 @@ describe("Layout", () => {
     );
     expect(warnSpy).not.toHaveBeenCalled();
     expect(screen.getByText("Content")).toBeDefined();
+    expect(screen.queryByText("Rogue element")).toBeNull();
     warnSpy.mockRestore();
   });
 

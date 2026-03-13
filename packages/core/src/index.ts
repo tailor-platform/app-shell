@@ -73,9 +73,11 @@ export { usePageMeta, type PageMeta } from "./hooks/use-page-meta";
 // Toast
 export { useToast } from "./hooks/use-toast";
 
+// Components
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
+export { Input } from "./components/input";
 export { Table } from "./components/table";
 export { Dialog } from "./components/dialog";

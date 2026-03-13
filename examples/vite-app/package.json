@@ -7,7 +7,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "preview": "vite preview",
-    "type-check": "tsc --incremental"
+    "type-check": "tsc -b"
   },
   "dependencies": {
     "@tailor-platform/app-shell": "workspace:*",

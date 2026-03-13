@@ -16,6 +16,9 @@ import { createTypedPaths } from "@tailor-platform/app-shell";
  */
 export type GeneratedRouteParams = {
   "/": {};
+  "/components": {};
+  "/components/autocomplete": {};
+  "/components/combobox": {};
   "/dashboard": {};
   "/dashboard/orders": {};
   "/dashboard/orders/:id": { id: string };

@@ -86,7 +86,10 @@ describe("Layout", () => {
     it("Layout.Header with title, actions, and children", () => {
       const { container } = render(
         <Layout>
-          <Layout.Header title="Edit" actions={[<button key="save">Save</button>]}>
+          <Layout.Header
+            title="Edit"
+            actions={[<button key="save">Save</button>]}
+          >
             <div>Tabs</div>
           </Layout.Header>
           <Layout.Column>Content</Layout.Column>
@@ -97,7 +100,10 @@ describe("Layout", () => {
 
     it("legacy title and actions props", () => {
       const { container } = render(
-        <Layout title="Legacy Title" actions={[<button key="save">Save</button>]}>
+        <Layout
+          title="Legacy Title"
+          actions={[<button key="save">Save</button>]}
+        >
           <Layout.Column>Content</Layout.Column>
         </Layout>,
       );
@@ -121,7 +127,10 @@ describe("Layout", () => {
   it("prefers Layout.Header over legacy title/actions props", () => {
     render(
       <Layout title="Legacy" actions={[<button key="a">Legacy Action</button>]}>
-        <Layout.Header title="New Title" actions={[<button key="new">New Action</button>]} />
+        <Layout.Header
+          title="New Title"
+          actions={[<button key="new">New Action</button>]}
+        />
         <Layout.Column>Content</Layout.Column>
       </Layout>,
     );
@@ -131,34 +140,7 @@ describe("Layout", () => {
     expect(screen.queryByText("Legacy Action")).toBeNull();
   });
 
-  it("warns and falls back to position-based on partial area specification", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const { container } = render(
-      <Layout>
-        <Layout.Column area="left">Left</Layout.Column>
-        <Layout.Column>Main</Layout.Column>
-      </Layout>,
-    );
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("must be specified on all"));
-    // Verify it fell back to position-based (same structure as area-less 2-col)
-    expect(container.innerHTML).toMatchSnapshot();
-    warnSpy.mockRestore();
-  });
-
-  it("warns and falls back to position-based on duplicate areas", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const { container } = render(
-      <Layout>
-        <Layout.Column area="main">First</Layout.Column>
-        <Layout.Column area="main">Second</Layout.Column>
-      </Layout>,
-    );
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Duplicate"));
-    expect(container.innerHTML).toMatchSnapshot();
-    warnSpy.mockRestore();
-  });
-
-  it("warns and renders only first 3 columns when more than 3 are provided", () => {
+  it("renders more than 3 columns without warnings", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(
       <Layout>
@@ -168,11 +150,11 @@ describe("Layout", () => {
         <Layout.Column>Four</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Maximum of 3"));
+    expect(warnSpy).not.toHaveBeenCalled();
     expect(screen.getByText("One")).toBeDefined();
     expect(screen.getByText("Two")).toBeDefined();
     expect(screen.getByText("Three")).toBeDefined();
-    expect(screen.queryByText("Four")).toBeNull();
+    expect(screen.getByText("Four")).toBeDefined();
     warnSpy.mockRestore();
   });
 
@@ -189,29 +171,29 @@ describe("Layout", () => {
     warnSpy.mockRestore();
   });
 
-  it("applies area-based width class for left column in 2-col layout", () => {
-    render(
+  it("applies area-based grid template for 2-col layout", () => {
+    const { container } = render(
       <Layout>
         <Layout.Column area="left">Sidebar</Layout.Column>
         <Layout.Column area="main">Content</Layout.Column>
       </Layout>,
     );
-    const sidebar = screen.getByText("Sidebar").closest("div");
-    expect(sidebar?.className).toContain("w-[320px]");
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.style.getPropertyValue("--layout-cols")).toBe("320px 1fr");
   });
 
-  it("applies area-based width class for right column in 3-col layout", () => {
-    render(
+  it("applies area-based grid template for 3-col layout", () => {
+    const { container } = render(
       <Layout>
         <Layout.Column area="left">Left</Layout.Column>
         <Layout.Column area="main">Center</Layout.Column>
         <Layout.Column area="right">Right</Layout.Column>
       </Layout>,
     );
-    const right = screen.getByText("Right").closest("div");
-    expect(right?.className).toContain("w-[280px]");
-    const left = screen.getByText("Left").closest("div");
-    expect(left?.className).toContain("w-[320px]");
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.style.getPropertyValue("--layout-cols")).toBe(
+      "320px 1fr 280px",
+    );
   });
 
   it("warns when deprecated columns prop doesn't match child count", () => {
@@ -221,7 +203,9 @@ describe("Layout", () => {
         <Layout.Column>Only one</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("does not match"));
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("does not match"),
+    );
     warnSpy.mockRestore();
   });
 });

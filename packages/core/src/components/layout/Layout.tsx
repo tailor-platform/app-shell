@@ -1,33 +1,46 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./types";
+import type {
+  LayoutProps,
+  ColumnProps,
+  LayoutHeaderProps,
+  ColumnArea,
+} from "./types";
 
 /**
  * Layout.Column — A single column within `<Layout>`.
  *
  * Wrap each logical section of the page in a `<Layout.Column>`.
- * The parent `<Layout>` automatically sizes columns based on the number of
- * children and, optionally, the `area` prop.
+ * The parent `<Layout>` sizes columns via CSS Grid `grid-template-columns`,
+ * based on the number of children and, optionally, the `area` prop.
+ * Column width is controlled entirely by the parent grid — the column
+ * itself does not set its own width.
  *
  * ### Position-based mode (default)
  *
  * When no `area` prop is provided, columns are sized by their DOM position:
  *
- * - **2-column:** 1st = flexible, 2nd = fixed 280 px
- * - **3-column:** 1st = fixed 320 px, 2nd = flexible, 3rd = fixed 280 px
+ * - **2-column:** 1st = flexible (`1fr`), 2nd = fixed 280 px
+ * - **3-column:** 1st = fixed 320 px, 2nd = flexible (`1fr`), 3rd = fixed 280 px
+ * - **4+ columns:** all columns share equal width (`repeat(N, 1fr)`)
  *
  * ### Area mode
  *
- * Give **every** column an `area` prop to opt into role-based widths.
- * Each `area` value controls only the **width** of the column — visual
- * ordering always follows DOM order, so place your columns in the
+ * Set the `area` prop on any column to opt into role-based widths.
+ * Columns without an `area` prop default to `1fr`.
+ * Visual ordering always follows DOM order, so place your columns in the
  * intended left-to-right sequence.
  *
  * | area      | width             |
  * | --------- | ----------------- |
  * | `"left"`  | fixed 320 px      |
- * | `"main"`  | flexible (fills)  |
+ * | `"main"`  | flexible (`1fr`)  |
  * | `"right"` | fixed 280 px      |
+ *
+ * ### Data attributes
+ *
+ * The rendered `<div>` always has `data-layout-column`.
+ * When `area` is set, `data-area` is also added with the area value.
  *
  * @example
  * ```tsx
@@ -45,11 +58,16 @@ import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./
  * ```
  */
 export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
-  ({ className, children, area: _area, ...props }, ref) => {
+  ({ className, children, area, ...props }, ref) => {
     return (
       <div
         ref={ref}
-        className={cn("astw:min-w-0 astw:flex astw:flex-col astw:gap-4", className)}
+        data-layout-column=""
+        {...(area ? { "data-area": area } : {})}
+        className={cn(
+          "astw:min-w-0 astw:flex astw:flex-col astw:gap-4",
+          className,
+        )}
         {...props}
       >
         {children}
@@ -64,13 +82,21 @@ Column.displayName = "Layout.Column";
  * full-width slot.
  *
  * Place this as a direct child of `<Layout>`, above any `<Layout.Column>`
- * children. The header spans the full width of the layout regardless of
- * column count.
+ * children. The header spans the full width of the grid via `col-span-full`,
+ * regardless of column count.
+ *
+ * If multiple `Layout.Header` children are provided to `<Layout>`, only the
+ * first one is rendered.
  *
  * - **title** — Rendered as an `<h1>` on the left side.
  * - **actions** — Rendered on the right side (e.g. save / cancel buttons).
  * - **children** — Rendered full-width below the title/actions row.
  *   Useful for tabs, breadcrumbs, or other secondary navigation.
+ *
+ * ### Data attributes
+ *
+ * The rendered `<header>` has `data-layout-header`, which `<Layout>` uses
+ * internally to apply `col-span-full`.
  *
  * @example
  * ```tsx
@@ -94,10 +120,17 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
   const hasTitleRow = title || (actions != null && actions.length > 0);
 
   return (
-    <header className="astw:flex astw:w-full astw:flex-col">
+    <header
+      data-layout-header=""
+      className="astw:flex astw:w-full astw:flex-col"
+    >
       {hasTitleRow && (
-        <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:py-4">
-          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
+        <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:pt-4">
+          {title && (
+            <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">
+              {title}
+            </h1>
+          )}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -107,118 +140,47 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
           )}
         </div>
       )}
-      {children != null && children !== false && <div className="astw:w-full">{children}</div>}
+      {children != null && children !== false && (
+        <div className="astw:w-full">{children}</div>
+      )}
     </header>
   );
 }
 Header.displayName = "Layout.Header";
 
-/**
- * Validates that `area` props on column children are consistent.
- * Returns `"area"` if all columns have valid, unique area values;
- * otherwise falls back to `"position"` mode with a console warning.
- */
-function validateAreas(columnChildren: React.ReactElement[]): "position" | "area" {
-  const areas = columnChildren.map((child) => (child.props as ColumnProps).area);
-  const withArea = areas.filter((a) => a != null);
+const AREA_WIDTHS: Record<ColumnArea, string> = {
+  left: "320px",
+  main: "1fr",
+  right: "280px",
+};
 
-  if (withArea.length === 0) return "position";
-  if (withArea.length !== areas.length) {
-    console.warn(
-      "Layout: `area` prop must be specified on all Layout.Column children or none. " +
-        "Falling back to position-based layout.",
-    );
-    return "position";
-  }
-
-  const uniqueAreas = new Set(withArea);
-  if (uniqueAreas.size !== withArea.length) {
-    console.warn("Layout: Duplicate `area` values found. Falling back to position-based layout.");
-    return "position";
-  }
-
-  return "area";
-}
+const POSITION_TEMPLATES: Record<number, string> = {
+  2: "1fr 280px",
+  3: "320px 1fr 280px",
+};
 
 /**
- * Returns the Tailwind width class for a given column area and column count.
- * Uses `xl:` breakpoint for 3-column layouts, `lg:` for 2-column.
- */
-function getAreaWidthClass(area: ColumnArea, columnCount: number): string {
-  if (columnCount === 3) {
-    switch (area) {
-      case "left":
-        return "astw:xl:w-[320px] astw:xl:shrink-0";
-      case "main":
-        return "astw:xl:flex-1";
-      case "right":
-        return "astw:xl:w-[280px] astw:xl:shrink-0";
-    }
-  }
-  switch (area) {
-    case "left":
-      return "astw:lg:w-[320px] astw:lg:shrink-0";
-    case "main":
-      return "astw:lg:flex-1";
-    case "right":
-      return "astw:lg:w-[280px] astw:lg:shrink-0";
-  }
-}
-
-/**
- * Applies responsive width classes to column children based on column count
- * and area/position mode. Returns a new array of cloned elements with the
- * appropriate `className` merged in.
- */
-function applyColumnStyles(
-  effectiveColumns: React.ReactElement[],
-  columnCount: number,
-  areaMode: "position" | "area",
-): React.ReactElement[] {
-  if (columnCount === 1) {
-    return effectiveColumns;
-  }
-
-  // Position-based: map index to an implicit area role
-  const POSITION_TO_AREA: Record<number, ColumnArea[]> = {
-    2: ["main", "right"],
-    3: ["left", "main", "right"],
-  };
-
-  return effectiveColumns.map((child, index) => {
-    const area =
-      areaMode === "area"
-        ? (child.props as ColumnProps).area!
-        : POSITION_TO_AREA[columnCount]?.[index];
-    if (!area) return child;
-    return React.cloneElement(child, {
-      key: child.key ?? index,
-      className: cn((child.props as ColumnProps).className, getAreaWidthClass(area, columnCount)),
-    } as Partial<ColumnProps>);
-  });
-}
-
-/**
- * Layout - Responsive column layout component
+ * Layout – Responsive grid layout component
  *
- * Automatically handles responsive behavior for 1, 2, or 3 column layouts.
- * Uses flexbox with viewport breakpoints for simple, CSS-only responsive behavior.
+ * Uses CSS Grid for responsive column layouts. On mobile, all columns
+ * stack vertically (`grid-cols-1`). At `lg` (2-column) or `xl` (3+ column)
+ * breakpoints, columns display side by side with widths determined by
+ * position or the `area` prop on each `Layout.Column`.
+ *
+ * ### Child filtering
  *
  * Only `Layout.Header` and `Layout.Column` are recognized as children;
  * any other elements are silently ignored and will not be rendered.
- * If multiple `Layout.Header` children are provided, only the first one is rendered.
+ * If multiple `Layout.Header` children are provided, only the first one
+ * is rendered.
  *
- * ### Warnings
+ * ### Grid template
  *
- * The following conditions emit a `console.warn`:
- *
- * - **More than 3 `Layout.Column` children** — only the first 3 are rendered.
- * - **Deprecated `columns` prop mismatch** — when the explicit `columns`
- *   value differs from the actual `Layout.Column` count.
- * - **Partial `area` specification** — `area` must be set on all columns or
- *   none; a mix falls back to position-based layout.
- * - **Duplicate `area` values** — each column must have a unique area; falls
- *   back to position-based layout.
+ * Column widths are controlled via a `--layout-cols` CSS custom property
+ * set on the root `<div>`, consumed by `grid-cols-[var(--layout-cols)]`.
+ * The value is computed from position (see `Layout.Column`) or `area` props.
+ * For a single column, no custom property is set and the grid remains
+ * `grid-cols-1`.
  *
  * @example
  * ```tsx
@@ -236,43 +198,49 @@ function applyColumnStyles(
  * </Layout>
  * ```
  */
-export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
-  // Parse children into header and column children
-  let headerChild: React.ReactElement | null = null;
-  const columnChildren: React.ReactElement[] = [];
+export function Layout({
+  columns,
+  className,
+  gap,
+  title,
+  actions,
+  children,
+}: LayoutProps) {
+  let columnCount = 0;
+  let hasHeaderChild = false;
+  const areas: (ColumnArea | undefined)[] = [];
+
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
     if (child.type === Header) {
-      if (!headerChild) headerChild = child;
+      hasHeaderChild = true;
     } else if (child.type === Column) {
-      columnChildren.push(child);
+      columnCount++;
+      areas.push((child.props as ColumnProps).area);
     }
   });
 
-  // Enforce max 3 columns
-  if (columnChildren.length > 3) {
-    console.warn(
-      `Layout: Maximum of 3 Layout.Column children supported. Found ${columnChildren.length}. Only the first 3 will be rendered.`,
-    );
-  }
-  const effectiveColumns = columnChildren.slice(0, 3);
+  const effectiveColumnCount = columns ?? columnCount;
 
-  // Determine column count: explicit prop (deprecated) or auto-detect.
-  // May be 0 when no Layout.Column children exist; applyColumnStyles returns []
-  // and the inner container renders as an empty flex div.
-  const columnCount = columns ?? effectiveColumns.length;
-
-  if (columns !== undefined && columns !== effectiveColumns.length) {
+  if (columns !== undefined && columns !== columnCount) {
     console.warn(
-      `Layout: \`columns\` prop (${columns}) does not match Layout.Column child count (${effectiveColumns.length}). ` +
+      `Layout: \`columns\` prop (${columns}) does not match Layout.Column child count (${columnCount}). ` +
         "The `columns` prop is deprecated; remove it to use auto-detection.",
     );
   }
 
-  // Determine area mode
-  const areaMode = validateAreas(effectiveColumns);
+  const hasAreas = areas.some((a) => a != null);
+  let gridTemplate: string | undefined;
+  if (effectiveColumnCount >= 2) {
+    if (hasAreas) {
+      gridTemplate = areas.map((a) => (a ? AREA_WIDTHS[a] : "1fr")).join(" ");
+    } else {
+      gridTemplate =
+        POSITION_TEMPLATES[effectiveColumnCount] ??
+        `repeat(${effectiveColumnCount}, 1fr)`;
+    }
+  }
 
-  // Gap mapping: 4 = gap-4 (16px), 6 = gap-6 (24px), 8 = gap-8 (32px)
   const gapClass =
     gap === undefined
       ? "astw:gap-4"
@@ -284,34 +252,52 @@ export function Layout({ columns, className, gap, title, actions, children }: La
             ? "astw:gap-8"
             : "astw:gap-4";
 
-  // Build flexbox classes based on column count
-  const containerClasses = cn(
-    "astw:flex astw:w-full",
-    gapClass,
-    columnCount === 1 && "astw:flex-col",
-    columnCount === 2 && ["astw:flex-col", "astw:lg:flex-row"],
-    columnCount === 3 && ["astw:flex-col", "astw:xl:flex-row"],
-    className,
-  );
+  const hasLegacyHeader =
+    !hasHeaderChild && (title || (actions != null && actions.length > 0));
 
-  // Apply width constraints to columns.
-  // No useMemo — the computation is trivial (mapping over at most 3 elements)
-  // and `effectiveColumns` is a new array ref every render (from .slice()),
-  // which would invalidate any memo anyway.
-  const childrenWithStyles = applyColumnStyles(effectiveColumns, columnCount, areaMode);
-
-  // Header: prefer Layout.Header child, fall back to title/actions props
-  const hasLegacyHeader = title || (actions != null && actions.length > 0);
+  // Filter to recognized children; only the first Layout.Header is kept
+  let headerSeen = false;
+  const filteredChildren = React.Children.toArray(children).filter((child) => {
+    if (!React.isValidElement(child)) return false;
+    if (child.type === Header) {
+      if (headerSeen) return false;
+      headerSeen = true;
+      return true;
+    }
+    return child.type === Column;
+  });
 
   return (
-    <div className="astw:flex astw:flex-col">
-      {headerChild}
-      {!headerChild && hasLegacyHeader && (
+    <div
+      className={cn(
+        "astw:grid astw:grid-cols-1 astw:w-full",
+        hasHeaderChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4",
+        gapClass,
+        "[&>[data-layout-header]]:astw:col-span-full",
+        effectiveColumnCount === 2 &&
+          gridTemplate &&
+          "astw:lg:grid-cols-[var(--layout-cols)]",
+        effectiveColumnCount >= 3 &&
+          gridTemplate &&
+          "astw:xl:grid-cols-[var(--layout-cols)]",
+        className,
+      )}
+      style={
+        gridTemplate
+          ? ({ "--layout-cols": gridTemplate } as React.CSSProperties)
+          : undefined
+      }
+    >
+      {hasLegacyHeader && (
         <header
-          className="astw:w-full astw:flex astw:justify-between astw:items-center"
-          style={{ paddingTop: "1rem", paddingBottom: "1rem" }}
+          data-layout-header=""
+          className="astw:w-full astw:flex astw:justify-between astw:items-center astw:pt-4"
         >
-          {title && <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{title}</h1>}
+          {title && (
+            <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">
+              {title}
+            </h1>
+          )}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -321,9 +307,7 @@ export function Layout({ columns, className, gap, title, actions, children }: La
           )}
         </header>
       )}
-      <div className={cn(headerChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4")}>
-        <div className={containerClasses}>{childrenWithStyles}</div>
-      </div>
+      {filteredChildren}
     </div>
   );
 }

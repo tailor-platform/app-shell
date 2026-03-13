@@ -743,40 +743,6 @@ const threeColumnLayoutResource = defineResource({
 // DEMO: Layout Slots (composition API)
 // ============================================================================
 
-const orderOverviewFields = [
-  { key: "docNumber", label: "PO Number", meta: { copyable: true } },
-  { key: "externalReference", label: "External Ref", meta: { copyable: true } },
-  { key: "supplierName", label: "Supplier" },
-  { type: "divider" as const },
-  {
-    key: "expectedDeliveryDate",
-    label: "Expected Delivery",
-    type: "date" as const,
-    meta: { dateFormat: "medium" as const },
-  },
-  {
-    key: "confirmedAt",
-    label: "Confirmed",
-    type: "date" as const,
-    meta: { dateFormat: "medium" as const },
-  },
-  {
-    key: "createdAt",
-    label: "Created",
-    type: "date" as const,
-    meta: { dateFormat: "relative" as const },
-  },
-  { key: "shipToLocation.name", label: "Warehouse" },
-  { type: "divider" as const },
-  {
-    key: "shipToLocation.address",
-    label: "Shipping Address",
-    type: "address" as const,
-    meta: { copyable: true },
-  },
-  { key: "note", label: "Notes", meta: { truncateLines: 3 } },
-];
-
 const layoutSlotsDemoResource = defineResource({
   path: "layout-patterns",
   meta: {

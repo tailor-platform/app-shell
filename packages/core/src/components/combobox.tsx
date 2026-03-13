@@ -307,6 +307,10 @@ interface UseCreatableReturnBase<T> {
   inputValue: string;
   /** Input change handler — pass to `Combobox.Root onInputValueChange` */
   onInputValueChange: (value: string) => void;
+  /** Converts item to display label — pass to `Combobox.Root itemToStringLabel` */
+  itemToStringLabel: (item: T) => string;
+  /** Converts item to form value — pass to `Combobox.Root itemToStringValue` */
+  itemToStringValue: (item: T) => string;
   /** Check if an item is the "create" sentinel */
   isCreateItem: (item: T) => boolean;
   /** Get the original input value from a sentinel item */
@@ -424,6 +428,26 @@ function useCreatable<T extends object>(
     [sentinel],
   );
 
+  const itemToStringLabelFn = useCallback(
+    (item: T): string => {
+      if (sentinel !== null && item === sentinel.item) {
+        return userFormatLabel(sentinel.label);
+      }
+      return getLabel(item);
+    },
+    [sentinel, getLabel, userFormatLabel],
+  );
+
+  const itemToStringValueFn = useCallback(
+    (item: T): string => {
+      if (sentinel !== null && item === sentinel.item) {
+        return "";
+      }
+      return getLabel(item);
+    },
+    [sentinel, getLabel],
+  );
+
   // --- Create logic (supports sync and deferred resolution via callback) ---
   const performCreate = useCallback(
     (value: string, baseMultiValue?: T[]) => {
@@ -515,6 +539,8 @@ function useCreatable<T extends object>(
     items: augmentedItems,
     inputValue: query,
     onInputValueChange: setQuery,
+    itemToStringLabel: itemToStringLabelFn,
+    itemToStringValue: itemToStringValueFn,
     isCreateItem,
     getCreateLabel: getCreateLabelFn,
     formatCreateLabel: userFormatLabel,

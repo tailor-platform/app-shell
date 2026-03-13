@@ -85,10 +85,7 @@ export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Checkbox } from "./components/checkbox";
 export { Collapsible } from "./components/collapsible";
 export { Combobox } from "./components/combobox";
-export {
-  DescriptionCard,
-  type DescriptionCardProps,
-} from "./components/description-card";
+export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export { Dialog } from "./components/dialog";
 export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";

@@ -28,6 +28,12 @@ const HomePage = () => {
         >
           → Go to Settings
         </Link>
+        <Link
+          to={paths.for("/components")}
+          style={{ color: "hsl(var(--primary))", textDecoration: "underline" }}
+        >
+          → Component Showcase
+        </Link>
       </div>
     </div>
   );

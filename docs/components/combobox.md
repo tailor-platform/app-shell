@@ -142,7 +142,7 @@ const creatable = Combobox.useCreatable({
 | ------------------- | ------------------------------------- | ------------------------------------------------------------------- |
 | `items`             | `T[]`                                 | Current items list                                                  |
 | `getLabel`          | `(item: T) => string`                 | Extract display label from an item                                  |
-| `createItem`        | `(value: string) => T`               | Factory to create a new item from user input                        |
+| `createItem`        | `(value: string) => T`                | Factory to create a new item from user input                        |
 | `multiple`          | `boolean`                             | Enable multi-select mode (default: `false`)                         |
 | `defaultValue`      | `T \| T[] \| null`                    | Initial selected value                                              |
 | `onValueChange`     | `(value) => void`                     | Called when selection changes                                       |

@@ -108,7 +108,7 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
   return (
     <div
       className={cn(
-        "astw:min-w-[320px] astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:shadow-xs",
+        "astw:min-w-[278px] astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:shadow-xs",
         className,
       )}
     >

@@ -9,14 +9,25 @@ import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./
  * The parent `<Layout>` automatically sizes columns based on the number of
  * children and, optionally, the `area` prop.
  *
- * **Area mode** — Give every column an `area` prop to opt into role-based
- * widths instead of position-based widths:
+ * ### Position-based mode (default)
  *
- * | area     | width          |
- * | -------- | -------------- |
- * | `"left"`  | fixed 320 px   |
- * | `"main"`  | flexible (1fr) |
- * | `"right"` | fixed 280 px   |
+ * When no `area` prop is provided, columns are sized by their DOM position:
+ *
+ * - **2-column:** 1st = flexible, 2nd = fixed 280 px
+ * - **3-column:** 1st = fixed 320 px, 2nd = flexible, 3rd = fixed 280 px
+ *
+ * ### Area mode
+ *
+ * Give **every** column an `area` prop to opt into role-based widths.
+ * Each `area` value controls only the **width** of the column — visual
+ * ordering always follows DOM order, so place your columns in the
+ * intended left-to-right sequence.
+ *
+ * | area      | width             |
+ * | --------- | ----------------- |
+ * | `"left"`  | fixed 320 px      |
+ * | `"main"`  | flexible (fills)  |
+ * | `"right"` | fixed 280 px      |
  *
  * @example
  * ```tsx
@@ -107,8 +118,6 @@ Header.displayName = "Layout.Header";
  * Returns `"area"` if all columns have valid, unique area values;
  * otherwise falls back to `"position"` mode with a console warning.
  */
-const VALID_AREAS: ColumnArea[] = ["left", "main", "right"];
-
 function validateAreas(columnChildren: React.ReactElement[]): "position" | "area" {
   const areas = columnChildren.map((child) => (child.props as ColumnProps).area);
   const withArea = areas.filter((a) => a != null);
@@ -128,16 +137,6 @@ function validateAreas(columnChildren: React.ReactElement[]): "position" | "area
     return "position";
   }
 
-  for (const area of withArea) {
-    if (!VALID_AREAS.includes(area!)) {
-      console.warn(
-        `Layout: Invalid area "${area}". Valid values: "left", "main", "right". ` +
-          "Falling back to position-based layout.",
-      );
-      return "position";
-    }
-  }
-
   return "area";
 }
 
@@ -149,20 +148,20 @@ function getAreaWidthClass(area: ColumnArea, columnCount: number): string {
   if (columnCount === 3) {
     switch (area) {
       case "left":
-        return "astw:xl:min-w-[320px]";
+        return "astw:xl:w-[320px] astw:xl:shrink-0";
       case "main":
         return "astw:xl:flex-1";
       case "right":
-        return "astw:xl:min-w-[280px]";
+        return "astw:xl:w-[280px] astw:xl:shrink-0";
     }
   }
   switch (area) {
     case "left":
-      return "astw:lg:min-w-[320px]";
+      return "astw:lg:w-[320px] astw:lg:shrink-0";
     case "main":
       return "astw:lg:flex-1";
     case "right":
-      return "astw:lg:min-w-[280px]";
+      return "astw:lg:w-[280px] astw:lg:shrink-0";
   }
 }
 
@@ -180,46 +179,23 @@ function applyColumnStyles(
     return effectiveColumns;
   }
 
-  if (areaMode === "area") {
-    return effectiveColumns.map((child, index) => {
-      const area = (child.props as ColumnProps).area!;
-      return React.cloneElement(child, {
-        key: child.key ?? index,
-        className: cn((child.props as ColumnProps).className, getAreaWidthClass(area, columnCount)),
-      } as Partial<ColumnProps>);
-    });
-  }
+  // Position-based: map index to an implicit area role
+  const POSITION_TO_AREA: Record<number, ColumnArea[]> = {
+    2: ["main", "right"],
+    3: ["left", "main", "right"],
+  };
 
-  // Position-based (default)
-  if (columnCount === 2) {
-    return effectiveColumns.map((child, index) => {
-      return React.cloneElement(child, {
-        key: child.key ?? index,
-        className: cn(
-          (child.props as ColumnProps).className,
-          index === 0 ? "astw:lg:flex-1" : "astw:lg:min-w-[280px]",
-        ),
-      } as Partial<ColumnProps>);
-    });
-  }
-
-  if (columnCount === 3) {
-    return effectiveColumns.map((child, index) => {
-      return React.cloneElement(child, {
-        key: child.key ?? index,
-        className: cn(
-          (child.props as ColumnProps).className,
-          index === 0
-            ? "astw:xl:min-w-[320px]"
-            : index === 2
-              ? "astw:xl:min-w-[280px]"
-              : "astw:xl:flex-1",
-        ),
-      } as Partial<ColumnProps>);
-    });
-  }
-
-  return effectiveColumns;
+  return effectiveColumns.map((child, index) => {
+    const area =
+      areaMode === "area"
+        ? (child.props as ColumnProps).area!
+        : POSITION_TO_AREA[columnCount]?.[index];
+    if (!area) return child;
+    return React.cloneElement(child, {
+      key: child.key ?? index,
+      className: cn((child.props as ColumnProps).className, getAreaWidthClass(area, columnCount)),
+    } as Partial<ColumnProps>);
+  });
 }
 
 /**
@@ -227,6 +203,22 @@ function applyColumnStyles(
  *
  * Automatically handles responsive behavior for 1, 2, or 3 column layouts.
  * Uses flexbox with viewport breakpoints for simple, CSS-only responsive behavior.
+ *
+ * Only `Layout.Header` and `Layout.Column` are recognized as children;
+ * any other elements are silently ignored and will not be rendered.
+ * If multiple `Layout.Header` children are provided, only the first one is rendered.
+ *
+ * ### Warnings
+ *
+ * The following conditions emit a `console.warn`:
+ *
+ * - **More than 3 `Layout.Column` children** — only the first 3 are rendered.
+ * - **Deprecated `columns` prop mismatch** — when the explicit `columns`
+ *   value differs from the actual `Layout.Column` count.
+ * - **Partial `area` specification** — `area` must be set on all columns or
+ *   none; a mix falls back to position-based layout.
+ * - **Duplicate `area` values** — each column must have a unique area; falls
+ *   back to position-based layout.
  *
  * @example
  * ```tsx
@@ -246,30 +238,14 @@ function applyColumnStyles(
  */
 export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
   // Parse children into header and column children
-  const headerChild: React.ReactElement | null = (() => {
-    let found: React.ReactElement | null = null;
-    let headerCount = 0;
-    React.Children.forEach(children, (child) => {
-      if (React.isValidElement(child) && child.type === Header) {
-        headerCount++;
-        if (!found) found = child;
-      }
-    });
-    if (headerCount > 1) {
-      console.warn("Layout: Only one Layout.Header is allowed. Extra headers will be ignored.");
-    }
-    return found;
-  })();
-
+  let headerChild: React.ReactElement | null = null;
   const columnChildren: React.ReactElement[] = [];
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
-    if (child.type === Column) {
+    if (child.type === Header) {
+      if (!headerChild) headerChild = child;
+    } else if (child.type === Column) {
       columnChildren.push(child);
-    } else if (child.type !== Header) {
-      console.warn(
-        "Layout: Unsupported child type detected. Only Layout.Header and Layout.Column are allowed as children.",
-      );
     }
   });
 

@@ -176,7 +176,7 @@ describe("Layout", () => {
     warnSpy.mockRestore();
   });
 
-  it("warns when unsupported children are provided", () => {
+  it("silently ignores unsupported children", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(
       <Layout>
@@ -184,7 +184,7 @@ describe("Layout", () => {
         <Layout.Column>Content</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Unsupported child type"));
+    expect(warnSpy).not.toHaveBeenCalled();
     expect(screen.getByText("Content")).toBeDefined();
     warnSpy.mockRestore();
   });

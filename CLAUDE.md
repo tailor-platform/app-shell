@@ -162,6 +162,35 @@ export { ComponentName, type ComponentNameProps } from "./components/component-n
 // - Metadata types (FieldMeta, etc.)
 ```
 
+### 5. Namespace-Object Pattern for Compound Components
+
+For compound components with multiple sub-components (e.g., Dialog, Sheet, Tooltip, Table), use the namespace-object export pattern:
+
+```typescript
+// dialog.tsx
+export const Dialog = {
+  Root,
+  Content,
+  Trigger,
+  Title,
+  Description,
+  // ...
+};
+
+// index.ts
+export { Dialog } from "./components/dialog";
+
+// Consumer usage:
+// <Dialog.Root>
+//   <Dialog.Trigger>Open</Dialog.Trigger>
+//   <Dialog.Content>...</Dialog.Content>
+// </Dialog.Root>
+```
+
+- **DO**: Group related sub-components into a single namespace object
+- **DON'T**: Export individual sub-components as separate named exports (e.g., `DialogRoot`, `DialogContent`)
+- **Rationale**: Provides clear component hierarchy, better discoverability via IDE autocomplete, and mirrors the underlying Base UI API pattern
+
 ## Component Styling Guidelines
 
 When developing or modifying AppShell components, follow these rules to maintain consistency and best practices:

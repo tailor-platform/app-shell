@@ -2,7 +2,28 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+/**
+ * The root table element with a horizontally scrollable container.
+ *
+ * @example
+ * ```tsx
+ * <Table.Root>
+ *   <Table.Header>
+ *     <Table.Row>
+ *       <Table.Head>Name</Table.Head>
+ *       <Table.Head>Status</Table.Head>
+ *     </Table.Row>
+ *   </Table.Header>
+ *   <Table.Body>
+ *     <Table.Row>
+ *       <Table.Cell>Item 1</Table.Cell>
+ *       <Table.Cell>Active</Table.Cell>
+ *     </Table.Row>
+ *   </Table.Body>
+ * </Table.Root>
+ * ```
+ */
+function Root({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div data-slot="table-container" className="astw:relative astw:w-full astw:overflow-x-auto">
       <table
@@ -13,14 +34,18 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     </div>
   );
 }
+Root.displayName = "Table.Root";
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+/** The table header section (`<thead>`). */
+function Header({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead data-slot="table-header" className={cn("astw:[&_tr]:border-b", className)} {...props} />
   );
 }
+Header.displayName = "Table.Header";
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+/** The table body section (`<tbody>`). */
+function Body({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
@@ -29,8 +54,10 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
     />
   );
 }
+Body.displayName = "Table.Body";
 
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
+/** The table footer section (`<tfoot>`). */
+function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       data-slot="table-footer"
@@ -42,8 +69,10 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     />
   );
 }
+Footer.displayName = "Table.Footer";
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+/** A table row (`<tr>`). */
+function Row({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
@@ -55,8 +84,10 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     />
   );
 }
+Row.displayName = "Table.Row";
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+/** A table header cell (`<th>`). */
+function Head({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
@@ -68,8 +99,10 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     />
   );
 }
+Head.displayName = "Table.Head";
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+/** A table data cell (`<td>`). */
+function Cell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       data-slot="table-cell"
@@ -81,8 +114,10 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     />
   );
 }
+Cell.displayName = "Table.Cell";
 
-function TableCaption({ className, ...props }: React.ComponentProps<"caption">) {
+/** A table caption element. */
+function Caption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption
       data-slot="table-caption"
@@ -91,5 +126,6 @@ function TableCaption({ className, ...props }: React.ComponentProps<"caption">) 
     />
   );
 }
+Caption.displayName = "Table.Caption";
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+export const Table = { Root, Header, Body, Footer, Row, Head, Cell, Caption };

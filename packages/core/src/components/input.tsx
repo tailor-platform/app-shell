@@ -2,7 +2,20 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+type InputProps = React.ComponentProps<"input">;
+
+/**
+ * A styled input component.
+ *
+ * @example
+ * ```tsx
+ * import { Input } from "@tailor-platform/app-shell";
+ *
+ * <Input type="text" placeholder="Enter your name" />
+ * <Input type="email" disabled />
+ * ```
+ */
+function Input({ className, type, ...props }: InputProps) {
   return (
     <input
       type={type}
@@ -18,4 +31,4 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   );
 }
 
-export { Input };
+export { Input, type InputProps };

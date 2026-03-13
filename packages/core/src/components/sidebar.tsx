@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Separator } from "@/components/separator";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/tooltip";
+import { Sheet } from "@/components/sheet";
+import { Tooltip } from "@/components/tooltip";
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -137,7 +137,7 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={0}>
+      <Tooltip.Provider delayDuration={0}>
         <div
           data-slot="sidebar-wrapper"
           style={
@@ -155,7 +155,7 @@ function SidebarProvider({
         >
           {children}
         </div>
-      </TooltipProvider>
+      </Tooltip.Provider>
     </SidebarContext.Provider>
   );
 }
@@ -192,8 +192,8 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
+      <Sheet.Root open={openMobile} onOpenChange={setOpenMobile} side={side} {...props}>
+        <Sheet.Content
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
@@ -203,15 +203,14 @@ function Sidebar({
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
             } as React.CSSProperties
           }
-          side={side}
         >
-          <SheetHeader className="astw:sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+          <Sheet.Header className="astw:sr-only">
+            <Sheet.Title>Sidebar</Sheet.Title>
+            <Sheet.Description>Displays the mobile sidebar.</Sheet.Description>
+          </Sheet.Header>
+          <div className="astw:flex astw:h-full astw:w-full astw:flex-col">{children}</div>
+        </Sheet.Content>
+      </Sheet.Root>
     );
   }
 
@@ -258,8 +257,8 @@ function Sidebar({
           </div>
         </div>
         {/* Overlay sidebar when opened */}
-        <Sheet open={openIconMode} onOpenChange={setOpenIconMode} {...props}>
-          <SheetContent
+        <Sheet.Root open={openIconMode} onOpenChange={setOpenIconMode} side={side} {...props}>
+          <Sheet.Content
             data-sidebar="sidebar"
             data-slot="sidebar-overlay"
             data-icon-mode="true"
@@ -269,15 +268,14 @@ function Sidebar({
                 "--sidebar-width": SIDEBAR_WIDTH,
               } as React.CSSProperties
             }
-            side={side}
           >
-            <SheetHeader className="astw:sr-only">
-              <SheetTitle>Sidebar</SheetTitle>
-              <SheetDescription>Displays the sidebar overlay.</SheetDescription>
-            </SheetHeader>
-            <div className="flex h-full w-full flex-col">{children}</div>
-          </SheetContent>
-        </Sheet>
+            <Sheet.Header className="astw:sr-only">
+              <Sheet.Title>Sidebar</Sheet.Title>
+              <Sheet.Description>Displays the sidebar overlay.</Sheet.Description>
+            </Sheet.Header>
+            <div className="astw:flex astw:h-full astw:w-full astw:flex-col">{children}</div>
+          </Sheet.Content>
+        </Sheet.Root>
       </>
     );
   }
@@ -575,13 +573,27 @@ function SidebarMenuButton({
   tooltip,
   className,
   children,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> & {
   render?: React.ReactElement;
   isActive?: boolean;
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+  tooltip?: string | React.ComponentProps<typeof Tooltip.Content>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state } = useSidebar();
+  const { isMobile, state, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
+      if (event.defaultPrevented) return;
+      if (isMobile) {
+        setOpenMobile(false);
+      } else if (openIconMode) {
+        setOpenIconMode(false);
+      }
+    },
+    [onClick, isMobile, setOpenMobile, openIconMode, setOpenIconMode],
+  );
 
   const button = useRender({
     defaultTagName: "button",
@@ -592,6 +604,7 @@ function SidebarMenuButton({
       "data-size": size,
       "data-active": isActive,
       className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+      onClick: handleClick,
       children,
       ...props,
     },
@@ -608,15 +621,15 @@ function SidebarMenuButton({
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger render={button} />
-      <TooltipContent
+    <Tooltip.Root>
+      <Tooltip.Trigger render={button} />
+      <Tooltip.Content
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
         {...tooltip}
       />
-    </Tooltip>
+    </Tooltip.Root>
   );
 }
 
@@ -705,12 +718,28 @@ function SidebarMenuSubButton({
   isActive = false,
   className,
   children,
+  onClick,
   ...props
 }: React.ComponentProps<"a"> & {
   render?: React.ReactElement;
   size?: "sm" | "md";
   isActive?: boolean;
 }) {
+  const { isMobile, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      onClick?.(event);
+      if (event.defaultPrevented) return;
+      if (isMobile) {
+        setOpenMobile(false);
+      } else if (openIconMode) {
+        setOpenIconMode(false);
+      }
+    },
+    [onClick, isMobile, setOpenMobile, openIconMode, setOpenIconMode],
+  );
+
   return useRender({
     defaultTagName: "a",
     render,
@@ -719,6 +748,7 @@ function SidebarMenuSubButton({
       "data-sidebar": "menu-sub-button",
       "data-size": size,
       "data-active": isActive,
+      onClick: handleClick,
       className: cn(
         "astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:[&>svg]:text-sidebar-accent-foreground astw:flex astw:h-7 astw:min-w-0 astw:-translate-x-px astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:px-2 astw:outline-hidden astw:focus-visible:ring-2 astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:text-sidebar-accent-foreground",

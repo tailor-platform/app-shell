@@ -14,7 +14,7 @@ export type NavItem = {
 
 export type NavItemResource = {
   title: string;
-  url: string;
+  url?: string;
   items?: Array<NavItemResource>;
 };
 
@@ -102,16 +102,22 @@ const filterVisibleResources = async (
 
       const resourcePath = `${basePath}/${resource.path}`;
       const resourceTitle = resolveTitle(resource.meta.title, resource.path);
+      const hasComponent = resource.component !== undefined;
 
       // Recursively process subResources
       const subItems = resource.subResources
         ? await filterVisibleResources(resource.subResources, resourcePath, resolveTitle)
         : undefined;
 
+      const hasVisibleSubItems = subItems && subItems.length > 0;
+
+      // Componentless resources without sub-resources are dead-end namespaces
+      if (!hasComponent && !hasVisibleSubItems) return null;
+
       return {
         title: resourceTitle,
-        url: resourcePath,
-        items: subItems && subItems.length > 0 ? subItems : undefined,
+        url: hasComponent ? resourcePath : undefined,
+        items: hasVisibleSubItems ? subItems : undefined,
       };
     }),
   );

@@ -180,13 +180,14 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
               {!!item.items?.length && (
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        {subItem.url ? (
+                    {item.items
+                      ?.filter((subItem) => subItem.url)
+                      .map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
                             render={
                               <Link
-                                to={subItem.url}
+                                to={subItem.url!}
                                 className={
                                   subItem.url === props.currentPath
                                     ? "astw:bg-sidebar-accent astw:font-medium"
@@ -197,13 +198,8 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                           >
                             <span>{subItem.title}</span>
                           </SidebarMenuSubButton>
-                        ) : (
-                          <SidebarMenuSubButton render={<span className="astw:flex astw:w-full" />}>
-                            <span>{subItem.title}</span>
-                          </SidebarMenuSubButton>
-                        )}
-                      </SidebarMenuSubItem>
-                    ))}
+                        </SidebarMenuSubItem>
+                      ))}
                   </SidebarMenuSub>
                 </CollapsibleContent>
               )}

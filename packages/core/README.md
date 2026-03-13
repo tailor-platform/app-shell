@@ -22,5 +22,5 @@ We've made sensible default choices so you can focus on what matters most — bu
 
 ## Documentation
 
+- [Introduction](https://github.com/tailor-platform/app-shell/blob/main/docs/introduction.md) — What is AppShell and why use it
 - [Quick Start](https://github.com/tailor-platform/app-shell/blob/main/docs/quickstart.md) — Installation, setup, and first steps
-- [API Reference](https://github.com/tailor-platform/app-shell/blob/main/docs/api.md) — Complete reference for all components, hooks, and functions

@@ -74,7 +74,7 @@ The current `Layout` component requires a `columns` prop that must exactly match
 | 1            | Always stacked vertically                  | Full width                                   |
 | 2            | < 1024px: stacked / ≥ 1024px: side-by-side | 1st flex-1, 2nd fixed 280px                  |
 | 3            | < 1280px: stacked / ≥ 1280px: side-by-side | 1st fixed 320px, 2nd flex-1, 3rd fixed 280px |
-| 4+           | < 1280px: stacked / ≥ 1280px: side-by-side | All columns equal width (`repeat(N, 1fr)`)    |
+| 4+           | < 1280px: stacked / ≥ 1280px: side-by-side | All columns equal width (`repeat(N, 1fr)`)   |
 
 ### Area-based (with `area` prop)
 

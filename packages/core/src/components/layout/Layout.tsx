@@ -182,20 +182,19 @@ const POSITION_TEMPLATES: Record<number, string> = {
  * ```
  */
 export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
-  let columnCount = 0;
-  let hasHeaderChild = false;
   const areas: (ColumnArea | undefined)[] = [];
+  let hasHeaderChild = false;
 
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
     if (child.type === Header) {
       hasHeaderChild = true;
     } else if (child.type === Column) {
-      columnCount++;
       areas.push((child.props as ColumnProps).area);
     }
   });
 
+  const columnCount = areas.length;
   const effectiveColumnCount = columns ?? columnCount;
 
   if (columns !== undefined && columns !== columnCount) {
@@ -229,18 +228,6 @@ export function Layout({ columns, className, gap, title, actions, children }: La
 
   const hasLegacyHeader = !hasHeaderChild && (title || (actions != null && actions.length > 0));
 
-  // Filter to recognized children; only the first Layout.Header is kept
-  let headerSeen = false;
-  const filteredChildren = React.Children.toArray(children).filter((child) => {
-    if (!React.isValidElement(child)) return false;
-    if (child.type === Header) {
-      if (headerSeen) return false;
-      headerSeen = true;
-      return true;
-    }
-    return child.type === Column;
-  });
-
   return (
     <div
       className={cn(
@@ -269,7 +256,7 @@ export function Layout({ columns, className, gap, title, actions, children }: La
           )}
         </header>
       )}
-      {filteredChildren}
+      {children}
     </div>
   );
 }

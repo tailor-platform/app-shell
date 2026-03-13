@@ -149,18 +149,15 @@ describe("Layout", () => {
     warnSpy.mockRestore();
   });
 
-  it("silently ignores unsupported children", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("renders unsupported children as-is", () => {
     render(
       <Layout>
-        <div>Rogue element</div>
+        <div>Extra element</div>
         <Layout.Column>Content</Layout.Column>
       </Layout>,
     );
-    expect(warnSpy).not.toHaveBeenCalled();
     expect(screen.getByText("Content")).toBeDefined();
-    expect(screen.queryByText("Rogue element")).toBeNull();
-    warnSpy.mockRestore();
+    expect(screen.getByText("Extra element")).toBeDefined();
   });
 
   it("applies area-based grid template for 2-col layout", () => {
@@ -195,5 +192,19 @@ describe("Layout", () => {
     );
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("does not match"));
     warnSpy.mockRestore();
+  });
+
+  it("renders Layout.Header children below title row", () => {
+    render(
+      <Layout>
+        <Layout.Header title="Page">
+          <div>Tab Content</div>
+        </Layout.Header>
+        <Layout.Column>Body</Layout.Column>
+      </Layout>,
+    );
+    expect(screen.getByText("Page")).toBeDefined();
+    expect(screen.getByText("Tab Content")).toBeDefined();
+    expect(screen.getByText("Body")).toBeDefined();
   });
 });

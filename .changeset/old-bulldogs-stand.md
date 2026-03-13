@@ -24,7 +24,7 @@ The current `Layout` component requires a `columns` prop that must exactly match
 ```tsx
 // With Layout.Header (title, actions, and extra content such as tabs)
 <Layout className="gap-6">
-  <Layout.Header title="Edit" actions={<Button>Save</Button>}>
+  <Layout.Header title="Edit" actions={[<Button key="save">Save</Button>]}>
     <Tabs>...</Tabs>   {/* Renders below title/actions, above Columns */}
   </Layout.Header>
   <Layout.Column>Main content</Layout.Column>
@@ -56,7 +56,7 @@ The current `Layout` component requires a `columns` prop that must exactly match
 | Component       | Status   | Props                                                           |
 | --------------- | -------- | --------------------------------------------------------------- |
 | `Layout.Column` | Retained | `area?: "left" \| "main" \| "right"`, `className?`, `children?` |
-| `Layout.Header` | **New**  | `title?`, `actions?: ReactNode`, `children?: ReactNode`         |
+| `Layout.Header` | **New**  | `title?`, `actions?: ReactNode[]`, `children?: ReactNode`       |
 
 ## Children Rules
 

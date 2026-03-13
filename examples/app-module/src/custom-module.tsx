@@ -600,27 +600,27 @@ const twoColumnLayoutResource = defineResource({
       <Layout>
         <Layout.Header
           title="2 Columns"
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  alert("Secondary button clicked!");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  alert("Primary button clicked!");
-                }}
-              >
-                Action
-              </Button>
-            </>
-          }
+          actions={[
+            <Button
+              key="cancel"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                alert("Secondary button clicked!");
+              }}
+            >
+              Cancel
+            </Button>,
+            <Button
+              key="action"
+              size="sm"
+              onClick={() => {
+                alert("Primary button clicked!");
+              }}
+            >
+              Action
+            </Button>,
+          ]}
         />
         <Layout.Column>
           <DescriptionCard
@@ -793,11 +793,11 @@ const layoutSlotsDemoResource = defineResource({
       <Layout>
         <Layout.Header
           title="Layout Slots Demo"
-          actions={
-            <Button size="sm" onClick={() => alert("Action!")}>
+          actions={[
+            <Button key="action" size="sm" onClick={() => alert("Action!")}>
               Action
-            </Button>
-          }
+            </Button>,
+          ]}
         />
       </Layout>
 

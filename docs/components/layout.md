@@ -140,6 +140,24 @@ Left sidebar, main content, right sidebar:
 - Complex detail pages
 - Editor with navigation and preview
 
+### 4+ Columns
+
+When more than 3 `Layout.Column` children are provided, all columns share equal width:
+
+```tsx
+<Layout>
+  <Layout.Column>{/* 25% */}</Layout.Column>
+  <Layout.Column>{/* 25% */}</Layout.Column>
+  <Layout.Column>{/* 25% */}</Layout.Column>
+  <Layout.Column>{/* 25% */}</Layout.Column>
+</Layout>
+```
+
+**Responsive behavior:**
+
+- Mobile (< 1280px): Stacks vertically
+- Desktop (≥ 1280px): Equal-width columns (`repeat(N, 1fr)`)
+
 ## Header
 
 Use `Layout.Header` to add a page-level header with title, actions, and optional full-width content:
@@ -191,8 +209,9 @@ By default, column widths are determined by position (first, second, third). You
 | `"left"`  | Fixed 320px    |
 | `"main"`  | Flexible (1fr) |
 | `"right"` | Fixed 280px    |
+| _(unset)_ | Flexible (1fr) |
 
-All `Layout.Column` children must have an `area` prop, or none — mixing is not supported.
+If any `Layout.Column` has an `area` prop, all columns switch to area-based widths. Columns without an `area` default to flexible (`1fr`).
 
 ```tsx
 <Layout>
@@ -395,7 +414,7 @@ The Layout component automatically handles responsive breakpoints:
 
 ### Breakpoints
 
-| Screen Size               | 1 Column   | 2 Columns    | 3 Columns    |
+| Screen Size               | 1 Column   | 2 Columns    | 3+ Columns   |
 | ------------------------- | ---------- | ------------ | ------------ |
 | Mobile (< 1024px)         | Full width | Stacked      | Stacked      |
 | Desktop (1024px - 1280px) | Full width | Side-by-side | Stacked      |
@@ -414,14 +433,17 @@ The Layout component automatically handles responsive breakpoints:
 - Column 2: Flexible (takes remaining space)
 - Column 3: Fixed 280px
 
+**4+ Columns (Desktop):**
+
+- All columns: Equal width (`repeat(N, 1fr)`)
+
 ## Validation
 
 The Layout component validates its children:
 
-- Only `Layout.Header` and `Layout.Column` are allowed as direct children
-- Maximum of 3 `Layout.Column` children (extra columns are ignored with a warning)
-- When using `area` mode, all columns must have an `area` prop (or none)
-- Duplicate `area` values produce a warning and fall back to position-based layout
+- Only `Layout.Header` and `Layout.Column` are recognized as direct children; other elements are silently filtered out
+- If multiple `Layout.Header` children are provided, only the first one is rendered
+- When the deprecated `columns` prop is set and doesn't match the actual `Layout.Column` child count, a console warning is emitted
 
 ## Styling
 

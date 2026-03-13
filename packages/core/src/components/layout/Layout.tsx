@@ -132,7 +132,7 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
             </h1>
           )}
           {actions != null && actions.length > 0 && (
-            <div className="astw:flex astw:gap-2 astw:items-center">
+            <div className="astw:ml-auto astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
                 <React.Fragment key={i}>{action}</React.Fragment>
               ))}

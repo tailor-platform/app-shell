@@ -2,6 +2,27 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * The root table element with a horizontally scrollable container.
+ *
+ * @example
+ * ```tsx
+ * <Table.Root>
+ *   <Table.Header>
+ *     <Table.Row>
+ *       <Table.Head>Name</Table.Head>
+ *       <Table.Head>Status</Table.Head>
+ *     </Table.Row>
+ *   </Table.Header>
+ *   <Table.Body>
+ *     <Table.Row>
+ *       <Table.Cell>Item 1</Table.Cell>
+ *       <Table.Cell>Active</Table.Cell>
+ *     </Table.Row>
+ *   </Table.Body>
+ * </Table.Root>
+ * ```
+ */
 function Root({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div data-slot="table-container" className="astw:relative astw:w-full astw:overflow-x-auto">
@@ -13,13 +34,17 @@ function Root({ className, ...props }: React.ComponentProps<"table">) {
     </div>
   );
 }
+Root.displayName = "Table.Root";
 
+/** The table header section (`<thead>`). */
 function Header({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead data-slot="table-header" className={cn("astw:[&_tr]:border-b", className)} {...props} />
   );
 }
+Header.displayName = "Table.Header";
 
+/** The table body section (`<tbody>`). */
 function Body({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
@@ -29,7 +54,9 @@ function Body({ className, ...props }: React.ComponentProps<"tbody">) {
     />
   );
 }
+Body.displayName = "Table.Body";
 
+/** The table footer section (`<tfoot>`). */
 function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
@@ -42,7 +69,9 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
     />
   );
 }
+Footer.displayName = "Table.Footer";
 
+/** A table row (`<tr>`). */
 function Row({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
@@ -55,7 +84,9 @@ function Row({ className, ...props }: React.ComponentProps<"tr">) {
     />
   );
 }
+Row.displayName = "Table.Row";
 
+/** A table header cell (`<th>`). */
 function Head({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
@@ -68,7 +99,9 @@ function Head({ className, ...props }: React.ComponentProps<"th">) {
     />
   );
 }
+Head.displayName = "Table.Head";
 
+/** A table data cell (`<td>`). */
 function Cell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
@@ -81,7 +114,9 @@ function Cell({ className, ...props }: React.ComponentProps<"td">) {
     />
   );
 }
+Cell.displayName = "Table.Cell";
 
+/** A table caption element. */
 function Caption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption
@@ -91,5 +126,6 @@ function Caption({ className, ...props }: React.ComponentProps<"caption">) {
     />
   );
 }
+Caption.displayName = "Table.Caption";
 
 export const Table = { Root, Header, Body, Footer, Row, Head, Cell, Caption };

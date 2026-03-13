@@ -4,22 +4,60 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Root({ ...props }: React.ComponentProps<typeof BaseDialog.Root>) {
+// Only the props relevant to the Dialog abstraction are picked from BaseDialog.Root.
+// Base UI-internal props (e.g. dismissible, animated) are intentionally excluded
+// so that upstream changes don't leak as breaking changes to consumers.
+type DialogRootProps = Pick<
+  React.ComponentProps<typeof BaseDialog.Root>,
+  "open" | "defaultOpen" | "onOpenChange" | "modal"
+> & {
+  children: React.ReactNode;
+};
+
+/**
+ * The root component that manages dialog open/close state.
+ *
+ * @example
+ * ```tsx
+ * <Dialog.Root>
+ *   <Dialog.Trigger render={<Button />}>Open</Dialog.Trigger>
+ *   <Dialog.Content>
+ *     <Dialog.Header>
+ *       <Dialog.Title>Are you sure?</Dialog.Title>
+ *       <Dialog.Description>This action cannot be undone.</Dialog.Description>
+ *     </Dialog.Header>
+ *     <Dialog.Footer>
+ *       <Button variant="outline">Cancel</Button>
+ *       <Button>Confirm</Button>
+ *     </Dialog.Footer>
+ *   </Dialog.Content>
+ * </Dialog.Root>
+ * ```
+ */
+function Root({ ...props }: DialogRootProps) {
   return <BaseDialog.Root data-slot="dialog" {...props} />;
 }
+Root.displayName = "Dialog.Root";
 
+/** The element that opens the dialog when clicked. */
 function Trigger({ ...props }: React.ComponentProps<typeof BaseDialog.Trigger>) {
   return <BaseDialog.Trigger data-slot="dialog-trigger" {...props} />;
 }
+Trigger.displayName = "Dialog.Trigger";
 
+/** @internal Renders dialog content into a React portal. */
 function Portal({ ...props }: React.ComponentProps<typeof BaseDialog.Portal>) {
   return <BaseDialog.Portal data-slot="dialog-portal" {...props} />;
 }
+Portal.displayName = "Dialog.Portal";
 
+/** A button that closes the dialog. */
 function Close({ ...props }: React.ComponentProps<typeof BaseDialog.Close>) {
   return <BaseDialog.Close data-slot="dialog-close" {...props} />;
 }
+Close.displayName = "Dialog.Close";
 
+/** @internal The backdrop overlay that appears behind the dialog. */
 function Overlay({ className, ...props }: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
     <BaseDialog.Backdrop
@@ -32,7 +70,9 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof BaseDialog
     />
   );
 }
+Overlay.displayName = "Dialog.Overlay";
 
+/** The main dialog panel that contains the dialog content. Automatically includes a close button and overlay. */
 function Content({ className, children, ...props }: React.ComponentProps<typeof BaseDialog.Popup>) {
   return (
     <Portal data-slot="dialog-portal">
@@ -54,7 +94,9 @@ function Content({ className, children, ...props }: React.ComponentProps<typeof 
     </Portal>
   );
 }
+Content.displayName = "Dialog.Content";
 
+/** A layout wrapper for the dialog title and description. */
 function Header({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -67,7 +109,9 @@ function Header({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+Header.displayName = "Dialog.Header";
 
+/** A layout wrapper for dialog action buttons, typically placed at the bottom. */
 function Footer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -80,7 +124,9 @@ function Footer({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+Footer.displayName = "Dialog.Footer";
 
+/** The title of the dialog, announced by screen readers. */
 function Title({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
     <BaseDialog.Title
@@ -90,7 +136,9 @@ function Title({ className, ...props }: React.ComponentProps<typeof BaseDialog.T
     />
   );
 }
+Title.displayName = "Dialog.Title";
 
+/** A description that provides additional context for the dialog. */
 function Description({ className, ...props }: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
     <BaseDialog.Description
@@ -100,6 +148,7 @@ function Description({ className, ...props }: React.ComponentProps<typeof BaseDi
     />
   );
 }
+Description.displayName = "Dialog.Description";
 
 export const Dialog = {
   Root,
@@ -108,8 +157,6 @@ export const Dialog = {
   Description,
   Footer,
   Header,
-  Overlay,
-  Portal,
   Title,
   Trigger,
 };

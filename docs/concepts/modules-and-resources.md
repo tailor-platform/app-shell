@@ -10,7 +10,7 @@ AppShell renders sidebar navigation, breadcrumbs, and handles routing based on a
 Modules and Resources both share core interface. Of interest:
 
 - `path: string` - the path segment
-- `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional for modules - will auto-redirect to first resource if omitted)
+- `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional — omitting it causes the path to return a 404 while child routes remain accessible)
 - `guards?: Guard[]` - optional array of guard functions to control access based on permissions or feature flags
 
 A trivial `modules` example:
@@ -52,7 +52,7 @@ const appShellPropModule = [
       // ...
     ],
   }),
-  // Module without component - automatically redirects to first resource
+  // Module without component - /dashboard returns 404, child routes remain accessible
   defineModule({
     path: "dashboard",
     resources: [
@@ -99,7 +99,11 @@ Modules show as top-level menu items and resources are the sub-menu items. Sub-r
 
 In the example above, clicking the 'Orders' menu item above will take you to `/{basePath}/purchasing/orders` and render the OrdersPage page. If you browse, either by direct request or via client-side navigation to `/{basePath}/purchasing/orders/1234`, AppShell will render OrderDetailPage with 'id' available via useParams
 
-Providing a `component` for a Module is optional. If omitted, the module will automatically redirect to its first resource. This is useful for modules that serve as containers for multiple resources without needing their own landing page.
+Providing a `component` for a Module is optional. If omitted, navigating directly to the module path returns a 404 response while its child resources remain fully accessible. This is useful when a path segment exists solely to group child routes under a shared URL prefix with no landing page of its own.
+
+The same applies to resources: a `defineResource()` call without a `component` makes the resource path itself return 404 while its `subResources` remain accessible.
+
+Guards on component-less modules and resources execute correctly. For example, a `redirectTo()` guard will fire as expected. If all guards return `pass()`, the route falls back to a 404 (since there is no component to render).
 
 > Read more about [client-side navigation](./routing-and-navigation.md) in AppShell apps
 

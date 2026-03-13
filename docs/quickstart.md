@@ -56,10 +56,7 @@ Create `src/App.tsx`:
 
 ```tsx
 // src/App.tsx
-import {
-  AppShell,
-  SidebarLayout,
-} from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
 
 function App() {
   return (
@@ -153,11 +150,7 @@ Next.js does not support file-based routing with the Vite plugin. Use the module
 // app/dashboard/[[...props]]/page.tsx
 "use client";
 
-import {
-  AppShell,
-  SidebarLayout,
-  defineModule,
-} from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell";
 
 const dashboardModule = defineModule({
   path: "home",

@@ -3,15 +3,19 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
 
-/** Provides shared delay configuration for nested tooltips. */
-function Provider({
-  delayDuration = 0,
-  children,
-  ...props
-}: Omit<React.ComponentProps<typeof BaseTooltip.Provider>, "delay"> & {
+// Only the props relevant to the Provider abstraction are picked.
+// Base UI-internal props are intentionally excluded so that
+// upstream changes don't leak as breaking changes to consumers.
+type ProviderProps = Pick<
+  React.ComponentProps<typeof BaseTooltip.Provider>,
+  "closeDelay" | "timeout"
+> & {
   delayDuration?: number;
   children: React.ReactNode;
-}) {
+};
+
+/** Provides shared delay configuration for nested tooltips. */
+function Provider({ delayDuration = 0, children, ...props }: ProviderProps) {
   return (
     <BaseTooltip.Provider data-slot="tooltip-provider" delay={delayDuration} {...props}>
       {children}

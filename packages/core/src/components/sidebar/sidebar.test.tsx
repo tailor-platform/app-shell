@@ -265,8 +265,7 @@ describe("Mobile sidebar", () => {
     vi.restoreAllMocks();
   });
 
-  const renderMobileSidebar = (initialPath = "/") => {
-    // Mock useIsMobile to return true
+  const mockMobileViewport = () => {
     vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
       matches: query.includes("max-width"),
       media: query,
@@ -278,12 +277,11 @@ describe("Mobile sidebar", () => {
       dispatchEvent: vi.fn(),
     }));
 
-    // Mock innerWidth to mobile size
-    Object.defineProperty(window, "innerWidth", {
-      writable: true,
-      configurable: true,
-      value: 375,
-    });
+    vi.stubGlobal("innerWidth", 375);
+  };
+
+  const renderMobileSidebar = (sidebarContent: React.ReactNode, initialPath = "/") => {
+    mockMobileViewport();
 
     return render(
       <MemoryRouter initialEntries={[initialPath]}>
@@ -292,23 +290,7 @@ describe("Mobile sidebar", () => {
             <SidebarTrigger data-testid="mobile-trigger" />
             <Sidebar>
               <SidebarContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton render={<Link to="/dashboard" />} data-testid="menu-button">
-                      Dashboard
-                    </SidebarMenuButton>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          render={<Link to="/dashboard/overview" />}
-                          data-testid="sub-menu-button"
-                        >
-                          Overview
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </SidebarMenuItem>
-                </SidebarMenu>
+                <SidebarMenu>{sidebarContent}</SidebarMenu>
               </SidebarContent>
             </Sidebar>
           </SidebarProvider>
@@ -319,7 +301,13 @@ describe("Mobile sidebar", () => {
 
   it("opens when the trigger is clicked", async () => {
     const user = userEvent.setup();
-    renderMobileSidebar();
+    renderMobileSidebar(
+      <SidebarMenuItem>
+        <SidebarMenuButton render={<Link to="/dashboard" />} data-testid="menu-button">
+          Dashboard
+        </SidebarMenuButton>
+      </SidebarMenuItem>,
+    );
 
     // Open the mobile sidebar
     await user.click(screen.getByTestId("mobile-trigger"));
@@ -331,7 +319,13 @@ describe("Mobile sidebar", () => {
 
   it("closes when a menu item is clicked", async () => {
     const user = userEvent.setup();
-    renderMobileSidebar();
+    renderMobileSidebar(
+      <SidebarMenuItem>
+        <SidebarMenuButton render={<Link to="/dashboard" />} data-testid="menu-button">
+          Dashboard
+        </SidebarMenuButton>
+      </SidebarMenuItem>,
+    );
 
     // Open the mobile sidebar
     await user.click(screen.getByTestId("mobile-trigger"));
@@ -351,7 +345,21 @@ describe("Mobile sidebar", () => {
 
   it("closes when a sub menu item is clicked", async () => {
     const user = userEvent.setup();
-    renderMobileSidebar();
+    renderMobileSidebar(
+      <SidebarMenuItem>
+        <SidebarMenuButton render={<Link to="/dashboard" />}>Dashboard</SidebarMenuButton>
+        <SidebarMenuSub>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton
+              render={<Link to="/dashboard/overview" />}
+              data-testid="sub-menu-button"
+            >
+              Overview
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        </SidebarMenuSub>
+      </SidebarMenuItem>,
+    );
 
     // Open the mobile sidebar
     await user.click(screen.getByTestId("mobile-trigger"));
@@ -366,6 +374,31 @@ describe("Mobile sidebar", () => {
     // The sidebar should close
     await vi.waitFor(() => {
       expect(screen.queryByTestId("sub-menu-button")).toBeNull();
+    });
+  });
+
+  it("does NOT close when a collapsible group header is clicked", async () => {
+    const user = userEvent.setup();
+    renderMobileSidebar(
+      <SidebarGroup title="Group" defaultOpen={false}>
+        <SidebarItem title="Child" to="/child" />
+      </SidebarGroup>,
+    );
+
+    // Open the mobile sidebar
+    await user.click(screen.getByTestId("mobile-trigger"));
+
+    // The group header should be visible
+    const groupHeader = await screen.findByText("Group");
+    expect(groupHeader).toBeDefined();
+
+    // Click the collapsible group header to expand it
+    await user.click(groupHeader);
+
+    // The sidebar should remain open — the group header is NOT a navigation link
+    await vi.waitFor(() => {
+      expect(screen.queryByText("Group")).not.toBeNull();
+      expect(screen.queryByText("Child")).not.toBeNull();
     });
   });
 });

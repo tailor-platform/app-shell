@@ -113,6 +113,9 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
         <SidebarMenuButton
           render={<span className="astw:flex astw:w-full" />}
           tooltip={resolvedTitle}
+          // Prevent SidebarMenuButton's auto-close behavior so the mobile sidebar
+          // stays open when toggling a collapsible group.
+          onClick={(e) => e.preventDefault()}
         >
           {icon}
           <span>{resolvedTitle}</span>

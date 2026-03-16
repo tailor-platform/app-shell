@@ -164,6 +164,11 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                     <SidebarMenuButton
                       render={<span className="astw:flex astw:w-full" />}
                       tooltip={item.title}
+                      onClick={(e) =>
+                        // Prevent SidebarMenuButton's auto-close behavior so the mobile sidebar
+                        // stays open when toggling a collapsible group.
+                        e.preventDefault()
+                      }
                     >
                       {item.icon}
                       <span>{item.title}</span>

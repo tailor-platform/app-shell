@@ -64,47 +64,7 @@ pnpm dev
 
 ## Versioning & Publishing
 
-Uses changesets for version management.
-
-### Publishing Process
-
-1. Run `npx changeset` and follow the prompts (select "@tailor-platform/app-shell" as the package)
-2. Edit the new file created in `.changeset/` to describe your change (changeset will remove it when making its automatic PR; the description is saved in CHANGELOG.md and the GitHub Release)
-3. Open a PR to `main` from your feature branch
-4. Changeset will open a PR for the release — merging it publishes the new version to NPM
-
-### When to Create Changesets
-
-**DO create changesets for changes that affect end-users:**
-
-- New features (new components, hooks, utilities)
-- Bug fixes that change behavior
-- API changes (new props, changed function signatures)
-- Breaking changes
-- Performance improvements
-- Documentation that affects API usage
-
-**For API-level changes, include code examples in the changeset:**
-
-- Show minimal code examples demonstrating how to use the new API
-- For breaking changes, provide before/after examples showing how to migrate
-- Include usage examples for new components, hooks, or utilities
-
-**DO NOT create changesets for:**
-
-- Internal refactoring that doesn't change behavior
-- Removing unused dependencies
-- Build/dev tooling changes
-- Test-only changes
-- Code style/formatting changes
-- Internal type changes that don't affect public API
-
-Note, when ClaudeCode is authoring changes that require a changeset:
-
-1. See all changes in the current branch
-2. Create a new changeset markdown under `.changeset` with 2-3 lines of summary and code examples if needed
-
-Then prompt the user to proceed with publishing the change.
+**📋 For changeset creation procedures, see:** [Create Changeset Skill](./.agents/skills/create-changeset/SKILL.md)
 
 ## API Design Principles
 

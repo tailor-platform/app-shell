@@ -9,7 +9,7 @@ Review local code changes against the API design principles defined in this proj
 
 ## How to Obtain the Diff and PR Context
 
-First, find the PR for the current branch using GitHub MCP tools. If a PR exists, use MCP tools to gather the diff and review context. If no PR exists, fall back to terminal commands.
+First, find the PR for the current branch using GitHub MCP tools. If a PR exists, use MCP tools to gather the diff. If no PR exists, fall back to terminal commands.
 
 ### Step 1: Find the PR
 
@@ -17,12 +17,9 @@ Use `mcp_github_list_pull_requests` with the `head` parameter set to `"{owner}:{
 
 ### If a PR exists
 
-1. **Get the list of changed files**: Use `mcp_github_pull_request_read` with `method: "get_files"`. Focus only on files matching `packages/**/*.ts`, `packages/**/*.tsx`, and `packages/**/package.json`.
-2. **Get the full diff**: Use `mcp_github_pull_request_read` with `method: "get_diff"`.
-3. **Fetch existing PR comments**: Use `mcp_github_pull_request_read` with `method: "get_comments"` to see general discussion.
-4. **Fetch inline review comments on the diff**: Use `mcp_github_pull_request_read` with `method: "get_review_comments"` to see code-level review threads.
-
-Use these comments as background information to understand what has already been discussed, what concerns have been raised, and what decisions have been made. Avoid re-flagging issues that have already been resolved or acknowledged in the PR conversation.
+1. **Get the changed files with patches**: Use `mcp_github_pull_request_read` with `method: "get_files"`. This returns both the file list and per-file diffs (patches) — this is the **only diff data you need**. Immediately filter to files matching `packages/**/*.ts`, `packages/**/*.tsx`, and `packages/**/package.json`. If no files match, stop — there are no API-relevant changes.
+2. **Do NOT call `get_diff`** — it returns the same diff data already included in `get_files` and would duplicate context.
+3. **Do NOT fetch PR comments or review comments upfront.** Only fetch them (via `get_comments` or `get_review_comments`) if you encounter an ambiguous design decision during review that needs clarification from the PR discussion.
 
 ### If no PR exists (fallback)
 

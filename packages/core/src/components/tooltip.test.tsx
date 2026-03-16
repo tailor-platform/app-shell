@@ -42,7 +42,7 @@ describe("Tooltip", () => {
 
     it("tooltip with provider", () => {
       const { container } = render(
-        <Tooltip.Provider delayDuration={500}>
+        <Tooltip.Provider delay={500}>
           <Tooltip.Root>
             <Tooltip.Trigger>Hover me</Tooltip.Trigger>
             <Tooltip.Content>Tooltip text</Tooltip.Content>

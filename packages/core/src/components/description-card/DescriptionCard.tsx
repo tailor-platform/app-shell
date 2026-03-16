@@ -191,7 +191,7 @@ export function DescriptionCard({
   };
 
   return (
-    <Tooltip.Provider delayDuration={300}>
+    <Tooltip.Provider delay={300}>
       <div
         className={cn(
           "astw:@container astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",

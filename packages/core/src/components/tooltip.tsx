@@ -8,16 +8,15 @@ import { cn } from "@/lib/utils";
 // upstream changes don't leak as breaking changes to consumers.
 type ProviderProps = Pick<
   React.ComponentProps<typeof BaseTooltip.Provider>,
-  "closeDelay" | "timeout"
+  "delay" | "closeDelay" | "timeout"
 > & {
-  delayDuration?: number;
   children: React.ReactNode;
 };
 
 /** Provides shared delay configuration for nested tooltips. */
-function Provider({ delayDuration = 0, children, ...props }: ProviderProps) {
+function Provider({ delay = 0, children, ...props }: ProviderProps) {
   return (
-    <BaseTooltip.Provider data-slot="tooltip-provider" delay={delayDuration} {...props}>
+    <BaseTooltip.Provider data-slot="tooltip-provider" delay={delay} {...props}>
       {children}
     </BaseTooltip.Provider>
   );

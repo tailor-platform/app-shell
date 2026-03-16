@@ -8,6 +8,51 @@ afterEach(() => {
 });
 
 describe("Tooltip", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for tooltip variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed tooltip (trigger only)", () => {
+      const { container } = render(
+        <Tooltip.Root>
+          <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+          <Tooltip.Content>Tooltip text</Tooltip.Content>
+        </Tooltip.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open tooltip", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(
+        <Tooltip.Root>
+          <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
+          <Tooltip.Content>Helpful information</Tooltip.Content>
+        </Tooltip.Root>,
+      );
+
+      await user.hover(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        expect(screen.getByText("Helpful information")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("tooltip with provider", () => {
+      const { container } = render(
+        <Tooltip.Provider delayDuration={500}>
+          <Tooltip.Root>
+            <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+            <Tooltip.Content>Tooltip text</Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders trigger", () => {
     render(
       <Tooltip.Root>
@@ -26,7 +71,9 @@ describe("Tooltip", () => {
     render(
       <Tooltip.Root>
         <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
-        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
+        <Tooltip.Content data-testid="tooltip-content">
+          Tooltip text
+        </Tooltip.Content>
       </Tooltip.Root>,
     );
 
@@ -44,7 +91,9 @@ describe("Tooltip", () => {
     render(
       <Tooltip.Root>
         <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
-        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
+        <Tooltip.Content data-testid="tooltip-content">
+          Tooltip text
+        </Tooltip.Content>
       </Tooltip.Root>,
     );
 
@@ -67,7 +116,9 @@ describe("Tooltip", () => {
         <Tooltip.Trigger render={<button />} data-testid="trigger">
           Focus me
         </Tooltip.Trigger>
-        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
+        <Tooltip.Content data-testid="tooltip-content">
+          Tooltip text
+        </Tooltip.Content>
       </Tooltip.Root>,
     );
 

@@ -8,6 +8,68 @@ afterEach(() => {
 });
 
 describe("Dialog", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for dialog variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed dialog (trigger only)", () => {
+      const { container } = render(
+        <Dialog.Root>
+          <Dialog.Trigger>Open</Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Title</Dialog.Title>
+            </Dialog.Header>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open dialog with header", async () => {
+      const { baseElement } = render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Trigger>Open</Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Dialog Title</Dialog.Title>
+              <Dialog.Description>Dialog description text</Dialog.Description>
+            </Dialog.Header>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Dialog Title")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("open dialog with header and footer", async () => {
+      const { baseElement } = render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Trigger>Open</Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Confirm Action</Dialog.Title>
+              <Dialog.Description>Are you sure?</Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <button>Cancel</button>
+              <button>Confirm</button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Confirm Action")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders trigger", () => {
     render(
       <Dialog.Root>

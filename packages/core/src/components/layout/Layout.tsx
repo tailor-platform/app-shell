@@ -53,13 +53,14 @@ import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./
  * ```
  */
 export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
-  ({ className, children, area, ...props }, ref) => {
+  ({ className, style, children, area, ...props }, ref) => {
     return (
       <div
         ref={ref}
         data-layout-column=""
         {...(area ? { "data-area": area } : {})}
         className={cn("astw:min-w-0 astw:flex astw:flex-col astw:gap-4", className)}
+        style={style}
         {...props}
       >
         {children}
@@ -181,7 +182,7 @@ const POSITION_TEMPLATES: Record<number, string> = {
  * </Layout>
  * ```
  */
-export function Layout({ columns, className, gap, title, actions, children }: LayoutProps) {
+export function Layout({ columns, className, style, gap, title, actions, children }: LayoutProps) {
   const areas: (ColumnArea | undefined)[] = [];
   let hasHeaderChild = false;
 
@@ -239,7 +240,12 @@ export function Layout({ columns, className, gap, title, actions, children }: La
         effectiveColumnCount >= 3 && gridTemplate && "astw:xl:grid-cols-[var(--layout-cols)]",
         className,
       )}
-      style={gridTemplate ? ({ "--layout-cols": gridTemplate } as React.CSSProperties) : undefined}
+      style={
+        {
+          ...style,
+          ...(gridTemplate ? { "--layout-cols": gridTemplate } : undefined),
+        } as React.CSSProperties
+      }
     >
       {hasLegacyHeader && (
         <header

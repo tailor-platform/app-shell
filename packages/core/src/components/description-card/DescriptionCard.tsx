@@ -136,6 +136,7 @@ export function DescriptionCard({
   fields,
   columns = 3,
   className,
+  style,
   headerAction,
 }: DescriptionCardProps) {
   // Resolve fields into sections (split by dividers)
@@ -196,6 +197,7 @@ export function DescriptionCard({
           "astw:@container astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",
           className,
         )}
+        style={style}
       >
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">

@@ -1,3 +1,5 @@
+import type { CSSProperties, ReactNode } from "react";
+
 // ============================================================================
 // FIELD TYPES
 // ============================================================================
@@ -117,8 +119,10 @@ export interface DescriptionCardProps {
   columns?: Columns;
   /** Additional CSS classes */
   className?: string;
+  /** Inline styles */
+  style?: CSSProperties;
   /** Header action slot (e.g., edit button) */
-  headerAction?: React.ReactNode;
+  headerAction?: ReactNode;
 }
 
 // ============================================================================

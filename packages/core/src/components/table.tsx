@@ -23,12 +23,16 @@ import { cn } from "@/lib/utils";
  * </Table.Root>
  * ```
  */
-function Root({ className, ...props }: React.ComponentProps<"table">) {
+function Root({ className, style, ...props }: React.ComponentProps<"table">) {
   return (
-    <div data-slot="table-container" className="astw:relative astw:w-full astw:overflow-x-auto">
+    <div
+      data-slot="table-container"
+      className={cn("astw:relative astw:w-full astw:overflow-x-auto", className)}
+      style={style}
+    >
       <table
         data-slot="table"
-        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
+        className="astw:w-full astw:caption-bottom astw:text-sm astw:bg-card"
         {...props}
       />
     </div>
@@ -62,7 +66,7 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "astw:bg-muted/50 astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0",
+        "astw:bg-card astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0",
         className,
       )}
       {...props}

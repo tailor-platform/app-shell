@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 // ============================================================================
 // LAYOUT TYPES
@@ -26,6 +26,8 @@ export interface LayoutProps {
   columns?: ColumnCount;
   /** Additional CSS classes */
   className?: string;
+  /** Inline styles */
+  style?: CSSProperties;
   /**
    * Gap between columns (default: 4 = 16px)
    *
@@ -54,6 +56,8 @@ export interface LayoutProps {
 export interface ColumnProps {
   /** Additional CSS classes */
   className?: string;
+  /** Inline styles */
+  style?: CSSProperties;
   /**
    * Column area role. When specified on all columns, determines width template
    * based on role rather than position.

@@ -20,9 +20,7 @@ describe("Button", () => {
     });
 
     it("destructive variant", () => {
-      const { container } = render(
-        <Button variant="destructive">Delete</Button>,
-      );
+      const { container } = render(<Button variant="destructive">Delete</Button>);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
@@ -32,9 +30,7 @@ describe("Button", () => {
     });
 
     it("secondary variant", () => {
-      const { container } = render(
-        <Button variant="secondary">Secondary</Button>,
-      );
+      const { container } = render(<Button variant="secondary">Secondary</Button>);
       expect(container.innerHTML).toMatchSnapshot();
     });
 

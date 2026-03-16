@@ -9,9 +9,7 @@ afterEach(() => {
 describe("Input", () => {
   describe("snapshots", () => {
     it("default text input", () => {
-      const { container } = render(
-        <Input type="text" placeholder="Enter text" />,
-      );
+      const { container } = render(<Input type="text" placeholder="Enter text" />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 

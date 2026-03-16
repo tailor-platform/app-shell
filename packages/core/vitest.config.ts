@@ -9,11 +9,7 @@ export default defineConfig({
     resolveSnapshotPath: (testPath, snapExtension) => {
       const relativePath = path.relative(__dirname, testPath);
       const snapshotName = relativePath.replaceAll(path.sep, "__");
-      return path.join(
-        __dirname,
-        "__snapshots__",
-        snapshotName + snapExtension,
-      );
+      return path.join(__dirname, "__snapshots__", snapshotName + snapExtension);
     },
   },
 });

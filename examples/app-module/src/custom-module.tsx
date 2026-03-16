@@ -10,6 +10,13 @@ import {
   DescriptionCard,
   ActionPanel,
   Layout,
+  Button,
+  Input,
+  Table,
+  Dialog,
+  Sheet,
+  Tooltip,
+  Badge,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -555,39 +562,6 @@ const adminOnlyResource = defineResource({
 });
 
 // ============================================================================
-// BUTTON COMPONENT (Demo component for Layout examples)
-// ============================================================================
-
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "default" | "secondary";
-  size?: "default" | "sm";
-};
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = "", variant = "default", size = "default", ...props }, ref) => {
-    const baseClasses =
-      "astw:inline-flex astw:items-center astw:justify-center astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]";
-
-    const variantClasses =
-      variant === "secondary"
-        ? "astw:bg-secondary astw:text-secondary-foreground astw:shadow-xs astw:hover:bg-secondary/80"
-        : "astw:bg-primary astw:text-primary-foreground astw:shadow-xs astw:hover:bg-primary/90";
-
-    const sizeClasses =
-      size === "sm" ? "astw:h-8 astw:gap-1.5 astw:px-3" : "astw:h-9 astw:gap-2 astw:px-4 astw:py-2";
-
-    return (
-      <button
-        ref={ref}
-        className={`${baseClasses} ${variantClasses} ${sizeClasses} ${className}`}
-        {...props}
-      />
-    );
-  },
-);
-Button.displayName = "Button";
-
-// ============================================================================
 // PLACEHOLDER COMPONENT
 // ============================================================================
 
@@ -930,6 +904,248 @@ const layoutSlotsDemoResource = defineResource({
   ),
 });
 
+// ============================================================================
+// DEMO: Primitive Components
+// ============================================================================
+
+const primitiveComponentsDemoResource = defineResource({
+  path: "primitives-demo",
+  meta: {
+    title: "Primitive Components Demo",
+  },
+  component: () => {
+    const [inputValue, setInputValue] = React.useState("");
+
+    const cardStyle: React.CSSProperties = {
+      padding: "1.5rem",
+      borderRadius: "0.75rem",
+      border: "1px solid var(--border)",
+      backgroundColor: "var(--card)",
+      color: "var(--card-foreground)",
+    };
+    const headingStyle: React.CSSProperties = {
+      fontWeight: "bold",
+      marginBottom: "0.5rem",
+    };
+    const labelStyle: React.CSSProperties = {
+      fontSize: "0.875rem",
+      color: "var(--muted-foreground)",
+      marginBottom: "0.5rem",
+    };
+    const rowStyle: React.CSSProperties = {
+      display: "flex",
+      gap: "0.5rem",
+      flexWrap: "wrap",
+    };
+
+    return (
+      <Layout>
+        <Layout.Header title="Primitive Components" />
+        <Layout.Column>
+          {/* Button variants */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Button</h3>
+            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+              <div>
+                <div style={labelStyle}>Variant</div>
+                <div style={rowStyle}>
+                  <Button>Default</Button>
+                  <Button variant="secondary">Secondary</Button>
+                  <Button variant="destructive">Destructive</Button>
+                  <Button variant="outline">Outline</Button>
+                  <Button variant="ghost">Ghost</Button>
+                  <Button variant="link">Link</Button>
+                </div>
+              </div>
+              <div>
+                <div style={labelStyle}>Size</div>
+                <div style={{ ...rowStyle, alignItems: "center" }}>
+                  <Button size="sm">Small</Button>
+                  <Button size="default">Default</Button>
+                  <Button size="lg">Large</Button>
+                  <Button disabled>Disabled</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Input */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Input</h3>
+            <div style={rowStyle}>
+              <Input
+                style={{ maxWidth: "240px" }}
+                placeholder="Type something..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+              <Input style={{ maxWidth: "240px" }} type="email" placeholder="Email" />
+              <Input style={{ maxWidth: "240px" }} disabled placeholder="Disabled" />
+            </div>
+          </div>
+
+          {/* Badge */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Badge</h3>
+            <div style={rowStyle}>
+              <Badge>Default</Badge>
+              <Badge variant="success">Success</Badge>
+              <Badge variant="warning">Warning</Badge>
+              <Badge variant="error">Error</Badge>
+              <Badge variant="neutral">Neutral</Badge>
+              <Badge variant="outline-success">Outline</Badge>
+            </div>
+          </div>
+
+          {/* Tooltip */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Tooltip</h3>
+            <Tooltip.Provider>
+              <div style={{ ...rowStyle, gap: "1rem" }}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger render={<Button variant="outline" />}>
+                    Top (default)
+                  </Tooltip.Trigger>
+                  <Tooltip.Content side="top">Tooltip on top</Tooltip.Content>
+                </Tooltip.Root>
+                <Tooltip.Root>
+                  <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
+                  <Tooltip.Content side="bottom">Tooltip on bottom</Tooltip.Content>
+                </Tooltip.Root>
+                <Tooltip.Root>
+                  <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
+                  <Tooltip.Content side="left">Tooltip on left</Tooltip.Content>
+                </Tooltip.Root>
+                <Tooltip.Root>
+                  <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
+                  <Tooltip.Content side="right">Tooltip on right</Tooltip.Content>
+                </Tooltip.Root>
+              </div>
+            </Tooltip.Provider>
+          </div>
+
+          {/* Dialog */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Dialog</h3>
+            <Dialog.Root>
+              <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Dialog Title</Dialog.Title>
+                  <Dialog.Description>
+                    This is a dialog description. You can put any content here.
+                  </Dialog.Description>
+                </Dialog.Header>
+                <Dialog.Footer>
+                  <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+                  <Dialog.Close render={<Button />}>Confirm</Dialog.Close>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Root>
+          </div>
+
+          {/* Sheet */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Sheet</h3>
+            <div style={rowStyle}>
+              <Sheet.Root side="right">
+                <Sheet.Trigger render={<Button variant="outline" />}>
+                  Open Sheet (Right)
+                </Sheet.Trigger>
+                <Sheet.Content>
+                  <Sheet.Header>
+                    <Sheet.Title>Sheet Title</Sheet.Title>
+                    <Sheet.Description>This sheet slides in from the right.</Sheet.Description>
+                  </Sheet.Header>
+                  <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                  <Sheet.Footer>
+                    <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                  </Sheet.Footer>
+                </Sheet.Content>
+              </Sheet.Root>
+              <Sheet.Root side="left">
+                <Sheet.Trigger render={<Button variant="outline" />}>
+                  Open Sheet (Left)
+                </Sheet.Trigger>
+                <Sheet.Content>
+                  <Sheet.Header>
+                    <Sheet.Title>Left Sheet</Sheet.Title>
+                    <Sheet.Description>This sheet slides in from the left.</Sheet.Description>
+                  </Sheet.Header>
+                  <Sheet.Footer>
+                    <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                  </Sheet.Footer>
+                </Sheet.Content>
+              </Sheet.Root>
+              <Sheet.Root side="bottom">
+                <Sheet.Trigger render={<Button variant="outline" />}>
+                  Open Sheet (Bottom)
+                </Sheet.Trigger>
+                <Sheet.Content>
+                  <Sheet.Header>
+                    <Sheet.Title>Bottom Sheet</Sheet.Title>
+                    <Sheet.Description>This sheet slides in from the bottom.</Sheet.Description>
+                  </Sheet.Header>
+                  <Sheet.Footer>
+                    <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                  </Sheet.Footer>
+                </Sheet.Content>
+              </Sheet.Root>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Table</h3>
+            <Table.Root>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Name</Table.Head>
+                  <Table.Head>Status</Table.Head>
+                  <Table.Head>Role</Table.Head>
+                  <Table.Head>Amount</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                <Table.Row>
+                  <Table.Cell>Alice Johnson</Table.Cell>
+                  <Table.Cell>
+                    <Badge variant="success">Active</Badge>
+                  </Table.Cell>
+                  <Table.Cell>Admin</Table.Cell>
+                  <Table.Cell>$1,200.00</Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>Bob Smith</Table.Cell>
+                  <Table.Cell>
+                    <Badge variant="neutral">Inactive</Badge>
+                  </Table.Cell>
+                  <Table.Cell>Editor</Table.Cell>
+                  <Table.Cell>$800.00</Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>Carol Lee</Table.Cell>
+                  <Table.Cell>
+                    <Badge variant="success">Active</Badge>
+                  </Table.Cell>
+                  <Table.Cell>Viewer</Table.Cell>
+                  <Table.Cell>$350.00</Table.Cell>
+                </Table.Row>
+              </Table.Body>
+              <Table.Footer>
+                <Table.Row>
+                  <Table.Cell colSpan={3}>Total</Table.Cell>
+                  <Table.Cell>$2,350.00</Table.Cell>
+                </Table.Row>
+              </Table.Footer>
+            </Table.Root>
+          </div>
+        </Layout.Column>
+      </Layout>
+    );
+  },
+});
+
 export const customPageModule = defineModule({
   path: "custom-page",
   component: (pageProps: ResourceComponentProps) => {
@@ -1025,6 +1241,17 @@ export const customPageModule = defineModule({
               🔒 Admin Only Page (Restricted)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/primitives-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Primitive Components Demo (Button, Input, Table, Dialog, Sheet, Tooltip)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -1043,5 +1270,6 @@ export const customPageModule = defineModule({
     twoColumnLayoutResource,
     threeColumnLayoutResource,
     layoutSlotsDemoResource,
+    primitiveComponentsDemoResource,
   ],
 });

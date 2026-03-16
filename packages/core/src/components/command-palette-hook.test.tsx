@@ -407,4 +407,39 @@ describe("navItemsToRoutes", () => {
       breadcrumb: ["Custom Page", "Sub2"],
     });
   });
+
+  it("should skip items without url but include their children", () => {
+    const navItems = [
+      {
+        title: "Module",
+        url: "module",
+        icon: null,
+        items: [
+          {
+            title: "Settings",
+            url: undefined,
+            items: [
+              { title: "General", url: "module/settings/general" },
+              { title: "Advanced", url: "module/settings/advanced" },
+            ],
+          },
+          { title: "Dashboard", url: "module/dashboard" },
+        ],
+      },
+    ];
+
+    const routes = navItemsToRoutes(navItems);
+
+    // Module + General + Advanced + Dashboard = 4 (Settings itself is skipped)
+    expect(routes).toHaveLength(4);
+    expect(routes.map((r) => r.path)).toEqual([
+      "module",
+      "module/settings/general",
+      "module/settings/advanced",
+      "module/dashboard",
+    ]);
+    // Children of the url-less item should have it in their breadcrumb
+    expect(routes[1].breadcrumb).toEqual(["Module", "Settings", "General"]);
+    expect(routes[2].breadcrumb).toEqual(["Module", "Settings", "Advanced"]);
+  });
 });

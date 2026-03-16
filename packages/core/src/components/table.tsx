@@ -2,6 +2,11 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+type RootProps = React.ComponentProps<"table"> & {
+  /** Additional class names for the outer scrollable container (`<div>`) wrapping the `<table>`. */
+  containerClassName?: string;
+};
+
 /**
  * The root table element with a horizontally scrollable container.
  *
@@ -23,16 +28,15 @@ import { cn } from "@/lib/utils";
  * </Table.Root>
  * ```
  */
-function Root({ className, style, ...props }: React.ComponentProps<"table">) {
+function Root({ className, containerClassName, ...props }: RootProps) {
   return (
     <div
       data-slot="table-container"
-      className={cn("astw:relative astw:w-full astw:overflow-x-auto", className)}
-      style={style}
+      className={cn("astw:relative astw:w-full astw:overflow-x-auto", containerClassName)}
     >
       <table
         data-slot="table"
-        className="astw:w-full astw:caption-bottom astw:text-sm astw:bg-card"
+        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
         {...props}
       />
     </div>
@@ -65,10 +69,7 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn(
-        "astw:bg-card astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0",
-        className,
-      )}
+      className={cn("astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0", className)}
       {...props}
     />
   );

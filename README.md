@@ -23,14 +23,8 @@ AppShell is an opinionated React application framework for creating applications
 
 For users building applications with AppShell, see the detailed guides in `docs/`:
 
+- [Introduction](./docs/introduction.md) — What is AppShell and why use it
 - [Quick Start](./docs/quickstart.md) — Installation, setup, and first steps
-- [API Reference](./docs/api.md) — Complete reference for all components, hooks, and functions
-- [Module & Resource Definition](./docs/module-resource-definition.md) — How to structure your application using modules and resources
-- [File-Based Routing](./docs/file-based-routing.md) — Define pages via directory structure instead of explicit configuration
-- [Routing & Navigation](./docs/routing-and-navigation.md) — Client-side navigation hooks, Command Palette, typed routes
-- [Sidebar Navigation](./docs/sidebar-navigation.md) — Customizing sidebar with composition mode and access control
-- [Authentication](./docs/authentication.md) — Setting up OAuth2/OIDC authentication with Tailor Platform
-- [Styles](./docs/styles.md) — Theming and Tailwind CSS configuration
 
 ## Development
 

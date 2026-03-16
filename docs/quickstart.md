@@ -1,9 +1,9 @@
 ---
-title: Quickstart
-description: Get started with AppShell in 5 minutes
+title: Quick Start
+description: Install and set up your first AppShell application
 ---
 
-# Quickstart
+# Quick Start
 
 Get your first AppShell application running in minutes.
 
@@ -11,43 +11,56 @@ Get your first AppShell application running in minutes.
 
 - Node.js 16+
 - React 19+ (React 18 supported)
-- Tailwind CSS v4 installed ([See Installation](./installation.md) for setup)
+- A React project (Vite, Next.js, or any bundler)
 
-## Install
+## Step 1: Install AppShell
 
 ```bash
+# npm
 npm install @tailor-platform/app-shell
+
+# yarn
+yarn add @tailor-platform/app-shell
+
+# pnpm
+pnpm add @tailor-platform/app-shell
 ```
 
-## Setup Theme
+## Step 2: Set Up File-Based Routing (Vite)
 
-Add to your global CSS file:
+Add the `appShellRoutes` plugin to your `vite.config.ts`:
+
+```typescript
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
+
+export default defineConfig({
+  plugins: [react(), tailwindcss(), appShellRoutes()],
+});
+```
+
+## Step 3: Create Your First App
+
+Add AppShell styles to your global CSS file:
 
 ```css
-/* globals.css */
-@import "@tailor-platform/app-shell/theme.css";
+/* index.css */
 @import "tailwindcss";
+@import "@tailor-platform/app-shell/styles";
 ```
 
-## Create Your First App
+Create `src/App.tsx`:
 
 ```tsx
-// App.tsx
-import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell";
-
-const dashboardModule = defineModule({
-  path: "dashboard",
-  component: () => (
-    <div className="astw:p-8">
-      <h1 className="astw:text-2xl astw:font-bold">Welcome to AppShell</h1>
-    </div>
-  ),
-  meta: { title: "Dashboard" },
-});
+// src/App.tsx
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
 
 function App() {
   return (
-    <AppShell title="My ERP App" basePath="/app" modules={[dashboardModule]}>
+    <AppShell title="My ERP App">
       <SidebarLayout />
     </AppShell>
   );
@@ -56,24 +69,60 @@ function App() {
 export default App;
 ```
 
-## Run
+Create your first page at `src/pages/page.tsx`:
+
+```tsx
+// src/pages/page.tsx
+const HomePage = () => {
+  return (
+    <div className="astw:p-8">
+      <h1 className="astw:text-2xl astw:font-bold">Welcome to AppShell</h1>
+    </div>
+  );
+};
+
+export default HomePage;
+```
+
+## Step 4: Run
 
 ```bash
 npm run dev
 ```
 
-Navigate to `/app/dashboard` - you should see your page with automatic sidebar navigation! 🎉
+Navigate to `/` - you should see your page with automatic sidebar navigation.
 
 ## Add Nested Pages
 
-```tsx
-import { defineModule, defineResource, useParams } from "@tailor-platform/app-shell";
+Create pages by adding directories and `page.tsx` files:
 
-const OrdersPage = () => (
-  <div className="astw:p-8">
-    <h2 className="astw:text-xl astw:font-bold">Orders</h2>
-  </div>
-);
+```
+src/pages/
+├── page.tsx                        → /
+├── dashboard/
+│   ├── page.tsx                    → /dashboard
+│   └── orders/
+│       ├── page.tsx                → /dashboard/orders
+│       └── [id]/
+│           └── page.tsx            → /dashboard/orders/:id
+```
+
+```tsx
+// src/pages/dashboard/page.tsx
+const DashboardPage = () => {
+  return (
+    <div className="astw:p-8">
+      <h1 className="astw:text-xl astw:font-bold">Dashboard</h1>
+    </div>
+  );
+};
+
+export default DashboardPage;
+```
+
+```tsx
+// src/pages/dashboard/orders/[id]/page.tsx
+import { useParams } from "@tailor-platform/app-shell";
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -84,80 +133,47 @@ const OrderDetailPage = () => {
   );
 };
 
-export const dashboardModule = defineModule({
-  path: "dashboard",
-  component: DashboardPage,
-  meta: { title: "Dashboard" },
-  resources: [
-    defineResource({
-      path: "orders",
-      component: OrdersPage,
-      meta: { title: "Orders" },
-      resources: [
-        defineResource({
-          path: ":id",
-          component: OrderDetailPage,
-          meta: { title: "Order Details" },
-        }),
-      ],
-    }),
-  ],
-});
+export default OrderDetailPage;
 ```
 
-This creates:
+AppShell automatically generates sidebar navigation and breadcrumbs.
 
-- `/app/dashboard` - Dashboard
-- `/app/dashboard/orders` - Orders list
-- `/app/dashboard/orders/123` - Order detail
+[Learn more about File-Based Routing →](./concepts/file-based-routing.md)
 
-AppShell automatically generates sidebar navigation, breadcrumbs, and provides Command Palette (`Cmd+K`).
+## Framework-Specific Notes
 
-## What's Included
+### Next.js (App Router)
 
-**Core Components:**
+Next.js does not support file-based routing with the Vite plugin. Use the module-based approach instead:
 
-- `AppShell` - Root provider
-- `SidebarLayout` / `DefaultSidebar` - Layouts
-- `CommandPalette` - Quick navigation (`Cmd+K`)
+```tsx
+// app/dashboard/[[...props]]/page.tsx
+"use client";
 
-**UI Components:**
+import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell";
 
-- `Layout` - Responsive columns (1/2/3)
-- `Badge` - Status badges
-- `DescriptionCard` - Field-value display
+const dashboardModule = defineModule({
+  path: "home",
+  component: () => <div>Home</div>,
+  meta: { title: "Home" },
+});
 
-**Structure:**
+export default function Page() {
+  return (
+    <AppShell title="My App" basePath="dashboard" modules={[dashboardModule]}>
+      <SidebarLayout />
+    </AppShell>
+  );
+}
+```
 
-- `defineModule` / `defineResource` - Declarative routing
-- `SidebarItem` / `SidebarGroup` - Custom navigation
-
-**Authentication:**
-
-- `AuthProvider` / `useAuth` - OAuth2/OIDC
-- Route Guards - `pass()`, `hidden()`, `redirectTo()`
-
-**Utilities:**
-
-- `defineI18nLabels` - Internationalization
-- `useTheme` - Light/dark mode
-- React Router hooks - `useNavigate`, `useParams`, `useLocation`
+See [Modules & Resources](./concepts/modules-and-resources.md) for the module-based API.
 
 ## Next Steps
 
-**Core Concepts:**
-
-- [Modules & Resources](./concepts/modules-and-resources.md) - App structure
-- [Routing & Navigation](./concepts/routing-navigation.md) - Navigation
-- [Authentication](./concepts/authentication.md) - User auth
-
-**Components:**
-
-- [AppShell](./components/app-shell.md) - Root component
-- [All Components](./components/sidebar-layout.md) - Component library
-
-**API Reference:**
-
-- [defineModule](./api/define-module.md) - Module API
-- [defineResource](./api/define-resource.md) - Resource API
-- [All Hooks](./api/use-app-shell.md) - Hooks reference
+- [File-Based Routing](./concepts/file-based-routing.md) - Define pages via directory structure
+- [Routing & Navigation](./concepts/routing-navigation.md) - Navigation hooks
+- [Authentication](./concepts/authentication.md) - Set up user authentication
+- [Sidebar Navigation](./concepts/sidebar-navigation.md) - Customize sidebar menus
+- [Styling & Theming](./concepts/styling-theming.md) - Theming and Tailwind CSS configuration
+- [Modules & Resources](./concepts/modules-and-resources.md) - Legacy module-based routing

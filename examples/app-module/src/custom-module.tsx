@@ -14,6 +14,7 @@ import {
   Input,
   Table,
   Dialog,
+  Menu,
   Sheet,
   Tooltip,
   Badge,
@@ -915,6 +916,9 @@ const primitiveComponentsDemoResource = defineResource({
   },
   component: () => {
     const [inputValue, setInputValue] = React.useState("");
+    const [showToolbar, setShowToolbar] = React.useState(true);
+    const [showSidebar, setShowSidebar] = React.useState(false);
+    const [sortOrder, setSortOrder] = React.useState("date");
 
     const cardStyle: React.CSSProperties = {
       padding: "1.5rem",
@@ -1094,6 +1098,128 @@ const primitiveComponentsDemoResource = defineResource({
             </div>
           </div>
 
+          {/* Menu */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Menu</h3>
+            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+              <div>
+                <div style={labelStyle}>Pattern</div>
+                <div style={rowStyle}>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Basic</Menu.Trigger>
+                    <Menu.Content>
+                      <Menu.Item onClick={() => alert("Edit clicked")}>Edit</Menu.Item>
+                      <Menu.Item onClick={() => alert("Duplicate clicked")}>Duplicate</Menu.Item>
+                      <Menu.Item onClick={() => alert("Copy ID clicked")}>Copy ID</Menu.Item>
+                      <Menu.Separator />
+                      <Menu.Item
+                        onClick={() => alert("Delete clicked")}
+                        className="astw:text-destructive"
+                      >
+                        Delete
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>
+                      Checkbox & Radio
+                    </Menu.Trigger>
+                    <Menu.Content>
+                      <Menu.Group>
+                        <Menu.GroupLabel>Panels</Menu.GroupLabel>
+                        <Menu.CheckboxItem checked={showToolbar} onCheckedChange={setShowToolbar}>
+                          <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+                          Show Toolbar
+                        </Menu.CheckboxItem>
+                        <Menu.CheckboxItem checked={showSidebar} onCheckedChange={setShowSidebar}>
+                          <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+                          Show Sidebar
+                        </Menu.CheckboxItem>
+                      </Menu.Group>
+                      <Menu.Separator />
+                      <Menu.Group>
+                        <Menu.GroupLabel>Sort by</Menu.GroupLabel>
+                        <Menu.RadioGroup value={sortOrder} onValueChange={setSortOrder}>
+                          <Menu.RadioItem value="date">
+                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                            Date
+                          </Menu.RadioItem>
+                          <Menu.RadioItem value="name">
+                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                            Name
+                          </Menu.RadioItem>
+                          <Menu.RadioItem value="size">
+                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                            Size
+                          </Menu.RadioItem>
+                        </Menu.RadioGroup>
+                      </Menu.Group>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Submenu</Menu.Trigger>
+                    <Menu.Content>
+                      <Menu.Group>
+                        <Menu.GroupLabel>Document</Menu.GroupLabel>
+                        <Menu.Item onClick={() => alert("New")}>New</Menu.Item>
+                        <Menu.Item onClick={() => alert("Open")}>Open</Menu.Item>
+                        <Menu.Item onClick={() => alert("Save")}>Save</Menu.Item>
+                      </Menu.Group>
+                      <Menu.Separator />
+                      <Menu.SubmenuRoot>
+                        <Menu.SubmenuTrigger>Export as →</Menu.SubmenuTrigger>
+                        <Menu.Content side="right" align="start">
+                          <Menu.Item onClick={() => alert("PDF")}>PDF</Menu.Item>
+                          <Menu.Item onClick={() => alert("CSV")}>CSV</Menu.Item>
+                          <Menu.Item onClick={() => alert("JSON")}>JSON</Menu.Item>
+                        </Menu.Content>
+                      </Menu.SubmenuRoot>
+                      <Menu.Separator />
+                      <Menu.Item disabled>Print (unavailable)</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                </div>
+              </div>
+              <div>
+                <div style={labelStyle}>Direction</div>
+                <div style={rowStyle}>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Bottom ↓</Menu.Trigger>
+                    <Menu.Content side="bottom">
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Top ↑</Menu.Trigger>
+                    <Menu.Content side="top">
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Right →</Menu.Trigger>
+                    <Menu.Content side="right">
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Left ←</Menu.Trigger>
+                    <Menu.Content side="left">
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Table */}
           <div style={cardStyle}>
             <h3 style={headingStyle}>Table</h3>
@@ -1249,7 +1375,7 @@ export const customPageModule = defineModule({
                 textDecoration: "underline",
               }}
             >
-              Primitive Components Demo (Button, Input, Table, Dialog, Sheet, Tooltip)
+              Primitive Components Demo (Button, Input, Menu, Table, Dialog, Sheet, Tooltip)
             </Link>
           </p>
         </div>

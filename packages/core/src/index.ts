@@ -82,5 +82,6 @@ export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Input, type InputProps } from "./components/input";
 export { Table } from "./components/table";
 export { Dialog } from "./components/dialog";
+export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
 export { Tooltip } from "./components/tooltip";

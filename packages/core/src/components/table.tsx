@@ -34,17 +34,11 @@ function Root({ className, containerClassName, ...props }: RootProps) {
   return (
     <div
       data-slot="table-container"
-      className={cn(
-        "astw:relative astw:w-full astw:overflow-x-auto",
-        containerClassName,
-      )}
+      className={cn("astw:relative astw:w-full astw:overflow-x-auto", containerClassName)}
     >
       <table
         data-slot="table"
-        className={cn(
-          "astw:w-full astw:caption-bottom astw:text-sm",
-          className,
-        )}
+        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
         {...props}
       />
     </div>
@@ -55,11 +49,7 @@ Root.displayName = "Table.Root";
 /** The table header section (`<thead>`). */
 function Header({ className, ...props }: React.ComponentProps<"thead">) {
   return (
-    <thead
-      data-slot="table-header"
-      className={cn("astw:[&_tr]:border-b", className)}
-      {...props}
-    />
+    <thead data-slot="table-header" className={cn("astw:[&_tr]:border-b", className)} {...props} />
   );
 }
 Header.displayName = "Table.Header";
@@ -81,10 +71,7 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn(
-        "astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0",
-        className,
-      )}
+      className={cn("astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0", className)}
       {...props}
     />
   );
@@ -141,10 +128,7 @@ function Caption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption
       data-slot="table-caption"
-      className={cn(
-        "astw:text-muted-foreground astw:mt-4 astw:text-sm",
-        className,
-      )}
+      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-sm", className)}
       {...props}
     />
   );

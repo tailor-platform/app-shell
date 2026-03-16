@@ -13,11 +13,7 @@ function Provider({
   children: React.ReactNode;
 }) {
   return (
-    <BaseTooltip.Provider
-      data-slot="tooltip-provider"
-      delay={delayDuration}
-      {...props}
-    >
+    <BaseTooltip.Provider data-slot="tooltip-provider" delay={delayDuration} {...props}>
       {children}
     </BaseTooltip.Provider>
   );
@@ -57,9 +53,7 @@ function Root({ children, ...props }: TooltipRootProps) {
 Root.displayName = "Tooltip.Root";
 
 /** The element that triggers the tooltip on hover or focus. */
-function Trigger({
-  ...props
-}: React.ComponentProps<typeof BaseTooltip.Trigger>) {
+function Trigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
   return <BaseTooltip.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 Trigger.displayName = "Tooltip.Trigger";

@@ -63,7 +63,7 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof BaseDialog
     <BaseDialog.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
         className,
       )}
       {...props}
@@ -80,7 +80,7 @@ function Content({ className, children, ...props }: React.ComponentProps<typeof 
       <BaseDialog.Popup
         data-slot="dialog-content"
         className={cn(
-          "astw:bg-background astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fixed astw:top-[50%] astw:left-[50%] astw:z-50 astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
+          "astw:bg-background astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-50 astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
           className,
         )}
         {...props}

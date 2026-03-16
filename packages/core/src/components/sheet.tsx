@@ -79,7 +79,7 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof Drawer.Bac
     <Drawer.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50",
         className,
       )}
       {...props}

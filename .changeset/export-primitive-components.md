@@ -15,7 +15,9 @@ import { Button, Input, Table, Dialog, Sheet, Tooltip } from "@tailor-platform/a
 Styled button with variant (`default`, `outline`, `destructive`, etc.) and size options.
 
 ```tsx
-<Button variant="outline" size="sm">Click me</Button>
+<Button variant="outline" size="sm">
+  Click me
+</Button>
 ```
 
 ### Input

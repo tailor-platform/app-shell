@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useSyncExternalStore, useCallback } from "react";
+import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
@@ -173,6 +173,90 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Internal context to expose the raw EnhancedAuthClient instance
+ * and provider configuration.
+ * Used by RouterContainer to run callback handling in a loader.
+ * @internal
+ */
+type AuthClientContextType = {
+  client: EnhancedAuthClient;
+  autoLogin?: boolean;
+  guardComponent?: () => React.ReactNode;
+};
+
+const AuthClientContext = createContext<AuthClientContextType | null>(null);
+
+/** @internal */
+export type AuthLoader = (requestUrl: URL) => Promise<Response | null>;
+
+/** @internal */
+export type AuthLoaderContext = {
+  loader: AuthLoader;
+  guardComponent?: () => React.ReactNode;
+};
+
+/**
+ * Internal hook that returns a loader function for handling OAuth callbacks
+ * and auth status checks, along with the guard component configuration,
+ * or null if AuthProvider is not present.
+ *
+ * The returned loader is intended to be called from a react-router loader,
+ * which runs outside React's lifecycle and is therefore unaffected by strict
+ * mode double-invocation.
+ *
+ * @returns An object with loader and guardComponent, or null if not inside an AuthProvider.
+ * @internal
+ */
+export const useAuthLoader = (): AuthLoaderContext | null => {
+  const authClientCtx = useContext(AuthClientContext);
+  if (!authClientCtx) return null;
+
+  const { client, autoLogin, guardComponent } = authClientCtx;
+  return {
+    guardComponent,
+    loader: async (requestUrl: URL): Promise<Response | null> => {
+      // The "code" query parameter indicates a redirect back from the OAuth provider.
+      // handleCallback() internally cleans up the OAuth-related query parameters
+      // from the URL, so no additional URL cleanup is needed here.
+      if (requestUrl.searchParams.has("code")) {
+        try {
+          await client.handleCallback();
+        } catch (error) {
+          console.error("Failed to handle callback:", error);
+        }
+      }
+
+      // Only check auth status on first load (when isReady is false).
+      // Subsequent navigations skip this because the client already holds
+      // the cached auth state via useSyncExternalStore.
+      if (!client.getState().isReady) {
+        try {
+          await client.checkAuthStatus();
+        } catch (error) {
+          // Intentionally swallow errors to avoid rendering the error boundary
+          // on transient failures (e.g. network timeouts). The next navigation
+          // will re-run this loader and retry automatically.
+          console.error("Failed to check auth status:", error);
+        }
+      }
+
+      // autoLogin is evaluated separately from checkAuthStatus so that it
+      // still fires after handleCallback updates the internal state via
+      // getState() (e.g. setting isAuthenticated to true on success).
+      if (autoLogin && !client.getState().isAuthenticated) {
+        try {
+          await client.login();
+        } catch (error) {
+          console.error("Failed to login:", error);
+        }
+      }
+
+      return null;
+    },
+  };
+};
+
 type AuthProviderProps = {
   /**
    * The EnhancedAuthClient instance created with createAuthClient from @tailor-platform/app-shell.
@@ -238,67 +322,26 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribe, getSnapshot);
 
-  // Initialize authentication on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      // Check if we're returning from OAuth callback
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("code")) {
-        try {
-          await client.handleCallback();
-          // Clean up URL - remove only OAuth-related params, preserve others
-          const cleanUrl = buildCleanOAuthCallbackUrl(new URL(window.location.href));
-          window.history.replaceState({}, "", cleanUrl);
-        } catch (error) {
-          console.error("Failed to handle callback:", error);
-        }
-      } else {
-        // Check authentication status
-        await client.checkAuthStatus();
-      }
-    };
-
-    initAuth();
-  }, [client]);
-
-  /**
-   * Initialize login if the user is not authenticated
-   *
-   * If `autoLogin` is set to false, or the user is already authenticated, do nothing.
-   */
-  useEffect(() => {
-    if (!props.autoLogin) {
-      return;
-    }
-
-    if (!authState.isReady || authState.isAuthenticated) {
-      return;
-    }
-
-    client.login();
-  }, [authState.isReady, authState.isAuthenticated, props.autoLogin, client]);
-
-  const isAuthenticated = authState.isAuthenticated;
-
-  const contents =
-    props.guardComponent && (!authState.isReady || !isAuthenticated) ? (
-      <props.guardComponent />
-    ) : (
-      props.children
-    );
-
   return (
-    <AuthContext.Provider
+    <AuthClientContext.Provider
       value={{
-        authState,
-        login: () => client.login(),
-        logout: () => client.logout(),
-        checkAuthStatus: () => client.checkAuthStatus(),
-        ready: () => client.ready(),
+        client,
+        autoLogin: props.autoLogin,
+        guardComponent: props.guardComponent,
       }}
     >
-      {contents}
-    </AuthContext.Provider>
+      <AuthContext.Provider
+        value={{
+          authState,
+          login: () => client.login(),
+          logout: () => client.logout(),
+          checkAuthStatus: () => client.checkAuthStatus(),
+          ready: () => client.ready(),
+        }}
+      >
+        {props.children}
+      </AuthContext.Provider>
+    </AuthClientContext.Provider>
   );
 };
 

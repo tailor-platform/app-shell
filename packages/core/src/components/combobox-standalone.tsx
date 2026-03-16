@@ -33,9 +33,7 @@ interface ComboboxItemGroup<T> {
 
 type ExtractItem<I> = I extends ComboboxItemGroup<infer T> ? T : I;
 
-function isGroupedItems<I>(
-  items: I[],
-): items is (I & ComboboxItemGroup<unknown>)[] {
+function isGroupedItems<I>(items: I[]): items is (I & ComboboxItemGroup<unknown>)[] {
   return (
     items.length > 0 &&
     typeof items[0] === "object" &&
@@ -64,9 +62,7 @@ interface ComboboxStandalonePropsBase<T> {
   disabled?: boolean;
 }
 
-interface ComboboxStandalonePropsSingle<
-  T,
-> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxStandalonePropsSingle<T> extends ComboboxStandalonePropsBase<T> {
   multiple?: false | undefined;
   /** Current value (controlled) */
   value?: T | null;
@@ -76,9 +72,7 @@ interface ComboboxStandalonePropsSingle<
   onValueChange?: (value: T | null) => void;
 }
 
-interface ComboboxStandalonePropsMultiple<
-  T,
-> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxStandalonePropsMultiple<T> extends ComboboxStandalonePropsBase<T> {
   multiple: true;
   /** Current value (controlled) */
   value?: T[];
@@ -135,8 +129,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
       );
 
   if (rest.multiple) {
-    const { value, defaultValue, onValueChange } =
-      rest as ComboboxStandalonePropsMultiple<T>;
+    const { value, defaultValue, onValueChange } = rest as ComboboxStandalonePropsMultiple<T>;
     return (
       <div className={className}>
         <ComboboxRoot<T, true>
@@ -154,17 +147,12 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
                 {(selected: T[]) => (
                   <>
                     {selected.map((item) => (
-                      <ComboboxChip
-                        key={getKey(item)}
-                        aria-label={getLabel(item)}
-                      >
+                      <ComboboxChip key={getKey(item)} aria-label={getLabel(item)}>
                         {getLabel(item)}
                         <ComboboxChipRemove />
                       </ComboboxChip>
                     ))}
-                    <ComboboxInput
-                      placeholder={selected.length > 0 ? "" : placeholder}
-                    />
+                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
                   </>
                 )}
               </ComboboxValue>
@@ -179,8 +167,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
     );
   }
 
-  const { value, defaultValue, onValueChange } =
-    rest as ComboboxStandalonePropsSingle<T>;
+  const { value, defaultValue, onValueChange } = rest as ComboboxStandalonePropsSingle<T>;
   return (
     <div className={className}>
       <ComboboxRoot<T>
@@ -260,26 +247,19 @@ function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
                 {(selected: T[]) => (
                   <>
                     {selected.map((item) => (
-                      <ComboboxChip
-                        key={getKey(item)}
-                        aria-label={getLabel(item)}
-                      >
+                      <ComboboxChip key={getKey(item)} aria-label={getLabel(item)}>
                         {getLabel(item)}
                         <ComboboxChipRemove />
                       </ComboboxChip>
                     ))}
-                    <ComboboxInput
-                      placeholder={selected.length > 0 ? "" : placeholder}
-                    />
+                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
                   </>
                 )}
               </ComboboxValue>
             </ComboboxChips>
           </ComboboxInputGroup>
           <ComboboxContent>
-            <ComboboxEmpty>
-              {async.loading ? loadingText : emptyText}
-            </ComboboxEmpty>
+            <ComboboxEmpty>{async.loading ? loadingText : emptyText}</ComboboxEmpty>
             <ComboboxList>
               {(item: T) => (
                 <ComboboxItem key={getKey(item)} value={item}>
@@ -312,9 +292,7 @@ function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
           <ComboboxTrigger />
         </ComboboxInputGroup>
         <ComboboxContent>
-          <ComboboxEmpty>
-            {async.loading ? loadingText : emptyText}
-          </ComboboxEmpty>
+          <ComboboxEmpty>{async.loading ? loadingText : emptyText}</ComboboxEmpty>
           <ComboboxList>
             {(item: T) => (
               <ComboboxItem key={getKey(item)} value={item}>
@@ -330,9 +308,7 @@ function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
 
 // --- Combobox.Creatable ---
 
-interface ComboboxCreatablePropsBase<
-  T extends object,
-> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxCreatablePropsBase<T extends object> extends ComboboxStandalonePropsBase<T> {
   /** Current items list */
   items: T[];
   /** Extract display label from an item */
@@ -345,18 +321,14 @@ interface ComboboxCreatablePropsBase<
   formatCreateLabel?: (value: string) => string;
 }
 
-interface ComboboxCreatablePropsSingle<
-  T extends object,
-> extends ComboboxCreatablePropsBase<T> {
+interface ComboboxCreatablePropsSingle<T extends object> extends ComboboxCreatablePropsBase<T> {
   multiple?: false | undefined;
   value?: T | null;
   defaultValue?: T | null;
   onValueChange?: (value: T | null) => void;
 }
 
-interface ComboboxCreatablePropsMultiple<
-  T extends object,
-> extends ComboboxCreatablePropsBase<T> {
+interface ComboboxCreatablePropsMultiple<T extends object> extends ComboboxCreatablePropsBase<T> {
   multiple: true;
   value?: T[];
   defaultValue?: T[];
@@ -367,9 +339,7 @@ type ComboboxCreatableProps<T extends object> =
   | ComboboxCreatablePropsSingle<T>
   | ComboboxCreatablePropsMultiple<T>;
 
-function ComboboxCreatableStandalone<T extends object>(
-  props: ComboboxCreatableProps<T>,
-) {
+function ComboboxCreatableStandalone<T extends object>(props: ComboboxCreatableProps<T>) {
   const {
     items,
     placeholder,
@@ -419,17 +389,12 @@ function ComboboxCreatableStandalone<T extends object>(
                 {(selected: T[]) => (
                   <>
                     {selected.map((item) => (
-                      <ComboboxChip
-                        key={getKey(item)}
-                        aria-label={getLabel(item)}
-                      >
+                      <ComboboxChip key={getKey(item)} aria-label={getLabel(item)}>
                         {getLabel(item)}
                         <ComboboxChipRemove />
                       </ComboboxChip>
                     ))}
-                    <ComboboxInput
-                      placeholder={selected.length > 0 ? "" : placeholder}
-                    />
+                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
                   </>
                 )}
               </ComboboxValue>
@@ -440,15 +405,11 @@ function ComboboxCreatableStandalone<T extends object>(
             <ComboboxList>
               {(item: T) => (
                 <ComboboxItem
-                  key={
-                    creatable.isCreateItem(item) ? "__create__" : getKey(item)
-                  }
+                  key={creatable.isCreateItem(item) ? "__create__" : getKey(item)}
                   value={item}
                 >
                   {creatable.isCreateItem(item)
-                    ? creatable.formatCreateLabel(
-                        creatable.getCreateLabel(item) ?? "",
-                      )
+                    ? creatable.formatCreateLabel(creatable.getCreateLabel(item) ?? "")
                     : renderItem
                       ? renderItem(item)
                       : getLabel(item)}
@@ -498,9 +459,7 @@ function ComboboxCreatableStandalone<T extends object>(
                 value={item}
               >
                 {creatable.isCreateItem(item)
-                  ? creatable.formatCreateLabel(
-                      creatable.getCreateLabel(item) ?? "",
-                    )
+                  ? creatable.formatCreateLabel(creatable.getCreateLabel(item) ?? "")
                   : renderItem
                     ? renderItem(item)
                     : getLabel(item)}

@@ -27,9 +27,7 @@ interface AutocompleteItemGroup<T> {
 
 type ExtractItem<I> = I extends AutocompleteItemGroup<infer T> ? T : I;
 
-function isGroupedItems<I>(
-  items: I[],
-): items is (I & AutocompleteItemGroup<unknown>)[] {
+function isGroupedItems<I>(items: I[]): items is (I & AutocompleteItemGroup<unknown>)[] {
   return (
     items.length > 0 &&
     typeof items[0] === "object" &&
@@ -89,10 +87,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
             <AutocompleteGroupLabel>{g.label}</AutocompleteGroupLabel>
             <AutocompleteCollection>
               {(item: any) => (
-                <AutocompleteItem
-                  key={getKey(item as T)}
-                  value={getLabel(item as T)}
-                >
+                <AutocompleteItem key={getKey(item as T)} value={getLabel(item as T)}>
                   {renderItem ? renderItem(item as T) : getLabel(item as T)}
                 </AutocompleteItem>
               )}
@@ -153,9 +148,7 @@ interface AutocompleteAsyncStandaloneProps<T> {
   onValueChange?: (value: string) => void;
 }
 
-function AutocompleteAsyncStandalone<T>(
-  props: AutocompleteAsyncStandaloneProps<T>,
-) {
+function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<T>) {
   const {
     fetcher,
     debounceMs,
@@ -195,9 +188,7 @@ function AutocompleteAsyncStandalone<T>(
           <AutocompleteTrigger />
         </AutocompleteInputGroup>
         <AutocompleteContent>
-          <AutocompleteEmpty>
-            {async.loading ? loadingText : emptyText}
-          </AutocompleteEmpty>
+          <AutocompleteEmpty>{async.loading ? loadingText : emptyText}</AutocompleteEmpty>
           <AutocompleteList>
             {(item: T) => (
               <AutocompleteItem key={getKey(item)} value={getLabel(item)}>

@@ -28,9 +28,7 @@ interface SelectStandalonePropsBase<I> {
   renderItem?: (item: ExtractItem<I>) => React.ReactNode;
   className?: string;
   disabled?: boolean;
-  renderValue?: (
-    value: ExtractItem<I> | ExtractItem<I>[] | null,
-  ) => React.ReactNode;
+  renderValue?: (value: ExtractItem<I> | ExtractItem<I>[] | null) => React.ReactNode;
 }
 
 interface SelectStandalonePropsSingle<I> extends SelectStandalonePropsBase<I> {
@@ -40,9 +38,7 @@ interface SelectStandalonePropsSingle<I> extends SelectStandalonePropsBase<I> {
   onValueChange?: (value: ExtractItem<I> | null) => void;
 }
 
-interface SelectStandalonePropsMultiple<
-  I,
-> extends SelectStandalonePropsBase<I> {
+interface SelectStandalonePropsMultiple<I> extends SelectStandalonePropsBase<I> {
   multiple: true;
   value?: ExtractItem<I>[];
   defaultValue?: ExtractItem<I>[];
@@ -55,9 +51,7 @@ type SelectStandaloneProps<I> =
 
 // --- Helpers ---
 
-function isGroupedItems<I>(
-  items: I[],
-): items is (I & SelectItemGroup<unknown>)[] {
+function isGroupedItems<I>(items: I[]): items is (I & SelectItemGroup<unknown>)[] {
   return (
     items.length > 0 &&
     typeof items[0] === "object" &&
@@ -120,8 +114,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
       );
 
   if (rest.multiple) {
-    const { value, defaultValue, onValueChange } =
-      rest as SelectStandalonePropsMultiple<I>;
+    const { value, defaultValue, onValueChange } = rest as SelectStandalonePropsMultiple<I>;
 
     return (
       <div className={className}>
@@ -129,19 +122,14 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
           multiple
           value={value as T[] | undefined}
           defaultValue={defaultValue as T[] | undefined}
-          onValueChange={
-            onValueChange &&
-            ((v: T[]) => (onValueChange as (v: T[]) => void)(v))
-          }
+          onValueChange={onValueChange && ((v: T[]) => (onValueChange as (v: T[]) => void)(v))}
           itemToStringLabel={getLabel}
           disabled={disabled}
         >
           <SelectTrigger>
             {renderValue ? (
               <SelectValue placeholder={placeholder}>
-                {(selected: T[]) =>
-                  (renderValue as (v: T[]) => React.ReactNode)(selected)
-                }
+                {(selected: T[]) => (renderValue as (v: T[]) => React.ReactNode)(selected)}
               </SelectValue>
             ) : (
               <SelectValue placeholder={placeholder} />
@@ -153,8 +141,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     );
   }
 
-  const { value, defaultValue, onValueChange } =
-    rest as SelectStandalonePropsSingle<I>;
+  const { value, defaultValue, onValueChange } = rest as SelectStandalonePropsSingle<I>;
 
   return (
     <div className={className}>
@@ -162,8 +149,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
         value={value as T | null | undefined}
         defaultValue={defaultValue as T | null | undefined}
         onValueChange={
-          onValueChange &&
-          ((v: T | null) => (onValueChange as (v: T | null) => void)(v))
+          onValueChange && ((v: T | null) => (onValueChange as (v: T | null) => void)(v))
         }
         itemToStringLabel={getLabel}
         disabled={disabled}
@@ -171,9 +157,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
         <SelectTrigger>
           {renderValue ? (
             <SelectValue placeholder={placeholder}>
-              {(selected: T) =>
-                (renderValue as (v: T) => React.ReactNode)(selected)
-              }
+              {(selected: T) => (renderValue as (v: T) => React.ReactNode)(selected)}
             </SelectValue>
           ) : (
             <SelectValue placeholder={placeholder} />

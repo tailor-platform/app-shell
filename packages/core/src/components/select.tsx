@@ -36,16 +36,11 @@ function SelectTrigger({
   );
 }
 
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Value>) {
+function SelectValue({ ...props }: React.ComponentProps<typeof BaseSelect.Value>) {
   return <BaseSelect.Value data-slot="select-value" {...props} />;
 }
 
-function SelectContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Popup>) {
+function SelectContent({ className, ...props }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
     <BaseSelect.Portal>
       <BaseSelect.Positioner>
@@ -89,9 +84,7 @@ function SelectItem({
   );
 }
 
-function SelectGroup({
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Group>) {
+function SelectGroup({ ...props }: React.ComponentProps<typeof BaseSelect.Group>) {
   return <BaseSelect.Group data-slot="select-group" {...props} />;
 }
 

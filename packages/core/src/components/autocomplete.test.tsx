@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  renderHook,
-  act,
-} from "@testing-library/react";
+import { cleanup, render, screen, waitFor, renderHook, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AutocompleteParts } from "./autocomplete";
 
@@ -25,10 +18,7 @@ function SimpleAutocomplete(props: {
 }) {
   return (
     <Autocomplete.Parts.Root {...props}>
-      <Autocomplete.Parts.Input
-        data-testid="input"
-        placeholder="Type a fruit..."
-      />
+      <Autocomplete.Parts.Input data-testid="input" placeholder="Type a fruit..." />
       <Autocomplete.Parts.Content>
         <Autocomplete.Parts.List>
           {suggestions.map((s) => (
@@ -102,10 +92,7 @@ describe("Autocomplete.Parts", () => {
   it("applies custom className to input", () => {
     render(
       <Autocomplete.Parts.Root>
-        <Autocomplete.Parts.Input
-          data-testid="input"
-          className="custom-class"
-        />
+        <Autocomplete.Parts.Input data-testid="input" className="custom-class" />
         <Autocomplete.Parts.Content>
           <Autocomplete.Parts.List>
             <Autocomplete.Parts.Item value="a">Apple</Autocomplete.Parts.Item>
@@ -114,9 +101,7 @@ describe("Autocomplete.Parts", () => {
       </Autocomplete.Parts.Root>,
     );
 
-    expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(
-      true,
-    );
+    expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(true);
   });
 
   it("renders the trigger with default icon", () => {
@@ -146,9 +131,7 @@ describe("Autocomplete.Parts", () => {
         </div>
         <Autocomplete.Parts.Content>
           <Autocomplete.Parts.List>
-            <Autocomplete.Parts.Item value="Apple">
-              Apple
-            </Autocomplete.Parts.Item>
+            <Autocomplete.Parts.Item value="Apple">Apple</Autocomplete.Parts.Item>
           </Autocomplete.Parts.List>
         </Autocomplete.Parts.Content>
       </Autocomplete.Parts.Root>,
@@ -187,9 +170,7 @@ describe("Autocomplete.Parts.useAsync", () => {
 
   it("returns correct shape with mapped property names", () => {
     const fetcher = vi.fn(async () => []);
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     // Should use `value` (not `query`) and `onValueChange` (not `onInputValueChange`)
     expect(result.current).toHaveProperty("items");
@@ -203,9 +184,7 @@ describe("Autocomplete.Parts.useAsync", () => {
 
   it("maps value from internal query state", () => {
     const fetcher = vi.fn(async () => []);
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("hello");
@@ -217,9 +196,7 @@ describe("Autocomplete.Parts.useAsync", () => {
   it("fetches items after debounce", async () => {
     const items = ["Apple", "Apricot"];
     const fetcher = vi.fn(async () => items);
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("ap");
@@ -239,9 +216,7 @@ describe("Autocomplete.Parts.useAsync", () => {
 
   it("respects custom debounceMs", async () => {
     const fetcher = vi.fn(async () => ["a"]);
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher, debounceMs: 500 }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher, debounceMs: 500 }));
 
     act(() => {
       result.current.onValueChange("test");
@@ -256,9 +231,7 @@ describe("Autocomplete.Parts.useAsync", () => {
 
   it("clears items when value is empty", async () => {
     const fetcher = vi.fn(async () => ["a", "b"]);
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("test");
@@ -277,9 +250,7 @@ describe("Autocomplete.Parts.useAsync", () => {
     const fetcher = vi.fn(async () => {
       throw error;
     });
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("test");
@@ -299,9 +270,7 @@ describe("Autocomplete.Parts.useAsync", () => {
       });
     });
 
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("first");
@@ -318,9 +287,7 @@ describe("Autocomplete.Parts.useAsync", () => {
 
   it("does not fetch for whitespace-only input", async () => {
     const fetcher = vi.fn(async () => []);
-    const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher }),
-    );
+    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("   ");

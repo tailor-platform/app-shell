@@ -30,11 +30,7 @@ describe("Select (standalone)", () => {
     const onValueChange = vi.fn();
 
     render(
-      <Select
-        items={["Apple", "Banana"]}
-        placeholder="Pick one"
-        onValueChange={onValueChange}
-      />,
+      <Select items={["Apple", "Banana"]} placeholder="Pick one" onValueChange={onValueChange} />,
     );
 
     await user.click(screen.getByText("Pick one"));
@@ -97,13 +93,7 @@ describe("Select (standalone)", () => {
 
 describe("Select (standalone, multiple)", () => {
   it("renders with placeholder", () => {
-    render(
-      <Select
-        items={["Apple", "Banana", "Cherry"]}
-        multiple
-        placeholder="Pick fruits"
-      />,
-    );
+    render(<Select items={["Apple", "Banana", "Cherry"]} multiple placeholder="Pick fruits" />);
     expect(screen.getByText("Pick fruits")).toBeDefined();
   });
 
@@ -178,13 +168,7 @@ describe("Select (standalone, grouped)", () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
 
-    render(
-      <Select
-        items={groups}
-        placeholder="Pick one"
-        onValueChange={onValueChange}
-      />,
-    );
+    render(<Select items={groups} placeholder="Pick one" onValueChange={onValueChange} />);
 
     await user.click(screen.getByText("Pick one"));
     await waitFor(() => expect(screen.getByText("Carrot")).toBeDefined());
@@ -200,12 +184,7 @@ describe("Select (standalone, grouped)", () => {
     const onValueChange = vi.fn();
 
     render(
-      <Select
-        items={groups}
-        multiple
-        placeholder="Pick items"
-        onValueChange={onValueChange}
-      />,
+      <Select items={groups} multiple placeholder="Pick items" onValueChange={onValueChange} />,
     );
 
     await user.click(screen.getByText("Pick items"));

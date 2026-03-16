@@ -35,9 +35,7 @@ function createFetcher<T>(result: T[], delay = 0) {
 
 /** Creates a fetcher mock that rejects with the given error. */
 function createFailingFetcher(error: Error) {
-  return vi.fn((_query: string, _opts: { signal: AbortSignal }) =>
-    Promise.reject(error),
-  );
+  return vi.fn((_query: string, _opts: { signal: AbortSignal }) => Promise.reject(error));
 }
 
 /** Advance timers by `ms` and flush pending microtasks. */
@@ -269,9 +267,7 @@ describe("useAsyncItems", () => {
 
     it("respects custom debounceMs", async () => {
       const fetcher = createFetcher(["a"]);
-      const { result } = renderHook(() =>
-        useAsyncItems({ fetcher, debounceMs: 500 }),
-      );
+      const { result } = renderHook(() => useAsyncItems({ fetcher, debounceMs: 500 }));
 
       act(() => {
         result.current.onInputValueChange("test");
@@ -338,14 +334,12 @@ describe("useAsyncItems", () => {
 
     it("aborts previous in-flight request when a new query fires", async () => {
       let capturedSignals: AbortSignal[] = [];
-      const fetcher = vi.fn(
-        async (_q: string, opts: { signal: AbortSignal }) => {
-          capturedSignals.push(opts.signal);
-          return new Promise<string[]>((resolve) => {
-            setTimeout(() => resolve([_q]), 200);
-          });
-        },
-      );
+      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+        capturedSignals.push(opts.signal);
+        return new Promise<string[]>((resolve) => {
+          setTimeout(() => resolve([_q]), 200);
+        });
+      });
 
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -366,30 +360,28 @@ describe("useAsyncItems", () => {
 
     it("does not update state from an aborted request", async () => {
       let callIndex = 0;
-      const fetcher = vi.fn(
-        async (_: string, opts: { signal: AbortSignal }) => {
-          callIndex++;
-          const myIndex = callIndex;
-          return new Promise<string[]>((resolve, reject) => {
-            const timer = setTimeout(
-              () => {
-                // Simulate: first request resolves slowly
-                if (myIndex === 1) {
-                  resolve(["stale-result"]);
-                } else {
-                  resolve(["fresh-result"]);
-                }
-              },
-              myIndex === 1 ? 500 : 50,
-            );
+      const fetcher = vi.fn(async (_: string, opts: { signal: AbortSignal }) => {
+        callIndex++;
+        const myIndex = callIndex;
+        return new Promise<string[]>((resolve, reject) => {
+          const timer = setTimeout(
+            () => {
+              // Simulate: first request resolves slowly
+              if (myIndex === 1) {
+                resolve(["stale-result"]);
+              } else {
+                resolve(["fresh-result"]);
+              }
+            },
+            myIndex === 1 ? 500 : 50,
+          );
 
-            opts.signal.addEventListener("abort", () => {
-              clearTimeout(timer);
-              reject(new DOMException("Aborted", "AbortError"));
-            });
+          opts.signal.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(new DOMException("Aborted", "AbortError"));
           });
-        },
-      );
+        });
+      });
 
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -413,14 +405,12 @@ describe("useAsyncItems", () => {
 
     it("aborts in-flight request when input is cleared", async () => {
       let capturedSignal: AbortSignal | null = null;
-      const fetcher = vi.fn(
-        async (_q: string, opts: { signal: AbortSignal }) => {
-          capturedSignal = opts.signal;
-          return new Promise<string[]>((resolve) => {
-            setTimeout(() => resolve(["result"]), 500);
-          });
-        },
-      );
+      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+        capturedSignal = opts.signal;
+        return new Promise<string[]>((resolve) => {
+          setTimeout(() => resolve(["result"]), 500);
+        });
+      });
 
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -440,14 +430,12 @@ describe("useAsyncItems", () => {
 
     it("cancels pending request and clears timeout on unmount", async () => {
       let capturedSignal: AbortSignal | null = null;
-      const fetcher = vi.fn(
-        async (_q: string, opts: { signal: AbortSignal }) => {
-          capturedSignal = opts.signal;
-          return new Promise<string[]>((resolve) => {
-            setTimeout(() => resolve(["result"]), 500);
-          });
-        },
-      );
+      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+        capturedSignal = opts.signal;
+        return new Promise<string[]>((resolve) => {
+          setTimeout(() => resolve(["result"]), 500);
+        });
+      });
 
       const { result, unmount } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -482,20 +470,18 @@ describe("useAsyncItems", () => {
     });
 
     it("does not set AbortError as error state", async () => {
-      const fetcher = vi.fn(
-        async (_q: string, opts: { signal: AbortSignal }) => {
-          return new Promise<string[]>((_, reject) => {
-            // Simulate an abort happening immediately
-            const timer = setTimeout(() => {
-              reject(new DOMException("Aborted", "AbortError"));
-            }, 50);
-            opts.signal.addEventListener("abort", () => {
-              clearTimeout(timer);
-              reject(new DOMException("Aborted", "AbortError"));
-            });
+      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+        return new Promise<string[]>((_, reject) => {
+          // Simulate an abort happening immediately
+          const timer = setTimeout(() => {
+            reject(new DOMException("Aborted", "AbortError"));
+          }, 50);
+          opts.signal.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(new DOMException("Aborted", "AbortError"));
           });
-        },
-      );
+        });
+      });
 
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -529,12 +515,10 @@ describe("useAsyncItems", () => {
 
     it("clears error on next successful fetch", async () => {
       let shouldFail = true;
-      const fetcher = vi.fn(
-        async (_q: string, _opts: { signal: AbortSignal }) => {
-          if (shouldFail) throw new Error("fail");
-          return ["success"];
-        },
-      );
+      const fetcher = vi.fn(async (_q: string, _opts: { signal: AbortSignal }) => {
+        if (shouldFail) throw new Error("fail");
+        return ["success"];
+      });
 
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -589,9 +573,7 @@ describe("useAsyncItems", () => {
       const fetcher2 = createFetcher(["from-v2"]);
 
       let currentFetcher = fetcher1;
-      const { result, rerender } = renderHook(() =>
-        useAsyncItems({ fetcher: currentFetcher }),
-      );
+      const { result, rerender } = renderHook(() => useAsyncItems({ fetcher: currentFetcher }));
 
       // Update fetcher before debounce fires
       currentFetcher = fetcher2;

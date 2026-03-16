@@ -190,8 +190,6 @@ describe("Select", () => {
       </Select.Root>,
     );
 
-    expect(
-      screen.getByTestId("trigger").classList.contains("custom-class"),
-    ).toBe(true);
+    expect(screen.getByTestId("trigger").classList.contains("custom-class")).toBe(true);
   });
 });

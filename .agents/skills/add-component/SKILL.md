@@ -170,6 +170,12 @@ return (
 
 ## Step 3: Base UI Integration
 
+### Base UI Reference
+
+When wrapping a Base UI component, fetch https://base-ui.com/llms.txt to find the relevant component or utility documentation URL, then fetch that URL to understand the full API before deciding which sub-components and props to expose via `Pick<>`.
+
+### Wrapping Rules
+
 When wrapping Base UI components:
 
 - Use `Pick<>` to select only stable, consumer-relevant props from Base UI types

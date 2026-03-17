@@ -86,6 +86,7 @@ export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
 export { Tooltip } from "./components/tooltip";
 export { Select } from "./components/select-standalone";
+export { type SelectAsyncFetcherFn } from "./components/select-standalone";
 export { Combobox } from "./components/combobox-standalone";
 export { Autocomplete } from "./components/autocomplete-standalone";
 export { type MappedItem, type ItemGroup } from "./components/dropdown-items";

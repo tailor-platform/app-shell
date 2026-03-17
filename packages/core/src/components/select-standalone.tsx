@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   SelectRoot,
   SelectTrigger,
@@ -12,46 +13,48 @@ import {
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 
-// --- Types ---
+// --- Shared types (used by both Select and Select.Async) ---
 
-interface SelectStandalonePropsBase<I> {
+interface SelectPropsBase<T> {
   /** Placeholder text shown when no value is selected */
   placeholder?: string;
   /** Map each item to its label, key, and optional custom render. */
-  mapItem?: (item: ExtractItem<I>) => MappedItem;
+  mapItem?: (item: T) => MappedItem;
   /** Additional className for the root container */
   className?: string;
   /** Whether the select is disabled */
   disabled?: boolean;
 }
 
-interface SelectStandalonePropsSingle<I> extends SelectStandalonePropsBase<I> {
+interface SelectPropsSingle<T> extends SelectPropsBase<T> {
   multiple?: false | undefined;
   /** Current value (controlled) */
-  value?: ExtractItem<I> | null;
+  value?: T | null;
   /** Default value (uncontrolled) */
-  defaultValue?: ExtractItem<I> | null;
+  defaultValue?: T | null;
   /** Called when the selected value changes */
-  onValueChange?: (value: ExtractItem<I> | null) => void;
+  onValueChange?: (value: T | null) => void;
   /** Custom render function for the selected value display */
-  renderValue?: (value: ExtractItem<I> | null) => React.ReactNode;
+  renderValue?: (value: T | null) => React.ReactNode;
 }
 
-interface SelectStandalonePropsMultiple<I> extends SelectStandalonePropsBase<I> {
+interface SelectPropsMultiple<T> extends SelectPropsBase<T> {
   multiple: true;
   /** Current value (controlled) */
-  value?: ExtractItem<I>[];
+  value?: T[];
   /** Default value (uncontrolled) */
-  defaultValue?: ExtractItem<I>[];
+  defaultValue?: T[];
   /** Called when the selected values change */
-  onValueChange?: (value: ExtractItem<I>[]) => void;
+  onValueChange?: (value: T[]) => void;
   /** Custom render function for the selected values display */
-  renderValue?: (value: ExtractItem<I>[]) => React.ReactNode;
+  renderValue?: (value: T[]) => React.ReactNode;
 }
 
+// --- Select (static) ---
+
 type SelectStandaloneProps<I> =
-  | ({ items: I[] } & SelectStandalonePropsSingle<I>)
-  | ({ items: I[] } & SelectStandalonePropsMultiple<I>);
+  | ({ items: I[] } & SelectPropsSingle<ExtractItem<I>>)
+  | ({ items: I[] } & SelectPropsMultiple<ExtractItem<I>>);
 
 // --- Helpers ---
 
@@ -86,8 +89,9 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     : renderFlatItems(items as T[], mapItem);
 
   if (rest.multiple) {
-    const { value, defaultValue, onValueChange, renderValue } =
-      rest as SelectStandalonePropsMultiple<I>;
+    const { value, defaultValue, onValueChange, renderValue } = rest as SelectPropsMultiple<
+      ExtractItem<I>
+    >;
 
     return (
       <div className={className}>
@@ -114,8 +118,141 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     );
   }
 
-  const { value, defaultValue, onValueChange, renderValue } =
-    rest as SelectStandalonePropsSingle<I>;
+  const { value, defaultValue, onValueChange, renderValue } = rest as SelectPropsSingle<
+    ExtractItem<I>
+  >;
+
+  return (
+    <div className={className}>
+      <SelectRoot<T>
+        value={value as T | null | undefined}
+        defaultValue={defaultValue as T | null | undefined}
+        onValueChange={
+          onValueChange && ((v: T | null) => (onValueChange as (v: T | null) => void)(v))
+        }
+        itemToStringLabel={getLabel}
+        disabled={disabled}
+      >
+        <SelectTrigger>
+          {renderValue ? (
+            <SelectValue placeholder={placeholder}>
+              {(selected: T) => (renderValue as (v: T) => React.ReactNode)(selected)}
+            </SelectValue>
+          ) : (
+            <SelectValue placeholder={placeholder} />
+          )}
+        </SelectTrigger>
+        <SelectContent>{content}</SelectContent>
+      </SelectRoot>
+    </div>
+  );
+}
+
+// ============================================================================
+// Select.Async
+// ============================================================================
+
+/**
+ * A function that fetches items for the Select.
+ * Called once on mount. Receives an `AbortSignal` so in-flight requests
+ * are cancelled when the component unmounts.
+ */
+type SelectAsyncFetcherFn<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
+
+interface SelectAsyncOwnProps<T> {
+  /** Fetcher for async item loading. Called once on mount. */
+  fetcher: SelectAsyncFetcherFn<T>;
+  /** Text shown while loading. @default "Loading..." */
+  loadingText?: string;
+}
+
+type SelectAsyncProps<T> =
+  | (SelectAsyncOwnProps<T> & SelectPropsSingle<T>)
+  | (SelectAsyncOwnProps<T> & SelectPropsMultiple<T>);
+
+function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
+  const {
+    fetcher,
+    placeholder,
+    loadingText = "Loading...",
+    mapItem: mapItemProp,
+    className,
+    disabled,
+    ...rest
+  } = props;
+
+  const [items, setItems] = useState<T[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+
+    fetcherRef
+      .current({ signal: controller.signal })
+      .then((result) => {
+        if (!controller.signal.aborted) {
+          setItems(result);
+        }
+      })
+      .catch((e) => {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (!controller.signal.aborted) {
+          setItems([]);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
+  const getLabel = (item: T) => mapItem(item).label;
+
+  const content = loading ? (
+    <div className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground">
+      {loadingText}
+    </div>
+  ) : (
+    renderFlatItems(items, mapItem)
+  );
+
+  if (rest.multiple) {
+    const { value, defaultValue, onValueChange, renderValue } = rest as SelectPropsMultiple<T>;
+
+    return (
+      <div className={className}>
+        <SelectRoot<T, true>
+          multiple
+          value={value as T[] | undefined}
+          defaultValue={defaultValue as T[] | undefined}
+          onValueChange={onValueChange && ((v: T[]) => (onValueChange as (v: T[]) => void)(v))}
+          itemToStringLabel={getLabel}
+          disabled={disabled}
+        >
+          <SelectTrigger>
+            {renderValue ? (
+              <SelectValue placeholder={placeholder}>
+                {(selected: T[]) => (renderValue as (v: T[]) => React.ReactNode)(selected)}
+              </SelectValue>
+            ) : (
+              <SelectValue placeholder={placeholder} />
+            )}
+          </SelectTrigger>
+          <SelectContent>{content}</SelectContent>
+        </SelectRoot>
+      </div>
+    );
+  }
+
+  const { value, defaultValue, onValueChange, renderValue } = rest as SelectPropsSingle<T>;
 
   return (
     <div className={className}>
@@ -148,7 +285,9 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
 // ============================================================================
 
 const Select = Object.assign(SelectStandalone, {
+  Async: SelectAsyncStandalone,
   Parts: SelectParts,
 });
 
 export { Select };
+export type { SelectAsyncFetcherFn };

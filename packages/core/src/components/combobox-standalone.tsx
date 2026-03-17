@@ -24,9 +24,9 @@ import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 
-// --- Shared props ---
+// --- Shared types (used by Combobox, Combobox.Async, and Combobox.Creatable) ---
 
-interface ComboboxStandalonePropsBase<T> {
+interface ComboboxPropsBase<T> {
   /** Placeholder text for the input */
   placeholder?: string;
   /** Text shown when no items match. @default "No results." */
@@ -39,7 +39,7 @@ interface ComboboxStandalonePropsBase<T> {
   disabled?: boolean;
 }
 
-interface ComboboxStandalonePropsSingle<T> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxPropsSingle<T> extends ComboboxPropsBase<T> {
   multiple?: false | undefined;
   /** Current value (controlled) */
   value?: T | null;
@@ -49,7 +49,7 @@ interface ComboboxStandalonePropsSingle<T> extends ComboboxStandalonePropsBase<T
   onValueChange?: (value: T | null) => void;
 }
 
-interface ComboboxStandalonePropsMultiple<T> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxPropsMultiple<T> extends ComboboxPropsBase<T> {
   multiple: true;
   /** Current value (controlled) */
   value?: T[];
@@ -59,11 +59,11 @@ interface ComboboxStandalonePropsMultiple<T> extends ComboboxStandalonePropsBase
   onValueChange?: (value: T[]) => void;
 }
 
-// --- Combobox (basic single / multiple) ---
+// --- Combobox (static) ---
 
 type ComboboxStaticProps<I> =
-  | ({ items: I[] } & ComboboxStandalonePropsSingle<ExtractItem<I>>)
-  | ({ items: I[] } & ComboboxStandalonePropsMultiple<ExtractItem<I>>);
+  | ({ items: I[] } & ComboboxPropsSingle<ExtractItem<I>>)
+  | ({ items: I[] } & ComboboxPropsMultiple<ExtractItem<I>>);
 
 function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
   type T = ExtractItem<I>;
@@ -110,7 +110,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
       };
 
   if (rest.multiple) {
-    const { value, defaultValue, onValueChange } = rest as ComboboxStandalonePropsMultiple<T>;
+    const { value, defaultValue, onValueChange } = rest as ComboboxPropsMultiple<T>;
     return (
       <div className={className}>
         <ComboboxRoot<T, true>
@@ -151,7 +151,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
     );
   }
 
-  const { value, defaultValue, onValueChange } = rest as ComboboxStandalonePropsSingle<T>;
+  const { value, defaultValue, onValueChange } = rest as ComboboxPropsSingle<T>;
   return (
     <div className={className}>
       <ComboboxRoot<T>
@@ -178,7 +178,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
 
 // --- Combobox.Async ---
 
-interface ComboboxAsyncPropsBase<T> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxAsyncOwnProps<T> {
   /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
   fetcher: AsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
@@ -186,8 +186,8 @@ interface ComboboxAsyncPropsBase<T> extends ComboboxStandalonePropsBase<T> {
 }
 
 type ComboboxAsyncProps<T> =
-  | (ComboboxAsyncPropsBase<T> & ComboboxStandalonePropsSingle<T>)
-  | (ComboboxAsyncPropsBase<T> & ComboboxStandalonePropsMultiple<T>);
+  | (ComboboxAsyncOwnProps<T> & ComboboxPropsSingle<T>)
+  | (ComboboxAsyncOwnProps<T> & ComboboxPropsMultiple<T>);
 
 function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
   const {
@@ -301,7 +301,7 @@ function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
  * object for identity comparison — primitive types (string, number) would
  * collide with real items.
  */
-interface ComboboxCreatablePropsBase<T extends object> extends ComboboxStandalonePropsBase<T> {
+interface ComboboxCreatablePropsBase<T extends object> extends ComboboxPropsBase<T> {
   /** Current items list */
   items: T[];
   /** Map each item to its label, key, and optional custom render. Required for creatable. */

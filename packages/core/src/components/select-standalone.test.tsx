@@ -277,3 +277,120 @@ describe("Select (standalone, grouped)", () => {
     });
   });
 });
+
+describe("Select.Async (standalone)", () => {
+  it("shows loading text then items after fetch", async () => {
+    const user = userEvent.setup();
+    let resolve: (value: string[]) => void;
+    const fetcher = vi.fn().mockImplementation(
+      () =>
+        new Promise<string[]>((r) => {
+          resolve = r;
+        }),
+    );
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" />);
+    expect(fetcher).toHaveBeenCalled();
+
+    // Open popup while loading
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => {
+      expect(screen.getByText("Loading...")).toBeDefined();
+    });
+
+    // Resolve
+    resolve!(["Apple", "Banana"]);
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeDefined();
+      expect(screen.getByText("Banana")).toBeDefined();
+    });
+  });
+
+  it("uses custom loadingText", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn().mockImplementation(
+      () => new Promise<string[]>(() => {}), // never resolves
+    );
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick" loadingText="Fetching..." />);
+    await user.click(screen.getByText("Pick"));
+    await waitFor(() => {
+      expect(screen.getByText("Fetching...")).toBeDefined();
+    });
+  });
+
+  it("calls onValueChange when an item is selected", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const fetcher = vi.fn().mockResolvedValue(["Apple", "Banana"]);
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" onValueChange={onValueChange} />);
+
+    await waitFor(() => expect(screen.getByText("Pick one")).toBeDefined());
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => expect(screen.getByText("Banana")).toBeDefined());
+    await user.click(screen.getByText("Banana"));
+
+    await waitFor(() => {
+      expect(onValueChange).toHaveBeenCalledWith("Banana");
+    });
+  });
+
+  it("supports mapItem for object items", async () => {
+    const user = userEvent.setup();
+    type Item = { id: number; name: string };
+    const items: Item[] = [
+      { id: 1, name: "Apple" },
+      { id: 2, name: "Banana" },
+    ];
+    const fetcher = vi.fn<() => Promise<Item[]>>().mockResolvedValue(items);
+
+    render(
+      <Select.Async
+        fetcher={fetcher}
+        mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+        placeholder="Pick one"
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText("Pick one")).toBeDefined());
+    await user.click(screen.getByText("Pick one"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeDefined();
+      expect(screen.getByText("Banana")).toBeDefined();
+    });
+  });
+
+  it("applies className", () => {
+    const fetcher = vi.fn().mockResolvedValue([]);
+    const { container } = render(
+      <Select.Async fetcher={fetcher} className="async-class" placeholder="Pick" />,
+    );
+    expect((container.firstChild as HTMLElement).classList.contains("async-class")).toBe(true);
+  });
+
+  it("renders multiple mode", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const fetcher = vi.fn().mockResolvedValue(["Apple", "Banana", "Cherry"]);
+
+    render(
+      <Select.Async
+        fetcher={fetcher}
+        multiple
+        placeholder="Pick fruits"
+        onValueChange={onValueChange}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText("Pick fruits")).toBeDefined());
+    await user.click(screen.getByText("Pick fruits"));
+    await waitFor(() => expect(screen.getByText("Apple")).toBeDefined());
+    await user.click(screen.getByText("Apple"));
+
+    await waitFor(() => {
+      expect(onValueChange).toHaveBeenCalledWith(["Apple"]);
+    });
+  });
+});

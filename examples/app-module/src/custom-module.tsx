@@ -1449,6 +1449,46 @@ const DropdownComponentsDemoPage = () => {
           </div>
         </div>
 
+        {/* ── Select.Async ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Select.Async</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Single</div>
+              <Select.Async
+                fetcher={async () => {
+                  await new Promise((r) => setTimeout(r, 800));
+                  return fruits;
+                }}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="Async select..."
+                loadingText="Loading fruits..."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Select.Async
+                fetcher={async () => {
+                  await new Promise((r) => setTimeout(r, 800));
+                  return fruits;
+                }}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                multiple
+                placeholder="Async multi-select..."
+              />
+            </div>
+          </div>
+        </div>
+
         {/* ── Combobox ── */}
         <div style={cardStyle}>
           <h3 style={headingStyle}>Combobox</h3>

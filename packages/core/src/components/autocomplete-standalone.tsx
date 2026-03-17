@@ -19,21 +19,21 @@ import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 
+// --- Shared types (used by both Autocomplete and Autocomplete.Async) ---
+
 /**
- * Props for the standalone Autocomplete component.
+ * Common props shared between Autocomplete and Autocomplete.Async.
  *
  * Unlike Select and Combobox, Autocomplete always operates in single-value
  * mode — its value is the raw input string, not a discrete item selection.
  */
-interface AutocompleteStandaloneProps<I> {
-  /** Items to show as suggestions */
-  items: I[];
+interface AutocompletePropsBase<T> {
   /** Placeholder text for the input */
   placeholder?: string;
-  /** Text shown when no items match. @default "No suggestions." */
+  /** Text shown when no items match */
   emptyText?: string;
   /** Map each item to its label, key, and optional custom render. */
-  mapItem?: (item: ExtractItem<I>) => MappedItem;
+  mapItem?: (item: T) => MappedItem;
   /** Additional className for the root container */
   className?: string;
   /** Whether the autocomplete is disabled */
@@ -44,6 +44,13 @@ interface AutocompleteStandaloneProps<I> {
   defaultValue?: string;
   /** Called when the value changes */
   onValueChange?: (value: string) => void;
+}
+
+// --- Autocomplete (static) ---
+
+interface AutocompleteStandaloneProps<I> extends AutocompletePropsBase<ExtractItem<I>> {
+  /** Items to show as suggestions */
+  items: I[];
 }
 
 function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
@@ -116,27 +123,11 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
 
 // --- Autocomplete.Async ---
 
-interface AutocompleteAsyncStandaloneProps<T> {
+interface AutocompleteAsyncStandaloneProps<T> extends AutocompletePropsBase<T> {
   /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
   fetcher: AsyncFetcher<T>;
-  /** Placeholder text for the input */
-  placeholder?: string;
-  /** Text shown when no items match. @default "No results." */
-  emptyText?: string;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
-  /** Map each item to its label, key, and optional custom render. */
-  mapItem?: (item: T) => MappedItem;
-  /** Additional className for the root container */
-  className?: string;
-  /** Whether the autocomplete is disabled */
-  disabled?: boolean;
-  /** Current value (controlled). Falls back to internal async state when omitted. */
-  value?: string;
-  /** Default value (uncontrolled) */
-  defaultValue?: string;
-  /** Called when the value changes */
-  onValueChange?: (value: string) => void;
 }
 
 function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<T>) {

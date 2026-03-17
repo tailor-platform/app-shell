@@ -3,38 +3,68 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
 
-function TooltipProvider({
-  delayDuration = 0,
-  children,
-  ...props
-}: {
-  delayDuration?: number;
+// Only the props relevant to the Provider abstraction are picked.
+// Base UI-internal props are intentionally excluded so that
+// upstream changes don't leak as breaking changes to consumers.
+type ProviderProps = Pick<
+  React.ComponentProps<typeof BaseTooltip.Provider>,
+  "delay" | "closeDelay" | "timeout"
+> & {
   children: React.ReactNode;
-}) {
+};
+
+/** Provides shared delay configuration for nested tooltips. */
+function Provider({ delay = 0, children, ...props }: ProviderProps) {
   return (
-    <BaseTooltip.Provider data-slot="tooltip-provider" delay={delayDuration} {...props}>
+    <BaseTooltip.Provider data-slot="tooltip-provider" delay={delay} {...props}>
       {children}
     </BaseTooltip.Provider>
   );
 }
+Provider.displayName = "Tooltip.Provider";
 
-function Tooltip({ children, ...props }: { children: React.ReactNode }) {
+// Only the props relevant to the Tooltip abstraction are picked from BaseTooltip.Root.
+// Base UI-internal props (e.g. trackCursorAxis, hoverable) are intentionally excluded
+// so that upstream changes don't leak as breaking changes to consumers.
+type TooltipRootProps = Pick<
+  React.ComponentProps<typeof BaseTooltip.Root>,
+  "open" | "defaultOpen" | "onOpenChange"
+> & {
+  children: React.ReactNode;
+};
+
+/**
+ * The root component that manages tooltip open/close state.
+ *
+ * @example
+ * ```tsx
+ * <Tooltip.Root>
+ *   <Tooltip.Trigger render={<Button variant="outline" />}>
+ *     Hover me
+ *   </Tooltip.Trigger>
+ *   <Tooltip.Content>Helpful information</Tooltip.Content>
+ * </Tooltip.Root>
+ * ```
+ */
+function Root({ children, ...props }: TooltipRootProps) {
   return (
-    <TooltipProvider>
-      <BaseTooltip.Root data-slot="tooltip" {...props}>
-        {children}
-      </BaseTooltip.Root>
-    </TooltipProvider>
+    <BaseTooltip.Root data-slot="tooltip" {...props}>
+      {children}
+    </BaseTooltip.Root>
   );
 }
+Root.displayName = "Tooltip.Root";
 
-function TooltipTrigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
+/** The element that triggers the tooltip on hover or focus. */
+function Trigger({ ...props }: React.ComponentProps<typeof BaseTooltip.Trigger>) {
   return <BaseTooltip.Trigger data-slot="tooltip-trigger" {...props} />;
 }
+Trigger.displayName = "Tooltip.Trigger";
 
-function TooltipContent({
+/** The tooltip popup that displays additional information. */
+function Content({
   className,
-  sideOffset = 0,
+  sideOffset = 5,
   side = "top",
   align = "center",
   children,
@@ -50,17 +80,23 @@ function TooltipContent({
         <BaseTooltip.Popup
           data-slot="tooltip-content"
           className={cn(
-            "astw:bg-primary astw:text-primary-foreground astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95 astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2 astw:z-50 astw:w-fit astw:origin-(--transform-origin) astw:rounded-md astw:px-3 astw:py-1.5 astw:text-xs astw:text-balance",
+            "astw:bg-primary astw:text-primary-foreground astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95 astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2 astw:z-50 astw:w-fit astw:overflow-visible astw:origin-(--transform-origin) astw:rounded-md astw:px-3 astw:py-1.5 astw:text-xs astw:text-balance",
             className,
           )}
           {...restProps}
         >
           {children}
-          <BaseTooltip.Arrow className="astw:bg-primary astw:fill-primary astw:z-50 astw:size-2.5 astw:translate-y-[calc(-50%_-_2px)] astw:rotate-45 astw:rounded-[2px]" />
+          <BaseTooltip.Arrow className="astw:size-2.5 astw:rotate-45 astw:bg-primary astw:data-[side=top]:-bottom-1 astw:data-[side=bottom]:-top-1 astw:data-[side=left]:-right-1 astw:data-[side=right]:-left-1" />
         </BaseTooltip.Popup>
       </BaseTooltip.Positioner>
     </BaseTooltip.Portal>
   );
 }
+Content.displayName = "Tooltip.Content";
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export const Tooltip = {
+  Root,
+  Trigger,
+  Content,
+  Provider,
+};

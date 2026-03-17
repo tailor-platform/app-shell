@@ -1,19 +1,64 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import { Tooltip } from "./tooltip";
 
 afterEach(() => {
   cleanup();
 });
 
 describe("Tooltip", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for tooltip variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed tooltip (trigger only)", () => {
+      const { container } = render(
+        <Tooltip.Root>
+          <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+          <Tooltip.Content>Tooltip text</Tooltip.Content>
+        </Tooltip.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open tooltip", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(
+        <Tooltip.Root>
+          <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
+          <Tooltip.Content>Helpful information</Tooltip.Content>
+        </Tooltip.Root>,
+      );
+
+      await user.hover(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        expect(screen.getByText("Helpful information")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("tooltip with provider", () => {
+      const { container } = render(
+        <Tooltip.Provider delay={500}>
+          <Tooltip.Root>
+            <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+            <Tooltip.Content>Tooltip text</Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders trigger", () => {
     render(
-      <Tooltip>
-        <TooltipTrigger data-testid="trigger">Hover me</TooltipTrigger>
-        <TooltipContent>Tooltip text</TooltipContent>
-      </Tooltip>,
+      <Tooltip.Root>
+        <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
+        <Tooltip.Content>Tooltip text</Tooltip.Content>
+      </Tooltip.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -24,10 +69,10 @@ describe("Tooltip", () => {
     const user = userEvent.setup();
 
     render(
-      <Tooltip>
-        <TooltipTrigger data-testid="trigger">Hover me</TooltipTrigger>
-        <TooltipContent data-testid="tooltip-content">Tooltip text</TooltipContent>
-      </Tooltip>,
+      <Tooltip.Root>
+        <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
+        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
+      </Tooltip.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");
@@ -42,10 +87,10 @@ describe("Tooltip", () => {
     const user = userEvent.setup();
 
     render(
-      <Tooltip>
-        <TooltipTrigger data-testid="trigger">Hover me</TooltipTrigger>
-        <TooltipContent data-testid="tooltip-content">Tooltip text</TooltipContent>
-      </Tooltip>,
+      <Tooltip.Root>
+        <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
+        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
+      </Tooltip.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");
@@ -63,12 +108,12 @@ describe("Tooltip", () => {
     const user = userEvent.setup();
 
     render(
-      <Tooltip>
-        <TooltipTrigger render={<button />} data-testid="trigger">
+      <Tooltip.Root>
+        <Tooltip.Trigger render={<button />} data-testid="trigger">
           Focus me
-        </TooltipTrigger>
-        <TooltipContent data-testid="tooltip-content">Tooltip text</TooltipContent>
-      </Tooltip>,
+        </Tooltip.Trigger>
+        <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>
+      </Tooltip.Root>,
     );
 
     await user.tab();
@@ -82,12 +127,12 @@ describe("Tooltip", () => {
     const user = userEvent.setup();
 
     render(
-      <Tooltip>
-        <TooltipTrigger data-testid="trigger">Hover me</TooltipTrigger>
-        <TooltipContent sideOffset={10} data-testid="tooltip-content">
+      <Tooltip.Root>
+        <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
+        <Tooltip.Content sideOffset={10} data-testid="tooltip-content">
           Tooltip text
-        </TooltipContent>
-      </Tooltip>,
+        </Tooltip.Content>
+      </Tooltip.Root>,
     );
 
     const trigger = screen.getByTestId("trigger");

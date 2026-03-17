@@ -1,31 +1,85 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "./dialog";
+import { Dialog } from "./dialog";
 
 afterEach(() => {
   cleanup();
 });
 
 describe("Dialog", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for dialog variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed dialog (trigger only)", () => {
+      const { container } = render(
+        <Dialog.Root>
+          <Dialog.Trigger>Open</Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Title</Dialog.Title>
+            </Dialog.Header>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open dialog with header", async () => {
+      const { baseElement } = render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Trigger>Open</Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Dialog Title</Dialog.Title>
+              <Dialog.Description>Dialog description text</Dialog.Description>
+            </Dialog.Header>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Dialog Title")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("open dialog with header and footer", async () => {
+      const { baseElement } = render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Trigger>Open</Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Confirm Action</Dialog.Title>
+              <Dialog.Description>Are you sure?</Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <button>Cancel</button>
+              <button>Confirm</button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Confirm Action")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders trigger", () => {
     render(
-      <Dialog>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Title</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Title</Dialog.Title>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -36,15 +90,15 @@ describe("Dialog", () => {
     const user = userEvent.setup();
 
     render(
-      <Dialog>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-            <DialogDescription>Dialog description</DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+            <Dialog.Description>Dialog description</Dialog.Description>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     expect(screen.queryByText("Dialog Title")).toBeNull();
@@ -61,14 +115,14 @@ describe("Dialog", () => {
     const user = userEvent.setup();
 
     render(
-      <Dialog>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
@@ -92,14 +146,14 @@ describe("Dialog", () => {
     const onOpenChange = vi.fn();
 
     render(
-      <Dialog onOpenChange={onOpenChange}>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root onOpenChange={onOpenChange}>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
@@ -115,27 +169,27 @@ describe("Dialog", () => {
     const onOpenChange = vi.fn();
 
     const { rerender } = render(
-      <Dialog open={false} onOpenChange={onOpenChange}>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root open={false} onOpenChange={onOpenChange}>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     expect(screen.queryByText("Dialog Title")).toBeNull();
 
     rerender(
-      <Dialog open={true} onOpenChange={onOpenChange}>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root open={true} onOpenChange={onOpenChange}>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     await waitFor(() => {
@@ -147,17 +201,17 @@ describe("Dialog", () => {
     const user = userEvent.setup();
 
     render(
-      <Dialog>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-          </DialogHeader>
-          <DialogFooter>
+      <Dialog.Root>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Header>
+          <Dialog.Footer>
             <button>Submit</button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>,
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
@@ -171,14 +225,14 @@ describe("Dialog", () => {
     const user = userEvent.setup();
 
     render(
-      <Dialog>
-        <DialogTrigger data-testid="trigger">Open</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog Title</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>,
+      <Dialog.Root>
+        <Dialog.Trigger data-testid="trigger">Open</Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Header>
+        </Dialog.Content>
+      </Dialog.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));

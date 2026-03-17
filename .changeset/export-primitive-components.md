@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Export primitive UI components (`Button`, `Input`, `Table`, `Dialog`, `Sheet`, `Tooltip`) and update `@base-ui-react` to v1.3.0.
+Export primitive UI components (`Button`, `Input`, `Table`, `Dialog`, `Sheet`, `Tooltip`) and update `@base-ui/react` to v1.3.0.
 
 ## New components
 

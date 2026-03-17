@@ -24,6 +24,7 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Button](./docs/components/button.md)** - Styled button with variants and sizes
 - **[Input](./docs/components/input.md)** - Styled text input
 - **[Table](./docs/components/table.md)** - Semantic HTML table sub-components
+- **[ActivityCard](./docs/components/activity-card.md)** - Timeline of document activities with avatars and overflow dialog
 - **[Dialog](./docs/components/dialog.md)** - Modal dialog with compound component API
 - **[Menu](./docs/components/menu.md)** - Dropdown menu with compound component API, checkbox/radio items, groups, and sub-menus
 - **[Sheet](./docs/components/sheet.md)** - Slide-in panel with swipe-to-dismiss support

@@ -86,5 +86,5 @@ export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
 export { Tooltip } from "./components/tooltip";
 export { Select, type MappedItem } from "./components/select-standalone";
-export { Combobox } from "./components/combobox-standalone";
+export { Combobox, type AsyncFetcher } from "./components/combobox-standalone";
 export { Autocomplete } from "./components/autocomplete-standalone";

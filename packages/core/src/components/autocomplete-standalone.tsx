@@ -139,6 +139,10 @@ interface AutocompleteAsyncStandaloneProps<T> {
   mapItem?: (item: T) => MappedItem;
   /** Additional className for the root container */
   className?: string;
+  /** Current value (controlled). Falls back to internal async state when omitted. */
+  value?: string;
+  /** Default value (uncontrolled) */
+  defaultValue?: string;
   /** Called when the value changes */
   onValueChange?: (value: string) => void;
 }
@@ -151,6 +155,8 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     loadingText = "Loading...",
     mapItem: mapItemProp,
     className,
+    value: controlledValue,
+    defaultValue,
     onValueChange: onValueChangeProp,
   } = props;
 
@@ -169,7 +175,8 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     <div className={className}>
       <AutocompleteRoot
         items={async.items}
-        value={async.value}
+        value={controlledValue ?? async.value}
+        defaultValue={defaultValue}
         onValueChange={handleValueChange}
         filter={null}
       >

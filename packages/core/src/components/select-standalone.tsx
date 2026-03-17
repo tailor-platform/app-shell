@@ -37,7 +37,6 @@ interface SelectStandalonePropsBase<I> {
   mapItem?: (item: ExtractItem<I>) => MappedItem;
   className?: string;
   disabled?: boolean;
-  renderValue?: (value: ExtractItem<I> | ExtractItem<I>[] | null) => React.ReactNode;
 }
 
 interface SelectStandalonePropsSingle<I> extends SelectStandalonePropsBase<I> {
@@ -45,6 +44,7 @@ interface SelectStandalonePropsSingle<I> extends SelectStandalonePropsBase<I> {
   value?: ExtractItem<I> | null;
   defaultValue?: ExtractItem<I> | null;
   onValueChange?: (value: ExtractItem<I> | null) => void;
+  renderValue?: (value: ExtractItem<I> | null) => React.ReactNode;
 }
 
 interface SelectStandalonePropsMultiple<I> extends SelectStandalonePropsBase<I> {
@@ -52,6 +52,7 @@ interface SelectStandalonePropsMultiple<I> extends SelectStandalonePropsBase<I> 
   value?: ExtractItem<I>[];
   defaultValue?: ExtractItem<I>[];
   onValueChange?: (value: ExtractItem<I>[]) => void;
+  renderValue?: (value: ExtractItem<I>[]) => React.ReactNode;
 }
 
 type SelectStandaloneProps<I> =
@@ -86,15 +87,7 @@ function renderFlatItems<T>(items: T[], mapItem: (item: T) => MappedItem) {
 function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
   type T = ExtractItem<I>;
 
-  const {
-    items,
-    placeholder,
-    mapItem: mapItemProp,
-    renderValue,
-    className,
-    disabled,
-    ...rest
-  } = props;
+  const { items, placeholder, mapItem: mapItemProp, className, disabled, ...rest } = props;
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
@@ -109,7 +102,8 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     : renderFlatItems(items as T[], mapItem);
 
   if (rest.multiple) {
-    const { value, defaultValue, onValueChange } = rest as SelectStandalonePropsMultiple<I>;
+    const { value, defaultValue, onValueChange, renderValue } =
+      rest as SelectStandalonePropsMultiple<I>;
 
     return (
       <div className={className}>
@@ -136,7 +130,8 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     );
   }
 
-  const { value, defaultValue, onValueChange } = rest as SelectStandalonePropsSingle<I>;
+  const { value, defaultValue, onValueChange, renderValue } =
+    rest as SelectStandalonePropsSingle<I>;
 
   return (
     <div className={className}>

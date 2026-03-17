@@ -316,6 +316,11 @@ function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
 
 // --- Combobox.Creatable ---
 
+/**
+ * `T` must be an object type because the creatable mechanism uses a sentinel
+ * object for identity comparison — primitive types (string, number) would
+ * collide with real items.
+ */
 interface ComboboxCreatablePropsBase<T extends object> extends ComboboxStandalonePropsBase<T> {
   /** Current items list */
   items: T[];
@@ -497,4 +502,4 @@ const Combobox = Object.assign(ComboboxStandalone, {
   Parts: ComboboxParts,
 });
 
-export { Combobox };
+export { Combobox, type AsyncFetcher };

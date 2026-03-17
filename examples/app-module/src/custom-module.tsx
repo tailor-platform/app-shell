@@ -9,6 +9,7 @@ import {
   pass,
   DescriptionCard,
   ActionPanel,
+  ActivityCard,
   Layout,
   Button,
   Input,
@@ -209,6 +210,90 @@ const metricCardDemoResource = defineResource({
   path: "metric-card-demo",
   meta: { title: "MetricCard Demo" },
   component: MetricCardDemoPage,
+});
+
+// ============================================================================
+// DEMO: ActivityCard (document updates / activity timeline)
+// ============================================================================
+
+const activityCardDemoActivities = [
+  {
+    id: "1",
+    userDisplayName: "Hanna",
+    description: "changed the status from DRAFT to CONFIRMED",
+    timestamp: new Date("2025-03-21T09:00:00"),
+  },
+  {
+    id: "2",
+    userDisplayName: "Pradeep Kumar",
+    description: "created this PO",
+    timestamp: new Date("2025-03-21T15:16:00"),
+  },
+  {
+    id: "3",
+    userDisplayName: "Pradeep Kumar",
+    description: "added a note",
+    timestamp: new Date("2025-03-21T15:16:00"),
+  },
+  {
+    id: "4",
+    userDisplayName: "Hanna",
+    description: "updated delivery date",
+    timestamp: new Date("2025-03-20T14:00:00"),
+  },
+  {
+    id: "5",
+    userDisplayName: "Pradeep Kumar",
+    description: "created this PO",
+    timestamp: new Date("2025-03-20T15:16:00"),
+  },
+  {
+    id: "6",
+    userDisplayName: "System",
+    description: "sent confirmation email",
+    timestamp: new Date("2025-03-20T10:00:00"),
+  },
+  {
+    id: "7",
+    userDisplayName: "Hanna",
+    description: "approved the order",
+    timestamp: new Date("2025-03-19T11:30:00"),
+  },
+  {
+    id: "8",
+    userDisplayName: "Pradeep Kumar",
+    description: "added a note",
+    timestamp: new Date("2025-03-19T09:00:00"),
+  },
+];
+
+const ActivityCardDemoPage = () => (
+  <Layout>
+    <Layout.Column>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+        ActivityCard Demo
+      </h1>
+      <p style={{ color: "var(--muted-foreground)", marginBottom: "1.5rem" }}>
+        Timeline of recent activities on a document (e.g. PO, SO, GR). Click &quot;N more
+        activities&quot; to open the full list in a dialog.
+      </p>
+      <div style={{ maxWidth: 360 }}>
+        <ActivityCard
+          title="Updates"
+          maxVisible={6}
+          overflowLabel="more"
+          groupBy="day"
+          activities={activityCardDemoActivities}
+        />
+      </div>
+    </Layout.Column>
+  </Layout>
+);
+
+const activityCardDemoResource = defineResource({
+  path: "activity-card-demo",
+  meta: { title: "ActivityCard Demo" },
+  component: ActivityCardDemoPage,
 });
 
 // ============================================================================
@@ -843,6 +928,13 @@ const twoColumnLayoutResource = defineResource({
         </Layout.Column>
         <Layout.Column>
           <ActionPanel title="Actions" actions={actions} />
+          <ActivityCard
+            title="Updates"
+            maxVisible={6}
+            overflowLabel="more"
+            groupBy="day"
+            activities={activityCardDemoActivities}
+          />
           <ActionPanel title="Additional actions" actions={[]} />
         </Layout.Column>
       </Layout>
@@ -1882,6 +1974,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/activity-card-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              View ActivityCard Demo
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/layout-1-column"
               style={{
                 color: "hsl(var(--primary))",
@@ -1972,6 +2075,7 @@ export const customPageModule = defineModule({
     purchaseOrderDemoResource,
     actionPanelDemoResource,
     metricCardDemoResource,
+    activityCardDemoResource,
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,

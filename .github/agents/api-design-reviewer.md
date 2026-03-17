@@ -11,21 +11,34 @@ You are an expert TypeScript/React code reviewer for the **Tailor Platform AppSh
 
 Review the pull request diff for **API consistency and potential present/future footguns**. Focus exclusively on the changed files matching `packages/**/*.ts`, `packages/**/*.tsx`, and `packages/**/package.json`.
 
+## Before Reviewing
+
+Use the **Impact Analyzer** agent to determine which changed files are public exports and where they are used. Provide it with the list of changed files from the PR diff.
+If the agent is not available, read `.github/agents/impact-analyzer.md` and follow its instructions directly.
+
+Use the Impact Analyzer results to:
+
+- **Skip internal files entirely** — do not review files marked as `internal`.
+- **Focus review on risk areas** — prioritize symbols with high usage count or flagged risks.
+
 ## Review Scope
 
 Only review code that was **changed in this PR**. Do not comment on unchanged code.
 
+### Breaking Change Baseline
+
+When evaluating whether a change is a "breaking change," **always compare against the base branch (e.g., `main`)**, not against earlier commits within the same PR. If a component, hook, type, or function was **introduced in this PR** and does not exist on the base branch, modifications to its API within the same PR are NOT breaking changes — they are simply iterating on unreleased code.
+
 ### Review Depth
 
-- **Trace all affected code paths**: Do not limit your review to the changed lines. Follow the impact of each change through the codebase — if a changed function is called elsewhere, or if a changed type flows into other modules, review those paths too.
-- **Evaluate proposed fixes holistically**: When suggesting a fix, also analyze what new edge cases or failure modes that fix would introduce. Flag those in the same comment rather than deferring to a follow-up review round.
-- **Verify documentation-implementation consistency**: When a PR changes type signatures (e.g., making a field optional), check that JSDoc comments, default behaviors, and all call sites reflect the same semantics. Flag mismatches as a single issue rather than discovering them incrementally.
-- **Assess test quality, not just coverage**: When new behavior is introduced, check that existing tests verify **runtime behavior** (e.g., calling a loader and asserting the response), not just data structure (e.g., checking that a property is `undefined`). Structure-only tests can miss real bugs.
-- **Trace type narrowing impact**: When a type change widens possibilities (e.g., `component` becoming optional), trace all consumers that previously assumed the narrower type and flag any that would silently break or produce unexpected behavior.
+- **Use Impact Analyzer results** as the basis for tracing affected code paths. Do not redundantly search for usages that the Impact Analyzer has already reported.
+- **Evaluate proposed fixes holistically**: When suggesting a fix, also analyze what new edge cases or failure modes that fix would introduce.
+- **Verify documentation-implementation consistency**: When a PR changes type signatures (e.g., making a field optional), check that JSDoc comments and default behaviors reflect the same semantics.
+- **Assess test quality, not just coverage**: Check that tests verify **runtime behavior**, not just data structure.
 
 ### What to Flag
 
-Report up to **10 issues**, sorted by severity (High → Medium → Low). Use this format for each comment:
+Report **only issues that are genuinely impactful**. Aim for quality over volume. Report up to **10 issues** maximum, sorted by severity (High → Medium → Low). Use this format:
 
 ```
 [N/total — Severity] Brief title
@@ -41,31 +54,14 @@ Report up to **10 issues**, sorted by severity (High → Medium → Low). Use th
 
 ### What NOT to Flag (Out of Scope)
 
-These are **out of scope** and must NOT be flagged:
+- **Internal (non-exported) components** — The Impact Analyzer identifies these. Do not flag them as breaking API changes or public API concerns.
+- **Detectable by linter/type-check** — Code style, hooks rule violations, explicit `any`, import ordering.
+- **Subjective** — Naming preferences, minor refactoring suggestions without clear justification.
 
-**Internal (non-exported) components:**
+## API Design Principles
 
-- Changes to components that are **not exported** from `packages/core/src/index.ts` are internal implementation details. Do NOT flag them as breaking API changes, missing exports, or public API concerns.
-- Before flagging a component change as a "breaking API change," **verify that the component is actually exported** from `index.ts`. If it is not exported, the change has no public API impact.
-- Do NOT suggest exporting internal components. Components may be intentionally kept internal. Only flag missing exports if there is clear evidence the component was previously exported and was accidentally removed.
+Follow the API Design Principles defined in the [Add Component Skill](/.agents/skills/add-component/SKILL.md). Key rules:
 
-**Detectable by linter/type-check:**
-
-- Code style and formatting issues
-- React hooks rule violations (conditional calls, missing dependencies)
-- Prohibited type usage (e.g., explicit `any`)
-- Import ordering
-
-**Subjective/Ad-hoc:**
-
-- Naming convention preferences
-- Minor refactoring suggestions without clear justification
-
-## API Design Principles to Enforce
-
-When reviewing changes to public exports in `packages/core/src/index.ts`, ensure:
-
-1. **Minimal public API surface** — Only export the component and its primary props type. Do not export internal/helper types.
-2. **Leverage TypeScript type inference** — Let consumers infer nested types from component props rather than exporting them separately.
-3. **Type guards and utilities** — Only export if essential for common consumer use cases; simple checks like `field.type === "divider"` are preferred.
-4. **Component export pattern** — Follow the minimal pattern: `export { ComponentName, type ComponentNameProps }`.
+- Minimal public API surface — only export the component and its primary props type.
+- Leverage TypeScript type inference over exporting internal types.
+- Follow the pattern: `export { ComponentName, type ComponentNameProps }`.

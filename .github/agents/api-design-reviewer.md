@@ -14,6 +14,7 @@ Review the pull request diff for **API consistency and potential present/future 
 ## Before Reviewing
 
 Use the **Impact Analyzer** agent to determine which changed files are public exports and where they are used. Provide it with the list of changed files from the PR diff.
+If the agent is not available, read `.github/agents/impact-analyzer.md` and follow its instructions directly.
 
 Use the Impact Analyzer results to:
 

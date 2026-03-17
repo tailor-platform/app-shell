@@ -37,6 +37,7 @@ The column count is auto-detected from the number of `Layout.Column` children:
 | Prop        | Type                | Default      | Description                                                                     |
 | ----------- | ------------------- | ------------ | ------------------------------------------------------------------------------- |
 | `className` | `string`            | -            | Additional CSS classes for container                                            |
+| `style`     | `CSSProperties`     | -            | Inline styles for the layout container                                          |
 | `children`  | `Layout.Column[]`   | **Required** | `Layout.Header` and/or `Layout.Column` components                               |
 | `columns`   | `1 \| 2 \| 3`       | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted |
 | `title`     | `string`            | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                      |
@@ -58,6 +59,7 @@ The column count is auto-detected from the number of `Layout.Column` children:
 | Prop        | Type                          | Default | Description                                                               |
 | ----------- | ----------------------------- | ------- | ------------------------------------------------------------------------- |
 | `className` | `string`                      | -       | Additional CSS classes                                                    |
+| `style`     | `CSSProperties`               | -       | Inline styles for the column                                              |
 | `area`      | `"left" \| "main" \| "right"` | -       | Column area role for explicit width control (see [Area Mode](#area-mode)) |
 | `children`  | `React.ReactNode`             | -       | Column content                                                            |
 

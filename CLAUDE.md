@@ -19,6 +19,15 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Introduction](./docs/introduction.md)** - What is AppShell and why use it
 - **[Quick Start](./docs/quickstart.md)** - Installation, setup, and first steps
 
+### UI Components
+
+- **[Button](./docs/components/button.md)** - Styled button with variants and sizes
+- **[Input](./docs/components/input.md)** - Styled text input
+- **[Table](./docs/components/table.md)** - Semantic HTML table sub-components
+- **[Dialog](./docs/components/dialog.md)** - Modal dialog with compound component API
+- **[Sheet](./docs/components/sheet.md)** - Slide-in panel with swipe-to-dismiss support
+- **[Tooltip](./docs/components/tooltip.md)** - Hover/focus tooltip with placement options
+
 ## Key Architecture Points (LLM Orientation)
 
 ### Monorepo Structure

@@ -175,7 +175,8 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     <div className={className}>
       <AutocompleteRoot
         items={async.items}
-        value={controlledValue ?? async.value}
+        // Use strict undefined check so that value="" is treated as controlled
+        value={controlledValue !== undefined ? controlledValue : async.value}
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         filter={null}

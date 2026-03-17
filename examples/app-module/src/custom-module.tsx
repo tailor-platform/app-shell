@@ -21,6 +21,7 @@ import {
   Select,
   Combobox,
   Autocomplete,
+  MetricCard,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -157,6 +158,63 @@ const actionPanelDemoResource = defineResource({
   path: "action-panel-demo",
   meta: { title: "Action Panel Demo" },
   component: ActionPanelDemoPage,
+});
+
+// ============================================================================
+// DEMO: MetricCard (KPI row)
+// ============================================================================
+
+const MetricCardDemoPage = () => (
+  <Layout>
+    <Layout.Header title="MetricCard Demo" />
+    <Layout.Column>
+      <p className="astw:text-sm astw:text-muted-foreground astw:mb-4">
+        Dashboard KPI cards: label, value, optional trend and comparison.
+      </p>
+      <div className="astw:flex astw:flex-row astw:flex-wrap astw:gap-4">
+        <div className="astw:min-w-[200px] astw:flex-1">
+          <MetricCard
+            label="Net total"
+            value="$1,500.00"
+            trend={{ direction: "up", value: "+5%" }}
+            comparison="vs last month"
+          />
+        </div>
+        <div className="astw:min-w-[200px] astw:flex-1">
+          <MetricCard
+            label="Discount total"
+            value="$120.00"
+            trend={{ direction: "down", value: "-2%" }}
+            comparison="vs last month"
+          />
+        </div>
+        <div className="astw:min-w-[200px] astw:flex-1">
+          <MetricCard
+            label="Orders"
+            value="42"
+            trend={{ direction: "neutral", value: "0%" }}
+            comparison="this week"
+            icon={<ZapIcon style={{ width: 14, height: 14 }} />}
+          />
+        </div>
+        <div className="astw:min-w-[200px] astw:flex-1">
+          <MetricCard
+            label="Orders"
+            value="42"
+            trend={{ direction: "neutral", value: "0%" }}
+            comparison="this week"
+            icon={<ZapIcon style={{ width: 14, height: 14 }} />}
+          />
+        </div>
+      </div>
+    </Layout.Column>
+  </Layout>
+);
+
+const metricCardDemoResource = defineResource({
+  path: "metric-card-demo",
+  meta: { title: "MetricCard Demo" },
+  component: MetricCardDemoPage,
 });
 
 // ============================================================================
@@ -1819,6 +1877,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/metric-card-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              View MetricCard Demo (KPI cards)
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/layout-1-column"
               style={{
                 color: "hsl(var(--primary))",
@@ -1908,6 +1977,7 @@ export const customPageModule = defineModule({
     adminOnlyResource,
     purchaseOrderDemoResource,
     actionPanelDemoResource,
+    metricCardDemoResource,
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,

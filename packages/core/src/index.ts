@@ -77,6 +77,7 @@ export { useToast } from "./hooks/use-toast";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
+export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Input, type InputProps } from "./components/input";

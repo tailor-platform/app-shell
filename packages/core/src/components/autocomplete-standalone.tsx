@@ -19,6 +19,9 @@ import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 
+/** Fetcher type for `Autocomplete.Async`. */
+export type AutocompleteAsyncFetcher<T> = AsyncFetcher<T>;
+
 // --- Shared types (used by both Autocomplete and Autocomplete.Async) ---
 
 /**
@@ -125,7 +128,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
 
 interface AutocompleteAsyncStandaloneProps<T> extends AutocompletePropsBase<T> {
   /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
-  fetcher: AsyncFetcher<T>;
+  fetcher: AutocompleteAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
 }

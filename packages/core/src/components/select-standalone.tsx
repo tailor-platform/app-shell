@@ -13,6 +13,18 @@ import {
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 
+/**
+ * Fetcher type for `Select.Async`.
+ * Called each time the dropdown is opened.
+ * Receives an `AbortSignal` so in-flight requests are cancelled
+ * when the component unmounts or the dropdown is re-opened before
+ * the previous request completes.
+ *
+ * If caching or deduplication is needed, implement it in the fetcher
+ * (e.g. via a query library or a simple cache layer).
+ */
+export type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
+
 // --- Shared types (used by both Select and Select.Async) ---
 
 interface SelectPropsBase<T> {
@@ -152,21 +164,9 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
 // Select.Async
 // ============================================================================
 
-/**
- * A function that fetches items for the Select.
- * Called each time the dropdown is opened.
- * Receives an `AbortSignal` so in-flight requests are cancelled
- * when the component unmounts or the dropdown is re-opened before
- * the previous request completes.
- *
- * If caching or deduplication is needed, implement it in the fetcher
- * (e.g. via a query library or a simple cache layer).
- */
-type SelectAsyncFetcherFn<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
-
 interface SelectAsyncOwnProps<T> {
   /** Fetcher for async item loading. Called each time the dropdown is opened. */
-  fetcher: SelectAsyncFetcherFn<T>;
+  fetcher: SelectAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
 }
@@ -307,4 +307,3 @@ const Select = Object.assign(SelectStandalone, {
 });
 
 export { Select };
-export type { SelectAsyncFetcherFn };

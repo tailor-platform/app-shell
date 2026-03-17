@@ -24,6 +24,9 @@ import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 
+/** Fetcher type for `Combobox.Async`. */
+export type ComboboxAsyncFetcher<T> = AsyncFetcher<T>;
+
 // --- Shared types (used by Combobox, Combobox.Async, and Combobox.Creatable) ---
 
 interface ComboboxPropsBase<T> {
@@ -180,7 +183,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
 
 interface ComboboxAsyncOwnProps<T> {
   /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
-  fetcher: AsyncFetcher<T>;
+  fetcher: ComboboxAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
 }

@@ -59,7 +59,7 @@ Report **only issues that are genuinely impactful**. Aim for quality over volume
 
 ## API Design Principles
 
-Follow the API Design Principles defined in `CLAUDE.md`. Key rules:
+Follow the API Design Principles defined in the [Add Component Skill](/.agents/skills/add-component/SKILL.md). Key rules:
 
 - Minimal public API surface — only export the component and its primary props type.
 - Leverage TypeScript type inference over exporting internal types.

@@ -15,8 +15,10 @@ import {
   AutocompleteParts,
   useAsync,
 } from "./autocomplete";
+import type { AsyncFetcher } from "@/hooks/use-async-items";
+import type { MappedItem } from "./select-standalone";
 
-const defaultGetLabel = String;
+const defaultMapItem = (item: unknown): MappedItem => ({ label: String(item) });
 
 // --- Types ---
 
@@ -44,12 +46,8 @@ interface AutocompleteStandaloneProps<I> {
   placeholder?: string;
   /** Text shown when no items match. @default "No suggestions." */
   emptyText?: string;
-  /** Extract display label from an item. Defaults to `String` for string items. */
-  getLabel?: (item: ExtractItem<I>) => string;
-  /** Extract a unique key for each item. Defaults to `getLabel`. */
-  getKey?: (item: ExtractItem<I>) => string;
-  /** Custom render function for each item in the dropdown */
-  renderItem?: (item: ExtractItem<I>) => React.ReactNode;
+  /** Map each item to its label, key, and optional custom render. */
+  mapItem?: (item: ExtractItem<I>) => MappedItem;
   /** Additional className for the root container */
   className?: string;
   /** Current value (controlled) */
@@ -67,17 +65,14 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
     items,
     placeholder,
     emptyText = "No suggestions.",
-    getLabel: getLabelProp,
-    getKey: getKeyProp,
-    renderItem,
+    mapItem: mapItemProp,
     className,
     value,
     defaultValue,
     onValueChange,
   } = props;
 
-  const getLabel = (getLabelProp ?? defaultGetLabel) as (item: T) => string;
-  const getKey = (getKeyProp ?? getLabel) as (item: T) => string;
+  const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
 
   const listChildren = isGroupedItems(items)
     ? (group: any) => {
@@ -86,20 +81,26 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
           <AutocompleteGroup key={g.label} items={g.items}>
             <AutocompleteGroupLabel>{g.label}</AutocompleteGroupLabel>
             <AutocompleteCollection>
-              {(item: any) => (
-                <AutocompleteItem key={getKey(item as T)} value={getLabel(item as T)}>
-                  {renderItem ? renderItem(item as T) : getLabel(item as T)}
-                </AutocompleteItem>
-              )}
+              {(item: any) => {
+                const mapped = mapItem(item as T);
+                return (
+                  <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
+                    {mapped.render ?? mapped.label}
+                  </AutocompleteItem>
+                );
+              }}
             </AutocompleteCollection>
           </AutocompleteGroup>
         );
       }
-    : (item: any) => (
-        <AutocompleteItem key={getKey(item as T)} value={getLabel(item as T)}>
-          {renderItem ? renderItem(item as T) : getLabel(item as T)}
-        </AutocompleteItem>
-      );
+    : (item: any) => {
+        const mapped = mapItem(item as T);
+        return (
+          <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
+            {mapped.render ?? mapped.label}
+          </AutocompleteItem>
+        );
+      };
 
   return (
     <div className={className}>
@@ -126,22 +127,16 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
 // --- Autocomplete.Async ---
 
 interface AutocompleteAsyncStandaloneProps<T> {
-  /** Fetch items for the given query string */
-  fetcher: (query: string, options: { signal: AbortSignal }) => Promise<T[]>;
-  /** Debounce delay in milliseconds. @default 300 */
-  debounceMs?: number;
+  /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
+  fetcher: AsyncFetcher<T>;
   /** Placeholder text for the input */
   placeholder?: string;
   /** Text shown when no items match. @default "No results." */
   emptyText?: string;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
-  /** Extract display label from an item. Defaults to `String` for string items. */
-  getLabel?: (item: T) => string;
-  /** Extract a unique key for each item. Defaults to `getLabel`. */
-  getKey?: (item: T) => string;
-  /** Custom render function for each item in the dropdown */
-  renderItem?: (item: T) => React.ReactNode;
+  /** Map each item to its label, key, and optional custom render. */
+  mapItem?: (item: T) => MappedItem;
   /** Additional className for the root container */
   className?: string;
   /** Called when the value changes */
@@ -151,20 +146,16 @@ interface AutocompleteAsyncStandaloneProps<T> {
 function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<T>) {
   const {
     fetcher,
-    debounceMs,
     placeholder,
     emptyText = "No results.",
     loadingText = "Loading...",
-    getLabel: getLabelProp,
-    getKey: getKeyProp,
-    renderItem,
+    mapItem: mapItemProp,
     className,
     onValueChange: onValueChangeProp,
   } = props;
 
-  const async = useAsync({ fetcher, debounceMs });
-  const getLabel = getLabelProp ?? (defaultGetLabel as (item: T) => string);
-  const getKey = getKeyProp ?? getLabel;
+  const async = useAsync({ fetcher });
+  const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
 
   const handleValueChange = React.useCallback(
     (value: string) => {
@@ -190,11 +181,14 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
         <AutocompleteContent>
           <AutocompleteEmpty>{async.loading ? loadingText : emptyText}</AutocompleteEmpty>
           <AutocompleteList>
-            {(item: T) => (
-              <AutocompleteItem key={getKey(item)} value={getLabel(item)}>
-                {renderItem ? renderItem(item) : getLabel(item)}
-              </AutocompleteItem>
-            )}
+            {(item: T) => {
+              const mapped = mapItem(item);
+              return (
+                <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
+                  {mapped.render ?? mapped.label}
+                </AutocompleteItem>
+              );
+            }}
           </AutocompleteList>
         </AutocompleteContent>
       </AutocompleteRoot>

@@ -10,9 +10,19 @@ import {
   SelectParts,
 } from "./select";
 
-const defaultGetLabel = String;
-
 // --- Types ---
+
+/** Shape returned by `mapItem` to describe how an item appears in the dropdown. */
+interface MappedItem {
+  /** Display text — used for filtering, a11y, and fallback display. */
+  label: string;
+  /** React key for list reconciliation. Defaults to `label`. */
+  key?: string;
+  /** Custom JSX to render in the dropdown. Defaults to `label`. */
+  render?: React.ReactNode;
+}
+
+const defaultMapItem = (item: unknown): MappedItem => ({ label: String(item) });
 
 interface SelectItemGroup<T> {
   label: string;
@@ -23,9 +33,8 @@ type ExtractItem<I> = I extends SelectItemGroup<infer T> ? T : I;
 
 interface SelectStandalonePropsBase<I> {
   placeholder?: string;
-  getLabel?: (item: ExtractItem<I>) => string;
-  getKey?: (item: ExtractItem<I>) => string;
-  renderItem?: (item: ExtractItem<I>) => React.ReactNode;
+  /** Map each item to its label, key, and optional custom render. */
+  mapItem?: (item: ExtractItem<I>) => MappedItem;
   className?: string;
   disabled?: boolean;
   renderValue?: (value: ExtractItem<I> | ExtractItem<I>[] | null) => React.ReactNode;
@@ -61,17 +70,15 @@ function isGroupedItems<I>(items: I[]): items is (I & SelectItemGroup<unknown>)[
   );
 }
 
-function renderFlatItems<T>(
-  items: T[],
-  getKey: (item: T) => string,
-  getLabel: (item: T) => string,
-  renderItem?: (item: T) => React.ReactNode,
-) {
-  return items.map((item) => (
-    <SelectItem key={getKey(item)} value={item}>
-      {renderItem ? renderItem(item) : getLabel(item)}
-    </SelectItem>
-  ));
+function renderFlatItems<T>(items: T[], mapItem: (item: T) => MappedItem) {
+  return items.map((item) => {
+    const mapped = mapItem(item);
+    return (
+      <SelectItem key={mapped.key ?? mapped.label} value={item}>
+        {mapped.render ?? mapped.label}
+      </SelectItem>
+    );
+  });
 }
 
 // --- Component ---
@@ -82,36 +89,24 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
   const {
     items,
     placeholder,
-    getLabel: getLabelProp,
-    getKey: getKeyProp,
-    renderItem,
+    mapItem: mapItemProp,
     renderValue,
     className,
     disabled,
     ...rest
   } = props;
 
-  const getLabel = (getLabelProp ?? defaultGetLabel) as (item: T) => string;
-  const getKey = (getKeyProp ?? getLabel) as (item: T) => string;
+  const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
+  const getLabel = (item: T) => mapItem(item).label;
 
   const content = isGroupedItems(items)
     ? (items as SelectItemGroup<T>[]).map((group) => (
         <SelectGroup key={group.label}>
           <SelectGroupLabel>{group.label}</SelectGroupLabel>
-          {renderFlatItems(
-            group.items,
-            getKey,
-            getLabel,
-            renderItem as ((item: T) => React.ReactNode) | undefined,
-          )}
+          {renderFlatItems(group.items, mapItem)}
         </SelectGroup>
       ))
-    : renderFlatItems(
-        items as T[],
-        getKey,
-        getLabel,
-        renderItem as ((item: T) => React.ReactNode) | undefined,
-      );
+    : renderFlatItems(items as T[], mapItem);
 
   if (rest.multiple) {
     const { value, defaultValue, onValueChange } = rest as SelectStandalonePropsMultiple<I>;
@@ -177,4 +172,4 @@ const Select = Object.assign(SelectStandalone, {
   Parts: SelectParts,
 });
 
-export { Select };
+export { Select, type MappedItem };

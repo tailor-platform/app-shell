@@ -18,7 +18,11 @@ function SimpleAutocomplete(props: {
 }) {
   return (
     <Autocomplete.Parts.Root {...props}>
-      <Autocomplete.Parts.Input data-testid="input" placeholder="Type a fruit..." />
+      <Autocomplete.Parts.InputGroup>
+        <Autocomplete.Parts.Input data-testid="input" placeholder="Type a fruit..." />
+        <Autocomplete.Parts.Clear />
+        <Autocomplete.Parts.Trigger />
+      </Autocomplete.Parts.InputGroup>
       <Autocomplete.Parts.Content>
         <Autocomplete.Parts.List>
           {suggestions.map((s) => (
@@ -34,6 +38,46 @@ function SimpleAutocomplete(props: {
 }
 
 describe("Autocomplete.Parts", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for autocomplete variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed autocomplete with placeholder", () => {
+      const { container } = render(<SimpleAutocomplete />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open autocomplete", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(<SimpleAutocomplete />);
+      const input = screen.getByTestId("input");
+      await user.click(input);
+      await user.type(input, "a");
+      await waitFor(() => {
+        expect(screen.getByText("Apple")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("with groups", () => {
+      const { container } = render(
+        <Autocomplete.Parts.Root>
+          <Autocomplete.Parts.Input placeholder="Search..." />
+          <Autocomplete.Parts.Content>
+            <Autocomplete.Parts.List>
+              <Autocomplete.Parts.Group>
+                <Autocomplete.Parts.GroupLabel>Fruits</Autocomplete.Parts.GroupLabel>
+                <Autocomplete.Parts.Item value="apple">Apple</Autocomplete.Parts.Item>
+              </Autocomplete.Parts.Group>
+            </Autocomplete.Parts.List>
+          </Autocomplete.Parts.Content>
+        </Autocomplete.Parts.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders the input with placeholder", () => {
     render(<SimpleAutocomplete />);
 
@@ -214,9 +258,11 @@ describe("Autocomplete.Parts.useAsync", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("respects custom debounceMs", async () => {
+  it("respects custom debounceMs via object fetcher", async () => {
     const fetcher = vi.fn(async () => ["a"]);
-    const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher, debounceMs: 500 }));
+    const { result } = renderHook(() =>
+      Autocomplete.Parts.useAsync({ fetcher: { fn: fetcher, debounceMs: 500 } }),
+    );
 
     act(() => {
       result.current.onValueChange("test");

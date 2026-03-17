@@ -2,25 +2,75 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 const DEFAULT_DEBOUNCE_MS = 300;
 
+/**
+ * A function that fetches items for a given query string.
+ *
+ * Receives an `AbortSignal` that is aborted when a newer request supersedes
+ * this one — pass it through to `fetch()` so the browser cancels the
+ * in-flight HTTP request automatically.
+ */
+export type AsyncFetcherFn<T> = (query: string, options: { signal: AbortSignal }) => Promise<T[]>;
+
+/**
+ * Fetcher specification for async item loading.
+ *
+ * Can be either:
+ * - A plain function — uses the default debounce delay (300ms)
+ * - An object with `fn` and `debounceMs` — uses the specified debounce delay
+ *
+ * @example
+ * ```tsx
+ * // Plain function (default 300ms debounce)
+ * fetcher: async (query, { signal }) => {
+ *   const res = await fetch(`/api/search?q=${query}`, { signal });
+ *   return res.json();
+ * }
+ *
+ * // Object with custom debounce
+ * fetcher: {
+ *   fn: async (query, { signal }) => {
+ *     const res = await fetch(`/api/search?q=${query}`, { signal });
+ *     return res.json();
+ *   },
+ *   debounceMs: 500,
+ * }
+ * ```
+ */
+export type AsyncFetcher<T> = AsyncFetcherFn<T> | { fn: AsyncFetcherFn<T>; debounceMs: number };
+
+function resolveAsyncFetcher<T>(fetcher: AsyncFetcher<T>): {
+  fn: AsyncFetcherFn<T>;
+  debounceMs: number;
+} {
+  if (typeof fetcher === "function") {
+    return { fn: fetcher, debounceMs: DEFAULT_DEBOUNCE_MS };
+  }
+  return fetcher;
+}
+
 export interface UseAsyncItemsOptions<T> {
   /**
-   * Fetch items for the given query string.
+   * Fetcher for async item loading.
    *
-   * Receives an `AbortSignal` that is aborted when a newer request supersedes
-   * this one — pass it through to `fetch()` so the browser cancels the
-   * in-flight HTTP request automatically.
+   * Pass a plain function to use the default debounce delay (300ms),
+   * or an object `{ fn, debounceMs }` to control the debounce timing.
    *
    * @example
    * ```tsx
+   * // Plain function
    * fetcher: async (query, { signal }) => {
    *   const res = await fetch(`/api/search?q=${query}`, { signal });
    *   return res.json();
    * }
+   *
+   * // With custom debounce
+   * fetcher: {
+   *   fn: async (query, { signal }) => { ... },
+   *   debounceMs: 500,
+   * }
    * ```
    */
-  fetcher: (query: string, options: { signal: AbortSignal }) => Promise<T[]>;
-  /** Debounce delay in milliseconds. @default 300 */
-  debounceMs?: number;
+  fetcher: AsyncFetcher<T>;
 }
 
 export interface UseAsyncItemsReturn<T> {
@@ -43,10 +93,8 @@ export interface UseAsyncItemsReturn<T> {
  * Pass `filter={null}` to the Root component to disable internal filtering
  * since items are already filtered by the remote source.
  */
-export function useAsyncItems<T>({
-  fetcher,
-  debounceMs = DEFAULT_DEBOUNCE_MS,
-}: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
+export function useAsyncItems<T>({ fetcher }: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
+  const { fn: fetcherFn, debounceMs } = resolveAsyncFetcher(fetcher);
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -55,8 +103,8 @@ export function useAsyncItems<T>({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep fetcher in a ref so the callback identity stays stable
-  const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
+  const fetcherRef = useRef(fetcherFn);
+  fetcherRef.current = fetcherFn;
 
   const onInputValueChange = useCallback(
     (value: string) => {

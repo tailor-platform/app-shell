@@ -606,7 +606,14 @@ function useCreatable<T extends object>(
  *     if (!res.ok) return [];
  *     return res.json();
  *   },
- *   debounceMs: 300,
+ * });
+ *
+ * // Or with custom debounce:
+ * const countries = Combobox.useAsync({
+ *   fetcher: {
+ *     fn: async (query, { signal }) => { ... },
+ *     debounceMs: 500,
+ *   },
  * });
  *
  * <Combobox.Root

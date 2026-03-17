@@ -8,6 +8,48 @@ afterEach(() => {
 });
 
 describe("Select (standalone)", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for standalone select
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("default with string items", () => {
+      const { container } = render(
+        <Select items={["Apple", "Banana", "Cherry"]} placeholder="Pick a fruit" />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("disabled", () => {
+      const { container } = render(
+        <Select items={["Apple", "Banana"]} placeholder="Disabled" disabled />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with custom mapItem", () => {
+      const items = [
+        { id: "1", name: "Apple" },
+        { id: "2", name: "Banana" },
+      ];
+      const { container } = render(
+        <Select
+          items={items}
+          mapItem={(item) => ({ label: item.name, key: item.id })}
+          placeholder="Pick"
+        />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("multiple mode", () => {
+      const { container } = render(
+        <Select items={["Apple", "Banana"]} placeholder="Pick fruits" multiple />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders with placeholder", () => {
     render(<Select items={["Apple", "Banana"]} placeholder="Pick one" />);
     expect(screen.getByText("Pick one")).toBeDefined();
@@ -42,7 +84,7 @@ describe("Select (standalone)", () => {
     });
   });
 
-  it("renders with custom getLabel for object items", async () => {
+  it("renders with custom mapItem for object items", async () => {
     const user = userEvent.setup();
     const items = [
       { id: 1, name: "Apple" },
@@ -52,8 +94,7 @@ describe("Select (standalone)", () => {
     render(
       <Select
         items={items}
-        getLabel={(item) => item.name}
-        getKey={(item) => String(item.id)}
+        mapItem={(item) => ({ label: item.name, key: String(item.id) })}
         placeholder="Pick one"
       />,
     );
@@ -66,12 +107,15 @@ describe("Select (standalone)", () => {
     });
   });
 
-  it("renders with custom renderItem", async () => {
+  it("renders with custom renderItem via mapItem", async () => {
     const user = userEvent.setup();
     render(
       <Select
         items={["Apple", "Banana"]}
-        renderItem={(item) => <span data-testid={`item-${item}`}>{item}!</span>}
+        mapItem={(item) => ({
+          label: item,
+          render: <span data-testid={`item-${item}`}>{item}!</span>,
+        })}
         placeholder="Pick one"
       />,
     );
@@ -196,7 +240,7 @@ describe("Select (standalone, grouped)", () => {
     });
   });
 
-  it("renders with object items and getLabel", async () => {
+  it("renders with object items and mapItem", async () => {
     const user = userEvent.setup();
     const objectGroups = [
       {
@@ -218,8 +262,7 @@ describe("Select (standalone, grouped)", () => {
     render(
       <Select
         items={objectGroups}
-        getLabel={(item) => item.name}
-        getKey={(item) => String(item.id)}
+        mapItem={(item) => ({ label: item.name, key: String(item.id) })}
         placeholder="Pick one"
       />,
     );

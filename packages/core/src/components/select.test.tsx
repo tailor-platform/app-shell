@@ -8,6 +8,113 @@ afterEach(() => {
 });
 
 describe("Select", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for select variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed select with placeholder", () => {
+      const { container } = render(
+        <Select.Root>
+          <Select.Trigger>
+            <Select.Value placeholder="Pick one" />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="a">Apple</Select.Item>
+            <Select.Item value="b">Banana</Select.Item>
+          </Select.Content>
+        </Select.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open select", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(
+        <Select.Root>
+          <Select.Trigger data-testid="trigger">
+            <Select.Value placeholder="Pick one" />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="a">Apple</Select.Item>
+            <Select.Item value="b">Banana</Select.Item>
+          </Select.Content>
+        </Select.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+      await waitFor(() => {
+        expect(screen.getByText("Apple")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("with groups and separator", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(
+        <Select.Root>
+          <Select.Trigger data-testid="trigger">
+            <Select.Value placeholder="Pick" />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              <Select.GroupLabel>Fruits</Select.GroupLabel>
+              <Select.Item value="apple">Apple</Select.Item>
+            </Select.Group>
+            <Select.Separator />
+            <Select.Group>
+              <Select.GroupLabel>Vegetables</Select.GroupLabel>
+              <Select.Item value="carrot">Carrot</Select.Item>
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+      await waitFor(() => {
+        expect(screen.getByText("Fruits")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("disabled select", () => {
+      const { container } = render(
+        <Select.Root disabled>
+          <Select.Trigger>
+            <Select.Value placeholder="Disabled" />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="a">Apple</Select.Item>
+          </Select.Content>
+        </Select.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("disabled item", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(
+        <Select.Root>
+          <Select.Trigger data-testid="trigger">
+            <Select.Value placeholder="Pick" />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="a">Apple</Select.Item>
+            <Select.Item value="b" disabled>
+              Banana
+            </Select.Item>
+          </Select.Content>
+        </Select.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+      await waitFor(() => {
+        expect(screen.getByText("Apple")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders trigger with placeholder", () => {
     render(
       <Select.Root>

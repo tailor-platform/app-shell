@@ -265,9 +265,11 @@ describe("useAsyncItems", () => {
       expect(fetcher).toHaveBeenCalledWith("abc", expect.anything());
     });
 
-    it("respects custom debounceMs", async () => {
+    it("respects custom debounceMs via object fetcher", async () => {
       const fetcher = createFetcher(["a"]);
-      const { result } = renderHook(() => useAsyncItems({ fetcher, debounceMs: 500 }));
+      const { result } = renderHook(() =>
+        useAsyncItems({ fetcher: { fn: fetcher, debounceMs: 500 } }),
+      );
 
       act(() => {
         result.current.onInputValueChange("test");

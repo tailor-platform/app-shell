@@ -247,7 +247,14 @@ export interface AutocompleteUseAsyncReturn<T> {
  *     if (!res.ok) return [];
  *     return res.json();
  *   },
- *   debounceMs: 300,
+ * });
+ *
+ * // Or with custom debounce:
+ * const movies = Autocomplete.useAsync({
+ *   fetcher: {
+ *     fn: async (query, { signal }) => { ... },
+ *     debounceMs: 500,
+ *   },
  * });
  *
  * <Autocomplete.Root

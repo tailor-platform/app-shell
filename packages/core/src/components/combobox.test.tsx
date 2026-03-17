@@ -34,6 +34,64 @@ function SimpleCombobox(props: {
 }
 
 describe("Combobox.Parts", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for combobox variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed combobox with placeholder", () => {
+      const { container } = render(<SimpleCombobox />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open combobox", async () => {
+      const user = userEvent.setup();
+      const { baseElement } = render(<SimpleCombobox />);
+      const input = screen.getByTestId("input");
+      await user.click(input);
+      await user.type(input, "a");
+      await waitFor(() => {
+        expect(screen.getByText("Apple")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("with InputGroup, Clear, and Trigger", () => {
+      const { container } = render(
+        <Combobox.Parts.Root>
+          <Combobox.Parts.InputGroup>
+            <Combobox.Parts.Input placeholder="Search..." />
+            <Combobox.Parts.Clear />
+            <Combobox.Parts.Trigger />
+          </Combobox.Parts.InputGroup>
+          <Combobox.Parts.Content>
+            <Combobox.Parts.List>
+              <Combobox.Parts.Item value="a">Alpha</Combobox.Parts.Item>
+            </Combobox.Parts.List>
+          </Combobox.Parts.Content>
+        </Combobox.Parts.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with groups", () => {
+      const { container } = render(
+        <Combobox.Parts.Root>
+          <Combobox.Parts.Input placeholder="Search..." />
+          <Combobox.Parts.Content>
+            <Combobox.Parts.List>
+              <Combobox.Parts.Group>
+                <Combobox.Parts.GroupLabel>Fruits</Combobox.Parts.GroupLabel>
+                <Combobox.Parts.Item value="apple">Apple</Combobox.Parts.Item>
+              </Combobox.Parts.Group>
+            </Combobox.Parts.List>
+          </Combobox.Parts.Content>
+        </Combobox.Parts.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders the input with placeholder", () => {
     render(<SimpleCombobox />);
 
@@ -1110,9 +1168,11 @@ describe("Combobox.Parts.useAsync", () => {
     expect(result.current.query).toBe("hello");
   });
 
-  it("respects custom debounceMs", async () => {
+  it("respects custom debounceMs via object fetcher", async () => {
     const fetcher = vi.fn(async () => ["a"]);
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher, debounceMs: 100 }));
+    const { result } = renderHook(() =>
+      Combobox.Parts.useAsync({ fetcher: { fn: fetcher, debounceMs: 100 } }),
+    );
 
     act(() => {
       result.current.onInputValueChange("test");

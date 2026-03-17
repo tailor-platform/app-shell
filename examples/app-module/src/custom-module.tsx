@@ -18,6 +18,9 @@ import {
   Sheet,
   Tooltip,
   Badge,
+  Select,
+  Combobox,
+  Autocomplete,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -1272,6 +1275,391 @@ const primitiveComponentsDemoResource = defineResource({
   },
 });
 
+// ============================================================================
+// DEMO: Select, Combobox, Autocomplete
+// ============================================================================
+
+interface Fruit {
+  id: string;
+  name: string;
+  emoji: string;
+}
+
+const fruits: Fruit[] = [
+  { id: "apple", name: "Apple", emoji: "🍎" },
+  { id: "banana", name: "Banana", emoji: "🍌" },
+  { id: "cherry", name: "Cherry", emoji: "🍒" },
+  { id: "grape", name: "Grape", emoji: "🍇" },
+  { id: "mango", name: "Mango", emoji: "🥭" },
+  { id: "orange", name: "Orange", emoji: "🍊" },
+  { id: "peach", name: "Peach", emoji: "🍑" },
+  { id: "strawberry", name: "Strawberry", emoji: "🍓" },
+];
+
+const groupedFruits = [
+  {
+    label: "Tropical",
+    items: [
+      { id: "banana", name: "Banana", emoji: "🍌" },
+      { id: "mango", name: "Mango", emoji: "🥭" },
+      { id: "pineapple", name: "Pineapple", emoji: "🍍" },
+    ],
+  },
+  {
+    label: "Berries",
+    items: [
+      { id: "cherry", name: "Cherry", emoji: "🍒" },
+      { id: "grape", name: "Grape", emoji: "🍇" },
+      { id: "strawberry", name: "Strawberry", emoji: "🍓" },
+    ],
+  },
+];
+
+const allProgrammingLanguages = [
+  "JavaScript",
+  "TypeScript",
+  "Python",
+  "Java",
+  "Go",
+  "Rust",
+  "C",
+  "C++",
+  "C#",
+  "Ruby",
+  "PHP",
+  "Swift",
+  "Kotlin",
+  "Scala",
+  "Haskell",
+  "Elixir",
+  "Clojure",
+  "Dart",
+  "Lua",
+  "R",
+  "Julia",
+  "Zig",
+  "Nim",
+  "OCaml",
+  "Erlang",
+  "Perl",
+  "Bash",
+  "SQL",
+  "HTML",
+  "CSS",
+];
+
+const DropdownComponentsDemoPage = () => {
+  const [selectedFruits, setSelectedFruits] = React.useState<Fruit[]>([]);
+  const [creatableItems, setCreatableItems] = React.useState<{ id: string; name: string }[]>([
+    { id: "1", name: "React" },
+    { id: "2", name: "Vue" },
+    { id: "3", name: "Angular" },
+    { id: "4", name: "Svelte" },
+  ]);
+
+  const cardStyle: React.CSSProperties = {
+    padding: "1.5rem",
+    borderRadius: "0.75rem",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--card)",
+    color: "var(--card-foreground)",
+  };
+  const headingStyle: React.CSSProperties = {
+    fontWeight: "bold",
+    marginBottom: "0.75rem",
+    fontSize: "1.125rem",
+  };
+  const subHeadingStyle: React.CSSProperties = {
+    fontWeight: 600,
+    marginBottom: "0.5rem",
+    fontSize: "0.875rem",
+    color: "var(--muted-foreground)",
+  };
+  const sectionStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+  };
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "1.5rem",
+  };
+
+  return (
+    <Layout>
+      <Layout.Header title="Select / Combobox / Autocomplete" />
+      <Layout.Column>
+        {/* ── Select ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Select</h3>
+          <div style={gridStyle}>
+            {/* Basic (string items) */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Basic</div>
+              <Select items={["Apple", "Banana", "Cherry", "Grape"]} placeholder="Pick a fruit" />
+            </div>
+
+            {/* Custom render */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Custom render</div>
+              <Select
+                items={fruits}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="With emoji"
+              />
+            </div>
+
+            {/* Multiple selection */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Select
+                items={fruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                multiple
+                value={selectedFruits}
+                onValueChange={setSelectedFruits}
+                placeholder="Pick fruits"
+              />
+            </div>
+
+            {/* Grouped items */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Grouped</div>
+              <Select
+                items={groupedFruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                placeholder="Grouped select"
+              />
+            </div>
+
+            {/* Disabled */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Disabled</div>
+              <Select items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Combobox ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Combobox</h3>
+          <div style={gridStyle}>
+            {/* Basic string items */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Basic</div>
+              <Combobox
+                items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
+                placeholder="Search fruit..."
+              />
+            </div>
+
+            {/* Custom render */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Custom render</div>
+              <Combobox
+                items={fruits}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="With emoji"
+              />
+            </div>
+
+            {/* Multiple */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple (chips)</div>
+              <Combobox
+                items={fruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                multiple
+                placeholder="Add fruits..."
+              />
+            </div>
+
+            {/* Grouped */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Grouped</div>
+              <Combobox
+                items={groupedFruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                placeholder="Search grouped..."
+              />
+            </div>
+
+            {/* Disabled */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Disabled</div>
+              <Combobox items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Combobox.Async ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Combobox.Async</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Single</div>
+              <Combobox.Async
+                fetcher={async (query) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  return allProgrammingLanguages.filter((l) =>
+                    l.toLowerCase().includes(query.toLowerCase()),
+                  );
+                }}
+                placeholder="Search programming language..."
+                loadingText="Searching..."
+                emptyText="No programming languages found."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Combobox.Async
+                fetcher={async (query) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  return allProgrammingLanguages.filter((l) =>
+                    l.toLowerCase().includes(query.toLowerCase()),
+                  );
+                }}
+                multiple
+                placeholder="Add programming languages..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Combobox.Creatable ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Combobox.Creatable</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Single</div>
+              <Combobox.Creatable
+                items={creatableItems}
+                mapItem={(item) => ({ label: item.name, key: item.id })}
+                createItem={(value) => ({
+                  id: crypto.randomUUID(),
+                  name: value,
+                })}
+                onItemCreated={(item, resolve) => {
+                  setCreatableItems((prev) => [...prev, item]);
+                  resolve();
+                }}
+                formatCreateLabel={(v) => `Create "${v}"`}
+                placeholder="Search or create..."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Combobox.Creatable
+                items={creatableItems}
+                mapItem={(item) => ({ label: item.name, key: item.id })}
+                createItem={(value) => ({
+                  id: crypto.randomUUID(),
+                  name: value,
+                })}
+                onItemCreated={(item, resolve) => {
+                  setCreatableItems((prev) => [...prev, item]);
+                  resolve();
+                }}
+                multiple
+                placeholder="Add or create tags..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Autocomplete ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Autocomplete</h3>
+          <div style={gridStyle}>
+            {/* Basic string items */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Basic</div>
+              <Autocomplete
+                items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
+                placeholder="Type a fruit..."
+              />
+            </div>
+
+            {/* Custom render */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Custom render</div>
+              <Autocomplete
+                items={fruits}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="With emoji"
+              />
+            </div>
+
+            {/* Grouped */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Grouped</div>
+              <Autocomplete
+                items={groupedFruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                placeholder="Grouped autocomplete..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Autocomplete.Async ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Autocomplete.Async</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Async search</div>
+              <Autocomplete.Async
+                fetcher={async (query) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  return allProgrammingLanguages.filter((l) =>
+                    l.toLowerCase().includes(query.toLowerCase()),
+                  );
+                }}
+                placeholder="Search programming language..."
+              />
+            </div>
+          </div>
+        </div>
+      </Layout.Column>
+    </Layout>
+  );
+};
+
+const dropdownComponentsDemoResource = defineResource({
+  path: "dropdown-demo",
+  meta: {
+    title: "Dropdown Components Demo",
+  },
+  component: DropdownComponentsDemoPage,
+});
+
 export const customPageModule = defineModule({
   path: "custom-page",
   component: (pageProps: ResourceComponentProps) => {
@@ -1378,6 +1766,17 @@ export const customPageModule = defineModule({
               Primitive Components Demo (Button, Input, Menu, Table, Dialog, Sheet, Tooltip)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/dropdown-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Dropdown Components Demo (Select, Combobox, Autocomplete)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -1397,5 +1796,6 @@ export const customPageModule = defineModule({
     threeColumnLayoutResource,
     layoutSlotsDemoResource,
     primitiveComponentsDemoResource,
+    dropdownComponentsDemoResource,
   ],
 });

@@ -10,6 +10,34 @@ afterEach(() => {
 const fruits = ["Apple", "Banana", "Cherry", "Date", "Elderberry"];
 
 describe("Combobox (standalone)", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for standalone combobox
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("default with string items", () => {
+      const { container } = render(<Combobox items={fruits} placeholder="Pick a fruit" />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("disabled", () => {
+      const { container } = render(<Combobox items={fruits} placeholder="Disabled" disabled />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("multiple mode", () => {
+      const { container } = render(<Combobox items={fruits} placeholder="Pick fruits" multiple />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with custom className", () => {
+      const { container } = render(
+        <Combobox items={fruits} placeholder="Styled" className="custom-class" />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders with placeholder", () => {
     render(<Combobox items={fruits} placeholder="Pick a fruit" />);
     const input = screen.getByRole("combobox");
@@ -64,13 +92,19 @@ describe("Combobox (standalone)", () => {
     expect(onValueChange).toHaveBeenCalledWith("Banana", expect.anything());
   });
 
-  it("renders with custom getLabel for object items", async () => {
+  it("renders with custom mapItem for object items", async () => {
     const items = [
       { id: 1, name: "Red" },
       { id: 2, name: "Blue" },
     ];
     const user = userEvent.setup();
-    render(<Combobox items={items} getLabel={(item) => item.name} placeholder="Pick color" />);
+    render(
+      <Combobox
+        items={items}
+        mapItem={(item) => ({ label: item.name })}
+        placeholder="Pick color"
+      />,
+    );
     const input = screen.getByRole("combobox");
     await user.click(input);
     await waitFor(() => {
@@ -79,13 +113,16 @@ describe("Combobox (standalone)", () => {
     });
   });
 
-  it("renders with custom renderItem", async () => {
+  it("renders with custom renderItem via mapItem", async () => {
     const user = userEvent.setup();
     render(
       <Combobox
         items={fruits}
         placeholder="Search..."
-        renderItem={(item) => <span data-testid={`custom-${item}`}>{item}!</span>}
+        mapItem={(item) => ({
+          label: item,
+          render: <span data-testid={`custom-${item}`}>{item}!</span>,
+        })}
       />,
     );
     const input = screen.getByRole("combobox");
@@ -197,7 +234,7 @@ describe("Combobox.Async (standalone)", () => {
 
 type Item = { label: string };
 const creatableItems: Item[] = [{ label: "Existing A" }, { label: "Existing B" }];
-const getItemLabel = (item: Item) => item.label;
+const mapCreatableItem = (item: Item) => ({ label: item.label });
 const createItem = (value: string) => ({ label: value });
 
 describe("Combobox.Creatable (standalone)", () => {
@@ -206,7 +243,7 @@ describe("Combobox.Creatable (standalone)", () => {
     render(
       <Combobox.Creatable
         items={creatableItems}
-        getLabel={getItemLabel}
+        mapItem={mapCreatableItem}
         createItem={createItem}
         placeholder="Search..."
       />,
@@ -224,7 +261,7 @@ describe("Combobox.Creatable (standalone)", () => {
     render(
       <Combobox.Creatable
         items={creatableItems}
-        getLabel={getItemLabel}
+        mapItem={mapCreatableItem}
         createItem={createItem}
         placeholder="Search..."
       />,
@@ -242,7 +279,7 @@ describe("Combobox.Creatable (standalone)", () => {
     render(
       <Combobox.Creatable
         items={creatableItems}
-        getLabel={getItemLabel}
+        mapItem={mapCreatableItem}
         createItem={createItem}
         formatCreateLabel={(v) => `Add: ${v}`}
         placeholder="Search..."
@@ -260,7 +297,7 @@ describe("Combobox.Creatable (standalone)", () => {
     const { container } = render(
       <Combobox.Creatable
         items={creatableItems}
-        getLabel={getItemLabel}
+        mapItem={mapCreatableItem}
         createItem={createItem}
         className="creatable-class"
         placeholder="Search..."
@@ -275,7 +312,7 @@ describe("Combobox.Creatable (standalone)", () => {
       <Combobox.Creatable
         items={creatableItems}
         multiple
-        getLabel={getItemLabel}
+        mapItem={mapCreatableItem}
         createItem={createItem}
         placeholder="Search..."
       />,
@@ -349,7 +386,7 @@ describe("Combobox (standalone, grouped)", () => {
     expect(onValueChange).toHaveBeenCalledWith(["Apple"], expect.anything());
   });
 
-  it("renders with object items and getLabel", async () => {
+  it("renders with object items and mapItem", async () => {
     const objectGroups = [
       {
         label: "Fruits",
@@ -370,8 +407,7 @@ describe("Combobox (standalone, grouped)", () => {
     render(
       <Combobox
         items={objectGroups}
-        getLabel={(item) => item.name}
-        getKey={(item) => String(item.id)}
+        mapItem={(item) => ({ label: item.name, key: String(item.id) })}
         placeholder="Pick one"
       />,
     );

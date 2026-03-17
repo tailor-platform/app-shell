@@ -10,6 +10,39 @@ afterEach(() => {
 const suggestions = ["Apple", "Banana", "Cherry", "Date", "Elderberry"];
 
 describe("Autocomplete (standalone)", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for standalone autocomplete
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("default with string items", () => {
+      const { container } = render(<Autocomplete items={suggestions} placeholder="Type a fruit" />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with custom className", () => {
+      const { container } = render(
+        <Autocomplete items={suggestions} placeholder="Styled" className="custom-class" />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with custom mapItem", () => {
+      const items = [
+        { id: "1", name: "Apple" },
+        { id: "2", name: "Banana" },
+      ];
+      const { container } = render(
+        <Autocomplete
+          items={items}
+          mapItem={(item) => ({ label: item.name, key: item.id })}
+          placeholder="Pick"
+        />,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders with placeholder", () => {
     render(<Autocomplete items={suggestions} placeholder="Type a fruit" />);
     const input = screen.getByRole("combobox");
@@ -52,13 +85,19 @@ describe("Autocomplete (standalone)", () => {
     });
   });
 
-  it("renders with custom getLabel for object items", async () => {
+  it("renders with custom mapItem for object items", async () => {
     const items = [
       { id: 1, name: "Red" },
       { id: 2, name: "Blue" },
     ];
     const user = userEvent.setup();
-    render(<Autocomplete items={items} getLabel={(item) => item.name} placeholder="Pick color" />);
+    render(
+      <Autocomplete
+        items={items}
+        mapItem={(item) => ({ label: item.name })}
+        placeholder="Pick color"
+      />,
+    );
     const input = screen.getByRole("combobox");
     await user.click(input);
     await user.type(input, "R");
@@ -67,13 +106,16 @@ describe("Autocomplete (standalone)", () => {
     });
   });
 
-  it("renders with custom renderItem", async () => {
+  it("renders with custom renderItem via mapItem", async () => {
     const user = userEvent.setup();
     render(
       <Autocomplete
         items={suggestions}
         placeholder="Type..."
-        renderItem={(item) => <span data-testid={`custom-${item}`}>{item}!</span>}
+        mapItem={(item) => ({
+          label: item,
+          render: <span data-testid={`custom-${item}`}>{item}!</span>,
+        })}
       />,
     );
     const input = screen.getByRole("combobox");
@@ -193,7 +235,7 @@ describe("Autocomplete (standalone, grouped)", () => {
     });
   });
 
-  it("renders with object items and getLabel", async () => {
+  it("renders with object items and mapItem", async () => {
     const objectGroups = [
       {
         label: "Fruits",
@@ -214,8 +256,7 @@ describe("Autocomplete (standalone, grouped)", () => {
     render(
       <Autocomplete
         items={objectGroups}
-        getLabel={(item) => item.name}
-        getKey={(item) => String(item.id)}
+        mapItem={(item) => ({ label: item.name, key: String(item.id) })}
         placeholder="Type..."
       />,
     );

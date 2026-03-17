@@ -9,49 +9,43 @@ import {
   SelectGroupLabel,
   SelectParts,
 } from "./select";
+import { defaultMapItem, isGroupedItems } from "./dropdown-items";
+import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 
 // --- Types ---
 
-/** Shape returned by `mapItem` to describe how an item appears in the dropdown. */
-interface MappedItem {
-  /** Display text — used for filtering, a11y, and fallback display. */
-  label: string;
-  /** React key for list reconciliation. Defaults to `label`. */
-  key?: string;
-  /** Custom JSX to render in the dropdown. Defaults to `label`. */
-  render?: React.ReactNode;
-}
-
-const defaultMapItem = (item: unknown): MappedItem => ({ label: String(item) });
-
-interface SelectItemGroup<T> {
-  label: string;
-  items: T[];
-}
-
-type ExtractItem<I> = I extends SelectItemGroup<infer T> ? T : I;
-
 interface SelectStandalonePropsBase<I> {
+  /** Placeholder text shown when no value is selected */
   placeholder?: string;
   /** Map each item to its label, key, and optional custom render. */
   mapItem?: (item: ExtractItem<I>) => MappedItem;
+  /** Additional className for the root container */
   className?: string;
+  /** Whether the select is disabled */
   disabled?: boolean;
 }
 
 interface SelectStandalonePropsSingle<I> extends SelectStandalonePropsBase<I> {
   multiple?: false | undefined;
+  /** Current value (controlled) */
   value?: ExtractItem<I> | null;
+  /** Default value (uncontrolled) */
   defaultValue?: ExtractItem<I> | null;
+  /** Called when the selected value changes */
   onValueChange?: (value: ExtractItem<I> | null) => void;
+  /** Custom render function for the selected value display */
   renderValue?: (value: ExtractItem<I> | null) => React.ReactNode;
 }
 
 interface SelectStandalonePropsMultiple<I> extends SelectStandalonePropsBase<I> {
   multiple: true;
+  /** Current value (controlled) */
   value?: ExtractItem<I>[];
+  /** Default value (uncontrolled) */
   defaultValue?: ExtractItem<I>[];
+  /** Called when the selected values change */
   onValueChange?: (value: ExtractItem<I>[]) => void;
+  /** Custom render function for the selected values display */
   renderValue?: (value: ExtractItem<I>[]) => React.ReactNode;
 }
 
@@ -60,16 +54,6 @@ type SelectStandaloneProps<I> =
   | ({ items: I[] } & SelectStandalonePropsMultiple<I>);
 
 // --- Helpers ---
-
-function isGroupedItems<I>(items: I[]): items is (I & SelectItemGroup<unknown>)[] {
-  return (
-    items.length > 0 &&
-    typeof items[0] === "object" &&
-    items[0] !== null &&
-    "label" in items[0] &&
-    "items" in items[0]
-  );
-}
 
 function renderFlatItems<T>(items: T[], mapItem: (item: T) => MappedItem) {
   return items.map((item) => {
@@ -93,7 +77,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
   const getLabel = (item: T) => mapItem(item).label;
 
   const content = isGroupedItems(items)
-    ? (items as SelectItemGroup<T>[]).map((group) => (
+    ? (items as ItemGroup<T>[]).map((group) => (
         <SelectGroup key={group.label}>
           <SelectGroupLabel>{group.label}</SelectGroupLabel>
           {renderFlatItems(group.items, mapItem)}
@@ -167,4 +151,4 @@ const Select = Object.assign(SelectStandalone, {
   Parts: SelectParts,
 });
 
-export { Select, type MappedItem };
+export { Select };

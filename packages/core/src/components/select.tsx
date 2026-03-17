@@ -4,9 +4,26 @@ import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function SelectRoot<Value, Multiple extends boolean | undefined = false>({
-  ...props
-}: React.ComponentProps<typeof BaseSelect.Root<Value, Multiple>>) {
+// Only the props relevant to the Select abstraction are picked from BaseSelect.Root.
+// Base UI-internal props are intentionally excluded so that
+// upstream changes don't leak as breaking changes to consumers.
+type SelectRootProps<
+  Value,
+  Multiple extends boolean | undefined = false,
+> = Pick<
+  React.ComponentProps<typeof BaseSelect.Root<Value, Multiple>>,
+  | "value"
+  | "defaultValue"
+  | "onValueChange"
+  | "multiple"
+  | "itemToStringLabel"
+  | "disabled"
+  | "children"
+>;
+
+function SelectRoot<Value, Multiple extends boolean | undefined = false>(
+  props: SelectRootProps<Value, Multiple>,
+) {
   return <BaseSelect.Root data-slot="select" {...props} />;
 }
 
@@ -36,11 +53,16 @@ function SelectTrigger({
   );
 }
 
-function SelectValue({ ...props }: React.ComponentProps<typeof BaseSelect.Value>) {
+function SelectValue({
+  ...props
+}: React.ComponentProps<typeof BaseSelect.Value>) {
   return <BaseSelect.Value data-slot="select-value" {...props} />;
 }
 
-function SelectContent({ className, ...props }: React.ComponentProps<typeof BaseSelect.Popup>) {
+function SelectContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
     <BaseSelect.Portal>
       <BaseSelect.Positioner>
@@ -84,7 +106,9 @@ function SelectItem({
   );
 }
 
-function SelectGroup({ ...props }: React.ComponentProps<typeof BaseSelect.Group>) {
+function SelectGroup({
+  ...props
+}: React.ComponentProps<typeof BaseSelect.Group>) {
   return <BaseSelect.Group data-slot="select-group" {...props} />;
 }
 

@@ -6,16 +6,33 @@ import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
 import type { UseAsyncItemsOptions } from "@/hooks/use-async-items";
 
-function AutocompleteRoot<Value>(props: AutocompleteRootProps<Value>) {
+// Only the props relevant to the Autocomplete abstraction are picked from BaseAutocomplete.Root.
+// Base UI-internal props are intentionally excluded so that
+// upstream changes don't leak as breaking changes to consumers.
+type AutocompletePickedRootProps<Value> = Pick<
+  AutocompleteRootProps<Value>,
+  | "value"
+  | "defaultValue"
+  | "onValueChange"
+  | "filter"
+  | "disabled"
+  | "children"
+> & {
+  items?: readonly Value[];
+};
+
+function AutocompleteRoot<Value>(props: AutocompletePickedRootProps<Value>) {
   return (
     <BaseAutocomplete.Root
       data-slot="autocomplete"
-      {...(props as AutocompleteRootProps<unknown>)}
+      {...(props as AutocompletePickedRootProps<unknown>)}
     />
   );
 }
 
-function AutocompleteValue({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Value>) {
+function AutocompleteValue({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Value>) {
   return <BaseAutocomplete.Value data-slot="autocomplete-value" {...props} />;
 }
 
@@ -62,7 +79,11 @@ function AutocompleteTrigger({
   );
 }
 
-function AutocompleteInputGroup({ className, children, ...props }: React.ComponentProps<"div">) {
+function AutocompleteInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="autocomplete-input-group"
@@ -167,7 +188,9 @@ function AutocompleteClear({
   );
 }
 
-function AutocompleteGroup({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Group>) {
+function AutocompleteGroup({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Group>) {
   return <BaseAutocomplete.Group data-slot="autocomplete-group" {...props} />;
 }
 
@@ -190,7 +213,12 @@ function AutocompleteGroupLabel({
 function AutocompleteCollection({
   ...props
 }: React.ComponentProps<typeof BaseAutocomplete.Collection>) {
-  return <BaseAutocomplete.Collection data-slot="autocomplete-collection" {...props} />;
+  return (
+    <BaseAutocomplete.Collection
+      data-slot="autocomplete-collection"
+      {...props}
+    />
+  );
 }
 
 function AutocompleteStatus({
@@ -270,8 +298,11 @@ export interface AutocompleteUseAsyncReturn<T> {
  * </Autocomplete.Root>
  * ```
  */
-function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncReturn<T> {
-  const { items, loading, query, error, onInputValueChange } = useAsyncItems(options);
+function useAsync<T>(
+  options: UseAsyncItemsOptions<T>,
+): AutocompleteUseAsyncReturn<T> {
+  const { items, loading, query, error, onInputValueChange } =
+    useAsyncItems(options);
 
   return {
     items,

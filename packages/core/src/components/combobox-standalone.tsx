@@ -20,29 +20,9 @@ import {
   useAsync,
 } from "./combobox";
 import type { UseCreatableOptionsBase } from "./combobox";
+import { defaultMapItem, isGroupedItems } from "./dropdown-items";
+import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
-import type { MappedItem } from "./select-standalone";
-
-const defaultMapItem = (item: unknown): MappedItem => ({ label: String(item) });
-
-// --- Types ---
-
-interface ComboboxItemGroup<T> {
-  label: string;
-  items: T[];
-}
-
-type ExtractItem<I> = I extends ComboboxItemGroup<infer T> ? T : I;
-
-function isGroupedItems<I>(items: I[]): items is (I & ComboboxItemGroup<unknown>)[] {
-  return (
-    items.length > 0 &&
-    typeof items[0] === "object" &&
-    items[0] !== null &&
-    "label" in items[0] &&
-    "items" in items[0]
-  );
-}
 
 // --- Shared props ---
 
@@ -103,7 +83,7 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
 
   const listChildren = isGroupedItems(items)
     ? (group: any) => {
-        const g = group as ComboboxItemGroup<T>;
+        const g = group as ItemGroup<T>;
         return (
           <ComboboxGroup key={g.label} items={g.items}>
             <ComboboxGroupLabel>{g.label}</ComboboxGroupLabel>
@@ -502,4 +482,4 @@ const Combobox = Object.assign(ComboboxStandalone, {
   Parts: ComboboxParts,
 });
 
-export { Combobox, type AsyncFetcher };
+export { Combobox };

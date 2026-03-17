@@ -15,30 +15,16 @@ import {
   AutocompleteParts,
   useAsync,
 } from "./autocomplete";
+import { defaultMapItem, isGroupedItems } from "./dropdown-items";
+import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
-import type { MappedItem } from "./select-standalone";
 
-const defaultMapItem = (item: unknown): MappedItem => ({ label: String(item) });
-
-// --- Types ---
-
-interface AutocompleteItemGroup<T> {
-  label: string;
-  items: T[];
-}
-
-type ExtractItem<I> = I extends AutocompleteItemGroup<infer T> ? T : I;
-
-function isGroupedItems<I>(items: I[]): items is (I & AutocompleteItemGroup<unknown>)[] {
-  return (
-    items.length > 0 &&
-    typeof items[0] === "object" &&
-    items[0] !== null &&
-    "label" in items[0] &&
-    "items" in items[0]
-  );
-}
-
+/**
+ * Props for the standalone Autocomplete component.
+ *
+ * Unlike Select and Combobox, Autocomplete always operates in single-value
+ * mode — its value is the raw input string, not a discrete item selection.
+ */
 interface AutocompleteStandaloneProps<I> {
   /** Items to show as suggestions */
   items: I[];
@@ -50,6 +36,8 @@ interface AutocompleteStandaloneProps<I> {
   mapItem?: (item: ExtractItem<I>) => MappedItem;
   /** Additional className for the root container */
   className?: string;
+  /** Whether the autocomplete is disabled */
+  disabled?: boolean;
   /** Current value (controlled) */
   value?: string;
   /** Default value (uncontrolled) */
@@ -67,6 +55,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
     emptyText = "No suggestions.",
     mapItem: mapItemProp,
     className,
+    disabled,
     value,
     defaultValue,
     onValueChange,
@@ -76,7 +65,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
 
   const listChildren = isGroupedItems(items)
     ? (group: any) => {
-        const g = group as AutocompleteItemGroup<T>;
+        const g = group as ItemGroup<T>;
         return (
           <AutocompleteGroup key={g.label} items={g.items}>
             <AutocompleteGroupLabel>{g.label}</AutocompleteGroupLabel>
@@ -109,6 +98,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
         value={value}
         defaultValue={defaultValue}
         onValueChange={onValueChange}
+        disabled={disabled}
       >
         <AutocompleteInputGroup>
           <AutocompleteInput placeholder={placeholder} />
@@ -139,6 +129,8 @@ interface AutocompleteAsyncStandaloneProps<T> {
   mapItem?: (item: T) => MappedItem;
   /** Additional className for the root container */
   className?: string;
+  /** Whether the autocomplete is disabled */
+  disabled?: boolean;
   /** Current value (controlled). Falls back to internal async state when omitted. */
   value?: string;
   /** Default value (uncontrolled) */
@@ -155,6 +147,7 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     loadingText = "Loading...",
     mapItem: mapItemProp,
     className,
+    disabled,
     value: controlledValue,
     defaultValue,
     onValueChange: onValueChangeProp,
@@ -180,6 +173,7 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         filter={null}
+        disabled={disabled}
       >
         <AutocompleteInputGroup>
           <AutocompleteInput placeholder={placeholder} />

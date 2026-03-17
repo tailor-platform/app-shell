@@ -261,7 +261,9 @@ describe("Autocomplete.Parts.useAsync", () => {
   it("respects custom debounceMs via object fetcher", async () => {
     const fetcher = vi.fn(async () => ["a"]);
     const { result } = renderHook(() =>
-      Autocomplete.Parts.useAsync({ fetcher: { fn: fetcher, debounceMs: 500 } }),
+      Autocomplete.Parts.useAsync({
+        fetcher: { fn: fetcher, debounceMs: 500 },
+      }),
     );
 
     act(() => {

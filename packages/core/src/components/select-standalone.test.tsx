@@ -290,10 +290,11 @@ describe("Select.Async (standalone)", () => {
     );
 
     render(<Select.Async fetcher={fetcher} placeholder="Pick one" />);
-    expect(fetcher).toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
 
-    // Open popup while loading
+    // Open popup — fetcher is called on open
     await user.click(screen.getByText("Pick one"));
+    expect(fetcher).toHaveBeenCalled();
     await waitFor(() => {
       expect(screen.getByText("Loading...")).toBeDefined();
     });

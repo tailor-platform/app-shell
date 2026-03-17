@@ -12,6 +12,8 @@ type SelectRootProps<Value, Multiple extends boolean | undefined = false> = Pick
   | "value"
   | "defaultValue"
   | "onValueChange"
+  | "open"
+  | "onOpenChange"
   | "multiple"
   | "itemToStringLabel"
   | "disabled"

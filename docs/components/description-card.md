@@ -45,6 +45,7 @@ const orderData = {
 | `fields`    | `FieldConfig[]`           | **Required** | Array of field configurations or dividers |
 | `columns`   | `2 \| 3 \| 4`             | `3`          | Number of columns in the grid             |
 | `className` | `string`                  | -            | Additional CSS classes                    |
+| `style`     | `CSSProperties`           | -            | Inline styles for the card container      |
 
 ## Field Types
 

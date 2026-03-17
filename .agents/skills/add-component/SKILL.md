@@ -30,8 +30,7 @@ const componentVariants = cva("astw:base-classes", {
   defaultVariants: { variant: "default", size: "default" },
 });
 
-type ComponentProps = React.ComponentProps<"div"> &
-  VariantProps<typeof componentVariants>;
+type ComponentProps = React.ComponentProps<"div"> & VariantProps<typeof componentVariants>;
 
 function Component({ className, variant, size, ...props }: ComponentProps) {
   return (
@@ -72,7 +71,11 @@ function Root({ children, ...props }: RootProps) {
 }
 Root.displayName = "ComponentName.Root";
 
-function Content({ className, children, ...props }: React.ComponentProps<typeof BaseComponentName.Content>) {
+function Content({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseComponentName.Content>) {
   return (
     <BaseComponentName.Content
       data-slot="component-name-content"
@@ -105,6 +108,7 @@ components/
 ```
 
 **index.ts:**
+
 ```tsx
 export { ComponentName, default } from "./ComponentName";
 export type { ComponentNameProps } from "./types";
@@ -213,6 +217,7 @@ export { ComponentName, type ComponentNameProps } from "./components/component-n
 ```
 
 **Minimal surface rules:**
+
 - Export only the component and its primary Props type — smaller API surface reduces potential conflicts with future APIs and makes the library easier to maintain
 - Do NOT export internal helper types, type guards, or enums (e.g., FieldConfig, FieldDefinition, FieldType, EmptyBehavior, FieldMeta)
 - Do NOT export type guards for internal discriminated unions — consumers can use simple checks like `field.type === "divider"`
@@ -250,6 +255,7 @@ describe("ComponentName", () => {
 ```
 
 **Testing conventions:**
+
 - Use `vitest`, `@testing-library/react`, and `@testing-library/user-event`
 - Include snapshot tests for all visual variants/states
 - Include behavioral tests for interactions (click, hover, open/close)

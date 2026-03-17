@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TooltipProvider } from "../tooltip";
+import { Tooltip } from "../tooltip";
 import { cn } from "../../lib/utils";
 
 import type { DescriptionCardProps, FieldConfig, FieldDefinition, ResolvedField } from "./types";
@@ -136,6 +136,7 @@ export function DescriptionCard({
   fields,
   columns = 3,
   className,
+  style,
   headerAction,
 }: DescriptionCardProps) {
   // Resolve fields into sections (split by dividers)
@@ -190,12 +191,13 @@ export function DescriptionCard({
   };
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <Tooltip.Provider delay={300}>
       <div
         className={cn(
           "astw:@container astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",
           className,
         )}
+        style={style}
       >
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
@@ -220,7 +222,7 @@ export function DescriptionCard({
           )}
         </div>
       </div>
-    </TooltipProvider>
+    </Tooltip.Provider>
   );
 }
 

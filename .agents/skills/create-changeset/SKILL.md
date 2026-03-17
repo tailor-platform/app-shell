@@ -55,13 +55,13 @@ Create a new markdown file under `.changeset/` with a random kebab-case name (e.
 
 The file format is:
 
-````markdown
+```markdown
 ---
 "@tailor-platform/app-shell": <bump-type>
 ---
 
 <summary>
-````
+```
 
 #### Summary Guidelines
 
@@ -87,19 +87,19 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
     { label: "Name", value: "Alice" },
     { label: "Email", value: "alice@example.com" },
   ]}
-/>
+/>;
 ```
 ````
 
 #### Example — Patch (bug fix):
 
-````markdown
+```markdown
 ---
 "@tailor-platform/app-shell": patch
 ---
 
 Fix sidebar not collapsing properly on mobile viewports when navigating between pages.
-````
+```
 
 #### Example — Major (breaking change):
 
@@ -111,14 +111,15 @@ Fix sidebar not collapsing properly on mobile viewports when navigating between 
 Replace `defaultResourceRedirectPath` with `redirectToResource()` helper for module-level redirects.
 
 Before:
+
 ```tsx
-defineModule({ defaultResourceRedirectPath: "/dashboard" })
+defineModule({ defaultResourceRedirectPath: "/dashboard" });
 ```
 
 After:
+
 ```tsx
 import { redirectToResource } from "@tailor-platform/app-shell";
-defineModule({ redirect: redirectToResource("dashboard") })
+defineModule({ redirect: redirectToResource("dashboard") });
 ```
 ````
-

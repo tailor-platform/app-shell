@@ -9,6 +9,71 @@ afterEach(() => {
 });
 
 describe("Button", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for each variant/size combination
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("default variant and size", () => {
+      const { container } = render(<Button>Click me</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("destructive variant", () => {
+      const { container } = render(<Button variant="destructive">Delete</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("outline variant", () => {
+      const { container } = render(<Button variant="outline">Outline</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("secondary variant", () => {
+      const { container } = render(<Button variant="secondary">Secondary</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("ghost variant", () => {
+      const { container } = render(<Button variant="ghost">Ghost</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("link variant", () => {
+      const { container } = render(<Button variant="link">Link</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("small size", () => {
+      const { container } = render(<Button size="sm">Small</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("large size", () => {
+      const { container } = render(<Button size="lg">Large</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("icon size", () => {
+      const { container } = render(<Button size="icon">★</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("disabled state", () => {
+      const { container } = render(<Button disabled>Disabled</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with render prop (as link)", () => {
+      const { container } = render(
+        <MemoryRouter>
+          <Button render={<Link to="/test" />}>Link Button</Button>
+        </MemoryRouter>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders as button by default", () => {
     render(<Button>Click me</Button>);
 

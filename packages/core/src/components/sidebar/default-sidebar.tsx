@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Await, useLocation } from "react-router";
 import { ChevronRight } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/collapsible";
+import { Collapsible } from "@base-ui/react/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -130,7 +130,7 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
       <SidebarMenu>
         {props.items.map((item) => {
           return (
-            <Collapsible key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
+            <Collapsible.Root key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
               {item.url ? (
                 <>
                   <SidebarMenuButton
@@ -150,20 +150,25 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                   {!!item.items?.length && (
-                    <CollapsibleTrigger
+                    <Collapsible.Trigger
                       render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
                     >
                       <ChevronRight />
                       <span className="astw:sr-only">{t("toggle")}</span>
-                    </CollapsibleTrigger>
+                    </Collapsible.Trigger>
                   )}
                 </>
               ) : (
                 <>
-                  <CollapsibleTrigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
+                  <Collapsible.Trigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
                     <SidebarMenuButton
                       render={<span className="astw:flex astw:w-full" />}
                       tooltip={item.title}
+                      onClick={(e) =>
+                        // Prevent SidebarMenuButton's auto-close behavior so the mobile sidebar
+                        // stays open when toggling a collapsible group.
+                        e.preventDefault()
+                      }
                     >
                       {item.icon}
                       <span>{item.title}</span>
@@ -174,11 +179,11 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                         <span className="astw:sr-only">{t("toggle")}</span>
                       </SidebarMenuAction>
                     )}
-                  </CollapsibleTrigger>
+                  </Collapsible.Trigger>
                 </>
               )}
               {!!item.items?.length && (
-                <CollapsibleContent>
+                <Collapsible.Panel>
                   <SidebarMenuSub>
                     {item.items
                       ?.filter((subItem) => subItem.url)
@@ -201,9 +206,9 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                         </SidebarMenuSubItem>
                       ))}
                   </SidebarMenuSub>
-                </CollapsibleContent>
+                </Collapsible.Panel>
               )}
-            </Collapsible>
+            </Collapsible.Root>
           );
         })}
       </SidebarMenu>

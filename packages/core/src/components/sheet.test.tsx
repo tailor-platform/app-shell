@@ -1,31 +1,102 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-} from "./sheet";
+import { Sheet } from "./sheet";
 
 afterEach(() => {
   cleanup();
 });
 
 describe("Sheet", () => {
+  // ==========================================================================
+  // Snapshots — verify full DOM structure for sheet variations
+  // ==========================================================================
+
+  describe("snapshots", () => {
+    it("closed sheet (trigger only)", () => {
+      const { container } = render(
+        <Sheet.Root>
+          <Sheet.Trigger>Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("open sheet (right side, default)", async () => {
+      const { baseElement } = render(
+        <Sheet.Root defaultOpen>
+          <Sheet.Trigger>Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+              <Sheet.Description>Sheet description</Sheet.Description>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Sheet Title")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("open sheet (left side)", async () => {
+      const { baseElement } = render(
+        <Sheet.Root side="left" defaultOpen>
+          <Sheet.Trigger>Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>Left Sheet</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Left Sheet")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
+    it("open sheet with header and footer", async () => {
+      const { baseElement } = render(
+        <Sheet.Root defaultOpen>
+          <Sheet.Trigger>Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>Settings</Sheet.Title>
+              <Sheet.Description>Manage your preferences.</Sheet.Description>
+            </Sheet.Header>
+            <Sheet.Footer>
+              <button>Save</button>
+            </Sheet.Footer>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Settings")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+  });
+
   it("renders trigger", () => {
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Title</SheetTitle>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -36,15 +107,15 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-            <SheetDescription>Sheet description</SheetDescription>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+            <Sheet.Description>Sheet description</Sheet.Description>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     expect(screen.queryByText("Sheet Title")).toBeNull();
@@ -61,14 +132,14 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
@@ -92,14 +163,14 @@ describe("Sheet", () => {
     const onOpenChange = vi.fn();
 
     render(
-      <Sheet onOpenChange={onOpenChange}>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root onOpenChange={onOpenChange}>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
@@ -115,21 +186,21 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent data-testid="content">
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content data-testid="content">
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
 
     await waitFor(() => {
       const content = screen.getByTestId("content");
-      expect(content.className).toContain("right-0");
+      expect(content.className).toContain("border-l");
     });
   });
 
@@ -137,21 +208,21 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent side="left" data-testid="content">
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root side="left">
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content data-testid="content">
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
 
     await waitFor(() => {
       const content = screen.getByTestId("content");
-      expect(content.className).toContain("left-0");
+      expect(content.className).toContain("border-r");
     });
   });
 
@@ -159,17 +230,17 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-          </SheetHeader>
-          <SheetFooter>
+      <Sheet.Root>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+          <Sheet.Footer>
             <button>Submit</button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>,
+          </Sheet.Footer>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));
@@ -183,14 +254,14 @@ describe("Sheet", () => {
     const user = userEvent.setup();
 
     render(
-      <Sheet>
-        <SheetTrigger data-testid="trigger">Open</SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>,
+      <Sheet.Root>
+        <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
     );
 
     await user.click(screen.getByTestId("trigger"));

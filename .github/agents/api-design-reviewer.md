@@ -16,6 +16,7 @@ Review the pull request diff for **API consistency and potential present/future 
 Use the **Impact Analyzer** agent to determine which changed files are public exports and where they are used. Provide it with the list of changed files from the PR diff.
 
 Use the Impact Analyzer results to:
+
 - **Skip internal files entirely** — do not review files marked as `internal`.
 - **Focus review on risk areas** — prioritize symbols with high usage count or flagged risks.
 
@@ -59,6 +60,7 @@ Report **only issues that are genuinely impactful**. Aim for quality over volume
 ## API Design Principles
 
 Follow the API Design Principles defined in `CLAUDE.md`. Key rules:
+
 - Minimal public API surface — only export the component and its primary props type.
 - Leverage TypeScript type inference over exporting internal types.
 - Follow the pattern: `export { ComponentName, type ComponentNameProps }`.

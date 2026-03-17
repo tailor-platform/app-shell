@@ -38,10 +38,10 @@ This review may be one of multiple rounds on the same PR. Before starting your r
 
 Every review MUST end with a clear verdict. Choose one:
 
-| Verdict              | When to use                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **Approve**          | No unresolved High or Medium issues. Low-severity suggestions may exist but are not blocking.                   |
-| **Request Changes**  | One or more High or Medium issues remain unresolved and require changes before merging.                         |
+| Verdict             | When to use                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| **Approve**         | No unresolved High or Medium issues. Low-severity suggestions may exist but are not blocking. |
+| **Request Changes** | One or more High or Medium issues remain unresolved and require changes before merging.       |
 
 Format your verdict at the end of the review as:
 

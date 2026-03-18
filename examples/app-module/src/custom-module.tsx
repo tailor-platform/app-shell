@@ -198,11 +198,7 @@ const MetricCardDemoPage = () => (
           />
         </div>
         <div className="astw:min-w-[200px] astw:flex-1">
-          <MetricCard
-            label="Revenue (MTD)"
-            value="$8,200"
-            comparison="vs last month"
-          />
+          <MetricCard label="Revenue (MTD)" value="$8,200" comparison="vs last month" />
         </div>
       </div>
     </Layout.Column>

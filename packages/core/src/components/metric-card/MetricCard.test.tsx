@@ -51,9 +51,7 @@ describe("MetricCard", () => {
   });
 
   it("does not render comparison when comparison is empty string", () => {
-    const { container } = render(
-      <MetricCard label="Sales" value="$3,000" comparison="" />,
-    );
+    const { container } = render(<MetricCard label="Sales" value="$3,000" comparison="" />);
     expect(container.querySelector('[data-slot="metric-card"]')?.children.length).toBe(2);
   });
 

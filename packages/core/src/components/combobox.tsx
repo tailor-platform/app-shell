@@ -578,7 +578,16 @@ function useCreatable<T extends object>(
         handleError();
       }
     },
-    [creating, isMultiple, createItem, onItemCreated, onValueChange, getLabel],
+    [
+      creating,
+      isMultiple,
+      createItem,
+      onItemCreated,
+      onValueChange,
+      getLabel,
+      setSingleValue,
+      setMultiValue,
+    ],
   );
 
   // --- Value change handlers ---
@@ -595,7 +604,7 @@ function useCreatable<T extends object>(
       (onValueChange as UseCreatableOptionsMultiple<T>["onValueChange"] | undefined)?.(next);
       setQuery("");
     },
-    [performCreate, onValueChange, sentinel],
+    [performCreate, onValueChange, sentinel, setMultiValue],
   );
 
   const handleSingleValueChange = useCallback(
@@ -609,7 +618,7 @@ function useCreatable<T extends object>(
       (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(next);
       setQuery("");
     },
-    [performCreate, onValueChange, sentinel],
+    [performCreate, onValueChange, sentinel, setSingleValue],
   );
 
   // --- Return ---

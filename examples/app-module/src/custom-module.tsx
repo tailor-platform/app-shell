@@ -1584,13 +1584,13 @@ const DropdownComponentsDemoPage = () => {
           </div>
         </div>
 
-        {/* ── Combobox.Creatable ── */}
+        {/* ── Combobox (creatable) ── */}
         <div style={cardStyle}>
-          <h3 style={headingStyle}>Combobox.Creatable</h3>
+          <h3 style={headingStyle}>Combobox (creatable)</h3>
           <div style={gridStyle}>
             <div style={sectionStyle}>
               <div style={subHeadingStyle}>Single</div>
-              <Combobox.Creatable
+              <Combobox
                 items={creatableItems}
                 mapItem={(item) => ({ label: item.name, key: item.id })}
                 createItem={(value) => ({
@@ -1608,7 +1608,7 @@ const DropdownComponentsDemoPage = () => {
 
             <div style={sectionStyle}>
               <div style={subHeadingStyle}>Multiple</div>
-              <Combobox.Creatable
+              <Combobox
                 items={creatableItems}
                 mapItem={(item) => ({ label: item.name, key: item.id })}
                 createItem={(value) => ({

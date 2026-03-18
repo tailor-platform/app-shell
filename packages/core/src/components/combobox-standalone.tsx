@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
   ComboboxRoot,
   ComboboxInputGroup,
@@ -27,7 +28,7 @@ import type { AsyncFetcher } from "@/hooks/use-async-items";
 /** Fetcher type for `Combobox.Async`. */
 export type ComboboxAsyncFetcher<T> = AsyncFetcher<T>;
 
-// --- Shared types (used by Combobox, Combobox.Async, and Combobox.Creatable) ---
+// --- Shared types ---
 
 interface ComboboxPropsBase<T> {
   /** Placeholder text for the input */
@@ -62,13 +63,159 @@ interface ComboboxPropsMultiple<T> extends ComboboxPropsBase<T> {
   onValueChange?: (value: T[]) => void;
 }
 
-// --- Combobox (static) ---
+/**
+ * Creatable opt-in props. When `createItem` is provided, the combobox allows
+ * users to create new items on-the-fly.
+ *
+ * `T` must be an object type because the creatable mechanism uses a sentinel
+ * object for identity comparison — primitive types (string, number) would
+ * collide with real items.
+ */
+interface CreatableProps<T extends object> {
+  /** Factory to create a new item from user input string */
+  createItem: (value: string) => T;
+  /** Map each item to its label, key, and optional custom render. Required when creatable. */
+  mapItem: (item: T) => MappedItem;
+  /** Called when a new item is created */
+  onItemCreated?: UseCreatableOptionsBase<T>["onItemCreated"];
+  /** Format the label for the "create" option. @default (v) => `Create "${v}"` */
+  formatCreateLabel?: (value: string) => string;
+}
 
-type ComboboxStaticProps<I> =
+// ============================================================================
+// Combobox (static items)
+// ============================================================================
+
+// -- Non-creatable --
+
+type ComboboxStaticPlainProps<I> =
   | ({ items: I[] } & ComboboxPropsSingle<ExtractItem<I>>)
   | ({ items: I[] } & ComboboxPropsMultiple<ExtractItem<I>>);
 
-function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
+// -- Creatable --
+
+type ComboboxStaticCreatableProps<T extends object> =
+  | ({ items: T[] } & CreatableProps<T> & Omit<ComboboxPropsSingle<T>, "mapItem">)
+  | ({ items: T[] } & CreatableProps<T> & Omit<ComboboxPropsMultiple<T>, "mapItem">);
+
+// ============================================================================
+// Shared internal layout — single place for single vs multiple rendering
+// ============================================================================
+
+function ComboboxShell({
+  className,
+  placeholder,
+  disabled,
+  emptyContent,
+  mapItem,
+  listChildren,
+  multiple,
+  rootProps,
+}: {
+  className?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  emptyContent: React.ReactNode;
+  mapItem: (item: any) => MappedItem;
+  listChildren: any;
+  multiple?: boolean;
+  rootProps: Record<string, any>;
+}) {
+  if (multiple) {
+    return (
+      <div className={className}>
+        <ComboboxRoot multiple {...rootProps} disabled={disabled}>
+          <ComboboxInputGroup>
+            <ComboboxChips>
+              <ComboboxValue>
+                {(selected: any[]) => (
+                  <>
+                    {selected.map((item) => {
+                      const mapped = mapItem(item);
+                      return (
+                        <ComboboxChip key={mapped.key ?? mapped.label} aria-label={mapped.label}>
+                          {mapped.label}
+                          <ComboboxChipRemove />
+                        </ComboboxChip>
+                      );
+                    })}
+                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
+                  </>
+                )}
+              </ComboboxValue>
+            </ComboboxChips>
+          </ComboboxInputGroup>
+          <ComboboxContent>
+            <ComboboxEmpty>{emptyContent}</ComboboxEmpty>
+            <ComboboxList>{listChildren}</ComboboxList>
+          </ComboboxContent>
+        </ComboboxRoot>
+      </div>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <ComboboxRoot {...rootProps} disabled={disabled}>
+        <ComboboxInputGroup>
+          <ComboboxInput placeholder={placeholder} />
+          <ComboboxClear />
+          <ComboboxTrigger />
+        </ComboboxInputGroup>
+        <ComboboxContent>
+          <ComboboxEmpty>{emptyContent}</ComboboxEmpty>
+          <ComboboxList>{listChildren}</ComboboxList>
+        </ComboboxContent>
+      </ComboboxRoot>
+    </div>
+  );
+}
+
+// ============================================================================
+// Shared item renderers
+// ============================================================================
+
+function flatItemRenderer<T>(mapItem: (item: T) => MappedItem) {
+  return (item: T) => {
+    const mapped = mapItem(item);
+    return (
+      <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
+        {mapped.render ?? mapped.label}
+      </ComboboxItem>
+    );
+  };
+}
+
+function creatableItemRenderer<T>(
+  mapItem: (item: T) => MappedItem,
+  creatable: {
+    isCreateItem: (item: T) => boolean;
+    formatCreateLabel: (v: string) => string;
+    getCreateLabel: (item: T) => string | undefined;
+  },
+) {
+  return (item: T) => {
+    if (creatable.isCreateItem(item)) {
+      return (
+        <ComboboxItem key="__create__" value={item}>
+          {creatable.formatCreateLabel(creatable.getCreateLabel(item) ?? "")}
+        </ComboboxItem>
+      );
+    }
+    const mapped = mapItem(item);
+    return (
+      <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
+        {mapped.render ?? mapped.label}
+      </ComboboxItem>
+    );
+  };
+}
+
+// ============================================================================
+// Combobox — static base (no creatable)
+// ============================================================================
+
+function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
   type T = ExtractItem<I>;
 
   const {
@@ -90,252 +237,38 @@ function ComboboxStandalone<I>(props: ComboboxStaticProps<I>) {
         return (
           <ComboboxGroup key={g.label} items={g.items}>
             <ComboboxGroupLabel>{g.label}</ComboboxGroupLabel>
-            <ComboboxCollection>
-              {(item: any) => {
-                const mapped = mapItem(item as T);
-                return (
-                  <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
-                    {mapped.render ?? mapped.label}
-                  </ComboboxItem>
-                );
-              }}
-            </ComboboxCollection>
+            <ComboboxCollection>{flatItemRenderer(mapItem)}</ComboboxCollection>
           </ComboboxGroup>
         );
       }
-    : (item: any) => {
-        const mapped = mapItem(item as T);
-        return (
-          <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
-            {mapped.render ?? mapped.label}
-          </ComboboxItem>
-        );
-      };
+    : flatItemRenderer(mapItem);
 
-  if (rest.multiple) {
-    const { value, defaultValue, onValueChange } = rest as ComboboxPropsMultiple<T>;
-    return (
-      <div className={className}>
-        <ComboboxRoot<T, true>
-          multiple
-          items={items as any}
-          value={value}
-          defaultValue={defaultValue}
-          onValueChange={onValueChange}
-          itemToStringLabel={getLabel}
-          disabled={disabled}
-        >
-          <ComboboxInputGroup>
-            <ComboboxChips>
-              <ComboboxValue>
-                {(selected: T[]) => (
-                  <>
-                    {selected.map((item) => {
-                      const mapped = mapItem(item);
-                      return (
-                        <ComboboxChip key={mapped.key ?? mapped.label} aria-label={mapped.label}>
-                          {mapped.label}
-                          <ComboboxChipRemove />
-                        </ComboboxChip>
-                      );
-                    })}
-                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
-                  </>
-                )}
-              </ComboboxValue>
-            </ComboboxChips>
-          </ComboboxInputGroup>
-          <ComboboxContent>
-            <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-            <ComboboxList>{listChildren}</ComboboxList>
-          </ComboboxContent>
-        </ComboboxRoot>
-      </div>
-    );
-  }
-
-  const { value, defaultValue, onValueChange } = rest as ComboboxPropsSingle<T>;
+  const { value, defaultValue, onValueChange } = rest as any;
   return (
-    <div className={className}>
-      <ComboboxRoot<T>
-        items={items as any}
-        value={value}
-        defaultValue={defaultValue}
-        onValueChange={onValueChange}
-        itemToStringLabel={getLabel}
-        disabled={disabled}
-      >
-        <ComboboxInputGroup>
-          <ComboboxInput placeholder={placeholder} />
-          <ComboboxClear />
-          <ComboboxTrigger />
-        </ComboboxInputGroup>
-        <ComboboxContent>
-          <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-          <ComboboxList>{listChildren}</ComboboxList>
-        </ComboboxContent>
-      </ComboboxRoot>
-    </div>
+    <ComboboxShell
+      className={className}
+      placeholder={placeholder}
+      disabled={disabled}
+      emptyContent={emptyText}
+      mapItem={mapItem}
+      listChildren={listChildren}
+      multiple={rest.multiple}
+      rootProps={{
+        items: items as any,
+        value,
+        defaultValue,
+        onValueChange,
+        itemToStringLabel: getLabel,
+      }}
+    />
   );
 }
 
-// --- Combobox.Async ---
+// ============================================================================
+// Combobox — static with creatable
+// ============================================================================
 
-interface ComboboxAsyncOwnProps<T> {
-  /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
-  fetcher: ComboboxAsyncFetcher<T>;
-  /** Text shown while loading. @default "Loading..." */
-  loadingText?: string;
-}
-
-type ComboboxAsyncProps<T> =
-  | (ComboboxAsyncOwnProps<T> & ComboboxPropsSingle<T>)
-  | (ComboboxAsyncOwnProps<T> & ComboboxPropsMultiple<T>);
-
-function ComboboxAsyncStandalone<T>(props: ComboboxAsyncProps<T>) {
-  const {
-    fetcher,
-    placeholder,
-    emptyText = "No results.",
-    loadingText = "Loading...",
-    mapItem: mapItemProp,
-    className,
-    disabled,
-    ...rest
-  } = props;
-
-  const async = useAsync({ fetcher });
-  const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
-  const getLabel = (item: T) => mapItem(item).label;
-
-  if (rest.multiple) {
-    const { value, defaultValue, onValueChange } = rest;
-    return (
-      <div className={className}>
-        <ComboboxRoot<T, true>
-          multiple
-          items={async.items}
-          filter={null}
-          onInputValueChange={async.onInputValueChange}
-          value={value}
-          defaultValue={defaultValue}
-          onValueChange={onValueChange}
-          itemToStringLabel={getLabel}
-          disabled={disabled}
-        >
-          <ComboboxInputGroup>
-            <ComboboxChips>
-              <ComboboxValue>
-                {(selected: T[]) => (
-                  <>
-                    {selected.map((item) => {
-                      const mapped = mapItem(item);
-                      return (
-                        <ComboboxChip key={mapped.key ?? mapped.label} aria-label={mapped.label}>
-                          {mapped.label}
-                          <ComboboxChipRemove />
-                        </ComboboxChip>
-                      );
-                    })}
-                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
-                  </>
-                )}
-              </ComboboxValue>
-            </ComboboxChips>
-          </ComboboxInputGroup>
-          <ComboboxContent>
-            <ComboboxEmpty>{async.loading ? loadingText : emptyText}</ComboboxEmpty>
-            <ComboboxList>
-              {(item: T) => {
-                const mapped = mapItem(item);
-                return (
-                  <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
-                    {mapped.render ?? mapped.label}
-                  </ComboboxItem>
-                );
-              }}
-            </ComboboxList>
-          </ComboboxContent>
-        </ComboboxRoot>
-      </div>
-    );
-  }
-
-  const { value, defaultValue, onValueChange } = rest;
-  return (
-    <div className={className}>
-      <ComboboxRoot
-        items={async.items}
-        filter={null}
-        onInputValueChange={async.onInputValueChange}
-        value={value}
-        defaultValue={defaultValue}
-        onValueChange={onValueChange}
-        itemToStringLabel={getLabel}
-        disabled={disabled}
-      >
-        <ComboboxInputGroup>
-          <ComboboxInput placeholder={placeholder} />
-          <ComboboxClear />
-          <ComboboxTrigger />
-        </ComboboxInputGroup>
-        <ComboboxContent>
-          <ComboboxEmpty>{async.loading ? loadingText : emptyText}</ComboboxEmpty>
-          <ComboboxList>
-            {(item: T) => {
-              const mapped = mapItem(item);
-              return (
-                <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
-                  {mapped.render ?? mapped.label}
-                </ComboboxItem>
-              );
-            }}
-          </ComboboxList>
-        </ComboboxContent>
-      </ComboboxRoot>
-    </div>
-  );
-}
-
-// --- Combobox.Creatable ---
-
-/**
- * `T` must be an object type because the creatable mechanism uses a sentinel
- * object for identity comparison — primitive types (string, number) would
- * collide with real items.
- */
-interface ComboboxCreatablePropsBase<T extends object> extends ComboboxPropsBase<T> {
-  /** Current items list */
-  items: T[];
-  /** Map each item to its label, key, and optional custom render. Required for creatable. */
-  mapItem: (item: T) => MappedItem;
-  /** Factory to create a new item from user input string */
-  createItem: (value: string) => T;
-  /** Called when a new item is created */
-  onItemCreated?: UseCreatableOptionsBase<T>["onItemCreated"];
-  /** Format the label for the "create" option. @default (v) => `Create "${v}"` */
-  formatCreateLabel?: (value: string) => string;
-}
-
-interface ComboboxCreatablePropsSingle<T extends object> extends ComboboxCreatablePropsBase<T> {
-  multiple?: false | undefined;
-  value?: T | null;
-  defaultValue?: T | null;
-  onValueChange?: (value: T | null) => void;
-}
-
-interface ComboboxCreatablePropsMultiple<T extends object> extends ComboboxCreatablePropsBase<T> {
-  multiple: true;
-  value?: T[];
-  defaultValue?: T[];
-  onValueChange?: (value: T[]) => void;
-}
-
-type ComboboxCreatableProps<T extends object> =
-  | ComboboxCreatablePropsSingle<T>
-  | ComboboxCreatablePropsMultiple<T>;
-
-function ComboboxCreatableStandalone<T extends object>(props: ComboboxCreatableProps<T>) {
+function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatableProps<T>) {
   const {
     items,
     placeholder,
@@ -350,129 +283,191 @@ function ComboboxCreatableStandalone<T extends object>(props: ComboboxCreatableP
   } = props;
 
   const getLabel = (item: T) => mapItem(item).label;
+  const { value, defaultValue, onValueChange, multiple } = rest as any;
 
-  if (rest.multiple) {
-    const { value, defaultValue, onValueChange } = rest;
-    const creatable = useCreatable({
-      items,
-      multiple: true,
-      getLabel,
-      createItem,
-      onItemCreated,
-      formatCreateLabel: formatCreateLabelProp,
-      defaultValue,
-      onValueChange,
-    });
-
-    return (
-      <div className={className}>
-        <ComboboxRoot<T, true>
-          multiple
-          items={creatable.items}
-          value={value ?? creatable.value}
-          onValueChange={creatable.onValueChange}
-          inputValue={creatable.inputValue}
-          onInputValueChange={creatable.onInputValueChange}
-          itemToStringLabel={creatable.itemToStringLabel}
-          itemToStringValue={creatable.itemToStringValue}
-          disabled={disabled}
-        >
-          <ComboboxInputGroup>
-            <ComboboxChips>
-              <ComboboxValue>
-                {(selected: T[]) => (
-                  <>
-                    {selected.map((item) => {
-                      const mapped = mapItem(item);
-                      return (
-                        <ComboboxChip key={mapped.key ?? mapped.label} aria-label={mapped.label}>
-                          {mapped.label}
-                          <ComboboxChipRemove />
-                        </ComboboxChip>
-                      );
-                    })}
-                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
-                  </>
-                )}
-              </ComboboxValue>
-            </ComboboxChips>
-          </ComboboxInputGroup>
-          <ComboboxContent>
-            <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-            <ComboboxList>
-              {(item: T) => {
-                if (creatable.isCreateItem(item)) {
-                  return (
-                    <ComboboxItem key="__create__" value={item}>
-                      {creatable.formatCreateLabel(creatable.getCreateLabel(item) ?? "")}
-                    </ComboboxItem>
-                  );
-                }
-                const mapped = mapItem(item);
-                return (
-                  <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
-                    {mapped.render ?? mapped.label}
-                  </ComboboxItem>
-                );
-              }}
-            </ComboboxList>
-          </ComboboxContent>
-        </ComboboxRoot>
-      </div>
-    );
-  }
-
-  const { value, defaultValue, onValueChange } = rest;
   const creatable = useCreatable({
     items,
+    ...(multiple ? { multiple: true } : {}),
     getLabel,
     createItem,
     onItemCreated,
     formatCreateLabel: formatCreateLabelProp,
     defaultValue,
     onValueChange,
-  });
+  } as any);
 
   return (
-    <div className={className}>
-      <ComboboxRoot
-        items={creatable.items}
-        value={value ?? creatable.value}
-        onValueChange={creatable.onValueChange}
-        inputValue={creatable.inputValue}
-        onInputValueChange={creatable.onInputValueChange}
-        itemToStringLabel={creatable.itemToStringLabel}
-        itemToStringValue={creatable.itemToStringValue}
-        disabled={disabled}
-      >
-        <ComboboxInputGroup>
-          <ComboboxInput placeholder={placeholder} />
-          <ComboboxClear />
-          <ComboboxTrigger />
-        </ComboboxInputGroup>
-        <ComboboxContent>
-          <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-          <ComboboxList>
-            {(item: T) => {
-              if (creatable.isCreateItem(item)) {
-                return (
-                  <ComboboxItem key="__create__" value={item}>
-                    {creatable.formatCreateLabel(creatable.getCreateLabel(item) ?? "")}
-                  </ComboboxItem>
-                );
-              }
-              const mapped = mapItem(item);
-              return (
-                <ComboboxItem key={mapped.key ?? mapped.label} value={item}>
-                  {mapped.render ?? mapped.label}
-                </ComboboxItem>
-              );
-            }}
-          </ComboboxList>
-        </ComboboxContent>
-      </ComboboxRoot>
-    </div>
+    <ComboboxShell
+      className={className}
+      placeholder={placeholder}
+      disabled={disabled}
+      emptyContent={emptyText}
+      mapItem={mapItem}
+      listChildren={creatableItemRenderer(mapItem, creatable)}
+      multiple={multiple}
+      rootProps={{
+        items: creatable.items,
+        value: value ?? creatable.value,
+        onValueChange: creatable.onValueChange,
+        inputValue: creatable.inputValue,
+        onInputValueChange: creatable.onInputValueChange,
+        itemToStringLabel: creatable.itemToStringLabel,
+        itemToStringValue: creatable.itemToStringValue,
+      }}
+    />
   );
+}
+
+// -- Dispatcher --
+
+function ComboboxStandalone<T extends object>(
+  props: ComboboxStaticCreatableProps<T>,
+): React.JSX.Element;
+function ComboboxStandalone<I>(props: ComboboxStaticPlainProps<I>): React.JSX.Element;
+function ComboboxStandalone(props: any) {
+  if ("createItem" in props) {
+    return <ComboboxStaticCreatable {...props} />;
+  }
+  return <ComboboxStaticBase {...props} />;
+}
+
+// ============================================================================
+// Combobox.Async
+// ============================================================================
+
+interface ComboboxAsyncOwnProps<T> {
+  /** Fetcher for async item loading. Pass a function for default debounce, or `{ fn, debounceMs }` to customize. */
+  fetcher: ComboboxAsyncFetcher<T>;
+  /** Text shown while loading. @default "Loading..." */
+  loadingText?: string;
+}
+
+// -- Non-creatable --
+
+type ComboboxAsyncPlainProps<T> =
+  | (ComboboxAsyncOwnProps<T> & ComboboxPropsSingle<T>)
+  | (ComboboxAsyncOwnProps<T> & ComboboxPropsMultiple<T>);
+
+// -- Creatable --
+
+type ComboboxAsyncCreatableProps<T extends object> =
+  | (ComboboxAsyncOwnProps<T> & CreatableProps<T> & Omit<ComboboxPropsSingle<T>, "mapItem">)
+  | (ComboboxAsyncOwnProps<T> & CreatableProps<T> & Omit<ComboboxPropsMultiple<T>, "mapItem">);
+
+// ============================================================================
+// Combobox.Async — base (no creatable)
+// ============================================================================
+
+function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
+  const {
+    fetcher,
+    placeholder,
+    emptyText = "No results.",
+    loadingText = "Loading...",
+    mapItem: mapItemProp,
+    className,
+    disabled,
+    ...rest
+  } = props;
+
+  const async = useAsync({ fetcher });
+  const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
+  const getLabel = (item: T) => mapItem(item).label;
+  const { value, defaultValue, onValueChange, multiple } = rest as any;
+
+  return (
+    <ComboboxShell
+      className={className}
+      placeholder={placeholder}
+      disabled={disabled}
+      emptyContent={async.loading ? loadingText : emptyText}
+      mapItem={mapItem}
+      listChildren={flatItemRenderer(mapItem)}
+      multiple={multiple}
+      rootProps={{
+        items: async.items,
+        filter: null,
+        onInputValueChange: async.onInputValueChange,
+        value,
+        defaultValue,
+        onValueChange,
+        itemToStringLabel: getLabel,
+      }}
+    />
+  );
+}
+
+// ============================================================================
+// Combobox.Async — with creatable
+// ============================================================================
+
+function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableProps<T>) {
+  const {
+    fetcher,
+    placeholder,
+    emptyText = "No results.",
+    loadingText = "Loading...",
+    mapItem,
+    createItem,
+    onItemCreated,
+    formatCreateLabel: formatCreateLabelProp,
+    className,
+    disabled,
+    ...rest
+  } = props;
+
+  const async = useAsync({ fetcher });
+  const getLabel = (item: T) => mapItem(item).label;
+  const { value, defaultValue, onValueChange, multiple } = rest as any;
+
+  const creatable = useCreatable({
+    items: async.items,
+    ...(multiple ? { multiple: true } : {}),
+    getLabel,
+    createItem,
+    onItemCreated,
+    formatCreateLabel: formatCreateLabelProp,
+    defaultValue,
+    onValueChange,
+  } as any);
+
+  return (
+    <ComboboxShell
+      className={className}
+      placeholder={placeholder}
+      disabled={disabled}
+      emptyContent={async.loading ? loadingText : emptyText}
+      mapItem={mapItem}
+      listChildren={creatableItemRenderer(mapItem, creatable)}
+      multiple={multiple}
+      rootProps={{
+        items: creatable.items,
+        filter: null,
+        value: value ?? creatable.value,
+        onValueChange: creatable.onValueChange,
+        inputValue: creatable.inputValue,
+        onInputValueChange: (v: string) => {
+          creatable.onInputValueChange(v);
+          async.onInputValueChange(v);
+        },
+        itemToStringLabel: creatable.itemToStringLabel,
+        itemToStringValue: creatable.itemToStringValue,
+      }}
+    />
+  );
+}
+
+// -- Dispatcher --
+
+function ComboboxAsyncStandalone<T extends object>(
+  props: ComboboxAsyncCreatableProps<T>,
+): React.JSX.Element;
+function ComboboxAsyncStandalone<T>(props: ComboboxAsyncPlainProps<T>): React.JSX.Element;
+function ComboboxAsyncStandalone(props: any) {
+  if ("createItem" in props) {
+    return <ComboboxAsyncCreatable {...props} />;
+  }
+  return <ComboboxAsyncBase {...props} />;
 }
 
 // ============================================================================
@@ -481,7 +476,6 @@ function ComboboxCreatableStandalone<T extends object>(props: ComboboxCreatableP
 
 const Combobox = Object.assign(ComboboxStandalone, {
   Async: ComboboxAsyncStandalone,
-  Creatable: ComboboxCreatableStandalone,
   Parts: ComboboxParts,
 });
 

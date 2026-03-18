@@ -237,11 +237,11 @@ const creatableItems: Item[] = [{ label: "Existing A" }, { label: "Existing B" }
 const mapCreatableItem = (item: Item) => ({ label: item.label });
 const createItem = (value: string) => ({ label: value });
 
-describe("Combobox.Creatable (standalone)", () => {
+describe("Combobox (standalone, creatable)", () => {
   it("renders with items", async () => {
     const user = userEvent.setup();
     render(
-      <Combobox.Creatable
+      <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
         createItem={createItem}
@@ -259,7 +259,7 @@ describe("Combobox.Creatable (standalone)", () => {
   it("shows create option when typing non-existing value", async () => {
     const user = userEvent.setup();
     render(
-      <Combobox.Creatable
+      <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
         createItem={createItem}
@@ -277,7 +277,7 @@ describe("Combobox.Creatable (standalone)", () => {
   it("uses custom formatCreateLabel", async () => {
     const user = userEvent.setup();
     render(
-      <Combobox.Creatable
+      <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
         createItem={createItem}
@@ -295,7 +295,7 @@ describe("Combobox.Creatable (standalone)", () => {
 
   it("applies className", () => {
     const { container } = render(
-      <Combobox.Creatable
+      <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
         createItem={createItem}
@@ -309,7 +309,7 @@ describe("Combobox.Creatable (standalone)", () => {
   it("supports multiple mode", async () => {
     const user = userEvent.setup();
     render(
-      <Combobox.Creatable
+      <Combobox
         items={creatableItems}
         multiple
         mapItem={mapCreatableItem}

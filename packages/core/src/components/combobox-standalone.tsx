@@ -335,7 +335,7 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
     <ComboboxShell
       className={className}
       placeholder={placeholder}
-      disabled={disabled}
+      disabled={disabled || creatable.creating}
       emptyContent={emptyText}
       mapItem={mapItem}
       listChildren={creatableItemRenderer(mapItem, creatable)}
@@ -482,7 +482,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
     <ComboboxShell
       className={className}
       placeholder={placeholder}
-      disabled={disabled}
+      disabled={disabled || creatable.creating}
       emptyContent={async.loading ? loadingText : emptyText}
       mapItem={mapItem}
       listChildren={creatableItemRenderer(mapItem, creatable)}

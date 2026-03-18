@@ -1105,6 +1105,226 @@ describe("Combobox.Parts.useCreatable", () => {
       expect(result.current.value).toHaveLength(1);
     });
   });
+
+  // =========================================================================
+  // creating state — disabled while async onItemCreated is in-flight
+  // =========================================================================
+
+  describe("creating state", () => {
+    it("is false initially", () => {
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+        }),
+      );
+
+      expect(result.current.creating).toBe(false);
+    });
+
+    it("becomes true while async onItemCreated is in-flight (single mode)", async () => {
+      let resolvePromise!: () => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((resolve) => {
+              resolvePromise = resolve;
+            }),
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      // While promise is pending, creating should be true
+      expect(result.current.creating).toBe(true);
+
+      await act(async () => {
+        resolvePromise();
+      });
+
+      // After resolve, creating should be false
+      expect(result.current.creating).toBe(false);
+    });
+
+    it("becomes true while async onItemCreated is in-flight (multiple mode)", async () => {
+      let resolvePromise!: () => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          multiple: true as const,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((resolve) => {
+              resolvePromise = resolve;
+            }),
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange([sentinel]);
+      });
+
+      expect(result.current.creating).toBe(true);
+
+      await act(async () => {
+        resolvePromise();
+      });
+
+      expect(result.current.creating).toBe(false);
+    });
+
+    it("resets to false when async onItemCreated rejects", async () => {
+      let rejectPromise!: () => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((_resolve, reject) => {
+              rejectPromise = reject;
+            }),
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      expect(result.current.creating).toBe(true);
+
+      await act(async () => {
+        rejectPromise();
+      });
+
+      expect(result.current.creating).toBe(false);
+    });
+
+    it("resets to false when async onItemCreated returns false", async () => {
+      let resolvePromise!: (v: false) => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item: Tag) =>
+            new Promise<false>((resolve) => {
+              resolvePromise = resolve;
+            }),
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      expect(result.current.creating).toBe(true);
+
+      await act(async () => {
+        resolvePromise(false);
+      });
+
+      expect(result.current.creating).toBe(false);
+    });
+
+    it("hides sentinel item while creating is true", async () => {
+      let resolvePromise!: () => void;
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((resolve) => {
+              resolvePromise = resolve;
+            }),
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      // Sentinel is present before create
+      expect(result.current.items).toHaveLength(4);
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+      expect(sentinel).toBeDefined();
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      // While creating, sentinel should be hidden
+      expect(result.current.creating).toBe(true);
+      expect(result.current.items.some((item) => result.current.isCreateItem(item))).toBe(false);
+
+      await act(async () => {
+        resolvePromise();
+      });
+
+      expect(result.current.creating).toBe(false);
+    });
+
+    it("stays false for sync onItemCreated", () => {
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: () => {},
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange(sentinel);
+      });
+
+      // Sync callback — creating should remain false
+      expect(result.current.creating).toBe(false);
+    });
+  });
 });
 
 // ============================================================================

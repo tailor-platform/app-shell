@@ -368,6 +368,8 @@ interface UseCreatableReturnBase<T> {
   getCreateLabel: (item: T) => string | undefined;
   /** The active formatCreateLabel function */
   formatCreateLabel: (value: string) => string;
+  /** `true` while an async `onItemCreated` callback is in-flight */
+  creating: boolean;
 }
 
 interface UseCreatableReturnMultiple<T> extends UseCreatableReturnBase<T> {
@@ -441,14 +443,21 @@ function useCreatable<T extends object>(
   const isMultiple = "multiple" in options && options.multiple === true;
 
   // --- Managed state ---
-  const [multiValue, setMultiValue] = useState<T[]>(
-    () =>
-      (isMultiple ? ((options as UseCreatableOptionsMultiple<T>).defaultValue ?? []) : []) as T[],
-  );
-  const [singleValue, setSingleValue] = useState<T | null>(() =>
-    !isMultiple ? ((options as UseCreatableOptionsSingle<T>).defaultValue ?? null) : null,
+  // Use a single discriminated state to avoid impossible combinations
+  // (e.g. multiValue set while in single mode).
+  const [selection, setSelection] = useState<T[] | T | null>(() =>
+    isMultiple
+      ? ((options as UseCreatableOptionsMultiple<T>).defaultValue ?? [])
+      : ((options as UseCreatableOptionsSingle<T>).defaultValue ?? null),
   );
   const [query, setQuery] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // Type-safe accessors
+  const multiValue = selection as T[];
+  const singleValue = selection as T | null;
+  const setMultiValue = setSelection as React.Dispatch<React.SetStateAction<T[]>>;
+  const setSingleValue = setSelection as React.Dispatch<React.SetStateAction<T | null>>;
 
   // Tracks the label being created during an async onItemCreated flow.
   // While set, onInputValueChange ignores base-ui's close-handler clearing
@@ -463,10 +472,11 @@ function useCreatable<T extends object>(
     trimmed !== "" && items.some((item) => getLabel(item).trim().toLocaleLowerCase() === lowered);
 
   // --- Sentinel: the "Create X" option appended to the items list ---
+  // Hide the sentinel while an async create is in-flight to prevent double-clicks.
   const sentinel = useMemo<{ item: T; label: string } | null>(() => {
-    if (trimmed === "" || exactExists) return null;
+    if (creating || trimmed === "" || exactExists) return null;
     return { item: createItem(trimmed), label: trimmed };
-  }, [trimmed, exactExists, createItem]);
+  }, [creating, trimmed, exactExists, createItem]);
 
   const augmentedItems = useMemo(() => {
     if (!sentinel) return items;
@@ -507,6 +517,9 @@ function useCreatable<T extends object>(
   // --- Create logic (Promise-based) ---
   const performCreate = useCallback(
     (value: string, baseMultiValue?: T[]) => {
+      // Prevent re-entrant calls while an async create is in-flight
+      if (creating) return;
+
       const newItem = createItem(value);
 
       const applySelection = (itemToSelect?: T) => {
@@ -536,6 +549,7 @@ function useCreatable<T extends object>(
 
       const handleResult = (result: void | false | T) => {
         pendingCreateLabelRef.current = null;
+        setCreating(false);
         if (result === false) {
           setQuery("");
           return;
@@ -546,6 +560,7 @@ function useCreatable<T extends object>(
 
       const handleError = () => {
         pendingCreateLabelRef.current = null;
+        setCreating(false);
         setQuery("");
       };
 
@@ -554,6 +569,7 @@ function useCreatable<T extends object>(
 
         // If callback returned a Promise, handle async
         if (result != null && typeof (result as Promise<unknown>).then === "function") {
+          setCreating(true);
           (result as Promise<void | false | T>).then(handleResult, handleError);
         } else {
           handleResult(result as void | false | T);
@@ -562,7 +578,7 @@ function useCreatable<T extends object>(
         handleError();
       }
     },
-    [isMultiple, createItem, onItemCreated, onValueChange, getLabel],
+    [creating, isMultiple, createItem, onItemCreated, onValueChange, getLabel],
   );
 
   // --- Value change handlers ---
@@ -611,6 +627,7 @@ function useCreatable<T extends object>(
     isCreateItem,
     getCreateLabel: getCreateLabelFn,
     formatCreateLabel: userFormatLabel,
+    creating,
   };
 
   if (isMultiple) {

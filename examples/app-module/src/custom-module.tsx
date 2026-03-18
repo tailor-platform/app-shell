@@ -1670,7 +1670,7 @@ const DropdownComponentsDemoPage = () => {
               <Combobox
                 items={creatableItems}
                 mapItem={(item) => ({ label: item.name, key: item.id })}
-                onCreateItem={(value) => {
+                onCreateItem={async (value) => {
                   const item = { id: crypto.randomUUID(), name: value };
                   setCreatableItems((prev) => [...prev, item]);
                   return item;
@@ -1686,7 +1686,7 @@ const DropdownComponentsDemoPage = () => {
                 items={creatableItems}
                 mapItem={(item) => ({ label: item.name, key: item.id })}
                 onCreateItem={async (value) => {
-                  await new Promise((r) => setTimeout(r, 400));
+                  await new Promise((r) => setTimeout(r, 500));
                   const item = { id: crypto.randomUUID(), name: value };
                   setCreatableItems((prev) => [...prev, item]);
                   return item;

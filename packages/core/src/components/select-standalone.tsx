@@ -29,6 +29,11 @@ import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
  *
  * If caching or deduplication is needed, implement it in the fetcher
  * (e.g. via a query library or a simple cache layer).
+ *
+ * **Error handling:** Errors should be handled inside the fetcher.
+ * If the fetcher throws, the component silently falls back to an empty
+ * item list — there is no `onError` callback. Catch errors in the
+ * fetcher to show toasts, log to error tracking, or return fallback data.
  */
 export type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
 

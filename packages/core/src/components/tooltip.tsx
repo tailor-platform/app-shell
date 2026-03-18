@@ -66,12 +66,28 @@ Trigger.displayName = "Tooltip.Trigger";
 function Content({
   className,
   position,
+  side: _side,
+  align: _align,
+  sideOffset: _sideOffset,
   children,
   ...restProps
 }: React.ComponentProps<typeof BaseTooltip.Popup> & {
   position?: PositionProps;
+  /** @deprecated Use `position={{ side }}` instead. */
+  side?: PositionProps["side"];
+  /** @deprecated Use `position={{ align }}` instead. */
+  align?: PositionProps["align"];
+  /** @deprecated Use `position={{ sideOffset }}` instead. */
+  sideOffset?: PositionProps["sideOffset"];
 }) {
-  const { side = "top", align = "center", sideOffset = 5 } = position ?? {};
+  // Deprecated flat props are accepted for backward compatibility but
+  // silently ignored when the `position` prop is provided.
+  const resolved = position ?? {
+    side: _side,
+    align: _align,
+    sideOffset: _sideOffset,
+  };
+  const { side = "top", align = "center", sideOffset = 5 } = resolved;
   return (
     <BaseTooltip.Portal>
       <BaseTooltip.Positioner sideOffset={sideOffset} side={side} align={align}>

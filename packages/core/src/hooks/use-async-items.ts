@@ -8,6 +8,11 @@ const DEFAULT_DEBOUNCE_MS = 300;
  * Receives an `AbortSignal` that is aborted when a newer request supersedes
  * this one — pass it through to `fetch()` so the browser cancels the
  * in-flight HTTP request automatically.
+ *
+ * **Error handling:** Errors should be handled inside the fetcher.
+ * If the fetcher throws, the component silently falls back to an empty
+ * item list — there is no `onError` callback. Catch errors in the
+ * fetcher to show toasts, log to error tracking, or return fallback data.
  */
 export type AsyncFetcherFn<T> = (query: string, options: { signal: AbortSignal }) => Promise<T[]>;
 

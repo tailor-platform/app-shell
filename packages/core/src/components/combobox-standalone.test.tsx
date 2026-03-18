@@ -235,7 +235,6 @@ describe("Combobox.Async (standalone)", () => {
 type Item = { label: string };
 const creatableItems: Item[] = [{ label: "Existing A" }, { label: "Existing B" }];
 const mapCreatableItem = (item: Item) => ({ label: item.label });
-const createItem = (value: string) => ({ label: value });
 
 describe("Combobox (standalone, creatable)", () => {
   it("renders with items", async () => {
@@ -244,7 +243,7 @@ describe("Combobox (standalone, creatable)", () => {
       <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
-        createItem={createItem}
+        onCreateItem={(value) => ({ label: value })}
         placeholder="Search..."
       />,
     );
@@ -262,7 +261,7 @@ describe("Combobox (standalone, creatable)", () => {
       <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
-        createItem={createItem}
+        onCreateItem={(value) => ({ label: value })}
         placeholder="Search..."
       />,
     );
@@ -274,13 +273,35 @@ describe("Combobox (standalone, creatable)", () => {
     });
   });
 
+  it("creates item via onCreateItem and selects it", async () => {
+    const onValueChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Combobox
+        items={creatableItems}
+        mapItem={mapCreatableItem}
+        onCreateItem={(value) => ({ label: value })}
+        onValueChange={onValueChange}
+        placeholder="Search..."
+      />,
+    );
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.type(input, "NewItem");
+    await waitFor(() => {
+      expect(screen.getByText(/Create "NewItem"/)).toBeDefined();
+    });
+    await user.click(screen.getByText(/Create "NewItem"/));
+    expect(onValueChange).toHaveBeenCalledWith(expect.objectContaining({ label: "NewItem" }));
+  });
+
   it("uses custom formatCreateLabel", async () => {
     const user = userEvent.setup();
     render(
       <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
-        createItem={createItem}
+        onCreateItem={(value) => ({ label: value })}
         formatCreateLabel={(v) => `Add: ${v}`}
         placeholder="Search..."
       />,
@@ -298,7 +319,7 @@ describe("Combobox (standalone, creatable)", () => {
       <Combobox
         items={creatableItems}
         mapItem={mapCreatableItem}
-        createItem={createItem}
+        onCreateItem={(value) => ({ label: value })}
         className="creatable-class"
         placeholder="Search..."
       />,
@@ -313,7 +334,7 @@ describe("Combobox (standalone, creatable)", () => {
         items={creatableItems}
         multiple
         mapItem={mapCreatableItem}
-        createItem={createItem}
+        onCreateItem={(value) => ({ label: value })}
         placeholder="Search..."
       />,
     );

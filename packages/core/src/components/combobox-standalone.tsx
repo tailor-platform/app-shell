@@ -20,7 +20,8 @@ import {
   useCreatable,
   useAsync,
 } from "./combobox";
-import type { UseCreatableOptionsBase } from "./combobox";
+import type { UseCreatableOptionsCombined } from "./combobox";
+
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
@@ -64,7 +65,7 @@ interface ComboboxPropsMultiple<T> extends ComboboxPropsBase<T> {
 }
 
 /**
- * Creatable opt-in props. When `createItem` is provided, the combobox allows
+ * Creatable opt-in props. When `onCreateItem` is provided, the combobox allows
  * users to create new items on-the-fly.
  *
  * `T` must be an object type because the creatable mechanism uses a sentinel
@@ -72,13 +73,35 @@ interface ComboboxPropsMultiple<T> extends ComboboxPropsBase<T> {
  * collide with real items.
  */
 interface CreatableProps<T extends object> {
-  /** Factory to create a new item from user input string */
-  createItem: (value: string) => T;
+  /**
+   * Called when the user selects the "create" option.
+   *
+   * Return values control what happens next:
+   * - `T` — accept the item and add it to the selection
+   * - `false` — cancel the creation (item is NOT selected)
+   *
+   * May return a `Promise` for async workflows.
+   * A rejected promise also cancels the creation.
+   */
+  onCreateItem: (value: string) => T | false | Promise<T | false>;
   /** Map each item to its label, key, and optional custom render. Required when creatable. */
   mapItem: (item: T) => MappedItem;
-  /** Called when a new item is created */
-  onItemCreated?: UseCreatableOptionsBase<T>["onItemCreated"];
   /** Format the label for the "create" option. @default (v) => `Create "${v}"` */
+  formatCreateLabel?: (value: string) => string;
+}
+
+interface CreatableInternalProps<T extends object> {
+  items: T[];
+  placeholder?: string;
+  emptyText?: string;
+  mapItem: (item: T) => MappedItem;
+  className?: string;
+  disabled?: boolean;
+  multiple?: boolean;
+  value?: T | T[] | null;
+  defaultValue?: T | T[] | null;
+  onValueChange?: ((value: T | null) => void) | ((value: T[]) => void);
+  onCreateItem: (value: string) => T | false | Promise<T | false>;
   formatCreateLabel?: (value: string) => string;
 }
 
@@ -225,7 +248,8 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
     mapItem: mapItemProp,
     className,
     disabled,
-    ...rest
+    multiple,
+    ...valueProps
   } = props;
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
@@ -243,7 +267,6 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
       }
     : flatItemRenderer(mapItem);
 
-  const { value, defaultValue, onValueChange } = rest as any;
   return (
     <ComboboxShell
       className={className}
@@ -252,12 +275,10 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
       emptyContent={emptyText}
       mapItem={mapItem}
       listChildren={listChildren}
-      multiple={rest.multiple}
+      multiple={multiple}
       rootProps={{
-        items: items as any,
-        value,
-        defaultValue,
-        onValueChange,
+        items,
+        ...valueProps,
         itemToStringLabel: getLabel,
       }}
     />
@@ -274,27 +295,41 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
     placeholder,
     emptyText = "No results.",
     mapItem,
-    createItem,
-    onItemCreated,
+    onCreateItem,
     formatCreateLabel: formatCreateLabelProp,
     className,
     disabled,
-    ...rest
-  } = props;
+    multiple,
+    value,
+    defaultValue,
+    onValueChange,
+  } = props as CreatableInternalProps<T>;
 
   const getLabel = (item: T) => mapItem(item).label;
-  const { value, defaultValue, onValueChange, multiple } = rest as any;
 
-  const creatable = useCreatable({
+  // Bridge onCreateItem → useCreatable's createItem + onItemCreated
+  const createItem = (v: string) => ({ __pending: true, __value: v }) as unknown as T;
+
+  const onItemCreated = (item: T) => {
+    const pending = item as unknown as {
+      __pending: boolean;
+      __value: string;
+    };
+    return onCreateItem(pending.__value);
+  };
+
+  const creatableOptions: UseCreatableOptionsCombined<T> = {
     items,
-    ...(multiple ? { multiple: true } : {}),
+    multiple,
     getLabel,
     createItem,
     onItemCreated,
     formatCreateLabel: formatCreateLabelProp,
     defaultValue,
     onValueChange,
-  } as any);
+  };
+
+  const creatable = useCreatable(creatableOptions);
 
   return (
     <ComboboxShell
@@ -325,7 +360,7 @@ function ComboboxStandalone<T extends object>(
 ): React.JSX.Element;
 function ComboboxStandalone<I>(props: ComboboxStaticPlainProps<I>): React.JSX.Element;
 function ComboboxStandalone(props: any) {
-  if ("createItem" in props) {
+  if ("onCreateItem" in props) {
     return <ComboboxStaticCreatable {...props} />;
   }
   return <ComboboxStaticBase {...props} />;
@@ -367,13 +402,13 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
     mapItem: mapItemProp,
     className,
     disabled,
-    ...rest
+    multiple,
+    ...valueProps
   } = props;
 
   const async = useAsync({ fetcher });
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
-  const { value, defaultValue, onValueChange, multiple } = rest as any;
 
   return (
     <ComboboxShell
@@ -388,9 +423,7 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
         items: async.items,
         filter: null,
         onInputValueChange: async.onInputValueChange,
-        value,
-        defaultValue,
-        onValueChange,
+        ...valueProps,
         itemToStringLabel: getLabel,
       }}
     />
@@ -408,28 +441,42 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
     emptyText = "No results.",
     loadingText = "Loading...",
     mapItem,
-    createItem,
-    onItemCreated,
+    onCreateItem,
     formatCreateLabel: formatCreateLabelProp,
     className,
     disabled,
-    ...rest
-  } = props;
+    multiple,
+    value,
+    defaultValue,
+    onValueChange,
+  } = props as ComboboxAsyncOwnProps<T> & CreatableInternalProps<T>;
 
   const async = useAsync({ fetcher });
   const getLabel = (item: T) => mapItem(item).label;
-  const { value, defaultValue, onValueChange, multiple } = rest as any;
 
-  const creatable = useCreatable({
+  // Bridge onCreateItem → useCreatable's createItem + onItemCreated
+  const createItem = (v: string) => ({ __pending: true, __value: v }) as unknown as T;
+
+  const onItemCreated = (item: T) => {
+    const pending = item as unknown as {
+      __pending: boolean;
+      __value: string;
+    };
+    return onCreateItem(pending.__value);
+  };
+
+  const creatableOptions: UseCreatableOptionsCombined<T> = {
     items: async.items,
-    ...(multiple ? { multiple: true } : {}),
+    multiple,
     getLabel,
     createItem,
     onItemCreated,
     formatCreateLabel: formatCreateLabelProp,
     defaultValue,
     onValueChange,
-  } as any);
+  };
+
+  const creatable = useCreatable(creatableOptions);
 
   return (
     <ComboboxShell
@@ -464,7 +511,7 @@ function ComboboxAsyncStandalone<T extends object>(
 ): React.JSX.Element;
 function ComboboxAsyncStandalone<T>(props: ComboboxAsyncPlainProps<T>): React.JSX.Element;
 function ComboboxAsyncStandalone(props: any) {
-  if ("createItem" in props) {
+  if ("onCreateItem" in props) {
     return <ComboboxAsyncCreatable {...props} />;
   }
   return <ComboboxAsyncBase {...props} />;

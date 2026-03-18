@@ -280,7 +280,7 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("creates item immediately with sync onItemCreated", () => {
-      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => resolve());
+      const onItemCreated = vi.fn((_item: Tag) => {});
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -304,22 +304,19 @@ describe("Combobox.Parts.useCreatable", () => {
         result.current.onValueChange([sentinel]);
       });
 
-      expect(onItemCreated).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Svelte" }),
-        expect.any(Function),
-      );
+      expect(onItemCreated).toHaveBeenCalledWith(expect.objectContaining({ name: "Svelte" }));
       expect(onValueChange).toHaveBeenCalledWith([expect.objectContaining({ name: "Svelte" })]);
       expect(result.current.value).toHaveLength(1);
       expect(result.current.inputValue).toBe("");
     });
 
-    it("cancels creation when resolve is called with false", () => {
+    it("cancels creation when onItemCreated returns false", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           ...defaultOptions,
-          onItemCreated: (_item, resolve) => resolve(false),
+          onItemCreated: () => false,
           onValueChange,
         }),
       );
@@ -338,17 +335,17 @@ describe("Combobox.Parts.useCreatable", () => {
       expect(result.current.value).toEqual([]);
     });
 
-    it("defers creation until resolve callback is called", () => {
-      let savedResolve!: (accept?: boolean) => void;
-      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => {
-        savedResolve = resolve;
-      });
+    it("defers creation until async onItemCreated resolves", async () => {
+      let resolvePromise!: () => void;
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           ...defaultOptions,
-          onItemCreated,
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((resolve) => {
+              resolvePromise = resolve;
+            }),
           onValueChange,
         }),
       );
@@ -367,25 +364,26 @@ describe("Combobox.Parts.useCreatable", () => {
       expect(result.current.value).toEqual([]);
       expect(onValueChange).not.toHaveBeenCalled();
 
-      // Call the resolve callback
-      act(() => {
-        savedResolve();
+      // Resolve the promise
+      await act(async () => {
+        resolvePromise();
       });
 
       expect(onValueChange).toHaveBeenCalledWith([expect.objectContaining({ name: "Svelte" })]);
       expect(result.current.value).toHaveLength(1);
     });
 
-    it("cancels deferred creation when resolve is called with false", () => {
-      let savedResolve!: (accept?: boolean) => void;
+    it("cancels deferred creation when async onItemCreated returns false", async () => {
+      let resolvePromise!: (value: false) => void;
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           ...defaultOptions,
-          onItemCreated: (_item, resolve) => {
-            savedResolve = resolve;
-          },
+          onItemCreated: (_item: Tag) =>
+            new Promise<false>((resolve) => {
+              resolvePromise = resolve;
+            }),
           onValueChange,
         }),
       );
@@ -400,9 +398,9 @@ describe("Combobox.Parts.useCreatable", () => {
         result.current.onValueChange([sentinel]);
       });
 
-      // Cancel via resolve(false)
-      act(() => {
-        savedResolve(false);
+      // Cancel via returning false
+      await act(async () => {
+        resolvePromise(false);
       });
 
       expect(onValueChange).not.toHaveBeenCalled();
@@ -442,7 +440,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           ...defaultOptions,
-          onItemCreated: async (_item: Tag) => {
+          onItemCreated: async (_item: Tag): Promise<false> => {
             return false;
           },
           onValueChange,
@@ -546,7 +544,7 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("creates and selects item for single select", () => {
-      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => resolve());
+      const onItemCreated = vi.fn((_item: Tag) => {});
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -567,10 +565,7 @@ describe("Combobox.Parts.useCreatable", () => {
         result.current.onValueChange(sentinel);
       });
 
-      expect(onItemCreated).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Svelte" }),
-        expect.any(Function),
-      );
+      expect(onItemCreated).toHaveBeenCalledWith(expect.objectContaining({ name: "Svelte" }));
       expect(onValueChange).toHaveBeenCalledWith(expect.objectContaining({ name: "Svelte" }));
       expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
     });
@@ -612,11 +607,14 @@ describe("Combobox.Parts.useCreatable", () => {
       expect(onValueChange).toHaveBeenCalledWith(null);
     });
 
-    it("defers creation in single mode until resolve is called", () => {
-      let savedResolve!: (accept?: boolean) => void;
-      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => {
-        savedResolve = resolve;
-      });
+    it("defers creation in single mode until async onItemCreated resolves", async () => {
+      let resolvePromise!: () => void;
+      const onItemCreated = vi.fn(
+        (_item: Tag) =>
+          new Promise<void>((resolve) => {
+            resolvePromise = resolve;
+          }),
+      );
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -639,21 +637,21 @@ describe("Combobox.Parts.useCreatable", () => {
 
       expect(result.current.value).toBeNull();
 
-      act(() => {
-        savedResolve();
+      await act(async () => {
+        resolvePromise();
       });
 
       expect(onItemCreated).toHaveBeenCalled();
       expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
     });
 
-    it("cancels single creation when resolve is called with false", () => {
+    it("cancels single creation when onItemCreated returns false", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           ...defaultOptions,
-          onItemCreated: (_item, resolve) => resolve(false),
+          onItemCreated: () => false,
           onValueChange,
         }),
       );
@@ -763,62 +761,20 @@ describe("Combobox.Parts.useCreatable", () => {
   });
 
   // =========================================================================
-  // Edge cases — resolve idempotency
+  // Edge cases — onItemCreated returns replacement item (T)
   // =========================================================================
 
-  describe("resolve idempotency", () => {
-    it("ignores duplicate resolve() calls", () => {
-      let savedResolve!: (accept?: boolean) => void;
+  describe("onItemCreated returns replacement item", () => {
+    it("uses returned item as selected value in single mode", () => {
       const onValueChange = vi.fn();
-
-      const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
-          items: initialTags,
-          multiple: true as const,
-          getLabel: (item: Tag) => item.name,
-          createItem: createTag,
-          onItemCreated: (_item, resolve) => {
-            savedResolve = resolve;
-          },
-          onValueChange,
-        }),
-      );
-
-      act(() => {
-        result.current.onInputValueChange("Svelte");
-      });
-
-      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
-
-      act(() => {
-        result.current.onValueChange([sentinel]);
-      });
-
-      // First resolve → accept
-      act(() => {
-        savedResolve();
-      });
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-
-      // Second resolve → ignored
-      act(() => {
-        savedResolve();
-      });
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-    });
-
-    it("ignores resolve(false) after resolve(true)", () => {
-      let savedResolve!: (accept?: boolean) => void;
-      const onValueChange = vi.fn();
+      const serverTag: Tag = { id: "server-id", name: "Svelte" };
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
-          onItemCreated: (_item, resolve) => {
-            savedResolve = resolve;
-          },
+          onItemCreated: () => serverTag,
           onValueChange,
         }),
       );
@@ -833,16 +789,65 @@ describe("Combobox.Parts.useCreatable", () => {
         result.current.onValueChange(sentinel);
       });
 
-      act(() => {
-        savedResolve(true);
-      });
-      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
+      expect(onValueChange).toHaveBeenCalledWith(serverTag);
+      expect(result.current.value).toBe(serverTag);
+    });
 
-      // Second call with false is ignored
+    it("uses returned item as selected value in multiple mode", () => {
+      const onValueChange = vi.fn();
+      const serverTag: Tag = { id: "server-id", name: "Svelte" };
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          multiple: true as const,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: () => serverTag,
+          onValueChange,
+        }),
+      );
+
       act(() => {
-        savedResolve(false);
+        result.current.onInputValueChange("Svelte");
       });
-      expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      act(() => {
+        result.current.onValueChange([sentinel]);
+      });
+
+      expect(onValueChange).toHaveBeenCalledWith([serverTag]);
+      expect(result.current.value).toEqual([serverTag]);
+    });
+
+    it("uses async returned item as selected value", async () => {
+      const onValueChange = vi.fn();
+      const serverTag: Tag = { id: "server-id", name: "Svelte" };
+
+      const { result } = renderHook(() =>
+        Combobox.Parts.useCreatable({
+          items: initialTags,
+          getLabel: (item: Tag) => item.name,
+          createItem: createTag,
+          onItemCreated: async () => serverTag,
+          onValueChange,
+        }),
+      );
+
+      act(() => {
+        result.current.onInputValueChange("Svelte");
+      });
+
+      const sentinel = result.current.items.find((item) => result.current.isCreateItem(item))!;
+
+      await act(async () => {
+        result.current.onValueChange(sentinel);
+      });
+
+      expect(onValueChange).toHaveBeenCalledWith(serverTag);
+      expect(result.current.value).toBe(serverTag);
     });
   });
 
@@ -851,17 +856,18 @@ describe("Combobox.Parts.useCreatable", () => {
   // =========================================================================
 
   describe("pendingCreateLabelRef (single mode async)", () => {
-    it("preserves input value during deferred creation in single mode", () => {
-      let savedResolve!: (accept?: boolean) => void;
+    it("preserves input value during async creation in single mode", async () => {
+      let resolvePromise!: () => void;
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
-          onItemCreated: (_item, resolve) => {
-            savedResolve = resolve;
-          },
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((resolve) => {
+              resolvePromise = resolve;
+            }),
         }),
       );
 
@@ -885,24 +891,25 @@ describe("Combobox.Parts.useCreatable", () => {
       expect(result.current.inputValue).toBe("Svelte");
 
       // Resolve → clears pending flag
-      act(() => {
-        savedResolve();
+      await act(async () => {
+        resolvePromise();
       });
 
       expect(result.current.value).toEqual(expect.objectContaining({ name: "Svelte" }));
     });
 
-    it("clears input when deferred creation is cancelled in single mode", () => {
-      let savedResolve!: (accept?: boolean) => void;
+    it("clears input when async creation is cancelled in single mode", async () => {
+      let rejectPromise!: () => void;
 
       const { result } = renderHook(() =>
         Combobox.Parts.useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
-          onItemCreated: (_item, resolve) => {
-            savedResolve = resolve;
-          },
+          onItemCreated: (_item: Tag) =>
+            new Promise<void>((_resolve, reject) => {
+              rejectPromise = () => reject(new Error("cancelled"));
+            }),
         }),
       );
 
@@ -916,8 +923,8 @@ describe("Combobox.Parts.useCreatable", () => {
         result.current.onValueChange(sentinel);
       });
 
-      act(() => {
-        savedResolve(false);
+      await act(async () => {
+        rejectPromise();
       });
 
       expect(result.current.inputValue).toBe("");
@@ -977,7 +984,7 @@ describe("Combobox.Parts.useCreatable", () => {
 
   describe("mixed workflow (multiple mode)", () => {
     it("select normal items then create a new one", () => {
-      const onItemCreated = vi.fn((_item: Tag, resolve: (accept?: boolean) => void) => resolve());
+      const onItemCreated = vi.fn((_item: Tag) => {});
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
@@ -1010,10 +1017,7 @@ describe("Combobox.Parts.useCreatable", () => {
         result.current.onValueChange([initialTags[0], initialTags[1], sentinel]);
       });
 
-      expect(onItemCreated).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Svelte" }),
-        expect.any(Function),
-      );
+      expect(onItemCreated).toHaveBeenCalledWith(expect.objectContaining({ name: "Svelte" }));
       // After create, value includes existing + new
       expect(result.current.value).toHaveLength(3);
     });
@@ -1025,7 +1029,7 @@ describe("Combobox.Parts.useCreatable", () => {
           multiple: true as const,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
-          onItemCreated: (_item, resolve) => resolve(),
+          onItemCreated: () => {},
         }),
       );
 

@@ -1348,6 +1348,83 @@ const allProgrammingLanguages = [
   "CSS",
 ];
 
+/**
+ * Example: Combobox creatable with a confirmation dialog.
+ * Demonstrates awaiting user input in onCreateItem via Promise.
+ */
+const CreatableWithDialog = ({
+  items,
+  onItemsChange,
+}: {
+  items: { id: string; name: string }[];
+  onItemsChange: React.Dispatch<React.SetStateAction<{ id: string; name: string }[]>>;
+}) => {
+  const [dialogState, setDialogState] = React.useState<{
+    open: boolean;
+    value: string;
+    resolve: (result: { id: string; name: string } | false) => void;
+  } | null>(null);
+
+  return (
+    <>
+      <Combobox
+        items={items}
+        mapItem={(item) => ({ label: item.name, key: item.id })}
+        onCreateItem={(value) =>
+          new Promise<{ id: string; name: string } | false>((resolve) => {
+            setDialogState({ open: true, value, resolve });
+          })
+        }
+        placeholder="Search or create (with confirm)..."
+      />
+      <Dialog.Root
+        open={dialogState?.open ?? false}
+        onOpenChange={(open) => {
+          if (!open && dialogState) {
+            dialogState.resolve(false);
+            setDialogState(null);
+          }
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Create new item</Dialog.Title>
+            <Dialog.Description>
+              Are you sure you want to create &quot;{dialogState?.value}&quot;?
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button
+              variant="outline"
+              onClick={() => {
+                dialogState?.resolve(false);
+                setDialogState(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (dialogState) {
+                  const item = {
+                    id: crypto.randomUUID(),
+                    name: dialogState.value,
+                  };
+                  onItemsChange((prev) => [...prev, item]);
+                  dialogState.resolve(item);
+                  setDialogState(null);
+                }
+              }}
+            >
+              Create
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
+    </>
+  );
+};
+
 const DropdownComponentsDemoPage = () => {
   const [selectedFruits, setSelectedFruits] = React.useState<Fruit[]>([]);
   const [creatableItems, setCreatableItems] = React.useState<{ id: string; name: string }[]>([
@@ -1593,13 +1670,10 @@ const DropdownComponentsDemoPage = () => {
               <Combobox
                 items={creatableItems}
                 mapItem={(item) => ({ label: item.name, key: item.id })}
-                createItem={(value) => ({
-                  id: crypto.randomUUID(),
-                  name: value,
-                })}
-                onItemCreated={(item, resolve) => {
+                onCreateItem={(value) => {
+                  const item = { id: crypto.randomUUID(), name: value };
                   setCreatableItems((prev) => [...prev, item]);
-                  resolve();
+                  return item;
                 }}
                 formatCreateLabel={(v) => `Create "${v}"`}
                 placeholder="Search or create..."
@@ -1607,21 +1681,24 @@ const DropdownComponentsDemoPage = () => {
             </div>
 
             <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Multiple</div>
+              <div style={subHeadingStyle}>Multiple (async)</div>
               <Combobox
                 items={creatableItems}
                 mapItem={(item) => ({ label: item.name, key: item.id })}
-                createItem={(value) => ({
-                  id: crypto.randomUUID(),
-                  name: value,
-                })}
-                onItemCreated={(item, resolve) => {
+                onCreateItem={async (value) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  const item = { id: crypto.randomUUID(), name: value };
                   setCreatableItems((prev) => [...prev, item]);
-                  resolve();
+                  return item;
                 }}
                 multiple
                 placeholder="Add or create tags..."
               />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>With confirmation dialog</div>
+              <CreatableWithDialog items={creatableItems} onItemsChange={setCreatableItems} />
             </div>
           </div>
         </div>

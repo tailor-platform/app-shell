@@ -74,14 +74,13 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
 
   const listChildren = isGroupedItems(items)
-    ? (group: any) => {
-        const g = group as ItemGroup<T>;
+    ? (group: ItemGroup<T>) => {
         return (
-          <AutocompleteGroup key={g.label} items={g.items}>
-            <AutocompleteGroupLabel>{g.label}</AutocompleteGroupLabel>
+          <AutocompleteGroup key={group.label} items={group.items}>
+            <AutocompleteGroupLabel>{group.label}</AutocompleteGroupLabel>
             <AutocompleteCollection>
-              {(item: any) => {
-                const mapped = mapItem(item as T);
+              {(item: T) => {
+                const mapped = mapItem(item);
                 return (
                   <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
                     {mapped.render ?? mapped.label}
@@ -92,8 +91,8 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
           </AutocompleteGroup>
         );
       }
-    : (item: any) => {
-        const mapped = mapItem(item as T);
+    : (item: T) => {
+        const mapped = mapItem(item);
         return (
           <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
             {mapped.render ?? mapped.label}
@@ -104,7 +103,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
   return (
     <div className={className}>
       <AutocompleteRoot
-        items={items as any}
+        items={items}
         value={value}
         defaultValue={defaultValue}
         onValueChange={onValueChange}

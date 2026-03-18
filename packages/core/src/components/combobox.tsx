@@ -286,21 +286,39 @@ interface UseCreatableOptionsBase<T extends object> {
   /**
    * Called when a new item is created via the "create" option.
    *
-   * Two patterns are supported:
+   * Return values control what happens next:
+   * - `void` / `undefined` — accept the item produced by `createItem` as-is
+   * - `T` — accept, but use the returned item instead (e.g. item with server-assigned ID)
+   * - `false` — cancel the creation (item is NOT selected)
    *
-   * **Resolve callback** — receives a `resolve` callback for sync or deferred flows:
-   * - Call `resolve()` or `resolve(true)` to accept the item into the selection
-   * - Call `resolve(false)` to cancel (item is NOT selected)
-   *
-   * **Promise** — return a `Promise` for async workflows (API calls, etc.):
-   * - Promise fulfillment accepts the item (unless resolved value is `false`)
-   * - Promise rejection cancels the creation
+   * May return a `Promise` for async workflows (API calls, confirmation dialogs, etc.).
+   * A rejected promise also cancels the creation.
    *
    * If not provided, created items are added to the selection immediately.
+   *
+   * @example
+   * ```tsx
+   * // Sync
+   * onItemCreated: (item) => {
+   *   setItems(prev => [...prev, item]);
+   * }
+   *
+   * // Async — return server-assigned item
+   * onItemCreated: async (item) => {
+   *   const saved = await api.create(item);
+   *   setItems(prev => [...prev, saved]);
+   *   return saved;
+   * }
+   *
+   * // Cancel
+   * onItemCreated: async (item) => {
+   *   const ok = await confirm("Create?");
+   *   if (!ok) return false;
+   *   setItems(prev => [...prev, item]);
+   * }
+   * ```
    */
-  onItemCreated?:
-    | ((item: T, resolve: (accept?: boolean) => void) => void)
-    | ((item: T) => Promise<void | boolean>);
+  onItemCreated?: (item: T) => void | false | T | Promise<void | false | T>;
   /**
    * Format the label for the "create" option in the dropdown.
    * Useful for i18n (e.g. Japanese: `(v) => \`「${v}」を作成\``).
@@ -321,6 +339,16 @@ interface UseCreatableOptionsSingle<T extends object> extends UseCreatableOption
   defaultValue?: T | null;
   /** Called when selection changes */
   onValueChange?: (value: T | null) => void;
+}
+
+/**
+ * Combined options type for callers that don't know single vs multiple at compile time.
+ * Accepts the union of both value shapes.
+ */
+interface UseCreatableOptionsCombined<T extends object> extends UseCreatableOptionsBase<T> {
+  multiple?: boolean;
+  defaultValue?: T[] | T | null;
+  onValueChange?: ((value: T[]) => void) | ((value: T | null) => void);
 }
 
 interface UseCreatableReturnBase<T> {
@@ -365,31 +393,25 @@ interface UseCreatableReturnSingle<T> extends UseCreatableReturnBase<T> {
  * Manages selected value, input query, and sentinel item injection internally.
  * Supports both single and multiple select.
  *
- * `onItemCreated` supports two patterns — a `resolve` callback for sync or
- * deferred flows, and a `Promise` return for async workflows:
- *
  * @example
  * ```tsx
- * // Sync — call resolve() immediately
- * onItemCreated: (item, resolve) => {
+ * // Sync
+ * onItemCreated: (item) => {
  *   setItems((prev) => [...prev, item]);
- *   resolve();
  * }
  *
- * // Async API call — return a Promise (no resolve arg)
+ * // Async — return server-assigned item to use as selected value
  * onItemCreated: async (item) => {
- *   await api.create(item);
- *   setItems((prev) => [...prev, item]);
- *   // auto-accept on fulfillment, auto-cancel on rejection
+ *   const saved = await api.create(item);
+ *   setItems((prev) => [...prev, saved]);
+ *   return saved;
  * }
  *
- * // Confirmation dialog — defer resolve() to user action
- * onItemCreated: (item, resolve) => {
- *   setDialogState({
- *     item,
- *     onConfirm: () => { setItems(p => [...p, item]); resolve(); },
- *     onCancel: () => resolve(false),
- *   });
+ * // Cancel via return false
+ * onItemCreated: async (item) => {
+ *   const ok = await confirm("Create?");
+ *   if (!ok) return false;
+ *   setItems((prev) => [...prev, item]);
  * }
  * ```
  */
@@ -400,7 +422,13 @@ function useCreatable<T extends object>(
   options: UseCreatableOptionsSingle<T>,
 ): UseCreatableReturnSingle<T>;
 function useCreatable<T extends object>(
-  options: UseCreatableOptionsMultiple<T> | UseCreatableOptionsSingle<T>,
+  options: UseCreatableOptionsCombined<T>,
+): UseCreatableReturnMultiple<T> | UseCreatableReturnSingle<T>;
+function useCreatable<T extends object>(
+  options:
+    | UseCreatableOptionsMultiple<T>
+    | UseCreatableOptionsSingle<T>
+    | UseCreatableOptionsCombined<T>,
 ): UseCreatableReturnMultiple<T> | UseCreatableReturnSingle<T> {
   const {
     items,
@@ -476,22 +504,23 @@ function useCreatable<T extends object>(
     [sentinel, getLabel],
   );
 
-  // --- Create logic (supports sync and deferred resolution via callback) ---
+  // --- Create logic (Promise-based) ---
   const performCreate = useCallback(
     (value: string, baseMultiValue?: T[]) => {
       const newItem = createItem(value);
 
-      const applySelection = () => {
+      const applySelection = (itemToSelect?: T) => {
+        const selected = itemToSelect ?? newItem;
         if (isMultiple) {
           const base = baseMultiValue ?? [];
-          const next = [...base, newItem];
+          const next = [...base, selected];
           setMultiValue(next);
           (onValueChange as UseCreatableOptionsMultiple<T>["onValueChange"] | undefined)?.(next);
         } else {
-          setSingleValue(newItem);
-          (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(newItem);
+          setSingleValue(selected);
+          (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(selected);
         }
-        setQuery(isMultiple ? "" : getLabel(newItem));
+        setQuery(isMultiple ? "" : getLabel(selected));
       };
 
       if (!onItemCreated) {
@@ -505,34 +534,32 @@ function useCreatable<T extends object>(
         setQuery(value);
       }
 
-      let resolved = false;
-      const resolve = (accept?: boolean) => {
-        if (resolved) return;
-        resolved = true;
+      const handleResult = (result: void | false | T) => {
         pendingCreateLabelRef.current = null;
-        if (accept !== false) applySelection();
-        else setQuery("");
+        if (result === false) {
+          setQuery("");
+          return;
+        }
+        // If result is an object (T), use it as the selected value
+        applySelection(result != null && typeof result === "object" ? result : undefined);
       };
 
-      // Detect pattern: Promise-returning (1 arg) vs resolve callback (2 args)
-      const result =
-        onItemCreated.length >= 2
-          ? (onItemCreated as (item: T, resolve: (accept?: boolean) => void) => void)(
-              newItem,
-              resolve,
-            )
-          : (onItemCreated as (item: T) => Promise<void | boolean>)(newItem);
+      const handleError = () => {
+        pendingCreateLabelRef.current = null;
+        setQuery("");
+      };
 
-      // If callback returned a Promise, auto-resolve on settle
-      if (result != null && typeof (result as Promise<unknown>).then === "function") {
-        (result as Promise<void | boolean>).then(
-          (resolvedValue) => {
-            if (!resolved) resolve(resolvedValue !== false);
-          },
-          () => {
-            if (!resolved) resolve(false);
-          },
-        );
+      try {
+        const result = onItemCreated(newItem);
+
+        // If callback returned a Promise, handle async
+        if (result != null && typeof (result as Promise<unknown>).then === "function") {
+          (result as Promise<void | false | T>).then(handleResult, handleError);
+        } else {
+          handleResult(result as void | false | T);
+        }
+      } catch {
+        handleError();
       }
     },
     [isMultiple, createItem, onItemCreated, onValueChange, getLabel],
@@ -703,4 +730,4 @@ export {
   useAsync,
 };
 
-export type { UseCreatableOptionsBase };
+export type { UseCreatableOptionsBase, UseCreatableOptionsCombined };

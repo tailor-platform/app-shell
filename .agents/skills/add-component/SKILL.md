@@ -297,6 +297,35 @@ When wrapping Base UI components:
 
 - **Root / Provider components**: Use `Pick<>` to select only stable, consumer-relevant props from Base UI types. Root components often expose internal state-management props that should not leak to consumers, so explicitly pick `open`, `defaultOpen`, `onOpenChange`, `children`, etc.
 - **Leaf sub-components** (Trigger, Content, Item, etc.): Use `React.ComponentProps<typeof Base*.SubComponent>` directly. These components have a narrow, stable prop surface (mostly `className`, `children`, DOM attributes) and benefit from automatic compatibility with Base UI updates.
+- **Composited Leaf sub-components** (wrapping multiple Base UI primitives, e.g. Portal + Positioner + Popup): When a single wrapper component combines props from multiple Base UI primitives, group each primitive's props under a namespaced prop object to prevent name collisions between primitives and keep prop ownership clear. The primary primitive's props (typically the one rendered as the outermost DOM element) stay at the top level; secondary primitives get a nested prop.
+
+```tsx
+// Example: Content wraps both Positioner and Popup.
+// Popup props stay top-level (it's the primary element consumers style).
+// Positioner props are grouped under `position`.
+function Content({
+  className,
+  position,
+  children,
+  ...popupProps
+}: React.ComponentProps<typeof Base*.Popup> & {
+  position?: { side?: "top" | "right" | "bottom" | "left"; align?: "start" | "center" | "end"; sideOffset?: number };
+}) {
+  const { side = "bottom", align = "start", sideOffset = 4 } = position ?? {};
+  return (
+    <Base*.Portal>
+      <Base*.Positioner sideOffset={sideOffset} side={side} align={align}>
+        <Base*.Popup className={cn("astw:...", className)} {...popupProps}>
+          {children}
+        </Base*.Popup>
+      </Base*.Positioner>
+    </Base*.Portal>
+  );
+}
+```
+
+If the same nested shape is reused across multiple components, extract a shared internal type (e.g. `PositionProps` in `@/lib/position`) — but the principle itself is general: **always use prop hierarchy to separate concerns when compositing multiple primitives**.
+
 - Set `displayName` on every sub-component (e.g., `Root.displayName = "Dialog.Root"`)
 - For components needing portals, use the Base UI `Portal` component
 

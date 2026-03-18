@@ -2,6 +2,7 @@ import * as React from "react";
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 
 import { cn } from "@/lib/utils";
+import type { PositionProps } from "@/lib/position";
 
 // Only the props relevant to the Provider abstraction are picked.
 // Base UI-internal props are intentionally excluded so that
@@ -64,16 +65,13 @@ Trigger.displayName = "Tooltip.Trigger";
 /** The tooltip popup that displays additional information. */
 function Content({
   className,
-  sideOffset = 5,
-  side = "top",
-  align = "center",
+  position,
   children,
   ...restProps
 }: React.ComponentProps<typeof BaseTooltip.Popup> & {
-  sideOffset?: number;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
+  position?: PositionProps;
 }) {
+  const { side = "top", align = "center", sideOffset = 5 } = position ?? {};
   return (
     <BaseTooltip.Portal>
       <BaseTooltip.Positioner sideOffset={sideOffset} side={side} align={align}>

@@ -129,7 +129,7 @@ describe("Tooltip", () => {
     render(
       <Tooltip.Root>
         <Tooltip.Trigger data-testid="trigger">Hover me</Tooltip.Trigger>
-        <Tooltip.Content sideOffset={10} data-testid="tooltip-content">
+        <Tooltip.Content position={{ sideOffset: 10 }} data-testid="tooltip-content">
           Tooltip text
         </Tooltip.Content>
       </Tooltip.Root>,

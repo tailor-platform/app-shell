@@ -25,6 +25,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>(
 ) {
   return <BaseSelect.Root data-slot="select" {...props} />;
 }
+SelectRoot.displayName = "Select.Root";
 
 function SelectTrigger({
   className,
@@ -51,10 +52,12 @@ function SelectTrigger({
     </BaseSelect.Trigger>
   );
 }
+SelectTrigger.displayName = "Select.Trigger";
 
 function SelectValue({ ...props }: React.ComponentProps<typeof BaseSelect.Value>) {
   return <BaseSelect.Value data-slot="select-value" {...props} />;
 }
+SelectValue.displayName = "Select.Value";
 
 function SelectContent({ className, ...props }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
@@ -72,6 +75,7 @@ function SelectContent({ className, ...props }: React.ComponentProps<typeof Base
     </BaseSelect.Portal>
   );
 }
+SelectContent.displayName = "Select.Content";
 
 function SelectItem({
   className,
@@ -99,10 +103,12 @@ function SelectItem({
     </BaseSelect.Item>
   );
 }
+SelectItem.displayName = "Select.Item";
 
 function SelectGroup({ ...props }: React.ComponentProps<typeof BaseSelect.Group>) {
   return <BaseSelect.Group data-slot="select-group" {...props} />;
 }
+SelectGroup.displayName = "Select.Group";
 
 function SelectGroupLabel({
   className,
@@ -119,6 +125,7 @@ function SelectGroupLabel({
     />
   );
 }
+SelectGroupLabel.displayName = "Select.GroupLabel";
 
 function SelectSeparator({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -129,6 +136,7 @@ function SelectSeparator({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+SelectSeparator.displayName = "Select.Separator";
 
 const SelectParts = {
   Root: SelectRoot,

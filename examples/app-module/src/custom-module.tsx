@@ -1013,19 +1013,19 @@ const primitiveComponentsDemoResource = defineResource({
                   <Tooltip.Trigger render={<Button variant="outline" />}>
                     Top (default)
                   </Tooltip.Trigger>
-                  <Tooltip.Content side="top">Tooltip on top</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "top" }}>Tooltip on top</Tooltip.Content>
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
-                  <Tooltip.Content side="bottom">Tooltip on bottom</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "bottom" }}>Tooltip on bottom</Tooltip.Content>
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
-                  <Tooltip.Content side="left">Tooltip on left</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "left" }}>Tooltip on left</Tooltip.Content>
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
-                  <Tooltip.Content side="right">Tooltip on right</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "right" }}>Tooltip on right</Tooltip.Content>
                 </Tooltip.Root>
               </div>
             </Tooltip.Provider>
@@ -1171,7 +1171,7 @@ const primitiveComponentsDemoResource = defineResource({
                       <Menu.Separator />
                       <Menu.SubmenuRoot>
                         <Menu.SubmenuTrigger>Export as →</Menu.SubmenuTrigger>
-                        <Menu.Content side="right" align="start">
+                        <Menu.Content position={{ side: "right", align: "start" }}>
                           <Menu.Item onClick={() => alert("PDF")}>PDF</Menu.Item>
                           <Menu.Item onClick={() => alert("CSV")}>CSV</Menu.Item>
                           <Menu.Item onClick={() => alert("JSON")}>JSON</Menu.Item>
@@ -1188,7 +1188,7 @@ const primitiveComponentsDemoResource = defineResource({
                 <div style={rowStyle}>
                   <Menu.Root>
                     <Menu.Trigger render={<Button variant="outline" />}>Bottom ↓</Menu.Trigger>
-                    <Menu.Content side="bottom">
+                    <Menu.Content position={{ side: "bottom" }}>
                       <Menu.Item>Item 1</Menu.Item>
                       <Menu.Item>Item 2</Menu.Item>
                       <Menu.Item>Item 3</Menu.Item>
@@ -1196,7 +1196,7 @@ const primitiveComponentsDemoResource = defineResource({
                   </Menu.Root>
                   <Menu.Root>
                     <Menu.Trigger render={<Button variant="outline" />}>Top ↑</Menu.Trigger>
-                    <Menu.Content side="top">
+                    <Menu.Content position={{ side: "top" }}>
                       <Menu.Item>Item 1</Menu.Item>
                       <Menu.Item>Item 2</Menu.Item>
                       <Menu.Item>Item 3</Menu.Item>
@@ -1204,7 +1204,7 @@ const primitiveComponentsDemoResource = defineResource({
                   </Menu.Root>
                   <Menu.Root>
                     <Menu.Trigger render={<Button variant="outline" />}>Right →</Menu.Trigger>
-                    <Menu.Content side="right">
+                    <Menu.Content position={{ side: "right" }}>
                       <Menu.Item>Item 1</Menu.Item>
                       <Menu.Item>Item 2</Menu.Item>
                       <Menu.Item>Item 3</Menu.Item>
@@ -1212,7 +1212,7 @@ const primitiveComponentsDemoResource = defineResource({
                   </Menu.Root>
                   <Menu.Root>
                     <Menu.Trigger render={<Button variant="outline" />}>Left ←</Menu.Trigger>
-                    <Menu.Content side="left">
+                    <Menu.Content position={{ side: "left" }}>
                       <Menu.Item>Item 1</Menu.Item>
                       <Menu.Item>Item 2</Menu.Item>
                       <Menu.Item>Item 3</Menu.Item>

@@ -15,10 +15,17 @@ import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
 
 /**
  * Fetcher type for `Select.Async`.
- * Called each time the dropdown is opened.
+ *
+ * Unlike `ComboboxAsyncFetcher` and `AutocompleteAsyncFetcher`, this fetcher
+ * does **not** receive a `query` string — Select has no search input.
+ * It is called each time the dropdown is opened (not per-keystroke).
+ *
  * Receives an `AbortSignal` so in-flight requests are cancelled
  * when the component unmounts or the dropdown is re-opened before
  * the previous request completes.
+ *
+ * Note: `Select.Async` does not support `ItemGroup<T>[]` — the fetcher
+ * must return a flat array.
  *
  * If caching or deduplication is needed, implement it in the fetcher
  * (e.g. via a query library or a simple cache layer).

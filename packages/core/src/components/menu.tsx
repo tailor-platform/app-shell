@@ -2,6 +2,7 @@ import * as React from "react";
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 
 import { cn } from "@/lib/utils";
+import type { PositionProps } from "@/lib/position";
 
 // Only the props relevant to the Menu abstraction are picked from BaseMenu.Root.
 // Base UI-internal props are intentionally excluded so that
@@ -47,16 +48,13 @@ Trigger.displayName = "Menu.Trigger";
 /** The menu popup that displays menu items. */
 function Content({
   className,
-  sideOffset = 4,
-  side = "bottom",
-  align = "start",
+  position,
   children,
   ...restProps
 }: React.ComponentProps<typeof BaseMenu.Popup> & {
-  sideOffset?: number;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
+  position?: PositionProps;
 }) {
+  const { side = "bottom", align = "start", sideOffset = 4 } = position ?? {};
   return (
     <BaseMenu.Portal>
       <BaseMenu.Positioner sideOffset={sideOffset} side={side} align={align}>

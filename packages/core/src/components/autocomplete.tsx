@@ -24,10 +24,12 @@ function AutocompleteRoot<Value>(props: AutocompletePickedRootProps<Value>) {
     />
   );
 }
+AutocompleteRoot.displayName = "Autocomplete.Root";
 
 function AutocompleteValue({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Value>) {
   return <BaseAutocomplete.Value data-slot="autocomplete-value" {...props} />;
 }
+AutocompleteValue.displayName = "Autocomplete.Value";
 
 function AutocompleteInput({
   className,
@@ -46,6 +48,7 @@ function AutocompleteInput({
     />
   );
 }
+AutocompleteInput.displayName = "Autocomplete.Input";
 
 function AutocompleteTrigger({
   className,
@@ -71,6 +74,7 @@ function AutocompleteTrigger({
     </BaseAutocomplete.Trigger>
   );
 }
+AutocompleteTrigger.displayName = "Autocomplete.Trigger";
 
 function AutocompleteInputGroup({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
@@ -89,6 +93,7 @@ function AutocompleteInputGroup({ className, children, ...props }: React.Compone
     </div>
   );
 }
+AutocompleteInputGroup.displayName = "Autocomplete.InputGroup";
 
 function AutocompleteContent({
   className,
@@ -109,6 +114,7 @@ function AutocompleteContent({
     </BaseAutocomplete.Portal>
   );
 }
+AutocompleteContent.displayName = "Autocomplete.Content";
 
 function AutocompleteList({
   className,
@@ -122,6 +128,7 @@ function AutocompleteList({
     />
   );
 }
+AutocompleteList.displayName = "Autocomplete.List";
 
 function AutocompleteItem({
   className,
@@ -140,6 +147,7 @@ function AutocompleteItem({
     />
   );
 }
+AutocompleteItem.displayName = "Autocomplete.Item";
 
 function AutocompleteEmpty({
   className,
@@ -156,6 +164,7 @@ function AutocompleteEmpty({
     />
   );
 }
+AutocompleteEmpty.displayName = "Autocomplete.Empty";
 
 function AutocompleteClear({
   className,
@@ -176,10 +185,12 @@ function AutocompleteClear({
     </BaseAutocomplete.Clear>
   );
 }
+AutocompleteClear.displayName = "Autocomplete.Clear";
 
 function AutocompleteGroup({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Group>) {
   return <BaseAutocomplete.Group data-slot="autocomplete-group" {...props} />;
 }
+AutocompleteGroup.displayName = "Autocomplete.Group";
 
 function AutocompleteGroupLabel({
   className,
@@ -196,12 +207,14 @@ function AutocompleteGroupLabel({
     />
   );
 }
+AutocompleteGroupLabel.displayName = "Autocomplete.GroupLabel";
 
 function AutocompleteCollection({
   ...props
 }: React.ComponentProps<typeof BaseAutocomplete.Collection>) {
   return <BaseAutocomplete.Collection data-slot="autocomplete-collection" {...props} />;
 }
+AutocompleteCollection.displayName = "Autocomplete.Collection";
 
 function AutocompleteStatus({
   className,
@@ -215,9 +228,7 @@ function AutocompleteStatus({
     />
   );
 }
-
-// ============================================================================
-// useAsync hook
+AutocompleteStatus.displayName = "Autocomplete.Status";
 // ============================================================================
 
 export interface AutocompleteUseAsyncReturn<T> {
@@ -319,6 +330,7 @@ type AutocompleteParts = typeof AutocompleteParts;
 
 export {
   AutocompleteRoot,
+  AutocompleteValue,
   AutocompleteInputGroup,
   AutocompleteInput,
   AutocompleteTrigger,
@@ -330,6 +342,7 @@ export {
   AutocompleteGroup,
   AutocompleteGroupLabel,
   AutocompleteCollection,
+  AutocompleteStatus,
   AutocompleteParts,
   useAsync,
 };

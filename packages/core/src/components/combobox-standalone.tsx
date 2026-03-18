@@ -20,7 +20,6 @@ import {
   useCreatable,
   useAsync,
 } from "./combobox";
-import type { UseCreatableOptionsCombined } from "./combobox";
 
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
@@ -318,7 +317,7 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
     return onCreateItem(pending.__value);
   };
 
-  const creatableOptions: UseCreatableOptionsCombined<T> = {
+  const creatableOptions = {
     items,
     multiple,
     getLabel,
@@ -465,7 +464,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
     return onCreateItem(pending.__value);
   };
 
-  const creatableOptions: UseCreatableOptionsCombined<T> = {
+  const creatableOptions = {
     items: async.items,
     multiple,
     getLabel,

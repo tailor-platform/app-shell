@@ -30,6 +30,7 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false>(
 ) {
   return <BaseCombobox.Root data-slot="combobox" {...props} />;
 }
+ComboboxRoot.displayName = "Combobox.Root";
 
 function ComboboxInput({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Input>) {
   return (
@@ -45,6 +46,7 @@ function ComboboxInput({ className, ...props }: React.ComponentProps<typeof Base
     />
   );
 }
+ComboboxInput.displayName = "Combobox.Input";
 
 function ComboboxTrigger({
   className,
@@ -70,6 +72,7 @@ function ComboboxTrigger({
     </BaseCombobox.Trigger>
   );
 }
+ComboboxTrigger.displayName = "Combobox.Trigger";
 
 function ComboboxInputGroup({
   className,
@@ -92,6 +95,7 @@ function ComboboxInputGroup({
     </BaseCombobox.InputGroup>
   );
 }
+ComboboxInputGroup.displayName = "Combobox.InputGroup";
 
 function ComboboxContent({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Popup>) {
   return (
@@ -109,6 +113,7 @@ function ComboboxContent({ className, ...props }: React.ComponentProps<typeof Ba
     </BaseCombobox.Portal>
   );
 }
+ComboboxContent.displayName = "Combobox.Content";
 
 function ComboboxList({ className, ...props }: React.ComponentProps<typeof BaseCombobox.List>) {
   return (
@@ -119,6 +124,7 @@ function ComboboxList({ className, ...props }: React.ComponentProps<typeof BaseC
     />
   );
 }
+ComboboxList.displayName = "Combobox.List";
 
 function ComboboxItem({
   className,
@@ -145,6 +151,7 @@ function ComboboxItem({
     </BaseCombobox.Item>
   );
 }
+ComboboxItem.displayName = "Combobox.Item";
 
 function ComboboxEmpty({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Empty>) {
   return (
@@ -158,10 +165,12 @@ function ComboboxEmpty({ className, ...props }: React.ComponentProps<typeof Base
     />
   );
 }
+ComboboxEmpty.displayName = "Combobox.Empty";
 
 function ComboboxGroup({ ...props }: React.ComponentProps<typeof BaseCombobox.Group>) {
   return <BaseCombobox.Group data-slot="combobox-group" {...props} />;
 }
+ComboboxGroup.displayName = "Combobox.Group";
 
 function ComboboxGroupLabel({
   className,
@@ -178,6 +187,7 @@ function ComboboxGroupLabel({
     />
   );
 }
+ComboboxGroupLabel.displayName = "Combobox.GroupLabel";
 
 function ComboboxClear({
   className,
@@ -198,6 +208,7 @@ function ComboboxClear({
     </BaseCombobox.Clear>
   );
 }
+ComboboxClear.displayName = "Combobox.Clear";
 
 function ComboboxChips({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Chips>) {
   return (
@@ -231,6 +242,7 @@ function ComboboxChip({ className, ...props }: React.ComponentProps<typeof BaseC
     />
   );
 }
+ComboboxChip.displayName = "Combobox.Chip";
 
 function ComboboxChipRemove({
   className,
@@ -251,10 +263,12 @@ function ComboboxChipRemove({
     </BaseCombobox.ChipRemove>
   );
 }
+ComboboxChipRemove.displayName = "Combobox.ChipRemove";
 
 function ComboboxValue({ ...props }: React.ComponentProps<typeof BaseCombobox.Value>) {
   return <BaseCombobox.Value data-slot="combobox-value" {...props} />;
 }
+ComboboxValue.displayName = "Combobox.Value";
 
 function ComboboxStatus({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Status>) {
   return (
@@ -265,10 +279,12 @@ function ComboboxStatus({ className, ...props }: React.ComponentProps<typeof Bas
     />
   );
 }
+ComboboxStatus.displayName = "Combobox.Status";
 
 function ComboboxCollection({ ...props }: React.ComponentProps<typeof BaseCombobox.Collection>) {
   return <BaseCombobox.Collection data-slot="combobox-collection" {...props} />;
 }
+ComboboxCollection.displayName = "Combobox.Collection";
 
 // ============================================================================
 // useCreatable hook
@@ -755,5 +771,3 @@ export {
   useCreatable,
   useAsync,
 };
-
-export type { UseCreatableOptionsBase, UseCreatableOptionsCombined };

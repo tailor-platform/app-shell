@@ -40,7 +40,7 @@ Single or multi-select dropdown. Pass `items` and get a fully assembled select o
 
 ### Combobox
 
-Searchable combobox with single/multi selection. Pass `items` and get a fully assembled combobox with built-in filtering. Supports async data fetching via `Combobox.Async` and user-created items via `Combobox.Creatable`.
+Searchable combobox with single/multi selection. Pass `items` and get a fully assembled combobox with built-in filtering. Supports async data fetching via `Combobox.Async` and user-created items via `onCreateItem` prop.
 
 ```tsx
 <Combobox

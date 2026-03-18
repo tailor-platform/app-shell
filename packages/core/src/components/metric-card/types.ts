@@ -30,7 +30,10 @@ export interface MetricCardProps {
   value: ReactNode;
   /** Optional trend indicator */
   trend?: MetricCardTrend;
-  /** Optional comparison text (e.g. "vs last period") */
+  /**
+   * Optional comparison text (e.g. "vs last period").
+   * Empty strings are treated as absent and the comparison row is not rendered.
+   */
   comparison?: string;
   /** Optional leading icon */
   icon?: ReactNode;

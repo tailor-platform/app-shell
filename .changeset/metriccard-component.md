@@ -12,5 +12,5 @@ import { MetricCard } from "@tailor-platform/app-shell";
   value="$1,500.00"
   trend={{ direction: "up", value: "+5%" }}
   comparison="vs last month"
-/>;
+/>
 ```

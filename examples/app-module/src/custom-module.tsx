@@ -199,11 +199,9 @@ const MetricCardDemoPage = () => (
         </div>
         <div className="astw:min-w-[200px] astw:flex-1">
           <MetricCard
-            label="Orders"
-            value="42"
-            trend={{ direction: "neutral", value: "0%" }}
-            comparison="this week"
-            icon={<ZapIcon style={{ width: 14, height: 14 }} />}
+            label="Revenue (MTD)"
+            value="$8,200"
+            comparison="vs last month"
           />
         </div>
       </div>

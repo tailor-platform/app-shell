@@ -50,6 +50,13 @@ describe("MetricCard", () => {
     expect(screen.getByText("vs last month")).toBeDefined();
   });
 
+  it("does not render comparison when comparison is empty string", () => {
+    const { container } = render(
+      <MetricCard label="Sales" value="$3,000" comparison="" />,
+    );
+    expect(container.querySelector('[data-slot="metric-card"]')?.children.length).toBe(2);
+  });
+
   it("renders trend and comparison together", () => {
     render(
       <MetricCard
@@ -65,9 +72,7 @@ describe("MetricCard", () => {
 
   it("does not render meta row when trend and comparison are absent", () => {
     const { container } = render(<MetricCard label="Label" value="Value" />);
-    const card = container.querySelector('[data-slot="metric-card"]');
-    expect(card).toBeTruthy();
-    expect(screen.queryByText("vs")).toBeNull();
+    expect(container.querySelector('[data-slot="metric-card"]')?.children.length).toBe(2);
   });
 
   it("accepts custom className", () => {

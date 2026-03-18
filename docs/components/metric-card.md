@@ -31,7 +31,7 @@ import { MetricCard } from "@tailor-platform/app-shell";
 | `label`      | `string`                                                    | **Required** | Short label (e.g. "Net total", "Revenue")       |
 | `value`      | `React.ReactNode`                                           | **Required** | Main value (string, number, or custom content)  |
 | `trend`      | `{ direction: "up" \| "down" \| "neutral"; value: string }` | -            | Optional trend (e.g. "+12%", "-5%", "0%")       |
-| `comparison` | `string`                                                    | -            | Optional comparison text (e.g. "vs last month") |
+| `comparison` | `string`                                                    | -            | Optional comparison text (e.g. "vs last month"). Empty strings are treated as absent and the comparison row is not rendered. |
 | `icon`       | `React.ReactNode`                                           | -            | Optional icon in the label row                  |
 | `className`  | `string`                                                    | -            | Additional CSS classes for the card root        |
 

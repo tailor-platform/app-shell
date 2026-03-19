@@ -14,6 +14,9 @@ updates:
           - "react"
           - "react-dom"
     ignore:
-      - dependency-name: "eslint"
+      - dependency-name: "@vitejs/plugin-react"
         versions:
-          - ">= 10.0.0"
+          - ">= 6.0.0"
+      - dependency-name: "vite"
+        versions:
+          - ">= 8.0.0"

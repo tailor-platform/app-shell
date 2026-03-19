@@ -90,8 +90,9 @@ const OrderDetailPage = () => {
       />
       <Layout.Column>
         <DescriptionCard
+          title="Order Details"
           data={orderData}
-          columns={2}
+          columns={3}
           fields={[
             { key: "orderId", label: "Order ID", meta: { copyable: true } },
             {

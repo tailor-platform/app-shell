@@ -57,6 +57,14 @@ export function createAutoInjectPlugin(ctx: PluginContext): Plugin {
         // Re-export everything from the real package, but override AppShell
         // with the pages-injected version from a separate virtual module.
         // This module does NOT import pages, so no circular dependency.
+        //
+        // Note: `export { AppShell } from "..."` is a re-export declaration,
+        // which creates an ES Module live binding. Unlike `import` statements
+        // that require the target module to be evaluated immediately, a
+        // re-export only resolves the binding when it is actually accessed.
+        // This means page components can import Button, Table, etc. from
+        // this proxy without triggering evaluation of the with-pages module
+        // (and thus the pages themselves), avoiding the circular TDZ error.
         return [
           `export * from "${APP_SHELL_PACKAGE}";`,
           `export { AppShell } from "${VIRTUAL_APPSHELL_WITH_PAGES_MODULE}";`,

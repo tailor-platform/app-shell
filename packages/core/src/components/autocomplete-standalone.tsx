@@ -51,9 +51,7 @@ interface AutocompletePropsBase<T> {
 
 // --- Autocomplete (static) ---
 
-interface AutocompleteStandaloneProps<I> extends AutocompletePropsBase<
-  ExtractItem<I>
-> {
+interface AutocompleteStandaloneProps<I> extends AutocompletePropsBase<ExtractItem<I>> {
   /**
    * Items to show as suggestions. May be a flat array of `T` or an array of
    * `ItemGroup<T>`. Items are identified as groups by the presence of
@@ -89,10 +87,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
               {(item: T) => {
                 const mapped = mapItem(item);
                 return (
-                  <AutocompleteItem
-                    key={mapped.key ?? mapped.label}
-                    value={mapped.label}
-                  >
+                  <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
                     {mapped.render ?? mapped.label}
                   </AutocompleteItem>
                 );
@@ -104,10 +99,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
     : (item: T) => {
         const mapped = mapItem(item);
         return (
-          <AutocompleteItem
-            key={mapped.key ?? mapped.label}
-            value={mapped.label}
-          >
+          <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
             {mapped.render ?? mapped.label}
           </AutocompleteItem>
         );
@@ -146,9 +138,7 @@ interface AutocompleteAsyncStandaloneProps<T> extends AutocompletePropsBase<T> {
   loadingText?: string;
 }
 
-function AutocompleteAsyncStandalone<T>(
-  props: AutocompleteAsyncStandaloneProps<T>,
-) {
+function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<T>) {
   const {
     fetcher,
     placeholder,
@@ -190,17 +180,12 @@ function AutocompleteAsyncStandalone<T>(
           <AutocompleteTrigger />
         </AutocompleteInputGroup>
         <AutocompleteContent>
-          <AutocompleteEmpty>
-            {async.loading ? loadingText : emptyText}
-          </AutocompleteEmpty>
+          <AutocompleteEmpty>{async.loading ? loadingText : emptyText}</AutocompleteEmpty>
           <AutocompleteList>
             {(item: T) => {
               const mapped = mapItem(item);
               return (
-                <AutocompleteItem
-                  key={mapped.key ?? mapped.label}
-                  value={mapped.label}
-                >
+                <AutocompleteItem key={mapped.key ?? mapped.label} value={mapped.label}>
                   {mapped.render ?? mapped.label}
                 </AutocompleteItem>
               );

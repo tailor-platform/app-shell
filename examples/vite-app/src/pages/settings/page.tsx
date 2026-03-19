@@ -1,4 +1,11 @@
-import type { AppShellPageProps } from "@tailor-platform/app-shell";
+import { useState } from "react";
+import {
+  Layout,
+  Input,
+  Button,
+  Dialog,
+  type AppShellPageProps,
+} from "@tailor-platform/app-shell";
 
 const SettingsIcon = () => (
   <svg
@@ -18,22 +25,66 @@ const SettingsIcon = () => (
 );
 
 const SettingsPage = () => {
+  const [name, setName] = useState("My Application");
+  const [email, setEmail] = useState("admin@example.com");
+
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}>Settings</h1>
-      <p style={{ marginBottom: "1rem", color: "hsl(var(--muted-foreground))" }}>
-        This page is at <code>src/pages/settings/page.tsx</code>
-      </p>
-      <div
-        style={{
-          padding: "1rem",
-          backgroundColor: "hsl(var(--muted))",
-          borderRadius: "0.5rem",
-        }}
-      >
-        <p>Configure your application settings here.</p>
-      </div>
-    </div>
+    <Layout>
+      <Layout.Header title="Settings" />
+      <Layout.Column>
+        <p className="astw:mb-6 astw:text-muted-foreground">
+          This page is at{" "}
+          <code className="astw:bg-muted astw:px-2 astw:py-0.5 astw:rounded">
+            src/pages/settings/page.tsx
+          </code>
+        </p>
+        <div className="astw:flex astw:flex-col astw:gap-4 astw:max-w-md">
+          <div className="astw:flex astw:flex-col astw:gap-1.5">
+            <label className="astw:text-sm astw:font-medium">
+              Application Name
+            </label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="astw:flex astw:flex-col astw:gap-1.5">
+            <label className="astw:text-sm astw:font-medium">Admin Email</label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="astw:flex astw:gap-2 astw:mt-2">
+            <Dialog.Root>
+              <Dialog.Trigger render={<Button />}>Save Changes</Dialog.Trigger>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Confirm Changes</Dialog.Title>
+                  <Dialog.Description>
+                    Save &quot;{name}&quot; as the application name and &quot;
+                    {email}&quot; as the admin email?
+                  </Dialog.Description>
+                </Dialog.Header>
+                <Dialog.Footer>
+                  <Dialog.Close render={<Button variant="outline" />}>
+                    Cancel
+                  </Dialog.Close>
+                  <Dialog.Close render={<Button />}>Confirm</Dialog.Close>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Root>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setName("My Application");
+                setEmail("admin@example.com");
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
+      </Layout.Column>
+    </Layout>
   );
 };
 

@@ -1,4 +1,11 @@
-import { Link, type AppShellPageProps } from "@tailor-platform/app-shell";
+import {
+  Link,
+  Button,
+  Layout,
+  Badge,
+  Tooltip,
+  type AppShellPageProps,
+} from "@tailor-platform/app-shell";
 import { paths } from "../../routes.generated";
 
 const ZapIcon = () => (
@@ -19,45 +26,38 @@ const ZapIcon = () => (
 
 const DashboardPage = () => {
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}>Dashboard</h1>
-      <p style={{ marginBottom: "1rem" }}>
-        Welcome to the file-based routing demo! This page is located at{" "}
-        <code
-          style={{
-            backgroundColor: "hsl(var(--muted))",
-            padding: "0.125rem 0.5rem",
-            borderRadius: "0.25rem",
-          }}
-        >
-          src/pages/dashboard/page.tsx
-        </code>
-      </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        <p>
-          <Link
-            to={paths.for("/dashboard/orders")}
-            style={{
-              color: "hsl(var(--primary))",
-              textDecoration: "underline",
-            }}
-          >
-            → View Orders
-          </Link>
+    <Layout>
+      <Layout.Header
+        title="Dashboard"
+        actions={[
+          <Tooltip.Root key="tooltip">
+            <Tooltip.Trigger render={<Badge variant="outline-success" />}>
+              System Online
+            </Tooltip.Trigger>
+            <Tooltip.Content>All services are operational</Tooltip.Content>
+          </Tooltip.Root>,
+        ]}
+      />
+      <Layout.Column>
+        <p className="astw:mb-4">
+          Welcome to the file-based routing demo! This page is located at{" "}
+          <code className="astw:bg-muted astw:px-2 astw:py-0.5 astw:rounded">
+            src/pages/dashboard/page.tsx
+          </code>
         </p>
-        <p>
-          <Link
-            to={paths.for("/settings")}
-            style={{
-              color: "hsl(var(--primary))",
-              textDecoration: "underline",
-            }}
+        <div className="astw:flex astw:gap-3">
+          <Button render={<Link to={paths.for("/dashboard/orders")} />}>
+            View Orders
+          </Button>
+          <Button
+            variant="outline"
+            render={<Link to={paths.for("/settings")} />}
           >
-            → Go to Settings
-          </Link>
-        </p>
-      </div>
-    </div>
+            Go to Settings
+          </Button>
+        </div>
+      </Layout.Column>
+    </Layout>
   );
 };
 

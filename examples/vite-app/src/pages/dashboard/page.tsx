@@ -39,13 +39,11 @@ const DashboardPage = () => {
         ]}
       />
       <Layout.Column>
-        <p className="astw:mb-4">
+        <p className="mb-4">
           Welcome to the file-based routing demo! This page is located at{" "}
-          <code className="astw:bg-muted astw:px-2 astw:py-0.5 astw:rounded">
-            src/pages/dashboard/page.tsx
-          </code>
+          <code className="bg-muted px-2 py-0.5 rounded">src/pages/dashboard/page.tsx</code>
         </p>
-        <div className="astw:flex astw:gap-3">
+        <div className="flex gap-3">
           <Button render={<Link to={paths.for("/dashboard/orders")} />}>View Orders</Button>
           <Button variant="outline" render={<Link to={paths.for("/settings")} />}>
             Go to Settings

@@ -26,22 +26,29 @@ const SettingsPage = () => {
     <Layout>
       <Layout.Header title="Settings" />
       <Layout.Column>
-        <p className="astw:mb-6 astw:text-muted-foreground">
+        <p className="mb-6 text-muted-foreground">
           This page is at{" "}
-          <code className="astw:bg-muted astw:px-2 astw:py-0.5 astw:rounded">
-            src/pages/settings/page.tsx
-          </code>
+          <code className="bg-muted px-2 py-0.5 rounded">src/pages/settings/page.tsx</code>
         </p>
-        <div className="astw:flex astw:flex-col astw:gap-4 astw:max-w-md">
-          <div className="astw:flex astw:flex-col astw:gap-1.5">
-            <label className="astw:text-sm astw:font-medium">Application Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="flex flex-col gap-4 max-w-md">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="app-name" className="text-sm font-medium">
+              Application Name
+            </label>
+            <Input id="app-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div className="astw:flex astw:flex-col astw:gap-1.5">
-            <label className="astw:text-sm astw:font-medium">Admin Email</label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="admin-email" className="text-sm font-medium">
+              Admin Email
+            </label>
+            <Input
+              id="admin-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-          <div className="astw:flex astw:gap-2 astw:mt-2">
+          <div className="flex gap-2 mt-2">
             <Dialog.Root>
               <Dialog.Trigger render={<Button />}>Save Changes</Dialog.Trigger>
               <Dialog.Content>

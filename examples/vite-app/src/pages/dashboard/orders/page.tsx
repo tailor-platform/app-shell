@@ -8,6 +8,19 @@ import {
 } from "@tailor-platform/app-shell";
 import { paths } from "../../../routes.generated";
 
+const statusVariant = (status: string) => {
+  switch (status) {
+    case "Shipped":
+      return "outline-info" as const;
+    case "Processing":
+      return "outline-warning" as const;
+    case "Delivered":
+      return "success" as const;
+    default:
+      return "neutral" as const;
+  }
+};
+
 const OrdersPage = () => {
   const orders = [
     {
@@ -30,28 +43,13 @@ const OrdersPage = () => {
     },
   ];
 
-  const statusVariant = (status: string) => {
-    switch (status) {
-      case "Shipped":
-        return "outline-info" as const;
-      case "Processing":
-        return "outline-warning" as const;
-      case "Delivered":
-        return "success" as const;
-      default:
-        return "neutral" as const;
-    }
-  };
-
   return (
     <Layout>
       <Layout.Header title="Orders" />
       <Layout.Column>
-        <p className="astw:mb-4 astw:text-muted-foreground">
+        <p className="mb-4 text-muted-foreground">
           This page is at{" "}
-          <code className="astw:bg-muted astw:px-2 astw:py-0.5 astw:rounded">
-            src/pages/dashboard/orders/page.tsx
-          </code>
+          <code className="bg-muted px-2 py-0.5 rounded">src/pages/dashboard/orders/page.tsx</code>
         </p>
         <Table.Root>
           <Table.Header>

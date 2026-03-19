@@ -64,7 +64,9 @@ describe("auto-inject plugin", () => {
       const { load } = createTestPlugin();
       const code = load(VIRTUAL_APPSHELL_WITH_PAGES_ID);
       expect(code).toContain(`import { pages } from "${VIRTUAL_MODULE_ID}"`);
-      expect(code).toContain(`import { AppShell as _OriginalAppShell } from "${APP_SHELL_PACKAGE}"`);
+      expect(code).toContain(
+        `import { AppShell as _OriginalAppShell } from "${APP_SHELL_PACKAGE}"`,
+      );
       expect(code).toContain("_OriginalAppShell.WithPages(pages)");
     });
 

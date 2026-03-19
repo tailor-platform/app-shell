@@ -240,12 +240,7 @@ export interface AutocompleteUseAsyncReturn<T> {
   value: string;
   /** The error thrown by the last fetch, if any */
   error: unknown;
-  /**
-   * Value change handler — pass to the Root `onValueChange` prop.
-   *
-   * Internally filters out `item-press` events so that selecting an item does
-   * not trigger a redundant refetch.
-   */
+  /** Value change handler — pass to the Root `onValueChange` prop. */
   onValueChange: (value: string) => void;
 }
 

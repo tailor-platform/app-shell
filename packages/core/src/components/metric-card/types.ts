@@ -24,17 +24,17 @@ export interface MetricCardTrend {
  * Props for the MetricCard component.
  */
 export interface MetricCardProps {
-  /** Metric label (e.g. "Net total payment") */
-  label: string;
+  /** Metric title / header (e.g. "Net total payment") */
+  title: string;
   /** Primary value (e.g. formatted currency or number) */
   value: ReactNode;
   /** Optional trend indicator */
   trend?: MetricCardTrend;
   /**
-   * Optional comparison text (e.g. "vs last period").
-   * Empty strings are treated as absent and the comparison row is not rendered.
+   * Optional supplementary description (e.g. "vs last period", "this week").
+   * Empty strings are treated as absent and the description is not rendered in the meta row.
    */
-  comparison?: string;
+  description?: string;
   /** Optional leading icon */
   icon?: ReactNode;
   /** Additional CSS classes for the card container */

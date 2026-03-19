@@ -19,7 +19,7 @@ const trendDirectionClasses: Record<MetricCardTrendDirection, string> = {
 // ============================================================================
 
 /**
- * MetricCard — Compact card for dashboard KPI display (label, value, optional trend and comparison).
+ * MetricCard — Compact card for dashboard KPI display (title, value, optional trend and description).
  *
  * Static display only in v1. Use for summary metrics (e.g. net total, discount total).
  * Styling follows existing card conventions (bg-card, border, rounded-xl).
@@ -27,15 +27,15 @@ const trendDirectionClasses: Record<MetricCardTrendDirection, string> = {
  * @example
  * ```tsx
  * <MetricCard
- *   label="Net total payment"
+ *   title="Net total payment"
  *   value="$1,500.00"
  *   trend={{ direction: "up", value: "+5%" }}
- *   comparison="vs last month"
+ *   description="vs last month"
  * />
  * ```
  */
-export function MetricCard({ label, value, trend, comparison, icon, className }: MetricCardProps) {
-  const hasMeta = trend != null || (comparison != null && comparison !== "");
+export function MetricCard({ title, value, trend, description, icon, className }: MetricCardProps) {
+  const hasMeta = trend != null || (description != null && description !== "");
 
   return (
     <div
@@ -45,7 +45,7 @@ export function MetricCard({ label, value, trend, comparison, icon, className }:
         className,
       )}
     >
-      {/* Top row: optional icon + label */}
+      {/* Top row: optional icon + title */}
       <div className="astw:flex astw:items-center astw:gap-2 astw:mb-6">
         {icon != null && (
           <span className={iconSlotClasses} aria-hidden>
@@ -53,7 +53,7 @@ export function MetricCard({ label, value, trend, comparison, icon, className }:
           </span>
         )}
         <span className="astw:text-sm astw:font-medium astw:text-muted-foreground astw:min-w-0 astw:truncate">
-          {label}
+          {title}
         </span>
       </div>
 
@@ -62,7 +62,7 @@ export function MetricCard({ label, value, trend, comparison, icon, className }:
         {value}
       </div>
 
-      {/* Optional meta row: trend + comparison */}
+      {/* Optional meta row: trend + description */}
       {hasMeta && (
         <div className="astw:mt-2 astw:flex astw:items-center astw:gap-2 astw:flex-wrap">
           {trend != null && (
@@ -76,9 +76,9 @@ export function MetricCard({ label, value, trend, comparison, icon, className }:
               {trend.value}
             </span>
           )}
-          {comparison != null && comparison !== "" && (
+          {description != null && description !== "" && (
             <span className="astw:text-sm astw:text-muted-foreground astw:truncate">
-              {comparison}
+              {description}
             </span>
           )}
         </div>

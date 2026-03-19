@@ -169,36 +169,36 @@ const MetricCardDemoPage = () => (
     <Layout.Header title="MetricCard Demo" />
     <Layout.Column>
       <p className="astw:text-sm astw:text-muted-foreground astw:mb-4">
-        Dashboard KPI cards: label, value, optional trend and comparison.
+        Dashboard KPI cards: title, value, optional trend and description.
       </p>
       <div className="astw:flex astw:flex-row astw:flex-wrap astw:gap-4">
         <div className="astw:min-w-[200px] astw:flex-1">
           <MetricCard
-            label="Net total"
+            title="Net total"
             value="$1,500.00"
             trend={{ direction: "up", value: "+5%" }}
-            comparison="vs last month"
+            description="vs last month"
           />
         </div>
         <div className="astw:min-w-[200px] astw:flex-1">
           <MetricCard
-            label="Discount total"
+            title="Discount total"
             value="$120.00"
             trend={{ direction: "down", value: "-2%" }}
-            comparison="vs last month"
+            description="vs last month"
           />
         </div>
         <div className="astw:min-w-[200px] astw:flex-1">
           <MetricCard
-            label="Orders"
+            title="Orders"
             value="42"
             trend={{ direction: "neutral", value: "0%" }}
-            comparison="this week"
+            description="this week"
             icon={<ZapIcon style={{ width: 14, height: 14 }} />}
           />
         </div>
         <div className="astw:min-w-[200px] astw:flex-1">
-          <MetricCard label="Revenue (MTD)" value="$8,200" comparison="vs last month" />
+          <MetricCard title="Revenue (MTD)" value="$8,200" description="vs last month" />
         </div>
       </div>
     </Layout.Column>

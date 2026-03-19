@@ -227,6 +227,7 @@ function ComboboxChips({ className, ...props }: React.ComponentProps<typeof Base
     />
   );
 }
+ComboboxChips.displayName = "Combobox.Chips";
 
 function ComboboxChip({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Chip>) {
   return (

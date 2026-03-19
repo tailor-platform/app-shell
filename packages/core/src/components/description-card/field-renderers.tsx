@@ -176,7 +176,7 @@ function CopyButton({ value }: { value: string }) {
           <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
         )}
       </Tooltip.Trigger>
-      <Tooltip.Content side="top">{copied ? "Copied!" : "Copy"}</Tooltip.Content>
+      <Tooltip.Content position={{ side: "top" }}>{copied ? "Copied!" : "Copy"}</Tooltip.Content>
     </Tooltip.Root>
   );
 }
@@ -258,7 +258,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
         <Tooltip.Trigger render={<span className="astw:cursor-default" />}>
           {content}
         </Tooltip.Trigger>
-        <Tooltip.Content side="bottom" style={{ maxWidth: 320 }}>
+        <Tooltip.Content position={{ side: "bottom" }} style={{ maxWidth: 320 }}>
           <p className="astw:text-sm">{value}</p>
         </Tooltip.Content>
       </Tooltip.Root>

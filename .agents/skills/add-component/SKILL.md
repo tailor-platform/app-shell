@@ -115,6 +115,119 @@ export type { ComponentNameProps } from "./types";
 // DO NOT export internal types, type guards, or enums
 ```
 
+### Pattern D — Standalone (Pre-assembled + Parts)
+
+Use when a compound component (Pattern B) has many sub-components that make typical usage verbose. The standalone pattern provides a **pre-assembled component** that covers 80% of use cases with a simple `items` prop, while still exposing low-level **Parts** for custom composition.
+
+Pattern D can be combined with Pattern C (directory split) when the standalone or parts files grow large enough to warrant separate internal types or helper files.
+
+**When to choose Pattern D over Pattern B:**
+
+- Pattern B (Compound): The consumer always needs to choose and arrange sub-components (e.g., `Menu`, `Dialog` — content varies per usage)
+- Pattern D (Standalone): There is a dominant usage pattern where passing `items` is sufficient, but some consumers need full control (e.g., `Select`, `Combobox`)
+
+**Files:**
+
+```
+components/
+  component-name.tsx              # Internal: Base UI wrappers (Parts primitives)
+  component-name-standalone.tsx   # Public: Standalone + Parts re-export
+```
+
+**component-name.tsx** — Internal compound parts (Pattern B style, not exported from `index.ts`):
+
+```tsx
+import * as React from "react";
+import { ComponentName as BaseComponentName } from "@base-ui/react/component-name";
+import { cn } from "@/lib/utils";
+
+function ComponentNameRoot<Value>({
+  ...props
+}: React.ComponentProps<typeof BaseComponentName.Root<Value>>) {
+  return <BaseComponentName.Root data-slot="component-name" {...props} />;
+}
+
+function ComponentNameItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseComponentName.Item>) {
+  return (
+    <BaseComponentName.Item
+      data-slot="component-name-item"
+      className={cn("astw:...", className)}
+      {...props}
+    />
+  );
+}
+
+// Assemble into Parts object
+const ComponentNameParts = {
+  Root: ComponentNameRoot,
+  Item: ComponentNameItem,
+  // ...other sub-components
+};
+
+export { ComponentNameRoot, ComponentNameItem, ComponentNameParts };
+```
+
+**component-name-standalone.tsx** — Public standalone + Parts:
+
+```tsx
+import { ComponentNameRoot, ComponentNameItem, ComponentNameParts } from "./component-name";
+import type { MappedItem } from "./select-standalone"; // shared type if applicable
+
+interface ComponentNameStandaloneProps<I> {
+  items: I[];
+  placeholder?: string;
+  mapItem?: (item: ExtractItem<I>) => MappedItem;
+  className?: string;
+  value?: ExtractItem<I> | null;
+  onValueChange?: (value: ExtractItem<I> | null) => void;
+}
+
+function ComponentNameStandalone<I>(props: ComponentNameStandaloneProps<I>) {
+  // Pre-assembled composition using internal parts
+  return (
+    <div className={className}>
+      <ComponentNameRoot items={items} value={value} onValueChange={onValueChange}>
+        {/* pre-wired sub-components */}
+      </ComponentNameRoot>
+    </div>
+  );
+}
+
+// Use Object.assign to keep the standalone callable as a component
+// while attaching Parts and variant sub-components
+const ComponentName = Object.assign(ComponentNameStandalone, {
+  Parts: ComponentNameParts,
+  // Optional variant sub-components (e.g., Async, Creatable)
+});
+
+export { ComponentName };
+```
+
+**Consumer usage:**
+
+```tsx
+// Standalone — simple usage (80% case)
+<ComponentName items={["A", "B", "C"]} onValueChange={handleChange} />
+
+// Parts — full control for custom layouts
+<ComponentName.Parts.Root>
+  <ComponentName.Parts.Trigger>...</ComponentName.Parts.Trigger>
+  <ComponentName.Parts.Content>
+    <ComponentName.Parts.Item value="a">Alpha</ComponentName.Parts.Item>
+  </ComponentName.Parts.Content>
+</ComponentName.Parts.Root>
+```
+
+**Conventions:**
+
+- The standalone file (`-standalone.tsx`) is the public entry point exported from `index.ts`
+- The internal parts file (without `-standalone`) is NOT exported from `index.ts`
+- Use `Object.assign` to attach `Parts` and variant sub-components (e.g., `Async`, `Creatable`) to the standalone function
+- Variant sub-components should support the same `mapItem`, `className`, `disabled` base props as the standalone
+
 ## Step 2: Styling Rules
 
 All Tailwind classes MUST use the `astw:` prefix. This is a Tailwind v4 scoped prefix for AppShell.
@@ -182,8 +295,37 @@ When wrapping a Base UI component, fetch https://base-ui.com/llms.txt to find th
 
 When wrapping Base UI components:
 
-- Use `Pick<>` to select only stable, consumer-relevant props from Base UI types
-- Do NOT spread all Base UI props — this prevents upstream changes from becoming breaking changes
+- **Root / Provider components**: Use `Pick<>` to select only stable, consumer-relevant props from Base UI types. Root components often expose internal state-management props that should not leak to consumers, so explicitly pick `open`, `defaultOpen`, `onOpenChange`, `children`, etc.
+- **Leaf sub-components** (Trigger, Content, Item, etc.): Use `React.ComponentProps<typeof Base*.SubComponent>` directly. These components have a narrow, stable prop surface (mostly `className`, `children`, DOM attributes) and benefit from automatic compatibility with Base UI updates.
+- **Composited Leaf sub-components** (wrapping multiple Base UI primitives, e.g. Portal + Positioner + Popup): When a single wrapper component combines props from multiple Base UI primitives, group each primitive's props under a namespaced prop object to prevent name collisions between primitives and keep prop ownership clear. The primary primitive's props (typically the one rendered as the outermost DOM element) stay at the top level; secondary primitives get a nested prop.
+
+```tsx
+// Example: Content wraps both Positioner and Popup.
+// Popup props stay top-level (it's the primary element consumers style).
+// Positioner props are grouped under `position`.
+function Content({
+  className,
+  position,
+  children,
+  ...popupProps
+}: React.ComponentProps<typeof Base*.Popup> & {
+  position?: { side?: "top" | "right" | "bottom" | "left"; align?: "start" | "center" | "end"; sideOffset?: number };
+}) {
+  const { side = "bottom", align = "start", sideOffset = 4 } = position ?? {};
+  return (
+    <Base*.Portal>
+      <Base*.Positioner sideOffset={sideOffset} side={side} align={align}>
+        <Base*.Popup className={cn("astw:...", className)} {...popupProps}>
+          {children}
+        </Base*.Popup>
+      </Base*.Positioner>
+    </Base*.Portal>
+  );
+}
+```
+
+If the same nested shape is reused across multiple components, extract a shared internal type (e.g. `PositionProps` in `@/lib/position`) — but the principle itself is general: **always use prop hierarchy to separate concerns when compositing multiple primitives**.
+
 - Set `displayName` on every sub-component (e.g., `Root.displayName = "Dialog.Root"`)
 - For components needing portals, use the Base UI `Portal` component
 

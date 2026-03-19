@@ -14,9 +14,13 @@ import {
   Input,
   Table,
   Dialog,
+  Menu,
   Sheet,
   Tooltip,
   Badge,
+  Select,
+  Combobox,
+  Autocomplete,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -915,6 +919,9 @@ const primitiveComponentsDemoResource = defineResource({
   },
   component: () => {
     const [inputValue, setInputValue] = React.useState("");
+    const [showToolbar, setShowToolbar] = React.useState(true);
+    const [showSidebar, setShowSidebar] = React.useState(false);
+    const [sortOrder, setSortOrder] = React.useState("date");
 
     const cardStyle: React.CSSProperties = {
       padding: "1.5rem",
@@ -1006,19 +1013,19 @@ const primitiveComponentsDemoResource = defineResource({
                   <Tooltip.Trigger render={<Button variant="outline" />}>
                     Top (default)
                   </Tooltip.Trigger>
-                  <Tooltip.Content side="top">Tooltip on top</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "top" }}>Tooltip on top</Tooltip.Content>
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
-                  <Tooltip.Content side="bottom">Tooltip on bottom</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "bottom" }}>Tooltip on bottom</Tooltip.Content>
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
-                  <Tooltip.Content side="left">Tooltip on left</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "left" }}>Tooltip on left</Tooltip.Content>
                 </Tooltip.Root>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
-                  <Tooltip.Content side="right">Tooltip on right</Tooltip.Content>
+                  <Tooltip.Content position={{ side: "right" }}>Tooltip on right</Tooltip.Content>
                 </Tooltip.Root>
               </div>
             </Tooltip.Provider>
@@ -1094,6 +1101,128 @@ const primitiveComponentsDemoResource = defineResource({
             </div>
           </div>
 
+          {/* Menu */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Menu</h3>
+            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+              <div>
+                <div style={labelStyle}>Pattern</div>
+                <div style={rowStyle}>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Basic</Menu.Trigger>
+                    <Menu.Content>
+                      <Menu.Item onClick={() => alert("Edit clicked")}>Edit</Menu.Item>
+                      <Menu.Item onClick={() => alert("Duplicate clicked")}>Duplicate</Menu.Item>
+                      <Menu.Item onClick={() => alert("Copy ID clicked")}>Copy ID</Menu.Item>
+                      <Menu.Separator />
+                      <Menu.Item
+                        onClick={() => alert("Delete clicked")}
+                        className="astw:text-destructive"
+                      >
+                        Delete
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>
+                      Checkbox & Radio
+                    </Menu.Trigger>
+                    <Menu.Content>
+                      <Menu.Group>
+                        <Menu.GroupLabel>Panels</Menu.GroupLabel>
+                        <Menu.CheckboxItem checked={showToolbar} onCheckedChange={setShowToolbar}>
+                          <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+                          Show Toolbar
+                        </Menu.CheckboxItem>
+                        <Menu.CheckboxItem checked={showSidebar} onCheckedChange={setShowSidebar}>
+                          <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+                          Show Sidebar
+                        </Menu.CheckboxItem>
+                      </Menu.Group>
+                      <Menu.Separator />
+                      <Menu.Group>
+                        <Menu.GroupLabel>Sort by</Menu.GroupLabel>
+                        <Menu.RadioGroup value={sortOrder} onValueChange={setSortOrder}>
+                          <Menu.RadioItem value="date">
+                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                            Date
+                          </Menu.RadioItem>
+                          <Menu.RadioItem value="name">
+                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                            Name
+                          </Menu.RadioItem>
+                          <Menu.RadioItem value="size">
+                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                            Size
+                          </Menu.RadioItem>
+                        </Menu.RadioGroup>
+                      </Menu.Group>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Submenu</Menu.Trigger>
+                    <Menu.Content>
+                      <Menu.Group>
+                        <Menu.GroupLabel>Document</Menu.GroupLabel>
+                        <Menu.Item onClick={() => alert("New")}>New</Menu.Item>
+                        <Menu.Item onClick={() => alert("Open")}>Open</Menu.Item>
+                        <Menu.Item onClick={() => alert("Save")}>Save</Menu.Item>
+                      </Menu.Group>
+                      <Menu.Separator />
+                      <Menu.SubmenuRoot>
+                        <Menu.SubmenuTrigger>Export as →</Menu.SubmenuTrigger>
+                        <Menu.Content position={{ side: "right", align: "start" }}>
+                          <Menu.Item onClick={() => alert("PDF")}>PDF</Menu.Item>
+                          <Menu.Item onClick={() => alert("CSV")}>CSV</Menu.Item>
+                          <Menu.Item onClick={() => alert("JSON")}>JSON</Menu.Item>
+                        </Menu.Content>
+                      </Menu.SubmenuRoot>
+                      <Menu.Separator />
+                      <Menu.Item disabled>Print (unavailable)</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                </div>
+              </div>
+              <div>
+                <div style={labelStyle}>Direction</div>
+                <div style={rowStyle}>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Bottom ↓</Menu.Trigger>
+                    <Menu.Content position={{ side: "bottom" }}>
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Top ↑</Menu.Trigger>
+                    <Menu.Content position={{ side: "top" }}>
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Right →</Menu.Trigger>
+                    <Menu.Content position={{ side: "right" }}>
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                  <Menu.Root>
+                    <Menu.Trigger render={<Button variant="outline" />}>Left ←</Menu.Trigger>
+                    <Menu.Content position={{ side: "left" }}>
+                      <Menu.Item>Item 1</Menu.Item>
+                      <Menu.Item>Item 2</Menu.Item>
+                      <Menu.Item>Item 3</Menu.Item>
+                    </Menu.Content>
+                  </Menu.Root>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Table */}
           <div style={cardStyle}>
             <h3 style={headingStyle}>Table</h3>
@@ -1144,6 +1273,508 @@ const primitiveComponentsDemoResource = defineResource({
       </Layout>
     );
   },
+});
+
+// ============================================================================
+// DEMO: Select, Combobox, Autocomplete
+// ============================================================================
+
+interface Fruit {
+  id: string;
+  name: string;
+  emoji: string;
+}
+
+const fruits: Fruit[] = [
+  { id: "apple", name: "Apple", emoji: "🍎" },
+  { id: "banana", name: "Banana", emoji: "🍌" },
+  { id: "cherry", name: "Cherry", emoji: "🍒" },
+  { id: "grape", name: "Grape", emoji: "🍇" },
+  { id: "mango", name: "Mango", emoji: "🥭" },
+  { id: "orange", name: "Orange", emoji: "🍊" },
+  { id: "peach", name: "Peach", emoji: "🍑" },
+  { id: "strawberry", name: "Strawberry", emoji: "🍓" },
+];
+
+const groupedFruits = [
+  {
+    label: "Tropical",
+    items: [
+      { id: "banana", name: "Banana", emoji: "🍌" },
+      { id: "mango", name: "Mango", emoji: "🥭" },
+      { id: "pineapple", name: "Pineapple", emoji: "🍍" },
+    ],
+  },
+  {
+    label: "Berries",
+    items: [
+      { id: "cherry", name: "Cherry", emoji: "🍒" },
+      { id: "grape", name: "Grape", emoji: "🍇" },
+      { id: "strawberry", name: "Strawberry", emoji: "🍓" },
+    ],
+  },
+];
+
+const allProgrammingLanguages = [
+  "JavaScript",
+  "TypeScript",
+  "Python",
+  "Java",
+  "Go",
+  "Rust",
+  "C",
+  "C++",
+  "C#",
+  "Ruby",
+  "PHP",
+  "Swift",
+  "Kotlin",
+  "Scala",
+  "Haskell",
+  "Elixir",
+  "Clojure",
+  "Dart",
+  "Lua",
+  "R",
+  "Julia",
+  "Zig",
+  "Nim",
+  "OCaml",
+  "Erlang",
+  "Perl",
+  "Bash",
+  "SQL",
+  "HTML",
+  "CSS",
+];
+
+/**
+ * Example: Combobox creatable with a confirmation dialog.
+ * Demonstrates awaiting user input in onCreateItem via Promise.
+ */
+const CreatableWithDialog = ({
+  items,
+  onItemsChange,
+}: {
+  items: { id: string; name: string }[];
+  onItemsChange: React.Dispatch<React.SetStateAction<{ id: string; name: string }[]>>;
+}) => {
+  const [dialogState, setDialogState] = React.useState<{
+    open: boolean;
+    value: string;
+    resolve: (result: { id: string; name: string } | false) => void;
+  } | null>(null);
+
+  return (
+    <>
+      <Combobox
+        items={items}
+        mapItem={(item) => ({ label: item.name, key: item.id })}
+        onCreateItem={(value) =>
+          new Promise<{ id: string; name: string } | false>((resolve) => {
+            setDialogState({ open: true, value, resolve });
+          })
+        }
+        placeholder="Search or create (with confirm)..."
+      />
+      <Dialog.Root
+        open={dialogState?.open ?? false}
+        onOpenChange={(open) => {
+          if (!open && dialogState) {
+            dialogState.resolve(false);
+            setDialogState(null);
+          }
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Create new item</Dialog.Title>
+            <Dialog.Description>
+              Are you sure you want to create &quot;{dialogState?.value}&quot;?
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button
+              variant="outline"
+              onClick={() => {
+                dialogState?.resolve(false);
+                setDialogState(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (dialogState) {
+                  const item = {
+                    id: crypto.randomUUID(),
+                    name: dialogState.value,
+                  };
+                  onItemsChange((prev) => [...prev, item]);
+                  dialogState.resolve(item);
+                  setDialogState(null);
+                }
+              }}
+            >
+              Create
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
+    </>
+  );
+};
+
+const DropdownComponentsDemoPage = () => {
+  const [selectedFruits, setSelectedFruits] = React.useState<Fruit[]>([]);
+  const [creatableItems, setCreatableItems] = React.useState<{ id: string; name: string }[]>([
+    { id: "1", name: "React" },
+    { id: "2", name: "Vue" },
+    { id: "3", name: "Angular" },
+    { id: "4", name: "Svelte" },
+  ]);
+
+  const cardStyle: React.CSSProperties = {
+    padding: "1.5rem",
+    borderRadius: "0.75rem",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--card)",
+    color: "var(--card-foreground)",
+  };
+  const headingStyle: React.CSSProperties = {
+    fontWeight: "bold",
+    marginBottom: "0.75rem",
+    fontSize: "1.125rem",
+  };
+  const subHeadingStyle: React.CSSProperties = {
+    fontWeight: 600,
+    marginBottom: "0.5rem",
+    fontSize: "0.875rem",
+    color: "var(--muted-foreground)",
+  };
+  const sectionStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+  };
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "1.5rem",
+  };
+
+  return (
+    <Layout>
+      <Layout.Header title="Select / Combobox / Autocomplete" />
+      <Layout.Column>
+        {/* ── Select ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Select</h3>
+          <div style={gridStyle}>
+            {/* Basic (string items) */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Basic</div>
+              <Select items={["Apple", "Banana", "Cherry", "Grape"]} placeholder="Pick a fruit" />
+            </div>
+
+            {/* Custom render */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Custom render</div>
+              <Select
+                items={fruits}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="With emoji"
+              />
+            </div>
+
+            {/* Multiple selection */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Select
+                items={fruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                multiple
+                value={selectedFruits}
+                onValueChange={setSelectedFruits}
+                placeholder="Pick fruits"
+              />
+            </div>
+
+            {/* Grouped items */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Grouped</div>
+              <Select
+                items={groupedFruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                placeholder="Grouped select"
+              />
+            </div>
+
+            {/* Disabled */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Disabled</div>
+              <Select items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Select.Async ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Select.Async</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Single</div>
+              <Select.Async
+                fetcher={async () => {
+                  await new Promise((r) => setTimeout(r, 800));
+                  return fruits;
+                }}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="Async select..."
+                loadingText="Loading fruits..."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Select.Async
+                fetcher={async () => {
+                  await new Promise((r) => setTimeout(r, 800));
+                  return fruits;
+                }}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                multiple
+                placeholder="Async multi-select..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Combobox ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Combobox</h3>
+          <div style={gridStyle}>
+            {/* Basic string items */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Basic</div>
+              <Combobox
+                items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
+                placeholder="Search fruit..."
+              />
+            </div>
+
+            {/* Custom render */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Custom render</div>
+              <Combobox
+                items={fruits}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="With emoji"
+              />
+            </div>
+
+            {/* Multiple */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple (chips)</div>
+              <Combobox
+                items={fruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                multiple
+                placeholder="Add fruits..."
+              />
+            </div>
+
+            {/* Grouped */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Grouped</div>
+              <Combobox
+                items={groupedFruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                placeholder="Search grouped..."
+              />
+            </div>
+
+            {/* Disabled */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Disabled</div>
+              <Combobox items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Combobox.Async ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Combobox.Async</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Single</div>
+              <Combobox.Async
+                fetcher={async (query) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  return allProgrammingLanguages.filter((l) =>
+                    l.toLowerCase().includes(query.toLowerCase()),
+                  );
+                }}
+                placeholder="Search programming language..."
+                loadingText="Searching..."
+                emptyText="No programming languages found."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple</div>
+              <Combobox.Async
+                fetcher={async (query) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  return allProgrammingLanguages.filter((l) =>
+                    l.toLowerCase().includes(query.toLowerCase()),
+                  );
+                }}
+                multiple
+                placeholder="Add programming languages..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Combobox (creatable) ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Combobox (creatable)</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Single</div>
+              <Combobox
+                items={creatableItems}
+                mapItem={(item) => ({ label: item.name, key: item.id })}
+                onCreateItem={async (value) => {
+                  const item = { id: crypto.randomUUID(), name: value };
+                  setCreatableItems((prev) => [...prev, item]);
+                  return item;
+                }}
+                formatCreateLabel={(v) => `Create "${v}"`}
+                placeholder="Search or create..."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Multiple (async)</div>
+              <Combobox
+                items={creatableItems}
+                mapItem={(item) => ({ label: item.name, key: item.id })}
+                onCreateItem={async (value) => {
+                  await new Promise((r) => setTimeout(r, 500));
+                  const item = { id: crypto.randomUUID(), name: value };
+                  setCreatableItems((prev) => [...prev, item]);
+                  return item;
+                }}
+                multiple
+                placeholder="Add or create tags..."
+              />
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>With confirmation dialog</div>
+              <CreatableWithDialog items={creatableItems} onItemsChange={setCreatableItems} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Autocomplete ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Autocomplete</h3>
+          <div style={gridStyle}>
+            {/* Basic string items */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Basic</div>
+              <Autocomplete
+                items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
+                placeholder="Type a fruit..."
+              />
+            </div>
+
+            {/* Custom render */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Custom render</div>
+              <Autocomplete
+                items={fruits}
+                mapItem={(f) => ({
+                  label: f.name,
+                  key: f.id,
+                  render: (
+                    <span>
+                      {f.emoji} {f.name}
+                    </span>
+                  ),
+                })}
+                placeholder="With emoji"
+              />
+            </div>
+
+            {/* Grouped */}
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Grouped</div>
+              <Autocomplete
+                items={groupedFruits}
+                mapItem={(f) => ({ label: f.name, key: f.id })}
+                placeholder="Grouped autocomplete..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Autocomplete.Async ── */}
+        <div style={cardStyle}>
+          <h3 style={headingStyle}>Autocomplete.Async</h3>
+          <div style={gridStyle}>
+            <div style={sectionStyle}>
+              <div style={subHeadingStyle}>Async search</div>
+              <Autocomplete.Async
+                fetcher={async (query) => {
+                  await new Promise((r) => setTimeout(r, 400));
+                  return allProgrammingLanguages.filter((l) =>
+                    l.toLowerCase().includes(query.toLowerCase()),
+                  );
+                }}
+                placeholder="Search programming language..."
+              />
+            </div>
+          </div>
+        </div>
+      </Layout.Column>
+    </Layout>
+  );
+};
+
+const dropdownComponentsDemoResource = defineResource({
+  path: "dropdown-demo",
+  meta: {
+    title: "Dropdown Components Demo",
+  },
+  component: DropdownComponentsDemoPage,
 });
 
 export const customPageModule = defineModule({
@@ -1249,7 +1880,18 @@ export const customPageModule = defineModule({
                 textDecoration: "underline",
               }}
             >
-              Primitive Components Demo (Button, Input, Table, Dialog, Sheet, Tooltip)
+              Primitive Components Demo (Button, Input, Menu, Table, Dialog, Sheet, Tooltip)
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/dropdown-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Dropdown Components Demo (Select, Combobox, Autocomplete)
             </Link>
           </p>
         </div>
@@ -1271,5 +1913,6 @@ export const customPageModule = defineModule({
     threeColumnLayoutResource,
     layoutSlotsDemoResource,
     primitiveComponentsDemoResource,
+    dropdownComponentsDemoResource,
   ],
 });

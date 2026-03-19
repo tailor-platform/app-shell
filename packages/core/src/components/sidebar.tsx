@@ -624,8 +624,7 @@ function SidebarMenuButton({
     <Tooltip.Root>
       <Tooltip.Trigger render={button} />
       <Tooltip.Content
-        side="right"
-        align="center"
+        position={{ side: "right", align: "center" }}
         hidden={state !== "collapsed" || isMobile}
         {...tooltip}
       />

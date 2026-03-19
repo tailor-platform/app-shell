@@ -52,7 +52,12 @@ interface AutocompletePropsBase<T> {
 // --- Autocomplete (static) ---
 
 interface AutocompleteStandaloneProps<I> extends AutocompletePropsBase<ExtractItem<I>> {
-  /** Items to show as suggestions */
+  /**
+   * Items to show as suggestions. May be a flat array of `T` or an array of
+   * `ItemGroup<T>`. Items are identified as groups by the presence of
+   * `label: string` and `items: T[]` fields — avoid item types whose
+   * shape coincidentally matches this structure.
+   */
   items: I[];
 }
 

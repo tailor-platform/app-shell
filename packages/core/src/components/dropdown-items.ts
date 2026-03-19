@@ -10,7 +10,13 @@ export interface MappedItem {
   render?: React.ReactNode;
 }
 
-/** A group of items with a label, used by Select, Combobox, and Autocomplete standalone components. */
+/**
+ * A group of items with a label, used by Select, Combobox, and Autocomplete standalone components.
+ *
+ * Items are identified as groups by the presence of `label: string` and `items: T[]` fields.
+ * Avoid item types whose shape coincidentally matches this structure, as they will be
+ * silently treated as group containers at both the type level and runtime.
+ */
 export interface ItemGroup<T> {
   label: string;
   items: T[];

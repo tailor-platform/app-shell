@@ -76,6 +76,12 @@ interface SelectPropsMultiple<T> extends SelectPropsBase<T> {
 
 // --- Select (static) ---
 
+/**
+ * @property items - Items to display. May be a flat array of `T` or an array of
+ * `ItemGroup<T>`. Items are identified as groups by the presence of
+ * `label: string` and `items: T[]` fields — avoid item types whose
+ * shape coincidentally matches this structure.
+ */
 type SelectStandaloneProps<I> =
   | ({ items: I[] } & SelectPropsSingle<ExtractItem<I>>)
   | ({ items: I[] } & SelectPropsMultiple<ExtractItem<I>>);

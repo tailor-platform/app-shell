@@ -122,7 +122,7 @@ Use `Combobox.Async` to load items from an API. The fetcher is called on each ke
 ```tsx
 import { type ComboboxAsyncFetcher } from "@tailor-platform/app-shell";
 
-const fetcher: ComboboxAsyncFetcher<User> = async ({ query, signal }) => {
+const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
   const res = await fetch(`/api/users?q=${query}`, { signal });
   return res.json();
 };
@@ -150,8 +150,8 @@ Accepts all the same props as `Combobox` except `items`, plus:
 
 ```ts
 type ComboboxAsyncFetcher<T> =
-  | ((options: { query: string; signal: AbortSignal }) => Promise<T[]>)
-  | { fn: (options: { query: string; signal: AbortSignal }) => Promise<T[]>; debounceMs: number };
+  | ((query: string, options: { signal: AbortSignal }) => Promise<T[]>)
+  | { fn: (query: string, options: { signal: AbortSignal }) => Promise<T[]>; debounceMs: number };
 ```
 
 Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.

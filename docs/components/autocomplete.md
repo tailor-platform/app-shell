@@ -96,7 +96,7 @@ Use `Autocomplete.Async` to fetch suggestions as the user types. The fetcher is 
 ```tsx
 import { type AutocompleteAsyncFetcher } from "@tailor-platform/app-shell";
 
-const fetcher: AutocompleteAsyncFetcher<string> = async ({ query, signal }) => {
+const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
   const res = await fetch(`/api/suggestions?q=${query}`, { signal });
   return res.json();
 };
@@ -121,8 +121,8 @@ Accepts all the same props as `Autocomplete` except `items`, plus:
 
 ```ts
 type AutocompleteAsyncFetcher<T> =
-  | ((options: { query: string; signal: AbortSignal }) => Promise<T[]>)
-  | { fn: (options: { query: string; signal: AbortSignal }) => Promise<T[]>; debounceMs: number };
+  | ((query: string, options: { signal: AbortSignal }) => Promise<T[]>)
+  | { fn: (query: string, options: { signal: AbortSignal }) => Promise<T[]>; debounceMs: number };
 ```
 
 Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.
@@ -165,7 +165,7 @@ const [query, setQuery] = useState("");
 ### Address Input with Async Suggestions
 
 ```tsx
-const fetcher: AutocompleteAsyncFetcher<string> = async ({ query, signal }) => {
+const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
   if (!query) return [];
   const res = await fetch(`/api/address-lookup?q=${encodeURIComponent(query)}`, { signal });
   return res.json();

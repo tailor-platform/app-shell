@@ -6,6 +6,7 @@ export const PAGE_FILE_NAME = "page.tsx";
 // Auto-inject virtual module IDs
 export const APP_SHELL_PACKAGE = "@tailor-platform/app-shell";
 export const VIRTUAL_PROXY_ID = "\0virtual:app-shell-proxy";
+export const VIRTUAL_APPSHELL_WITH_PAGES_ID = "\0virtual:app-shell-with-pages";
 
 // Logger
 export const LOG_PREFIX = "app-shell-routes";

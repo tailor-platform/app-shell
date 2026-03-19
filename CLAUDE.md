@@ -25,8 +25,12 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Input](./docs/components/input.md)** - Styled text input
 - **[Table](./docs/components/table.md)** - Semantic HTML table sub-components
 - **[Dialog](./docs/components/dialog.md)** - Modal dialog with compound component API
+- **[Menu](./docs/components/menu.md)** - Dropdown menu with compound component API, checkbox/radio items, groups, and sub-menus
 - **[Sheet](./docs/components/sheet.md)** - Slide-in panel with swipe-to-dismiss support
 - **[Tooltip](./docs/components/tooltip.md)** - Hover/focus tooltip with placement options
+- **[Select](./docs/components/select.md)** - Single or multi-select dropdown with optional async loading
+- **[Combobox](./docs/components/combobox.md)** - Searchable combobox with filtering, multi-select, async loading, and creatable items
+- **[Autocomplete](./docs/components/autocomplete.md)** - Free-text input with a suggestion list and optional async loading
 
 ## Key Architecture Points (LLM Orientation)
 

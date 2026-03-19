@@ -17,13 +17,8 @@ const HomePage = () => {
           <Badge variant="outline-info">v1.0</Badge>
         </div>
         <div className="astw:flex astw:gap-3 astw:mt-6">
-          <Button render={<Link to={paths.for("/dashboard")} />}>
-            Go to Dashboard
-          </Button>
-          <Button
-            variant="outline"
-            render={<Link to={paths.for("/settings")} />}
-          >
+          <Button render={<Link to={paths.for("/dashboard")} />}>Go to Dashboard</Button>
+          <Button variant="outline" render={<Link to={paths.for("/settings")} />}>
             Go to Settings
           </Button>
         </div>

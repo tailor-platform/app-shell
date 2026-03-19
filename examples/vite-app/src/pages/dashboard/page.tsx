@@ -46,13 +46,8 @@ const DashboardPage = () => {
           </code>
         </p>
         <div className="astw:flex astw:gap-3">
-          <Button render={<Link to={paths.for("/dashboard/orders")} />}>
-            View Orders
-          </Button>
-          <Button
-            variant="outline"
-            render={<Link to={paths.for("/settings")} />}
-          >
+          <Button render={<Link to={paths.for("/dashboard/orders")} />}>View Orders</Button>
+          <Button variant="outline" render={<Link to={paths.for("/settings")} />}>
             Go to Settings
           </Button>
         </div>

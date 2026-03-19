@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Layout,
-  Input,
-  Button,
-  Dialog,
-  type AppShellPageProps,
-} from "@tailor-platform/app-shell";
+import { Layout, Input, Button, Dialog, type AppShellPageProps } from "@tailor-platform/app-shell";
 
 const SettingsIcon = () => (
   <svg
@@ -40,18 +34,12 @@ const SettingsPage = () => {
         </p>
         <div className="astw:flex astw:flex-col astw:gap-4 astw:max-w-md">
           <div className="astw:flex astw:flex-col astw:gap-1.5">
-            <label className="astw:text-sm astw:font-medium">
-              Application Name
-            </label>
+            <label className="astw:text-sm astw:font-medium">Application Name</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="astw:flex astw:flex-col astw:gap-1.5">
             <label className="astw:text-sm astw:font-medium">Admin Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="astw:flex astw:gap-2 astw:mt-2">
             <Dialog.Root>
@@ -65,9 +53,7 @@ const SettingsPage = () => {
                   </Dialog.Description>
                 </Dialog.Header>
                 <Dialog.Footer>
-                  <Dialog.Close render={<Button variant="outline" />}>
-                    Cancel
-                  </Dialog.Close>
+                  <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
                   <Dialog.Close render={<Button />}>Confirm</Dialog.Close>
                 </Dialog.Footer>
               </Dialog.Content>

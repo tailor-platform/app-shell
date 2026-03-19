@@ -69,9 +69,7 @@ const OrdersPage = () => {
                 <Table.Cell>{order.id}</Table.Cell>
                 <Table.Cell>{order.name}</Table.Cell>
                 <Table.Cell>
-                  <Badge variant={statusVariant(order.status)}>
-                    {order.status}
-                  </Badge>
+                  <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
                 </Table.Cell>
                 <Table.Cell>{order.amount}</Table.Cell>
                 <Table.Cell>

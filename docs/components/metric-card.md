@@ -26,14 +26,14 @@ import { MetricCard } from "@tailor-platform/app-shell";
 
 ## Props
 
-| Prop          | Type                                                        | Default      | Description                                                                                                                  |
-| ------------- | ----------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `title`       | `string`                                                    | **Required** | Short title / header (e.g. "Net total", "Revenue")                                                                           |
-| `value`       | `React.ReactNode`                                           | **Required** | Main value (string, number, or custom content)                                                                               |
-| `trend`       | `{ direction: "up" \| "down" \| "neutral"; value: string }` | -            | Optional trend (e.g. "+12%", "-5%", "0%")                                                                                    |
-| `description` | `string`                                                    | -            | Optional supplementary text (e.g. "vs last month", "this week"). Empty strings are treated as absent and not rendered.       |
-| `icon`        | `React.ReactNode`                                           | -            | Optional icon in the title row                                                                                               |
-| `className`   | `string`                                                    | -            | Additional CSS classes for the card root                                                                                     |
+| Prop          | Type                                                        | Default      | Description                                                                                                            |
+| ------------- | ----------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `title`       | `string`                                                    | **Required** | Short title / header (e.g. "Net total", "Revenue")                                                                     |
+| `value`       | `React.ReactNode`                                           | **Required** | Main value (string, number, or custom content)                                                                         |
+| `trend`       | `{ direction: "up" \| "down" \| "neutral"; value: string }` | -            | Optional trend (e.g. "+12%", "-5%", "0%")                                                                              |
+| `description` | `string`                                                    | -            | Optional supplementary text (e.g. "vs last month", "this week"). Empty strings are treated as absent and not rendered. |
+| `icon`        | `React.ReactNode`                                           | -            | Optional icon in the title row                                                                                         |
+| `className`   | `string`                                                    | -            | Additional CSS classes for the card root                                                                               |
 
 ## Trend Directions
 

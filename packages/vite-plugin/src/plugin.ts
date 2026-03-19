@@ -19,6 +19,7 @@ export type ResolvedOptions = {
   logLevel: LogLevel;
   generateTypedRoutes: boolean;
   typedRoutesOutput: string;
+  entrypoint: string | undefined;
 };
 
 /**
@@ -54,6 +55,7 @@ function createPluginContext(userOptions: AppShellRoutesPluginOptions): PluginCo
     logLevel: userOptions.logLevel ?? "info",
     generateTypedRoutes,
     typedRoutesOutput,
+    entrypoint: userOptions.entrypoint,
   };
 
   const state: PluginState = {

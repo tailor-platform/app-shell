@@ -52,6 +52,21 @@ export type AppShellRoutesPluginOptions = {
    * @default false
    */
   generateTypedRoutes?: boolean | TypedRoutesOptions;
+
+  /**
+   * The file that renders the AppShell component (relative to project root).
+   *
+   * When specified, only imports from this file are intercepted and replaced
+   * with the pages-injected AppShell. All other files (including page
+   * components) import directly from the real package, so there is no
+   * circular module dependency.
+   *
+   * When omitted, all user-code imports of `@tailor-platform/app-shell` are
+   * intercepted (legacy behavior).
+   *
+   * @example "src/App.tsx"
+   */
+  entrypoint?: string;
 };
 
 // ============================================

@@ -67,7 +67,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
   const {
     items,
     placeholder,
-    emptyText = "No suggestions.",
+    emptyText = "No results.",
     mapItem: mapItemProp,
     className,
     disabled,

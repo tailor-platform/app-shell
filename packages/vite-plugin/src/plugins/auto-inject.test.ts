@@ -3,6 +3,7 @@ import { createAutoInjectPlugin } from "./auto-inject";
 import {
   APP_SHELL_PACKAGE,
   VIRTUAL_PROXY_ID,
+  VIRTUAL_APPSHELL_WITH_PAGES_MODULE,
   VIRTUAL_APPSHELL_WITH_PAGES_ID,
   VIRTUAL_MODULE_ID,
 } from "../constants";
@@ -43,6 +44,12 @@ describe("auto-inject plugin", () => {
       expect(result).toBeNull();
     });
 
+    it("resolves with-pages virtual module ID", () => {
+      const { resolveId } = createTestPlugin();
+      const result = resolveId(VIRTUAL_APPSHELL_WITH_PAGES_MODULE, undefined);
+      expect(result).toBe(VIRTUAL_APPSHELL_WITH_PAGES_ID);
+    });
+
     it("ignores unrelated imports", () => {
       const { resolveId } = createTestPlugin();
       const result = resolveId("react", "/project/src/App.tsx");
@@ -55,7 +62,7 @@ describe("auto-inject plugin", () => {
       const { load } = createTestPlugin();
       const code = load(VIRTUAL_PROXY_ID);
       expect(code).toContain(`export * from "${APP_SHELL_PACKAGE}"`);
-      expect(code).toContain(`export { AppShell } from "${VIRTUAL_APPSHELL_WITH_PAGES_ID}"`);
+      expect(code).toContain(`export { AppShell } from "${VIRTUAL_APPSHELL_WITH_PAGES_MODULE}"`);
       // The proxy must NOT import pages directly — that would cause TDZ
       expect(code).not.toContain(VIRTUAL_MODULE_ID);
     });

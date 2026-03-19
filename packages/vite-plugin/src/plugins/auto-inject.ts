@@ -4,6 +4,7 @@ import {
   VIRTUAL_MODULE_ID,
   APP_SHELL_PACKAGE,
   VIRTUAL_PROXY_ID,
+  VIRTUAL_APPSHELL_WITH_PAGES_MODULE,
   VIRTUAL_APPSHELL_WITH_PAGES_ID,
 } from "../constants";
 
@@ -43,6 +44,10 @@ export function createAutoInjectPlugin(ctx: PluginContext): Plugin {
         log.debug(`Intercepting import of ${APP_SHELL_PACKAGE}`);
         return VIRTUAL_PROXY_ID;
       }
+      // Resolve the with-pages virtual module
+      if (id === VIRTUAL_APPSHELL_WITH_PAGES_MODULE) {
+        return VIRTUAL_APPSHELL_WITH_PAGES_ID;
+      }
       return null;
     },
 
@@ -54,7 +59,7 @@ export function createAutoInjectPlugin(ctx: PluginContext): Plugin {
         // This module does NOT import pages, so no circular dependency.
         return [
           `export * from "${APP_SHELL_PACKAGE}";`,
-          `export { AppShell } from "${VIRTUAL_APPSHELL_WITH_PAGES_ID}";`,
+          `export { AppShell } from "${VIRTUAL_APPSHELL_WITH_PAGES_MODULE}";`,
         ].join("\n");
       }
 

@@ -104,8 +104,8 @@ importers:
         specifier: ^8
         version: 8.5.8
       tailwindcss:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.2.2
+        version: 4.2.2
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -128,8 +128,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       tailwindcss:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.2.2
+        version: 4.2.2
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.2.1
@@ -232,8 +232,8 @@ importers:
         specifier: ^8
         version: 8.5.8
       tailwindcss:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.2.2
+        version: 4.2.2
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -383,6 +383,10 @@ packages:
 
   '@babel/runtime@7.28.6':
     resolution: {integrity: sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.2':
+    resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.28.6':
@@ -3399,6 +3403,9 @@ packages:
   tailwindcss@4.2.1:
     resolution: {integrity: sha512-/tBrSQ36vCleJkAOsy9kbNTgaxvGbyOamC30PRePTQe/o1MFwEKHQk4Cn7BNGaPtjp+PuUrByJehM1hgxfq4sw==}
 
+  tailwindcss@4.2.2:
+    resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
+
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
@@ -3444,11 +3451,11 @@ packages:
     resolution: {integrity: sha512-PSkbLUoxOFRzJYjjxHJt9xro7D+iilgMX/C9lawzVuYiIdcihh9DXmVibBe8lmcFrRi/VzlPjBxbN7rH24q8/Q==}
     engines: {node: '>=14.0.0'}
 
-  tldts-core@7.0.25:
-    resolution: {integrity: sha512-ZjCZK0rppSBu7rjHYDYsEaMOIbbT+nWF57hKkv4IUmZWBNrBWBOjIElc0mKRgLM8bm7x/BBlof6t2gi/Oq/Asw==}
+  tldts-core@7.0.27:
+    resolution: {integrity: sha512-YQ7uPjgWUibIK6DW5lrKujGwUKhLevU4hcGbP5O6TcIUb+oTjJYJVWPS4nZsIHrEEEG6myk/oqAJUEQmpZrHsg==}
 
-  tldts@7.0.25:
-    resolution: {integrity: sha512-keinCnPbwXEUG3ilrWQZU+CqcTTzHq9m2HhoUP2l7Xmi8l1LuijAXLpAJ5zRW+ifKTNscs4NdCkfkDCBYm352w==}
+  tldts@7.0.27:
+    resolution: {integrity: sha512-I4FZcVFcqCRuT0ph6dCDpPuO4Xgzvh+spkcTr1gK7peIvxWauoloVO0vuy1FQnijT63ss6AsHB6+OIM4aXHbPg==}
     hasBin: true
 
   to-regex-range@5.0.1:
@@ -3799,6 +3806,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.20.0:
+    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -3965,6 +3984,8 @@ snapshots:
       '@babel/helper-plugin-utils': 7.27.1
 
   '@babel/runtime@7.28.6': {}
+
+  '@babel/runtime@7.29.2': {}
 
   '@babel/template@7.28.6':
     dependencies:
@@ -5208,7 +5229,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.29.0
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -5970,7 +5991,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 15.1.0
-      ws: 8.19.0
+      ws: 8.20.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -6683,6 +6704,8 @@ snapshots:
 
   tailwindcss@4.2.1: {}
 
+  tailwindcss@4.2.2: {}
+
   tapable@2.3.0: {}
 
   term-size@2.2.1: {}
@@ -6717,12 +6740,12 @@ snapshots:
 
   tinyrainbow@3.0.3: {}
 
-  tldts-core@7.0.25:
+  tldts-core@7.0.27:
     optional: true
 
-  tldts@7.0.25:
+  tldts@7.0.27:
     dependencies:
-      tldts-core: 7.0.25
+      tldts-core: 7.0.27
     optional: true
 
   to-regex-range@5.0.1:
@@ -6731,7 +6754,7 @@ snapshots:
 
   tough-cookie@6.0.1:
     dependencies:
-      tldts: 7.0.25
+      tldts: 7.0.27
     optional: true
 
   tr46@1.0.1:
@@ -7036,6 +7059,9 @@ snapshots:
       strip-ansi: 7.2.0
 
   ws@8.19.0: {}
+
+  ws@8.20.0:
+    optional: true
 
   xml-name-validator@5.0.0:
     optional: true

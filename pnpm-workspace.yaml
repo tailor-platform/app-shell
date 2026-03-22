@@ -3,7 +3,7 @@ packages:
   - packages/**
 
 catalog:
-  oxlint: ^1.0.0
+  oxlint: ^1.56.0
   oxfmt: ^0.40.0
   "@types/react": ^19
   "@types/react-dom": ^19

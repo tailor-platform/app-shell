@@ -1,1 +1,5 @@
-export { defineConfig, type PreviewerConfig } from "./config";
+export {
+  defineConfig,
+  type PreviewerConfig,
+  type PreviewerRepo,
+} from "./config";

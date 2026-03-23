@@ -14,6 +14,7 @@ const dev = defineCommand({
       root: cwd,
       glob: config.glob ?? "src/**/*.preview.mdx",
       css: config.css,
+      repo: config.repo,
       vite: config.vite,
     });
     const server = await createServer(viteConfig);
@@ -31,6 +32,7 @@ const buildCmd = defineCommand({
       root: cwd,
       glob: config.glob ?? "src/**/*.preview.mdx",
       css: config.css,
+      repo: config.repo,
       vite: config.vite,
     });
     await build({

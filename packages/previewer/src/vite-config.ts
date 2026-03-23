@@ -1,4 +1,4 @@
-import { resolve, dirname, basename } from "node:path";
+import { resolve, dirname, basename, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
@@ -7,6 +7,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
+import type { PreviewerRepo } from "./config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = resolve(__dirname, "..", "app");
@@ -21,6 +22,8 @@ export function createPreviewerViteConfig(options: {
   root: string;
   glob: string;
   css?: string;
+  /** GitHub repository configuration */
+  repo?: PreviewerRepo;
   /** Vite configuration overrides */
   vite?: {
     plugins?: PluginOption[];
@@ -59,6 +62,8 @@ export function createPreviewerViteConfig(options: {
       ...(options.vite?.plugins ?? []),
       previewerEntriesPlugin(options.root, options.glob),
       previewerCssPlugin(options.root, options.css),
+      previewerConfigPlugin(options.repo),
+      previewerLlmsTxtPlugin(options.root, options.glob, options.repo),
     ],
   };
 }
@@ -91,6 +96,7 @@ function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
         varName: `Mod${i}`,
         name: basename(file).replace(/\.preview\.mdx$/, ""),
         file,
+        filePath: relative(hostRoot, file),
       }));
 
       return [
@@ -102,7 +108,7 @@ function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
         "export const entries = [",
         ...entries.map(
           (e) =>
-            `  { name: ${JSON.stringify(e.name)}, Component: ${e.varName}, frontmatter: ${e.varName}Fm ?? {} },`,
+            `  { name: ${JSON.stringify(e.name)}, Component: ${e.varName}, frontmatter: ${e.varName}Fm ?? {}, filePath: ${JSON.stringify(e.filePath)} },`,
         ),
         "];",
       ].join("\n");
@@ -133,6 +139,158 @@ function previewerCssPlugin(hostRoot: string, css?: string): Plugin {
 
       const cssPath = resolve(hostRoot, css);
       return `@import ${JSON.stringify(cssPath)};`;
+    },
+  };
+}
+
+/**
+ * Virtual module `virtual:previewer-config` — exposes the resolved
+ * repo configuration so the app can render source links.
+ */
+function previewerConfigPlugin(repo?: PreviewerRepo): Plugin {
+  const MODULE_ID = "virtual:previewer-config";
+  const RESOLVED_ID = "\0" + MODULE_ID;
+
+  return {
+    name: "previewer-config",
+
+    resolveId(id) {
+      if (id === MODULE_ID) return RESOLVED_ID;
+    },
+
+    load(id) {
+      if (id !== RESOLVED_ID) return;
+
+      if (!repo) {
+        return "export const repo = null;";
+      }
+
+      // Strip trailing slash from URL
+      const normalizedUrl = repo.url.replace(/\/+$/, "");
+      const branch = repo.branch ?? "main";
+
+      return `export const repo = ${JSON.stringify({ url: normalizedUrl, branch })};`;
+    },
+  };
+}
+
+/**
+ * Serves `/llms.txt` as a plain-text endpoint that describes all discovered
+ * preview entries in the llms.txt format (https://llmstxt.org/).
+ *
+ * - Dev: intercepts the request via `configureServer` middleware.
+ * - Build: emits `llms.txt` as a static asset via `generateBundle`.
+ */
+function previewerLlmsTxtPlugin(
+  hostRoot: string,
+  glob: string,
+  repo?: PreviewerRepo,
+): Plugin {
+  async function buildLlmsTxt(): Promise<string> {
+    const fg = await import("fast-glob");
+    const { readFile } = await import("node:fs/promises");
+
+    const files = await fg.default(glob, { cwd: hostRoot, absolute: true });
+
+    // Parse frontmatter from each file
+    interface FmEntry {
+      title: string;
+      description: string;
+      group: string;
+      order: number;
+      filePath: string;
+      hidden?: boolean;
+    }
+
+    const fmEntries: FmEntry[] = [];
+    for (const file of files) {
+      const content = await readFile(file, "utf-8");
+      const match = content.match(/^---\n([\s\S]*?)\n---/);
+      if (!match) continue;
+
+      const yaml = match[1];
+      const get = (key: string) => {
+        const m = yaml.match(new RegExp(`^${key}:\\s*(.+)$`, "m"));
+        return m ? m[1].trim() : undefined;
+      };
+
+      if (get("hidden") === "true") continue;
+
+      fmEntries.push({
+        title: get("title") ?? basename(file).replace(/\.preview\.mdx$/, ""),
+        description: get("description") ?? "",
+        group: get("group") ?? "Ungrouped",
+        order: Number(get("order") ?? 999),
+        filePath: relative(hostRoot, file),
+        hidden: get("hidden") === "true",
+      });
+    }
+
+    // Group entries
+    const groupMap = new Map<string, FmEntry[]>();
+    for (const entry of fmEntries) {
+      const group = groupMap.get(entry.group) ?? [];
+      group.push(entry);
+      groupMap.set(entry.group, group);
+    }
+    for (const group of groupMap.values()) {
+      group.sort((a, b) => a.order - b.order);
+    }
+
+    const repoUrl = repo?.url?.replace(/\/+$/, "");
+    const branch = repo?.branch ?? "main";
+
+    function buildSourceUrl(entry: FmEntry): string {
+      if (!repoUrl) return "";
+      return `${repoUrl}/blob/${branch}/${entry.filePath.replace(/^\/+/, "")}`;
+    }
+
+    const lines: string[] = [];
+    lines.push(`# Component Library`);
+    lines.push("");
+    lines.push(
+      `> ${fmEntries.length} components across ${groupMap.size} groups`,
+    );
+    lines.push("");
+
+    for (const [groupName, groupEntries] of groupMap) {
+      lines.push(`## ${groupName}`);
+      lines.push("");
+      for (const entry of groupEntries) {
+        const url = buildSourceUrl(entry);
+        const link = url ? `[${entry.title}](${url})` : entry.title;
+        const desc = entry.description ? `: ${entry.description}` : "";
+        lines.push(`- ${link}${desc}`);
+      }
+      lines.push("");
+    }
+
+    return lines.join("\n");
+  }
+
+  return {
+    name: "previewer-llms-txt",
+
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url !== "/llms.txt") return next();
+
+        buildLlmsTxt()
+          .then((text) => {
+            res.setHeader("Content-Type", "text/plain; charset=utf-8");
+            res.end(text);
+          })
+          .catch(next);
+      });
+    },
+
+    async generateBundle() {
+      const text = await buildLlmsTxt();
+      this.emitFile({
+        type: "asset",
+        fileName: "llms.txt",
+        source: text,
+      });
     },
   };
 }

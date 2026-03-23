@@ -7,7 +7,9 @@ import {
 } from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { entries } from "virtual:previewer-entries";
+import { repo } from "virtual:previewer-config";
 import { mdxComponents } from "./mdx-components";
+import { Overview } from "./overview";
 
 interface PreviewEntryFrontmatter {
   title?: string;
@@ -16,12 +18,14 @@ interface PreviewEntryFrontmatter {
   order?: number;
   status?: "stable" | "beta" | "experimental" | "deprecated";
   hidden?: boolean;
+  codePath?: string;
 }
 
 interface PreviewEntry {
   name: string;
   Component: ComponentType;
   frontmatter: PreviewEntryFrontmatter;
+  filePath: string;
 }
 
 interface SidebarGroup {
@@ -57,6 +61,15 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function buildCodeUrl(entry: PreviewEntry): string | null {
+  if (!repo) return null;
+
+  const codePath = entry.frontmatter.codePath;
+  const path = codePath ?? entry.filePath;
+
+  return `${repo.url}/blob/${repo.branch}/${path.replace(/^\/+/, "")}`;
+}
+
 function useGroupedEntries(entries: PreviewEntry[]) {
   return useMemo(() => {
     const visible = entries.filter((e) => !e.frontmatter.hidden);
@@ -86,6 +99,8 @@ function useGroupedEntries(entries: PreviewEntry[]) {
   }, [entries]);
 }
 
+const OVERVIEW_KEY = "__overview__";
+
 function Sidebar({
   groups,
   selected,
@@ -105,6 +120,76 @@ function Sidebar({
         flexShrink: 0,
       }}
     >
+      {/* General section */}
+      <div>
+        <div
+          style={{
+            padding: "12px 16px 4px",
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#9ca3af",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          General
+        </div>
+        <button
+          onClick={() => onSelect(OVERVIEW_KEY)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            width: "100%",
+            textAlign: "left",
+            padding: "8px 16px",
+            fontSize: 14,
+            border: "none",
+            cursor: "pointer",
+            backgroundColor:
+              selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
+            fontWeight: selected === OVERVIEW_KEY ? 600 : 400,
+          }}
+        >
+          Overview
+        </button>
+        <a
+          href="/llms.txt"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            width: "100%",
+            textAlign: "left",
+            padding: "8px 16px",
+            fontSize: 14,
+            border: "none",
+            cursor: "pointer",
+            backgroundColor: "transparent",
+            fontWeight: 400,
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <span style={{ flex: 1 }}>LLMs.txt</span>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="#9ca3af"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3.5 1.5h7v7" />
+            <path d="M10.5 1.5l-9 9" />
+          </svg>
+        </a>
+      </div>
+
       {groups.map((group) => (
         <div key={group.name}>
           <div
@@ -157,6 +242,9 @@ function PreviewHeader({ entry }: { entry: PreviewEntry }) {
   if (!frontmatter.title && !frontmatter.description && !frontmatter.status) {
     return null;
   }
+
+  const codeUrl = buildCodeUrl(entry);
+
   return (
     <div
       style={{
@@ -176,6 +264,30 @@ function PreviewHeader({ entry }: { entry: PreviewEntry }) {
         <p style={{ margin: "8px 0 0", color: "#6b7280", lineHeight: 1.6 }}>
           {frontmatter.description}
         </p>
+      )}
+      {codeUrl && (
+        <a
+          href={codeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            marginTop: 12,
+            fontSize: 13,
+            color: "#6b7280",
+            textDecoration: "none",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+            />
+          </svg>
+          View source code
+        </a>
       )}
     </div>
   );
@@ -358,7 +470,7 @@ function EmptyState() {
 export function App() {
   const groups = useGroupedEntries(entries);
   const visibleEntries = entries.filter((e) => !e.frontmatter.hidden);
-  const [selected, setSelected] = useState(visibleEntries[0]?.name ?? null);
+  const [selected, setSelected] = useState(OVERVIEW_KEY);
   const current = visibleEntries.find((e) => e.name === selected);
 
   return (
@@ -380,7 +492,9 @@ export function App() {
           }}
         >
           <Sidebar groups={groups} selected={selected} onSelect={setSelected} />
-          {current ? (
+          {selected === OVERVIEW_KEY ? (
+            <Overview onSelect={setSelected} />
+          ) : current ? (
             <PreviewContent key={current.name} entry={current} />
           ) : (
             <EmptyState />

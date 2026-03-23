@@ -309,7 +309,7 @@ To migrate from `defineModule`/`defineResource` to file-based routing:
    import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
 
    export default defineConfig({
-     plugins: [react(), appShellRoutes()],
+     plugins: [react(), appShellRoutes({ entrypoint: "src/App.tsx" })],
    });
    ```
 

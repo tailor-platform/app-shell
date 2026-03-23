@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
 import mdx from "@mdx-js/rollup";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
 
@@ -45,7 +47,11 @@ export function createPreviewerViteConfig(options: {
       {
         enforce: "pre",
         ...mdx({
-          remarkPlugins: [remarkGfm],
+          remarkPlugins: [
+            remarkGfm,
+            remarkFrontmatter,
+            [remarkMdxFrontmatter, { name: "frontmatter" }],
+          ],
           providerImportSource: "@mdx-js/react",
         }),
       } as Plugin,
@@ -88,10 +94,16 @@ function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
       }));
 
       return [
-        ...entries.map((e) => `import ${e.varName} from ${JSON.stringify(e.file)};`),
+        ...entries.map(
+          (e) =>
+            `import ${e.varName}, { frontmatter as ${e.varName}Fm } from ${JSON.stringify(e.file)};`,
+        ),
         "",
         "export const entries = [",
-        ...entries.map((e) => `  { name: ${JSON.stringify(e.name)}, Component: ${e.varName} },`),
+        ...entries.map(
+          (e) =>
+            `  { name: ${JSON.stringify(e.name)}, Component: ${e.varName}, frontmatter: ${e.varName}Fm ?? {} },`,
+        ),
         "];",
       ].join("\n");
     },

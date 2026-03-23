@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 
-export function CodeBlock({
-  children,
-  className,
-}: {
-  children: string;
-  className?: string;
-}) {
+export function CodeBlock({ children, className }: { children: string; className?: string }) {
   const lang = className?.replace("language-", "") ?? "";
   const [html, setHtml] = useState<string | null>(null);
 

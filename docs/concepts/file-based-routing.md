@@ -53,7 +53,7 @@ export default defineConfig({
   plugins: [
     react(),
     appShellRoutes({
-      entrypoint: "src/App.tsx", // recommended — avoids circular module dependencies
+      entrypoint: "src/App.tsx", // recommended
     }),
   ],
 });
@@ -68,7 +68,7 @@ export default defineConfig({
 | `entrypoint`          | `string`                        | `undefined`   | File that renders the AppShell component (relative to project root). See note below. |
 | `generateTypedRoutes` | `boolean \| { output: string }` | `false`       | Generate a TypeScript file with type-safe route definitions                          |
 
-> **`entrypoint` (recommended):** When specified, only imports from this file are intercepted and replaced with the pages-injected AppShell. All other files — including page components — import directly from the real package, eliminating circular module dependencies. Without this option, all user-code imports of `@tailor-platform/app-shell` are intercepted, which can cause TDZ (Temporal Dead Zone) errors in page components that also import from the package.
+> **`entrypoint` (recommended):** When specified, only imports from this file are intercepted and replaced with the pages-injected AppShell. All other files — including page components — import directly from the real package. Without this option, all user-code imports of `@tailor-platform/app-shell` are intercepted, which can cause TDZ (Temporal Dead Zone) errors in page components that also import from the package.
 
 ### 2. Use AppShell (No Configuration Needed)
 

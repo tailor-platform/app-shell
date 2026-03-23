@@ -6,10 +6,16 @@ interface OverviewProps {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
-  stable: { bg: "#dcfce7", fg: "#166534" },
-  beta: { bg: "#dbeafe", fg: "#1e40af" },
-  experimental: { bg: "#fef9c3", fg: "#854d0e" },
-  deprecated: { bg: "#fee2e2", fg: "#991b1b" },
+  stable: { bg: "var(--status-stable-bg)", fg: "var(--status-stable-fg)" },
+  beta: { bg: "var(--status-beta-bg)", fg: "var(--status-beta-fg)" },
+  experimental: {
+    bg: "var(--status-experimental-bg)",
+    fg: "var(--status-experimental-fg)",
+  },
+  deprecated: {
+    bg: "var(--status-deprecated-bg)",
+    fg: "var(--status-deprecated-fg)",
+  },
 };
 
 export function Overview({ onSelect }: OverviewProps) {
@@ -44,12 +50,18 @@ export function Overview({ onSelect }: OverviewProps) {
         {/* Header */}
         <div
           style={{
-            borderBottom: "1px solid #e5e7eb",
+            borderBottom: "1px solid var(--border)",
             padding: "24px 60px 20px",
           }}
         >
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Overview</h1>
-          <p style={{ margin: "8px 0 0", color: "#6b7280", lineHeight: 1.6 }}>
+          <p
+            style={{
+              margin: "8px 0 0",
+              color: "var(--fg-secondary)",
+              lineHeight: 1.6,
+            }}
+          >
             {visible.length} components across {groupMap.size} groups
           </p>
         </div>
@@ -62,7 +74,7 @@ export function Overview({ onSelect }: OverviewProps) {
                 style={{
                   fontSize: 14,
                   fontWeight: 700,
-                  color: "#9ca3af",
+                  color: "var(--fg-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   margin: "0 0 12px",
@@ -87,18 +99,18 @@ export function Overview({ onSelect }: OverviewProps) {
                       alignItems: "flex-start",
                       gap: 4,
                       padding: "16px",
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid var(--border)",
                       borderRadius: 8,
-                      backgroundColor: "white",
+                      backgroundColor: "var(--card-bg)",
                       cursor: "pointer",
                       textAlign: "left",
                       transition: "border-color 0.15s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#9ca3af";
+                      e.currentTarget.style.borderColor = "var(--border-hover)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#e5e7eb";
+                      e.currentTarget.style.borderColor = "var(--border)";
                     }}
                   >
                     <div
@@ -121,12 +133,12 @@ export function Overview({ onSelect }: OverviewProps) {
                             borderRadius: 4,
                             backgroundColor: (
                               STATUS_COLORS[entry.frontmatter.status] ?? {
-                                bg: "#f3f4f6",
+                                bg: "var(--code-bg)",
                               }
                             ).bg,
                             color: (
                               STATUS_COLORS[entry.frontmatter.status] ?? {
-                                fg: "#374151",
+                                fg: "var(--fg)",
                               }
                             ).fg,
                             lineHeight: "18px",
@@ -141,7 +153,7 @@ export function Overview({ onSelect }: OverviewProps) {
                         style={{
                           margin: 0,
                           fontSize: 13,
-                          color: "#6b7280",
+                          color: "var(--fg-secondary)",
                           lineHeight: 1.5,
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
@@ -164,15 +176,15 @@ export function Overview({ onSelect }: OverviewProps) {
               style={{
                 marginTop: 16,
                 padding: "16px 20px",
-                border: "1px solid #e5e7eb",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
-                backgroundColor: "#f9fafb",
+                backgroundColor: "var(--card-bg)",
               }}
             >
               <div
                 style={{
                   fontSize: 13,
-                  color: "#6b7280",
+                  color: "var(--fg-secondary)",
                   lineHeight: 1.5,
                 }}
               >
@@ -181,7 +193,7 @@ export function Overview({ onSelect }: OverviewProps) {
                   href="/llms.txt"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: "#111827", fontWeight: 500 }}
+                  style={{ color: "var(--fg)", fontWeight: 500 }}
                 >
                   llms.txt
                 </a>{" "}

@@ -10,6 +10,7 @@ import { entries } from "virtual:previewer-entries";
 import { title, repo } from "virtual:previewer-config";
 import { mdxComponents } from "./mdx-components";
 import { Overview } from "./overview";
+import { ThemeProvider, ThemeToggle } from "./theme";
 
 interface PreviewEntryFrontmatter {
   title?: string;
@@ -52,14 +53,23 @@ interface SidebarGroup {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
-  stable: { bg: "#dcfce7", fg: "#166534" },
-  beta: { bg: "#dbeafe", fg: "#1e40af" },
-  experimental: { bg: "#fef9c3", fg: "#854d0e" },
-  deprecated: { bg: "#fee2e2", fg: "#991b1b" },
+  stable: { bg: "var(--status-stable-bg)", fg: "var(--status-stable-fg)" },
+  beta: { bg: "var(--status-beta-bg)", fg: "var(--status-beta-fg)" },
+  experimental: {
+    bg: "var(--status-experimental-bg)",
+    fg: "var(--status-experimental-fg)",
+  },
+  deprecated: {
+    bg: "var(--status-deprecated-bg)",
+    fg: "var(--status-deprecated-fg)",
+  },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const colors = STATUS_COLORS[status] ?? { bg: "#f3f4f6", fg: "#374151" };
+  const colors = STATUS_COLORS[status] ?? {
+    bg: "var(--code-bg)",
+    fg: "var(--fg)",
+  };
   return (
     <span
       style={{
@@ -123,7 +133,7 @@ const OVERVIEW_KEY = "__overview__";
 const groupHeadingStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 700,
-  color: "#9ca3af",
+  color: "var(--fg-muted)",
   textTransform: "uppercase",
   letterSpacing: "0.05em",
 };
@@ -153,22 +163,12 @@ function Sidebar({
     <nav
       style={{
         width: 220,
-        borderRight: "1px solid #e5e7eb",
-        padding: "20px 0",
+        borderRight: "1px solid var(--border)",
+        padding: "12px 0",
         overflowY: "auto",
         flexShrink: 0,
       }}
     >
-      <div
-        style={{
-          padding: "10px 16px 16px",
-          fontSize: 15,
-          fontWeight: 700,
-          marginBottom: 4,
-        }}
-      >
-        {title}
-      </div>
       {/* General section */}
       <div>
         <div style={{ padding: "12px 16px 4px", ...groupHeadingStyle }}>
@@ -179,7 +179,9 @@ function Sidebar({
           style={{
             ...sidebarItemStyle,
             backgroundColor:
-              selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
+              selected === OVERVIEW_KEY
+                ? "var(--sidebar-active)"
+                : "transparent",
             fontWeight: selected === OVERVIEW_KEY ? 600 : 400,
           }}
         >
@@ -203,7 +205,7 @@ function Sidebar({
             height="12"
             viewBox="0 0 12 12"
             fill="none"
-            stroke="#9ca3af"
+            stroke="var(--fg-muted)"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -226,7 +228,9 @@ function Sidebar({
               style={{
                 ...sidebarItemStyle,
                 backgroundColor:
-                  selected === entry.name ? "#f3f4f6" : "transparent",
+                  selected === entry.name
+                    ? "var(--sidebar-active)"
+                    : "transparent",
                 fontWeight: selected === entry.name ? 600 : 400,
               }}
             >
@@ -261,7 +265,7 @@ function PreviewHeader({
   return (
     <div
       style={{
-        borderBottom: hideBorder ? "none" : "1px solid #e5e7eb",
+        borderBottom: hideBorder ? "none" : "1px solid var(--border)",
         padding: "24px 60px 20px",
       }}
     >
@@ -274,7 +278,13 @@ function PreviewHeader({
         {frontmatter.status && <StatusBadge status={frontmatter.status} />}
       </div>
       {frontmatter.description && (
-        <p style={{ margin: "8px 0 0", color: "#6b7280", lineHeight: 1.6 }}>
+        <p
+          style={{
+            margin: "8px 0 0",
+            color: "var(--fg-secondary)",
+            lineHeight: 1.6,
+          }}
+        >
           {frontmatter.description}
         </p>
       )}
@@ -289,7 +299,7 @@ function PreviewHeader({
             gap: 6,
             marginTop: 12,
             fontSize: 13,
-            color: "#6b7280",
+            color: "var(--fg-secondary)",
             textDecoration: "none",
           }}
         >
@@ -406,12 +416,12 @@ function TableOfContents({
             lineHeight: "20px",
             padding: "3px 0",
             paddingLeft: item.level === 3 ? 12 : 0,
-            color: activeId === item.id ? "#111827" : "#6b7280",
+            color: activeId === item.id ? "var(--fg)" : "var(--fg-secondary)",
             fontWeight: activeId === item.id ? 600 : 400,
             textDecoration: "none",
             borderLeft:
               activeId === item.id
-                ? "2px solid #111827"
+                ? "2px solid var(--fg)"
                 : "2px solid transparent",
             paddingInlineStart: item.level === 3 ? 20 : 8,
           }}
@@ -445,7 +455,7 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
               <p
                 style={{
                   fontSize: 14,
-                  color: "#6b7280",
+                  color: "var(--fg-secondary)",
                   margin: "0 0 16px",
                   lineHeight: 1.5,
                 }}
@@ -469,10 +479,10 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
                       style={{
                         textAlign: "left",
                         padding: "8px 12px",
-                        borderBottom: "2px solid #e5e7eb",
+                        borderBottom: "2px solid var(--border)",
                         fontWeight: 600,
                         fontSize: 13,
-                        color: "#374151",
+                        color: "var(--fg)",
                         width:
                           h === "Name"
                             ? "18%"
@@ -492,13 +502,13 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
                 {group.props.map((prop) => (
                   <tr
                     key={prop.name}
-                    style={{ borderBottom: "1px solid #f3f4f6" }}
+                    style={{ borderBottom: "1px solid var(--border-subtle)" }}
                   >
                     <td style={{ padding: "8px 12px", verticalAlign: "top" }}>
                       <code
                         style={{
                           fontSize: 13,
-                          backgroundColor: "#f3f4f6",
+                          backgroundColor: "var(--code-bg)",
                           padding: "2px 5px",
                           borderRadius: 4,
                         }}
@@ -510,7 +520,7 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
                       <code
                         style={{
                           fontSize: 13,
-                          backgroundColor: "#f3f4f6",
+                          backgroundColor: "var(--code-bg)",
                           padding: "2px 5px",
                           borderRadius: 4,
                           wordBreak: "break-word",
@@ -523,7 +533,9 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
                       style={{
                         padding: "8px 12px",
                         verticalAlign: "top",
-                        color: prop.defaultValue ? "#111827" : "#9ca3af",
+                        color: prop.defaultValue
+                          ? "var(--fg)"
+                          : "var(--fg-muted)",
                       }}
                     >
                       {prop.defaultValue ?? "—"}
@@ -532,7 +544,7 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
                       style={{
                         padding: "8px 12px",
                         verticalAlign: "top",
-                        color: "#6b7280",
+                        color: "var(--fg-secondary)",
                         lineHeight: 1.5,
                       }}
                     >
@@ -588,10 +600,10 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
                 display: "flex",
                 gap: 0,
                 padding: "0 60px",
-                borderBottom: "1px solid #e5e7eb",
+                borderBottom: "1px solid var(--border)",
                 position: "sticky",
                 top: 0,
-                backgroundColor: "white",
+                backgroundColor: "var(--bg)",
                 zIndex: 1,
               }}
             >
@@ -610,12 +622,13 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
                     padding: "10px 16px",
                     fontSize: 14,
                     fontWeight: activeTab === key ? 600 : 400,
-                    color: activeTab === key ? "#111827" : "#6b7280",
+                    color:
+                      activeTab === key ? "var(--fg)" : "var(--fg-secondary)",
                     background: "none",
                     border: "none",
                     borderBottom:
                       activeTab === key
-                        ? "2px solid #111827"
+                        ? "2px solid var(--fg)"
                         : "2px solid transparent",
                     cursor: "pointer",
                     marginBottom: -1,
@@ -645,7 +658,7 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
           style={{
             width: 200,
             flexShrink: 0,
-            borderLeft: "1px solid #e5e7eb",
+            borderLeft: "1px solid var(--border)",
           }}
         >
           <TableOfContents
@@ -666,7 +679,7 @@ function EmptyState() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "#9ca3af",
+        color: "var(--fg-muted)",
       }}
     >
       {entries.length === 0
@@ -683,33 +696,57 @@ export function App() {
   const current = visibleEntries.find((e) => e.name === selected);
 
   return (
-    <MDXProvider components={mdxComponents}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          height: "100vh",
-          fontFamily: "system-ui, sans-serif",
-          backgroundColor: "white",
-        }}
-      >
+    <ThemeProvider>
+      <MDXProvider components={mdxComponents}>
         <div
           style={{
             display: "flex",
-            width: "100%",
-            maxWidth: 1560,
+            flexDirection: "column",
+            height: "100vh",
+            fontFamily: "system-ui, sans-serif",
+            backgroundColor: "var(--bg)",
+            color: "var(--fg)",
           }}
         >
-          <Sidebar groups={groups} selected={selected} onSelect={setSelected} />
-          {selected === OVERVIEW_KEY ? (
-            <Overview onSelect={setSelected} />
-          ) : current ? (
-            <PreviewContent entry={current} />
-          ) : (
-            <EmptyState />
-          )}
+          <header
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 20px",
+              height: 48,
+              borderBottom: "1px solid var(--border)",
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontSize: 15, fontWeight: 700 }}>{title}</span>
+            <ThemeToggle />
+          </header>
+          <div
+            style={{
+              display: "flex",
+              flex: 1,
+              overflow: "hidden",
+              width: "100%",
+              maxWidth: 1560,
+              margin: "0 auto",
+            }}
+          >
+            <Sidebar
+              groups={groups}
+              selected={selected}
+              onSelect={setSelected}
+            />
+            {selected === OVERVIEW_KEY ? (
+              <Overview onSelect={setSelected} />
+            ) : current ? (
+              <PreviewContent entry={current} />
+            ) : (
+              <EmptyState />
+            )}
+          </div>
         </div>
-      </div>
-    </MDXProvider>
+      </MDXProvider>
+    </ThemeProvider>
   );
 }

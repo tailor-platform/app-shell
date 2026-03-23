@@ -300,6 +300,12 @@ importers:
       shiki:
         specifier: ^4.0.2
         version: 4.0.2
+      ts-morph:
+        specifier: ^27.0.2
+        version: 27.0.2
+      unist-util-visit:
+        specifier: ^5.0.0
+        version: 5.1.0
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@22.13.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.7.0)

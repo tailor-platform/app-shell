@@ -1,0 +1,43 @@
+{
+  "name": "@tailor-platform/previewer",
+  "private": true,
+  "bin": {
+    "previewer": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist/**",
+    "app/**"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "type-check": "tsc --incremental"
+  },
+  "dependencies": {
+    "@mdx-js/react": "^3.1.0",
+    "@mdx-js/rollup": "^3.1.0",
+    "@vitejs/plugin-react": "catalog:",
+    "c12": "^3.3.3",
+    "citty": "^0.2.1",
+    "fast-glob": "^3.3.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remark-gfm": "^4.0.1",
+    "shiki": "^4.0.2",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "tsdown": "^0.21.3",
+    "typescript": "~5.9.3"
+  }
+}

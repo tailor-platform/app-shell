@@ -1,0 +1,57 @@
+import { Button } from "@tailor-platform/app-shell";
+
+# Button
+
+A styled button with multiple visual variants and sizes. Supports rendering as a custom element via the `render` prop.
+
+## Variants
+
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "16px 0" }}>
+  <Button variant="default">Default</Button>
+  <Button variant="destructive">Destructive</Button>
+  <Button variant="outline">Outline</Button>
+  <Button variant="secondary">Secondary</Button>
+  <Button variant="ghost">Ghost</Button>
+  <Button variant="link">Link</Button>
+</div>
+
+```tsx
+<Button variant="default">Default</Button>
+<Button variant="destructive">Destructive</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+```
+
+## Sizes
+
+<div style={{ display: "flex", gap: 8, alignItems: "center", padding: "16px 0" }}>
+  <Button size="sm">Small</Button>
+  <Button size="default">Default</Button>
+  <Button size="lg">Large</Button>
+</div>
+
+```tsx
+<Button size="sm">Small</Button>
+<Button size="default">Default</Button>
+<Button size="lg">Large</Button>
+```
+
+## Disabled
+
+<div style={{ display: "flex", gap: 8, padding: "16px 0" }}>
+  <Button disabled>Disabled Default</Button>
+  <Button variant="outline" disabled>
+    Disabled Outline
+  </Button>
+  <Button variant="destructive" disabled>
+    Disabled Destructive
+  </Button>
+</div>
+
+```tsx
+<Button disabled>Disabled Default</Button>
+<Button variant="outline" disabled>Disabled Outline</Button>
+<Button variant="destructive" disabled>Disabled Destructive</Button>
+```

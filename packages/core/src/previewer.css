@@ -1,0 +1,2 @@
+@source "./**/*.{ts,tsx,mdx}";
+@import "./globals.css";

@@ -1,4 +1,10 @@
-import { useMemo, useState, type ComponentType } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { entries } from "virtual:previewer-entries";
 import { mdxComponents } from "./mdx-components";
@@ -154,9 +160,8 @@ function PreviewHeader({ entry }: { entry: PreviewEntry }) {
   return (
     <div
       style={{
-        margin: "0 -32px 24px",
         borderBottom: "1px solid #e5e7eb",
-        padding: "0 32px 16px",
+        padding: "24px 60px 20px",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -176,12 +181,158 @@ function PreviewHeader({ entry }: { entry: PreviewEntry }) {
   );
 }
 
+interface TocItem {
+  id: string;
+  text: string;
+  level: number;
+}
+
+function useTableOfContents(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+) {
+  const [items, setItems] = useState<TocItem[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Small delay to let MDX render
+    const timeout = setTimeout(() => {
+      const headings = container.querySelectorAll("h2[id], h3[id]");
+      const tocItems: TocItem[] = Array.from(headings).map((el) => ({
+        id: el.id,
+        text: el.textContent ?? "",
+        level: el.tagName === "H2" ? 2 : 3,
+      }));
+      setItems(tocItems);
+      if (tocItems.length > 0) {
+        setActiveId(tocItems[0].id);
+      }
+    }, 50);
+
+    return () => clearTimeout(timeout);
+  }, [containerRef]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || items.length === 0) return;
+
+    const handleScroll = () => {
+      const headings = items
+        .map(({ id }) => {
+          const el = document.getElementById(id);
+          return el ? { id, top: el.getBoundingClientRect().top } : null;
+        })
+        .filter(Boolean) as { id: string; top: number }[];
+
+      // Find the last heading that has scrolled past the top
+      let current = headings[0]?.id ?? null;
+      for (const h of headings) {
+        if (h.top <= 80) current = h.id;
+      }
+      setActiveId(current);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [containerRef, items]);
+
+  return { items, activeId, setActiveId };
+}
+
+function TableOfContents({
+  containerRef,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const { items, activeId, setActiveId } = useTableOfContents(containerRef);
+
+  if (items.length === 0) return null;
+
+  return (
+    <nav
+      style={{
+        width: 200,
+        flexShrink: 0,
+        padding: "32px 16px",
+        borderLeft: "1px solid #e5e7eb",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#9ca3af",
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          marginBottom: 12,
+        }}
+      >
+        Table of contents
+      </div>
+      {items.map((item) => (
+        <a
+          key={item.id}
+          href={`#${item.id}`}
+          onClick={(e) => {
+            e.preventDefault();
+            setActiveId(item.id);
+            const el = document.getElementById(item.id);
+            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          style={{
+            display: "block",
+            fontSize: 13,
+            lineHeight: "20px",
+            padding: "3px 0",
+            paddingLeft: item.level === 3 ? 12 : 0,
+            color: activeId === item.id ? "#111827" : "#6b7280",
+            fontWeight: activeId === item.id ? 600 : 400,
+            textDecoration: "none",
+            borderLeft:
+              activeId === item.id
+                ? "2px solid #111827"
+                : "2px solid transparent",
+            paddingInlineStart: item.level === 3 ? 20 : 8,
+          }}
+        >
+          {item.text}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 function PreviewContent({ entry }: { entry: PreviewEntry }) {
   const { Component } = entry;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div style={{ flex: 1, padding: 32, overflowY: "auto" }}>
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       <PreviewHeader entry={entry} />
-      <Component />
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <div
+          ref={scrollRef}
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            scrollbarWidth: "none",
+          }}
+        >
+          <div style={{ maxWidth: 1020, margin: "0 auto" }}>
+            <Component />
+          </div>
+        </div>
+        <TableOfContents containerRef={scrollRef} />
+      </div>
     </div>
   );
 }
@@ -215,12 +366,26 @@ export function App() {
       <div
         style={{
           display: "flex",
+          justifyContent: "center",
           height: "100vh",
           fontFamily: "system-ui, sans-serif",
+          backgroundColor: "white",
         }}
       >
-        <Sidebar groups={groups} selected={selected} onSelect={setSelected} />
-        {current ? <PreviewContent entry={current} /> : <EmptyState />}
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            maxWidth: 1560,
+          }}
+        >
+          <Sidebar groups={groups} selected={selected} onSelect={setSelected} />
+          {current ? (
+            <PreviewContent key={current.name} entry={current} />
+          ) : (
+            <EmptyState />
+          )}
+        </div>
       </div>
     </MDXProvider>
   );

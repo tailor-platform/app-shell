@@ -1,0 +1,108 @@
+---
+title: Select
+description: A single or multi-select dropdown. Accepts a flat or grouped items array.
+group: Forms
+order: 2
+---
+
+import { Select } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Select
+    items={["Apple", "Banana", "Cherry", "Date", "Elderberry"]}
+    placeholder="Select a fruit"
+  />
+</div>
+
+```tsx
+<Select
+  items={["Apple", "Banana", "Cherry", "Date", "Elderberry"]}
+  placeholder="Select a fruit"
+/>
+```
+
+## With Objects
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Select
+    items={[
+      { id: 1, name: "Active" },
+      { id: 2, name: "Inactive" },
+      { id: 3, name: "Pending" },
+    ]}
+    mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+    placeholder="Select a status"
+  />
+</div>
+
+```tsx
+<Select
+  items={[
+    { id: 1, name: "Active" },
+    { id: 2, name: "Inactive" },
+    { id: 3, name: "Pending" },
+  ]}
+  mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+  placeholder="Select a status"
+/>
+```
+
+## Grouped Items
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Select
+    items={[
+      { label: "Fruits", items: ["Apple", "Banana", "Cherry"] },
+      { label: "Vegetables", items: ["Carrot", "Broccoli", "Spinach"] },
+    ]}
+    placeholder="Select a food"
+  />
+</div>
+
+```tsx
+<Select
+  items={[
+    { label: "Fruits", items: ["Apple", "Banana", "Cherry"] },
+    { label: "Vegetables", items: ["Carrot", "Broccoli", "Spinach"] },
+  ]}
+  placeholder="Select a food"
+/>
+```
+
+## Multiple
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Select
+    items={["Red", "Green", "Blue", "Yellow", "Purple"]}
+    placeholder="Select colors"
+    multiple
+  />
+</div>
+
+```tsx
+<Select
+  items={["Red", "Green", "Blue", "Yellow", "Purple"]}
+  placeholder="Select colors"
+  multiple
+/>
+```
+
+## Disabled
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Select
+    items={["Apple", "Banana", "Cherry"]}
+    placeholder="Disabled select"
+    disabled
+  />
+</div>
+
+```tsx
+<Select
+  items={["Apple", "Banana", "Cherry"]}
+  placeholder="Disabled select"
+  disabled
+/>
+```

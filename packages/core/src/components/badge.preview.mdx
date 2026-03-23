@@ -1,0 +1,46 @@
+---
+title: Badge
+description: A small label component with multiple visual variants. Supports filled and outline styles with status dots.
+group: Data Display
+order: 1
+---
+
+import { Badge } from "@tailor-platform/app-shell";
+
+## Filled Variants
+
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "16px 0" }}>
+  <Badge variant="default">Default</Badge>
+  <Badge variant="success">Success</Badge>
+  <Badge variant="warning">Warning</Badge>
+  <Badge variant="error">Error</Badge>
+  <Badge variant="neutral">Neutral</Badge>
+</div>
+
+```tsx
+<Badge variant="default">Default</Badge>
+<Badge variant="success">Success</Badge>
+<Badge variant="warning">Warning</Badge>
+<Badge variant="error">Error</Badge>
+<Badge variant="neutral">Neutral</Badge>
+```
+
+## Outline Variants
+
+Outline variants include a colored status dot.
+
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "16px 0" }}>
+  <Badge variant="outline-success">Success</Badge>
+  <Badge variant="outline-warning">Warning</Badge>
+  <Badge variant="outline-error">Error</Badge>
+  <Badge variant="outline-info">Info</Badge>
+  <Badge variant="outline-neutral">Neutral</Badge>
+</div>
+
+```tsx
+<Badge variant="outline-success">Success</Badge>
+<Badge variant="outline-warning">Warning</Badge>
+<Badge variant="outline-error">Error</Badge>
+<Badge variant="outline-info">Info</Badge>
+<Badge variant="outline-neutral">Neutral</Badge>
+```

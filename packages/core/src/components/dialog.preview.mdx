@@ -1,0 +1,77 @@
+---
+title: Dialog
+description: A modal dialog with compound component API. Includes header, footer, title, and description sub-components.
+group: Overlays
+order: 1
+---
+
+import { Dialog, Button } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ padding: "16px 0" }}>
+  <Dialog.Root>
+    <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
+    <Dialog.Content>
+      <Dialog.Header>
+        <Dialog.Title>Are you sure?</Dialog.Title>
+        <Dialog.Description>This action cannot be undone. This will permanently delete your account and remove your data from our servers.</Dialog.Description>
+      </Dialog.Header>
+      <Dialog.Footer>
+        <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+        <Button>Confirm</Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Root>
+</div>
+
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Are you sure?</Dialog.Title>
+      <Dialog.Description>
+        This action cannot be undone. This will permanently delete your
+        account and remove your data from our servers.
+      </Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+      <Button>Confirm</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+```
+
+## Without Description
+
+<div style={{ padding: "16px 0" }}>
+  <Dialog.Root>
+    <Dialog.Trigger render={<Button />}>Simple Dialog</Dialog.Trigger>
+    <Dialog.Content>
+      <Dialog.Header>
+        <Dialog.Title>Notification</Dialog.Title>
+      </Dialog.Header>
+      <p style={{ fontSize: 14 }}>Your changes have been saved successfully.</p>
+      <Dialog.Footer>
+        <Dialog.Close render={<Button />}>OK</Dialog.Close>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Root>
+</div>
+
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger render={<Button />}>Simple Dialog</Dialog.Trigger>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Notification</Dialog.Title>
+    </Dialog.Header>
+    <p>Your changes have been saved successfully.</p>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button />}>OK</Dialog.Close>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+```

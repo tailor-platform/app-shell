@@ -1,0 +1,118 @@
+---
+title: Menu
+description: A dropdown menu with compound component API. Supports checkbox/radio items, groups, separators, and sub-menus.
+group: Actions
+order: 2
+---
+
+import { Menu, Button } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ padding: "16px 0" }}>
+  <Menu.Root>
+    <Menu.Trigger render={<Button variant="outline" />}>Open Menu</Menu.Trigger>
+    <Menu.Content>
+      <Menu.Item>Edit</Menu.Item>
+      <Menu.Item>Duplicate</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item>Archive</Menu.Item>
+      <Menu.Item>Delete</Menu.Item>
+    </Menu.Content>
+  </Menu.Root>
+</div>
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger render={<Button variant="outline" />}>Open Menu</Menu.Trigger>
+  <Menu.Content>
+    <Menu.Item>Edit</Menu.Item>
+    <Menu.Item>Duplicate</Menu.Item>
+    <Menu.Separator />
+    <Menu.Item>Archive</Menu.Item>
+    <Menu.Item>Delete</Menu.Item>
+  </Menu.Content>
+</Menu.Root>
+```
+
+## With Groups
+
+<div style={{ padding: "16px 0" }}>
+  <Menu.Root>
+    <Menu.Trigger render={<Button variant="outline" />}>Actions</Menu.Trigger>
+    <Menu.Content>
+      <Menu.Group>
+        <Menu.GroupLabel>Edit</Menu.GroupLabel>
+        <Menu.Item>Cut</Menu.Item>
+        <Menu.Item>Copy</Menu.Item>
+        <Menu.Item>Paste</Menu.Item>
+      </Menu.Group>
+      <Menu.Separator />
+      <Menu.Group>
+        <Menu.GroupLabel>View</Menu.GroupLabel>
+        <Menu.Item>Zoom In</Menu.Item>
+        <Menu.Item>Zoom Out</Menu.Item>
+      </Menu.Group>
+    </Menu.Content>
+  </Menu.Root>
+</div>
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger render={<Button variant="outline" />}>Actions</Menu.Trigger>
+  <Menu.Content>
+    <Menu.Group>
+      <Menu.GroupLabel>Edit</Menu.GroupLabel>
+      <Menu.Item>Cut</Menu.Item>
+      <Menu.Item>Copy</Menu.Item>
+      <Menu.Item>Paste</Menu.Item>
+    </Menu.Group>
+    <Menu.Separator />
+    <Menu.Group>
+      <Menu.GroupLabel>View</Menu.GroupLabel>
+      <Menu.Item>Zoom In</Menu.Item>
+      <Menu.Item>Zoom Out</Menu.Item>
+    </Menu.Group>
+  </Menu.Content>
+</Menu.Root>
+```
+
+## With Sub-menu
+
+<div style={{ padding: "16px 0" }}>
+  <Menu.Root>
+    <Menu.Trigger render={<Button variant="outline" />}>Options</Menu.Trigger>
+    <Menu.Content>
+      <Menu.Item>New File</Menu.Item>
+      <Menu.Item>New Window</Menu.Item>
+      <Menu.Separator />
+      <Menu.SubmenuRoot>
+        <Menu.SubmenuTrigger>Share →</Menu.SubmenuTrigger>
+        <Menu.Content>
+          <Menu.Item>Email</Menu.Item>
+          <Menu.Item>Message</Menu.Item>
+          <Menu.Item>Copy Link</Menu.Item>
+        </Menu.Content>
+      </Menu.SubmenuRoot>
+    </Menu.Content>
+  </Menu.Root>
+</div>
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger render={<Button variant="outline" />}>Options</Menu.Trigger>
+  <Menu.Content>
+    <Menu.Item>New File</Menu.Item>
+    <Menu.Item>New Window</Menu.Item>
+    <Menu.Separator />
+    <Menu.SubmenuRoot>
+      <Menu.SubmenuTrigger>Share →</Menu.SubmenuTrigger>
+      <Menu.Content>
+        <Menu.Item>Email</Menu.Item>
+        <Menu.Item>Message</Menu.Item>
+        <Menu.Item>Copy Link</Menu.Item>
+      </Menu.Content>
+    </Menu.SubmenuRoot>
+  </Menu.Content>
+</Menu.Root>
+```

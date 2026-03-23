@@ -1,0 +1,110 @@
+---
+title: Combobox
+description: A searchable combobox with filtering, multi-select, and optional async loading.
+group: Forms
+order: 3
+---
+
+import { Combobox } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Combobox
+    items={["Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape"]}
+    placeholder="Search fruits..."
+  />
+</div>
+
+```tsx
+<Combobox
+  items={["Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape"]}
+  placeholder="Search fruits..."
+/>
+```
+
+## With Objects
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Combobox
+    items={[
+      { id: 1, name: "React" },
+      { id: 2, name: "Vue" },
+      { id: 3, name: "Angular" },
+      { id: 4, name: "Svelte" },
+    ]}
+    mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+    placeholder="Search frameworks..."
+  />
+</div>
+
+```tsx
+<Combobox
+  items={[
+    { id: 1, name: "React" },
+    { id: 2, name: "Vue" },
+    { id: 3, name: "Angular" },
+    { id: 4, name: "Svelte" },
+  ]}
+  mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+  placeholder="Search frameworks..."
+/>
+```
+
+## Multiple
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Combobox
+    items={["React", "Vue", "Angular", "Svelte", "Solid", "Preact"]}
+    placeholder="Select frameworks..."
+    multiple
+  />
+</div>
+
+```tsx
+<Combobox
+  items={["React", "Vue", "Angular", "Svelte", "Solid", "Preact"]}
+  placeholder="Select frameworks..."
+  multiple
+/>
+```
+
+## Grouped Items
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Combobox
+    items={[
+      { label: "Frontend", items: ["React", "Vue", "Angular"] },
+      { label: "Backend", items: ["Express", "Fastify", "Hono"] },
+    ]}
+    placeholder="Search frameworks..."
+  />
+</div>
+
+```tsx
+<Combobox
+  items={[
+    { label: "Frontend", items: ["React", "Vue", "Angular"] },
+    { label: "Backend", items: ["Express", "Fastify", "Hono"] },
+  ]}
+  placeholder="Search frameworks..."
+/>
+```
+
+## Disabled
+
+<div style={{ maxWidth: 320, padding: "16px 0" }}>
+  <Combobox
+    items={["Apple", "Banana", "Cherry"]}
+    placeholder="Disabled combobox"
+    disabled
+  />
+</div>
+
+```tsx
+<Combobox
+  items={["Apple", "Banana", "Cherry"]}
+  placeholder="Disabled combobox"
+  disabled
+/>
+```

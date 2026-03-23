@@ -1,0 +1,42 @@
+---
+title: Input
+description: A styled text input component. Supports all native input attributes.
+group: Forms
+order: 1
+---
+
+import { Input } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 320, padding: "16px 0" }}>
+  <Input type="text" placeholder="Enter your name" />
+  <Input type="email" placeholder="Email address" />
+  <Input type="password" placeholder="Password" />
+</div>
+
+```tsx
+<Input type="text" placeholder="Enter your name" />
+<Input type="email" placeholder="Email address" />
+<Input type="password" placeholder="Password" />
+```
+
+## Disabled
+
+<div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 320, padding: "16px 0" }}>
+  <Input placeholder="Disabled input" disabled />
+</div>
+
+```tsx
+<Input placeholder="Disabled input" disabled />
+```
+
+## File Input
+
+<div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 320, padding: "16px 0" }}>
+  <Input type="file" />
+</div>
+
+```tsx
+<Input type="file" />
+```

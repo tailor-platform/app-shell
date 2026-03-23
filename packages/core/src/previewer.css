@@ -1,2 +1,52 @@
 @source "./**/*.{ts,tsx,mdx}";
 @import "./globals.css";
+
+:root {
+  --bg: #ffffff;
+  --fg: #111827;
+  --fg-secondary: #6b7280;
+  --fg-muted: #9ca3af;
+  --border: #e5e7eb;
+  --border-subtle: #f3f4f6;
+  --border-hover: #9ca3af;
+  --code-bg: #f4f4f5;
+  --card-bg: #ffffff;
+  --sidebar-active: #f3f4f6;
+  --table-header-bg: #f6f8fa;
+
+  /* Status badges */
+  --status-stable-bg: #dcfce7;
+  --status-stable-fg: #166534;
+  --status-beta-bg: #dbeafe;
+  --status-beta-fg: #1e40af;
+  --status-experimental-bg: #fef9c3;
+  --status-experimental-fg: #854d0e;
+  --status-deprecated-bg: #fee2e2;
+  --status-deprecated-fg: #991b1b;
+}
+
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --fg-secondary: #8b949e;
+  --fg-muted: #6e7681;
+  --border: #30363d;
+  --border-subtle: #21262d;
+  --border-hover: #8b949e;
+  --code-bg: #161b22;
+  --card-bg: #161b22;
+  --sidebar-active: #1c2128;
+  --table-header-bg: #161b22;
+
+  /* Status badges */
+  --status-stable-bg: #0d2818;
+  --status-stable-fg: #56d364;
+  --status-beta-bg: #0c2d6b;
+  --status-beta-fg: #79c0ff;
+  --status-experimental-bg: #3b2607;
+  --status-experimental-fg: #e3b341;
+  --status-deprecated-bg: #3c1418;
+  --status-deprecated-fg: #f85149;
+
+  color-scheme: dark;
+}

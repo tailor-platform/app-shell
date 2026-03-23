@@ -13,16 +13,20 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
 
 ## Single Column
 
-<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+The simplest layout with a single full-width column.
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
   <Layout>
     <Layout.Header title="Page Title" />
     <Layout.Column>
-      <div style={{ background: "#e4e4e7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(161, 161, 170, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Main Content
       </div>
     </Layout.Column>
   </Layout>
 </div>
+
+<br />
 
 ```tsx
 <Layout>
@@ -35,21 +39,25 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
 
 ## Two Columns
 
-<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+A flexible main area paired with a fixed-width sidebar (280px).
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
   <Layout>
     <Layout.Header title="Two Columns" />
     <Layout.Column>
-      <div style={{ background: "#dbeafe", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(96, 165, 250, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Main (1fr)
       </div>
     </Layout.Column>
     <Layout.Column>
-      <div style={{ background: "#fef9c3", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(250, 204, 21, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Side (280px)
       </div>
     </Layout.Column>
   </Layout>
 </div>
+
+<br />
 
 ```tsx
 <Layout>
@@ -65,26 +73,30 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
 
 ## Three Columns
 
-<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+A left sidebar (320px), flexible main area, and right sidebar (280px).
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
   <Layout>
     <Layout.Header title="Three Columns" />
     <Layout.Column>
-      <div style={{ background: "#dcfce7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(74, 222, 128, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Left (320px)
       </div>
     </Layout.Column>
     <Layout.Column>
-      <div style={{ background: "#dbeafe", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(96, 165, 250, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Main (1fr)
       </div>
     </Layout.Column>
     <Layout.Column>
-      <div style={{ background: "#fef9c3", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(250, 204, 21, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Right (280px)
       </div>
     </Layout.Column>
   </Layout>
 </div>
+
+<br />
 
 ```tsx
 <Layout>
@@ -103,7 +115,9 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
 
 ## With Header Actions
 
-<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+Use `actions` to place buttons alongside the page title.
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
   <Layout>
     <Layout.Header
       title="Orders"
@@ -113,8 +127,9 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
           style={{
             padding: "4px 12px",
             borderRadius: 6,
-            border: "1px solid #d4d4d8",
-            background: "white",
+            border: "1px solid var(--border)",
+            background: "var(--card-bg, transparent)",
+            color: "var(--fg, inherit)",
             cursor: "pointer",
           }}
         >
@@ -126,8 +141,8 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
             padding: "4px 12px",
             borderRadius: 6,
             border: "none",
-            background: "#18181b",
-            color: "white",
+            background: "var(--fg, #18181b)",
+            color: "var(--bg, white)",
             cursor: "pointer",
           }}
         >
@@ -136,12 +151,14 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
       ]}
     />
     <Layout.Column>
-      <div style={{ background: "#e4e4e7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(161, 161, 170, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Content area
       </div>
     </Layout.Column>
   </Layout>
 </div>
+
+<br />
 
 ```tsx
 <Layout>
@@ -162,26 +179,30 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
 
 ## Area-Based Columns
 
-<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+Use the `area` prop to assign role-based widths (`left`, `main`, `right`) instead of relying on position.
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
   <Layout>
     <Layout.Header title="Area-Based" />
     <Layout.Column area="left">
-      <div style={{ background: "#dcfce7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(74, 222, 128, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Left
       </div>
     </Layout.Column>
     <Layout.Column area="main">
-      <div style={{ background: "#dbeafe", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(96, 165, 250, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Main
       </div>
     </Layout.Column>
     <Layout.Column area="right">
-      <div style={{ background: "#fef9c3", borderRadius: 6, padding: 16, textAlign: "center" }}>
+      <div style={{ background: "rgba(250, 204, 21, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
         Right
       </div>
     </Layout.Column>
   </Layout>
 </div>
+
+<br />
 
 ```tsx
 <Layout>
@@ -189,5 +210,77 @@ Use `Layout` to organize page content into 1, 2, or 3 responsive columns with an
   <Layout.Column area="left">Left sidebar</Layout.Column>
   <Layout.Column area="main">Main content</Layout.Column>
   <Layout.Column area="right">Right sidebar</Layout.Column>
+</Layout>
+```
+
+## Left + Main
+
+A two-column area-based layout with a left sidebar (320px) and flexible main area.
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header title="Left + Main" />
+    <Layout.Column area="left">
+      <div style={{ background: "rgba(74, 222, 128, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Left (320px)
+      </div>
+    </Layout.Column>
+    <Layout.Column area="main">
+      <div style={{ background: "rgba(96, 165, 250, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Main (1fr)
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+<br />
+
+```tsx
+<Layout>
+  <Layout.Header title="Left + Main" />
+  <Layout.Column area="left">Left sidebar</Layout.Column>
+  <Layout.Column area="main">Main content</Layout.Column>
+</Layout>
+```
+
+## Four Columns
+
+With four or more columns, all columns share equal width (`repeat(N, 1fr)`).
+
+<div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header title="Four Columns" />
+    <Layout.Column>
+      <div style={{ background: "rgba(74, 222, 128, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Column 1
+      </div>
+    </Layout.Column>
+    <Layout.Column>
+      <div style={{ background: "rgba(96, 165, 250, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Column 2
+      </div>
+    </Layout.Column>
+    <Layout.Column>
+      <div style={{ background: "rgba(250, 204, 21, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Column 3
+      </div>
+    </Layout.Column>
+    <Layout.Column>
+      <div style={{ background: "rgba(192, 132, 252, 0.2)", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Column 4
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+<br />
+
+```tsx
+<Layout>
+  <Layout.Header title="Four Columns" />
+  <Layout.Column>Column 1</Layout.Column>
+  <Layout.Column>Column 2</Layout.Column>
+  <Layout.Column>Column 3</Layout.Column>
+  <Layout.Column>Column 4</Layout.Column>
 </Layout>
 ```

@@ -15,6 +15,8 @@ Use `Dialog` when you need the user to confirm an action, acknowledge informatio
 
 ## Basic
 
+A confirmation dialog with a title, description, and cancel/confirm actions.
+
 <div style={{ padding: "16px 0" }}>
   <Dialog.Root>
     <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
@@ -55,9 +57,11 @@ Use `Dialog` when you need the user to confirm an action, acknowledge informatio
 
 ## Without Description
 
+A minimal dialog that omits `Dialog.Description` for simple notifications.
+
 <div style={{ padding: "16px 0" }}>
   <Dialog.Root>
-    <Dialog.Trigger render={<Button />}>Simple Dialog</Dialog.Trigger>
+    <Dialog.Trigger render={<Button variant="outline" />}>Simple Dialog</Dialog.Trigger>
     <Dialog.Content>
       <Dialog.Header>
         <Dialog.Title>Notification</Dialog.Title>

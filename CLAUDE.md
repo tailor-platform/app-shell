@@ -31,6 +31,7 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Select](./docs/components/select.md)** - Single or multi-select dropdown with optional async loading
 - **[Combobox](./docs/components/combobox.md)** - Searchable combobox with filtering, multi-select, async loading, and creatable items
 - **[Autocomplete](./docs/components/autocomplete.md)** - Free-text input with a suggestion list and optional async loading
+- **[MetricCard](./docs/components/metric-card.md)** - Compact card for dashboard KPI summaries with title, value, optional trend and description
 
 ## Key Architecture Points (LLM Orientation)
 

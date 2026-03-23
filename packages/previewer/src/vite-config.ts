@@ -7,7 +7,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
-import type { PreviewerRepo } from "./config";
+import type { PreviewerRepo, PreviewerSidebar } from "./config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = resolve(__dirname, "..", "app");
@@ -24,6 +24,8 @@ export function createPreviewerViteConfig(options: {
   css?: string;
   /** GitHub repository configuration */
   repo?: PreviewerRepo;
+  /** Sidebar configuration */
+  sidebar?: PreviewerSidebar;
   /** Vite configuration overrides */
   vite?: {
     plugins?: PluginOption[];
@@ -62,8 +64,10 @@ export function createPreviewerViteConfig(options: {
       ...(options.vite?.plugins ?? []),
       previewerEntriesPlugin(options.root, options.glob),
       previewerCssPlugin(options.root, options.css),
-      previewerConfigPlugin(options.repo),
-      previewerLlmsTxtPlugin(options.root, options.glob, options.repo),
+      previewerConfigPlugin(options.repo, options.sidebar),
+      ...(options.repo?.url
+        ? [previewerLlmsTxtPlugin(options.root, options.glob, options.repo)]
+        : []),
     ],
   };
 }
@@ -147,7 +151,7 @@ function previewerCssPlugin(hostRoot: string, css?: string): Plugin {
  * Virtual module `virtual:previewer-config` — exposes the resolved
  * repo configuration so the app can render source links.
  */
-function previewerConfigPlugin(repo?: PreviewerRepo): Plugin {
+function previewerConfigPlugin(repo?: PreviewerRepo, sidebar?: PreviewerSidebar): Plugin {
   const MODULE_ID = "virtual:previewer-config";
   const RESOLVED_ID = "\0" + MODULE_ID;
 
@@ -161,15 +165,20 @@ function previewerConfigPlugin(repo?: PreviewerRepo): Plugin {
     load(id) {
       if (id !== RESOLVED_ID) return;
 
-      if (!repo) {
-        return "export const repo = null;";
+      const lines: string[] = [];
+
+      if (repo) {
+        // Strip trailing slash from URL
+        const normalizedUrl = repo.url.replace(/\/+$/, "");
+        const branch = repo.branch ?? "main";
+        lines.push(`export const repo = ${JSON.stringify({ url: normalizedUrl, branch })};`);
+      } else {
+        lines.push("export const repo = null;");
       }
 
-      // Strip trailing slash from URL
-      const normalizedUrl = repo.url.replace(/\/+$/, "");
-      const branch = repo.branch ?? "main";
+      lines.push(`export const sidebar = ${JSON.stringify({ title: sidebar?.title ?? null })};`);
 
-      return `export const repo = ${JSON.stringify({ url: normalizedUrl, branch })};`;
+      return lines.join("\n");
     },
   };
 }
@@ -233,12 +242,16 @@ function previewerLlmsTxtPlugin(hostRoot: string, glob: string, repo?: Previewer
       group.sort((a, b) => a.order - b.order);
     }
 
-    const repoUrl = repo?.url?.replace(/\/+$/, "");
     const branch = repo?.branch ?? "main";
 
     function buildSourceUrl(entry: FmEntry): string {
+      const repoUrl = repo?.url?.replace(/\/+$/, "");
       if (!repoUrl) return "";
-      return `${repoUrl}/blob/${branch}/${entry.filePath.replace(/^\/+/, "")}`;
+      const rawBase = repoUrl.replace(
+        /^https:\/\/github\.com\//,
+        "https://raw.githubusercontent.com/",
+      );
+      return `${rawBase}/${branch}/${entry.filePath.replace(/^\/+/, "")}`;
     }
 
     const lines: string[] = [];

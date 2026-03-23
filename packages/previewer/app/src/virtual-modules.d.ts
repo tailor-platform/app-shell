@@ -25,7 +25,11 @@ declare module "virtual:previewer-config" {
     url: string;
     branch: string;
   }
+  interface PreviewerSidebarResolved {
+    title: string | null;
+  }
   export const repo: PreviewerRepoResolved | null;
+  export const sidebar: PreviewerSidebarResolved;
 }
 
 declare module "virtual:previewer-css" {}

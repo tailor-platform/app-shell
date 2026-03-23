@@ -7,6 +7,11 @@ export type PreviewerRepo = {
   branch?: string;
 };
 
+export type PreviewerSidebar = {
+  /** Title displayed at the top of the sidebar */
+  title?: string;
+};
+
 export type PreviewerConfig = {
   /** Glob pattern for preview MDX files (default: "src/**\/*.preview.mdx") */
   glob?: string;
@@ -14,6 +19,8 @@ export type PreviewerConfig = {
   css?: string;
   /** GitHub repository for "View docs code" links. */
   repo?: PreviewerRepo;
+  /** Sidebar configuration */
+  sidebar?: PreviewerSidebar;
   /** Vite configuration overrides */
   vite?: {
     /** Additional Vite plugins (e.g. @tailwindcss/vite for Tailwind support) */

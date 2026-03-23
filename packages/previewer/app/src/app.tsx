@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { entries } from "virtual:previewer-entries";
-import { repo } from "virtual:previewer-config";
+import { repo, sidebar } from "virtual:previewer-config";
 import { mdxComponents } from "./mdx-components";
 import { Overview } from "./overview";
 
@@ -93,6 +93,26 @@ function useGroupedEntries(entries: PreviewEntry[]) {
 
 const OVERVIEW_KEY = "__overview__";
 
+const groupHeadingStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  color: "#9ca3af",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+};
+
+const sidebarItemStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  width: "100%",
+  textAlign: "left",
+  padding: "6px 16px",
+  fontSize: 14,
+  border: "none",
+  cursor: "pointer",
+};
+
 function Sidebar({
   groups,
   selected,
@@ -112,32 +132,25 @@ function Sidebar({
         flexShrink: 0,
       }}
     >
-      {/* General section */}
-      <div>
+      {sidebar.title && (
         <div
           style={{
-            padding: "12px 16px 4px",
-            fontSize: 11,
+            padding: "10px 16px 16px",
+            fontSize: 15,
             fontWeight: 700,
-            color: "#9ca3af",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
+            marginBottom: 4,
           }}
         >
-          General
+          {sidebar.title}
         </div>
+      )}
+      {/* General section */}
+      <div>
+        <div style={{ padding: "12px 16px 4px", ...groupHeadingStyle }}>General</div>
         <button
           onClick={() => onSelect(OVERVIEW_KEY)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            width: "100%",
-            textAlign: "left",
-            padding: "8px 16px",
-            fontSize: 14,
-            border: "none",
-            cursor: "pointer",
+            ...sidebarItemStyle,
             backgroundColor: selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
             fontWeight: selected === OVERVIEW_KEY ? 600 : 400,
           }}
@@ -149,15 +162,7 @@ function Sidebar({
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            width: "100%",
-            textAlign: "left",
-            padding: "8px 16px",
-            fontSize: 14,
-            border: "none",
-            cursor: "pointer",
+            ...sidebarItemStyle,
             backgroundColor: "transparent",
             fontWeight: 400,
             textDecoration: "none",
@@ -183,32 +188,13 @@ function Sidebar({
 
       {groups.map((group) => (
         <div key={group.name}>
-          <div
-            style={{
-              padding: "12px 16px 4px",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#9ca3af",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            {group.name}
-          </div>
+          <div style={{ padding: "20px 16px 4px", ...groupHeadingStyle }}>{group.name}</div>
           {group.entries.map((entry) => (
             <button
               key={entry.name}
               onClick={() => onSelect(entry.name)}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                width: "100%",
-                textAlign: "left",
-                padding: "8px 16px",
-                fontSize: 14,
-                border: "none",
-                cursor: "pointer",
+                ...sidebarItemStyle,
                 backgroundColor: selected === entry.name ? "#f3f4f6" : "transparent",
                 fontWeight: selected === entry.name ? 600 : 400,
               }}
@@ -353,18 +339,7 @@ function TableOfContents({
         borderLeft: "1px solid #e5e7eb",
       }}
     >
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "#9ca3af",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          marginBottom: 12,
-        }}
-      >
-        Table of contents
-      </div>
+      <div style={{ ...groupHeadingStyle, marginBottom: 12 }}>Table of contents</div>
       {items.map((item) => (
         <a
           key={item.id}

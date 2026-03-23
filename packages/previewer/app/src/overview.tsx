@@ -25,9 +25,7 @@ export function Overview({ onSelect }: OverviewProps) {
 
   // Sort entries within each group by order
   for (const group of groupMap.values()) {
-    group.sort(
-      (a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999),
-    );
+    group.sort((a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999));
   }
 
   return (

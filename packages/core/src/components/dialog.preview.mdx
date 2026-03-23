@@ -3,6 +3,7 @@ title: Dialog
 description: A modal dialog with compound component API. Includes header, footer, title, and description sub-components.
 group: Overlays
 order: 1
+codePath: packages/core/src/components/dialog.tsx
 ---
 
 import { Dialog, Button } from "@tailor-platform/app-shell";
@@ -15,7 +16,10 @@ import { Dialog, Button } from "@tailor-platform/app-shell";
     <Dialog.Content>
       <Dialog.Header>
         <Dialog.Title>Are you sure?</Dialog.Title>
-        <Dialog.Description>This action cannot be undone. This will permanently delete your account and remove your data from our servers.</Dialog.Description>
+        <Dialog.Description>
+          This action cannot be undone. This will permanently delete your account and remove your
+          data from our servers.
+        </Dialog.Description>
       </Dialog.Header>
       <Dialog.Footer>
         <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
@@ -32,8 +36,8 @@ import { Dialog, Button } from "@tailor-platform/app-shell";
     <Dialog.Header>
       <Dialog.Title>Are you sure?</Dialog.Title>
       <Dialog.Description>
-        This action cannot be undone. This will permanently delete your
-        account and remove your data from our servers.
+        This action cannot be undone. This will permanently delete your account and remove your data
+        from our servers.
       </Dialog.Description>
     </Dialog.Header>
     <Dialog.Footer>

@@ -3,6 +3,7 @@ title: DescriptionCard
 description: A structured key-value card for displaying document or record details with support for badges, money, dates, links, and more.
 group: Data Display
 order: 4
+codePath: packages/core/src/components/description-card/DescriptionCard.tsx
 ---
 
 import { DescriptionCard } from "@tailor-platform/app-shell";
@@ -70,7 +71,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
   title="Order #1234"
   data={{
     status: "CONFIRMED",
-    total: 1250.00,
+    total: 1250.0,
     currency: "USD",
     createdAt: "2025-06-15T10:30:00Z",
   }}
@@ -149,7 +150,12 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
       { key: "category", label: "Category" },
       { key: "price", label: "Price", type: "money", meta: { currencyKey: "currency" } },
       { key: "weight", label: "Weight" },
-      { key: "stock", label: "Availability", type: "badge", meta: { badgeVariantMap: { "In Stock": "success" } } },
+      {
+        key: "stock",
+        label: "Availability",
+        type: "badge",
+        meta: { badgeVariantMap: { "In Stock": "success" } },
+      },
       { key: "manufacturer", label: "Manufacturer" },
     ]}
   />

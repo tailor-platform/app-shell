@@ -181,11 +181,7 @@ function previewerConfigPlugin(repo?: PreviewerRepo): Plugin {
  * - Dev: intercepts the request via `configureServer` middleware.
  * - Build: emits `llms.txt` as a static asset via `generateBundle`.
  */
-function previewerLlmsTxtPlugin(
-  hostRoot: string,
-  glob: string,
-  repo?: PreviewerRepo,
-): Plugin {
+function previewerLlmsTxtPlugin(hostRoot: string, glob: string, repo?: PreviewerRepo): Plugin {
   async function buildLlmsTxt(): Promise<string> {
     const fg = await import("fast-glob");
     const { readFile } = await import("node:fs/promises");
@@ -248,9 +244,7 @@ function previewerLlmsTxtPlugin(
     const lines: string[] = [];
     lines.push(`# Component Library`);
     lines.push("");
-    lines.push(
-      `> ${fmEntries.length} components across ${groupMap.size} groups`,
-    );
+    lines.push(`> ${fmEntries.length} components across ${groupMap.size} groups`);
     lines.push("");
 
     for (const [groupName, groupEntries] of groupMap) {

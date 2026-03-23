@@ -3,6 +3,7 @@ title: Sheet
 description: A slide-in panel with swipe-to-dismiss support. Can appear from any edge of the screen.
 group: Overlays
 order: 3
+codePath: packages/core/src/components/sheet.tsx
 ---
 
 import { Sheet, Button } from "@tailor-platform/app-shell";
@@ -17,9 +18,7 @@ import { Sheet, Button } from "@tailor-platform/app-shell";
         <Sheet.Title>Settings</Sheet.Title>
         <Sheet.Description>Manage your preferences here.</Sheet.Description>
       </Sheet.Header>
-      <div style={{ padding: "0 16px", fontSize: 14 }}>
-        Sheet content goes here.
-      </div>
+      <div style={{ padding: "0 16px", fontSize: 14 }}>Sheet content goes here.</div>
       <Sheet.Footer>
         <Sheet.Close render={<Button />}>Close</Sheet.Close>
       </Sheet.Footer>

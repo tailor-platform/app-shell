@@ -3,6 +3,7 @@ title: Combobox
 description: A searchable combobox with filtering, multi-select, and optional async loading.
 group: Forms
 order: 3
+codePath: packages/core/src/components/combobox.tsx
 ---
 
 import { Combobox } from "@tailor-platform/app-shell";
@@ -94,17 +95,9 @@ import { Combobox } from "@tailor-platform/app-shell";
 ## Disabled
 
 <div style={{ maxWidth: 320, padding: "16px 0" }}>
-  <Combobox
-    items={["Apple", "Banana", "Cherry"]}
-    placeholder="Disabled combobox"
-    disabled
-  />
+  <Combobox items={["Apple", "Banana", "Cherry"]} placeholder="Disabled combobox" disabled />
 </div>
 
 ```tsx
-<Combobox
-  items={["Apple", "Banana", "Cherry"]}
-  placeholder="Disabled combobox"
-  disabled
-/>
+<Combobox items={["Apple", "Banana", "Cherry"]} placeholder="Disabled combobox" disabled />
 ```

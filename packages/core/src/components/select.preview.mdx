@@ -3,6 +3,7 @@ title: Select
 description: A single or multi-select dropdown. Accepts a flat or grouped items array.
 group: Forms
 order: 2
+codePath: packages/core/src/components/select.tsx
 ---
 
 import { Select } from "@tailor-platform/app-shell";
@@ -17,10 +18,7 @@ import { Select } from "@tailor-platform/app-shell";
 </div>
 
 ```tsx
-<Select
-  items={["Apple", "Banana", "Cherry", "Date", "Elderberry"]}
-  placeholder="Select a fruit"
-/>
+<Select items={["Apple", "Banana", "Cherry", "Date", "Elderberry"]} placeholder="Select a fruit" />
 ```
 
 ## With Objects
@@ -82,27 +80,15 @@ import { Select } from "@tailor-platform/app-shell";
 </div>
 
 ```tsx
-<Select
-  items={["Red", "Green", "Blue", "Yellow", "Purple"]}
-  placeholder="Select colors"
-  multiple
-/>
+<Select items={["Red", "Green", "Blue", "Yellow", "Purple"]} placeholder="Select colors" multiple />
 ```
 
 ## Disabled
 
 <div style={{ maxWidth: 320, padding: "16px 0" }}>
-  <Select
-    items={["Apple", "Banana", "Cherry"]}
-    placeholder="Disabled select"
-    disabled
-  />
+  <Select items={["Apple", "Banana", "Cherry"]} placeholder="Disabled select" disabled />
 </div>
 
 ```tsx
-<Select
-  items={["Apple", "Banana", "Cherry"]}
-  placeholder="Disabled select"
-  disabled
-/>
+<Select items={["Apple", "Banana", "Cherry"]} placeholder="Disabled select" disabled />
 ```

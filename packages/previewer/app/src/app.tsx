@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentType,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { entries } from "virtual:previewer-entries";
 import { repo } from "virtual:previewer-config";
@@ -90,9 +84,7 @@ function useGroupedEntries(entries: PreviewEntry[]) {
     }
 
     for (const group of groupMap.values()) {
-      group.entries.sort(
-        (a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999),
-      );
+      group.entries.sort((a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999));
     }
 
     return [...groupMap.values()].sort((a, b) => a.order - b.order);
@@ -146,8 +138,7 @@ function Sidebar({
             fontSize: 14,
             border: "none",
             cursor: "pointer",
-            backgroundColor:
-              selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
+            backgroundColor: selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
             fontWeight: selected === OVERVIEW_KEY ? 600 : 400,
           }}
         >
@@ -218,17 +209,12 @@ function Sidebar({
                 fontSize: 14,
                 border: "none",
                 cursor: "pointer",
-                backgroundColor:
-                  selected === entry.name ? "#f3f4f6" : "transparent",
+                backgroundColor: selected === entry.name ? "#f3f4f6" : "transparent",
                 fontWeight: selected === entry.name ? 600 : 400,
               }}
             >
-              <span style={{ flex: 1 }}>
-                {entry.frontmatter.title ?? entry.name}
-              </span>
-              {entry.frontmatter.status && (
-                <StatusBadge status={entry.frontmatter.status} />
-              )}
+              <span style={{ flex: 1 }}>{entry.frontmatter.title ?? entry.name}</span>
+              {entry.frontmatter.status && <StatusBadge status={entry.frontmatter.status} />}
             </button>
           ))}
         </div>
@@ -254,9 +240,7 @@ function PreviewHeader({ entry }: { entry: PreviewEntry }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {frontmatter.title && (
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>
-            {frontmatter.title}
-          </h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{frontmatter.title}</h1>
         )}
         {frontmatter.status && <StatusBadge status={frontmatter.status} />}
       </div>
@@ -299,9 +283,7 @@ interface TocItem {
   level: number;
 }
 
-function useTableOfContents(
-  containerRef: React.RefObject<HTMLDivElement | null>,
-) {
+function useTableOfContents(containerRef: React.RefObject<HTMLDivElement | null>) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -402,10 +384,7 @@ function TableOfContents({
             color: activeId === item.id ? "#111827" : "#6b7280",
             fontWeight: activeId === item.id ? 600 : 400,
             textDecoration: "none",
-            borderLeft:
-              activeId === item.id
-                ? "2px solid #111827"
-                : "2px solid transparent",
+            borderLeft: activeId === item.id ? "2px solid #111827" : "2px solid transparent",
             paddingInlineStart: item.level === 3 ? 20 : 8,
           }}
         >

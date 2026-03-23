@@ -31,10 +31,10 @@ describe("Field", () => {
 
     it("field with error", () => {
       const { container } = render(
-        <Field.Root name="url" invalid>
+        <Field.Root name="url" error={{ message: "Please enter a valid URL." }}>
           <Field.Label>Homepage</Field.Label>
           <Field.Control type="url" />
-          <Field.Error match>Please enter a valid URL.</Field.Error>
+          <Field.Error match={true}>Please enter a valid URL.</Field.Error>
         </Field.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
@@ -82,14 +82,43 @@ describe("Field", () => {
     expect(screen.getByText("Help text")).toBeDefined();
   });
 
-  it("renders error when invalid", () => {
+  it("renders error when error is provided", () => {
     render(
-      <Field.Root name="test" invalid>
+      <Field.Root name="test" error={{ message: "Error message" }}>
         <Field.Label>Test</Field.Label>
         <Field.Control />
-        <Field.Error match>Error message</Field.Error>
+        <Field.Error match={true}>Error message</Field.Error>
       </Field.Root>,
     );
     expect(screen.getByText("Error message")).toBeDefined();
+  });
+
+  describe("RHF integration", () => {
+    it("maps isTouched to touched", () => {
+      const { container } = render(
+        <Field.Root name="test" isTouched>
+          <Field.Control />
+        </Field.Root>,
+      );
+      expect(container.querySelector("[data-touched]")).toBeDefined();
+    });
+
+    it("maps isDirty to dirty", () => {
+      const { container } = render(
+        <Field.Root name="test" isDirty>
+          <Field.Control />
+        </Field.Root>,
+      );
+      expect(container.querySelector("[data-dirty]")).toBeDefined();
+    });
+
+    it("sets invalid when error is provided", () => {
+      const { container } = render(
+        <Field.Root name="test" error={{ message: "Required" }}>
+          <Field.Control />
+        </Field.Root>,
+      );
+      expect(container.querySelector("[data-invalid]")).toBeDefined();
+    });
   });
 });

@@ -6,19 +6,30 @@ import { cn } from "@/lib/utils";
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
 // so that upstream changes don't leak as breaking changes to consumers.
+//
+// The field-state props (`isTouched`, `isDirty`, `error`) follow React Hook
+// Form's `fieldState` shape so `<Field.Root {...fieldState}>` just works.
 type FieldRootProps = Pick<
   React.ComponentProps<typeof BaseField.Root>,
   | "name"
-  | "invalid"
-  | "dirty"
-  | "touched"
   | "disabled"
   | "validate"
   | "validationMode"
   | "validationDebounceTime"
   | "className"
   | "style"
-> & { children: React.ReactNode };
+> & {
+  children: React.ReactNode;
+  /** Whether the field has been blurred. Maps to Base UI's `touched`. */
+  isTouched?: boolean;
+  /** Whether the field value differs from the default. Maps to Base UI's `dirty`. */
+  isDirty?: boolean;
+  /**
+   * An error object (e.g. from React Hook Form's `fieldState.error`).
+   * When provided, the field is marked invalid (`invalid={!!error}`).
+   */
+  error?: { message?: string };
+};
 
 /**
  * Groups all parts of a form field and manages its validation state.
@@ -36,28 +47,53 @@ type FieldRootProps = Pick<
  * component — the wiring happens automatically through Base UI's context.
  *
  * @example
+ * ### With Field.Control (plain input)
  * ```tsx
- * // With Field.Control (plain input)
  * <Field.Root name="email">
  *   <Field.Label>Email</Field.Label>
  *   <Field.Control type="email" required />
  *   <Field.Description>We'll never share your email.</Field.Description>
  *   <Field.Error match="typeMismatch">Please enter a valid email.</Field.Error>
  * </Field.Root>
+ * ```
  *
- * // With Select (auto-wired via Base UI context)
- * <Field.Root name="fruit">
- *   <Field.Label>Fruit</Field.Label>
- *   <Select items={fruits} mapItem={mapFruit} />
- *   <Field.Description>Pick one.</Field.Description>
- * </Field.Root>
+ * @example
+ * ### With React Hook Form (Controller spread)
+ * ```tsx
+ * <Controller
+ *   name="email"
+ *   control={control}
+ *   rules={{ required: "Required" }}
+ *   render={({ field, fieldState }) => (
+ *     <Field.Root {...fieldState}>
+ *       <Field.Label>Email</Field.Label>
+ *       <Field.Control {...field} type="email" />
+ *       <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+ *     </Field.Root>
+ *   )}
+ * />
  * ```
  */
-function Root({ className, children, ...props }: FieldRootProps) {
+function Root({
+  className,
+  children,
+  isTouched,
+  isDirty,
+  error,
+  // Absorb extra RHF fieldState props so they don't leak to the DOM.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isValidating: _isValidating,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  invalid: _invalid,
+  ...props
+}: FieldRootProps & { isValidating?: unknown; invalid?: unknown }) {
   return (
     <BaseField.Root
       data-slot="field"
       className={cn("astw:flex astw:flex-col astw:items-start astw:gap-1", className)}
+      touched={isTouched}
+      dirty={isDirty}
+      invalid={!!error}
       {...props}
     >
       {children}

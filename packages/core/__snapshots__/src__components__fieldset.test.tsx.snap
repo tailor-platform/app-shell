@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Fieldset > snapshots > basic fieldset with legend 1`] = `"<fieldset data-slot="fieldset" aria-labelledby="base-ui-_r_0_"><div id="base-ui-_r_0_" data-slot="fieldset-legend" class="astw:text-sm astw:font-medium">Billing details</div><div>Field content</div></fieldset>"`;
+
+exports[`Fieldset > snapshots > fieldset with custom className 1`] = `"<fieldset data-slot="fieldset" class="custom-fieldset" aria-labelledby="base-ui-_r_1_"><div id="base-ui-_r_1_" data-slot="fieldset-legend" class="astw:text-sm astw:font-medium custom-legend">Section</div></fieldset>"`;

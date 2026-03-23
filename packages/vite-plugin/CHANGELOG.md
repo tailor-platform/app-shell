@@ -1,5 +1,17 @@
 # @tailor-platform/app-shell-vite-plugin
 
+## 0.2.0
+
+### Minor Changes
+
+- 01a2249: Add `entrypoint` option to `appShellRoutes()` plugin. When specified, only imports from the entrypoint file are intercepted and replaced with the pages-injected AppShell, eliminating circular module dependencies entirely. It is recommended to set this option to avoid potential TDZ errors caused by circular imports in page components.
+
+  ```ts
+  appShellRoutes({
+    entrypoint: "src/App.tsx",
+  });
+  ```
+
 ## 0.27.0
 
 ### Minor Changes
@@ -39,6 +51,7 @@
   ```
 
   Under the hood, the plugin:
+
   1. **Scans pages** - Finds `page.tsx` files in `src/pages` and builds a route tree
   2. **Generates virtual module** - Creates `virtual:app-shell-pages` with all discovered pages
   3. **Auto-injects pages** - Intercepts `@tailor-platform/app-shell` imports and wraps `AppShell` with `AppShell.WithPages(pages)`
@@ -71,6 +84,7 @@
   ```
 
   When enabled, the plugin generates `src/routes.generated.ts` containing:
+
   - `GeneratedRouteParams` type mapping all routes to their parameter types
   - `paths` helper with a type-safe `for()` method for building URLs
   - Module augmentation to register route types with app-shell

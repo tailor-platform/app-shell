@@ -1,5 +1,13 @@
 # @tailor-platform/app-shell
 
+## 0.31.1
+
+### Patch Changes
+
+- e81fbd7: Updated [react-router](https://www.npmjs.com/package/react-router) (^7.4.0 -> ^7.13.1)
+- Updated dependencies [01a2249]
+  - @tailor-platform/app-shell-vite-plugin@0.2.0
+
 ## 0.31.0
 
 ### Minor Changes

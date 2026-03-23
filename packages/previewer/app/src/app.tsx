@@ -100,7 +100,7 @@ function Sidebar({
       style={{
         width: 220,
         borderRight: "1px solid #e5e7eb",
-        padding: "16px 0",
+        padding: "20px 0",
         overflowY: "auto",
         flexShrink: 0,
       }}
@@ -327,7 +327,7 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
             scrollbarWidth: "none",
           }}
         >
-          <div style={{ maxWidth: 1020, margin: "0 auto" }}>
+          <div style={{ maxWidth: 1020, margin: "0 auto", paddingBottom: 80 }}>
             <Component />
           </div>
         </div>

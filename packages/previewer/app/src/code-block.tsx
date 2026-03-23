@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 
-export function CodeBlock({ children, className }: { children: string; className?: string }) {
+export function CodeBlock({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) {
   const lang = className?.replace("language-", "") ?? "";
   const [html, setHtml] = useState<string | null>(null);
 
@@ -30,6 +36,7 @@ export function CodeBlock({ children, className }: { children: string; className
     return (
       <div
         style={{
+          background: "#f4f4f5",
           borderRadius: 8,
           overflow: "auto",
           fontSize: 13,
@@ -44,7 +51,7 @@ export function CodeBlock({ children, className }: { children: string; className
   return (
     <pre
       style={{
-        background: "#f8f9fa",
+        background: "#f4f4f5",
         padding: 16,
         borderRadius: 8,
         overflow: "auto",

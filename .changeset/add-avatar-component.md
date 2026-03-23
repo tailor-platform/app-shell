@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `Avatar` (Base UI): `Avatar.Root`, `Avatar.Image`, and `Avatar.Fallback` with `size` variants (`sm`, `default`, `lg`) and exported `avatarVariants`. `ActivityCard` now uses this shared avatar.
+Add `Avatar` (Base UI): `Avatar.Root`, `Avatar.Image`, and `Avatar.Fallback` with `size` variants (`sm`, `default`, `lg`) and exported `avatarVariants` and `AvatarProps`. `ActivityCard` uses this shared avatar; export `ActivityCardActivity` from the package root for typed activity lists.
 
 ```tsx
 import { Avatar } from "@tailor-platform/app-shell";

@@ -76,12 +76,16 @@ export { useToast } from "./hooks/use-toast";
 // Components
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
-export { ActivityCard, type ActivityCardProps } from "./components/activity-card";
+export {
+  ActivityCard,
+  type ActivityCardProps,
+  type ActivityCardActivity,
+} from "./components/activity-card";
 export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
-export { Avatar, avatarVariants, type AvatarRootProps } from "./components/avatar";
+export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
 export { Table } from "./components/table";
 export { Dialog } from "./components/dialog";

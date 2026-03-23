@@ -54,6 +54,14 @@ import { Avatar } from "@tailor-platform/app-shell";
 </Avatar.Root>
 ```
 
+## Types
+
+`AvatarProps` is the props type for `Avatar.Root` (includes `size` and Base UI root props). Import when wrapping or composing:
+
+```tsx
+import { Avatar, type AvatarProps } from "@tailor-platform/app-shell";
+```
+
 ## `avatarVariants`
 
 The same size styles used by `Avatar.Root` are exported as `avatarVariants` (for example if you need to mirror avatar dimensions in layout code). Prefer the `size` prop on `Avatar.Root` for normal use.

@@ -1,12 +1,17 @@
 ---
 title: Dialog
 description: A modal dialog with compound component API. Includes header, footer, title, and description sub-components.
-group: Overlays
-order: 1
-codePath: packages/core/src/components/dialog.tsx
+sidebar:
+  group: Overlays
+  order: 1
+filePath: packages/core/src/components/dialog.tsx
+props:
+  - ./dialog.tsx:DialogRootProps
 ---
 
 import { Dialog, Button } from "@tailor-platform/app-shell";
+
+Use `Dialog` when you need the user to confirm an action, acknowledge information, or fill out a short form without leaving the current page. It renders a modal overlay that blocks background interaction until dismissed.
 
 ## Basic
 

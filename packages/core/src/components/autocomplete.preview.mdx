@@ -1,12 +1,15 @@
 ---
 title: Autocomplete
 description: A free-text input with a suggestion list. Supports filtering, grouped items, and optional async loading.
-group: Forms
-order: 4
-codePath: packages/core/src/components/autocomplete.tsx
+sidebar:
+  group: Forms
+  order: 4
+filePath: packages/core/src/components/autocomplete.tsx
 ---
 
 import { Autocomplete } from "@tailor-platform/app-shell";
+
+Use `Autocomplete` when users should type free-form text but benefit from suggestions. Unlike `Select` or `Combobox`, the value is the raw input string — not a discrete selection. Ideal for search fields, address inputs, or any input where suggestions assist but don't constrain the user.
 
 ## Basic
 

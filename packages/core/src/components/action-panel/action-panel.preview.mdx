@@ -1,12 +1,18 @@
 ---
 title: ActionPanel
 description: A card displaying a list of clickable actions with icons, loading, and disabled states.
-group: Data Display
-order: 3
-codePath: packages/core/src/components/action-panel/ActionPanel.tsx
+sidebar:
+  group: Data Display
+  order: 3
+filePath: packages/core/src/components/action-panel/ActionPanel.tsx
+props:
+  - ./types.ts:ActionPanelProps
+  - ./types.ts:ActionItem
 ---
 
 import { ActionPanel } from "@tailor-platform/app-shell";
+
+Use `ActionPanel` to display a vertical list of clickable actions with icons. It is designed for ERP detail pages and side panels where available actions (e.g. "Create invoice", "Export CSV") are listed alongside a record.
 
 ## Basic
 

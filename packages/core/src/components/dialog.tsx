@@ -1,5 +1,8 @@
 import * as React from "react";
-import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import {
+  Dialog as BaseDialog,
+  DialogRootProps as BaseDialogRootProps,
+} from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -8,7 +11,7 @@ import { cn } from "@/lib/utils";
 // Base UI-internal props (e.g. dismissible, animated) are intentionally excluded
 // so that upstream changes don't leak as breaking changes to consumers.
 type DialogRootProps = Pick<
-  React.ComponentProps<typeof BaseDialog.Root>,
+  BaseDialogRootProps,
   "open" | "defaultOpen" | "onOpenChange" | "modal"
 > & {
   children: React.ReactNode;

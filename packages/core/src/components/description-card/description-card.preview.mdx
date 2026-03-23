@@ -1,12 +1,19 @@
 ---
 title: DescriptionCard
 description: A structured key-value card for displaying document or record details with support for badges, money, dates, links, and more.
-group: Data Display
-order: 4
-codePath: packages/core/src/components/description-card/DescriptionCard.tsx
+sidebar:
+  group: Data Display
+  order: 4
+filePath: packages/core/src/components/description-card/DescriptionCard.tsx
+props:
+  - ./types.ts:DescriptionCardProps
+  - ./types.ts:FieldDefinition
+  - ./types.ts:FieldMeta
 ---
 
 import { DescriptionCard } from "@tailor-platform/app-shell";
+
+Use `DescriptionCard` to display structured key-value information for a record — such as customer details, order summaries, or document metadata. It renders field-value pairs in a responsive grid with built-in support for badges, monetary values, dates, and links.
 
 ## Basic
 

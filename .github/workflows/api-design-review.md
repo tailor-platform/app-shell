@@ -55,4 +55,4 @@ Format your verdict at the end of the review as:
 ## Safe Outputs
 
 - Use `create-pull-request-review-comment` to post inline review comments on specific lines in the diff.
-- If the PR has no issues to flag, call the `noop` safe output with a message like: "No API design issues found in this PR."
+- If the PR has no issues to flag, use `add_comment` (not `submit_pull_request_review`) to post a brief comment on the PR confirming the review found no issues.

@@ -1,0 +1,164 @@
+---
+title: Layout
+description: A responsive CSS Grid layout with header, columns, and area-based sizing. Supports 1–3 column configurations.
+group: Layout
+order: 1
+---
+
+import { Layout } from "@tailor-platform/app-shell";
+
+## Single Column
+
+<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header title="Page Title" />
+    <Layout.Column>
+      <div style={{ background: "#e4e4e7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Main Content
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+```tsx
+<Layout>
+  <Layout.Header title="Page Title" />
+  <Layout.Column>
+    <p>Main content goes here.</p>
+  </Layout.Column>
+</Layout>
+```
+
+## Two Columns
+
+<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header title="Two Columns" />
+    <Layout.Column>
+      <div style={{ background: "#dbeafe", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Main (1fr)
+      </div>
+    </Layout.Column>
+    <Layout.Column>
+      <div style={{ background: "#fef9c3", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Side (280px)
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+```tsx
+<Layout>
+  <Layout.Header title="Two Columns" />
+  <Layout.Column>
+    <p>Main content (1fr)</p>
+  </Layout.Column>
+  <Layout.Column>
+    <p>Sidebar (280px)</p>
+  </Layout.Column>
+</Layout>
+```
+
+## Three Columns
+
+<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header title="Three Columns" />
+    <Layout.Column>
+      <div style={{ background: "#dcfce7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Left (320px)
+      </div>
+    </Layout.Column>
+    <Layout.Column>
+      <div style={{ background: "#dbeafe", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Main (1fr)
+      </div>
+    </Layout.Column>
+    <Layout.Column>
+      <div style={{ background: "#fef9c3", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Right (280px)
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+```tsx
+<Layout>
+  <Layout.Header title="Three Columns" />
+  <Layout.Column>
+    <p>Left sidebar (320px)</p>
+  </Layout.Column>
+  <Layout.Column>
+    <p>Main content (1fr)</p>
+  </Layout.Column>
+  <Layout.Column>
+    <p>Right sidebar (280px)</p>
+  </Layout.Column>
+</Layout>
+```
+
+## With Header Actions
+
+<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header
+      title="Orders"
+      actions={[
+        <button key="export" style={{ padding: "4px 12px", borderRadius: 6, border: "1px solid #d4d4d8", background: "white", cursor: "pointer" }}>Export</button>,
+        <button key="create" style={{ padding: "4px 12px", borderRadius: 6, border: "none", background: "#18181b", color: "white", cursor: "pointer" }}>+ New Order</button>,
+      ]}
+    />
+    <Layout.Column>
+      <div style={{ background: "#e4e4e7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Content area
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+```tsx
+<Layout>
+  <Layout.Header
+    title="Orders"
+    actions={[
+      <Button key="export" variant="outline">Export</Button>,
+      <Button key="create">+ New Order</Button>,
+    ]}
+  />
+  <Layout.Column>
+    <p>Content area</p>
+  </Layout.Column>
+</Layout>
+```
+
+## Area-Based Columns
+
+<div style={{ padding: "16px 0", border: "1px dashed #d4d4d8", borderRadius: 8 }}>
+  <Layout>
+    <Layout.Header title="Area-Based" />
+    <Layout.Column area="left">
+      <div style={{ background: "#dcfce7", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Left
+      </div>
+    </Layout.Column>
+    <Layout.Column area="main">
+      <div style={{ background: "#dbeafe", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Main
+      </div>
+    </Layout.Column>
+    <Layout.Column area="right">
+      <div style={{ background: "#fef9c3", borderRadius: 6, padding: 16, textAlign: "center" }}>
+        Right
+      </div>
+    </Layout.Column>
+  </Layout>
+</div>
+
+```tsx
+<Layout>
+  <Layout.Header title="Area-Based" />
+  <Layout.Column area="left">Left sidebar</Layout.Column>
+  <Layout.Column area="main">Main content</Layout.Column>
+  <Layout.Column area="right">Right sidebar</Layout.Column>
+</Layout>
+```

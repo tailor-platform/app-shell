@@ -1,0 +1,76 @@
+---
+title: ActionPanel
+description: A card displaying a list of clickable actions with icons, loading, and disabled states.
+group: Data Display
+order: 3
+---
+
+import { ActionPanel } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ maxWidth: 360, padding: "16px 0" }}>
+  <ActionPanel
+    title="Actions"
+    actions={[
+      { key: "edit", label: "Edit record", icon: <span>✏️</span>, onClick: () => {} },
+      { key: "copy", label: "Duplicate", icon: <span>📋</span>, onClick: () => {} },
+      { key: "delete", label: "Delete", icon: <span>🗑️</span>, onClick: () => {} },
+    ]}
+  />
+</div>
+
+```tsx
+<ActionPanel
+  title="Actions"
+  actions={[
+    { key: "edit", label: "Edit record", icon: <EditIcon />, onClick: () => {} },
+    { key: "copy", label: "Duplicate", icon: <CopyIcon />, onClick: () => {} },
+    { key: "delete", label: "Delete", icon: <TrashIcon />, onClick: () => {} },
+  ]}
+/>
+```
+
+## Loading State
+
+<div style={{ maxWidth: 360, padding: "16px 0" }}>
+  <ActionPanel
+    title="Processing"
+    actions={[
+      { key: "save", label: "Saving…", icon: <span>💾</span>, loading: true },
+      { key: "export", label: "Export CSV", icon: <span>📤</span>, onClick: () => {} },
+    ]}
+  />
+</div>
+
+```tsx
+<ActionPanel
+  title="Processing"
+  actions={[
+    { key: "save", label: "Saving…", icon: <SaveIcon />, loading: true },
+    { key: "export", label: "Export CSV", icon: <ExportIcon />, onClick: () => {} },
+  ]}
+/>
+```
+
+## Disabled
+
+<div style={{ maxWidth: 360, padding: "16px 0" }}>
+  <ActionPanel
+    title="Restricted"
+    actions={[
+      { key: "approve", label: "Approve", icon: <span>✅</span>, disabled: true },
+      { key: "reject", label: "Reject", icon: <span>❌</span>, disabled: true },
+    ]}
+  />
+</div>
+
+```tsx
+<ActionPanel
+  title="Restricted"
+  actions={[
+    { key: "approve", label: "Approve", icon: <CheckIcon />, disabled: true },
+    { key: "reject", label: "Reject", icon: <XIcon />, disabled: true },
+  ]}
+/>
+```

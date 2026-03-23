@@ -1,0 +1,171 @@
+---
+title: DescriptionCard
+description: A structured key-value card for displaying document or record details with support for badges, money, dates, links, and more.
+group: Data Display
+order: 4
+---
+
+import { DescriptionCard } from "@tailor-platform/app-shell";
+
+## Basic
+
+<div style={{ padding: "16px 0" }}>
+  <DescriptionCard
+    title="Customer"
+    data={{
+      name: "Acme Corp",
+      email: "contact@acme.com",
+      phone: "+1-555-0123",
+    }}
+    fields={[
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Phone" },
+    ]}
+  />
+</div>
+
+```tsx
+<DescriptionCard
+  title="Customer"
+  data={{
+    name: "Acme Corp",
+    email: "contact@acme.com",
+    phone: "+1-555-0123",
+  }}
+  fields={[
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Phone" },
+  ]}
+/>
+```
+
+## With Badge and Money
+
+<div style={{ padding: "16px 0" }}>
+  <DescriptionCard
+    title="Order #1234"
+    data={{
+      status: "CONFIRMED",
+      total: 1250.0,
+      currency: "USD",
+      createdAt: "2025-06-15T10:30:00Z",
+    }}
+    fields={[
+      {
+        key: "status",
+        label: "Status",
+        type: "badge",
+        meta: { badgeVariantMap: { CONFIRMED: "success", PENDING: "warning", CANCELLED: "error" } },
+      },
+      { key: "total", label: "Total", type: "money", meta: { currencyKey: "currency" } },
+      { key: "createdAt", label: "Created", type: "date", meta: { dateFormat: "medium" } },
+    ]}
+  />
+</div>
+
+```tsx
+<DescriptionCard
+  title="Order #1234"
+  data={{
+    status: "CONFIRMED",
+    total: 1250.00,
+    currency: "USD",
+    createdAt: "2025-06-15T10:30:00Z",
+  }}
+  fields={[
+    {
+      key: "status",
+      label: "Status",
+      type: "badge",
+      meta: { badgeVariantMap: { CONFIRMED: "success", PENDING: "warning" } },
+    },
+    { key: "total", label: "Total", type: "money", meta: { currencyKey: "currency" } },
+    { key: "createdAt", label: "Created", type: "date", meta: { dateFormat: "medium" } },
+  ]}
+/>
+```
+
+## With Divider
+
+<div style={{ padding: "16px 0" }}>
+  <DescriptionCard
+    title="Shipping Info"
+    data={{
+      recipient: "John Doe",
+      address: "123 Main St, Springfield",
+      carrier: "FedEx",
+      tracking: "FX123456789",
+    }}
+    fields={[
+      { key: "recipient", label: "Recipient" },
+      { key: "address", label: "Address" },
+      { type: "divider" },
+      { key: "carrier", label: "Carrier" },
+      { key: "tracking", label: "Tracking #", meta: { copyable: true } },
+    ]}
+  />
+</div>
+
+```tsx
+<DescriptionCard
+  title="Shipping Info"
+  data={{
+    recipient: "John Doe",
+    address: "123 Main St, Springfield",
+    carrier: "FedEx",
+    tracking: "FX123456789",
+  }}
+  fields={[
+    { key: "recipient", label: "Recipient" },
+    { key: "address", label: "Address" },
+    { type: "divider" },
+    { key: "carrier", label: "Carrier" },
+    { key: "tracking", label: "Tracking #", meta: { copyable: true } },
+  ]}
+/>
+```
+
+## 4 Columns
+
+<div style={{ padding: "16px 0" }}>
+  <DescriptionCard
+    title="Product Details"
+    columns={4}
+    data={{
+      sku: "PROD-001",
+      name: "Widget Pro",
+      category: "Electronics",
+      price: 49.99,
+      currency: "USD",
+      weight: "0.5 kg",
+      stock: "In Stock",
+      manufacturer: "WidgetCo",
+    }}
+    fields={[
+      { key: "sku", label: "SKU", meta: { copyable: true } },
+      { key: "name", label: "Product Name" },
+      { key: "category", label: "Category" },
+      { key: "price", label: "Price", type: "money", meta: { currencyKey: "currency" } },
+      { key: "weight", label: "Weight" },
+      { key: "stock", label: "Availability", type: "badge", meta: { badgeVariantMap: { "In Stock": "success" } } },
+      { key: "manufacturer", label: "Manufacturer" },
+    ]}
+  />
+</div>
+
+```tsx
+<DescriptionCard
+  title="Product Details"
+  columns={4}
+  data={{ sku: "PROD-001", name: "Widget Pro", category: "Electronics", ... }}
+  fields={[
+    { key: "sku", label: "SKU", meta: { copyable: true } },
+    { key: "name", label: "Product Name" },
+    { key: "category", label: "Category" },
+    { key: "price", label: "Price", type: "money", meta: { currencyKey: "currency" } },
+    { key: "stock", label: "Availability", type: "badge", meta: { badgeVariantMap: { "In Stock": "success" } } },
+  ]}
+/>
+```

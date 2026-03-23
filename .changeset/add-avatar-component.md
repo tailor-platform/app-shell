@@ -7,8 +7,12 @@ Add `Avatar` (Base UI): `Avatar.Root`, `Avatar.Image`, and `Avatar.Fallback` wit
 ```tsx
 import { Avatar } from "@tailor-platform/app-shell";
 
-<Avatar.Root>
-  <Avatar.Image src="/user.png" alt="" />
-  <Avatar.Fallback>AB</Avatar.Fallback>
-</Avatar.Root>;
+export function UserAvatar() {
+  return (
+    <Avatar.Root>
+      <Avatar.Image src="/user.png" alt="" />
+      <Avatar.Fallback>AB</Avatar.Fallback>
+    </Avatar.Root>
+  );
+}
 ```

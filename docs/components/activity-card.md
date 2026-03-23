@@ -32,7 +32,9 @@ const activities = [
   },
 ];
 
-<ActivityCard activities={activities} title="Updates" />;
+export function DocumentUpdates() {
+  return <ActivityCard activities={activities} title="Updates" />;
+}
 ```
 
 ## Overflow and dialog
@@ -64,3 +66,7 @@ Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", 
 | `className`     | `string`                 | -        | Applied to the card root.                         |
 
 Each activity must include: `id`, `userDisplayName`, `description`, `timestamp` (Date or string). Optional: `userAvatarUrl` (fallback is initials).
+
+## See also
+
+- [Avatar](./avatar.md) — underlying avatar primitive used for profile images and initials

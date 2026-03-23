@@ -170,8 +170,8 @@ function previewerConfigPlugin(repo?: PreviewerRepo, sidebar?: PreviewerSidebar)
       if (repo) {
         // Strip trailing slash from URL
         const normalizedUrl = repo.url.replace(/\/+$/, "");
-        const branch = repo.branch ?? "main";
-        lines.push(`export const repo = ${JSON.stringify({ url: normalizedUrl, branch })};`);
+        const ref = repo.ref ?? "main";
+        lines.push(`export const repo = ${JSON.stringify({ url: normalizedUrl, ref })};`);
       } else {
         lines.push("export const repo = null;");
       }
@@ -242,7 +242,7 @@ function previewerLlmsTxtPlugin(hostRoot: string, glob: string, repo?: Previewer
       group.sort((a, b) => a.order - b.order);
     }
 
-    const branch = repo?.branch ?? "main";
+    const ref = repo?.ref ?? "main";
 
     function buildSourceUrl(entry: FmEntry): string {
       const repoUrl = repo?.url?.replace(/\/+$/, "");
@@ -251,7 +251,7 @@ function previewerLlmsTxtPlugin(hostRoot: string, glob: string, repo?: Previewer
         /^https:\/\/github\.com\//,
         "https://raw.githubusercontent.com/",
       );
-      return `${rawBase}/${branch}/${entry.filePath.replace(/^\/+/, "")}`;
+      return `${rawBase}/${ref}/${entry.filePath.replace(/^\/+/, "")}`;
     }
 
     const lines: string[] = [];

@@ -3,8 +3,8 @@ import type { PluginOption } from "vite";
 export type PreviewerRepo = {
   /** GitHub repository URL (e.g. "https://github.com/user/repo") */
   url: string;
-  /** Branch name (default: "main") */
-  branch?: string;
+  /** Git ref — branch, tag, or commit SHA (default: "main") */
+  ref?: string;
 };
 
 export type PreviewerSidebar = {

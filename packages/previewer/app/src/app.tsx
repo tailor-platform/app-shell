@@ -61,7 +61,7 @@ function buildCodeUrl(entry: PreviewEntry): string | null {
   const codePath = entry.frontmatter.codePath;
   const path = codePath ?? entry.filePath;
 
-  return `${repo.url}/blob/${repo.branch}/${path.replace(/^\/+/, "")}`;
+  return `${repo.url}/blob/${repo.ref}/${path.replace(/^\/+/, "")}`;
 }
 
 function useGroupedEntries(entries: PreviewEntry[]) {

@@ -10,8 +10,14 @@ The `ActivityCard` component displays a timeline of recent activities (e.g. chan
 ## Import
 
 ```tsx
-import { ActivityCard } from "@tailor-platform/app-shell";
+import {
+  ActivityCard,
+  type ActivityCardActivity,
+  type ActivityCardProps,
+} from "@tailor-platform/app-shell";
 ```
+
+Use `ActivityCardActivity` for each item in your activities array (or infer from `ActivityCardProps["activities"][number]`).
 
 ## Basic Usage
 

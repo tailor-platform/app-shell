@@ -10,6 +10,10 @@ export interface ActivityCardActivity {
   userDisplayName: string;
   userAvatarUrl?: string;
   description: string;
+  /**
+   * When this is a string, it should be parseable by `Date` (e.g. ISO 8601) so it can be
+   * formatted for display. If parsing fails, the string is shown as-is (for pre-formatted labels).
+   */
   timestamp: Date | string;
 }
 

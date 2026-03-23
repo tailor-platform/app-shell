@@ -20,7 +20,7 @@ const avatarVariants = cva(
   },
 );
 
-type AvatarRootProps = React.ComponentProps<typeof BaseAvatar.Root> &
+type AvatarProps = React.ComponentProps<typeof BaseAvatar.Root> &
   VariantProps<typeof avatarVariants>;
 
 /**
@@ -36,7 +36,7 @@ type AvatarRootProps = React.ComponentProps<typeof BaseAvatar.Root> &
  * </Avatar.Root>
  * ```
  */
-function Root({ className, size, ...props }: AvatarRootProps) {
+function Root({ className, size, ...props }: AvatarProps) {
   return (
     <BaseAvatar.Root
       data-slot="avatar"
@@ -77,4 +77,4 @@ export const Avatar = {
   Fallback,
 };
 
-export { avatarVariants, type AvatarRootProps };
+export { avatarVariants, type AvatarProps };

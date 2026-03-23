@@ -20,8 +20,11 @@ function getInitials(name: string): string {
 }
 
 function formatTimestamp(ts: Date | string): string {
-  if (typeof ts === "string") return ts;
-  return ts.toLocaleDateString(undefined, {
+  const d = typeof ts === "string" ? new Date(ts) : ts;
+  if (Number.isNaN(d.getTime())) {
+    return typeof ts === "string" ? ts : "";
+  }
+  return d.toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",

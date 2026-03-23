@@ -3,21 +3,39 @@ import { Form as BaseForm } from "@base-ui/react/form";
 
 import { cn } from "@/lib/utils";
 
+// Extract the submit-event details type from Base UI without relying on
+// namespace access so the wrapper stays robust across package versions.
+type FormSubmitEventDetails =
+  NonNullable<React.ComponentProps<typeof BaseForm>["onFormSubmit"]> extends (
+    values: any,
+    details: infer D,
+  ) => any
+    ? D
+    : never;
+
 // Only the props relevant to the Form abstraction are picked from BaseForm.
 // Base UI-internal props are intentionally excluded
 // so that upstream changes don't leak as breaking changes to consumers.
-type FormProps = Pick<
+//
+// `onFormSubmit` is defined separately so the `FormValues` generic
+// flows through to the callback's first parameter, enabling type-safe
+// form values when a type argument is provided (e.g. `<Form<MyValues>>`).
+type FormProps<FormValues extends Record<string, any> = Record<string, any>> = Pick<
   React.ComponentProps<typeof BaseForm>,
   | "errors"
   | "onSubmit"
-  | "onFormSubmit"
   | "actionsRef"
   | "validationMode"
   | "noValidate"
   | "ref"
   | "className"
   | "style"
-> & { children: React.ReactNode };
+> & {
+  children: React.ReactNode;
+  onFormSubmit?:
+    | ((formValues: FormValues, eventDetails: FormSubmitEventDetails) => void)
+    | undefined;
+};
 
 /**
  * A form element with consolidated error handling and validation.
@@ -83,9 +101,13 @@ type FormProps = Pick<
  * </Form>
  * ```
  */
-function Form({ className, children, ...props }: FormProps) {
+function Form<FormValues extends Record<string, any> = Record<string, any>>({
+  className,
+  children,
+  ...props
+}: FormProps<FormValues>) {
   return (
-    <BaseForm data-slot="form" className={cn(className)} {...props}>
+    <BaseForm<FormValues> data-slot="form" className={cn(className)} {...props}>
       {children}
     </BaseForm>
   );

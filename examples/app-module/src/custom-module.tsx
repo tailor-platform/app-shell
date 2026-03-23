@@ -21,6 +21,9 @@ import {
   Select,
   Combobox,
   Autocomplete,
+  Field,
+  Fieldset,
+  Form,
   type Guard,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
@@ -1777,6 +1780,384 @@ const dropdownComponentsDemoResource = defineResource({
   component: DropdownComponentsDemoPage,
 });
 
+// ============================================================================
+// DEMO: Form Components (Field, Fieldset, Form)
+// ============================================================================
+
+type ProfileFormData = {
+  username: string;
+  email: string;
+  bio: string;
+};
+
+const FormComponentsDemoPage = () => {
+  const [serverErrors, setServerErrors] = React.useState<Record<string, string>>({});
+  const [submittedData, setSubmittedData] = React.useState<ProfileFormData | null>(null);
+
+  // Select / Combobox / Autocomplete data
+  type FruitOption = { id: string; name: string };
+  const fruitOptions: FruitOption[] = [
+    { id: "apple", name: "Apple" },
+    { id: "banana", name: "Banana" },
+    { id: "cherry", name: "Cherry" },
+    { id: "grape", name: "Grape" },
+    { id: "mango", name: "Mango" },
+    { id: "orange", name: "Orange" },
+  ];
+  const comboItems = ["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"];
+
+  const cardStyle: React.CSSProperties = {
+    padding: "1.5rem",
+    borderRadius: "0.75rem",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--card)",
+    color: "var(--card-foreground)",
+  };
+  const headingStyle: React.CSSProperties = {
+    fontWeight: "bold",
+    marginBottom: "0.5rem",
+  };
+  const labelStyle: React.CSSProperties = {
+    fontSize: "0.875rem",
+    color: "var(--muted-foreground)",
+    marginBottom: "0.5rem",
+  };
+
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "1rem",
+  };
+
+  return (
+    <Layout>
+      <Layout.Header title="Form Components" />
+      <Layout.Column>
+        <div style={gridStyle}>
+          {/* Basic Field */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Field</h3>
+            <p style={labelStyle}>
+              A compound component that groups label, control, description, and error message.
+              Wrapped in a Form to demonstrate submit.
+            </p>
+            <Form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const fd = new FormData(event.currentTarget);
+                setSubmittedData({
+                  username: fd.get("username") as string,
+                  email: fd.get("email") as string,
+                  bio: fd.get("bio") as string,
+                });
+              }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+              }}
+            >
+              <Field.Root name="username">
+                <Field.Label>Username</Field.Label>
+                <Field.Control placeholder="Enter your username" required />
+                <Field.Description>Your unique display name.</Field.Description>
+                <Field.Error match="valueMissing">Username is required.</Field.Error>
+              </Field.Root>
+
+              <Field.Root name="email">
+                <Field.Label>Email</Field.Label>
+                <Field.Control type="email" placeholder="you@example.com" required />
+                <Field.Error match="valueMissing">Email is required.</Field.Error>
+                <Field.Error match="typeMismatch">Please enter a valid email address.</Field.Error>
+              </Field.Root>
+
+              <Field.Root name="bio">
+                <Field.Label>Bio</Field.Label>
+                <Field.Control render={<textarea />} placeholder="Tell us about yourself" />
+                <Field.Description>Optional — max 200 characters.</Field.Description>
+              </Field.Root>
+
+              <Field.Root name="disabled-field" disabled>
+                <Field.Label>Disabled Field</Field.Label>
+                <Field.Control placeholder="Cannot edit" />
+                <Field.Description>This field is disabled.</Field.Description>
+              </Field.Root>
+
+              <div>
+                <Button type="submit">Submit</Button>
+              </div>
+            </Form>
+
+            <Dialog.Root
+              open={submittedData !== null}
+              onOpenChange={(open) => {
+                if (!open) setSubmittedData(null);
+              }}
+            >
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Submitted Data</Dialog.Title>
+                  <Dialog.Description>The following values were submitted:</Dialog.Description>
+                </Dialog.Header>
+                <Table.Root>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.Head>Field</Table.Head>
+                      <Table.Head>Value</Table.Head>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {submittedData && (
+                      <>
+                        <Table.Row>
+                          <Table.Cell style={{ fontWeight: 500 }}>Username</Table.Cell>
+                          <Table.Cell>
+                            {submittedData.username || (
+                              <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                        <Table.Row>
+                          <Table.Cell style={{ fontWeight: 500 }}>Email</Table.Cell>
+                          <Table.Cell>
+                            {submittedData.email || (
+                              <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                        <Table.Row>
+                          <Table.Cell style={{ fontWeight: 500 }}>Bio</Table.Cell>
+                          <Table.Cell>
+                            {submittedData.bio || (
+                              <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                      </>
+                    )}
+                  </Table.Body>
+                </Table.Root>
+                <Dialog.Footer>
+                  <Dialog.Close render={<Button />}>Close</Dialog.Close>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Root>
+          </div>
+
+          {/* Fieldset */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Fieldset</h3>
+            <p style={labelStyle}>
+              Groups related fields under a semantic <code>&lt;fieldset&gt;</code> with a{" "}
+              <code>&lt;legend&gt;</code>.
+            </p>
+            <Fieldset.Root
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+              }}
+            >
+              <Fieldset.Legend>Shipping Address</Fieldset.Legend>
+
+              <Field.Root name="street">
+                <Field.Label>Street</Field.Label>
+                <Field.Control placeholder="123 Main St" />
+              </Field.Root>
+
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <Field.Root name="city" style={{ flex: 1 }}>
+                  <Field.Label>City</Field.Label>
+                  <Field.Control placeholder="City" />
+                </Field.Root>
+
+                <Field.Root name="zip" style={{ width: "120px" }}>
+                  <Field.Label>ZIP</Field.Label>
+                  <Field.Control placeholder="00000" />
+                </Field.Root>
+              </div>
+            </Fieldset.Root>
+          </div>
+
+          {/* Field with custom validation */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Field — Custom Validation</h3>
+            <p style={labelStyle}>
+              Use the <code>validate</code> prop for custom validation logic.
+            </p>
+            <Field.Root
+              name="password"
+              validationMode="onChange"
+              validate={(value) => {
+                const v = String(value ?? "");
+                if (v.length > 0 && v.length < 8) {
+                  return "Password must be at least 8 characters.";
+                }
+                return null;
+              }}
+            >
+              <Field.Label>Password</Field.Label>
+              <Field.Control type="password" placeholder="At least 8 characters" />
+              <Field.Error />
+            </Field.Root>
+          </div>
+
+          {/* Field.Validity */}
+          <div style={cardStyle}>
+            <h3 style={headingStyle}>Field.Validity</h3>
+            <p style={labelStyle}>
+              Render-prop that exposes the field's <code>ValidityState</code> for custom rendering.
+            </p>
+            <Field.Root name="age" validationMode="onChange">
+              <Field.Label>Age</Field.Label>
+              <Field.Control type="number" min={0} max={150} placeholder="0–150" />
+              <Field.Validity>
+                {(state) =>
+                  state.validity.rangeOverflow ? (
+                    <p
+                      style={{
+                        color: "var(--destructive)",
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      Age cannot exceed 150.
+                    </p>
+                  ) : null
+                }
+              </Field.Validity>
+            </Field.Root>
+          </div>
+
+          {/* Field + Dropdown Components */}
+          <div style={{ ...cardStyle, gridColumn: "1 / -1" }}>
+            <h3 style={headingStyle}>Field + Dropdown Components</h3>
+            <p style={labelStyle}>
+              Select, Combobox, Autocomplete composed with Field for labeling, description, and
+              validation.
+            </p>
+            <div style={{ display: "flex", gap: "1.5rem" }}>
+              <Field.Root
+                name="fruit-select"
+                style={{ flex: 1 }}
+                className="astw:items-stretch"
+                validate={(value) => {
+                  const v = value as FruitOption | null;
+                  if (v?.name !== "Mango") {
+                    return 'Please select "Mango".';
+                  }
+                  return null;
+                }}
+                validationMode="onChange"
+              >
+                <Field.Label>Select</Field.Label>
+                <Select
+                  items={fruitOptions}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  placeholder="Choose a fruit"
+                />
+                <Field.Description>Must be "Mango".</Field.Description>
+                <Field.Error />
+              </Field.Root>
+
+              <Field.Root
+                name="fruit-combobox"
+                style={{ flex: 1 }}
+                className="astw:items-stretch"
+                validate={(value) => {
+                  const v = value as string[] | undefined;
+                  if (!v || v.length === 0) {
+                    return "Select at least one fruit.";
+                  }
+                  return null;
+                }}
+                validationMode="onChange"
+              >
+                <Field.Label>Combobox</Field.Label>
+                <Combobox items={comboItems} multiple placeholder="Search fruits..." />
+                <Field.Description>Required — at least one.</Field.Description>
+                <Field.Error />
+              </Field.Root>
+
+              <Field.Root
+                name="fruit-autocomplete"
+                style={{ flex: 1 }}
+                className="astw:items-stretch"
+                validate={(value) => {
+                  const v = String(value ?? "");
+                  if (v !== "" && v !== "Cherry") {
+                    return 'Please type "Cherry".';
+                  }
+                  return null;
+                }}
+                validationMode="onChange"
+              >
+                <Field.Label>Autocomplete</Field.Label>
+                <Autocomplete
+                  items={fruitOptions}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  placeholder="Type a fruit..."
+                />
+                <Field.Description>Must be "Cherry".</Field.Description>
+                <Field.Error />
+              </Field.Root>
+            </div>
+          </div>
+
+          {/* Form with submit — spans full width */}
+          <div style={{ ...cardStyle, gridColumn: "1 / -1" }}>
+            <h3 style={headingStyle}>Form — Submit & Server Errors</h3>
+            <p style={labelStyle}>
+              Wraps fields in a <code>&lt;form&gt;</code> with consolidated error handling.
+            </p>
+            <Form
+              errors={serverErrors}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                const url = String(formData.get("url") ?? "");
+
+                // Simulate a server-side error
+                if (url && !url.startsWith("https://")) {
+                  setServerErrors({ url: "URL must start with https://" });
+                  return;
+                }
+
+                setServerErrors({});
+                alert(`Submitted URL: ${url}`);
+              }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+                maxWidth: "480px",
+              }}
+            >
+              <Field.Root name="url">
+                <Field.Label>Homepage URL</Field.Label>
+                <Field.Control type="url" required placeholder="https://example.com" />
+                <Field.Description>Must start with https://</Field.Description>
+                <Field.Error match="valueMissing">URL is required.</Field.Error>
+                <Field.Error match="typeMismatch">Please enter a valid URL.</Field.Error>
+              </Field.Root>
+              <div>
+                <Button type="submit">Submit</Button>
+              </div>
+            </Form>
+          </div>
+        </div>
+      </Layout.Column>
+    </Layout>
+  );
+};
+
+const formComponentsDemoResource = defineResource({
+  path: "form-demo",
+  meta: {
+    title: "Form Components Demo",
+  },
+  component: FormComponentsDemoPage,
+});
+
 export const customPageModule = defineModule({
   path: "custom-page",
   component: (pageProps: ResourceComponentProps) => {
@@ -1894,6 +2275,17 @@ export const customPageModule = defineModule({
               Dropdown Components Demo (Select, Combobox, Autocomplete)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/form-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Form Components Demo (Field, Fieldset, Form)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -1914,5 +2306,6 @@ export const customPageModule = defineModule({
     layoutSlotsDemoResource,
     primitiveComponentsDemoResource,
     dropdownComponentsDemoResource,
+    formComponentsDemoResource,
   ],
 });

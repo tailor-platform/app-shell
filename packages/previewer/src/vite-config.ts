@@ -290,6 +290,14 @@ function previewerLlmsTxtPlugin(
       lines.push("");
     }
 
+    const repoUrl = repo?.url?.replace(/\/+$/, "");
+    if (repoUrl) {
+      lines.push("## Reference");
+      lines.push("");
+      lines.push(`- [Repository](${repoUrl})`);
+      lines.push("");
+    }
+
     return lines.join("\n");
   }
 

@@ -267,7 +267,10 @@ interface TocItem {
   level: number;
 }
 
-function useTableOfContents(containerRef: React.RefObject<HTMLDivElement | null>) {
+function useTableOfContents(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  entryName: string,
+) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -290,7 +293,7 @@ function useTableOfContents(containerRef: React.RefObject<HTMLDivElement | null>
     }, 50);
 
     return () => clearTimeout(timeout);
-  }, [containerRef]);
+  }, [containerRef, entryName]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -321,10 +324,12 @@ function useTableOfContents(containerRef: React.RefObject<HTMLDivElement | null>
 
 function TableOfContents({
   containerRef,
+  entryName,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
+  entryName: string;
 }) {
-  const { items, activeId, setActiveId } = useTableOfContents(containerRef);
+  const { items, activeId, setActiveId } = useTableOfContents(containerRef, entryName);
 
   if (items.length === 0) return null;
 
@@ -372,6 +377,11 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
   const { Component } = entry;
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Reset scroll position when entry changes (instead of relying on key-based remount)
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [entry.name]);
+
   return (
     <div
       style={{
@@ -395,7 +405,7 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
             <Component />
           </div>
         </div>
-        <TableOfContents containerRef={scrollRef} />
+        <TableOfContents containerRef={scrollRef} entryName={entry.name} />
       </div>
     </div>
   );
@@ -447,7 +457,7 @@ export function App() {
           {selected === OVERVIEW_KEY ? (
             <Overview onSelect={setSelected} />
           ) : current ? (
-            <PreviewContent key={current.name} entry={current} />
+            <PreviewContent entry={current} />
           ) : (
             <EmptyState />
           )}

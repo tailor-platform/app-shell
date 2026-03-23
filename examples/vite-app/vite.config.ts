@@ -9,6 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     appShellRoutes({
+      entrypoint: "src/App.tsx",
       generateTypedRoutes: true,
     }),
   ],

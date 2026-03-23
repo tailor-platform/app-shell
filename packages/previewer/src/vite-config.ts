@@ -9,7 +9,7 @@ import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
 import type { PreviewerRepo } from "./config";
 import { remarkPropsTable } from "./remark-props-table";
-import { extractProps } from "./extract-props";
+import { extractProps, extractTypeDescription } from "./extract-props";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = resolve(__dirname, "..", "app");
@@ -143,7 +143,16 @@ function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
           const propsData = propEntries.map((entry) => {
             const absPath = resolve(dirname(file), entry.file);
             const props = extractProps(absPath, entry.name, tsconfigPath);
-            return { name: entry.name, props };
+            const description = extractTypeDescription(
+              absPath,
+              entry.name,
+              tsconfigPath,
+            );
+            return {
+              name: entry.name,
+              props,
+              ...(description !== undefined && { description }),
+            };
           });
 
           return {
@@ -299,11 +308,19 @@ function previewerLlmsTxtPlugin(
 
       if (get("hidden") === "true") continue;
 
+      // Parse sidebar nested fields
+      const sidebarMatch = yaml.match(/^sidebar:\n((?:\s{2}\w+:.*\n?)*)/m);
+      const sidebarYaml = sidebarMatch ? sidebarMatch[1] : "";
+      const getSidebar = (key: string) => {
+        const m = sidebarYaml.match(new RegExp(`^\\s{2}${key}:\\s*(.+)$`, "m"));
+        return m ? m[1].trim() : undefined;
+      };
+
       fmEntries.push({
         title: get("title") ?? basename(file).replace(/\.preview\.mdx$/, ""),
         description: get("description") ?? "",
-        group: get("group") ?? "Ungrouped",
-        order: Number(get("order") ?? 999),
+        group: getSidebar("group") ?? "Ungrouped",
+        order: Number(getSidebar("order") ?? 999),
         filePath: relative(hostRoot, file),
         hidden: get("hidden") === "true",
       });

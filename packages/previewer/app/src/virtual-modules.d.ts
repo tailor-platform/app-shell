@@ -3,12 +3,14 @@ declare module "virtual:previewer-entries" {
   interface PreviewEntryFrontmatter {
     title?: string;
     description?: string;
-    group?: string;
-    order?: number;
+    sidebar?: {
+      group?: string;
+      order?: number;
+    };
     status?: "stable" | "beta" | "experimental" | "deprecated";
     hidden?: boolean;
-    /** Relative path from the repository root to the source code. Used for "View docs code" link. */
-    codePath?: string;
+    /** Relative path from the repository root to the source code. Used for "View code" link. */
+    filePath?: string;
   }
   interface PropInfo {
     name: string;
@@ -19,6 +21,7 @@ declare module "virtual:previewer-entries" {
   }
   interface PropsGroup {
     name: string;
+    description?: string;
     props: PropInfo[];
   }
   interface PreviewEntry {

@@ -17,7 +17,7 @@ export function Overview({ onSelect }: OverviewProps) {
 
   const groupMap = new Map<string, typeof visible>();
   for (const entry of visible) {
-    const groupName = entry.frontmatter.group ?? "Ungrouped";
+    const groupName = entry.frontmatter.sidebar?.group ?? "Ungrouped";
     const group = groupMap.get(groupName) ?? [];
     group.push(entry);
     groupMap.set(groupName, group);
@@ -25,7 +25,11 @@ export function Overview({ onSelect }: OverviewProps) {
 
   // Sort entries within each group by order
   for (const group of groupMap.values()) {
-    group.sort((a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999));
+    group.sort(
+      (a, b) =>
+        (a.frontmatter.sidebar?.order ?? 999) -
+        (b.frontmatter.sidebar?.order ?? 999),
+    );
   }
 
   return (

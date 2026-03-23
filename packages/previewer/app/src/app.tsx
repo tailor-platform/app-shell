@@ -14,11 +14,13 @@ import { Overview } from "./overview";
 interface PreviewEntryFrontmatter {
   title?: string;
   description?: string;
-  group?: string;
-  order?: number;
+  sidebar?: {
+    group?: string;
+    order?: number;
+  };
   status?: "stable" | "beta" | "experimental" | "deprecated";
   hidden?: boolean;
-  codePath?: string;
+  filePath?: string;
 }
 
 interface PropInfo {
@@ -31,6 +33,7 @@ interface PropInfo {
 
 interface PropsGroup {
   name: string;
+  description?: string;
   props: PropInfo[];
 }
 
@@ -78,8 +81,8 @@ function StatusBadge({ status }: { status: string }) {
 function buildCodeUrl(entry: PreviewEntry): string | null {
   if (!repo) return null;
 
-  const codePath = entry.frontmatter.codePath;
-  const path = codePath ?? entry.filePath;
+  const fp = entry.frontmatter.filePath;
+  const path = fp ?? entry.filePath;
 
   return `${repo.url}/blob/${repo.ref}/${path.replace(/^\/+/, "")}`;
 }
@@ -90,12 +93,12 @@ function useGroupedEntries(entries: PreviewEntry[]) {
     const groupMap = new Map<string, SidebarGroup>();
 
     for (const entry of visible) {
-      const groupName = entry.frontmatter.group ?? "Ungrouped";
+      const groupName = entry.frontmatter.sidebar?.group ?? "Ungrouped";
       let group = groupMap.get(groupName);
       if (!group) {
         group = {
           name: groupName,
-          order: entry.frontmatter.order ?? 999,
+          order: entry.frontmatter.sidebar?.order ?? 999,
           entries: [],
         };
         groupMap.set(groupName, group);
@@ -105,7 +108,9 @@ function useGroupedEntries(entries: PreviewEntry[]) {
 
     for (const group of groupMap.values()) {
       group.entries.sort(
-        (a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999),
+        (a, b) =>
+          (a.frontmatter.sidebar?.order ?? 999) -
+          (b.frontmatter.sidebar?.order ?? 999),
       );
     }
 
@@ -430,12 +435,24 @@ function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
               style={{
                 fontSize: 18,
                 fontWeight: 600,
-                margin: "0 0 16px",
+                margin: "0 0 8px",
                 scrollMarginTop: 16,
               }}
             >
               {group.name}
             </h2>
+            {group.description && (
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#6b7280",
+                  margin: "0 0 16px",
+                  lineHeight: 1.5,
+                }}
+              >
+                {group.description}
+              </p>
+            )}
             <table
               style={{
                 width: "100%",
@@ -611,7 +628,12 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
           )}
           {activeTab === "documentation" ? (
             <div
-              style={{ maxWidth: 1020, margin: "0 auto", paddingBottom: 80 }}
+              style={{
+                maxWidth: 1020,
+                margin: "0 auto",
+                paddingTop: 24,
+                paddingBottom: 80,
+              }}
             >
               <Component />
             </div>

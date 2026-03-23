@@ -121,8 +121,7 @@ function parseInlineMarkdown(text: string): MdastPhrasingContent[] {
       line = `• ${bulletMatch[1]}`;
     }
 
-    const pattern =
-      /`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|\[([^\]]+)\]\(([^)]+)\)/g;
+    const pattern = /`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|\[([^\]]+)\]\(([^)]+)\)/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;
 
@@ -169,81 +168,75 @@ export function remarkPropsTable(options: RemarkPropsTableOptions) {
 
   // biome-ignore lint/suspicious/noExplicitAny: remark plugin tree/file types are generic
   return (tree: any, file: any) => {
-    visit(
-      tree,
-      "code",
-      (node: MdastCode, index: number | undefined, parent: any) => {
-        if (node.lang !== "proplist:table") return;
+    visit(tree, "code", (node: MdastCode, index: number | undefined, parent: any) => {
+      if (node.lang !== "proplist:table") return;
 
-        const entries = parseProplistBlock(node.value);
+      const entries = parseProplistBlock(node.value);
 
-        if (entries.length === 0) {
-          console.warn(
-            `[remark-props-table] No valid entries in proplist:table code block`,
-          );
-          return;
-        }
+      if (entries.length === 0) {
+        console.warn(`[remark-props-table] No valid entries in proplist:table code block`);
+        return;
+      }
 
-        const mdxDir = file.path ? dirname(file.path) : options.root;
+      const mdxDir = file.path ? dirname(file.path) : options.root;
 
-        // Collect all props from all entries
-        const allProps = entries.flatMap((entry) => {
-          const absoluteFilePath = resolve(mdxDir, entry.file);
-          return extractProps(absoluteFilePath, entry.name, tsconfigPath);
-        });
+      // Collect all props from all entries
+      const allProps = entries.flatMap((entry) => {
+        const absoluteFilePath = resolve(mdxDir, entry.file);
+        return extractProps(absoluteFilePath, entry.name, tsconfigPath);
+      });
 
-        if (allProps.length === 0) {
-          const names = entries.map((e) => e.name).join(", ");
-          const replacement: MdastParagraph = {
-            type: "paragraph",
-            children: [
-              {
-                type: "emphasis",
-                children: [
-                  {
-                    type: "text",
-                    value: `No props found for ${names}`,
-                  },
-                ],
-              },
-            ],
-          };
-          if (parent && index !== undefined) {
-            parent.children[index] = replacement;
-          }
-          return;
-        }
-
-        const headerRow: MdastTableRow = {
-          type: "tableRow",
+      if (allProps.length === 0) {
+        const names = entries.map((e) => e.name).join(", ");
+        const replacement: MdastParagraph = {
+          type: "paragraph",
           children: [
-            textCell("Name"),
-            textCell("Type"),
-            textCell("Default"),
-            textCell("Description"),
+            {
+              type: "emphasis",
+              children: [
+                {
+                  type: "text",
+                  value: `No props found for ${names}`,
+                },
+              ],
+            },
           ],
         };
-
-        const dataRows: MdastTableRow[] = allProps.map((prop) => ({
-          type: "tableRow" as const,
-          children: [
-            codeCell(prop.name),
-            codeCell(prop.type),
-            textCell(prop.defaultValue ?? "—"),
-            markdownCell(prop.description ?? ""),
-          ],
-        }));
-
-        const table: MdastTable = {
-          type: "table",
-          align: [null, null, null, null],
-          children: [headerRow, ...dataRows],
-        };
-
         if (parent && index !== undefined) {
-          parent.children[index] = table;
+          parent.children[index] = replacement;
         }
-      },
-    );
+        return;
+      }
+
+      const headerRow: MdastTableRow = {
+        type: "tableRow",
+        children: [
+          textCell("Name"),
+          textCell("Type"),
+          textCell("Default"),
+          textCell("Description"),
+        ],
+      };
+
+      const dataRows: MdastTableRow[] = allProps.map((prop) => ({
+        type: "tableRow" as const,
+        children: [
+          codeCell(prop.name),
+          codeCell(prop.type),
+          textCell(prop.defaultValue ?? "—"),
+          markdownCell(prop.description ?? ""),
+        ],
+      }));
+
+      const table: MdastTable = {
+        type: "table",
+        align: [null, null, null, null],
+        children: [headerRow, ...dataRows],
+      };
+
+      if (parent && index !== undefined) {
+        parent.children[index] = table;
+      }
+    });
   };
 }

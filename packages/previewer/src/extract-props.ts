@@ -137,3 +137,26 @@ export function extractProps(
 
   return props;
 }
+
+/**
+ * Extract the JSDoc description of a type alias or interface itself.
+ */
+export function extractTypeDescription(
+  filePath: string,
+  typeName: string,
+  tsconfigPath?: string,
+): string | undefined {
+  const project = getProject(tsconfigPath);
+  const sourceFile = getSourceFile(project, filePath);
+
+  const typeAlias = sourceFile.getTypeAlias(typeName);
+  const iface = sourceFile.getInterface(typeName);
+  const declaration = typeAlias ?? iface;
+
+  if (!declaration) return undefined;
+
+  const jsDocs = declaration.getJsDocs();
+  if (jsDocs.length === 0) return undefined;
+
+  return jsDocs[0].getDescription().trim() || undefined;
+}

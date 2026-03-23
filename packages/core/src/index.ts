@@ -81,6 +81,7 @@ export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
+export { Avatar, avatarVariants, type AvatarRootProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
 export { Table } from "./components/table";
 export { Dialog } from "./components/dialog";

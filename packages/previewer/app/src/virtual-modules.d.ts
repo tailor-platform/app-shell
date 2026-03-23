@@ -10,12 +10,25 @@ declare module "virtual:previewer-entries" {
     /** Relative path from the repository root to the source code. Used for "View docs code" link. */
     codePath?: string;
   }
+  interface PropInfo {
+    name: string;
+    type: string;
+    required: boolean;
+    defaultValue?: string;
+    description?: string;
+  }
+  interface PropsGroup {
+    name: string;
+    props: PropInfo[];
+  }
   interface PreviewEntry {
     name: string;
     Component: ComponentType;
     frontmatter: PreviewEntryFrontmatter;
     /** File path relative to the host project root */
     filePath: string;
+    /** Props data extracted at build time from frontmatter `props` field */
+    propsData: PropsGroup[];
   }
   export const entries: PreviewEntry[];
 }

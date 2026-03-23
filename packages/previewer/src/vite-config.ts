@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
 import type { PreviewerRepo } from "./config";
 import { remarkPropsTable } from "./remark-props-table";
+import { extractProps } from "./extract-props";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = resolve(__dirname, "..", "app");
@@ -86,9 +87,34 @@ export function createPreviewerViteConfig(options: {
  * Virtual module `virtual:previewer-entries` — exports all discovered
  * *.preview.mdx files as an array of { name, Component } objects.
  */
+/**
+ * Parse the `props` list from raw YAML frontmatter content.
+ * Expects format: `props:\n  - ./file.tsx:TypeName\n  - ...`
+ */
+function parseFrontmatterProps(
+  yamlContent: string,
+): { file: string; name: string }[] {
+  const propsMatch = yamlContent.match(/^props:\s*\n((?:\s+-\s+.+\n?)*)/m);
+  if (!propsMatch) return [];
+  const lines = propsMatch[1].match(/^\s+-\s+(.+)/gm);
+  if (!lines) return [];
+  return lines
+    .map((line) => {
+      const value = line.replace(/^\s+-\s+/, "").trim();
+      const colonIndex = value.lastIndexOf(":");
+      if (colonIndex === -1) return null;
+      return {
+        file: value.slice(0, colonIndex).trim(),
+        name: value.slice(colonIndex + 1).trim(),
+      };
+    })
+    .filter((e): e is { file: string; name: string } => e !== null);
+}
+
 function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
   const MODULE_ID = "virtual:previewer-entries";
   const RESOLVED_ID = "\0" + MODULE_ID;
+  const tsconfigPath = resolve(hostRoot, "tsconfig.json");
 
   return {
     name: "previewer-entries",
@@ -101,17 +127,34 @@ function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
       if (id !== RESOLVED_ID) return;
 
       const fg = await import("fast-glob");
+      const { readFile } = await import("node:fs/promises");
       const files = await fg.default(glob, {
         cwd: hostRoot,
         absolute: true,
       });
 
-      const entries = files.map((file, i) => ({
-        varName: `Mod${i}`,
-        name: basename(file).replace(/\.preview\.mdx$/, ""),
-        file,
-        filePath: relative(hostRoot, file),
-      }));
+      const entries = await Promise.all(
+        files.map(async (file, i) => {
+          const content = await readFile(file, "utf-8");
+          const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+          const yamlContent = fmMatch ? fmMatch[1] : "";
+          const propEntries = parseFrontmatterProps(yamlContent);
+
+          const propsData = propEntries.map((entry) => {
+            const absPath = resolve(dirname(file), entry.file);
+            const props = extractProps(absPath, entry.name, tsconfigPath);
+            return { name: entry.name, props };
+          });
+
+          return {
+            varName: `Mod${i}`,
+            name: basename(file).replace(/\.preview\.mdx$/, ""),
+            file,
+            filePath: relative(hostRoot, file),
+            propsData,
+          };
+        }),
+      );
 
       return [
         ...entries.map(
@@ -119,10 +162,16 @@ function previewerEntriesPlugin(hostRoot: string, glob: string): Plugin {
             `import ${e.varName}, { frontmatter as ${e.varName}Fm } from ${JSON.stringify(e.file)};`,
         ),
         "",
+        ...entries
+          .filter((e) => e.propsData.length > 0)
+          .map(
+            (e) => `const ${e.varName}Props = ${JSON.stringify(e.propsData)};`,
+          ),
+        "",
         "export const entries = [",
         ...entries.map(
           (e) =>
-            `  { name: ${JSON.stringify(e.name)}, Component: ${e.varName}, frontmatter: ${e.varName}Fm ?? {}, filePath: ${JSON.stringify(e.filePath)} },`,
+            `  { name: ${JSON.stringify(e.name)}, Component: ${e.varName}, frontmatter: ${e.varName}Fm ?? {}, filePath: ${JSON.stringify(e.filePath)}, propsData: ${e.propsData.length > 0 ? `${e.varName}Props` : "[]"} },`,
         ),
         "];",
       ].join("\n");

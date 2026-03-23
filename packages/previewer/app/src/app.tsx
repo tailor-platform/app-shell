@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { entries } from "virtual:previewer-entries";
 import { title, repo } from "virtual:previewer-config";
@@ -15,11 +21,25 @@ interface PreviewEntryFrontmatter {
   codePath?: string;
 }
 
+interface PropInfo {
+  name: string;
+  type: string;
+  required: boolean;
+  defaultValue?: string;
+  description?: string;
+}
+
+interface PropsGroup {
+  name: string;
+  props: PropInfo[];
+}
+
 interface PreviewEntry {
   name: string;
   Component: ComponentType;
   frontmatter: PreviewEntryFrontmatter;
   filePath: string;
+  propsData: PropsGroup[];
 }
 
 interface SidebarGroup {
@@ -84,7 +104,9 @@ function useGroupedEntries(entries: PreviewEntry[]) {
     }
 
     for (const group of groupMap.values()) {
-      group.entries.sort((a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999));
+      group.entries.sort(
+        (a, b) => (a.frontmatter.order ?? 999) - (b.frontmatter.order ?? 999),
+      );
     }
 
     return [...groupMap.values()].sort((a, b) => a.order - b.order);
@@ -144,12 +166,15 @@ function Sidebar({
       </div>
       {/* General section */}
       <div>
-        <div style={{ padding: "12px 16px 4px", ...groupHeadingStyle }}>General</div>
+        <div style={{ padding: "12px 16px 4px", ...groupHeadingStyle }}>
+          General
+        </div>
         <button
           onClick={() => onSelect(OVERVIEW_KEY)}
           style={{
             ...sidebarItemStyle,
-            backgroundColor: selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
+            backgroundColor:
+              selected === OVERVIEW_KEY ? "#f3f4f6" : "transparent",
             fontWeight: selected === OVERVIEW_KEY ? 600 : 400,
           }}
         >
@@ -186,19 +211,26 @@ function Sidebar({
 
       {groups.map((group) => (
         <div key={group.name}>
-          <div style={{ padding: "20px 16px 4px", ...groupHeadingStyle }}>{group.name}</div>
+          <div style={{ padding: "20px 16px 4px", ...groupHeadingStyle }}>
+            {group.name}
+          </div>
           {group.entries.map((entry) => (
             <button
               key={entry.name}
               onClick={() => onSelect(entry.name)}
               style={{
                 ...sidebarItemStyle,
-                backgroundColor: selected === entry.name ? "#f3f4f6" : "transparent",
+                backgroundColor:
+                  selected === entry.name ? "#f3f4f6" : "transparent",
                 fontWeight: selected === entry.name ? 600 : 400,
               }}
             >
-              <span style={{ flex: 1 }}>{entry.frontmatter.title ?? entry.name}</span>
-              {entry.frontmatter.status && <StatusBadge status={entry.frontmatter.status} />}
+              <span style={{ flex: 1 }}>
+                {entry.frontmatter.title ?? entry.name}
+              </span>
+              {entry.frontmatter.status && (
+                <StatusBadge status={entry.frontmatter.status} />
+              )}
             </button>
           ))}
         </div>
@@ -207,7 +239,13 @@ function Sidebar({
   );
 }
 
-function PreviewHeader({ entry }: { entry: PreviewEntry }) {
+function PreviewHeader({
+  entry,
+  hideBorder,
+}: {
+  entry: PreviewEntry;
+  hideBorder?: boolean;
+}) {
   const { frontmatter } = entry;
   if (!frontmatter.title && !frontmatter.description && !frontmatter.status) {
     return null;
@@ -218,13 +256,15 @@ function PreviewHeader({ entry }: { entry: PreviewEntry }) {
   return (
     <div
       style={{
-        borderBottom: "1px solid #e5e7eb",
+        borderBottom: hideBorder ? "none" : "1px solid #e5e7eb",
         padding: "24px 60px 20px",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {frontmatter.title && (
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{frontmatter.title}</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>
+            {frontmatter.title}
+          </h1>
         )}
         {frontmatter.status && <StatusBadge status={frontmatter.status} />}
       </div>
@@ -269,7 +309,7 @@ interface TocItem {
 
 function useTableOfContents(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  entryName: string,
+  contentKey: string,
 ) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -278,7 +318,7 @@ function useTableOfContents(
     const container = containerRef.current;
     if (!container) return;
 
-    // Small delay to let MDX render
+    // Small delay to let content render
     const timeout = setTimeout(() => {
       const headings = container.querySelectorAll("h2[id], h3[id]");
       const tocItems: TocItem[] = Array.from(headings).map((el) => ({
@@ -293,7 +333,7 @@ function useTableOfContents(
     }, 50);
 
     return () => clearTimeout(timeout);
-  }, [containerRef, entryName]);
+  }, [containerRef, contentKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -324,25 +364,27 @@ function useTableOfContents(
 
 function TableOfContents({
   containerRef,
-  entryName,
+  contentKey,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  entryName: string;
+  contentKey: string;
 }) {
-  const { items, activeId, setActiveId } = useTableOfContents(containerRef, entryName);
+  const { items, activeId, setActiveId } = useTableOfContents(
+    containerRef,
+    contentKey,
+  );
 
   if (items.length === 0) return null;
 
   return (
     <nav
       style={{
-        width: 200,
-        flexShrink: 0,
         padding: "32px 16px",
-        borderLeft: "1px solid #e5e7eb",
       }}
     >
-      <div style={{ ...groupHeadingStyle, marginBottom: 12 }}>Table of contents</div>
+      <div style={{ ...groupHeadingStyle, marginBottom: 12 }}>
+        Table of contents
+      </div>
       {items.map((item) => (
         <a
           key={item.id}
@@ -362,7 +404,10 @@ function TableOfContents({
             color: activeId === item.id ? "#111827" : "#6b7280",
             fontWeight: activeId === item.id ? 600 : 400,
             textDecoration: "none",
-            borderLeft: activeId === item.id ? "2px solid #111827" : "2px solid transparent",
+            borderLeft:
+              activeId === item.id
+                ? "2px solid #111827"
+                : "2px solid transparent",
             paddingInlineStart: item.level === 3 ? 20 : 8,
           }}
         >
@@ -373,13 +418,132 @@ function TableOfContents({
   );
 }
 
+function PropsPanel({ propsData }: { propsData: PropsGroup[] }) {
+  return (
+    <div style={{ padding: "24px 60px", paddingBottom: 80 }}>
+      {propsData.map((group) => {
+        const slugId = `props-${group.name.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}`;
+        return (
+          <div key={group.name} style={{ marginBottom: 40 }}>
+            <h2
+              id={slugId}
+              style={{
+                fontSize: 18,
+                fontWeight: 600,
+                margin: "0 0 16px",
+                scrollMarginTop: 16,
+              }}
+            >
+              {group.name}
+            </h2>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 14,
+                tableLayout: "fixed",
+              }}
+            >
+              <thead>
+                <tr>
+                  {["Name", "Type", "Default", "Description"].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        textAlign: "left",
+                        padding: "8px 12px",
+                        borderBottom: "2px solid #e5e7eb",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        color: "#374151",
+                        width:
+                          h === "Name"
+                            ? "18%"
+                            : h === "Type"
+                              ? "25%"
+                              : h === "Default"
+                                ? "12%"
+                                : "45%",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {group.props.map((prop) => (
+                  <tr
+                    key={prop.name}
+                    style={{ borderBottom: "1px solid #f3f4f6" }}
+                  >
+                    <td style={{ padding: "8px 12px", verticalAlign: "top" }}>
+                      <code
+                        style={{
+                          fontSize: 13,
+                          backgroundColor: "#f3f4f6",
+                          padding: "2px 5px",
+                          borderRadius: 4,
+                        }}
+                      >
+                        {prop.name}
+                      </code>
+                    </td>
+                    <td style={{ padding: "8px 12px", verticalAlign: "top" }}>
+                      <code
+                        style={{
+                          fontSize: 13,
+                          backgroundColor: "#f3f4f6",
+                          padding: "2px 5px",
+                          borderRadius: 4,
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {prop.type}
+                      </code>
+                    </td>
+                    <td
+                      style={{
+                        padding: "8px 12px",
+                        verticalAlign: "top",
+                        color: prop.defaultValue ? "#111827" : "#9ca3af",
+                      }}
+                    >
+                      {prop.defaultValue ?? "—"}
+                    </td>
+                    <td
+                      style={{
+                        padding: "8px 12px",
+                        verticalAlign: "top",
+                        color: "#6b7280",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {prop.description ?? ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+type ContentTab = "documentation" | "props";
+
 function PreviewContent({ entry }: { entry: PreviewEntry }) {
   const { Component } = entry;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasProps = entry.propsData.length > 0;
+  const [activeTab, setActiveTab] = useState<ContentTab>("documentation");
 
-  // Reset scroll position when entry changes (instead of relying on key-based remount)
+  // Reset scroll position and tab when entry changes
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
+    setActiveTab("documentation");
   }, [entry.name]);
 
   return (
@@ -391,7 +555,6 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
         overflow: "hidden",
       }}
     >
-      <PreviewHeader entry={entry} />
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         <div
           ref={scrollRef}
@@ -401,11 +564,73 @@ function PreviewContent({ entry }: { entry: PreviewEntry }) {
             scrollbarWidth: "none",
           }}
         >
-          <div style={{ maxWidth: 1020, margin: "0 auto", paddingBottom: 80 }}>
-            <Component />
-          </div>
+          <PreviewHeader entry={entry} hideBorder={hasProps} />
+          {hasProps && (
+            <div
+              style={{
+                display: "flex",
+                gap: 0,
+                padding: "0 60px",
+                borderBottom: "1px solid #e5e7eb",
+                position: "sticky",
+                top: 0,
+                backgroundColor: "white",
+                zIndex: 1,
+              }}
+            >
+              {(
+                [
+                  { key: "documentation" as const, label: "Documentation" },
+                  { key: "props" as const, label: "Props" },
+                ] as const
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setActiveTab(key);
+                  }}
+                  style={{
+                    padding: "10px 16px",
+                    fontSize: 14,
+                    fontWeight: activeTab === key ? 600 : 400,
+                    color: activeTab === key ? "#111827" : "#6b7280",
+                    background: "none",
+                    border: "none",
+                    borderBottom:
+                      activeTab === key
+                        ? "2px solid #111827"
+                        : "2px solid transparent",
+                    cursor: "pointer",
+                    marginBottom: -1,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {activeTab === "documentation" ? (
+            <div
+              style={{ maxWidth: 1020, margin: "0 auto", paddingBottom: 80 }}
+            >
+              <Component />
+            </div>
+          ) : (
+            <PropsPanel propsData={entry.propsData} />
+          )}
         </div>
-        <TableOfContents containerRef={scrollRef} entryName={entry.name} />
+        <div
+          style={{
+            width: 200,
+            flexShrink: 0,
+            borderLeft: "1px solid #e5e7eb",
+          }}
+        >
+          <TableOfContents
+            containerRef={scrollRef}
+            contentKey={`${entry.name}:${activeTab}`}
+          />
+        </div>
       </div>
     </div>
   );

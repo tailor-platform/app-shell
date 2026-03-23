@@ -38,7 +38,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), appShellRoutes()],
+  plugins: [react(), tailwindcss(), appShellRoutes({ entrypoint: "src/App.tsx" })],
 });
 ```
 

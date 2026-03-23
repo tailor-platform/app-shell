@@ -32,7 +32,7 @@ const activities = [
   },
 ];
 
-<ActivityCard activities={activities} title="Updates" />
+<ActivityCard activities={activities} title="Updates" />;
 ```
 
 ## Overflow and dialog
@@ -40,12 +40,7 @@ const activities = [
 By default the card shows the 6 most recent activities. If there are more, a button appears at the bottom (e.g. **"2 more activities"**). Clicking it opens a modal dialog titled "All activities" with the full list in a scrollable area. The overflow label can be switched to a count style (**"+2"**) via the `overflowLabel` prop.
 
 ```tsx
-<ActivityCard
-  activities={manyActivities}
-  title="Updates"
-  maxVisible={6}
-  overflowLabel="more"
-/>
+<ActivityCard activities={manyActivities} title="Updates" maxVisible={6} overflowLabel="more" />
 // or overflowLabel="count" for "+N"
 ```
 
@@ -54,22 +49,18 @@ By default the card shows the 6 most recent activities. If there are more, a but
 Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", or a formatted date.
 
 ```tsx
-<ActivityCard
-  activities={activities}
-  title="Updates"
-  groupBy="day"
-/>
+<ActivityCard activities={activities} title="Updates" groupBy="day" />
 ```
 
 ## Props
 
-| Prop            | Type                               | Default  | Description                                      |
-| --------------- | ---------------------------------- | -------- | ------------------------------------------------ |
-| `activities`    | `ActivityCardActivity[]`           | required | List of activities (newest first).               |
-| `title`        | `string`                           | -        | Card title, e.g. "Updates".                      |
-| `maxVisible`   | `number`                           | `6`      | Max activities shown in the card before overflow.|
-| `overflowLabel`| `"more" \| "count"`                | `"more"` | "N more activities" vs "+N".                     |
-| `groupBy`       | `"none" \| "day"`                 | `"none"` | Optional grouping by day.                       |
-| `className`     | `string`                           | -        | Applied to the card root.                        |
+| Prop            | Type                     | Default  | Description                                       |
+| --------------- | ------------------------ | -------- | ------------------------------------------------- |
+| `activities`    | `ActivityCardActivity[]` | required | List of activities (newest first).                |
+| `title`         | `string`                 | -        | Card title, e.g. "Updates".                       |
+| `maxVisible`    | `number`                 | `6`      | Max activities shown in the card before overflow. |
+| `overflowLabel` | `"more" \| "count"`      | `"more"` | "N more activities" vs "+N".                      |
+| `groupBy`       | `"none" \| "day"`        | `"none"` | Optional grouping by day.                         |
+| `className`     | `string`                 | -        | Applied to the card root.                         |
 
 Each activity must include: `id`, `userDisplayName`, `description`, `timestamp` (Date or string). Optional: `userAvatarUrl` (fallback is initials).

@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Avatar > snapshots > fallback only 1`] = `"<span data-slot="avatar" class="astw:relative astw:flex astw:shrink-0 astw:items-center astw:justify-center astw:overflow-hidden astw:rounded-full astw:bg-muted astw:text-muted-foreground astw:font-medium astw:size-7 astw:text-xs"><span data-slot="avatar-fallback" class="astw:flex astw:size-full astw:items-center astw:justify-center">AB</span></span>"`;
+
+exports[`Avatar > snapshots > size lg 1`] = `"<span data-slot="avatar" class="astw:relative astw:flex astw:shrink-0 astw:items-center astw:justify-center astw:overflow-hidden astw:rounded-full astw:bg-muted astw:text-muted-foreground astw:font-medium astw:size-10 astw:text-sm"><span data-slot="avatar-fallback" class="astw:flex astw:size-full astw:items-center astw:justify-center">EF</span></span>"`;
+
+exports[`Avatar > snapshots > size sm 1`] = `"<span data-slot="avatar" class="astw:relative astw:flex astw:shrink-0 astw:items-center astw:justify-center astw:overflow-hidden astw:rounded-full astw:bg-muted astw:text-muted-foreground astw:font-medium astw:size-6 astw:text-[10px]"><span data-slot="avatar-fallback" class="astw:flex astw:size-full astw:items-center astw:justify-center">CD</span></span>"`;

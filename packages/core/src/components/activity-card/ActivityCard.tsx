@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Avatar } from "../avatar";
 import { Dialog } from "../dialog";
 import { cn } from "../../lib/utils";
 
@@ -41,44 +42,6 @@ function getDayKey(ts: Date | string): string {
 }
 
 // ============================================================================
-// AVATAR (internal)
-// ============================================================================
-
-function Avatar({
-  name,
-  src,
-  className,
-}: {
-  name: string;
-  src?: string;
-  className?: string;
-}) {
-  const [imgFailed, setImgFailed] = React.useState(false);
-  const showImg = src && !imgFailed;
-
-  return (
-    <div
-      className={cn(
-        "astw:relative astw:flex astw:shrink-0 astw:items-center astw:justify-center astw:overflow-hidden astw:rounded-full astw:bg-muted astw:text-muted-foreground astw:size-7 astw:text-xs astw:font-medium",
-        className,
-      )}
-      aria-hidden
-    >
-      {showImg ? (
-        <img
-          src={src}
-          alt=""
-          className="astw:size-full astw:object-cover"
-          onError={() => setImgFailed(true)}
-        />
-      ) : (
-        <span>{getInitials(name)}</span>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
 // TIMELINE CONNECTOR (measures row heights so line connects avatar centers)
 // ============================================================================
 
@@ -104,10 +67,8 @@ function TimelineConnector() {
       const prevRect = prev.getBoundingClientRect();
       const nextRect = next.getBoundingClientRect();
       const wrapperRect = wrapper.getBoundingClientRect();
-      const top =
-        prevRect.top + AVATAR_CENTER_OFFSET - wrapperRect.top;
-      const bottom =
-        nextRect.top + AVATAR_CENTER_OFFSET - wrapperRect.top;
+      const top = prevRect.top + AVATAR_CENTER_OFFSET - wrapperRect.top;
+      const bottom = nextRect.top + AVATAR_CENTER_OFFSET - wrapperRect.top;
       const height = bottom - top;
       if (height > 0) {
         setLineStyle({ top, height });
@@ -124,15 +85,18 @@ function TimelineConnector() {
   return (
     <div
       ref={wrapperRef}
-      className="astw:relative astw:h-5 astw:shrink-0 astw:flex-none"
+      className="astw:relative astw:z-0 astw:h-5 astw:shrink-0 astw:flex-none"
       aria-hidden
     >
       <div
-        className="astw:absolute astw:left-[14px] astw:w-px astw:rounded-md astw:bg-border"
+        className="astw:absolute astw:left-[14px] astw:z-0 astw:w-px astw:rounded-md astw:bg-border"
         style={
           lineStyle
             ? { top: lineStyle.top, height: lineStyle.height }
-            : { top: -AVATAR_CENTER_OFFSET, height: AVATAR_CENTER_OFFSET + ROW_GAP + AVATAR_CENTER_OFFSET }
+            : {
+                top: -AVATAR_CENTER_OFFSET,
+                height: AVATAR_CENTER_OFFSET + ROW_GAP + AVATAR_CENTER_OFFSET,
+              }
         }
         aria-hidden
       />
@@ -146,8 +110,11 @@ function TimelineConnector() {
 
 function ActivityRow({ activity }: { activity: ActivityCardActivity }) {
   return (
-    <div className="astw:flex astw:gap-3 astw:min-w-0">
-      <Avatar name={activity.userDisplayName} src={activity.userAvatarUrl} />
+    <div className="astw:relative astw:z-10 astw:flex astw:gap-3 astw:min-w-0">
+      <Avatar.Root aria-hidden>
+        {activity.userAvatarUrl ? <Avatar.Image src={activity.userAvatarUrl} alt="" /> : null}
+        <Avatar.Fallback>{getInitials(activity.userDisplayName)}</Avatar.Fallback>
+      </Avatar.Root>
       <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-1">
         <p className="astw:text-sm astw:font-medium astw:leading-normal astw:text-foreground">
           <span>{activity.userDisplayName}</span>{" "}
@@ -156,6 +123,27 @@ function ActivityRow({ activity }: { activity: ActivityCardActivity }) {
         <p className="astw:text-xs astw:leading-none astw:text-muted-foreground">
           {formatTimestamp(activity.timestamp)}
         </p>
+      </div>
+    </div>
+  );
+}
+
+/** One section: day label + activities with line segments between rows only */
+function renderActivitySection(dayLabel: string | null, dayActivities: ActivityCardActivity[]) {
+  return (
+    <div key={dayLabel ?? "single"} className="astw:flex astw:flex-col astw:gap-5">
+      {dayLabel != null && (
+        <p className="astw:text-xs astw:font-semibold astw:leading-none astw:opacity-60 astw:text-foreground">
+          {dayLabel}
+        </p>
+      )}
+      <div className="astw:flex astw:flex-col astw:gap-0">
+        {dayActivities.map((activity, index) => (
+          <React.Fragment key={activity.id}>
+            <ActivityRow activity={activity} />
+            {index < dayActivities.length - 1 && <TimelineConnector />}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
@@ -200,31 +188,6 @@ function ActivityCard({
     };
   }, []);
 
-  /** One section: day label + activities with line segments between rows only */
-  const renderSection = (
-    dayLabel: string | null,
-    dayActivities: ActivityCardActivity[],
-  ) => (
-    <div
-      key={dayLabel ?? "single"}
-      className="astw:flex astw:flex-col astw:gap-5"
-    >
-      {dayLabel != null && (
-        <p className="astw:text-xs astw:font-semibold astw:leading-none astw:opacity-60 astw:text-foreground">
-          {dayLabel}
-        </p>
-      )}
-      <div className="astw:flex astw:flex-col astw:gap-0">
-        {dayActivities.map((activity, index) => (
-          <React.Fragment key={activity.id}>
-            <ActivityRow activity={activity} />
-            {index < dayActivities.length - 1 && <TimelineConnector />}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-
   const renderActivityList = (list: ActivityCardActivity[]) => {
     if (groupBy === "day") {
       const byDay = new Map<string, ActivityCardActivity[]>();
@@ -237,15 +200,13 @@ function ActivityCard({
       return (
         <div className="astw:flex astw:flex-col astw:gap-8">
           {entries.map(([dayLabel, dayActivities]) =>
-            renderSection(dayLabel, dayActivities),
+            renderActivitySection(dayLabel, dayActivities),
           )}
         </div>
       );
     }
     return (
-      <div className="astw:flex astw:flex-col astw:gap-5">
-        {renderSection(null, list)}
-      </div>
+      <div className="astw:flex astw:flex-col astw:gap-5">{renderActivitySection(null, list)}</div>
     );
   };
 
@@ -280,9 +241,7 @@ function ActivityCard({
             onClick={() => setDialogOpen(true)}
             className="astw:cursor-pointer astw:w-full astw:border-t astw:border-border astw:py-4 astw:text-sm astw:font-medium astw:text-center astw:text-foreground astw:opacity-60 astw:transition-colors astw:hover:opacity-100 astw:hover:bg-secondary/50 astw:focus:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring astw:focus-visible:ring-inset"
           >
-            {overflowLabel === "count"
-              ? `+${overflowCount}`
-              : `${overflowCount} more activities`}
+            {overflowLabel === "count" ? `+${overflowCount}` : `${overflowCount} more activities`}
           </button>
         )}
       </div>

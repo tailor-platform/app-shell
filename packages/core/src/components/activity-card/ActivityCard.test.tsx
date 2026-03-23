@@ -47,9 +47,7 @@ describe("ActivityCard", () => {
       ...mockActivities[0],
       id: `id-${i}`,
     }));
-    render(
-      <ActivityCard activities={many} title="Updates" maxVisible={6} />,
-    );
+    render(<ActivityCard activities={many} title="Updates" maxVisible={6} />);
     const overflowButton = screen.getByText("2 more activities");
     expect(overflowButton).toBeDefined();
     await user.click(overflowButton);
@@ -61,14 +59,7 @@ describe("ActivityCard", () => {
       ...mockActivities[0],
       id: `id-${i}`,
     }));
-    render(
-      <ActivityCard
-        activities={many}
-        title="Updates"
-        maxVisible={6}
-        overflowLabel="count"
-      />,
-    );
+    render(<ActivityCard activities={many} title="Updates" maxVisible={6} overflowLabel="count" />);
     expect(screen.getByText("+2")).toBeDefined();
   });
 });

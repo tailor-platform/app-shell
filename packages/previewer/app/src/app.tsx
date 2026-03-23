@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { entries } from "virtual:previewer-entries";
-import { repo, sidebar } from "virtual:previewer-config";
+import { title, repo } from "virtual:previewer-config";
 import { mdxComponents } from "./mdx-components";
 import { Overview } from "./overview";
 
@@ -132,18 +132,16 @@ function Sidebar({
         flexShrink: 0,
       }}
     >
-      {sidebar.title && (
-        <div
-          style={{
-            padding: "10px 16px 16px",
-            fontSize: 15,
-            fontWeight: 700,
-            marginBottom: 4,
-          }}
-        >
-          {sidebar.title}
-        </div>
-      )}
+      <div
+        style={{
+          padding: "10px 16px 16px",
+          fontSize: 15,
+          fontWeight: 700,
+          marginBottom: 4,
+        }}
+      >
+        {title}
+      </div>
       {/* General section */}
       <div>
         <div style={{ padding: "12px 16px 4px", ...groupHeadingStyle }}>General</div>

@@ -7,7 +7,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
-import type { PreviewerRepo, PreviewerSidebar } from "./config";
+import type { PreviewerRepo } from "./config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = resolve(__dirname, "..", "app");
@@ -22,10 +22,10 @@ export function createPreviewerViteConfig(options: {
   root: string;
   glob: string;
   css?: string;
+  /** Title used in the sidebar header, HTML page title, and llms.txt heading */
+  title: string;
   /** GitHub repository configuration */
   repo?: PreviewerRepo;
-  /** Sidebar configuration */
-  sidebar?: PreviewerSidebar;
   /** Vite configuration overrides */
   vite?: {
     plugins?: PluginOption[];
@@ -64,9 +64,10 @@ export function createPreviewerViteConfig(options: {
       ...(options.vite?.plugins ?? []),
       previewerEntriesPlugin(options.root, options.glob),
       previewerCssPlugin(options.root, options.css),
-      previewerConfigPlugin(options.repo, options.sidebar),
+      previewerConfigPlugin(options.title, options.repo),
+      previewerHtmlTitlePlugin(options.title),
       ...(options.repo?.url
-        ? [previewerLlmsTxtPlugin(options.root, options.glob, options.repo)]
+        ? [previewerLlmsTxtPlugin(options.title, options.root, options.glob, options.repo)]
         : []),
     ],
   };
@@ -151,7 +152,7 @@ function previewerCssPlugin(hostRoot: string, css?: string): Plugin {
  * Virtual module `virtual:previewer-config` — exposes the resolved
  * repo configuration so the app can render source links.
  */
-function previewerConfigPlugin(repo?: PreviewerRepo, sidebar?: PreviewerSidebar): Plugin {
+function previewerConfigPlugin(title: string, repo?: PreviewerRepo): Plugin {
   const MODULE_ID = "virtual:previewer-config";
   const RESOLVED_ID = "\0" + MODULE_ID;
 
@@ -167,6 +168,8 @@ function previewerConfigPlugin(repo?: PreviewerRepo, sidebar?: PreviewerSidebar)
 
       const lines: string[] = [];
 
+      lines.push(`export const title = ${JSON.stringify(title)};`);
+
       if (repo) {
         // Strip trailing slash from URL
         const normalizedUrl = repo.url.replace(/\/+$/, "");
@@ -176,9 +179,19 @@ function previewerConfigPlugin(repo?: PreviewerRepo, sidebar?: PreviewerSidebar)
         lines.push("export const repo = null;");
       }
 
-      lines.push(`export const sidebar = ${JSON.stringify({ title: sidebar?.title ?? null })};`);
-
       return lines.join("\n");
+    },
+  };
+}
+
+/**
+ * Replaces the `<title>` in index.html with the configured title.
+ */
+function previewerHtmlTitlePlugin(title: string): Plugin {
+  return {
+    name: "previewer-html-title",
+    transformIndexHtml(html) {
+      return html.replaceAll("{{title}}", title);
     },
   };
 }
@@ -190,7 +203,12 @@ function previewerConfigPlugin(repo?: PreviewerRepo, sidebar?: PreviewerSidebar)
  * - Dev: intercepts the request via `configureServer` middleware.
  * - Build: emits `llms.txt` as a static asset via `generateBundle`.
  */
-function previewerLlmsTxtPlugin(hostRoot: string, glob: string, repo?: PreviewerRepo): Plugin {
+function previewerLlmsTxtPlugin(
+  title: string,
+  hostRoot: string,
+  glob: string,
+  repo?: PreviewerRepo,
+): Plugin {
   async function buildLlmsTxt(): Promise<string> {
     const fg = await import("fast-glob");
     const { readFile } = await import("node:fs/promises");
@@ -255,7 +273,7 @@ function previewerLlmsTxtPlugin(hostRoot: string, glob: string, repo?: Previewer
     }
 
     const lines: string[] = [];
-    lines.push(`# Component Library`);
+    lines.push(`# ${title}`);
     lines.push("");
     lines.push(`> ${fmEntries.length} components across ${groupMap.size} groups`);
     lines.push("");

@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
 // so that upstream changes don't leak as breaking changes to consumers.
 //
-// The field-state props (`isTouched`, `isDirty`, `error`) follow React Hook
-// Form's `fieldState` shape so `<Field.Root {...fieldState}>` just works.
+// The field-state props (`isTouched`, `isDirty`, `invalid`, `error`) follow
+// React Hook Form's `fieldState` shape so `<Field.Root {...fieldState}>` just works.
 type FieldRootProps = Pick<
   React.ComponentProps<typeof BaseField.Root>,
   | "name"
@@ -24,6 +24,8 @@ type FieldRootProps = Pick<
   isTouched?: boolean;
   /** Whether the field value differs from the default. Maps to Base UI's `dirty`. */
   isDirty?: boolean;
+  /** When true, marks the field as invalid. Also set automatically when `error` is provided. */
+  invalid?: boolean;
   /**
    * An error object (e.g. from React Hook Form's `fieldState.error`).
    * When provided, the field is marked invalid (`invalid={!!error}`).
@@ -83,21 +85,20 @@ function Root({
   children,
   isTouched,
   isDirty,
+  invalid,
   error,
-  // Absorb extra RHF fieldState props so they don't leak to the DOM.
+  // Absorb RHF's isValidating so it doesn't leak to the DOM.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isValidating: _isValidating,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  invalid: _invalid,
   ...props
-}: FieldRootProps & { isValidating?: unknown; invalid?: unknown }) {
+}: FieldRootProps & { isValidating?: unknown }) {
   return (
     <BaseField.Root
       data-slot="field"
       className={cn("astw:flex astw:flex-col astw:items-start astw:gap-1", className)}
       touched={isTouched}
       dirty={isDirty}
-      invalid={!!error || !!_invalid}
+      invalid={!!error || !!invalid}
       {...props}
     >
       {children}

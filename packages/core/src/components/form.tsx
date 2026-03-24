@@ -13,6 +13,12 @@ type FormSubmitEventDetails =
     ? D
     : never;
 
+// Compile-time guard: fails if Base UI changes the callback shape.
+// @ts-expect-error TS6196 — intentionally unused; exists only as a compile-time assertion
+type _AssertFormSubmitDetails = FormSubmitEventDetails extends never
+  ? ["ERROR: FormSubmitEventDetails inference broke — check @base-ui/react version"]
+  : true;
+
 // Only the props relevant to the Form abstraction are picked from BaseForm.
 // Base UI-internal props are intentionally excluded
 // so that upstream changes don't leak as breaking changes to consumers.

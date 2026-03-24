@@ -73,6 +73,10 @@ type FieldRootProps = Pick<
  *   )}
  * />
  * ```
+ *
+ * > **Note:** When combining RHF with `Form`'s `errors` prop for server-side
+ * > error routing, add `name={field.name}` to `Field.Root` so errors can be
+ * > matched by field name.
  */
 function Root({
   className,
@@ -93,7 +97,7 @@ function Root({
       className={cn("astw:flex astw:flex-col astw:items-start astw:gap-1", className)}
       touched={isTouched}
       dirty={isDirty}
-      invalid={!!error}
+      invalid={!!error || !!_invalid}
       {...props}
     >
       {children}
@@ -184,7 +188,7 @@ Error.displayName = "Field.Error";
 
 /** Used to display a custom message based on the field's validity state. */
 function Validity({ ...props }: React.ComponentProps<typeof BaseField.Validity>) {
-  return <BaseField.Validity data-slot="field-validity" {...props} />;
+  return <BaseField.Validity {...props} />;
 }
 Validity.displayName = "Field.Validity";
 

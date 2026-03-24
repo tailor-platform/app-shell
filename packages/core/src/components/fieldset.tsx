@@ -21,7 +21,12 @@ import { cn } from "@/lib/utils";
  * </Fieldset.Root>
  * ```
  */
-function Root({ className, ...props }: React.ComponentProps<typeof BaseFieldset.Root>) {
+type FieldsetRootProps = Pick<
+  React.ComponentProps<typeof BaseFieldset.Root>,
+  "disabled" | "className" | "style"
+> & { children: React.ReactNode };
+
+function Root({ className, ...props }: FieldsetRootProps) {
   return <BaseFieldset.Root data-slot="fieldset" className={cn(className)} {...props} />;
 }
 Root.displayName = "Fieldset.Root";

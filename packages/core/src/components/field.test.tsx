@@ -100,7 +100,7 @@ describe("Field", () => {
           <Field.Control />
         </Field.Root>,
       );
-      expect(container.querySelector("[data-touched]")).toBeDefined();
+      expect(container.querySelector("[data-touched]")).not.toBeNull();
     });
 
     it("maps isDirty to dirty", () => {
@@ -109,7 +109,7 @@ describe("Field", () => {
           <Field.Control />
         </Field.Root>,
       );
-      expect(container.querySelector("[data-dirty]")).toBeDefined();
+      expect(container.querySelector("[data-dirty]")).not.toBeNull();
     });
 
     it("sets invalid when error is provided", () => {
@@ -118,7 +118,7 @@ describe("Field", () => {
           <Field.Control />
         </Field.Root>,
       );
-      expect(container.querySelector("[data-invalid]")).toBeDefined();
+      expect(container.querySelector("[data-invalid]")).not.toBeNull();
     });
   });
 });

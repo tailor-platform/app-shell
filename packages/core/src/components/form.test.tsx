@@ -80,4 +80,17 @@ describe("Form", () => {
     );
     expect(ref.current).toBeInstanceOf(HTMLFormElement);
   });
+
+  it("routes server errors to matching Field.Error", () => {
+    render(
+      <Form errors={{ url: "Server says invalid" }}>
+        <Field.Root name="url">
+          <Field.Label>URL</Field.Label>
+          <Field.Control type="url" />
+          <Field.Error>Server says invalid</Field.Error>
+        </Field.Root>
+      </Form>,
+    );
+    expect(screen.getByText("Server says invalid")).not.toBeNull();
+  });
 });

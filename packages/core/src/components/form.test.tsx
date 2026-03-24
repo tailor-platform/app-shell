@@ -82,7 +82,18 @@ describe("Form", () => {
   });
 
   it("routes server errors to matching Field.Error", () => {
-    render(
+    const { rerender } = render(
+      <Form>
+        <Field.Root name="url">
+          <Field.Label>URL</Field.Label>
+          <Field.Control type="url" />
+          <Field.Error>Server says invalid</Field.Error>
+        </Field.Root>
+      </Form>,
+    );
+    expect(screen.queryByText("Server says invalid")).toBeNull();
+
+    rerender(
       <Form errors={{ url: "Server says invalid" }}>
         <Field.Root name="url">
           <Field.Label>URL</Field.Label>

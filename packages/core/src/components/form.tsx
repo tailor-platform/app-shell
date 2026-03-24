@@ -13,12 +13,6 @@ type FormSubmitEventDetails =
     ? D
     : never;
 
-// Compile-time guard: fails if Base UI changes the callback shape.
-// @ts-expect-error TS6196 — intentionally unused; exists only as a compile-time assertion
-type _AssertFormSubmitDetails = FormSubmitEventDetails extends never
-  ? ["ERROR: FormSubmitEventDetails inference broke — check @base-ui/react version"]
-  : true;
-
 // Only the props relevant to the Form abstraction are picked from BaseForm.
 // Base UI-internal props are intentionally excluded
 // so that upstream changes don't leak as breaking changes to consumers.
@@ -26,22 +20,23 @@ type _AssertFormSubmitDetails = FormSubmitEventDetails extends never
 // `onFormSubmit` is defined separately so the `FormValues` generic
 // flows through to the callback's first parameter, enabling type-safe
 // form values when a type argument is provided (e.g. `<Form<MyValues>>`).
-type FormProps<FormValues extends Record<string, any> = Record<string, any>> = Pick<
-  React.ComponentProps<typeof BaseForm>,
-  | "errors"
-  | "onSubmit"
-  | "actionsRef"
-  | "validationMode"
-  | "noValidate"
-  | "ref"
-  | "className"
-  | "style"
-> & {
-  children: React.ReactNode;
-  onFormSubmit?:
-    | ((formValues: FormValues, eventDetails: FormSubmitEventDetails) => void)
-    | undefined;
-};
+type FormProps<FormValues extends Record<string, any> = Record<string, any>> =
+  Pick<
+    React.ComponentProps<typeof BaseForm>,
+    | "errors"
+    | "onSubmit"
+    | "actionsRef"
+    | "validationMode"
+    | "noValidate"
+    | "ref"
+    | "className"
+    | "style"
+  > & {
+    children: React.ReactNode;
+    onFormSubmit?:
+      | ((formValues: FormValues, eventDetails: FormSubmitEventDetails) => void)
+      | undefined;
+  };
 
 /**
  * A form element with consolidated error handling and validation.

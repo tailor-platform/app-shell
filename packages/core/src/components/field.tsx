@@ -2,6 +2,7 @@ import * as React from "react";
 import { Field as BaseField } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
+import { inputBaseClasses } from "@/lib/input-classes";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -95,7 +96,10 @@ function Root({
   return (
     <BaseField.Root
       data-slot="field"
-      className={cn("astw:flex astw:flex-col astw:items-start astw:gap-1", className)}
+      className={cn(
+        "astw:flex astw:flex-col astw:items-start astw:gap-1",
+        className,
+      )}
       touched={isTouched}
       dirty={isDirty}
       invalid={!!error || !!invalid}
@@ -115,7 +119,10 @@ Root.displayName = "Field.Root";
  * Combobox, Autocomplete) registers its ID with the context, so clicking
  * this label will focus the correct control.
  */
-function Label({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseField.Label>) {
   return (
     <BaseField.Label
       data-slot="field-label"
@@ -133,16 +140,16 @@ Label.displayName = "Field.Label";
  * (e.g. Select, Combobox, Autocomplete) as a sibling — those components
  * register themselves with the Field context automatically.
  */
-function Control({ className, ...props }: React.ComponentProps<typeof BaseField.Control>) {
+function Control({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseField.Control>) {
   return (
     <BaseField.Control
       data-slot="field-control"
       className={cn(
-        "astw:border-input astw:flex astw:h-9 astw:w-full astw:min-w-0 astw:rounded-md astw:border astw:bg-transparent astw:px-3 astw:py-1 astw:text-base astw:shadow-xs astw:outline-none astw:md:text-sm",
-        "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
-        "astw:data-invalid:ring-destructive/20 astw:data-invalid:border-destructive",
-        "astw:disabled:pointer-events-none astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
-        "astw:placeholder:text-muted-foreground",
+        inputBaseClasses,
+        "astw:data-invalid:ring-destructive/20 astw:dark:data-invalid:ring-destructive/40 astw:data-invalid:border-destructive",
         className,
       )}
       {...props}
@@ -157,7 +164,10 @@ Control.displayName = "Field.Control";
  * Its ID is registered with the Field context so that the control
  * automatically receives a matching `aria-describedby` attribute.
  */
-function Description({ className, ...props }: React.ComponentProps<typeof BaseField.Description>) {
+function Description({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseField.Description>) {
   return (
     <BaseField.Description
       data-slot="field-description"
@@ -176,11 +186,17 @@ Description.displayName = "Field.Description";
  * specific `ValidityState` key (e.g. `"valueMissing"`, `"typeMismatch"`).
  * Omitting `match` shows the browser's default validation message.
  */
-function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Error>) {
+function Error({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseField.Error>) {
   return (
     <BaseField.Error
       data-slot="field-error"
-      className={cn("astw:text-destructive astw:text-sm astw:font-medium", className)}
+      className={cn(
+        "astw:text-destructive astw:text-sm astw:font-medium",
+        className,
+      )}
       {...props}
     />
   );
@@ -188,7 +204,9 @@ function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Er
 Error.displayName = "Field.Error";
 
 /** Used to display a custom message based on the field's validity state. */
-function Validity({ ...props }: React.ComponentProps<typeof BaseField.Validity>) {
+function Validity({
+  ...props
+}: React.ComponentProps<typeof BaseField.Validity>) {
   return <BaseField.Validity {...props} />;
 }
 Validity.displayName = "Field.Validity";

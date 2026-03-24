@@ -13,16 +13,7 @@ Use `Tooltip` to show brief contextual information when users hover over or focu
 
 ## Basic
 
-<div style={{ display: "flex", gap: 8, padding: "16px 0" }}>
-  <Tooltip.Provider>
-    <Tooltip.Root>
-      <Tooltip.Trigger render={<Button variant="outline" />}>Hover me</Tooltip.Trigger>
-      <Tooltip.Content>Helpful tooltip text</Tooltip.Content>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-</div>
-
-```tsx
+```tsx preview
 <Tooltip.Provider>
   <Tooltip.Root>
     <Tooltip.Trigger render={<Button variant="outline" />}>Hover me</Tooltip.Trigger>
@@ -33,15 +24,12 @@ Use `Tooltip` to show brief contextual information when users hover over or focu
 
 ## Placement
 
-<div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "16px 0" }}>
+```tsx preview
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
   <Tooltip.Provider>
     <Tooltip.Root>
       <Tooltip.Trigger render={<Button variant="outline" />}>Top</Tooltip.Trigger>
       <Tooltip.Content position={{ side: "top" }}>Top tooltip</Tooltip.Content>
-    </Tooltip.Root>
-    <Tooltip.Root>
-      <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
-      <Tooltip.Content position={{ side: "right" }}>Right tooltip</Tooltip.Content>
     </Tooltip.Root>
     <Tooltip.Root>
       <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
@@ -51,26 +39,10 @@ Use `Tooltip` to show brief contextual information when users hover over or focu
       <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
       <Tooltip.Content position={{ side: "left" }}>Left tooltip</Tooltip.Content>
     </Tooltip.Root>
+    <Tooltip.Root>
+      <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
+      <Tooltip.Content position={{ side: "right" }}>Right tooltip</Tooltip.Content>
+    </Tooltip.Root>
   </Tooltip.Provider>
 </div>
-
-```tsx
-<Tooltip.Provider>
-  <Tooltip.Root>
-    <Tooltip.Trigger render={<Button variant="outline" />}>Top</Tooltip.Trigger>
-    <Tooltip.Content position={{ side: "top" }}>Top tooltip</Tooltip.Content>
-  </Tooltip.Root>
-  <Tooltip.Root>
-    <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
-    <Tooltip.Content position={{ side: "right" }}>Right tooltip</Tooltip.Content>
-  </Tooltip.Root>
-  <Tooltip.Root>
-    <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
-    <Tooltip.Content position={{ side: "bottom" }}>Bottom tooltip</Tooltip.Content>
-  </Tooltip.Root>
-  <Tooltip.Root>
-    <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
-    <Tooltip.Content position={{ side: "left" }}>Left tooltip</Tooltip.Content>
-  </Tooltip.Root>
-</Tooltip.Provider>
 ```

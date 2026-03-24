@@ -13,23 +13,7 @@ Use `Sheet` when you need a slide-in panel for secondary content — settings fo
 
 ## Basic (Right)
 
-<div style={{ padding: "16px 0" }}>
-  <Sheet.Root side="right">
-    <Sheet.Trigger render={<Button variant="outline" />}>Open Sheet</Sheet.Trigger>
-    <Sheet.Content>
-      <Sheet.Header>
-        <Sheet.Title>Settings</Sheet.Title>
-        <Sheet.Description>Manage your preferences here.</Sheet.Description>
-      </Sheet.Header>
-      <div style={{ padding: "0 16px", fontSize: 14 }}>Sheet content goes here.</div>
-      <Sheet.Footer>
-        <Sheet.Close render={<Button />}>Close</Sheet.Close>
-      </Sheet.Footer>
-    </Sheet.Content>
-  </Sheet.Root>
-</div>
-
-```tsx
+```tsx preview
 <Sheet.Root side="right">
   <Sheet.Trigger render={<Button variant="outline" />}>Open Sheet</Sheet.Trigger>
   <Sheet.Content>
@@ -37,7 +21,7 @@ Use `Sheet` when you need a slide-in panel for secondary content — settings fo
       <Sheet.Title>Settings</Sheet.Title>
       <Sheet.Description>Manage your preferences here.</Sheet.Description>
     </Sheet.Header>
-    <div>Sheet content goes here.</div>
+    <div style={{ padding: "0 16px", fontSize: 14 }}>Sheet content goes here.</div>
     <Sheet.Footer>
       <Sheet.Close render={<Button />}>Close</Sheet.Close>
     </Sheet.Footer>
@@ -47,7 +31,8 @@ Use `Sheet` when you need a slide-in panel for secondary content — settings fo
 
 ## Sides
 
-<div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "16px 0" }}>
+```tsx preview
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
   <Sheet.Root side="left">
     <Sheet.Trigger render={<Button variant="outline" />}>Left</Sheet.Trigger>
     <Sheet.Content>
@@ -76,35 +61,4 @@ Use `Sheet` when you need a slide-in panel for secondary content — settings fo
     </Sheet.Content>
   </Sheet.Root>
 </div>
-
-```tsx
-<Sheet.Root side="left">
-  <Sheet.Trigger render={<Button variant="outline" />}>Left</Sheet.Trigger>
-  <Sheet.Content>
-    <Sheet.Header>
-      <Sheet.Title>Left Sheet</Sheet.Title>
-      <Sheet.Description>Slides in from the left edge.</Sheet.Description>
-    </Sheet.Header>
-  </Sheet.Content>
-</Sheet.Root>
-
-<Sheet.Root side="top">
-  <Sheet.Trigger render={<Button variant="outline" />}>Top</Sheet.Trigger>
-  <Sheet.Content>
-    <Sheet.Header>
-      <Sheet.Title>Top Sheet</Sheet.Title>
-      <Sheet.Description>Slides in from the top edge.</Sheet.Description>
-    </Sheet.Header>
-  </Sheet.Content>
-</Sheet.Root>
-
-<Sheet.Root side="bottom">
-  <Sheet.Trigger render={<Button variant="outline" />}>Bottom</Sheet.Trigger>
-  <Sheet.Content>
-    <Sheet.Header>
-      <Sheet.Title>Bottom Sheet</Sheet.Title>
-      <Sheet.Description>Slides in from the bottom edge.</Sheet.Description>
-    </Sheet.Header>
-  </Sheet.Content>
-</Sheet.Root>
 ```

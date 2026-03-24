@@ -17,34 +17,14 @@ Use `Dialog` when you need the user to confirm an action, acknowledge informatio
 
 A confirmation dialog with a title, description, and cancel/confirm actions.
 
-<div style={{ padding: "16px 0" }}>
-  <Dialog.Root>
-    <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
-    <Dialog.Content>
-      <Dialog.Header>
-        <Dialog.Title>Are you sure?</Dialog.Title>
-        <Dialog.Description>
-          This action cannot be undone. This will permanently delete your account and remove your
-          data from our servers.
-        </Dialog.Description>
-      </Dialog.Header>
-      <Dialog.Footer>
-        <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-        <Button>Confirm</Button>
-      </Dialog.Footer>
-    </Dialog.Content>
-  </Dialog.Root>
-</div>
-
-```tsx
+```tsx preview
 <Dialog.Root>
   <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title>Are you sure?</Dialog.Title>
       <Dialog.Description>
-        This action cannot be undone. This will permanently delete your account and remove your data
-        from our servers.
+        {"This action cannot be undone. This will permanently delete your account and remove your data from our servers."}
       </Dialog.Description>
     </Dialog.Header>
     <Dialog.Footer>
@@ -59,22 +39,7 @@ A confirmation dialog with a title, description, and cancel/confirm actions.
 
 A minimal dialog that omits `Dialog.Description` for simple notifications.
 
-<div style={{ padding: "16px 0" }}>
-  <Dialog.Root>
-    <Dialog.Trigger render={<Button variant="outline" />}>Simple Dialog</Dialog.Trigger>
-    <Dialog.Content>
-      <Dialog.Header>
-        <Dialog.Title>Notification</Dialog.Title>
-      </Dialog.Header>
-      <p style={{ fontSize: 14 }}>Your changes have been saved successfully.</p>
-      <Dialog.Footer>
-        <Dialog.Close render={<Button />}>OK</Dialog.Close>
-      </Dialog.Footer>
-    </Dialog.Content>
-  </Dialog.Root>
-</div>
-
-```tsx
+```tsx preview
 <Dialog.Root>
   <Dialog.Trigger render={<Button />}>Simple Dialog</Dialog.Trigger>
   <Dialog.Content>

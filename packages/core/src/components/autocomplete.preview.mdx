@@ -13,23 +13,19 @@ Use `Autocomplete` when users should type free-form text but benefit from sugges
 
 ## Basic
 
-<div style={{ maxWidth: 320, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 400 }}>
   <Autocomplete
     items={["Tokyo", "Osaka", "Kyoto", "Nagoya", "Fukuoka", "Sapporo"]}
     placeholder="Search cities..."
   />
 </div>
-
-```tsx
-<Autocomplete
-  items={["Tokyo", "Osaka", "Kyoto", "Nagoya", "Fukuoka", "Sapporo"]}
-  placeholder="Search cities..."
-/>
 ```
 
 ## With Objects
 
-<div style={{ maxWidth: 320, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 400 }}>
   <Autocomplete
     items={[
       { code: "US", name: "United States" },
@@ -42,24 +38,12 @@ Use `Autocomplete` when users should type free-form text but benefit from sugges
     placeholder="Search countries..."
   />
 </div>
-
-```tsx
-<Autocomplete
-  items={[
-    { code: "US", name: "United States" },
-    { code: "JP", name: "Japan" },
-    { code: "GB", name: "United Kingdom" },
-    { code: "DE", name: "Germany" },
-    { code: "FR", name: "France" },
-  ]}
-  mapItem={(item) => ({ label: item.name, key: item.code })}
-  placeholder="Search countries..."
-/>
 ```
 
 ## Grouped Items
 
-<div style={{ maxWidth: 320, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 400 }}>
   <Autocomplete
     items={[
       { label: "Asia", items: ["Tokyo", "Seoul", "Bangkok"] },
@@ -68,23 +52,12 @@ Use `Autocomplete` when users should type free-form text but benefit from sugges
     placeholder="Search cities..."
   />
 </div>
-
-```tsx
-<Autocomplete
-  items={[
-    { label: "Asia", items: ["Tokyo", "Seoul", "Bangkok"] },
-    { label: "Europe", items: ["London", "Paris", "Berlin"] },
-  ]}
-  placeholder="Search cities..."
-/>
 ```
 
 ## Disabled
 
-<div style={{ maxWidth: 320, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 400 }}>
   <Autocomplete items={["Tokyo", "Osaka", "Kyoto"]} placeholder="Disabled autocomplete" disabled />
 </div>
-
-```tsx
-<Autocomplete items={["Tokyo", "Osaka", "Kyoto"]} placeholder="Disabled autocomplete" disabled />
 ```

@@ -16,7 +16,8 @@ Use `ActionPanel` to display a vertical list of clickable actions with icons. It
 
 ## Basic
 
-<div style={{ maxWidth: 360, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 350, padding: "16px 0" }}>
   <ActionPanel
     title="Actions"
     actions={[
@@ -26,21 +27,12 @@ Use `ActionPanel` to display a vertical list of clickable actions with icons. It
     ]}
   />
 </div>
-
-```tsx
-<ActionPanel
-  title="Actions"
-  actions={[
-    { key: "edit", label: "Edit record", icon: <EditIcon />, onClick: () => {} },
-    { key: "copy", label: "Duplicate", icon: <CopyIcon />, onClick: () => {} },
-    { key: "delete", label: "Delete", icon: <TrashIcon />, onClick: () => {} },
-  ]}
-/>
 ```
 
 ## Loading State
 
-<div style={{ maxWidth: 360, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 350, padding: "16px 0" }}>
   <ActionPanel
     title="Processing"
     actions={[
@@ -49,20 +41,12 @@ Use `ActionPanel` to display a vertical list of clickable actions with icons. It
     ]}
   />
 </div>
-
-```tsx
-<ActionPanel
-  title="Processing"
-  actions={[
-    { key: "save", label: "Saving…", icon: <SaveIcon />, loading: true },
-    { key: "export", label: "Export CSV", icon: <ExportIcon />, onClick: () => {} },
-  ]}
-/>
 ```
 
 ## Disabled
 
-<div style={{ maxWidth: 360, padding: "16px 0" }}>
+```tsx preview
+<div style={{ width: 350, padding: "16px 0" }}>
   <ActionPanel
     title="Restricted"
     actions={[
@@ -71,13 +55,4 @@ Use `ActionPanel` to display a vertical list of clickable actions with icons. It
     ]}
   />
 </div>
-
-```tsx
-<ActionPanel
-  title="Restricted"
-  actions={[
-    { key: "approve", label: "Approve", icon: <CheckIcon />, disabled: true },
-    { key: "reject", label: "Reject", icon: <XIcon />, disabled: true },
-  ]}
-/>
 ```

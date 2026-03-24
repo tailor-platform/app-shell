@@ -13,7 +13,8 @@ Use `Button` for any clickable action — form submissions, confirmations, navig
 
 ## Variants
 
-<div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "16px 0" }}>
+```tsx preview
+<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
   <Button variant="default">Default</Button>
   <Button variant="destructive">Destructive</Button>
   <Button variant="outline">Outline</Button>
@@ -21,33 +22,22 @@ Use `Button` for any clickable action — form submissions, confirmations, navig
   <Button variant="ghost">Ghost</Button>
   <Button variant="link">Link</Button>
 </div>
-
-```tsx
-<Button variant="default">Default</Button>
-<Button variant="destructive">Destructive</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="secondary">Secondary</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>
 ```
 
 ## Sizes
 
-<div style={{ display: "flex", gap: 8, alignItems: "center", padding: "16px 0" }}>
+```tsx preview
+<div style={{ display: "flex", gap: 8, alignItems: "center" }}>
   <Button size="sm">Small</Button>
   <Button size="default">Default</Button>
   <Button size="lg">Large</Button>
 </div>
-
-```tsx
-<Button size="sm">Small</Button>
-<Button size="default">Default</Button>
-<Button size="lg">Large</Button>
 ```
 
 ## Disabled
 
-<div style={{ display: "flex", gap: 8, padding: "16px 0" }}>
+```tsx preview
+<div style={{ display: "flex", gap: 8 }}>
   <Button disabled>Disabled Default</Button>
   <Button variant="outline" disabled>
     Disabled Outline
@@ -56,9 +46,4 @@ Use `Button` for any clickable action — form submissions, confirmations, navig
     Disabled Destructive
   </Button>
 </div>
-
-```tsx
-<Button disabled>Disabled Default</Button>
-<Button variant="outline" disabled>Disabled Outline</Button>
-<Button variant="destructive" disabled>Disabled Destructive</Button>
 ```

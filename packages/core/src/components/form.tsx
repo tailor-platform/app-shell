@@ -20,23 +20,22 @@ type FormSubmitEventDetails =
 // `onFormSubmit` is defined separately so the `FormValues` generic
 // flows through to the callback's first parameter, enabling type-safe
 // form values when a type argument is provided (e.g. `<Form<MyValues>>`).
-type FormProps<FormValues extends Record<string, any> = Record<string, any>> =
-  Pick<
-    React.ComponentProps<typeof BaseForm>,
-    | "errors"
-    | "onSubmit"
-    | "actionsRef"
-    | "validationMode"
-    | "noValidate"
-    | "ref"
-    | "className"
-    | "style"
-  > & {
-    children: React.ReactNode;
-    onFormSubmit?:
-      | ((formValues: FormValues, eventDetails: FormSubmitEventDetails) => void)
-      | undefined;
-  };
+type FormProps<FormValues extends Record<string, any> = Record<string, any>> = Pick<
+  React.ComponentProps<typeof BaseForm>,
+  | "errors"
+  | "onSubmit"
+  | "actionsRef"
+  | "validationMode"
+  | "noValidate"
+  | "ref"
+  | "className"
+  | "style"
+> & {
+  children: React.ReactNode;
+  onFormSubmit?:
+    | ((formValues: FormValues, eventDetails: FormSubmitEventDetails) => void)
+    | undefined;
+};
 
 /**
  * A form element with consolidated error handling and validation.

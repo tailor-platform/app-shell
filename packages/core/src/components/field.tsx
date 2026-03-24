@@ -96,10 +96,7 @@ function Root({
   return (
     <BaseField.Root
       data-slot="field"
-      className={cn(
-        "astw:flex astw:flex-col astw:items-start astw:gap-1",
-        className,
-      )}
+      className={cn("astw:flex astw:flex-col astw:items-start astw:gap-1", className)}
       touched={isTouched}
       dirty={isDirty}
       invalid={!!error || !!invalid}
@@ -119,10 +116,7 @@ Root.displayName = "Field.Root";
  * Combobox, Autocomplete) registers its ID with the context, so clicking
  * this label will focus the correct control.
  */
-function Label({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Label>) {
+function Label({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
   return (
     <BaseField.Label
       data-slot="field-label"
@@ -140,10 +134,7 @@ Label.displayName = "Field.Label";
  * (e.g. Select, Combobox, Autocomplete) as a sibling — those components
  * register themselves with the Field context automatically.
  */
-function Control({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Control>) {
+function Control({ className, ...props }: React.ComponentProps<typeof BaseField.Control>) {
   return (
     <BaseField.Control
       data-slot="field-control"
@@ -164,10 +155,7 @@ Control.displayName = "Field.Control";
  * Its ID is registered with the Field context so that the control
  * automatically receives a matching `aria-describedby` attribute.
  */
-function Description({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Description>) {
+function Description({ className, ...props }: React.ComponentProps<typeof BaseField.Description>) {
   return (
     <BaseField.Description
       data-slot="field-description"
@@ -186,17 +174,11 @@ Description.displayName = "Field.Description";
  * specific `ValidityState` key (e.g. `"valueMissing"`, `"typeMismatch"`).
  * Omitting `match` shows the browser's default validation message.
  */
-function Error({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseField.Error>) {
+function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Error>) {
   return (
     <BaseField.Error
       data-slot="field-error"
-      className={cn(
-        "astw:text-destructive astw:text-sm astw:font-medium",
-        className,
-      )}
+      className={cn("astw:text-destructive astw:text-sm astw:font-medium", className)}
       {...props}
     />
   );
@@ -204,9 +186,7 @@ function Error({
 Error.displayName = "Field.Error";
 
 /** Used to display a custom message based on the field's validity state. */
-function Validity({
-  ...props
-}: React.ComponentProps<typeof BaseField.Validity>) {
+function Validity({ ...props }: React.ComponentProps<typeof BaseField.Validity>) {
   return <BaseField.Validity {...props} />;
 }
 Validity.displayName = "Field.Validity";

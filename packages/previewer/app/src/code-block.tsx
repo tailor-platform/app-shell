@@ -18,15 +18,15 @@ function CopyButton({ text }: { text: string }) {
       aria-label="Copy code"
       style={{
         position: "absolute",
-        top: 8,
-        right: 8,
+        top: 6,
+        right: 6,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 32,
-        height: 32,
+        width: 24,
+        height: 24,
         border: "1px solid var(--border)",
-        borderRadius: 6,
+        borderRadius: 4,
         backgroundColor: "var(--bg)",
         cursor: "pointer",
         color: "var(--fg-muted)",
@@ -42,8 +42,8 @@ function CopyButton({ text }: { text: string }) {
     >
       {copied ? (
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 16 16"
           fill="none"
           stroke="currentColor"
@@ -55,8 +55,8 @@ function CopyButton({ text }: { text: string }) {
         </svg>
       ) : (
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 16 16"
           fill="none"
           stroke="currentColor"
@@ -75,11 +75,15 @@ function CopyButton({ text }: { text: string }) {
 export function CodeBlock({
   children,
   className,
+  noBorderRadius,
 }: {
   children: string;
   className?: string;
+  noBorderRadius?: boolean;
 }) {
   const lang = className?.replace("language-", "") ?? "";
+  const radius = noBorderRadius ? 0 : 8;
+  const border = noBorderRadius ? "none" : "1px solid var(--border)";
   const { colorScheme } = useTheme();
   const [html, setHtml] = useState<string | null>(null);
 
@@ -110,11 +114,12 @@ export function CodeBlock({
         style={{
           position: "relative",
           background: "var(--code-bg)",
-          borderRadius: 8,
-          overflow: "auto",
+          borderRadius: radius,
+          overflowX: "auto",
+          overflowY: "hidden",
           fontSize: 13,
           lineHeight: 1.5,
-          border: "1px solid var(--border)",
+          border,
         }}
       >
         <CopyButton text={children} />
@@ -129,12 +134,14 @@ export function CodeBlock({
       <pre
         style={{
           background: "var(--code-bg)",
-          padding: 16,
-          borderRadius: 8,
-          overflow: "auto",
+          padding: 10,
+          borderRadius: radius,
+          overflowX: "auto",
+          overflowY: "hidden",
           fontSize: 13,
           lineHeight: 1.5,
-          border: "1px solid var(--border)",
+          border,
+          margin: 0,
         }}
       >
         <code data-language={lang}>{children}</code>

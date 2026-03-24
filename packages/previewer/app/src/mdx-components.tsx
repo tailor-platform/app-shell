@@ -1,5 +1,6 @@
 import { type ReactNode, Children } from "react";
 import { CodeBlock } from "./code-block";
+import { PreviewBlock } from "./preview-block";
 
 function slugify(children: ReactNode): string {
   const text = Children.toArray(children)
@@ -105,4 +106,5 @@ export const mdxComponents = {
       {children}
     </code>
   ),
+  PreviewBlock,
 };

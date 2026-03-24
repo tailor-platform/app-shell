@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import type { InlineConfig, Plugin, PluginOption } from "vite";
 import type { PreviewerRepo } from "./config";
 import { remarkPropsTable } from "./remark-props-table";
+import { previewCodePlugin } from "./vite-plugin-preview-code";
 import { extractProps, extractTypeDescription } from "./extract-props";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -51,6 +52,7 @@ export function createPreviewerViteConfig(options: {
       },
     },
     plugins: [
+      previewCodePlugin(),
       {
         enforce: "pre",
         ...mdx({

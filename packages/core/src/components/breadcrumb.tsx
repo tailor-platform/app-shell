@@ -55,12 +55,18 @@ function BreadcrumbLink({
   });
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbPage({
+  className,
+  ariaCurrent = "location",
+  ...props
+}: React.ComponentProps<"span"> & {
+  ariaCurrent?: React.AriaAttributes["aria-current"];
+}) {
   return (
     <span
       data-slot="breadcrumb-page"
       aria-disabled="true"
-      aria-current="page"
+      aria-current={ariaCurrent}
       className={cn("astw:text-foreground astw:font-normal", className)}
       {...props}
     />

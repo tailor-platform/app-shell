@@ -59,7 +59,11 @@ export const DynamicBreadcrumb = () => {
               {segmentInfo.clickable ? (
                 <BreadcrumbLink to={segmentInfo.path}>{segmentInfo.title}</BreadcrumbLink>
               ) : (
-                <BreadcrumbPage>{segmentInfo.title}</BreadcrumbPage>
+                // Non-last segments use ariaCurrent={false} to avoid announcing
+                // intermediate items as the current location to screen readers.
+                <BreadcrumbPage ariaCurrent={index === segments.length - 1 ? "location" : false}>
+                  {segmentInfo.title}
+                </BreadcrumbPage>
               )}
             </BreadcrumbItem>
             {index < segments.length - 1 && <BreadcrumbSeparator />}

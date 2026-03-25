@@ -37,6 +37,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: rgba(10, 10, 10, 1);
   --foreground: rgba(250, 250, 250, 1);
   --card: rgba(23, 23, 23, 1);

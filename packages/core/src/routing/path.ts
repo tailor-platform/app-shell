@@ -41,6 +41,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
         {
           title: string;
           breadcrumbTitle?: string | ((segment: string) => string);
+          clickable: boolean;
         }
       >,
       module,
@@ -51,6 +52,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
         title: moduleTitle,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- breadcrumbTitle exists at runtime but not in CommonPageResource type
         breadcrumbTitle: (module.meta as any).breadcrumbTitle,
+        clickable: module.meta.menuItemClickable,
       };
 
       const buildResourceMappingRecursively = (resources: Array<Resource>, basePath: string) => {
@@ -63,6 +65,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
             title: resourceTitle,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- breadcrumbTitle exists at runtime but not in CommonPageResource type
             breadcrumbTitle: (resource.meta as any).breadcrumbTitle,
+            clickable: true,
           };
 
           if (resource.subResources && resource.subResources.length > 0) {
@@ -128,6 +131,7 @@ export function processPathSegments(
       segment,
       path: currentPath,
       title,
+      clickable: mapping?.clickable ?? true,
     };
   });
 

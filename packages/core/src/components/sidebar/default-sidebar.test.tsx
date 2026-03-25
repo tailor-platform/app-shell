@@ -101,6 +101,43 @@ describe("DefaultSidebar", () => {
 });
 
 describe("DefaultSidebar auto-generation", () => {
+  it("applies active style to the current page sidebar item", async () => {
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard Root</div>,
+        resources: [
+          defineResource({
+            path: "overview",
+            meta: { title: "Overview" },
+            component: () => <div>Overview</div>,
+          }),
+        ],
+      }),
+    ];
+
+    // pathname is "/dashboard/overview" (with leading slash)
+    // but nav item URLs are "dashboard/overview" (without leading slash)
+    window.history.pushState({}, "", "/dashboard/overview");
+    render(
+      <AppShell title="Test" modules={modules}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Overview").length).toBeGreaterThan(0);
+    });
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+    const links = sidebar.querySelectorAll("a");
+    const overviewLink = Array.from(links).find((link) => link.textContent === "Overview");
+
+    expect(overviewLink).toBeDefined();
+    expect(overviewLink!.className).toContain("astw:bg-sidebar-accent");
+  });
+
   it("excludes componentless resources from sidebar links", async () => {
     const modules = [
       defineModule({

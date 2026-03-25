@@ -120,6 +120,16 @@ const AutoSidebar = ({ currentPath }: { currentPath: string }) => {
 };
 
 /**
+ * Compare a nav-item URL (which may lack a leading slash) against the
+ * current pathname (which always starts with "/").
+ */
+const isActivePath = (url: string | undefined, currentPath: string) => {
+  if (!url) return false;
+  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+  return normalizedUrl === currentPath;
+};
+
+/**
  * Automatically generates sidebar items from navigation data.
  */
 const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string }) => {
@@ -138,7 +148,7 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                       <Link
                         to={item.url as string}
                         className={
-                          item.url === props.currentPath
+                          isActivePath(item.url, props.currentPath)
                             ? "astw:bg-sidebar-accent astw:font-medium"
                             : undefined
                         }
@@ -194,7 +204,7 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                               <Link
                                 to={subItem.url!}
                                 className={
-                                  subItem.url === props.currentPath
+                                  isActivePath(subItem.url, props.currentPath)
                                     ? "astw:bg-sidebar-accent astw:font-medium"
                                     : undefined
                                 }

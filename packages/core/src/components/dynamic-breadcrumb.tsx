@@ -5,6 +5,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/breadcrumb";
 import { processPathSegments } from "@/routing/path";
@@ -55,7 +56,11 @@ export const DynamicBreadcrumb = () => {
             key={index}
           >
             <BreadcrumbItem>
-              <BreadcrumbLink to={segmentInfo.path}>{segmentInfo.title}</BreadcrumbLink>
+              {segmentInfo.clickable ? (
+                <BreadcrumbLink to={segmentInfo.path}>{segmentInfo.title}</BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage>{segmentInfo.title}</BreadcrumbPage>
+              )}
             </BreadcrumbItem>
             {index < segments.length - 1 && <BreadcrumbSeparator />}
           </div>

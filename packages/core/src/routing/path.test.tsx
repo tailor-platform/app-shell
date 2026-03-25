@@ -100,6 +100,7 @@ describe.concurrent("processPathSegments", () => {
       segment: "dashboard",
       path: "dashboard",
       title: "Dashboard",
+      clickable: true,
     });
   });
 
@@ -112,11 +113,13 @@ describe.concurrent("processPathSegments", () => {
       segment: "dashboard",
       path: "dashboard",
       title: "Dashboard",
+      clickable: true,
     });
     expect(result.segments[1]).toEqual({
       segment: "analytics",
       path: "dashboard/analytics",
       title: "Analytics",
+      clickable: true,
     });
   });
 
@@ -129,16 +132,19 @@ describe.concurrent("processPathSegments", () => {
       segment: "dashboard",
       path: "dashboard",
       title: "Dashboard",
+      clickable: true,
     });
     expect(result.segments[1]).toEqual({
       segment: "settings",
       path: "dashboard/settings",
       title: "Settings",
+      clickable: true,
     });
     expect(result.segments[2]).toEqual({
       segment: "profile",
       path: "dashboard/settings/profile",
       title: "Profile",
+      clickable: true,
     });
   });
 
@@ -151,6 +157,7 @@ describe.concurrent("processPathSegments", () => {
       segment: "users",
       path: "users",
       title: "Users",
+      clickable: true,
     });
   });
 
@@ -163,6 +170,43 @@ describe.concurrent("processPathSegments", () => {
       segment: "unknown-path",
       path: "unknown-path",
       title: "unknown-path",
+      clickable: true,
+    });
+  });
+
+  it("should mark module-level segment as non-clickable when module has no component", () => {
+    const modulesWithNoComponent = [
+      defineModule({
+        path: "master-data",
+        meta: { title: "Master Data" },
+        resources: [
+          defineResource({
+            path: "items",
+            component: () => null,
+            meta: { title: "Items" },
+          }),
+        ],
+      }),
+    ];
+    const result = processPathSegments(
+      "/master-data/items",
+      undefined,
+      modulesWithNoComponent,
+      "en",
+    );
+
+    expect(result.segments).toHaveLength(2);
+    expect(result.segments[0]).toEqual({
+      segment: "master-data",
+      path: "master-data",
+      title: "Master Data",
+      clickable: false,
+    });
+    expect(result.segments[1]).toEqual({
+      segment: "items",
+      path: "master-data/items",
+      title: "Items",
+      clickable: true,
     });
   });
 

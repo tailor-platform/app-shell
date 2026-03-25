@@ -173,6 +173,48 @@ Description.displayName = "Field.Description";
  * `aria-describedby`. Use the `match` prop to show the message only for a
  * specific `ValidityState` key (e.g. `"valueMissing"`, `"typeMismatch"`).
  * Omitting `match` shows the browser's default validation message.
+ *
+ * Multiple `Field.Error` elements can be placed in the same `Field.Root` to
+ * handle different validation failures independently.
+ *
+ * @example
+ * ### Single catch-all error
+ * ```tsx
+ * <Field.Root name="name">
+ *   <Field.Label>Name</Field.Label>
+ *   <Field.Control required />
+ *   <Field.Error>This field is required.</Field.Error>
+ * </Field.Root>
+ * ```
+ *
+ * @example
+ * ### Multiple errors for different validity states
+ * ```tsx
+ * <Field.Root name="email">
+ *   <Field.Label>Email</Field.Label>
+ *   <Field.Control type="email" required />
+ *   <Field.Error match="valueMissing">Email is required.</Field.Error>
+ *   <Field.Error match="typeMismatch">Please enter a valid email address.</Field.Error>
+ * </Field.Root>
+ * ```
+ *
+ * @example
+ * ### With React Hook Form error
+ * ```tsx
+ * <Controller
+ *   name="email"
+ *   control={control}
+ *   render={({ field, fieldState }) => (
+ *     <Field.Root {...fieldState}>
+ *       <Field.Label>Email</Field.Label>
+ *       <Field.Control {...field} />
+ *       <Field.Error match={!!fieldState.error}>
+ *         {fieldState.error?.message}
+ *       </Field.Error>
+ *     </Field.Root>
+ *   )}
+ * />
+ * ```
  */
 function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Error>) {
   return (
@@ -185,7 +227,51 @@ function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Er
 }
 Error.displayName = "Field.Error";
 
-/** Used to display a custom message based on the field's validity state. */
+/**
+ * Used to display a custom message based on the field's validity state.
+ *
+ * Requires `children` to be a render function that receives a
+ * `FieldValidityState` object. The `validity` property within it mirrors the
+ * browser's `ValidityState` (e.g. `valueMissing`, `tooShort`, `valid`),
+ * enabling fully custom validation UI.
+ *
+ * @example
+ * ### Checklist-style password requirements
+ * ```tsx
+ * <Field.Root name="password">
+ *   <Field.Label>Password</Field.Label>
+ *   <Field.Control type="password" required minLength={8} />
+ *   <Field.Validity>
+ *     {(state) => (
+ *       <ul>
+ *         <li>{state.validity.valueMissing ? "NG" : "OK"} Required</li>
+ *         <li>{state.validity.tooShort ? "NG" : "OK"} At least 8 characters</li>
+ *       </ul>
+ *     )}
+ *   </Field.Validity>
+ * </Field.Root>
+ * ```
+ *
+ * @example
+ * ### Conditional styling based on validity
+ * ```tsx
+ * <Field.Root name="url">
+ *   <Field.Label>Website</Field.Label>
+ *   <Field.Control type="url" required />
+ *   <Field.Validity>
+ *     {(state) =>
+ *       state.validity.valid === false && (
+ *         <p className="text-destructive text-sm">
+ *           {state.validity.typeMismatch
+ *             ? "Please enter a valid URL (e.g. https://example.com)"
+ *             : "This field is required."}
+ *         </p>
+ *       )
+ *     }
+ *   </Field.Validity>
+ * </Field.Root>
+ * ```
+ */
 function Validity({ ...props }: React.ComponentProps<typeof BaseField.Validity>) {
   return <BaseField.Validity {...props} />;
 }

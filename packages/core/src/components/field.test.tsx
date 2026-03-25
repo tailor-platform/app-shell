@@ -121,4 +121,53 @@ describe("Field", () => {
       expect(container.querySelector("[data-invalid]")).not.toBeNull();
     });
   });
+
+  describe("Validity", () => {
+    it("invokes render callback with validity state", () => {
+      render(
+        <Field.Root name="username">
+          <Field.Control required minLength={8} />
+          <Field.Validity>
+            {(state) => (
+              <ul data-testid="validity-list">
+                <li data-testid="valid">{state.validity.valid ? "valid" : "invalid"}</li>
+                <li data-testid="too-short">{state.validity.tooShort ? "yes" : "no"}</li>
+              </ul>
+            )}
+          </Field.Validity>
+        </Field.Root>,
+      );
+      const list = screen.getByTestId("validity-list");
+      expect(list).toBeDefined();
+      expect(screen.getByTestId("valid")).toBeDefined();
+      expect(screen.getByTestId("too-short")).toBeDefined();
+    });
+  });
+
+  describe("multiple errors", () => {
+    it("renders multiple catch-all errors when field is invalid", () => {
+      render(
+        <Field.Root name="email" error={{ message: "Server error" }}>
+          <Field.Label>Email</Field.Label>
+          <Field.Control type="email" />
+          <Field.Error match={true}>This field has an error.</Field.Error>
+          <Field.Error match={true}>Please fix before continuing.</Field.Error>
+        </Field.Root>,
+      );
+      expect(screen.getByText("This field has an error.")).toBeDefined();
+      expect(screen.getByText("Please fix before continuing.")).toBeDefined();
+    });
+
+    it("renders catch-all error when no match is specified", () => {
+      render(
+        <Field.Root name="test" error={{ message: "Something went wrong" }}>
+          <Field.Label>Test</Field.Label>
+          <Field.Control />
+          <Field.Error match="typeMismatch">Type error</Field.Error>
+          <Field.Error match={true}>Something went wrong</Field.Error>
+        </Field.Root>,
+      );
+      expect(screen.getByText("Something went wrong")).toBeDefined();
+    });
+  });
 });

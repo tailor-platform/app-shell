@@ -22,16 +22,22 @@ type FormSubmitEventDetails =
 // form values when a type argument is provided (e.g. `<Form<MyValues>>`).
 type FormProps<FormValues extends Record<string, any> = Record<string, any>> = Pick<
   React.ComponentProps<typeof BaseForm>,
-  | "errors"
-  | "onSubmit"
-  | "actionsRef"
-  | "validationMode"
-  | "noValidate"
-  | "ref"
-  | "className"
-  | "style"
+  "errors" | "actionsRef" | "validationMode" | "noValidate" | "ref" | "className" | "style"
 > & {
   children: React.ReactNode;
+  /**
+   * Low-level submit handler that receives the native `FormEvent`.
+   * Use this when you need direct access to the event (e.g. integrating
+   * with React Hook Form's `handleSubmit`). For type-safe parsed form
+   * values, prefer `onFormSubmit` instead.
+   */
+  onSubmit?: React.ComponentProps<typeof BaseForm>["onSubmit"];
+  /**
+   * Called after successful validation with the parsed form values as a
+   * typed object. Prefer this for simple forms that don't use an external
+   * form library. When integrating with React Hook Form, use `onSubmit`
+   * instead.
+   */
   onFormSubmit?:
     | ((formValues: FormValues, eventDetails: FormSubmitEventDetails) => void)
     | undefined;

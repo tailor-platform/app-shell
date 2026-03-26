@@ -36,16 +36,16 @@ A form element with consolidated error handling and validation. Wraps every chil
 
 ### Form Props
 
-| Prop               | Type                                                              | Default      | Description                                                                                                                             |
-| ------------------ | ----------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`         | `React.ReactNode`                                                 | **Required** | Form contents                                                                                                                           |
-| `onFormSubmit`     | `(values: FormValues, details: FormSubmitEventDetails) => void`   | -            | Called after successful validation with parsed form values. Prefer this for simple forms. Use a type argument for type-safe values.     |
-| `onSubmit`         | `React.FormEventHandler`                                          | -            | Low-level native submit handler. Use when integrating with React Hook Form's `handleSubmit`.                                            |
-| `errors`           | `Record<string, string>`                                          | -            | External errors keyed by field `name` (e.g. from an API response). Automatically routed to matching `Field.Error` components.           |
-| `validationMode`   | `"onSubmit" \| "onBlur" \| "onChange"`                            | `"onSubmit"` | Controls when field validation fires.                                                                                                   |
-| `noValidate`       | `boolean`                                                         | -            | Disables native browser validation UI (recommended — AppShell renders its own).                                                         |
-| `actionsRef`       | `React.Ref<{ validate: () => void }>`                             | -            | Ref to imperatively trigger validation from outside the submit flow.                                                                    |
-| `className`        | `string`                                                          | -            | Additional CSS classes for the `<form>` element.                                                                                        |
+| Prop             | Type                                                            | Default      | Description                                                                                                                         |
+| ---------------- | --------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `children`       | `React.ReactNode`                                               | **Required** | Form contents                                                                                                                       |
+| `onFormSubmit`   | `(values: FormValues, details: FormSubmitEventDetails) => void` | -            | Called after successful validation with parsed form values. Prefer this for simple forms. Use a type argument for type-safe values. |
+| `onSubmit`       | `React.FormEventHandler`                                        | -            | Low-level native submit handler. Use when integrating with React Hook Form's `handleSubmit`.                                        |
+| `errors`         | `Record<string, string>`                                        | -            | External errors keyed by field `name` (e.g. from an API response). Automatically routed to matching `Field.Error` components.       |
+| `validationMode` | `"onSubmit" \| "onBlur" \| "onChange"`                          | `"onSubmit"` | Controls when field validation fires.                                                                                               |
+| `noValidate`     | `boolean`                                                       | -            | Disables native browser validation UI (recommended — AppShell renders its own).                                                     |
+| `actionsRef`     | `React.Ref<{ validate: () => void }>`                           | -            | Ref to imperatively trigger validation from outside the submit flow.                                                                |
+| `className`      | `string`                                                        | -            | Additional CSS classes for the `<form>` element.                                                                                    |
 
 ### External Errors
 
@@ -97,37 +97,37 @@ A compound component that groups all parts of a form field and manages its valid
 
 ### Sub-components
 
-| Sub-component      | Description                                                                                  |
-| ------------------ | -------------------------------------------------------------------------------------------- |
-| `Field.Root`       | Context boundary for a single field. Manages validation state.                               |
-| `Field.Label`      | Accessible label; `htmlFor` is resolved automatically via context.                           |
-| `Field.Control`    | Styled `<input>`. Can be omitted when using a Base UI-backed AppShell component as the input. |
-| `Field.Description`| Supplementary help text; automatically linked via `aria-describedby`.                        |
-| `Field.Error`      | Validation error message. Use `match` to target specific validity states.                    |
-| `Field.Validity`   | Render-prop access to the field's `ValidityState` for fully custom validation UI.             |
+| Sub-component       | Description                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `Field.Root`        | Context boundary for a single field. Manages validation state.                                |
+| `Field.Label`       | Accessible label; `htmlFor` is resolved automatically via context.                            |
+| `Field.Control`     | Styled `<input>`. Can be omitted when using a Base UI-backed AppShell component as the input. |
+| `Field.Description` | Supplementary help text; automatically linked via `aria-describedby`.                         |
+| `Field.Error`       | Validation error message. Use `match` to target specific validity states.                     |
+| `Field.Validity`    | Render-prop access to the field's `ValidityState` for fully custom validation UI.             |
 
 ### Field.Root Props
 
-| Prop                    | Type                          | Default | Description                                                                                         |
-| ----------------------- | ----------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `name`                  | `string`                      | -       | Field name; used for form value extraction and error routing.                                       |
-| `children`              | `React.ReactNode`             | -       | Field sub-components and input controls.                                                            |
-| `disabled`              | `boolean`                     | -       | Disables all controls within the field.                                                             |
-| `isTouched`             | `boolean`                     | -       | Whether the field has been blurred. Maps to React Hook Form's `fieldState.isTouched`.               |
-| `isDirty`               | `boolean`                     | -       | Whether the field value differs from its default. Maps to React Hook Form's `fieldState.isDirty`.   |
-| `invalid`               | `boolean`                     | -       | Marks the field as invalid (shows error styling).                                                   |
-| `error`                 | `{ message?: string }`        | -       | Error object from React Hook Form's `fieldState.error`. Sets `invalid` automatically when provided. |
-| `validate`              | `(value: string) => string \| undefined` | - | Custom validation function; return an error message string to mark the field invalid.          |
-| `validationMode`        | `"onSubmit" \| "onBlur" \| "onChange"` | -   | Overrides the parent Form's `validationMode` for this field.                                    |
-| `validationDebounceTime`| `number`                      | -       | Debounce delay (ms) for `"onChange"` validation mode.                                               |
-| `className`             | `string`                      | -       | Additional CSS classes for the field wrapper.                                                       |
+| Prop                     | Type                                     | Default | Description                                                                                         |
+| ------------------------ | ---------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `name`                   | `string`                                 | -       | Field name; used for form value extraction and error routing.                                       |
+| `children`               | `React.ReactNode`                        | -       | Field sub-components and input controls.                                                            |
+| `disabled`               | `boolean`                                | -       | Disables all controls within the field.                                                             |
+| `isTouched`              | `boolean`                                | -       | Whether the field has been blurred. Maps to React Hook Form's `fieldState.isTouched`.               |
+| `isDirty`                | `boolean`                                | -       | Whether the field value differs from its default. Maps to React Hook Form's `fieldState.isDirty`.   |
+| `invalid`                | `boolean`                                | -       | Marks the field as invalid (shows error styling).                                                   |
+| `error`                  | `{ message?: string }`                   | -       | Error object from React Hook Form's `fieldState.error`. Sets `invalid` automatically when provided. |
+| `validate`               | `(value: string) => string \| undefined` | -       | Custom validation function; return an error message string to mark the field invalid.               |
+| `validationMode`         | `"onSubmit" \| "onBlur" \| "onChange"`   | -       | Overrides the parent Form's `validationMode` for this field.                                        |
+| `validationDebounceTime` | `number`                                 | -       | Debounce delay (ms) for `"onChange"` validation mode.                                               |
+| `className`              | `string`                                 | -       | Additional CSS classes for the field wrapper.                                                       |
 
 ### Field.Error Props
 
-| Prop       | Type                                                              | Default | Description                                                                                                   |
-| ---------- | ----------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| `match`    | `keyof ValidityState \| boolean \| ((value: string) => boolean)` | -       | Validity state key to match (e.g. `"valueMissing"`, `"typeMismatch"`). Omit for a catch-all error message.    |
-| `children` | `React.ReactNode`                                                 | -       | Error message content. If omitted, the browser's native validation message is shown.                          |
+| Prop       | Type                                                             | Default | Description                                                                                                |
+| ---------- | ---------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
+| `match`    | `keyof ValidityState \| boolean \| ((value: string) => boolean)` | -       | Validity state key to match (e.g. `"valueMissing"`, `"typeMismatch"`). Omit for a catch-all error message. |
+| `children` | `React.ReactNode`                                                | -       | Error message content. If omitted, the browser's native validation message is shown.                       |
 
 ### Using Another AppShell Component as the Control
 
@@ -176,10 +176,10 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 
 ### Sub-components
 
-| Sub-component      | Description                                                    |
-| ------------------ | -------------------------------------------------------------- |
-| `Fieldset.Root`    | Renders a `<fieldset>`. Propagates `disabled` to all children. |
-| `Fieldset.Legend`  | Accessible `<legend>` for the group.                           |
+| Sub-component     | Description                                                    |
+| ----------------- | -------------------------------------------------------------- |
+| `Fieldset.Root`   | Renders a `<fieldset>`. Propagates `disabled` to all children. |
+| `Fieldset.Legend` | Accessible `<legend>` for the group.                           |
 
 ### Fieldset.Root Props
 

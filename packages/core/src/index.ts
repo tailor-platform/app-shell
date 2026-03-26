@@ -99,6 +99,7 @@ export { Fieldset } from "./components/fieldset";
 export { Form, type FormProps } from "./components/form";
 export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
+export { Tabs } from "./components/tabs";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";

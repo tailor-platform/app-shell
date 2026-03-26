@@ -101,6 +101,8 @@ In the example above, clicking the 'Orders' menu item above will take you to `/{
 
 Providing a `component` for a Module is optional. If omitted, navigating directly to the module path returns a 404 response while its child resources remain fully accessible. This is useful when a path segment exists solely to group child routes under a shared URL prefix with no landing page of its own.
 
+When a module has no `component`, its breadcrumb segment is rendered as plain non-clickable text (instead of a link), preventing navigation to a page that does not exist.
+
 The same applies to resources: a `defineResource()` call without a `component` makes the resource path itself return 404 while its `subResources` remain accessible.
 
 Guards on component-less modules and resources execute correctly. For example, a `redirectTo()` guard will fire as expected. If all guards return `pass()`, the route falls back to a 404 (since there is no component to render).

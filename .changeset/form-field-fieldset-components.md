@@ -81,8 +81,8 @@ A compound component (`Field.Root`, `Field.Label`, `Field.Control`, `Field.Descr
   <Field.Validity>
     {(state) => (
       <ul>
-        <li>{state.valueMissing ? "❌" : "✅"} Required</li>
-        <li>{state.tooShort ? "❌" : "✅"} At least 8 characters</li>
+        <li>{state.validity.valueMissing ? "❌" : "✅"} Required</li>
+        <li>{state.validity.tooShort ? "❌" : "✅"} At least 8 characters</li>
       </ul>
     )}
   </Field.Validity>

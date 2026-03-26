@@ -32,6 +32,7 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Combobox](./docs/components/combobox.md)** - Searchable combobox with filtering, multi-select, async loading, and creatable items
 - **[Autocomplete](./docs/components/autocomplete.md)** - Free-text input with a suggestion list and optional async loading
 - **[MetricCard](./docs/components/metric-card.md)** - Compact card for dashboard KPI summaries with title, value, optional trend and description
+- **[Form, Field, and Fieldset](./docs/components/form.md)** - Form, Field, and Fieldset components for building validated forms with accessibility wiring and optional React Hook Form integration
 
 ## Key Architecture Points (LLM Orientation)
 

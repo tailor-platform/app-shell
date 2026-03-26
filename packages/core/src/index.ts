@@ -88,6 +88,7 @@ export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
 export { Table } from "./components/table";
+export { Card } from "./components/card";
 export { Dialog } from "./components/dialog";
 export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";

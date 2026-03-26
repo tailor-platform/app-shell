@@ -1,4 +1,5 @@
 import { cn } from "../../lib/utils";
+import { Card } from "../card";
 import type { MetricCardProps, MetricCardTrendDirection } from "./types";
 
 // ============================================================================
@@ -38,12 +39,9 @@ export function MetricCard({ title, value, trend, description, icon, className }
   const hasMeta = trend != null || (description != null && description !== "");
 
   return (
-    <div
+    <Card.Root
       data-slot="metric-card"
-      className={cn(
-        "astw:min-w-0 astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:px-4 astw:py-4",
-        className,
-      )}
+      className={cn("astw:min-w-0 astw:w-full astw:px-4 astw:py-4", className)}
     >
       {/* Top row: optional icon + title */}
       <div className="astw:flex astw:items-center astw:gap-2 astw:mb-6">
@@ -83,7 +81,7 @@ export function MetricCard({ title, value, trend, description, icon, className }
           )}
         </div>
       )}
-    </div>
+    </Card.Root>
   );
 }
 

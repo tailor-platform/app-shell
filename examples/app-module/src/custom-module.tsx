@@ -27,6 +27,7 @@ import {
   Fieldset,
   Form,
   type Guard,
+  Card,
 } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
 import { useT, labels } from "./i18n-labels";
@@ -345,127 +346,125 @@ const PurchaseOrderDetailPage = () => {
 
   return (
     <Layout>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-        Purchase Order: {purchaseOrder.docNumber}
-      </h1>
-
-      {/* Status Overview Card */}
-      <DescriptionCard
-        data={purchaseOrder}
-        title="Status Overview"
-        columns={4}
-        fields={[
-          {
-            key: "status",
-            label: "Status",
-            type: "badge",
-            meta: {
-              badgeVariantMap: {
-                DRAFT: "success",
-                CONFIRMED: "success",
-                CLOSED: "success",
-                CANCELED: "outline-error",
+      <Layout.Header title={`Purchase Order: ${purchaseOrder.docNumber}`} />
+      <Layout.Column>
+        <DescriptionCard
+          data={purchaseOrder}
+          title="Status Overview"
+          columns={4}
+          fields={[
+            {
+              key: "status",
+              label: "Status",
+              type: "badge",
+              meta: {
+                badgeVariantMap: {
+                  DRAFT: "success",
+                  CONFIRMED: "success",
+                  CLOSED: "success",
+                  CANCELED: "outline-error",
+                },
               },
             },
-          },
-          {
-            key: "billingStatus",
-            label: "Billing",
-            type: "badge",
-            meta: {
-              badgeVariantMap: {
-                NOT_BILLED: "outline-neutral",
-                PARTIALLY_BILLED: "outline-warning",
-                BILLED: "outline-success",
+            {
+              key: "billingStatus",
+              label: "Billing",
+              type: "badge",
+              meta: {
+                badgeVariantMap: {
+                  NOT_BILLED: "outline-neutral",
+                  PARTIALLY_BILLED: "outline-warning",
+                  BILLED: "outline-success",
+                },
               },
             },
-          },
-          {
-            key: "deliveryStatus",
-            label: "Delivery",
-            type: "badge",
-            meta: {
-              badgeVariantMap: {
-                NOT_RECEIVED: "outline-neutral",
-                PARTIALLY_RECEIVED: "outline-warning",
-                RECEIVED: "outline-success",
+            {
+              key: "deliveryStatus",
+              label: "Delivery",
+              type: "badge",
+              meta: {
+                badgeVariantMap: {
+                  NOT_RECEIVED: "outline-neutral",
+                  PARTIALLY_RECEIVED: "outline-warning",
+                  RECEIVED: "outline-success",
+                },
               },
             },
-          },
-        ]}
-      />
+          ]}
+        />
 
-      {/* Order Details Card */}
-      <DescriptionCard
-        data={purchaseOrder}
-        title="Order Overview"
-        columns={4}
-        fields={[
-          { key: "docNumber", label: "PO Number", meta: { copyable: true } },
-          {
-            key: "externalReference",
-            label: "External Ref",
-            meta: { copyable: true },
-          },
-          { key: "supplierName", label: "Supplier" },
-          { type: "divider" },
-          {
-            key: "expectedDeliveryDate",
-            label: "Expected Delivery",
-            type: "date",
-            meta: { dateFormat: "medium" },
-          },
-          {
-            key: "confirmedAt",
-            label: "Confirmed",
-            type: "date",
-            meta: { dateFormat: "medium" },
-          },
-          {
-            key: "createdAt",
-            label: "Created",
-            type: "date",
-            meta: { dateFormat: "relative" },
-          },
-          { key: "shipToLocation.name", label: "Warehouse" },
-          { type: "divider" },
-          {
-            key: "shipToLocation.address",
-            label: "Shipping Address",
-            type: "address",
-            meta: { copyable: true },
-          },
-          { key: "note", label: "Notes", meta: { truncateLines: 3 } },
-        ]}
-      />
+        {/* Order Details Card */}
+        <DescriptionCard
+          data={purchaseOrder}
+          title="Order Overview"
+          columns={4}
+          fields={[
+            { key: "docNumber", label: "PO Number", meta: { copyable: true } },
+            {
+              key: "externalReference",
+              label: "External Ref",
+              meta: { copyable: true },
+            },
+            { key: "supplierName", label: "Supplier" },
+            { type: "divider" },
+            {
+              key: "expectedDeliveryDate",
+              label: "Expected Delivery",
+              type: "date",
+              meta: { dateFormat: "medium" },
+            },
+            {
+              key: "confirmedAt",
+              label: "Confirmed",
+              type: "date",
+              meta: { dateFormat: "medium" },
+            },
+            {
+              key: "createdAt",
+              label: "Created",
+              type: "date",
+              meta: { dateFormat: "relative" },
+            },
+            { key: "shipToLocation.name", label: "Warehouse" },
+            { type: "divider" },
+            {
+              key: "shipToLocation.address",
+              label: "Shipping Address",
+              type: "address",
+              meta: { copyable: true },
+            },
+            { key: "note", label: "Notes", meta: { truncateLines: 3 } },
+          ]}
+        />
 
-      {/* Financial Summary Card */}
-      <DescriptionCard
-        data={purchaseOrder}
-        title="Financial Summary"
-        columns={4}
-        fields={[
-          {
-            key: "subtotal",
-            label: "Subtotal",
-            type: "money",
-            meta: { currencyKey: "currency.code" },
-          },
-          {
-            key: "tax",
-            label: "Tax",
-            type: "money",
-            meta: { currencyKey: "currency.code" },
-          },
-          {
-            key: "total",
-            label: "Total",
-            type: "money",
-            meta: { currencyKey: "currency.code" },
-          },
-          { key: "currency.code", label: "Currency" },
-        ]}
-      />
+        {/* Financial Summary Card */}
+        <DescriptionCard
+          data={purchaseOrder}
+          title="Financial Summary"
+          columns={4}
+          fields={[
+            {
+              key: "subtotal",
+              label: "Subtotal",
+              type: "money",
+              meta: { currencyKey: "currency.code" },
+            },
+            {
+              key: "tax",
+              label: "Tax",
+              type: "money",
+              meta: { currencyKey: "currency.code" },
+            },
+            {
+              key: "total",
+              label: "Total",
+              type: "money",
+              meta: { currencyKey: "currency.code" },
+            },
+            { key: "currency.code", label: "Currency" },
+          ]}
+        />
+      </Layout.Column>
     </Layout>
   );
 };
@@ -1072,17 +1071,6 @@ const primitiveComponentsDemoResource = defineResource({
     const [showSidebar, setShowSidebar] = React.useState(false);
     const [sortOrder, setSortOrder] = React.useState("date");
 
-    const cardStyle: React.CSSProperties = {
-      padding: "1.5rem",
-      borderRadius: "0.75rem",
-      border: "1px solid var(--border)",
-      backgroundColor: "var(--card)",
-      color: "var(--card-foreground)",
-    };
-    const headingStyle: React.CSSProperties = {
-      fontWeight: "bold",
-      marginBottom: "0.5rem",
-    };
     const labelStyle: React.CSSProperties = {
       fontSize: "0.875rem",
       color: "var(--muted-foreground)",
@@ -1099,325 +1087,343 @@ const primitiveComponentsDemoResource = defineResource({
         <Layout.Header title="Primitive Components" />
         <Layout.Column>
           {/* Button variants */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Button</h3>
-            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-              <div>
-                <div style={labelStyle}>Variant</div>
-                <div style={rowStyle}>
-                  <Button>Default</Button>
-                  <Button variant="secondary">Secondary</Button>
-                  <Button variant="destructive">Destructive</Button>
-                  <Button variant="outline">Outline</Button>
-                  <Button variant="ghost">Ghost</Button>
-                  <Button variant="link">Link</Button>
+          <Card.Root>
+            <Card.Header title="Button" />
+            <Card.Content>
+              <div style={{ display: "flex", gap: "2rem" }}>
+                <div>
+                  <div style={labelStyle}>Variant</div>
+                  <div style={rowStyle}>
+                    <Button>Default</Button>
+                    <Button variant="secondary">Secondary</Button>
+                    <Button variant="destructive">Destructive</Button>
+                    <Button variant="outline">Outline</Button>
+                    <Button variant="ghost">Ghost</Button>
+                    <Button variant="link">Link</Button>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Size</div>
+                  <div style={{ ...rowStyle, alignItems: "center" }}>
+                    <Button size="sm">Small</Button>
+                    <Button size="default">Default</Button>
+                    <Button size="lg">Large</Button>
+                    <Button disabled>Disabled</Button>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div style={labelStyle}>Size</div>
-                <div style={{ ...rowStyle, alignItems: "center" }}>
-                  <Button size="sm">Small</Button>
-                  <Button size="default">Default</Button>
-                  <Button size="lg">Large</Button>
-                  <Button disabled>Disabled</Button>
-                </div>
-              </div>
-            </div>
-          </div>
+            </Card.Content>
+          </Card.Root>
 
           {/* Input */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Input</h3>
-            <div style={rowStyle}>
-              <Input
-                style={{ maxWidth: "240px" }}
-                placeholder="Type something..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-              />
-              <Input style={{ maxWidth: "240px" }} type="email" placeholder="Email" />
-              <Input style={{ maxWidth: "240px" }} disabled placeholder="Disabled" />
-            </div>
-          </div>
+          <Card.Root>
+            <Card.Header title="Input" />
+            <Card.Content>
+              <div style={rowStyle}>
+                <Input
+                  style={{ maxWidth: "240px" }}
+                  placeholder="Type something..."
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                />
+                <Input style={{ maxWidth: "240px" }} type="email" placeholder="Email" />
+                <Input style={{ maxWidth: "240px" }} disabled placeholder="Disabled" />
+              </div>
+            </Card.Content>
+          </Card.Root>
 
           {/* Badge */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Badge</h3>
-            <div style={rowStyle}>
-              <Badge>Default</Badge>
-              <Badge variant="success">Success</Badge>
-              <Badge variant="warning">Warning</Badge>
-              <Badge variant="error">Error</Badge>
-              <Badge variant="neutral">Neutral</Badge>
-              <Badge variant="outline-success">Outline</Badge>
-            </div>
-          </div>
+          <Card.Root>
+            <Card.Header title="Badge" />
+            <Card.Content>
+              <div style={rowStyle}>
+                <Badge>Default</Badge>
+                <Badge variant="success">Success</Badge>
+                <Badge variant="warning">Warning</Badge>
+                <Badge variant="error">Error</Badge>
+                <Badge variant="neutral">Neutral</Badge>
+                <Badge variant="outline-success">Outline</Badge>
+              </div>
+            </Card.Content>
+          </Card.Root>
 
           {/* Tooltip */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Tooltip</h3>
-            <Tooltip.Provider>
-              <div style={{ ...rowStyle, gap: "1rem" }}>
-                <Tooltip.Root>
-                  <Tooltip.Trigger render={<Button variant="outline" />}>
-                    Top (default)
-                  </Tooltip.Trigger>
-                  <Tooltip.Content position={{ side: "top" }}>Tooltip on top</Tooltip.Content>
-                </Tooltip.Root>
-                <Tooltip.Root>
-                  <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
-                  <Tooltip.Content position={{ side: "bottom" }}>Tooltip on bottom</Tooltip.Content>
-                </Tooltip.Root>
-                <Tooltip.Root>
-                  <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
-                  <Tooltip.Content position={{ side: "left" }}>Tooltip on left</Tooltip.Content>
-                </Tooltip.Root>
-                <Tooltip.Root>
-                  <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
-                  <Tooltip.Content position={{ side: "right" }}>Tooltip on right</Tooltip.Content>
-                </Tooltip.Root>
-              </div>
-            </Tooltip.Provider>
-          </div>
+          <Card.Root>
+            <Card.Header title="Tooltip" />
+            <Card.Content>
+              <Tooltip.Provider>
+                <div style={{ ...rowStyle, gap: "1rem" }}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger render={<Button variant="outline" />}>
+                      Top (default)
+                    </Tooltip.Trigger>
+                    <Tooltip.Content position={{ side: "top" }}>Tooltip on top</Tooltip.Content>
+                  </Tooltip.Root>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger render={<Button variant="outline" />}>Bottom</Tooltip.Trigger>
+                    <Tooltip.Content position={{ side: "bottom" }}>
+                      Tooltip on bottom
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger render={<Button variant="outline" />}>Left</Tooltip.Trigger>
+                    <Tooltip.Content position={{ side: "left" }}>Tooltip on left</Tooltip.Content>
+                  </Tooltip.Root>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger render={<Button variant="outline" />}>Right</Tooltip.Trigger>
+                    <Tooltip.Content position={{ side: "right" }}>Tooltip on right</Tooltip.Content>
+                  </Tooltip.Root>
+                </div>
+              </Tooltip.Provider>
+            </Card.Content>
+          </Card.Root>
 
           {/* Dialog */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Dialog</h3>
-            <Dialog.Root>
-              <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Dialog Title</Dialog.Title>
-                  <Dialog.Description>
-                    This is a dialog description. You can put any content here.
-                  </Dialog.Description>
-                </Dialog.Header>
-                <Dialog.Footer>
-                  <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-                  <Dialog.Close render={<Button />}>Confirm</Dialog.Close>
-                </Dialog.Footer>
-              </Dialog.Content>
-            </Dialog.Root>
-          </div>
+          <Card.Root>
+            <Card.Header title="Dialog" />
+            <Card.Content>
+              <Dialog.Root>
+                <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>Dialog Title</Dialog.Title>
+                    <Dialog.Description>
+                      This is a dialog description. You can put any content here.
+                    </Dialog.Description>
+                  </Dialog.Header>
+                  <Dialog.Footer>
+                    <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+                    <Dialog.Close render={<Button />}>Confirm</Dialog.Close>
+                  </Dialog.Footer>
+                </Dialog.Content>
+              </Dialog.Root>
+            </Card.Content>
+          </Card.Root>
 
           {/* Sheet */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Sheet</h3>
-            <div style={rowStyle}>
-              <Sheet.Root side="right">
-                <Sheet.Trigger render={<Button variant="outline" />}>
-                  Open Sheet (Right)
-                </Sheet.Trigger>
-                <Sheet.Content>
-                  <Sheet.Header>
-                    <Sheet.Title>Sheet Title</Sheet.Title>
-                    <Sheet.Description>This sheet slides in from the right.</Sheet.Description>
-                  </Sheet.Header>
-                  <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
-                  <Sheet.Footer>
-                    <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
-                  </Sheet.Footer>
-                </Sheet.Content>
-              </Sheet.Root>
-              <Sheet.Root side="left">
-                <Sheet.Trigger render={<Button variant="outline" />}>
-                  Open Sheet (Left)
-                </Sheet.Trigger>
-                <Sheet.Content>
-                  <Sheet.Header>
-                    <Sheet.Title>Left Sheet</Sheet.Title>
-                    <Sheet.Description>This sheet slides in from the left.</Sheet.Description>
-                  </Sheet.Header>
-                  <Sheet.Footer>
-                    <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
-                  </Sheet.Footer>
-                </Sheet.Content>
-              </Sheet.Root>
-              <Sheet.Root side="bottom">
-                <Sheet.Trigger render={<Button variant="outline" />}>
-                  Open Sheet (Bottom)
-                </Sheet.Trigger>
-                <Sheet.Content>
-                  <Sheet.Header>
-                    <Sheet.Title>Bottom Sheet</Sheet.Title>
-                    <Sheet.Description>This sheet slides in from the bottom.</Sheet.Description>
-                  </Sheet.Header>
-                  <Sheet.Footer>
-                    <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
-                  </Sheet.Footer>
-                </Sheet.Content>
-              </Sheet.Root>
-            </div>
-          </div>
+          <Card.Root>
+            <Card.Header title="Sheet" />
+            <Card.Content>
+              <div style={rowStyle}>
+                <Sheet.Root side="right">
+                  <Sheet.Trigger render={<Button variant="outline" />}>
+                    Open Sheet (Right)
+                  </Sheet.Trigger>
+                  <Sheet.Content>
+                    <Sheet.Header>
+                      <Sheet.Title>Sheet Title</Sheet.Title>
+                      <Sheet.Description>This sheet slides in from the right.</Sheet.Description>
+                    </Sheet.Header>
+                    <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                    <Sheet.Footer>
+                      <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                    </Sheet.Footer>
+                  </Sheet.Content>
+                </Sheet.Root>
+                <Sheet.Root side="left">
+                  <Sheet.Trigger render={<Button variant="outline" />}>
+                    Open Sheet (Left)
+                  </Sheet.Trigger>
+                  <Sheet.Content>
+                    <Sheet.Header>
+                      <Sheet.Title>Left Sheet</Sheet.Title>
+                      <Sheet.Description>This sheet slides in from the left.</Sheet.Description>
+                    </Sheet.Header>
+                    <Sheet.Footer>
+                      <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                    </Sheet.Footer>
+                  </Sheet.Content>
+                </Sheet.Root>
+                <Sheet.Root side="bottom">
+                  <Sheet.Trigger render={<Button variant="outline" />}>
+                    Open Sheet (Bottom)
+                  </Sheet.Trigger>
+                  <Sheet.Content>
+                    <Sheet.Header>
+                      <Sheet.Title>Bottom Sheet</Sheet.Title>
+                      <Sheet.Description>This sheet slides in from the bottom.</Sheet.Description>
+                    </Sheet.Header>
+                    <Sheet.Footer>
+                      <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                    </Sheet.Footer>
+                  </Sheet.Content>
+                </Sheet.Root>
+              </div>
+            </Card.Content>
+          </Card.Root>
 
           {/* Menu */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Menu</h3>
-            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-              <div>
-                <div style={labelStyle}>Pattern</div>
-                <div style={rowStyle}>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>Basic</Menu.Trigger>
-                    <Menu.Content>
-                      <Menu.Item onClick={() => alert("Edit clicked")}>Edit</Menu.Item>
-                      <Menu.Item onClick={() => alert("Duplicate clicked")}>Duplicate</Menu.Item>
-                      <Menu.Item onClick={() => alert("Copy ID clicked")}>Copy ID</Menu.Item>
-                      <Menu.Separator />
-                      <Menu.Item
-                        onClick={() => alert("Delete clicked")}
-                        className="astw:text-destructive"
-                      >
-                        Delete
-                      </Menu.Item>
-                    </Menu.Content>
-                  </Menu.Root>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>
-                      Checkbox & Radio
-                    </Menu.Trigger>
-                    <Menu.Content>
-                      <Menu.Group>
-                        <Menu.GroupLabel>Panels</Menu.GroupLabel>
-                        <Menu.CheckboxItem checked={showToolbar} onCheckedChange={setShowToolbar}>
-                          <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
-                          Show Toolbar
-                        </Menu.CheckboxItem>
-                        <Menu.CheckboxItem checked={showSidebar} onCheckedChange={setShowSidebar}>
-                          <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
-                          Show Sidebar
-                        </Menu.CheckboxItem>
-                      </Menu.Group>
-                      <Menu.Separator />
-                      <Menu.Group>
-                        <Menu.GroupLabel>Sort by</Menu.GroupLabel>
-                        <Menu.RadioGroup value={sortOrder} onValueChange={setSortOrder}>
-                          <Menu.RadioItem value="date">
-                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-                            Date
-                          </Menu.RadioItem>
-                          <Menu.RadioItem value="name">
-                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-                            Name
-                          </Menu.RadioItem>
-                          <Menu.RadioItem value="size">
-                            <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-                            Size
-                          </Menu.RadioItem>
-                        </Menu.RadioGroup>
-                      </Menu.Group>
-                    </Menu.Content>
-                  </Menu.Root>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>Submenu</Menu.Trigger>
-                    <Menu.Content>
-                      <Menu.Group>
-                        <Menu.GroupLabel>Document</Menu.GroupLabel>
-                        <Menu.Item onClick={() => alert("New")}>New</Menu.Item>
-                        <Menu.Item onClick={() => alert("Open")}>Open</Menu.Item>
-                        <Menu.Item onClick={() => alert("Save")}>Save</Menu.Item>
-                      </Menu.Group>
-                      <Menu.Separator />
-                      <Menu.SubmenuRoot>
-                        <Menu.SubmenuTrigger>Export as →</Menu.SubmenuTrigger>
-                        <Menu.Content position={{ side: "right", align: "start" }}>
-                          <Menu.Item onClick={() => alert("PDF")}>PDF</Menu.Item>
-                          <Menu.Item onClick={() => alert("CSV")}>CSV</Menu.Item>
-                          <Menu.Item onClick={() => alert("JSON")}>JSON</Menu.Item>
-                        </Menu.Content>
-                      </Menu.SubmenuRoot>
-                      <Menu.Separator />
-                      <Menu.Item disabled>Print (unavailable)</Menu.Item>
-                    </Menu.Content>
-                  </Menu.Root>
+          <Card.Root>
+            <Card.Header title="Menu" />
+            <Card.Content>
+              <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                <div>
+                  <div style={labelStyle}>Pattern</div>
+                  <div style={rowStyle}>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>Basic</Menu.Trigger>
+                      <Menu.Content>
+                        <Menu.Item onClick={() => alert("Edit clicked")}>Edit</Menu.Item>
+                        <Menu.Item onClick={() => alert("Duplicate clicked")}>Duplicate</Menu.Item>
+                        <Menu.Item onClick={() => alert("Copy ID clicked")}>Copy ID</Menu.Item>
+                        <Menu.Separator />
+                        <Menu.Item
+                          onClick={() => alert("Delete clicked")}
+                          className="astw:text-destructive"
+                        >
+                          Delete
+                        </Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>
+                        Checkbox & Radio
+                      </Menu.Trigger>
+                      <Menu.Content>
+                        <Menu.Group>
+                          <Menu.GroupLabel>Panels</Menu.GroupLabel>
+                          <Menu.CheckboxItem checked={showToolbar} onCheckedChange={setShowToolbar}>
+                            <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+                            Show Toolbar
+                          </Menu.CheckboxItem>
+                          <Menu.CheckboxItem checked={showSidebar} onCheckedChange={setShowSidebar}>
+                            <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+                            Show Sidebar
+                          </Menu.CheckboxItem>
+                        </Menu.Group>
+                        <Menu.Separator />
+                        <Menu.Group>
+                          <Menu.GroupLabel>Sort by</Menu.GroupLabel>
+                          <Menu.RadioGroup value={sortOrder} onValueChange={setSortOrder}>
+                            <Menu.RadioItem value="date">
+                              <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                              Date
+                            </Menu.RadioItem>
+                            <Menu.RadioItem value="name">
+                              <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                              Name
+                            </Menu.RadioItem>
+                            <Menu.RadioItem value="size">
+                              <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                              Size
+                            </Menu.RadioItem>
+                          </Menu.RadioGroup>
+                        </Menu.Group>
+                      </Menu.Content>
+                    </Menu.Root>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>Submenu</Menu.Trigger>
+                      <Menu.Content>
+                        <Menu.Group>
+                          <Menu.GroupLabel>Document</Menu.GroupLabel>
+                          <Menu.Item onClick={() => alert("New")}>New</Menu.Item>
+                          <Menu.Item onClick={() => alert("Open")}>Open</Menu.Item>
+                          <Menu.Item onClick={() => alert("Save")}>Save</Menu.Item>
+                        </Menu.Group>
+                        <Menu.Separator />
+                        <Menu.SubmenuRoot>
+                          <Menu.SubmenuTrigger>Export as →</Menu.SubmenuTrigger>
+                          <Menu.Content position={{ side: "right", align: "start" }}>
+                            <Menu.Item onClick={() => alert("PDF")}>PDF</Menu.Item>
+                            <Menu.Item onClick={() => alert("CSV")}>CSV</Menu.Item>
+                            <Menu.Item onClick={() => alert("JSON")}>JSON</Menu.Item>
+                          </Menu.Content>
+                        </Menu.SubmenuRoot>
+                        <Menu.Separator />
+                        <Menu.Item disabled>Print (unavailable)</Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Direction</div>
+                  <div style={rowStyle}>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>Bottom ↓</Menu.Trigger>
+                      <Menu.Content position={{ side: "bottom" }}>
+                        <Menu.Item>Item 1</Menu.Item>
+                        <Menu.Item>Item 2</Menu.Item>
+                        <Menu.Item>Item 3</Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>Top ↑</Menu.Trigger>
+                      <Menu.Content position={{ side: "top" }}>
+                        <Menu.Item>Item 1</Menu.Item>
+                        <Menu.Item>Item 2</Menu.Item>
+                        <Menu.Item>Item 3</Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>Right →</Menu.Trigger>
+                      <Menu.Content position={{ side: "right" }}>
+                        <Menu.Item>Item 1</Menu.Item>
+                        <Menu.Item>Item 2</Menu.Item>
+                        <Menu.Item>Item 3</Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                    <Menu.Root>
+                      <Menu.Trigger render={<Button variant="outline" />}>Left ←</Menu.Trigger>
+                      <Menu.Content position={{ side: "left" }}>
+                        <Menu.Item>Item 1</Menu.Item>
+                        <Menu.Item>Item 2</Menu.Item>
+                        <Menu.Item>Item 3</Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div style={labelStyle}>Direction</div>
-                <div style={rowStyle}>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>Bottom ↓</Menu.Trigger>
-                    <Menu.Content position={{ side: "bottom" }}>
-                      <Menu.Item>Item 1</Menu.Item>
-                      <Menu.Item>Item 2</Menu.Item>
-                      <Menu.Item>Item 3</Menu.Item>
-                    </Menu.Content>
-                  </Menu.Root>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>Top ↑</Menu.Trigger>
-                    <Menu.Content position={{ side: "top" }}>
-                      <Menu.Item>Item 1</Menu.Item>
-                      <Menu.Item>Item 2</Menu.Item>
-                      <Menu.Item>Item 3</Menu.Item>
-                    </Menu.Content>
-                  </Menu.Root>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>Right →</Menu.Trigger>
-                    <Menu.Content position={{ side: "right" }}>
-                      <Menu.Item>Item 1</Menu.Item>
-                      <Menu.Item>Item 2</Menu.Item>
-                      <Menu.Item>Item 3</Menu.Item>
-                    </Menu.Content>
-                  </Menu.Root>
-                  <Menu.Root>
-                    <Menu.Trigger render={<Button variant="outline" />}>Left ←</Menu.Trigger>
-                    <Menu.Content position={{ side: "left" }}>
-                      <Menu.Item>Item 1</Menu.Item>
-                      <Menu.Item>Item 2</Menu.Item>
-                      <Menu.Item>Item 3</Menu.Item>
-                    </Menu.Content>
-                  </Menu.Root>
-                </div>
-              </div>
-            </div>
-          </div>
+            </Card.Content>
+          </Card.Root>
 
           {/* Table */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Table</h3>
-            <Table.Root>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>Name</Table.Head>
-                  <Table.Head>Status</Table.Head>
-                  <Table.Head>Role</Table.Head>
-                  <Table.Head>Amount</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                <Table.Row>
-                  <Table.Cell>Alice Johnson</Table.Cell>
-                  <Table.Cell>
-                    <Badge variant="success">Active</Badge>
-                  </Table.Cell>
-                  <Table.Cell>Admin</Table.Cell>
-                  <Table.Cell>$1,200.00</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Bob Smith</Table.Cell>
-                  <Table.Cell>
-                    <Badge variant="neutral">Inactive</Badge>
-                  </Table.Cell>
-                  <Table.Cell>Editor</Table.Cell>
-                  <Table.Cell>$800.00</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>Carol Lee</Table.Cell>
-                  <Table.Cell>
-                    <Badge variant="success">Active</Badge>
-                  </Table.Cell>
-                  <Table.Cell>Viewer</Table.Cell>
-                  <Table.Cell>$350.00</Table.Cell>
-                </Table.Row>
-              </Table.Body>
-              <Table.Footer>
-                <Table.Row>
-                  <Table.Cell colSpan={3}>Total</Table.Cell>
-                  <Table.Cell>$2,350.00</Table.Cell>
-                </Table.Row>
-              </Table.Footer>
-            </Table.Root>
-          </div>
+          <Card.Root>
+            <Card.Header title="Table" />
+            <Card.Content>
+              <Table.Root>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head>Name</Table.Head>
+                    <Table.Head>Status</Table.Head>
+                    <Table.Head>Role</Table.Head>
+                    <Table.Head>Amount</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  <Table.Row>
+                    <Table.Cell>Alice Johnson</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant="success">Active</Badge>
+                    </Table.Cell>
+                    <Table.Cell>Admin</Table.Cell>
+                    <Table.Cell>$1,200.00</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Bob Smith</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant="neutral">Inactive</Badge>
+                    </Table.Cell>
+                    <Table.Cell>Editor</Table.Cell>
+                    <Table.Cell>$800.00</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Carol Lee</Table.Cell>
+                    <Table.Cell>
+                      <Badge variant="success">Active</Badge>
+                    </Table.Cell>
+                    <Table.Cell>Viewer</Table.Cell>
+                    <Table.Cell>$350.00</Table.Cell>
+                  </Table.Row>
+                </Table.Body>
+                <Table.Footer>
+                  <Table.Row>
+                    <Table.Cell colSpan={3}>Total</Table.Cell>
+                    <Table.Cell>$2,350.00</Table.Cell>
+                  </Table.Row>
+                </Table.Footer>
+              </Table.Root>
+            </Card.Content>
+          </Card.Root>
         </Layout.Column>
       </Layout>
     );
@@ -1583,28 +1589,16 @@ const DropdownComponentsDemoPage = () => {
     { id: "4", name: "Svelte" },
   ]);
 
-  const cardStyle: React.CSSProperties = {
-    padding: "1.5rem",
-    borderRadius: "0.75rem",
-    border: "1px solid var(--border)",
-    backgroundColor: "var(--card)",
-    color: "var(--card-foreground)",
-  };
-  const headingStyle: React.CSSProperties = {
-    fontWeight: "bold",
-    marginBottom: "0.75rem",
-    fontSize: "1.125rem",
+  const sectionStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
   };
   const subHeadingStyle: React.CSSProperties = {
     fontWeight: 600,
     marginBottom: "0.5rem",
     fontSize: "0.875rem",
     color: "var(--muted-foreground)",
-  };
-  const sectionStyle: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
   };
   const gridStyle: React.CSSProperties = {
     display: "grid",
@@ -1617,302 +1611,316 @@ const DropdownComponentsDemoPage = () => {
       <Layout.Header title="Select / Combobox / Autocomplete" />
       <Layout.Column>
         {/* ── Select ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Select</h3>
-          <div style={gridStyle}>
-            {/* Basic (string items) */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Basic</div>
-              <Select items={["Apple", "Banana", "Cherry", "Grape"]} placeholder="Pick a fruit" />
-            </div>
+        <Card.Root>
+          <Card.Header title="Select" />
+          <Card.Content>
+            <div style={gridStyle}>
+              {/* Basic (string items) */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Basic</div>
+                <Select items={["Apple", "Banana", "Cherry", "Grape"]} placeholder="Pick a fruit" />
+              </div>
 
-            {/* Custom render */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Custom render</div>
-              <Select
-                items={fruits}
-                mapItem={(f) => ({
-                  label: f.name,
-                  key: f.id,
-                  render: (
-                    <span>
-                      {f.emoji} {f.name}
-                    </span>
-                  ),
-                })}
-                placeholder="With emoji"
-              />
-            </div>
+              {/* Custom render */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Custom render</div>
+                <Select
+                  items={fruits}
+                  mapItem={(f) => ({
+                    label: f.name,
+                    key: f.id,
+                    render: (
+                      <span>
+                        {f.emoji} {f.name}
+                      </span>
+                    ),
+                  })}
+                  placeholder="With emoji"
+                />
+              </div>
 
-            {/* Multiple selection */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Multiple</div>
-              <Select
-                items={fruits}
-                mapItem={(f) => ({ label: f.name, key: f.id })}
-                multiple
-                value={selectedFruits}
-                onValueChange={setSelectedFruits}
-                placeholder="Pick fruits"
-              />
-            </div>
+              {/* Multiple selection */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Multiple</div>
+                <Select
+                  items={fruits}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  multiple
+                  value={selectedFruits}
+                  onValueChange={setSelectedFruits}
+                  placeholder="Pick fruits"
+                />
+              </div>
 
-            {/* Grouped items */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Grouped</div>
-              <Select
-                items={groupedFruits}
-                mapItem={(f) => ({ label: f.name, key: f.id })}
-                placeholder="Grouped select"
-              />
-            </div>
+              {/* Grouped items */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Grouped</div>
+                <Select
+                  items={groupedFruits}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  placeholder="Grouped select"
+                />
+              </div>
 
-            {/* Disabled */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Disabled</div>
-              <Select items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+              {/* Disabled */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Disabled</div>
+                <Select items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
 
         {/* ── Select.Async ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Select.Async</h3>
-          <div style={gridStyle}>
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Single</div>
-              <Select.Async
-                fetcher={async () => {
-                  await new Promise((r) => setTimeout(r, 800));
-                  return fruits;
-                }}
-                mapItem={(f) => ({
-                  label: f.name,
-                  key: f.id,
-                  render: (
-                    <span>
-                      {f.emoji} {f.name}
-                    </span>
-                  ),
-                })}
-                placeholder="Async select..."
-                loadingText="Loading fruits..."
-              />
-            </div>
+        <Card.Root>
+          <Card.Header title="Select.Async" />
+          <Card.Content>
+            <div style={gridStyle}>
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Single</div>
+                <Select.Async
+                  fetcher={async () => {
+                    await new Promise((r) => setTimeout(r, 800));
+                    return fruits;
+                  }}
+                  mapItem={(f) => ({
+                    label: f.name,
+                    key: f.id,
+                    render: (
+                      <span>
+                        {f.emoji} {f.name}
+                      </span>
+                    ),
+                  })}
+                  placeholder="Async select..."
+                  loadingText="Loading fruits..."
+                />
+              </div>
 
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Multiple</div>
-              <Select.Async
-                fetcher={async () => {
-                  await new Promise((r) => setTimeout(r, 800));
-                  return fruits;
-                }}
-                mapItem={(f) => ({ label: f.name, key: f.id })}
-                multiple
-                placeholder="Async multi-select..."
-              />
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Multiple</div>
+                <Select.Async
+                  fetcher={async () => {
+                    await new Promise((r) => setTimeout(r, 800));
+                    return fruits;
+                  }}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  multiple
+                  placeholder="Async multi-select..."
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
 
         {/* ── Combobox ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Combobox</h3>
-          <div style={gridStyle}>
-            {/* Basic string items */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Basic</div>
-              <Combobox
-                items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
-                placeholder="Search fruit..."
-              />
-            </div>
+        <Card.Root>
+          <Card.Header title="Combobox" />
+          <Card.Content>
+            <div style={gridStyle}>
+              {/* Basic string items */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Basic</div>
+                <Combobox
+                  items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
+                  placeholder="Search fruit..."
+                />
+              </div>
 
-            {/* Custom render */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Custom render</div>
-              <Combobox
-                items={fruits}
-                mapItem={(f) => ({
-                  label: f.name,
-                  key: f.id,
-                  render: (
-                    <span>
-                      {f.emoji} {f.name}
-                    </span>
-                  ),
-                })}
-                placeholder="With emoji"
-              />
-            </div>
+              {/* Custom render */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Custom render</div>
+                <Combobox
+                  items={fruits}
+                  mapItem={(f) => ({
+                    label: f.name,
+                    key: f.id,
+                    render: (
+                      <span>
+                        {f.emoji} {f.name}
+                      </span>
+                    ),
+                  })}
+                  placeholder="With emoji"
+                />
+              </div>
 
-            {/* Multiple */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Multiple (chips)</div>
-              <Combobox
-                items={fruits}
-                mapItem={(f) => ({ label: f.name, key: f.id })}
-                multiple
-                placeholder="Add fruits..."
-              />
-            </div>
+              {/* Multiple */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Multiple (chips)</div>
+                <Combobox
+                  items={fruits}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  multiple
+                  placeholder="Add fruits..."
+                />
+              </div>
 
-            {/* Grouped */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Grouped</div>
-              <Combobox
-                items={groupedFruits}
-                mapItem={(f) => ({ label: f.name, key: f.id })}
-                placeholder="Search grouped..."
-              />
-            </div>
+              {/* Grouped */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Grouped</div>
+                <Combobox
+                  items={groupedFruits}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  placeholder="Search grouped..."
+                />
+              </div>
 
-            {/* Disabled */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Disabled</div>
-              <Combobox items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+              {/* Disabled */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Disabled</div>
+                <Combobox items={["Apple", "Banana"]} placeholder="Disabled" disabled />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
 
         {/* ── Combobox.Async ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Combobox.Async</h3>
-          <div style={gridStyle}>
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Single</div>
-              <Combobox.Async
-                fetcher={async (query) => {
-                  await new Promise((r) => setTimeout(r, 400));
-                  return allProgrammingLanguages.filter((l) =>
-                    l.toLowerCase().includes(query.toLowerCase()),
-                  );
-                }}
-                placeholder="Search programming language..."
-                loadingText="Searching..."
-                emptyText="No programming languages found."
-              />
-            </div>
+        <Card.Root>
+          <Card.Header title="Combobox.Async" />
+          <Card.Content>
+            <div style={gridStyle}>
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Single</div>
+                <Combobox.Async
+                  fetcher={async (query) => {
+                    await new Promise((r) => setTimeout(r, 400));
+                    return allProgrammingLanguages.filter((l) =>
+                      l.toLowerCase().includes(query.toLowerCase()),
+                    );
+                  }}
+                  placeholder="Search programming language..."
+                  loadingText="Searching..."
+                  emptyText="No programming languages found."
+                />
+              </div>
 
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Multiple</div>
-              <Combobox.Async
-                fetcher={async (query) => {
-                  await new Promise((r) => setTimeout(r, 400));
-                  return allProgrammingLanguages.filter((l) =>
-                    l.toLowerCase().includes(query.toLowerCase()),
-                  );
-                }}
-                multiple
-                placeholder="Add programming languages..."
-              />
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Multiple</div>
+                <Combobox.Async
+                  fetcher={async (query) => {
+                    await new Promise((r) => setTimeout(r, 400));
+                    return allProgrammingLanguages.filter((l) =>
+                      l.toLowerCase().includes(query.toLowerCase()),
+                    );
+                  }}
+                  multiple
+                  placeholder="Add programming languages..."
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
 
         {/* ── Combobox (creatable) ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Combobox (creatable)</h3>
-          <div style={gridStyle}>
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Single</div>
-              <Combobox
-                items={creatableItems}
-                mapItem={(item) => ({ label: item.name, key: item.id })}
-                onCreateItem={async (value) => {
-                  const item = { id: crypto.randomUUID(), name: value };
-                  setCreatableItems((prev) => [...prev, item]);
-                  return item;
-                }}
-                formatCreateLabel={(v) => `Create "${v}"`}
-                placeholder="Search or create..."
-              />
-            </div>
+        <Card.Root>
+          <Card.Header title="Combobox (creatable)" />
+          <Card.Content>
+            <div style={gridStyle}>
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Single</div>
+                <Combobox
+                  items={creatableItems}
+                  mapItem={(item) => ({ label: item.name, key: item.id })}
+                  onCreateItem={async (value) => {
+                    const item = { id: crypto.randomUUID(), name: value };
+                    setCreatableItems((prev) => [...prev, item]);
+                    return item;
+                  }}
+                  formatCreateLabel={(v) => `Create "${v}"`}
+                  placeholder="Search or create..."
+                />
+              </div>
 
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Multiple (async)</div>
-              <Combobox
-                items={creatableItems}
-                mapItem={(item) => ({ label: item.name, key: item.id })}
-                onCreateItem={async (value) => {
-                  await new Promise((r) => setTimeout(r, 500));
-                  const item = { id: crypto.randomUUID(), name: value };
-                  setCreatableItems((prev) => [...prev, item]);
-                  return item;
-                }}
-                multiple
-                placeholder="Add or create tags..."
-              />
-            </div>
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Multiple (async)</div>
+                <Combobox
+                  items={creatableItems}
+                  mapItem={(item) => ({ label: item.name, key: item.id })}
+                  onCreateItem={async (value) => {
+                    await new Promise((r) => setTimeout(r, 500));
+                    const item = { id: crypto.randomUUID(), name: value };
+                    setCreatableItems((prev) => [...prev, item]);
+                    return item;
+                  }}
+                  multiple
+                  placeholder="Add or create tags..."
+                />
+              </div>
 
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>With confirmation dialog</div>
-              <CreatableWithDialog items={creatableItems} onItemsChange={setCreatableItems} />
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>With confirmation dialog</div>
+                <CreatableWithDialog items={creatableItems} onItemsChange={setCreatableItems} />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
 
         {/* ── Autocomplete ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Autocomplete</h3>
-          <div style={gridStyle}>
-            {/* Basic string items */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Basic</div>
-              <Autocomplete
-                items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
-                placeholder="Type a fruit..."
-              />
-            </div>
+        <Card.Root>
+          <Card.Header title="Autocomplete" />
+          <Card.Content>
+            <div style={gridStyle}>
+              {/* Basic string items */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Basic</div>
+                <Autocomplete
+                  items={["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"]}
+                  placeholder="Type a fruit..."
+                />
+              </div>
 
-            {/* Custom render */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Custom render</div>
-              <Autocomplete
-                items={fruits}
-                mapItem={(f) => ({
-                  label: f.name,
-                  key: f.id,
-                  render: (
-                    <span>
-                      {f.emoji} {f.name}
-                    </span>
-                  ),
-                })}
-                placeholder="With emoji"
-              />
-            </div>
+              {/* Custom render */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Custom render</div>
+                <Autocomplete
+                  items={fruits}
+                  mapItem={(f) => ({
+                    label: f.name,
+                    key: f.id,
+                    render: (
+                      <span>
+                        {f.emoji} {f.name}
+                      </span>
+                    ),
+                  })}
+                  placeholder="With emoji"
+                />
+              </div>
 
-            {/* Grouped */}
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Grouped</div>
-              <Autocomplete
-                items={groupedFruits}
-                mapItem={(f) => ({ label: f.name, key: f.id })}
-                placeholder="Grouped autocomplete..."
-              />
+              {/* Grouped */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Grouped</div>
+                <Autocomplete
+                  items={groupedFruits}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  placeholder="Grouped autocomplete..."
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
 
         {/* ── Autocomplete.Async ── */}
-        <div style={cardStyle}>
-          <h3 style={headingStyle}>Autocomplete.Async</h3>
-          <div style={gridStyle}>
-            <div style={sectionStyle}>
-              <div style={subHeadingStyle}>Async search</div>
-              <Autocomplete.Async
-                fetcher={async (query) => {
-                  await new Promise((r) => setTimeout(r, 400));
-                  return allProgrammingLanguages.filter((l) =>
-                    l.toLowerCase().includes(query.toLowerCase()),
-                  );
-                }}
-                placeholder="Search programming language..."
-              />
+        <Card.Root>
+          <Card.Header title="Autocomplete.Async" />
+          <Card.Content>
+            <div style={gridStyle}>
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Async search</div>
+                <Autocomplete.Async
+                  fetcher={async (query) => {
+                    await new Promise((r) => setTimeout(r, 400));
+                    return allProgrammingLanguages.filter((l) =>
+                      l.toLowerCase().includes(query.toLowerCase()),
+                    );
+                  }}
+                  placeholder="Search programming language..."
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
       </Layout.Column>
     </Layout>
   );
@@ -1952,17 +1960,6 @@ const FormComponentsDemoPage = () => {
   ];
   const comboItems = ["Apple", "Banana", "Cherry", "Grape", "Mango", "Orange"];
 
-  const cardStyle: React.CSSProperties = {
-    padding: "1.5rem",
-    borderRadius: "0.75rem",
-    border: "1px solid var(--border)",
-    backgroundColor: "var(--card)",
-    color: "var(--card-foreground)",
-  };
-  const headingStyle: React.CSSProperties = {
-    fontWeight: "bold",
-    marginBottom: "0.5rem",
-  };
   const labelStyle: React.CSSProperties = {
     fontSize: "0.875rem",
     color: "var(--muted-foreground)",
@@ -1981,315 +1978,330 @@ const FormComponentsDemoPage = () => {
       <Layout.Column>
         <div style={gridStyle}>
           {/* Basic Field */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Field</h3>
-            <p style={labelStyle}>
-              A compound component that groups label, control, description, and error message.
-              Wrapped in a Form to demonstrate submit.
-            </p>
-            <Form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const fd = new FormData(event.currentTarget);
-                setSubmittedData({
-                  username: fd.get("username") as string,
-                  email: fd.get("email") as string,
-                  bio: fd.get("bio") as string,
-                });
-              }}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }}
-            >
-              <Field.Root name="username">
-                <Field.Label>Username</Field.Label>
-                <Field.Control placeholder="Enter your username" required />
-                <Field.Description>Your unique display name.</Field.Description>
-                <Field.Error match="valueMissing">Username is required.</Field.Error>
-              </Field.Root>
+          <Card.Root>
+            <Card.Header title="Field" />
+            <Card.Content>
+              <p style={labelStyle}>
+                A compound component that groups label, control, description, and error message.
+                Wrapped in a Form to demonstrate submit.
+              </p>
+              <Form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const fd = new FormData(event.currentTarget);
+                  setSubmittedData({
+                    username: fd.get("username") as string,
+                    email: fd.get("email") as string,
+                    bio: fd.get("bio") as string,
+                  });
+                }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
+                <Field.Root name="username">
+                  <Field.Label>Username</Field.Label>
+                  <Field.Control placeholder="Enter your username" required />
+                  <Field.Description>Your unique display name.</Field.Description>
+                  <Field.Error match="valueMissing">Username is required.</Field.Error>
+                </Field.Root>
 
-              <Field.Root name="email">
-                <Field.Label>Email</Field.Label>
-                <Field.Control type="email" placeholder="you@example.com" required />
-                <Field.Error match="valueMissing">Email is required.</Field.Error>
-                <Field.Error match="typeMismatch">Please enter a valid email address.</Field.Error>
-              </Field.Root>
+                <Field.Root name="email">
+                  <Field.Label>Email</Field.Label>
+                  <Field.Control type="email" placeholder="you@example.com" required />
+                  <Field.Error match="valueMissing">Email is required.</Field.Error>
+                  <Field.Error match="typeMismatch">
+                    Please enter a valid email address.
+                  </Field.Error>
+                </Field.Root>
 
-              <Field.Root name="bio">
-                <Field.Label>Bio</Field.Label>
-                <Field.Control render={<textarea />} placeholder="Tell us about yourself" />
-                <Field.Description>Optional — max 200 characters.</Field.Description>
-              </Field.Root>
+                <Field.Root name="bio">
+                  <Field.Label>Bio</Field.Label>
+                  <Field.Control render={<textarea />} placeholder="Tell us about yourself" />
+                  <Field.Description>Optional — max 200 characters.</Field.Description>
+                </Field.Root>
 
-              <Field.Root name="disabled-field" disabled>
-                <Field.Label>Disabled Field</Field.Label>
-                <Field.Control placeholder="Cannot edit" />
-                <Field.Description>This field is disabled.</Field.Description>
-              </Field.Root>
+                <Field.Root name="disabled-field" disabled>
+                  <Field.Label>Disabled Field</Field.Label>
+                  <Field.Control placeholder="Cannot edit" />
+                  <Field.Description>This field is disabled.</Field.Description>
+                </Field.Root>
 
-              <div>
-                <Button type="submit">Submit</Button>
-              </div>
-            </Form>
+                <div>
+                  <Button type="submit">Submit</Button>
+                </div>
+              </Form>
 
-            <Dialog.Root
-              open={submittedData !== null}
-              onOpenChange={(open) => {
-                if (!open) setSubmittedData(null);
-              }}
-            >
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Submitted Data</Dialog.Title>
-                  <Dialog.Description>The following values were submitted:</Dialog.Description>
-                </Dialog.Header>
-                <Table.Root>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.Head>Field</Table.Head>
-                      <Table.Head>Value</Table.Head>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {submittedData && (
-                      <>
-                        <Table.Row>
-                          <Table.Cell style={{ fontWeight: 500 }}>Username</Table.Cell>
-                          <Table.Cell>
-                            {submittedData.username || (
-                              <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
-                            )}
-                          </Table.Cell>
-                        </Table.Row>
-                        <Table.Row>
-                          <Table.Cell style={{ fontWeight: 500 }}>Email</Table.Cell>
-                          <Table.Cell>
-                            {submittedData.email || (
-                              <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
-                            )}
-                          </Table.Cell>
-                        </Table.Row>
-                        <Table.Row>
-                          <Table.Cell style={{ fontWeight: 500 }}>Bio</Table.Cell>
-                          <Table.Cell>
-                            {submittedData.bio || (
-                              <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
-                            )}
-                          </Table.Cell>
-                        </Table.Row>
-                      </>
-                    )}
-                  </Table.Body>
-                </Table.Root>
-                <Dialog.Footer>
-                  <Dialog.Close render={<Button />}>Close</Dialog.Close>
-                </Dialog.Footer>
-              </Dialog.Content>
-            </Dialog.Root>
-          </div>
+              <Dialog.Root
+                open={submittedData !== null}
+                onOpenChange={(open) => {
+                  if (!open) setSubmittedData(null);
+                }}
+              >
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>Submitted Data</Dialog.Title>
+                    <Dialog.Description>The following values were submitted:</Dialog.Description>
+                  </Dialog.Header>
+                  <Table.Root>
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.Head>Field</Table.Head>
+                        <Table.Head>Value</Table.Head>
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {submittedData && (
+                        <>
+                          <Table.Row>
+                            <Table.Cell style={{ fontWeight: 500 }}>Username</Table.Cell>
+                            <Table.Cell>
+                              {submittedData.username || (
+                                <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
+                              )}
+                            </Table.Cell>
+                          </Table.Row>
+                          <Table.Row>
+                            <Table.Cell style={{ fontWeight: 500 }}>Email</Table.Cell>
+                            <Table.Cell>
+                              {submittedData.email || (
+                                <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
+                              )}
+                            </Table.Cell>
+                          </Table.Row>
+                          <Table.Row>
+                            <Table.Cell style={{ fontWeight: 500 }}>Bio</Table.Cell>
+                            <Table.Cell>
+                              {submittedData.bio || (
+                                <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
+                              )}
+                            </Table.Cell>
+                          </Table.Row>
+                        </>
+                      )}
+                    </Table.Body>
+                  </Table.Root>
+                  <Dialog.Footer>
+                    <Dialog.Close render={<Button />}>Close</Dialog.Close>
+                  </Dialog.Footer>
+                </Dialog.Content>
+              </Dialog.Root>
+            </Card.Content>
+          </Card.Root>
 
           {/* Fieldset */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Fieldset</h3>
-            <p style={labelStyle}>
-              Groups related fields under a semantic <code>&lt;fieldset&gt;</code> with a{" "}
-              <code>&lt;legend&gt;</code>.
-            </p>
-            <Fieldset.Root
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }}
-            >
-              <Fieldset.Legend>Shipping Address</Fieldset.Legend>
+          <Card.Root>
+            <Card.Header title="Fieldset" />
+            <Card.Content>
+              <p style={labelStyle}>
+                Groups related fields under a semantic <code>&lt;fieldset&gt;</code> with a{" "}
+                <code>&lt;legend&gt;</code>.
+              </p>
+              <Fieldset.Root
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
+                <Fieldset.Legend>Shipping Address</Fieldset.Legend>
 
-              <Field.Root name="street">
-                <Field.Label>Street</Field.Label>
-                <Field.Control placeholder="123 Main St" />
-              </Field.Root>
-
-              <div style={{ display: "flex", gap: "0.75rem" }}>
-                <Field.Root name="city" style={{ flex: 1 }}>
-                  <Field.Label>City</Field.Label>
-                  <Field.Control placeholder="City" />
+                <Field.Root name="street">
+                  <Field.Label>Street</Field.Label>
+                  <Field.Control placeholder="123 Main St" />
                 </Field.Root>
 
-                <Field.Root name="zip" style={{ width: "120px" }}>
-                  <Field.Label>ZIP</Field.Label>
-                  <Field.Control placeholder="00000" />
-                </Field.Root>
-              </div>
-            </Fieldset.Root>
-          </div>
+                <div style={{ display: "flex", gap: "0.75rem" }}>
+                  <Field.Root name="city" style={{ flex: 1 }}>
+                    <Field.Label>City</Field.Label>
+                    <Field.Control placeholder="City" />
+                  </Field.Root>
+
+                  <Field.Root name="zip" style={{ width: "120px" }}>
+                    <Field.Label>ZIP</Field.Label>
+                    <Field.Control placeholder="00000" />
+                  </Field.Root>
+                </div>
+              </Fieldset.Root>
+            </Card.Content>
+          </Card.Root>
 
           {/* Field with custom validation */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Field — Custom Validation</h3>
-            <p style={labelStyle}>
-              Use the <code>validate</code> prop for custom validation logic.
-            </p>
-            <Field.Root
-              name="password"
-              validationMode="onChange"
-              validate={(value) => {
-                const v = String(value ?? "");
-                if (v.length > 0 && v.length < 8) {
-                  return "Password must be at least 8 characters.";
-                }
-                return null;
-              }}
-            >
-              <Field.Label>Password</Field.Label>
-              <Field.Control type="password" placeholder="At least 8 characters" />
-              <Field.Error />
-            </Field.Root>
-          </div>
-
-          {/* Field.Validity */}
-          <div style={cardStyle}>
-            <h3 style={headingStyle}>Field.Validity</h3>
-            <p style={labelStyle}>
-              Render-prop that exposes the field's <code>ValidityState</code> for custom rendering.
-            </p>
-            <Field.Root name="age" validationMode="onChange">
-              <Field.Label>Age</Field.Label>
-              <Field.Control type="number" min={0} max={150} placeholder="0–150" />
-              <Field.Validity>
-                {(state) =>
-                  state.validity.rangeOverflow ? (
-                    <p
-                      style={{
-                        color: "var(--destructive)",
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      Age cannot exceed 150.
-                    </p>
-                  ) : null
-                }
-              </Field.Validity>
-            </Field.Root>
-          </div>
-
-          {/* Field + Dropdown Components */}
-          <div style={{ ...cardStyle, gridColumn: "1 / -1" }}>
-            <h3 style={headingStyle}>Field + Dropdown Components</h3>
-            <p style={labelStyle}>
-              Select, Combobox, Autocomplete composed with Field for labeling, description, and
-              validation.
-            </p>
-            <div style={{ display: "flex", gap: "1.5rem" }}>
+          <Card.Root>
+            <Card.Header title="Field — Custom Validation" />
+            <Card.Content>
+              <p style={labelStyle}>
+                Use the <code>validate</code> prop for custom validation logic.
+              </p>
               <Field.Root
-                name="fruit-select"
-                style={{ flex: 1 }}
-                className="astw:items-stretch"
-                validate={(value) => {
-                  const v = value as FruitOption | null;
-                  if (v?.name !== "Mango") {
-                    return 'Please select "Mango".';
-                  }
-                  return null;
-                }}
+                name="password"
                 validationMode="onChange"
-              >
-                <Field.Label>Select</Field.Label>
-                <Select
-                  items={fruitOptions}
-                  mapItem={(f) => ({ label: f.name, key: f.id })}
-                  placeholder="Choose a fruit"
-                />
-                <Field.Description>Must be "Mango".</Field.Description>
-                <Field.Error />
-              </Field.Root>
-
-              <Field.Root
-                name="fruit-combobox"
-                style={{ flex: 1 }}
-                className="astw:items-stretch"
-                validate={(value) => {
-                  const v = value as string[] | undefined;
-                  if (!v || v.length === 0) {
-                    return "Select at least one fruit.";
-                  }
-                  return null;
-                }}
-                validationMode="onChange"
-              >
-                <Field.Label>Combobox</Field.Label>
-                <Combobox items={comboItems} multiple placeholder="Search fruits..." />
-                <Field.Description>Required — at least one.</Field.Description>
-                <Field.Error />
-              </Field.Root>
-
-              <Field.Root
-                name="fruit-autocomplete"
-                style={{ flex: 1 }}
-                className="astw:items-stretch"
                 validate={(value) => {
                   const v = String(value ?? "");
-                  if (v !== "" && v !== "Cherry") {
-                    return 'Please type "Cherry".';
+                  if (v.length > 0 && v.length < 8) {
+                    return "Password must be at least 8 characters.";
                   }
                   return null;
                 }}
-                validationMode="onChange"
               >
-                <Field.Label>Autocomplete</Field.Label>
-                <Autocomplete
-                  items={fruitOptions}
-                  mapItem={(f) => ({ label: f.name, key: f.id })}
-                  placeholder="Type a fruit..."
-                />
-                <Field.Description>Must be "Cherry".</Field.Description>
+                <Field.Label>Password</Field.Label>
+                <Field.Control type="password" placeholder="At least 8 characters" />
                 <Field.Error />
               </Field.Root>
-            </div>
-          </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Field.Validity */}
+          <Card.Root>
+            <Card.Header title="Field.Validity" />
+            <Card.Content>
+              <p style={labelStyle}>
+                Render-prop that exposes the field's <code>ValidityState</code> for custom
+                rendering.
+              </p>
+              <Field.Root name="age" validationMode="onChange">
+                <Field.Label>Age</Field.Label>
+                <Field.Control type="number" min={0} max={150} placeholder="0–150" />
+                <Field.Validity>
+                  {(state) =>
+                    state.validity.rangeOverflow ? (
+                      <p
+                        style={{
+                          color: "var(--destructive)",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        Age cannot exceed 150.
+                      </p>
+                    ) : null
+                  }
+                </Field.Validity>
+              </Field.Root>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Field + Dropdown Components */}
+          <Card.Root style={{ gridColumn: "1 / -1" }}>
+            <Card.Header title="Field + Dropdown Components" />
+            <Card.Content>
+              <p style={labelStyle}>
+                Select, Combobox, Autocomplete composed with Field for labeling, description, and
+                validation.
+              </p>
+              <div style={{ display: "flex", gap: "1.5rem" }}>
+                <Field.Root
+                  name="fruit-select"
+                  style={{ flex: 1 }}
+                  className="astw:items-stretch"
+                  validate={(value) => {
+                    const v = value as FruitOption | null;
+                    if (v?.name !== "Mango") {
+                      return 'Please select "Mango".';
+                    }
+                    return null;
+                  }}
+                  validationMode="onChange"
+                >
+                  <Field.Label>Select</Field.Label>
+                  <Select
+                    items={fruitOptions}
+                    mapItem={(f) => ({ label: f.name, key: f.id })}
+                    placeholder="Choose a fruit"
+                  />
+                  <Field.Description>Must be "Mango".</Field.Description>
+                  <Field.Error />
+                </Field.Root>
+
+                <Field.Root
+                  name="fruit-combobox"
+                  style={{ flex: 1 }}
+                  className="astw:items-stretch"
+                  validate={(value) => {
+                    const v = value as string[] | undefined;
+                    if (!v || v.length === 0) {
+                      return "Select at least one fruit.";
+                    }
+                    return null;
+                  }}
+                  validationMode="onChange"
+                >
+                  <Field.Label>Combobox</Field.Label>
+                  <Combobox items={comboItems} multiple placeholder="Search fruits..." />
+                  <Field.Description>Required — at least one.</Field.Description>
+                  <Field.Error />
+                </Field.Root>
+
+                <Field.Root
+                  name="fruit-autocomplete"
+                  style={{ flex: 1 }}
+                  className="astw:items-stretch"
+                  validate={(value) => {
+                    const v = String(value ?? "");
+                    if (v !== "" && v !== "Cherry") {
+                      return 'Please type "Cherry".';
+                    }
+                    return null;
+                  }}
+                  validationMode="onChange"
+                >
+                  <Field.Label>Autocomplete</Field.Label>
+                  <Autocomplete
+                    items={fruitOptions}
+                    mapItem={(f) => ({ label: f.name, key: f.id })}
+                    placeholder="Type a fruit..."
+                  />
+                  <Field.Description>Must be "Cherry".</Field.Description>
+                  <Field.Error />
+                </Field.Root>
+              </div>
+            </Card.Content>
+          </Card.Root>
 
           {/* Form with submit — spans full width */}
-          <div style={{ ...cardStyle, gridColumn: "1 / -1" }}>
-            <h3 style={headingStyle}>Form — Submit & Server Errors</h3>
-            <p style={labelStyle}>
-              Wraps fields in a <code>&lt;form&gt;</code> with consolidated error handling.
-            </p>
-            <Form
-              errors={serverErrors}
-              onSubmit={(event) => {
-                event.preventDefault();
-                const formData = new FormData(event.currentTarget);
-                const url = String(formData.get("url") ?? "");
+          <Card.Root style={{ gridColumn: "1 / -1" }}>
+            <Card.Header title="Form — Submit & Server Errors" />
+            <Card.Content>
+              <p style={labelStyle}>
+                Wraps fields in a <code>&lt;form&gt;</code> with consolidated error handling.
+              </p>
+              <Form
+                errors={serverErrors}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  const url = String(formData.get("url") ?? "");
 
-                // Simulate a server-side error
-                if (url && !url.startsWith("https://")) {
-                  setServerErrors({ url: "URL must start with https://" });
-                  return;
-                }
+                  // Simulate a server-side error
+                  if (url && !url.startsWith("https://")) {
+                    setServerErrors({ url: "URL must start with https://" });
+                    return;
+                  }
 
-                setServerErrors({});
-                alert(`Submitted URL: ${url}`);
-              }}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-                maxWidth: "480px",
-              }}
-            >
-              <Field.Root name="url">
-                <Field.Label>Homepage URL</Field.Label>
-                <Field.Control type="url" required placeholder="https://example.com" />
-                <Field.Description>Must start with https://</Field.Description>
-                <Field.Error match="valueMissing">URL is required.</Field.Error>
-                <Field.Error match="typeMismatch">Please enter a valid URL.</Field.Error>
-              </Field.Root>
-              <div>
-                <Button type="submit">Submit</Button>
-              </div>
-            </Form>
-          </div>
+                  setServerErrors({});
+                  alert(`Submitted URL: ${url}`);
+                }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                  maxWidth: "480px",
+                }}
+              >
+                <Field.Root name="url">
+                  <Field.Label>Homepage URL</Field.Label>
+                  <Field.Control type="url" required placeholder="https://example.com" />
+                  <Field.Description>Must start with https://</Field.Description>
+                  <Field.Error match="valueMissing">URL is required.</Field.Error>
+                  <Field.Error match="typeMismatch">Please enter a valid URL.</Field.Error>
+                </Field.Root>
+                <div>
+                  <Button type="submit">Submit</Button>
+                </div>
+              </Form>
+            </Card.Content>
+          </Card.Root>
         </div>
       </Layout.Column>
     </Layout>

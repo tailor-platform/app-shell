@@ -24,7 +24,12 @@ describe("ActionPanel", () => {
 
   it("renders action list with buttons when onClick is provided", () => {
     const actions = [
-      { key: "1", label: "Create invoice", icon: <MockIcon />, onClick: () => {} },
+      {
+        key: "1",
+        label: "Create invoice",
+        icon: <MockIcon />,
+        onClick: () => {},
+      },
       { key: "2", label: "Edit order", icon: <MockIcon />, onClick: () => {} },
     ];
     render(<ActionPanel title="Actions" actions={actions} />);
@@ -83,7 +88,15 @@ describe("ActionPanel", () => {
     render(
       <ActionPanel
         title="Actions"
-        actions={[{ key: "1", label: "Submit", icon: <MockIcon />, onClick, loading: true }]}
+        actions={[
+          {
+            key: "1",
+            label: "Submit",
+            icon: <MockIcon />,
+            onClick,
+            loading: true,
+          },
+        ]}
       />,
     );
 
@@ -100,7 +113,13 @@ describe("ActionPanel", () => {
       <ActionPanel
         title="Actions"
         actions={[
-          { key: "1", label: "Saving", icon: <MockIcon />, onClick: () => {}, loading: true },
+          {
+            key: "1",
+            label: "Saving",
+            icon: <MockIcon />,
+            onClick: () => {},
+            loading: true,
+          },
         ]}
       />,
     );

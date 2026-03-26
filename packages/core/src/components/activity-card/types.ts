@@ -7,8 +7,16 @@
  */
 export interface ActivityCardActivity {
   id: string;
-  userDisplayName: string;
-  userAvatarUrl?: string;
+  /**
+   * The subject of the activity. Optional — omit for system events with no specific actor
+   * (e.g. "Status automatically changed to EXPIRED").
+   */
+  actor?: {
+    /** Display name of the actor (user, bot, service account, etc.). */
+    name: string;
+    /** Avatar image URL. Falls back to initials derived from `name`. */
+    avatarUrl?: string;
+  };
   description: string;
   /**
    * When this is a string, it should be parseable by `Date` (e.g. ISO 8601) so it can be

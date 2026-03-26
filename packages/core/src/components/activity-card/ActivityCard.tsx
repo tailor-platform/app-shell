@@ -112,15 +112,17 @@ function TimelineConnector() {
 // ============================================================================
 
 function ActivityRow({ activity }: { activity: ActivityCardActivity }) {
+  const actorName = activity.actor?.name;
   return (
     <div className="astw:relative astw:z-10 astw:flex astw:gap-3 astw:min-w-0">
       <Avatar.Root aria-hidden>
-        {activity.userAvatarUrl ? <Avatar.Image src={activity.userAvatarUrl} alt="" /> : null}
-        <Avatar.Fallback>{getInitials(activity.userDisplayName)}</Avatar.Fallback>
+        {activity.actor?.avatarUrl ? <Avatar.Image src={activity.actor.avatarUrl} alt="" /> : null}
+        <Avatar.Fallback>{actorName ? getInitials(actorName) : ""}</Avatar.Fallback>
       </Avatar.Root>
       <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-1">
         <p className="astw:text-sm astw:font-medium astw:leading-normal astw:text-foreground">
-          <span>{activity.userDisplayName}</span>{" "}
+          {actorName ? <span>{actorName}</span> : null}
+          {actorName ? " " : null}
           <span className="astw:text-muted-foreground">{activity.description}</span>
         </p>
         <p className="astw:text-xs astw:leading-none astw:text-muted-foreground">

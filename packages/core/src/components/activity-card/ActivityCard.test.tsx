@@ -6,13 +6,13 @@ import { ActivityCard } from "./ActivityCard";
 const mockActivities = [
   {
     id: "1",
-    userDisplayName: "Hanna",
+    actor: { name: "Hanna" },
     description: "changed the status from DRAFT to CONFIRMED",
     timestamp: new Date("2025-03-21T09:00:00"),
   },
   {
     id: "2",
-    userDisplayName: "Pradeep Kumar",
+    actor: { name: "Pradeep Kumar" },
     description: "created this PO",
     timestamp: new Date("2025-03-21T15:16:00"),
   },

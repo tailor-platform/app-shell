@@ -25,16 +25,21 @@ Use `ActivityCardActivity` for each item in your activities array (or infer from
 const activities = [
   {
     id: "1",
-    userDisplayName: "Hanna",
-    userAvatarUrl: "/avatars/hanna.jpg", // optional
+    actor: { name: "Hanna", avatarUrl: "/avatars/hanna.jpg" }, // avatarUrl is optional
     description: "changed the status from DRAFT to CONFIRMED",
     timestamp: new Date("2025-03-21T09:00:00"),
   },
   {
     id: "2",
-    userDisplayName: "Pradeep Kumar",
+    actor: { name: "Pradeep Kumar" },
     description: "created this PO",
     timestamp: new Date("2025-03-21T15:16:00"),
+  },
+  {
+    id: "3",
+    // no actor — system event with no specific subject
+    description: "Status automatically changed to EXPIRED",
+    timestamp: new Date("2025-03-20T10:00:00"),
   },
 ];
 
@@ -71,7 +76,7 @@ Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", 
 | `groupBy`       | `"none" \| "day"`        | `"none"` | Optional grouping by day.                         |
 | `className`     | `string`                 | -        | Applied to the card root.                         |
 
-Each activity must include: `id`, `userDisplayName`, `description`, `timestamp` (Date or string). Optional: `userAvatarUrl` (fallback is initials).
+Each activity must include: `id`, `description`, `timestamp` (Date or string). Optional: `actor` (`{ name, avatarUrl? }`) — omit for system events with no specific actor (initials fallback when `avatarUrl` is absent).
 
 ## See also
 

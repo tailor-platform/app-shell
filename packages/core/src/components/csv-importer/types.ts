@@ -88,7 +88,9 @@ export type CsvImporterLabels = {
   uploadButton: string;
   mappingTitle: string;
   mappingDescription: string;
-  mappingSkip: string;
+  mappingExpectedField: string;
+  mappingCsvColumn: string;
+  mappingPreview: string;
   reviewTitle: string;
   reviewDescription: string;
   completeTitle: string;
@@ -99,7 +101,6 @@ export type CsvImporterLabels = {
   closeButton: string;
   fileSizeError: string;
   parseError: string;
-  requiredColumnError: string;
 };
 
 /** The step in the CSV import flow. */

@@ -41,6 +41,8 @@ interface AutocompletePropsBase<T> {
   className?: string;
   /** Whether the autocomplete is disabled */
   disabled?: boolean;
+  /** A parent element to render the portal into (e.g. a modal/drawer ref). */
+  container?: React.ComponentProps<typeof AutocompleteContent>["container"];
   /** Current value (controlled) */
   value?: string;
   /** Default value (uncontrolled) */
@@ -71,6 +73,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
     mapItem: mapItemProp,
     className,
     disabled,
+    container,
     value,
     defaultValue,
     onValueChange,
@@ -119,7 +122,7 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
           <AutocompleteClear />
           <AutocompleteTrigger />
         </AutocompleteInputGroup>
-        <AutocompleteContent>
+        <AutocompleteContent container={container}>
           <AutocompleteEmpty>{emptyText}</AutocompleteEmpty>
           <AutocompleteList>{listChildren}</AutocompleteList>
         </AutocompleteContent>
@@ -147,6 +150,7 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     mapItem: mapItemProp,
     className,
     disabled,
+    container,
     value: controlledValue,
     defaultValue,
     onValueChange: onValueChangeProp,
@@ -179,7 +183,7 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
           <AutocompleteClear />
           <AutocompleteTrigger />
         </AutocompleteInputGroup>
-        <AutocompleteContent>
+        <AutocompleteContent container={container}>
           <AutocompleteEmpty>{async.loading ? loadingText : emptyText}</AutocompleteEmpty>
           <AutocompleteList>
             {(item: T) => {

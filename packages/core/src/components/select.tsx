@@ -59,9 +59,15 @@ function SelectValue({ ...props }: React.ComponentProps<typeof BaseSelect.Value>
 }
 SelectValue.displayName = "Select.Value";
 
-function SelectContent({ className, ...props }: React.ComponentProps<typeof BaseSelect.Popup>) {
+function SelectContent({
+  className,
+  container,
+  ...props
+}: React.ComponentProps<typeof BaseSelect.Popup> & {
+  container?: React.ComponentProps<typeof BaseSelect.Portal>["container"];
+}) {
   return (
-    <BaseSelect.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseSelect.Portal container={container} style={{ position: "relative", zIndex: "var(--z-popup)" }}>
       <BaseSelect.Positioner>
         <BaseSelect.Popup
           data-slot="select-content"

@@ -9,7 +9,9 @@ const DEFAULT_LABELS: CsvImporterLabels = {
   uploadButton: "Choose file",
   mappingTitle: "Map columns",
   mappingDescription: "Match CSV columns to the expected fields",
-  mappingSkip: "Skip",
+  mappingExpectedField: "Expected field",
+  mappingCsvColumn: "CSV column",
+  mappingPreview: "Preview",
   reviewTitle: "Review data",
   reviewDescription: "Review and fix any issues before importing",
   completeTitle: "Import complete",
@@ -20,7 +22,6 @@ const DEFAULT_LABELS: CsvImporterLabels = {
   closeButton: "Close",
   fileSizeError: "File size exceeds the maximum allowed size",
   parseError: "Failed to parse the CSV file",
-  requiredColumnError: "This column is required and must be mapped",
 };
 
 type UseCsvImporterOptions = {

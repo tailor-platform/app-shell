@@ -1,0 +1,18 @@
+---
+"@tailor-platform/app-shell": minor
+---
+
+Add `Avatar` (Base UI): `Avatar.Root`, `Avatar.Image`, and `Avatar.Fallback` with `size` variants (`sm`, `default`, `lg`) and exported `avatarVariants` and `AvatarProps`. `ActivityCard` uses this shared avatar; export `ActivityCardActivity` from the package root for typed activity lists.
+
+```tsx
+import { Avatar } from "@tailor-platform/app-shell";
+
+export function UserAvatar() {
+  return (
+    <Avatar.Root>
+      <Avatar.Image src="/user.png" alt="" />
+      <Avatar.Fallback>AB</Avatar.Fallback>
+    </Avatar.Root>
+  );
+}
+```

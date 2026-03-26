@@ -178,6 +178,7 @@ type CommonPageResource = {
   meta: {
     title: LocalizedString;
     icon?: ReactNode;
+    breadcrumbTitle?: string | ((segment: string) => string);
   };
 };
 

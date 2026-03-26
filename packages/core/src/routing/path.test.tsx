@@ -216,6 +216,82 @@ describe.concurrent("processPathSegments", () => {
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(0);
   });
+
+  it("should use breadcrumbTitle string when defined on a module", () => {
+    const modulesWithBreadcrumb = [
+      defineModule({
+        path: "dashboard",
+        component: () => null,
+        meta: { title: "Dashboard", breadcrumbTitle: "Home" },
+        resources: [],
+      }),
+    ];
+    const result = processPathSegments("/dashboard", undefined, modulesWithBreadcrumb, "en");
+
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Home");
+  });
+
+  it("should use breadcrumbTitle function when defined on a module", () => {
+    const modulesWithBreadcrumb = [
+      defineModule({
+        path: "dashboard",
+        component: () => null,
+        meta: { title: "Dashboard", breadcrumbTitle: () => "Custom Home" },
+        resources: [],
+      }),
+    ];
+    const result = processPathSegments("/dashboard", undefined, modulesWithBreadcrumb, "en");
+
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Custom Home");
+  });
+
+  it("should use breadcrumbTitle on a resource", () => {
+    const modulesWithBreadcrumb = [
+      defineModule({
+        path: "dashboard",
+        component: () => null,
+        meta: { title: "Dashboard" },
+        resources: [
+          defineResource({
+            path: "orders",
+            component: () => null,
+            meta: { title: "Orders", breadcrumbTitle: "All Orders" },
+          }),
+        ],
+      }),
+    ];
+    const result = processPathSegments("/dashboard/orders", undefined, modulesWithBreadcrumb, "en");
+
+    expect(result.segments).toHaveLength(2);
+    expect(result.segments[0].title).toBe("Dashboard");
+    expect(result.segments[1].title).toBe("All Orders");
+  });
+
+  it("should use breadcrumbTitle function with dynamic segment", () => {
+    const modulesWithBreadcrumb = [
+      defineModule({
+        path: "dashboard",
+        component: () => null,
+        meta: { title: "Dashboard" },
+        resources: [
+          defineResource({
+            path: ":id",
+            component: () => null,
+            meta: {
+              title: "Detail",
+              breadcrumbTitle: (segment: string) => `Item #${segment}`,
+            },
+          }),
+        ],
+      }),
+    ];
+    const result = processPathSegments("/dashboard/42", undefined, modulesWithBreadcrumb, "en");
+
+    expect(result.segments).toHaveLength(2);
+    expect(result.segments[1].title).toBe("Item #42");
+  });
 });
 
 describe.concurrent("filterRoutes", () => {

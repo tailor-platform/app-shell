@@ -35,6 +35,11 @@ export type AppShellPageProps = {
      * Icon displayed alongside the title in navigation.
      */
     icon?: ReactNode;
+    /**
+     * Custom breadcrumb segment title for this page.
+     * Can be a static string or a function that receives the URL segment.
+     */
+    breadcrumbTitle?: string | ((segment: string) => string);
   };
 
   /**

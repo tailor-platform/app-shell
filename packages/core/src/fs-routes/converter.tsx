@@ -78,6 +78,7 @@ function nodeToResource(node: PageNode): Resource {
   const Component = node.component;
   const title = getTitle(Component, node.path);
   const icon = Component?.appShellPageProps?.meta?.icon;
+  const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
   const loader = Component?.appShellPageProps?.loader;
 
   // Recursively convert children to subResources
@@ -93,6 +94,7 @@ function nodeToResource(node: PageNode): Resource {
     meta: {
       title,
       icon,
+      ...(breadcrumbTitle !== undefined ? { breadcrumbTitle } : {}),
     },
     component: Component ? () => <Component /> : undefined,
     subResources: subResources.length > 0 ? subResources : undefined,
@@ -109,6 +111,7 @@ function nodeToModule(node: PageNode): Module {
   const Component = node.component;
   const title = getTitle(Component, node.path);
   const icon = Component?.appShellPageProps?.meta?.icon;
+  const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
   const loader = Component?.appShellPageProps?.loader;
 
   // Convert children to resources
@@ -124,6 +127,7 @@ function nodeToModule(node: PageNode): Module {
     meta: {
       title,
       icon,
+      ...(breadcrumbTitle !== undefined ? { breadcrumbTitle } : {}),
       menuItemClickable: Component !== undefined,
     },
     component: Component ? () => <Component /> : undefined,

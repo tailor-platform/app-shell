@@ -1,10 +1,5 @@
 import { useCallback, useState } from "react";
-import type {
-  CsvSchema,
-  CsvImportEvent,
-  CsvImporterProps,
-  CsvImporterLabels,
-} from "./types";
+import type { CsvSchema, CsvImportEvent, CsvImporterProps, CsvImporterLabels } from "./types";
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 

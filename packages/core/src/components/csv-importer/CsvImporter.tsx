@@ -99,9 +99,7 @@ function UploadStep({
         <UploadIcon className="astw:text-muted-foreground astw:size-10" />
         <div className="astw:text-center">
           <p className="astw:text-sm astw:font-medium">{labels.uploadButton}</p>
-          <p className="astw:text-muted-foreground astw:text-xs">
-            CSV (max {maxSizeMB}MB)
-          </p>
+          <p className="astw:text-muted-foreground astw:text-xs">CSV (max {maxSizeMB}MB)</p>
         </div>
         <input
           ref={inputRef}
@@ -137,9 +135,7 @@ function MappingStep({
   onMappingChange: (csvHeader: string, columnKey: string | null) => void;
 }) {
   const unmappedRequiredColumns = schema.columns.filter(
-    (col) =>
-      col.required &&
-      !mappings.some((m) => m.columnKey === col.key),
+    (col) => col.required && !mappings.some((m) => m.columnKey === col.key),
   );
 
   return (
@@ -178,7 +174,8 @@ function MappingStep({
                   );
                   return (
                     <option key={col.key} value={col.key} disabled={isUsedByOther}>
-                      {col.label}{col.required ? " *" : ""}
+                      {col.label}
+                      {col.required ? " *" : ""}
                     </option>
                   );
                 })}
@@ -191,8 +188,7 @@ function MappingStep({
         <div className="astw:flex astw:items-start astw:gap-2 astw:rounded-md astw:bg-destructive/10 astw:px-3 astw:py-2 astw:text-sm astw:text-destructive">
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0 astw:mt-0.5" />
           <div>
-            {labels.requiredColumnError}:{" "}
-            {unmappedRequiredColumns.map((c) => c.label).join(", ")}
+            {labels.requiredColumnError}: {unmappedRequiredColumns.map((c) => c.label).join(", ")}
           </div>
         </div>
       )}
@@ -231,9 +227,7 @@ function ReviewStep({
   const warningCount = issues.filter((i) => i.severity === "warning").length;
 
   const getCorrectedValue = (rowIdx: number, columnKey: string): string | undefined => {
-    const correction = corrections.find(
-      (c) => c.row === rowIdx && c.columnKey === columnKey,
-    );
+    const correction = corrections.find((c) => c.row === rowIdx && c.columnKey === columnKey);
     return correction ? String(correction.newValue) : undefined;
   };
 
@@ -250,19 +244,17 @@ function ReviewStep({
 
       <div className="astw:flex astw:gap-4 astw:text-sm">
         <span>Total: {rawRows.length} rows</span>
-        {errorCount > 0 && (
-          <span className="astw:text-destructive">Errors: {errorCount}</span>
-        )}
-        {warningCount > 0 && (
-          <span className="astw:text-yellow-600">Warnings: {warningCount}</span>
-        )}
+        {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
+        {warningCount > 0 && <span className="astw:text-yellow-600">Warnings: {warningCount}</span>}
       </div>
 
       <div className="astw:overflow-auto astw:max-h-[400px] astw:rounded-md astw:border">
         <table className="astw:w-full astw:text-sm">
           <thead className="astw:bg-muted astw:sticky astw:top-0">
             <tr>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">#</th>
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+                #
+              </th>
               {activeMappings.map((m) => {
                 const col = schema.columns.find((c) => c.key === m.columnKey);
                 return (
@@ -395,10 +387,7 @@ function validateRows(
             row: rowIdx,
             columnKey: mapping.columnKey!,
             value: rawValue,
-            message:
-              e instanceof Error
-                ? `Transform failed: ${e.message}`
-                : "Transform failed",
+            message: e instanceof Error ? `Transform failed: ${e.message}` : "Transform failed",
             severity: "warning",
           });
         }
@@ -499,14 +488,9 @@ export function CsvImporter({
     [maxFileSize, labels, schema],
   );
 
-  const handleMappingChange = useCallback(
-    (csvHeader: string, columnKey: string | null) => {
-      setMappings((prev) =>
-        prev.map((m) => (m.csvHeader === csvHeader ? { ...m, columnKey } : m)),
-      );
-    },
-    [],
-  );
+  const handleMappingChange = useCallback((csvHeader: string, columnKey: string | null) => {
+    setMappings((prev) => prev.map((m) => (m.csvHeader === csvHeader ? { ...m, columnKey } : m)));
+  }, []);
 
   const handleGoToReview = useCallback(() => {
     const validationIssues = validateRows(rawRows, csvHeaders, mappings, schema, corrections);
@@ -517,14 +501,10 @@ export function CsvImporter({
   const handleCellEdit = useCallback(
     (rowIdx: number, columnKey: string, value: string) => {
       setCorrections((prev) => {
-        const existing = prev.find(
-          (c) => c.row === rowIdx && c.columnKey === columnKey,
-        );
+        const existing = prev.find((c) => c.row === rowIdx && c.columnKey === columnKey);
         if (existing) {
           return prev.map((c) =>
-            c.row === rowIdx && c.columnKey === columnKey
-              ? { ...c, newValue: value }
-              : c,
+            c.row === rowIdx && c.columnKey === columnKey ? { ...c, newValue: value } : c,
           );
         }
         // Find the original value
@@ -540,9 +520,7 @@ export function CsvImporter({
         if (!column) return prev;
 
         // Remove old issues for this cell
-        const filtered = prev.filter(
-          (i) => !(i.row === rowIdx && i.columnKey === columnKey),
-        );
+        const filtered = prev.filter((i) => !(i.row === rowIdx && i.columnKey === columnKey));
 
         // Build row record for context
         const headerIndexMap = new Map<string, number>();
@@ -556,9 +534,7 @@ export function CsvImporter({
           if (m.columnKey === columnKey) {
             rowRecord[m.columnKey] = value;
           } else {
-            const corr = corrections.find(
-              (c) => c.row === rowIdx && c.columnKey === m.columnKey,
-            );
+            const corr = corrections.find((c) => c.row === rowIdx && c.columnKey === m.columnKey);
             rowRecord[m.columnKey] = corr
               ? corr.newValue
               : colIdx !== undefined
@@ -579,10 +555,7 @@ export function CsvImporter({
                 row: rowIdx,
                 columnKey,
                 value,
-                message:
-                  e instanceof Error
-                    ? `Transform failed: ${e.message}`
-                    : "Transform failed",
+                message: e instanceof Error ? `Transform failed: ${e.message}` : "Transform failed",
                 severity: "warning" as const,
               },
             ];
@@ -651,9 +624,7 @@ export function CsvImporter({
   return (
     <BaseDialog.Root open={open} onOpenChange={handleOpenChange}>
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop
-          className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50"
-        />
+        <BaseDialog.Backdrop className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50" />
         <BaseDialog.Popup
           data-slot="csv-importer"
           className="astw:bg-background astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-50 astw:flex astw:flex-col astw:w-full astw:max-w-2xl astw:max-w-[calc(100%-2rem)] astw:max-h-[85vh] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:rounded-lg astw:border astw:shadow-lg"
@@ -661,34 +632,30 @@ export function CsvImporter({
           {/* Header with step indicators */}
           <div className="astw:flex astw:items-center astw:justify-between astw:border-b astw:px-6 astw:py-4">
             <div className="astw:flex astw:items-center astw:gap-2">
-              {(["upload", "mapping", "review", "complete"] as const).map(
-                (s, idx) => (
-                  <React.Fragment key={s}>
-                    {idx > 0 && (
-                      <div
-                        className={cn(
-                          "astw:h-px astw:w-6",
-                          stepIndex(step) >= idx
-                            ? "astw:bg-primary"
-                            : "astw:bg-muted-foreground/25",
-                        )}
-                      />
-                    )}
+              {(["upload", "mapping", "review", "complete"] as const).map((s, idx) => (
+                <React.Fragment key={s}>
+                  {idx > 0 && (
                     <div
                       className={cn(
-                        "astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-full astw:text-xs astw:font-medium",
-                        step === s
-                          ? "astw:bg-primary astw:text-primary-foreground"
-                          : stepIndex(step) > idx
-                            ? "astw:bg-primary/20 astw:text-primary"
-                            : "astw:bg-muted astw:text-muted-foreground",
+                        "astw:h-px astw:w-6",
+                        stepIndex(step) >= idx ? "astw:bg-primary" : "astw:bg-muted-foreground/25",
                       )}
-                    >
-                      {idx + 1}
-                    </div>
-                  </React.Fragment>
-                ),
-              )}
+                    />
+                  )}
+                  <div
+                    className={cn(
+                      "astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-full astw:text-xs astw:font-medium",
+                      step === s
+                        ? "astw:bg-primary astw:text-primary-foreground"
+                        : stepIndex(step) > idx
+                          ? "astw:bg-primary/20 astw:text-primary"
+                          : "astw:bg-muted astw:text-muted-foreground",
+                    )}
+                  >
+                    {idx + 1}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
             <BaseDialog.Close className="astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:outline-hidden">
               <XIcon className="astw:size-4" />

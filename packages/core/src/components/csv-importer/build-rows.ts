@@ -1,9 +1,4 @@
-import type {
-  CsvImportEvent,
-  CsvSchema,
-  CsvColumnMapping,
-  CsvCorrection,
-} from "./types";
+import type { CsvImportEvent, CsvSchema, CsvColumnMapping, CsvCorrection } from "./types";
 import { parseCsvFile } from "./csv-parser";
 
 /**

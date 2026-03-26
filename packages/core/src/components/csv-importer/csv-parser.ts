@@ -61,9 +61,7 @@ export function autoMatchHeaders(
       if (usedKeys.has(col.key)) continue;
 
       const candidates = [col.key, col.label, ...(col.aliases ?? [])];
-      const match = candidates.some(
-        (c) => c.trim().toLowerCase() === normalized,
-      );
+      const match = candidates.some((c) => c.trim().toLowerCase() === normalized);
 
       if (match) {
         usedKeys.add(col.key);

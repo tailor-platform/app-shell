@@ -3,7 +3,7 @@ import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 
 import { cn } from "@/lib/utils";
 
-// Only the props relevant to the Tabs abstraction are picked from BaseTabs.Root.
+// Only the props relevant to the Tabs abstraction are picked from Base UI.
 // Base UI-internal props are intentionally excluded so that upstream changes
 // don't leak as breaking changes to consumers.
 type RootProps = Pick<
@@ -40,8 +40,10 @@ function Root({ className, children, ...props }: RootProps) {
 }
 Root.displayName = "Tabs.Root";
 
+type ListProps = Pick<React.ComponentProps<typeof BaseTabs.List>, "children" | "className">;
+
 /** Groups the individual tab buttons. */
-function List({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
+function List({ className, children, ...props }: ListProps) {
   return (
     <BaseTabs.List
       data-slot="tabs-list"
@@ -57,8 +59,13 @@ function List({ className, children, ...props }: React.ComponentProps<typeof Bas
 }
 List.displayName = "Tabs.List";
 
+type TabProps = Pick<
+  React.ComponentProps<typeof BaseTabs.Tab>,
+  "value" | "disabled" | "children" | "className"
+>;
+
 /** An individual interactive tab button that toggles the corresponding panel. */
-function Tab({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.Tab>) {
+function Tab({ className, children, ...props }: TabProps) {
   return (
     <BaseTabs.Tab
       data-slot="tabs-tab"
@@ -78,8 +85,13 @@ function Tab({ className, children, ...props }: React.ComponentProps<typeof Base
 }
 Tab.displayName = "Tabs.Tab";
 
+type PanelProps = Pick<
+  React.ComponentProps<typeof BaseTabs.Panel>,
+  "value" | "keepMounted" | "children" | "className"
+>;
+
 /** A panel displayed when the corresponding tab is active. */
-function Panel({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.Panel>) {
+function Panel({ className, children, ...props }: PanelProps) {
   return (
     <BaseTabs.Panel
       data-slot="tabs-panel"

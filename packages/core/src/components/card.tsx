@@ -17,7 +17,7 @@ function Root({ className, ...props }: React.ComponentProps<"div">) {
 Root.displayName = "Card.Root";
 
 type HeaderProps = Omit<React.ComponentProps<"div">, "title"> & {
-  title: React.ReactNode;
+  title?: React.ReactNode;
   description?: React.ReactNode;
 };
 
@@ -31,9 +31,11 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       )}
       {...props}
     >
-      <h3 data-slot="card-title" className="astw:leading-none astw:font-semibold">
-        {title}
-      </h3>
+      {title && (
+        <h3 data-slot="card-title" className="astw:leading-none astw:font-semibold">
+          {title}
+        </h3>
+      )}
       {description && (
         <div data-slot="card-description" className="astw:text-muted-foreground astw:text-sm">
           {description}

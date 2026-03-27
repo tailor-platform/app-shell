@@ -33,7 +33,6 @@ function ActivityCardStandalone({
           const actorName = item.actor?.name;
           return (
             <Item
-              key={item.id}
               indicator={
                 actorName ? (
                   <Avatar.Root aria-hidden>

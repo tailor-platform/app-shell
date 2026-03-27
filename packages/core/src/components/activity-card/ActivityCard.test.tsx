@@ -82,7 +82,7 @@ describe("ActivityCard (compound)", () => {
       <ActivityCard.Root<CustomActivity> items={mockActivities} title="Custom">
         <ActivityCard.Items<CustomActivity>>
           {(item) => (
-            <ActivityCard.Item key={item.id}>
+            <ActivityCard.Item>
               <p>{item.description}</p>
             </ActivityCard.Item>
           )}
@@ -99,7 +99,7 @@ describe("ActivityCard (compound)", () => {
       <ActivityCard.Root<CustomActivity> items={mockActivities} title="With Indicator">
         <ActivityCard.Items<CustomActivity>>
           {(item) => (
-            <ActivityCard.Item key={item.id} indicator={<span data-testid="icon">★</span>}>
+            <ActivityCard.Item indicator={<span data-testid="icon">★</span>}>
               <p>{item.description}</p>
             </ActivityCard.Item>
           )}
@@ -120,7 +120,7 @@ describe("ActivityCard (compound)", () => {
       <ActivityCard.Root<CustomMessageActivity> items={many} title="Overflow" maxVisible={6}>
         <ActivityCard.Items<CustomMessageActivity>>
           {(item) => (
-            <ActivityCard.Item key={item.id}>
+            <ActivityCard.Item>
               <p>{item.message}</p>
             </ActivityCard.Item>
           )}

@@ -57,7 +57,7 @@ export function getInitials(name: string): string {
 // ============================================================================
 
 interface ActivityCardContextValue<T extends ActivityCardBaseItem = ActivityCardBaseItem> {
-  activities: T[];
+  items: T[];
   maxVisible: number;
   overflowLabel: "more" | "count";
   groupBy: "none" | "day";
@@ -78,7 +78,7 @@ function useActivityCardContext<T extends ActivityCardBaseItem>(): ActivityCardC
 // ============================================================================
 
 function Root<T extends ActivityCardBaseItem>({
-  activities,
+  items,
   title,
   maxVisible = 6,
   overflowLabel = "more",
@@ -87,8 +87,8 @@ function Root<T extends ActivityCardBaseItem>({
   children,
 }: ActivityCardRootProps<T>) {
   const contextValue = React.useMemo<ActivityCardContextValue<T>>(
-    () => ({ activities, maxVisible, overflowLabel, groupBy }),
-    [activities, maxVisible, overflowLabel, groupBy],
+    () => ({ items, maxVisible, overflowLabel, groupBy }),
+    [items, maxVisible, overflowLabel, groupBy],
   );
 
   return (
@@ -182,14 +182,14 @@ function renderList<T extends ActivityCardBaseItem>(
 }
 
 function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsProps<T>) {
-  const { activities, maxVisible, overflowLabel, groupBy } = useActivityCardContext<T>();
+  const { items, maxVisible, overflowLabel, groupBy } = useActivityCardContext<T>();
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [isScrolling, setIsScrolling] = React.useState(false);
   const scrollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const visible = activities.slice(0, maxVisible);
-  const overflowCount = activities.length - maxVisible;
+  const visible = items.slice(0, maxVisible);
+  const overflowCount = items.length - maxVisible;
   const hasOverflow = overflowCount > 0;
 
   const handleScroll = React.useCallback(() => {
@@ -247,7 +247,7 @@ function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsPr
                 : "astw:[&::-webkit-scrollbar-thumb]:opacity-0 astw:hover:[&::-webkit-scrollbar-thumb]:opacity-100",
             )}
           >
-            {renderList(activities, children, groupBy)}
+            {renderList(items, children, groupBy)}
           </div>
         </Dialog.Content>
       </Dialog.Root>

@@ -1,7 +1,7 @@
 export { ActivityCard } from "./standalone";
 export type {
   ActivityCardProps,
-  ActivityCardActivity,
+  ActivityCardItem,
   ActivityCardBaseItem,
   ActivityCardRootProps,
   ActivityCardItemsProps,

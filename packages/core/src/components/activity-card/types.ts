@@ -20,7 +20,7 @@ export interface ActivityCardBaseItem {
 /**
  * A single activity entry used by the standalone ActivityCard component.
  */
-export interface ActivityCardActivity extends ActivityCardBaseItem {
+export interface ActivityCardItem extends ActivityCardBaseItem {
   /**
    * The subject of the activity. Optional — omit for system events with no specific actor
    * (e.g. "Status automatically changed to EXPIRED").
@@ -42,8 +42,8 @@ export interface ActivityCardActivity extends ActivityCardBaseItem {
  * Props for ActivityCard.Root — the outermost card container.
  */
 export interface ActivityCardRootProps<T extends ActivityCardBaseItem> {
-  /** List of activities (newest first). */
-  activities: T[];
+  /** List of items (newest first). */
+  items: T[];
   /** Card title, e.g. "Updates". */
   title?: string;
   /** Max number of activities shown in the card before overflow. Default 6. */
@@ -57,7 +57,7 @@ export interface ActivityCardRootProps<T extends ActivityCardBaseItem> {
 }
 
 /**
- * Props for ActivityCard.Items — iterates over activities and renders each via children render function.
+ * Props for ActivityCard.Items — iterates over items and renders each via children render function.
  */
 export interface ActivityCardItemsProps<T extends ActivityCardBaseItem> {
   children: (item: T) => React.ReactNode;
@@ -82,8 +82,8 @@ export interface ActivityCardItemProps {
  * Props for the standalone (pre-assembled) ActivityCard component.
  */
 export interface ActivityCardProps {
-  /** List of activities (newest first). */
-  activities: ActivityCardActivity[];
+  /** List of items (newest first). */
+  items: ActivityCardItem[];
   /** Card title, e.g. "Updates". */
   title?: string;
   /** Max number of activities shown in the card before overflow. Default 6. */

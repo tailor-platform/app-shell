@@ -12,17 +12,17 @@ The `ActivityCard` component displays a timeline of recent activities (e.g. chan
 ```tsx
 import {
   ActivityCard,
-  type ActivityCardActivity,
+  type ActivityCardItem,
   type ActivityCardProps,
 } from "@tailor-platform/app-shell";
 ```
 
-Use `ActivityCardActivity` for each item in your activities array (or infer from `ActivityCardProps["activities"][number]`).
+Use `ActivityCardItem` for each item in your items array (or infer from `ActivityCardProps["items"][number]`).
 
 ## Basic Usage
 
 ```tsx
-const activities = [
+const items = [
   {
     id: "1",
     actor: { name: "Hanna", avatarUrl: "/avatars/hanna.jpg" }, // avatarUrl is optional
@@ -44,7 +44,7 @@ const activities = [
 ];
 
 export function DocumentUpdates() {
-  return <ActivityCard activities={activities} title="Updates" />;
+  return <ActivityCard items={items} title="Updates" />;
 }
 ```
 
@@ -53,7 +53,7 @@ export function DocumentUpdates() {
 By default the card shows the 6 most recent activities. If there are more, a button appears at the bottom (e.g. **"2 more activities"**). Clicking it opens a modal dialog titled "All activities" with the full list in a scrollable area. The overflow label can be switched to a count style (**"+2"**) via the `overflowLabel` prop.
 
 ```tsx
-<ActivityCard activities={manyActivities} title="Updates" maxVisible={6} overflowLabel="more" />
+<ActivityCard items={manyItems} title="Updates" maxVisible={6} overflowLabel="more" />
 // or overflowLabel="count" for "+N"
 ```
 
@@ -62,19 +62,19 @@ By default the card shows the 6 most recent activities. If there are more, a but
 Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", or a formatted date.
 
 ```tsx
-<ActivityCard activities={activities} title="Updates" groupBy="day" />
+<ActivityCard items={items} title="Updates" groupBy="day" />
 ```
 
 ## Props
 
-| Prop            | Type                     | Default  | Description                                       |
-| --------------- | ------------------------ | -------- | ------------------------------------------------- |
-| `activities`    | `ActivityCardActivity[]` | required | List of activities (newest first).                |
-| `title`         | `string`                 | -        | Card title, e.g. "Updates".                       |
-| `maxVisible`    | `number`                 | `6`      | Max activities shown in the card before overflow. |
-| `overflowLabel` | `"more" \| "count"`      | `"more"` | "N more activities" vs "+N".                      |
-| `groupBy`       | `"none" \| "day"`        | `"none"` | Optional grouping by day.                         |
-| `className`     | `string`                 | -        | Applied to the card root.                         |
+| Prop            | Type                 | Default  | Description                                       |
+| --------------- | -------------------- | -------- | ------------------------------------------------- |
+| `items`         | `ActivityCardItem[]` | required | List of items (newest first).                     |
+| `title`         | `string`             | -        | Card title, e.g. "Updates".                       |
+| `maxVisible`    | `number`             | `6`      | Max activities shown in the card before overflow. |
+| `overflowLabel` | `"more" \| "count"`  | `"more"` | "N more activities" vs "+N".                      |
+| `groupBy`       | `"none" \| "day"`    | `"none"` | Optional grouping by day.                         |
+| `className`     | `string`             | -        | Applied to the card root.                         |
 
 Each activity must include: `id`, `description`, `timestamp` (Date or string). Optional: `actor` (`{ name, avatarUrl? }`) — omit for system events with no specific actor (initials fallback when `avatarUrl` is absent).
 

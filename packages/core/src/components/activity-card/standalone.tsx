@@ -1,7 +1,7 @@
 import { Avatar } from "../avatar";
 import { Root, Items, Item, formatTimestamp, getInitials } from "./ActivityCard";
 
-import type { ActivityCardProps, ActivityCardActivity } from "./types";
+import type { ActivityCardProps, ActivityCardItem } from "./types";
 
 // ============================================================================
 // STANDALONE (pre-assembled) — backwards-compatible with the original API
@@ -12,7 +12,7 @@ import type { ActivityCardProps, ActivityCardActivity } from "./types";
  * and timestamps. For custom item rendering, use ActivityCard.Root / .Items / .Item.
  */
 function ActivityCardStandalone({
-  activities,
+  items,
   title,
   maxVisible = 6,
   overflowLabel = "more",
@@ -21,24 +21,24 @@ function ActivityCardStandalone({
 }: ActivityCardProps) {
   return (
     <Root
-      activities={activities}
+      items={items}
       title={title}
       maxVisible={maxVisible}
       overflowLabel={overflowLabel}
       groupBy={groupBy}
       className={className}
     >
-      <Items<ActivityCardActivity>>
-        {(activity) => {
-          const actorName = activity.actor?.name;
+      <Items<ActivityCardItem>>
+        {(item) => {
+          const actorName = item.actor?.name;
           return (
             <Item
-              key={activity.id}
+              key={item.id}
               indicator={
                 actorName ? (
                   <Avatar.Root aria-hidden>
-                    {activity.actor?.avatarUrl ? (
-                      <Avatar.Image src={activity.actor.avatarUrl} alt="" />
+                    {item.actor?.avatarUrl ? (
+                      <Avatar.Image src={item.actor.avatarUrl} alt="" />
                     ) : null}
                     <Avatar.Fallback>{getInitials(actorName)}</Avatar.Fallback>
                   </Avatar.Root>
@@ -48,10 +48,10 @@ function ActivityCardStandalone({
               <p className="astw:text-sm astw:font-medium astw:leading-normal astw:text-foreground">
                 {actorName ? <span>{actorName}</span> : null}
                 {actorName ? " " : null}
-                <span className="astw:text-muted-foreground">{activity.description}</span>
+                <span className="astw:text-muted-foreground">{item.description}</span>
               </p>
               <p className="astw:text-xs astw:leading-none astw:text-muted-foreground">
-                {formatTimestamp(activity.timestamp)}
+                {formatTimestamp(item.timestamp)}
               </p>
             </Item>
           );

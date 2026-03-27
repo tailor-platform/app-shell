@@ -79,7 +79,7 @@ export { DescriptionCard, type DescriptionCardProps } from "./components/descrip
 export {
   ActivityCard,
   type ActivityCardProps,
-  type ActivityCardActivity,
+  type ActivityCardItem,
   type ActivityCardBaseItem,
   type ActivityCardRootProps,
   type ActivityCardItemsProps,

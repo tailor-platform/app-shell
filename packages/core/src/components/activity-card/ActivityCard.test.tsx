@@ -24,17 +24,17 @@ afterEach(() => {
 
 describe("ActivityCard (standalone)", () => {
   it("renders title when provided", () => {
-    render(<ActivityCard activities={mockActivities} title="Updates" />);
+    render(<ActivityCard items={mockActivities} title="Updates" />);
     expect(screen.getByText("Updates")).toBeDefined();
   });
 
   it("renders empty state when no activities", () => {
-    render(<ActivityCard activities={[]} title="Updates" />);
+    render(<ActivityCard items={[]} title="Updates" />);
     expect(screen.getByText("No activities yet")).toBeDefined();
   });
 
   it("renders activity descriptions and timestamps", () => {
-    render(<ActivityCard activities={mockActivities} title="Updates" />);
+    render(<ActivityCard items={mockActivities} title="Updates" />);
     expect(screen.getByText(/Hanna/)).toBeDefined();
     expect(screen.getByText(/changed the status/)).toBeDefined();
     expect(screen.getByText(/Pradeep Kumar/)).toBeDefined();
@@ -47,7 +47,7 @@ describe("ActivityCard (standalone)", () => {
       ...mockActivities[0],
       id: `id-${i}`,
     }));
-    render(<ActivityCard activities={many} title="Updates" maxVisible={6} />);
+    render(<ActivityCard items={many} title="Updates" maxVisible={6} />);
     const overflowButton = screen.getByText("2 more activities");
     expect(overflowButton).toBeDefined();
     await user.click(overflowButton);
@@ -59,7 +59,7 @@ describe("ActivityCard (standalone)", () => {
       ...mockActivities[0],
       id: `id-${i}`,
     }));
-    render(<ActivityCard activities={many} title="Updates" maxVisible={6} overflowLabel="count" />);
+    render(<ActivityCard items={many} title="Updates" maxVisible={6} overflowLabel="count" />);
     expect(screen.getByText("+2")).toBeDefined();
   });
 });
@@ -79,7 +79,7 @@ interface CustomMessageActivity {
 describe("ActivityCard (compound)", () => {
   it("renders with custom items via Root/Items/Item", () => {
     render(
-      <ActivityCard.Root<CustomActivity> activities={mockActivities} title="Custom">
+      <ActivityCard.Root<CustomActivity> items={mockActivities} title="Custom">
         <ActivityCard.Items<CustomActivity>>
           {(item) => (
             <ActivityCard.Item key={item.id}>
@@ -96,7 +96,7 @@ describe("ActivityCard (compound)", () => {
 
   it("renders indicator when provided", () => {
     render(
-      <ActivityCard.Root<CustomActivity> activities={mockActivities} title="With Indicator">
+      <ActivityCard.Root<CustomActivity> items={mockActivities} title="With Indicator">
         <ActivityCard.Items<CustomActivity>>
           {(item) => (
             <ActivityCard.Item key={item.id} indicator={<span data-testid="icon">★</span>}>
@@ -117,7 +117,7 @@ describe("ActivityCard (compound)", () => {
       message: `Activity ${i}`,
     }));
     render(
-      <ActivityCard.Root<CustomMessageActivity> activities={many} title="Overflow" maxVisible={6}>
+      <ActivityCard.Root<CustomMessageActivity> items={many} title="Overflow" maxVisible={6}>
         <ActivityCard.Items<CustomMessageActivity>>
           {(item) => (
             <ActivityCard.Item key={item.id}>

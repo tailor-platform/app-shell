@@ -14,7 +14,7 @@ interface MyItem extends ActivityCardBaseItem {
   message?: string;
 }
 
-<ActivityCard.Root activities={items} title="Updates" groupBy="day">
+<ActivityCard.Root items={items} title="Updates" groupBy="day">
   <ActivityCard.Items<MyItem>>
     {(item) =>
       item.kind === "approval" ? (

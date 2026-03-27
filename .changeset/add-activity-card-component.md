@@ -2,7 +2,20 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `ActivityCard` compound component API (`ActivityCard.Root` / `.Items` / `.Item`) for fully custom item rendering — icons, links, buttons, badges, mixed item kinds, etc. The existing standalone API is preserved and backwards-compatible.
+Add `ActivityCard` APIs for both simple and advanced use cases:
+
+- Standalone API (`<ActivityCard />`) for quick timeline rendering with sensible defaults
+- Compound API (`ActivityCard.Root` / `.Items` / `.Item`) for fully custom item rendering (icons, links, buttons, badges, mixed item kinds)
+
+## Standalone API
+
+```tsx
+import { ActivityCard } from "@tailor-platform/app-shell";
+
+<ActivityCard items={items} title="Updates" maxVisible={6} overflowLabel="more" groupBy="day" />;
+```
+
+## Compound API
 
 ```tsx
 import { ActivityCard, Badge } from "@tailor-platform/app-shell";
@@ -33,4 +46,4 @@ interface MyItem extends ActivityCardBaseItem {
 </ActivityCard.Root>;
 ```
 
-Each activity must satisfy `ActivityCardBaseItem` (`id` + `timestamp`). Items without an `indicator` render a default timeline node. The `indicator` prop accepts any `ReactNode` (avatars, icons, etc.).
+Each item must satisfy `ActivityCardBaseItem` (`id` + `timestamp`). Items without an `indicator` render a default timeline node. The `indicator` prop accepts any `ReactNode` (avatars, icons, etc.).

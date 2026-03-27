@@ -2,28 +2,48 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `ActivityCard` component: a scrollable timeline of document activities with avatars, optional day grouping (`none` | `day`), and overflow into a full-list dialog.
+Add `ActivityCard` APIs for both simple and advanced use cases:
 
-Each activity can carry an optional `actor` (covering users, bots, service accounts, or external systems). Omit `actor` entirely for system events with no specific subject.
+- Standalone API (`<ActivityCard />`) for quick timeline rendering with sensible defaults
+- Compound API (`ActivityCard.Root` / `.Items` / `.Item`) for fully custom item rendering (icons, links, buttons, badges, mixed item kinds)
+
+## Standalone API
 
 ```tsx
 import { ActivityCard } from "@tailor-platform/app-shell";
-import type { ActivityCardActivity } from "@tailor-platform/app-shell";
 
-const activities: ActivityCardActivity[] = [
-  {
-    id: "1",
-    actor: { name: "Alice", avatarUrl: "/avatars/alice.jpg" },
-    description: "Created the document",
-    timestamp: new Date(),
-  },
-  {
-    id: "2",
-    // no actor — system event
-    description: "Status automatically changed to EXPIRED",
-    timestamp: new Date(),
-  },
-];
-
-<ActivityCard title="Updates" activities={activities} maxVisible={6} groupBy="day" />;
+<ActivityCard items={items} title="Updates" maxVisible={6} overflowLabel="more" groupBy="day" />;
 ```
+
+## Compound API
+
+```tsx
+import { ActivityCard, Badge } from "@tailor-platform/app-shell";
+import type { ActivityCardBaseItem } from "@tailor-platform/app-shell";
+
+interface MyItem extends ActivityCardBaseItem {
+  kind: "approval" | "update";
+  label?: string;
+  message?: string;
+}
+
+<ActivityCard.Root items={items} title="Updates" groupBy="day">
+  <ActivityCard.Items<MyItem>>
+    {(item) =>
+      item.kind === "approval" ? (
+        <ActivityCard.Item indicator={<ApprovedIcon />}>
+          <p>{item.label}</p>
+          <Badge variant="default">Complete</Badge>
+        </ActivityCard.Item>
+      ) : (
+        <ActivityCard.Item>
+          <p>{item.message}</p>
+          <a href="#">View changes</a>
+        </ActivityCard.Item>
+      )
+    }
+  </ActivityCard.Items>
+</ActivityCard.Root>;
+```
+
+Each item must satisfy `ActivityCardBaseItem` (`id` + `timestamp`). Items without an `indicator` render a default timeline node. The `indicator` prop accepts any `ReactNode` (avatars, icons, etc.).

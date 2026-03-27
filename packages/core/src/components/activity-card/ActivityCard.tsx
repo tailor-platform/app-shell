@@ -137,14 +137,14 @@ function renderSection<T extends ActivityCardBaseItem>(
             {index > 0 && (
               <div
                 aria-hidden
-                className="astw:absolute astw:left-[14px] astw:top-0 astw:h-3.5 astw:w-px astw:bg-border"
+                className="astw:absolute astw:left-3.5 astw:-translate-x-1/2 astw:top-0 astw:h-3.5 astw:w-px astw:bg-border"
               />
             )}
-            {/* Lower connector: from indicator bottom through gap to next item */}
+            {/* Lower connector: from indicator center through gap to next item */}
             {index < items.length - 1 && (
               <div
                 aria-hidden
-                className="astw:absolute astw:left-[14px] astw:top-7 astw:-bottom-5 astw:w-px astw:bg-border"
+                className="astw:absolute astw:left-3.5 astw:-translate-x-1/2 astw:top-3.5 astw:-bottom-5 astw:w-px astw:bg-border"
               />
             )}
             {renderItem(item)}
@@ -261,6 +261,8 @@ Items.displayName = "ActivityCard.Items";
 // ============================================================================
 
 function Item({ indicator, children, className }: ActivityCardItemProps) {
+  const hasCustomIndicator = indicator != null;
+
   return (
     <div
       data-slot="activity-card-item"
@@ -268,11 +270,12 @@ function Item({ indicator, children, className }: ActivityCardItemProps) {
     >
       <div
         data-slot="activity-card-indicator"
-        className="astw:relative astw:z-10 astw:flex astw:size-7 astw:shrink-0 astw:items-center astw:justify-center"
-      >
-        {indicator ?? (
-          <div className="astw:size-7 astw:rounded-full astw:border-[5px] astw:border-muted astw:bg-card" />
+        className={cn(
+          "astw:relative astw:z-10 astw:flex astw:size-7 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-full",
+          hasCustomIndicator ? "astw:bg-card" : "astw:bg-transparent",
         )}
+      >
+        {indicator ?? <div className="astw:size-2.5 astw:rounded-full astw:bg-border" />}
       </div>
       <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-1">{children}</div>
     </div>

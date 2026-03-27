@@ -149,4 +149,22 @@ describe("Tabs", () => {
 
     expect(screen.getByText("Content 2")).toBeDefined();
   });
+
+  it("keeps panel in DOM when keepMounted is set", () => {
+    render(
+      <Tabs.Root defaultValue="tab1">
+        <Tabs.List>
+          <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
+          <Tabs.Tab value="tab2">Tab 2</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
+        <Tabs.Panel value="tab2" keepMounted>
+          Content 2
+        </Tabs.Panel>
+      </Tabs.Root>,
+    );
+
+    // tab1 is active, but tab2's panel should remain in the DOM due to keepMounted
+    expect(screen.getByText("Content 2")).toBeDefined();
+  });
 });

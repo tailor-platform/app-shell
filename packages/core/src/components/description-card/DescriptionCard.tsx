@@ -201,7 +201,7 @@ export function DescriptionCard({
         </div>
 
         {/* Content */}
-        <Card.Content>
+        <Card.Content className="astw:pb-4">
           {!hasContent ? (
             <p className="astw:text-sm astw:text-muted-foreground">No information available</p>
           ) : (

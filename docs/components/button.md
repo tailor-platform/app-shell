@@ -26,7 +26,7 @@ import { Button } from "@tailor-platform/app-shell";
 | Prop        | Type                                                                          | Default     | Description                                       |
 | ----------- | ----------------------------------------------------------------------------- | ----------- | ------------------------------------------------- |
 | `variant`   | `"default" \| "destructive" \| "outline" \| "secondary" \| "ghost" \| "link"` | `"default"` | Visual style variant                              |
-| `size`      | `"default" \| "sm" \| "lg" \| "icon"`                                         | `"default"` | Button size                                       |
+| `size`      | `"default" \| "xs" \| "sm" \| "lg" \| "icon"`                                 | `"default"` | Button size                                       |
 | `render`    | `React.ReactElement`                                                          | -           | Custom element to render as (Base UI render prop) |
 | `className` | `string`                                                                      | -           | Additional CSS classes                            |
 | `children`  | `React.ReactNode`                                                             | -           | Button content                                    |
@@ -47,6 +47,7 @@ All standard HTML `<button>` props are also accepted.
 ## Sizes
 
 ```tsx
+<Button size="xs">Extra Small</Button>
 <Button size="sm">Small</Button>
 <Button size="default">Default</Button>
 <Button size="lg">Large</Button>

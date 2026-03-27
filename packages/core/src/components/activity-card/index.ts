@@ -1,2 +1,9 @@
-export { ActivityCard } from "./ActivityCard";
-export type { ActivityCardProps, ActivityCardActivity } from "./types";
+export { ActivityCard } from "./standalone";
+export type {
+  ActivityCardProps,
+  ActivityCardActivity,
+  ActivityCardBaseItem,
+  ActivityCardRootProps,
+  ActivityCardItemsProps,
+  ActivityCardItemProps,
+} from "./types";

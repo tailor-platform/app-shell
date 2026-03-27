@@ -49,6 +49,11 @@ describe("Button", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
+    it("extra-small size", () => {
+      const { container } = render(<Button size="xs">Extra Small</Button>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
     it("large size", () => {
       const { container } = render(<Button size="lg">Large</Button>);
       expect(container.innerHTML).toMatchSnapshot();

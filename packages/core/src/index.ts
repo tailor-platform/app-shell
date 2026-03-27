@@ -80,6 +80,10 @@ export {
   ActivityCard,
   type ActivityCardProps,
   type ActivityCardActivity,
+  type ActivityCardBaseItem,
+  type ActivityCardRootProps,
+  type ActivityCardItemsProps,
+  type ActivityCardItemProps,
 } from "./components/activity-card";
 export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";

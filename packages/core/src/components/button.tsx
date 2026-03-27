@@ -23,6 +23,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "astw:h-9 astw:px-4 astw:py-2 astw:has-[>svg]:px-3",
+        xs: "astw:h-7 astw:rounded-md astw:gap-1 astw:px-2.5 astw:text-xs astw:has-[>svg]:px-1.5",
         sm: "astw:h-8 astw:rounded-md astw:gap-1.5 astw:px-3 astw:has-[>svg]:px-2.5",
         lg: "astw:h-10 astw:rounded-md astw:px-6 astw:has-[>svg]:px-4",
         icon: "astw:size-9",

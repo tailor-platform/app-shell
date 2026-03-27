@@ -271,8 +271,10 @@ function Item({ indicator, children, className }: ActivityCardItemProps) {
       <div
         data-slot="activity-card-indicator"
         className={cn(
-          "astw:relative astw:z-10 astw:flex astw:size-7 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-full",
-          hasCustomIndicator ? "astw:bg-card" : "astw:bg-transparent",
+          "astw:relative astw:z-10 astw:flex astw:size-7 astw:shrink-0 astw:justify-center astw:rounded-full",
+          hasCustomIndicator
+            ? "astw:items-center astw:bg-card"
+            : "astw:items-start astw:pt-1.5 astw:bg-transparent",
         )}
       >
         {indicator ?? <div className="astw:size-2.5 astw:rounded-full astw:bg-border" />}

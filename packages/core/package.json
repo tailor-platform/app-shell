@@ -52,7 +52,6 @@
     "@standard-schema/spec": "^1.1.0",
     "@tailor-platform/app-shell-vite-plugin": "workspace:*",
     "@tailor-platform/auth-public-client": "^0.5.0",
-    "@tanstack/react-table": "^8.21.3",
     "change-case": "^5.4.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

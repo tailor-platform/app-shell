@@ -26,29 +26,29 @@ import { Card } from "@tailor-platform/app-shell";
 
 ## Parts
 
-| Part           | Description                                                                    |
-| -------------- | ------------------------------------------------------------------------------ |
-| `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied.               |
-| `Card.Header`  | Top section with an optional title and description.                            |
-| `Card.Content` | Body section with consistent horizontal and bottom padding.                    |
+| Part           | Description                                                      |
+| -------------- | ---------------------------------------------------------------- |
+| `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied. |
+| `Card.Header`  | Top section with an optional title and description.              |
+| `Card.Content` | Body section with consistent horizontal and bottom padding.      |
 
 ## Card.Root Props
 
 `Card.Root` accepts all standard HTML `<div>` props.
 
-| Prop        | Type              | Default | Description             |
-| ----------- | ----------------- | ------- | ----------------------- |
-| `className` | `string`          | -       | Additional CSS classes  |
-| `children`  | `React.ReactNode` | -       | Card parts and content  |
+| Prop        | Type              | Default | Description            |
+| ----------- | ----------------- | ------- | ---------------------- |
+| `className` | `string`          | -       | Additional CSS classes |
+| `children`  | `React.ReactNode` | -       | Card parts and content |
 
 ## Card.Header Props
 
-| Prop          | Type              | Default | Description                                              |
-| ------------- | ----------------- | ------- | -------------------------------------------------------- |
-| `title`       | `React.ReactNode` | -       | Card title rendered in a `<h3>`.                         |
-| `description` | `React.ReactNode` | -       | Supplementary text rendered below the title.             |
+| Prop          | Type              | Default | Description                                                 |
+| ------------- | ----------------- | ------- | ----------------------------------------------------------- |
+| `title`       | `React.ReactNode` | -       | Card title rendered in a `<h3>`.                            |
+| `description` | `React.ReactNode` | -       | Supplementary text rendered below the title.                |
 | `children`    | `React.ReactNode` | -       | Additional header content rendered after title/description. |
-| `className`   | `string`          | -       | Additional CSS classes.                                  |
+| `className`   | `string`          | -       | Additional CSS classes.                                     |
 
 ## Card.Content Props
 
@@ -84,7 +84,9 @@ import { Card } from "@tailor-platform/app-shell";
 ```tsx
 <Card.Root>
   <Card.Header title="Recent Orders">
-    <Button size="sm" variant="outline">View all</Button>
+    <Button size="sm" variant="outline">
+      View all
+    </Button>
   </Card.Header>
   <Card.Content>
     <Table>{/* ... */}</Table>

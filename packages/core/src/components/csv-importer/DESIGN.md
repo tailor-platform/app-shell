@@ -171,22 +171,22 @@ Review (loading)
 
 CSV import across ERP systems and SaaS products falls into three distinct patterns:
 
-| Pattern | Products | Approach |
-|---------|----------|----------|
-| **Fixed-schema upload** | Shopify, Notion | Upload a CSV that matches a predefined column structure. No mapping UI — file must conform to the template. |
-| **Column mapping UI** | Odoo, Dynamics 365, Flatfile, OneSchema | Upload any CSV, then map its columns to expected fields. Varying levels of validation and error correction. |
-| **Batch job / data management** | SAP, NetSuite, Dynamics 365 (advanced) | Import as a backend job with staging tables, entity sequencing, and admin-level configuration. Not end-user-facing. |
+| Pattern                         | Products                                | Approach                                                                                                            |
+| ------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Fixed-schema upload**         | Shopify, Notion                         | Upload a CSV that matches a predefined column structure. No mapping UI — file must conform to the template.         |
+| **Column mapping UI**           | Odoo, Dynamics 365, Flatfile, OneSchema | Upload any CSV, then map its columns to expected fields. Varying levels of validation and error correction.         |
+| **Batch job / data management** | SAP, NetSuite, Dynamics 365 (advanced)  | Import as a backend job with staging tables, entity sequencing, and admin-level configuration. Not end-user-facing. |
 
 ### Per-Product Breakdown
 
-| Product | Upload | Column mapping | Auto-match | Validation | Inline error fix | Transform | Encoding detection |
-|---------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Shopify** | ✓ | ✗ Fixed template | — | ✗ Post-import email | ✗ | ✗ | ✗ |
-| **Notion** | ✓ | ✗ Auto-detect | — | ✗ | ✗ | ✗ | ✗ |
-| **Odoo** | ✓ | ✓ Column dropdown | ✓ Heuristic | ✓ Test button | ✗ Must fix source file | ✓ Server-side | ✗ |
-| **Dynamics 365** | ✓ | ✓ Visual mapper | ✓ Name-based | ✓ Staging tables | △ Via staging | ✗ | ✓ Code page selection |
-| **Flatfile** | ✓ | ✓ AI-assisted | ✓ AI | ✓ Real-time | ✓ | ✓ Hooks | ✓ |
-| **This design** | ✓ + Template DL | ✓ Schema-centric | ✓ Key/label/alias | ✓ Cell-level + async backend | ✓ Inline editing | ✓ Client-side | ✓ Auto-detect |
+| Product          |     Upload      |  Column mapping   |    Auto-match     |          Validation          |    Inline error fix    |   Transform   |  Encoding detection   |
+| ---------------- | :-------------: | :---------------: | :---------------: | :--------------------------: | :--------------------: | :-----------: | :-------------------: |
+| **Shopify**      |        ✓        | ✗ Fixed template  |         —         |     ✗ Post-import email      |           ✗            |       ✗       |           ✗           |
+| **Notion**       |        ✓        |   ✗ Auto-detect   |         —         |              ✗               |           ✗            |       ✗       |           ✗           |
+| **Odoo**         |        ✓        | ✓ Column dropdown |    ✓ Heuristic    |        ✓ Test button         | ✗ Must fix source file | ✓ Server-side |           ✗           |
+| **Dynamics 365** |        ✓        |  ✓ Visual mapper  |   ✓ Name-based    |       ✓ Staging tables       |     △ Via staging      |       ✗       | ✓ Code page selection |
+| **Flatfile**     |        ✓        |   ✓ AI-assisted   |       ✓ AI        |         ✓ Real-time          |           ✓            |    ✓ Hooks    |           ✓           |
+| **This design**  | ✓ + Template DL | ✓ Schema-centric  | ✓ Key/label/alias | ✓ Cell-level + async backend |    ✓ Inline editing    | ✓ Client-side |     ✓ Auto-detect     |
 
 ### Why Fixed-Schema Products Skip Column Mapping
 

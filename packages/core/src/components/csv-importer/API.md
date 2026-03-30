@@ -175,11 +175,11 @@ type CsvColumn = {
 
 The `schema` field accepts any object implementing the [Standard Schema v1](https://github.com/standard-schema/standard-schema) interface. This provides a unified way to define coercion and validation using your preferred schema library:
 
-| Library | Example |
-|---------|--------|
-| **zod** | `z.coerce.number().min(0)` |
+| Library     | Example                         |
+| ----------- | ------------------------------- |
+| **zod**     | `z.coerce.number().min(0)`      |
 | **valibot** | `v.pipe(v.string(), v.email())` |
-| **arktype** | `type("string.email")` |
+| **arktype** | `type("string.email")`          |
 
 **How it works internally:**
 
@@ -203,10 +203,10 @@ This provides a single declaration that handles both coercion (`string → numbe
 
 The CSV Importer uses a two-layer validation model. Both layers are optional and can be used independently or together.
 
-| Layer | Mechanism | Timing | Use case |
-|-------|-----------|--------|----------|
+| Layer           | Mechanism                            | Timing                                                               | Use case                                                        |
+| --------------- | ------------------------------------ | -------------------------------------------------------------------- | --------------------------------------------------------------- |
 | **Client-side** | `CsvColumn.schema` (Standard Schema) | Synchronous. Runs on Review entry and immediately on each cell edit. | Coercion, format checks, required fields, range, pattern, enum. |
-| **Server-side** | `onValidate` | Async. Runs on Review entry and on Import button press. | Uniqueness, FK resolution, upsert detection, business rules. |
+| **Server-side** | `onValidate`                         | Async. Runs on Review entry and on Import button press.              | Uniqueness, FK resolution, upsert detection, business rules.    |
 
 Both layers produce errors in the same shape (`CellError`), which are merged and rendered uniformly in the Review table.
 
@@ -253,10 +253,10 @@ import { csv } from "@tailor-platform/app-shell";
 Pass-through with optional length constraints. `min: 1` serves as a required check.
 
 ```ts
-csv.string()                   // any string
-csv.string({ min: 1 })         // required (non-empty)
-csv.string({ max: 100 })       // max length
-csv.string({ min: 1, max: 50 })
+csv.string(); // any string
+csv.string({ min: 1 }); // required (non-empty)
+csv.string({ max: 100 }); // max length
+csv.string({ min: 1, max: 50 });
 ```
 
 ```ts
@@ -271,10 +271,10 @@ csv.string(options?: {
 Coerces the raw CSV string to a number. Rejects `NaN`.
 
 ```ts
-csv.number()                          // any number
-csv.number({ min: 0 })                // non-negative
-csv.number({ min: 0, max: 999999 })   // range
-csv.number({ integer: true })         // integers only
+csv.number(); // any number
+csv.number({ min: 0 }); // non-negative
+csv.number({ min: 0, max: 999999 }); // range
+csv.number({ integer: true }); // integers only
 ```
 
 ```ts
@@ -293,8 +293,8 @@ Default truthy: `"true"`, `"1"`, `"yes"`
 Default falsy: `"false"`, `"0"`, `"no"`
 
 ```ts
-csv.boolean()
-csv.boolean({ truthy: ["true", "1", "○"], falsy: ["false", "0", "×"] })
+csv.boolean();
+csv.boolean({ truthy: ["true", "1", "○"], falsy: ["false", "0", "×"] });
 ```
 
 ```ts
@@ -309,7 +309,7 @@ csv.boolean(options?: {
 Coerces the raw CSV string to a `Date` object. Rejects unparseable values.
 
 ```ts
-csv.date()
+csv.date();
 ```
 
 ```ts
@@ -321,8 +321,8 @@ csv.date() => StandardSchemaV1<string, Date>
 Validates the value is one of the allowed strings. Case-sensitive.
 
 ```ts
-csv.enum(["active", "inactive", "pending"])
-csv.enum(["JPY", "USD", "EUR"])
+csv.enum(["active", "inactive", "pending"]);
+csv.enum(["JPY", "USD", "EUR"]);
 ```
 
 ```ts
@@ -339,10 +339,10 @@ import { z } from "zod";
 
 const schema = {
   columns: [
-    { key: "name",   label: "Name",   schema: csv.string({ min: 1 }) },       // built-in
-    { key: "email",  label: "Email",  schema: z.string().email() },            // zod
-    { key: "amount", label: "Amount", schema: csv.number({ min: 0 }) },        // built-in
-    { key: "status", label: "Status", schema: csv.enum(["active", "closed"]) },// built-in
+    { key: "name", label: "Name", schema: csv.string({ min: 1 }) }, // built-in
+    { key: "email", label: "Email", schema: z.string().email() }, // zod
+    { key: "amount", label: "Amount", schema: csv.number({ min: 0 }) }, // built-in
+    { key: "status", label: "Status", schema: csv.enum(["active", "closed"]) }, // built-in
   ],
 } satisfies CsvSchema;
 ```
@@ -460,34 +460,34 @@ All user-facing text is customizable via the `labels` option. Only override the 
 ```ts
 type CsvImporterLabels = {
   // Upload step
-  uploadTitle: string;          // "Upload CSV"
-  uploadDescription: string;    // "Select a CSV file to import"
-  uploadButton: string;         // "Choose file"
-  templateDownload: string;     // "Download template"
-  fileSizeError: string;        // "File size exceeds the maximum allowed size"
-  parseError: string;           // "Failed to parse the CSV file"
+  uploadTitle: string; // "Upload CSV"
+  uploadDescription: string; // "Select a CSV file to import"
+  uploadButton: string; // "Choose file"
+  templateDownload: string; // "Download template"
+  fileSizeError: string; // "File size exceeds the maximum allowed size"
+  parseError: string; // "Failed to parse the CSV file"
 
   // Mapping step
-  mappingTitle: string;         // "Map columns"
-  mappingDescription: string;   // "Match CSV columns to the expected fields"
+  mappingTitle: string; // "Map columns"
+  mappingDescription: string; // "Match CSV columns to the expected fields"
   mappingExpectedField: string; // "Expected field"
-  mappingCsvColumn: string;     // "CSV column"
-  mappingPreview: string;       // "Preview"
+  mappingCsvColumn: string; // "CSV column"
+  mappingPreview: string; // "Preview"
 
   // Review step
-  reviewTitle: string;          // "Review data"
-  reviewDescription: string;    // "Review and fix any issues before importing"
-  reviewValidating: string;     // "Validating..."
+  reviewTitle: string; // "Review data"
+  reviewDescription: string; // "Review and fix any issues before importing"
+  reviewValidating: string; // "Validating..."
 
   // Complete step
-  completeTitle: string;        // "Import complete"
-  completeDescription: string;  // "Your data has been imported successfully"
+  completeTitle: string; // "Import complete"
+  completeDescription: string; // "Your data has been imported successfully"
 
   // Navigation
-  nextButton: string;           // "Next"
-  backButton: string;           // "Back"
-  importButton: string;         // "Import"
-  closeButton: string;          // "Close"
+  nextButton: string; // "Next"
+  backButton: string; // "Back"
+  importButton: string; // "Import"
+  closeButton: string; // "Close"
 };
 ```
 
@@ -633,7 +633,9 @@ const csvImporter = useCsvImporter({
       { key: "price", label: "Price", schema: z.coerce.number().min(0) },
     ],
   },
-  onImport: async (event) => { /* ... */ },
+  onImport: async (event) => {
+    /* ... */
+  },
 });
 ```
 
@@ -647,10 +649,16 @@ const csvImporter = useCsvImporter({
     columns: [
       { key: "name", label: "Name", required: true, schema: v.pipe(v.string(), v.minLength(1)) },
       { key: "email", label: "Email", schema: v.pipe(v.string(), v.email()) },
-      { key: "age", label: "Age", schema: v.pipe(v.unknown(), v.transform(Number), v.number(), v.minValue(0)) },
+      {
+        key: "age",
+        label: "Age",
+        schema: v.pipe(v.unknown(), v.transform(Number), v.number(), v.minValue(0)),
+      },
     ],
   },
-  onImport: async (event) => { /* ... */ },
+  onImport: async (event) => {
+    /* ... */
+  },
 });
 ```
 
@@ -662,9 +670,19 @@ import { csv } from "@tailor-platform/app-shell";
 const csvImporter = useCsvImporter({
   schema: {
     columns: [
-      { key: "productName", label: "商品名", required: true, aliases: ["品名", "product"], schema: csv.string({ min: 1 }) },
+      {
+        key: "productName",
+        label: "商品名",
+        required: true,
+        aliases: ["品名", "product"],
+        schema: csv.string({ min: 1 }),
+      },
       { key: "quantity", label: "数量", schema: csv.number({ integer: true, min: 0 }) },
-      { key: "taxIncluded", label: "税込", schema: csv.boolean({ truthy: ["true", "1", "○"], falsy: ["false", "0", "×"] }) },
+      {
+        key: "taxIncluded",
+        label: "税込",
+        schema: csv.boolean({ truthy: ["true", "1", "○"], falsy: ["false", "0", "×"] }),
+      },
     ],
   },
   labels: {
@@ -672,7 +690,9 @@ const csvImporter = useCsvImporter({
     uploadButton: "ファイルを選択",
     importButton: "インポート",
   },
-  onImport: async (event) => { /* ... */ },
+  onImport: async (event) => {
+    /* ... */
+  },
 });
 // Encoding detection (Shift-JIS, EUC-JP) is automatic — no configuration needed.
 ```

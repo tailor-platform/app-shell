@@ -18,12 +18,12 @@ export const DataTable = {
 **Usage pattern:**
 
 ```tsx
-const { variables, ...collection } = useCollectionVariables({ params: { pageSize: 20 } });
+const { variables, control } = useCollectionVariables({ params: { pageSize: 20 } });
 const [result] = useQuery({
   query: GET_ORDERS,
   variables: { ...variables.pagination, query: variables.query, order: variables.order },
 });
-const table = useDataTable({ columns, data: result.data?.orders, collection });
+const table = useDataTable({ columns, data: result.data?.orders, control });
 
 <DataTable.Provider value={table}>
   <DataTable.Root>
@@ -65,7 +65,7 @@ interface UseDataTableOptions<TRow> {
   data: CollectionResult<TRow> | undefined;
   loading?: boolean;
   error?: Error | null;
-  collection?: UseCollectionReturn;
+  control?: CollectionControl;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
   locale?: "en" | "ja"; // ← Removed in migration (use defineI18nLabels)
@@ -100,7 +100,7 @@ interface UseDataTableReturn<TRow> {
   insertRow: (row: TRow) => { rollback: () => void };
 
   // Passthrough
-  collection: UseCollectionReturn | undefined;
+  control: CollectionControl | undefined;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
   locale: "en" | "ja"; // ← Removed in migration
@@ -134,7 +134,11 @@ interface UseCollectionOptions<TFieldName = string, TFilter = Filter<TFieldName>
 
 interface UseCollectionReturn<TFieldName, TVariables, TFilter = Filter<TFieldName>> {
   variables: TVariables;                    // { query, order, pagination }
+  control: CollectionControl<TFieldName, TFilter>;
+}
 
+// CollectionControl — separated from UseCollectionReturn for passing to useDataTable / context
+interface CollectionControl<TFieldName = string, TFilter = Filter<TFieldName>> {
   // Filters
   filters: Filter[];
   addFilter(field: TFieldName, operator: FilterOperator, value: unknown): void;
@@ -185,7 +189,7 @@ interface PaginationLabels {
 }
 ```
 
-Reads context from `useDataTableContext()` and `useCollectionVariablesContext()`. Must be used within `DataTable.Provider`.
+Reads context from `useDataTableContext()` and `useCollectionControl()`. Must be used within `DataTable.Provider`.
 
 **Migration notes:** Replace inline SVG icons with `lucide-react` (`ChevronsLeft`, `ChevronLeft`, `ChevronRight`, `ChevronsRight`). Replace raw `<button>` / `<select>` with app-shell `Button` / `Select`. Labels will move to `defineI18nLabels`.
 

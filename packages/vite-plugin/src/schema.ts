@@ -31,6 +31,10 @@ export const appShellPagePropsSchema = s.object({
        * Icon displayed alongside the title in navigation.
        */
       icon: s.any(),
+      /**
+       * Custom title for breadcrumb navigation.
+       */
+      breadcrumbTitle: s.any(),
     })
     .optional(),
 

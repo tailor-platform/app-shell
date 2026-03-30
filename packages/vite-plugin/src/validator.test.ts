@@ -136,6 +136,7 @@ describe("validateAppShellPageProps", () => {
       .object({
         title: s.any(),
         icon: s.any(),
+        breadcrumbTitle: s.any(),
       })
       .optional(),
     guards: s.array(s.any()).optional(),

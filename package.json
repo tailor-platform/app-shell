@@ -16,7 +16,7 @@
     "@changesets/cli": "^2.30.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "turbo": "^2.8.20"
+    "turbo": "^2.8.21"
   },
   "engines": {
     "node": "24.x"

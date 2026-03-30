@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@types/node':
+      specifier: ^25
+      version: 25.5.0
     '@types/react':
       specifier: ^19
       version: 19.2.13
@@ -64,13 +67,13 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
       '@types/node':
-        specifier: ^25
+        specifier: 'catalog:'
         version: 25.5.0
       '@types/react':
-        specifier: ^19
+        specifier: 'catalog:'
         version: 19.2.13
       '@types/react-dom':
-        specifier: ^19
+        specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.13)
       tsup:
         specifier: ^8.5.1
@@ -101,7 +104,7 @@ importers:
         specifier: ^4.2.2
         version: 4.2.2
       '@types/node':
-        specifier: ^25
+        specifier: 'catalog:'
         version: 25.5.0
       '@types/react':
         specifier: 'catalog:'
@@ -223,7 +226,7 @@ importers:
         specifier: ^14.6.1
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@types/node':
-        specifier: ^25
+        specifier: 'catalog:'
         version: 25.5.0
       '@types/react':
         specifier: 'catalog:'
@@ -272,7 +275,7 @@ importers:
         version: 27.0.2
     devDependencies:
       '@types/node':
-        specifier: ^25
+        specifier: 'catalog:'
         version: 25.5.0
       tsdown:
         specifier: ^0.21.7

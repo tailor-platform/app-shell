@@ -136,6 +136,7 @@ describe("validateAppShellPageProps", () => {
       .object({
         title: s.any(),
         icon: s.any(),
+        breadcrumbTitle: s.any(),
       })
       .optional(),
     guards: s.array(s.any()).optional(),
@@ -194,7 +195,7 @@ describe("validateAppShellPageProps", () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0].key).toBe("invalidProp");
     expect(warnings[0].message).toContain("in meta");
-    expect(warnings[0].validKeys).toEqual(["title", "icon"]);
+    expect(warnings[0].validKeys).toEqual(["title", "icon", "breadcrumbTitle"]);
   });
 
   it("reports multiple unknown keys", () => {

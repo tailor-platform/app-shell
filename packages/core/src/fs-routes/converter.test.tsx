@@ -156,6 +156,51 @@ describe("convertPagesToModules", () => {
     expect(typeof indexRoute?.Component).toBe("function");
     expect(typeof indexRoute?.loader).toBe("function"); // 404 loader
   });
+
+  it("propagates breadcrumbTitle string from module meta", () => {
+    const pages = [
+      createMockPage("/dashboard", {
+        meta: { title: "Dashboard", breadcrumbTitle: "Home" },
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules).toHaveLength(1);
+    expect(modules[0].meta.breadcrumbTitle).toBe("Home");
+  });
+
+  it("propagates breadcrumbTitle function from module meta", () => {
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    const breadcrumbFn = (segment: string) => `Module: ${segment}`;
+    const pages = [
+      createMockPage("/dashboard", {
+        meta: { title: "Dashboard", breadcrumbTitle: breadcrumbFn },
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules).toHaveLength(1);
+    expect(modules[0].meta.breadcrumbTitle).toBe(breadcrumbFn);
+  });
+
+  it("propagates breadcrumbTitle from resource meta", () => {
+    const pages = [
+      createMockPage("/purchasing"),
+      createMockPage("/purchasing/orders", {
+        meta: { title: "Orders", breadcrumbTitle: "All Orders" },
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules[0].resources[0].meta.breadcrumbTitle).toBe("All Orders");
+  });
+
+  it("does not include breadcrumbTitle when not specified", () => {
+    const pages = [createMockPage("/dashboard", { meta: { title: "Dashboard" } })];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules[0].meta).not.toHaveProperty("breadcrumbTitle");
+  });
 });
 
 // ============================================

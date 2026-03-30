@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Tooltip } from "../tooltip";
+import { Card } from "../card";
 import { cn } from "../../lib/utils";
 
 import type { DescriptionCardProps, FieldConfig, FieldDefinition, ResolvedField } from "./types";
@@ -192,13 +193,7 @@ export function DescriptionCard({
 
   return (
     <Tooltip.Provider delay={300}>
-      <div
-        className={cn(
-          "astw:@container astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",
-          className,
-        )}
-        style={style}
-      >
+      <Card.Root className={cn("astw:@container", className)} style={style}>
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
           <h3 className="astw:text-lg astw:font-semibold astw:leading-none">{title}</h3>
@@ -206,7 +201,7 @@ export function DescriptionCard({
         </div>
 
         {/* Content */}
-        <div className="astw:px-6 astw:pb-4">
+        <Card.Content className="astw:pb-4">
           {!hasContent ? (
             <p className="astw:text-sm astw:text-muted-foreground">No information available</p>
           ) : (
@@ -220,8 +215,8 @@ export function DescriptionCard({
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </Card.Content>
+      </Card.Root>
     </Tooltip.Provider>
   );
 }

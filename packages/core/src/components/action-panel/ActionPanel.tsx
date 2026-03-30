@@ -1,4 +1,5 @@
 import { cn } from "../../lib/utils";
+import { Card } from "../card";
 import type { ActionPanelProps, ActionItem } from "./types";
 
 // ============================================================================
@@ -106,16 +107,9 @@ function ActionRow({ action }: { action: ActionItem }) {
  */
 export function ActionPanel({ title, actions, className }: ActionPanelProps) {
   return (
-    <div
-      className={cn(
-        "astw:min-w-[278px] astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:shadow-xs",
-        className,
-      )}
-    >
-      <div className="astw:px-4 astw:pt-6 astw:pb-4">
-        <h3 className="astw:text-lg astw:font-semibold astw:leading-none astw:pl-3">{title}</h3>
-      </div>
-      <div className="astw:px-4 astw:pb-4">
+    <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>
+      <Card.Header title={title} className="astw:text-lg astw:px-8" />
+      <Card.Content className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
           <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">
             No actions available
@@ -129,8 +123,8 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </Card.Content>
+    </Card.Root>
   );
 }
 

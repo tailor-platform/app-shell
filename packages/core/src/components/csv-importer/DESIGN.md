@@ -106,13 +106,13 @@ Mapping → [Next →]
    │
    ▼
 Review (loading)
-   ├─ 1. Client-side: transform → rules (synchronous, immediate)
+   ├─ 1. Client-side: CsvColumn.schema validation (synchronous, immediate)
    ├─ 2. Server-side: onValidate(rows) (async, shows loading indicator)
    └─ 3. Merge all errors and display
           │
           ▼
      User edits cells
-     (rules re-evaluated immediately on each edit)
+     (schema validation re-evaluated immediately on each edit)
           │
           ▼
      [Import →] clicked
@@ -121,19 +121,19 @@ Review (loading)
           └─ No errors → execute onImport → move to Complete
 ```
 
-- `rules` run client-side and synchronously, so feedback is reflected immediately on each cell edit (format checks, required checks, etc.).
+- `CsvColumn.schema` (Standard Schema) runs client-side and synchronously, so feedback is reflected immediately on each cell edit (coercion, format checks, required checks, etc.).
 - `onValidate` involves a server round-trip, so it only runs at two gate points: entering the Review step and pressing the Import button. It is not re-invoked on each edit.
-- `rules` are optional. `onValidate` alone can cover all validation needs. `rules` are positioned as an optimization layer for instant feedback without hitting the server.
+- `CsvColumn.schema` is optional. `onValidate` alone can cover all validation needs. `CsvColumn.schema` is positioned as an optimization layer for instant feedback without hitting the server.
 
 **Features:**
 
-- **Cell-level validation** — Runs `transform` then `rules` per cell. Errors (red) block import; warnings (yellow) allow import.
+- **Cell-level validation** — Runs `CsvColumn.schema` (Standard Schema) per cell for coercion and validation. Errors (red) block import; warnings (yellow) allow import.
 - **Async backend validation (`onValidate`)** — Optional async hook that runs at two gate points: (1) entering the Review step, and (2) pressing the Import button. Validates rows against the server (uniqueness checks, foreign key resolution, upsert detection). Returns `CellError[]` in the same shape as client-side rule errors, which are merged into the review table. The component handles the plumbing (call validator, merge errors, let user fix and re-validate); the app provides the business logic (which fields are unique, which FKs to check). Without this hook, apps would either skip validation, pre-fetch entire lookup tables client-side (doesn't scale), or build custom post-import error screens — defeating the purpose of the inline error correction UX.
 
   ```ts
   onValidate?: (rows: ParsedRow[]) => Promise<CellError[]>
 
-  // CellError uses the same shape client-side rules already produce:
+  // CellError uses the same shape client-side schema validation produces:
   type CellError = {
     rowIndex: number
     columnKey: string
@@ -143,7 +143,7 @@ Review (loading)
   ```
 
 - **Import button as validation gate** — The Import button serves dual purpose: if `onValidate` returns errors, the review table is updated and import does not proceed; if no errors remain, `onImport` is executed and the flow moves to Complete.
-- **Inline editing** — Users can fix errors directly in the review table without going back to the source file. Client-side `rules` are re-evaluated immediately on each edit; `onValidate` is re-invoked only when Import is pressed.
+- **Inline editing** — Users can fix errors directly in the review table without going back to the source file. Client-side `CsvColumn.schema` validation is re-evaluated immediately on each edit; `onValidate` is re-invoked only when Import is pressed.
 - **Correction tracking** — All user edits are tracked as `CsvCorrection` objects and passed to the `onImport` callback.
 - **Summary bar** — Shows total rows, error count, and warning count.
 
@@ -234,7 +234,7 @@ These products validate the design pattern used in this component (schema-driven
 
 1. **Inline error correction** — No surveyed ERP product (Odoo, Dynamics 365, SAP) allows users to fix validation errors directly in the review table. Users must always edit the source file and re-upload. This design eliminates that round-trip.
 2. **Auto-encoding detection** — Automatic detection of Shift-JIS, EUC-JP, and other encodings is critical for Japanese ERP environments. Most products either require UTF-8 or offer manual code page selection (Dynamics 365).
-3. **Client-side transforms with async backend validation** — The `transform` → `rules` pipeline runs entirely in the browser for immediate cell-level feedback. Additionally, the optional `onValidate` hook enables server round-trips during the Review step for database-level checks (uniqueness, foreign key resolution, upsert detection) — surfacing backend errors in the same inline UI before the final import. Odoo runs validation server-side but requires a full "Test" round-trip with no inline correction.
+3. **Client-side schema validation with async backend validation** — `CsvColumn.schema` accepts any Standard Schema-compatible library (zod, valibot, arktype) and runs entirely in the browser for immediate cell-level feedback, handling both coercion and validation in a single declaration. Additionally, the optional `onValidate` hook enables server round-trips during the Review step for database-level checks (uniqueness, foreign key resolution, upsert detection) — surfacing backend errors in the same inline UI before the final import. Odoo runs validation server-side but requires a full "Test" round-trip with no inline correction.
 4. **Schema-centric mapping layout** — The mapping UI is organized by expected fields (what the system needs), not by CSV columns (what the file has). This makes it immediately clear which required fields are missing, rather than showing a long list of CSV headers that may or may not be relevant.
 5. **Correction tracking** — User edits in the review step are tracked as `CsvCorrection` objects and passed to the `onImport` callback. This enables audit trails and backend-side re-validation if needed.
 6. **Template download** — Like Odoo, this design offers a downloadable CSV template generated from the schema. Unlike Odoo (which requires server-side template generation per model), the template is generated client-side from `schema.columns`, making it zero-config for developers.
@@ -250,8 +250,8 @@ Most ERP import tools (Odoo, Dynamics 365) use a full-page experience. This desi
 ## ERP-Specific Considerations
 
 1. **Multi-encoding support** — Japanese ERP environments commonly produce Shift-JIS or EUC-JP CSV files. Auto-detection with `encoding-japanese` avoids user confusion about encoding settings.
-2. **Schema-driven validation** — `CsvColumn.rules` (required, pattern, range, oneOf, email, date, length) cover the most common ERP data validation needs without requiring custom logic.
-3. **Transform pipeline** — `transform: (raw: string) => unknown` converts raw CSV strings into typed values (dates, numbers, booleans) before validation rules run. This separation enables clean error messages.
+2. **Standard Schema-driven validation** — `CsvColumn.schema` accepts any Standard Schema v1-compatible library (zod, valibot, arktype) for coercion and validation. Built-in helpers (`csv.string`, `csv.number`, `csv.boolean`, `csv.date`, `csv.enum`) cover common ERP needs without external dependencies.
+3. **Unified coercion and validation** — A single `schema` declaration handles both type coercion (string → number, string → Date) and validation (range, format, enum) in one step, eliminating the need for separate transform and validation stages.
 4. **Alias-based auto-matching** — `CsvColumn.aliases` handles the common ERP scenario where different systems export the same field under different names (e.g., "仕入先", "Vendor", "supplier_name" all map to the same field).
 5. **`onImport` flexibility** — The callback receives the original `File`, `mappings`, `corrections`, and `issues`, allowing the consumer to either process data client-side (via `buildRows`) or send the raw file + metadata to a backend for server-side processing.
-6. **Backend validation hook (`onValidate`)** — ERP imports almost always need validation against the database — uniqueness, foreign key resolution, upsert detection. The `onValidate` async hook runs during the Review step and returns errors in the same `CellError` shape as client-side rules, so server-returned errors are rendered with the same inline editing UX. This closes the gap where backend rejections only surface after `onImport`, breaking the inline error correction flow.
+6. **Backend validation hook (`onValidate`)** — ERP imports almost always need validation against the database — uniqueness, foreign key resolution, upsert detection. The `onValidate` async hook runs during the Review step and returns errors in the same `CellError` shape as client-side schema validation, so server-returned errors are rendered with the same inline editing UX. This closes the gap where backend rejections only surface after `onImport`, breaking the inline error correction flow.

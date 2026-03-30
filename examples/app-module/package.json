@@ -23,9 +23,9 @@
   },
   "devDependencies": {
     "@tailor-platform/app-shell": "workspace:*",
-    "@types/node": "^25",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "tsup": "^8.5.1",
     "typescript": "^5"
   },

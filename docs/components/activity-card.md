@@ -13,11 +13,12 @@ The `ActivityCard` component displays a timeline of recent activities (e.g. chan
 import {
   ActivityCard,
   type ActivityCardItem,
+  type ActivityCardBaseItem,
   type ActivityCardProps,
 } from "@tailor-platform/app-shell";
 ```
 
-Use `ActivityCardItem` for each item in your items array (or infer from `ActivityCardProps["items"][number]`).
+Use `ActivityCardItem` for each item in the standalone API. Use `ActivityCardBaseItem` as the minimum constraint when extending items for the compound API.
 
 ## Basic Usage
 
@@ -77,6 +78,81 @@ Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", 
 | `className`     | `string`             | -        | Applied to the card root.                         |
 
 Each activity must include: `id`, `description`, `timestamp` (Date or string). Optional: `actor` (`{ name, avatarUrl? }`) — omit for system events with no specific actor (initials fallback when `avatarUrl` is absent).
+
+---
+
+## Compound API
+
+Use the compound API when you need fully custom item rendering — custom icons, links, badges, or mixed item kinds. Items still must satisfy `ActivityCardBaseItem` (`id` + `timestamp`). You extend `ActivityCardBaseItem` with any additional fields you need.
+
+### Import
+
+```tsx
+import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
+```
+
+### Parts
+
+| Part                 | Description                                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ActivityCard.Root`  | Outer card container. Accepts the same `items`, `title`, `maxVisible`, `overflowLabel`, `groupBy` props as the standalone API, plus `children`. |
+| `ActivityCard.Items` | Iterates over items and renders each via a render-prop children function. Generic over your item type.                                          |
+| `ActivityCard.Item`  | A single row in the timeline. Accepts an optional `indicator` (any `ReactNode`) for the left column.                                            |
+
+### ActivityCard.Root Props
+
+| Prop            | Type                | Default  | Description                                                           |
+| --------------- | ------------------- | -------- | --------------------------------------------------------------------- |
+| `items`         | `T[]`               | required | List of items (newest first). `T` must extend `ActivityCardBaseItem`. |
+| `title`         | `string`            | -        | Card title, e.g. "Updates".                                           |
+| `maxVisible`    | `number`            | `6`      | Max items shown in the card before overflow.                          |
+| `overflowLabel` | `"more" \| "count"` | `"more"` | "N more activities" vs "+N".                                          |
+| `groupBy`       | `"none" \| "day"`   | `"none"` | Optional grouping by day.                                             |
+| `className`     | `string`            | -        | Applied to the card root.                                             |
+| `children`      | `React.ReactNode`   | required | Must contain `ActivityCard.Items`.                                    |
+
+### ActivityCard.Item Props
+
+| Prop        | Type              | Default | Description                                                                                |
+| ----------- | ----------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `indicator` | `React.ReactNode` | -       | Element rendered in the left column (e.g. Avatar, icon). Omit for a default timeline node. |
+| `children`  | `React.ReactNode` | -       | Content for the item row (text, badges, links, etc.).                                      |
+| `className` | `string`          | -       | Additional CSS classes.                                                                    |
+
+### Example
+
+```tsx
+import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
+
+interface MyItem extends ActivityCardBaseItem {
+  kind: "approval" | "update";
+  label?: string;
+  message?: string;
+}
+
+const items: MyItem[] = [
+  { id: "1", timestamp: new Date(), kind: "approval", label: "PO approved" },
+  { id: "2", timestamp: new Date(), kind: "update", message: "Status changed to CONFIRMED" },
+];
+
+<ActivityCard.Root items={items} title="Updates" groupBy="day">
+  <ActivityCard.Items<MyItem>>
+    {(item) =>
+      item.kind === "approval" ? (
+        <ActivityCard.Item indicator={<ApprovedIcon />}>
+          <p>{item.label}</p>
+        </ActivityCard.Item>
+      ) : (
+        <ActivityCard.Item>
+          <p>{item.message}</p>
+        </ActivityCard.Item>
+      )
+    }
+  </ActivityCard.Items>
+</ActivityCard.Root>;
+```
+
+---
 
 ## See also
 

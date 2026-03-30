@@ -31,7 +31,7 @@ defineModule({
 
 - **Type:** `(props: ResourceComponentProps) => React.ReactNode`
 - **Required:** No
-- **Description:** Landing page component for the module. If omitted, module redirects to first resource.
+- **Description:** Landing page component for the module. If omitted, the module redirects to its first resource, and its breadcrumb segment is rendered as plain text (not a link).
 
 **ResourceComponentProps:**
 

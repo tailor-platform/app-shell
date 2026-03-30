@@ -24,6 +24,7 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Button](./docs/components/button.md)** - Styled button with variants and sizes
 - **[Input](./docs/components/input.md)** - Styled text input
 - **[Avatar](./docs/components/avatar.md)** - User avatar with image and fallback
+- **[Card](./docs/components/card.md)** - General-purpose container with compound component API
 - **[Table](./docs/components/table.md)** - Semantic HTML table sub-components
 - **[ActivityCard](./docs/components/activity-card.md)** - Timeline of document activities with avatars and overflow dialog
 - **[Dialog](./docs/components/dialog.md)** - Modal dialog with compound component API

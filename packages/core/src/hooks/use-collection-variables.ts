@@ -43,10 +43,7 @@ import type {
  * ```
  */
 export function useCollectionVariables<const TTable extends TableMetadata>(
-  options: UseCollectionOptions<
-    TableFieldName<TTable>,
-    TableMetadataFilter<TTable>
-  > & {
+  options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
     tableMetadata: TTable;
   },
 ): UseCollectionReturn<
@@ -95,11 +92,7 @@ export function useCollectionVariables(
   },
 ): UseCollectionReturn<string, CollectionVariables> {
   const { params = {} } = options;
-  const {
-    initialFilters = [],
-    initialSort = [],
-    pageSize: initialPageSize = 20,
-  } = params;
+  const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
 
   // ---------------------------------------------------------------------------
   // State
@@ -108,9 +101,7 @@ export function useCollectionVariables(
   const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
   const [pageSize, setPageSizeState] = useState(initialPageSize);
   const [cursor, setCursor] = useState<string | null>(null);
-  const [paginationDirection, setPaginationDirection] = useState<
-    "forward" | "backward"
-  >("forward");
+  const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
   const [currentPageInfo, setCurrentPageInfo] = useState<PageInfo>({
     hasNextPage: false,
     endCursor: null,
@@ -123,24 +114,21 @@ export function useCollectionVariables(
   // ---------------------------------------------------------------------------
   // Filter operations
   // ---------------------------------------------------------------------------
-  const addFilter = useCallback(
-    (field: string, operator: FilterOperator, value: unknown) => {
-      setFiltersState((prev) => {
-        const existing = prev.findIndex((f) => f.field === field);
-        const newFilter: Filter = { field, operator, value };
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = newFilter;
-          return updated;
-        }
-        return [...prev, newFilter];
-      });
-      setCursor(null);
-      setPaginationDirection("forward");
-      setCurrentPage(1);
-    },
-    [],
-  );
+  const addFilter = useCallback((field: string, operator: FilterOperator, value: unknown) => {
+    setFiltersState((prev) => {
+      const existing = prev.findIndex((f) => f.field === field);
+      const newFilter: Filter = { field, operator, value };
+      if (existing >= 0) {
+        const updated = [...prev];
+        updated[existing] = newFilter;
+        return updated;
+      }
+      return [...prev, newFilter];
+    });
+    setCursor(null);
+    setPaginationDirection("forward");
+    setCurrentPage(1);
+  }, []);
 
   const setFilters = useCallback((newFilters: Filter[]) => {
     setFiltersState(newFilters);
@@ -223,8 +211,7 @@ export function useCollectionVariables(
     setTotalState(value);
   }, []);
 
-  const totalPages =
-    total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null;
+  const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null;
 
   const goToFirstPage = useCallback(() => {
     setCursor(null);
@@ -239,10 +226,7 @@ export function useCollectionVariables(
   }, [totalPages]);
 
   const hasPrevPage = currentPage > 1;
-  const hasNextPage =
-    totalPages !== null
-      ? currentPage < totalPages
-      : currentPageInfo.hasNextPage;
+  const hasNextPage = totalPages !== null ? currentPage < totalPages : currentPageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
   // Build collection variables (Tailor Platform format)

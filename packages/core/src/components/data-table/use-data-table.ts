@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type {
-  Column,
-  PageInfo,
-  SortState,
-  UseDataTableOptions,
-  UseDataTableReturn,
-} from "./types";
+import type { Column, PageInfo, SortState, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
  * Hook that integrates data management, column visibility, row operations, and
@@ -167,9 +161,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const deleteRow = useCallback(
     (rowId: string) => {
       const currentRows = optimisticRows ?? sourceRows;
-      const deletedRow = currentRows.find(
-        (row) => (row as Record<string, unknown>).id === rowId,
-      );
+      const deletedRow = currentRows.find((row) => (row as Record<string, unknown>).id === rowId);
       const filteredRows = currentRows.filter(
         (row) => (row as Record<string, unknown>).id !== rowId,
       );
@@ -206,12 +198,9 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     return control?.sortStates ?? [];
   }, [control?.sortStates]);
 
-  const onSort = useMemo<
-    ((field: string, direction?: "Asc" | "Desc") => void) | undefined
-  >(() => {
+  const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
     if (!control) return undefined;
-    return (field: string, direction?: "Asc" | "Desc") =>
-      control.setSort(field, direction);
+    return (field: string, direction?: "Asc" | "Desc") => control.setSort(field, direction);
   }, [control]);
 
   // ---------------------------------------------------------------------------

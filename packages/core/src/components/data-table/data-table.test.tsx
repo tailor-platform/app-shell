@@ -73,10 +73,7 @@ describe("DataTable", () => {
   });
 
   it("renders error state", () => {
-    render(
-      <TestDataTable data={undefined} error={new Error("Network error")} />,
-      { wrapper },
-    );
+    render(<TestDataTable data={undefined} error={new Error("Network error")} />, { wrapper });
 
     expect(screen.getByText(/Network error/)).toBeDefined();
   });
@@ -100,11 +97,7 @@ describe("DataTable", () => {
     const { container } = render(<TestDataTable />, { wrapper });
 
     expect(container.querySelector('[data-slot="data-table"]')).toBeDefined();
-    expect(
-      container.querySelector('[data-slot="data-table-header"]'),
-    ).toBeDefined();
-    expect(
-      container.querySelector('[data-slot="data-table-body"]'),
-    ).toBeDefined();
+    expect(container.querySelector('[data-slot="data-table-header"]')).toBeDefined();
+    expect(container.querySelector('[data-slot="data-table-body"]')).toBeDefined();
   });
 });

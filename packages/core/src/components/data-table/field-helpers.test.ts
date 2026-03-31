@@ -12,10 +12,7 @@ describe("NodeType", () => {
   });
 
   it("handles nullable collection (e.g. gql-tada ResultOf)", () => {
-    type Result =
-      | { edges: { node: { id: string; amount: number } }[] }
-      | null
-      | undefined;
+    type Result = { edges: { node: { id: string; amount: number } }[] } | null | undefined;
     type Row = NodeType<Result>;
     expectTypeOf<Row>().toEqualTypeOf<{ id: string; amount: number }>();
   });

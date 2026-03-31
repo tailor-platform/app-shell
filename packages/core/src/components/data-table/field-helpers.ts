@@ -60,10 +60,7 @@ export function inferColumns<
   const TTable extends TableMetadata = TableMetadata,
 >(
   tableMetadata: TTable,
-): (
-  dataKey: TableFieldName<TTable>,
-  options?: MetadataFieldOptions,
-) => ColumnOptions<TRow> {
+): (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => ColumnOptions<TRow> {
   const fields = tableMetadata.fields;
 
   return (
@@ -73,9 +70,7 @@ export function inferColumns<
     const fieldName = dataKey as string;
     const fieldMeta = fields.find((f) => f.name === fieldName);
     if (!fieldMeta) {
-      throw new Error(
-        `Field "${fieldName}" not found in table "${tableMetadata.name}" metadata`,
-      );
+      throw new Error(`Field "${fieldName}" not found in table "${tableMetadata.name}" metadata`);
     }
 
     let sort: SortConfig | undefined;
@@ -88,26 +83,20 @@ export function inferColumns<
 
     let filter: FilterConfig | undefined;
     if (columnOptions?.filter !== false) {
-      filter = fieldTypeToFilterConfig(
-        fieldName,
-        fieldMeta.type,
-        fieldMeta.enumValues,
-      );
+      filter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
     }
     if (columnOptions?.filter === false) {
       filter = undefined;
     }
 
-    const label =
-      columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;
+    const label = columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;
 
     return {
       label,
-      render: ((row: Record<string, unknown>) =>
-        formatValue(row[fieldName])) as (row: TRow) => ReactNode,
-      accessor: ((row: Record<string, unknown>) => row[fieldName]) as (
+      render: ((row: Record<string, unknown>) => formatValue(row[fieldName])) as (
         row: TRow,
-      ) => unknown,
+      ) => ReactNode,
+      accessor: ((row: Record<string, unknown>) => row[fieldName]) as (row: TRow) => unknown,
       width: columnOptions?.width,
       sort,
       filter,
@@ -138,15 +127,11 @@ export function createColumnHelper<TRow extends Record<string, unknown>>(): {
   column: (options: ColumnOptions<TRow>) => Column<TRow>;
   inferColumns: <const TTable extends TableMetadata = TableMetadata>(
     tableMetadata: TTable,
-  ) => (
-    dataKey: TableFieldName<TTable>,
-    options?: MetadataFieldOptions,
-  ) => ColumnOptions<TRow>;
+  ) => (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => ColumnOptions<TRow>;
 } {
   return {
     column: (options: ColumnOptions<TRow>) => column<TRow>(options),
-    inferColumns: <const TTable extends TableMetadata = TableMetadata>(
-      tableMetadata: TTable,
-    ) => inferColumns<TRow, TTable>(tableMetadata),
+    inferColumns: <const TTable extends TableMetadata = TableMetadata>(tableMetadata: TTable) =>
+      inferColumns<TRow, TTable>(tableMetadata),
   };
 }

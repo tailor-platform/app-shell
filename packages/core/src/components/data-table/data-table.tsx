@@ -6,23 +6,14 @@ import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import type { RowAction, SortConfig, UseDataTableReturn } from "./types";
-import {
-  DataTableContext,
-  type DataTableContextValue,
-} from "./data-table-context";
+import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 
 // =============================================================================
 // DataTable.Root
 // =============================================================================
 
-function DataTableRoot({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+function DataTableRoot({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <Table.Root
       data-slot="data-table"
@@ -68,17 +59,11 @@ function DataTableProviderComponent<TRow extends Record<string, unknown>>({
   const controlValue = value.control ?? null;
 
   const inner = (
-    <DataTableContext.Provider value={dataTableValue}>
-      {children}
-    </DataTableContext.Provider>
+    <DataTableContext.Provider value={dataTableValue}>{children}</DataTableContext.Provider>
   );
 
   if (controlValue) {
-    return (
-      <CollectionControlProvider value={controlValue}>
-        {inner}
-      </CollectionControlProvider>
-    );
+    return <CollectionControlProvider value={controlValue}>{inner}</CollectionControlProvider>;
   }
 
   return inner;
@@ -92,9 +77,7 @@ DataTableProviderComponent.displayName = "DataTable.Provider";
 function DataTableHeaders({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
-    throw new Error(
-      "<DataTable.Headers> must be used within <DataTable.Provider>",
-    );
+    throw new Error("<DataTable.Headers> must be used within <DataTable.Provider>");
   }
   const { columns, sortStates, onSort, rowActions } = ctx;
   const t = useDataTableT();
@@ -108,9 +91,7 @@ function DataTableHeaders({ className }: { className?: string }) {
 
           const isSortable = !!col.sort;
           const currentSort = col.sort
-            ? sortStates?.find(
-                (s) => s.field === (col.sort as SortConfig).field,
-              )
+            ? sortStates?.find((s) => s.field === (col.sort as SortConfig).field)
             : undefined;
 
           const handleClick = () => {
@@ -128,16 +109,12 @@ function DataTableHeaders({ className }: { className?: string }) {
             <Table.Head
               key={key}
               style={col.width ? { width: col.width } : undefined}
-              className={cn(
-                isSortable && "astw:cursor-pointer astw:select-none",
-              )}
+              className={cn(isSortable && "astw:cursor-pointer astw:select-none")}
               onClick={isSortable ? handleClick : undefined}
             >
               <span className="astw:inline-flex astw:items-center astw:gap-1">
                 {label}
-                {currentSort && (
-                  <SortIndicator direction={currentSort.direction} />
-                )}
+                {currentSort && <SortIndicator direction={currentSort.direction} />}
               </span>
             </Table.Head>
           );
@@ -169,18 +146,10 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
 // DataTable.Body
 // =============================================================================
 
-function DataTableBody({
-  children,
-  className,
-}: {
-  children?: ReactNode;
-  className?: string;
-}) {
+function DataTableBody({ children, className }: { children?: ReactNode; className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
-    throw new Error(
-      "<DataTable.Body> must be used within <DataTable.Provider>",
-    );
+    throw new Error("<DataTable.Body> must be used within <DataTable.Provider>");
   }
   const { columns, rows, loading, error, onClickRow, rowActions } = ctx;
   const t = useDataTableT();
@@ -199,14 +168,8 @@ function DataTableBody({
     <Table.Body data-slot="data-table-body" className={className}>
       {loading && (!rows || rows.length === 0) && (
         <Table.Row>
-          <Table.Cell
-            colSpan={totalColSpan}
-            className="astw:h-24 astw:text-center"
-          >
-            <span
-              className="astw:text-muted-foreground"
-              data-datatable-state="loading"
-            >
+          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
+            <span className="astw:text-muted-foreground" data-datatable-state="loading">
               {t("loading")}
             </span>
           </Table.Cell>
@@ -214,14 +177,8 @@ function DataTableBody({
       )}
       {error && (
         <Table.Row>
-          <Table.Cell
-            colSpan={totalColSpan}
-            className="astw:h-24 astw:text-center"
-          >
-            <span
-              className="astw:text-destructive"
-              data-datatable-state="error"
-            >
+          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
+            <span className="astw:text-destructive" data-datatable-state="error">
               {t("errorPrefix")} {error.message}
             </span>
           </Table.Cell>
@@ -229,14 +186,8 @@ function DataTableBody({
       )}
       {!loading && !error && (!rows || rows.length === 0) && (
         <Table.Row>
-          <Table.Cell
-            colSpan={totalColSpan}
-            className="astw:h-24 astw:text-center"
-          >
-            <span
-              className="astw:text-muted-foreground"
-              data-datatable-state="empty"
-            >
+          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
+            <span className="astw:text-muted-foreground" data-datatable-state="empty">
               {t("noData")}
             </span>
           </Table.Cell>
@@ -262,10 +213,7 @@ function DataTableBody({
             );
           })}
           {hasRowActions && (
-            <Table.Cell
-              style={{ width: 50 }}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <Table.Cell style={{ width: 50 }} onClick={(e) => e.stopPropagation()}>
               <RowActionsMenu actions={rowActions} row={row} />
             </Table.Cell>
           )}
@@ -327,9 +275,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
                     action.onClick(row);
                   }
                 }}
-                className={cn(
-                  action.variant === "destructive" && "astw:text-destructive",
-                )}
+                className={cn(action.variant === "destructive" && "astw:text-destructive")}
               >
                 {action.icon}
                 {action.label}

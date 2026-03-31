@@ -133,17 +133,14 @@ describe("appShellMetadataPlugin", () => {
       ],
     });
 
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     expect(content).toContain('"order"');
     expect(content).toContain('"orders"');
     expect(content).toContain('"Purchase orders"');
     expect(content).toContain('"Order title"');
 
     // Parse the generated metadata
-    const metadataMatch = content.match(
-      /export const tableMetadata = ({[\s\S]*?}) as const;/,
-    );
+    const metadataMatch = content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/);
     expect(metadataMatch).not.toBeNull();
     const metadata = JSON.parse(metadataMatch![1]);
 
@@ -153,9 +150,7 @@ describe("appShellMetadataPlugin", () => {
     expect(metadata.order.description).toBe("Purchase orders");
     expect(metadata.order.fields).toHaveLength(4);
 
-    const titleField = metadata.order.fields.find(
-      (f: { name: string }) => f.name === "title",
-    );
+    const titleField = metadata.order.fields.find((f: { name: string }) => f.name === "title");
     expect(titleField).toEqual({
       name: "title",
       type: "string",
@@ -163,9 +158,7 @@ describe("appShellMetadataPlugin", () => {
       description: "Order title",
     });
 
-    const amountField = metadata.order.fields.find(
-      (f: { name: string }) => f.name === "amount",
-    );
+    const amountField = metadata.order.fields.find((f: { name: string }) => f.name === "amount");
     expect(amountField).toEqual({
       name: "amount",
       type: "number",
@@ -214,32 +207,19 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );
     const fields = metadata.testType.fields;
 
-    expect(
-      fields.find((f: { name: string }) => f.name === "intField").type,
-    ).toBe("number");
-    expect(
-      fields.find((f: { name: string }) => f.name === "floatField").type,
-    ).toBe("number");
-    expect(
-      fields.find((f: { name: string }) => f.name === "decimalField").type,
-    ).toBe("number");
-    expect(
-      fields.find((f: { name: string }) => f.name === "dateField").type,
-    ).toBe("date");
-    expect(
-      fields.find((f: { name: string }) => f.name === "dtField").type,
-    ).toBe("datetime");
+    expect(fields.find((f: { name: string }) => f.name === "intField").type).toBe("number");
+    expect(fields.find((f: { name: string }) => f.name === "floatField").type).toBe("number");
+    expect(fields.find((f: { name: string }) => f.name === "decimalField").type).toBe("number");
+    expect(fields.find((f: { name: string }) => f.name === "dateField").type).toBe("date");
+    expect(fields.find((f: { name: string }) => f.name === "dtField").type).toBe("datetime");
 
-    const arrayField = fields.find(
-      (f: { name: string }) => f.name === "arrayField",
-    );
+    const arrayField = fields.find((f: { name: string }) => f.name === "arrayField");
     expect(arrayField.type).toBe("array");
     expect(arrayField.arrayItemType).toBe("string");
   });
@@ -256,11 +236,7 @@ describe("appShellMetadataPlugin", () => {
             config: {
               type: "enum",
               required: true,
-              allowedValues: [
-                { value: "DRAFT" },
-                { value: "ACTIVE" },
-                { value: "ARCHIVED" },
-              ],
+              allowedValues: [{ value: "DRAFT" }, { value: "ACTIVE" }, { value: "ARCHIVED" }],
             },
           },
         },
@@ -273,8 +249,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );
@@ -326,8 +301,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );
@@ -392,8 +366,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );
@@ -432,8 +405,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );
@@ -472,8 +444,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
 
     expect(content).toContain("export const tableNames");
     expect(content).toContain('"order"');
@@ -556,8 +527,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );
@@ -586,8 +556,7 @@ describe("appShellMetadataPlugin", () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
-    const content = (result as { files: { content: string }[] }).files[0]
-      .content;
+    const content = (result as { files: { content: string }[] }).files[0].content;
     const metadata = JSON.parse(
       content.match(/export const tableMetadata = ({[\s\S]*?}) as const;/)![1],
     );

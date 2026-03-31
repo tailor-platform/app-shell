@@ -1,11 +1,5 @@
 import { createContext, useContext } from "react";
-import type {
-  Column,
-  PageInfo,
-  RowAction,
-  RowOperations,
-  SortState,
-} from "./types";
+import type { Column, PageInfo, RowAction, RowOperations, SortState } from "./types";
 
 /**
  * Context value provided by `DataTable.Provider`.
@@ -49,9 +43,7 @@ export function useDataTableContext<
 >(): DataTableContextValue<TRow> {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
-    throw new Error(
-      "useDataTableContext must be used within <DataTable.Provider>",
-    );
+    throw new Error("useDataTableContext must be used within <DataTable.Provider>");
   }
   return ctx as DataTableContextValue<TRow>;
 }

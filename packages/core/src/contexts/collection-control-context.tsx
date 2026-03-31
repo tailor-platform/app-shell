@@ -25,9 +25,7 @@ export function CollectionControlProvider({
   children: ReactNode;
 }) {
   return (
-    <CollectionControlContext.Provider value={value}>
-      {children}
-    </CollectionControlContext.Provider>
+    <CollectionControlContext.Provider value={value}>{children}</CollectionControlContext.Provider>
   );
 }
 
@@ -43,9 +41,7 @@ export function useCollectionControl<
 >(): CollectionControl<TFieldName> {
   const ctx = useContext(CollectionControlContext);
   if (!ctx) {
-    throw new Error(
-      "useCollectionControl must be used within <CollectionControlProvider>",
-    );
+    throw new Error("useCollectionControl must be used within <CollectionControlProvider>");
   }
   return ctx as CollectionControl<TFieldName>;
 }

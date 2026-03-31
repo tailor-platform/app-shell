@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  AppShellConfigContext,
-  buildConfigurations,
-} from "@/contexts/appshell-context";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 
 /**
  * Test wrapper that provides AppShellConfigContext for components/hooks

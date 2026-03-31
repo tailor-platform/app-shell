@@ -20,9 +20,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("uses custom pageSize", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 50 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 50 } }));
       expect(result.current.variables.pagination.first).toBe(50);
     });
 
@@ -37,9 +35,7 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.sortStates).toEqual([
         { field: "createdAt", direction: "Desc" },
       ]);
-      expect(result.current.variables.order).toEqual([
-        { field: "createdAt", direction: "Desc" },
-      ]);
+      expect(result.current.variables.order).toEqual([{ field: "createdAt", direction: "Desc" }]);
     });
 
     it("applies initial filters", () => {
@@ -184,9 +180,7 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.sortStates).toEqual([
         { field: "createdAt", direction: "Desc" },
       ]);
-      expect(result.current.variables.order).toEqual([
-        { field: "createdAt", direction: "Desc" },
-      ]);
+      expect(result.current.variables.order).toEqual([{ field: "createdAt", direction: "Desc" }]);
     });
 
     it("appends sort for different fields", () => {
@@ -237,9 +231,7 @@ describe("useCollectionVariables", () => {
         result.current.control.setSort("createdAt");
       });
 
-      expect(result.current.control.sortStates).toEqual([
-        { field: "name", direction: "Asc" },
-      ]);
+      expect(result.current.control.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
     it("clears sort", () => {
@@ -391,9 +383,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("returns undefined for query and order when empty", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 10 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
       expect(result.current.variables.query).toBeUndefined();
       expect(result.current.variables.order).toBeUndefined();
@@ -444,9 +434,7 @@ describe("useCollectionVariables", () => {
         }),
       );
 
-      expect(result.current.control.sortStates).toEqual([
-        { field: "dueDate", direction: "Desc" },
-      ]);
+      expect(result.current.control.sortStates).toEqual([{ field: "dueDate", direction: "Desc" }]);
     });
   });
 });

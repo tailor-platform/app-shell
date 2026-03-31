@@ -135,9 +135,9 @@ export type FilterOperator = OperatorForFilterType[FilterConfig["type"]];
 /**
  * Resolve the operator union for a specific field within a filter type.
  */
-export type OperatorForField<TFilter, F extends string> = [
-  Extract<TFilter, { field: F }>,
-] extends [never]
+export type OperatorForField<TFilter, F extends string> = [Extract<TFilter, { field: F }>] extends [
+  never,
+]
   ? FilterOperator
   : Extract<TFilter, { field: F }> extends { operator: infer O }
     ? O
@@ -272,10 +272,7 @@ type FieldTypeToTSType = {
   enum: string;
 };
 
-type ResolveFieldValueType<
-  F,
-  T extends keyof FieldTypeToTSType,
-> = T extends "enum"
+type ResolveFieldValueType<F, T extends keyof FieldTypeToTSType> = T extends "enum"
   ? F extends { readonly enumValues: readonly (infer V extends string)[] }
     ? V
     : string
@@ -287,14 +284,8 @@ type OperatorValueType<TOp extends string, TValue> = TOp extends "in" | "nin"
     ? { min: TValue; max: TValue }
     : TValue;
 
-type FilterInputForFieldType<
-  TFilterConfigType extends FilterConfig["type"],
-  TValue,
-> = {
-  [Op in OperatorForFilterType[TFilterConfigType]]?: OperatorValueType<
-    Op,
-    TValue
-  >;
+type FilterInputForFieldType<TFilterConfigType extends FilterConfig["type"], TValue> = {
+  [Op in OperatorForFilterType[TFilterConfigType]]?: OperatorValueType<Op, TValue>;
 };
 
 /**
@@ -311,11 +302,9 @@ export type BuildQueryVariables<TTable extends TableMetadata> = {
         : N
       : never
     : never]?: F extends {
-    readonly type: infer T extends keyof FieldTypeToFilterConfigType &
-      keyof FieldTypeToTSType;
+    readonly type: infer T extends keyof FieldTypeToFilterConfigType & keyof FieldTypeToTSType;
   }
-    ? FieldTypeToFilterConfigType[T] extends infer FCT extends
-        FilterConfig["type"]
+    ? FieldTypeToFilterConfigType[T] extends infer FCT extends FilterConfig["type"]
       ? FilterInputForFieldType<FCT, ResolveFieldValueType<F, T>>
       : never
     : never;
@@ -346,9 +335,8 @@ export interface CollectionResult<T> {
 /**
  * Extract the node type from a cursor connection result.
  */
-export type NodeType<
-  T extends { edges: { node: unknown }[] } | null | undefined,
-> = NonNullable<T>["edges"][number]["node"];
+export type NodeType<T extends { edges: { node: unknown }[] } | null | undefined> =
+  NonNullable<T>["edges"][number]["node"];
 
 // =============================================================================
 // Column Definitions
@@ -383,8 +371,7 @@ export interface Column<TRow extends Record<string, unknown>> {
 /**
  * Column definition used by `useDataTable` (same as `Column`).
  */
-export type ColumnDefinition<TRow extends Record<string, unknown>> =
-  Column<TRow>;
+export type ColumnDefinition<TRow extends Record<string, unknown>> = Column<TRow>;
 
 // =============================================================================
 // useCollectionVariables Types
@@ -546,14 +533,13 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 /**
  * Extract field names from a single table metadata object.
  */
-export type TableFieldName<TTable extends TableMetadata> =
-  TTable["fields"][number] extends {
-    readonly name: infer N;
-  }
-    ? N extends string
-      ? N
-      : never
-    : never;
+export type TableFieldName<TTable extends TableMetadata> = TTable["fields"][number] extends {
+  readonly name: infer N;
+}
+  ? N extends string
+    ? N
+    : never
+  : never;
 
 /**
  * Extract field names from table metadata map + table name.
@@ -565,23 +551,13 @@ export type FieldName<
   TTableName extends keyof TMetadata,
 > = TableFieldName<TMetadata[TTableName]>;
 
-type OrderableFieldType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "datetime"
-  | "date"
-  | "time"
-  | "enum";
+type OrderableFieldType = "string" | "number" | "boolean" | "datetime" | "date" | "time" | "enum";
 
 /**
  * Extract only orderable field names from a single table metadata object.
  */
 export type TableOrderableFieldName<TTable extends TableMetadata> =
-  Extract<
-    TTable["fields"][number],
-    { readonly type: OrderableFieldType }
-  > extends {
+  Extract<TTable["fields"][number], { readonly type: OrderableFieldType }> extends {
     readonly name: infer N;
   }
     ? N extends string
@@ -602,13 +578,8 @@ export type OrderableFieldName<
 /**
  * Find table names in metadata whose fields are a superset of `TFieldName`.
  */
-export type MatchingTableName<
-  TMetadata extends TableMetadataMap,
-  TFieldName extends string,
-> = {
-  [K in string & keyof TMetadata]: TFieldName extends FieldName<TMetadata, K>
-    ? K
-    : never;
+export type MatchingTableName<TMetadata extends TableMetadataMap, TFieldName extends string> = {
+  [K in string & keyof TMetadata]: TFieldName extends FieldName<TMetadata, K> ? K : never;
 }[string & keyof TMetadata];
 
 /**
@@ -663,10 +634,7 @@ export const DEFAULT_OPERATOR_LABELS: Record<FilterOperator, string> = {
  * Map metadata field type to SortConfig.
  * Returns undefined for types that don't support sorting.
  */
-export function fieldTypeToSortConfig(
-  field: string,
-  type: FieldType,
-): SortConfig | undefined {
+export function fieldTypeToSortConfig(field: string, type: FieldType): SortConfig | undefined {
   switch (type) {
     case "string":
       return { field, type: "string" };

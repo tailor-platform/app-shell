@@ -1,4 +1,1 @@
-export {
-  appShellMetadataPlugin,
-  type AppShellMetadataPluginOptions,
-} from "./metadata-plugin";
+export { appShellMetadataPlugin, type AppShellMetadataPluginOptions } from "./metadata-plugin";

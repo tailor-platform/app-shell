@@ -295,6 +295,9 @@ importers:
       oxlint:
         specifier: 'catalog:'
         version: 1.59.0
+      tsdown:
+        specifier: ^0.21.7
+        version: 0.21.7(typescript@5.9.3)
       typescript:
         specifier: ^5
         version: 5.9.3

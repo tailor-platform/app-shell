@@ -44,6 +44,7 @@
   "devDependencies": {
     "@tailor-platform/sdk": "^1.33.0",
     "oxlint": "catalog:",
+    "tsdown": "^0.21.7",
     "typescript": "^5",
     "vitest": "^4"
   },

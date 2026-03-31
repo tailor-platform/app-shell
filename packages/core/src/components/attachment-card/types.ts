@@ -8,24 +8,14 @@ export interface AttachmentItem {
   /** Optional preview URL for image attachments. */
   previewUrl?: string;
   /** Lifecycle status used for upload rendering. */
-  status?: "ready" | "uploading" | "error";
-  /** Optional upload error message for UI/telemetry. */
-  errorMessage?: string;
+  status?: "ready" | "uploading";
 }
 
-export interface AttachmentCardProps {
+interface AttachmentCardBaseProps {
   /** Card title text. */
   title?: string;
   /** List of attachments to render. */
   items?: AttachmentItem[];
-  /** Called when files are selected or dropped. */
-  onUpload?: (files: File[]) => void;
-  /** Optional async upload handler for built-in upload lifecycle UX. */
-  uploadFile?: (file: File) => Promise<AttachmentItem>;
-  /** Called when an async upload fails. */
-  onUploadError?: (ctx: { file: File; error: Error }) => void;
-  /** Optional retry handler used by consumers for error recovery strategies. */
-  onRetryUpload?: (item: AttachmentItem) => Promise<AttachmentItem>;
   /** Called when delete action is selected for an item. */
   onDelete?: (item: AttachmentItem) => void;
   /** Called when download action is selected for an item. */
@@ -39,3 +29,27 @@ export interface AttachmentCardProps {
   /** Additional classes applied on the card root. */
   className?: string;
 }
+
+type ControlledUploadProps = {
+  /** Called when files are selected or dropped. */
+  onUpload: (files: File[]) => void;
+  uploadFile?: never;
+  onUploadError?: never;
+};
+
+type AsyncUploadProps = {
+  onUpload?: never;
+  /** Optional async upload handler for built-in upload lifecycle UX. */
+  uploadFile: (file: File) => Promise<AttachmentItem>;
+  /** Called when an async upload fails. */
+  onUploadError?: (ctx: { file: File; error: Error }) => void;
+};
+
+type ReadOnlyListProps = {
+  onUpload?: undefined;
+  uploadFile?: undefined;
+  onUploadError?: never;
+};
+
+export type AttachmentCardProps = AttachmentCardBaseProps &
+  (ControlledUploadProps | AsyncUploadProps | ReadOnlyListProps);

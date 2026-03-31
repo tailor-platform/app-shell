@@ -36,20 +36,19 @@ const items: AttachmentItem[] = [
 
 ## Props
 
-| Prop            | Type                                                | Default         | Description                                                          |
-| --------------- | --------------------------------------------------- | --------------- | -------------------------------------------------------------------- |
-| `title`         | `string`                                            | `"Attachments"` | Card heading text                                                    |
-| `items`         | `AttachmentItem[]`                                  | `[]`            | Attachment list rendered as preview tiles                            |
-| `onUpload`      | `(files: File[]) => void`                           | -               | Legacy controlled upload callback for file input + drag/drop         |
-| `uploadFile`    | `(file: File) => Promise<AttachmentItem>`           | -               | Optional async upload handler for built-in uploading lifecycle UI    |
-| `onUploadError` | `(ctx: { file: File; error: Error }) => void`       | -               | Called when `uploadFile` fails                                       |
-| `onRetryUpload` | `(item: AttachmentItem) => Promise<AttachmentItem>` | -               | Optional retry strategy hook for consumer-defined recovery workflows |
-| `onDelete`      | `(item: AttachmentItem) => void`                    | -               | Called when Delete is chosen in a preview menu                       |
-| `onDownload`    | `(item: AttachmentItem) => void`                    | -               | Called when Download is chosen in a preview menu                     |
-| `uploadLabel`   | `string`                                            | `"Upload"`      | Upload button text                                                   |
-| `accept`        | `string`                                            | -               | Accepted file types for hidden file input                            |
-| `disabled`      | `boolean`                                           | `false`         | Disables upload/drop and hides per-item menu actions                 |
-| `className`     | `string`                                            | -               | Additional classes on the root card                                  |
+| Prop            | Type                                          | Default         | Description                                                       |
+| --------------- | --------------------------------------------- | --------------- | ----------------------------------------------------------------- |
+| `title`         | `string`                                      | `"Attachments"` | Card heading text                                                 |
+| `items`         | `AttachmentItem[]`                            | `[]`            | Attachment list rendered as preview tiles                         |
+| `onUpload`      | `(files: File[]) => void`                     | -               | Controlled upload callback for file input + drag/drop             |
+| `uploadFile`    | `(file: File) => Promise<AttachmentItem>`     | -               | Optional async upload handler for built-in uploading lifecycle UI |
+| `onUploadError` | `(ctx: { file: File; error: Error }) => void` | -               | Called when `uploadFile` fails                                    |
+| `onDelete`      | `(item: AttachmentItem) => void`              | -               | Called when Delete is chosen in a preview menu                    |
+| `onDownload`    | `(item: AttachmentItem) => void`              | -               | Called when Download is chosen in a preview menu                  |
+| `uploadLabel`   | `string`                                      | `"Upload"`      | Upload button text                                                |
+| `accept`        | `string`                                      | -               | Accepted file types for hidden file input                         |
+| `disabled`      | `boolean`                                     | `false`         | Disables upload/drop and hides per-item menu actions              |
+| `className`     | `string`                                      | -               | Additional classes on the root card                               |
 
 ## AttachmentItem
 
@@ -59,8 +58,7 @@ interface AttachmentItem {
   fileName: string;
   mimeType: string;
   previewUrl?: string;
-  status?: "ready" | "uploading" | "error";
-  errorMessage?: string;
+  status?: "ready" | "uploading";
 }
 ```
 
@@ -68,6 +66,7 @@ interface AttachmentItem {
 
 - **Controlled mode (`onUpload`)**: component emits selected files and the parent owns upload + list updates.
 - **Async mode (`uploadFile`)**: component shows temporary uploading tiles with local previews, dark overlay, and spinner while awaiting each upload promise.
+- `onUpload` and `uploadFile` are mutually exclusive integration modes.
 - **Failure behavior**: when `uploadFile` rejects, the component removes the temporary tile, shows a toast, and calls `onUploadError`.
 
 ## Behavior

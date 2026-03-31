@@ -262,4 +262,38 @@ describe("AttachmentCard", () => {
       expect(onDelete).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("revokes pending object URLs when unmounted during async upload", async () => {
+    const createObjectUrlSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:attachment-card-pending-image");
+    const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+
+    const uploadFile = vi.fn(
+      () =>
+        new Promise<AttachmentItem>(() => {
+          // Intentionally unresolved promise to simulate in-flight upload.
+        }),
+    );
+
+    const { unmount } = render(<AttachmentCard uploadFile={uploadFile} />);
+    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
+
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["image-bytes"], "pending-image.jpg", { type: "image/jpeg" })],
+      },
+    });
+
+    await waitFor(() => {
+      expect(uploadFile).toHaveBeenCalledTimes(1);
+    });
+
+    unmount();
+
+    expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-card-pending-image");
+
+    createObjectUrlSpy.mockRestore();
+    revokeObjectUrlSpy.mockRestore();
+  });
 });

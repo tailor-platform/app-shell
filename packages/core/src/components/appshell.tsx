@@ -1,4 +1,9 @@
-import { Modules, Resource, ErrorBoundaryComponent, setContextData } from "@/resource";
+import {
+  Modules,
+  Resource,
+  ErrorBoundaryComponent,
+  setContextData,
+} from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
 import {
@@ -9,6 +14,7 @@ import {
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
@@ -169,12 +175,21 @@ export const AppShell = (props: AppShellProps) => {
             locale: props.locale,
           })
         : null,
-    [modules, props.settingsResources, props.basePath, props.errorBoundary, props.locale],
+    [
+      modules,
+      props.settingsResources,
+      props.basePath,
+      props.errorBoundary,
+      props.locale,
+    ],
   );
 
   // Memoize context values to prevent unnecessary re-renders
   const configValue = useMemo(
-    () => (configurations ? { title: props.title, icon: props.icon, configurations } : null),
+    () =>
+      configurations
+        ? { title: props.title, icon: props.icon, configurations }
+        : null,
     [props.title, props.icon, configurations],
   );
 
@@ -200,7 +215,9 @@ export const AppShell = (props: AppShellProps) => {
           <h1 className="astw:mb-2 astw:text-lg astw:font-semibold astw:text-destructive">
             Configuration Error
           </h1>
-          <p className="astw:text-sm astw:text-muted-foreground">{errorMessage}</p>
+          <p className="astw:text-sm astw:text-muted-foreground">
+            {errorMessage}
+          </p>
         </div>
       </div>
     );
@@ -211,9 +228,13 @@ export const AppShell = (props: AppShellProps) => {
   return (
     <AppShellConfigContext.Provider value={configValue}>
       <AppShellDataContext.Provider value={dataValue}>
-        <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-          <RouterContainer rootComponent={props.rootComponent}>{props.children}</RouterContainer>
-        </ThemeProvider>
+        <BreadcrumbOverrideProvider>
+          <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
+            <RouterContainer rootComponent={props.rootComponent}>
+              {props.children}
+            </RouterContainer>
+          </ThemeProvider>
+        </BreadcrumbOverrideProvider>
       </AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>
   );

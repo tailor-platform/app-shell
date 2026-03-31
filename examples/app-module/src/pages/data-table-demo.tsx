@@ -1,15 +1,15 @@
 import {
-  Layout,
+  defineResource,
   Badge,
   DataTable,
   Pagination,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
+  Layout,
   type CollectionResult,
   type CollectionVariables,
   type RowAction,
-  type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { useMemo } from "react";
 
@@ -60,7 +60,7 @@ const productMetadata = {
 const { column, inferColumns } = createColumnHelper<Product>();
 const infer = inferColumns(productMetadata);
 
-const columns = [
+const productColumns = [
   column({
     ...infer("name"),
     render: (row) => <span className="font-medium">{row.name}</span>,
@@ -188,7 +188,7 @@ const mockProducts: CollectionResult<Product> = {
 // Row actions
 // ---------------------------------------------------------------------------
 
-const rowActions: RowAction<Product>[] = [
+const productRowActions: RowAction<Product>[] = [
   {
     id: "edit",
     label: "Edit",
@@ -208,8 +208,6 @@ const rowActions: RowAction<Product>[] = [
 // ---------------------------------------------------------------------------
 
 function useProductsQuery(_variables: CollectionVariables) {
-  // In a real app this would be a GraphQL / REST call that forwards the
-  // variables (pagination, sorting, filters) to the server.
   return useMemo(() => ({ data: mockProducts, loading: false }), []);
 }
 
@@ -217,7 +215,7 @@ function useProductsQuery(_variables: CollectionVariables) {
 // Page component
 // ---------------------------------------------------------------------------
 
-const ProductsPage = () => {
+const DataTableDemoPage = () => {
   const { variables, control } = useCollectionVariables({
     params: { pageSize: 10 },
   });
@@ -225,17 +223,17 @@ const ProductsPage = () => {
   const { data, loading } = useProductsQuery(variables);
 
   const table = useDataTable<Product>({
-    columns,
+    columns: productColumns,
     data,
     loading,
     control,
-    rowActions,
+    rowActions: productRowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
   });
 
   return (
     <Layout>
-      <Layout.Header title="Products" />
+      <Layout.Header title="DataTable Demo" />
       <Layout.Column>
         <p className="mb-4 text-muted-foreground">
           DataTable demo with sortable columns, row actions, and pagination.
@@ -252,10 +250,10 @@ const ProductsPage = () => {
   );
 };
 
-ProductsPage.appShellPageProps = {
+export const dataTableDemoResource = defineResource({
+  path: "data-table-demo",
   meta: {
-    title: "Products",
+    title: "DataTable Demo",
   },
-} satisfies AppShellPageProps;
-
-export default ProductsPage;
+  component: DataTableDemoPage,
+});

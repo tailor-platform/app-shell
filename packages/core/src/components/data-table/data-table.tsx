@@ -258,11 +258,13 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
   return (
     <div data-slot="data-table-row-actions">
       <Menu.Root>
-        <Menu.Trigger>
-          <Button variant="ghost" size="icon" aria-label={t("rowActions")}>
-            <Ellipsis className="astw:size-4" />
-          </Button>
-        </Menu.Trigger>
+        <Menu.Trigger
+          render={
+            <Button variant="ghost" size="icon" aria-label={t("rowActions")}>
+              <Ellipsis className="astw:size-4" />
+            </Button>
+          }
+        />
         <Menu.Content>
           {actions.map((action) => {
             const disabled = action.isDisabled?.(row) ?? false;

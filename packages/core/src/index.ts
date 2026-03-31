@@ -17,11 +17,7 @@ export {
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
 
-export {
-  useAppShell,
-  useAppShellConfig,
-  useAppShellData,
-} from "./contexts/appshell-context";
+export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/appshell-context";
 export { useTheme } from "./contexts/theme-context";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
 export {
@@ -82,10 +78,7 @@ export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 
 // Components
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
-export {
-  DescriptionCard,
-  type DescriptionCardProps,
-} from "./components/description-card";
+export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,
   type ActivityCardProps,
@@ -110,16 +103,7 @@ export { Form, type FormProps } from "./components/form";
 export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
 export { Tooltip } from "./components/tooltip";
-export {
-  Select,
-  type SelectAsyncFetcher,
-} from "./components/select-standalone";
-export {
-  Combobox,
-  type ComboboxAsyncFetcher,
-} from "./components/combobox-standalone";
-export {
-  Autocomplete,
-  type AutocompleteAsyncFetcher,
-} from "./components/autocomplete-standalone";
+export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
+export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
+export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
 export { type MappedItem, type ItemGroup } from "./components/dropdown-items";

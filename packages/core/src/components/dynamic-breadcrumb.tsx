@@ -53,9 +53,7 @@ export const DynamicBreadcrumb = () => {
     <Breadcrumb>
       <BreadcrumbList>
         {segments.map((segmentInfo, index) => {
-          const fullPath = basePath
-            ? `/${basePath}/${segmentInfo.path}`
-            : `/${segmentInfo.path}`;
+          const fullPath = basePath ? `/${basePath}/${segmentInfo.path}` : `/${segmentInfo.path}`;
           const title = overrides.get(fullPath) ?? segmentInfo.title;
           return (
             <div
@@ -68,11 +66,7 @@ export const DynamicBreadcrumb = () => {
                 ) : (
                   // Non-last segments use ariaCurrent={false} to avoid announcing
                   // intermediate items as the current location to screen readers.
-                  <BreadcrumbPage
-                    ariaCurrent={
-                      index === segments.length - 1 ? "location" : false
-                    }
-                  >
+                  <BreadcrumbPage ariaCurrent={index === segments.length - 1 ? "location" : false}>
                     {title}
                   </BreadcrumbPage>
                 )}

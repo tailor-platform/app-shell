@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 type BreadcrumbOverrideContextValue = {
   overrides: Map<string, string>;
@@ -12,17 +6,10 @@ type BreadcrumbOverrideContextValue = {
   unregister: (path: string) => void;
 };
 
-const BreadcrumbOverrideContext =
-  createContext<BreadcrumbOverrideContextValue | null>(null);
+const BreadcrumbOverrideContext = createContext<BreadcrumbOverrideContextValue | null>(null);
 
-export const BreadcrumbOverrideProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
-  const [overrides, setOverrides] = useState<Map<string, string>>(
-    () => new Map(),
-  );
+export const BreadcrumbOverrideProvider = ({ children }: { children: ReactNode }) => {
+  const [overrides, setOverrides] = useState<Map<string, string>>(() => new Map());
 
   const register = useCallback((path: string, title: string) => {
     setOverrides((prev) => {
@@ -42,9 +29,7 @@ export const BreadcrumbOverrideProvider = ({
   }, []);
 
   return (
-    <BreadcrumbOverrideContext.Provider
-      value={{ overrides, register, unregister }}
-    >
+    <BreadcrumbOverrideContext.Provider value={{ overrides, register, unregister }}>
       {children}
     </BreadcrumbOverrideContext.Provider>
   );
@@ -53,9 +38,7 @@ export const BreadcrumbOverrideProvider = ({
 export const useBreadcrumbOverride = () => {
   const context = useContext(BreadcrumbOverrideContext);
   if (!context) {
-    throw new Error(
-      "useBreadcrumbOverride must be used within BreadcrumbOverrideProvider",
-    );
+    throw new Error("useBreadcrumbOverride must be used within BreadcrumbOverrideProvider");
   }
   return context;
 };

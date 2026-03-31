@@ -4,6 +4,7 @@ import { ZapIcon } from "./pages/metric-card-demo";
 import { actionPanelDemoResource } from "./pages/action-panel-demo";
 import { metricCardDemoResource } from "./pages/metric-card-demo";
 import { activityCardDemoResource } from "./pages/activity-card-demo";
+import { attachmentCardDemoResource } from "./pages/attachment-card-demo";
 import {
   purchaseOrderDemoResource,
   subPageResource,
@@ -81,6 +82,17 @@ export const customPageModule = defineModule({
               }}
             >
               View ActivityCard Demo
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/attachment-card-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              View AttachmentCard Demo
             </Link>
           </p>
           <p>
@@ -209,6 +221,7 @@ export const customPageModule = defineModule({
     actionPanelDemoResource,
     metricCardDemoResource,
     activityCardDemoResource,
+    attachmentCardDemoResource,
     oneColumnLayoutResource,
     twoColumnLayoutResource,
     threeColumnLayoutResource,

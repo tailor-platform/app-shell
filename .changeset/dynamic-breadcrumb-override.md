@@ -13,7 +13,10 @@ defineResource({
   path: ":id",
   component: () => {
     const { data } = useQuery(GET_ORDER, { variables: { id } });
+
+    // Update breadcrumb with the order name
     useOverrideBreadcrumb(data?.order?.name);
+
     return <OrderDetail />;
   },
 });
@@ -27,7 +30,10 @@ import { useOverrideBreadcrumb, useParams } from "@tailor-platform/app-shell";
 const OrderDetailPage = () => {
   const { id } = useParams();
   const { data } = useQuery(GET_ORDER, { variables: { id } });
+
+  // Update breadcrumb with the order name
   useOverrideBreadcrumb(data?.order?.name);
+
   return <div>...</div>;
 };
 

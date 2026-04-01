@@ -428,6 +428,7 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
         items: async.items,
         filter: null,
         onInputValueChange: async.onInputValueChange,
+        onOpenChange: async.onOpenChange,
         ...valueProps,
         itemToStringLabel: getLabel,
       }}
@@ -502,6 +503,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
           creatable.onInputValueChange(v);
           async.onInputValueChange(v);
         },
+        onOpenChange: async.onOpenChange,
         itemToStringLabel: creatable.itemToStringLabel,
         itemToStringValue: creatable.itemToStringValue,
       }}

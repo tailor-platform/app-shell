@@ -22,7 +22,7 @@ afterEach(() => {
 /** Creates a fetcher mock that resolves with the given result after an optional delay. */
 function createFetcher<T>(result: T[], delay = 0) {
   return vi.fn(
-    (_query: string, _opts: { signal: AbortSignal }) =>
+    (_query: string | null, _opts: { signal: AbortSignal }) =>
       new Promise<T[]>((resolve) => {
         if (delay > 0) {
           setTimeout(() => resolve(result), delay);
@@ -35,7 +35,7 @@ function createFetcher<T>(result: T[], delay = 0) {
 
 /** Creates a fetcher mock that rejects with the given error. */
 function createFailingFetcher(error: Error) {
-  return vi.fn((_query: string, _opts: { signal: AbortSignal }) => Promise.reject(error));
+  return vi.fn((_query: string | null, _opts: { signal: AbortSignal }) => Promise.reject(error));
 }
 
 /** Advance timers by `ms` and flush pending microtasks. */
@@ -64,6 +64,7 @@ describe("useAsyncItems", () => {
       expect(result.current.query).toBe("");
       expect(result.current.error).toBeUndefined();
       expect(typeof result.current.onInputValueChange).toBe("function");
+      expect(typeof result.current.onOpenChange).toBe("function");
     });
 
     it("calls fetcher with trimmed query after debounce", async () => {
@@ -135,7 +136,7 @@ describe("useAsyncItems", () => {
 
     it("clears error on successful fetch", async () => {
       let shouldFail = true;
-      const fetcher = vi.fn(async (_q: string, _o: { signal: AbortSignal }) => {
+      const fetcher = vi.fn(async (_q: string | null, _o: { signal: AbortSignal }) => {
         if (shouldFail) throw new Error("fail");
         return ["ok"];
       });
@@ -167,7 +168,7 @@ describe("useAsyncItems", () => {
   // =========================================================================
 
   describe("empty input handling", () => {
-    it("clears items when input is empty", async () => {
+    it("calls fetcher with null when input is empty", async () => {
       const fetcher = createFetcher(["a", "b"]);
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -179,16 +180,20 @@ describe("useAsyncItems", () => {
 
       expect(result.current.items).toEqual(["a", "b"]);
 
-      // Clear input
+      // Clear input — fetcher is called with null
       act(() => {
         result.current.onInputValueChange("");
       });
+      // null fetch is not debounced, so it runs immediately
+      await advanceAndFlush(0);
 
-      expect(result.current.items).toEqual([]);
-      expect(result.current.loading).toBe(false);
+      expect(fetcher).toHaveBeenLastCalledWith(
+        null,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
 
-    it("clears error when input is empty", async () => {
+    it("calls fetcher with null when input is cleared after error", async () => {
       const fetcher = createFailingFetcher(new Error("oops"));
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -200,29 +205,35 @@ describe("useAsyncItems", () => {
 
       expect(result.current.error).toBeDefined();
 
-      // Clear input → error cleared
+      // Clear input → fetcher called with null
       act(() => {
         result.current.onInputValueChange("");
       });
+      await advanceAndFlush(0);
 
-      expect(result.current.error).toBeUndefined();
+      expect(fetcher).toHaveBeenLastCalledWith(
+        null,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
 
-    it("does not fetch for whitespace-only input", async () => {
+    it("calls fetcher with null for whitespace-only input", async () => {
       const fetcher = createFetcher([]);
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
       act(() => {
         result.current.onInputValueChange("   ");
       });
-      await advanceAndFlush(300);
+      await advanceAndFlush(0);
 
-      expect(fetcher).not.toHaveBeenCalled();
-      expect(result.current.loading).toBe(false);
+      expect(fetcher).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
 
-    it("sets loading=false when input is empty", async () => {
-      const fetcher = createFetcher(["a"], 100);
+    it("sets loading=true then false when input is emptied and null-fetch completes", async () => {
+      const fetcher = createFetcher(["a"]);
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
       act(() => {
@@ -233,6 +244,8 @@ describe("useAsyncItems", () => {
       act(() => {
         result.current.onInputValueChange("");
       });
+      // null fetch runs immediately (no debounce) and resolves synchronously
+      await advanceAndFlush(0);
       expect(result.current.loading).toBe(false);
     });
   });
@@ -303,16 +316,20 @@ describe("useAsyncItems", () => {
       expect(fetcher).toHaveBeenCalledWith("second", expect.anything());
     });
 
-    it("does not set up debounce timer for empty input", async () => {
+    it("calls fetcher with null immediately (no debounce) for empty input", async () => {
       const fetcher = createFetcher([]);
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
       act(() => {
         result.current.onInputValueChange("");
       });
-      await advanceAndFlush(300);
+      // null fetch is called immediately, not debounced
+      await advanceAndFlush(0);
 
-      expect(fetcher).not.toHaveBeenCalled();
+      expect(fetcher).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
     });
   });
 
@@ -336,10 +353,10 @@ describe("useAsyncItems", () => {
 
     it("aborts previous in-flight request when a new query fires", async () => {
       let capturedSignals: AbortSignal[] = [];
-      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+      const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
         capturedSignals.push(opts.signal);
         return new Promise<string[]>((resolve) => {
-          setTimeout(() => resolve([_q]), 200);
+          setTimeout(() => resolve([_q ?? ""]), 200);
         });
       });
 
@@ -362,7 +379,7 @@ describe("useAsyncItems", () => {
 
     it("does not update state from an aborted request", async () => {
       let callIndex = 0;
-      const fetcher = vi.fn(async (_: string, opts: { signal: AbortSignal }) => {
+      const fetcher = vi.fn(async (_: string | null, opts: { signal: AbortSignal }) => {
         callIndex++;
         const myIndex = callIndex;
         return new Promise<string[]>((resolve, reject) => {
@@ -405,10 +422,10 @@ describe("useAsyncItems", () => {
       expect(result.current.items).toEqual(["fresh-result"]);
     });
 
-    it("aborts in-flight request when input is cleared", async () => {
-      let capturedSignal: AbortSignal | null = null;
-      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
-        capturedSignal = opts.signal;
+    it("aborts in-flight request when input is cleared and starts null fetch", async () => {
+      const capturedSignals: AbortSignal[] = [];
+      const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
+        capturedSignals.push(opts.signal);
         return new Promise<string[]>((resolve) => {
           setTimeout(() => resolve(["result"]), 500);
         });
@@ -421,18 +438,22 @@ describe("useAsyncItems", () => {
       });
       await advanceAndFlush(300);
 
-      expect(capturedSignal).not.toBeNull();
+      expect(capturedSignals).toHaveLength(1);
 
       act(() => {
         result.current.onInputValueChange("");
       });
+      await advanceAndFlush(0);
 
-      expect(capturedSignal!.aborted).toBe(true);
+      // First request aborted, second (null) request started
+      expect(capturedSignals[0].aborted).toBe(true);
+      expect(capturedSignals).toHaveLength(2);
+      expect(fetcher).toHaveBeenLastCalledWith(null, expect.anything());
     });
 
     it("cancels pending request and clears timeout on unmount", async () => {
       let capturedSignal: AbortSignal | null = null;
-      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+      const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
         capturedSignal = opts.signal;
         return new Promise<string[]>((resolve) => {
           setTimeout(() => resolve(["result"]), 500);
@@ -472,7 +493,7 @@ describe("useAsyncItems", () => {
     });
 
     it("does not set AbortError as error state", async () => {
-      const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+      const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
         return new Promise<string[]>((_, reject) => {
           // Simulate an abort happening immediately
           const timer = setTimeout(() => {
@@ -517,7 +538,7 @@ describe("useAsyncItems", () => {
 
     it("clears error on next successful fetch", async () => {
       let shouldFail = true;
-      const fetcher = vi.fn(async (_q: string, _opts: { signal: AbortSignal }) => {
+      const fetcher = vi.fn(async (_q: string | null, _opts: { signal: AbortSignal }) => {
         if (shouldFail) throw new Error("fail");
         return ["success"];
       });
@@ -609,6 +630,67 @@ describe("useAsyncItems", () => {
 
       expect(result.current.items).toEqual(items);
       expect(result.current.items[0].name).toBe("Alpha");
+    });
+  });
+
+  // =========================================================================
+  // onOpenChange
+  // =========================================================================
+
+  describe("onOpenChange", () => {
+    it("calls fetcher with null on first open", async () => {
+      const fetcher = createFetcher(["a", "b"]);
+      const { result } = renderHook(() => useAsyncItems({ fetcher }));
+
+      act(() => {
+        result.current.onOpenChange(true);
+      });
+      await advanceAndFlush(0);
+
+      expect(fetcher).toHaveBeenCalledOnce();
+      expect(fetcher).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+      expect(result.current.items).toEqual(["a", "b"]);
+    });
+
+    it("does not fetch again on subsequent opens", async () => {
+      const fetcher = createFetcher(["a"]);
+      const { result } = renderHook(() => useAsyncItems({ fetcher }));
+
+      // First open
+      act(() => {
+        result.current.onOpenChange(true);
+      });
+      await advanceAndFlush(0);
+
+      expect(fetcher).toHaveBeenCalledOnce();
+
+      // Close
+      act(() => {
+        result.current.onOpenChange(false);
+      });
+
+      // Second open — should not fetch again
+      act(() => {
+        result.current.onOpenChange(true);
+      });
+      await advanceAndFlush(0);
+
+      expect(fetcher).toHaveBeenCalledOnce();
+    });
+
+    it("does not fetch when closed", async () => {
+      const fetcher = createFetcher(["a"]);
+      const { result } = renderHook(() => useAsyncItems({ fetcher }));
+
+      act(() => {
+        result.current.onOpenChange(false);
+      });
+      await advanceAndFlush(0);
+
+      expect(fetcher).not.toHaveBeenCalled();
     });
   });
 });

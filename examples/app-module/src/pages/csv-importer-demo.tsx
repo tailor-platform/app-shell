@@ -5,7 +5,7 @@ import {
   CsvImporter,
   useCsvImporter,
   csv,
-  type CellError,
+  type CsvCellIssue,
 } from "@tailor-platform/app-shell";
 
 const CsvImporterDemoPage = () => {
@@ -54,7 +54,7 @@ const CsvImporterDemoPage = () => {
     onValidate: async (rows) => {
       // Simulate server-side validation (uniqueness check on SKU)
       await new Promise((resolve) => setTimeout(resolve, 500));
-      const errors: CellError[] = [];
+      const errors: CsvCellIssue[] = [];
       const seenSkus = new Map<string, number>();
       for (const row of rows) {
         const sku = row.data.sku;

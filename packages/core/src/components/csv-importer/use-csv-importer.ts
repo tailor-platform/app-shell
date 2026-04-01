@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
-import type { CsvSchema, CsvImportEvent, CsvImporterProps, CellError, ParsedRow } from "./types";
+import type { CsvSchema, CsvImportEvent, CsvImporterProps, CsvCellIssue, ParsedRow } from "./types";
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 type UseCsvImporterOptions = {
   schema: CsvSchema;
   onImport: (event: CsvImportEvent) => void | Promise<void>;
-  onValidate?: (rows: ParsedRow[]) => Promise<CellError[]>;
+  onValidate?: (rows: ParsedRow[]) => Promise<CsvCellIssue[]>;
   maxFileSize?: number;
 };
 

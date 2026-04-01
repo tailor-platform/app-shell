@@ -22,10 +22,9 @@ import type {
   CsvCorrection,
   CsvImportEvent,
   CsvSchema,
-  ParsedRow,
-  CellError,
 } from "./types";
 import { parseCsvFile, autoMatchHeaders } from "./csv-parser";
+import { processRows } from "./process-rows";
 import { useT } from "./i18n-labels";
 
 // ─── Context for Portal container (Drawer popup ref) ────
@@ -340,8 +339,8 @@ function ReviewStep({
     headerIndexMap.set(csvHeaders[i], i);
   }
 
-  const errorCount = issues.filter((i) => i.severity === "error").length;
-  const warningCount = issues.filter((i) => i.severity === "warning").length;
+  const errorCount = issues.filter((i) => i.level === "error").length;
+  const warningCount = issues.filter((i) => i.level === "warning").length;
 
   const getCorrectedValue = (rowIdx: number, columnKey: string): string | undefined => {
     const correction = corrections.find((c) => c.row === rowIdx && c.columnKey === columnKey);
@@ -349,7 +348,7 @@ function ReviewStep({
   };
 
   const getIssue = (rowIdx: number, columnKey: string): CsvCellIssue | undefined => {
-    return issues.find((i) => i.row === rowIdx && i.columnKey === columnKey);
+    return issues.find((i) => i.rowIndex === rowIdx && i.columnKey === columnKey);
   };
 
   return (
@@ -402,8 +401,8 @@ function ReviewStep({
                       key={m.csvHeader}
                       className={cn(
                         "astw:px-1 astw:py-1",
-                        issue?.severity === "error" && "astw:bg-destructive/10",
-                        issue?.severity === "warning" && "astw:bg-yellow-50",
+                        issue?.level === "error" && "astw:bg-destructive/10",
+                        issue?.level === "warning" && "astw:bg-yellow-50",
                       )}
                     >
                       <div className="astw:flex astw:flex-col astw:gap-0.5">
@@ -411,8 +410,8 @@ function ReviewStep({
                           type="text"
                           className={cn(
                             "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
-                            issue?.severity === "error" && "astw:border-destructive",
-                            issue?.severity === "warning" && "astw:border-yellow-500",
+                            issue?.level === "error" && "astw:border-destructive",
+                            issue?.level === "warning" && "astw:border-yellow-500",
                             !issue && "astw:border-transparent",
                           )}
                           value={displayValue}
@@ -422,7 +421,7 @@ function ReviewStep({
                           <span
                             className={cn(
                               "astw:text-xs astw:px-2",
-                              issue.severity === "error"
+                              issue.level === "error"
                                 ? "astw:text-destructive"
                                 : "astw:text-yellow-600",
                             )}
@@ -478,119 +477,6 @@ function CompleteStep({
       </div>
     </div>
   );
-}
-
-// ─── Validation Logic ────────────────────────────────────
-
-function validateRows(
-  rawRows: string[][],
-  csvHeaders: string[],
-  mappings: CsvColumnMapping[],
-  schema: CsvSchema,
-  corrections: CsvCorrection[],
-): CsvCellIssue[] {
-  const issues: CsvCellIssue[] = [];
-  const headerIndexMap = new Map<string, number>();
-  for (let i = 0; i < csvHeaders.length; i++) {
-    headerIndexMap.set(csvHeaders[i], i);
-  }
-
-  const activeMappings = mappings.filter((m) => m.columnKey !== null);
-
-  for (let rowIdx = 0; rowIdx < rawRows.length; rowIdx++) {
-    const row = rawRows[rowIdx];
-
-    for (const mapping of activeMappings) {
-      const colIdx = headerIndexMap.get(mapping.csvHeader);
-      const correction = corrections.find(
-        (c) => c.row === rowIdx && c.columnKey === mapping.columnKey,
-      );
-      const rawValue: string =
-        correction !== undefined
-          ? String(correction.newValue)
-          : colIdx !== undefined
-            ? row[colIdx]
-            : "";
-
-      const column = schema.columns.find((c) => c.key === mapping.columnKey);
-      if (!column?.schema) continue;
-
-      const result = column.schema["~standard"].validate(rawValue);
-      // Built-in helpers are sync; external schemas may be async (handled at gate points)
-      if (result instanceof Promise) continue;
-
-      if (result.issues) {
-        for (const issue of result.issues) {
-          issues.push({
-            row: rowIdx,
-            columnKey: mapping.columnKey!,
-            value: rawValue,
-            message: issue.message,
-            severity: "error",
-          });
-          break; // Only first error per cell
-        }
-      }
-    }
-  }
-
-  return issues;
-}
-
-/** Build ParsedRow[] for onValidate, applying schema coercion where possible. */
-function buildParsedRows(
-  rawRows: string[][],
-  csvHeaders: string[],
-  mappings: CsvColumnMapping[],
-  schema: CsvSchema,
-  corrections: CsvCorrection[],
-): ParsedRow[] {
-  const headerIndexMap = new Map<string, number>();
-  for (let i = 0; i < csvHeaders.length; i++) {
-    headerIndexMap.set(csvHeaders[i], i);
-  }
-
-  const activeMappings = mappings.filter((m) => m.columnKey !== null);
-
-  return rawRows.map((row, rowIdx) => {
-    const data: Record<string, unknown> = {};
-    for (const mapping of activeMappings) {
-      const colIdx = headerIndexMap.get(mapping.csvHeader);
-      const correction = corrections.find(
-        (c) => c.row === rowIdx && c.columnKey === mapping.columnKey,
-      );
-      const rawValue: string =
-        correction !== undefined
-          ? String(correction.newValue)
-          : colIdx !== undefined
-            ? row[colIdx]
-            : "";
-
-      const column = schema.columns.find((c) => c.key === mapping.columnKey);
-      if (column?.schema) {
-        const result = column.schema["~standard"].validate(rawValue);
-        if (!(result instanceof Promise) && !result.issues) {
-          data[mapping.columnKey!] = result.value;
-        } else {
-          data[mapping.columnKey!] = rawValue;
-        }
-      } else {
-        data[mapping.columnKey!] = rawValue;
-      }
-    }
-    return { rowIndex: rowIdx, data };
-  });
-}
-
-/** Convert CellError[] from onValidate to CsvCellIssue[]. */
-function cellErrorsToIssues(errors: CellError[]): CsvCellIssue[] {
-  return errors.map((e) => ({
-    row: e.rowIndex,
-    columnKey: e.columnKey,
-    value: undefined,
-    message: e.message,
-    severity: e.level,
-  }));
 }
 
 // ─── Main Component ──────────────────────────────────────
@@ -669,19 +555,20 @@ export function CsvImporter({
   }, []);
 
   const handleGoToReview = useCallback(async () => {
-    // 1. Client-side schema validation (synchronous)
-    const clientIssues = validateRows(rawRows, csvHeaders, mappings, schema, corrections);
+    const { issues: clientIssues, parsedRows } = processRows(
+      rawRows,
+      csvHeaders,
+      mappings,
+      schema,
+      corrections,
+    );
     setIssues(clientIssues);
     setStep("review");
 
-    // 2. Server-side onValidate (async)
     if (onValidate) {
       setValidating(true);
       try {
-        const parsedRows = buildParsedRows(rawRows, csvHeaders, mappings, schema, corrections);
-        const serverErrors = await onValidate(parsedRows);
-        const serverIssues = cellErrorsToIssues(serverErrors);
-        // Merge client + server issues
+        const serverIssues = await onValidate(parsedRows);
         setIssues((prev) => [...prev, ...serverIssues]);
       } finally {
         setValidating(false);
@@ -711,7 +598,7 @@ export function CsvImporter({
         if (!column) return prev;
 
         // Remove old client-side issues for this cell
-        const filtered = prev.filter((i) => !(i.row === rowIdx && i.columnKey === columnKey));
+        const filtered = prev.filter((i) => !(i.rowIndex === rowIdx && i.columnKey === columnKey));
 
         if (!column.schema) return filtered;
 
@@ -722,11 +609,10 @@ export function CsvImporter({
           return [
             ...filtered,
             {
-              row: rowIdx,
+              rowIndex: rowIdx,
               columnKey,
-              value,
               message: result.issues[0].message,
-              severity: "error" as const,
+              level: "error" as const,
             },
           ];
         }
@@ -737,7 +623,7 @@ export function CsvImporter({
     [mappings, csvHeaders, rawRows, schema],
   );
 
-  const hasErrors = issues.some((i) => i.severity === "error");
+  const hasErrors = issues.some((i) => i.level === "error");
   const hasUnmappedRequired = schema.columns.some(
     (col) => col.required && !mappings.some((m) => m.columnKey === col.key),
   );
@@ -749,12 +635,15 @@ export function CsvImporter({
     if (onValidate) {
       setValidating(true);
       try {
-        const parsedRows = buildParsedRows(rawRows, csvHeaders, mappings, schema, corrections);
-        const serverErrors = await onValidate(parsedRows);
-        if (serverErrors.length > 0) {
-          // Re-run client-side validation too
-          const clientIssues = validateRows(rawRows, csvHeaders, mappings, schema, corrections);
-          const serverIssues = cellErrorsToIssues(serverErrors);
+        const { issues: clientIssues, parsedRows } = processRows(
+          rawRows,
+          csvHeaders,
+          mappings,
+          schema,
+          corrections,
+        );
+        const serverIssues = await onValidate(parsedRows);
+        if (serverIssues.length > 0) {
           setIssues([...clientIssues, ...serverIssues]);
           return; // Stay on Review — do not proceed to import
         }
@@ -763,7 +652,7 @@ export function CsvImporter({
       }
     }
 
-    const warnings = issues.filter((i) => i.severity === "warning");
+    const warnings = issues.filter((i) => i.level === "warning");
     const correctedRows = new Set(corrections.map((c) => c.row)).size;
 
     const event: CsvImportEvent = {

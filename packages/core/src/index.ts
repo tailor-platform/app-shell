@@ -118,6 +118,5 @@ export {
   type CsvCorrection,
   type CsvColumnMapping,
   type CsvCellIssue,
-  type CellError,
   type ParsedRow,
 } from "./components/csv-importer";

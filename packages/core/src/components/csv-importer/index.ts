@@ -9,6 +9,5 @@ export type {
   CsvCorrection,
   CsvColumnMapping,
   CsvCellIssue,
-  CellError,
   ParsedRow,
 } from "./types";

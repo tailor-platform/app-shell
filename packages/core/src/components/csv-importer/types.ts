@@ -29,18 +29,6 @@ export type CsvSchema = {
   columns: CsvColumn[];
 };
 
-/** A cell-level error returned by `onValidate`. */
-export type CellError = {
-  /** 0-based row index in the parsed data. */
-  rowIndex: number;
-  /** The schema column key this error applies to. */
-  columnKey: string;
-  /** "error" blocks import; "warning" allows import. */
-  level: "error" | "warning";
-  /** Human-readable message displayed in the cell tooltip. */
-  message: string;
-};
-
 /** The row data passed to `onValidate`, after transforms have been applied. */
 export type ParsedRow = {
   /** 0-based row index, stable across edits. */
@@ -52,15 +40,13 @@ export type ParsedRow = {
 /** A single cell-level issue found during validation. */
 export type CsvCellIssue = {
   /** 0-based row index. */
-  row: number;
+  rowIndex: number;
   /** The schema column key. */
   columnKey: string;
-  /** The cell value that caused the issue. */
-  value: unknown;
+  /** "error" blocks import; "warning" allows import but shows a warning. */
+  level: "error" | "warning";
   /** Human-readable message. */
   message: string;
-  /** "error" blocks import; "warning" allows import but shows a warning. */
-  severity: "error" | "warning";
 };
 
 /** A mapping from a CSV header to a schema column key. */
@@ -113,5 +99,5 @@ export type CsvImporterProps = {
   schema: CsvSchema;
   maxFileSize: number;
   onImport: (event: CsvImportEvent) => void | Promise<void>;
-  onValidate?: (rows: ParsedRow[]) => Promise<CellError[]>;
+  onValidate?: (rows: ParsedRow[]) => Promise<CsvCellIssue[]>;
 };

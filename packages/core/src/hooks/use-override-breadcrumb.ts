@@ -32,7 +32,7 @@ export function useOverrideBreadcrumb(title: string | undefined): void {
   const path = location.pathname;
 
   useEffect(() => {
-    if (title !== undefined) {
+    if (title) {
       register(path, title);
     } else {
       unregister(path);

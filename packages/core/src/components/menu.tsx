@@ -56,7 +56,9 @@ function Content({
 }) {
   const { side = "bottom", align = "start", sideOffset = 4 } = position ?? {};
   return (
-    <BaseMenu.Portal>
+    // Establish a stacking context on the portal container so the menu
+    // renders above fixed elements like sidebar-container (z-index: 10).
+    <BaseMenu.Portal style={{ position: "relative", zIndex: 50 }}>
       <BaseMenu.Positioner sideOffset={sideOffset} side={side} align={align}>
         <BaseMenu.Popup
           data-slot="menu-content"

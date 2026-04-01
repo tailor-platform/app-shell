@@ -41,14 +41,14 @@ import { Tabs } from "@tailor-platform/app-shell";
 
 ### Tabs.Root Props
 
-| Prop            | Type                         | Default        | Description                             |
-| --------------- | ---------------------------- | -------------- | --------------------------------------- |
-| `defaultValue`  | `Tabs.Tab.Value`             | `0`            | Initial active tab value (uncontrolled) |
-| `value`         | `Tabs.Tab.Value`             | -              | Controlled active tab value             |
-| `onValueChange` | `(value: any) => void`       | -              | Callback when the active tab changes    |
-| `orientation`   | `'horizontal' \| 'vertical'` | `'horizontal'` | Orientation of the tabs                 |
-| `className`     | `string`                     | -              | Additional CSS classes for root         |
-| `children`      | `React.ReactNode`            | -              | Tabs sub-components                     |
+| Prop            | Type                                                                          | Default        | Description                                                                                                                                          |
+| --------------- | ----------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultValue`  | `Tabs.Tab.Value`                                                              | `0`            | Initial active tab value (uncontrolled)                                                                                                              |
+| `value`         | `Tabs.Tab.Value`                                                              | -              | Controlled active tab value                                                                                                                          |
+| `onValueChange` | `(value: Tabs.Tab.Value, eventDetails: Tabs.Root.ChangeEventDetails) => void` | -              | Callback when the active tab changes. The second argument includes `activationDirection` and standard event details (`event`, `reason`, `cancel()`). |
+| `orientation`   | `'horizontal' \| 'vertical'`                                                  | `'horizontal'` | Orientation of the tabs                                                                                                                              |
+| `className`     | `string`                                                                      | -              | Additional CSS classes for root                                                                                                                      |
+| `children`      | `React.ReactNode`                                                             | -              | Tabs sub-components                                                                                                                                  |
 
 ### Tabs.List Props
 

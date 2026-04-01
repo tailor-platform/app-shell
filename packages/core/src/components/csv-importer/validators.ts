@@ -1,86 +1,114 @@
-import type { CsvColumnRule } from "./types";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function success<T>(value: T): StandardSchemaV1.SuccessResult<T> {
+  return { value };
+}
 
-/** Built-in validation rules for CSV columns. */
-export const csvRules = {
-  /** Rejects empty, null, or undefined values. */
-  required: (message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") {
-        return message ?? "This field is required";
-      }
-      return undefined;
-    },
-  }),
+function failure(message: string): StandardSchemaV1.FailureResult {
+  return { issues: [{ message }] };
+}
 
-  /** Validates against a regular expression. */
-  pattern: (regex: RegExp, message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") return undefined;
-      if (!regex.test(String(value))) {
-        return message ?? `Must match pattern ${regex.source}`;
-      }
-      return undefined;
-    },
-  }),
+/** Built-in Standard Schema helpers for common CSV column types. */
+export const csv = {
+  /** Pass-through with optional length constraints. `min: 1` serves as a required check. */
+  string(options?: { min?: number; max?: number }): StandardSchemaV1<string, string> {
+    return {
+      "~standard": {
+        version: 1,
+        vendor: "csv-importer",
+        validate(value) {
+          const str = String(value ?? "");
+          if (options?.min !== undefined && str.length < options.min) {
+            return failure(`Must be at least ${options.min} character(s)`);
+          }
+          if (options?.max !== undefined && str.length > options.max) {
+            return failure(`Must be at most ${options.max} character(s)`);
+          }
+          return success(str);
+        },
+      },
+    };
+  },
 
-  /** Validates a number is within a range (inclusive). */
-  range: (min: number, max: number, message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") return undefined;
-      const num = Number(value);
-      if (Number.isNaN(num) || num < min || num > max) {
-        return message ?? `Must be between ${min} and ${max}`;
-      }
-      return undefined;
-    },
-  }),
+  /** Coerces the raw CSV string to a number. Rejects `NaN`. */
+  number(options?: {
+    min?: number;
+    max?: number;
+    integer?: boolean;
+  }): StandardSchemaV1<string, number> {
+    return {
+      "~standard": {
+        version: 1,
+        vendor: "csv-importer",
+        validate(value) {
+          const num = Number(value);
+          if (Number.isNaN(num)) {
+            return failure("Must be a valid number");
+          }
+          if (options?.integer && !Number.isInteger(num)) {
+            return failure("Must be an integer");
+          }
+          if (options?.min !== undefined && num < options.min) {
+            return failure(`Must be at least ${options.min}`);
+          }
+          if (options?.max !== undefined && num > options.max) {
+            return failure(`Must be at most ${options.max}`);
+          }
+          return success(num);
+        },
+      },
+    };
+  },
 
-  /** Validates the value is one of the allowed values. */
-  oneOf: (values: unknown[], message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") return undefined;
-      if (!values.includes(value)) {
-        return message ?? `Must be one of: ${values.join(", ")}`;
-      }
-      return undefined;
-    },
-  }),
+  /** Coerces common CSV boolean representations to `true`/`false`. Case-insensitive. */
+  boolean(options?: { truthy?: string[]; falsy?: string[] }): StandardSchemaV1<string, boolean> {
+    const truthyValues = (options?.truthy ?? ["true", "1", "yes"]).map((v) => v.toLowerCase());
+    const falsyValues = (options?.falsy ?? ["false", "0", "no"]).map((v) => v.toLowerCase());
+    return {
+      "~standard": {
+        version: 1,
+        vendor: "csv-importer",
+        validate(value) {
+          const str = String(value ?? "").toLowerCase();
+          if (truthyValues.includes(str)) return success(true);
+          if (falsyValues.includes(str)) return success(false);
+          return failure(`Must be one of: ${[...truthyValues, ...falsyValues].join(", ")}`);
+        },
+      },
+    };
+  },
 
-  /** Validates an email address format. */
-  email: (message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") return undefined;
-      if (!EMAIL_RE.test(String(value))) {
-        return message ?? "Must be a valid email address";
-      }
-      return undefined;
-    },
-  }),
+  /** Coerces the raw CSV string to a `Date` object. Rejects unparseable values. */
+  date(): StandardSchemaV1<string, Date> {
+    return {
+      "~standard": {
+        version: 1,
+        vendor: "csv-importer",
+        validate(value) {
+          const d = new Date(String(value));
+          if (Number.isNaN(d.getTime())) {
+            return failure("Must be a valid date");
+          }
+          return success(d);
+        },
+      },
+    };
+  },
 
-  /** Validates the value can be parsed as a date. */
-  date: (message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") return undefined;
-      const d = new Date(String(value));
-      if (Number.isNaN(d.getTime())) {
-        return message ?? "Must be a valid date";
-      }
-      return undefined;
-    },
-  }),
-
-  /** Validates string length (min and optional max). */
-  length: (min: number, max?: number, message?: string): CsvColumnRule => ({
-    validate: (value) => {
-      if (value === null || value === undefined || value === "") return undefined;
-      const len = String(value).length;
-      if (len < min || (max !== undefined && len > max)) {
-        const range = max !== undefined ? `${min}-${max}` : `at least ${min}`;
-        return message ?? `Length must be ${range} characters`;
-      }
-      return undefined;
-    },
-  }),
+  /** Validates the value is one of the allowed strings. Case-sensitive. */
+  enum<T extends string>(values: T[]): StandardSchemaV1<string, T> {
+    return {
+      "~standard": {
+        version: 1,
+        vendor: "csv-importer",
+        validate(value) {
+          const str = String(value ?? "");
+          if (values.includes(str as T)) {
+            return success(str as T);
+          }
+          return failure(`Must be one of: ${values.join(", ")}`);
+        },
+      },
+    };
+  },
 };

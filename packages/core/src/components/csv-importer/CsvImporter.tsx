@@ -22,9 +22,11 @@ import type {
   CsvCorrection,
   CsvImportEvent,
   CsvSchema,
-  CsvImporterLabels,
+  ParsedRow,
+  CellError,
 } from "./types";
 import { parseCsvFile, autoMatchHeaders } from "./csv-parser";
+import { useT } from "./i18n-labels";
 
 // ─── Context for Portal container (Drawer popup ref) ────
 
@@ -61,16 +63,17 @@ function MappingColumnSelect({
 // ─── Upload Step ─────────────────────────────────────────
 
 function UploadStep({
-  labels,
   maxFileSize,
+  schema,
   onFileSelected,
   error,
 }: {
-  labels: CsvImporterLabels;
   maxFileSize: number;
+  schema: CsvSchema;
   onFileSelected: (file: File) => void;
   error: string | null;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -109,6 +112,18 @@ function UploadStep({
     [handleFile],
   );
 
+  const handleTemplateDownload = useCallback(() => {
+    const headers = schema.columns.map((col) => col.label);
+    const csvContent = headers.join(",") + "\n";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [schema]);
+
   const maxSizeMB = (maxFileSize / (1024 * 1024)).toFixed(0);
 
   return (
@@ -128,7 +143,7 @@ function UploadStep({
       >
         <UploadIcon className="astw:text-muted-foreground astw:size-10" />
         <div className="astw:text-center">
-          <p className="astw:text-sm astw:font-medium">{labels.uploadButton}</p>
+          <p className="astw:text-sm astw:font-medium">{t("uploadButton")}</p>
           <p className="astw:text-muted-foreground astw:text-xs">CSV (max {maxSizeMB}MB)</p>
         </div>
         <input
@@ -145,6 +160,13 @@ function UploadStep({
           {error}
         </div>
       )}
+      <button
+        type="button"
+        className="astw:text-sm astw:text-primary astw:underline astw:cursor-pointer astw:bg-transparent astw:border-none astw:p-0 astw:self-start"
+        onClick={handleTemplateDownload}
+      >
+        {t("templateDownload")}
+      </button>
     </div>
   );
 }
@@ -152,20 +174,19 @@ function UploadStep({
 // ─── Mapping Step ────────────────────────────────────────
 
 function MappingStep({
-  labels,
   csvHeaders,
   rawRows,
   schema,
   mappings,
   onMappingChange,
 }: {
-  labels: CsvImporterLabels;
   csvHeaders: string[];
   rawRows: string[][];
   schema: CsvSchema;
   mappings: CsvColumnMapping[];
   onMappingChange: (csvHeader: string, columnKey: string | null) => void;
 }) {
+  const t = useT();
   // Build a header-index map for preview lookup
   const headerIndexMap = new Map<string, number>();
   for (let i = 0; i < csvHeaders.length; i++) {
@@ -191,13 +212,13 @@ function MappingStep({
             <tr className="astw:border-b astw:bg-muted/50">
               <th className="astw:w-10 astw:px-3 astw:py-2" />
               <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
-                {labels.mappingExpectedField}
+                {t("mappingExpectedField")}
               </th>
               <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
-                {labels.mappingCsvColumn}
+                {t("mappingCsvColumn")}
               </th>
               <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
-                {labels.mappingPreview}
+                {t("mappingPreview")}
               </th>
             </tr>
           </thead>
@@ -300,6 +321,7 @@ function ReviewStep({
   mappings,
   issues,
   corrections,
+  validating,
   onCellEdit,
 }: {
   schema: CsvSchema;
@@ -308,8 +330,10 @@ function ReviewStep({
   mappings: CsvColumnMapping[];
   issues: CsvCellIssue[];
   corrections: CsvCorrection[];
+  validating: boolean;
   onCellEdit: (row: number, columnKey: string, value: string) => void;
 }) {
+  const t = useT();
   const activeMappings = mappings.filter((m) => m.columnKey !== null);
   const headerIndexMap = new Map<string, number>();
   for (let i = 0; i < csvHeaders.length; i++) {
@@ -334,6 +358,12 @@ function ReviewStep({
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
         {warningCount > 0 && <span className="astw:text-yellow-600">Warnings: {warningCount}</span>}
+        {validating && (
+          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-muted-foreground">
+            <span className="astw:size-3 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
+            {t("reviewValidating")}
+          </span>
+        )}
       </div>
 
       <div className="astw:overflow-auto astw:max-h-[400px] astw:rounded-md astw:border">
@@ -469,15 +499,13 @@ function validateRows(
 
   for (let rowIdx = 0; rowIdx < rawRows.length; rowIdx++) {
     const row = rawRows[rowIdx];
-    const rowRecord: Record<string, unknown> = {};
 
-    // First pass: build row record with transforms
     for (const mapping of activeMappings) {
       const colIdx = headerIndexMap.get(mapping.csvHeader);
       const correction = corrections.find(
         (c) => c.row === rowIdx && c.columnKey === mapping.columnKey,
       );
-      let rawValue: string =
+      const rawValue: string =
         correction !== undefined
           ? String(correction.newValue)
           : colIdx !== undefined
@@ -485,39 +513,19 @@ function validateRows(
             : "";
 
       const column = schema.columns.find((c) => c.key === mapping.columnKey);
-      if (column?.transform) {
-        try {
-          rowRecord[mapping.columnKey!] = column.transform(rawValue);
-        } catch (e) {
-          // Transform failure → warning
-          rowRecord[mapping.columnKey!] = rawValue;
+      if (!column?.schema) continue;
+
+      const result = column.schema["~standard"].validate(rawValue);
+      // Built-in helpers are sync; external schemas may be async (handled at gate points)
+      if (result instanceof Promise) continue;
+
+      if (result.issues) {
+        for (const issue of result.issues) {
           issues.push({
             row: rowIdx,
             columnKey: mapping.columnKey!,
             value: rawValue,
-            message: e instanceof Error ? `Transform failed: ${e.message}` : "Transform failed",
-            severity: "warning",
-          });
-        }
-      } else {
-        rowRecord[mapping.columnKey!] = rawValue;
-      }
-    }
-
-    // Second pass: run validation rules
-    for (const mapping of activeMappings) {
-      const column = schema.columns.find((c) => c.key === mapping.columnKey);
-      if (!column?.rules) continue;
-
-      const value = rowRecord[mapping.columnKey!];
-      for (const rule of column.rules) {
-        const errorMessage = rule.validate(value, rowRecord);
-        if (errorMessage) {
-          issues.push({
-            row: rowIdx,
-            columnKey: mapping.columnKey!,
-            value,
-            message: errorMessage,
+            message: issue.message,
             severity: "error",
           });
           break; // Only first error per cell
@@ -529,16 +537,73 @@ function validateRows(
   return issues;
 }
 
+/** Build ParsedRow[] for onValidate, applying schema coercion where possible. */
+function buildParsedRows(
+  rawRows: string[][],
+  csvHeaders: string[],
+  mappings: CsvColumnMapping[],
+  schema: CsvSchema,
+  corrections: CsvCorrection[],
+): ParsedRow[] {
+  const headerIndexMap = new Map<string, number>();
+  for (let i = 0; i < csvHeaders.length; i++) {
+    headerIndexMap.set(csvHeaders[i], i);
+  }
+
+  const activeMappings = mappings.filter((m) => m.columnKey !== null);
+
+  return rawRows.map((row, rowIdx) => {
+    const data: Record<string, unknown> = {};
+    for (const mapping of activeMappings) {
+      const colIdx = headerIndexMap.get(mapping.csvHeader);
+      const correction = corrections.find(
+        (c) => c.row === rowIdx && c.columnKey === mapping.columnKey,
+      );
+      const rawValue: string =
+        correction !== undefined
+          ? String(correction.newValue)
+          : colIdx !== undefined
+            ? row[colIdx]
+            : "";
+
+      const column = schema.columns.find((c) => c.key === mapping.columnKey);
+      if (column?.schema) {
+        const result = column.schema["~standard"].validate(rawValue);
+        if (!(result instanceof Promise) && !result.issues) {
+          data[mapping.columnKey!] = result.value;
+        } else {
+          data[mapping.columnKey!] = rawValue;
+        }
+      } else {
+        data[mapping.columnKey!] = rawValue;
+      }
+    }
+    return { rowIndex: rowIdx, data };
+  });
+}
+
+/** Convert CellError[] from onValidate to CsvCellIssue[]. */
+function cellErrorsToIssues(errors: CellError[]): CsvCellIssue[] {
+  return errors.map((e) => ({
+    row: e.rowIndex,
+    columnKey: e.columnKey,
+    value: undefined,
+    message: e.message,
+    severity: e.level,
+  }));
+}
+
 // ─── Main Component ──────────────────────────────────────
 
 export function CsvImporter({
   open,
   onOpenChange,
   schema,
-  labels,
   maxFileSize,
   onImport,
+  onValidate,
 }: CsvImporterProps) {
+  const t = useT();
   const [step, setStep] = useState<CsvImporterStep>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -548,6 +613,7 @@ export function CsvImporter({
   const [corrections, setCorrections] = useState<CsvCorrection[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [validating, setValidating] = useState(false);
   const drawerPopupRef = useRef<HTMLDivElement>(null);
 
   const reset = useCallback(() => {
@@ -560,6 +626,7 @@ export function CsvImporter({
     setCorrections([]);
     setUploadError(null);
     setImporting(false);
+    setValidating(false);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -577,7 +644,7 @@ export function CsvImporter({
       setUploadError(null);
 
       if (selectedFile.size > maxFileSize) {
-        setUploadError(labels.fileSizeError);
+        setUploadError(t("fileSizeError"));
         return;
       }
 
@@ -591,21 +658,36 @@ export function CsvImporter({
         setMappings(autoMappings);
         setStep("mapping");
       } catch {
-        setUploadError(labels.parseError);
+        setUploadError(t("parseError"));
       }
     },
-    [maxFileSize, labels, schema],
+    [maxFileSize, t, schema],
   );
 
   const handleMappingChange = useCallback((csvHeader: string, columnKey: string | null) => {
     setMappings((prev) => prev.map((m) => (m.csvHeader === csvHeader ? { ...m, columnKey } : m)));
   }, []);
 
-  const handleGoToReview = useCallback(() => {
-    const validationIssues = validateRows(rawRows, csvHeaders, mappings, schema, corrections);
-    setIssues(validationIssues);
+  const handleGoToReview = useCallback(async () => {
+    // 1. Client-side schema validation (synchronous)
+    const clientIssues = validateRows(rawRows, csvHeaders, mappings, schema, corrections);
+    setIssues(clientIssues);
     setStep("review");
-  }, [rawRows, csvHeaders, mappings, schema, corrections]);
+
+    // 2. Server-side onValidate (async)
+    if (onValidate) {
+      setValidating(true);
+      try {
+        const parsedRows = buildParsedRows(rawRows, csvHeaders, mappings, schema, corrections);
+        const serverErrors = await onValidate(parsedRows);
+        const serverIssues = cellErrorsToIssues(serverErrors);
+        // Merge client + server issues
+        setIssues((prev) => [...prev, ...serverIssues]);
+      } finally {
+        setValidating(false);
+      }
+    }
+  }, [rawRows, csvHeaders, mappings, schema, corrections, onValidate]);
 
   const handleCellEdit = useCallback(
     (rowIdx: number, columnKey: string, value: string) => {
@@ -623,77 +705,36 @@ export function CsvImporter({
         return [...prev, { row: rowIdx, columnKey, oldValue, newValue: value }];
       });
 
-      // Re-validate after edit
+      // Re-validate this cell using Standard Schema (synchronous, immediate)
       setIssues((prev) => {
         const column = schema.columns.find((c) => c.key === columnKey);
         if (!column) return prev;
 
-        // Remove old issues for this cell
+        // Remove old client-side issues for this cell
         const filtered = prev.filter((i) => !(i.row === rowIdx && i.columnKey === columnKey));
 
-        // Build row record for context
-        const headerIndexMap = new Map<string, number>();
-        for (let i = 0; i < csvHeaders.length; i++) {
-          headerIndexMap.set(csvHeaders[i], i);
-        }
-        const rowRecord: Record<string, unknown> = {};
-        for (const m of mappings) {
-          if (!m.columnKey) continue;
-          const colIdx = headerIndexMap.get(m.csvHeader);
-          if (m.columnKey === columnKey) {
-            rowRecord[m.columnKey] = value;
-          } else {
-            const corr = corrections.find((c) => c.row === rowIdx && c.columnKey === m.columnKey);
-            rowRecord[m.columnKey] = corr
-              ? corr.newValue
-              : colIdx !== undefined
-                ? rawRows[rowIdx][colIdx]
-                : "";
-          }
-        }
+        if (!column.schema) return filtered;
 
-        // Transform
-        let transformedValue: unknown = value;
-        if (column.transform) {
-          try {
-            transformedValue = column.transform(value);
-          } catch (e) {
-            return [
-              ...filtered,
-              {
-                row: rowIdx,
-                columnKey,
-                value,
-                message: e instanceof Error ? `Transform failed: ${e.message}` : "Transform failed",
-                severity: "warning" as const,
-              },
-            ];
-          }
-        }
+        const result = column.schema["~standard"].validate(value);
+        if (result instanceof Promise) return filtered;
 
-        // Validate
-        if (column.rules) {
-          for (const rule of column.rules) {
-            const errorMessage = rule.validate(transformedValue, rowRecord);
-            if (errorMessage) {
-              return [
-                ...filtered,
-                {
-                  row: rowIdx,
-                  columnKey,
-                  value: transformedValue,
-                  message: errorMessage,
-                  severity: "error" as const,
-                },
-              ];
-            }
-          }
+        if (result.issues) {
+          return [
+            ...filtered,
+            {
+              row: rowIdx,
+              columnKey,
+              value,
+              message: result.issues[0].message,
+              severity: "error" as const,
+            },
+          ];
         }
 
         return filtered;
       });
     },
-    [mappings, csvHeaders, rawRows, schema, corrections],
+    [mappings, csvHeaders, rawRows, schema],
   );
 
   const hasErrors = issues.some((i) => i.severity === "error");
@@ -703,6 +744,24 @@ export function CsvImporter({
 
   const handleImport = useCallback(async () => {
     if (!file) return;
+
+    // Re-run onValidate before import
+    if (onValidate) {
+      setValidating(true);
+      try {
+        const parsedRows = buildParsedRows(rawRows, csvHeaders, mappings, schema, corrections);
+        const serverErrors = await onValidate(parsedRows);
+        if (serverErrors.length > 0) {
+          // Re-run client-side validation too
+          const clientIssues = validateRows(rawRows, csvHeaders, mappings, schema, corrections);
+          const serverIssues = cellErrorsToIssues(serverErrors);
+          setIssues([...clientIssues, ...serverIssues]);
+          return; // Stay on Review — do not proceed to import
+        }
+      } finally {
+        setValidating(false);
+      }
+    }
 
     const warnings = issues.filter((i) => i.severity === "warning");
     const correctedRows = new Set(corrections.map((c) => c.row)).size;
@@ -728,20 +787,20 @@ export function CsvImporter({
     } finally {
       setImporting(false);
     }
-  }, [file, mappings, corrections, issues, rawRows, onImport]);
+  }, [file, mappings, corrections, issues, rawRows, onImport, onValidate, csvHeaders, schema]);
 
   const stepTitle: Record<CsvImporterStep, string> = {
-    upload: labels.uploadTitle,
-    mapping: labels.mappingTitle,
-    review: labels.reviewTitle,
-    complete: labels.completeTitle,
+    upload: t("uploadTitle"),
+    mapping: t("mappingTitle"),
+    review: t("reviewTitle"),
+    complete: t("completeTitle"),
   };
 
   const stepDescription: Record<CsvImporterStep, string> = {
-    upload: labels.uploadDescription,
-    mapping: labels.mappingDescription,
-    review: labels.reviewDescription,
-    complete: labels.completeDescription,
+    upload: t("uploadDescription"),
+    mapping: t("mappingDescription"),
+    review: t("reviewDescription"),
+    complete: t("completeDescription"),
   };
 
   return (
@@ -809,15 +868,14 @@ export function CsvImporter({
                 <div className="astw:flex-1 astw:flex astw:flex-col astw:overflow-y-auto astw:px-6 astw:py-4">
                   {step === "upload" && (
                     <UploadStep
-                      labels={labels}
                       maxFileSize={maxFileSize}
+                      schema={schema}
                       onFileSelected={handleFileSelected}
                       error={uploadError}
                     />
                   )}
                   {step === "mapping" && (
                     <MappingStep
-                      labels={labels}
                       csvHeaders={csvHeaders}
                       rawRows={rawRows}
                       schema={schema}
@@ -833,6 +891,7 @@ export function CsvImporter({
                       mappings={mappings}
                       issues={issues}
                       corrections={corrections}
+                      validating={validating}
                       onCellEdit={handleCellEdit}
                     />
                   )}
@@ -858,7 +917,7 @@ export function CsvImporter({
                         }}
                       >
                         <ArrowLeftIcon className="astw:size-4" />
-                        {labels.backButton}
+                        {t("backButton")}
                       </button>
                     )}
                     {step === "review" && (
@@ -868,7 +927,7 @@ export function CsvImporter({
                         onClick={() => setStep("mapping")}
                       >
                         <ArrowLeftIcon className="astw:size-4" />
-                        {labels.backButton}
+                        {t("backButton")}
                       </button>
                     )}
                   </div>
@@ -880,7 +939,7 @@ export function CsvImporter({
                         onClick={handleGoToReview}
                         disabled={hasUnmappedRequired}
                       >
-                        {labels.nextButton}
+                        {t("nextButton")}
                         <ArrowRightIcon className="astw:size-4" />
                       </button>
                     )}
@@ -889,15 +948,15 @@ export function CsvImporter({
                         type="button"
                         className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
                         onClick={handleImport}
-                        disabled={hasErrors || importing}
+                        disabled={hasErrors || importing || validating}
                       >
                         {importing ? (
                           <span className="astw:inline-flex astw:items-center astw:gap-2">
                             <span className="astw:size-4 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
-                            Importing...
+                            {t("importingButton")}
                           </span>
                         ) : (
-                          labels.importButton
+                          t("importButton")
                         )}
                       </button>
                     )}
@@ -907,7 +966,7 @@ export function CsvImporter({
                         className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90"
                         onClick={() => handleOpenChange(false)}
                       >
-                        {labels.closeButton}
+                        {t("closeButton")}
                       </button>
                     )}
                   </div>

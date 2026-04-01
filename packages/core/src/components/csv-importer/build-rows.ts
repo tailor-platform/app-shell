@@ -2,7 +2,7 @@ import type { CsvImportEvent, CsvSchema, CsvColumnMapping, CsvCorrection } from 
 import { parseCsvFile } from "./csv-parser";
 
 /**
- * Reconstruct parsed rows from the original file, applying mappings, transforms,
+ * Reconstruct parsed rows from the original file, applying mappings, schema coercion,
  * and user corrections.
  *
  * Use this when you want the fully-processed row data on the frontend side.
@@ -43,18 +43,24 @@ export async function buildRows(
       const correctionKey = `${rowIndex}:${mapping.columnKey}`;
       const correction = correctionMap.get(correctionKey);
 
-      let value: unknown = correction ? correction.newValue : row[colIndex];
+      const rawValue: unknown = correction ? correction.newValue : row[colIndex];
 
       const column = columnMap.get(mapping.columnKey);
-      if (column?.transform && typeof value === "string") {
-        try {
-          value = column.transform(value);
-        } catch {
-          // Keep raw value if transform fails
+      if (column?.schema) {
+        const result = column.schema["~standard"].validate(rawValue);
+        if (result instanceof Promise) {
+          // Standard Schema can return sync or async; buildRows is already async
+          // but we handle the sync path for built-in helpers
+          record[mapping.columnKey] = rawValue;
+        } else if (!result.issues) {
+          record[mapping.columnKey] = result.value;
+        } else {
+          // Validation failed — keep raw value
+          record[mapping.columnKey] = rawValue;
         }
+      } else {
+        record[mapping.columnKey] = rawValue;
       }
-
-      record[mapping.columnKey] = value;
     }
 
     return record;

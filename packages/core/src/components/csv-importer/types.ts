@@ -1,8 +1,4 @@
-/** A validation rule for a single CSV column. */
-export type CsvColumnRule = {
-  /** Return an error message string if invalid, or undefined if valid. */
-  validate: (value: unknown, row: Record<string, unknown>) => string | undefined;
-};
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 /** Schema definition for a single column in the CSV. */
 export type CsvColumn = {
@@ -16,15 +12,41 @@ export type CsvColumn = {
   required?: boolean;
   /** Alternative CSV header names for automatic matching. */
   aliases?: string[];
-  /** Transform the raw CSV string value into a typed value. */
-  transform?: (raw: string) => unknown;
-  /** Validation rules applied after transform. */
-  rules?: CsvColumnRule[];
+  /**
+   * A Standard Schema-compatible validator for this column.
+   * Handles both coercion (transform) and validation in a single declaration.
+   * The raw CSV string is passed to `schema["~standard"].validate(value)`.
+   * On success, the output value is used for the parsed row.
+   * On failure, each issue is rendered as a cell error in the Review table.
+   *
+   * @see https://github.com/standard-schema/standard-schema
+   */
+  schema?: StandardSchemaV1;
 };
 
 /** The full schema definition for a CSV import. */
 export type CsvSchema = {
   columns: CsvColumn[];
+};
+
+/** A cell-level error returned by `onValidate`. */
+export type CellError = {
+  /** 0-based row index in the parsed data. */
+  rowIndex: number;
+  /** The schema column key this error applies to. */
+  columnKey: string;
+  /** "error" blocks import; "warning" allows import. */
+  level: "error" | "warning";
+  /** Human-readable message displayed in the cell tooltip. */
+  message: string;
+};
+
+/** The row data passed to `onValidate`, after transforms have been applied. */
+export type ParsedRow = {
+  /** 0-based row index, stable across edits. */
+  rowIndex: number;
+  /** Column key → transformed value. Only mapped columns are included. */
+  data: Record<string, unknown>;
 };
 
 /** A single cell-level issue found during validation. */
@@ -81,28 +103,6 @@ export type CsvImportEvent = {
   };
 };
 
-/** Customizable UI text labels. */
-export type CsvImporterLabels = {
-  uploadTitle: string;
-  uploadDescription: string;
-  uploadButton: string;
-  mappingTitle: string;
-  mappingDescription: string;
-  mappingExpectedField: string;
-  mappingCsvColumn: string;
-  mappingPreview: string;
-  reviewTitle: string;
-  reviewDescription: string;
-  completeTitle: string;
-  completeDescription: string;
-  nextButton: string;
-  backButton: string;
-  importButton: string;
-  closeButton: string;
-  fileSizeError: string;
-  parseError: string;
-};
-
 /** The step in the CSV import flow. */
 export type CsvImporterStep = "upload" | "mapping" | "review" | "complete";
 
@@ -111,7 +111,7 @@ export type CsvImporterProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   schema: CsvSchema;
-  labels: CsvImporterLabels;
   maxFileSize: number;
   onImport: (event: CsvImportEvent) => void | Promise<void>;
+  onValidate?: (rows: ParsedRow[]) => Promise<CellError[]>;
 };

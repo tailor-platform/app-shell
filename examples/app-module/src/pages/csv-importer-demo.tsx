@@ -4,6 +4,8 @@ import {
   Button,
   CsvImporter,
   useCsvImporter,
+  csv,
+  type CellError,
 } from "@tailor-platform/app-shell";
 
 const CsvImporterDemoPage = () => {
@@ -16,6 +18,7 @@ const CsvImporterDemoPage = () => {
           description: "The name of the product",
           required: true,
           aliases: ["product_name", "productName", "Product"],
+          schema: csv.string({ min: 1 }),
         },
         {
           key: "sku",
@@ -23,6 +26,7 @@ const CsvImporterDemoPage = () => {
           description: "Stock keeping unit",
           required: true,
           aliases: ["product_sku", "item_code"],
+          schema: csv.string({ min: 1 }),
         },
         {
           key: "price",
@@ -30,39 +34,14 @@ const CsvImporterDemoPage = () => {
           description: "Unit price (number)",
           required: true,
           aliases: ["unit_price", "unitPrice"],
-          transform: (raw) => {
-            const n = Number(raw);
-            if (Number.isNaN(n)) throw new Error(`"${raw}" is not a valid number`);
-            return n;
-          },
-          rules: [
-            {
-              validate: (value) =>
-                typeof value === "number" && value > 0
-                  ? undefined
-                  : "Price must be a positive number",
-            },
-          ],
+          schema: csv.number({ min: 0 }),
         },
         {
           key: "quantity",
           label: "Quantity",
           description: "Stock quantity (integer)",
           aliases: ["qty", "stock"],
-          transform: (raw) => {
-            const n = Number(raw);
-            if (Number.isNaN(n) || !Number.isInteger(n))
-              throw new Error(`"${raw}" is not a valid integer`);
-            return n;
-          },
-          rules: [
-            {
-              validate: (value) =>
-                typeof value === "number" && value >= 0
-                  ? undefined
-                  : "Quantity must be a non-negative integer",
-            },
-          ],
+          schema: csv.number({ integer: true, min: 0 }),
         },
         {
           key: "category",
@@ -71,6 +50,29 @@ const CsvImporterDemoPage = () => {
           aliases: ["product_category", "type"],
         },
       ],
+    },
+    onValidate: async (rows) => {
+      // Simulate server-side validation (uniqueness check on SKU)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const errors: CellError[] = [];
+      const seenSkus = new Map<string, number>();
+      for (const row of rows) {
+        const sku = row.data.sku;
+        if (typeof sku === "string" && sku !== "") {
+          const prevIndex = seenSkus.get(sku);
+          if (prevIndex !== undefined) {
+            errors.push({
+              rowIndex: row.rowIndex,
+              columnKey: "sku",
+              level: "error",
+              message: `Duplicate SKU "${sku}" (same as row ${prevIndex + 1})`,
+            });
+          } else {
+            seenSkus.set(sku, row.rowIndex);
+          }
+        }
+      }
+      return errors;
     },
     onImport: async (event) => {
       // Simulate async import

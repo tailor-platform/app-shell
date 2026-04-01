@@ -295,7 +295,7 @@ const ActivityCardDemoPage = () => (
           maxVisible={6}
           overflowLabel="more"
           groupBy="day"
-          activities={activityCardDemoActivities}
+          items={activityCardDemoActivities}
         />
       </div>
     </Layout.Column>
@@ -945,7 +945,7 @@ const twoColumnLayoutResource = defineResource({
             maxVisible={6}
             overflowLabel="more"
             groupBy="day"
-            activities={activityCardDemoActivities}
+            items={activityCardDemoActivities}
           />
           <ActionPanel title="Additional actions" actions={[]} />
         </Layout.Column>

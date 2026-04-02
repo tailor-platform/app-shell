@@ -6,6 +6,7 @@ import {
   DescriptionCard,
   ActionPanel,
   type AppShellPageProps,
+  useOverrideBreadcrumb,
 } from "@tailor-platform/app-shell";
 import { paths } from "../../../../routes.generated";
 
@@ -64,7 +65,6 @@ const ArchiveIcon = () => (
 
 const OrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-
   const orderData = {
     orderId: id,
     status: "processing",
@@ -73,6 +73,8 @@ const OrderDetailPage = () => {
     currency: "USD",
     createdAt: "2026-03-15T10:30:00Z",
   };
+
+  useOverrideBreadcrumb(id);
 
   return (
     <Layout>

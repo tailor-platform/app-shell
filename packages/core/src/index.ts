@@ -73,6 +73,9 @@ export { usePageMeta, type PageMeta } from "./hooks/use-page-meta";
 // Toast
 export { useToast } from "./hooks/use-toast";
 
+// Breadcrumb override
+export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
+
 // Components
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";

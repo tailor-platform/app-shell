@@ -9,6 +9,7 @@ import {
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
@@ -211,9 +212,11 @@ export const AppShell = (props: AppShellProps) => {
   return (
     <AppShellConfigContext.Provider value={configValue}>
       <AppShellDataContext.Provider value={dataValue}>
-        <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-          <RouterContainer rootComponent={props.rootComponent}>{props.children}</RouterContainer>
-        </ThemeProvider>
+        <BreadcrumbOverrideProvider>
+          <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
+            <RouterContainer rootComponent={props.rootComponent}>{props.children}</RouterContainer>
+          </ThemeProvider>
+        </BreadcrumbOverrideProvider>
       </AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>
   );

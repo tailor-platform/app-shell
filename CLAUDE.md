@@ -12,34 +12,9 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 **📋 For development commands, see:** [README.md - Development](./README.md#development)
 
-## Documentation Index
+## Documentation
 
-This project has comprehensive documentation organized in the `docs/` directory:
-
-- **[Introduction](./docs/introduction.md)** - What is AppShell and why use it
-- **[Quick Start](./docs/quickstart.md)** - Installation, setup, and first steps
-
-### API Hooks
-
-- **[useOverrideBreadcrumb](./docs/api/use-override-breadcrumb.md)** - Hook for dynamically overriding breadcrumb titles from within page components
-
-### UI Components
-
-- **[Button](./docs/components/button.md)** - Styled button with variants and sizes
-- **[Input](./docs/components/input.md)** - Styled text input
-- **[Avatar](./docs/components/avatar.md)** - User avatar with image and fallback
-- **[Card](./docs/components/card.md)** - General-purpose container with compound component API
-- **[Table](./docs/components/table.md)** - Semantic HTML table sub-components
-- **[ActivityCard](./docs/components/activity-card.md)** - Timeline of document activities with avatars and overflow dialog
-- **[Dialog](./docs/components/dialog.md)** - Modal dialog with compound component API
-- **[Menu](./docs/components/menu.md)** - Dropdown menu with compound component API, checkbox/radio items, groups, and sub-menus
-- **[Sheet](./docs/components/sheet.md)** - Slide-in panel with swipe-to-dismiss support
-- **[Tooltip](./docs/components/tooltip.md)** - Hover/focus tooltip with placement options
-- **[Select](./docs/components/select.md)** - Single or multi-select dropdown with optional async loading
-- **[Combobox](./docs/components/combobox.md)** - Searchable combobox with filtering, multi-select, async loading, and creatable items
-- **[Autocomplete](./docs/components/autocomplete.md)** - Free-text input with a suggestion list and optional async loading
-- **[MetricCard](./docs/components/metric-card.md)** - Compact card for dashboard KPI summaries with title, value, optional trend and description
-- **[Form, Field, and Fieldset](./docs/components/form.md)** - Form, Field, and Fieldset components for building validated forms with accessibility wiring and optional React Hook Form integration
+**📖 For component and API documentation, see:** [`docs/`](./docs/)
 
 ## Key Architecture Points (LLM Orientation)
 

@@ -231,6 +231,13 @@ function AutocompleteStatus({
 AutocompleteStatus.displayName = "Autocomplete.Status";
 // ============================================================================
 
+/**
+ * Return type of `Autocomplete.useAsync`.
+ *
+ * Unlike `Combobox.useAsync`, this does **not** include `onOpenChange`.
+ * Autocomplete is driven by focus and typing — not by an explicit open/close
+ * toggle — so `onOpenChange` is intentionally omitted.
+ */
 export interface AutocompleteUseAsyncReturn<T> {
   /** Fetched items — pass to the Root `items` prop */
   items: T[];
@@ -259,7 +266,7 @@ export interface AutocompleteUseAsyncReturn<T> {
  * ```tsx
  * const movies = Autocomplete.useAsync({
  *   fetcher: async (query, { signal }) => {
- *     const res = await fetch(`/api/movies?q=${query}`, { signal });
+ *     const res = await fetch(`/api/movies?q=${query ?? ""}`, { signal });
  *     if (!res.ok) return [];
  *     return res.json();
  *   },

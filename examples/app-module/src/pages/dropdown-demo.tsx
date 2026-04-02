@@ -362,7 +362,7 @@ const DropdownComponentsDemoPage = () => {
                   fetcher={async (query) => {
                     await new Promise((r) => setTimeout(r, 400));
                     return allProgrammingLanguages.filter((l) =>
-                      l.toLowerCase().includes(query.toLowerCase()),
+                      l.toLowerCase().includes((query ?? "").toLowerCase()),
                     );
                   }}
                   placeholder="Search programming language..."
@@ -377,7 +377,7 @@ const DropdownComponentsDemoPage = () => {
                   fetcher={async (query) => {
                     await new Promise((r) => setTimeout(r, 400));
                     return allProgrammingLanguages.filter((l) =>
-                      l.toLowerCase().includes(query.toLowerCase()),
+                      l.toLowerCase().includes((query ?? "").toLowerCase()),
                     );
                   }}
                   multiple
@@ -488,7 +488,7 @@ const DropdownComponentsDemoPage = () => {
                   fetcher={async (query) => {
                     await new Promise((r) => setTimeout(r, 400));
                     return allProgrammingLanguages.filter((l) =>
-                      l.toLowerCase().includes(query.toLowerCase()),
+                      l.toLowerCase().includes((query ?? "").toLowerCase()),
                     );
                   }}
                   placeholder="Search programming language..."

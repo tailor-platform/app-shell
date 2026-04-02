@@ -1409,8 +1409,8 @@ describe("Combobox.Parts.useAsync", () => {
     expect(fetcher).toHaveBeenCalledOnce();
   });
 
-  it("clears items when input is empty", async () => {
-    const fetcher = vi.fn(async () => ["a", "b"]);
+  it("calls fetcher with null when input is empty", async () => {
+    const fetcher = vi.fn(async (_q: string | null) => (_q === null ? [] : ["a", "b"]));
     const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
 
     act(() => {
@@ -1422,7 +1422,8 @@ describe("Combobox.Parts.useAsync", () => {
     act(() => {
       result.current.onInputValueChange("");
     });
-    expect(result.current.items).toEqual([]);
+    await advanceAndFlush(0);
+    expect(fetcher).toHaveBeenLastCalledWith(null, expect.anything());
   });
 
   it("captures fetcher errors", async () => {
@@ -1443,10 +1444,10 @@ describe("Combobox.Parts.useAsync", () => {
 
   it("cancels previous request on new input", async () => {
     let capturedSignals: AbortSignal[] = [];
-    const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+    const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
       capturedSignals.push(opts.signal);
       return new Promise<string[]>((resolve) => {
-        setTimeout(() => resolve([_q]), 200);
+        setTimeout(() => resolve([_q ?? ""]), 200);
       });
     });
 

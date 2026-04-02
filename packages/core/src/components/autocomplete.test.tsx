@@ -277,8 +277,8 @@ describe("Autocomplete.Parts.useAsync", () => {
     expect(fetcher).toHaveBeenCalledOnce();
   });
 
-  it("clears items when value is empty", async () => {
-    const fetcher = vi.fn(async () => ["a", "b"]);
+  it("calls fetcher with null when value is empty", async () => {
+    const fetcher = vi.fn(async (_q: string | null) => (_q === null ? [] : ["a", "b"]));
     const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
@@ -290,7 +290,8 @@ describe("Autocomplete.Parts.useAsync", () => {
     act(() => {
       result.current.onValueChange("");
     });
-    expect(result.current.items).toEqual([]);
+    await advanceAndFlush(0);
+    expect(fetcher).toHaveBeenLastCalledWith(null, expect.anything());
   });
 
   it("captures fetcher errors", async () => {
@@ -311,10 +312,10 @@ describe("Autocomplete.Parts.useAsync", () => {
 
   it("cancels previous request on new input", async () => {
     let capturedSignals: AbortSignal[] = [];
-    const fetcher = vi.fn(async (_q: string, opts: { signal: AbortSignal }) => {
+    const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
       capturedSignals.push(opts.signal);
       return new Promise<string[]>((resolve) => {
-        setTimeout(() => resolve([_q]), 200);
+        setTimeout(() => resolve([_q ?? ""]), 200);
       });
     });
 
@@ -333,15 +334,15 @@ describe("Autocomplete.Parts.useAsync", () => {
     expect(capturedSignals[0].aborted).toBe(true);
   });
 
-  it("does not fetch for whitespace-only input", async () => {
+  it("calls fetcher with null for whitespace-only input", async () => {
     const fetcher = vi.fn(async () => []);
     const { result } = renderHook(() => Autocomplete.Parts.useAsync({ fetcher }));
 
     act(() => {
       result.current.onValueChange("   ");
     });
-    await advanceAndFlush(300);
+    await advanceAndFlush(0);
 
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledWith(null, expect.anything());
   });
 });

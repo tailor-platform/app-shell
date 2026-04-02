@@ -13,8 +13,16 @@ const DEFAULT_DEBOUNCE_MS = 300;
  * If the fetcher throws, the component silently falls back to an empty
  * item list — there is no `onError` callback. Catch errors in the
  * fetcher to show toasts, log to error tracking, or return fallback data.
+ *
+ * The `query` parameter is `null` when the user has not typed anything
+ * (e.g. the dropdown was just opened). Return initial / default items
+ * for `null`, or return an empty array to show nothing until the user
+ * starts typing.
  */
-export type AsyncFetcherFn<T> = (query: string, options: { signal: AbortSignal }) => Promise<T[]>;
+export type AsyncFetcherFn<T> = (
+  query: string | null,
+  options: { signal: AbortSignal },
+) => Promise<T[]>;
 
 /**
  * Fetcher specification for async item loading.
@@ -27,14 +35,14 @@ export type AsyncFetcherFn<T> = (query: string, options: { signal: AbortSignal }
  * ```tsx
  * // Plain function (default 300ms debounce)
  * fetcher: async (query, { signal }) => {
- *   const res = await fetch(`/api/search?q=${query}`, { signal });
+ *   const res = await fetch(`/api/search?q=${query ?? ""}`, { signal });
  *   return res.json();
  * }
  *
  * // Object with custom debounce
  * fetcher: {
  *   fn: async (query, { signal }) => {
- *     const res = await fetch(`/api/search?q=${query}`, { signal });
+ *     const res = await fetch(`/api/search?q=${query ?? ""}`, { signal });
  *     return res.json();
  *   },
  *   debounceMs: 500,
@@ -64,7 +72,7 @@ export interface UseAsyncItemsOptions<T> {
    * ```tsx
    * // Plain function
    * fetcher: async (query, { signal }) => {
-   *   const res = await fetch(`/api/search?q=${query}`, { signal });
+   *   const res = await fetch(`/api/search?q=${query ?? ""}`, { signal });
    *   return res.json();
    * }
    *
@@ -89,6 +97,8 @@ export interface UseAsyncItemsReturn<T> {
   error: unknown;
   /** Input change handler — pass to the Root `onInputValueChange` prop */
   onInputValueChange: (value: string) => void;
+  /** Open change handler — pass to the Root `onOpenChange` prop to fetch initial items on open */
+  onOpenChange: (open: boolean) => void;
 }
 
 /**
@@ -111,33 +121,22 @@ export function useAsyncItems<T>({ fetcher }: UseAsyncItemsOptions<T>): UseAsync
   const fetcherRef = useRef(fetcherFn);
   fetcherRef.current = fetcherFn;
 
-  const onInputValueChange = useCallback(
-    (value: string) => {
-      setQuery(value);
-
+  const doFetch = useCallback(
+    (fetchQuery: string | null, debounce: boolean) => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = null;
       }
 
-      if (value.trim().length === 0) {
-        abortControllerRef.current?.abort();
-        abortControllerRef.current = null;
-        setItems([]);
-        setError(undefined);
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
 
-      debounceTimerRef.current = setTimeout(async () => {
+      const run = async () => {
         abortControllerRef.current?.abort();
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
         try {
-          const result = await fetcherRef.current(value.trim(), {
+          const result = await fetcherRef.current(fetchQuery, {
             signal: controller.signal,
           });
           if (!controller.signal.aborted) {
@@ -155,9 +154,47 @@ export function useAsyncItems<T>({ fetcher }: UseAsyncItemsOptions<T>): UseAsync
             setLoading(false);
           }
         }
-      }, debounceMs);
+      };
+
+      if (debounce) {
+        debounceTimerRef.current = setTimeout(run, debounceMs);
+      } else {
+        run();
+      }
     },
     [debounceMs],
+  );
+
+  const onInputValueChange = useCallback(
+    (value: string) => {
+      setQuery(value);
+
+      if (value.trim().length === 0) {
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = null;
+        }
+        doFetch(null, false);
+        return;
+      }
+
+      doFetch(value.trim(), true);
+    },
+    [doFetch],
+  );
+
+  const hasFetchedOnOpenRef = useRef(false);
+
+  const onOpenChange = useCallback(
+    (open: boolean) => {
+      if (open && !hasFetchedOnOpenRef.current) {
+        hasFetchedOnOpenRef.current = true;
+        doFetch(null, false);
+      }
+    },
+    [doFetch],
   );
 
   // Cleanup on unmount
@@ -168,5 +205,5 @@ export function useAsyncItems<T>({ fetcher }: UseAsyncItemsOptions<T>): UseAsync
     };
   }, []);
 
-  return { items, loading, query, error, onInputValueChange };
+  return { items, loading, query, error, onInputValueChange, onOpenChange };
 }

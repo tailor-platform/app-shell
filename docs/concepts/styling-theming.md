@@ -35,3 +35,28 @@ In CSS, the order of style-definition affects the final styles which are compute
 To avoid this situation, and to ensure correct style resolution, AppShell components use a class prefix "astw" (AppShell TailWind) to avoid clashes.
 
 This is important to note for developing in AppShell.
+
+## Z-Index Layering
+
+AppShell defines CSS custom properties for z-index values so you can adjust the stacking order to integrate with other libraries or overlays in your application.
+
+These properties are defined in `:root` and can be overridden in your own CSS:
+
+| Property           | Default | Used for                                                            |
+| ------------------ | ------- | ------------------------------------------------------------------- |
+| `--z-sidebar`      | `10`    | The sidebar panel                                                   |
+| `--z-sidebar-rail` | `20`    | The sidebar collapse rail / toggle button                           |
+| `--z-popup`        | `50`    | Portal-based popups (Menu, Select, Combobox, Autocomplete, Tooltip) |
+| `--z-overlay`      | `50`    | Modal overlays (Dialog, Sheet)                                      |
+
+### Example: Raising popup z-index
+
+```css
+/* your-app/globals.css */
+@import "@tailor-platform/app-shell/theme.css";
+@import "tailwindcss";
+
+:root {
+  --z-popup: 100;
+}
+```

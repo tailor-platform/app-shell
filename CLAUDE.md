@@ -19,6 +19,10 @@ This project has comprehensive documentation organized in the `docs/` directory:
 - **[Introduction](./docs/introduction.md)** - What is AppShell and why use it
 - **[Quick Start](./docs/quickstart.md)** - Installation, setup, and first steps
 
+### API Hooks
+
+- **[useOverrideBreadcrumb](./docs/api/use-override-breadcrumb.md)** - Hook for dynamically overriding breadcrumb titles from within page components
+
 ### UI Components
 
 - **[Button](./docs/components/button.md)** - Styled button with variants and sizes

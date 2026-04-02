@@ -33,36 +33,34 @@ export async function buildRows(
     (m): m is CsvColumnMapping & { columnKey: string } => m.columnKey !== null,
   );
 
-  return rows.map((row, rowIndex) => {
-    const record: Record<string, unknown> = {};
+  return Promise.all(
+    rows.map(async (row, rowIndex) => {
+      const record: Record<string, unknown> = {};
 
-    for (const mapping of activeMappings) {
-      const colIndex = headerIndexMap.get(mapping.csvHeader);
-      if (colIndex === undefined) continue;
+      for (const mapping of activeMappings) {
+        const colIndex = headerIndexMap.get(mapping.csvHeader);
+        if (colIndex === undefined) continue;
 
-      const correctionKey = `${rowIndex}:${mapping.columnKey}`;
-      const correction = correctionMap.get(correctionKey);
+        const correctionKey = `${rowIndex}:${mapping.columnKey}`;
+        const correction = correctionMap.get(correctionKey);
 
-      const rawValue: unknown = correction ? correction.newValue : row[colIndex];
+        const rawValue: unknown = correction ? correction.newValue : row[colIndex];
 
-      const column = columnMap.get(mapping.columnKey);
-      if (column?.schema) {
-        const result = column.schema["~standard"].validate(rawValue);
-        if (result instanceof Promise) {
-          // Standard Schema can return sync or async; buildRows is already async
-          // but we handle the sync path for built-in helpers
-          record[mapping.columnKey] = rawValue;
-        } else if (!result.issues) {
-          record[mapping.columnKey] = result.value;
+        const column = columnMap.get(mapping.columnKey);
+        if (column?.schema) {
+          const rawResult = column.schema["~standard"].validate(rawValue);
+          const result = rawResult instanceof Promise ? await rawResult : rawResult;
+          if (!result.issues) {
+            record[mapping.columnKey] = result.value;
+          } else {
+            record[mapping.columnKey] = rawValue;
+          }
         } else {
-          // Validation failed — keep raw value
           record[mapping.columnKey] = rawValue;
         }
-      } else {
-        record[mapping.columnKey] = rawValue;
       }
-    }
 
-    return record;
-  });
+      return record;
+    }),
+  );
 }

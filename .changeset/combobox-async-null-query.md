@@ -1,5 +1,5 @@
 ---
-"@tailor-platform/app-shell": major
+"@tailor-platform/app-shell": minor
 ---
 
 **Breaking:** `AsyncFetcherFn` now receives `string | null` instead of `string` as the `query` parameter.

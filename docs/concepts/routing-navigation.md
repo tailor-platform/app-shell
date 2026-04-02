@@ -49,6 +49,49 @@ const MyComponent = () => {
 };
 ```
 
+## Breadcrumbs
+
+AppShell automatically generates breadcrumbs from your module and resource hierarchy. Each path segment corresponds to a breadcrumb item, using the `title` (or `meta.breadcrumbTitle`) defined in `defineModule` / `defineResource`.
+
+### Static Breadcrumb Titles
+
+Set a fixed breadcrumb title via `meta.breadcrumbTitle`:
+
+```tsx
+defineResource({
+  path: ":id",
+  meta: {
+    breadcrumbTitle: (segment) => `Order #${segment}`,
+  },
+  component: OrderDetailPage,
+});
+// Breadcrumb shows: "Orders > Order #12345"
+```
+
+### Dynamic Breadcrumb Titles
+
+Use the `useOverrideBreadcrumb` hook to replace a breadcrumb segment with a data-driven value from within the rendered page component:
+
+```tsx
+import { useOverrideBreadcrumb } from "@tailor-platform/app-shell";
+
+defineResource({
+  path: ":id",
+  component: () => {
+    const { data } = useQuery(GET_ORDER, { variables: { id } });
+
+    // Breadcrumb updates reactively once data loads
+    useOverrideBreadcrumb(data?.order?.name);
+
+    return <OrderDetail />;
+  },
+});
+```
+
+While `title` is `undefined` (e.g., loading), the override is cleared and the static title is shown. The override is automatically cleaned up on unmount.
+
+See [useOverrideBreadcrumb](../api/use-override-breadcrumb.md) for the full API reference.
+
 ## Command Palette for Quick Navigation
 
 AppShell includes a `CommandPalette` component that provides keyboard-driven quick navigation to any page in your application.

@@ -35,14 +35,14 @@ export type AsyncFetcherFn<T> = (
  * ```tsx
  * // Plain function (default 300ms debounce)
  * fetcher: async (query, { signal }) => {
- *   const res = await fetch(`/api/search?q=${query}`, { signal });
+ *   const res = await fetch(`/api/search?q=${query ?? ""}`, { signal });
  *   return res.json();
  * }
  *
  * // Object with custom debounce
  * fetcher: {
  *   fn: async (query, { signal }) => {
- *     const res = await fetch(`/api/search?q=${query}`, { signal });
+ *     const res = await fetch(`/api/search?q=${query ?? ""}`, { signal });
  *     return res.json();
  *   },
  *   debounceMs: 500,
@@ -72,7 +72,7 @@ export interface UseAsyncItemsOptions<T> {
    * ```tsx
    * // Plain function
    * fetcher: async (query, { signal }) => {
-   *   const res = await fetch(`/api/search?q=${query}`, { signal });
+   *   const res = await fetch(`/api/search?q=${query ?? ""}`, { signal });
    *   return res.json();
    * }
    *

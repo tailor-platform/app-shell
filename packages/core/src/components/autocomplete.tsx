@@ -100,7 +100,7 @@ function AutocompleteContent({
   ...props
 }: React.ComponentProps<typeof BaseAutocomplete.Popup>) {
   return (
-    <BaseAutocomplete.Portal>
+    <BaseAutocomplete.Portal style={{ position: "relative", zIndex: 50 }}>
       <BaseAutocomplete.Positioner>
         <BaseAutocomplete.Popup
           data-slot="autocomplete-content"

@@ -99,7 +99,7 @@ ComboboxInputGroup.displayName = "Combobox.InputGroup";
 
 function ComboboxContent({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Popup>) {
   return (
-    <BaseCombobox.Portal>
+    <BaseCombobox.Portal style={{ position: "relative", zIndex: 50 }}>
       <BaseCombobox.Positioner>
         <BaseCombobox.Popup
           data-slot="combobox-content"

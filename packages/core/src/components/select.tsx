@@ -61,7 +61,7 @@ SelectValue.displayName = "Select.Value";
 
 function SelectContent({ className, ...props }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
-    <BaseSelect.Portal>
+    <BaseSelect.Portal style={{ position: "relative", zIndex: 50 }}>
       <BaseSelect.Positioner>
         <BaseSelect.Popup
           data-slot="select-content"

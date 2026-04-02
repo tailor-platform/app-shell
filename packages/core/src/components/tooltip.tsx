@@ -89,7 +89,7 @@ function Content({
   };
   const { side = "top", align = "center", sideOffset = 5 } = resolved;
   return (
-    <BaseTooltip.Portal>
+    <BaseTooltip.Portal style={{ position: "relative", zIndex: 50 }}>
       <BaseTooltip.Positioner sideOffset={sideOffset} side={side} align={align}>
         <BaseTooltip.Popup
           data-slot="tooltip-content"

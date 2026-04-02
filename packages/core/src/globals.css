@@ -21,6 +21,13 @@
 }
 
 @layer base {
+  :root {
+    --z-sidebar: 10;
+    --z-sidebar-rail: 20;
+    --z-popup: 50;
+    --z-overlay: 50;
+  }
+
   * {
     @apply astw:border-border astw:outline-ring/50;
   }

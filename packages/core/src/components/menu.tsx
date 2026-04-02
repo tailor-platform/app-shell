@@ -56,12 +56,14 @@ function Content({
 }) {
   const { side = "bottom", align = "start", sideOffset = 4 } = position ?? {};
   return (
-    <BaseMenu.Portal>
+    // Establish a stacking context on the portal container so the menu
+    // renders above fixed elements like sidebar-container (z-index: 10).
+    <BaseMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
       <BaseMenu.Positioner sideOffset={sideOffset} side={side} align={align}>
         <BaseMenu.Popup
           data-slot="menu-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:z-50 astw:min-w-[8rem] astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:p-1 astw:shadow-md",
+            "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-[8rem] astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:p-1 astw:shadow-md",
             "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             "astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2",
             className,

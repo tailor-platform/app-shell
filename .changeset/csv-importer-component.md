@@ -65,7 +65,9 @@ const { open, props } = useCsvImporter({
   },
 });
 
-// open() triggers the drawer; props wires up the multi-step UI
+// open() opens the import drawer
 <Button onClick={open}>Import CSV</Button>
+
+// Renders a multi-step flow CSV importer component in drawer
 <CsvImporter {...props} />
 ```

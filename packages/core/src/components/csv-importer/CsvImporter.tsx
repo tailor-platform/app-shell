@@ -321,6 +321,7 @@ function ReviewStep({
   issues,
   corrections,
   validating,
+  validated,
   onCellEdit,
 }: {
   schema: CsvSchema;
@@ -330,6 +331,7 @@ function ReviewStep({
   issues: CsvCellIssue[];
   corrections: CsvCorrection[];
   validating: boolean;
+  validated: boolean;
   onCellEdit: (row: number, columnKey: string, value: string) => void;
 }) {
   const t = useT();
@@ -357,6 +359,12 @@ function ReviewStep({
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
         {warningCount > 0 && <span className="astw:text-yellow-600">Warnings: {warningCount}</span>}
+        {validated && errorCount === 0 && !validating && (
+          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-emerald-600">
+            <CheckCircle2Icon className="astw:size-3" />
+            {t("reviewNoErrors")}
+          </span>
+        )}
         {validating && (
           <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-muted-foreground">
             <span className="astw:size-3 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
@@ -500,6 +508,7 @@ export function CsvImporter({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [validated, setValidated] = useState(false);
   const drawerPopupRef = useRef<HTMLDivElement>(null);
 
   const reset = useCallback(() => {
@@ -513,6 +522,7 @@ export function CsvImporter({
     setUploadError(null);
     setImporting(false);
     setValidating(false);
+    setValidated(false);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -574,6 +584,7 @@ export function CsvImporter({
         setValidating(false);
       }
     }
+    setValidated(true);
   }, [rawRows, csvHeaders, mappings, schema, corrections, onValidate]);
 
   const handleCellEdit = useCallback(
@@ -591,6 +602,9 @@ export function CsvImporter({
         const oldValue = headerIdx >= 0 ? rawRows[rowIdx][headerIdx] : "";
         return [...prev, { row: rowIdx, columnKey, oldValue, newValue: value }];
       });
+
+      // Mark as needing re-check after edit
+      setValidated(false);
 
       // Re-validate this cell using Standard Schema (synchronous, immediate)
       setIssues((prev) => {
@@ -628,29 +642,30 @@ export function CsvImporter({
     (col) => col.required && !mappings.some((m) => m.columnKey === col.key),
   );
 
+  const handleCheck = useCallback(async () => {
+    setValidating(true);
+    try {
+      const { issues: clientIssues, parsedRows } = processRows(
+        rawRows,
+        csvHeaders,
+        mappings,
+        schema,
+        corrections,
+      );
+      let allIssues = [...clientIssues];
+      if (onValidate) {
+        const serverIssues = await onValidate(parsedRows);
+        allIssues = [...allIssues, ...serverIssues];
+      }
+      setIssues(allIssues);
+      setValidated(true);
+    } finally {
+      setValidating(false);
+    }
+  }, [rawRows, csvHeaders, mappings, schema, corrections, onValidate]);
+
   const handleImport = useCallback(async () => {
     if (!file) return;
-
-    // Re-run onValidate before import
-    if (onValidate) {
-      setValidating(true);
-      try {
-        const { issues: clientIssues, parsedRows } = processRows(
-          rawRows,
-          csvHeaders,
-          mappings,
-          schema,
-          corrections,
-        );
-        const serverIssues = await onValidate(parsedRows);
-        if (serverIssues.length > 0) {
-          setIssues([...clientIssues, ...serverIssues]);
-          return; // Stay on Review — do not proceed to import
-        }
-      } finally {
-        setValidating(false);
-      }
-    }
 
     const warnings = issues.filter((i) => i.level === "warning");
     const correctedRows = new Set(corrections.map((c) => c.row)).size;
@@ -676,7 +691,7 @@ export function CsvImporter({
     } finally {
       setImporting(false);
     }
-  }, [file, mappings, corrections, issues, rawRows, onImport, onValidate, csvHeaders, schema]);
+  }, [file, mappings, corrections, issues, rawRows, onImport]);
 
   const stepTitle: Record<CsvImporterStep, string> = {
     upload: t("uploadTitle"),
@@ -781,6 +796,7 @@ export function CsvImporter({
                       issues={issues}
                       corrections={corrections}
                       validating={validating}
+                      validated={validated}
                       onCellEdit={handleCellEdit}
                     />
                   )}
@@ -833,21 +849,34 @@ export function CsvImporter({
                       </button>
                     )}
                     {step === "review" && (
-                      <button
-                        type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
-                        onClick={handleImport}
-                        disabled={hasErrors || importing || validating}
-                      >
-                        {importing ? (
-                          <span className="astw:inline-flex astw:items-center astw:gap-2">
-                            <span className="astw:size-4 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
-                            {t("importingButton")}
-                          </span>
+                      <div className="astw:inline-flex astw:items-center astw:gap-3">
+                        {!validated ? (
+                          <button
+                            type="button"
+                            className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
+                            onClick={handleCheck}
+                            disabled={validating}
+                          >
+                            {t("checkButton")}
+                          </button>
                         ) : (
-                          t("importButton")
+                          <button
+                            type="button"
+                            className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
+                            onClick={handleImport}
+                            disabled={hasErrors || importing}
+                          >
+                            {importing ? (
+                              <span className="astw:inline-flex astw:items-center astw:gap-2">
+                                <span className="astw:size-4 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
+                                {t("importingButton")}
+                              </span>
+                            ) : (
+                              t("importButton")
+                            )}
+                          </button>
                         )}
-                      </button>
+                      </div>
                     )}
                     {step === "complete" && (
                       <button

@@ -37,6 +37,10 @@ export const csv = {
     integer?: boolean;
   }): StandardSchemaV1<string, number> {
     return createSchema((value) => {
+      const str = String(value ?? "").trim();
+      if (str === "") {
+        return failure("Must be a valid number");
+      }
       const num = Number(value);
       if (Number.isNaN(num)) {
         return failure("Must be a valid number");

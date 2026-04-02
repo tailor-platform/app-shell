@@ -70,9 +70,10 @@ describe("csv.number", () => {
     });
   });
 
-  it("coerces empty string to 0", () => {
-    // Number("") === 0 in JavaScript
-    expect(validate<number>(csv.number(), "")).toEqual({ value: 0 });
+  it("rejects empty string", () => {
+    expect(validate(csv.number(), "")).toEqual({
+      issues: [{ message: "Must be a valid number" }],
+    });
   });
 
   it("enforces integer", () => {

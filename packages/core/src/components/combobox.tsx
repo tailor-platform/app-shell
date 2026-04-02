@@ -4,18 +4,12 @@ import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
-import type {
-  UseAsyncItemsOptions,
-  UseAsyncItemsReturn,
-} from "@/hooks/use-async-items";
+import type { UseAsyncItemsOptions, UseAsyncItemsReturn } from "@/hooks/use-async-items";
 
 // Only the props relevant to the Combobox abstraction are picked from BaseCombobox.Root.
 // Base UI-internal props are intentionally excluded so that
 // upstream changes don't leak as breaking changes to consumers.
-type ComboboxRootProps<
-  Value,
-  Multiple extends boolean | undefined = false,
-> = Pick<
+type ComboboxRootProps<Value, Multiple extends boolean | undefined = false> = Pick<
   React.ComponentProps<typeof BaseCombobox.Root<Value, Multiple>>,
   | "items"
   | "value"
@@ -39,10 +33,7 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false>(
 }
 ComboboxRoot.displayName = "Combobox.Root";
 
-function ComboboxInput({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Input>) {
+function ComboboxInput({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Input>) {
   return (
     <BaseCombobox.Input
       data-slot="combobox-input"
@@ -107,14 +98,9 @@ function ComboboxInputGroup({
 }
 ComboboxInputGroup.displayName = "Combobox.InputGroup";
 
-function ComboboxContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Popup>) {
+function ComboboxContent({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Popup>) {
   return (
-    <BaseCombobox.Portal
-      style={{ position: "relative", zIndex: "var(--z-popup)" }}
-    >
+    <BaseCombobox.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
       <BaseCombobox.Positioner>
         <BaseCombobox.Popup
           data-slot="combobox-content"
@@ -130,10 +116,7 @@ function ComboboxContent({
 }
 ComboboxContent.displayName = "Combobox.Content";
 
-function ComboboxList({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.List>) {
+function ComboboxList({ className, ...props }: React.ComponentProps<typeof BaseCombobox.List>) {
   return (
     <BaseCombobox.List
       data-slot="combobox-list"
@@ -171,10 +154,7 @@ function ComboboxItem({
 }
 ComboboxItem.displayName = "Combobox.Item";
 
-function ComboboxEmpty({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Empty>) {
+function ComboboxEmpty({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Empty>) {
   return (
     <BaseCombobox.Empty
       data-slot="combobox-empty"
@@ -188,9 +168,7 @@ function ComboboxEmpty({
 }
 ComboboxEmpty.displayName = "Combobox.Empty";
 
-function ComboboxGroup({
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Group>) {
+function ComboboxGroup({ ...props }: React.ComponentProps<typeof BaseCombobox.Group>) {
   return <BaseCombobox.Group data-slot="combobox-group" {...props} />;
 }
 ComboboxGroup.displayName = "Combobox.Group";
@@ -233,10 +211,7 @@ function ComboboxClear({
 }
 ComboboxClear.displayName = "Combobox.Clear";
 
-function ComboboxChips({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Chips>) {
+function ComboboxChips({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Chips>) {
   return (
     <BaseCombobox.Chips
       data-slot="combobox-chips"
@@ -255,10 +230,7 @@ function ComboboxChips({
 }
 ComboboxChips.displayName = "Combobox.Chips";
 
-function ComboboxChip({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Chip>) {
+function ComboboxChip({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Chip>) {
   return (
     <BaseCombobox.Chip
       data-slot="combobox-chip"
@@ -295,17 +267,12 @@ function ComboboxChipRemove({
 }
 ComboboxChipRemove.displayName = "Combobox.ChipRemove";
 
-function ComboboxValue({
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Value>) {
+function ComboboxValue({ ...props }: React.ComponentProps<typeof BaseCombobox.Value>) {
   return <BaseCombobox.Value data-slot="combobox-value" {...props} />;
 }
 ComboboxValue.displayName = "Combobox.Value";
 
-function ComboboxStatus({
-  className,
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Status>) {
+function ComboboxStatus({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Status>) {
   return (
     <BaseCombobox.Status
       data-slot="combobox-status"
@@ -316,9 +283,7 @@ function ComboboxStatus({
 }
 ComboboxStatus.displayName = "Combobox.Status";
 
-function ComboboxCollection({
-  ...props
-}: React.ComponentProps<typeof BaseCombobox.Collection>) {
+function ComboboxCollection({ ...props }: React.ComponentProps<typeof BaseCombobox.Collection>) {
   return <BaseCombobox.Collection data-slot="combobox-collection" {...props} />;
 }
 ComboboxCollection.displayName = "Combobox.Collection";
@@ -380,18 +345,14 @@ interface UseCreatableOptionsBase<T extends object> {
   formatCreateLabel?: (value: string) => string;
 }
 
-interface UseCreatableOptionsMultiple<
-  T extends object,
-> extends UseCreatableOptionsBase<T> {
+interface UseCreatableOptionsMultiple<T extends object> extends UseCreatableOptionsBase<T> {
   multiple: true;
   defaultValue?: T[];
   /** Called when selection changes (sentinel items are already excluded) */
   onValueChange?: (value: T[]) => void;
 }
 
-interface UseCreatableOptionsSingle<
-  T extends object,
-> extends UseCreatableOptionsBase<T> {
+interface UseCreatableOptionsSingle<T extends object> extends UseCreatableOptionsBase<T> {
   multiple?: false | undefined;
   defaultValue?: T | null;
   /** Called when selection changes */
@@ -402,9 +363,7 @@ interface UseCreatableOptionsSingle<
  * Combined options type for callers that don't know single vs multiple at compile time.
  * Accepts the union of both value shapes.
  */
-interface UseCreatableOptionsCombined<
-  T extends object,
-> extends UseCreatableOptionsBase<T> {
+interface UseCreatableOptionsCombined<T extends object> extends UseCreatableOptionsBase<T> {
   multiple?: boolean;
   defaultValue?: T[] | T | null;
   onValueChange?: ((value: T[]) => void) | ((value: T | null) => void);
@@ -515,12 +474,8 @@ function useCreatable<T extends object>(
   // Type-safe accessors
   const multiValue = selection as T[];
   const singleValue = selection as T | null;
-  const setMultiValue = setSelection as React.Dispatch<
-    React.SetStateAction<T[]>
-  >;
-  const setSingleValue = setSelection as React.Dispatch<
-    React.SetStateAction<T | null>
-  >;
+  const setMultiValue = setSelection as React.Dispatch<React.SetStateAction<T[]>>;
+  const setSingleValue = setSelection as React.Dispatch<React.SetStateAction<T | null>>;
 
   // Tracks the label being created during an async onItemCreated flow.
   // While set, onInputValueChange ignores base-ui's close-handler clearing
@@ -532,8 +487,7 @@ function useCreatable<T extends object>(
   const trimmed = query.trim();
   const lowered = trimmed.toLocaleLowerCase();
   const exactExists =
-    trimmed !== "" &&
-    items.some((item) => getLabel(item).trim().toLocaleLowerCase() === lowered);
+    trimmed !== "" && items.some((item) => getLabel(item).trim().toLocaleLowerCase() === lowered);
 
   // --- Sentinel: the "Create X" option appended to the items list ---
   // Hide the sentinel while an async create is in-flight to prevent double-clicks.
@@ -592,18 +546,10 @@ function useCreatable<T extends object>(
           const base = baseMultiValue ?? [];
           const next = [...base, selected];
           setMultiValue(next);
-          (
-            onValueChange as
-              | UseCreatableOptionsMultiple<T>["onValueChange"]
-              | undefined
-          )?.(next);
+          (onValueChange as UseCreatableOptionsMultiple<T>["onValueChange"] | undefined)?.(next);
         } else {
           setSingleValue(selected);
-          (
-            onValueChange as
-              | UseCreatableOptionsSingle<T>["onValueChange"]
-              | undefined
-          )?.(selected);
+          (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(selected);
         }
         setQuery(isMultiple ? "" : getLabel(selected));
       };
@@ -627,9 +573,7 @@ function useCreatable<T extends object>(
           return;
         }
         // If result is an object (T), use it as the selected value
-        applySelection(
-          result != null && typeof result === "object" ? result : undefined,
-        );
+        applySelection(result != null && typeof result === "object" ? result : undefined);
       };
 
       const handleError = () => {
@@ -642,10 +586,7 @@ function useCreatable<T extends object>(
         const result = onItemCreated(newItem);
 
         // If callback returned a Promise, handle async
-        if (
-          result != null &&
-          typeof (result as Promise<unknown>).then === "function"
-        ) {
+        if (result != null && typeof (result as Promise<unknown>).then === "function") {
           setCreating(true);
           (result as Promise<void | false | T>).then(handleResult, handleError);
         } else {
@@ -670,23 +611,15 @@ function useCreatable<T extends object>(
   // --- Value change handlers ---
   const handleMultipleValueChange = useCallback(
     (next: T[]) => {
-      const creatableItem = next.find(
-        (item) => sentinel !== null && item === sentinel.item,
-      );
+      const creatableItem = next.find((item) => sentinel !== null && item === sentinel.item);
       if (creatableItem && sentinel) {
         const label = sentinel.label;
-        const cleaned = next.filter(
-          (item) => !(sentinel !== null && item === sentinel.item),
-        );
+        const cleaned = next.filter((item) => !(sentinel !== null && item === sentinel.item));
         performCreate(label, cleaned);
         return;
       }
       setMultiValue(next);
-      (
-        onValueChange as
-          | UseCreatableOptionsMultiple<T>["onValueChange"]
-          | undefined
-      )?.(next);
+      (onValueChange as UseCreatableOptionsMultiple<T>["onValueChange"] | undefined)?.(next);
       setQuery("");
     },
     [performCreate, onValueChange, sentinel, setMultiValue],
@@ -700,11 +633,7 @@ function useCreatable<T extends object>(
         return;
       }
       setSingleValue(next);
-      (
-        onValueChange as
-          | UseCreatableOptionsSingle<T>["onValueChange"]
-          | undefined
-      )?.(next);
+      (onValueChange as UseCreatableOptionsSingle<T>["onValueChange"] | undefined)?.(next);
       setQuery("");
     },
     [performCreate, onValueChange, sentinel, setSingleValue],

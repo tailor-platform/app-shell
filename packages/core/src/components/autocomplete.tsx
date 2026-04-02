@@ -11,7 +11,12 @@ import type { UseAsyncItemsOptions } from "@/hooks/use-async-items";
 // upstream changes don't leak as breaking changes to consumers.
 type AutocompletePickedRootProps<Value> = Pick<
   AutocompleteRootProps<Value>,
-  "value" | "defaultValue" | "onValueChange" | "filter" | "disabled" | "children"
+  | "value"
+  | "defaultValue"
+  | "onValueChange"
+  | "filter"
+  | "disabled"
+  | "children"
 > & {
   items?: readonly Value[];
 };
@@ -26,7 +31,9 @@ function AutocompleteRoot<Value>(props: AutocompletePickedRootProps<Value>) {
 }
 AutocompleteRoot.displayName = "Autocomplete.Root";
 
-function AutocompleteValue({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Value>) {
+function AutocompleteValue({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Value>) {
   return <BaseAutocomplete.Value data-slot="autocomplete-value" {...props} />;
 }
 AutocompleteValue.displayName = "Autocomplete.Value";
@@ -76,7 +83,11 @@ function AutocompleteTrigger({
 }
 AutocompleteTrigger.displayName = "Autocomplete.Trigger";
 
-function AutocompleteInputGroup({ className, children, ...props }: React.ComponentProps<"div">) {
+function AutocompleteInputGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="autocomplete-input-group"
@@ -100,7 +111,9 @@ function AutocompleteContent({
   ...props
 }: React.ComponentProps<typeof BaseAutocomplete.Popup>) {
   return (
-    <BaseAutocomplete.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseAutocomplete.Portal
+      style={{ position: "relative", zIndex: "var(--z-popup)" }}
+    >
       <BaseAutocomplete.Positioner>
         <BaseAutocomplete.Popup
           data-slot="autocomplete-content"
@@ -187,7 +200,9 @@ function AutocompleteClear({
 }
 AutocompleteClear.displayName = "Autocomplete.Clear";
 
-function AutocompleteGroup({ ...props }: React.ComponentProps<typeof BaseAutocomplete.Group>) {
+function AutocompleteGroup({
+  ...props
+}: React.ComponentProps<typeof BaseAutocomplete.Group>) {
   return <BaseAutocomplete.Group data-slot="autocomplete-group" {...props} />;
 }
 AutocompleteGroup.displayName = "Autocomplete.Group";
@@ -212,7 +227,12 @@ AutocompleteGroupLabel.displayName = "Autocomplete.GroupLabel";
 function AutocompleteCollection({
   ...props
 }: React.ComponentProps<typeof BaseAutocomplete.Collection>) {
-  return <BaseAutocomplete.Collection data-slot="autocomplete-collection" {...props} />;
+  return (
+    <BaseAutocomplete.Collection
+      data-slot="autocomplete-collection"
+      {...props}
+    />
+  );
 }
 AutocompleteCollection.displayName = "Autocomplete.Collection";
 
@@ -293,8 +313,11 @@ export interface AutocompleteUseAsyncReturn<T> {
  * </Autocomplete.Root>
  * ```
  */
-function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncReturn<T> {
-  const { items, loading, query, error, onInputValueChange } = useAsyncItems(options);
+function useAsync<T>(
+  options: UseAsyncItemsOptions<T>,
+): AutocompleteUseAsyncReturn<T> {
+  const { items, loading, query, error, onInputValueChange } =
+    useAsyncItems(options);
 
   return {
     items,
@@ -304,6 +327,27 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncRetu
     onValueChange: onInputValueChange,
   };
 }
+
+/**
+ * Hook for robust string matching using `Intl.Collator`.
+ *
+ * Returns an object with `contains`, `startsWith`, and `endsWith` methods
+ * that can be passed to the `filter` prop of `<Autocomplete.Parts.Root>`
+ * to customize how suggestions are filtered against the input value.
+ *
+ * Accepts `Intl.CollatorOptions` (e.g. `sensitivity`, `usage`) plus
+ * an optional `locale` for locale-aware matching.
+ *
+ * @example
+ * ```tsx
+ * const filter = Autocomplete.useFilter({ sensitivity: "base" });
+ *
+ * <Autocomplete.Parts.Root filter={filter.contains}>
+ *   ...
+ * </Autocomplete.Parts.Root>
+ * ```
+ */
+const useFilter = BaseAutocomplete.useFilter;
 
 // ============================================================================
 // Export
@@ -324,8 +368,6 @@ const AutocompleteParts = {
   GroupLabel: AutocompleteGroupLabel,
   Collection: AutocompleteCollection,
   Status: AutocompleteStatus,
-  useFilter: BaseAutocomplete.useFilter,
-  useAsync,
 };
 
 type AutocompleteParts = typeof AutocompleteParts;
@@ -347,4 +389,5 @@ export {
   AutocompleteStatus,
   AutocompleteParts,
   useAsync,
+  useFilter,
 };

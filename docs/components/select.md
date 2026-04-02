@@ -183,6 +183,38 @@ const [selected, setSelected] = useState<string | null>(null);
 />
 ```
 
+### Async with Parts (custom composition)
+
+Combine `Select.useAsync` with `Select.Parts` for full control over layout and rendering:
+
+```tsx
+type Fruit = { id: number; name: string };
+
+const fruits = Select.useAsync({
+  fetcher: async ({ signal }) => {
+    const res = await fetch("/api/fruits", { signal });
+    return res.json() as Promise<Fruit[]>;
+  },
+});
+
+<Select.Parts.Root {...fruits} itemToStringLabel={(f) => f.name}>
+  <Select.Parts.Trigger>
+    <Select.Parts.Value placeholder="Pick a fruit" />
+  </Select.Parts.Trigger>
+  <Select.Parts.Content>
+    {fruits.loading ? (
+      <div className="px-4 py-2 text-center text-sm text-muted-foreground">Loading...</div>
+    ) : (
+      fruits.items.map((f) => (
+        <Select.Parts.Item key={f.id} value={f}>
+          {f.name}
+        </Select.Parts.Item>
+      ))
+    )}
+  </Select.Parts.Content>
+</Select.Parts.Root>;
+```
+
 ## Related Components
 
 - [Combobox](./combobox.md) - Searchable combobox with filtering

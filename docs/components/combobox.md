@@ -182,9 +182,6 @@ const {
   Value,
   Collection,
   Status,
-  useFilter,
-  useCreatable,
-  useAsync,
 } = Combobox.Parts;
 ```
 
@@ -202,6 +199,42 @@ const [selected, setSelected] = useState<User | null>(null);
   onValueChange={setSelected}
   placeholder="Select a user"
 />;
+```
+
+### Async with Parts (custom composition)
+
+Combine `Combobox.useAsync` with `Combobox.Parts` for full control over layout and rendering:
+
+```tsx
+type Country = { code: string; name: string };
+
+const countries = Combobox.useAsync({
+  fetcher: async (query, { signal }) => {
+    const res = await fetch(`/api/countries?q=${query ?? ""}`, { signal });
+    if (!res.ok) return [];
+    return res.json() as Promise<Country[]>;
+  },
+});
+
+<Combobox.Parts.Root {...countries} filter={null} itemToStringLabel={(c) => c.name}>
+  <Combobox.Parts.InputGroup>
+    <Combobox.Parts.Input placeholder="Search countries..." />
+    <Combobox.Parts.Clear />
+    <Combobox.Parts.Trigger />
+  </Combobox.Parts.InputGroup>
+  <Combobox.Parts.Content>
+    <Combobox.Parts.List>
+      {countries.items.map((c) => (
+        <Combobox.Parts.Item key={c.code} value={c}>
+          {c.name}
+        </Combobox.Parts.Item>
+      ))}
+      <Combobox.Parts.Empty>
+        {countries.loading ? "Loading..." : "No results."}
+      </Combobox.Parts.Empty>
+    </Combobox.Parts.List>
+  </Combobox.Parts.Content>
+</Combobox.Parts.Root>;
 ```
 
 ## Accessibility

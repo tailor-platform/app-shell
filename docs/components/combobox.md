@@ -117,13 +117,13 @@ const [tags, setTags] = useState<Tag[]>([
 
 ## Async Loading
 
-Use `Combobox.Async` to load items from an API. The fetcher is called on each keystroke (debounced).
+Use `Combobox.Async` to load items from an API. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default items for `null`, or return an empty array to show nothing until the user starts typing.
 
 ```tsx
 import { type ComboboxAsyncFetcher } from "@tailor-platform/app-shell";
 
 const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
-  const res = await fetch(`/api/users?q=${query}`, { signal });
+  const res = await fetch(`/api/users?q=${query ?? ""}`, { signal });
   return res.json();
 };
 
@@ -150,11 +150,14 @@ Accepts all the same props as `Combobox` except `items`, plus:
 
 ```ts
 type ComboboxAsyncFetcher<T> =
-  | ((query: string, options: { signal: AbortSignal }) => Promise<T[]>)
-  | { fn: (query: string, options: { signal: AbortSignal }) => Promise<T[]>; debounceMs: number };
+  | ((query: string | null, options: { signal: AbortSignal }) => Promise<T[]>)
+  | {
+      fn: (query: string | null, options: { signal: AbortSignal }) => Promise<T[]>;
+      debounceMs: number;
+    };
 ```
 
-Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.
+`query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.
 
 ## Low-level Primitives
 

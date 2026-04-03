@@ -7,15 +7,12 @@ description: Dropdown menu with a compound component API, supporting checkbox/ra
 
 The `Menu` component provides a dropdown menu with a compound component API. It is backed by Base UI's Menu primitive.
 
-## Import
-
-```tsx
-import { Menu } from "@tailor-platform/app-shell";
-```
 
 ## Basic Usage
 
-```tsx
+```tsx preview align="start"
+import { Menu } from "@tailor-platform/app-shell";
+
 <Menu.Root>
   <Menu.Trigger>Open menu</Menu.Trigger>
   <Menu.Content>
@@ -86,7 +83,9 @@ Accepts `className`, `disabled`, and all standard Base UI `Menu.Item` props.
 
 Use `Menu.Group` and `Menu.GroupLabel` to visually group related items:
 
-```tsx
+```tsx preview align="start" height="330"
+import { Menu } from "@tailor-platform/app-shell";
+
 <Menu.Root>
   <Menu.Trigger>Actions</Menu.Trigger>
   <Menu.Content>
@@ -155,7 +154,9 @@ const [align, setAlign] = useState("left");
 
 ## Nested Sub-menus
 
-```tsx
+```tsx preview align="start" height="350"
+import { Menu } from "@tailor-platform/app-shell";
+
 <Menu.Root>
   <Menu.Trigger>Edit</Menu.Trigger>
   <Menu.Content>

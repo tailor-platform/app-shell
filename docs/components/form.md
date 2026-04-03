@@ -15,16 +15,20 @@ import { Form, Field, Fieldset } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<Form onFormSubmit={(values) => save(values)}>
-  <Field.Root name="email">
+```tsx preview height="300"
+import { Form, Field, Button } from "@tailor-platform/app-shell";
+
+<Form onFormSubmit={(values) => console.log(values)}>
+  <Field.Root name="email"> 
     <Field.Label>Email</Field.Label>
-    <Field.Control type="email" required />
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+      <Field.Control type="email" required />
+      <Button type="submit">Save</Button>
+    </div>
     <Field.Description>We'll never share your email.</Field.Description>
     <Field.Error match="valueMissing">Email is required.</Field.Error>
     <Field.Error match="typeMismatch">Enter a valid email address.</Field.Error>
   </Field.Root>
-  <button type="submit">Save</button>
 </Form>
 ```
 
@@ -191,17 +195,21 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 
 ### Example
 
-```tsx
-<Fieldset.Root>
+```tsx preview height="350"
+import { Form, Field, Fieldset } from "@tailor-platform/app-shell";
+
+<Fieldset.Root style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
   <Fieldset.Legend>Billing details</Fieldset.Legend>
-  <Field.Root name="company">
-    <Field.Label>Company</Field.Label>
-    <Field.Control />
-  </Field.Root>
-  <Field.Root name="taxId">
-    <Field.Label>Tax ID</Field.Label>
-    <Field.Control />
-  </Field.Root>
+  <div style={{ display: "flex", gap: "1rem" }}>
+    <Field.Root name="company">
+      <Field.Label>Company</Field.Label>
+      <Field.Control />
+    </Field.Root>
+    <Field.Root name="taxId">
+      <Field.Label>Tax ID</Field.Label>
+      <Field.Control />
+    </Field.Root>
+  </div>
 </Fieldset.Root>
 ```
 

@@ -7,15 +7,11 @@ description: Single or multi-select dropdown with optional async data fetching
 
 The `Select` component provides a fully assembled single or multi-select dropdown. Pass `items` and get a ready-to-use select out of the box. For async data fetching use `Select.Async`. For custom compositions use `Select.Parts`.
 
-## Import
-
-```tsx
-import { Select } from "@tailor-platform/app-shell";
-```
-
 ## Basic Usage
 
-```tsx
+```tsx preview align="start" height="300"
+import { Select } from "@tailor-platform/app-shell";
+
 <Select
   items={["Apple", "Banana", "Cherry"]}
   placeholder="Pick a fruit"
@@ -63,13 +59,16 @@ interface ItemGroup<T> {
 
 ## Grouped Items
 
-```tsx
-const fruits = [
-  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
-  { label: "Berries", items: ["Strawberry", "Blueberry"] },
-];
+```tsx preview align="start" height="300"
+import { Select } from "@tailor-platform/app-shell";
 
-<Select items={fruits} placeholder="Pick a fruit" />;
+<Select 
+  placeholder="Pick a fruit"
+  items={[
+    { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
+    { label: "Berries", items: ["Strawberry", "Blueberry"] },
+  ]}  
+/>
 ```
 
 ## Object Items with mapItem
@@ -93,7 +92,9 @@ const fruits: Fruit[] = [
 
 ## Multi-select
 
-```tsx
+```tsx preview align="start" height="300"
+import { Select } from "@tailor-platform/app-shell";
+
 <Select
   items={["Red", "Green", "Blue"]}
   multiple

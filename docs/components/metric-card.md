@@ -15,7 +15,9 @@ import { MetricCard } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview
+import { MetricCard } from "@tailor-platform/app-shell";
+
 <MetricCard
   title="Net total payment"
   value="$1,500.00"
@@ -41,7 +43,9 @@ import { MetricCard } from "@tailor-platform/app-shell";
 - **down** — Negative change (destructive styling, e.g. red).
 - **neutral** — No change or neutral (muted styling).
 
-```tsx
+```tsx preview wrap="row"
+import { MetricCard } from "@tailor-platform/app-shell";
+
 <MetricCard
   title="Revenue"
   value="$2,400"

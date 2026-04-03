@@ -15,7 +15,9 @@ import { Dialog } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview height="450"
+import { Button, Dialog } from "@tailor-platform/app-shell";
+
 <Dialog.Root>
   <Dialog.Trigger render={<Button />}>Open</Dialog.Trigger>
   <Dialog.Content>

@@ -15,7 +15,9 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Basic usage
 
-```tsx
+```tsx preview
+import { Avatar } from "@tailor-platform/app-shell";
+
 <Avatar.Root>
   <Avatar.Image src="/user.png" alt="Jane Doe" />
   <Avatar.Fallback>JD</Avatar.Fallback>
@@ -42,7 +44,9 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Sizes
 
-```tsx
+```tsx preview wrap="row"
+import { Avatar } from "@tailor-platform/app-shell";
+
 <Avatar.Root size="sm">
   <Avatar.Fallback>AB</Avatar.Fallback>
 </Avatar.Root>

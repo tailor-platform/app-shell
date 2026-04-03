@@ -15,7 +15,9 @@ import { Badge } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge>Default</Badge>
 <Badge variant="success">Success</Badge>
 <Badge variant="warning">Warning</Badge>
@@ -28,7 +30,9 @@ import { Badge } from "@tailor-platform/app-shell";
 
 Filled background variants for high emphasis:
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge variant="default">Default</Badge>
 <Badge variant="success">Approved</Badge>
 <Badge variant="warning">Pending</Badge>
@@ -40,7 +44,9 @@ Filled background variants for high emphasis:
 
 Outlined badges with colored status dots for subtle emphasis:
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge variant="outline-success">Active</Badge>
 <Badge variant="outline-warning">In Progress</Badge>
 <Badge variant="outline-error">Failed</Badge>
@@ -113,7 +119,8 @@ const priorities = [
 
 ### With Icons
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
 import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
 
 <div className="astw:flex astw:gap-2">
@@ -155,7 +162,9 @@ function ProductBadge({ product }: { product: Product }) {
 
 ### Custom Styling
 
-```tsx
+```tsx preview
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
   Premium
 </Badge>

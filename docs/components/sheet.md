@@ -15,7 +15,9 @@ import { Sheet } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview height="500" 
+import { Button, Sheet } from "@tailor-platform/app-shell";
+
 <Sheet.Root side="right">
   <Sheet.Trigger render={<Button />}>Open Settings</Sheet.Trigger>
   <Sheet.Content>

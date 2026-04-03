@@ -15,7 +15,9 @@ import { Table } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview
+import { Table } from "@tailor-platform/app-shell";
+
 <Table.Root>
   <Table.Header>
     <Table.Row>
@@ -64,7 +66,9 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
 
 ### With Footer
 
-```tsx
+```tsx preview
+import { Table } from "@tailor-platform/app-shell";
+
 <Table.Root>
   <Table.Header>
     <Table.Row>
@@ -96,7 +100,9 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
 
 ### With Caption
 
-```tsx
+```tsx preview
+import { Table } from "@tailor-platform/app-shell";
+
 <Table.Root>
   <Table.Caption>Order line items</Table.Caption>
   <Table.Header>

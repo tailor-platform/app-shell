@@ -15,7 +15,9 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview
+import { DescriptionCard } from "@tailor-platform/app-shell";
+
 const orderData = {
   orderNumber: "ORD-12345",
   customer: "Acme Corporation",

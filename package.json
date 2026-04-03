@@ -7,6 +7,9 @@
     "type-check": "turbo type-check",
     "lint": "turbo lint",
     "test": "turbo test",
+    "docs:dev": "mrp dev",
+    "docs:build": "mrp build",
+    "docs:preview": "mrp preview",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
@@ -14,6 +17,8 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
+    "@izumisy/md-react-preview": "^0.1.1",
+    "@tailwindcss/vite": "^4.2.2",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "turbo": "^2.8.21"

@@ -15,7 +15,9 @@ import { Button } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview wrap="row"
+import { Button } from "@tailor-platform/app-shell";
+
 <Button>Click me</Button>
 <Button variant="outline">Outline</Button>
 <Button variant="destructive">Delete</Button>
@@ -35,7 +37,9 @@ All standard HTML `<button>` props are also accepted.
 
 ## Variants
 
-```tsx
+```tsx preview wrap="row"
+import { Button } from "@tailor-platform/app-shell";
+
 <Button variant="default">Primary Action</Button>
 <Button variant="destructive">Delete</Button>
 <Button variant="outline">Secondary Action</Button>
@@ -46,7 +50,10 @@ All standard HTML `<button>` props are also accepted.
 
 ## Sizes
 
-```tsx
+```tsx preview wrap="row"
+import { Button } from "@tailor-platform/app-shell";
+import { PlusIcon } from "lucide-react";
+
 <Button size="xs">Extra Small</Button>
 <Button size="sm">Small</Button>
 <Button size="default">Default</Button>
@@ -73,7 +80,9 @@ This is the Base UI render pattern — the button's class names and event handle
 
 ### Form Actions
 
-```tsx
+```tsx preview
+import { Button } from "@tailor-platform/app-shell";
+
 <div className="astw:flex astw:gap-2 astw:justify-end">
   <Button variant="outline">Cancel</Button>
   <Button>Save Changes</Button>
@@ -90,7 +99,8 @@ This is the Base UI render pattern — the button's class names and event handle
 
 ### Icon Button
 
-```tsx
+```tsx preview
+import { Button } from "@tailor-platform/app-shell";
 import { PlusIcon } from "lucide-react";
 
 <Button size="icon" variant="outline">
@@ -108,7 +118,7 @@ import { type ButtonProps } from "@tailor-platform/app-shell";
 
 Use `buttonVariants` to apply button styles to non-button elements:
 
-```tsx
+```tsx preview
 import { buttonVariants } from "@tailor-platform/app-shell";
 
 <a href="/orders" className={buttonVariants({ variant: "outline", size: "sm" })}>

@@ -15,7 +15,9 @@ import { Combobox } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview align="start"
+import { Combobox } from "@tailor-platform/app-shell";
+
 <Combobox
   items={["Apple", "Banana", "Cherry"]}
   placeholder="Search fruits..."
@@ -63,20 +65,25 @@ interface ItemGroup<T> {
 
 ## Grouped Items
 
-```tsx
-const fruits = [
-  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
-  { label: "Berries", items: ["Strawberry", "Blueberry"] },
-];
+```tsx preview align="start" height="350"
+import { Combobox } from "@tailor-platform/app-shell";
 
-<Combobox items={fruits} placeholder="Search fruits..." />;
+<Combobox 
+  placeholder="Search fruits..." 
+  items={[
+    { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
+    { label: "Berries", items: ["Strawberry", "Blueberry"] },
+  ]} 
+/>
 ```
 
 ## Multi-select
 
 In multi-select mode, selected items are displayed as chips inside the input:
 
-```tsx
+```tsx preview align="start"
+import { Combobox } from "@tailor-platform/app-shell";
+
 <Combobox
   items={["Red", "Green", "Blue"]}
   multiple
@@ -89,7 +96,7 @@ In multi-select mode, selected items are displayed as chips inside the input:
 
 Add `onCreateItem` to let users create new items on-the-fly. `T` must be an object type:
 
-```tsx
+```tsx 
 type Tag = { id: string; name: string };
 
 const [tags, setTags] = useState<Tag[]>([

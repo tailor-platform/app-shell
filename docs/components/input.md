@@ -15,7 +15,9 @@ import { Input } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview
+import { Input } from "@tailor-platform/app-shell";
+
 <Input placeholder="Enter your name" />
 ```
 
@@ -34,25 +36,33 @@ Accepts all standard HTML `<input>` props.
 
 ### Text Input
 
-```tsx
+```tsx preview
+import { Input } from "@tailor-platform/app-shell";
+
 <Input type="text" placeholder="Enter your name" />
 ```
 
 ### Email Input
 
-```tsx
+```tsx preview
+import { Input } from "@tailor-platform/app-shell";
+
 <Input type="email" placeholder="you@example.com" />
 ```
 
 ### Number Input
 
-```tsx
+```tsx preview
+import { Input } from "@tailor-platform/app-shell";
+
 <Input type="number" placeholder="0" min={0} max={100} />
 ```
 
 ### Disabled Input
 
-```tsx
+```tsx preview
+import { Input } from "@tailor-platform/app-shell";
+
 <Input value="Read-only value" disabled />
 ```
 

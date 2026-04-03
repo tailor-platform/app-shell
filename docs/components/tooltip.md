@@ -15,7 +15,9 @@ import { Tooltip } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell";
+
 <Tooltip.Root>
   <Tooltip.Trigger render={<Button variant="outline" />}>Hover me</Tooltip.Trigger>
   <Tooltip.Content>Helpful information</Tooltip.Content>
@@ -65,7 +67,9 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ## Placement
 
-```tsx
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell";
+
 <Tooltip.Root>
   <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
   <Tooltip.Content side="right" align="start">
@@ -101,7 +105,8 @@ Use `Tooltip.Provider` to avoid tooltips opening immediately in dense UIs like t
 
 ### Icon Button with Tooltip
 
-```tsx
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell";
 import { PencilIcon } from "lucide-react";
 
 <Tooltip.Root>
@@ -110,7 +115,7 @@ import { PencilIcon } from "lucide-react";
     <span className="astw:sr-only">Edit</span>
   </Tooltip.Trigger>
   <Tooltip.Content>Edit order</Tooltip.Content>
-</Tooltip.Root>;
+</Tooltip.Root>
 ```
 
 ### Controlled Tooltip
@@ -121,7 +126,7 @@ const [open, setOpen] = useState(false);
 <Tooltip.Root open={open} onOpenChange={setOpen}>
   <Tooltip.Trigger render={<Button />}>Info</Tooltip.Trigger>
   <Tooltip.Content>Additional details here</Tooltip.Content>
-</Tooltip.Root>;
+</Tooltip.Root>
 ```
 
 ## Accessibility

@@ -15,7 +15,9 @@ import { Autocomplete } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
+```tsx preview align="start"
+import { Autocomplete } from "@tailor-platform/app-shell";
+
 <Autocomplete
   items={["Apple", "Banana", "Cherry"]}
   placeholder="Type a fruit..."
@@ -60,13 +62,16 @@ interface ItemGroup<T> {
 
 ## Grouped Suggestions
 
-```tsx
-const cities = [
-  { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
-  { label: "France", items: ["Paris", "Lyon", "Marseille"] },
-];
+```tsx preview align="start" height="350"
+import { Autocomplete } from "@tailor-platform/app-shell";
 
-<Autocomplete items={cities} placeholder="Search cities..." />;
+<Autocomplete 
+  placeholder="Search cities..."
+  items={[
+    { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
+    { label: "France", items: ["Paris", "Lyon", "Marseille"] },
+  ]}  
+/>
 ```
 
 ## Object Items with mapItem

@@ -15,8 +15,10 @@ import { Card } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<Card.Root>
+```tsx preview
+import { Card } from "@tailor-platform/app-shell";
+
+<Card.Root style={{ flex: 1 }}>
   <Card.Header title="Order Details" description="Summary of order #1234" />
   <Card.Content>
     <p>Content goes here</p>
@@ -63,16 +65,20 @@ import { Card } from "@tailor-platform/app-shell";
 
 ### Header only
 
-```tsx
-<Card.Root>
+```tsx preview
+import { Card } from "@tailor-platform/app-shell";
+
+<Card.Root style={{ flex: 1 }}>
   <Card.Header title="Summary" description="Key metrics for this period" />
 </Card.Root>
 ```
 
 ### Content only
 
-```tsx
-<Card.Root>
+```tsx preview
+import { Card } from "@tailor-platform/app-shell";
+
+<Card.Root style={{ flex: 1 }}>
   <Card.Content>
     <p>No header needed for this card.</p>
   </Card.Content>

@@ -1,14 +1,7 @@
 import { describe, expect, it, assert } from "vitest";
 import { createContentRoutes } from "./routes";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import {
-  defineModule,
-  defineResource,
-  pass,
-  redirectTo,
-  hidden,
-  withGuardsLoader,
-} from "@/resource";
+import { defineModule, defineResource, pass, redirectTo, hidden } from "@/resource";
 
 const createMockResource = (path: string) =>
   defineResource({
@@ -33,7 +26,6 @@ const createMockResourceWithSubResources = (
   });
 
 const RootComponent = () => <div>Root</div>;
-const mockRootLoader = async () => null;
 const createMockResourceWithoutComponent = (
   path: string,
   subResources: ReturnType<typeof defineResource>[],
@@ -66,24 +58,23 @@ describe("createContentRoutes", () => {
     expect(routes[0].Component).toBe(RootComponent);
   });
 
-  it("attaches rootLoader to the root index route", () => {
+  it("attaches rootLoader to the root index route when rootGuards is provided", () => {
     const routes = createContentRoutes({
       modules: [],
       settingsResources: [],
-      rootLoader: mockRootLoader,
+      rootGuards: [() => redirectTo("/somewhere")],
     });
 
     expect(routes[0].index).toBe(true);
-    expect(routes[0].loader).toBe(mockRootLoader);
+    expect(typeof routes[0].loader).toBe("function");
   });
 
   it("rootLoader redirects when guard returns redirectTo", async () => {
-    const rootLoader = withGuardsLoader([() => redirectTo("/dashboard")]);
     const routes = createContentRoutes({
       modules: [],
       settingsResources: [],
       rootComponent: RootComponent,
-      rootLoader,
+      rootGuards: [() => redirectTo("/dashboard")],
     });
 
     expect(routes[0].index).toBe(true);

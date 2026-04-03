@@ -1,10 +1,4 @@
-import {
-  Modules,
-  Resource,
-  ErrorBoundaryComponent,
-  LoaderHandler,
-  setContextData,
-} from "@/resource";
+import { Modules, Resource, ErrorBoundaryComponent, Guard, setContextData } from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
 import {
@@ -54,22 +48,22 @@ type SharedAppShellProps = React.PropsWithChildren<{
   rootComponent?: () => React.ReactNode;
 
   /**
-   * Loader for the root route, used for guard evaluation.
+   * Guards for the root route.
    *
    * When using file-based routing, this is automatically set from
    * the root page's guards via `AppShell.WithPages()`.
    *
    * @example
    * ```tsx
-   * import { withGuardsLoader, redirectTo } from "@tailor-platform/app-shell";
+   * import { redirectTo } from "@tailor-platform/app-shell";
    *
    * <AppShell
    *   modules={[...]}
-   *   rootLoader={withGuardsLoader([() => redirectTo("/dashboard")])}
+   *   rootGuards={[() => redirectTo("/dashboard")]}
    * />
    * ```
    */
-  rootLoader?: LoaderHandler;
+  rootGuards?: Guard[];
 
   /**
    * Settings resources to be included in the settings menu
@@ -244,7 +238,7 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-            <RouterContainer rootComponent={props.rootComponent} rootLoader={props.rootLoader}>
+            <RouterContainer rootComponent={props.rootComponent} rootGuards={props.rootGuards}>
               {props.children}
             </RouterContainer>
           </ThemeProvider>
@@ -276,7 +270,7 @@ AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
         {...props}
         modules={otherModules}
         rootComponent={props.rootComponent ?? rootModule?.component}
-        rootLoader={props.rootLoader ?? rootModule?.loader}
+        rootGuards={props.rootGuards ?? rootModule?.guards}
       />
     );
   };

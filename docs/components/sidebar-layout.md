@@ -63,7 +63,6 @@ The `Outlet` component renders your current route's component.
 
 ```tsx
 import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
-
 <SidebarLayout
   sidebar={
     <DefaultSidebar>

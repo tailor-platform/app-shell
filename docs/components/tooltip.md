@@ -15,11 +15,15 @@ import { Tooltip } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button variant="outline" />}>Hover me</Tooltip.Trigger>
-  <Tooltip.Content>Helpful information</Tooltip.Content>
-</Tooltip.Root>
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell";
+
+export default (
+  <Tooltip.Root>
+    <Tooltip.Trigger render={<Button variant="outline" />}>Hover me</Tooltip.Trigger>
+    <Tooltip.Content>Helpful information</Tooltip.Content>
+  </Tooltip.Root>
+);
 ```
 
 ## Sub-components
@@ -65,13 +69,17 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ## Placement
 
-```tsx
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
-  <Tooltip.Content side="right" align="start">
-    Appears on the right
-  </Tooltip.Content>
-</Tooltip.Root>
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell";
+
+export default (
+  <Tooltip.Root>
+    <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
+    <Tooltip.Content side="right" align="start">
+      Appears on the right
+    </Tooltip.Content>
+  </Tooltip.Root>
+);
 ```
 
 ## Shared Delay with Provider
@@ -101,16 +109,19 @@ Use `Tooltip.Provider` to avoid tooltips opening immediately in dense UIs like t
 
 ### Icon Button with Tooltip
 
-```tsx
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell";
 import { PencilIcon } from "lucide-react";
 
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
-    <PencilIcon />
-    <span className="astw:sr-only">Edit</span>
-  </Tooltip.Trigger>
-  <Tooltip.Content>Edit order</Tooltip.Content>
-</Tooltip.Root>;
+export default (
+  <Tooltip.Root>
+    <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
+      <PencilIcon />
+      <span className="astw:sr-only">Edit</span>
+    </Tooltip.Trigger>
+    <Tooltip.Content>Edit order</Tooltip.Content>
+  </Tooltip.Root>
+);
 ```
 
 ### Controlled Tooltip

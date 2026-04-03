@@ -143,7 +143,6 @@ const labels = defineI18nLabels({
 
 ```tsx
 import { Package } from "lucide-react";
-
 <SidebarGroup title="Products" icon={<Package />}>
   <SidebarItem to="/products/all" />
   <SidebarItem to="/products/categories" />
@@ -155,7 +154,6 @@ import { Package } from "lucide-react";
 
 ```tsx
 import { Settings } from "lucide-react";
-
 <SidebarGroup title="Settings" icon={<Settings />} to="/settings">
   <SidebarItem to="/settings/profile" />
   <SidebarItem to="/settings/security" />
@@ -170,7 +168,6 @@ Clicking "Settings" navigates to `/settings`, while child items navigate to thei
 
 ```tsx
 import { Package, ShoppingCart, Users, Settings } from "lucide-react";
-
 <DefaultSidebar>
   <SidebarItem to="/dashboard" />
 
@@ -203,7 +200,6 @@ import { Package, ShoppingCart, Users, Settings } from "lucide-react";
 
 ```tsx
 import { FolderIcon } from "lucide-react";
-
 <SidebarGroup title="Documents" icon={<FolderIcon />}>
   <SidebarItem to="/documents/recent" />
 
@@ -259,7 +255,6 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
 
 ```tsx
 import { HelpCircle, FileText, ExternalLink } from "lucide-react";
-
 <SidebarGroup title="Help" icon={<HelpCircle />}>
   <SidebarItem to="/help/faq" />
   <SidebarItem to="https://docs.example.com" title="Documentation" icon={<FileText />} external />

@@ -15,26 +15,29 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-const orderData = {
-  orderNumber: "ORD-12345",
-  customer: "Acme Corporation",
-  status: "shipped",
-  totalAmount: 15750.0,
-  currency: "USD",
-  orderDate: "2026-03-01T10:00:00Z",
-};
+```tsx preview height="400"
+import { DescriptionCard } from "@tailor-platform/app-shell";
 
-<DescriptionCard
-  data={orderData}
-  fields={[
-    { key: "orderNumber", label: "Order Number" },
-    { key: "customer", label: "Customer" },
-    { key: "status", label: "Status", type: "badge" },
-    { key: "totalAmount", label: "Total", type: "money", meta: { currencyKey: "currency" } },
-    { key: "orderDate", label: "Order Date", type: "date" },
-  ]}
-/>;
+export default (
+  <DescriptionCard
+    style={{ flex: 1 }}
+    data={{
+      orderNumber: "ORD-12345",
+      customer: "Acme Corporation",
+      status: "shipped",
+      totalAmount: 15750.0,
+      currency: "USD",
+      orderDate: "2026-03-01T10:00:00Z",
+    }}
+    fields={[
+      { key: "orderNumber", label: "Order Number" },
+      { key: "customer", label: "Customer" },
+      { key: "status", label: "Status", type: "badge" },
+      { key: "totalAmount", label: "Total", type: "money", meta: { currencyKey: "currency" } },
+      { key: "orderDate", label: "Order Date", type: "date" },
+    ]}
+  />
+);
 ```
 
 ## Props

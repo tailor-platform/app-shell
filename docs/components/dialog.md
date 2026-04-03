@@ -15,20 +15,24 @@ import { Dialog } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<Dialog.Root>
-  <Dialog.Trigger render={<Button />}>Open</Dialog.Trigger>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Confirm Action</Dialog.Title>
-      <Dialog.Description>Are you sure you want to proceed?</Dialog.Description>
-    </Dialog.Header>
-    <Dialog.Footer>
-      <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-      <Button>Confirm</Button>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog.Root>
+```tsx preview height="450"
+import { Button, Dialog } from "@tailor-platform/app-shell";
+
+export default (
+  <Dialog.Root>
+    <Dialog.Trigger render={<Button />}>Open</Dialog.Trigger>
+    <Dialog.Content>
+      <Dialog.Header>
+        <Dialog.Title>Confirm Action</Dialog.Title>
+        <Dialog.Description>Are you sure you want to proceed?</Dialog.Description>
+      </Dialog.Header>
+      <Dialog.Footer>
+        <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+        <Button>Confirm</Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Root>
+);
 ```
 
 ## Sub-components

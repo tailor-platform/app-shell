@@ -1,5 +1,74 @@
 # @tailor-platform/app-shell
 
+## 0.33.0
+
+### Minor Changes
+
+- 6f5c23f: **Breaking:** `AsyncFetcherFn` now receives `string | null` instead of `string` as the `query` parameter.
+
+  The fetcher is called with `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Return initial/default items for `null`, or return an empty array to show nothing until the user starts typing.
+
+  `useAsync` also now returns an `onOpenChange` handler that triggers `fetcher(null)` on the first open, so `Combobox.Async` shows initial items immediately when the dropdown opens.
+
+  ```tsx
+  // Before
+  const fetcher = async (query: string, { signal }) => { ... };
+
+  // After
+  const fetcher = async (query: string | null, { signal }) => {
+    const res = await fetch(`/api/items?q=${query ?? ""}`, { signal });
+    return res.json();
+  };
+  ```
+
+- 7917328: Add `useOverrideBreadcrumb` hook for dynamically overriding breadcrumb titles from within page components. This is useful for displaying data-driven titles (e.g., record names) instead of static route-based titles.
+
+  With `defineResource`:
+
+  ```tsx
+  import { useOverrideBreadcrumb } from "@tailor-platform/app-shell";
+
+  defineResource({
+    path: ":id",
+    component: () => {
+      const { data } = useQuery(GET_ORDER, { variables: { id } });
+
+      // Update breadcrumb with the order name
+      useOverrideBreadcrumb(data?.order?.name);
+
+      return <OrderDetail />;
+    },
+  });
+  ```
+
+  With file-based routing (`pages/orders/[id]/page.tsx`):
+
+  ```tsx
+  import { useOverrideBreadcrumb, useParams } from "@tailor-platform/app-shell";
+
+  const OrderDetailPage = () => {
+    const { id } = useParams();
+    const { data } = useQuery(GET_ORDER, { variables: { id } });
+
+    // Update breadcrumb with the order name
+    useOverrideBreadcrumb(data?.order?.name);
+
+    return <div>...</div>;
+  };
+
+  export default OrderDetailPage;
+  ```
+
+- 58f8024: Fix guards defined via `appShellPageProps` being silently ignored in file-based routing. Guards now correctly produce route loaders for both root and non-root pages.
+
+### Patch Changes
+
+- 1cad50d: Fix portal-based components (`Menu`, `Select`, `Combobox`, `Autocomplete`, `Tooltip`) rendering behind the sidebar by establishing a stacking context on each portal container.
+
+  Centralize all z-index values into CSS custom properties (`--z-sidebar`, `--z-sidebar-rail`, `--z-popup`, `--z-overlay`) defined in `globals.css`.
+
+- afec4f7: Updated [graphql](https://www.npmjs.com/package/graphql) (^16.13.0 -> ^16.13.2)
+
 ## 0.32.0
 
 ### Minor Changes

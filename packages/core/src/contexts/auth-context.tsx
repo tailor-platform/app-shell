@@ -86,27 +86,6 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
   return enhancedClient;
 }
 
-/**
- * Build a clean URL by removing OAuth-related parameters (code, state)
- * while preserving other query parameters and hash fragments.
- *
- * @param url - The URL to clean
- * @returns The cleaned URL string
- *
- * @example
- * ```ts
- * buildCleanOAuthCallbackUrl(new URL('https://example.com/dashboard?code=xxx&state=yyy&tab=settings#section1'))
- * // => '/dashboard?tab=settings#section1'
- * ```
- */
-export function buildCleanOAuthCallbackUrl(url: URL): string {
-  const params = new URLSearchParams(url.search);
-  params.delete("code");
-  params.delete("state");
-  const newSearch = params.toString();
-  return url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
-}
-
 // ============================================================================
 // Auth Context
 // ============================================================================
@@ -209,6 +188,10 @@ type AuthProviderProps = {
    * Guard UI component to show when loading or unauthenticated.
    *
    * If not provided, children will be just rendered in any auth state.
+   *
+   * Note: This prop only takes effect when AuthProvider wraps an AppShell
+   * component. The guard is rendered by the router's root route element,
+   * so it requires RouterContainer to be present in the component tree.
    */
   guardComponent?: () => React.ReactNode;
 };

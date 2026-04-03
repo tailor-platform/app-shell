@@ -5,6 +5,11 @@ import type { PageEntry, PageComponent } from "./types";
 
 // ============================================
 // Converter Tests
+//
+// These tests verify the wiring correctness of convertPagesToModules:
+// that guards produce a loader, components are wrapped, meta is propagated, etc.
+// The behavioral correctness of loaders (e.g. redirect, 404) is tested in
+// routes.test.tsx, which exercises withGuardsLoader and resolveIndexRoute.
 // ============================================
 
 const parentGuard = async () => ({ type: "pass" as const });
@@ -215,6 +220,40 @@ describe("convertPagesToModules", () => {
     expect(modules[0].guards).toHaveLength(1);
     expect(modules[0].loader).toBeDefined();
     expect(typeof modules[0].loader).toBe("function");
+  });
+
+  it("non-root module with guards produces a loader", () => {
+    const pages = [createMockPage("/dashboard", { guards: [redirectGuard] })];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules).toHaveLength(1);
+    expect(modules[0].path).toBe("dashboard");
+    expect(modules[0].guards).toHaveLength(1);
+    expect(modules[0].loader).toBeDefined();
+    expect(typeof modules[0].loader).toBe("function");
+  });
+
+  it("resource with guards produces a loader", () => {
+    const pages = [
+      createMockPage("/dashboard"),
+      createMockPage("/dashboard/orders", { guards: [redirectGuard] }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules).toHaveLength(1);
+    const resource = modules[0].resources[0];
+    expect(resource.path).toBe("orders");
+    expect(resource.guards).toHaveLength(1);
+    expect(resource.loader).toBeDefined();
+    expect(typeof resource.loader).toBe("function");
+  });
+
+  it("module without guards does not produce a loader", () => {
+    const pages = [createMockPage("/dashboard", { meta: { title: "Dashboard" } })];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules[0].guards).toHaveLength(0);
+    expect(modules[0].loader).toBeUndefined();
   });
 });
 

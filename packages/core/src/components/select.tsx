@@ -67,7 +67,10 @@ function SelectContent({
   container?: React.ComponentProps<typeof BaseSelect.Portal>["container"];
 }) {
   return (
-    <BaseSelect.Portal container={container} style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseSelect.Portal
+      container={container}
+      style={{ position: "relative", zIndex: "var(--z-popup)" }}
+    >
       <BaseSelect.Positioner>
         <BaseSelect.Popup
           data-slot="select-content"

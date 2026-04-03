@@ -103,7 +103,10 @@ function AutocompleteContent({
   container?: React.ComponentProps<typeof BaseAutocomplete.Portal>["container"];
 }) {
   return (
-    <BaseAutocomplete.Portal container={container} style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseAutocomplete.Portal
+      container={container}
+      style={{ position: "relative", zIndex: "var(--z-popup)" }}
+    >
       <BaseAutocomplete.Positioner>
         <BaseAutocomplete.Popup
           data-slot="autocomplete-content"

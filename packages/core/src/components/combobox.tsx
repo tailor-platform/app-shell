@@ -106,7 +106,10 @@ function ComboboxContent({
   container?: React.ComponentProps<typeof BaseCombobox.Portal>["container"];
 }) {
   return (
-    <BaseCombobox.Portal container={container} style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseCombobox.Portal
+      container={container}
+      style={{ position: "relative", zIndex: "var(--z-popup)" }}
+    >
       <BaseCombobox.Positioner>
         <BaseCombobox.Popup
           data-slot="combobox-content"

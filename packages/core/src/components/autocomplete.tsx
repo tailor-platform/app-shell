@@ -97,10 +97,16 @@ AutocompleteInputGroup.displayName = "Autocomplete.InputGroup";
 
 function AutocompleteContent({
   className,
+  container,
   ...props
-}: React.ComponentProps<typeof BaseAutocomplete.Popup>) {
+}: React.ComponentProps<typeof BaseAutocomplete.Popup> & {
+  container?: React.ComponentProps<typeof BaseAutocomplete.Portal>["container"];
+}) {
   return (
-    <BaseAutocomplete.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseAutocomplete.Portal
+      container={container}
+      style={{ position: "relative", zIndex: "var(--z-popup)" }}
+    >
       <BaseAutocomplete.Positioner>
         <BaseAutocomplete.Popup
           data-slot="autocomplete-content"

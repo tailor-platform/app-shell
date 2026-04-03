@@ -41,6 +41,8 @@ interface ComboboxPropsBase<T> {
   className?: string;
   /** Whether the combobox is disabled */
   disabled?: boolean;
+  /** A parent element to render the portal into (e.g. a modal/drawer ref). */
+  container?: React.ComponentProps<typeof ComboboxContent>["container"];
 }
 
 interface ComboboxPropsSingle<T> extends ComboboxPropsBase<T> {
@@ -97,6 +99,7 @@ interface CreatableInternalProps<T extends object> {
   className?: string;
   disabled?: boolean;
   multiple?: boolean;
+  container?: React.ComponentProps<typeof ComboboxContent>["container"];
   value?: T | T[] | null;
   defaultValue?: T | T[] | null;
   onValueChange?: ((value: T | null) => void) | ((value: T[]) => void);
@@ -138,6 +141,7 @@ function ComboboxShell({
   mapItem,
   listChildren,
   multiple,
+  container,
   rootProps,
 }: {
   className?: string;
@@ -147,6 +151,7 @@ function ComboboxShell({
   mapItem: (item: any) => MappedItem;
   listChildren: any;
   multiple?: boolean;
+  container?: React.ComponentProps<typeof ComboboxContent>["container"];
   rootProps: Record<string, any>;
 }) {
   if (multiple) {
@@ -173,7 +178,7 @@ function ComboboxShell({
               </ComboboxValue>
             </ComboboxChips>
           </ComboboxInputGroup>
-          <ComboboxContent>
+          <ComboboxContent container={container}>
             <ComboboxEmpty>{emptyContent}</ComboboxEmpty>
             <ComboboxList>{listChildren}</ComboboxList>
           </ComboboxContent>
@@ -190,7 +195,7 @@ function ComboboxShell({
           <ComboboxClear />
           <ComboboxTrigger />
         </ComboboxInputGroup>
-        <ComboboxContent>
+        <ComboboxContent container={container}>
           <ComboboxEmpty>{emptyContent}</ComboboxEmpty>
           <ComboboxList>{listChildren}</ComboboxList>
         </ComboboxContent>
@@ -254,6 +259,7 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
     className,
     disabled,
     multiple,
+    container,
     ...valueProps
   } = props;
 
@@ -281,6 +287,7 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
       mapItem={mapItem}
       listChildren={listChildren}
       multiple={multiple}
+      container={container}
       rootProps={{
         items,
         ...valueProps,
@@ -305,6 +312,7 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
     className,
     disabled,
     multiple,
+    container,
     value,
     defaultValue,
     onValueChange,
@@ -345,6 +353,7 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
       mapItem={mapItem}
       listChildren={creatableItemRenderer(mapItem, creatable)}
       multiple={multiple}
+      container={container}
       rootProps={{
         items: creatable.items,
         value: value ?? creatable.value,
@@ -408,6 +417,7 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
     className,
     disabled,
     multiple,
+    container,
     ...valueProps
   } = props;
 
@@ -424,6 +434,7 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
       mapItem={mapItem}
       listChildren={flatItemRenderer(mapItem)}
       multiple={multiple}
+      container={container}
       rootProps={{
         items: async.items,
         filter: null,
@@ -452,6 +463,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
     className,
     disabled,
     multiple,
+    container,
     value,
     defaultValue,
     onValueChange,
@@ -493,6 +505,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
       mapItem={mapItem}
       listChildren={creatableItemRenderer(mapItem, creatable)}
       multiple={multiple}
+      container={container}
       rootProps={{
         items: creatable.items,
         filter: null,

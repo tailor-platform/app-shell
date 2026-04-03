@@ -98,9 +98,18 @@ function ComboboxInputGroup({
 }
 ComboboxInputGroup.displayName = "Combobox.InputGroup";
 
-function ComboboxContent({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Popup>) {
+function ComboboxContent({
+  className,
+  container,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Popup> & {
+  container?: React.ComponentProps<typeof BaseCombobox.Portal>["container"];
+}) {
   return (
-    <BaseCombobox.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseCombobox.Portal
+      container={container}
+      style={{ position: "relative", zIndex: "var(--z-popup)" }}
+    >
       <BaseCombobox.Positioner>
         <BaseCombobox.Popup
           data-slot="combobox-content"

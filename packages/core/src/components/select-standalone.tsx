@@ -48,6 +48,8 @@ interface SelectPropsBase<T> {
   className?: string;
   /** Whether the select is disabled */
   disabled?: boolean;
+  /** A parent element to render the portal into (e.g. a modal/drawer ref). */
+  container?: React.ComponentProps<typeof SelectContent>["container"];
 }
 
 interface SelectPropsSingle<T> extends SelectPropsBase<T> {
@@ -104,7 +106,15 @@ function renderFlatItems<T>(items: T[], mapItem: (item: T) => MappedItem) {
 function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
   type T = ExtractItem<I>;
 
-  const { items, placeholder, mapItem: mapItemProp, className, disabled, ...rest } = props;
+  const {
+    items,
+    placeholder,
+    mapItem: mapItemProp,
+    className,
+    disabled,
+    container,
+    ...rest
+  } = props;
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
@@ -142,7 +152,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
               <SelectValue placeholder={placeholder} />
             )}
           </SelectTrigger>
-          <SelectContent>{content}</SelectContent>
+          <SelectContent container={container}>{content}</SelectContent>
         </SelectRoot>
       </div>
     );
@@ -172,7 +182,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
             <SelectValue placeholder={placeholder} />
           )}
         </SelectTrigger>
-        <SelectContent>{content}</SelectContent>
+        <SelectContent container={container}>{content}</SelectContent>
       </SelectRoot>
     </div>
   );
@@ -201,6 +211,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     mapItem: mapItemProp,
     className,
     disabled,
+    container,
     ...rest
   } = props;
 
@@ -280,7 +291,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
               <SelectValue placeholder={placeholder} />
             )}
           </SelectTrigger>
-          <SelectContent>{content}</SelectContent>
+          <SelectContent container={container}>{content}</SelectContent>
         </SelectRoot>
       </div>
     );
@@ -309,7 +320,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
             <SelectValue placeholder={placeholder} />
           )}
         </SelectTrigger>
-        <SelectContent>{content}</SelectContent>
+        <SelectContent container={container}>{content}</SelectContent>
       </SelectRoot>
     </div>
   );

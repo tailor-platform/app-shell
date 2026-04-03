@@ -107,3 +107,16 @@ export { Select, type SelectAsyncFetcher } from "./components/select-standalone"
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
 export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
 export { type MappedItem, type ItemGroup } from "./components/dropdown-items";
+export {
+  CsvImporter,
+  useCsvImporter,
+  buildRows,
+  csv,
+  type CsvSchema,
+  type CsvColumn,
+  type CsvImportEvent,
+  type CsvCorrection,
+  type CsvColumnMapping,
+  type CsvCellIssue,
+  type ParsedRow,
+} from "./components/csv-importer";

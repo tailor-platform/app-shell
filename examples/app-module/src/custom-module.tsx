@@ -19,6 +19,7 @@ import {
 import { primitiveComponentsDemoResource } from "./pages/primitives-demo";
 import { dropdownComponentsDemoResource } from "./pages/dropdown-demo";
 import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form-demo";
+import { csvImporterDemoResource } from "./pages/csv-importer-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -181,6 +182,17 @@ export const customPageModule = defineModule({
               Zod + React Hook Form Demo
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/csv-importer-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              CSV Importer Demo
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -205,5 +217,6 @@ export const customPageModule = defineModule({
     dropdownComponentsDemoResource,
     formComponentsDemoResource,
     zodRHFFormDemoResource,
+    csvImporterDemoResource,
   ],
 });

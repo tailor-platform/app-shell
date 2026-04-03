@@ -354,7 +354,10 @@ function ReviewStep({
   };
 
   return (
-    <div data-slot="csv-importer-review" className="astw:flex astw:flex-1 astw:min-h-0 astw:flex-col astw:gap-4">
+    <div
+      data-slot="csv-importer-review"
+      className="astw:flex astw:flex-1 astw:min-h-0 astw:flex-col astw:gap-4"
+    >
       <div className="astw:flex astw:gap-4 astw:text-sm">
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}

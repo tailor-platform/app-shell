@@ -158,7 +158,7 @@ export const runGuards = async (guards: Guard[] | undefined): Promise<GuardResul
  * If guards deny access, throws createNotFoundError or redirects.
  * Otherwise, runs the base loader if provided.
  */
-const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: LoaderHandler) => {
+export const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: LoaderHandler) => {
   return async (args: LoaderFunctionArgs) => {
     const result = await runGuards(guards);
     switch (result.type) {

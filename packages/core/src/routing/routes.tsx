@@ -7,7 +7,9 @@ import {
   Resource,
   ErrorBoundaryComponent,
   createNotFoundError,
-  LoaderHandler,
+  Guard,
+  withGuardsLoader,
+  type LoaderHandler,
 } from "@/resource";
 
 export type RootComponentOption = () => ReactNode;
@@ -94,17 +96,21 @@ type CreateContentRoutesParams = {
   modules: Modules;
   settingsResources: Array<Resource>;
   rootComponent?: RootComponentOption;
+  rootGuards?: Guard[];
 };
 
 export const createContentRoutes = ({
   modules,
   settingsResources,
   rootComponent,
+  rootGuards,
 }: CreateContentRoutesParams): Array<RouteObject> => {
-  const rootRouteConfig = {
-    index: true,
-    Component: rootComponent ?? EmptyOutlet,
-  };
+  const rootLoader = rootGuards && rootGuards.length > 0 ? withGuardsLoader(rootGuards) : undefined;
+  const rootRouteConfig = resolveIndexRoute({
+    path: "",
+    component: rootComponent ?? EmptyOutlet,
+    loader: rootLoader,
+  });
 
   const settingsRoutes =
     settingsResources.length > 0

@@ -58,6 +58,36 @@ describe("createContentRoutes", () => {
     expect(routes[0].Component).toBe(RootComponent);
   });
 
+  it("attaches rootLoader to the root index route when rootGuards is provided", () => {
+    const routes = createContentRoutes({
+      modules: [],
+      settingsResources: [],
+      rootGuards: [() => redirectTo("/somewhere")],
+    });
+
+    expect(routes[0].index).toBe(true);
+    expect(typeof routes[0].loader).toBe("function");
+  });
+
+  it("rootLoader redirects when guard returns redirectTo", async () => {
+    const routes = createContentRoutes({
+      modules: [],
+      settingsResources: [],
+      rootComponent: RootComponent,
+      rootGuards: [() => redirectTo("/dashboard")],
+    });
+
+    expect(routes[0].index).toBe(true);
+    expect(routes[0].Component).toBe(RootComponent);
+    expect(typeof routes[0].loader).toBe("function");
+
+    assert(typeof routes[0].loader === "function");
+    const result = await routes[0].loader({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/dashboard");
+  });
+
   it("adds module routes with inherited error boundaries", () => {
     const module = defineModule({
       path: "dashboard",

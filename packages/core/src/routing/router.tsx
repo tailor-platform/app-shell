@@ -3,9 +3,11 @@ import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from 
 import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
+import type { Guard } from "@/resource";
 
 type RouterContainerPropsCommon = {
   rootComponent?: RootComponentOption;
+  rootGuards?: Guard[];
 };
 
 export type RouterContainerProps =
@@ -24,6 +26,7 @@ export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) 
     modules: configurations.modules,
     settingsResources: configurations.settingsResources,
     rootComponent,
+    rootGuards: props.rootGuards,
   });
   const globalErrorBoundary = configurations.errorBoundary;
   const { loaderID, loader } = createNavItemsLoader({

@@ -1,6 +1,7 @@
 import { capitalCase } from "change-case";
 import { parsePath } from "@tailor-platform/app-shell-vite-plugin/parser";
 import type { Module, Resource, Guard } from "@/resource";
+import { withGuardsLoader } from "@/resource";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import type { LocalizedString } from "@/lib/i18n";
 import type { PageEntry, PageComponent } from "./types";
@@ -79,7 +80,10 @@ function nodeToResource(node: PageNode): Resource {
   const title = getTitle(Component, node.path);
   const icon = Component?.appShellPageProps?.meta?.icon;
   const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
-  const loader = Component?.appShellPageProps?.loader;
+  const explicitLoader = Component?.appShellPageProps?.loader;
+  const loader =
+    explicitLoader ??
+    (node.guards && node.guards.length > 0 ? withGuardsLoader(node.guards) : undefined);
 
   // Recursively convert children to subResources
   const subResources: Resource[] = [];
@@ -112,7 +116,10 @@ function nodeToModule(node: PageNode): Module {
   const title = getTitle(Component, node.path);
   const icon = Component?.appShellPageProps?.meta?.icon;
   const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
-  const loader = Component?.appShellPageProps?.loader;
+  const explicitLoader = Component?.appShellPageProps?.loader;
+  const loader =
+    explicitLoader ??
+    (node.guards && node.guards.length > 0 ? withGuardsLoader(node.guards) : undefined);
 
   // Convert children to resources
   const resources: Resource[] = [];

@@ -19,6 +19,7 @@ import {
   ComboboxParts,
   useCreatable,
   useAsync,
+  useFilter,
 } from "./combobox";
 
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
@@ -531,6 +532,9 @@ function ComboboxAsyncStandalone(props: any) {
 const Combobox = Object.assign(ComboboxStandalone, {
   Async: ComboboxAsyncStandalone,
   Parts: ComboboxParts,
+  useAsync,
+  useFilter,
+  useCreatable,
 });
 
 export { Combobox };

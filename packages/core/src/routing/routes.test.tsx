@@ -33,7 +33,6 @@ const createMockResourceWithSubResources = (
   });
 
 const RootComponent = () => <div>Root</div>;
-// eslint-disable-next-line unicorn/consistent-function-scoping
 const mockRootLoader = async () => null;
 const createMockResourceWithoutComponent = (
   path: string,

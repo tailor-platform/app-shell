@@ -12,9 +12,9 @@ import {
   AuthProvider,
   useAuth,
   useAuthSuspense,
-  useAuthLoader,
   type EnhancedAuthClient,
 } from "./auth-context";
+import { useRootRouteContext } from "./root-route-context";
 
 afterEach(() => {
   cleanup();
@@ -142,7 +142,7 @@ describe("AuthProvider", () => {
   });
 
   describe("authentication flow", () => {
-    it("should check auth status via useAuthLoader", async () => {
+    it("should check auth status via useRootRouteContext", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -158,17 +158,21 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useAuthLoader(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+      const { result } = renderHook(() => useRootRouteContext(), {
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       expect(result.current).not.toBeNull();
-      const response = await result.current!.loader(new URL("http://localhost/"));
+      const response = await result.current!.loader(
+        new URL("http://localhost/"),
+      );
       expect(mockCheckAuthStatus).toHaveBeenCalled();
       expect(response).toBeNull();
     });
 
-    it("should handle OAuth callback via useAuthLoader when code is present", async () => {
+    it("should handle OAuth callback via useRootRouteContext when code is present", async () => {
       const state = {
         isAuthenticated: true,
         error: null,
@@ -180,8 +184,10 @@ describe("AuthProvider", () => {
         handleCallback: mockHandleCallback,
       });
 
-      const { result } = renderHook(() => useAuthLoader(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+      const { result } = renderHook(() => useRootRouteContext(), {
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       expect(result.current).not.toBeNull();
@@ -207,7 +213,9 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {
@@ -233,7 +241,9 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {
@@ -261,7 +271,9 @@ describe("AuthProvider", () => {
       const mockClient = createMockAuthClient(state);
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {
@@ -288,7 +300,9 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {
@@ -316,7 +330,9 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {
@@ -376,7 +392,9 @@ describe("AuthProvider", () => {
     });
 
     it("should resolve suspense when auth becomes ready", async () => {
-      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+      let authEventListener:
+        | ((event: { type: string; data?: unknown }) => void)
+        | undefined;
 
       const mockAddEventListener = vi.fn(
         (listener: (event: { type: string; data?: unknown }) => void) => {
@@ -403,7 +421,12 @@ describe("AuthProvider", () => {
 
       const TestComponent = () => {
         const { isAuthenticated } = useAuthSuspense();
-        return <div>Content Loaded: {isAuthenticated ? "authenticated" : "not authenticated"}</div>;
+        return (
+          <div>
+            Content Loaded:{" "}
+            {isAuthenticated ? "authenticated" : "not authenticated"}
+          </div>
+        );
       };
 
       render(
@@ -447,7 +470,11 @@ describe("AuthProvider", () => {
 
       const TestComponent = () => {
         const { isAuthenticated } = useAuthSuspense();
-        return <div>Loaded: {isAuthenticated ? "authenticated" : "unauthenticated"}</div>;
+        return (
+          <div>
+            Loaded: {isAuthenticated ? "authenticated" : "unauthenticated"}
+          </div>
+        );
       };
 
       render(
@@ -466,7 +493,7 @@ describe("AuthProvider", () => {
   });
 
   describe("autoLogin", () => {
-    it("should automatically login via useAuthLoader when autoLogin is true and user is not authenticated", async () => {
+    it("should automatically login via useRootRouteContext when autoLogin is true and user is not authenticated", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -483,7 +510,7 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useAuthLoader(), {
+      const { result } = renderHook(() => useRootRouteContext(), {
         wrapper: ({ children }) => (
           <AuthProvider client={mockClient} autoLogin={true}>
             {children}
@@ -555,7 +582,9 @@ describe("AuthProvider", () => {
 
   describe("event listeners", () => {
     it("should listen to auth state changes via useSyncExternalStore", async () => {
-      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+      let authEventListener:
+        | ((event: { type: string; data?: unknown }) => void)
+        | undefined;
 
       const mockAddEventListener = vi.fn(
         (listener: (event: { type: string; data?: unknown }) => void) => {
@@ -579,7 +608,9 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {
@@ -622,7 +653,9 @@ describe("AuthProvider", () => {
       });
 
       const { result } = renderHook(() => useAuth(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+        wrapper: ({ children }) => (
+          <AuthProvider client={mockClient}>{children}</AuthProvider>
+        ),
       });
 
       await waitFor(() => {

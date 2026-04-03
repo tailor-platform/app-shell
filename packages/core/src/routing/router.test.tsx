@@ -1,7 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { RouterContainer } from "./router";
-import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
+import {
+  AppShellConfigContext,
+  AppShellDataContext,
+} from "@/contexts/appshell-context";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
@@ -51,7 +61,11 @@ const renderWithConfig = ({
   const tree = (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData }}>
-        <RouterContainer memory rootComponent={rootComponent} initialEntries={initialEntries}>
+        <RouterContainer
+          memory
+          rootComponent={rootComponent}
+          initialEntries={initialEntries}
+        >
           <Outlet />
         </RouterContainer>
       </AppShellDataContext.Provider>
@@ -60,7 +74,11 @@ const renderWithConfig = ({
 
   render(
     authClient ? (
-      <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
+      <AuthProvider
+        client={authClient}
+        autoLogin={autoLogin}
+        guardComponent={guardComponent}
+      >
         {tree}
       </AuthProvider>
     ) : (
@@ -210,7 +228,9 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard"],
       });
 
-      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+      expect(
+        await screen.findByRole("alert", { name: "default-error-boundary" }),
+      ).toBeDefined();
 
       cleanup();
 
@@ -219,7 +239,9 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard/overview"],
       });
 
-      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+      expect(
+        await screen.findByRole("alert", { name: "default-error-boundary" }),
+      ).toBeDefined();
     } finally {
       consoleSpy.mockRestore();
     }
@@ -231,7 +253,9 @@ describe("RouterContainer (memory)", () => {
       initialEntries: ["/unknown-path"],
     });
 
-    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+    expect(
+      await screen.findByRole("alert", { name: "default-error-boundary" }),
+    ).toBeDefined();
     expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 
@@ -362,7 +386,9 @@ describe("RouterContainer (memory)", () => {
       initialEntries: ["/admin"],
     });
 
-    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
+    expect(
+      await screen.findByRole("alert", { name: "default-error-boundary" }),
+    ).toBeDefined();
     expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 
@@ -661,5 +687,187 @@ describe("RouterContainer with AuthProvider", () => {
     // After auth state transitions, children should replace the guard
     expect(await screen.findByText("Home")).toBeDefined();
     expect(screen.queryByText("Loading...")).toBeNull();
+  });
+
+  it("allows navigation between routes after authentication", async () => {
+    const authClient = createMockAuthClient({
+      isAuthenticated: true,
+      error: null,
+      isReady: true,
+    });
+
+    const dashboardModule = defineModule({
+      path: "dashboard",
+      component: () => {
+        const navigate = useNavigate();
+        return (
+          <div>
+            <h1>Dashboard</h1>
+            <button type="button" onClick={() => navigate("/settings")}>
+              Go to Settings
+            </button>
+            <Outlet />
+          </div>
+        );
+      },
+      meta: { title: "Dashboard" },
+      resources: [],
+    });
+
+    const settingsModule = defineModule({
+      path: "settings",
+      component: () => <div>Settings Page</div>,
+      meta: { title: "Settings" },
+      resources: [],
+    });
+
+    renderWithConfig({
+      modules: [dashboardModule, settingsModule],
+      initialEntries: ["/dashboard"],
+      authClient,
+      guardComponent: () => <div>Loading...</div>,
+    });
+
+    expect(await screen.findByText("Dashboard")).toBeDefined();
+    expect(screen.queryByText("Loading...")).toBeNull();
+
+    const button = await screen.findByRole("button", {
+      name: "Go to Settings",
+    });
+    fireEvent.click(button);
+
+    expect(await screen.findByText("Settings Page")).toBeDefined();
+  });
+
+  it("renders the correct page after OAuth callback with a specific path", async () => {
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    const authClient = createMockAuthClient(
+      { isAuthenticated: true, error: null, isReady: true },
+      { handleCallback: mockHandleCallback },
+    );
+
+    renderWithConfig({
+      modules: [
+        defineModule({
+          path: "dashboard",
+          component: () => <div>Dashboard</div>,
+          meta: { title: "Dashboard" },
+          resources: [],
+        }),
+      ],
+      initialEntries: ["/dashboard?code=auth-code-123&state=abc"],
+      authClient,
+    });
+
+    expect(await screen.findByText("Dashboard")).toBeDefined();
+    expect(mockHandleCallback).toHaveBeenCalled();
+  });
+
+  it("applies both auth guard and route-level guards correctly", async () => {
+    let snapshot = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: false,
+    };
+    const listeners: Array<(event: { type: string }) => void> = [];
+
+    const authClient = createMockAuthClient(snapshot, {
+      getState: vi.fn(() => snapshot),
+      addEventListener: vi.fn((listener) => {
+        listeners.push(listener);
+        return () => {
+          const idx = listeners.indexOf(listener);
+          if (idx >= 0) listeners.splice(idx, 1);
+        };
+      }),
+    });
+
+    const publicModule = defineModule({
+      path: "public",
+      component: () => <div>Public Page</div>,
+      meta: { title: "Public" },
+      resources: [],
+    });
+
+    const restrictedModule = defineModule({
+      path: "restricted",
+      component: () => <div>Restricted Page</div>,
+      meta: { title: "Restricted" },
+      guards: [() => redirectTo("/public")],
+      resources: [],
+    });
+
+    renderWithConfig({
+      modules: [publicModule, restrictedModule],
+      initialEntries: ["/restricted"],
+      authClient,
+      guardComponent: () => <div>Auth Loading...</div>,
+    });
+
+    // Auth guard should be shown first (auth not ready)
+    expect(await screen.findByText("Auth Loading...")).toBeDefined();
+    expect(screen.queryByText("Public Page")).toBeNull();
+    expect(screen.queryByText("Restricted Page")).toBeNull();
+
+    // Simulate auth becoming ready and authenticated
+    act(() => {
+      snapshot = {
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      };
+      for (const listener of listeners) {
+        listener({ type: "auth_state_changed" });
+      }
+    });
+
+    // After auth resolves, route-level guard should redirect to /public
+    expect(await screen.findByText("Public Page")).toBeDefined();
+    expect(screen.queryByText("Restricted Page")).toBeNull();
+    expect(screen.queryByText("Auth Loading...")).toBeNull();
+  });
+
+  it("works without AuthProvider (no regression)", async () => {
+    const dashboardModule = defineModule({
+      path: "dashboard",
+      component: () => {
+        const navigate = useNavigate();
+        return (
+          <div>
+            <h1>Dashboard</h1>
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard/settings")}
+            >
+              Go to Settings
+            </button>
+            <Outlet />
+          </div>
+        );
+      },
+      meta: { title: "Dashboard" },
+      resources: [
+        defineResource({
+          path: "settings",
+          component: () => <div>Settings Resource</div>,
+          meta: { title: "Settings" },
+        }),
+      ],
+    });
+
+    // No authClient — AuthProvider is not used
+    renderWithConfig({
+      modules: [dashboardModule],
+      initialEntries: ["/dashboard"],
+    });
+
+    expect(await screen.findByText("Dashboard")).toBeDefined();
+
+    const button = await screen.findByRole("button", {
+      name: "Go to Settings",
+    });
+    fireEvent.click(button);
+
+    expect(await screen.findByText("Settings Resource")).toBeDefined();
   });
 });

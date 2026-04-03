@@ -110,7 +110,6 @@ export { type MappedItem, type ItemGroup } from "./components/dropdown-items";
 export {
   CsvImporter,
   useCsvImporter,
-  buildRows,
   csv,
   type CsvSchema,
   type CsvColumn,
@@ -119,4 +118,5 @@ export {
   type CsvColumnMapping,
   type CsvCellIssue,
   type ParsedRow,
+  type InferCsvRow,
 } from "./components/csv-importer";

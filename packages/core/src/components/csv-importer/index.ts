@@ -1,6 +1,5 @@
 export { CsvImporter } from "./CsvImporter";
 export { useCsvImporter } from "./use-csv-importer";
-export { buildRows } from "./build-rows";
 export { csv } from "./validators";
 export type {
   CsvSchema,
@@ -10,4 +9,5 @@ export type {
   CsvColumnMapping,
   CsvCellIssue,
   ParsedRow,
+  InferCsvRow,
 } from "./types";

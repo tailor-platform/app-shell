@@ -50,7 +50,11 @@ export async function parseCsvFile(file: File): Promise<ParsedCsv> {
 /** Auto-match CSV headers to schema columns using exact match or aliases. */
 export function autoMatchHeaders(
   csvHeaders: string[],
-  columns: { key: string; label: string; aliases?: string[] }[],
+  columns: readonly {
+    key: string;
+    label: string;
+    aliases?: readonly string[];
+  }[],
 ): { csvHeader: string; columnKey: string | null }[] {
   const usedKeys = new Set<string>();
 

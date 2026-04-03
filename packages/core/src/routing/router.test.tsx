@@ -458,7 +458,7 @@ describe("RouterContainer with AuthProvider", () => {
     expect(mockCheckAuthStatus).toHaveBeenCalled();
   });
 
-  it("handles OAuth callback and redirects to clean URL", async () => {
+  it("calls handleCallback when OAuth code is present in URL", async () => {
     const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
     const mockCheckAuthStatus = vi.fn().mockResolvedValue({
       isAuthenticated: true,

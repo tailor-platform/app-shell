@@ -25,7 +25,7 @@ import type {
 } from "./types";
 import { parseCsvFile, autoMatchHeaders } from "./csv-parser";
 import { processRows } from "./process-rows";
-import { buildRows } from "./build-rows";
+import { buildRows, buildSummary } from "./build-rows";
 import { useT } from "./i18n-labels";
 
 // ─── Context for Portal container (Drawer popup ref) ────
@@ -672,20 +672,13 @@ export function CsvImporter<T extends CsvSchema>({
     if (!file) return;
 
     const warnings = issues.filter((i) => i.level === "warning");
-    const correctedRows = new Set(corrections.map((c) => c.row)).size;
 
     const event: CsvImportEvent<T> = {
       file,
       mappings,
       corrections,
       issues: warnings,
-      summary: {
-        totalRows: rawRows.length,
-        validRows: rawRows.length - warnings.length,
-        correctedRows,
-        skippedRows: 0,
-        warningRows: warnings.length,
-      },
+      summary: buildSummary(rawRows.length, issues, corrections),
       buildRows: () => buildRows(file, schema, mappings, corrections),
     };
 

@@ -1,5 +1,33 @@
-import type { CsvSchema, CsvColumnMapping, CsvCorrection, InferCsvRow } from "./types";
+import type {
+  CsvSchema,
+  CsvColumnMapping,
+  CsvCorrection,
+  CsvCellIssue,
+  CsvImportEvent,
+  InferCsvRow,
+} from "./types";
 import { parseCsvFile } from "./csv-parser";
+
+/**
+ * Build the summary statistics for a CSV import event.
+ */
+export function buildSummary(
+  totalRows: number,
+  issues: CsvCellIssue[],
+  corrections: CsvCorrection[],
+): CsvImportEvent["summary"] {
+  const warnings = issues.filter((i) => i.level === "warning");
+  const correctedRows = new Set(corrections.map((c) => c.row)).size;
+
+  return {
+    totalRows,
+    validRows: totalRows - warnings.length,
+    correctedRows,
+    warningRows: warnings.length,
+    // Reserved for a future "skip row" feature — currently no rows are ever skipped.
+    skippedRows: 0,
+  };
+}
 
 /**
  * Reconstruct parsed rows from the original file, applying mappings, schema coercion,

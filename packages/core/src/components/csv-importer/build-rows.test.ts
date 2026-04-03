@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildRows } from "./build-rows";
-import type { CsvColumnMapping, CsvCorrection, CsvSchema } from "./types";
+import { buildRows, buildSummary } from "./build-rows";
+import type { CsvCellIssue, CsvColumnMapping, CsvCorrection, CsvSchema } from "./types";
 import { csv } from "./validators";
 
 // Mock parseCsvFile to avoid real file I/O
@@ -139,5 +139,96 @@ describe("buildRows", () => {
 
     const rows = await buildRows(createFile("test.csv"), schema, mappings, corrections);
     expect(rows).toEqual([{ price: 99 }]);
+  });
+});
+
+describe("buildSummary", () => {
+  it("returns all zeros for empty inputs", () => {
+    expect(buildSummary(0, [], [])).toEqual({
+      totalRows: 0,
+      validRows: 0,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 0,
+    });
+  });
+
+  it("counts all rows as valid when there are no issues", () => {
+    expect(buildSummary(5, [], [])).toEqual({
+      totalRows: 5,
+      validRows: 5,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 0,
+    });
+  });
+
+  it("counts warning rows and subtracts from valid rows", () => {
+    const issues: CsvCellIssue[] = [
+      {
+        rowIndex: 0,
+        columnKey: "name",
+        level: "warning",
+        message: "too short",
+      },
+      { rowIndex: 2, columnKey: "price", level: "warning", message: "unusual" },
+    ];
+
+    expect(buildSummary(5, issues, [])).toEqual({
+      totalRows: 5,
+      validRows: 3,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 2,
+    });
+  });
+
+  it("ignores error-level issues (only warnings affect the summary)", () => {
+    const issues: CsvCellIssue[] = [
+      { rowIndex: 0, columnKey: "name", level: "error", message: "invalid" },
+      { rowIndex: 1, columnKey: "price", level: "warning", message: "unusual" },
+    ];
+
+    expect(buildSummary(3, issues, [])).toEqual({
+      totalRows: 3,
+      validRows: 2,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 1,
+    });
+  });
+
+  it("counts distinct corrected rows", () => {
+    const corrections: CsvCorrection[] = [
+      { row: 0, columnKey: "name", oldValue: "a", newValue: "b" },
+      { row: 0, columnKey: "price", oldValue: "1", newValue: "2" },
+      { row: 3, columnKey: "name", oldValue: "c", newValue: "d" },
+    ];
+
+    expect(buildSummary(5, [], corrections)).toEqual({
+      totalRows: 5,
+      validRows: 5,
+      correctedRows: 2,
+      skippedRows: 0,
+      warningRows: 0,
+    });
+  });
+
+  it("combines warnings and corrections", () => {
+    const issues: CsvCellIssue[] = [
+      { rowIndex: 1, columnKey: "sku", level: "warning", message: "duplicate" },
+    ];
+    const corrections: CsvCorrection[] = [
+      { row: 0, columnKey: "name", oldValue: "x", newValue: "y" },
+      { row: 2, columnKey: "name", oldValue: "a", newValue: "b" },
+    ];
+
+    expect(buildSummary(4, issues, corrections)).toEqual({
+      totalRows: 4,
+      validRows: 3,
+      correctedRows: 2,
+      skippedRows: 0,
+      warningRows: 1,
+    });
   });
 });

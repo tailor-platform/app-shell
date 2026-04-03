@@ -94,10 +94,15 @@ export type CsvImportEvent<T extends CsvSchema = CsvSchema> = {
   issues: CsvCellIssue[];
   /** Summary statistics. */
   summary: {
+    /** Total number of data rows in the CSV (excluding the header row). */
     totalRows: number;
+    /** Rows with no warning-level issues. */
     validRows: number;
+    /** Distinct rows where the user made at least one correction. */
     correctedRows: number;
+    /** Rows that were skipped during import. */
     skippedRows: number;
+    /** Rows that have at least one warning-level issue. */
     warningRows: number;
   };
   /**

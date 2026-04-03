@@ -1,7 +1,14 @@
 import { describe, expect, it, assert } from "vitest";
 import { createContentRoutes } from "./routes";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import { defineModule, defineResource, pass, redirectTo, hidden } from "@/resource";
+import {
+  defineModule,
+  defineResource,
+  pass,
+  redirectTo,
+  hidden,
+  withGuardsLoader,
+} from "@/resource";
 
 const createMockResource = (path: string) =>
   defineResource({
@@ -26,6 +33,8 @@ const createMockResourceWithSubResources = (
   });
 
 const RootComponent = () => <div>Root</div>;
+// eslint-disable-next-line unicorn/consistent-function-scoping
+const mockRootLoader = async () => null;
 const createMockResourceWithoutComponent = (
   path: string,
   subResources: ReturnType<typeof defineResource>[],
@@ -56,6 +65,37 @@ describe("createContentRoutes", () => {
     });
 
     expect(routes[0].Component).toBe(RootComponent);
+  });
+
+  it("attaches rootLoader to the root index route", () => {
+    const routes = createContentRoutes({
+      modules: [],
+      settingsResources: [],
+      rootLoader: mockRootLoader,
+    });
+
+    expect(routes[0].index).toBe(true);
+    expect(routes[0].loader).toBe(mockRootLoader);
+  });
+
+  it("rootLoader redirects when guard returns redirectTo", async () => {
+    const rootLoader = withGuardsLoader([() => redirectTo("/dashboard")]);
+    const routes = createContentRoutes({
+      modules: [],
+      settingsResources: [],
+      rootComponent: RootComponent,
+      rootLoader,
+    });
+
+    expect(routes[0].index).toBe(true);
+    expect(routes[0].Component).toBe(RootComponent);
+    expect(typeof routes[0].loader).toBe("function");
+
+    assert(typeof routes[0].loader === "function");
+    const result = await routes[0].loader({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/dashboard");
   });
 
   it("adds module routes with inherited error boundaries", () => {

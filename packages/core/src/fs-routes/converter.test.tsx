@@ -9,6 +9,10 @@ import type { PageEntry, PageComponent } from "./types";
 
 const parentGuard = async () => ({ type: "pass" as const });
 const childGuard = async () => ({ type: "pass" as const });
+const redirectGuard = async () => ({
+  type: "redirect" as const,
+  to: "/dashboard",
+});
 
 const createMockPage = (
   path: string,
@@ -200,6 +204,17 @@ describe("convertPagesToModules", () => {
     const modules = convertPagesToModules(pages);
 
     expect(modules[0].meta).not.toHaveProperty("breadcrumbTitle");
+  });
+
+  it("root page with guards produces a loader on the module", () => {
+    const pages = [createMockPage("/", { guards: [redirectGuard] })];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules).toHaveLength(1);
+    expect(modules[0].path).toBe("");
+    expect(modules[0].guards).toHaveLength(1);
+    expect(modules[0].loader).toBeDefined();
+    expect(typeof modules[0].loader).toBe("function");
   });
 });
 

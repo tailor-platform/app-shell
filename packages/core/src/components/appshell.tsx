@@ -1,4 +1,10 @@
-import { Modules, Resource, ErrorBoundaryComponent, setContextData } from "@/resource";
+import {
+  Modules,
+  Resource,
+  ErrorBoundaryComponent,
+  LoaderHandler,
+  setContextData,
+} from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
 import {
@@ -14,6 +20,12 @@ import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
 
+/**
+ * Shared props between `AppShellProps` and the internal `WithPages` wrapper.
+ *
+ * These props are available regardless of whether routes are configured
+ * automatically (via vite-plugin) or manually (via `modules` prop).
+ */
 type SharedAppShellProps = React.PropsWithChildren<{
   /**
    * App shell title
@@ -40,6 +52,24 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * ```
    */
   rootComponent?: () => React.ReactNode;
+
+  /**
+   * Loader for the root route, used for guard evaluation.
+   *
+   * When using file-based routing, this is automatically set from
+   * the root page's guards via `AppShell.WithPages()`.
+   *
+   * @example
+   * ```tsx
+   * import { withGuardsLoader, redirectTo } from "@tailor-platform/app-shell";
+   *
+   * <AppShell
+   *   modules={[...]}
+   *   rootLoader={withGuardsLoader([() => redirectTo("/dashboard")])}
+   * />
+   * ```
+   */
+  rootLoader?: LoaderHandler;
 
   /**
    * Settings resources to be included in the settings menu
@@ -214,7 +244,9 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-            <RouterContainer rootComponent={props.rootComponent}>{props.children}</RouterContainer>
+            <RouterContainer rootComponent={props.rootComponent} rootLoader={props.rootLoader}>
+              {props.children}
+            </RouterContainer>
           </ThemeProvider>
         </BreadcrumbOverrideProvider>
       </AppShellDataContext.Provider>
@@ -222,7 +254,15 @@ export const AppShell = (props: AppShellProps) => {
   );
 };
 
-function withPages(pages: PageEntry[]): FC<AppShellProps> {
+/**
+ * Create an AppShell component with pages pre-configured.
+ *
+ * @internal
+ * This method is used internally by the vite-plugin to inject pages.
+ * Users should not call this directly. Use the vite-plugin for automatic
+ * page configuration, or pass the `modules` prop for manual configuration.
+ */
+AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
 
@@ -236,19 +276,10 @@ function withPages(pages: PageEntry[]): FC<AppShellProps> {
         {...props}
         modules={otherModules}
         rootComponent={props.rootComponent ?? rootModule?.component}
+        rootLoader={props.rootLoader ?? rootModule?.loader}
       />
     );
   };
 
   return WrappedAppShell;
-}
-
-/**
- * Create an AppShell component with pages pre-configured.
- *
- * @internal
- * This method is used internally by the vite-plugin to inject pages.
- * Users should not call this directly. Use the vite-plugin for automatic
- * page configuration, or pass the `modules` prop for manual configuration.
- */
-AppShell.WithPages = withPages;
+};

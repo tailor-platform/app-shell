@@ -94,17 +94,20 @@ type CreateContentRoutesParams = {
   modules: Modules;
   settingsResources: Array<Resource>;
   rootComponent?: RootComponentOption;
+  rootLoader?: LoaderHandler;
 };
 
 export const createContentRoutes = ({
   modules,
   settingsResources,
   rootComponent,
+  rootLoader,
 }: CreateContentRoutesParams): Array<RouteObject> => {
-  const rootRouteConfig = {
-    index: true,
-    Component: rootComponent ?? EmptyOutlet,
-  };
+  const rootRouteConfig = resolveIndexRoute({
+    path: "",
+    component: rootComponent ?? EmptyOutlet,
+    loader: rootLoader,
+  });
 
   const settingsRoutes =
     settingsResources.length > 0

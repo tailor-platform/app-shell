@@ -8,8 +8,8 @@
         // Disable semicolons in Markdown code blocks. Without this, oxfmt
         // appends a semicolon to single-line JSX expressions (e.g. `<Button />;`),
         // which renders as visible ";" text in md-react-preview live previews.
-        "semi": false
-      }
-    }
-  ]
+        "semi": false,
+      },
+    },
+  ],
 }

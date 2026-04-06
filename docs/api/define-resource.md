@@ -10,7 +10,7 @@ Creates a nested resource (page) within a module. Resources represent individual
 ## Signature
 
 ```typescript
-function defineResource(props: DefineResourceProps): Resource;
+function defineResource(props: DefineResourceProps): Resource
 ```
 
 ## Parameters
@@ -25,7 +25,7 @@ function defineResource(props: DefineResourceProps): Resource;
 defineResource({
   path: ":id", // Dynamic: /products/:id
   path: "categories", // Static: /products/categories
-});
+})
 ```
 
 ### `component`
@@ -95,7 +95,7 @@ See [Guards Overview](./guards/overview.md) for details.
 ## Return Type
 
 ```typescript
-Resource;
+Resource
 ```
 
 A resource object used in the `resources` array of `defineModule`.
@@ -122,7 +122,7 @@ const categoriesResource = defineResource({
     title: "Product Categories",
   },
   component: CategoriesPage,
-});
+})
 ```
 
 ### Dynamic Route with useParams
@@ -160,7 +160,7 @@ const ordersResource = defineResource({
       ],
     }),
   ],
-});
+})
 
 // URLs:
 // /orders
@@ -171,17 +171,17 @@ const ordersResource = defineResource({
 ### Resource with Guards
 
 ```typescript
-import { pass, hidden } from "@tailor-platform/app-shell";
+import { pass, hidden } from "@tailor-platform/app-shell"
 
 const adminSettingsResource = defineResource({
   path: "admin-settings",
   component: AdminSettingsPage,
   guards: [
     ({ context }) => {
-      return context.currentUser?.role === "admin" ? pass() : hidden();
+      return context.currentUser?.role === "admin" ? pass() : hidden()
     },
   ],
-});
+})
 ```
 
 ### Resource with Loader
@@ -191,10 +191,10 @@ const productResource = defineResource({
   path: ":id",
   component: ProductPage,
   loader: async ({ params }) => {
-    const product = await fetch(`/api/products/${params.id}`);
-    return product.json();
+    const product = await fetch(`/api/products/${params.id}`)
+    return product.json()
   },
-});
+})
 ```
 
 ### Resource with Error Boundary
@@ -223,7 +223,7 @@ const orderResource = defineResource({
     breadcrumbTitle: (segment) => `Order #${segment}`,
   },
   component: OrderDetailPage,
-});
+})
 
 // Breadcrumb shows: "Orders > Order #12345"
 // Instead of: "Orders > 12345"
@@ -252,7 +252,7 @@ const productsModule = defineModule({
       component: BrandsPage,
     }),
   ],
-});
+})
 ```
 
 ## Navigation Behavior
@@ -286,7 +286,7 @@ defineModule({
       ],
     }),
   ],
-});
+})
 ```
 
 **Sidebar:**
@@ -305,15 +305,15 @@ Products > Product Details > Edit
 ## TypeScript
 
 ```typescript
-import { type DefineResourceProps, type Resource } from "@tailor-platform/app-shell";
+import { type DefineResourceProps, type Resource } from "@tailor-platform/app-shell"
 
 const props: DefineResourceProps = {
   path: ":id",
   component: DetailPage,
   guards: [],
-};
+}
 
-const resource: Resource = defineResource(props);
+const resource: Resource = defineResource(props)
 ```
 
 ## Related

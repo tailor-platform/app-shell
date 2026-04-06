@@ -10,13 +10,14 @@ The `Tooltip` component displays contextual information on hover or focus. It is
 ## Import
 
 ```tsx
-import { Tooltip } from "@tailor-platform/app-shell";
+import { Tooltip } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Tooltip.Root>
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell"
+;<Tooltip.Root>
   <Tooltip.Trigger render={<Button variant="outline" />}>Hover me</Tooltip.Trigger>
   <Tooltip.Content>Helpful information</Tooltip.Content>
 </Tooltip.Root>
@@ -65,8 +66,9 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ## Placement
 
-```tsx
-<Tooltip.Root>
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell"
+;<Tooltip.Root>
   <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
   <Tooltip.Content side="right" align="start">
     Appears on the right
@@ -101,27 +103,27 @@ Use `Tooltip.Provider` to avoid tooltips opening immediately in dense UIs like t
 
 ### Icon Button with Tooltip
 
-```tsx
-import { PencilIcon } from "lucide-react";
-
-<Tooltip.Root>
+```tsx preview
+import { Button, Tooltip } from "@tailor-platform/app-shell"
+import { PencilIcon } from "lucide-react"
+;<Tooltip.Root>
   <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
     <PencilIcon />
     <span className="astw:sr-only">Edit</span>
   </Tooltip.Trigger>
   <Tooltip.Content>Edit order</Tooltip.Content>
-</Tooltip.Root>;
+</Tooltip.Root>
 ```
 
 ### Controlled Tooltip
 
 ```tsx
-const [open, setOpen] = useState(false);
+const [open, setOpen] = useState(false)
 
-<Tooltip.Root open={open} onOpenChange={setOpen}>
+;<Tooltip.Root open={open} onOpenChange={setOpen}>
   <Tooltip.Trigger render={<Button />}>Info</Tooltip.Trigger>
   <Tooltip.Content>Additional details here</Tooltip.Content>
-</Tooltip.Root>;
+</Tooltip.Root>
 ```
 
 ## Accessibility

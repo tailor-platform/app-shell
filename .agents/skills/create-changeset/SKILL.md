@@ -80,14 +80,13 @@ The file format is:
 Add `DescriptionCard` component for displaying structured field data in a responsive grid layout.
 
 ```tsx
-import { DescriptionCard } from "@tailor-platform/app-shell";
-
-<DescriptionCard
+import { DescriptionCard } from "@tailor-platform/app-shell"
+;<DescriptionCard
   fields={[
     { label: "Name", value: "Alice" },
     { label: "Email", value: "alice@example.com" },
   ]}
-/>;
+/>
 ```
 ````
 
@@ -113,13 +112,13 @@ Replace `defaultResourceRedirectPath` with `redirectToResource()` helper for mod
 Before:
 
 ```tsx
-defineModule({ defaultResourceRedirectPath: "/dashboard" });
+defineModule({ defaultResourceRedirectPath: "/dashboard" })
 ```
 
 After:
 
 ```tsx
-import { redirectToResource } from "@tailor-platform/app-shell";
-defineModule({ redirect: redirectToResource("dashboard") });
+import { redirectToResource } from "@tailor-platform/app-shell"
+defineModule({ redirect: redirectToResource("dashboard") })
 ```
 ````

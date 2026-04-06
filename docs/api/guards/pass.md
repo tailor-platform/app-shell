@@ -10,25 +10,25 @@ Returns a guard result that allows access and continues to the next guard in the
 ## Signature
 
 ```typescript
-function pass(): GuardResult;
+function pass(): GuardResult
 ```
 
 ## Return Type
 
 ```typescript
 {
-  type: "pass";
+  type: "pass"
 }
 ```
 
 ## Usage
 
 ```typescript
-import { pass, type Guard } from "@tailor-platform/app-shell";
+import { pass, type Guard } from "@tailor-platform/app-shell"
 
 const allowAccess: Guard = () => {
-  return pass();
-};
+  return pass()
+}
 ```
 
 ## When to Use
@@ -44,7 +44,7 @@ Use `pass()` when:
 ### Always Allow
 
 ```typescript
-const allowAll: Guard = () => pass();
+const allowAll: Guard = () => pass()
 ```
 
 ### Conditional Access
@@ -52,10 +52,10 @@ const allowAll: Guard = () => pass();
 ```typescript
 const requireAuth: Guard = ({ context }) => {
   if (context.currentUser) {
-    return pass(); // User is authenticated
+    return pass() // User is authenticated
   }
-  return redirectTo("/login");
-};
+  return redirectTo("/login")
+}
 ```
 
 ### Role Check
@@ -63,10 +63,10 @@ const requireAuth: Guard = ({ context }) => {
 ```typescript
 const requireAdmin: Guard = ({ context }) => {
   if (context.currentUser?.role === "admin") {
-    return pass(); // User is admin
+    return pass() // User is admin
   }
-  return hidden();
-};
+  return hidden()
+}
 ```
 
 ### Permission Check
@@ -76,10 +76,10 @@ const requirePermission =
   (perm: string): Guard =>
   ({ context }) => {
     if (context.permissions.includes(perm)) {
-      return pass(); // User has permission
+      return pass() // User has permission
     }
-    return hidden();
-  };
+    return hidden()
+  }
 ```
 
 ### Multiple Conditions
@@ -88,22 +88,22 @@ const requirePermission =
 const complexGuard: Guard = ({ context }) => {
   // Check multiple conditions
   if (context.currentUser && context.currentUser.active && !context.currentUser.suspended) {
-    return pass(); // All conditions met
+    return pass() // All conditions met
   }
-  return hidden();
-};
+  return hidden()
+}
 ```
 
 ### Async Guard
 
 ```typescript
 const asyncGuard: Guard = async ({ context }) => {
-  const isValid = await validateToken(context.token);
+  const isValid = await validateToken(context.token)
   if (isValid) {
-    return pass();
+    return pass()
   }
-  return redirectTo("/login");
-};
+  return redirectTo("/login")
+}
 ```
 
 ## Guard Chaining
@@ -115,7 +115,7 @@ guards: [
   guardA, // Returns pass() → Continue to guardB
   guardB, // Returns pass() → Continue to guardC
   guardC, // Returns pass() → Grant access
-];
+]
 ```
 
 If all guards return `pass()`, access is granted.

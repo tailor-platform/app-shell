@@ -12,7 +12,7 @@ AppShell provides built-in OAuth2/OIDC authentication through the `AuthProvider`
 Wrap your AppShell with the authentication provider:
 
 ```tsx
-import { AuthProvider, AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AuthProvider, AppShell, SidebarLayout } from "@tailor-platform/app-shell"
 
 const App = () => (
   <AuthProvider
@@ -26,7 +26,7 @@ const App = () => (
       <SidebarLayout />
     </AppShell>
   </AuthProvider>
-);
+)
 ```
 
 Find the above values in Tailor Console:
@@ -56,17 +56,17 @@ See the [API](./api.md#authprovider) for more details.
 Use the `useAuth` hook to access authentication state and methods:
 
 ```tsx
-import { useAuth } from "@tailor-platform/app-shell";
+import { useAuth } from "@tailor-platform/app-shell"
 
 const UserProfile = () => {
-  const { authState, login, logout } = useAuth();
+  const { authState, login, logout } = useAuth()
 
   if (authState.isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   if (!authState.isAuthenticated) {
-    return <button onClick={login}>Sign In</button>;
+    return <button onClick={login}>Sign In</button>
   }
 
   return (
@@ -75,8 +75,8 @@ const UserProfile = () => {
       <p>User ID: {authState.user.id}</p>
       <button onClick={logout}>Sign Out</button>
     </div>
-  );
-};
+  )
+}
 ```
 
 ### Authentication State
@@ -108,10 +108,10 @@ If your application needs additional user fields (e.g., roles, organization info
 declare module "@tailor-platform/app-shell" {
   interface AuthRegister {
     user: DefaultUser & {
-      roles: Array<string>;
-      organizationId: string;
+      roles: Array<string>
+      organizationId: string
       // Add any other custom fields your API returns
-    };
+    }
   }
 }
 ```
@@ -147,18 +147,18 @@ The `meQuery` prop defines the GraphQL query used to fetch the authenticated use
 After the above setup, `authState.user` will be fully typed:
 
 ```tsx
-import { useAuth } from "@tailor-platform/app-shell";
+import { useAuth } from "@tailor-platform/app-shell"
 
 const MyComponent = () => {
-  const { authState } = useAuth();
+  const { authState } = useAuth()
 
   // TypeScript knows these properties exist
-  console.log(authState.user.roles); // Array<string>
-  console.log(authState.user.organizationId); // string
-  console.log(authState.user.email); // string (from DefaultUser)
+  console.log(authState.user.roles) // Array<string>
+  console.log(authState.user.organizationId) // string
+  console.log(authState.user.email) // string (from DefaultUser)
 
-  return <div>...</div>;
-};
+  return <div>...</div>
+}
 ```
 
 ## OAuth Callback Handling
@@ -166,25 +166,25 @@ const MyComponent = () => {
 If your authentication flow requires a dedicated callback page, use the `handleCallback` method:
 
 ```tsx
-import { useAuth } from "@tailor-platform/app-shell";
-import { useEffect } from "react";
+import { useAuth } from "@tailor-platform/app-shell"
+import { useEffect } from "react"
 
 const CallbackPage = () => {
-  const { handleCallback } = useAuth();
+  const { handleCallback } = useAuth()
 
   useEffect(() => {
     handleCallback()
       .then(() => {
         // Redirect to home or intended page
-        window.location.href = "/";
+        window.location.href = "/"
       })
       .catch((error) => {
-        console.error("Auth callback failed:", error);
-      });
-  }, [handleCallback]);
+        console.error("Auth callback failed:", error)
+      })
+  }, [handleCallback])
 
-  return <div>Processing authentication...</div>;
-};
+  return <div>Processing authentication...</div>
+}
 ```
 
 ## Auth Client
@@ -192,12 +192,12 @@ const CallbackPage = () => {
 Use `createAuthClient` to create an authentication client that you pass to `AuthProvider`. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
 
 ```tsx
-import { createAuthClient } from "@tailor-platform/app-shell";
+import { createAuthClient } from "@tailor-platform/app-shell"
 
 const authClient = createAuthClient({
   clientId: "your-client-id",
   appUri: "https://xyz.erp.dev",
-});
+})
 ```
 
 ### Using `authClient.fetch` with a GraphQL Client
@@ -205,18 +205,18 @@ const authClient = createAuthClient({
 Pass `authClient.fetch` directly to your GraphQL client (e.g., urql). It transparently handles DPoP proof generation and token refresh on every request:
 
 ```tsx
-import { createAuthClient, AuthProvider } from "@tailor-platform/app-shell";
-import { createClient, Provider } from "urql";
+import { createAuthClient, AuthProvider } from "@tailor-platform/app-shell"
+import { createClient, Provider } from "urql"
 
 const authClient = createAuthClient({
   clientId: "your-client-id",
   appUri: "https://xyz.erp.dev",
-});
+})
 
 const urqlClient = createClient({
   url: `${authClient.getAppUri()}/query`,
   fetch: authClient.fetch,
-});
+})
 
 function App() {
   return (
@@ -225,7 +225,7 @@ function App() {
         <YourAppComponents />
       </Provider>
     </AuthProvider>
-  );
+  )
 }
 ```
 

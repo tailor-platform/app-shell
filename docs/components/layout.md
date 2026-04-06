@@ -7,18 +7,13 @@ description: Responsive column layout component for organizing page content in 1
 
 `Layout` is a responsive column layout component that helps you organize page content into 1, 2, or 3 columns with automatic responsive behavior. Perfect for detail pages, dashboards, and forms.
 
-## Import
-
-```tsx
-import { Layout } from "@tailor-platform/app-shell";
-```
-
 ## Basic Usage
 
 The column count is auto-detected from the number of `Layout.Column` children:
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Column>
     <h2>Main Content</h2>
     <p>Your main content goes here...</p>
@@ -69,8 +64,9 @@ The column count is auto-detected from the number of `Layout.Column` children:
 
 Full-width layout, always stacks vertically:
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Column>
     <DescriptionCard data={data} fields={fields} />
   </Layout.Column>
@@ -85,8 +81,9 @@ Full-width layout, always stacks vertically:
 
 Main content with sidebar:
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Column>
     {/* Main content - flexible width */}
     <DescriptionCard data={orderData} fields={orderFields} />
@@ -114,8 +111,9 @@ Main content with sidebar:
 
 Left sidebar, main content, right sidebar:
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Column>
     {/* Left sidebar - fixed 320px */}
     <Navigation />
@@ -146,8 +144,9 @@ Left sidebar, main content, right sidebar:
 
 When more than 3 `Layout.Column` children are provided, all columns share equal width:
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Column>{/* 25% */}</Layout.Column>
   <Layout.Column>{/* 25% */}</Layout.Column>
   <Layout.Column>{/* 25% */}</Layout.Column>
@@ -164,8 +163,9 @@ When more than 3 `Layout.Column` children are provided, all columns share equal 
 
 Use `Layout.Header` to add a page-level header with title, actions, and optional full-width content:
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout, Button } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Header
     title="Order #12345"
     actions={[
@@ -189,7 +189,8 @@ The header displays:
 ### Header with Tabs
 
 ```tsx
-<Layout>
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Header title="Purchase Orders" actions={[<Button key="create">Create</Button>]}>
     <Tabs value={tab} onValueChange={setTab}>
       <TabsList>
@@ -215,8 +216,9 @@ By default, column widths are determined by position (first, second, third). You
 
 If any `Layout.Column` has an `area` prop, all columns switch to area-based widths. Columns without an `area` default to flexible (`1fr`).
 
-```tsx
-<Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout>
   <Layout.Column area="left">
     <nav>Sidebar</nav>
   </Layout.Column>
@@ -232,8 +234,9 @@ Columns are rendered in source order — place them in the visual order you want
 
 Use `className` to control the space between columns:
 
-```tsx
-<Layout className="astw:gap-6">
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell"
+;<Layout className="astw:gap-6">
   <Layout.Column>{/* ... */}</Layout.Column>
   <Layout.Column>{/* ... */}</Layout.Column>
 </Layout>
@@ -245,8 +248,8 @@ Use `className` to control the space between columns:
 
 ```tsx
 function OrderDetailPage() {
-  const { id } = useParams();
-  const order = useOrder(id);
+  const { id } = useParams()
+  const order = useOrder(id)
 
   return (
     <Layout>
@@ -284,7 +287,7 @@ function OrderDetailPage() {
         </Card>
       </Layout.Column>
     </Layout>
-  );
+  )
 }
 ```
 
@@ -322,7 +325,7 @@ function Dashboard() {
         </Card>
       </Layout.Column>
     </Layout>
-  );
+  )
 }
 ```
 
@@ -330,7 +333,7 @@ function Dashboard() {
 
 ```tsx
 function ProductEditor() {
-  const [product, setProduct] = useState(initialProduct);
+  const [product, setProduct] = useState(initialProduct)
 
   return (
     <Layout>
@@ -371,7 +374,7 @@ function ProductEditor() {
         </Card>
       </Layout.Column>
     </Layout>
-  );
+  )
 }
 ```
 
@@ -392,7 +395,7 @@ function EditorPage() {
         <PropertiesPanel />
       </Layout.Column>
     </Layout>
-  );
+  )
 }
 ```
 

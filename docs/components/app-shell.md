@@ -10,13 +10,13 @@ description: The root component that provides routing, navigation, and theming f
 ## Import
 
 ```tsx
-import { AppShell } from "@tailor-platform/app-shell";
+import { AppShell } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx
-import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell"
 
 const modules = [
   defineModule({
@@ -24,14 +24,14 @@ const modules = [
     component: DashboardPage,
     meta: { title: "Dashboard" },
   }),
-];
+]
 
 function App() {
   return (
     <AppShell title="My ERP App" basePath="/app" modules={modules}>
       <SidebarLayout />
     </AppShell>
-  );
+  )
 }
 ```
 
@@ -54,11 +54,10 @@ function App() {
 - **Description:** Application icon displayed in the sidebar header
 
 ```tsx
-import { Building } from "lucide-react";
-
-<AppShell title="My App" icon={<Building />} modules={modules}>
+import { Building } from "lucide-react"
+;<AppShell title="My App" icon={<Building />} modules={modules}>
   {/* ... */}
-</AppShell>;
+</AppShell>
 ```
 
 ### basePath
@@ -85,7 +84,7 @@ import { Building } from "lucide-react";
 - **Description:** Array of module definitions that define your application structure
 
 ```tsx
-import { defineModule, defineResource } from "@tailor-platform/app-shell";
+import { defineModule, defineResource } from "@tailor-platform/app-shell"
 
 const modules = [
   defineModule({
@@ -100,9 +99,9 @@ const modules = [
       }),
     ],
   }),
-];
+]
 
-<AppShell modules={modules}>{/* ... */}</AppShell>;
+;<AppShell modules={modules}>{/* ... */}</AppShell>
 ```
 
 [Learn more about Modules and Resources →](../concepts/modules-and-resources.md)
@@ -121,11 +120,10 @@ const modules = [
 > **Tip:** For redirects from the root, use a guard with `redirectTo()` instead
 
 ```tsx
-import { redirectTo } from "@tailor-platform/app-shell";
-
-<AppShell basePath="/app" modules={modules} rootComponent={() => redirectTo("/app/dashboard")}>
+import { redirectTo } from "@tailor-platform/app-shell"
+;<AppShell basePath="/app" modules={modules} rootComponent={() => redirectTo("/app/dashboard")}>
   {/* ... */}
-</AppShell>;
+</AppShell>
 ```
 
 ### settingsResources
@@ -134,7 +132,7 @@ import { redirectTo } from "@tailor-platform/app-shell";
 - **Description:** Resources to include in the settings menu dropdown
 
 ```tsx
-import { defineResource } from "@tailor-platform/app-shell";
+import { defineResource } from "@tailor-platform/app-shell"
 
 const settingsResources = [
   defineResource({
@@ -147,11 +145,11 @@ const settingsResources = [
     component: BillingSettingsPage,
     meta: { title: "Billing" },
   }),
-];
+]
 
-<AppShell modules={modules} settingsResources={settingsResources}>
+;<AppShell modules={modules} settingsResources={settingsResources}>
   {/* ... */}
-</AppShell>;
+</AppShell>
 ```
 
 Settings appear in a dropdown menu in the sidebar header, accessible via the settings icon.
@@ -178,21 +176,21 @@ Supported locales: `en`, `ja`
 - **Description:** Global error boundary component applied to all routes
 
 ```tsx
-import { useRouteError } from "@tailor-platform/app-shell";
+import { useRouteError } from "@tailor-platform/app-shell"
 
 const GlobalErrorBoundary = () => {
-  const error = useRouteError() as Error;
+  const error = useRouteError() as Error
   return (
     <div className="astw:p-8">
       <h1 className="astw:text-xl astw:font-bold astw:mb-4">Something went wrong</h1>
       <p className="astw:text-red-600">{error.message}</p>
     </div>
-  );
-};
+  )
+}
 
-<AppShell modules={modules} errorBoundary={GlobalErrorBoundary}>
+;<AppShell modules={modules} errorBoundary={GlobalErrorBoundary}>
   {/* ... */}
-</AppShell>;
+</AppShell>
 ```
 
 > **Note:** Module and resource-level error boundaries take precedence over the global error boundary.
@@ -209,10 +207,10 @@ First, define your context data type using module augmentation:
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
-      apiClient: ApiClient;
-      currentUser: User | null;
-      tenantId: string;
-    };
+      apiClient: ApiClient
+      currentUser: User | null
+      tenantId: string
+    }
   }
 }
 ```
@@ -236,30 +234,30 @@ Then pass the data to AppShell:
 Access the context data in your components:
 
 ```tsx
-import { useAppShell } from "@tailor-platform/app-shell";
+import { useAppShell } from "@tailor-platform/app-shell"
 
 function MyComponent() {
-  const { context } = useAppShell();
+  const { context } = useAppShell()
 
   // Fully typed!
-  const user = context.currentUser;
-  const client = context.apiClient;
+  const user = context.currentUser
+  const client = context.apiClient
 
-  return <div>Welcome, {user?.name}</div>;
+  return <div>Welcome, {user?.name}</div>
 }
 ```
 
 Or in guards:
 
 ```tsx
-import { pass, hidden } from "@tailor-platform/app-shell";
+import { pass, hidden } from "@tailor-platform/app-shell"
 
 const requireAuth: Guard = ({ context }) => {
   if (!context.currentUser) {
-    return redirectTo("/login");
+    return redirectTo("/login")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### children
@@ -270,11 +268,10 @@ const requireAuth: Guard = ({ context }) => {
 Typically, you'll use `SidebarLayout`:
 
 ```tsx
-import { SidebarLayout } from "@tailor-platform/app-shell";
-
-<AppShell modules={modules}>
+import { SidebarLayout } from "@tailor-platform/app-shell"
+;<AppShell modules={modules}>
   <SidebarLayout />
-</AppShell>;
+</AppShell>
 ```
 
 Or create a custom layout:
@@ -294,12 +291,12 @@ When using the Vite plugin for file-based routing, use the special `WithPages` h
 /// <reference types="@tailor-platform/app-shell/vite-plugin" />
 
 // App.tsx
-import { AppShell } from "@tailor-platform/app-shell";
+import { AppShell } from "@tailor-platform/app-shell"
 
 // No need to pass modules prop
-<AppShell.WithPages title="My App" basePath="/app">
+;<AppShell.WithPages title="My App" basePath="/app">
   <SidebarLayout />
-</AppShell.WithPages>;
+</AppShell.WithPages>
 ```
 
 [Learn more about File-Based Routing →](../concepts/file-based-routing.md)
@@ -315,28 +312,28 @@ import {
   defineModule,
   defineResource,
   useRouteError,
-} from "@tailor-platform/app-shell";
-import { Building } from "lucide-react";
+} from "@tailor-platform/app-shell"
+import { Building } from "lucide-react"
 
 // Define context data type
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
-      currentUser: User | null;
-    };
+      currentUser: User | null
+    }
   }
 }
 
 // Error boundary
 const ErrorBoundary = () => {
-  const error = useRouteError() as Error;
+  const error = useRouteError() as Error
   return (
     <div className="astw:p-8">
       <h1 className="astw:text-xl astw:font-bold">Error</h1>
       <p>{error.message}</p>
     </div>
-  );
-};
+  )
+}
 
 // Modules
 const modules = [
@@ -356,7 +353,7 @@ const modules = [
       }),
     ],
   }),
-];
+]
 
 // Settings
 const settingsResources = [
@@ -365,11 +362,11 @@ const settingsResources = [
     component: ProfilePage,
     meta: { title: "Profile" },
   }),
-];
+]
 
 // App
 function App() {
-  const currentUser = useCurrentUser();
+  const currentUser = useCurrentUser()
 
   return (
     <AppShell
@@ -384,10 +381,10 @@ function App() {
     >
       <SidebarLayout />
     </AppShell>
-  );
+  )
 }
 
-export default App;
+export default App
 ```
 
 ## Related Components

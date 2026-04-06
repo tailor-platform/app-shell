@@ -10,26 +10,28 @@ description: Display a title and a vertical list of actions with per-row loading
 ## Import
 
 ```tsx
-import { ActionPanel } from "@tailor-platform/app-shell";
+import { ActionPanel } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<ActionPanel
+```tsx preview height="350"
+import { ActionPanel } from "@tailor-platform/app-shell"
+import { ReceiptIcon, ExternalLinkIcon } from "lucide-react"
+;<ActionPanel
   title="Actions"
   actions={[
     {
       key: "create-invoice",
       label: "Create new sales invoice",
       icon: <ReceiptIcon />,
-      onClick: () => openCreateInvoiceModal(),
+      onClick: () => console.log("create invoice"),
     },
     {
       key: "view-docs",
       label: "View documentation",
       icon: <ExternalLinkIcon />,
-      onClick: () => window.open("/docs", "_blank", "noopener,noreferrer"),
+      onClick: () => console.log("view docs"),
     },
   ]}
 />
@@ -67,30 +69,28 @@ import { ActionPanel } from "@tailor-platform/app-shell";
 
 Use parent state to control which row is loading:
 
-```tsx
-const [loadingKey, setLoadingKey] = useState<string | null>(null);
-
-const handleConfirm = async () => {
-  setLoadingKey("confirm");
-  try {
-    await confirmOrder(orderId);
-  } finally {
-    setLoadingKey(null);
-  }
-};
-
-<ActionPanel
+```tsx preview height="350"
+import { ActionPanel } from "@tailor-platform/app-shell"
+import { CheckIcon, ReceiptIcon } from "lucide-react"
+;<ActionPanel
   title="Actions"
   actions={[
+    {
+      key: "create-order",
+      label: "Create new order",
+      icon: <ReceiptIcon />,
+      onClick: () => console.log("create new order"),
+      disabled: true,
+    },
     {
       key: "confirm",
       label: "Confirm order",
       icon: <CheckIcon />,
-      onClick: handleConfirm,
-      loading: loadingKey === "confirm",
+      onClick: () => console.log("confirm order"),
+      loading: true,
     },
   ]}
-/>;
+/>
 ```
 
 ## Backend-Driven Pattern

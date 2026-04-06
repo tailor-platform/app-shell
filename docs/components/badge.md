@@ -10,12 +10,14 @@ The `Badge` component displays status indicators, labels, and tags with multiple
 ## Import
 
 ```tsx
-import { Badge } from "@tailor-platform/app-shell";
+import { Badge } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge>Default</Badge>
 <Badge variant="success">Success</Badge>
 <Badge variant="warning">Warning</Badge>
@@ -28,7 +30,9 @@ import { Badge } from "@tailor-platform/app-shell";
 
 Filled background variants for high emphasis:
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge variant="default">Default</Badge>
 <Badge variant="success">Approved</Badge>
 <Badge variant="warning">Pending</Badge>
@@ -40,7 +44,9 @@ Filled background variants for high emphasis:
 
 Outlined badges with colored status dots for subtle emphasis:
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
 <Badge variant="outline-success">Active</Badge>
 <Badge variant="outline-warning">In Progress</Badge>
 <Badge variant="outline-error">Failed</Badge>
@@ -71,7 +77,7 @@ type BadgeVariant =
   | "outline-warning"
   | "outline-error"
   | "outline-info"
-  | "outline-neutral";
+  | "outline-neutral"
 ```
 
 ## Examples
@@ -86,9 +92,9 @@ function OrderStatus({ status }: { status: string }) {
     shipped: "outline-success",
     delivered: "success",
     cancelled: "outline-error",
-  };
+  }
 
-  return <Badge variant={variantMap[status] || "neutral"}>{status.toUpperCase()}</Badge>;
+  return <Badge variant={variantMap[status] || "neutral"}>{status.toUpperCase()}</Badge>
 }
 ```
 
@@ -100,23 +106,23 @@ const priorities = [
   { label: "Medium", variant: "outline-info" },
   { label: "High", variant: "outline-warning" },
   { label: "Critical", variant = "error" },
-];
+]
 
-<div className="astw:flex astw:gap-2">
+;<div className="astw:flex astw:gap-2">
   {priorities.map((p) => (
     <Badge key={p.label} variant={p.variant}>
       {p.label}
     </Badge>
   ))}
-</div>;
+</div>
 ```
 
 ### With Icons
 
-```tsx
-import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
-
-<div className="astw:flex astw:gap-2">
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell"
+import { CheckCircle, AlertCircle, XCircle } from "lucide-react"
+;<div className="astw:flex astw:gap-2">
   <Badge variant="success">
     <CheckCircle className="astw:w-3 astw:h-3 astw:mr-1" />
     Verified
@@ -129,34 +135,35 @@ import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
     <XCircle className="astw:w-3 astw:h-3 astw:mr-1" />
     Blocked
   </Badge>
-</div>;
+</div>
 ```
 
 ### Dynamic Variant Selection
 
 ```tsx
 interface Product {
-  name: string;
-  stock: number;
+  name: string
+  stock: number
 }
 
 function ProductBadge({ product }: { product: Product }) {
   // Determine variant based on stock level
-  let variant: BadgeVariant = "success";
+  let variant: BadgeVariant = "success"
   if (product.stock === 0) {
-    variant = "error";
+    variant = "error"
   } else if (product.stock < 10) {
-    variant = "warning";
+    variant = "warning"
   }
 
-  return <Badge variant={variant}>{product.stock} in stock</Badge>;
+  return <Badge variant={variant}>{product.stock} in stock</Badge>
 }
 ```
 
 ### Custom Styling
 
-```tsx
-<Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
+```tsx preview
+import { Badge } from "@tailor-platform/app-shell"
+;<Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
   Premium
 </Badge>
 ```
@@ -195,9 +202,8 @@ function ProductBadge({ product }: { product: Product }) {
 Badges can be used with DescriptionCard for automatic status rendering:
 
 ```tsx
-import { DescriptionCard } from "@tailor-platform/app-shell";
-
-<DescriptionCard
+import { DescriptionCard } from "@tailor-platform/app-shell"
+;<DescriptionCard
   data={orderData}
   fields={[
     {
@@ -213,7 +219,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
       },
     },
   ]}
-/>;
+/>
 ```
 
 [Learn more about DescriptionCard →](./description-card.md)
@@ -248,8 +254,7 @@ Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
 3. **Creating custom variants** using the `badgeVariants` utility
 
 ```tsx
-import { badgeVariants } from "@tailor-platform/app-shell";
-import { cn } from "@/lib/utils";
-
-<div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>Custom Badge</div>;
+import { badgeVariants } from "@tailor-platform/app-shell"
+import { cn } from "@/lib/utils"
+;<div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>Custom Badge</div>
 ```

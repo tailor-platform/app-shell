@@ -10,13 +10,14 @@ The `Autocomplete` component provides a free-text input with a suggestion list. 
 ## Import
 
 ```tsx
-import { Autocomplete } from "@tailor-platform/app-shell";
+import { Autocomplete } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Autocomplete
+```tsx preview align="start"
+import { Autocomplete } from "@tailor-platform/app-shell"
+;<Autocomplete
   items={["Apple", "Banana", "Cherry"]}
   placeholder="Type a fruit..."
   onValueChange={(value) => console.log(value)}
@@ -43,9 +44,9 @@ import { Autocomplete } from "@tailor-platform/app-shell";
 
 ```ts
 interface MappedItem {
-  label: string; // Display text, used for filtering and a11y
-  key?: string; // React key. Defaults to label
-  render?: React.ReactNode; // Custom JSX to render in the dropdown
+  label: string // Display text, used for filtering and a11y
+  key?: string // React key. Defaults to label
+  render?: React.ReactNode // Custom JSX to render in the dropdown
 }
 ```
 
@@ -53,20 +54,22 @@ interface MappedItem {
 
 ```ts
 interface ItemGroup<T> {
-  label: string;
-  items: T[];
+  label: string
+  items: T[]
 }
 ```
 
 ## Grouped Suggestions
 
-```tsx
-const cities = [
-  { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
-  { label: "France", items: ["Paris", "Lyon", "Marseille"] },
-];
-
-<Autocomplete items={cities} placeholder="Search cities..." />;
+```tsx preview align="start" height="350"
+import { Autocomplete } from "@tailor-platform/app-shell"
+;<Autocomplete
+  placeholder="Search cities..."
+  items={[
+    { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
+    { label: "France", items: ["Paris", "Lyon", "Marseille"] },
+  ]}
+/>
 ```
 
 ## Object Items with mapItem
@@ -74,19 +77,19 @@ const cities = [
 When items are objects, use `mapItem` to tell the component how to display them. The selected value is the item's `label` string returned by `mapItem`:
 
 ```tsx
-type City = { code: string; name: string };
+type City = { code: string; name: string }
 
 const cities: City[] = [
   { code: "TYO", name: "Tokyo" },
   { code: "OSA", name: "Osaka" },
-];
+]
 
-<Autocomplete
+;<Autocomplete
   items={cities}
   mapItem={(city) => ({ label: city.name, key: city.code })}
   placeholder="Search cities..."
   onValueChange={(name) => console.log(name)} // receives "Tokyo", "Osaka", etc.
-/>;
+/>
 ```
 
 ## Async Suggestions
@@ -94,18 +97,18 @@ const cities: City[] = [
 Use `Autocomplete.Async` to fetch suggestions as the user types. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default suggestions for `null`, or return an empty array to show nothing until the user starts typing.
 
 ```tsx
-import { type AutocompleteAsyncFetcher } from "@tailor-platform/app-shell";
+import { type AutocompleteAsyncFetcher } from "@tailor-platform/app-shell"
 
 const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
-  const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
-  return res.json();
-};
+  const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal })
+  return res.json()
+}
 
-<Autocomplete.Async
+;<Autocomplete.Async
   fetcher={fetcher}
   placeholder="Search..."
   onValueChange={(value) => console.log(value)}
-/>;
+/>
 ```
 
 ### Autocomplete.Async Props
@@ -123,9 +126,9 @@ Accepts all the same props as `Autocomplete` except `items`, plus:
 type AutocompleteAsyncFetcher<T> =
   | ((query: string | null, options: { signal: AbortSignal }) => Promise<T[]>)
   | {
-      fn: (query: string | null, options: { signal: AbortSignal }) => Promise<T[]>;
-      debounceMs: number;
-    };
+      fn: (query: string | null, options: { signal: AbortSignal }) => Promise<T[]>
+      debounceMs: number
+    }
 ```
 
 `query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.
@@ -152,7 +155,7 @@ const {
   Status,
   useFilter,
   useAsync,
-} = Autocomplete.Parts;
+} = Autocomplete.Parts
 ```
 
 ## Examples
@@ -160,25 +163,25 @@ const {
 ### Controlled Autocomplete
 
 ```tsx
-const [query, setQuery] = useState("");
+const [query, setQuery] = useState("")
 
-<Autocomplete items={suggestions} value={query} onValueChange={setQuery} placeholder="Search..." />;
+;<Autocomplete items={suggestions} value={query} onValueChange={setQuery} placeholder="Search..." />
 ```
 
 ### Address Input with Async Suggestions
 
 ```tsx
 const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
-  if (!query) return [];
-  const res = await fetch(`/api/address-lookup?q=${encodeURIComponent(query)}`, { signal });
-  return res.json();
-};
+  if (!query) return []
+  const res = await fetch(`/api/address-lookup?q=${encodeURIComponent(query)}`, { signal })
+  return res.json()
+}
 
-<Autocomplete.Async
+;<Autocomplete.Async
   fetcher={fetcher}
   placeholder="Start typing an address..."
   onValueChange={(address) => form.setValue("address", address)}
-/>;
+/>
 ```
 
 ## Accessibility

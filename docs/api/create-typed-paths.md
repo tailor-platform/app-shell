@@ -10,7 +10,7 @@ Generates type-safe route path helpers from file-based routing structure. Only a
 ## Signature
 
 ```typescript
-function createTypedPaths<T extends Record<string, PageEntry>>(pages: T): TypedPaths<T>;
+function createTypedPaths<T extends Record<string, PageEntry>>(pages: T): TypedPaths<T>
 ```
 
 ## Parameters
@@ -30,13 +30,13 @@ Type-safe path builder functions for each route.
 ### Basic Usage
 
 ```typescript
-import { createTypedPaths } from "@tailor-platform/app-shell";
-import pages from "virtual:app-shell-pages";
+import { createTypedPaths } from "@tailor-platform/app-shell"
+import pages from "virtual:app-shell-pages"
 
-const paths = createTypedPaths(pages);
+const paths = createTypedPaths(pages)
 
 // Type-safe navigation
-navigate(paths.products.detail({ id: "123" }));
+navigate(paths.products.detail({ id: "123" }))
 // Result: "/products/123"
 ```
 
@@ -85,22 +85,22 @@ function ProductLink({ id }: { id: string }) {
 //       edit/
 //         page.tsx
 
-paths.orders.index(); // "/orders"
-paths.orders.detail({ id: "1" }); // "/orders/1"
-paths.orders.edit({ id: "1" }); // "/orders/1/edit"
+paths.orders.index() // "/orders"
+paths.orders.detail({ id: "1" }) // "/orders/1"
+paths.orders.edit({ id: "1" }) // "/orders/1/edit"
 ```
 
 ## TypeScript Benefits
 
 ```typescript
 // ✅ Type-safe parameters
-paths.products.detail({ id: "123" }); // Valid
+paths.products.detail({ id: "123" }) // Valid
 
 // ❌ Type error - missing required param
-paths.products.detail(); // Error: Argument required
+paths.products.detail() // Error: Argument required
 
 // ❌ Type error - wrong param name
-paths.products.detail({ productId: "123" }); // Error: Unknown key
+paths.products.detail({ productId: "123" }) // Error: Unknown key
 ```
 
 ## File-Based Routing Only

@@ -10,13 +10,14 @@ The `Avatar` component wraps [Base UI Avatar](https://base-ui.com/react/componen
 ## Import
 
 ```tsx
-import { Avatar } from "@tailor-platform/app-shell";
+import { Avatar } from "@tailor-platform/app-shell"
 ```
 
 ## Basic usage
 
-```tsx
-<Avatar.Root>
+```tsx preview
+import { Avatar } from "@tailor-platform/app-shell"
+;<Avatar.Root>
   <Avatar.Image src="/user.png" alt="Jane Doe" />
   <Avatar.Fallback>JD</Avatar.Fallback>
 </Avatar.Root>
@@ -42,7 +43,9 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Sizes
 
-```tsx
+```tsx preview wrap="row"
+import { Avatar } from "@tailor-platform/app-shell";
+
 <Avatar.Root size="sm">
   <Avatar.Fallback>AB</Avatar.Fallback>
 </Avatar.Root>
@@ -59,7 +62,7 @@ import { Avatar } from "@tailor-platform/app-shell";
 `AvatarProps` is the props type for `Avatar.Root` (includes `size` and Base UI root props). Import when wrapping or composing:
 
 ```tsx
-import { Avatar, type AvatarProps } from "@tailor-platform/app-shell";
+import { Avatar, type AvatarProps } from "@tailor-platform/app-shell"
 ```
 
 ## `avatarVariants`

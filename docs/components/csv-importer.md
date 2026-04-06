@@ -21,7 +21,7 @@ import {
   type CsvCorrection,
   type CsvColumnMapping,
   type ParsedRow,
-} from "@tailor-platform/app-shell";
+} from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
@@ -29,8 +29,8 @@ import {
 Use the `useCsvImporter` hook to manage state, then render `<CsvImporter>` with the returned props.
 
 ```tsx
-import { CsvImporter, useCsvImporter, csv } from "@tailor-platform/app-shell";
-import { Button } from "@tailor-platform/app-shell";
+import { CsvImporter, useCsvImporter, csv } from "@tailor-platform/app-shell"
+import { Button } from "@tailor-platform/app-shell"
 
 function ProductImport() {
   const { open, props } = useCsvImporter({
@@ -56,16 +56,16 @@ function ProductImport() {
       ],
     },
     onImport: (event) => {
-      console.log(event.summary);
+      console.log(event.summary)
     },
-  });
+  })
 
   return (
     <>
       <Button onClick={open}>Import CSV</Button>
       <CsvImporter {...props} />
     </>
-  );
+  )
 }
 ```
 
@@ -103,8 +103,8 @@ The `useCsvImporter` hook manages the open/close state and returns both an `open
 
 ```ts
 type CsvSchema = {
-  columns: CsvColumn[];
-};
+  columns: CsvColumn[]
+}
 ```
 
 ### `CsvColumn`
@@ -132,22 +132,22 @@ Built-in Standard Schema validators for common CSV column types. Each helper han
 
 ```tsx
 // String with required check (min: 1)
-csv.string({ min: 1 });
+csv.string({ min: 1 })
 
 // Number with lower bound
-csv.number({ min: 0 });
+csv.number({ min: 0 })
 
 // Integer only
-csv.number({ integer: true });
+csv.number({ integer: true })
 
 // Boolean with defaults: truthy = ["true","1","yes"], falsy = ["false","0","no"]
-csv.boolean();
+csv.boolean()
 
 // Date
-csv.date();
+csv.date()
 
 // Enum
-csv.enum(["active", "inactive", "pending"]);
+csv.enum(["active", "inactive", "pending"])
 ```
 
 ## Server-side Validation

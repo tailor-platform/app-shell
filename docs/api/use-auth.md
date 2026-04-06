@@ -11,13 +11,13 @@ React hook to access authentication state and methods when using `AuthProvider`.
 
 ```typescript
 const useAuth: () => {
-  error: string | null;
-  isAuthenticated: boolean;
-  isReady: boolean;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
-  checkAuthStatus: () => Promise<AuthState>;
-};
+  error: string | null
+  isAuthenticated: boolean
+  isReady: boolean
+  login: () => Promise<void>
+  logout: () => Promise<void>
+  checkAuthStatus: () => Promise<AuthState>
+}
 ```
 
 ## Return Value

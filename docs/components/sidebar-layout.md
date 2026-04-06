@@ -10,20 +10,20 @@ description: The default layout component with sidebar navigation, breadcrumbs, 
 ## Import
 
 ```tsx
-import { SidebarLayout } from "@tailor-platform/app-shell";
+import { SidebarLayout } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx
-import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell"
 
 function App() {
   return (
     <AppShell modules={modules}>
       <SidebarLayout />
     </AppShell>
-  );
+  )
 }
 ```
 
@@ -62,15 +62,14 @@ The `Outlet` component renders your current route's component.
 - **Description:** Custom sidebar content
 
 ```tsx
-import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
-
-<SidebarLayout
+import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell"
+;<SidebarLayout
   sidebar={
     <DefaultSidebar>
       <SidebarItem label="Custom Link" href="/custom" />
     </DefaultSidebar>
   }
-/>;
+/>
 ```
 
 ## Features
@@ -106,17 +105,17 @@ A sun/moon icon button in the header allows users to switch between light and da
 ### Custom Header and Footer
 
 ```tsx
-import { SidebarLayout } from "@tailor-platform/app-shell";
+import { SidebarLayout } from "@tailor-platform/app-shell"
 
 const CustomHeader = () => (
   <div className="astw:bg-blue-500 astw:text-white astw:p-4">
     <h2>Welcome to My App</h2>
   </div>
-);
+)
 
 const CustomFooter = () => (
   <footer className="astw:p-4 astw:text-sm astw:text-gray-600">© 2026 My Company</footer>
-);
+)
 
 function App() {
   return (
@@ -133,7 +132,7 @@ function App() {
         )}
       </SidebarLayout>
     </AppShell>
-  );
+  )
 }
 ```
 
@@ -146,8 +145,8 @@ import {
   SidebarItem,
   SidebarGroup,
   SidebarSeparator,
-} from "@tailor-platform/app-shell";
-import { HelpCircle, ExternalLink } from "lucide-react";
+} from "@tailor-platform/app-shell"
+import { HelpCircle, ExternalLink } from "lucide-react"
 
 function App() {
   return (
@@ -177,7 +176,7 @@ function App() {
         }
       />
     </AppShell>
-  );
+  )
 }
 ```
 

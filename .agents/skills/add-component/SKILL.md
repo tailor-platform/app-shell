@@ -18,9 +18,9 @@ Use for standalone components with variant-based styling (e.g., Button, Badge, I
 **File:** `packages/core/src/components/{component-name}.tsx`
 
 ```tsx
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
 
 const componentVariants = cva("astw:base-classes", {
   variants: {
@@ -28,9 +28,9 @@ const componentVariants = cva("astw:base-classes", {
     size: { default: "astw:..." },
   },
   defaultVariants: { variant: "default", size: "default" },
-});
+})
 
-type ComponentProps = React.ComponentProps<"div"> & VariantProps<typeof componentVariants>;
+type ComponentProps = React.ComponentProps<"div"> & VariantProps<typeof componentVariants>
 
 function Component({ className, variant, size, ...props }: ComponentProps) {
   return (
@@ -39,10 +39,10 @@ function Component({ className, variant, size, ...props }: ComponentProps) {
       className={cn(componentVariants({ variant, size, className }))}
       {...props}
     />
-  );
+  )
 }
 
-export { Component, componentVariants, type ComponentProps };
+export { Component, componentVariants, type ComponentProps }
 ```
 
 ### Pattern B — Compound Component (Namespace Object)
@@ -52,24 +52,24 @@ Use for multi-part components wrapping Base UI (e.g., Dialog, Sheet, Tooltip, Co
 **File:** `packages/core/src/components/{component-name}.tsx`
 
 ```tsx
-import * as React from "react";
-import { ComponentName as BaseComponentName } from "@base-ui/react/component-name";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import { ComponentName as BaseComponentName } from "@base-ui/react/component-name"
+import { cn } from "@/lib/utils"
 
 // Pick only stable, consumer-relevant props — prevents upstream breakage
 type RootProps = Pick<
   React.ComponentProps<typeof BaseComponentName.Root>,
   "open" | "defaultOpen" | "onOpenChange"
-> & { children: React.ReactNode };
+> & { children: React.ReactNode }
 
 function Root({ children, ...props }: RootProps) {
   return (
     <BaseComponentName.Root data-slot="component-name" {...props}>
       {children}
     </BaseComponentName.Root>
-  );
+  )
 }
-Root.displayName = "ComponentName.Root";
+Root.displayName = "ComponentName.Root"
 
 function Content({
   className,
@@ -84,15 +84,15 @@ function Content({
     >
       {children}
     </BaseComponentName.Content>
-  );
+  )
 }
-Content.displayName = "ComponentName.Content";
+Content.displayName = "ComponentName.Content"
 
 // Assemble all sub-components into a single namespace object
 export const ComponentName = {
   Root,
   Content,
-};
+}
 ```
 
 ### Pattern C — Multi-File Component (Directory)
@@ -110,8 +110,8 @@ components/
 **index.ts:**
 
 ```tsx
-export { ComponentName, default } from "./ComponentName";
-export type { ComponentNameProps } from "./types";
+export { ComponentName, default } from "./ComponentName"
+export type { ComponentNameProps } from "./types"
 // DO NOT export internal types, type guards, or enums
 ```
 
@@ -137,14 +137,14 @@ components/
 **component-name.tsx** — Internal compound parts (Pattern B style, not exported from `index.ts`):
 
 ```tsx
-import * as React from "react";
-import { ComponentName as BaseComponentName } from "@base-ui/react/component-name";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import { ComponentName as BaseComponentName } from "@base-ui/react/component-name"
+import { cn } from "@/lib/utils"
 
 function ComponentNameRoot<Value>({
   ...props
 }: React.ComponentProps<typeof BaseComponentName.Root<Value>>) {
-  return <BaseComponentName.Root data-slot="component-name" {...props} />;
+  return <BaseComponentName.Root data-slot="component-name" {...props} />
 }
 
 function ComponentNameItem({
@@ -157,7 +157,7 @@ function ComponentNameItem({
       className={cn("astw:...", className)}
       {...props}
     />
-  );
+  )
 }
 
 // Assemble into Parts object
@@ -165,24 +165,24 @@ const ComponentNameParts = {
   Root: ComponentNameRoot,
   Item: ComponentNameItem,
   // ...other sub-components
-};
+}
 
-export { ComponentNameRoot, ComponentNameItem, ComponentNameParts };
+export { ComponentNameRoot, ComponentNameItem, ComponentNameParts }
 ```
 
 **component-name-standalone.tsx** — Public standalone + Parts:
 
 ```tsx
-import { ComponentNameRoot, ComponentNameItem, ComponentNameParts } from "./component-name";
-import type { MappedItem } from "./select-standalone"; // shared type if applicable
+import { ComponentNameRoot, ComponentNameItem, ComponentNameParts } from "./component-name"
+import type { MappedItem } from "./select-standalone" // shared type if applicable
 
 interface ComponentNameStandaloneProps<I> {
-  items: I[];
-  placeholder?: string;
-  mapItem?: (item: ExtractItem<I>) => MappedItem;
-  className?: string;
-  value?: ExtractItem<I> | null;
-  onValueChange?: (value: ExtractItem<I> | null) => void;
+  items: I[]
+  placeholder?: string
+  mapItem?: (item: ExtractItem<I>) => MappedItem
+  className?: string
+  value?: ExtractItem<I> | null
+  onValueChange?: (value: ExtractItem<I> | null) => void
 }
 
 function ComponentNameStandalone<I>(props: ComponentNameStandaloneProps<I>) {
@@ -193,7 +193,7 @@ function ComponentNameStandalone<I>(props: ComponentNameStandaloneProps<I>) {
         {/* pre-wired sub-components */}
       </ComponentNameRoot>
     </div>
-  );
+  )
 }
 
 // Use Object.assign to keep the standalone callable as a component
@@ -201,9 +201,9 @@ function ComponentNameStandalone<I>(props: ComponentNameStandaloneProps<I>) {
 const ComponentName = Object.assign(ComponentNameStandalone, {
   Parts: ComponentNameParts,
   // Optional variant sub-components (e.g., Async, Creatable)
-});
+})
 
-export { ComponentName };
+export { ComponentName }
 ```
 
 **Consumer usage:**
@@ -255,13 +255,13 @@ const gridClasses = cn(
   columns === 4
     ? "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3 astw:@[800px]:grid-cols-4"
     : "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3",
-);
+)
 
 return (
   <div className="astw:@container">
     <div className={gridClasses}>{/* content */}</div>
   </div>
-);
+)
 ```
 
 Do NOT write custom CSS with `@container` rules or use inline styles for container queries.
@@ -275,14 +275,14 @@ const STYLES = `
   @container (min-width: 400px) {
     .custom-grid { grid-template-columns: repeat(2, 1fr); }
   }
-`;
+`
 
 return (
   <>
     <style dangerouslySetInnerHTML={{ __html: STYLES }} />
     <div className="custom-container">{/* content */}</div>
   </>
-);
+)
 ```
 
 ## Step 3: Base UI Integration
@@ -332,14 +332,14 @@ If the same nested shape is reused across multiple components, extract a shared 
 When using Base UI's `useRender` hook (for polymorphic rendering):
 
 ```tsx
-import { useRender } from "@base-ui/react/use-render";
+import { useRender } from "@base-ui/react/use-render"
 
 function Component({ render, children, ...props }: ComponentProps) {
   return useRender({
     defaultTagName: "button",
     render,
     props: { "data-slot": "component", children, ...props },
-  });
+  })
 }
 ```
 
@@ -349,13 +349,13 @@ Add the export to `packages/core/src/index.ts`:
 
 ```tsx
 // Simple component — export component, variants, and Props type
-export { Component, componentVariants, type ComponentProps } from "./components/component-name";
+export { Component, componentVariants, type ComponentProps } from "./components/component-name"
 
 // Compound component (namespace object) — export only the namespace
-export { ComponentName } from "./components/component-name";
+export { ComponentName } from "./components/component-name"
 
 // Directory component — export component and Props type only
-export { ComponentName, type ComponentNameProps } from "./components/component-name";
+export { ComponentName, type ComponentNameProps } from "./components/component-name"
 ```
 
 **Minimal surface rules:**
@@ -370,30 +370,30 @@ export { ComponentName, type ComponentNameProps } from "./components/component-n
 Create a test file next to the component: `{component-name}.test.tsx`
 
 ```tsx
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { ComponentName } from "./component-name";
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { cleanup, render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { ComponentName } from "./component-name"
 
 afterEach(() => {
-  cleanup();
-});
+  cleanup()
+})
 
 describe("ComponentName", () => {
   // Snapshot tests for each variant/state
   describe("snapshots", () => {
     it("default", () => {
-      const { container } = render(<ComponentName>Content</ComponentName>);
-      expect(container.innerHTML).toMatchSnapshot();
-    });
-  });
+      const { container } = render(<ComponentName>Content</ComponentName>)
+      expect(container.innerHTML).toMatchSnapshot()
+    })
+  })
 
   // Behavioral tests
   it("renders correctly", () => {
-    render(<ComponentName>Content</ComponentName>);
-    expect(screen.getByText("Content")).toBeDefined();
-  });
-});
+    render(<ComponentName>Content</ComponentName>)
+    expect(screen.getByText("Content")).toBeDefined()
+  })
+})
 ```
 
 **Testing conventions:**

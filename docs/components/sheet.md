@@ -10,13 +10,14 @@ The `Sheet` component is a slide-in panel that appears from any edge of the scre
 ## Import
 
 ```tsx
-import { Sheet } from "@tailor-platform/app-shell";
+import { Sheet } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Sheet.Root side="right">
+```tsx preview height="500"
+import { Button, Sheet } from "@tailor-platform/app-shell"
+;<Sheet.Root side="right">
   <Sheet.Trigger render={<Button />}>Open Settings</Sheet.Trigger>
   <Sheet.Content>
     <Sheet.Header>
@@ -79,9 +80,9 @@ The swipe-to-dismiss gesture direction is automatically determined by the `side`
 ## Controlled Usage
 
 ```tsx
-const [open, setOpen] = useState(false);
+const [open, setOpen] = useState(false)
 
-<Sheet.Root side="right" open={open} onOpenChange={setOpen}>
+;<Sheet.Root side="right" open={open} onOpenChange={setOpen}>
   <Sheet.Trigger render={<Button />}>Open</Sheet.Trigger>
   <Sheet.Content>
     <Sheet.Header>
@@ -91,7 +92,7 @@ const [open, setOpen] = useState(false);
       <Button onClick={() => setOpen(false)}>Apply</Button>
     </Sheet.Footer>
   </Sheet.Content>
-</Sheet.Root>;
+</Sheet.Root>
 ```
 
 ## Examples
@@ -118,7 +119,7 @@ function FilterPanel() {
         </Sheet.Footer>
       </Sheet.Content>
     </Sheet.Root>
-  );
+  )
 }
 ```
 

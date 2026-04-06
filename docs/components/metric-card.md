@@ -10,13 +10,14 @@ description: Compact card for dashboard KPI summaries with title, value, optiona
 ## Import
 
 ```tsx
-import { MetricCard } from "@tailor-platform/app-shell";
+import { MetricCard } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<MetricCard
+```tsx preview
+import { MetricCard } from "@tailor-platform/app-shell"
+;<MetricCard
   title="Net total payment"
   value="$1,500.00"
   trend={{ direction: "up", value: "+5%" }}
@@ -41,7 +42,9 @@ import { MetricCard } from "@tailor-platform/app-shell";
 - **down** — Negative change (destructive styling, e.g. red).
 - **neutral** — No change or neutral (muted styling).
 
-```tsx
+```tsx preview wrap="row"
+import { MetricCard } from "@tailor-platform/app-shell";
+
 <MetricCard
   title="Revenue"
   value="$2,400"

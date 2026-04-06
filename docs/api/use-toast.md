@@ -11,8 +11,8 @@ React hook to display toast notifications for user feedback.
 
 ```typescript
 const useToast: () => {
-  toast: (props: ToastProps) => void;
-};
+  toast: (props: ToastProps) => void
+}
 ```
 
 ## Parameters
@@ -97,7 +97,7 @@ function DeleteButton() {
 toast({
   title: "Processing...",
   duration: 5000, // 5 seconds
-});
+})
 ```
 
 ## Related

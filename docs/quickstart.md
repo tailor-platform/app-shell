@@ -32,14 +32,14 @@ Add the `appShellRoutes` plugin to your `vite.config.ts`:
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import tailwindcss from "@tailwindcss/vite"
+import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin"
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), appShellRoutes({ entrypoint: "src/App.tsx" })],
-});
+})
 ```
 
 ## Step 3: Create Your First App
@@ -56,17 +56,17 @@ Create `src/App.tsx`:
 
 ```tsx
 // src/App.tsx
-import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell"
 
 function App() {
   return (
     <AppShell title="My ERP App">
       <SidebarLayout />
     </AppShell>
-  );
+  )
 }
 
-export default App;
+export default App
 ```
 
 Create your first page at `src/pages/page.tsx`:
@@ -78,10 +78,10 @@ const HomePage = () => {
     <div className="astw:p-8">
       <h1 className="astw:text-2xl astw:font-bold">Welcome to AppShell</h1>
     </div>
-  );
-};
+  )
+}
 
-export default HomePage;
+export default HomePage
 ```
 
 ## Step 4: Run
@@ -114,26 +114,26 @@ const DashboardPage = () => {
     <div className="astw:p-8">
       <h1 className="astw:text-xl astw:font-bold">Dashboard</h1>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardPage;
+export default DashboardPage
 ```
 
 ```tsx
 // src/pages/dashboard/orders/[id]/page.tsx
-import { useParams } from "@tailor-platform/app-shell";
+import { useParams } from "@tailor-platform/app-shell"
 
 const OrderDetailPage = () => {
-  const { id } = useParams();
+  const { id } = useParams()
   return (
     <div className="astw:p-8">
       <h2 className="astw:text-xl astw:font-bold">Order #{id}</h2>
     </div>
-  );
-};
+  )
+}
 
-export default OrderDetailPage;
+export default OrderDetailPage
 ```
 
 AppShell automatically generates sidebar navigation and breadcrumbs.
@@ -148,22 +148,22 @@ Next.js does not support file-based routing with the Vite plugin. Use the module
 
 ```tsx
 // app/dashboard/[[...props]]/page.tsx
-"use client";
+"use client"
 
-import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell"
 
 const dashboardModule = defineModule({
   path: "home",
   component: () => <div>Home</div>,
   meta: { title: "Home" },
-});
+})
 
 export default function Page() {
   return (
     <AppShell title="My App" basePath="dashboard" modules={[dashboardModule]}>
       <SidebarLayout />
     </AppShell>
-  );
+  )
 }
 ```
 

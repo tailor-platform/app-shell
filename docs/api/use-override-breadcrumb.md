@@ -10,7 +10,7 @@ React hook to dynamically override the breadcrumb title for the current page. Us
 ## Signature
 
 ```typescript
-function useOverrideBreadcrumb(title: string | undefined): void;
+function useOverrideBreadcrumb(title: string | undefined): void
 ```
 
 ## Parameters
@@ -26,38 +26,38 @@ function useOverrideBreadcrumb(title: string | undefined): void;
 ### With `defineResource`
 
 ```tsx
-import { useOverrideBreadcrumb } from "@tailor-platform/app-shell";
+import { useOverrideBreadcrumb } from "@tailor-platform/app-shell"
 
 defineResource({
   path: ":id",
   component: () => {
-    const { id } = useParams();
-    const { data } = useQuery(GET_ORDER, { variables: { id } });
+    const { id } = useParams()
+    const { data } = useQuery(GET_ORDER, { variables: { id } })
 
     // Update breadcrumb with the order name
-    useOverrideBreadcrumb(data?.order?.name);
+    useOverrideBreadcrumb(data?.order?.name)
 
-    return <OrderDetail />;
+    return <OrderDetail />
   },
-});
+})
 ```
 
 ### With file-based routing
 
 ```tsx
-import { useOverrideBreadcrumb, useParams } from "@tailor-platform/app-shell";
+import { useOverrideBreadcrumb, useParams } from "@tailor-platform/app-shell"
 
 const OrderDetailPage = () => {
-  const { id } = useParams();
-  const { data } = useQuery(GET_ORDER, { variables: { id } });
+  const { id } = useParams()
+  const { data } = useQuery(GET_ORDER, { variables: { id } })
 
   // Update breadcrumb with the order name
-  useOverrideBreadcrumb(data?.order?.name);
+  useOverrideBreadcrumb(data?.order?.name)
 
-  return <div>...</div>;
-};
+  return <div>...</div>
+}
 
-export default OrderDetailPage;
+export default OrderDetailPage
 ```
 
 ## Notes

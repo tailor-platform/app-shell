@@ -15,38 +15,38 @@ import {
   type ActivityCardItem,
   type ActivityCardBaseItem,
   type ActivityCardProps,
-} from "@tailor-platform/app-shell";
+} from "@tailor-platform/app-shell"
 ```
 
 Use `ActivityCardItem` for each item in the standalone API. Use `ActivityCardBaseItem` as the minimum constraint when extending items for the compound API.
 
 ## Basic Usage
 
-```tsx
-const items = [
-  {
-    id: "1",
-    actor: { name: "Hanna", avatarUrl: "/avatars/hanna.jpg" }, // avatarUrl is optional
-    description: "changed the status from DRAFT to CONFIRMED",
-    timestamp: new Date("2025-03-21T09:00:00"),
-  },
-  {
-    id: "2",
-    actor: { name: "Pradeep Kumar" },
-    description: "created this PO",
-    timestamp: new Date("2025-03-21T15:16:00"),
-  },
-  {
-    id: "3",
-    // no actor — system event with no specific subject
-    description: "Status automatically changed to EXPIRED",
-    timestamp: new Date("2025-03-20T10:00:00"),
-  },
-];
-
-export function DocumentUpdates() {
-  return <ActivityCard items={items} title="Updates" />;
-}
+```tsx preview
+import { ActivityCard } from "@tailor-platform/app-shell"
+;<ActivityCard
+  title="Updates"
+  items={[
+    {
+      id: "1",
+      actor: { name: "Hanna", avatarUrl: "/avatars/hanna.jpg" }, // avatarUrl is optional
+      description: "changed the status from DRAFT to CONFIRMED",
+      timestamp: new Date("2025-03-21T09:00:00"),
+    },
+    {
+      id: "2",
+      actor: { name: "Pradeep Kumar" },
+      description: "created this PO",
+      timestamp: new Date("2025-03-21T15:16:00"),
+    },
+    {
+      id: "3",
+      // no actor — system event with no specific subject
+      description: "Status automatically changed to EXPIRED",
+      timestamp: new Date("2025-03-20T10:00:00"),
+    },
+  ]}
+/>
 ```
 
 ## Overflow and dialog
@@ -85,10 +85,32 @@ Each activity must include: `id`, `description`, `timestamp` (Date or string). O
 
 Use the compound API when you need fully custom item rendering — custom icons, links, badges, or mixed item kinds. Items still must satisfy `ActivityCardBaseItem` (`id` + `timestamp`). You extend `ActivityCardBaseItem` with any additional fields you need.
 
-### Import
+### Example
 
-```tsx
-import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
+```tsx preview
+import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell"
+;<ActivityCard.Root
+  items={[
+    { id: "1", timestamp: new Date(), kind: "approval", label: "PO approved" },
+    { id: "2", timestamp: new Date(), kind: "update", message: "Status changed to CONFIRMED" },
+  ]}
+  title="Updates"
+  groupBy="day"
+>
+  <ActivityCard.Items>
+    {(item) =>
+      item.kind === "approval" ? (
+        <ActivityCard.Item>
+          <p style={{ color: "green" }}>{item.label}</p>
+        </ActivityCard.Item>
+      ) : (
+        <ActivityCard.Item>
+          <p style={{ fontWeight: "bold" }}>{item.message}</p>
+        </ActivityCard.Item>
+      )
+    }
+  </ActivityCard.Items>
+</ActivityCard.Root>
 ```
 
 ### Parts
@@ -118,39 +140,6 @@ import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-sh
 | `indicator` | `React.ReactNode` | -       | Element rendered in the left column (e.g. Avatar, icon). Omit for a default timeline node. |
 | `children`  | `React.ReactNode` | -       | Content for the item row (text, badges, links, etc.).                                      |
 | `className` | `string`          | -       | Additional CSS classes.                                                                    |
-
-### Example
-
-```tsx
-import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
-
-interface MyItem extends ActivityCardBaseItem {
-  kind: "approval" | "update";
-  label?: string;
-  message?: string;
-}
-
-const items: MyItem[] = [
-  { id: "1", timestamp: new Date(), kind: "approval", label: "PO approved" },
-  { id: "2", timestamp: new Date(), kind: "update", message: "Status changed to CONFIRMED" },
-];
-
-<ActivityCard.Root items={items} title="Updates" groupBy="day">
-  <ActivityCard.Items<MyItem>>
-    {(item) =>
-      item.kind === "approval" ? (
-        <ActivityCard.Item indicator={<ApprovedIcon />}>
-          <p>{item.label}</p>
-        </ActivityCard.Item>
-      ) : (
-        <ActivityCard.Item>
-          <p>{item.message}</p>
-        </ActivityCard.Item>
-      )
-    }
-  </ActivityCard.Items>
-</ActivityCard.Root>;
-```
 
 ---
 

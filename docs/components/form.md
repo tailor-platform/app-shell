@@ -10,21 +10,24 @@ description: Components for building validated forms with automatic accessibilit
 ## Import
 
 ```tsx
-import { Form, Field, Fieldset } from "@tailor-platform/app-shell";
+import { Form, Field, Fieldset } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Form onFormSubmit={(values) => save(values)}>
+```tsx preview height="300"
+import { Form, Field, Button } from "@tailor-platform/app-shell"
+;<Form onFormSubmit={(values) => console.log(values)}>
   <Field.Root name="email">
     <Field.Label>Email</Field.Label>
-    <Field.Control type="email" required />
+    <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+      <Field.Control type="email" required />
+      <Button type="submit">Save</Button>
+    </div>
     <Field.Description>We'll never share your email.</Field.Description>
     <Field.Error match="valueMissing">Email is required.</Field.Error>
     <Field.Error match="typeMismatch">Enter a valid email address.</Field.Error>
   </Field.Root>
-  <button type="submit">Save</button>
 </Form>
 ```
 
@@ -52,21 +55,21 @@ A form element with consolidated error handling and validation. Wraps every chil
 Feed API validation errors back into the form via the `errors` prop. Errors are keyed by field `name` and cleared automatically when the user edits the corresponding field.
 
 ```tsx
-const [errors, setErrors] = React.useState({});
+const [errors, setErrors] = React.useState({})
 
 async function handleSubmit(values) {
-  const res = await api.save(values);
-  if (res.errors) setErrors(res.errors);
+  const res = await api.save(values)
+  if (res.errors) setErrors(res.errors)
 }
 
-<Form errors={errors} onFormSubmit={handleSubmit}>
+;<Form errors={errors} onFormSubmit={handleSubmit}>
   <Field.Root name="url">
     <Field.Label>Homepage</Field.Label>
     <Field.Control type="url" required />
     <Field.Error />
   </Field.Root>
   <button type="submit">Submit</button>
-</Form>;
+</Form>
 ```
 
 ### Programmatic Validation
@@ -74,17 +77,16 @@ async function handleSubmit(values) {
 Use `actionsRef` to imperatively trigger validation (e.g. in a multi-step wizard).
 
 ```tsx
-const actions = React.useRef(null);
+const actions = React.useRef(null)
 
-<Form actionsRef={actions}>
+;<Form actionsRef={actions}>
   <Field.Root name="name">
     <Field.Label>Name</Field.Label>
     <Field.Control required />
     <Field.Error>Name is required.</Field.Error>
   </Field.Root>
-</Form>;
-
-<button onClick={() => actions.current?.validate()}>Check</button>;
+</Form>
+;<button onClick={() => actions.current?.validate()}>Check</button>
 ```
 
 ---
@@ -191,17 +193,20 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 
 ### Example
 
-```tsx
-<Fieldset.Root>
+```tsx preview height="350"
+import { Form, Field, Fieldset } from "@tailor-platform/app-shell"
+;<Fieldset.Root style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
   <Fieldset.Legend>Billing details</Fieldset.Legend>
-  <Field.Root name="company">
-    <Field.Label>Company</Field.Label>
-    <Field.Control />
-  </Field.Root>
-  <Field.Root name="taxId">
-    <Field.Label>Tax ID</Field.Label>
-    <Field.Control />
-  </Field.Root>
+  <div style={{ display: "flex", gap: "1rem" }}>
+    <Field.Root name="company">
+      <Field.Label>Company</Field.Label>
+      <Field.Control />
+    </Field.Root>
+    <Field.Root name="taxId">
+      <Field.Label>Tax ID</Field.Label>
+      <Field.Control />
+    </Field.Root>
+  </div>
 </Fieldset.Root>
 ```
 
@@ -212,16 +217,16 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 `Field.Root` accepts `isTouched`, `isDirty`, `invalid`, and `error` props that align with React Hook Form's `fieldState` shape, so you can spread `fieldState` directly. Use `Form`'s `onSubmit` prop to connect RHF's `handleSubmit`.
 
 ```tsx
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 
-const schema = z.object({ email: z.string().email() });
+const schema = z.object({ email: z.string().email() })
 
 function MyForm() {
   const { control, handleSubmit } = useForm({
     resolver: zodResolver(schema),
-  });
+  })
 
   return (
     <Form onSubmit={handleSubmit((data) => save(data))}>
@@ -238,7 +243,7 @@ function MyForm() {
       />
       <button type="submit">Save</button>
     </Form>
-  );
+  )
 }
 ```
 

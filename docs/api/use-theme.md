@@ -11,10 +11,10 @@ React hook to access and control the current theme (light/dark mode).
 
 ```typescript
 const useTheme: () => {
-  theme: "light" | "dark" | "system";
-  setTheme: (theme: "light" | "dark" | "system") => void;
-  systemTheme: "light" | "dark";
-};
+  theme: "light" | "dark" | "system"
+  setTheme: (theme: "light" | "dark" | "system") => void
+  systemTheme: "light" | "dark"
+}
 ```
 
 ## Return Value

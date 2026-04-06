@@ -10,7 +10,7 @@ Creates a top-level module that appears in the main navigation. Modules can cont
 ## Signature
 
 ```typescript
-function defineModule(props: DefineModuleProps): Module;
+function defineModule(props: DefineModuleProps): Module
 ```
 
 ## Parameters
@@ -24,7 +24,7 @@ function defineModule(props: DefineModuleProps): Module;
 ```typescript
 defineModule({
   path: "products", // URL: /products
-});
+})
 ```
 
 ### `component`
@@ -94,7 +94,7 @@ See [Guards Overview](./guards/overview.md) for details.
 ## Return Type
 
 ```typescript
-Module;
+Module
 ```
 
 A module object that can be passed to the `modules` prop of `AppShell`.
@@ -145,7 +145,7 @@ const productsModule = defineModule({
       component: CategoriesPage,
     }),
   ],
-});
+})
 ```
 
 ### Module without Component (Auto-redirect)
@@ -164,13 +164,13 @@ const dashboardModule = defineModule({
       component: AnalyticsPage,
     }),
   ],
-});
+})
 ```
 
 ### Module with Guards
 
 ```typescript
-import { pass, hidden } from "@tailor-platform/app-shell";
+import { pass, hidden } from "@tailor-platform/app-shell"
 
 const adminModule = defineModule({
   path: "admin",
@@ -178,10 +178,10 @@ const adminModule = defineModule({
   resources: [adminResources],
   guards: [
     ({ context }) => {
-      return context.currentUser?.role === "admin" ? pass() : hidden();
+      return context.currentUser?.role === "admin" ? pass() : hidden()
     },
   ],
-});
+})
 ```
 
 ### Module with Error Boundary
@@ -210,14 +210,14 @@ const productsModule = defineModule({
 ### Module with Internationalization
 
 ```typescript
-import { defineI18nLabels } from "@tailor-platform/app-shell";
+import { defineI18nLabels } from "@tailor-platform/app-shell"
 
 const labels = defineI18nLabels({
   dashboard: {
     en: "Dashboard",
     ja: "ダッシュボード",
   },
-});
+})
 
 const dashboardModule = defineModule({
   path: "dashboard",
@@ -226,21 +226,21 @@ const dashboardModule = defineModule({
   },
   component: DashboardPage,
   resources: [],
-});
+})
 ```
 
 ## TypeScript
 
 ```typescript
-import { type DefineModuleProps, type Module } from "@tailor-platform/app-shell";
+import { type DefineModuleProps, type Module } from "@tailor-platform/app-shell"
 
 const props: DefineModuleProps = {
   path: "products",
   component: ProductsPage,
   resources: [],
-};
+}
 
-const module: Module = defineModule(props);
+const module: Module = defineModule(props)
 ```
 
 ## Related

@@ -10,13 +10,14 @@ The `Input` component is a styled text input that provides consistent theming ac
 ## Import
 
 ```tsx
-import { Input } from "@tailor-platform/app-shell";
+import { Input } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Input placeholder="Enter your name" />
+```tsx preview
+import { Input } from "@tailor-platform/app-shell"
+;<Input placeholder="Enter your name" />
 ```
 
 ## Props
@@ -34,40 +35,44 @@ Accepts all standard HTML `<input>` props.
 
 ### Text Input
 
-```tsx
-<Input type="text" placeholder="Enter your name" />
+```tsx preview
+import { Input } from "@tailor-platform/app-shell"
+;<Input type="text" placeholder="Enter your name" />
 ```
 
 ### Email Input
 
-```tsx
-<Input type="email" placeholder="you@example.com" />
+```tsx preview
+import { Input } from "@tailor-platform/app-shell"
+;<Input type="email" placeholder="you@example.com" />
 ```
 
 ### Number Input
 
-```tsx
-<Input type="number" placeholder="0" min={0} max={100} />
+```tsx preview
+import { Input } from "@tailor-platform/app-shell"
+;<Input type="number" placeholder="0" min={0} max={100} />
 ```
 
 ### Disabled Input
 
-```tsx
-<Input value="Read-only value" disabled />
+```tsx preview
+import { Input } from "@tailor-platform/app-shell"
+;<Input value="Read-only value" disabled />
 ```
 
 ### With onChange Handler
 
 ```tsx
-const [value, setValue] = useState("");
+const [value, setValue] = useState("")
 
-<Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Type something..." />;
+;<Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Type something..." />
 ```
 
 ## TypeScript
 
 ```typescript
-import { type InputProps } from "@tailor-platform/app-shell";
+import { type InputProps } from "@tailor-platform/app-shell"
 ```
 
 ## Related Components

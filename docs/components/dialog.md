@@ -10,13 +10,14 @@ The `Dialog` component provides a modal dialog with a compound component API. It
 ## Import
 
 ```tsx
-import { Dialog } from "@tailor-platform/app-shell";
+import { Dialog } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Dialog.Root>
+```tsx preview height="450"
+import { Button, Dialog } from "@tailor-platform/app-shell"
+;<Dialog.Root>
   <Dialog.Trigger render={<Button />}>Open</Dialog.Trigger>
   <Dialog.Content>
     <Dialog.Header>
@@ -67,9 +68,9 @@ Accept a `render` prop for custom element rendering (Base UI render pattern), pl
 ## Controlled Usage
 
 ```tsx
-const [open, setOpen] = useState(false);
+const [open, setOpen] = useState(false)
 
-<Dialog.Root open={open} onOpenChange={setOpen}>
+;<Dialog.Root open={open} onOpenChange={setOpen}>
   <Dialog.Trigger render={<Button variant="outline" />}>Open Dialog</Dialog.Trigger>
   <Dialog.Content>
     <Dialog.Header>
@@ -79,7 +80,7 @@ const [open, setOpen] = useState(false);
       <Button onClick={() => setOpen(false)}>Done</Button>
     </Dialog.Footer>
   </Dialog.Content>
-</Dialog.Root>;
+</Dialog.Root>
 ```
 
 ## Examples
@@ -106,7 +107,7 @@ function DeleteConfirmation({ onDelete }: { onDelete: () => void }) {
         </Dialog.Footer>
       </Dialog.Content>
     </Dialog.Root>
-  );
+  )
 }
 ```
 
@@ -114,7 +115,7 @@ function DeleteConfirmation({ onDelete }: { onDelete: () => void }) {
 
 ```tsx
 function EditDialog({ item }: { item: Item }) {
-  const [name, setName] = useState(item.name);
+  const [name, setName] = useState(item.name)
 
   return (
     <Dialog.Root>
@@ -130,7 +131,7 @@ function EditDialog({ item }: { item: Item }) {
         </Dialog.Footer>
       </Dialog.Content>
     </Dialog.Root>
-  );
+  )
 }
 ```
 

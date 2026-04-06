@@ -23,17 +23,17 @@ AppShell re-exports the following hooks from `react-router` for use in your comp
 ### Example Usage
 
 ```tsx
-import { useNavigate, useParams, useLocation, Link } from "@tailor-platform/app-shell";
+import { useNavigate, useParams, useLocation, Link } from "@tailor-platform/app-shell"
 
 const MyComponent = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const location = useLocation();
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const location = useLocation()
 
   const handleClick = () => {
     // Navigate programmatically
-    navigate("/dashboard/overview");
-  };
+    navigate("/dashboard/overview")
+  }
 
   return (
     <div>
@@ -45,8 +45,8 @@ const MyComponent = () => {
 
       <button onClick={handleClick}>Go to Dashboard</button>
     </div>
-  );
-};
+  )
+}
 ```
 
 ## Breadcrumbs
@@ -64,7 +64,7 @@ defineResource({
     breadcrumbTitle: (segment) => `Order #${segment}`,
   },
   component: OrderDetailPage,
-});
+})
 // Breadcrumb shows: "Orders > Order #12345"
 ```
 
@@ -73,19 +73,19 @@ defineResource({
 Use the `useOverrideBreadcrumb` hook to replace a breadcrumb segment with a data-driven value from within the rendered page component:
 
 ```tsx
-import { useOverrideBreadcrumb } from "@tailor-platform/app-shell";
+import { useOverrideBreadcrumb } from "@tailor-platform/app-shell"
 
 defineResource({
   path: ":id",
   component: () => {
-    const { data } = useQuery(GET_ORDER, { variables: { id } });
+    const { data } = useQuery(GET_ORDER, { variables: { id } })
 
     // Breadcrumb updates reactively once data loads
-    useOverrideBreadcrumb(data?.order?.name);
+    useOverrideBreadcrumb(data?.order?.name)
 
-    return <OrderDetail />;
+    return <OrderDetail />
   },
-});
+})
 ```
 
 While `title` is `undefined` (e.g., loading), the override is cleared and the static title is shown. The override is automatically cleaned up on unmount.
@@ -109,7 +109,7 @@ AppShell includes a `CommandPalette` component that provides keyboard-driven qui
 Add the `CommandPalette` component to your AppShell layout:
 
 ```tsx
-import { AppShell, SidebarLayout, CommandPalette } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout, CommandPalette } from "@tailor-platform/app-shell"
 
 const App = () => (
   <AppShell modules={modules} locale="en">
@@ -118,7 +118,7 @@ const App = () => (
       <CommandPalette />
     </>
   </AppShell>
-);
+)
 ```
 
 The CommandPalette automatically:
@@ -148,9 +148,9 @@ Enable `generateTypedRoutes` in your vite config:
 
 ```ts
 // vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin"
 
 export default defineConfig({
   plugins: [
@@ -163,7 +163,7 @@ export default defineConfig({
       // generateTypedRoutes: { output: "src/my-routes.ts" },
     }),
   ],
-});
+})
 ```
 
 This generates a `src/routes.generated.ts` file containing type definitions for all your routes.
@@ -174,54 +174,54 @@ The generated file exports a `paths` helper with a type-safe `for()` method:
 
 ```ts
 // src/routes.generated.ts (auto-generated)
-import { createTypedPaths } from "@tailor-platform/app-shell";
+import { createTypedPaths } from "@tailor-platform/app-shell"
 
 type RouteParams = {
-  "/": {};
-  "/dashboard": {};
-  "/orders": {};
-  "/orders/:id": { id: string };
-  "/orders/:orderId/items/:itemId": { orderId: string; itemId: string };
-};
+  "/": {}
+  "/dashboard": {}
+  "/orders": {}
+  "/orders/:id": { id: string }
+  "/orders/:orderId/items/:itemId": { orderId: string; itemId: string }
+}
 
-export const paths = createTypedPaths<RouteParams>();
+export const paths = createTypedPaths<RouteParams>()
 
-export type { RouteParams };
+export type { RouteParams }
 ```
 
 ### Usage
 
 ```tsx
-import { useNavigate } from "@tailor-platform/app-shell";
-import { paths } from "./routes.generated";
+import { useNavigate } from "@tailor-platform/app-shell"
+import { paths } from "./routes.generated"
 
 const MyComponent = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   // ✅ Static route - no params needed
   const goToDashboard = () => {
-    navigate(paths.for("/dashboard"));
-  };
+    navigate(paths.for("/dashboard"))
+  }
 
   // ✅ Dynamic route - params required and type-checked
   const goToOrder = (orderId: string) => {
-    navigate(paths.for("/orders/:id", { id: orderId }));
-  };
+    navigate(paths.for("/orders/:id", { id: orderId }))
+  }
 
   // ✅ Multiple params
   const goToOrderItem = (orderId: string, itemId: string) => {
-    navigate(paths.for("/orders/:orderId/items/:itemId", { orderId, itemId }));
-  };
+    navigate(paths.for("/orders/:orderId/items/:itemId", { orderId, itemId }))
+  }
 
   // ✅ Query string passthrough
   const goToOrderWithTab = (orderId: string) => {
-    navigate(paths.for("/orders/:id?tab=details", { id: orderId }));
-  };
+    navigate(paths.for("/orders/:id?tab=details", { id: orderId }))
+  }
 
   // ✅ Dynamic query values via template literal
   const goToOrderWithDynamicQuery = (orderId: string, tab: string) => {
-    navigate(paths.for(`/orders/:id?tab=${tab}`, { id: orderId }));
-  };
+    navigate(paths.for(`/orders/:id?tab=${tab}`, { id: orderId }))
+  }
 
   // ❌ TypeScript error: missing required params
   // navigate(paths.for("/orders/:id"));
@@ -229,8 +229,8 @@ const MyComponent = () => {
   // ❌ TypeScript error: invalid path
   // navigate(paths.for("/invalid/path"));
 
-  return <button onClick={goToDashboard}>Go to Dashboard</button>;
-};
+  return <button onClick={goToDashboard}>Go to Dashboard</button>
+}
 ```
 
 ### Opt-In Design
@@ -239,7 +239,7 @@ This feature is opt-in. If you don't enable `generateTypedRoutes`, you can conti
 
 ```tsx
 // Still works without typed routes
-navigate(`/orders/${orderId}`);
+navigate(`/orders/${orderId}`)
 ```
 
 ### HMR Support

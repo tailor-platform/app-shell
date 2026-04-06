@@ -12,7 +12,7 @@ Creates internationalized labels that automatically resolve based on the current
 ```typescript
 function defineI18nLabels<T extends Record<string, Record<string, string>>>(
   labels: T,
-): I18nLabels<T>;
+): I18nLabels<T>
 ```
 
 ## Parameters
@@ -27,7 +27,7 @@ function defineI18nLabels<T extends Record<string, Record<string, string>>>(
 
 ```typescript
 {
-  t: (key: keyof T) => LocalizedString;
+  t: (key: keyof T) => LocalizedString
 }
 ```
 
@@ -36,7 +36,7 @@ function defineI18nLabels<T extends Record<string, Record<string, string>>>(
 ### Basic Labels
 
 ```typescript
-import { defineI18nLabels } from "@tailor-platform/app-shell";
+import { defineI18nLabels } from "@tailor-platform/app-shell"
 
 const labels = defineI18nLabels({
   dashboard: {
@@ -51,7 +51,7 @@ const labels = defineI18nLabels({
     en: "Settings",
     ja: "設定",
   },
-});
+})
 
 // Use in modules
 const dashboardModule = defineModule({
@@ -60,7 +60,7 @@ const dashboardModule = defineModule({
     title: labels.t("dashboard"),
   },
   component: DashboardPage,
-});
+})
 ```
 
 ### Multiple Locales
@@ -73,7 +73,7 @@ const labels = defineI18nLabels({
     es: "Bienvenido",
     fr: "Bienvenue",
   },
-});
+})
 ```
 
 ### In Components
@@ -130,10 +130,10 @@ Full type safety:
 const labels = defineI18nLabels({
   dashboard: { en: "Dashboard", ja: "ダッシュボード" },
   products: { en: "Products", ja: "商品" },
-});
+})
 
-labels.t("dashboard"); // ✅ Valid
-labels.t("invalid"); // ❌ Type error
+labels.t("dashboard") // ✅ Valid
+labels.t("invalid") // ❌ Type error
 ```
 
 ## Related

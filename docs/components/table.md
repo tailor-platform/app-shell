@@ -10,13 +10,14 @@ The `Table` component provides a set of pre-styled, semantic HTML table sub-comp
 ## Import
 
 ```tsx
-import { Table } from "@tailor-platform/app-shell";
+import { Table } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
-```tsx
-<Table.Root>
+```tsx preview
+import { Table } from "@tailor-platform/app-shell"
+;<Table.Root>
   <Table.Header>
     <Table.Row>
       <Table.Head>Name</Table.Head>
@@ -64,8 +65,9 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
 
 ### With Footer
 
-```tsx
-<Table.Root>
+```tsx preview
+import { Table } from "@tailor-platform/app-shell"
+;<Table.Root>
   <Table.Header>
     <Table.Row>
       <Table.Head>Product</Table.Head>
@@ -96,8 +98,9 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
 
 ### With Caption
 
-```tsx
-<Table.Root>
+```tsx preview
+import { Table } from "@tailor-platform/app-shell"
+;<Table.Root>
   <Table.Caption>Order line items</Table.Caption>
   <Table.Header>
     <Table.Row>

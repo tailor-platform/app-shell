@@ -134,13 +134,13 @@ type AppShellPageProps = {
 
 ## Path Conventions
 
-| Directory Name | Converts To | Description                                   |
-| -------------- | ----------- | --------------------------------------------- |
-| `orders`       | `orders`    | Static segment                                |
-| `[id]`         | `:id`       | Dynamic parameter                             |
+| Directory Name | Converts To | Description                                    |
+| -------------- | ----------- | ---------------------------------------------- |
+| `orders`       | `orders`    | Static segment                                 |
+| `[id]`         | `:id`       | Dynamic parameter                              |
 | `[...slug]`    | `*slug`     | Catch-all — matches zero or more path segments |
-| `(group)`      | (excluded)  | Grouping only (not in path)                   |
-| `_lib`         | (ignored)   | Not routed (for shared logic)                 |
+| `(group)`      | (excluded)  | Grouping only (not in path)                    |
+| `_lib`         | (ignored)   | Not routed (for shared logic)                  |
 
 ### Examples
 

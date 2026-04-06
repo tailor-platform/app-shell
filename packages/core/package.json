@@ -29,11 +29,11 @@
     "./styles": "./dist/app-shell.css",
     "./theme.css": "./dist/theme.css",
     ".": {
-      "types": "./dist/app-shell.d.ts",
+      "types": "./dist/src/index.d.ts",
       "default": "./dist/app-shell.js"
     },
     "./vite-plugin": {
-      "types": "./dist/vite-plugin.d.ts",
+      "types": "./dist/src/vite-plugin.d.ts",
       "default": "./dist/vite-plugin.js"
     }
   },

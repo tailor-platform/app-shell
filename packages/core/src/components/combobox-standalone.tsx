@@ -541,7 +541,10 @@ function ComboboxAsyncStandalone(props: any) {
 // Export
 // ============================================================================
 
-const Combobox = Object.assign(ComboboxStandalone, {
+const Combobox: typeof ComboboxStandalone & {
+  Async: typeof ComboboxAsyncStandalone;
+  Parts: ComboboxParts;
+} = Object.assign(ComboboxStandalone, {
   Async: ComboboxAsyncStandalone,
   Parts: ComboboxParts,
 });

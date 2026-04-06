@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
      */
     dts({
       include: ["src"],
-      rollupTypes: true,
+      entryRoot: "src",
     }),
 
     /**

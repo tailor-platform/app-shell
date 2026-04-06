@@ -4,6 +4,7 @@
   "keywords": [],
   "license": "ISC",
   "author": "",
+  "type": "module",
   "main": "index.js",
   "exports": {
     ".": {
@@ -12,8 +13,8 @@
     }
   },
   "scripts": {
-    "dev": "NODE_ENV=development tsup --watch",
-    "build": "tsup",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
     "lint": "oxlint -c .oxlintrc.jsonc"
   },
   "dependencies": {
@@ -26,7 +27,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.21.7",
     "typescript": "^6"
   },
   "peerDependencies": {

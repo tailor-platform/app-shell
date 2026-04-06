@@ -51,6 +51,9 @@ export {
   type GuardResult,
   type ResourceComponentProps,
   type ErrorBoundaryComponent,
+  // Return types of defineModule/defineResource
+  type Module,
+  type Resource,
 } from "./resource";
 
 // Re-exports react-router hooks

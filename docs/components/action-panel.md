@@ -10,16 +10,15 @@ description: Display a title and a vertical list of actions with per-row loading
 ## Import
 
 ```tsx
-import { ActionPanel } from "@tailor-platform/app-shell";
+import { ActionPanel } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx preview height="350"
-import { ActionPanel } from "@tailor-platform/app-shell";
-import { ReceiptIcon, ExternalLinkIcon } from "lucide-react";
-
-<ActionPanel
+import { ActionPanel } from "@tailor-platform/app-shell"
+import { ReceiptIcon, ExternalLinkIcon } from "lucide-react"
+;<ActionPanel
   title="Actions"
   actions={[
     {
@@ -71,10 +70,9 @@ import { ReceiptIcon, ExternalLinkIcon } from "lucide-react";
 Use parent state to control which row is loading:
 
 ```tsx preview height="350"
-import { ActionPanel } from "@tailor-platform/app-shell";
-import { CheckIcon, ReceiptIcon } from "lucide-react";
-
-<ActionPanel
+import { ActionPanel } from "@tailor-platform/app-shell"
+import { CheckIcon, ReceiptIcon } from "lucide-react"
+;<ActionPanel
   title="Actions"
   actions={[
     {
@@ -82,7 +80,7 @@ import { CheckIcon, ReceiptIcon } from "lucide-react";
       label: "Create new order",
       icon: <ReceiptIcon />,
       onClick: () => console.log("create new order"),
-      disabled: true
+      disabled: true,
     },
     {
       key: "confirm",

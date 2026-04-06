@@ -10,22 +10,21 @@ description: Collapsible group component for organizing sidebar navigation items
 ## Import
 
 ```tsx
-import { SidebarGroup } from "@tailor-platform/app-shell";
+import { SidebarGroup } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx
-import { SidebarGroup, SidebarItem } from "@tailor-platform/app-shell";
-import { Package } from "lucide-react";
-
-<DefaultSidebar>
+import { SidebarGroup, SidebarItem } from "@tailor-platform/app-shell"
+import { Package } from "lucide-react"
+;<DefaultSidebar>
   <SidebarGroup title="Products" icon={<Package />}>
     <SidebarItem to="/products/all" />
     <SidebarItem to="/products/categories" />
     <SidebarItem to="/products/brands" />
   </SidebarGroup>
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ## Props
@@ -119,7 +118,7 @@ Create multi-level navigation:
 Titles support i18n with `defineI18nLabels`:
 
 ```tsx
-import { defineI18nLabels } from "@tailor-platform/app-shell";
+import { defineI18nLabels } from "@tailor-platform/app-shell"
 
 const labels = defineI18nLabels({
   products: {
@@ -130,11 +129,11 @@ const labels = defineI18nLabels({
     en: "Settings",
     ja: "設定",
   },
-});
+})
 
-<SidebarGroup title={labels.t("products")} icon={<Package />}>
+;<SidebarGroup title={labels.t("products")} icon={<Package />}>
   <SidebarItem to="/products/all" />
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ## Examples
@@ -142,26 +141,24 @@ const labels = defineI18nLabels({
 ### Basic Group
 
 ```tsx
-import { Package } from "lucide-react";
-
-<SidebarGroup title="Products" icon={<Package />}>
+import { Package } from "lucide-react"
+;<SidebarGroup title="Products" icon={<Package />}>
   <SidebarItem to="/products/all" />
   <SidebarItem to="/products/categories" />
   <SidebarItem to="/products/brands" />
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ### Clickable Group with Landing Page
 
 ```tsx
-import { Settings } from "lucide-react";
-
-<SidebarGroup title="Settings" icon={<Settings />} to="/settings">
+import { Settings } from "lucide-react"
+;<SidebarGroup title="Settings" icon={<Settings />} to="/settings">
   <SidebarItem to="/settings/profile" />
   <SidebarItem to="/settings/security" />
   <SidebarItem to="/settings/notifications" />
   <SidebarItem to="/settings/billing" />
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 Clicking "Settings" navigates to `/settings`, while child items navigate to their specific pages.
@@ -169,9 +166,8 @@ Clicking "Settings" navigates to `/settings`, while child items navigate to thei
 ### Multiple Groups
 
 ```tsx
-import { Package, ShoppingCart, Users, Settings } from "lucide-react";
-
-<DefaultSidebar>
+import { Package, ShoppingCart, Users, Settings } from "lucide-react"
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" />
 
   <SidebarGroup title="Products" icon={<Package />}>
@@ -196,15 +192,14 @@ import { Package, ShoppingCart, Users, Settings } from "lucide-react";
     <SidebarItem to="/settings/profile" />
     <SidebarItem to="/settings/billing" />
   </SidebarGroup>
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ### Nested Groups
 
 ```tsx
-import { FolderIcon } from "lucide-react";
-
-<SidebarGroup title="Documents" icon={<FolderIcon />}>
+import { FolderIcon } from "lucide-react"
+;<SidebarGroup title="Documents" icon={<FolderIcon />}>
   <SidebarItem to="/documents/recent" />
 
   <SidebarGroup title="Projects">
@@ -217,7 +212,7 @@ import { FolderIcon } from "lucide-react";
     <SidebarItem to="/documents/archives/2023" />
     <SidebarItem to="/documents/archives/2022" />
   </SidebarGroup>
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ### Collapsed by Default
@@ -240,11 +235,11 @@ Useful for:
 ### With Conditional Items
 
 ```tsx
-import { WithGuard } from "@tailor-platform/app-shell";
+import { WithGuard } from "@tailor-platform/app-shell"
 
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden())
 
-<SidebarGroup title="Settings" icon={<Settings />}>
+;<SidebarGroup title="Settings" icon={<Settings />}>
   <SidebarItem to="/settings/profile" />
   <SidebarItem to="/settings/notifications" />
 
@@ -252,19 +247,18 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
     <SidebarItem to="/settings/users" />
     <SidebarItem to="/settings/permissions" />
   </WithGuard>
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ### With External Links
 
 ```tsx
-import { HelpCircle, FileText, ExternalLink } from "lucide-react";
-
-<SidebarGroup title="Help" icon={<HelpCircle />}>
+import { HelpCircle, FileText, ExternalLink } from "lucide-react"
+;<SidebarGroup title="Help" icon={<HelpCircle />}>
   <SidebarItem to="/help/faq" />
   <SidebarItem to="https://docs.example.com" title="Documentation" icon={<FileText />} external />
   <SidebarItem to="https://support.example.com" title="Support" icon={<ExternalLink />} external />
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ### With Custom Separator

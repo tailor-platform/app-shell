@@ -10,25 +10,25 @@ Returns a guard result that denies access and makes the route return 404 Not Fou
 ## Signature
 
 ```typescript
-function hidden(): GuardResult;
+function hidden(): GuardResult
 ```
 
 ## Return Type
 
 ```typescript
 {
-  type: "hidden";
+  type: "hidden"
 }
 ```
 
 ## Usage
 
 ```typescript
-import { hidden, type Guard } from "@tailor-platform/app-shell";
+import { hidden, type Guard } from "@tailor-platform/app-shell"
 
 const denyAccess: Guard = () => {
-  return hidden();
-};
+  return hidden()
+}
 ```
 
 ## When to Use
@@ -55,7 +55,7 @@ When `hidden()` is returned:
 ### Deny All Access
 
 ```typescript
-const denyAll: Guard = () => hidden();
+const denyAll: Guard = () => hidden()
 ```
 
 ### Role-Based Hiding
@@ -63,10 +63,10 @@ const denyAll: Guard = () => hidden();
 ```typescript
 const adminOnly: Guard = ({ context }) => {
   if (context.currentUser?.role !== "admin") {
-    return hidden(); // Non-admins see 404
+    return hidden() // Non-admins see 404
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Permission-Based Hiding
@@ -76,10 +76,10 @@ const requirePermission =
   (perm: string): Guard =>
   ({ context }) => {
     if (!context.permissions.includes(perm)) {
-      return hidden(); // No permission → 404
+      return hidden() // No permission → 404
     }
-    return pass();
-  };
+    return pass()
+  }
 ```
 
 ### Feature Flag
@@ -87,10 +87,10 @@ const requirePermission =
 ```typescript
 const requireBetaFeature: Guard = ({ context }) => {
   if (!context.featureFlags?.beta) {
-    return hidden(); // Feature disabled → 404
+    return hidden() // Feature disabled → 404
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Subscription Tier
@@ -98,10 +98,10 @@ const requireBetaFeature: Guard = ({ context }) => {
 ```typescript
 const premiumOnly: Guard = ({ context }) => {
   if (context.currentUser?.plan !== "premium") {
-    return hidden(); // Free users see 404
+    return hidden() // Free users see 404
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Conditional Hiding
@@ -110,22 +110,22 @@ const premiumOnly: Guard = ({ context }) => {
 const conditionalHide: Guard = ({ context }) => {
   // Multiple conditions
   if (!context.currentUser || context.currentUser.suspended || !context.currentUser.emailVerified) {
-    return hidden();
+    return hidden()
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Async Permission Check
 
 ```typescript
 const asyncHide: Guard = async ({ context }) => {
-  const allowed = await fetch("/api/check-access");
+  const allowed = await fetch("/api/check-access")
   if (!allowed) {
-    return hidden();
+    return hidden()
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ## vs redirectTo()
@@ -143,18 +143,18 @@ const asyncHide: Guard = async ({ context }) => {
 // Use hidden() - Silently deny access
 const adminFeature: Guard = ({ context }) => {
   if (!isAdmin(context)) {
-    return hidden(); // Non-admins don't even see this exists
+    return hidden() // Non-admins don't even see this exists
   }
-  return pass();
-};
+  return pass()
+}
 
 // Use redirectTo() - Explicitly redirect
 const requireAuth: Guard = ({ context }) => {
   if (!context.currentUser) {
-    return redirectTo("/login"); // Unauthenticated users go to login
+    return redirectTo("/login") // Unauthenticated users go to login
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ## Navigation Impact

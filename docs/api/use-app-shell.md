@@ -11,10 +11,10 @@ React hook to access AppShell context data and configuration within your compone
 
 ```typescript
 const useAppShell: () => {
-  context: ContextData;
-  contextData: ContextData;
-  configurations: AppShellConfig;
-};
+  context: ContextData
+  contextData: ContextData
+  configurations: AppShellConfig
+}
 ```
 
 ## Return Value

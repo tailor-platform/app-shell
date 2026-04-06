@@ -10,19 +10,18 @@ description: Individual navigation item for customizing sidebar with icons, acti
 ## Import
 
 ```tsx
-import { SidebarItem } from "@tailor-platform/app-shell";
+import { SidebarItem } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx
-import { DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
-
-<DefaultSidebar>
+import { DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell"
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" />
   <SidebarItem to="/products" />
   <SidebarItem to="/orders" />
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 When you only provide `to`, the title and icon are automatically resolved from the matching resource's `meta` property.
@@ -52,10 +51,10 @@ const dashboardModule = defineModule({
   meta: {
     title: "Dashboard", // ← Automatically used
   },
-});
+})
 
 // In sidebar - no title needed!
-<SidebarItem to="/dashboard" />;
+;<SidebarItem to="/dashboard" />
 // Renders as: Dashboard
 ```
 
@@ -64,7 +63,7 @@ const dashboardModule = defineModule({
 Icons are resolved from the module's `meta.icon`:
 
 ```tsx
-import { Home, Package } from "lucide-react";
+import { Home, Package } from "lucide-react"
 
 const modules = [
   defineModule({
@@ -81,12 +80,12 @@ const modules = [
       icon: <Package />,
     },
   }),
-];
+]
 
-<DefaultSidebar>
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" /> {/* Shows Home icon */}
   <SidebarItem to="/products" /> {/* Shows Package icon */}
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ## Manual Override
@@ -103,20 +102,18 @@ const modules = [
 ### Override Icon
 
 ```tsx
-import { Home } from "lucide-react";
-
-<SidebarItem
+import { Home } from "lucide-react"
+;<SidebarItem
   to="/dashboard"
   icon={<Home />} // Override auto-resolved icon
-/>;
+/>
 ```
 
 ### Both Title and Icon
 
 ```tsx
-import { Settings } from "lucide-react";
-
-<SidebarItem to="/settings" title="Settings" icon={<Settings />} />;
+import { Settings } from "lucide-react"
+;<SidebarItem to="/settings" title="Settings" icon={<Settings />} />
 ```
 
 ## External Links
@@ -124,14 +121,13 @@ import { Settings } from "lucide-react";
 Open links in a new tab with an external link icon:
 
 ```tsx
-import { ExternalLink } from "lucide-react";
-
-<SidebarItem
+import { ExternalLink } from "lucide-react"
+;<SidebarItem
   to="https://docs.example.com"
   title="Documentation"
   icon={<ExternalLink />}
   external
-/>;
+/>
 ```
 
 The external link icon is automatically added to the end of the item.
@@ -190,11 +186,11 @@ The render function receives:
 
 ```typescript
 type SidebarItemRenderProps = {
-  title: string; // Auto-resolved or overridden
-  url: string; // The `to` prop value
-  icon?: ReactNode; // Auto-resolved or overridden
-  isActive: boolean; // Whether this item matches the current route
-};
+  title: string // Auto-resolved or overridden
+  url: string // The `to` prop value
+  icon?: ReactNode // Auto-resolved or overridden
+  isActive: boolean // Whether this item matches the current route
+}
 ```
 
 ## Examples
@@ -213,22 +209,20 @@ type SidebarItemRenderProps = {
 ### With Manual Overrides
 
 ```tsx
-import { Home, Package, ShoppingCart, Users } from "lucide-react";
-
-<DefaultSidebar>
+import { Home, Package, ShoppingCart, Users } from "lucide-react"
+;<DefaultSidebar>
   <SidebarItem to="/" title="Home" icon={<Home />} />
   <SidebarItem to="/products" title="Products" icon={<Package />} />
   <SidebarItem to="/orders" title="Orders" icon={<ShoppingCart />} />
   <SidebarItem to="/customers" title="Customers" icon={<Users />} />
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ### With External Links
 
 ```tsx
-import { HelpCircle, FileText, ExternalLink } from "lucide-react";
-
-<DefaultSidebar>
+import { HelpCircle, FileText, ExternalLink } from "lucide-react"
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" />
   <SidebarItem to="/products" />
 
@@ -236,7 +230,7 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
 
   <SidebarItem to="https://docs.example.com" title="Documentation" icon={<FileText />} external />
   <SidebarItem to="https://support.example.com" title="Support" icon={<HelpCircle />} external />
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ### With Notification Badge
@@ -284,31 +278,30 @@ Without `activeMatch="exact"`, the root item would be active on all pages since 
 ### Conditional Rendering with Guards
 
 ```tsx
-import { WithGuard } from "@tailor-platform/app-shell";
+import { WithGuard } from "@tailor-platform/app-shell"
 
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden())
 
-<DefaultSidebar>
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" />
   <SidebarItem to="/products" />
 
   <WithGuard guards={[isAdmin]}>
     <SidebarItem to="/admin" title="Admin Panel" />
   </WithGuard>
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ### In SidebarGroup
 
 ```tsx
-import { SidebarGroup, SidebarItem } from "@tailor-platform/app-shell";
-import { Package } from "lucide-react";
-
-<SidebarGroup title="Products" icon={<Package />}>
+import { SidebarGroup, SidebarItem } from "@tailor-platform/app-shell"
+import { Package } from "lucide-react"
+;<SidebarGroup title="Products" icon={<Package />}>
   <SidebarItem to="/products/all" />
   <SidebarItem to="/products/categories" />
   <SidebarItem to="/products/brands" />
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ## Styling

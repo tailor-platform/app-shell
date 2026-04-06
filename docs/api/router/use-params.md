@@ -10,7 +10,7 @@ React Router hook to access dynamic route parameters from the URL. Re-exported f
 ## Signature
 
 ```typescript
-const useParams: <T extends Record<string, string>>() => T;
+const useParams: <T extends Record<string, string>>() => T
 ```
 
 ## Usage
@@ -134,20 +134,20 @@ const ordersModule = defineModule({
 
 ```typescript
 // ✅ Correct
-import { useParams } from "@tailor-platform/app-shell";
+import { useParams } from "@tailor-platform/app-shell"
 
 // ❌ Wrong - won't work with AppShell's router
-import { useParams } from "react-router";
+import { useParams } from "react-router"
 ```
 
 ### Parameters are Always Strings
 
 ```typescript
-const { id } = useParams();
+const { id } = useParams()
 // id is always a string, even for numeric IDs
 
 // Convert if needed:
-const numericId = parseInt(id, 10);
+const numericId = parseInt(id, 10)
 ```
 
 ### Optional Parameters
@@ -155,7 +155,7 @@ const numericId = parseInt(id, 10);
 For optional parameters, check for undefined:
 
 ```typescript
-const { filter } = useParams();
+const { filter } = useParams()
 
 if (filter) {
   // Filter is provided

@@ -10,7 +10,7 @@ React hook to access only the AppShell configuration (title, icon, basePath, mod
 ## Signature
 
 ```typescript
-const useAppShellConfig: () => AppShellConfig;
+const useAppShellConfig: () => AppShellConfig
 ```
 
 ## Return Value
@@ -101,11 +101,11 @@ Use `useAppShellConfig` when you only need configuration data:
 
 ```typescript
 // ✅ Good - only need config
-const { modules } = useAppShellConfig();
+const { modules } = useAppShellConfig()
 
 // ❌ Overkill - useAppShell returns more data
-const { configurations } = useAppShell();
-const modules = configurations.modules;
+const { configurations } = useAppShell()
+const modules = configurations.modules
 ```
 
 ## Comparison with Other Hooks

@@ -15,7 +15,7 @@ import {
   type ActivityCardItem,
   type ActivityCardBaseItem,
   type ActivityCardProps,
-} from "@tailor-platform/app-shell";
+} from "@tailor-platform/app-shell"
 ```
 
 Use `ActivityCardItem` for each item in the standalone API. Use `ActivityCardBaseItem` as the minimum constraint when extending items for the compound API.
@@ -23,10 +23,9 @@ Use `ActivityCardItem` for each item in the standalone API. Use `ActivityCardBas
 ## Basic Usage
 
 ```tsx preview
-import { ActivityCard } from "@tailor-platform/app-shell";
-
-<ActivityCard 
-  title="Updates" 
+import { ActivityCard } from "@tailor-platform/app-shell"
+;<ActivityCard
+  title="Updates"
   items={[
     {
       id: "1",
@@ -46,7 +45,7 @@ import { ActivityCard } from "@tailor-platform/app-shell";
       description: "Status automatically changed to EXPIRED",
       timestamp: new Date("2025-03-20T10:00:00"),
     },
-  ]} 
+  ]}
 />
 ```
 
@@ -89,14 +88,13 @@ Use the compound API when you need fully custom item rendering — custom icons,
 ### Example
 
 ```tsx preview
-import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
-
-<ActivityCard.Root 
+import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell"
+;<ActivityCard.Root
   items={[
     { id: "1", timestamp: new Date(), kind: "approval", label: "PO approved" },
     { id: "2", timestamp: new Date(), kind: "update", message: "Status changed to CONFIRMED" },
-  ]} 
-  title="Updates" 
+  ]}
+  title="Updates"
   groupBy="day"
 >
   <ActivityCard.Items>

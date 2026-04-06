@@ -10,7 +10,7 @@ React Router hook to access error details within a custom error boundary compone
 ## Signature
 
 ```typescript
-const useRouteError: () => unknown;
+const useRouteError: () => unknown
 ```
 
 ## Return Value
@@ -190,10 +190,10 @@ defineResource({
 
 ```typescript
 // ✅ Correct
-import { useRouteError } from "@tailor-platform/app-shell";
+import { useRouteError } from "@tailor-platform/app-shell"
 
 // ❌ Wrong - won't work with AppShell's router
-import { useRouteError } from "react-router";
+import { useRouteError } from "react-router"
 ```
 
 ### Error Boundaries Don't Catch

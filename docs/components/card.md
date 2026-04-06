@@ -10,15 +10,14 @@ description: General-purpose container with consistent styling using a compound 
 ## Import
 
 ```tsx
-import { Card } from "@tailor-platform/app-shell";
+import { Card } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx preview
-import { Card } from "@tailor-platform/app-shell";
-
-<Card.Root style={{ flex: 1 }}>
+import { Card } from "@tailor-platform/app-shell"
+;<Card.Root style={{ flex: 1 }}>
   <Card.Header title="Order Details" description="Summary of order #1234" />
   <Card.Content>
     <p>Content goes here</p>
@@ -66,9 +65,8 @@ import { Card } from "@tailor-platform/app-shell";
 ### Header only
 
 ```tsx preview
-import { Card } from "@tailor-platform/app-shell";
-
-<Card.Root style={{ flex: 1 }}>
+import { Card } from "@tailor-platform/app-shell"
+;<Card.Root style={{ flex: 1 }}>
   <Card.Header title="Summary" description="Key metrics for this period" />
 </Card.Root>
 ```
@@ -76,9 +74,8 @@ import { Card } from "@tailor-platform/app-shell";
 ### Content only
 
 ```tsx preview
-import { Card } from "@tailor-platform/app-shell";
-
-<Card.Root style={{ flex: 1 }}>
+import { Card } from "@tailor-platform/app-shell"
+;<Card.Root style={{ flex: 1 }}>
   <Card.Content>
     <p>No header needed for this card.</p>
   </Card.Content>

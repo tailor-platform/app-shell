@@ -10,13 +10,13 @@ description: Display structured key-value information in a responsive grid layou
 ## Import
 
 ```tsx
-import { DescriptionCard } from "@tailor-platform/app-shell";
+import { DescriptionCard } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx preview
-import { DescriptionCard } from "@tailor-platform/app-shell";
+import { DescriptionCard } from "@tailor-platform/app-shell"
 
 const orderData = {
   orderNumber: "ORD-12345",
@@ -25,9 +25,9 @@ const orderData = {
   totalAmount: 15750.0,
   currency: "USD",
   orderDate: "2026-03-01T10:00:00Z",
-};
+}
 
-<DescriptionCard
+;<DescriptionCard
   data={orderData}
   fields={[
     { key: "orderNumber", label: "Order Number" },
@@ -36,7 +36,7 @@ const orderData = {
     { key: "totalAmount", label: "Total", type: "money", meta: { currencyKey: "currency" } },
     { key: "orderDate", label: "Order Date", type: "date" },
   ]}
-/>;
+/>
 ```
 
 ## Props
@@ -228,15 +228,15 @@ const data = {
       email: "contact@acme.com",
     },
   },
-};
+}
 
-<DescriptionCard
+;<DescriptionCard
   data={data}
   fields={[
     { key: "customer.name", label: "Customer Name" },
     { key: "customer.contact.email", label: "Email" },
   ]}
-/>;
+/>
 ```
 
 ## Column Layouts
@@ -264,7 +264,7 @@ The component is fully responsive:
 ## Complete Example
 
 ```tsx
-import { DescriptionCard } from "@tailor-platform/app-shell";
+import { DescriptionCard } from "@tailor-platform/app-shell"
 
 const orderData = {
   // Order info
@@ -296,7 +296,7 @@ const orderData = {
 
   // Notes
   notes: "Rush delivery requested",
-};
+}
 
 function OrderDetails() {
   return (
@@ -397,7 +397,7 @@ function OrderDetails() {
         },
       ]}
     />
-  );
+  )
 }
 ```
 

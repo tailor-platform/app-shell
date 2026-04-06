@@ -10,7 +10,7 @@ description: Keyboard-driven quick navigation with fuzzy search for all routes i
 ## Import
 
 ```tsx
-import { CommandPalette } from "@tailor-platform/app-shell";
+import { CommandPalette } from "@tailor-platform/app-shell"
 ```
 
 ## Usage
@@ -18,14 +18,14 @@ import { CommandPalette } from "@tailor-platform/app-shell";
 The CommandPalette is automatically included when you use `AppShell` with `SidebarLayout`. It requires no additional configuration:
 
 ```tsx
-import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell"
 
 function App() {
   return (
     <AppShell modules={modules}>
       <SidebarLayout />
     </AppShell>
-  );
+  )
 }
 ```
 
@@ -101,7 +101,7 @@ const productsModule = defineModule({
     title: "Products",
     icon: <Package />, // Shown in CommandPalette
   },
-});
+})
 ```
 
 ## Customization
@@ -111,14 +111,14 @@ const productsModule = defineModule({
 If you need to customize the CommandPalette behavior, you can use the `useCommandPalette` hook:
 
 ```tsx
-import { useCommandPalette, navItemsToRoutes } from "@tailor-platform/app-shell";
+import { useCommandPalette, navItemsToRoutes } from "@tailor-platform/app-shell"
 
 function CustomPalette() {
-  const navItems = useNavItems(); // Get navigation items
-  const routes = navItemsToRoutes(navItems);
+  const navItems = useNavItems() // Get navigation items
+  const routes = navItemsToRoutes(navItems)
 
   const { open, handleOpenChange, search, setSearch, filteredRoutes, handleSelect, handleKeyDown } =
-    useCommandPalette({ routes });
+    useCommandPalette({ routes })
 
   // Custom UI implementation
   return (
@@ -137,7 +137,7 @@ function CustomPalette() {
         </button>
       ))}
     </Dialog>
-  );
+  )
 }
 ```
 
@@ -177,7 +177,7 @@ const modules = [
       }),
     ],
   }),
-];
+]
 
 // CommandPalette will show:
 // - Dashboard
@@ -197,10 +197,10 @@ const adminModule = defineModule({
   meta: { title: "Admin Panel" },
   guards: [
     ({ context }) => {
-      return context.currentUser?.role === "admin" ? pass() : hidden(); // Won't show in CommandPalette for non-admins
+      return context.currentUser?.role === "admin" ? pass() : hidden() // Won't show in CommandPalette for non-admins
     },
   ],
-});
+})
 ```
 
 ### Search Behavior

@@ -10,7 +10,7 @@ React Router hook for programmatic navigation. Re-exported from `react-router` f
 ## Signature
 
 ```typescript
-const useNavigate: () => (to: string | number, options?: NavigateOptions) => void;
+const useNavigate: () => (to: string | number, options?: NavigateOptions) => void
 ```
 
 ## Usage
@@ -106,10 +106,10 @@ function ProductDetail() {
 
 ```typescript
 interface NavigateOptions {
-  replace?: boolean; // Replace current entry instead of pushing
-  state?: any; // Pass state to target route
-  preventScrollReset?: boolean;
-  relative?: "route" | "path";
+  replace?: boolean // Replace current entry instead of pushing
+  state?: any // Pass state to target route
+  preventScrollReset?: boolean
+  relative?: "route" | "path"
 }
 ```
 
@@ -121,10 +121,10 @@ Always import from `@tailor-platform/app-shell`, not `react-router`:
 
 ```typescript
 // ✅ Correct
-import { useNavigate } from "@tailor-platform/app-shell";
+import { useNavigate } from "@tailor-platform/app-shell"
 
 // ❌ Wrong - won't work with AppShell's router
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"
 ```
 
 This ensures you're using AppShell's router instance.

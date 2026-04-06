@@ -16,7 +16,7 @@ Modules and Resources both share core interface. Of interest:
 A trivial `modules` example:
 
 ```tsx
-import { defineModule, defineResource, pass, hidden } from "@tailor-platform/app-shell";
+import { defineModule, defineResource, pass, hidden } from "@tailor-platform/app-shell"
 
 const appShellPropModule = [
   defineModule({
@@ -75,12 +75,12 @@ const appShellPropModule = [
       async ({ context, signal }) => {
         const ok = await fetch("/api/me/permissions?scope=reports", {
           signal,
-        }).then((r) => r.ok);
-        return ok ? pass() : hidden();
+        }).then((r) => r.ok)
+        return ok ? pass() : hidden()
       },
     ],
   }),
-];
+]
 ```
 
 Produces the following navigation menu:
@@ -124,7 +124,7 @@ See the [Route Guards documentation](./api.md#route-guards) in the API reference
 **Permission-based access:**
 
 ```tsx
-import { defineModule, pass, hidden } from "@tailor-platform/app-shell";
+import { defineModule, pass, hidden } from "@tailor-platform/app-shell"
 
 const reportsModule = defineModule({
   path: "reports",
@@ -134,17 +134,17 @@ const reportsModule = defineModule({
     async ({ context, signal }) => {
       const ok = await fetch("/api/me/permissions?scope=reports", {
         signal,
-      }).then((r) => r.ok);
-      return ok ? pass() : hidden();
+      }).then((r) => r.ok)
+      return ok ? pass() : hidden()
     },
   ],
-});
+})
 ```
 
 **Feature flag based:**
 
 ```tsx
-import { pass, hidden } from "@tailor-platform/app-shell";
+import { pass, hidden } from "@tailor-platform/app-shell"
 
 const betaFeaturesModule = defineModule({
   path: "beta",
@@ -152,17 +152,17 @@ const betaFeaturesModule = defineModule({
   resources: [newFeatureResource],
   guards: [
     async ({ context }) => {
-      const enabled = await checkFeatureFlag("beta-features");
-      return enabled ? pass() : hidden();
+      const enabled = await checkFeatureFlag("beta-features")
+      return enabled ? pass() : hidden()
     },
   ],
-});
+})
 ```
 
 **Tenant tier based:**
 
 ```tsx
-import { pass, hidden } from "@tailor-platform/app-shell";
+import { pass, hidden } from "@tailor-platform/app-shell"
 
 const billingModule = defineModule({
   path: "billing",
@@ -170,56 +170,56 @@ const billingModule = defineModule({
   resources: [billingResources],
   guards: [
     async ({ context }) => {
-      const plan = await getCurrentTenantPlan();
-      return plan === "enterprise" ? pass() : hidden();
+      const plan = await getCurrentTenantPlan()
+      return plan === "enterprise" ? pass() : hidden()
     },
   ],
-});
+})
 ```
 
 **Resource-level guards:**
 
 ```tsx
-import { pass, hidden } from "@tailor-platform/app-shell";
+import { pass, hidden } from "@tailor-platform/app-shell"
 
 defineResource({
   path: "admin-settings",
   component: AdminSettingsPage,
   guards: [
     async ({ context, signal }) => {
-      const user = await getCurrentUser({ signal });
-      return user.role === "admin" ? pass() : hidden();
+      const user = await getCurrentUser({ signal })
+      return user.role === "admin" ? pass() : hidden()
     },
   ],
-});
+})
 ```
 
 **Reusable guards:**
 
 ```tsx
-import { type Guard, pass, hidden, redirectTo } from "@tailor-platform/app-shell";
+import { type Guard, pass, hidden, redirectTo } from "@tailor-platform/app-shell"
 
 // Define reusable guards
 const requireAuth: Guard = ({ context }) => {
   if (!context.currentUser) {
-    return redirectTo("/login");
+    return redirectTo("/login")
   }
-  return pass();
-};
+  return pass()
+}
 
 const requireAdmin: Guard = ({ context }) => {
   if (context.currentUser?.role !== "admin") {
-    return hidden();
+    return hidden()
   }
-  return pass();
-};
+  return pass()
+}
 
 // Use in multiple resources
 defineResource({
   path: "admin/users",
   component: AdminUsersPage,
   guards: [requireAuth, requireAdmin],
-});
+})
 ```
 
 When a module or resource is hidden via guards, it will:

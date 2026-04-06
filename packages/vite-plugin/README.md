@@ -16,13 +16,13 @@ pnpm add @tailor-platform/app-shell-vite-plugin
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin"
 
 export default defineConfig({
   plugins: [react(), appShellRoutes()],
-});
+})
 ```
 
 ## Options
@@ -37,7 +37,7 @@ export default defineConfig({
 appShellRoutes({
   pagesDir: "src/pages",
   generateTypedRoutes: true, // outputs to src/routes.generated.ts
-});
+})
 ```
 
 For comprehensive usage guide including page conventions, path rules, guards, typed routes, and migration from the legacy API, see the [File-Based Routing documentation](https://github.com/tailor-platform/app-shell/blob/main/docs/file-based-routing.md).
@@ -95,19 +95,19 @@ The plugin generates a virtual module `virtual:app-shell-pages`:
 
 ```typescript
 // virtual:app-shell-pages (generated)
-import Page0 from "/src/pages/page.tsx";
-import Page1 from "/src/pages/dashboard/page.tsx";
-import Page2 from "/src/pages/dashboard/orders/page.tsx";
-import Page3 from "/src/pages/dashboard/orders/[id]/page.tsx";
+import Page0 from "/src/pages/page.tsx"
+import Page1 from "/src/pages/dashboard/page.tsx"
+import Page2 from "/src/pages/dashboard/orders/page.tsx"
+import Page3 from "/src/pages/dashboard/orders/[id]/page.tsx"
 
 export const pages = [
   { path: "/", component: Page0 },
   { path: "/dashboard", component: Page1 },
   { path: "/dashboard/orders", component: Page2 },
   { path: "/dashboard/orders/:id", component: Page3 },
-];
+]
 
-export default pages;
+export default pages
 ```
 
 ## Auto-Inject Proxy Module
@@ -115,14 +115,14 @@ export default pages;
 The generated proxy module that replaces `@tailor-platform/app-shell` imports:
 
 ```typescript
-import { pages } from "virtual:app-shell-pages";
-import { AppShell as _OriginalAppShell } from "@tailor-platform/app-shell";
+import { pages } from "virtual:app-shell-pages"
+import { AppShell as _OriginalAppShell } from "@tailor-platform/app-shell"
 
 // Re-export everything from the original package
-export * from "@tailor-platform/app-shell";
+export * from "@tailor-platform/app-shell"
 
 // Override AppShell with pages pre-configured via WithPages
-export const AppShell = _OriginalAppShell.WithPages(pages);
+export const AppShell = _OriginalAppShell.WithPages(pages)
 ```
 
 ## Why `enforce: "pre"` is Required

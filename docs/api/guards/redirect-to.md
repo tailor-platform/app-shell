@@ -10,7 +10,7 @@ Returns a guard result that redirects the user to a different URL. Used primaril
 ## Signature
 
 ```typescript
-function redirectTo(to: string): GuardResult;
+function redirectTo(to: string): GuardResult
 ```
 
 ## Parameters
@@ -25,19 +25,19 @@ function redirectTo(to: string): GuardResult;
 
 ```typescript
 {
-  type: "redirect";
-  to: string;
+  type: "redirect"
+  to: string
 }
 ```
 
 ## Usage
 
 ```typescript
-import { redirectTo, type Guard } from "@tailor-platform/app-shell";
+import { redirectTo, type Guard } from "@tailor-platform/app-shell"
 
 const redirectToLogin: Guard = () => {
-  return redirectTo("/login");
-};
+  return redirectTo("/login")
+}
 ```
 
 ## When to Use
@@ -56,10 +56,10 @@ Use `redirectTo()` when:
 ```typescript
 const requireAuth: Guard = ({ context }) => {
   if (!context.currentUser) {
-    return redirectTo("/login");
+    return redirectTo("/login")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Subscription Required
@@ -67,10 +67,10 @@ const requireAuth: Guard = ({ context }) => {
 ```typescript
 const requirePremium: Guard = ({ context }) => {
   if (context.currentUser?.plan !== "premium") {
-    return redirectTo("/upgrade");
+    return redirectTo("/upgrade")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Complete Profile
@@ -78,10 +78,10 @@ const requirePremium: Guard = ({ context }) => {
 ```typescript
 const requireProfile: Guard = ({ context }) => {
   if (!context.currentUser?.profileComplete) {
-    return redirectTo("/complete-profile");
+    return redirectTo("/complete-profile")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Email Verification
@@ -89,10 +89,10 @@ const requireProfile: Guard = ({ context }) => {
 ```typescript
 const requireVerifiedEmail: Guard = ({ context }) => {
   if (!context.currentUser?.emailVerified) {
-    return redirectTo("/verify-email");
+    return redirectTo("/verify-email")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Terms Acceptance
@@ -100,10 +100,10 @@ const requireVerifiedEmail: Guard = ({ context }) => {
 ```typescript
 const requireTerms: Guard = ({ context }) => {
   if (!context.currentUser?.termsAccepted) {
-    return redirectTo("/accept-terms");
+    return redirectTo("/accept-terms")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Role-Based Redirect
@@ -111,47 +111,47 @@ const requireTerms: Guard = ({ context }) => {
 ```typescript
 const redirectNonAdmins: Guard = ({ context }) => {
   if (context.currentUser?.role !== "admin") {
-    return redirectTo("/access-denied");
+    return redirectTo("/access-denied")
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Conditional Redirect
 
 ```typescript
 const conditionalRedirect: Guard = ({ context }) => {
-  const user = context.currentUser;
+  const user = context.currentUser
 
   if (!user) {
-    return redirectTo("/login");
+    return redirectTo("/login")
   }
 
   if (user.suspended) {
-    return redirectTo("/account-suspended");
+    return redirectTo("/account-suspended")
   }
 
   if (!user.onboardingComplete) {
-    return redirectTo("/onboarding");
+    return redirectTo("/onboarding")
   }
 
-  return pass();
-};
+  return pass()
+}
 ```
 
 ### Async Redirect
 
 ```typescript
 const asyncRedirect: Guard = async ({ context }) => {
-  const status = await fetch("/api/user-status");
-  const { active } = await status.json();
+  const status = await fetch("/api/user-status")
+  const { active } = await status.json()
 
   if (!active) {
-    return redirectTo("/reactivate");
+    return redirectTo("/reactivate")
   }
 
-  return pass();
-};
+  return pass()
+}
 ```
 
 ## vs hidden()
@@ -170,18 +170,18 @@ const asyncRedirect: Guard = async ({ context }) => {
 // Use redirectTo() - User needs to take action
 const requireAuth: Guard = ({ context }) => {
   if (!context.currentUser) {
-    return redirectTo("/login"); // Clear: "You need to log in"
+    return redirectTo("/login") // Clear: "You need to log in"
   }
-  return pass();
-};
+  return pass()
+}
 
 // Use hidden() - Feature doesn't exist for user
 const adminFeature: Guard = ({ context }) => {
   if (!isAdmin(context)) {
-    return hidden(); // Silent: User doesn't even know this exists
+    return hidden() // Silent: User doesn't even know this exists
   }
-  return pass();
-};
+  return pass()
+}
 ```
 
 ## Redirect Chains
@@ -193,25 +193,25 @@ const guards = [
   // 1. Check authentication
   ({ context }) => {
     if (!context.currentUser) {
-      return redirectTo("/login");
+      return redirectTo("/login")
     }
-    return pass();
+    return pass()
   },
   // 2. Check onboarding (only runs if authenticated)
   ({ context }) => {
     if (!context.currentUser?.onboardingComplete) {
-      return redirectTo("/onboarding");
+      return redirectTo("/onboarding")
     }
-    return pass();
+    return pass()
   },
   // 3. Check permissions (only runs if onboarded)
   ({ context }) => {
     if (!context.currentUser?.hasAccess) {
-      return redirectTo("/upgrade");
+      return redirectTo("/upgrade")
     }
-    return pass();
+    return pass()
   },
-];
+]
 ```
 
 ## Module vs Resource Redirects
@@ -225,12 +225,12 @@ const dashboardModule = defineModule({
   guards: [
     ({ context }) => {
       if (!context.currentUser) {
-        return redirectTo("/login");
+        return redirectTo("/login")
       }
-      return pass();
+      return pass()
     },
   ],
-});
+})
 
 // Accessing /dashboard without auth → Redirects to /login
 ```
@@ -244,12 +244,12 @@ const settingsResource = defineResource({
   guards: [
     ({ context }) => {
       if (!context.currentUser?.emailVerified) {
-        return redirectTo("/verify-email");
+        return redirectTo("/verify-email")
       }
-      return pass();
+      return pass()
     },
   ],
-});
+})
 
 // Accessing /settings without verified email → Redirects to /verify-email
 ```
@@ -286,11 +286,11 @@ To preserve the original URL after redirect:
 ```typescript
 const requireAuth: Guard = ({ context }) => {
   if (!context.currentUser) {
-    const currentPath = window.location.pathname;
-    return redirectTo(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    const currentPath = window.location.pathname
+    return redirectTo(`/login?redirect=${encodeURIComponent(currentPath)}`)
   }
-  return pass();
-};
+  return pass()
+}
 
 // After login, redirect back:
 // const redirect = searchParams.get('redirect');

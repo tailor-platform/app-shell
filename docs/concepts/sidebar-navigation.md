@@ -17,13 +17,13 @@ AppShell provides flexible sidebar navigation with two modes:
 The simplest way to use the sidebar - navigation items are automatically generated from your module definitions:
 
 ```tsx
-import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell"
 
 const App = () => (
   <AppShell modules={modules}>
     <SidebarLayout />
   </AppShell>
-);
+)
 ```
 
 ### Composition Mode
@@ -38,8 +38,8 @@ import {
   SidebarItem,
   SidebarGroup,
   SidebarSeparator,
-} from "@tailor-platform/app-shell";
-import { Package, Settings } from "lucide-react";
+} from "@tailor-platform/app-shell"
+import { Package, Settings } from "lucide-react"
 
 const App = () => (
   <AppShell modules={modules}>
@@ -57,7 +57,7 @@ const App = () => (
       }
     />
   </AppShell>
-);
+)
 ```
 
 ---
@@ -166,16 +166,16 @@ A collapsible group for organizing navigation items.
 Group titles support localized strings:
 
 ```tsx
-import { defineI18nLabels } from "@tailor-platform/app-shell";
+import { defineI18nLabels } from "@tailor-platform/app-shell"
 
 const labels = defineI18nLabels({
   en: { products: "Products" },
   ja: { products: "製品" },
-});
+})
 
-<SidebarGroup title={labels.t("products")} icon={<Package />}>
+;<SidebarGroup title={labels.t("products")} icon={<Package />}>
   <SidebarItem to="/products/all" />
-</SidebarGroup>;
+</SidebarGroup>
 ```
 
 ---
@@ -244,12 +244,12 @@ A hook to retrieve page metadata (title, icon) for a given URL path.
 #### Signature
 
 ```typescript
-const usePageMeta: (path: string) => PageMeta | null;
+const usePageMeta: (path: string) => PageMeta | null
 
 type PageMeta = {
-  title: string;
-  icon?: ReactNode;
-};
+  title: string
+  icon?: ReactNode
+}
 ```
 
 #### Parameters
@@ -266,13 +266,13 @@ type PageMeta = {
 #### Example
 
 ```tsx
-import { usePageMeta } from "@tailor-platform/app-shell";
+import { usePageMeta } from "@tailor-platform/app-shell"
 
 const MyComponent = () => {
-  const pageMeta = usePageMeta("/products/all");
+  const pageMeta = usePageMeta("/products/all")
 
   if (!pageMeta) {
-    return <span>Unknown Page</span>;
+    return <span>Unknown Page</span>
   }
 
   return (
@@ -280,8 +280,8 @@ const MyComponent = () => {
       {pageMeta.icon}
       <span>{pageMeta.title}</span>
     </div>
-  );
-};
+  )
+}
 ```
 
 ---
@@ -293,7 +293,7 @@ const MyComponent = () => {
 In auto-generation mode, `guards` defined in `defineModule`/`defineResource` are automatically evaluated. Modules/resources that return `hidden()` will not appear in the sidebar.
 
 ```tsx
-import { defineModule, defineResource, pass, hidden } from "@tailor-platform/app-shell";
+import { defineModule, defineResource, pass, hidden } from "@tailor-platform/app-shell"
 
 const adminModule = defineModule({
   path: "admin",
@@ -307,10 +307,10 @@ const adminModule = defineModule({
       component: () => <div>Users</div>,
     }),
   ],
-});
+})
 
 // Used with auto-generation mode
-<DefaultSidebar />;
+;<DefaultSidebar />
 ```
 
 ### Composition Mode
@@ -318,12 +318,12 @@ const adminModule = defineModule({
 In composition mode, use the `WithGuard` component to control visibility of sidebar items. This allows you to reuse the same guard logic used in route definitions.
 
 ```tsx
-import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
+import { WithGuard, pass, hidden } from "@tailor-platform/app-shell"
 
 // Define a guard function
-const isAdminGuard = ({ context }) => (context.currentUser.role === "admin" ? pass() : hidden());
+const isAdminGuard = ({ context }) => (context.currentUser.role === "admin" ? pass() : hidden())
 
-<DefaultSidebar>
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" />
 
   {/* Wrap items with WithGuard for conditional visibility */}
@@ -333,7 +333,7 @@ const isAdminGuard = ({ context }) => (context.currentUser.role === "admin" ? pa
       <SidebarItem to="/admin/settings" />
     </SidebarGroup>
   </WithGuard>
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 #### Curried Guards
@@ -345,9 +345,9 @@ For parameterized guards, use the curried pattern:
 const hasRole =
   (role: string) =>
   ({ context }) =>
-    context.currentUser.role === role ? pass() : hidden();
+    context.currentUser.role === role ? pass() : hidden()
 
-<DefaultSidebar>
+;<DefaultSidebar>
   <WithGuard guards={[hasRole("admin")]}>
     <SidebarItem to="/admin" />
   </WithGuard>
@@ -355,7 +355,7 @@ const hasRole =
   <WithGuard guards={[hasRole("manager")]}>
     <SidebarItem to="/reports" />
   </WithGuard>
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 > **Note**: Route-level access control (e.g., redirects) still works via `guards` in `defineResource`, even in composition mode. `WithGuard` only controls visibility—it does not prevent navigation to protected routes.

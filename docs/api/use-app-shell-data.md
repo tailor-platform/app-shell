@@ -10,7 +10,7 @@ React hook to access only the custom context data. This is a lighter alternative
 ## Signature
 
 ```typescript
-const useAppShellData: () => ContextData;
+const useAppShellData: () => ContextData
 ```
 
 ## Return Value
@@ -95,14 +95,14 @@ Define your context type with module augmentation:
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
-      currentUser: User | null;
-      permissions: string[];
-      tenantId: string;
+      currentUser: User | null
+      permissions: string[]
+      tenantId: string
       featureFlags: {
-        newEditor: boolean;
-        betaDashboard: boolean;
-      };
-    };
+        newEditor: boolean
+        betaDashboard: boolean
+      }
+    }
   }
 }
 ```
@@ -110,10 +110,10 @@ declare module "@tailor-platform/app-shell" {
 Now `useAppShellData()` returns fully typed data:
 
 ```typescript
-const data = useAppShellData();
-data.currentUser; // Type: User | null
-data.permissions; // Type: string[]
-data.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
+const data = useAppShellData()
+data.currentUser // Type: User | null
+data.permissions // Type: string[]
+data.featureFlags // Type: { newEditor: boolean, betaDashboard: boolean }
 ```
 
 ## When to Use
@@ -122,10 +122,10 @@ Use `useAppShellData` when you only need context data:
 
 ```typescript
 // ✅ Good - only need context
-const data = useAppShellData();
+const data = useAppShellData()
 
 // ❌ Overkill - useAppShell returns more than needed
-const { context } = useAppShell();
+const { context } = useAppShell()
 ```
 
 ## Comparison with Other Hooks

@@ -10,18 +10,18 @@ React Router hook to access the current location object. Re-exported from `react
 ## Signature
 
 ```typescript
-const useLocation: () => Location;
+const useLocation: () => Location
 ```
 
 ## Return Type
 
 ```typescript
 interface Location {
-  pathname: string; // Current path: "/products/123"
-  search: string; // Query string: "?sort=name&page=2"
-  hash: string; // Hash: "#details"
-  state: any; // State passed via navigate()
-  key: string; // Unique key for this location
+  pathname: string // Current path: "/products/123"
+  search: string // Query string: "?sort=name&page=2"
+  hash: string // Hash: "#details"
+  state: any // State passed via navigate()
+  key: string // Unique key for this location
 }
 ```
 
@@ -101,14 +101,14 @@ function ProductDetail() {
 
 ```typescript
 function AnalyticsTracker() {
-  const location = useLocation();
+  const location = useLocation()
 
   useEffect(() => {
     // Track page view
-    analytics.pageView(location.pathname);
-  }, [location.pathname]);
+    analytics.pageView(location.pathname)
+  }, [location.pathname])
 
-  return null;
+  return null
 }
 ```
 
@@ -150,16 +150,16 @@ function NavItem({ path }: { path: string }) {
 
 ```typescript
 function ScrollToHash() {
-  const location = useLocation();
+  const location = useLocation()
 
   useEffect(() => {
     if (location.hash) {
-      const element = document.querySelector(location.hash);
-      element?.scrollIntoView({ behavior: "smooth" });
+      const element = document.querySelector(location.hash)
+      element?.scrollIntoView({ behavior: "smooth" })
     }
-  }, [location.hash]);
+  }, [location.hash])
 
-  return null;
+  return null
 }
 ```
 
@@ -212,10 +212,10 @@ function ProductsList() {
 
 ```typescript
 // ✅ Correct
-import { useLocation } from "@tailor-platform/app-shell";
+import { useLocation } from "@tailor-platform/app-shell"
 
 // ❌ Wrong - won't work with AppShell's router
-import { useLocation } from "react-router";
+import { useLocation } from "react-router"
 ```
 
 ### Location is Immutable
@@ -224,10 +224,10 @@ The location object is immutable. Don't try to modify it:
 
 ```typescript
 // ❌ Wrong
-location.pathname = "/new-path";
+location.pathname = "/new-path"
 
 // ✅ Correct - use navigate
-navigate("/new-path");
+navigate("/new-path")
 ```
 
 ## Related

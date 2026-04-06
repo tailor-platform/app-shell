@@ -10,9 +10,8 @@ The `Select` component provides a fully assembled single or multi-select dropdow
 ## Basic Usage
 
 ```tsx preview align="start" height="300"
-import { Select } from "@tailor-platform/app-shell";
-
-<Select
+import { Select } from "@tailor-platform/app-shell"
+;<Select
   items={["Apple", "Banana", "Cherry"]}
   placeholder="Pick a fruit"
   onValueChange={(value) => console.log(value)}
@@ -40,9 +39,9 @@ import { Select } from "@tailor-platform/app-shell";
 
 ```ts
 interface MappedItem {
-  label: string; // Display text, used for filtering and a11y
-  key?: string; // React key. Defaults to label
-  render?: React.ReactNode; // Custom JSX to render in the dropdown
+  label: string // Display text, used for filtering and a11y
+  key?: string // React key. Defaults to label
+  render?: React.ReactNode // Custom JSX to render in the dropdown
 }
 ```
 
@@ -52,22 +51,21 @@ Pass grouped items by wrapping them in `ItemGroup<T>` objects:
 
 ```ts
 interface ItemGroup<T> {
-  label: string;
-  items: T[];
+  label: string
+  items: T[]
 }
 ```
 
 ## Grouped Items
 
 ```tsx preview align="start" height="300"
-import { Select } from "@tailor-platform/app-shell";
-
-<Select 
+import { Select } from "@tailor-platform/app-shell"
+;<Select
   placeholder="Pick a fruit"
   items={[
     { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
     { label: "Berries", items: ["Strawberry", "Blueberry"] },
-  ]}  
+  ]}
 />
 ```
 
@@ -76,26 +74,25 @@ import { Select } from "@tailor-platform/app-shell";
 When items are objects, use `mapItem` to tell the component how to display them:
 
 ```tsx
-type Fruit = { id: number; name: string };
+type Fruit = { id: number; name: string }
 
 const fruits: Fruit[] = [
   { id: 1, name: "Apple" },
   { id: 2, name: "Banana" },
-];
+]
 
-<Select
+;<Select
   items={fruits}
   mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
   onValueChange={(fruit) => console.log(fruit?.id)}
-/>;
+/>
 ```
 
 ## Multi-select
 
 ```tsx preview align="start" height="300"
-import { Select } from "@tailor-platform/app-shell";
-
-<Select
+import { Select } from "@tailor-platform/app-shell"
+;<Select
   items={["Red", "Green", "Blue"]}
   multiple
   placeholder="Pick colors"
@@ -108,19 +105,19 @@ import { Select } from "@tailor-platform/app-shell";
 Use `Select.Async` to load items from an API. The fetcher is called each time the dropdown is opened.
 
 ```tsx
-import { type SelectAsyncFetcher } from "@tailor-platform/app-shell";
+import { type SelectAsyncFetcher } from "@tailor-platform/app-shell"
 
 const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
-  const res = await fetch("/api/fruits", { signal });
-  return res.json();
-};
+  const res = await fetch("/api/fruits", { signal })
+  return res.json()
+}
 
-<Select.Async
+;<Select.Async
   fetcher={fetcher}
   mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
   placeholder="Pick a fruit"
   onValueChange={(fruit) => console.log(fruit)}
-/>;
+/>
 ```
 
 ### Select.Async Props
@@ -137,7 +134,7 @@ Accepts all the same props as `Select` except `items`, plus:
 ### SelectAsyncFetcher
 
 ```ts
-type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
+type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>
 ```
 
 Errors thrown by the fetcher are silently caught — handle errors inside the fetcher (e.g. show a toast, return fallback data).
@@ -147,7 +144,7 @@ Errors thrown by the fetcher are silently caught — handle errors inside the fe
 `Select.Parts` exposes the styled sub-components for fully custom compositions:
 
 ```tsx
-const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Select.Parts;
+const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Select.Parts
 ```
 
 ## Examples
@@ -155,14 +152,14 @@ const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Se
 ### Controlled Select
 
 ```tsx
-const [selected, setSelected] = useState<string | null>(null);
+const [selected, setSelected] = useState<string | null>(null)
 
-<Select
+;<Select
   items={["Draft", "Pending", "Approved", "Rejected"]}
   value={selected}
   onValueChange={setSelected}
   placeholder="Select status"
-/>;
+/>
 ```
 
 ### Custom Render

@@ -10,15 +10,15 @@ description: Conditionally render UI elements based on guard evaluation with sup
 ## Import
 
 ```tsx
-import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
+import { WithGuard, pass, hidden } from "@tailor-platform/app-shell"
 ```
 
 ## Basic Usage
 
 ```tsx
-import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
+import { WithGuard, pass, hidden } from "@tailor-platform/app-shell"
 
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden())
 
 function AdminPanel() {
   return (
@@ -29,7 +29,7 @@ function AdminPanel() {
         <Button>Delete All Users</Button>
       </WithGuard>
     </div>
-  );
+  )
 }
 ```
 
@@ -49,11 +49,11 @@ If the user is not an admin, the button won't render.
 WithGuard uses the same `Guard` type as route guards:
 
 ```typescript
-type Guard = (ctx: GuardContext) => GuardResult | Promise<GuardResult>;
+type Guard = (ctx: GuardContext) => GuardResult | Promise<GuardResult>
 
 type GuardResult =
   | { type: "pass" } // Allow rendering
-  | { type: "hidden" }; // Hide content (render fallback)
+  | { type: "hidden" } // Hide content (render fallback)
 ```
 
 **Note:** Unlike route guards, `redirectTo()` is **not supported** in WithGuard. Use `hidden()` with a fallback that handles navigation if needed.
@@ -61,28 +61,28 @@ type GuardResult =
 ### Creating Guards
 
 ```tsx
-import { type Guard, pass, hidden } from "@tailor-platform/app-shell";
+import { type Guard, pass, hidden } from "@tailor-platform/app-shell"
 
 // Simple guard
 const requireAuth: Guard = ({ context }) => {
-  return context.currentUser ? pass() : hidden();
-};
+  return context.currentUser ? pass() : hidden()
+}
 
 // Async guard with API call
 const hasPermission: Guard = async ({ context }) => {
   const canAccess = await fetch("/api/permissions/admin")
     .then((r) => r.json())
-    .then((data) => data.allowed);
+    .then((data) => data.allowed)
 
-  return canAccess ? pass() : hidden();
-};
+  return canAccess ? pass() : hidden()
+}
 
 // Parameterized guard (curried function)
 const isOwner =
   (resourceId: string): Guard =>
   ({ context }) => {
-    return context.currentUser?.id === resourceId ? pass() : hidden();
-  };
+    return context.currentUser?.id === resourceId ? pass() : hidden()
+  }
 ```
 
 ## Examples
@@ -90,11 +90,11 @@ const isOwner =
 ### Simple Role Check
 
 ```tsx
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden())
 
-<WithGuard guards={[isAdmin]}>
+;<WithGuard guards={[isAdmin]}>
   <Button>Admin Settings</Button>
-</WithGuard>;
+</WithGuard>
 ```
 
 ### With Fallback
@@ -113,13 +113,13 @@ Show loading spinner while checking permissions:
 
 ```tsx
 const checkPermission: Guard = async ({ context }) => {
-  const allowed = await api.checkPermission("admin");
-  return allowed ? pass() : hidden();
-};
+  const allowed = await api.checkPermission("admin")
+  return allowed ? pass() : hidden()
+}
 
-<WithGuard guards={[checkPermission]} loading={<Spinner />} fallback={<UpgradePrompt />}>
+;<WithGuard guards={[checkPermission]} loading={<Spinner />} fallback={<UpgradePrompt />}>
   <PremiumFeature />
-</WithGuard>;
+</WithGuard>
 ```
 
 ### Multiple Guards
@@ -127,13 +127,13 @@ const checkPermission: Guard = async ({ context }) => {
 All guards must pass for content to render:
 
 ```tsx
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden())
 
-const hasFeatureFlag = ({ context }) => (context.featureFlags?.betaFeatures ? pass() : hidden());
+const hasFeatureFlag = ({ context }) => (context.featureFlags?.betaFeatures ? pass() : hidden())
 
-<WithGuard guards={[isAdmin, hasFeatureFlag]}>
+;<WithGuard guards={[isAdmin, hasFeatureFlag]}>
   <BetaAdminFeature />
-</WithGuard>;
+</WithGuard>
 ```
 
 ### Parameterized Guards
@@ -144,8 +144,8 @@ Use curried functions to create reusable parameterized guards:
 const isOwner =
   (resourceId: string): Guard =>
   ({ context }) => {
-    return context.currentUser?.id === resourceId ? pass() : hidden();
-  };
+    return context.currentUser?.id === resourceId ? pass() : hidden()
+  }
 
 function ResourceActions({ resourceId }) {
   return (
@@ -153,7 +153,7 @@ function ResourceActions({ resourceId }) {
       <Button>Edit</Button>
       <Button>Delete</Button>
     </WithGuard>
-  );
+  )
 }
 ```
 
@@ -162,11 +162,11 @@ function ResourceActions({ resourceId }) {
 Conditionally show navigation items:
 
 ```tsx
-import { DefaultSidebar, SidebarItem, WithGuard } from "@tailor-platform/app-shell";
+import { DefaultSidebar, SidebarItem, WithGuard } from "@tailor-platform/app-shell"
 
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden())
 
-<DefaultSidebar>
+;<DefaultSidebar>
   <SidebarItem to="/dashboard" />
   <SidebarItem to="/products" />
 
@@ -174,7 +174,7 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
     <SidebarItem to="/admin" />
     <SidebarItem to="/settings" />
   </WithGuard>
-</DefaultSidebar>;
+</DefaultSidebar>
 ```
 
 ### Feature Flags
@@ -182,11 +182,11 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
 Toggle features based on flags:
 
 ```tsx
-const hasBetaFeature = ({ context }) => (context.featureFlags?.newDashboard ? pass() : hidden());
+const hasBetaFeature = ({ context }) => (context.featureFlags?.newDashboard ? pass() : hidden())
 
-<WithGuard guards={[hasBetaFeature]} fallback={<OldDashboard />}>
+;<WithGuard guards={[hasBetaFeature]} fallback={<OldDashboard />}>
   <NewDashboard />
-</WithGuard>;
+</WithGuard>
 ```
 
 ### Subscription Tiers
@@ -195,9 +195,9 @@ Show features based on user's subscription:
 
 ```tsx
 const isPremium = ({ context }) =>
-  context.currentUser?.subscription === "premium" ? pass() : hidden();
+  context.currentUser?.subscription === "premium" ? pass() : hidden()
 
-<WithGuard
+;<WithGuard
   guards={[isPremium]}
   fallback={
     <Card>
@@ -208,7 +208,7 @@ const isPremium = ({ context }) =>
   }
 >
   <AdvancedAnalytics />
-</WithGuard>;
+</WithGuard>
 ```
 
 ### Dynamic Permissions
@@ -219,10 +219,10 @@ Check permissions from API:
 const canDeleteOrder =
   (orderId: string): Guard =>
   async ({ context }) => {
-    const response = await fetch(`/api/orders/${orderId}/permissions`);
-    const { canDelete } = await response.json();
-    return canDelete ? pass() : hidden();
-  };
+    const response = await fetch(`/api/orders/${orderId}/permissions`)
+    const { canDelete } = await response.json()
+    return canDelete ? pass() : hidden()
+  }
 
 function OrderActions({ orderId }) {
   return (
@@ -233,7 +233,7 @@ function OrderActions({ orderId }) {
         <Button variant="destructive">Delete</Button>
       </WithGuard>
     </div>
-  );
+  )
 }
 ```
 
@@ -244,26 +244,26 @@ Reuse the same guards for routes and UI:
 ```tsx
 // guards.ts
 export const requireAuth: Guard = ({ context }) => {
-  return context.currentUser ? pass() : hidden();
-};
+  return context.currentUser ? pass() : hidden()
+}
 
 export const isAdmin: Guard = ({ context }) => {
-  return context.currentUser?.role === "admin" ? pass() : hidden();
-};
+  return context.currentUser?.role === "admin" ? pass() : hidden()
+}
 
 // routes.tsx
 const adminModule = defineModule({
   path: "admin",
   component: AdminPage,
   guards: [requireAuth, isAdmin], // Route-level
-});
+})
 
 // component.tsx
-<WithGuard guards={[requireAuth, isAdmin]}>
+;<WithGuard guards={[requireAuth, isAdmin]}>
   {" "}
   {/* UI-level */}
   <AdminSettings />
-</WithGuard>;
+</WithGuard>
 ```
 
 ## Guard Evaluation
@@ -271,12 +271,12 @@ const adminModule = defineModule({
 Guards are evaluated in order and stop at the first non-pass result:
 
 ```tsx
-const guards = [guardA, guardB, guardC];
+const guards = [guardA, guardB, guardC]
 
 // If guardA returns hidden(), guardB and guardC are NOT evaluated
-<WithGuard guards={guards}>
+;<WithGuard guards={guards}>
   <Content />
-</WithGuard>;
+</WithGuard>
 ```
 
 ## Performance
@@ -305,10 +305,10 @@ Guards receive the same context as route guards:
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
-      currentUser: User | null;
-      featureFlags: FeatureFlags;
-      permissions: string[];
-    };
+      currentUser: User | null
+      featureFlags: FeatureFlags
+      permissions: string[]
+    }
   }
 }
 
@@ -316,8 +316,8 @@ declare module "@tailor-platform/app-shell" {
 const hasPermission =
   (perm: string): Guard =>
   ({ context }) => {
-    return context.permissions.includes(perm) ? pass() : hidden();
-  };
+    return context.permissions.includes(perm) ? pass() : hidden()
+  }
 ```
 
 ## Comparison: WithGuard vs Route Guards
@@ -388,13 +388,13 @@ const guardProps: WithGuardProps = {
 
 ```tsx
 // ❌ Bad - mutating object
-context.currentUser.role = "admin";
+context.currentUser.role = "admin"
 
 // ✅ Good - new reference
 setContextData({
   ...contextData,
   currentUser: { ...currentUser, role: "admin" },
-});
+})
 ```
 
 ### Infinite loading
@@ -406,15 +406,15 @@ setContextData({
 ```tsx
 // ❌ Bad - no return
 const checkPermission: Guard = async ({ context }) => {
-  await fetch("/api/check");
+  await fetch("/api/check")
   // Missing return!
-};
+}
 
 // ✅ Good - returns result
 const checkPermission: Guard = async ({ context }) => {
-  const allowed = await fetch("/api/check").then((r) => r.json());
-  return allowed ? pass() : hidden();
-};
+  const allowed = await fetch("/api/check").then((r) => r.json())
+  return allowed ? pass() : hidden()
+}
 ```
 
 ## Related Components

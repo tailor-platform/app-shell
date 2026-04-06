@@ -27,11 +27,11 @@ export default defineConfig({
 
 ## Options
 
-| Option                | Type                            | Default       | Description                                                                                       |
-| --------------------- | ------------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| `pagesDir`            | `string`                        | `'src/pages'` | Directory containing page components                                                              |
-| `generateTypedRoutes` | `boolean \| { output: string }` | `false`       | Generate typed routes file                                                                        |
-| `logLevel`            | `'info' \| 'debug' \| 'off'`    | `'info'`      | Plugin log level                                                                                  |
+| Option                | Type                            | Default       | Description                                                                                                                                                                                            |
+| --------------------- | ------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pagesDir`            | `string`                        | `'src/pages'` | Directory containing page components                                                                                                                                                                   |
+| `generateTypedRoutes` | `boolean \| { output: string }` | `false`       | Generate typed routes file                                                                                                                                                                             |
+| `logLevel`            | `'info' \| 'debug' \| 'off'`    | `'info'`      | Plugin log level                                                                                                                                                                                       |
 | `entrypoint`          | `string`                        | —             | File that renders AppShell (e.g. `'src/App.tsx'`). When set, only imports from this file are intercepted, eliminating circular module dependencies. Omit to use legacy mode (all imports intercepted). |
 
 ```typescript

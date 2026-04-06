@@ -486,16 +486,10 @@ describe("RouterContainer with AuthProvider", () => {
 
   it("calls login automatically when autoLogin is enabled and not authenticated", async () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
-    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
-      isAuthenticated: false,
-      error: null,
-      isReady: true,
-    });
     const authClient = createMockAuthClient(
-      { isAuthenticated: false, error: null, isReady: false },
+      { isAuthenticated: false, error: null, isReady: true },
       {
         login: mockLogin,
-        checkAuthStatus: mockCheckAuthStatus,
       },
     );
 

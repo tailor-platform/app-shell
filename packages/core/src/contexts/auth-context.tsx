@@ -1,4 +1,4 @@
-import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
+import { createContext, useContext, useSyncExternalStore, useCallback, useRef } from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
@@ -197,6 +197,65 @@ type AuthProviderProps = {
 };
 
 /**
+ * Internal hook for auto-login orchestration.
+ *
+ * It keeps AuthProvider focused on context wiring while this hook handles:
+ * - auth_state_changed subscription
+ * - initial deferred auto-login attempt
+ * - duplicate login prevention
+ */
+const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) => {
+  // Prevent duplicate login redirects when multiple auth_state_changed
+  // events fire before the first login attempt settles.
+  const loginInFlightRef = useRef<Promise<void> | null>(null);
+
+  // Attempt auto-login if unauthenticated when auth state changes or on initial load.
+  const attemptAutoLogin = useCallback(() => {
+    const authState = props.client.getState();
+    if (
+      !props.enabled ||
+      !authState.isReady ||
+      authState.isAuthenticated ||
+      loginInFlightRef.current
+    ) {
+      return;
+    }
+
+    loginInFlightRef.current = props.client
+      .login()
+      .catch((error) => {
+        console.error("Failed to auto-login after session expiry:", error);
+      })
+      .finally(() => {
+        loginInFlightRef.current = null;
+      });
+  }, [props.client, props.enabled]);
+
+  return {
+    subscribeAuthState: useCallback(
+      (notify: () => void) => {
+        // Run one deferred check so that initial ready+unauthenticated
+        // states are handled even if no auth_state_changed event fires.
+        // queueMicrotask is used instead of a synchronous call to avoid
+        // triggering state changes (via notify()) during the subscribe
+        // phase of useSyncExternalStore, which can cause React warnings.
+        queueMicrotask(() => {
+          attemptAutoLogin();
+        });
+
+        return props.client.addEventListener((event) => {
+          if (event.type === "auth_state_changed") {
+            notify();
+            attemptAutoLogin();
+          }
+        });
+      },
+      [props.client, attemptAutoLogin],
+    ),
+  };
+};
+
+/**
  * Authentication provider component.
  *
  * Wrap your application with this component to provide authentication context.
@@ -223,23 +282,17 @@ type AuthProviderProps = {
 export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
-  // Subscribe to client state changes for useSyncExternalStore
-  const subscribe = useCallback(
-    (callback: () => void) => {
-      return client.addEventListener((event) => {
-        if (event.type === "auth_state_changed") {
-          callback();
-        }
-      });
-    },
-    [client],
-  );
+  // Set up auth state subscription for auto-login orchestration
+  const { subscribeAuthState } = useAutoLogin({
+    client,
+    enabled: props.autoLogin,
+  });
 
   // Get current state snapshot (no cache needed - client returns same reference)
   const getSnapshot = useCallback(() => client.getState(), [client]);
 
   // Use useSyncExternalStore for state management
-  const authState = useSyncExternalStore(subscribe, getSnapshot);
+  const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
   // Build the root loader inside AuthProvider so that the router layer
   // never needs to know about EnhancedAuthClient internals.
@@ -270,20 +323,9 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
         }
       }
 
-      // autoLogin is evaluated separately from checkAuthStatus so that it
-      // still fires after handleCallback updates the internal state via
-      // getState() (e.g. setting isAuthenticated to true on success).
-      if (props.autoLogin && !client.getState().isAuthenticated) {
-        try {
-          await client.login();
-        } catch (error) {
-          console.error("Failed to login:", error);
-        }
-      }
-
       return null;
     },
-    [client, props.autoLogin],
+    [client],
   );
 
   const guardComponent = props.guardComponent;

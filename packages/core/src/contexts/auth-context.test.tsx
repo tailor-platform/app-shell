@@ -461,7 +461,7 @@ describe("AuthProvider", () => {
   });
 
   describe("autoLogin", () => {
-    it("should automatically login via useRootRouteContext when autoLogin is true and user is not authenticated", async () => {
+    it("should not call login from the loader (autoLogin is handled by provider subscription)", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -489,7 +489,58 @@ describe("AuthProvider", () => {
       expect(result.current).not.toBeNull();
       await result.current!.loader(new URL("http://localhost/"));
       expect(mockCheckAuthStatus).toHaveBeenCalled();
-      expect(mockLogin).toHaveBeenCalled();
+      // autoLogin is no longer evaluated in the loader; it is handled
+      // reactively by the provider subscription so that it also covers
+      // mid-session expiry while idle on a page.
+      expect(mockLogin).not.toHaveBeenCalled();
+    });
+
+    it("should login when auth state changes to unauthenticated", async () => {
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+
+      const mockAddEventListener = vi.fn(
+        (listener: (event: { type: string; data?: unknown }) => void) => {
+          authEventListener = listener;
+          return () => {};
+        },
+      );
+
+      let currentState = {
+        isAuthenticated: true,
+        error: null as string | null,
+        isReady: true,
+      };
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockClient = createMockAuthClient(undefined, {
+        login: mockLogin,
+        addEventListener: mockAddEventListener,
+        getState: vi.fn(() => currentState),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockLogin).not.toHaveBeenCalled();
+      });
+
+      currentState = {
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      };
+
+      act(() => {
+        authEventListener?.({ type: "auth_state_changed", data: {} });
+      });
+
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+      });
     });
 
     it("should not login when autoLogin is false", async () => {

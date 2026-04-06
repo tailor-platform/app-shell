@@ -2,7 +2,6 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import react from "@vitejs/plugin-react";
 import { externalizeDeps } from "vite-plugin-externalize-deps";
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 
 const whenProductionBuild = (mode: string) => mode === "production";
 
@@ -12,14 +11,6 @@ export default defineConfig(({ mode }) => ({
      * Automatically externalize imports in `dependencies` and `peerDependencies`.
      */
     externalizeDeps(),
-
-    /**
-     * Generate TypeScript declaration files.
-     */
-    dts({
-      include: ["src"],
-      entryRoot: "src",
-    }),
 
     /**
      * Support path mapping based on tsconfig.json.

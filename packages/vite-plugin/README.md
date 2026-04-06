@@ -133,7 +133,7 @@ When `entrypoint` is set, only imports from that specific file are intercepted.
 All other files (including page components) import directly from the real package,
 so there is no circular module dependency.
 
-### Legacy mode (entrypoint not set)
+### Global mode (entrypoint not set)
 
 All user-code imports of `@tailor-platform/app-shell` are intercepted. This creates
 a circular dependency (proxy → pages → page components → proxy) which works in practice

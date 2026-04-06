@@ -1,4 +1,11 @@
-import { createContext, useContext, useSyncExternalStore, useCallback, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useSyncExternalStore,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
@@ -329,14 +336,23 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   );
 
   const guardComponent = props.guardComponent;
-  const guardComponentWrapper = guardComponent
-    ? (children: React.ReactNode) => (
-        <AuthGuard guardComponent={guardComponent}>{children}</AuthGuard>
-      )
-    : undefined;
+  const guardComponentWrapper = useMemo(
+    () =>
+      guardComponent
+        ? (children: React.ReactNode) => (
+            <AuthGuard guardComponent={guardComponent}>{children}</AuthGuard>
+          )
+        : undefined,
+    [guardComponent],
+  );
+
+  const rootRouteCtxValue = useMemo(
+    () => ({ loader: authLoader, wrapComponent: guardComponentWrapper }),
+    [authLoader, guardComponentWrapper],
+  );
 
   return (
-    <RootRouteContext.Provider value={{ loader: authLoader, wrapComponent: guardComponentWrapper }}>
+    <RootRouteContext.Provider value={rootRouteCtxValue}>
       <AuthContext.Provider
         value={{
           authState,

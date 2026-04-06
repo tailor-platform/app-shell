@@ -27,16 +27,18 @@ export default defineConfig({
 
 ## Options
 
-| Option                | Type                            | Default       | Description                          |
-| --------------------- | ------------------------------- | ------------- | ------------------------------------ |
-| `pagesDir`            | `string`                        | `'src/pages'` | Directory containing page components |
-| `generateTypedRoutes` | `boolean \| { output: string }` | `false`       | Generate typed routes file           |
-| `logLevel`            | `'info' \| 'debug' \| 'off'`    | `'info'`      | Plugin log level                     |
+| Option                | Type                            | Default       | Description                                                                                       |
+| --------------------- | ------------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
+| `pagesDir`            | `string`                        | `'src/pages'` | Directory containing page components                                                              |
+| `generateTypedRoutes` | `boolean \| { output: string }` | `false`       | Generate typed routes file                                                                        |
+| `logLevel`            | `'info' \| 'debug' \| 'off'`    | `'info'`      | Plugin log level                                                                                  |
+| `entrypoint`          | `string`                        | —             | File that renders AppShell (e.g. `'src/App.tsx'`). When set, only imports from this file are intercepted, eliminating circular module dependencies. Omit to use legacy mode (all imports intercepted). |
 
 ```typescript
 appShellRoutes({
   pagesDir: "src/pages",
   generateTypedRoutes: true, // outputs to src/routes.generated.ts
+  entrypoint: "src/App.tsx", // recommended: only intercept imports from this file
 });
 ```
 
@@ -76,8 +78,8 @@ This plugin enables file-based routing for AppShell by scanning the filesystem a
                              ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ Wrapped AppShell Component                                              │
-│ - pages are pre-configured via WithPages                                │
-│ - User can still override with modules prop if needed                   │
+│ - modules and rootGuards are pre-configured via WithPages               │
+│ - User can still override rootComponent and rootGuards via props        │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -125,6 +127,18 @@ export * from "@tailor-platform/app-shell";
 export const AppShell = _OriginalAppShell.WithPages(pages);
 ```
 
+### Entrypoint mode (recommended)
+
+When `entrypoint` is set, only imports from that specific file are intercepted.
+All other files (including page components) import directly from the real package,
+so there is no circular module dependency.
+
+### Legacy mode (entrypoint not set)
+
+All user-code imports of `@tailor-platform/app-shell` are intercepted. This creates
+a circular dependency (proxy → pages → page components → proxy) which works in practice
+but requires that page components do **not** import `AppShell` directly.
+
 ## Why `enforce: "pre"` is Required
 
 Vite resolves node_modules packages first by default. To intercept `@tailor-platform/app-shell` imports, the plugin must use `enforce: "pre"` to run before other resolvers (especially workspace package resolution).
@@ -148,8 +162,9 @@ AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   return (props) => (
     <AppShell
       {...props}
-      modules={props.modules ?? otherModules}
+      modules={otherModules}
       rootComponent={props.rootComponent ?? rootModule?.component}
+      rootGuards={props.rootGuards ?? rootModule?.guards}
     />
   );
 };
@@ -169,6 +184,7 @@ AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
 | -------------- | ----------- | ----------------------------- |
 | `orders`       | `orders`    | Static segment                |
 | `[id]`         | `:id`       | Dynamic parameter             |
+| `[...slug]`    | `*slug`     | Catch-all parameter           |
 | `(group)`      | (excluded)  | Grouping only (not in path)   |
 | `_lib`         | (ignored)   | Not routed (for shared logic) |
 

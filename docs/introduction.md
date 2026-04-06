@@ -29,7 +29,7 @@ We extracted these common patterns into a shared framework. Instead of documenti
 
 Today, AppShell also reflects our bet on AI-assisted development. We operate with small teams augmented by AI agents, running multiple client projects in parallel. The framework's file-based conventions and declarative APIs minimize the decisions an AI agent needs to make — "where does this page go?" and "what do I need to declare?" always have exactly one answer. Knowledge gained on one project — whether by a developer or an AI skill file — transfers directly to the next.
 
-For a deeper look at the tradeoffs and principles behind these choices, see [Design Philosophy](./concepts/design-philosophy.md).
+For a deeper look at the tradeoffs and principles behind these choices, see [Design Philosophy](./design-philosophy.md).
 
 ## Out of the Box
 

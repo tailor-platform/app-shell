@@ -12,7 +12,12 @@ AppShell provides built-in OAuth2/OIDC authentication through the `AuthProvider`
 First, create an auth client, then wrap your app with `AuthProvider`:
 
 ```tsx
-import { createAuthClient, AuthProvider, AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import {
+  createAuthClient,
+  AuthProvider,
+  AppShell,
+  SidebarLayout,
+} from "@tailor-platform/app-shell";
 
 const authClient = createAuthClient({
   clientId: CLIENT_ID,
@@ -20,11 +25,7 @@ const authClient = createAuthClient({
 });
 
 const App = () => (
-  <AuthProvider
-    client={authClient}
-    autoLogin={true}
-    guardComponent={() => <LoadingScreen />}
-  >
+  <AuthProvider client={authClient} autoLogin={true} guardComponent={() => <LoadingScreen />}>
     <AppShell modules={modules}>
       <SidebarLayout />
     </AppShell>
@@ -72,14 +73,14 @@ const UserProfile = () => {
 
 ### Return Value
 
-| Property            | Type                      | Description                                            |
-| ------------------- | ------------------------- | ------------------------------------------------------ |
-| `isAuthenticated`   | `boolean`                 | Whether the user is currently authenticated            |
-| `isReady`           | `boolean`                 | Whether the initial authentication check has completed |
-| `error`             | `string \| null`          | Error message if authentication failed                 |
-| `login`             | `() => Promise<void>`     | Initiates the login/redirect flow                      |
-| `logout`            | `() => Promise<void>`     | Clears tokens and ends the session                     |
-| `checkAuthStatus`   | `() => Promise<AuthState>`| Re-checks auth status (always makes a network request) |
+| Property          | Type                       | Description                                            |
+| ----------------- | -------------------------- | ------------------------------------------------------ |
+| `isAuthenticated` | `boolean`                  | Whether the user is currently authenticated            |
+| `isReady`         | `boolean`                  | Whether the initial authentication check has completed |
+| `error`           | `string \| null`           | Error message if authentication failed                 |
+| `login`           | `() => Promise<void>`      | Initiates the login/redirect flow                      |
+| `logout`          | `() => Promise<void>`      | Clears tokens and ends the session                     |
+| `checkAuthStatus` | `() => Promise<AuthState>` | Re-checks auth status (always makes a network request) |
 
 ### Suspense-Compatible Hook
 
@@ -170,11 +171,11 @@ function App() {
 
 ## `AuthProvider` Props
 
-| Prop              | Type                    | Required | Description                                                    |
-| ----------------- | ----------------------- | -------- | -------------------------------------------------------------- |
-| `client`          | `EnhancedAuthClient`    | Yes      | Auth client created with `createAuthClient`                    |
-| `autoLogin`       | `boolean`               | No       | Automatically redirect unauthenticated users to login          |
-| `guardComponent`  | `() => React.ReactNode` | No       | Rendered while loading or when not authenticated               |
+| Prop             | Type                    | Required | Description                                           |
+| ---------------- | ----------------------- | -------- | ----------------------------------------------------- |
+| `client`         | `EnhancedAuthClient`    | Yes      | Auth client created with `createAuthClient`           |
+| `autoLogin`      | `boolean`               | No       | Automatically redirect unauthenticated users to login |
+| `guardComponent` | `() => React.ReactNode` | No       | Rendered while loading or when not authenticated      |
 
 ## Integration with AppShell
 

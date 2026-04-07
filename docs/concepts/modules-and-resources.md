@@ -107,7 +107,7 @@ The same applies to resources: a `defineResource()` call without a `component` m
 
 Guards on component-less modules and resources execute correctly. For example, a `redirectTo()` guard will fire as expected. If all guards return `pass()`, the route falls back to a 404 (since there is no component to render).
 
-> Read more about [client-side navigation](./routing-and-navigation.md) in AppShell apps
+> Read more about [client-side navigation](./routing-navigation.md) in AppShell apps
 
 ## Route Guards
 
@@ -117,7 +117,7 @@ Both modules and resources support `guards` - an array of functions that control
 - Reusability: Share common guards across routes
 - Semantic constraints: Clear `pass()`, `hidden()`, or `redirectTo()` results
 
-See the [Route Guards documentation](./api.md#route-guards) in the API reference for full details.
+See the [Guards documentation](../api/guards/overview.md) for full details.
 
 ### Guard Examples
 
@@ -131,10 +131,8 @@ const reportsModule = defineModule({
   component: ReportsPage,
   resources: [reportsListResource],
   guards: [
-    async ({ context, signal }) => {
-      const ok = await fetch("/api/me/permissions?scope=reports", {
-        signal,
-      }).then((r) => r.ok);
+    async ({ context }) => {
+      const ok = await fetch("/api/me/permissions?scope=reports").then((r) => r.ok);
       return ok ? pass() : hidden();
     },
   ],
@@ -186,8 +184,8 @@ defineResource({
   path: "admin-settings",
   component: AdminSettingsPage,
   guards: [
-    async ({ context, signal }) => {
-      const user = await getCurrentUser({ signal });
+    async ({ context }) => {
+      const user = await getCurrentUser();
       return user.role === "admin" ? pass() : hidden();
     },
   ],

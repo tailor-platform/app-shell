@@ -34,6 +34,45 @@ export type CommandPaletteAction = {
   onSelect: () => void | Promise<void>;
 };
 
+/**
+ * A single search result returned by a `CommandPaletteSearchSource`.
+ *
+ * Selecting a result navigates to `path`.
+ */
+export type CommandPaletteSearchResult = {
+  /** Unique key for React reconciliation */
+  key: string;
+  /** Visible label shown in the palette (e.g. "Order #ORD-1234") */
+  label: string;
+  /** Optional secondary text (e.g. "山田太郎 - 2024/01/15") */
+  description?: string;
+  /** Optional icon for this specific result */
+  icon?: ReactNode;
+  /** Resolved navigation path (e.g. "/orders/abc-123") */
+  path: string;
+};
+
+/**
+ * An async search source that can be plugged into the CommandPalette.
+ *
+ * Each source is activated by typing its `prefix` followed by `:` in the
+ * search input (e.g. `PO:` for Purchase Orders). The prefix match is
+ * case-sensitive.
+ */
+export type CommandPaletteSearchSource = {
+  /** Mode-switching prefix (e.g. "PO"). Case-sensitive, alphanumeric only. */
+  prefix: string;
+  /** Heading shown above search results (e.g. "Purchase Orders") */
+  title: string;
+  /** Optional icon shown next to each result that lacks its own icon */
+  icon?: ReactNode;
+  /** Async search function. Receives the query after the prefix and an AbortSignal. */
+  search: (
+    query: string,
+    options: { signal: AbortSignal },
+  ) => Promise<CommandPaletteSearchResult[]>;
+};
+
 type DispatchContextValue = {
   register: (sourceId: string, actions: CommandPaletteAction[]) => () => void;
 };

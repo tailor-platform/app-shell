@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, LoaderCircleIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
 import { useT } from "@/i18n-labels";
@@ -10,11 +10,19 @@ import { useNavItems, NavItem, NavItemResource } from "../routing/navigation";
 import {
   useCommandPaletteActions,
   type CommandPaletteAction,
+  type CommandPaletteSearchResult,
+  type CommandPaletteSearchSource,
 } from "@/contexts/command-palette-context";
 
 type SelectableItem =
   | { type: "action"; action: CommandPaletteAction }
-  | { type: "route"; route: NavigatableRoute };
+  | { type: "route"; route: NavigatableRoute }
+  | { type: "search-mode"; source: CommandPaletteSearchSource }
+  | {
+      type: "search-result";
+      result: CommandPaletteSearchResult;
+      source: CommandPaletteSearchSource;
+    };
 
 const paletteItemBase =
   "astw:relative astw:flex astw:w-full astw:cursor-pointer astw:select-none astw:rounded-sm astw:px-2 astw:py-2 astw:text-sm astw:outline-none astw:text-left";
@@ -27,6 +35,7 @@ const paletteItemHighlight = (active: boolean) =>
 export type UseCommandPaletteOptions = {
   routes: Array<NavigatableRoute>;
   contextualActions?: Array<CommandPaletteAction>;
+  searchSources?: Array<CommandPaletteSearchSource>;
 };
 
 /**
@@ -87,6 +96,9 @@ export type UseCommandPaletteReturn = {
   selectedIndex: number;
   filteredActions: Array<CommandPaletteAction>;
   filteredRoutes: Array<NavigatableRoute>;
+  searchResults: Array<CommandPaletteSearchResult>;
+  activeSearchSource: CommandPaletteSearchSource | null;
+  isSearching: boolean;
   selectableItems: Array<SelectableItem>;
   handleSelectItem: (item: SelectableItem) => void;
   handleKeyDown: (e: React.KeyboardEvent) => void;
@@ -102,30 +114,131 @@ function filterActions(
   return actions.filter((action) => action.label.toLowerCase().includes(lowerSearch));
 }
 
+const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * Parse the search input to detect an active search mode.
+ *
+ * If the input starts with a registered prefix followed by `:`, the matching
+ * source is returned together with the query portion after the colon.
+ * The prefix match is case-sensitive.
+ */
+export function parseSearchMode(
+  search: string,
+  searchSources: Array<CommandPaletteSearchSource>,
+): { activeSource: CommandPaletteSearchSource | null; searchQuery: string } {
+  const colonIndex = search.indexOf(":");
+  if (colonIndex < 1) return { activeSource: null, searchQuery: search };
+
+  const prefix = search.slice(0, colonIndex);
+  const source = searchSources.find((s) => s.prefix === prefix);
+  if (!source) return { activeSource: null, searchQuery: search };
+
+  return {
+    activeSource: source,
+    searchQuery: search.slice(colonIndex + 1).trimStart(),
+  };
+}
+
 export function useCommandPalette({
   routes,
   contextualActions = [],
+  searchSources = [],
 }: UseCommandPaletteOptions): UseCommandPaletteReturn {
   const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearchInternal] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [searchResults, setSearchResults] = useState<Array<CommandPaletteSearchResult>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Detect active search mode from input
+  const { activeSource, searchQuery } = useMemo(
+    () => parseSearchMode(search, searchSources),
+    [search, searchSources],
+  );
+
+  // In default mode: sync filter actions & routes
   const filteredActions = useMemo(
-    () => filterActions(contextualActions, search),
-    [contextualActions, search],
+    () => (activeSource ? [] : filterActions(contextualActions, search)),
+    [contextualActions, search, activeSource],
   );
-  const filteredRoutes = useMemo(() => filterRoutes(routes, search), [routes, search]);
+  const filteredRoutes = useMemo(
+    () => (activeSource ? [] : filterRoutes(routes, search)),
+    [routes, search, activeSource],
+  );
 
-  // Unified list: actions first, then routes
-  const selectableItems = useMemo<Array<SelectableItem>>(
-    () => [
-      ...filteredActions.map((action) => ({ type: "action" as const, action })),
-      ...filteredRoutes.map((route) => ({ type: "route" as const, route })),
-    ],
-    [filteredActions, filteredRoutes],
-  );
+  // Debounced async search when in search mode
+  useEffect(() => {
+    if (!activeSource) {
+      // Clear results when leaving search mode
+      setSearchResults([]);
+      setIsSearching(false);
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults([]);
+
+    const timer = setTimeout(() => {
+      // Abort previous in-flight request
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      activeSource
+        .search(searchQuery, { signal: controller.signal })
+        .then((results) => {
+          if (!controller.signal.aborted) {
+            setSearchResults(results);
+            setIsSearching(false);
+          }
+        })
+        .catch((err) => {
+          if (!controller.signal.aborted) {
+            // On non-abort errors, clear results and stop loading
+            if (err instanceof Error && err.name !== "AbortError") {
+              setSearchResults([]);
+            }
+            setIsSearching(false);
+          }
+        });
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [activeSource, searchQuery]);
+
+  // Unified selectable items list
+  const selectableItems = useMemo<Array<SelectableItem>>(() => {
+    if (activeSource) {
+      // In search mode: only search results
+      return searchResults.map((result) => ({
+        type: "search-result" as const,
+        result,
+        source: activeSource,
+      }));
+    }
+
+    // Default mode: search mode entries (when no query) + actions + routes
+    const items: Array<SelectableItem> = [];
+    if (!search.trim() && searchSources.length > 0) {
+      items.push(
+        ...searchSources.map((source) => ({
+          type: "search-mode" as const,
+          source,
+        })),
+      );
+    }
+    items.push(...filteredActions.map((action) => ({ type: "action" as const, action })));
+    items.push(...filteredRoutes.map((route) => ({ type: "route" as const, route })));
+    return items;
+  }, [activeSource, searchResults, search, searchSources, filteredActions, filteredRoutes]);
 
   // Wrapper to reset selectedIndex when search changes
   const setSearch = useCallback((newSearch: string) => {
@@ -151,6 +264,10 @@ export function useCommandPalette({
     if (!newOpen) {
       setSearchInternal("");
       setSelectedIndex(0);
+      setSearchResults([]);
+      setIsSearching(false);
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
     }
   }, []);
 
@@ -165,7 +282,16 @@ export function useCommandPalette({
 
   const handleSelectItem = useCallback(
     (item: SelectableItem) => {
-      if (item.type === "route") {
+      if (item.type === "search-mode") {
+        // Enter search mode: set prefix in input, keep palette open
+        setSearchInternal(`${item.source.prefix}: `);
+        setSelectedIndex(0);
+        setSearchResults([]);
+        return;
+      }
+      if (item.type === "search-result") {
+        navigate(item.result.path);
+      } else if (item.type === "route") {
         navigate(item.route.path);
       } else {
         const result = item.action.onSelect();
@@ -175,6 +301,7 @@ export function useCommandPalette({
       }
       setOpen(false);
       setSearchInternal("");
+      setSearchResults([]);
     },
     [navigate],
   );
@@ -212,6 +339,9 @@ export function useCommandPalette({
     selectedIndex,
     filteredActions,
     filteredRoutes,
+    searchResults,
+    activeSearchSource: activeSource,
+    isSearching,
     selectableItems,
     handleSelectItem,
     handleKeyDown,
@@ -221,9 +351,13 @@ export function useCommandPalette({
 
 type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
+  searchSources?: Array<CommandPaletteSearchSource>;
 };
 
-export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
+export function CommandPaletteContent({
+  navItems,
+  searchSources = [],
+}: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
   const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
@@ -235,14 +369,20 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
     selectedIndex,
     filteredActions,
     filteredRoutes,
+    searchResults,
+    activeSearchSource,
+    isSearching,
     selectableItems,
     handleSelectItem,
     handleKeyDown,
     listRef,
-  } = useCommandPalette({ routes, contextualActions });
+  } = useCommandPalette({ routes, contextualActions, searchSources });
 
-  // Compute the global index offset for routes (actions come first)
-  const routeIndexOffset = filteredActions.length;
+  // Compute index offsets for each section
+  const searchModesCount =
+    !activeSearchSource && !search.trim() && searchSources.length > 0 ? searchSources.length : 0;
+  const actionIndexOffset = searchModesCount;
+  const routeIndexOffset = actionIndexOffset + filteredActions.length;
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
@@ -267,43 +407,78 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
           ref={listRef}
           className="astw:max-h-[50vh] astw:overflow-y-auto astw:overflow-x-hidden"
         >
-          {selectableItems.length === 0 ? (
+          {selectableItems.length === 0 && !isSearching ? (
             <div className="astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground">
               {t("commandPaletteNoResults")}
             </div>
           ) : (
             <div className="astw:p-1">
-              {filteredActions.length > 0 && (
+              {/* Search mode entries (default mode, empty query only) */}
+              {searchModesCount > 0 && (
                 <>
                   <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
-                    {t("commandPaletteActions")}
+                    {t("commandPaletteSearchModes")}
                   </div>
-                  {filteredActions.map((action, index) => (
+                  {searchSources.map((source, index) => (
                     <button
-                      key={`action-${action.key}`}
+                      key={`search-mode-${source.prefix}`}
                       data-index={index}
-                      onClick={() => handleSelectItem({ type: "action", action })}
+                      onClick={() => handleSelectItem({ type: "search-mode", source })}
                       className={cn(
                         paletteItemBase,
                         "astw:items-center astw:gap-2",
                         paletteItemHighlight(index === selectedIndex),
                       )}
                     >
-                      {action.icon && (
+                      {source.icon && (
                         <span className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:shrink-0">
-                          {action.icon}
+                          {source.icon}
                         </span>
                       )}
-                      <span className="astw:truncate">{action.label}</span>
-                      {action.group && (
-                        <span className="astw:ml-auto astw:text-xs astw:text-muted-foreground astw:shrink-0">
-                          {action.group}
-                        </span>
-                      )}
+                      <span className="astw:font-mono astw:text-xs astw:text-muted-foreground astw:shrink-0">
+                        {source.prefix}:
+                      </span>
+                      <span className="astw:truncate">{source.title}</span>
                     </button>
                   ))}
                 </>
               )}
+              {/* Actions section (default mode only) */}
+              {filteredActions.length > 0 && (
+                <>
+                  <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+                    {t("commandPaletteActions")}
+                  </div>
+                  {filteredActions.map((action, index) => {
+                    const globalIndex = actionIndexOffset + index;
+                    return (
+                      <button
+                        key={`action-${action.key}`}
+                        data-index={globalIndex}
+                        onClick={() => handleSelectItem({ type: "action", action })}
+                        className={cn(
+                          paletteItemBase,
+                          "astw:items-center astw:gap-2",
+                          paletteItemHighlight(globalIndex === selectedIndex),
+                        )}
+                      >
+                        {action.icon && (
+                          <span className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:shrink-0">
+                            {action.icon}
+                          </span>
+                        )}
+                        <span className="astw:truncate">{action.label}</span>
+                        {action.group && (
+                          <span className="astw:ml-auto astw:text-xs astw:text-muted-foreground astw:shrink-0">
+                            {action.group}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+              {/* Pages section (default mode only) */}
               {filteredRoutes.length > 0 && (
                 <>
                   <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
@@ -333,6 +508,53 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
                   })}
                 </>
               )}
+              {/* Search results (search mode only) */}
+              {activeSearchSource && searchResults.length > 0 && (
+                <>
+                  <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+                    {activeSearchSource.title}
+                  </div>
+                  {searchResults.map((result, index) => (
+                    <button
+                      key={`search-result-${result.key}`}
+                      data-index={index}
+                      onClick={() =>
+                        handleSelectItem({
+                          type: "search-result",
+                          result,
+                          source: activeSearchSource,
+                        })
+                      }
+                      className={cn(
+                        paletteItemBase,
+                        "astw:flex-col astw:items-start",
+                        paletteItemHighlight(index === selectedIndex),
+                      )}
+                    >
+                      <span className="astw:flex astw:items-center astw:gap-2 astw:w-full">
+                        {(result.icon || activeSearchSource.icon) && (
+                          <span className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:shrink-0">
+                            {result.icon ?? activeSearchSource.icon}
+                          </span>
+                        )}
+                        <span className="astw:truncate">{result.label}</span>
+                      </span>
+                      {result.description && (
+                        <span className="astw:text-[11px] astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
+                          {result.description}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+          {/* Searching indicator */}
+          {isSearching && (
+            <div className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-sm astw:text-muted-foreground">
+              <LoaderCircleIcon className="astw:h-4 astw:w-4 astw:animate-spin" />
+              {t("commandPaletteSearching")}
             </div>
           )}
         </div>
@@ -341,17 +563,47 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
   );
 }
 
+export type CommandPaletteProps = {
+  /**
+   * Async search sources activated by prefix-based modes.
+   *
+   * Each source defines a `prefix` (e.g. "PO") and a `search` function.
+   * When the user types `PO:` in the palette, only that source is queried.
+   *
+   * @example
+   * ```tsx
+   * <CommandPalette
+   *   searchSources={[
+   *     {
+   *       prefix: "PO",
+   *       title: "Purchase Orders",
+   *       search: async (query, { signal }) => {
+   *         const results = await api.searchOrders(query, { signal });
+   *         return results.map((o) => ({
+   *           key: o.id,
+   *           label: o.number,
+   *           path: `/orders/${o.id}`,
+   *         }));
+   *       },
+   *     },
+   *   ]}
+   * />
+   * ```
+   */
+  searchSources?: Array<CommandPaletteSearchSource>;
+};
+
 /**
  * CommandPalette component that uses navigation items with access control.
  * Renders a searchable command palette UI triggered by Cmd+K / Ctrl+K.
  */
-export function CommandPalette() {
+export function CommandPalette({ searchSources }: CommandPaletteProps) {
   const navItems = useNavItems();
 
   return (
     <Suspense fallback={null}>
       <Await resolve={navItems}>
-        {(items) => <CommandPaletteContent navItems={items ?? []} />}
+        {(items) => <CommandPaletteContent navItems={items ?? []} searchSources={searchSources} />}
       </Await>
     </Suspense>
   );

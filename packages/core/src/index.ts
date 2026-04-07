@@ -1,10 +1,12 @@
 import "./globals.css";
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
-export { CommandPalette } from "./components/command-palette";
+export { CommandPalette, type CommandPaletteProps } from "./components/command-palette";
 export {
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
+  type CommandPaletteSearchResult,
+  type CommandPaletteSearchSource,
 } from "./contexts/command-palette-context";
 
 // Sidebar navigation components

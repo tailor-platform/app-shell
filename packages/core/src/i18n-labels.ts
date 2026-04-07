@@ -21,6 +21,8 @@ export const labels = defineI18nLabels({
     commandPaletteNoResults: "No results found",
     commandPaletteActions: "Actions",
     commandPalettePages: "Pages",
+    commandPaletteSearchModes: "Search Modes",
+    commandPaletteSearching: "Searching...",
   },
   ja: {
     error404Title: "404 ページが見つかりません",
@@ -42,6 +44,8 @@ export const labels = defineI18nLabels({
     commandPaletteNoResults: "結果が見つかりません",
     commandPaletteActions: "アクション",
     commandPalettePages: "ページ",
+    commandPaletteSearchModes: "検索モード",
+    commandPaletteSearching: "検索中...",
   },
 });
 

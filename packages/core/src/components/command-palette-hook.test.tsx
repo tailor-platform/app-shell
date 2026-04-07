@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useCommandPalette, navItemsToRoutes } from "./command-palette";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { useCommandPalette, navItemsToRoutes, parseSearchMode } from "./command-palette";
 import { NavigatableRoute } from "@/routing/path";
-import { CommandPaletteAction } from "@/contexts/command-palette-context";
+import {
+  CommandPaletteAction,
+  CommandPaletteSearchSource,
+} from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
 import { ReactNode } from "react";
 
@@ -643,6 +646,239 @@ describe("useCommandPalette with contextualActions", () => {
       });
       expect(mockNavigate).toHaveBeenCalledWith("dashboard");
       expect(mockOnSelect).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("parseSearchMode", () => {
+  const sources: Array<CommandPaletteSearchSource> = [
+    { prefix: "PO", title: "Purchase Orders", search: vi.fn() },
+    { prefix: "CU", title: "Customers", search: vi.fn() },
+  ];
+
+  it("returns null activeSource when no colon is present", () => {
+    const result = parseSearchMode("hello", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("hello");
+  });
+
+  it("returns null activeSource when colon is at position 0", () => {
+    const result = parseSearchMode(":query", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe(":query");
+  });
+
+  it("detects matching prefix (case-sensitive)", () => {
+    const result = parseSearchMode("PO: 12345", sources);
+    expect(result.activeSource).toBe(sources[0]);
+    expect(result.searchQuery).toBe("12345");
+  });
+
+  it("does not match lowercase prefix", () => {
+    const result = parseSearchMode("po: 12345", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("po: 12345");
+  });
+
+  it("trims leading whitespace from query", () => {
+    const result = parseSearchMode("CU:   some query", sources);
+    expect(result.activeSource).toBe(sources[1]);
+    expect(result.searchQuery).toBe("some query");
+  });
+
+  it("returns empty query when only prefix is typed", () => {
+    const result = parseSearchMode("PO:", sources);
+    expect(result.activeSource).toBe(sources[0]);
+    expect(result.searchQuery).toBe("");
+  });
+
+  it("returns null for unknown prefix", () => {
+    const result = parseSearchMode("XX: query", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("XX: query");
+  });
+
+  it("handles empty search sources", () => {
+    const result = parseSearchMode("PO: query", []);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("PO: query");
+  });
+});
+
+describe("useCommandPalette with searchSources", () => {
+  const mockSearch = vi.fn();
+
+  const createTestSearchSources = (): Array<CommandPaletteSearchSource> => [
+    {
+      prefix: "PO",
+      title: "Purchase Orders",
+      search: mockSearch,
+    },
+    {
+      prefix: "CU",
+      title: "Customers",
+      search: vi.fn().mockResolvedValue([]),
+    },
+  ];
+
+  const renderWithSources = (
+    routes = createTestRoutes2(),
+    searchSources = createTestSearchSources(),
+  ) => {
+    return renderHook(() => useCommandPalette({ routes, searchSources, contextualActions: [] }), {
+      wrapper,
+    });
+  };
+
+  beforeEach(() => {
+    mockSearch.mockReset();
+    mockSearch.mockResolvedValue([]);
+    mockNavigate.mockClear();
+  });
+
+  describe("default mode with search sources", () => {
+    it("should include search-mode items when search is empty", () => {
+      const { result } = renderWithSources();
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      expect(modeItems).toHaveLength(2);
+    });
+
+    it("should not include search-mode items when search has text", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("dashboard");
+      });
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      expect(modeItems).toHaveLength(0);
+    });
+
+    it("should show routes in default mode", () => {
+      const { result } = renderWithSources();
+      expect(result.current.filteredRoutes).toHaveLength(2);
+    });
+  });
+
+  describe("entering search mode", () => {
+    it("should detect search mode when prefix is typed", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: ");
+      });
+      expect(result.current.activeSearchSource).not.toBeNull();
+      expect(result.current.activeSearchSource?.prefix).toBe("PO");
+    });
+
+    it("should hide actions and routes in search mode", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+      expect(result.current.filteredActions).toHaveLength(0);
+      expect(result.current.filteredRoutes).toHaveLength(0);
+    });
+
+    it("should set search input to prefix when selecting a search-mode item", () => {
+      const { result } = renderWithSources();
+      const modeItem = result.current.selectableItems.find((i) => i.type === "search-mode");
+      expect(modeItem).toBeDefined();
+
+      act(() => {
+        result.current.handleSelectItem(modeItem!);
+      });
+
+      // Should keep palette open (not closed)
+      // Search should be set to "PO: "
+      expect(result.current.search).toBe("PO: ");
+    });
+  });
+
+  describe("async search", () => {
+    it("should call search function after debounce", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+
+      expect(result.current.isSearching).toBe(true);
+
+      await waitFor(() => {
+        expect(mockSearch).toHaveBeenCalledWith("test", {
+          signal: expect.any(AbortSignal),
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSearching).toBe(false);
+        expect(result.current.searchResults).toHaveLength(1);
+        expect(result.current.searchResults[0].label).toBe("PO #1");
+      });
+    });
+
+    it("should navigate when selecting a search result", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.handleSelectItem(result.current.selectableItems[0]);
+      });
+
+      expect(mockNavigate).toHaveBeenCalledWith("/orders/1");
+      expect(result.current.open).toBe(false);
+    });
+
+    it("should clear search results when leaving search mode", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(1);
+      });
+
+      // Leave search mode
+      act(() => {
+        result.current.setSearch("plain text");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(0);
+        expect(result.current.activeSearchSource).toBeNull();
+      });
+    });
+
+    it("should clear search results when dialog closes", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.handleOpenChange(true);
+        result.current.setSearch("PO: test");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.handleOpenChange(false);
+      });
+
+      expect(result.current.searchResults).toHaveLength(0);
+      expect(result.current.search).toBe("");
+      expect(result.current.isSearching).toBe(false);
     });
   });
 });

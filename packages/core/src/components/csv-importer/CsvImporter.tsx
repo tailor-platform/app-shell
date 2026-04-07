@@ -354,7 +354,10 @@ function ReviewStep({
   };
 
   return (
-    <div data-slot="csv-importer-review" className="astw:flex astw:flex-col astw:gap-4">
+    <div
+      data-slot="csv-importer-review"
+      className="astw:flex astw:flex-1 astw:min-h-0 astw:flex-col astw:gap-4"
+    >
       <div className="astw:flex astw:gap-4 astw:text-sm">
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
@@ -373,7 +376,7 @@ function ReviewStep({
         )}
       </div>
 
-      <div className="astw:overflow-auto astw:max-h-[400px] astw:rounded-md astw:border">
+      <div className="astw:flex-1 astw:min-h-0 astw:overflow-auto astw:rounded-md astw:border">
         <table className="astw:w-full astw:text-sm">
           <thead className="astw:bg-muted astw:sticky astw:top-0">
             <tr>

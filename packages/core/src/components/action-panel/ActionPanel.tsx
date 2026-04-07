@@ -1,12 +1,15 @@
+import { useEffect, useId } from "react";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
+import { useCommandPaletteDispatch } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
 
 // ============================================================================
 // SPINNER (loading indicator for icon slot)
 // ============================================================================
 
-const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
+const iconSlotClasses =
+  "astw:flex astw:size-4 astw:items-center astw:justify-center";
 
 const ActionSpinner = () => (
   <svg
@@ -92,6 +95,12 @@ function ActionRow({ action }: { action: ActionItem }) {
  * When an action has `loading: true`, the row shows a spinner in the icon slot and is
  * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).
  *
+ * **CommandPalette integration** — Actions that are enabled (not `disabled`,
+ * not `loading`, and have an `onClick` handler) are automatically registered
+ * to the CommandPalette so users can discover and trigger them via keyboard
+ * shortcut. The actions are grouped under the panel's `title`. Registration
+ * is cleaned up when the ActionPanel unmounts.
+ *
  * @example
  * ```tsx
  * const navigate = useNavigate();
@@ -106,6 +115,25 @@ function ActionRow({ action }: { action: ActionItem }) {
  * ```
  */
 export function ActionPanel({ title, actions, className }: ActionPanelProps) {
+  const id = useId();
+  const { register } = useCommandPaletteDispatch();
+
+  // Register enabled actions to the CommandPalette context so they are
+  // searchable and triggerable from the palette. The returned cleanup
+  // function unregisters them when the panel unmounts or actions change.
+  useEffect(() => {
+    const paletteActions = actions
+      .filter((a) => !a.disabled && !a.loading && a.onClick)
+      .map((a) => ({
+        key: a.key,
+        label: a.label,
+        icon: a.icon,
+        group: title,
+        onSelect: a.onClick!,
+      }));
+    return register(id, paletteActions);
+  }, [id, actions, title, register]);
+
   return (
     <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>
       <Card.Header title={title} className="astw:text-lg astw:px-8" />

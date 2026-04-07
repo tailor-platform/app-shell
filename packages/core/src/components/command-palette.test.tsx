@@ -10,6 +10,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CommandPaletteContent } from "./command-palette";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
+import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
 import type { Resource } from "@/resource";
 import type { NavItem } from "../routing/navigation";
@@ -49,9 +50,11 @@ const renderCommandPaletteContent = (navItems: NavItem[] = mockNavItems) => {
   return render(
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData: {} }}>
-        <MemoryRouter>
-          <CommandPaletteContent navItems={navItems} />
-        </MemoryRouter>
+        <CommandPaletteProvider>
+          <MemoryRouter>
+            <CommandPaletteContent navItems={navItems} />
+          </MemoryRouter>
+        </CommandPaletteProvider>
       </AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>,
   );

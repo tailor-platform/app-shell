@@ -2,11 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useCommandPalette, navItemsToRoutes } from "./command-palette";
 import { NavigatableRoute } from "@/routing/path";
+import { CommandPaletteAction } from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
 import { ReactNode } from "react";
 
 // Helper to create a mock React.KeyboardEvent
-const createKeyboardEvent = (key: string, isComposing = false): React.KeyboardEvent => {
+const createKeyboardEvent = (
+  key: string,
+  isComposing = false,
+): React.KeyboardEvent => {
   const preventDefault = vi.fn();
   return {
     key,
@@ -42,7 +46,9 @@ vi.mock("react-router", async (importOriginal) => {
 });
 
 // Wrapper for hooks that need router context
-const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <MemoryRouter>{children}</MemoryRouter>
+);
 
 describe("useCommandPalette", () => {
   const renderCommandPaletteHook = (routes = createTestRoutes()) => {
@@ -106,7 +112,9 @@ describe("useCommandPalette", () => {
       expect(result.current.open).toBe(false);
 
       act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+        );
       });
 
       expect(result.current.open).toBe(true);
@@ -117,7 +125,9 @@ describe("useCommandPalette", () => {
       expect(result.current.open).toBe(false);
 
       act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "k", ctrlKey: true }),
+        );
       });
 
       expect(result.current.open).toBe(true);
@@ -127,12 +137,16 @@ describe("useCommandPalette", () => {
       const { result } = renderCommandPaletteHook();
 
       act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+        );
       });
       expect(result.current.open).toBe(true);
 
       act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+        );
       });
       expect(result.current.open).toBe(false);
     });
@@ -233,12 +247,15 @@ describe("useCommandPalette", () => {
     });
   });
 
-  describe("handleSelect", () => {
+  describe("handleSelectItem", () => {
     it("should navigate to selected route", () => {
       const { result } = renderCommandPaletteHook();
       act(() => {
         // filteredRoutes[0] is module, [1] is dashboard, [2] is users
-        result.current.handleSelect(result.current.filteredRoutes[2]);
+        result.current.handleSelectItem({
+          type: "route",
+          route: result.current.filteredRoutes[2],
+        });
       });
       expect(mockNavigate).toHaveBeenCalledWith("test/users");
     });
@@ -249,7 +266,10 @@ describe("useCommandPalette", () => {
         result.current.handleOpenChange(true);
       });
       act(() => {
-        result.current.handleSelect(result.current.filteredRoutes[0]);
+        result.current.handleSelectItem({
+          type: "route",
+          route: result.current.filteredRoutes[0],
+        });
       });
       expect(result.current.open).toBe(false);
     });
@@ -260,7 +280,10 @@ describe("useCommandPalette", () => {
         result.current.setSearch("dash");
       });
       act(() => {
-        result.current.handleSelect(result.current.filteredRoutes[0]);
+        result.current.handleSelectItem({
+          type: "route",
+          route: result.current.filteredRoutes[0],
+        });
       });
       expect(result.current.search).toBe("");
     });
@@ -441,5 +464,198 @@ describe("navItemsToRoutes", () => {
     // Children of the url-less item should have it in their breadcrumb
     expect(routes[1].breadcrumb).toEqual(["Module", "Settings", "General"]);
     expect(routes[2].breadcrumb).toEqual(["Module", "Settings", "Advanced"]);
+  });
+});
+
+const createTestRoutes2 = (): Array<NavigatableRoute> => [
+  { path: "dashboard", title: "Dashboard", breadcrumb: ["Dashboard"] },
+  { path: "orders", title: "Orders", breadcrumb: ["Orders"] },
+];
+
+describe("useCommandPalette with contextualActions", () => {
+  const mockOnSelect = vi.fn();
+
+  const createTestActions = (): Array<CommandPaletteAction> => [
+    {
+      key: "create-invoice",
+      label: "Create Invoice",
+      group: "Actions",
+      onSelect: mockOnSelect,
+    },
+    {
+      key: "export-csv",
+      label: "Export CSV",
+      group: "Actions",
+      onSelect: vi.fn(),
+    },
+  ];
+
+  const renderWithActions = (
+    routes = createTestRoutes2(),
+    contextualActions = createTestActions(),
+  ) => {
+    return renderHook(() => useCommandPalette({ routes, contextualActions }), {
+      wrapper,
+    });
+  };
+
+  beforeEach(() => {
+    mockOnSelect.mockClear();
+  });
+
+  describe("filtering actions", () => {
+    it("should return all actions when search is empty", () => {
+      const { result } = renderWithActions();
+      expect(result.current.filteredActions).toHaveLength(2);
+    });
+
+    it("should filter actions by label", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.setSearch("invoice");
+      });
+      expect(result.current.filteredActions).toHaveLength(1);
+      expect(result.current.filteredActions[0].key).toBe("create-invoice");
+    });
+
+    it("should filter actions case-insensitively", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.setSearch("EXPORT");
+      });
+      expect(result.current.filteredActions).toHaveLength(1);
+      expect(result.current.filteredActions[0].key).toBe("export-csv");
+    });
+
+    it("should return empty when no actions match", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.setSearch("nonexistent");
+      });
+      expect(result.current.filteredActions).toHaveLength(0);
+    });
+  });
+
+  describe("selectableItems ordering", () => {
+    it("should place actions before routes", () => {
+      const { result } = renderWithActions();
+      expect(result.current.selectableItems).toHaveLength(4);
+      expect(result.current.selectableItems[0].type).toBe("action");
+      expect(result.current.selectableItems[1].type).toBe("action");
+      expect(result.current.selectableItems[2].type).toBe("route");
+      expect(result.current.selectableItems[3].type).toBe("route");
+    });
+
+    it("should include only matching items when search filters both", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.setSearch("order");
+      });
+      // "Orders" route matches, no actions match
+      expect(result.current.selectableItems).toHaveLength(1);
+      expect(result.current.selectableItems[0].type).toBe("route");
+    });
+  });
+
+  describe("keyboard navigation across actions and routes", () => {
+    it("should navigate through actions then routes with ArrowDown", () => {
+      const { result } = renderWithActions();
+      // Start at 0 (first action)
+      expect(result.current.selectedIndex).toBe(0);
+
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
+      });
+      expect(result.current.selectedIndex).toBe(1); // second action
+
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
+      });
+      expect(result.current.selectedIndex).toBe(2); // first route
+
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
+      });
+      expect(result.current.selectedIndex).toBe(3); // second route
+    });
+
+    it("should not exceed total selectableItems length", () => {
+      const { result } = renderWithActions();
+      // 2 actions + 2 routes = 4, max index = 3
+      act(() => {
+        for (let i = 0; i < 10; i++) {
+          result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
+        }
+      });
+      expect(result.current.selectedIndex).toBe(3);
+    });
+  });
+
+  describe("handleSelectItem with action", () => {
+    it("should call onSelect when action is selected", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.handleSelectItem({
+          type: "action",
+          action: result.current.filteredActions[0],
+        });
+      });
+      expect(mockOnSelect).toHaveBeenCalledTimes(1);
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("should close dialog after action selection", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.handleOpenChange(true);
+      });
+      act(() => {
+        result.current.handleSelectItem({
+          type: "action",
+          action: result.current.filteredActions[0],
+        });
+      });
+      expect(result.current.open).toBe(false);
+    });
+
+    it("should reset search after action selection", () => {
+      const { result } = renderWithActions();
+      act(() => {
+        result.current.setSearch("invoice");
+      });
+      act(() => {
+        result.current.handleSelectItem({
+          type: "action",
+          action: result.current.filteredActions[0],
+        });
+      });
+      expect(result.current.search).toBe("");
+    });
+  });
+
+  describe("Enter key with actions", () => {
+    it("should call onSelect on Enter when action is selected", () => {
+      const { result } = renderWithActions();
+      // index 0 = first action
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("Enter"));
+      });
+      expect(mockOnSelect).toHaveBeenCalledTimes(1);
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("should navigate on Enter when route is selected", () => {
+      const { result } = renderWithActions();
+      // Move past 2 actions to first route (index 2)
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
+        result.current.handleKeyDown(createKeyboardEvent("ArrowDown"));
+      });
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("Enter"));
+      });
+      expect(mockNavigate).toHaveBeenCalledWith("dashboard");
+      expect(mockOnSelect).not.toHaveBeenCalled();
+    });
   });
 });

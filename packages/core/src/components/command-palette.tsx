@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  Suspense,
+} from "react";
 import { useNavigate, Await } from "react-router";
 import { SearchIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
@@ -33,7 +40,9 @@ export type UseCommandPaletteOptions = {
  * Convert NavItems (from navigation loader with access control) to NavigableRoutes.
  * Recursively processes subResources to include nested routes.
  */
-export function navItemsToRoutes(navItems: Array<NavItem>): Array<NavigatableRoute> {
+export function navItemsToRoutes(
+  navItems: Array<NavItem>,
+): Array<NavigatableRoute> {
   const routes: Array<NavigatableRoute> = [];
 
   const processResourceItems = (
@@ -223,7 +232,9 @@ type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
 };
 
-export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
+export function CommandPaletteContent({
+  navItems,
+}: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
   const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
@@ -251,7 +262,9 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
         onKeyDown={handleKeyDown}
         aria-describedby={undefined}
       >
-        <Dialog.Title className="astw:sr-only">{t("commandPaletteSearch")}</Dialog.Title>
+        <Dialog.Title className="astw:sr-only">
+          {t("commandPaletteSearch")}
+        </Dialog.Title>
         <div className="astw:flex astw:items-center astw:border-b astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
           <Input

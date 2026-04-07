@@ -7,7 +7,8 @@ import type { ActionPanelProps, ActionItem } from "./types";
 // SPINNER (loading indicator for icon slot)
 // ============================================================================
 
-const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
+const iconSlotClasses =
+  "astw:flex astw:size-4 astw:items-center astw:justify-center";
 
 const ActionSpinner = () => (
   <svg

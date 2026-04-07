@@ -45,9 +45,7 @@ describe("ActionPanel", () => {
     ];
     renderActionPanel({ title: "Actions", actions });
 
-    expect(
-      screen.getByRole("button", { name: "Create invoice" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Create invoice" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Edit order" })).toBeDefined();
     expect(screen.getAllByTestId("mock-icon").length).toBe(2);
   });

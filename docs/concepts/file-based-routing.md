@@ -127,8 +127,13 @@ export default DashboardPage;
 
 ```typescript
 type AppShellPageProps = {
-  meta?: { title: LocalizedString; icon?: ReactNode };
+  meta?: {
+    title?: LocalizedString;
+    icon?: ReactNode;
+    breadcrumbTitle?: string | ((segment: string) => string);
+  };
   guards?: Guard[];
+  loader?: LoaderHandler;
 };
 ```
 

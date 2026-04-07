@@ -124,7 +124,7 @@ const App = () => (
 The CommandPalette automatically:
 
 - Collects all navigable routes from your module definitions
-- Respects `accessControl` settings (hidden modules/resources won't appear)
+- Respects guards (modules/resources returning `hidden()` won't appear)
 - Updates when navigation items change
 - Adapts to the current locale
 

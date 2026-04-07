@@ -311,6 +311,27 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncRetu
   };
 }
 
+/**
+ * Hook for robust string matching using `Intl.Collator`.
+ *
+ * Returns an object with `contains`, `startsWith`, and `endsWith` methods
+ * that can be passed to the `filter` prop of `<Autocomplete.Parts.Root>`
+ * to customize how suggestions are filtered against the input value.
+ *
+ * Accepts `Intl.CollatorOptions` (e.g. `sensitivity`, `usage`) plus
+ * an optional `locale` for locale-aware matching.
+ *
+ * @example
+ * ```tsx
+ * const filter = Autocomplete.useFilter({ sensitivity: "base" });
+ *
+ * <Autocomplete.Parts.Root filter={filter.contains}>
+ *   ...
+ * </Autocomplete.Parts.Root>
+ * ```
+ */
+const useFilter = BaseAutocomplete.useFilter;
+
 // ============================================================================
 // Export
 // ============================================================================
@@ -330,8 +351,6 @@ const AutocompleteParts = {
   GroupLabel: AutocompleteGroupLabel,
   Collection: AutocompleteCollection,
   Status: AutocompleteStatus,
-  useFilter: BaseAutocomplete.useFilter,
-  useAsync,
 };
 
 type AutocompleteParts = typeof AutocompleteParts;
@@ -353,4 +372,5 @@ export {
   AutocompleteStatus,
   AutocompleteParts,
   useAsync,
+  useFilter,
 };

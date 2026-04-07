@@ -189,6 +189,106 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
 }
 
 // ============================================================================
+// Select.useAsync
+// ============================================================================
+
+interface UseSelectAsyncOptions<T> {
+  /** Fetcher for async item loading. Called each time the dropdown is opened. */
+  fetcher: SelectAsyncFetcher<T>;
+}
+
+interface UseSelectAsyncReturn<T> {
+  /** Fetched items — pass to the Root `items` prop or render manually */
+  items: T[];
+  /** Whether a fetch is currently in-flight */
+  loading: boolean;
+  /** The error thrown by the last fetch, if any */
+  error: unknown;
+  /** Open change handler — pass to the Root `onOpenChange` prop */
+  onOpenChange: (open: boolean) => void;
+}
+
+/**
+ * Hook that encapsulates the async select pattern — fetching on open,
+ * request cancellation via `AbortController`, and loading/error state.
+ *
+ * Unlike `Combobox.useAsync`, this does **not** involve a search query
+ * or debouncing — Select has no text input. The fetcher is called each
+ * time the dropdown opens.
+ *
+ * @example
+ * ```tsx
+ * const countries = Select.useAsync({
+ *   fetcher: async ({ signal }) => {
+ *     const res = await fetch("/api/countries", { signal });
+ *     return res.json();
+ *   },
+ * });
+ *
+ * <Select.Parts.Root
+ *   onOpenChange={countries.onOpenChange}
+ * >
+ *   <Select.Parts.Trigger>
+ *     <Select.Parts.Value placeholder="Select a country" />
+ *   </Select.Parts.Trigger>
+ *   <Select.Parts.Content>
+ *     {countries.loading
+ *       ? "Loading..."
+ *       : countries.items.map((c) => (
+ *           <Select.Parts.Item key={c.id} value={c}>{c.name}</Select.Parts.Item>
+ *         ))}
+ *   </Select.Parts.Content>
+ * </Select.Parts.Root>
+ * ```
+ */
+function useAsync<T>({ fetcher }: UseSelectAsyncOptions<T>): UseSelectAsyncReturn<T> {
+  const [items, setItems] = useState<T[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<unknown>(undefined);
+
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const onOpenChange = React.useCallback((open: boolean) => {
+    if (open) {
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      setLoading(true);
+
+      fetcherRef
+        .current({ signal: controller.signal })
+        .then((result) => {
+          if (!controller.signal.aborted) {
+            setItems(result);
+            setError(undefined);
+          }
+        })
+        .catch((e) => {
+          if (e instanceof DOMException && e.name === "AbortError") return;
+          if (!controller.signal.aborted) {
+            setItems([]);
+            setError(e);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        });
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => abortControllerRef.current?.abort();
+  }, []);
+
+  return { items, loading, error, onOpenChange };
+}
+
+// ============================================================================
 // Select.Async
 // ============================================================================
 
@@ -215,47 +315,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     ...rest
   } = props;
 
-  const [items, setItems] = useState<T[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
-
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const handleOpenChange = React.useCallback((open: boolean) => {
-    if (open) {
-      abortControllerRef.current?.abort();
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-      setLoading(true);
-
-      fetcherRef
-        .current({ signal: controller.signal })
-        .then((result) => {
-          if (!controller.signal.aborted) {
-            setItems(result);
-          }
-        })
-        .catch((e) => {
-          if (e instanceof DOMException && e.name === "AbortError") return;
-          if (!controller.signal.aborted) {
-            setItems([]);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setLoading(false);
-          }
-        });
-    }
-  }, []);
-
-  // Abort any in-flight request when the component unmounts
-  // (e.g. page navigation while the dropdown is open and fetching).
-  useEffect(() => {
-    return () => abortControllerRef.current?.abort();
-  }, []);
+  const { items, loading, onOpenChange: handleOpenChange } = useAsync({ fetcher });
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
@@ -333,6 +393,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
 const Select = Object.assign(SelectStandalone, {
   Async: SelectAsyncStandalone,
   Parts: SelectParts,
+  useAsync,
 });
 
-export { Select };
+export { Select, useAsync };

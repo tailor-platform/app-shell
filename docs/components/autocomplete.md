@@ -150,8 +150,6 @@ const {
   GroupLabel,
   Collection,
   Status,
-  useFilter,
-  useAsync,
 } = Autocomplete.Parts;
 ```
 
@@ -179,6 +177,38 @@ const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
   placeholder="Start typing an address..."
   onValueChange={(address) => form.setValue("address", address)}
 />;
+```
+
+### Async with Parts (custom composition)
+
+Combine `Autocomplete.useAsync` with `Autocomplete.Parts` for full control over layout and rendering:
+
+```tsx
+const suggestions = Autocomplete.useAsync({
+  fetcher: async (query, { signal }) => {
+    const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
+    return res.json();
+  },
+});
+
+<Autocomplete.Parts.Root {...suggestions} filter={null}>
+  <Autocomplete.Parts.InputGroup>
+    <Autocomplete.Parts.Input placeholder="Search..." />
+    <Autocomplete.Parts.Clear />
+  </Autocomplete.Parts.InputGroup>
+  <Autocomplete.Parts.Content>
+    <Autocomplete.Parts.List>
+      {suggestions.items.map((item) => (
+        <Autocomplete.Parts.Item key={item} value={item}>
+          {item}
+        </Autocomplete.Parts.Item>
+      ))}
+      <Autocomplete.Parts.Empty>
+        {suggestions.loading ? "Loading..." : "No results."}
+      </Autocomplete.Parts.Empty>
+    </Autocomplete.Parts.List>
+  </Autocomplete.Parts.Content>
+</Autocomplete.Parts.Root>;
 ```
 
 ## Accessibility

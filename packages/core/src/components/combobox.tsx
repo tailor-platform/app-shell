@@ -731,6 +731,27 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
   return useAsyncItems(options);
 }
 
+/**
+ * Hook for robust string matching using `Intl.Collator`.
+ *
+ * Returns an object with `contains`, `startsWith`, and `endsWith` methods
+ * that can be passed to the `filter` prop of `<Combobox.Parts.Root>`
+ * to customize how items are filtered against the input value.
+ *
+ * Accepts `Intl.CollatorOptions` (e.g. `sensitivity`, `usage`) plus
+ * an optional `locale` for locale-aware matching.
+ *
+ * @example
+ * ```tsx
+ * const filter = Combobox.useFilter({ sensitivity: "base" });
+ *
+ * <Combobox.Parts.Root filter={filter.contains}>
+ *   ...
+ * </Combobox.Parts.Root>
+ * ```
+ */
+const useFilter = BaseCombobox.useFilter;
+
 // ============================================================================
 // Export
 // ============================================================================
@@ -753,9 +774,6 @@ const ComboboxParts = {
   Value: ComboboxValue,
   Collection: ComboboxCollection,
   Status: ComboboxStatus,
-  useFilter: BaseCombobox.useFilter,
-  useCreatable,
-  useAsync,
 };
 
 type ComboboxParts = typeof ComboboxParts;
@@ -781,4 +799,5 @@ export {
   ComboboxParts,
   useCreatable,
   useAsync,
+  useFilter,
 };

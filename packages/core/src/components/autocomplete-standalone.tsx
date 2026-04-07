@@ -14,6 +14,7 @@ import {
   AutocompleteCollection,
   AutocompleteParts,
   useAsync,
+  useFilter,
 } from "./autocomplete";
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
@@ -209,6 +210,8 @@ AutocompleteAsyncStandalone.displayName = "Autocomplete.Async";
 const Autocomplete = Object.assign(AutocompleteStandalone, {
   Async: AutocompleteAsyncStandalone,
   Parts: AutocompleteParts,
+  useAsync,
+  useFilter,
 });
 
 export { Autocomplete };

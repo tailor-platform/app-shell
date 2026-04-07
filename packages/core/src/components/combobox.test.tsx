@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, renderHook, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ComboboxParts } from "./combobox";
-
-const Combobox = { Parts: ComboboxParts };
+import { ComboboxParts, useCreatable, useAsync } from "./combobox";
 
 afterEach(() => {
   cleanup();
@@ -17,19 +15,19 @@ function SimpleCombobox(props: {
   value?: string;
 }) {
   return (
-    <Combobox.Parts.Root {...props}>
-      <Combobox.Parts.Input data-testid="input" placeholder="Search fruits..." />
-      <Combobox.Parts.Content>
-        <Combobox.Parts.List>
+    <ComboboxParts.Root {...props}>
+      <ComboboxParts.Input data-testid="input" placeholder="Search fruits..." />
+      <ComboboxParts.Content>
+        <ComboboxParts.List>
           {fruits.map((fruit) => (
-            <Combobox.Parts.Item key={fruit} value={fruit}>
+            <ComboboxParts.Item key={fruit} value={fruit}>
               {fruit}
-            </Combobox.Parts.Item>
+            </ComboboxParts.Item>
           ))}
-          <Combobox.Parts.Empty>No results found</Combobox.Parts.Empty>
-        </Combobox.Parts.List>
-      </Combobox.Parts.Content>
-    </Combobox.Parts.Root>
+          <ComboboxParts.Empty>No results found</ComboboxParts.Empty>
+        </ComboboxParts.List>
+      </ComboboxParts.Content>
+    </ComboboxParts.Root>
   );
 }
 
@@ -58,35 +56,35 @@ describe("Combobox.Parts", () => {
 
     it("with InputGroup, Clear, and Trigger", () => {
       const { container } = render(
-        <Combobox.Parts.Root>
-          <Combobox.Parts.InputGroup>
-            <Combobox.Parts.Input placeholder="Search..." />
-            <Combobox.Parts.Clear />
-            <Combobox.Parts.Trigger />
-          </Combobox.Parts.InputGroup>
-          <Combobox.Parts.Content>
-            <Combobox.Parts.List>
-              <Combobox.Parts.Item value="a">Alpha</Combobox.Parts.Item>
-            </Combobox.Parts.List>
-          </Combobox.Parts.Content>
-        </Combobox.Parts.Root>,
+        <ComboboxParts.Root>
+          <ComboboxParts.InputGroup>
+            <ComboboxParts.Input placeholder="Search..." />
+            <ComboboxParts.Clear />
+            <ComboboxParts.Trigger />
+          </ComboboxParts.InputGroup>
+          <ComboboxParts.Content>
+            <ComboboxParts.List>
+              <ComboboxParts.Item value="a">Alpha</ComboboxParts.Item>
+            </ComboboxParts.List>
+          </ComboboxParts.Content>
+        </ComboboxParts.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("with groups", () => {
       const { container } = render(
-        <Combobox.Parts.Root>
-          <Combobox.Parts.Input placeholder="Search..." />
-          <Combobox.Parts.Content>
-            <Combobox.Parts.List>
-              <Combobox.Parts.Group>
-                <Combobox.Parts.GroupLabel>Fruits</Combobox.Parts.GroupLabel>
-                <Combobox.Parts.Item value="apple">Apple</Combobox.Parts.Item>
-              </Combobox.Parts.Group>
-            </Combobox.Parts.List>
-          </Combobox.Parts.Content>
-        </Combobox.Parts.Root>,
+        <ComboboxParts.Root>
+          <ComboboxParts.Input placeholder="Search..." />
+          <ComboboxParts.Content>
+            <ComboboxParts.List>
+              <ComboboxParts.Group>
+                <ComboboxParts.GroupLabel>Fruits</ComboboxParts.GroupLabel>
+                <ComboboxParts.Item value="apple">Apple</ComboboxParts.Item>
+              </ComboboxParts.Group>
+            </ComboboxParts.List>
+          </ComboboxParts.Content>
+        </ComboboxParts.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
@@ -137,14 +135,14 @@ describe("Combobox.Parts", () => {
 
   it("applies custom className to input", () => {
     render(
-      <Combobox.Parts.Root>
-        <Combobox.Parts.Input data-testid="input" className="custom-class" />
-        <Combobox.Parts.Content>
-          <Combobox.Parts.List>
-            <Combobox.Parts.Item value="a">Apple</Combobox.Parts.Item>
-          </Combobox.Parts.List>
-        </Combobox.Parts.Content>
-      </Combobox.Parts.Root>,
+      <ComboboxParts.Root>
+        <ComboboxParts.Input data-testid="input" className="custom-class" />
+        <ComboboxParts.Content>
+          <ComboboxParts.List>
+            <ComboboxParts.Item value="a">Apple</ComboboxParts.Item>
+          </ComboboxParts.List>
+        </ComboboxParts.Content>
+      </ComboboxParts.Root>,
     );
 
     expect(screen.getByTestId("input").classList.contains("custom-class")).toBe(true);
@@ -154,17 +152,17 @@ describe("Combobox.Parts", () => {
     const user = userEvent.setup();
 
     render(
-      <Combobox.Parts.Root>
-        <Combobox.Parts.Input data-testid="input" />
-        <Combobox.Parts.Content>
-          <Combobox.Parts.List>
-            <Combobox.Parts.Group>
-              <Combobox.Parts.GroupLabel>Fruits</Combobox.Parts.GroupLabel>
-              <Combobox.Parts.Item value="apple">Apple</Combobox.Parts.Item>
-            </Combobox.Parts.Group>
-          </Combobox.Parts.List>
-        </Combobox.Parts.Content>
-      </Combobox.Parts.Root>,
+      <ComboboxParts.Root>
+        <ComboboxParts.Input data-testid="input" />
+        <ComboboxParts.Content>
+          <ComboboxParts.List>
+            <ComboboxParts.Group>
+              <ComboboxParts.GroupLabel>Fruits</ComboboxParts.GroupLabel>
+              <ComboboxParts.Item value="apple">Apple</ComboboxParts.Item>
+            </ComboboxParts.Group>
+          </ComboboxParts.List>
+        </ComboboxParts.Content>
+      </ComboboxParts.Root>,
     );
 
     const input = screen.getByTestId("input");
@@ -186,17 +184,17 @@ describe("Combobox.Parts", () => {
 
   it("renders the trigger with default icon", () => {
     render(
-      <Combobox.Parts.Root>
+      <ComboboxParts.Root>
         <div style={{ position: "relative" }}>
-          <Combobox.Parts.Input data-testid="input" />
-          <Combobox.Parts.Trigger data-testid="trigger" />
+          <ComboboxParts.Input data-testid="input" />
+          <ComboboxParts.Trigger data-testid="trigger" />
         </div>
-        <Combobox.Parts.Content>
-          <Combobox.Parts.List>
-            <Combobox.Parts.Item value="a">Apple</Combobox.Parts.Item>
-          </Combobox.Parts.List>
-        </Combobox.Parts.Content>
-      </Combobox.Parts.Root>,
+        <ComboboxParts.Content>
+          <ComboboxParts.List>
+            <ComboboxParts.Item value="a">Apple</ComboboxParts.Item>
+          </ComboboxParts.List>
+        </ComboboxParts.Content>
+      </ComboboxParts.Root>,
     );
 
     expect(screen.getByTestId("trigger")).toBeDefined();
@@ -204,17 +202,17 @@ describe("Combobox.Parts", () => {
 
   it("renders the clear button", () => {
     render(
-      <Combobox.Parts.Root defaultValue="Apple">
+      <ComboboxParts.Root defaultValue="Apple">
         <div style={{ position: "relative" }}>
-          <Combobox.Parts.Input data-testid="input" />
-          <Combobox.Parts.Clear data-testid="clear" />
+          <ComboboxParts.Input data-testid="input" />
+          <ComboboxParts.Clear data-testid="clear" />
         </div>
-        <Combobox.Parts.Content>
-          <Combobox.Parts.List>
-            <Combobox.Parts.Item value="Apple">Apple</Combobox.Parts.Item>
-          </Combobox.Parts.List>
-        </Combobox.Parts.Content>
-      </Combobox.Parts.Root>,
+        <ComboboxParts.Content>
+          <ComboboxParts.List>
+            <ComboboxParts.Item value="Apple">Apple</ComboboxParts.Item>
+          </ComboboxParts.List>
+        </ComboboxParts.Content>
+      </ComboboxParts.Root>,
     );
 
     expect(screen.getByTestId("clear")).toBeDefined();
@@ -241,7 +239,7 @@ const createTag = (value: string): Tag => ({
   name: value,
 });
 
-describe("Combobox.Parts.useCreatable", () => {
+describe("useCreatable", () => {
   describe("multiple mode", () => {
     const defaultOptions = {
       items: initialTags,
@@ -251,14 +249,14 @@ describe("Combobox.Parts.useCreatable", () => {
     };
 
     it("returns items unchanged when inputValue is empty", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
       expect(result.current.items).toBe(initialTags);
       expect(result.current.value).toEqual([]);
       expect(result.current.multiple).toBe(true);
     });
 
     it("appends a sentinel item when query has no exact match", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("Svelte");
@@ -270,7 +268,7 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("does not append sentinel when query exactly matches an item (case-insensitive)", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("react");
@@ -284,7 +282,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -314,7 +312,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: () => false,
           onValueChange,
@@ -340,7 +338,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: (_item: Tag) =>
             new Promise<void>((resolve) => {
@@ -378,7 +376,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: (_item: Tag) =>
             new Promise<false>((resolve) => {
@@ -411,7 +409,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: async (_item: Tag) => {
             // Simulate API call
@@ -438,7 +436,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: async (_item: Tag): Promise<false> => {
             return false;
@@ -465,7 +463,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: async (_item: Tag) => {
             throw new Error("API error");
@@ -492,7 +490,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onValueChange,
         }),
@@ -508,7 +506,7 @@ describe("Combobox.Parts.useCreatable", () => {
 
     it("respects defaultValue", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           defaultValue: [initialTags[0]],
         }),
@@ -519,7 +517,7 @@ describe("Combobox.Parts.useCreatable", () => {
 
     it("uses custom formatCreateLabel", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           formatCreateLabel: (v) => `「${v}」を作成`,
         }),
@@ -537,7 +535,7 @@ describe("Combobox.Parts.useCreatable", () => {
     };
 
     it("returns value as null initially", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       expect(result.current.value).toBeNull();
       expect(result.current.multiple).toBe(false);
@@ -548,7 +546,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -574,7 +572,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onValueChange,
         }),
@@ -592,7 +590,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           defaultValue: initialTags[0],
           onValueChange,
@@ -618,7 +616,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated,
           onValueChange,
@@ -649,7 +647,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           onItemCreated: () => false,
           onValueChange,
@@ -672,7 +670,7 @@ describe("Combobox.Parts.useCreatable", () => {
 
     it("respects defaultValue in single mode", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           ...defaultOptions,
           defaultValue: initialTags[1],
         }),
@@ -685,7 +683,7 @@ describe("Combobox.Parts.useCreatable", () => {
   describe("isCreateItem / getCreateLabel", () => {
     it("correctly identifies sentinel vs regular items", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           multiple: true,
           getLabel: (item: Tag) => item.name,
@@ -726,7 +724,7 @@ describe("Combobox.Parts.useCreatable", () => {
     };
 
     it("trims leading/trailing whitespace for sentinel check", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("  Svelte  ");
@@ -739,7 +737,7 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("does not append sentinel for whitespace-only input", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("   ");
@@ -749,7 +747,7 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("matches exact item even with leading/trailing spaces in query", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("  React  ");
@@ -770,7 +768,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const serverTag: Tag = { id: "server-id", name: "Svelte" };
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -798,7 +796,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const serverTag: Tag = { id: "server-id", name: "Svelte" };
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           multiple: true as const,
           getLabel: (item: Tag) => item.name,
@@ -827,7 +825,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const serverTag: Tag = { id: "server-id", name: "Svelte" };
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -860,7 +858,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let resolvePromise!: () => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -902,7 +900,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let rejectPromise!: () => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -944,7 +942,7 @@ describe("Combobox.Parts.useCreatable", () => {
     };
 
     it("returns formatted create label for sentinel item", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("Svelte");
@@ -955,13 +953,13 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("returns getLabel for regular items", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       expect(result.current.itemToStringLabel(initialTags[0])).toBe("React");
     });
 
     it("returns empty string for sentinel itemToStringValue", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       act(() => {
         result.current.onInputValueChange("Svelte");
@@ -972,7 +970,7 @@ describe("Combobox.Parts.useCreatable", () => {
     });
 
     it("returns getLabel for regular items in itemToStringValue", () => {
-      const { result } = renderHook(() => Combobox.Parts.useCreatable(defaultOptions));
+      const { result } = renderHook(() => useCreatable(defaultOptions));
 
       expect(result.current.itemToStringValue(initialTags[0])).toBe("React");
     });
@@ -988,7 +986,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           multiple: true as const,
           getLabel: (item: Tag) => item.name,
@@ -1024,7 +1022,7 @@ describe("Combobox.Parts.useCreatable", () => {
 
     it("clears input after creating in multiple mode", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           multiple: true as const,
           getLabel: (item: Tag) => item.name,
@@ -1056,7 +1054,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1082,7 +1080,7 @@ describe("Combobox.Parts.useCreatable", () => {
       const onValueChange = vi.fn();
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           multiple: true as const,
           getLabel: (item: Tag) => item.name,
@@ -1113,7 +1111,7 @@ describe("Combobox.Parts.useCreatable", () => {
   describe("creating state", () => {
     it("is false initially", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1127,7 +1125,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let resolvePromise!: () => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1163,7 +1161,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let resolvePromise!: () => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           multiple: true as const,
           getLabel: (item: Tag) => item.name,
@@ -1198,7 +1196,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let rejectPromise!: () => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1232,7 +1230,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let resolvePromise!: (v: false) => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1266,7 +1264,7 @@ describe("Combobox.Parts.useCreatable", () => {
       let resolvePromise!: () => void;
 
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1303,7 +1301,7 @@ describe("Combobox.Parts.useCreatable", () => {
 
     it("stays false for sync onItemCreated", () => {
       const { result } = renderHook(() =>
-        Combobox.Parts.useCreatable({
+        useCreatable({
           items: initialTags,
           getLabel: (item: Tag) => item.name,
           createItem: createTag,
@@ -1328,10 +1326,10 @@ describe("Combobox.Parts.useCreatable", () => {
 });
 
 // ============================================================================
-// Combobox.Parts.useAsync tests
+// useAsync tests
 // ============================================================================
 
-describe("Combobox.Parts.useAsync", () => {
+describe("useAsync", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -1349,7 +1347,7 @@ describe("Combobox.Parts.useAsync", () => {
 
   it("returns correct shape", () => {
     const fetcher = vi.fn(async () => []);
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+    const { result } = renderHook(() => useAsync({ fetcher }));
 
     expect(result.current).toHaveProperty("items");
     expect(result.current).toHaveProperty("loading");
@@ -1362,7 +1360,7 @@ describe("Combobox.Parts.useAsync", () => {
     const items = [{ id: 1, name: "React" }];
     const fetcher = vi.fn(async () => items);
 
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+    const { result } = renderHook(() => useAsync({ fetcher }));
 
     act(() => {
       result.current.onInputValueChange("react");
@@ -1383,7 +1381,7 @@ describe("Combobox.Parts.useAsync", () => {
 
   it("updates query on input change", () => {
     const fetcher = vi.fn(async () => []);
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+    const { result } = renderHook(() => useAsync({ fetcher }));
 
     act(() => {
       result.current.onInputValueChange("hello");
@@ -1394,9 +1392,7 @@ describe("Combobox.Parts.useAsync", () => {
 
   it("respects custom debounceMs via object fetcher", async () => {
     const fetcher = vi.fn(async () => ["a"]);
-    const { result } = renderHook(() =>
-      Combobox.Parts.useAsync({ fetcher: { fn: fetcher, debounceMs: 100 } }),
-    );
+    const { result } = renderHook(() => useAsync({ fetcher: { fn: fetcher, debounceMs: 100 } }));
 
     act(() => {
       result.current.onInputValueChange("test");
@@ -1411,7 +1407,7 @@ describe("Combobox.Parts.useAsync", () => {
 
   it("calls fetcher with null when input is empty", async () => {
     const fetcher = vi.fn(async (_q: string | null) => (_q === null ? [] : ["a", "b"]));
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+    const { result } = renderHook(() => useAsync({ fetcher }));
 
     act(() => {
       result.current.onInputValueChange("test");
@@ -1431,7 +1427,7 @@ describe("Combobox.Parts.useAsync", () => {
     const fetcher = vi.fn(async () => {
       throw error;
     });
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+    const { result } = renderHook(() => useAsync({ fetcher }));
 
     act(() => {
       result.current.onInputValueChange("test");
@@ -1451,7 +1447,7 @@ describe("Combobox.Parts.useAsync", () => {
       });
     });
 
-    const { result } = renderHook(() => Combobox.Parts.useAsync({ fetcher }));
+    const { result } = renderHook(() => useAsync({ fetcher }));
 
     act(() => {
       result.current.onInputValueChange("first");

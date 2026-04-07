@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tailor Platform AppShell - A React-based framework for building ERP applications with opinionated layouts, authentication, and module federation.
+Tailor Platform AppShell - A React-based framework for building ERP applications with opinionated layouts and authentication.
 
 **📖 For complete overview and quickstart guide, see:** [README.md](./README.md)
 

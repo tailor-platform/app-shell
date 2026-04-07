@@ -214,6 +214,21 @@ describe("buildSummary", () => {
     });
   });
 
+  it("counts distinct warning rows (multiple issues on the same row count as one)", () => {
+    const issues: CsvCellIssue[] = [
+      { rowIndex: 0, columnKey: "name", level: "warning", message: "too short" },
+      { rowIndex: 0, columnKey: "price", level: "warning", message: "unusual" },
+    ];
+
+    expect(buildSummary(3, issues, [])).toEqual({
+      totalRows: 3,
+      validRows: 2,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 1,
+    });
+  });
+
   it("combines warnings and corrections", () => {
     const issues: CsvCellIssue[] = [
       { rowIndex: 1, columnKey: "sku", level: "warning", message: "duplicate" },

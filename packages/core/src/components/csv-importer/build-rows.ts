@@ -18,12 +18,13 @@ export function buildSummary(
 ): CsvImportEvent["summary"] {
   const warnings = issues.filter((i) => i.level === "warning");
   const correctedRows = new Set(corrections.map((c) => c.row)).size;
+  const warningRows = new Set(warnings.map((w) => w.rowIndex)).size;
 
   return {
     totalRows,
-    validRows: totalRows - warnings.length,
+    validRows: totalRows - warningRows,
     correctedRows,
-    warningRows: warnings.length,
+    warningRows,
     // Reserved for a future "skip row" feature — currently no rows are ever skipped.
     skippedRows: 0,
   };

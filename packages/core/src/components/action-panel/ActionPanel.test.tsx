@@ -45,9 +45,7 @@ describe("ActionPanel", () => {
     ];
     renderActionPanel({ title: "Actions", actions });
 
-    expect(
-      screen.getByRole("button", { name: "Create invoice" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Create invoice" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Edit order" })).toBeDefined();
     expect(screen.getAllByTestId("mock-icon").length).toBe(2);
   });
@@ -57,9 +55,7 @@ describe("ActionPanel", () => {
     const onClick = vi.fn();
     renderActionPanel({
       title: "Actions",
-      actions: [
-        { key: "1", label: "Do something", icon: <MockIcon />, onClick },
-      ],
+      actions: [{ key: "1", label: "Do something", icon: <MockIcon />, onClick }],
     });
 
     await user.click(screen.getByRole("button", { name: "Do something" }));
@@ -160,11 +156,7 @@ describe("ActionPanel", () => {
 });
 
 describe("ActionPanel context registration", () => {
-  const ActionsReader = ({
-    onActions,
-  }: {
-    onActions: (a: unknown[]) => void;
-  }) => {
+  const ActionsReader = ({ onActions }: { onActions: (a: unknown[]) => void }) => {
     const actions = useCommandPaletteActions();
     onActions(actions);
     return null;
@@ -260,8 +252,7 @@ describe("ActionPanel context registration", () => {
     );
 
     // Actions registered
-    const beforeUnmount =
-      onActions.mock.calls[onActions.mock.calls.length - 1][0];
+    const beforeUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
     expect(beforeUnmount).toHaveLength(1);
 
     // Unmount triggers cleanup
@@ -275,8 +266,7 @@ describe("ActionPanel context registration", () => {
       </CommandPaletteProvider>,
     );
 
-    const afterUnmount =
-      onActions2.mock.calls[onActions2.mock.calls.length - 1][0];
+    const afterUnmount = onActions2.mock.calls[onActions2.mock.calls.length - 1][0];
     expect(afterUnmount).toHaveLength(0);
   });
 });

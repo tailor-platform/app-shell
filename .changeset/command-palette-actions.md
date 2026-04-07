@@ -8,7 +8,5 @@ Add contextual action registration for CommandPalette via `useCommandPaletteDisp
 import { useCommandPaletteDispatch } from "@tailor-platform/app-shell";
 
 const { register } = useCommandPaletteDispatch();
-register("my-source", [
-  { key: "save", label: "Save", group: "Editor", onSelect: handleSave },
-]);
+register("my-source", [{ key: "save", label: "Save", group: "Editor", onSelect: handleSave }]);
 ```

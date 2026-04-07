@@ -216,7 +216,12 @@ describe("buildSummary", () => {
 
   it("counts distinct warning rows (multiple issues on the same row count as one)", () => {
     const issues: CsvCellIssue[] = [
-      { rowIndex: 0, columnKey: "name", level: "warning", message: "too short" },
+      {
+        rowIndex: 0,
+        columnKey: "name",
+        level: "warning",
+        message: "too short",
+      },
       { rowIndex: 0, columnKey: "price", level: "warning", message: "unusual" },
     ];
 

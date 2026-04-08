@@ -68,7 +68,9 @@ export type RouterContainerProps =
       initialEntries: Array<string>;
     } & RouterContainerPropsCommon);
 
-export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
+export const RouterContainer = (
+  props: PropsWithChildren<RouterContainerProps>,
+) => {
   const { rootComponent, children } = props;
   const { configurations } = useAppShellConfig();
   const contentRoutes = useMemo(

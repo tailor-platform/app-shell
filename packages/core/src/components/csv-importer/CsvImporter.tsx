@@ -30,7 +30,9 @@ import { useT } from "./i18n-labels";
 
 // ─── Context for Portal container (Drawer popup ref) ────
 
-const PortalContainerContext = React.createContext<React.RefObject<HTMLElement | null>>({
+const PortalContainerContext = React.createContext<
+  React.RefObject<HTMLElement | null>
+>({
   current: null,
 });
 
@@ -127,7 +129,10 @@ function UploadStep({
   const maxSizeMB = (maxFileSize / (1024 * 1024)).toFixed(0);
 
   return (
-    <div data-slot="csv-importer-upload" className="astw:flex astw:flex-col astw:gap-4 astw:flex-1">
+    <div
+      data-slot="csv-importer-upload"
+      className="astw:flex astw:flex-col astw:gap-4 astw:flex-1"
+    >
       <button
         type="button"
         className={cn(
@@ -144,7 +149,9 @@ function UploadStep({
         <UploadIcon className="astw:text-muted-foreground astw:size-10" />
         <div className="astw:text-center">
           <p className="astw:text-sm astw:font-medium">{t("uploadButton")}</p>
-          <p className="astw:text-muted-foreground astw:text-xs">CSV (max {maxSizeMB}MB)</p>
+          <p className="astw:text-muted-foreground astw:text-xs">
+            CSV (max {maxSizeMB}MB)
+          </p>
         </div>
         <input
           ref={inputRef}
@@ -204,7 +211,10 @@ function MappingStep({
   };
 
   return (
-    <div data-slot="csv-importer-mapping" className="astw:flex astw:flex-col astw:gap-4">
+    <div
+      data-slot="csv-importer-mapping"
+      className="astw:flex astw:flex-col astw:gap-4"
+    >
       {/* Schema-centric table */}
       <div className="astw:overflow-y-auto astw:rounded-md astw:border">
         <table className="astw:w-full astw:text-sm">
@@ -254,7 +264,9 @@ function MappingStep({
                       <span className="astw:font-medium">
                         {col.label}
                         {col.required && (
-                          <span className="astw:text-destructive astw:ml-0.5">*</span>
+                          <span className="astw:text-destructive astw:ml-0.5">
+                            *
+                          </span>
                         )}
                       </span>
                       {col.description && (
@@ -299,7 +311,9 @@ function MappingStep({
                         {preview}
                       </span>
                     ) : (
-                      <span className="astw:text-muted-foreground/50">&mdash;</span>
+                      <span className="astw:text-muted-foreground/50">
+                        &mdash;
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -345,13 +359,23 @@ function ReviewStep({
   const errorCount = issues.filter((i) => i.level === "error").length;
   const warningCount = issues.filter((i) => i.level === "warning").length;
 
-  const getCorrectedValue = (rowIdx: number, columnKey: string): string | undefined => {
-    const correction = corrections.find((c) => c.row === rowIdx && c.columnKey === columnKey);
+  const getCorrectedValue = (
+    rowIdx: number,
+    columnKey: string,
+  ): string | undefined => {
+    const correction = corrections.find(
+      (c) => c.row === rowIdx && c.columnKey === columnKey,
+    );
     return correction ? String(correction.newValue) : undefined;
   };
 
-  const getIssue = (rowIdx: number, columnKey: string): CsvCellIssue | undefined => {
-    return issues.find((i) => i.rowIndex === rowIdx && i.columnKey === columnKey);
+  const getIssue = (
+    rowIdx: number,
+    columnKey: string,
+  ): CsvCellIssue | undefined => {
+    return issues.find(
+      (i) => i.rowIndex === rowIdx && i.columnKey === columnKey,
+    );
   };
 
   return (
@@ -361,8 +385,12 @@ function ReviewStep({
     >
       <div className="astw:flex astw:gap-4 astw:text-sm">
         <span>Total: {rawRows.length} rows</span>
-        {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
-        {warningCount > 0 && <span className="astw:text-yellow-600">Warnings: {warningCount}</span>}
+        {errorCount > 0 && (
+          <span className="astw:text-destructive">Errors: {errorCount}</span>
+        )}
+        {warningCount > 0 && (
+          <span className="astw:text-yellow-600">Warnings: {warningCount}</span>
+        )}
         {validated && errorCount === 0 && !validating && (
           <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-emerald-600">
             <CheckCircle2Icon className="astw:size-3" />
@@ -400,11 +428,16 @@ function ReviewStep({
           <tbody>
             {rawRows.map((row, rowIdx) => (
               <tr key={rowIdx} className="astw:border-t">
-                <td className="astw:px-3 astw:py-1 astw:text-muted-foreground">{rowIdx + 1}</td>
+                <td className="astw:px-3 astw:py-1 astw:text-muted-foreground">
+                  {rowIdx + 1}
+                </td>
                 {activeMappings.map((m) => {
                   const colIdx = headerIndexMap.get(m.csvHeader);
                   const rawValue = colIdx !== undefined ? row[colIdx] : "";
-                  const correctedValue = getCorrectedValue(rowIdx, m.columnKey!);
+                  const correctedValue = getCorrectedValue(
+                    rowIdx,
+                    m.columnKey!,
+                  );
                   const displayValue = correctedValue ?? rawValue;
                   const issue = getIssue(rowIdx, m.columnKey!);
 
@@ -422,12 +455,16 @@ function ReviewStep({
                           type="text"
                           className={cn(
                             "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
-                            issue?.level === "error" && "astw:border-destructive",
-                            issue?.level === "warning" && "astw:border-yellow-500",
+                            issue?.level === "error" &&
+                              "astw:border-destructive",
+                            issue?.level === "warning" &&
+                              "astw:border-yellow-500",
                             !issue && "astw:border-transparent",
                           )}
                           value={displayValue}
-                          onChange={(e) => onCellEdit(rowIdx, m.columnKey!, e.target.value)}
+                          onChange={(e) =>
+                            onCellEdit(rowIdx, m.columnKey!, e.target.value)
+                          }
                         />
                         {issue && (
                           <span
@@ -564,9 +601,14 @@ export function CsvImporter<T extends CsvSchema>({
     [maxFileSize, t, schema],
   );
 
-  const handleMappingChange = useCallback((csvHeader: string, columnKey: string | null) => {
-    setMappings((prev) => prev.map((m) => (m.csvHeader === csvHeader ? { ...m, columnKey } : m)));
-  }, []);
+  const handleMappingChange = useCallback(
+    (csvHeader: string, columnKey: string | null) => {
+      setMappings((prev) =>
+        prev.map((m) => (m.csvHeader === csvHeader ? { ...m, columnKey } : m)),
+      );
+    },
+    [],
+  );
 
   const handleGoToReview = useCallback(async () => {
     const { issues: clientIssues, parsedRows } = processRows(
@@ -594,10 +636,14 @@ export function CsvImporter<T extends CsvSchema>({
   const handleCellEdit = useCallback(
     (rowIdx: number, columnKey: string, value: string) => {
       setCorrections((prev) => {
-        const existing = prev.find((c) => c.row === rowIdx && c.columnKey === columnKey);
+        const existing = prev.find(
+          (c) => c.row === rowIdx && c.columnKey === columnKey,
+        );
         if (existing) {
           return prev.map((c) =>
-            c.row === rowIdx && c.columnKey === columnKey ? { ...c, newValue: value } : c,
+            c.row === rowIdx && c.columnKey === columnKey
+              ? { ...c, newValue: value }
+              : c,
           );
         }
         // Find the original value
@@ -616,7 +662,9 @@ export function CsvImporter<T extends CsvSchema>({
         if (!column) return prev;
 
         // Remove old client-side issues for this cell
-        const filtered = prev.filter((i) => !(i.rowIndex === rowIdx && i.columnKey === columnKey));
+        const filtered = prev.filter(
+          (i) => !(i.rowIndex === rowIdx && i.columnKey === columnKey),
+        );
 
         if (!column.schema) return filtered;
 
@@ -706,7 +754,11 @@ export function CsvImporter<T extends CsvSchema>({
   };
 
   return (
-    <Drawer.Root open={open} onOpenChange={handleOpenChange} swipeDirection="down">
+    <Drawer.Root
+      open={open}
+      onOpenChange={handleOpenChange}
+      swipeDirection="down"
+    >
       <Drawer.Portal>
         <Drawer.Backdrop className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50" />
         <Drawer.Viewport
@@ -719,12 +771,17 @@ export function CsvImporter<T extends CsvSchema>({
             className="astw:bg-background astw:flex astw:flex-col astw:w-full astw:h-[70vh] astw:rounded-t-lg astw:border-t astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms] astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(100%)] astw:data-starting-style:[transform:translateY(100%)]"
           >
             <PortalContainerContext.Provider value={drawerPopupRef}>
-              <Drawer.Content data-slot="csv-importer-inner" className="astw:contents">
+              <Drawer.Content
+                data-slot="csv-importer-inner"
+                className="astw:contents"
+              >
                 {/* Header: step indicators + title + close */}
                 <div className="astw:flex astw:items-center astw:justify-between astw:border-b astw:px-6 astw:py-4">
                   <div className="astw:flex astw:items-center astw:gap-4">
                     <div className="astw:flex astw:items-center astw:gap-2">
-                      {(["upload", "mapping", "review", "complete"] as const).map((s, idx) => (
+                      {(
+                        ["upload", "mapping", "review", "complete"] as const
+                      ).map((s, idx) => (
                         <React.Fragment key={s}>
                           {idx > 0 && (
                             <div
@@ -802,7 +859,9 @@ export function CsvImporter<T extends CsvSchema>({
                     <CompleteStep
                       fileName={file?.name ?? ""}
                       totalRows={rawRows.length}
-                      correctedRows={new Set(corrections.map((c) => c.row)).size}
+                      correctedRows={
+                        new Set(corrections.map((c) => c.row)).size
+                      }
                     />
                   )}
                 </div>

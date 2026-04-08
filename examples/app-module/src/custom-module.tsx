@@ -1,4 +1,8 @@
-import { defineModule, Link, ResourceComponentProps } from "@tailor-platform/app-shell";
+import {
+  defineModule,
+  Link,
+  ResourceComponentProps,
+} from "@tailor-platform/app-shell";
 import { useT, labels } from "./i18n-labels";
 import { ZapIcon } from "./pages/metric-card-demo";
 import { actionPanelDemoResource } from "./pages/action-panel-demo";
@@ -18,7 +22,10 @@ import {
 } from "./pages/layout-demos";
 import { primitiveComponentsDemoResource } from "./pages/primitives-demo";
 import { dropdownComponentsDemoResource } from "./pages/dropdown-demo";
-import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form-demo";
+import {
+  formComponentsDemoResource,
+  zodRHFFormDemoResource,
+} from "./pages/form-demo";
 import { csvImporterDemoResource } from "./pages/csv-importer-demo";
 import { dataTableDemoResource } from "./pages/data-table-demo";
 
@@ -38,7 +45,9 @@ export const customPageModule = defineModule({
             <Link to="/custom-page/sub1/sub1-1">{t("goToSub1-1")}</Link>
           </p>
           <p>
-            <Link to="/custom-page/sub1/sub1-1/123">{t("goToDynamicPage")}</Link>
+            <Link to="/custom-page/sub1/sub1-1/123">
+              {t("goToDynamicPage")}
+            </Link>
           </p>
           <p>
             <Link
@@ -147,7 +156,8 @@ export const customPageModule = defineModule({
                 textDecoration: "underline",
               }}
             >
-              Primitive Components Demo (Button, Input, Menu, Table, Dialog, Sheet, Tooltip)
+              Primitive Components Demo (Button, Input, Menu, Table, Dialog,
+              Sheet, Tooltip)
             </Link>
           </p>
           <p>

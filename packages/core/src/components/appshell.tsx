@@ -10,10 +10,7 @@ import {
 import { RouterContainer } from "@/routing/router";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
-import {
-  CommandPaletteProvider,
-  type CommandPaletteSearchSource,
-} from "@/contexts/command-palette-context";
+import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
@@ -166,7 +163,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * />
    * ```
    */
-  searchSources?: Array<CommandPaletteSearchSource>;
+  searchSources?: readonly SearchSource[];
 }>;
 
 /**

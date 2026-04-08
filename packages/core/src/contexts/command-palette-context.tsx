@@ -35,7 +35,7 @@ export type CommandPaletteAction = {
 };
 
 /**
- * A single search result returned by a `CommandPaletteSearchSource`.
+ * A single search result returned by a `SearchSource`.
  *
  * Selecting a result navigates to `path`.
  */
@@ -59,7 +59,7 @@ export type CommandPaletteSearchResult = {
  * search input (e.g. `PO:` for Purchase Orders). The prefix match is
  * case-sensitive.
  */
-export type CommandPaletteSearchSource = {
+export type SearchSource = {
   /** Mode-switching prefix (e.g. "PO"). Case-sensitive, alphanumeric only. */
   prefix: string;
   /** Heading shown above search results (e.g. "Purchase Orders") */
@@ -79,7 +79,7 @@ type DispatchContextValue = {
 
 type StateContextValue = {
   actions: CommandPaletteAction[];
-  searchSources: CommandPaletteSearchSource[];
+  searchSources: readonly SearchSource[];
   open: boolean;
   setOpen: (open: boolean) => void;
 };
@@ -101,7 +101,7 @@ export function CommandPaletteProvider({
   searchSources = [],
 }: {
   children: ReactNode;
-  searchSources?: CommandPaletteSearchSource[];
+  searchSources?: readonly SearchSource[];
 }) {
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);

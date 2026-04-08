@@ -12,17 +12,17 @@ import {
   useCommandPaletteState,
   type CommandPaletteAction,
   type CommandPaletteSearchResult,
-  type CommandPaletteSearchSource,
+  type SearchSource,
 } from "@/contexts/command-palette-context";
 
 type SelectableItem =
   | { type: "action"; action: CommandPaletteAction }
   | { type: "route"; route: NavigatableRoute }
-  | { type: "search-mode"; source: CommandPaletteSearchSource }
+  | { type: "search-mode"; source: SearchSource }
   | {
       type: "search-result";
       result: CommandPaletteSearchResult;
-      source: CommandPaletteSearchSource;
+      source: SearchSource;
     };
 
 const paletteItemBase =
@@ -36,7 +36,7 @@ const paletteItemHighlight = (active: boolean) =>
 export type UseCommandPaletteOptions = {
   routes: Array<NavigatableRoute>;
   contextualActions?: Array<CommandPaletteAction>;
-  searchSources?: Array<CommandPaletteSearchSource>;
+  searchSources?: readonly SearchSource[];
   open: boolean;
   setOpen: (open: boolean) => void;
 };
@@ -100,7 +100,7 @@ export type UseCommandPaletteReturn = {
   filteredActions: Array<CommandPaletteAction>;
   filteredRoutes: Array<NavigatableRoute>;
   searchResults: Array<CommandPaletteSearchResult>;
-  activeSearchSource: CommandPaletteSearchSource | null;
+  activeSearchSource: SearchSource | null;
   isSearching: boolean;
   selectableItems: Array<SelectableItem>;
   handleSelectItem: (item: SelectableItem) => void;
@@ -128,8 +128,8 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 export function parseSearchMode(
   search: string,
-  searchSources: Array<CommandPaletteSearchSource>,
-): { activeSource: CommandPaletteSearchSource | null; searchQuery: string } {
+  searchSources: readonly SearchSource[],
+): { activeSource: SearchSource | null; searchQuery: string } {
   const colonIndex = search.indexOf(":");
   if (colonIndex < 1) return { activeSource: null, searchQuery: search };
 

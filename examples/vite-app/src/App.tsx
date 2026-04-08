@@ -2,11 +2,11 @@ import {
   AppShell,
   DefaultSidebar,
   SidebarLayout,
-  type CommandPaletteSearchSource,
+  type SearchSource,
 } from "@tailor-platform/app-shell";
 import { searchOrders } from "./fake-search";
 
-const searchSources: CommandPaletteSearchSource[] = [
+const searchSources: SearchSource[] = [
   {
     prefix: "ORD",
     title: "Orders",

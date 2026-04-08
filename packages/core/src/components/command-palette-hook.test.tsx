@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useCommandPalette, navItemsToRoutes, parseSearchMode } from "./command-palette";
 import { NavigatableRoute } from "@/routing/path";
-import {
-  CommandPaletteAction,
-  CommandPaletteSearchSource,
-} from "@/contexts/command-palette-context";
+import { CommandPaletteAction, SearchSource } from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
 import { ReactNode, useState } from "react";
 
@@ -615,7 +612,7 @@ describe("useCommandPalette with contextualActions", () => {
 });
 
 describe("parseSearchMode", () => {
-  const sources: Array<CommandPaletteSearchSource> = [
+  const sources: Array<SearchSource> = [
     { prefix: "PO", title: "Purchase Orders", search: vi.fn() },
     { prefix: "CU", title: "Customers", search: vi.fn() },
   ];
@@ -672,7 +669,7 @@ describe("parseSearchMode", () => {
 describe("useCommandPalette with searchSources", () => {
   const mockSearch = vi.fn();
 
-  const createTestSearchSources = (): Array<CommandPaletteSearchSource> => [
+  const createTestSearchSources = (): Array<SearchSource> => [
     {
       prefix: "PO",
       title: "Purchase Orders",

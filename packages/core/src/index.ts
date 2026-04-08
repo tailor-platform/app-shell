@@ -4,6 +4,7 @@ export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 export {
   useRegisterCommandPaletteActions,
+  CommandPaletteProvider,
   type CommandPaletteAction,
 } from "./contexts/command-palette-context";
 

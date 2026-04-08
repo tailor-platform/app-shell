@@ -89,6 +89,7 @@ export function AttachmentCard({
   const toast = useToast();
 
   React.useEffect(() => {
+    isMountedRef.current = true;
     const trackedObjectUrls = objectUrlsRef.current;
     return () => {
       isMountedRef.current = false;
@@ -223,7 +224,7 @@ export function AttachmentCard({
       data-slot="attachment-card"
       className={cn(
         "astw:@container astw:transition-colors",
-        isDragOver && !disabled && "astw:border-primary astw:ring-1 astw:ring-primary/30",
+        isDragOver && !disabled && "astw:border-dashed astw:border-primary astw:ring-1 astw:ring-primary/30",
         className,
       )}
       onDragOver={(event) => event.preventDefault()}

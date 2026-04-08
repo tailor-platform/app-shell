@@ -185,22 +185,21 @@ The `onImport` callback receives a `CsvImportEvent` with the following shape:
 | `corrections` | `CsvCorrection[]`                                                   | Corrections made by the user in the review step                          |
 | `issues`      | `CsvCellIssue[]`                                                    | Any remaining issues (warnings only — errors are resolved before import) |
 | `summary`     | `{ totalRows, validRows, correctedRows, skippedRows, warningRows }` | Summary statistics                                                       |
+| `buildRows()` | `() => Promise<InferCsvRow<T>[]>`                                   | Reconstruct fully-processed rows with schema coercion and corrections    |
 
-## `buildRows`
+## `event.buildRows()`
 
-A utility to reconstruct the fully processed row data on the client side from a `CsvImportEvent`. Useful when you want typed row objects on the frontend instead of sending raw file data to a server.
+A method on the import event that reconstructs the fully processed row data on the client side. The return type is inferred from the schema definition — column keys become object keys, and `StandardSchemaV1` output types are preserved.
 
 ```tsx
-import { buildRows } from "@tailor-platform/app-shell";
-
 onImport: async (event) => {
-  const rows = await buildRows(event, schema);
-  // rows: Record<string, unknown>[] — schema coercion and corrections applied
+  const rows = await event.buildRows();
+  // rows is typed based on schema — e.g. { name: string; price: number; ... }[]
   await saveToBackend(rows);
 },
 ```
 
-> If you are sending the file, mappings, and corrections to a backend for processing, you do not need `buildRows`.
+> If you are sending the file, mappings, and corrections to a backend for processing, you do not need `buildRows()`.
 
 ## i18n
 

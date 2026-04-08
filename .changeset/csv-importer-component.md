@@ -59,9 +59,11 @@ const { open, props } = useCsvImporter({
 
   // Called when the user confirms the import after resolving all errors.
   // `event` contains the final rows, mappings, corrections, and summary stats.
-  onImport: (event) => {
-    console.log(event.summary);
-    // => { totalRows, validRows, correctedRows, skippedRows, warningRows }
+  onImport: async (event) => {
+    // buildRows() returns typed rows inferred from the schema definition.
+    // e.g. { name: string; price: number; active: boolean }[]
+    const rows = await event.buildRows();
+    await saveToBackend(rows);
   },
 });
 

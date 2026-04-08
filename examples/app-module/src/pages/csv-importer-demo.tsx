@@ -80,6 +80,10 @@ const CsvImporterDemoPage = () => {
       alert(
         `Imported ${event.summary.totalRows} rows (${event.summary.validRows} valid, ${event.summary.correctedRows} corrected, ${event.summary.warningRows} warnings)`,
       );
+
+      // Access the final parsed rows with applied mappings, coercion, and corrections
+      const rows = await event.buildRows();
+      console.log(rows);
     },
   });
 

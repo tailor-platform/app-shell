@@ -25,6 +25,7 @@ import type {
 } from "./types";
 import { parseCsvFile, autoMatchHeaders } from "./csv-parser";
 import { processRows } from "./process-rows";
+import { buildRows, buildSummary } from "./build-rows";
 import { useT } from "./i18n-labels";
 
 // ─── Context for Portal container (Drawer popup ref) ────
@@ -492,14 +493,14 @@ function CompleteStep({
 
 // ─── Main Component ──────────────────────────────────────
 
-export function CsvImporter({
+export function CsvImporter<T extends CsvSchema>({
   open,
   onOpenChange,
   schema,
   maxFileSize,
   onImport,
   onValidate,
-}: CsvImporterProps) {
+}: CsvImporterProps<T>) {
   const t = useT();
   const [step, setStep] = useState<CsvImporterStep>("upload");
   const [file, setFile] = useState<File | null>(null);
@@ -671,20 +672,14 @@ export function CsvImporter({
     if (!file) return;
 
     const warnings = issues.filter((i) => i.level === "warning");
-    const correctedRows = new Set(corrections.map((c) => c.row)).size;
 
-    const event: CsvImportEvent = {
+    const event: CsvImportEvent<T> = {
       file,
       mappings,
       corrections,
       issues: warnings,
-      summary: {
-        totalRows: rawRows.length,
-        validRows: rawRows.length - warnings.length,
-        correctedRows,
-        skippedRows: 0,
-        warningRows: warnings.length,
-      },
+      summary: buildSummary(rawRows.length, issues, corrections),
+      buildRows: () => buildRows(file, schema, mappings, corrections),
     };
 
     setImporting(true);
@@ -694,7 +689,7 @@ export function CsvImporter({
     } finally {
       setImporting(false);
     }
-  }, [file, mappings, corrections, issues, rawRows, onImport]);
+  }, [file, mappings, corrections, issues, rawRows, onImport, schema]);
 
   const stepTitle: Record<CsvImporterStep, string> = {
     upload: t("uploadTitle"),

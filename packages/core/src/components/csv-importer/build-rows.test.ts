@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildRows } from "./build-rows";
-import type { CsvImportEvent, CsvSchema } from "./types";
+import { buildRows, buildSummary } from "./build-rows";
+import type { CsvCellIssue, CsvColumnMapping, CsvCorrection, CsvSchema } from "./types";
 import { csv } from "./validators";
 
 // Mock parseCsvFile to avoid real file I/O
@@ -33,24 +33,12 @@ describe("buildRows", () => {
       ],
     };
 
-    const event: CsvImportEvent = {
-      file: createFile("test.csv"),
-      mappings: [
-        { csvHeader: "Name", columnKey: "name" },
-        { csvHeader: "Email", columnKey: "email" },
-      ],
-      corrections: [],
-      issues: [],
-      summary: {
-        totalRows: 2,
-        validRows: 2,
-        correctedRows: 0,
-        skippedRows: 0,
-        warningRows: 0,
-      },
-    };
+    const mappings: CsvColumnMapping[] = [
+      { csvHeader: "Name", columnKey: "name" },
+      { csvHeader: "Email", columnKey: "email" },
+    ];
 
-    const rows = await buildRows(event, schema);
+    const rows = await buildRows(createFile("test.csv"), schema, mappings, []);
     expect(rows).toEqual([
       { name: "Alice", email: "alice@example.com" },
       { name: "Bob", email: "bob@example.com" },
@@ -67,24 +55,12 @@ describe("buildRows", () => {
       columns: [{ key: "name", label: "Name" }],
     };
 
-    const event: CsvImportEvent = {
-      file: createFile("test.csv"),
-      mappings: [
-        { csvHeader: "Name", columnKey: "name" },
-        { csvHeader: "Unused", columnKey: null },
-      ],
-      corrections: [],
-      issues: [],
-      summary: {
-        totalRows: 1,
-        validRows: 1,
-        correctedRows: 0,
-        skippedRows: 0,
-        warningRows: 0,
-      },
-    };
+    const mappings: CsvColumnMapping[] = [
+      { csvHeader: "Name", columnKey: "name" },
+      { csvHeader: "Unused", columnKey: null },
+    ];
 
-    const rows = await buildRows(event, schema);
+    const rows = await buildRows(createFile("test.csv"), schema, mappings, []);
     expect(rows).toEqual([{ name: "Alice" }]);
   });
 
@@ -98,28 +74,18 @@ describe("buildRows", () => {
       columns: [{ key: "name", label: "Name" }],
     };
 
-    const event: CsvImportEvent = {
-      file: createFile("test.csv"),
-      mappings: [{ csvHeader: "Name", columnKey: "name" }],
-      corrections: [
-        {
-          row: 0,
-          columnKey: "name",
-          oldValue: "Alice",
-          newValue: "Alice Updated",
-        },
-      ],
-      issues: [],
-      summary: {
-        totalRows: 1,
-        validRows: 1,
-        correctedRows: 1,
-        skippedRows: 0,
-        warningRows: 0,
-      },
-    };
+    const mappings: CsvColumnMapping[] = [{ csvHeader: "Name", columnKey: "name" }];
 
-    const rows = await buildRows(event, schema);
+    const corrections: CsvCorrection[] = [
+      {
+        row: 0,
+        columnKey: "name",
+        oldValue: "Alice",
+        newValue: "Alice Updated",
+      },
+    ];
+
+    const rows = await buildRows(createFile("test.csv"), schema, mappings, corrections);
     expect(rows).toEqual([{ name: "Alice Updated" }]);
   });
 
@@ -133,21 +99,9 @@ describe("buildRows", () => {
       columns: [{ key: "price", label: "Price", schema: csv.number() }],
     };
 
-    const event: CsvImportEvent = {
-      file: createFile("test.csv"),
-      mappings: [{ csvHeader: "Price", columnKey: "price" }],
-      corrections: [],
-      issues: [],
-      summary: {
-        totalRows: 1,
-        validRows: 1,
-        correctedRows: 0,
-        skippedRows: 0,
-        warningRows: 0,
-      },
-    };
+    const mappings: CsvColumnMapping[] = [{ csvHeader: "Price", columnKey: "price" }];
 
-    const rows = await buildRows(event, schema);
+    const rows = await buildRows(createFile("test.csv"), schema, mappings, []);
     expect(rows).toEqual([{ price: 42.5 }]);
   });
 
@@ -161,21 +115,9 @@ describe("buildRows", () => {
       columns: [{ key: "price", label: "Price", schema: csv.number() }],
     };
 
-    const event: CsvImportEvent = {
-      file: createFile("test.csv"),
-      mappings: [{ csvHeader: "Price", columnKey: "price" }],
-      corrections: [],
-      issues: [],
-      summary: {
-        totalRows: 1,
-        validRows: 0,
-        correctedRows: 0,
-        skippedRows: 0,
-        warningRows: 0,
-      },
-    };
+    const mappings: CsvColumnMapping[] = [{ csvHeader: "Price", columnKey: "price" }];
 
-    const rows = await buildRows(event, schema);
+    const rows = await buildRows(createFile("test.csv"), schema, mappings, []);
     expect(rows).toEqual([{ price: "not-a-number" }]);
   });
 
@@ -189,21 +131,124 @@ describe("buildRows", () => {
       columns: [{ key: "price", label: "Price", schema: csv.number() }],
     };
 
-    const event: CsvImportEvent = {
-      file: createFile("test.csv"),
-      mappings: [{ csvHeader: "Price", columnKey: "price" }],
-      corrections: [{ row: 0, columnKey: "price", oldValue: "bad", newValue: "99" }],
-      issues: [],
-      summary: {
-        totalRows: 1,
-        validRows: 1,
-        correctedRows: 1,
-        skippedRows: 0,
-        warningRows: 0,
-      },
-    };
+    const mappings: CsvColumnMapping[] = [{ csvHeader: "Price", columnKey: "price" }];
 
-    const rows = await buildRows(event, schema);
+    const corrections: CsvCorrection[] = [
+      { row: 0, columnKey: "price", oldValue: "bad", newValue: "99" },
+    ];
+
+    const rows = await buildRows(createFile("test.csv"), schema, mappings, corrections);
     expect(rows).toEqual([{ price: 99 }]);
+  });
+});
+
+describe("buildSummary", () => {
+  it("returns all zeros for empty inputs", () => {
+    expect(buildSummary(0, [], [])).toEqual({
+      totalRows: 0,
+      validRows: 0,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 0,
+    });
+  });
+
+  it("counts all rows as valid when there are no issues", () => {
+    expect(buildSummary(5, [], [])).toEqual({
+      totalRows: 5,
+      validRows: 5,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 0,
+    });
+  });
+
+  it("counts warning rows and subtracts from valid rows", () => {
+    const issues: CsvCellIssue[] = [
+      {
+        rowIndex: 0,
+        columnKey: "name",
+        level: "warning",
+        message: "too short",
+      },
+      { rowIndex: 2, columnKey: "price", level: "warning", message: "unusual" },
+    ];
+
+    expect(buildSummary(5, issues, [])).toEqual({
+      totalRows: 5,
+      validRows: 3,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 2,
+    });
+  });
+
+  it("ignores error-level issues (only warnings affect the summary)", () => {
+    const issues: CsvCellIssue[] = [
+      { rowIndex: 0, columnKey: "name", level: "error", message: "invalid" },
+      { rowIndex: 1, columnKey: "price", level: "warning", message: "unusual" },
+    ];
+
+    expect(buildSummary(3, issues, [])).toEqual({
+      totalRows: 3,
+      validRows: 2,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 1,
+    });
+  });
+
+  it("counts distinct corrected rows", () => {
+    const corrections: CsvCorrection[] = [
+      { row: 0, columnKey: "name", oldValue: "a", newValue: "b" },
+      { row: 0, columnKey: "price", oldValue: "1", newValue: "2" },
+      { row: 3, columnKey: "name", oldValue: "c", newValue: "d" },
+    ];
+
+    expect(buildSummary(5, [], corrections)).toEqual({
+      totalRows: 5,
+      validRows: 5,
+      correctedRows: 2,
+      skippedRows: 0,
+      warningRows: 0,
+    });
+  });
+
+  it("counts distinct warning rows (multiple issues on the same row count as one)", () => {
+    const issues: CsvCellIssue[] = [
+      {
+        rowIndex: 0,
+        columnKey: "name",
+        level: "warning",
+        message: "too short",
+      },
+      { rowIndex: 0, columnKey: "price", level: "warning", message: "unusual" },
+    ];
+
+    expect(buildSummary(3, issues, [])).toEqual({
+      totalRows: 3,
+      validRows: 2,
+      correctedRows: 0,
+      skippedRows: 0,
+      warningRows: 1,
+    });
+  });
+
+  it("combines warnings and corrections", () => {
+    const issues: CsvCellIssue[] = [
+      { rowIndex: 1, columnKey: "sku", level: "warning", message: "duplicate" },
+    ];
+    const corrections: CsvCorrection[] = [
+      { row: 0, columnKey: "name", oldValue: "x", newValue: "y" },
+      { row: 2, columnKey: "name", oldValue: "a", newValue: "b" },
+    ];
+
+    expect(buildSummary(4, issues, corrections)).toEqual({
+      totalRows: 4,
+      validRows: 3,
+      correctedRows: 2,
+      skippedRows: 0,
+      warningRows: 1,
+    });
   });
 });

@@ -3,14 +3,14 @@ import type { CsvSchema, CsvImportEvent, CsvImporterProps, CsvCellIssue, ParsedR
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-type UseCsvImporterOptions = {
-  schema: CsvSchema;
-  onImport: (event: CsvImportEvent) => void | Promise<void>;
+type UseCsvImporterOptions<T extends CsvSchema> = {
+  schema: T;
+  onImport: (event: CsvImportEvent<T>) => void | Promise<void>;
   onValidate?: (rows: ParsedRow[]) => Promise<CsvCellIssue[]>;
   maxFileSize?: number;
 };
 
-export function useCsvImporter(options: UseCsvImporterOptions) {
+export function useCsvImporter<const T extends CsvSchema>(options: UseCsvImporterOptions<T>) {
   const { schema, onImport, onValidate, maxFileSize } = options;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -18,7 +18,7 @@ export function useCsvImporter(options: UseCsvImporterOptions) {
     setIsOpen(true);
   }, []);
 
-  const props: CsvImporterProps = {
+  const props: CsvImporterProps<T> = {
     open: isOpen,
     onOpenChange: setIsOpen,
     schema,

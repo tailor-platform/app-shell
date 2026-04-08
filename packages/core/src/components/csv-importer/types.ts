@@ -11,7 +11,7 @@ export type CsvColumn = {
   /** Whether this column must be mapped (default: false). */
   required?: boolean;
   /** Alternative CSV header names for automatic matching. */
-  aliases?: string[];
+  aliases?: readonly string[];
   /**
    * A Standard Schema-compatible validator for this column.
    * Handles both coercion (transform) and validation in a single declaration.
@@ -26,7 +26,20 @@ export type CsvColumn = {
 
 /** The full schema definition for a CSV import. */
 export type CsvSchema = {
-  columns: CsvColumn[];
+  columns: readonly CsvColumn[];
+};
+
+/**
+ * Infer the row object type from a CsvSchema definition.
+ * Each column key becomes a property; the value type is derived from the
+ * column's Standard Schema output type (falls back to `unknown`).
+ */
+export type InferCsvRow<T extends CsvSchema> = {
+  [C in T["columns"][number] as C["key"]]: C extends {
+    schema: StandardSchemaV1<infer _I, infer O>;
+  }
+    ? O
+    : unknown;
 };
 
 /** The row data passed to `onValidate`, after transforms have been applied. */
@@ -70,7 +83,7 @@ export type CsvCorrection = {
 };
 
 /** The event payload passed to the onImport callback. */
-export type CsvImportEvent = {
+export type CsvImportEvent<T extends CsvSchema = CsvSchema> = {
   /** The original file selected by the user. */
   file: File;
   /** The confirmed column mappings. */
@@ -81,23 +94,35 @@ export type CsvImportEvent = {
   issues: CsvCellIssue[];
   /** Summary statistics. */
   summary: {
+    /** Total number of data rows in the CSV (excluding the header row). */
     totalRows: number;
+    /** Rows with no warning-level issues. */
     validRows: number;
+    /** Distinct rows where the user made at least one correction. */
     correctedRows: number;
+    /** Rows that were skipped during import. */
     skippedRows: number;
+    /** Rows that have at least one warning-level issue. */
     warningRows: number;
   };
+  /**
+   * Reconstruct parsed rows from the original file, applying mappings,
+   * schema coercion, and user corrections.
+   *
+   * The return type is inferred from the schema definition.
+   */
+  buildRows: () => Promise<InferCsvRow<T>[]>;
 };
 
 /** The step in the CSV import flow. */
 export type CsvImporterStep = "upload" | "mapping" | "review" | "complete";
 
 /** Internal props for the CsvImporter component (managed by useCsvImporter). */
-export type CsvImporterProps = {
+export type CsvImporterProps<T extends CsvSchema = CsvSchema> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  schema: CsvSchema;
+  schema: T;
   maxFileSize: number;
-  onImport: (event: CsvImportEvent) => void | Promise<void>;
+  onImport: (event: CsvImportEvent<T>) => void | Promise<void>;
   onValidate?: (rows: ParsedRow[]) => Promise<CsvCellIssue[]>;
 };

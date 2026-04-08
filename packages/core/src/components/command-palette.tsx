@@ -168,7 +168,10 @@ export function useCommandPalette({
       if (item.type === "route") {
         navigate(item.route.path);
       } else {
-        item.action.onSelect();
+        const result = item.action.onSelect();
+        if (result instanceof Promise) {
+          result.catch((err) => console.error("[CommandPalette] onSelect error:", err));
+        }
       }
       setOpen(false);
       setSearchInternal("");

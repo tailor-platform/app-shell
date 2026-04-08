@@ -739,6 +739,8 @@ describe("useCommandPalette with searchSources", () => {
       });
       expect(result.current.activeSearchSource).not.toBeNull();
       expect(result.current.activeSearchSource?.prefix).toBe("PO");
+      // Prefix is locked in state; input shows only the query part
+      expect(result.current.search).toBe("");
     });
 
     it("should hide actions and routes in search mode", () => {
@@ -750,7 +752,7 @@ describe("useCommandPalette with searchSources", () => {
       expect(result.current.filteredRoutes).toHaveLength(0);
     });
 
-    it("should set search input to prefix when selecting a search-mode item", () => {
+    it("should set search input to empty and lock source when selecting a search-mode item", () => {
       const { result } = renderWithSources();
       const modeItem = result.current.selectableItems.find((i) => i.type === "search-mode");
       expect(modeItem).toBeDefined();
@@ -759,9 +761,9 @@ describe("useCommandPalette with searchSources", () => {
         result.current.handleSelectItem(modeItem!);
       });
 
-      // Should keep palette open (not closed)
-      // Search should be set to "PO: "
-      expect(result.current.search).toBe("PO: ");
+      // Should keep palette open with source locked; input is empty
+      expect(result.current.search).toBe("");
+      expect(result.current.activeSearchSource?.prefix).toBe("PO");
     });
   });
 
@@ -809,7 +811,7 @@ describe("useCommandPalette with searchSources", () => {
       expect(result.current.open).toBe(false);
     });
 
-    it("should clear search results when leaving search mode", async () => {
+    it("should clear search results when leaving search mode via Backspace", async () => {
       mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
 
       const { result } = renderWithSources();
@@ -821,9 +823,12 @@ describe("useCommandPalette with searchSources", () => {
         expect(result.current.searchResults).toHaveLength(1);
       });
 
-      // Leave search mode
+      // Clear query first, then Backspace to exit search mode
       act(() => {
-        result.current.setSearch("plain text");
+        result.current.setSearch("");
+      });
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("Backspace"));
       });
 
       await waitFor(() => {

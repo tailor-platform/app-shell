@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
+import { useReducer, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
 import { SearchIcon, LoaderCircleIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
@@ -119,6 +119,107 @@ function filterActions(
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+// ── Reducer State (discriminated union) ──
+
+type PaletteState =
+  | {
+      mode: "browse";
+      search: string;
+      selectedIndex: number;
+    }
+  | {
+      mode: "search";
+      source: SearchSource;
+      query: string;
+      selectedIndex: number;
+      results: Array<CommandPaletteSearchResult>;
+      isSearching: boolean;
+    };
+
+type PaletteAction =
+  | {
+      type: "SET_SEARCH";
+      value: string;
+      detectedSource?: SearchSource;
+      detectedQuery?: string;
+    }
+  | { type: "ARROW_DOWN"; maxIndex: number }
+  | { type: "ARROW_UP" }
+  | { type: "ENTER_SEARCH_MODE"; source: SearchSource }
+  | { type: "EXIT_SEARCH_MODE" }
+  | { type: "SEARCH_START" }
+  | { type: "SEARCH_DONE"; results: Array<CommandPaletteSearchResult> }
+  | { type: "SEARCH_FAIL" }
+  | { type: "RESET" };
+
+const initialPaletteState: PaletteState = {
+  mode: "browse",
+  search: "",
+  selectedIndex: 0,
+};
+
+const EMPTY_RESULTS: Array<CommandPaletteSearchResult> = [];
+
+function paletteReducer(state: PaletteState, action: PaletteAction): PaletteState {
+  switch (action.type) {
+    case "SET_SEARCH":
+      if (state.mode === "search") {
+        return { ...state, query: action.value, selectedIndex: 0 };
+      }
+      if (action.detectedSource) {
+        return {
+          mode: "search",
+          source: action.detectedSource,
+          query: action.detectedQuery ?? "",
+          selectedIndex: 0,
+          results: [],
+          isSearching: false,
+        };
+      }
+      return { ...state, search: action.value, selectedIndex: 0 };
+
+    case "ENTER_SEARCH_MODE":
+      return {
+        mode: "search",
+        source: action.source,
+        query: "",
+        selectedIndex: 0,
+        results: [],
+        isSearching: false,
+      };
+
+    case "EXIT_SEARCH_MODE":
+      return initialPaletteState;
+
+    case "SEARCH_START":
+      if (state.mode !== "search") return state;
+      return { ...state, isSearching: true, results: [] };
+
+    case "SEARCH_DONE":
+      if (state.mode !== "search") return state;
+      return { ...state, results: action.results, isSearching: false };
+
+    case "SEARCH_FAIL":
+      if (state.mode !== "search") return state;
+      return { ...state, results: [], isSearching: false };
+
+    case "ARROW_DOWN":
+      return {
+        ...state,
+        selectedIndex: Math.min(state.selectedIndex + 1, action.maxIndex),
+      };
+
+    case "ARROW_UP":
+      return {
+        ...state,
+        selectedIndex: Math.max(state.selectedIndex - 1, 0),
+      };
+
+    case "RESET":
+      return initialPaletteState;
+  }
+}
+
 /**
  * Parse the search input to detect an active search mode.
  *
@@ -152,17 +253,15 @@ export function useCommandPalette({
 }: UseCommandPaletteOptions): UseCommandPaletteReturn {
   const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
-  const [search, setSearchInternal] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [searchResults, setSearchResults] = useState<Array<CommandPaletteSearchResult>>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [state, dispatch] = useReducer(paletteReducer, initialPaletteState);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Detect active search mode from input
-  const { activeSource, searchQuery } = useMemo(
-    () => parseSearchMode(search, searchSources),
-    [search, searchSources],
-  );
+  // Derive flat values from discriminated state
+  const search = state.mode === "search" ? state.query : state.search;
+  const selectedIndex = state.selectedIndex;
+  const activeSource = state.mode === "search" ? state.source : null;
+  const searchResults = state.mode === "search" ? state.results : EMPTY_RESULTS;
+  const isSearching = state.mode === "search" ? state.isSearching : false;
 
   // In default mode: sync filter actions & routes
   const filteredActions = useMemo(
@@ -177,16 +276,12 @@ export function useCommandPalette({
   // Debounced async search when in search mode
   useEffect(() => {
     if (!activeSource) {
-      // Clear results when leaving search mode
-      setSearchResults([]);
-      setIsSearching(false);
       abortControllerRef.current?.abort();
       abortControllerRef.current = null;
       return;
     }
 
-    setIsSearching(true);
-    setSearchResults([]);
+    dispatch({ type: "SEARCH_START" });
 
     const timer = setTimeout(() => {
       // Abort previous in-flight request
@@ -195,20 +290,15 @@ export function useCommandPalette({
       abortControllerRef.current = controller;
 
       activeSource
-        .search(searchQuery, { signal: controller.signal })
+        .search(search, { signal: controller.signal })
         .then((results) => {
           if (!controller.signal.aborted) {
-            setSearchResults(results);
-            setIsSearching(false);
+            dispatch({ type: "SEARCH_DONE", results });
           }
         })
-        .catch((err) => {
+        .catch(() => {
           if (!controller.signal.aborted) {
-            // On non-abort errors, clear results and stop loading
-            if (err instanceof Error && err.name !== "AbortError") {
-              setSearchResults([]);
-            }
-            setIsSearching(false);
+            dispatch({ type: "SEARCH_FAIL" });
           }
         });
     }, SEARCH_DEBOUNCE_MS);
@@ -216,7 +306,7 @@ export function useCommandPalette({
     return () => {
       clearTimeout(timer);
     };
-  }, [activeSource, searchQuery]);
+  }, [activeSource, search]);
 
   // Unified selectable items list
   const selectableItems = useMemo<Array<SelectableItem>>(() => {
@@ -244,21 +334,30 @@ export function useCommandPalette({
     return items;
   }, [activeSource, searchResults, search, searchSources, filteredActions, filteredRoutes]);
 
-  // Wrapper to reset selectedIndex when search changes
-  const setSearch = useCallback((newSearch: string) => {
-    setSearchInternal(newSearch);
-    setSelectedIndex(0);
-  }, []);
+  // Wrapper that dispatches SET_SEARCH with auto-detected search mode
+  const setSearch = useCallback(
+    (newSearch: string) => {
+      if (state.mode === "search") {
+        dispatch({ type: "SET_SEARCH", value: newSearch });
+        return;
+      }
+      const parsed = parseSearchMode(newSearch, searchSources);
+      dispatch({
+        type: "SET_SEARCH",
+        value: newSearch,
+        detectedSource: parsed.activeSource ?? undefined,
+        detectedQuery: parsed.activeSource ? parsed.searchQuery : undefined,
+      });
+    },
+    [state.mode, searchSources],
+  );
 
   // Handler for dialog open state changes
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       setOpen(newOpen);
       if (!newOpen) {
-        setSearchInternal("");
-        setSelectedIndex(0);
-        setSearchResults([]);
-        setIsSearching(false);
+        dispatch({ type: "RESET" });
         abortControllerRef.current?.abort();
         abortControllerRef.current = null;
       }
@@ -278,10 +377,8 @@ export function useCommandPalette({
   const handleSelectItem = useCallback(
     (item: SelectableItem) => {
       if (item.type === "search-mode") {
-        // Enter search mode: set prefix in input, keep palette open
-        setSearchInternal(`${item.source.prefix}: `);
-        setSelectedIndex(0);
-        setSearchResults([]);
+        // Enter search mode: lock source and clear input
+        dispatch({ type: "ENTER_SEARCH_MODE", source: item.source });
         return;
       }
       if (item.type === "search-result") {
@@ -295,8 +392,7 @@ export function useCommandPalette({
         }
       }
       setOpen(false);
-      setSearchInternal("");
-      setSearchResults([]);
+      dispatch({ type: "RESET" });
     },
     [navigate, setOpen],
   );
@@ -309,11 +405,14 @@ export function useCommandPalette({
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setSelectedIndex((prev) => (prev < selectableItems.length - 1 ? prev + 1 : prev));
+          dispatch({
+            type: "ARROW_DOWN",
+            maxIndex: selectableItems.length - 1,
+          });
           break;
         case "ArrowUp":
           e.preventDefault();
-          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+          dispatch({ type: "ARROW_UP" });
           break;
         case "Enter":
           e.preventDefault();
@@ -321,9 +420,17 @@ export function useCommandPalette({
             handleSelectItem(selectableItems[selectedIndex]);
           }
           break;
+        case "Backspace":
+          if (activeSource && search === "") {
+            e.preventDefault();
+            dispatch({ type: "EXIT_SEARCH_MODE" });
+            abortControllerRef.current?.abort();
+            abortControllerRef.current = null;
+          }
+          break;
       }
     },
-    [selectableItems, selectedIndex, handleSelectItem],
+    [selectableItems, selectedIndex, handleSelectItem, activeSource, search],
   );
 
   return {
@@ -392,6 +499,11 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
         <Dialog.Title className="astw:sr-only">{t("commandPaletteSearch")}</Dialog.Title>
         <div className="astw:flex astw:items-center astw:border-b astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
+          {activeSearchSource && (
+            <span className="astw:inline-flex astw:items-center astw:shrink-0 astw:rounded astw:bg-muted astw:px-1.5 astw:py-0.5 astw:mr-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+              {activeSearchSource.prefix}
+            </span>
+          )}
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}

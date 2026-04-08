@@ -107,9 +107,6 @@ export function useCommandPaletteDispatch(): DispatchContextValue {
  * automatically unregistered on unmount. Re-registering with new actions
  * replaces the previous set.
  *
- * Note: `icon` changes alone do not trigger re-registration. If you need
- * dynamic icons, also change the action's `key` or `label`.
- *
  * @example
  * ```tsx
  * import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
@@ -121,7 +118,10 @@ export function useCommandPaletteDispatch(): DispatchContextValue {
  * }
  * ```
  */
-export function useRegisterCommandPaletteActions(group: string, actions: CommandPaletteAction[]) {
+export function useRegisterCommandPaletteActions(
+  group: string,
+  actions: Omit<CommandPaletteAction, "group">[],
+) {
   const id = useId();
   const { register } = useCommandPaletteDispatch();
 
@@ -129,7 +129,7 @@ export function useRegisterCommandPaletteActions(group: string, actions: Command
   actionsRef.current = actions;
 
   // Derive a stable dependency from serialisable action properties.
-  // Callback identity changes are absorbed by the ref.
+  //Callback identity changes are absorbed by the ref.
   const depsKey = actions.map((a) => `${a.key}\0${a.label}`).join("\n");
 
   useEffect(() => {
@@ -137,7 +137,7 @@ export function useRegisterCommandPaletteActions(group: string, actions: Command
       id,
       actionsRef.current.map((a) => ({
         ...a,
-        group: a.group ?? group,
+        group,
         onSelect: () => actionsRef.current.find((c) => c.key === a.key)?.onSelect(),
       })),
     );

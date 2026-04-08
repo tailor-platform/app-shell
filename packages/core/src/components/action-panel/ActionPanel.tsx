@@ -99,6 +99,9 @@ function ActionRow({ action }: { action: ActionItem }) {
  * shortcut. The actions are grouped under the panel's `title`. Registration
  * is cleaned up when the ActionPanel unmounts.
  *
+ * NOTE: This component must be rendered inside `AppShell` (which provides
+ * `CommandPaletteProvider`). Rendering it outside that tree will throw.
+ *
  * @example
  * ```tsx
  * const navigate = useNavigate();

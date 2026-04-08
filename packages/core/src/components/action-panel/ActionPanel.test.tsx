@@ -234,7 +234,8 @@ describe("ActionPanel context registration", () => {
   it("unregisters actions when ActionPanel unmounts", () => {
     const onActions = vi.fn();
 
-    const { unmount } = render(
+    // Use rerender so the same CommandPaletteProvider instance survives
+    const { rerender } = render(
       <CommandPaletteProvider>
         <ActionPanel
           title="Panel"
@@ -255,18 +256,14 @@ describe("ActionPanel context registration", () => {
     const beforeUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
     expect(beforeUnmount).toHaveLength(1);
 
-    // Unmount triggers cleanup
-    unmount();
-
-    // Re-render just the reader to check state
-    const onActions2 = vi.fn();
-    render(
+    // Remove ActionPanel but keep the provider alive
+    rerender(
       <CommandPaletteProvider>
-        <ActionsReader onActions={onActions2} />
+        <ActionsReader onActions={onActions} />
       </CommandPaletteProvider>,
     );
 
-    const afterUnmount = onActions2.mock.calls[onActions2.mock.calls.length - 1][0];
+    const afterUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
     expect(afterUnmount).toHaveLength(0);
   });
 });

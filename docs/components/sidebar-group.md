@@ -455,7 +455,7 @@ Without `to`, only the chevron is clickable (for expand/collapse).
 ## Related Concepts
 
 - [Sidebar Navigation](../concepts/sidebar-navigation.md) - Sidebar customization guide
-- [Internationalization](../guides/internationalization.md) - Multi-language support
+- [Internationalization](../api/define-i18n-labels.md) - Multi-language support
 
 ## API Reference
 

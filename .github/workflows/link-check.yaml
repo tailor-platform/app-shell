@@ -18,6 +18,6 @@ jobs:
         with:
           args: |
             --no-progress
-            --exclude-mail
+            --exclude 'mailto:'
             'docs/**/*.md'
           fail: true

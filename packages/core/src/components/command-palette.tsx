@@ -543,26 +543,26 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
                     const source = item.type === "search-mode" ? item.source : null;
                     if (!source) return null;
                     return (
-                    <button
-                      key={`search-mode-${source.prefix}`}
-                      data-index={index}
-                      onClick={() => handleSelectItem({ type: "search-mode", source })}
-                      className={cn(
-                        paletteItemBase,
-                        "astw:items-center astw:gap-2",
-                        paletteItemHighlight(index === selectedIndex),
-                      )}
-                    >
-                      {source.icon && (
-                        <span className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:shrink-0">
-                          {source.icon}
+                      <button
+                        key={`search-mode-${source.prefix}`}
+                        data-index={index}
+                        onClick={() => handleSelectItem({ type: "search-mode", source })}
+                        className={cn(
+                          paletteItemBase,
+                          "astw:items-center astw:gap-2",
+                          paletteItemHighlight(index === selectedIndex),
+                        )}
+                      >
+                        {source.icon && (
+                          <span className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:shrink-0">
+                            {source.icon}
+                          </span>
+                        )}
+                        <span className="astw:font-mono astw:text-xs astw:text-muted-foreground astw:shrink-0">
+                          {source.prefix}:
                         </span>
-                      )}
-                      <span className="astw:font-mono astw:text-xs astw:text-muted-foreground astw:shrink-0">
-                        {source.prefix}:
-                      </span>
-                      <span className="astw:truncate">{source.title}</span>
-                    </button>
+                        <span className="astw:truncate">{source.title}</span>
+                      </button>
                     );
                   })}
                 </>

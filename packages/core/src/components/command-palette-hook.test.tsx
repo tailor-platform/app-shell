@@ -725,6 +725,28 @@ describe("useCommandPalette with searchSources", () => {
       expect(modeItems).toHaveLength(0);
     });
 
+    it("should filter search-mode items by title match", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("order");
+      });
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      // "Purchase Orders" title matches "order"
+      expect(modeItems).toHaveLength(1);
+      expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("PO");
+    });
+
+    it("should filter search-mode items by prefix match (case-insensitive)", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("cu");
+      });
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      // "CU" prefix matches "cu"
+      expect(modeItems).toHaveLength(1);
+      expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("CU");
+    });
+
     it("should show routes in default mode", () => {
       const { result } = renderWithSources();
       expect(result.current.filteredRoutes).toHaveLength(2);
@@ -858,5 +880,102 @@ describe("useCommandPalette with searchSources", () => {
       expect(result.current.search).toBe("");
       expect(result.current.isSearching).toBe(false);
     });
+  });
+});
+
+describe("useCommandPalette with actions, routes, and searchSources combined", () => {
+  const mockOnSelect = vi.fn();
+
+  const createMixedActions = (): Array<CommandPaletteAction> => [
+    {
+      key: "create-order",
+      label: "Create Order",
+      group: "Actions",
+      onSelect: mockOnSelect,
+    },
+    {
+      key: "export-csv",
+      label: "Export CSV",
+      group: "Actions",
+      onSelect: vi.fn(),
+    },
+  ];
+
+  const createMixedSources = (): Array<SearchSource> => [
+    {
+      prefix: "ORD",
+      title: "Orders",
+      search: vi.fn().mockResolvedValue([]),
+    },
+    {
+      prefix: "CU",
+      title: "Customers",
+      search: vi.fn().mockResolvedValue([]),
+    },
+  ];
+
+  const renderMixed = (
+    routes = createTestRoutes2(),
+    contextualActions = createMixedActions(),
+    searchSources = createMixedSources(),
+  ) => {
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({
+          routes,
+          contextualActions,
+          searchSources,
+          open,
+          setOpen,
+        });
+      },
+      { wrapper },
+    );
+  };
+
+  beforeEach(() => {
+    mockOnSelect.mockClear();
+  });
+
+  it("should show all item types when search is empty", () => {
+    const { result } = renderMixed();
+    const types = result.current.selectableItems.map((i) => i.type);
+    // 2 search-modes + 2 actions + 2 routes
+    expect(types).toEqual(["search-mode", "search-mode", "action", "action", "route", "route"]);
+  });
+
+  it("should filter across all types when search matches multiple", () => {
+    const { result } = renderMixed();
+    act(() => {
+      // "order" matches: route "Orders", action "Create Order", search-mode "Orders" (title)
+      result.current.setSearch("order");
+    });
+    const types = result.current.selectableItems.map((i) => i.type);
+    expect(types).toContain("search-mode");
+    expect(types).toContain("action");
+    expect(types).toContain("route");
+    expect(result.current.selectableItems).toHaveLength(3);
+  });
+
+  it("should show only routes when search matches no action or source", () => {
+    const { result } = renderMixed();
+    act(() => {
+      result.current.setSearch("dashboard");
+    });
+    const types = result.current.selectableItems.map((i) => i.type);
+    expect(types).toEqual(["route"]);
+  });
+
+  it("should show only search-mode when search matches only a source prefix", () => {
+    const { result } = renderMixed();
+    act(() => {
+      result.current.setSearch("cu");
+    });
+    const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+    expect(modeItems).toHaveLength(1);
+    expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("CU");
+    // No actions or routes match "cu"
+    expect(result.current.selectableItems).toHaveLength(1);
   });
 });

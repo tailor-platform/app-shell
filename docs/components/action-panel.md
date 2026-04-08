@@ -93,6 +93,25 @@ const handleConfirm = async () => {
 />;
 ```
 
+## CommandPalette Integration
+
+`ActionPanel` automatically registers its enabled actions to the CommandPalette. Actions that are not `disabled`, not `loading`, and have an `onClick` handler are registered under the panel's `title` as the group name. Registration is cleaned up when the component unmounts.
+
+This means users can discover and trigger any visible ActionPanel action via `Cmd+K` / `Ctrl+K` without any additional setup.
+
+```tsx
+// Actions in this panel will automatically appear in the CommandPalette
+<ActionPanel
+  title="Order Actions"
+  actions={[
+    { key: "confirm", label: "Confirm order", icon: <CheckIcon />, onClick: handleConfirm },
+    { key: "cancel", label: "Cancel order", icon: <XIcon />, onClick: handleCancel },
+  ]}
+/>
+```
+
+> **Note:** `ActionPanel` must be rendered inside `AppShell` (which provides the required `CommandPaletteProvider`). Rendering it outside that tree will throw.
+
 ## Backend-Driven Pattern
 
 In ERP apps, the backend often decides which actions are available for a document. A common setup:

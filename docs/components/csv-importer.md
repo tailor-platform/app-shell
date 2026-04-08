@@ -21,6 +21,7 @@ import {
   type CsvCorrection,
   type CsvColumnMapping,
   type ParsedRow,
+  type InferCsvRow,
 } from "@tailor-platform/app-shell";
 ```
 

@@ -104,6 +104,46 @@ const productsModule = defineModule({
 });
 ```
 
+## Contextual Actions
+
+In addition to navigation results, the CommandPalette can surface page-level actions. Use the `useRegisterCommandPaletteActions` hook to register actions that appear in the **Actions** section of the palette. Actions are unregistered automatically when the component unmounts.
+
+```tsx
+import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+
+function OrderDetailPage() {
+  useRegisterCommandPaletteActions("Order Actions", [
+    { key: "confirm", label: "Confirm order", onSelect: handleConfirm },
+    { key: "cancel", label: "Cancel order", icon: <XIcon />, onSelect: handleCancel },
+  ]);
+}
+```
+
+### Parameters
+
+| Parameter | Type                     | Description                                                |
+| --------- | ------------------------ | ---------------------------------------------------------- |
+| `group`   | `string`                 | Display group name for the actions shown in the palette    |
+| `actions` | `CommandPaletteAction[]` | List of actions to register (see `CommandPaletteAction`)   |
+
+### `CommandPaletteAction`
+
+| Property   | Type                          | Description                                                                              |
+| ---------- | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| `key`      | `string`                      | Unique key for React reconciliation                                                      |
+| `label`    | `string`                      | Visible label shown in the palette; also used for search matching                        |
+| `icon`     | `ReactNode`                   | Optional icon rendered next to the label                                                 |
+| `group`    | `string`                      | Optional group override; defaults to the `group` parameter passed to the hook            |
+| `onSelect` | `() => void \| Promise<void>` | Callback invoked when the user selects the action                                        |
+
+> **Note:** `icon` changes alone do not trigger re-registration. To reflect a dynamic icon update, also change the action's `key` or `label`.
+
+### ActionPanel Integration
+
+When you use the [`ActionPanel`](./action-panel.md) component, its enabled actions (not `disabled`, not `loading`, and with an `onClick` handler) are automatically registered to the CommandPalette under the panel's `title`. No additional setup is required.
+
+For more details see [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md).
+
 ## Customization
 
 ### Custom Palette (Advanced)

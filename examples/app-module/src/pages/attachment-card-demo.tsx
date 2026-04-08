@@ -47,6 +47,7 @@ const AttachmentCardDemoPage = () => {
         </p>
         <AttachmentCard
           title="Product images (controlled mode)"
+          description="Images, PDF, or Word — max 10 MB per file."
           uploadLabel="Upload image"
           accept="image/*,.pdf,.doc,.docx"
           items={items}

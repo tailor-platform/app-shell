@@ -1,3 +1,5 @@
+import type * as React from "react";
+
 export interface AttachmentItem {
   /** Unique identifier for the attachment item. */
   id: string;
@@ -14,6 +16,11 @@ export interface AttachmentItem {
 interface AttachmentCardBaseProps {
   /** Card title text. */
   title?: string;
+  /**
+   * Optional helper text shown under the title (e.g. accepted formats and max file size).
+   * Omit when no supplementary guidance is needed.
+   */
+  description?: React.ReactNode;
   /** List of attachments to render. */
   items?: AttachmentItem[];
   /** Called when delete action is selected for an item. */

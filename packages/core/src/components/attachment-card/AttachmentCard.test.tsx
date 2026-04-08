@@ -56,6 +56,20 @@ describe("AttachmentCard", () => {
     expect(screen.getByRole("button", { name: "Upload image" })).toBeDefined();
   });
 
+  it("renders optional description under the title", () => {
+    render(
+      <AttachmentCard
+        title="Documents"
+        description="PDF and images only. Max 5 MB."
+        uploadLabel="Add file"
+      />,
+    );
+    expect(screen.getByText("PDF and images only. Max 5 MB.")).toBeDefined();
+    expect(document.querySelector('[data-slot="attachment-card-description"]')?.textContent).toBe(
+      "PDF and images only. Max 5 MB.",
+    );
+  });
+
   it("renders image and file preview branches", () => {
     render(<AttachmentCard items={mixedItems} />);
     expect(screen.getByRole("img", { name: "shoe-red.png" })).toBeDefined();

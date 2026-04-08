@@ -1,11 +1,11 @@
 ---
 title: AttachmentCard
-description: Card component for uploading, previewing, and managing attachments
+description: Card for uploading, previewing, and managing attachments, with optional title and helper text
 ---
 
 # AttachmentCard
 
-`AttachmentCard` is a reusable file/image attachment surface for ERP detail pages. It provides a header with upload affordance, drag-and-drop upload support, image/file preview tiles, and per-item menu actions for download and delete.
+`AttachmentCard` is a reusable file/image attachment surface for ERP detail pages. It provides a header with an optional title, optional helper text under the title, upload affordance, drag-and-drop upload support, image/file preview tiles, and per-item menu actions for download and delete.
 
 ## Import
 
@@ -25,6 +25,7 @@ const items: AttachmentItem[] = [
 
 <AttachmentCard
   title="Product images"
+  description="PNG, JPG, or PDF — max 10 MB per file."
   items={items}
   uploadLabel="Upload image"
   accept="image/*,.pdf"
@@ -34,11 +35,19 @@ const items: AttachmentItem[] = [
 />;
 ```
 
+## Title and description
+
+- **`title`** sets the main heading in the card header (default `"Attachments"`).
+- **`description`** is optional. When set, it renders as secondary helper text directly under the title—use it to explain accepted formats, maximum file size, or other constraints. Omit it when no extra guidance is needed.
+- The description is informational only: it does not enforce limits. Pair it with your own validation and with the `accept` attribute (and/or logic inside `onUpload` / `uploadFile`) for real restrictions.
+- You can pass a string or any `React.ReactNode` (for example, inline emphasis or a short link). The rendered wrapper uses `data-slot="attachment-card-description"` for styling or tests.
+
 ## Props
 
 | Prop            | Type                                          | Default         | Description                                                       |
 | --------------- | --------------------------------------------- | --------------- | ----------------------------------------------------------------- |
 | `title`         | `string`                                      | `"Attachments"` | Card heading text                                                 |
+| `description`   | `React.ReactNode`                             | -               | Optional helper under the title (formats, size limits, etc.)      |
 | `items`         | `AttachmentItem[]`                            | `[]`            | Attachment list rendered as preview tiles                         |
 | `onUpload`      | `(files: File[]) => void`                     | -               | Controlled upload callback for file input + drag/drop             |
 | `uploadFile`    | `(file: File) => Promise<AttachmentItem>`     | -               | Optional async upload handler for built-in uploading lifecycle UI |
@@ -71,6 +80,7 @@ interface AttachmentItem {
 
 ## Behavior
 
+- **Header layout**: the title and optional description sit in the left column; the “Drag and drop…” hint (on wide viewports), upload button, and hidden file input sit on the right, top-aligned with the title block.
 - **Image items** (`mimeType` starts with `image/`) render as 120x120 image thumbnails.
 - **Non-image items** render as 120x120 file tiles with icon and wrapped filename.
 - **Drag and drop** is supported on the entire card container.

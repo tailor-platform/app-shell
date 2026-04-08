@@ -68,6 +68,7 @@ function mergeAttachmentItems(externalItems: AttachmentItem[], localItems: Attac
 
 export function AttachmentCard({
   title = "Attachments",
+  description,
   items = [],
   onUpload,
   uploadFile,
@@ -224,7 +225,9 @@ export function AttachmentCard({
       data-slot="attachment-card"
       className={cn(
         "astw:@container astw:transition-colors",
-        isDragOver && !disabled && "astw:border-dashed astw:border-primary astw:ring-1 astw:ring-primary/30",
+        isDragOver &&
+          !disabled &&
+          "astw:border-dashed astw:border-primary astw:ring-1 astw:ring-primary/30",
         className,
       )}
       onDragOver={(event) => event.preventDefault()}
@@ -233,9 +236,19 @@ export function AttachmentCard({
       onDrop={handleDrop}
     >
       <div className={cn("astw:px-5 astw:pt-5", hasItems ? "astw:pb-4" : "astw:pb-5")}>
-        <div className="astw:flex astw:w-full astw:items-center astw:justify-between astw:gap-4">
-          <h3 className="astw:text-lg astw:font-semibold astw:text-card-foreground">{title}</h3>
-          <div className="astw:flex astw:items-center astw:gap-2 astw:text-sm">
+        <div className="astw:flex astw:w-full astw:items-start astw:justify-between astw:gap-4">
+          <div className="astw:min-w-0 astw:flex-1 astw:space-y-1">
+            <h3 className="astw:text-lg astw:font-semibold astw:text-card-foreground">{title}</h3>
+            {description ? (
+              <div
+                data-slot="attachment-card-description"
+                className="astw:text-sm astw:text-muted-foreground"
+              >
+                {description}
+              </div>
+            ) : null}
+          </div>
+          <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2 astw:text-sm">
             <span className="astw:hidden astw:@[620px]:inline astw:text-foreground">
               Drag and drop images/files or
             </span>

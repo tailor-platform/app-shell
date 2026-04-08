@@ -1,11 +1,5 @@
 "use client";
-import {
-  AppShell,
-  AppShellProps,
-  CommandPalette,
-  DefaultSidebar,
-  SidebarLayout,
-} from "@tailor-platform/app-shell";
+import { AppShell, AppShellProps, DefaultSidebar, SidebarLayout } from "@tailor-platform/app-shell";
 import {
   customPageModule,
   profileResource,
@@ -28,10 +22,7 @@ const App = () => {
 
   return (
     <AppShell {...appShellConfig}>
-      <>
-        <SidebarLayout sidebar={<DefaultSidebar footer={<SidebarMenu />} />} />
-        <CommandPalette />
-      </>
+      <SidebarLayout sidebar={<DefaultSidebar footer={<SidebarMenu />} />} />
     </AppShell>
   );
 };

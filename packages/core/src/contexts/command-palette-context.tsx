@@ -79,13 +79,16 @@ type DispatchContextValue = {
 
 type StateContextValue = {
   actions: CommandPaletteAction[];
+  searchSources: CommandPaletteSearchSource[];
+  open: boolean;
+  setOpen: (open: boolean) => void;
 };
 
 const CommandPaletteDispatchContext = createContext<DispatchContextValue | null>(null);
 const CommandPaletteStateContext = createContext<StateContextValue | null>(null);
 
 /**
- * Provider that manages contextual actions for the CommandPalette.
+ * Provider that manages contextual actions and open state for the CommandPalette.
  *
  * Placed inside `AppShell`; consumers register/unregister actions via
  * `useRegisterCommandPaletteActions`, and the `CommandPalette` component
@@ -93,9 +96,16 @@ const CommandPaletteStateContext = createContext<StateContextValue | null>(null)
  *
  * @internal — mounted automatically by AppShell; not intended for direct use.
  */
-export function CommandPaletteProvider({ children }: { children: ReactNode }) {
+export function CommandPaletteProvider({
+  children,
+  searchSources = [],
+}: {
+  children: ReactNode;
+  searchSources?: CommandPaletteSearchSource[];
+}) {
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
+  const [open, setOpen] = useState(false);
 
   const updateActions = useCallback(() => {
     setActions(Array.from(registryRef.current.values()).flat());
@@ -113,8 +123,23 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
     [updateActions],
   );
 
+  // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
   const dispatchValue = useMemo(() => ({ register }), [register]);
-  const stateValue = useMemo(() => ({ actions }), [actions]);
+  const stateValue = useMemo(
+    () => ({ actions, searchSources, open, setOpen }),
+    [actions, searchSources, open],
+  );
 
   return (
     <CommandPaletteDispatchContext.Provider value={dispatchValue}>
@@ -181,6 +206,20 @@ export function useRegisterCommandPaletteActions(group: string, actions: Command
       })),
     );
   }, [id, register, depsKey, group]);
+}
+
+/**
+ * Returns the current state of the CommandPalette context including
+ * actions, search sources, and palette open state.
+ *
+ * @internal — used by the `CommandPalette` component and `DefaultSidebar`.
+ */
+export function useCommandPaletteState(): StateContextValue {
+  const ctx = useContext(CommandPaletteStateContext);
+  if (!ctx) {
+    throw new Error("useCommandPaletteState must be used within CommandPaletteProvider");
+  }
+  return ctx;
 }
 
 /**

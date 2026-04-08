@@ -7,7 +7,7 @@ import {
   CommandPaletteSearchSource,
 } from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 // Helper to create a mock React.KeyboardEvent
 const createKeyboardEvent = (key: string, isComposing = false): React.KeyboardEvent => {
@@ -50,7 +50,13 @@ const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{childr
 
 describe("useCommandPalette", () => {
   const renderCommandPaletteHook = (routes = createTestRoutes()) => {
-    return renderHook(() => useCommandPalette({ routes }), { wrapper });
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({ routes, open, setOpen });
+      },
+      { wrapper },
+    );
   };
 
   beforeEach(() => {
@@ -101,54 +107,6 @@ describe("useCommandPalette", () => {
       });
       expect(result.current.search).toBe("");
       expect(result.current.selectedIndex).toBe(0);
-    });
-  });
-
-  describe("global keyboard shortcut", () => {
-    it("should open with Cmd+K", () => {
-      const { result } = renderCommandPaletteHook();
-      expect(result.current.open).toBe(false);
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-      });
-
-      expect(result.current.open).toBe(true);
-    });
-
-    it("should open with Ctrl+K", () => {
-      const { result } = renderCommandPaletteHook();
-      expect(result.current.open).toBe(false);
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
-      });
-
-      expect(result.current.open).toBe(true);
-    });
-
-    it("should toggle with repeated Cmd+K", () => {
-      const { result } = renderCommandPaletteHook();
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-      });
-      expect(result.current.open).toBe(true);
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-      });
-      expect(result.current.open).toBe(false);
-    });
-
-    it("should not open with just K key (no modifier)", () => {
-      const { result } = renderCommandPaletteHook();
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k" }));
-      });
-
-      expect(result.current.open).toBe(false);
     });
   });
 
@@ -484,9 +442,15 @@ describe("useCommandPalette with contextualActions", () => {
     routes = createTestRoutes2(),
     contextualActions = createTestActions(),
   ) => {
-    return renderHook(() => useCommandPalette({ routes, contextualActions }), {
-      wrapper,
-    });
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({ routes, contextualActions, open, setOpen });
+      },
+      {
+        wrapper,
+      },
+    );
   };
 
   beforeEach(() => {
@@ -725,9 +689,21 @@ describe("useCommandPalette with searchSources", () => {
     routes = createTestRoutes2(),
     searchSources = createTestSearchSources(),
   ) => {
-    return renderHook(() => useCommandPalette({ routes, searchSources, contextualActions: [] }), {
-      wrapper,
-    });
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({
+          routes,
+          searchSources,
+          contextualActions: [],
+          open,
+          setOpen,
+        });
+      },
+      {
+        wrapper,
+      },
+    );
   };
 
   beforeEach(() => {

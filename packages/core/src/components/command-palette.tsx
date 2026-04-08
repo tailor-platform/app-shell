@@ -9,6 +9,7 @@ import { filterRoutes, NavigatableRoute } from "@/routing/path";
 import { useNavItems, NavItem, NavItemResource } from "../routing/navigation";
 import {
   useCommandPaletteActions,
+  useCommandPaletteState,
   type CommandPaletteAction,
   type CommandPaletteSearchResult,
   type CommandPaletteSearchSource,
@@ -36,6 +37,8 @@ export type UseCommandPaletteOptions = {
   routes: Array<NavigatableRoute>;
   contextualActions?: Array<CommandPaletteAction>;
   searchSources?: Array<CommandPaletteSearchSource>;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 };
 
 /**
@@ -144,10 +147,11 @@ export function useCommandPalette({
   routes,
   contextualActions = [],
   searchSources = [],
+  open,
+  setOpen,
 }: UseCommandPaletteOptions): UseCommandPaletteReturn {
   const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
   const [search, setSearchInternal] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchResults, setSearchResults] = useState<Array<CommandPaletteSearchResult>>([]);
@@ -246,30 +250,21 @@ export function useCommandPalette({
     setSelectedIndex(0);
   }, []);
 
-  // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setOpen((prev) => !prev);
-      }
-    };
-    document.addEventListener("keydown", handleGlobalKeyDown);
-    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
-
   // Handler for dialog open state changes
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      setSearchInternal("");
-      setSelectedIndex(0);
-      setSearchResults([]);
-      setIsSearching(false);
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-    }
-  }, []);
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen);
+      if (!newOpen) {
+        setSearchInternal("");
+        setSelectedIndex(0);
+        setSearchResults([]);
+        setIsSearching(false);
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+      }
+    },
+    [setOpen],
+  );
 
   // Scroll selected item into view
   useEffect(() => {
@@ -303,7 +298,7 @@ export function useCommandPalette({
       setSearchInternal("");
       setSearchResults([]);
     },
-    [navigate],
+    [navigate, setOpen],
   );
 
   const handleKeyDown = useCallback(
@@ -351,18 +346,15 @@ export function useCommandPalette({
 
 type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
-  searchSources?: Array<CommandPaletteSearchSource>;
 };
 
-export function CommandPaletteContent({
-  navItems,
-  searchSources = [],
-}: CommandPaletteContentProps) {
+export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
+  const { searchSources, open, setOpen } = useCommandPaletteState();
   const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
   const {
-    open,
+    open: paletteOpen,
     handleOpenChange,
     search,
     setSearch,
@@ -376,7 +368,13 @@ export function CommandPaletteContent({
     handleSelectItem,
     handleKeyDown,
     listRef,
-  } = useCommandPalette({ routes, contextualActions, searchSources });
+  } = useCommandPalette({
+    routes,
+    contextualActions,
+    searchSources,
+    open,
+    setOpen,
+  });
 
   // Compute index offsets for each section
   const searchModesCount =
@@ -385,7 +383,7 @@ export function CommandPaletteContent({
   const routeIndexOffset = actionIndexOffset + filteredActions.length;
 
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+    <Dialog.Root open={paletteOpen} onOpenChange={handleOpenChange}>
       <Dialog.Content
         className="astw:p-0 astw:gap-0 astw:sm:max-w-2xl astw:overflow-hidden astw:top-[30%] astw:translate-y-[-30%]"
         onKeyDown={handleKeyDown}
@@ -563,47 +561,31 @@ export function CommandPaletteContent({
   );
 }
 
-export type CommandPaletteProps = {
-  /**
-   * Async search sources activated by prefix-based modes.
-   *
-   * Each source defines a `prefix` (e.g. "PO") and a `search` function.
-   * When the user types `PO:` in the palette, only that source is queried.
-   *
-   * @example
-   * ```tsx
-   * <CommandPalette
-   *   searchSources={[
-   *     {
-   *       prefix: "PO",
-   *       title: "Purchase Orders",
-   *       search: async (query, { signal }) => {
-   *         const results = await api.searchOrders(query, { signal });
-   *         return results.map((o) => ({
-   *           key: o.id,
-   *           label: o.number,
-   *           path: `/orders/${o.id}`,
-   *         }));
-   *       },
-   *     },
-   *   ]}
-   * />
-   * ```
-   */
-  searchSources?: Array<CommandPaletteSearchSource>;
-};
+/**
+ * @deprecated CommandPalette is now built into AppShell and rendered automatically.
+ * Remove `<CommandPalette>` from your JSX.
+ */
+export function CommandPalette(): React.ReactNode {
+  console.warn(
+    "[AppShell] <CommandPalette> is deprecated. " +
+      "CommandPalette is now built into AppShell. " +
+      'Remove <CommandPalette> from your JSX and pass "searchSources" to <AppShell> instead.',
+  );
+  return null;
+}
 
 /**
- * CommandPalette component that uses navigation items with access control.
- * Renders a searchable command palette UI triggered by Cmd+K / Ctrl+K.
+ * Built-in CommandPalette rendered internally by AppShell.
+ *
+ * @internal — not intended for direct use.
  */
-export function CommandPalette({ searchSources }: CommandPaletteProps) {
+export function BuiltInCommandPalette() {
   const navItems = useNavItems();
 
   return (
     <Suspense fallback={null}>
       <Await resolve={navItems}>
-        {(items) => <CommandPaletteContent navItems={items ?? []} searchSources={searchSources} />}
+        {(items) => <CommandPaletteContent navItems={items ?? []} />}
       </Await>
     </Suspense>
   );

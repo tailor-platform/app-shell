@@ -319,11 +319,19 @@ export function useCommandPalette({
       }));
     }
 
-    // Default mode: search mode entries (when no query) + actions + routes
+    // Default mode: search mode entries (filtered by prefix/title) + actions + routes
     const items: Array<SelectableItem> = [];
-    if (!search.trim() && searchSources.length > 0) {
+    if (searchSources.length > 0) {
+      const lowerSearch = search.trim().toLowerCase();
+      const matchingSources = lowerSearch
+        ? searchSources.filter(
+            (source) =>
+              source.prefix.toLowerCase().includes(lowerSearch) ||
+              source.title.toLowerCase().includes(lowerSearch),
+          )
+        : searchSources;
       items.push(
-        ...searchSources.map((source) => ({
+        ...matchingSources.map((source) => ({
           type: "search-mode" as const,
           source,
         })),
@@ -484,8 +492,10 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
   });
 
   // Compute index offsets for each section
-  const searchModesCount =
-    !activeSearchSource && !search.trim() && searchSources.length > 0 ? searchSources.length : 0;
+  const searchModeItems = activeSearchSource
+    ? []
+    : selectableItems.filter((i) => i.type === "search-mode");
+  const searchModesCount = searchModeItems.length;
   const actionIndexOffset = searchModesCount;
   const routeIndexOffset = actionIndexOffset + filteredActions.length;
 
@@ -523,13 +533,16 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
             </div>
           ) : (
             <div className="astw:p-1">
-              {/* Search mode entries (default mode, empty query only) */}
+              {/* Search mode entries (default mode, filtered by search) */}
               {searchModesCount > 0 && (
                 <>
                   <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
                     {t("commandPaletteSearchModes")}
                   </div>
-                  {searchSources.map((source, index) => (
+                  {searchModeItems.map((item, index) => {
+                    const source = item.type === "search-mode" ? item.source : null;
+                    if (!source) return null;
+                    return (
                     <button
                       key={`search-mode-${source.prefix}`}
                       data-index={index}
@@ -550,7 +563,8 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
                       </span>
                       <span className="astw:truncate">{source.title}</span>
                     </button>
-                  ))}
+                    );
+                  })}
                 </>
               )}
               {/* Actions section (default mode only) */}

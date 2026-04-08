@@ -31,9 +31,10 @@ const fakeOrders = Array.from({ length: 100 }, (_, i) => ({
   date: `2024-${String(Math.floor(i / 9) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}`,
 }));
 
-export async function searchOrders(
+async function fakeSearch(
+  orders: typeof fakeOrders,
   query: string,
-  { signal }: { signal: AbortSignal },
+  signal: AbortSignal,
 ): Promise<CommandPaletteSearchResult[]> {
   // Simulate network latency
   await new Promise<void>((resolve, reject) => {
@@ -45,7 +46,7 @@ export async function searchOrders(
   });
 
   const lowerQuery = query.toLowerCase();
-  return fakeOrders
+  return orders
     .filter(
       (o) =>
         !lowerQuery ||
@@ -58,4 +59,19 @@ export async function searchOrders(
       description: `${order.customer} — ${order.date}`,
       path: paths.for("/dashboard/orders/:id", { id: order.id }),
     }));
+}
+
+export async function searchOrders(
+  query: string,
+  { signal }: { signal: AbortSignal },
+): Promise<CommandPaletteSearchResult[]> {
+  return fakeSearch(fakeOrders, query, signal);
+}
+
+export async function searchRecentOrders(
+  query: string,
+  { signal }: { signal: AbortSignal },
+): Promise<CommandPaletteSearchResult[]> {
+  // Only return the 20 most recent orders
+  return fakeSearch(fakeOrders.slice(-20), query, signal);
 }

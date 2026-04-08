@@ -4,13 +4,19 @@ import {
   SidebarLayout,
   type SearchSource,
 } from "@tailor-platform/app-shell";
-import { searchOrders } from "./fake-search";
+import { searchOrders, searchRecentOrders } from "./fake-search";
 
+// Demonstrates multiple search sources in the command palette
 const searchSources: SearchSource[] = [
   {
     prefix: "ORD",
     title: "Orders",
     search: searchOrders,
+  },
+  {
+    prefix: "REC",
+    title: "Recent Orders",
+    search: searchRecentOrders,
   },
 ];
 

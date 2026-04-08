@@ -2,6 +2,8 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -11,9 +13,9 @@ import {
 /**
  * An action entry displayed in the CommandPalette.
  *
- * Actions registered via `useCommandPaletteDispatch` (or implicitly through
- * `ActionPanel`) appear in the "Actions" section of the palette and are
- * searchable by `label`.
+ * Actions registered via `useRegisterCommandPaletteActions` (or implicitly
+ * through `ActionPanel`) appear in the "Actions" section of the palette and
+ * are searchable by `label`.
  */
 export type CommandPaletteAction = {
   /** Unique key for React reconciliation */
@@ -43,8 +45,8 @@ const CommandPaletteStateContext = createContext<StateContextValue | null>(null)
  * Provider that manages contextual actions for the CommandPalette.
  *
  * Placed inside `AppShell`; consumers register/unregister actions via
- * `useCommandPaletteDispatch`, and the `CommandPalette` component reads
- * them via `useCommandPaletteActions`.
+ * `useRegisterCommandPaletteActions`, and the `CommandPalette` component
+ * reads them via `useCommandPaletteActions`.
  *
  * @internal — mounted automatically by AppShell; not intended for direct use.
  */
@@ -83,33 +85,8 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
 /**
  * Returns a `register` function to add contextual actions to the CommandPalette.
  *
- * `register(sourceId, actions)` returns an unregister function that removes
- * the actions — perfect for `useEffect` cleanup. Registering with the same
- * `sourceId` again replaces the previous set.
- *
- * `ActionPanel` uses this internally, but you can call it directly to
- * register actions from any component.
- *
- * @example
- * ```tsx
- * import { useCommandPaletteDispatch } from "@tailor-platform/app-shell";
- *
- * function MyComponent() {
- *   const id = useId();
- *   const { register } = useCommandPaletteDispatch();
- *
- *   useEffect(() => {
- *     return register(id, [
- *       {
- *         key: "refresh",
- *         label: "Refresh data",
- *         group: "My Page",
- *         onSelect: () => refetch()
- *       },
- *     ]);
- *   }, [id, register]);
- * }
- * ```
+ * @internal — used by `useRegisterCommandPaletteActions` and `ActionPanel`.
+ * Prefer `useRegisterCommandPaletteActions` for public usage.
  */
 export function useCommandPaletteDispatch(): DispatchContextValue {
   const ctx = useContext(CommandPaletteDispatchContext);
@@ -117,6 +94,50 @@ export function useCommandPaletteDispatch(): DispatchContextValue {
     throw new Error("useCommandPaletteDispatch must be used within CommandPaletteProvider");
   }
   return ctx;
+}
+
+/**
+ * Declaratively register contextual actions to the CommandPalette.
+ *
+ * Actions are registered while the calling component is mounted and
+ * automatically unregistered on unmount. Re-registering with new actions
+ * replaces the previous set.
+ *
+ * @example
+ * ```tsx
+ * import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+ *
+ * function MyComponent() {
+ *   useRegisterCommandPaletteActions("My Page", [
+ *     { key: "refresh", label: "Refresh data", onSelect: () => refetch() },
+ *   ]);
+ * }
+ * ```
+ */
+export function useRegisterCommandPaletteActions(
+  group: string,
+  actions: Omit<CommandPaletteAction, "group">[],
+) {
+  const id = useId();
+  const { register } = useCommandPaletteDispatch();
+
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+
+  // Derive a stable dependency from serialisable action properties.
+  //Callback identity changes are absorbed by the ref.
+  const depsKey = actions.map((a) => `${a.key}\0${a.label}`).join("\n");
+
+  useEffect(() => {
+    return register(
+      id,
+      actionsRef.current.map((a) => ({
+        ...a,
+        group,
+        onSelect: () => actionsRef.current.find((c) => c.key === a.key)?.onSelect(),
+      })),
+    );
+  }, [id, register, depsKey, group]);
 }
 
 /**

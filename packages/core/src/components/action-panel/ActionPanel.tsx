@@ -1,7 +1,6 @@
-import { useEffect, useId } from "react";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
-import { useCommandPaletteDispatch } from "../../contexts/command-palette-context";
+import { useRegisterCommandPaletteActions } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
 
 // ============================================================================
@@ -114,24 +113,19 @@ function ActionRow({ action }: { action: ActionItem }) {
  * ```
  */
 export function ActionPanel({ title, actions, className }: ActionPanelProps) {
-  const id = useId();
-  const { register } = useCommandPaletteDispatch();
-
   // Register enabled actions to the CommandPalette context so they are
-  // searchable and triggerable from the palette. The returned cleanup
-  // function unregisters them when the panel unmounts or actions change.
-  useEffect(() => {
-    const paletteActions = actions
+  // searchable and triggerable from the palette.
+  useRegisterCommandPaletteActions(
+    title,
+    actions
       .filter((a) => !a.disabled && !a.loading && a.onClick)
       .map((a) => ({
         key: a.key,
         label: a.label,
         icon: a.icon,
-        group: title,
         onSelect: a.onClick!,
-      }));
-    return register(id, paletteActions);
-  }, [id, actions, title, register]);
+      })),
+  );
 
   return (
     <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>

@@ -3,7 +3,7 @@ export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 export {
-  useCommandPaletteDispatch,
+  useRegisterCommandPaletteActions,
   type CommandPaletteAction,
 } from "./contexts/command-palette-context";
 

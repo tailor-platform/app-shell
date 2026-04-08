@@ -5,6 +5,7 @@ import {
   CommandPaletteProvider,
   useCommandPaletteDispatch,
   useCommandPaletteActions,
+  useRegisterCommandPaletteActions,
   type CommandPaletteAction,
 } from "./command-palette-context";
 
@@ -128,6 +129,67 @@ describe("CommandPaletteProvider", () => {
       // Original source should still be intact
       expect(result.current.actions).toHaveLength(1);
       expect(result.current.actions[0].key).toBe("a1");
+    });
+  });
+
+  describe("useRegisterCommandPaletteActions", () => {
+    it("registers actions with the given group", () => {
+      const { result } = renderHook(
+        () => {
+          useRegisterCommandPaletteActions("My Group", [
+            { key: "a1", label: "Action 1", onSelect: vi.fn() },
+          ]);
+          return useCommandPaletteActions();
+        },
+        { wrapper },
+      );
+
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0]).toMatchObject({
+        key: "a1",
+        label: "Action 1",
+        group: "My Group",
+      });
+    });
+
+    it("unregisters actions on unmount", () => {
+      const { result, unmount } = renderHook(
+        () => {
+          useRegisterCommandPaletteActions("Group", [
+            { key: "a1", label: "Action 1", onSelect: vi.fn() },
+          ]);
+          return useCommandPaletteActions();
+        },
+        { wrapper },
+      );
+
+      expect(result.current).toHaveLength(1);
+
+      unmount();
+
+      // Re-render a fresh hook that only reads actions
+      const { result: readResult } = renderHook(() => useCommandPaletteActions(), { wrapper });
+      expect(readResult.current).toHaveLength(0);
+    });
+
+    it("invokes the latest onSelect even after re-render", () => {
+      const first = vi.fn();
+      const second = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ onSelect }) => {
+          useRegisterCommandPaletteActions("Group", [{ key: "a1", label: "Action", onSelect }]);
+          return useCommandPaletteActions();
+        },
+        { wrapper, initialProps: { onSelect: first } },
+      );
+
+      // Re-render with a new callback (unstable reference)
+      rerender({ onSelect: second });
+
+      // The registered action should call the latest callback
+      result.current[0].onSelect();
+      expect(first).not.toHaveBeenCalled();
+      expect(second).toHaveBeenCalledOnce();
     });
   });
 });

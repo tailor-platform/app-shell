@@ -138,5 +138,4 @@ labels.t("invalid"); // ❌ Type error
 
 ## Related
 
-- [Internationalization Guide](../guides/internationalization.md) - Complete i18n guide
 - [defineModule](./define-module.md) - Use labels in modules

@@ -218,13 +218,13 @@ export interface SortState {
 }
 
 /**
- * Page info from GraphQL response (Tailor Platform standard).
+ * Page info for cursor/token-based pagination.
  */
 export interface PageInfo {
   hasNextPage: boolean;
-  endCursor: string | null;
   hasPreviousPage: boolean;
-  startCursor: string | null;
+  nextPageToken: string | null;
+  previousPageToken: string | null;
 }
 
 // =============================================================================
@@ -420,17 +420,12 @@ export interface CollectionControl<
   setPageSize: (size: number) => void;
   cursor: string | null;
   paginationDirection: "forward" | "backward";
-  nextPage: (endCursor: string) => void;
-  prevPage: (startCursor: string) => void;
+  nextPage: (token: string) => void;
+  prevPage: (token: string) => void;
   resetPage: () => void;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  setPageInfo: (pageInfo: PageInfo) => void;
   currentPage: number;
-  totalPages: number | null;
   goToFirstPage: () => void;
-  goToLastPage: () => void;
-  setTotal: (total: number) => void;
+  goToLastPage: (lastPage: number) => void;
 }
 
 /**
@@ -450,11 +445,20 @@ export interface UseCollectionReturn<
 // =============================================================================
 
 /**
+ * Data input for `useDataTable` hook.
+ */
+export interface DataTableData<TRow> {
+  rows: TRow[];
+  pageInfo?: PageInfo;
+  total?: number | null;
+}
+
+/**
  * Options for `useDataTable` hook.
  */
 export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
   columns: Column<TRow>[];
-  data: CollectionResult<TRow> | undefined;
+  data: DataTableData<TRow> | undefined;
   loading?: boolean;
   error?: Error | null;
   control?: CollectionControl;
@@ -498,10 +502,12 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   sortStates: SortState[];
   onSort?: (field: string, direction?: "Asc" | "Desc") => void;
 
-  // Pagination (delegated from collection)
+  // Pagination (derived from data)
   pageInfo: PageInfo;
-  nextPage: (endCursor: string) => void;
-  prevPage: (startCursor: string) => void;
+  total: number | null;
+  totalPages: number | null;
+  nextPage: (token: string) => void;
+  prevPage: (token: string) => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
 

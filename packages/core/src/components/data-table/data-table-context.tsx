@@ -23,6 +23,12 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   hideAllColumns: () => void;
 
   pageInfo: PageInfo;
+  total: number | null;
+  totalPages: number | null;
+  nextPage: (token: string) => void;
+  prevPage: (token: string) => void;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
 
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];

@@ -52,6 +52,12 @@ function DataTableProviderComponent<TRow extends Record<string, unknown>>({
     showAllColumns: value.showAllColumns,
     hideAllColumns: value.hideAllColumns,
     pageInfo: value.pageInfo,
+    total: value.total,
+    totalPages: value.totalPages,
+    nextPage: value.nextPage,
+    prevPage: value.prevPage,
+    hasPrevPage: value.hasPrevPage,
+    hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
   };

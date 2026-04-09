@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { createAppShellWrapper } from "@/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, CollectionResult } from "./types";
+import type { Column, DataTableData } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -16,22 +16,16 @@ const testColumns: Column<TestRow>[] = [
   { label: "Status", render: (row) => row.status },
 ];
 
-const testData: CollectionResult<TestRow> = {
-  edges: [
-    { node: { id: "1", name: "Alice", status: "Active" } },
-    { node: { id: "2", name: "Bob", status: "Inactive" } },
+const testData: DataTableData<TestRow> = {
+  rows: [
+    { id: "1", name: "Alice", status: "Active" },
+    { id: "2", name: "Bob", status: "Inactive" },
   ],
-  pageInfo: {
-    hasNextPage: false,
-    endCursor: null,
-    hasPreviousPage: false,
-    startCursor: null,
-  },
 };
 
 function TestDataTable(props: {
   columns?: Column<TestRow>[];
-  data?: CollectionResult<TestRow> | undefined;
+  data?: DataTableData<TestRow> | undefined;
   loading?: boolean;
   error?: Error | null;
 }) {
@@ -79,14 +73,8 @@ describe("DataTable", () => {
   });
 
   it("renders empty state", () => {
-    const emptyData: CollectionResult<TestRow> = {
-      edges: [],
-      pageInfo: {
-        hasNextPage: false,
-        endCursor: null,
-        hasPreviousPage: false,
-        startCursor: null,
-      },
+    const emptyData: DataTableData<TestRow> = {
+      rows: [],
     };
     render(<TestDataTable data={emptyData} />, { wrapper });
 

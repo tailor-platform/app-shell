@@ -5,7 +5,6 @@ import type {
   CollectionVariables,
   Filter,
   FilterOperator,
-  PageInfo,
   PaginationVariables,
   SortState,
   TableFieldName,
@@ -102,14 +101,7 @@ export function useCollectionVariables(
   const [pageSize, setPageSizeState] = useState(initialPageSize);
   const [cursor, setCursor] = useState<string | null>(null);
   const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
-  const [currentPageInfo, setCurrentPageInfo] = useState<PageInfo>({
-    hasNextPage: false,
-    endCursor: null,
-    hasPreviousPage: false,
-    startCursor: null,
-  });
   const [currentPage, setCurrentPage] = useState(1);
-  const [total, setTotalState] = useState<number | null>(null);
 
   // ---------------------------------------------------------------------------
   // Filter operations
@@ -178,14 +170,14 @@ export function useCollectionVariables(
   // ---------------------------------------------------------------------------
   // Pagination operations
   // ---------------------------------------------------------------------------
-  const nextPage = useCallback((endCursor: string) => {
-    setCursor(endCursor);
+  const nextPage = useCallback((token: string) => {
+    setCursor(token);
     setPaginationDirection("forward");
     setCurrentPage((p) => p + 1);
   }, []);
 
-  const prevPage = useCallback((startCursor: string) => {
-    setCursor(startCursor);
+  const prevPage = useCallback((token: string) => {
+    setCursor(token);
     setPaginationDirection("backward");
     setCurrentPage((p) => Math.max(1, p - 1));
   }, []);
@@ -203,30 +195,17 @@ export function useCollectionVariables(
     setCurrentPage(1);
   }, []);
 
-  const setPageInfo = useCallback((pageInfo: PageInfo) => {
-    setCurrentPageInfo(pageInfo);
-  }, []);
-
-  const setTotal = useCallback((value: number) => {
-    setTotalState(value);
-  }, []);
-
-  const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null;
-
   const goToFirstPage = useCallback(() => {
     setCursor(null);
     setPaginationDirection("forward");
     setCurrentPage(1);
   }, []);
 
-  const goToLastPage = useCallback(() => {
+  const goToLastPage = useCallback((lastPage: number) => {
     setCursor(null);
     setPaginationDirection("backward");
-    setCurrentPage(totalPages ?? 1);
-  }, [totalPages]);
-
-  const hasPrevPage = currentPage > 1;
-  const hasNextPage = totalPages !== null ? currentPage < totalPages : currentPageInfo.hasNextPage;
+    setCurrentPage(lastPage);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Build collection variables (Tailor Platform format)
@@ -290,14 +269,9 @@ export function useCollectionVariables(
       nextPage,
       prevPage,
       resetPage,
-      hasPrevPage,
-      hasNextPage,
-      setPageInfo,
       currentPage,
-      totalPages,
       goToFirstPage,
       goToLastPage,
-      setTotal,
     },
   };
 }

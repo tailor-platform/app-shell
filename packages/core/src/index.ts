@@ -165,6 +165,7 @@ export {
   type FilterOperator,
   type SelectOption,
   type PageInfo,
+  type DataTableData,
   type RowAction,
   type RowOperations,
   type CollectionVariables,

@@ -33,6 +33,7 @@ export type {
   FilterOperator,
   SelectOption,
   PageInfo,
+  DataTableData,
   RowAction,
   RowOperations,
 

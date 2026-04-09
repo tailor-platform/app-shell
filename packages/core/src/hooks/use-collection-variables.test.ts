@@ -16,7 +16,7 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.filters).toEqual([]);
       expect(result.current.control.sortStates).toEqual([]);
       expect(result.current.control.cursor).toBeNull();
-      expect(result.current.control.hasPrevPage).toBe(false);
+      expect(result.current.control.currentPage).toBe(1);
     });
 
     it("uses custom pageSize", () => {
@@ -147,7 +147,6 @@ describe("useCollectionVariables", () => {
       });
 
       expect(result.current.control.filters).toHaveLength(0);
-      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("resets pagination when filters change", () => {
@@ -162,7 +161,7 @@ describe("useCollectionVariables", () => {
         result.current.control.addFilter("status", "eq", "ACTIVE");
       });
       expect(result.current.control.cursor).toBeNull();
-      expect(result.current.control.hasPrevPage).toBe(false);
+      expect(result.current.control.currentPage).toBe(1);
     });
   });
 
@@ -313,28 +312,16 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.paginationDirection).toBe("forward");
     });
 
-    it("tracks hasPrevPage from currentPage and hasNextPage from setPageInfo", () => {
+    it("tracks currentPage on navigation", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
-      expect(result.current.control.hasPrevPage).toBe(false);
-      expect(result.current.control.hasNextPage).toBe(false);
+      expect(result.current.control.currentPage).toBe(1);
 
       act(() => {
         result.current.control.nextPage("cursor-end");
       });
 
-      expect(result.current.control.hasPrevPage).toBe(true);
-
-      act(() => {
-        result.current.control.setPageInfo({
-          hasNextPage: true,
-          endCursor: "end",
-          hasPreviousPage: false,
-          startCursor: "start",
-        });
-      });
-
-      expect(result.current.control.hasNextPage).toBe(true);
+      expect(result.current.control.currentPage).toBe(2);
     });
   });
 

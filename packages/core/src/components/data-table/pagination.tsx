@@ -40,19 +40,10 @@ export interface PaginationProps {
  * ```
  */
 export function Pagination({ pageSizeOptions }: PaginationProps = {}) {
-  const { pageInfo } = useDataTableContext();
-  const {
-    nextPage,
-    prevPage,
-    hasPrevPage,
-    hasNextPage,
-    currentPage,
-    totalPages,
-    goToFirstPage,
-    goToLastPage,
-    pageSize,
-    setPageSize,
-  } = useCollectionControl();
+  const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =
+    useDataTableContext();
+  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } =
+    useCollectionControl();
 
   const t = useDataTableT();
 
@@ -94,8 +85,8 @@ export function Pagination({ pageSizeOptions }: PaginationProps = {}) {
         variant="outline"
         size="icon"
         onClick={() => {
-          if (pageInfo.startCursor) {
-            prevPage(pageInfo.startCursor);
+          if (pageInfo.previousPageToken) {
+            prevPage(pageInfo.previousPageToken);
           }
         }}
         disabled={!hasPrevPage}
@@ -107,8 +98,8 @@ export function Pagination({ pageSizeOptions }: PaginationProps = {}) {
         variant="outline"
         size="icon"
         onClick={() => {
-          if (pageInfo.endCursor) {
-            nextPage(pageInfo.endCursor);
+          if (pageInfo.nextPageToken) {
+            nextPage(pageInfo.nextPageToken);
           }
         }}
         disabled={!hasNextPage}
@@ -119,7 +110,7 @@ export function Pagination({ pageSizeOptions }: PaginationProps = {}) {
       <Button
         variant="outline"
         size="icon"
-        onClick={goToLastPage}
+        onClick={() => goToLastPage(totalPages ?? 1)}
         disabled={!hasNextPage || totalPages === null}
         aria-label={t("paginationLast")}
       >

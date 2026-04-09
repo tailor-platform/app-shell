@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Column, PageInfo, SortState, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -15,7 +15,11 @@ import type { Column, PageInfo, SortState, UseDataTableOptions, UseDataTableRetu
  *
  * const table = useDataTable<Order>({
  *   columns,
- *   data: result.data?.orders,
+ *   data: {
+ *     rows: result.data?.orders?.edges.map(e => e.node) ?? [],
+ *     pageInfo: { ... },
+ *     total: result.data?.orders?.total,
+ *   },
  *   loading: result.fetching,
  *   control,
  * });
@@ -46,35 +50,27 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // ---------------------------------------------------------------------------
   const [optimisticRows, setOptimisticRows] = useState<TRow[] | null>(null);
 
-  const sourceRows = useMemo<TRow[]>(() => {
-    return data?.edges?.map((e) => e.node) ?? [];
-  }, [data]);
-
+  const sourceRows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const rows = optimisticRows ?? sourceRows;
 
-  useEffect(() => {
-    setOptimisticRows(null);
-  }, [sourceRows]);
+  const pageInfo: PageInfo = data?.pageInfo ?? {
+    hasNextPage: false,
+    hasPreviousPage: false,
+    nextPageToken: null,
+    previousPageToken: null,
+  };
 
-  const pageInfo = useMemo<PageInfo>(() => {
-    return (
-      data?.pageInfo ?? {
-        hasNextPage: false,
-        endCursor: null,
-        hasPreviousPage: false,
-        startCursor: null,
-      }
-    );
-  }, [data]);
+  const total = data?.total ?? null;
 
-  useEffect(() => {
-    if (data?.pageInfo) {
-      control?.setPageInfo(data.pageInfo);
-    }
-    if (data?.total != null) {
-      control?.setTotal(data.total);
-    }
-  }, [data?.pageInfo, data?.total, control]);
+  // ---------------------------------------------------------------------------
+  // Pagination (derived from data + control)
+  // ---------------------------------------------------------------------------
+  const pageSize = control?.pageSize ?? 0;
+  const currentPage = control?.currentPage ?? 1;
+  const totalPages =
+    total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
+  const hasPrevPage = currentPage > 1;
+  const hasNextPage = totalPages !== null ? currentPage < totalPages : pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
   // Column visibility management
@@ -116,24 +112,21 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   );
 
   // ---------------------------------------------------------------------------
-  // Pagination (delegated from control)
+  // Pagination actions (delegated to control)
   // ---------------------------------------------------------------------------
   const nextPage = useCallback(
-    (endCursor: string) => {
-      control?.nextPage(endCursor);
+    (token: string) => {
+      control?.nextPage(token);
     },
     [control],
   );
 
   const prevPage = useCallback(
-    (startCursor: string) => {
-      control?.prevPage(startCursor);
+    (token: string) => {
+      control?.prevPage(token);
     },
     [control],
   );
-
-  const hasPrevPage = control?.hasPrevPage ?? false;
-  const hasNextPage = control?.hasNextPage ?? false;
 
   // ---------------------------------------------------------------------------
   // Row Operations (Optimistic Updates)
@@ -213,6 +206,8 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     sortStates,
     onSort,
     pageInfo,
+    total,
+    totalPages,
     nextPage,
     prevPage,
     hasPrevPage,

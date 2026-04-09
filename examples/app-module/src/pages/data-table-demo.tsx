@@ -7,7 +7,6 @@ import {
   useCollectionVariables,
   createColumnHelper,
   Layout,
-  type CollectionResult,
   type CollectionVariables,
   type RowAction,
 } from "@tailor-platform/app-shell";
@@ -89,10 +88,10 @@ const productColumns = [
 ];
 
 // ---------------------------------------------------------------------------
-// Mock data (CollectionResult format)
+// Mock data (GraphQL connection style)
 // ---------------------------------------------------------------------------
 
-const mockProducts: CollectionResult<Product> = {
+const mockProducts = {
   edges: [
     {
       node: {
@@ -101,7 +100,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Furniture",
         price: 499.99,
         stock: 42,
-        status: "Active",
+        status: "Active" as const,
       },
     },
     {
@@ -111,7 +110,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Furniture",
         price: 899.0,
         stock: 15,
-        status: "Active",
+        status: "Active" as const,
       },
     },
     {
@@ -121,7 +120,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Electronics",
         price: 159.99,
         stock: 230,
-        status: "Active",
+        status: "Active" as const,
       },
     },
     {
@@ -131,7 +130,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Electronics",
         price: 79.99,
         stock: 0,
-        status: "Draft",
+        status: "Draft" as const,
       },
     },
     {
@@ -141,7 +140,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Accessories",
         price: 129.0,
         stock: 57,
-        status: "Active",
+        status: "Active" as const,
       },
     },
     {
@@ -151,7 +150,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Electronics",
         price: 89.99,
         stock: 120,
-        status: "Archived",
+        status: "Archived" as const,
       },
     },
     {
@@ -161,7 +160,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Accessories",
         price: 45.0,
         stock: 88,
-        status: "Active",
+        status: "Active" as const,
       },
     },
     {
@@ -171,7 +170,7 @@ const mockProducts: CollectionResult<Product> = {
         category: "Accessories",
         price: 29.99,
         stock: 200,
-        status: "Draft",
+        status: "Draft" as const,
       },
     },
   ],
@@ -224,7 +223,18 @@ const DataTableDemoPage = () => {
 
   const table = useDataTable<Product>({
     columns: productColumns,
-    data,
+    data: data
+      ? {
+          rows: data.edges.map((e) => e.node),
+          pageInfo: {
+            hasNextPage: data.pageInfo.hasNextPage,
+            hasPreviousPage: data.pageInfo.hasPreviousPage,
+            nextPageToken: data.pageInfo.endCursor,
+            previousPageToken: data.pageInfo.startCursor,
+          },
+          total: data.total,
+        }
+      : undefined,
     loading,
     control,
     rowActions: productRowActions,

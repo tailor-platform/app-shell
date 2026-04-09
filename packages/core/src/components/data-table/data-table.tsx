@@ -20,28 +20,14 @@ import { DataTableToolbar, DataTableFilters } from "./toolbar";
 // DataTable.Root
 // =============================================================================
 
-function DataTableRoot({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div
-      data-slot="data-table"
-      className={cn("astw:border astw:rounded-md astw:bg-card", className)}
-    >
-      {children}
-    </div>
-  );
-}
-DataTableRoot.displayName = "DataTable.Root";
-
-// =============================================================================
-// DataTable.Provider
-// =============================================================================
-
-function DataTableProviderComponent<TRow extends Record<string, unknown>>({
+function DataTableRoot<TRow extends Record<string, unknown>>({
   value,
   children,
+  className,
 }: {
   value: UseDataTableReturn<TRow>;
   children: ReactNode;
+  className?: string;
 }) {
   const dataTableValue: DataTableContextValue<TRow> = {
     columns: value.columns,
@@ -72,7 +58,14 @@ function DataTableProviderComponent<TRow extends Record<string, unknown>>({
   const controlValue = value.control ?? null;
 
   const inner = (
-    <DataTableContext.Provider value={dataTableValue}>{children}</DataTableContext.Provider>
+    <DataTableContext.Provider value={dataTableValue}>
+      <div
+        data-slot="data-table"
+        className={cn("astw:border astw:rounded-md astw:bg-card", className)}
+      >
+        {children}
+      </div>
+    </DataTableContext.Provider>
   );
 
   if (controlValue) {
@@ -81,7 +74,7 @@ function DataTableProviderComponent<TRow extends Record<string, unknown>>({
 
   return inner;
 }
-DataTableProviderComponent.displayName = "DataTable.Provider";
+DataTableRoot.displayName = "DataTable.Root";
 
 // =============================================================================
 // DataTable.Headers
@@ -90,7 +83,7 @@ DataTableProviderComponent.displayName = "DataTable.Provider";
 function DataTableHeaders({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
-    throw new Error("<DataTable.Headers> must be used within <DataTable.Provider>");
+    throw new Error("<DataTable.Headers> must be used within <DataTable.Root>");
   }
   const { columns, sortStates, onSort, rowActions } = ctx;
   const t = useDataTableT();
@@ -162,7 +155,7 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
 function DataTableBody({ children, className }: { children?: ReactNode; className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
-    throw new Error("<DataTable.Body> must be used within <DataTable.Provider>");
+    throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
   }
   const { columns, rows, loading, error, onClickRow, rowActions } = ctx;
   const t = useDataTableT();
@@ -440,7 +433,6 @@ DataTablePagination.displayName = "DataTable.Pagination";
 // =============================================================================
 
 export const DataTable = {
-  Provider: DataTableProviderComponent,
   Root: DataTableRoot,
   Toolbar: DataTableToolbar,
   Filters: DataTableFilters,

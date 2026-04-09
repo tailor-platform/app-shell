@@ -129,17 +129,15 @@ const DataTableDemoPage = () => {
         <p className="mb-4 text-muted-foreground">
           DataTable demo with sortable columns, row actions, and pagination.
         </p>
-        <DataTable.Provider value={table}>
-          <DataTable.Root>
-            <DataTable.Toolbar>
-              <DataTable.Filters />
-            </DataTable.Toolbar>
-            <DataTable.Table />
-            <DataTable.Footer>
-              <DataTable.Pagination pageSizeOptions={[5, 10, 20]} />
-            </DataTable.Footer>
-          </DataTable.Root>
-        </DataTable.Provider>
+        <DataTable.Root value={table}>
+          <DataTable.Toolbar>
+            <DataTable.Filters />
+          </DataTable.Toolbar>
+          <DataTable.Table />
+          <DataTable.Footer>
+            <DataTable.Pagination pageSizeOptions={[5, 10, 20]} />
+          </DataTable.Footer>
+        </DataTable.Root>
       </Layout.Column>
     </Layout>
   );

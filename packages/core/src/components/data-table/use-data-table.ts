@@ -24,14 +24,12 @@ import type { Column, PageInfo, SortState, UseDataTableOptions, UseDataTableRetu
  *   control,
  * });
  *
- * <DataTable.Provider value={table}>
- *   <DataTable.Root>
- *     <DataTable.Table />
- *     <DataTable.Footer>
- *       <DataTable.Pagination />
- *     </DataTable.Footer>
- *   </DataTable.Root>
- * </DataTable.Provider>
+ * <DataTable.Root value={table}>
+ *   <DataTable.Table />
+ *   <DataTable.Footer>
+ *     <DataTable.Pagination />
+ *   </DataTable.Footer>
+ * </DataTable.Root>
  * ```
  */
 export function useDataTable<TRow extends Record<string, unknown>>(

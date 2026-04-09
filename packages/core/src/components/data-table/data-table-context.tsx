@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import type { Column, PageInfo, RowAction, RowOperations, SortState } from "./types";
 
 /**
- * Context value provided by `DataTable.Provider`.
+ * Context value provided by `DataTable.Root`.
  */
 export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   updateRow: RowOperations<TRow>["updateRow"];
@@ -40,16 +40,16 @@ const DataTableContext = createContext<DataTableContextValue<any> | null>(null);
 export { DataTableContext };
 
 /**
- * Hook to access row operations from the nearest `DataTable.Provider`.
+ * Hook to access row operations from the nearest `DataTable.Root`.
  *
- * @throws Error if used outside of `DataTable.Provider`.
+ * @throws Error if used outside of `DataTable.Root`.
  */
 export function useDataTableContext<
   TRow extends Record<string, unknown>,
 >(): DataTableContextValue<TRow> {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
-    throw new Error("useDataTableContext must be used within <DataTable.Provider>");
+    throw new Error("useDataTableContext must be used within <DataTable.Root>");
   }
   return ctx as DataTableContextValue<TRow>;
 }

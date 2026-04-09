@@ -904,9 +904,54 @@ function getOperatorLabel(operator: FilterOperator, t: ReturnType<typeof useData
       return t("filterOperator_hasPrefix");
     case "hasSuffix":
       return t("filterOperator_hasSuffix");
+    case "notHasPrefix":
+      return t("filterOperator_notHasPrefix");
+    case "notHasSuffix":
+      return t("filterOperator_notHasSuffix");
+    case "between":
+      return t("filterOperator_between");
+    case "in":
+      return t("filterOperator_in");
+    case "nin":
+      return t("filterOperator_nin");
     default:
       return operator;
   }
+}
+
+function formatFilterValue(
+  filter: Filter,
+  config: FilterConfig,
+  t: ReturnType<typeof useDataTableT>,
+): string {
+  if (config.type === "enum" && Array.isArray(filter.value)) {
+    const labels = filter.value
+      .map((v) => config.options.find((option) => option.value === v)?.label ?? String(v))
+      .filter((v) => v !== "");
+    return labels.join(", ");
+  }
+
+  if (config.type === "boolean" && Array.isArray(filter.value)) {
+    const labels = (filter.value as boolean[]).map((v) =>
+      v ? t("filterBooleanTrue") : t("filterBooleanFalse"),
+    );
+    return labels.join(", ");
+  }
+
+  if (config.type === "number" && filter.operator === "between") {
+    const range = filter.value as { min?: unknown; max?: unknown } | null;
+    if (!range || typeof range !== "object") return "";
+    const min = range.min != null ? String(range.min) : "";
+    const max = range.max != null ? String(range.max) : "";
+    return [min, max].filter(Boolean).join(" - ");
+  }
+
+  if (Array.isArray(filter.value)) {
+    return filter.value.map((v) => String(v)).join(", ");
+  }
+
+  if (filter.value == null || filter.value === "") return "";
+  return String(filter.value);
 }
 
 function getChipDisplayLabel(
@@ -915,20 +960,22 @@ function getChipDisplayLabel(
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
 ): string {
-  if (config.type === "enum" && Array.isArray(filter.value)) {
-    const count = (filter.value as string[]).length;
-    if (count === 0) return columnLabel;
-    return `${columnLabel} (${count})`;
+  const valueLabel = formatFilterValue(filter, config, t);
+  if (!valueLabel) return columnLabel;
+
+  const operatorLabel = getOperatorLabel(filter.operator, t);
+  if (config.type === "number" || config.type === "date") {
+    return `${columnLabel} ${operatorLabel} ${valueLabel}`;
   }
-  if (config.type === "boolean" && Array.isArray(filter.value)) {
-    const vals = filter.value as boolean[];
-    if (vals.length === 0) return columnLabel;
-    const labels = vals.map((v) => (v ? t("filterBooleanTrue") : t("filterBooleanFalse")));
-    return `${columnLabel}: ${labels.join(", ")}`;
+
+  if (config.type === "string" || config.type === "uuid") {
+    return `${columnLabel} ${operatorLabel} ${valueLabel}`;
   }
-  if (filter.value !== "" && filter.value != null) {
-    return `${columnLabel}: ${String(filter.value)}`;
+
+  if (config.type === "enum" || config.type === "boolean") {
+    return `${columnLabel} ${operatorLabel}: ${valueLabel}`;
   }
+
   return columnLabel;
 }
 

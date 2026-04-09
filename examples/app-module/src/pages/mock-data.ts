@@ -177,13 +177,110 @@ export const allProducts: Product[] = [
 import { useMemo } from "react";
 import type { CollectionVariables } from "@tailor-platform/app-shell";
 
+function compareValues(left: unknown, right: unknown): number | null {
+  if (typeof left === "number" && typeof right === "number") {
+    return left < right ? -1 : left > right ? 1 : 0;
+  }
+  if (typeof left === "string" && typeof right === "string") {
+    return left < right ? -1 : left > right ? 1 : 0;
+  }
+  return null;
+}
+
+function matchStringOperator(fieldValue: unknown, operator: string, expected: unknown): boolean {
+  const value = String(fieldValue ?? "").toLowerCase();
+  const needle = String(expected ?? "").toLowerCase();
+
+  switch (operator) {
+    case "contains":
+      return value.includes(needle);
+    case "notContains":
+      return !value.includes(needle);
+    case "hasPrefix":
+      return value.startsWith(needle);
+    case "hasSuffix":
+      return value.endsWith(needle);
+    case "notHasPrefix":
+      return !value.startsWith(needle);
+    case "notHasSuffix":
+      return !value.endsWith(needle);
+    default:
+      return false;
+  }
+}
+
+function matchOperator(fieldValue: unknown, operator: string, expected: unknown): boolean {
+  switch (operator) {
+    case "eq":
+      return fieldValue === expected;
+    case "ne":
+      return fieldValue !== expected;
+    case "in":
+      return Array.isArray(expected) && expected.some((item) => item === fieldValue);
+    case "nin":
+      return Array.isArray(expected) && !expected.some((item) => item === fieldValue);
+    case "contains":
+    case "notContains":
+    case "hasPrefix":
+    case "hasSuffix":
+    case "notHasPrefix":
+    case "notHasSuffix":
+      return matchStringOperator(fieldValue, operator, expected);
+    case "gt": {
+      const compared = compareValues(fieldValue, expected);
+      return compared != null && compared > 0;
+    }
+    case "gte": {
+      const compared = compareValues(fieldValue, expected);
+      return compared != null && compared >= 0;
+    }
+    case "lt": {
+      const compared = compareValues(fieldValue, expected);
+      return compared != null && compared < 0;
+    }
+    case "lte": {
+      const compared = compareValues(fieldValue, expected);
+      return compared != null && compared <= 0;
+    }
+    case "between": {
+      if (!expected || typeof expected !== "object") return false;
+      const range = expected as { min?: unknown; max?: unknown };
+      const minCompared =
+        range.min === undefined || range.min === null ? 0 : compareValues(fieldValue, range.min);
+      const maxCompared =
+        range.max === undefined || range.max === null ? 0 : compareValues(fieldValue, range.max);
+      const passMin = minCompared != null && minCompared >= 0;
+      const passMax = maxCompared != null && maxCompared <= 0;
+      return passMin && passMax;
+    }
+    default:
+      // Ignore unsupported operators in mock mode.
+      return true;
+  }
+}
+
+function applyQueryFilters(products: Product[], variables: CollectionVariables): Product[] {
+  if (!variables.query) return products;
+
+  return products.filter((product) => {
+    return Object.entries(variables.query ?? {}).every(([field, operators]) => {
+      const fieldValue = product[field as keyof Product];
+      return Object.entries(operators ?? {}).every(([operator, expected]) => {
+        return matchOperator(fieldValue, operator, expected);
+      });
+    });
+  });
+}
+
 export function useProductsQuery(variables: CollectionVariables) {
   return useMemo(() => {
+    // Filter
+    let rows = applyQueryFilters(allProducts, variables);
+
     // Sort
-    let sorted = [...allProducts];
     if (variables.order && variables.order.length > 0) {
       const { field, direction } = variables.order[0];
-      sorted.sort((a, b) => {
+      rows.sort((a, b) => {
         const aVal = a[field as keyof Product];
         const bVal = b[field as keyof Product];
         if (aVal == null || bVal == null) return 0;
@@ -193,7 +290,7 @@ export function useProductsQuery(variables: CollectionVariables) {
     }
 
     // Paginate
-    const pageSize = variables.pagination.first ?? variables.pagination.last ?? sorted.length;
+    const pageSize = variables.pagination.first ?? variables.pagination.last ?? rows.length;
     let page = 1;
     if (variables.pagination.after) {
       page = Number(variables.pagination.after);
@@ -201,9 +298,9 @@ export function useProductsQuery(variables: CollectionVariables) {
       page = Number(variables.pagination.before);
     }
     const start = (page - 1) * pageSize;
-    const end = Math.min(start + pageSize, sorted.length);
-    const pageRows = sorted.slice(start, end);
-    const hasNextPage = end < sorted.length;
+    const end = Math.min(start + pageSize, rows.length);
+    const pageRows = rows.slice(start, end);
+    const hasNextPage = end < rows.length;
     const hasPreviousPage = page > 1;
 
     return {
@@ -215,15 +312,9 @@ export function useProductsQuery(variables: CollectionVariables) {
           hasPreviousPage,
           startCursor: hasPreviousPage ? String(page - 1) : null,
         },
-        total: sorted.length,
+        total: rows.length,
       },
       loading: false,
     };
-  }, [
-    variables.pagination.first,
-    variables.pagination.last,
-    variables.pagination.after,
-    variables.pagination.before,
-    variables.order,
-  ]);
+  }, [variables]);
 }

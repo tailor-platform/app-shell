@@ -37,11 +37,9 @@ function TestDataTable(props: {
   } = props;
   const table = useDataTable<TestRow>({ columns, data, loading, error });
   return (
-    <DataTable.Provider value={table}>
-      <DataTable.Root>
-        <DataTable.Table />
-      </DataTable.Root>
-    </DataTable.Provider>
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
   );
 }
 

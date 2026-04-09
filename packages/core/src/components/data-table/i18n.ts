@@ -36,6 +36,11 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_notContains: "does not contain",
     filterOperator_hasPrefix: "starts with",
     filterOperator_hasSuffix: "ends with",
+    filterOperator_notHasPrefix: "does not start with",
+    filterOperator_notHasSuffix: "does not end with",
+    filterOperator_between: "between",
+    filterOperator_in: "in",
+    filterOperator_nin: "not in",
   },
   ja: {
     loading: "読み込み中...",
@@ -65,6 +70,11 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_notContains: "含まない",
     filterOperator_hasPrefix: "で始まる",
     filterOperator_hasSuffix: "で終わる",
+    filterOperator_notHasPrefix: "で始まらない",
+    filterOperator_notHasSuffix: "で終わらない",
+    filterOperator_between: "範囲内",
+    filterOperator_in: "次のいずれか",
+    filterOperator_nin: "次のいずれでもない",
   },
 });
 

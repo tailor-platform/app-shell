@@ -126,6 +126,12 @@ export {
 } from "./components/csv-importer";
 export { FileUploadDialog, type FileUploadDialogProps } from "./components/file-upload-dialog";
 export {
+  LinkedRecordsCard,
+  type LinkedRecordsCardProps,
+  type LinkedRecord,
+  type MatchScoreConfig,
+} from "./components/linked-records-card";
+export {
   ReconciliationList,
   ReconciliationDetail,
   type ReconciliationStatus,

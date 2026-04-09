@@ -40,6 +40,8 @@ export interface ReconciliationListItem {
   totalAmount: number;
   currency: string;
   date: Date | string;
+  /** Optional link to the auto-generated purchase invoice. */
+  createdInvoice?: { label: string; href: string };
 }
 
 // ============================================================================

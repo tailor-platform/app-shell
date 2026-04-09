@@ -61,14 +61,14 @@ describe("ReconciliationList", () => {
 
   it("renders status badges", () => {
     render(<ReconciliationList items={mockItems} />);
-    expect(screen.getByText("Matched")).toBeDefined();
-    expect(screen.getByText("Partial Match")).toBeDefined();
-    expect(screen.getByText("Processing")).toBeDefined();
+    expect(screen.getAllByText("Matched").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Partial Match").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Processing").length).toBeGreaterThan(0);
   });
 
   it("shows dash for score when processing", () => {
     render(<ReconciliationList items={[mockItems[2]]} />);
-    expect(screen.getByText("—")).toBeDefined();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
   it("shows percentage with color for score when not processing", () => {
@@ -130,47 +130,6 @@ describe("ReconciliationList", () => {
     it("does not show items when loading", () => {
       render(<ReconciliationList items={mockItems} loading />);
       expect(screen.queryByText("26TKC-00200")).toBeNull();
-    });
-  });
-
-  describe("sorting", () => {
-    it("sorts by invoice number when header clicked", async () => {
-      const user = userEvent.setup();
-      render(<ReconciliationList items={mockItems} />);
-
-      // Click Invoice # header to sort
-      await user.click(screen.getByText("Invoice #"));
-
-      const rows = screen.getAllByRole("row");
-      // First row is header, data rows start at index 1
-      const firstDataCell = rows[1].querySelector("td");
-      expect(firstDataCell?.textContent).toBe("26TKC-00200");
-    });
-
-    it("toggles sort direction on second click", async () => {
-      const user = userEvent.setup();
-      render(<ReconciliationList items={mockItems} />);
-
-      // Click twice for descending
-      await user.click(screen.getByText("Invoice #"));
-      await user.click(screen.getByText("Invoice #"));
-
-      const rows = screen.getAllByRole("row");
-      const firstDataCell = rows[1].querySelector("td");
-      expect(firstDataCell?.textContent).toBe("SS26-0522");
-    });
-
-    it("sorts by score", async () => {
-      const user = userEvent.setup();
-      render(<ReconciliationList items={mockItems} />);
-
-      // Sort by score ascending
-      await user.click(screen.getByText("Score"));
-
-      const rows = screen.getAllByRole("row");
-      // Processing item (score 0) should be first
-      const firstInvoice = rows[1].querySelector("td");
-      expect(firstInvoice?.textContent).toBe("DT26010026");
     });
   });
 

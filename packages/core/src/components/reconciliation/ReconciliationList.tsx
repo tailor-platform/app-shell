@@ -1,13 +1,26 @@
 import * as React from "react";
-import { ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 
 import { cn } from "../../lib/utils";
 import { Badge } from "../badge";
 import { Card } from "../card";
 import { Table } from "../table";
 import { FileUploadDialog } from "../file-upload-dialog";
-import type { ReconciliationListProps, ReconciliationListItem } from "./types";
+import type { ReconciliationListProps, ReconciliationListItem, ReconciliationStatus } from "./types";
 import { statusBadgeVariant, statusLabel } from "./types";
+
+// ============================================================================
+// STATUS TABS
+// ============================================================================
+
+const STATUS_TABS: Array<{ key: ReconciliationStatus | "all"; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "matched", label: "Matched" },
+  { key: "partial_match", label: "Partial Match" },
+  { key: "mismatch", label: "Mismatch" },
+  { key: "processing", label: "Processing" },
+  { key: "error", label: "Error" },
+];
 
 // ============================================================================
 // HELPERS
@@ -36,70 +49,13 @@ function scoreColor(score: number): string {
 }
 
 // ============================================================================
-// SORTING
-// ============================================================================
-
-type SortKey = "invoiceNumber" | "supplier" | "status" | "matchScore" | "totalAmount" | "date";
-type SortDirection = "asc" | "desc";
-
-const statusOrder: Record<string, number> = {
-  matched: 0,
-  partial_match: 1,
-  mismatch: 2,
-  processing: 3,
-  error: 4,
-};
-
-function compareItems(
-  a: ReconciliationListItem,
-  b: ReconciliationListItem,
-  key: SortKey,
-  dir: SortDirection,
-): number {
-  let cmp = 0;
-  switch (key) {
-    case "invoiceNumber":
-      cmp = a.invoiceNumber.localeCompare(b.invoiceNumber);
-      break;
-    case "supplier":
-      cmp = a.supplier.localeCompare(b.supplier);
-      break;
-    case "status":
-      cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
-      break;
-    case "matchScore":
-      cmp = a.matchScore - b.matchScore;
-      break;
-    case "totalAmount":
-      cmp = a.totalAmount - b.totalAmount;
-      break;
-    case "date": {
-      const da = typeof a.date === "string" ? new Date(a.date).getTime() : a.date.getTime();
-      const db = typeof b.date === "string" ? new Date(b.date).getTime() : b.date.getTime();
-      cmp = da - db;
-      break;
-    }
-  }
-  return dir === "desc" ? -cmp : cmp;
-}
-
-function SortIcon({ active, direction }: { active: boolean; direction: SortDirection }) {
-  if (!active) return <ArrowUpDownIcon className="astw:size-3 astw:opacity-40" />;
-  return direction === "asc" ? (
-    <ArrowUpIcon className="astw:size-3" />
-  ) : (
-    <ArrowDownIcon className="astw:size-3" />
-  );
-}
-
-// ============================================================================
 // SKELETON
 // ============================================================================
 
 function SkeletonRow() {
   return (
     <Table.Row>
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 7 }).map((_, i) => (
         <Table.Cell key={i}>
           <div className="astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse astw:w-20" />
         </Table.Cell>
@@ -119,6 +75,7 @@ function ListSkeleton() {
           <Table.Head className="astw:text-right">Score</Table.Head>
           <Table.Head className="astw:text-right">Amount</Table.Head>
           <Table.Head>Date</Table.Head>
+          <Table.Head>Created Invoice</Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -142,39 +99,6 @@ function DefaultEmptyState() {
         Upload an invoice to get started.
       </p>
     </div>
-  );
-}
-
-// ============================================================================
-// SORTABLE HEADER
-// ============================================================================
-
-function SortableHead({
-  children,
-  sortKey,
-  activeKey,
-  direction,
-  onSort,
-  className,
-}: {
-  children: React.ReactNode;
-  sortKey: SortKey;
-  activeKey: SortKey | null;
-  direction: SortDirection;
-  onSort: (key: SortKey) => void;
-  className?: string;
-}) {
-  return (
-    <Table.Head className={className}>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className="astw:inline-flex astw:items-center astw:gap-1 astw:cursor-pointer astw:hover:text-foreground astw:transition-colors"
-      >
-        {children}
-        <SortIcon active={activeKey === sortKey} direction={direction} />
-      </button>
-    </Table.Head>
   );
 }
 
@@ -209,22 +133,12 @@ export function ReconciliationList({
   const [internalOpen, setInternalOpen] = React.useState(false);
   const uploadOpen = controlledOpen ?? internalOpen;
   const setUploadOpen = onUploadOpenChange ?? setInternalOpen;
-  const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = React.useState<SortDirection>("asc");
+  const [activeTab, setActiveTab] = React.useState<ReconciliationStatus | "all">("all");
 
-  function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
-  const sortedItems = React.useMemo(() => {
-    if (!sortKey) return items;
-    return items.toSorted((a, b) => compareItems(a, b, sortKey, sortDir));
-  }, [items, sortKey, sortDir]);
+  const filteredItems = React.useMemo(() => {
+    if (activeTab === "all") return items;
+    return items.filter((item) => item.status === activeTab);
+  }, [items, activeTab]);
 
   function handleRowClick(item: ReconciliationListItem) {
     onItemClick?.(item);
@@ -241,69 +155,60 @@ export function ReconciliationList({
     <div data-slot="reconciliation-list" className={cn("astw:space-y-4", className)}>
       {/* Table inside card */}
       <Card.Root>
-        <Card.Content className="astw:pt-6">
+        {/* Status filter tabs */}
+        <div className="astw:px-5 astw:pt-4 astw:pb-0">
+          <div className="astw:flex astw:gap-1">
+            {STATUS_TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
+              const count = tab.key === "all" ? items.length : items.filter((i) => i.status === tab.key).length;
+              if (tab.key !== "all" && count === 0) return null;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "astw:px-3 astw:py-1.5 astw:text-sm astw:rounded-md astw:transition-colors astw:cursor-pointer",
+                    isActive
+                      ? "astw:bg-muted astw:text-foreground astw:font-medium"
+                      : "astw:text-muted-foreground astw:hover:text-foreground astw:hover:bg-muted/50",
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="astw:pt-2">
           {loading ? (
             <ListSkeleton />
-          ) : items.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
             (emptyState ?? <DefaultEmptyState />)
           ) : (
-            <Table.Root>
+            <Table.Root className="astw:table-fixed">
+              <colgroup>
+                <col className="astw:w-[13%]" />
+                <col className="astw:w-[24%]" />
+                <col className="astw:w-[12%]" />
+                <col className="astw:w-[8%]" />
+                <col className="astw:w-[13%]" />
+                <col className="astw:w-[12%]" />
+                <col className="astw:w-[18%]" />
+              </colgroup>
               <Table.Header>
-                <Table.Row>
-                  <SortableHead
-                    sortKey="invoiceNumber"
-                    activeKey={sortKey}
-                    direction={sortDir}
-                    onSort={handleSort}
-                  >
-                    Invoice #
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="supplier"
-                    activeKey={sortKey}
-                    direction={sortDir}
-                    onSort={handleSort}
-                  >
-                    Supplier
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="status"
-                    activeKey={sortKey}
-                    direction={sortDir}
-                    onSort={handleSort}
-                  >
-                    Status
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="matchScore"
-                    activeKey={sortKey}
-                    direction={sortDir}
-                    onSort={handleSort}
-                    className="astw:text-right"
-                  >
-                    Score
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="totalAmount"
-                    activeKey={sortKey}
-                    direction={sortDir}
-                    onSort={handleSort}
-                    className="astw:text-right"
-                  >
-                    Amount
-                  </SortableHead>
-                  <SortableHead
-                    sortKey="date"
-                    activeKey={sortKey}
-                    direction={sortDir}
-                    onSort={handleSort}
-                  >
-                    Date
-                  </SortableHead>
+                <Table.Row className="astw:hover:bg-transparent">
+                  <Table.Head className="astw:pl-5">Invoice #</Table.Head>
+                  <Table.Head>Supplier</Table.Head>
+                  <Table.Head>Status</Table.Head>
+                  <Table.Head className="astw:text-right">Score</Table.Head>
+                  <Table.Head className="astw:text-right">Amount</Table.Head>
+                  <Table.Head>Date</Table.Head>
+                  <Table.Head className="astw:pr-5">Created Invoice</Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {sortedItems.map((item) => (
+                {filteredItems.map((item) => (
                   <Table.Row
                     key={item.id}
                     className={cn(onItemClick && "astw:cursor-pointer")}
@@ -312,7 +217,7 @@ export function ReconciliationList({
                     tabIndex={onItemClick ? 0 : undefined}
                     role={onItemClick ? "button" : undefined}
                   >
-                    <Table.Cell className="astw:font-medium">{item.invoiceNumber}</Table.Cell>
+                    <Table.Cell className="astw:font-medium astw:pl-5">{item.invoiceNumber}</Table.Cell>
                     <Table.Cell>{item.supplier}</Table.Cell>
                     <Table.Cell>
                       <Badge variant={statusBadgeVariant[item.status]}>
@@ -332,12 +237,26 @@ export function ReconciliationList({
                       {formatCurrency(item.totalAmount, item.currency)}
                     </Table.Cell>
                     <Table.Cell>{formatDate(item.date)}</Table.Cell>
+                    <Table.Cell className="astw:pr-5">
+                      {item.createdInvoice ? (
+                        <a
+                          href={item.createdInvoice.href}
+                          className="astw:text-sm astw:text-foreground astw:hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {item.createdInvoice.label}
+                          <ExternalLinkIcon className="astw:inline astw:size-3 astw:ml-1 astw:text-muted-foreground" />
+                        </a>
+                      ) : (
+                        <span className="astw:text-muted-foreground">—</span>
+                      )}
+                    </Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
             </Table.Root>
           )}
-        </Card.Content>
+        </div>
       </Card.Root>
 
       {/* Upload dialog */}

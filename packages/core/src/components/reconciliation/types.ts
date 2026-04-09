@@ -2,24 +2,44 @@ import type * as React from "react";
 import type { FieldConfig } from "../description-card/types";
 
 // ============================================================================
-// STATUS TYPES
+// STATUS CONFIG
 // ============================================================================
 
 /**
- * Reconciliation matching status.
+ * Consumer-provided status configuration.
+ * Defines how the component interprets and displays status values.
  */
-export type ReconciliationStatus =
-  | "processing"
-  | "matched"
-  | "partial_match"
-  | "mismatch"
-  | "error";
+export interface StatusConfig {
+  /** Status value that means "still processing" — shows loading state. */
+  processingStatus: string;
+  /** Status value that means "failed" — shows error state. */
+  errorStatus: string;
+  /** Statuses where action buttons should be hidden (e.g. resolved or processing). */
+  hideActionsForStatuses?: string[];
+  /** Maps status values to badge variants. */
+  badgeVariantMap: Record<string, string>;
+  /** Maps status values to human-readable labels. */
+  labelMap: Record<string, string>;
+}
+
+/**
+ * A tab definition for the list filter.
+ */
+export interface StatusTab {
+  /** Status key to filter by. Use "all" to show everything. */
+  key: string;
+  /** Tab display label. */
+  label: string;
+}
+
+// ============================================================================
+// SEVERITY
+// ============================================================================
 
 /**
  * Severity level for a detected discrepancy.
  */
 export type DiscrepancySeverity = "warning" | "error";
-
 
 // ============================================================================
 // LIST PAGE
@@ -30,15 +50,9 @@ export type DiscrepancySeverity = "warning" | "error";
  */
 export interface ReconciliationListItem {
   id: string;
-  invoiceNumber: string;
-  supplier: string;
-  status: ReconciliationStatus;
-  matchScore: number;
-  totalAmount: number;
-  currency: string;
-  date: Date | string;
-  /** Optional link to the auto-generated purchase invoice. */
-  createdInvoice?: { label: string; href: string };
+  status: string;
+  /** All display fields — rendered via list table columns. */
+  data: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -46,7 +60,7 @@ export interface ReconciliationListItem {
 // ============================================================================
 
 /**
- * A step in the processing pipeline (upload → extract → match).
+ * A step in the processing pipeline.
  */
 export interface ProcessingStep {
   id: string;
@@ -93,7 +107,7 @@ export interface LineItemColumn {
 }
 
 /**
- * A related document (source PO/GR or auto-generated bill).
+ * A related document.
  */
 export interface RelatedDocument {
   id: string;
@@ -114,9 +128,9 @@ export interface RelatedDocument {
  */
 export interface ReconciliationRecord {
   id: string;
-  status: ReconciliationStatus;
+  status: string;
   matchScore: number;
-  /** Generic data bag — all backend fields. DescriptionCard reads from this via field keys. */
+  /** Generic data bag — DescriptionCard reads from this via field keys. */
   data: Record<string, unknown>;
   summary: string;
   processingSteps: ProcessingStep[];
@@ -131,11 +145,46 @@ export interface ReconciliationRecord {
 // ============================================================================
 
 /**
+ * Column definition for the list table.
+ */
+export interface ListColumn {
+  /** Key path to the value in the item's `data` bag. Use "status" or "matchScore" for top-level fields. */
+  key: string;
+  /** Column header text. */
+  header: string;
+  /** Rendering type. Default: "text". */
+  type?: "text" | "number" | "badge" | "money" | "score" | "date" | "link";
+  /** Column alignment. Default: "left". */
+  align?: "left" | "right";
+  /** Truncate cell text with ellipsis. */
+  truncate?: boolean;
+  /** Type-specific configuration. */
+  meta?: {
+    /** Badge variant map for "badge" type columns. */
+    badgeVariantMap?: Record<string, string>;
+    /** Label map for "badge" type columns (maps value to display text). */
+    labelMap?: Record<string, string>;
+    /** Key path to the currency code, for "money" type columns. */
+    currencyKey?: string;
+    /** Key path to the href, for "link" type columns. */
+    hrefKey?: string;
+    /** Status value that should show "—" instead of a number, for "score" type. */
+    dashForStatus?: string;
+  };
+}
+
+/**
  * Props for the ReconciliationList component.
  */
 export interface ReconciliationListProps {
   /** List of reconciliation records to display. */
   items: ReconciliationListItem[];
+  /** Status configuration — badge variants, labels, behavior keys. */
+  statusConfig: StatusConfig;
+  /** Tab definitions for status filtering. */
+  tabs: StatusTab[];
+  /** Column definitions for the list table. */
+  columns: ListColumn[];
   /** Called when a row is clicked. */
   onItemClick?: (item: ReconciliationListItem) => void;
   /** Called when a file is uploaded via the dialog. Omit to hide the upload dialog. */
@@ -165,6 +214,10 @@ export interface ReconciliationListProps {
 export interface ReconciliationDetailProps {
   /** Full reconciliation record. */
   data: ReconciliationRecord;
+  /** Status configuration. */
+  statusConfig: StatusConfig;
+  /** Title for the match result section. */
+  title?: string;
   /** DescriptionCard field configuration for the match result section. */
   fields: FieldConfig[];
   /** Column configuration for the line items comparison table. */
@@ -177,38 +230,14 @@ export interface ReconciliationDetailProps {
   onUpdate?: () => void;
   /** Label for the update action button. */
   updateLabel?: string;
-  /** Called on polling interval while status is "processing". */
+  /** Called on polling interval while status is processing. */
   onRefresh?: () => void;
   /** Polling interval in ms while processing (default 5000). */
   refreshInterval?: number;
+  /** Label for the retry action shown in error state. */
+  retryLabel?: string;
   /** Additional custom action buttons. */
   actions?: React.ReactNode;
   /** Additional CSS classes on the root. */
   className?: string;
 }
-
-// ============================================================================
-// STATUS HELPERS
-// ============================================================================
-
-/** Maps ReconciliationStatus to Badge variant. */
-export const statusBadgeVariant: Record<
-  ReconciliationStatus,
-  "subtle-default" | "subtle-success" | "subtle-warning" | "subtle-error"
-> = {
-  processing: "subtle-default",
-  matched: "subtle-success",
-  partial_match: "subtle-warning",
-  mismatch: "subtle-error",
-  error: "subtle-error",
-};
-
-/** Maps ReconciliationStatus to a human-readable label. */
-export const statusLabel: Record<ReconciliationStatus, string> = {
-  processing: "Processing",
-  matched: "Matched",
-  partial_match: "Partial Match",
-  mismatch: "Mismatch",
-  error: "Error",
-};
-

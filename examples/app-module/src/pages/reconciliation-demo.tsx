@@ -30,67 +30,120 @@ const UploadIcon = () => (
 );
 
 // 🧪 Dummy Data: Reconciliation list items
+// 🧪 Status configuration for the invoice reconciliation use case
+const STATUS_CONFIG = {
+  processingStatus: "processing",
+  errorStatus: "error",
+  hideActionsForStatuses: ["matched", "processing"],
+  badgeVariantMap: {
+    matched: "subtle-success",
+    partial_match: "subtle-warning",
+    mismatch: "subtle-error",
+    processing: "subtle-default",
+    error: "subtle-error",
+  },
+  labelMap: {
+    matched: "Matched",
+    partial_match: "Partial Match",
+    mismatch: "Mismatch",
+    processing: "Processing",
+    error: "Error",
+  },
+};
+
+const LIST_TABS = [
+  { key: "all", label: "All" },
+  { key: "matched", label: "Matched" },
+  { key: "partial_match", label: "Partial Match" },
+  { key: "mismatch", label: "Mismatch" },
+  { key: "processing", label: "Processing" },
+  { key: "error", label: "Error" },
+];
+
+const LIST_COLUMNS = [
+  { key: "invoiceNumber", header: "Invoice #" },
+  { key: "supplier", header: "Supplier", truncate: true },
+  { key: "status", header: "Status", type: "badge" as const },
+  { key: "matchScore", header: "Score", type: "score" as const, align: "right" as const },
+  { key: "totalAmount", header: "Amount", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  { key: "date", header: "Date", type: "date" as const },
+  { key: "createdInvoiceLabel", header: "Created Invoice", type: "link" as const, meta: { hrefKey: "createdInvoiceHref" } },
+];
+
 const demoListItems: ReconciliationListItem[] = [
   {
     id: "1",
-    invoiceNumber: "26TKC-00200",
-    supplier: "CADICA Tekstil VE Tic. Ltd. Sti.",
     status: "matched",
-    matchScore: 100,
-    totalAmount: 7854.01,
-    currency: "USD",
-    date: new Date("2026-04-07"),
-    createdInvoice: { label: "PI-2026-00371", href: "#" },
+    data: {
+      invoiceNumber: "26TKC-00200",
+      supplier: "CADICA Tekstil VE Tic. Ltd. Sti.",
+      matchScore: 100,
+      totalAmount: 7854.01,
+      currency: "USD",
+      date: new Date("2026-04-07"),
+      createdInvoiceLabel: "PI-2026-00371",
+      createdInvoiceHref: "#",
+    },
   },
   {
     id: "2",
-    invoiceNumber: "SS26-0522",
-    supplier: "Karmen Deri Urunleri Sanayi ve Ticaret A.S.",
     status: "partial_match",
-    matchScore: 75,
-    totalAmount: 157990.0,
-    currency: "USD",
-    date: new Date("2026-04-07"),
+    data: {
+      invoiceNumber: "SS26-0522",
+      supplier: "Karmen Deri Urunleri Sanayi ve Ticaret A.S.",
+      matchScore: 75,
+      totalAmount: 157990.0,
+      currency: "USD",
+      date: new Date("2026-04-07"),
+    },
   },
   {
     id: "3",
-    invoiceNumber: "DT26010026",
-    supplier: "Dongtex Industrial Co., Ltd.",
     status: "partial_match",
-    matchScore: 88,
-    totalAmount: 621.37,
-    currency: "USD",
-    date: new Date("2026-04-07"),
+    data: {
+      invoiceNumber: "DT26010026",
+      supplier: "Dongtex Industrial Co., Ltd.",
+      matchScore: 88,
+      totalAmount: 621.37,
+      currency: "USD",
+      date: new Date("2026-04-07"),
+    },
   },
   {
     id: "4",
-    invoiceNumber: "MZ26-04187",
-    supplier: "Mazzucchelli 1849 S.p.A.",
     status: "mismatch",
-    matchScore: 42,
-    totalAmount: 18720.0,
-    currency: "EUR",
-    date: new Date("2026-04-06"),
+    data: {
+      invoiceNumber: "MZ26-04187",
+      supplier: "Mazzucchelli 1849 S.p.A.",
+      matchScore: 42,
+      totalAmount: 18720.0,
+      currency: "EUR",
+      date: new Date("2026-04-06"),
+    },
   },
   {
     id: "5",
-    invoiceNumber: "PT26-00891",
-    supplier: "Premiata S.r.l.",
     status: "processing",
-    matchScore: 0,
-    totalAmount: 34500.0,
-    currency: "EUR",
-    date: new Date("2026-04-08"),
+    data: {
+      invoiceNumber: "PT26-00891",
+      supplier: "Premiata S.r.l.",
+      matchScore: 0,
+      totalAmount: 34500.0,
+      currency: "EUR",
+      date: new Date("2026-04-08"),
+    },
   },
   {
     id: "6",
-    invoiceNumber: "HK26-SL0044",
-    supplier: "Sun Hing Leather Co., Ltd.",
     status: "error",
-    matchScore: 0,
-    totalAmount: 8900.0,
-    currency: "USD",
-    date: new Date("2026-04-09"),
+    data: {
+      invoiceNumber: "HK26-SL0044",
+      supplier: "Sun Hing Leather Co., Ltd.",
+      matchScore: 0,
+      totalAmount: 8900.0,
+      currency: "USD",
+      date: new Date("2026-04-09"),
+    },
   },
 ];
 
@@ -724,13 +777,15 @@ function addUploadedRecord(file: File): string {
   _dynamicListItems = [
     {
       id,
-      invoiceNumber: processingRecord.invoiceNumber,
-      supplier: "—",
       status: "processing",
-      matchScore: 0,
-      totalAmount: 0,
-      currency: "USD",
-      date: now,
+      data: {
+        invoiceNumber: String(processingRecord.data.invoiceNumber ?? fileName.replace(/\.[^.]+$/, "")),
+        supplier: "—",
+        matchScore: 0,
+        totalAmount: 0,
+        currency: "USD",
+        date: now,
+      },
     },
     ..._dynamicListItems,
   ];
@@ -744,10 +799,13 @@ function addUploadedRecord(file: File): string {
       item.id === id
         ? {
             ...item,
-            status: "matched" as const,
-            matchScore: 100,
-            supplier: matched.supplier,
-            totalAmount: matched.totalAmount,
+            status: "matched",
+            data: {
+              ...item.data,
+              matchScore: 100,
+              supplier: String(matched.data.supplier ?? ""),
+              totalAmount: Number(matched.data.totalAmount ?? 0),
+            },
           }
         : item,
     );
@@ -782,6 +840,9 @@ const ReconciliationListPage = () => {
       <Layout.Column>
         <ReconciliationList
           items={allItems}
+          statusConfig={STATUS_CONFIG}
+          tabs={LIST_TABS}
+          columns={LIST_COLUMNS}
           onItemClick={(item) => {
             navigate(`/custom-page/reconciliation-demo/${item.id}`);
           }}
@@ -792,6 +853,12 @@ const ReconciliationListPage = () => {
           }}
           uploadOpen={uploadOpen}
           onUploadOpenChange={setUploadOpen}
+          uploadDialogProps={{
+            title: "Upload Invoice",
+            description:
+              "Upload a PDF or image of a supplier invoice. The system will extract data and match it against existing purchase orders and goods receipts.",
+            uploadLabel: "Upload Invoice",
+          }}
         />
       </Layout.Column>
     </Layout>
@@ -823,6 +890,7 @@ const ReconciliationDetailPage = () => {
   return (
     <ReconciliationDetail
       data={record}
+      statusConfig={STATUS_CONFIG}
       fields={INVOICE_FIELDS}
       lineItemColumns={LINE_ITEM_COLUMNS}
       onCreate={() =>

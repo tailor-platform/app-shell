@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReconciliationDetail } from "./ReconciliationDetail";
 import { CommandPaletteProvider } from "../../contexts/command-palette-context";
-import type { ReconciliationRecord, LineItemColumn } from "./types";
+import type { ReconciliationRecord, LineItemColumn, StatusConfig } from "./types";
 import type { FieldConfig } from "../description-card/types";
 
 // ============================================================================
@@ -135,11 +135,36 @@ const errorRecord: ReconciliationRecord = {
 };
 
 // ============================================================================
+// TEST STATUS CONFIG
+// ============================================================================
+
+const TEST_STATUS_CONFIG: StatusConfig = {
+  processingStatus: "processing",
+  errorStatus: "error",
+  hideActionsForStatuses: ["matched", "processing"],
+  badgeVariantMap: {
+    matched: "subtle-success",
+    partial_match: "subtle-warning",
+    mismatch: "subtle-error",
+    processing: "subtle-default",
+    error: "subtle-error",
+  },
+  labelMap: {
+    matched: "Matched",
+    partial_match: "Partial Match",
+    mismatch: "Mismatch",
+    processing: "Processing",
+    error: "Error",
+  },
+};
+
+// ============================================================================
 // DEFAULT PROPS HELPER
 // ============================================================================
 
 function defaultProps(overrides: Partial<React.ComponentProps<typeof ReconciliationDetail>> & { data: ReconciliationRecord }) {
   return {
+    statusConfig: TEST_STATUS_CONFIG,
     fields: TEST_FIELDS,
     lineItemColumns: TEST_COLUMNS,
     ...overrides,
@@ -300,7 +325,7 @@ describe("ReconciliationDetail", () => {
 
     it("shows retry action when onRefresh is provided", () => {
       renderDetail(defaultProps({ data: errorRecord, onRefresh: vi.fn() }));
-      expect(screen.getByText("Retry processing")).toBeDefined();
+      expect(screen.getByText("Retry")).toBeDefined();
     });
 
     it("hides Update and Create actions", () => {

@@ -1,4 +1,4 @@
-name: Link Check
+name: Doc Check
 
 on:
   pull_request:

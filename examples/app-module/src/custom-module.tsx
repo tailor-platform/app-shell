@@ -20,6 +20,7 @@ import { primitiveComponentsDemoResource } from "./pages/primitives-demo";
 import { dropdownComponentsDemoResource } from "./pages/dropdown-demo";
 import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form-demo";
 import { csvImporterDemoResource } from "./pages/csv-importer-demo";
+import { reconciliationDemoResource } from "./pages/reconciliation-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -193,6 +194,17 @@ export const customPageModule = defineModule({
               CSV Importer Demo
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/reconciliation-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Reconciliation Demo (Three-Way Matching)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -218,5 +230,6 @@ export const customPageModule = defineModule({
     formComponentsDemoResource,
     zodRHFFormDemoResource,
     csvImporterDemoResource,
+    reconciliationDemoResource,
   ],
 });

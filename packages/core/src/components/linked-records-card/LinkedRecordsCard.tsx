@@ -1,11 +1,5 @@
 import * as React from "react";
-import {
-  FileTextIcon,
-  TruckIcon,
-  ReceiptIcon,
-  PackageIcon,
-  ExternalLinkIcon,
-} from "lucide-react";
+import { FileTextIcon, TruckIcon, ReceiptIcon, PackageIcon, ExternalLinkIcon } from "lucide-react";
 
 import { Badge } from "../badge";
 import { Card } from "../card";
@@ -42,10 +36,7 @@ function RecordRow({ record }: { record: LinkedRecord }) {
         {record.label}
         <ExternalLinkIcon className="astw:inline astw:size-3 astw:ml-1 astw:text-muted-foreground" />
       </a>
-      <Badge
-        variant={record.statusVariant ?? "outline-neutral"}
-        className="astw:shrink-0"
-      >
+      <Badge variant={record.statusVariant ?? "outline-neutral"} className="astw:shrink-0">
         {record.status}
       </Badge>
     </div>

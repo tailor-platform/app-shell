@@ -131,4 +131,6 @@ export {
   ReconciliationDetail,
   type ReconciliationListProps,
   type ReconciliationDetailProps,
+  type ReconciliationListItem,
+  type ReconciliationRecord,
 } from "./components/reconciliation";

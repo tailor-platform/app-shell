@@ -38,7 +38,12 @@ describe("LinkedRecordsCard", () => {
   });
 
   it("renders ReactNode title", () => {
-    render(<LinkedRecordsCard title={<span data-testid="custom">100% Matched</span>} records={mockRecords} />);
+    render(
+      <LinkedRecordsCard
+        title={<span data-testid="custom">100% Matched</span>}
+        records={mockRecords}
+      />,
+    );
     expect(screen.getByTestId("custom")).toBeDefined();
     expect(screen.getByText("100% Matched")).toBeDefined();
   });

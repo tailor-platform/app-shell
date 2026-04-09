@@ -8,7 +8,11 @@ import { Badge } from "../badge";
 import { Card } from "../card";
 import { Table } from "../table";
 import { FileUploadDialog } from "../file-upload-dialog";
-import type { ReconciliationListProps, ReconciliationListItem, ReconciliationStatus } from "./types";
+import type {
+  ReconciliationListProps,
+  ReconciliationListItem,
+  ReconciliationStatus,
+} from "./types";
 import { statusBadgeVariant, statusLabel } from "./types";
 
 // ============================================================================
@@ -124,10 +128,14 @@ export function ReconciliationList({
   const setUploadOpen = onUploadOpenChange ?? setInternalOpen;
   const [activeTab, setActiveTab] = React.useState<ReconciliationStatus | "all">("all");
 
+  // Clamp to "all" if the active tab has no matching items
+  const effectiveTab =
+    activeTab !== "all" && !items.some((item) => item.status === activeTab) ? "all" : activeTab;
+
   const filteredItems = React.useMemo(() => {
-    if (activeTab === "all") return items;
-    return items.filter((item) => item.status === activeTab);
-  }, [items, activeTab]);
+    if (effectiveTab === "all") return items;
+    return items.filter((item) => item.status === effectiveTab);
+  }, [items, effectiveTab]);
 
   function handleRowClick(item: ReconciliationListItem) {
     onItemClick?.(item);
@@ -148,8 +156,9 @@ export function ReconciliationList({
         <div className="astw:px-5 astw:pt-4 astw:pb-0">
           <div className="astw:flex astw:gap-1">
             {STATUS_TABS.map((tab) => {
-              const isActive = activeTab === tab.key;
-              const count = tab.key === "all" ? items.length : items.filter((i) => i.status === tab.key).length;
+              const isActive = effectiveTab === tab.key;
+              const count =
+                tab.key === "all" ? items.length : items.filter((i) => i.status === tab.key).length;
               if (tab.key !== "all" && count === 0) return null;
               return (
                 <button
@@ -206,7 +215,9 @@ export function ReconciliationList({
                     tabIndex={onItemClick ? 0 : undefined}
                     role={onItemClick ? "button" : undefined}
                   >
-                    <Table.Cell className="astw:font-medium astw:pl-5">{item.invoiceNumber}</Table.Cell>
+                    <Table.Cell className="astw:font-medium astw:pl-5">
+                      {item.invoiceNumber}
+                    </Table.Cell>
                     <Table.Cell>{item.supplier}</Table.Cell>
                     <Table.Cell>
                       <Badge variant={statusBadgeVariant[item.status]}>

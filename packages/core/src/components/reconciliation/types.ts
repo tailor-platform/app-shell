@@ -203,7 +203,10 @@ export const statusLabel: Record<ReconciliationStatus, string> = {
 };
 
 /** Maps LineItemStatus to a Badge variant. */
-export const lineItemBadgeVariant: Record<LineItemStatus, "subtle-success" | "subtle-warning" | "subtle-error"> = {
+export const lineItemBadgeVariant: Record<
+  LineItemStatus,
+  "subtle-success" | "subtle-warning" | "subtle-error"
+> = {
   matched: "subtle-success",
   price_mismatch: "subtle-warning",
   qty_mismatch: "subtle-warning",

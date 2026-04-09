@@ -68,8 +68,18 @@ export function FileUploadDialog({
     }
   }, [open]);
 
+  function isAcceptedFile(candidate: File): boolean {
+    if (!accept) return true;
+    const accepted = accept.split(",").map((s) => s.trim().toLowerCase());
+    const ext = `.${candidate.name.split(".").pop()?.toLowerCase()}`;
+    const mime = candidate.type.toLowerCase();
+    return accepted.some(
+      (a) => a === ext || a === mime || (a.endsWith("/*") && mime.startsWith(a.replace("/*", "/"))),
+    );
+  }
+
   function handleFileSelect(selected: File | undefined) {
-    if (selected) {
+    if (selected && isAcceptedFile(selected)) {
       setFile(selected);
     }
   }

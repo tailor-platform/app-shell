@@ -2,5 +2,10 @@
 export { ReconciliationList, default } from "./ReconciliationList";
 export { ReconciliationDetail } from "./ReconciliationDetail";
 
-// Props types only — internal types are inferred via Props
-export type { ReconciliationListProps, ReconciliationDetailProps } from "./types";
+// Public types — Props + data shapes consumers must construct
+export type {
+  ReconciliationListProps,
+  ReconciliationDetailProps,
+  ReconciliationListItem,
+  ReconciliationRecord,
+} from "./types";

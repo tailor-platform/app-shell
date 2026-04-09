@@ -1,5 +1,11 @@
 import * as React from "react";
-import { LoaderCircleIcon, FilePlusIcon, PencilIcon, CircleAlertIcon, RotateCwIcon } from "lucide-react";
+import {
+  LoaderCircleIcon,
+  FilePlusIcon,
+  PencilIcon,
+  CircleAlertIcon,
+  RotateCwIcon,
+} from "lucide-react";
 
 import { cn } from "../../lib/utils";
 import { scoreColor } from "../../lib/score-color";
@@ -23,7 +29,12 @@ import type {
   RelatedDocument,
   ProcessingStep,
 } from "./types";
-import { statusBadgeVariant, statusLabel, lineItemBadgeVariant, lineItemStatusLabel } from "./types";
+import {
+  statusBadgeVariant,
+  statusLabel,
+  lineItemBadgeVariant,
+  lineItemStatusLabel,
+} from "./types";
 
 // ============================================================================
 // FORMATTERS
@@ -56,7 +67,9 @@ function toLinkedRecord(doc: RelatedDocument): LinkedRecord {
     label: doc.label,
     href: doc.href,
     status: doc.status,
-    statusVariant: STATUS_VARIANT_MAP[doc.status] ?? "outline-neutral",
+    statusVariant: doc.statusVariant
+      ? (`outline-${doc.statusVariant}` as LinkedRecord["statusVariant"])
+      : (STATUS_VARIANT_MAP[doc.status] ?? "outline-neutral"),
   };
 }
 
@@ -273,20 +286,15 @@ function DiscrepanciesCard({ discrepancies }: { discrepancies: Discrepancy[] }) 
       </Card.Header>
       <Card.Content>
         <div className="astw:space-y-2">
-          {discrepancies.map((d) => (
-            <div
-              key={d.id}
-              className="astw:relative astw:pl-3 astw:py-2"
-            >
+          {unresolved.map((d) => (
+            <div key={d.id} className="astw:relative astw:pl-3 astw:py-2">
               <span
                 className={cn(
                   "astw:absolute astw:left-0 astw:top-2 astw:bottom-2 astw:w-0.5 astw:rounded-full",
-                  d.severity === "error"
-                    ? "astw:bg-destructive"
-                    : "astw:bg-yellow-500",
+                  d.severity === "error" ? "astw:bg-destructive" : "astw:bg-yellow-500",
                 )}
               />
-              <p className="astw:text-xs astw:font-semibold">{d.category}</p>
+              <p className="astw:text-sm astw:font-semibold">{d.category}</p>
               <p className="astw:text-xs astw:text-muted-foreground astw:mt-0.5">{d.message}</p>
             </div>
           ))}
@@ -358,7 +366,9 @@ function LineItemsTable({
                 <Table.Cell className="astw:text-right">
                   {formatCurrency(item.poPrice, currency)}
                 </Table.Cell>
-                <Table.Cell className={cn("astw:text-right astw:pr-6", varianceColor(item.priceVariance))}>
+                <Table.Cell
+                  className={cn("astw:text-right astw:pr-6", varianceColor(item.priceVariance))}
+                >
                   {formatVariance(item.priceVariance)}
                 </Table.Cell>
               </Table.Row>
@@ -490,7 +500,12 @@ export function ReconciliationDetail({
               <LinkedRecordsCard
                 title={
                   !isProcessing && !isError ? (
-                    <span className={cn("astw:text-lg astw:font-bold astw:tabular-nums astw:leading-none", scoreColor(data.matchScore))}>
+                    <span
+                      className={cn(
+                        "astw:text-lg astw:font-bold astw:tabular-nums astw:leading-none",
+                        scoreColor(data.matchScore),
+                      )}
+                    >
                       {data.matchScore}% {statusLabel[data.status]}
                     </span>
                   ) : undefined

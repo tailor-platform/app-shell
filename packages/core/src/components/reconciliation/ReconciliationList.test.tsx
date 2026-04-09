@@ -133,6 +133,36 @@ describe("ReconciliationList", () => {
     });
   });
 
+  describe("status tabs", () => {
+    it("filters items when a status tab is clicked", async () => {
+      const user = userEvent.setup();
+      render(<ReconciliationList items={mockItems} />);
+
+      // Click "Matched" tab
+      await user.click(screen.getAllByText("Matched")[0]);
+
+      // Only matched item should show in table
+      expect(screen.getByText("26TKC-00200")).toBeDefined();
+      expect(screen.queryByText("SS26-0522")).toBeNull();
+      expect(screen.queryByText("DT26010026")).toBeNull();
+    });
+
+    it("falls back to All when active tab has no items", async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<ReconciliationList items={mockItems} />);
+
+      // Click "Matched" tab
+      await user.click(screen.getAllByText("Matched")[0]);
+      expect(screen.getByText("26TKC-00200")).toBeDefined();
+
+      // Re-render with no matched items — should fall back to showing all
+      const noMatchedItems = mockItems.filter((i) => i.status !== "matched");
+      rerender(<ReconciliationList items={noMatchedItems} />);
+      expect(screen.getByText("SS26-0522")).toBeDefined();
+      expect(screen.getByText("DT26010026")).toBeDefined();
+    });
+  });
+
   it("matches snapshot", () => {
     const { container } = render(<ReconciliationList items={mockItems} onUpload={() => {}} />);
     expect(container.innerHTML).toMatchSnapshot();

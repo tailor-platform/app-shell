@@ -175,6 +175,18 @@ const lowScoreRecord: ReconciliationRecord = {
   status: "mismatch",
 };
 
+const errorRecord: ReconciliationRecord = {
+  ...matchedRecord,
+  id: "err-1",
+  invoiceNumber: "ERR-001",
+  status: "error",
+  matchScore: 0,
+  summary: "OCR extraction failed — file corrupted.",
+  lineItems: [],
+  discrepancies: [],
+  relatedDocuments: [],
+};
+
 afterEach(() => {
   cleanup();
 });
@@ -322,6 +334,25 @@ describe("ReconciliationDetail", () => {
       expect(onRefresh).not.toHaveBeenCalled();
 
       vi.useRealTimers();
+    });
+  });
+
+  describe("error state", () => {
+    it("shows error message instead of DescriptionCard", () => {
+      renderDetail({ data: errorRecord });
+      expect(screen.getByText("OCR extraction failed — file corrupted.")).toBeDefined();
+      expect(screen.queryByText("Match Result")).toBeNull();
+    });
+
+    it("shows retry action when onRefresh is provided", () => {
+      renderDetail({ data: errorRecord, onRefresh: vi.fn() });
+      expect(screen.getByText("Retry processing")).toBeDefined();
+    });
+
+    it("hides Update PO and Create Bill actions", () => {
+      renderDetail({ data: errorRecord, onCreateBill: vi.fn(), onUpdatePO: vi.fn() });
+      expect(screen.queryByText("Create purchase bill")).toBeNull();
+      expect(screen.queryByText("Update PO")).toBeNull();
     });
   });
 

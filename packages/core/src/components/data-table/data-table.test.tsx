@@ -39,8 +39,7 @@ function TestDataTable(props: {
   return (
     <DataTable.Provider value={table}>
       <DataTable.Root>
-        <DataTable.Headers />
-        <DataTable.Body />
+        <DataTable.Table />
       </DataTable.Root>
     </DataTable.Provider>
   );
@@ -85,6 +84,7 @@ describe("DataTable", () => {
     const { container } = render(<TestDataTable />, { wrapper });
 
     expect(container.querySelector('[data-slot="data-table"]')).toBeDefined();
+    expect(container.querySelector('[data-slot="data-table-table"]')).toBeDefined();
     expect(container.querySelector('[data-slot="data-table-header"]')).toBeDefined();
     expect(container.querySelector('[data-slot="data-table-body"]')).toBeDefined();
   });

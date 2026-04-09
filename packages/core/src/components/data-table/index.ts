@@ -1,10 +1,7 @@
 // DataTable compound component
-export { DataTable } from "./data-table";
+export { DataTable, type DataTablePaginationProps } from "./data-table";
 export { useDataTable } from "./use-data-table";
 export { useDataTableContext } from "./data-table-context";
-
-// Pagination
-export { Pagination, type PaginationProps } from "./pagination";
 
 // Field helpers
 export { createColumnHelper } from "./field-helpers";

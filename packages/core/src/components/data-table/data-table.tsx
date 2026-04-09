@@ -1,13 +1,20 @@
 import { useContext, type ComponentProps, type ReactNode } from "react";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
+import { useCollectionControl } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
+import { Select } from "@/components/select-standalone";
 import type { RowAction, SortConfig, UseDataTableReturn } from "./types";
-import { DataTableContext, type DataTableContextValue } from "./data-table-context";
+import {
+  DataTableContext,
+  useDataTableContext,
+  type DataTableContextValue,
+} from "./data-table-context";
 import { useDataTableT } from "./i18n";
+import { DataTableToolbar, DataTableFilters } from "./toolbar";
 
 // =============================================================================
 // DataTable.Root
@@ -15,12 +22,12 @@ import { useDataTableT } from "./i18n";
 
 function DataTableRoot({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <Table.Root
+    <div
       data-slot="data-table"
       className={cn("astw:border astw:rounded-md astw:bg-card", className)}
     >
       {children}
-    </Table.Root>
+    </div>
   );
 }
 DataTableRoot.displayName = "DataTable.Root";
@@ -297,14 +304,149 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 }
 
 // =============================================================================
+// =============================================================================
+// DataTable.Table
+// =============================================================================
+
+/**
+ * Table component that renders `<table>` with built-in Headers and Body.
+ * Place inside `DataTable.Root`.
+ */
+function DataTableTable({ className }: { className?: string }) {
+  return (
+    <Table.Root data-slot="data-table-table" className={className}>
+      <DataTableHeaders />
+      <DataTableBody />
+    </Table.Root>
+  );
+}
+DataTableTable.displayName = "DataTable.Table";
+
+// =============================================================================
+// DataTable.Footer
+// =============================================================================
+
+/**
+ * Footer container for pagination and other footer content.
+ * Place inside `DataTable.Root`, after `DataTable.Table`.
+ */
+function DataTableFooter({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      data-slot="data-table-footer"
+      className={cn("astw:flex astw:items-center astw:border-t astw:px-4 astw:py-2", className)}
+    >
+      {children}
+    </div>
+  );
+}
+DataTableFooter.displayName = "DataTable.Footer";
+
+// =============================================================================
+// DataTable.Pagination
+// =============================================================================
+
+export interface DataTablePaginationProps {
+  /**
+   * Available page-size options shown in a dropdown selector.
+   * When provided, a page-size switcher is rendered.
+   */
+  pageSizeOptions?: number[];
+}
+
+/**
+ * Pre-built pagination controls. Place inside `DataTable.Footer`.
+ */
+function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {}) {
+  const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =
+    useDataTableContext();
+  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } =
+    useCollectionControl();
+  const t = useDataTableT();
+
+  return (
+    <div className="astw:flex astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
+      {pageSizeOptions && pageSizeOptions.length > 0 && (
+        <div className="astw:flex astw:items-center astw:gap-1.5">
+          <span className="astw:text-sm astw:text-muted-foreground astw:whitespace-nowrap">
+            {t("paginationRowsPerPage")}
+          </span>
+          <Select
+            items={pageSizeOptions.map(String)}
+            value={String(pageSize)}
+            onValueChange={(item) => {
+              if (item) setPageSize(Number(item));
+            }}
+            className="astw:w-[70px]"
+          />
+        </div>
+      )}
+      {totalPages !== null && (
+        <span className="astw:text-sm astw:text-muted-foreground astw:tabular-nums">
+          {t("paginationPage")} {currentPage} / {totalPages}
+        </span>
+      )}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={goToFirstPage}
+        disabled={!hasPrevPage}
+        aria-label={t("paginationFirst")}
+      >
+        <ChevronsLeft className="astw:size-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => {
+          if (pageInfo.previousPageToken) {
+            prevPage(pageInfo.previousPageToken);
+          }
+        }}
+        disabled={!hasPrevPage}
+        aria-label={t("paginationPrevious")}
+      >
+        <ChevronLeft className="astw:size-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => {
+          if (pageInfo.nextPageToken) {
+            nextPage(pageInfo.nextPageToken);
+          }
+        }}
+        disabled={!hasNextPage}
+        aria-label={t("paginationNext")}
+      >
+        <ChevronRight className="astw:size-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => goToLastPage(totalPages ?? 1)}
+        disabled={!hasNextPage || totalPages === null}
+        aria-label={t("paginationLast")}
+      >
+        <ChevronsRight className="astw:size-4" />
+      </Button>
+    </div>
+  );
+}
+DataTablePagination.displayName = "DataTable.Pagination";
+
+// =============================================================================
 // DataTable namespace
 // =============================================================================
 
 export const DataTable = {
   Provider: DataTableProviderComponent,
   Root: DataTableRoot,
-  Headers: DataTableHeaders,
-  Body: DataTableBody,
+  Toolbar: DataTableToolbar,
+  Filters: DataTableFilters,
+  Table: DataTableTable,
+  Footer: DataTableFooter,
+  Pagination: DataTablePagination,
   Row: DataTableRow,
   Cell: DataTableCell,
 } as const;

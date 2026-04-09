@@ -26,8 +26,10 @@ import type { Column, PageInfo, SortState, UseDataTableOptions, UseDataTableRetu
  *
  * <DataTable.Provider value={table}>
  *   <DataTable.Root>
- *     <DataTable.Headers />
- *     <DataTable.Body />
+ *     <DataTable.Table />
+ *     <DataTable.Footer>
+ *       <DataTable.Pagination />
+ *     </DataTable.Footer>
  *   </DataTable.Root>
  * </DataTable.Provider>
  * ```

@@ -19,6 +19,23 @@ export const dataTableLabels = defineI18nLabels({
     paginationNext: "Next page",
     paginationLast: "Last page",
     paginationRowsPerPage: "Rows per page",
+    paginationPage: "Page",
+
+    // Filters
+    addFilter: "Add filter",
+    removeFilter: "Remove filter",
+    filterBooleanTrue: "True",
+    filterBooleanFalse: "False",
+    filterOperator_eq: "equals",
+    filterOperator_ne: "not equals",
+    filterOperator_gt: "greater than",
+    filterOperator_gte: "greater than or equal",
+    filterOperator_lt: "less than",
+    filterOperator_lte: "less than or equal",
+    filterOperator_contains: "contains",
+    filterOperator_notContains: "does not contain",
+    filterOperator_hasPrefix: "starts with",
+    filterOperator_hasSuffix: "ends with",
   },
   ja: {
     loading: "読み込み中...",
@@ -31,6 +48,23 @@ export const dataTableLabels = defineI18nLabels({
     paginationNext: "次のページ",
     paginationLast: "最後のページ",
     paginationRowsPerPage: "表示件数",
+    paginationPage: "ページ",
+
+    // Filters
+    addFilter: "フィルタを追加",
+    removeFilter: "フィルタを削除",
+    filterBooleanTrue: "真",
+    filterBooleanFalse: "偽",
+    filterOperator_eq: "等しい",
+    filterOperator_ne: "等しくない",
+    filterOperator_gt: "より大きい",
+    filterOperator_gte: "以上",
+    filterOperator_lt: "より小さい",
+    filterOperator_lte: "以下",
+    filterOperator_contains: "含む",
+    filterOperator_notContains: "含まない",
+    filterOperator_hasPrefix: "で始まる",
+    filterOperator_hasSuffix: "で終わる",
   },
 });
 

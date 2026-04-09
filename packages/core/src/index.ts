@@ -132,13 +132,13 @@ export {
   DataTable,
   useDataTable,
   useDataTableContext,
-  Pagination,
   createColumnHelper,
   dataTableLabels,
   OPERATORS_BY_FILTER_TYPE,
   DEFAULT_OPERATOR_LABELS,
   fieldTypeToSortConfig,
   fieldTypeToFilterConfig,
+  type DataTablePaginationProps,
   type Column,
   type ColumnOptions,
   type ColumnDefinition,
@@ -176,7 +176,6 @@ export {
   type MatchingTableName,
   type MetadataFieldOptions,
   type MetadataFieldsOptions,
-  type PaginationProps,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export {

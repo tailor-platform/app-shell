@@ -1,11 +1,4 @@
-import {
-  useReducer,
-  useEffect,
-  useMemo,
-  useCallback,
-  useRef,
-  Suspense,
-} from "react";
+import { useReducer, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
 import { SearchIcon, LoaderCircleIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
@@ -52,9 +45,7 @@ export type UseCommandPaletteOptions = {
  * Convert NavItems (from navigation loader with access control) to NavigableRoutes.
  * Recursively processes subResources to include nested routes.
  */
-export function navItemsToRoutes(
-  navItems: Array<NavItem>,
-): Array<NavigatableRoute> {
+export function navItemsToRoutes(navItems: Array<NavItem>): Array<NavigatableRoute> {
   const routes: Array<NavigatableRoute> = [];
 
   const processResourceItems = (
@@ -123,9 +114,7 @@ function filterActions(
 ): Array<CommandPaletteAction> {
   if (!search.trim()) return actions;
   const lowerSearch = search.toLowerCase();
-  return actions.filter((action) =>
-    action.label.toLowerCase().includes(lowerSearch),
-  );
+  return actions.filter((action) => action.label.toLowerCase().includes(lowerSearch));
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -171,10 +160,7 @@ const initialPaletteState: PaletteState = {
 
 const EMPTY_RESULTS: Array<CommandPaletteSearchResult> = [];
 
-function paletteReducer(
-  state: PaletteState,
-  action: PaletteAction,
-): PaletteState {
+function paletteReducer(state: PaletteState, action: PaletteAction): PaletteState {
   switch (action.type) {
     case "SET_SEARCH":
       if (state.mode === "search") {
@@ -353,21 +339,10 @@ export function useCommandPalette({
         })),
       );
     }
-    items.push(
-      ...filteredActions.map((action) => ({ type: "action" as const, action })),
-    );
-    items.push(
-      ...filteredRoutes.map((route) => ({ type: "route" as const, route })),
-    );
+    items.push(...filteredActions.map((action) => ({ type: "action" as const, action })));
+    items.push(...filteredRoutes.map((route) => ({ type: "route" as const, route })));
     return items;
-  }, [
-    activeSource,
-    searchResults,
-    search,
-    searchSources,
-    filteredActions,
-    filteredRoutes,
-  ]);
+  }, [activeSource, searchResults, search, searchSources, filteredActions, filteredRoutes]);
 
   // Wrapper that dispatches SET_SEARCH with auto-detected search mode
   const setSearch = useCallback(
@@ -490,9 +465,7 @@ type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
 };
 
-export function CommandPaletteContent({
-  navItems,
-}: CommandPaletteContentProps) {
+export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
   const { searchSources, open, setOpen } = useCommandPaletteState();
@@ -535,9 +508,7 @@ export function CommandPaletteContent({
         onKeyDown={handleKeyDown}
         aria-describedby={undefined}
       >
-        <Dialog.Title className="astw:sr-only">
-          {t("commandPaletteSearch")}
-        </Dialog.Title>
+        <Dialog.Title className="astw:sr-only">{t("commandPaletteSearch")}</Dialog.Title>
         <div className="astw:flex astw:items-center astw:border-b astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
           {activeSearchSource && (
@@ -571,16 +542,13 @@ export function CommandPaletteContent({
                     {t("commandPaletteSearchModes")}
                   </div>
                   {searchModeItems.map((item, index) => {
-                    const source =
-                      item.type === "search-mode" ? item.source : null;
+                    const source = item.type === "search-mode" ? item.source : null;
                     if (!source) return null;
                     return (
                       <button
                         key={`search-mode-${source.prefix}`}
                         data-index={index}
-                        onClick={() =>
-                          handleSelectItem({ type: "search-mode", source })
-                        }
+                        onClick={() => handleSelectItem({ type: "search-mode", source })}
                         className={cn(
                           paletteItemBase,
                           "astw:items-center astw:gap-2",
@@ -613,9 +581,7 @@ export function CommandPaletteContent({
                       <button
                         key={`action-${action.key}`}
                         data-index={globalIndex}
-                        onClick={() =>
-                          handleSelectItem({ type: "action", action })
-                        }
+                        onClick={() => handleSelectItem({ type: "action", action })}
                         className={cn(
                           paletteItemBase,
                           "astw:items-center astw:gap-2",
@@ -650,9 +616,7 @@ export function CommandPaletteContent({
                       <button
                         key={route.path}
                         data-index={globalIndex}
-                        onClick={() =>
-                          handleSelectItem({ type: "route", route })
-                        }
+                        onClick={() => handleSelectItem({ type: "route", route })}
                         className={cn(
                           paletteItemBase,
                           "astw:flex-col astw:items-start",

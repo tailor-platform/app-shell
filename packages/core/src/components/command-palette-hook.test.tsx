@@ -1,23 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import {
-  useCommandPalette,
-  navItemsToRoutes,
-  parseSearchMode,
-} from "./command-palette";
+import { useCommandPalette, navItemsToRoutes, parseSearchMode } from "./command-palette";
 import { NavigatableRoute } from "@/routing/path";
-import {
-  CommandPaletteAction,
-  SearchSource,
-} from "@/contexts/command-palette-context";
+import { CommandPaletteAction, SearchSource } from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
 import { ReactNode, useState } from "react";
 
 // Helper to create a mock React.KeyboardEvent
-const createKeyboardEvent = (
-  key: string,
-  isComposing = false,
-): React.KeyboardEvent => {
+const createKeyboardEvent = (key: string, isComposing = false): React.KeyboardEvent => {
   const preventDefault = vi.fn();
   return {
     key,
@@ -53,9 +43,7 @@ vi.mock("react-router", async (importOriginal) => {
 });
 
 // Wrapper for hooks that need router context
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <MemoryRouter>{children}</MemoryRouter>
-);
+const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
 
 describe("useCommandPalette", () => {
   const renderCommandPaletteHook = (routes = createTestRoutes()) => {
@@ -724,9 +712,7 @@ describe("useCommandPalette with searchSources", () => {
   describe("default mode with search sources", () => {
     it("should include search-mode items when search is empty", () => {
       const { result } = renderWithSources();
-      const modeItems = result.current.selectableItems.filter(
-        (i) => i.type === "search-mode",
-      );
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
       expect(modeItems).toHaveLength(2);
     });
 
@@ -735,9 +721,7 @@ describe("useCommandPalette with searchSources", () => {
       act(() => {
         result.current.setSearch("dashboard");
       });
-      const modeItems = result.current.selectableItems.filter(
-        (i) => i.type === "search-mode",
-      );
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
       expect(modeItems).toHaveLength(0);
     });
 
@@ -746,14 +730,10 @@ describe("useCommandPalette with searchSources", () => {
       act(() => {
         result.current.setSearch("order");
       });
-      const modeItems = result.current.selectableItems.filter(
-        (i) => i.type === "search-mode",
-      );
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
       // "Purchase Orders" title matches "order"
       expect(modeItems).toHaveLength(1);
-      expect(
-        modeItems[0].type === "search-mode" && modeItems[0].source.prefix,
-      ).toBe("PO");
+      expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("PO");
     });
 
     it("should filter search-mode items by prefix match (case-insensitive)", () => {
@@ -761,14 +741,10 @@ describe("useCommandPalette with searchSources", () => {
       act(() => {
         result.current.setSearch("cu");
       });
-      const modeItems = result.current.selectableItems.filter(
-        (i) => i.type === "search-mode",
-      );
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
       // "CU" prefix matches "cu"
       expect(modeItems).toHaveLength(1);
-      expect(
-        modeItems[0].type === "search-mode" && modeItems[0].source.prefix,
-      ).toBe("CU");
+      expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("CU");
     });
 
     it("should show routes in default mode", () => {
@@ -800,9 +776,7 @@ describe("useCommandPalette with searchSources", () => {
 
     it("should set search input to empty and lock source when selecting a search-mode item", () => {
       const { result } = renderWithSources();
-      const modeItem = result.current.selectableItems.find(
-        (i) => i.type === "search-mode",
-      );
+      const modeItem = result.current.selectableItems.find((i) => i.type === "search-mode");
       expect(modeItem).toBeDefined();
 
       act(() => {
@@ -817,9 +791,7 @@ describe("useCommandPalette with searchSources", () => {
 
   describe("async search", () => {
     it("should call search function after debounce", async () => {
-      mockSearch.mockResolvedValue([
-        { key: "1", label: "PO #1", path: "/orders/1" },
-      ]);
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
 
       const { result } = renderWithSources();
       act(() => {
@@ -843,9 +815,7 @@ describe("useCommandPalette with searchSources", () => {
     });
 
     it("should navigate when selecting a search result", async () => {
-      mockSearch.mockResolvedValue([
-        { key: "1", label: "PO #1", path: "/orders/1" },
-      ]);
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
 
       const { result } = renderWithSources();
       act(() => {
@@ -865,9 +835,7 @@ describe("useCommandPalette with searchSources", () => {
     });
 
     it("should clear search results when leaving search mode via Backspace", async () => {
-      mockSearch.mockResolvedValue([
-        { key: "1", label: "PO #1", path: "/orders/1" },
-      ]);
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
 
       const { result } = renderWithSources();
       act(() => {
@@ -893,9 +861,7 @@ describe("useCommandPalette with searchSources", () => {
     });
 
     it("should clear search results when dialog closes", async () => {
-      mockSearch.mockResolvedValue([
-        { key: "1", label: "PO #1", path: "/orders/1" },
-      ]);
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
 
       const { result } = renderWithSources();
       act(() => {
@@ -977,14 +943,7 @@ describe("useCommandPalette with actions, routes, and searchSources combined", (
     const { result } = renderMixed();
     const types = result.current.selectableItems.map((i) => i.type);
     // 2 search-modes + 2 actions + 2 routes
-    expect(types).toEqual([
-      "search-mode",
-      "search-mode",
-      "action",
-      "action",
-      "route",
-      "route",
-    ]);
+    expect(types).toEqual(["search-mode", "search-mode", "action", "action", "route", "route"]);
   });
 
   it("should filter across all types when search matches multiple", () => {
@@ -1014,13 +973,9 @@ describe("useCommandPalette with actions, routes, and searchSources combined", (
     act(() => {
       result.current.setSearch("cu");
     });
-    const modeItems = result.current.selectableItems.filter(
-      (i) => i.type === "search-mode",
-    );
+    const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
     expect(modeItems).toHaveLength(1);
-    expect(
-      modeItems[0].type === "search-mode" && modeItems[0].source.prefix,
-    ).toBe("CU");
+    expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("CU");
     // No actions or routes match "cu"
     expect(result.current.selectableItems).toHaveLength(1);
   });

@@ -1,10 +1,9 @@
 import * as React from "react";
-import { Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
+import { CirclePlus, Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-import { Button } from "../button";
 import { Card } from "../card";
 import { Menu } from "../menu";
 import type { AttachmentCardProps, AttachmentItem } from "./types";
@@ -68,14 +67,14 @@ function mergeAttachmentItems(externalItems: AttachmentItem[], localItems: Attac
 
 export function AttachmentCard({
   title = "Attachments",
-  description,
   items = [],
   onUpload,
   uploadFile,
   onUploadError,
   onDelete,
   onDownload,
-  uploadLabel = "Upload",
+  uploadLabel = "Click to upload",
+  uploadHint,
   accept,
   disabled = false,
   className,
@@ -218,7 +217,6 @@ export function AttachmentCard({
     () => mergeAttachmentItems(items, localItems),
     [items, localItems],
   );
-  const hasItems = displayItems.length > 0;
 
   return (
     <Card.Root
@@ -235,158 +233,153 @@ export function AttachmentCard({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className={cn("astw:px-5 astw:pt-5", hasItems ? "astw:pb-4" : "astw:pb-5")}>
-        <div className="astw:flex astw:w-full astw:items-start astw:justify-between astw:gap-4">
-          <div className="astw:min-w-0 astw:flex-1 astw:space-y-1">
-            <h3 className="astw:text-lg astw:font-semibold astw:text-card-foreground">{title}</h3>
-            {description ? (
-              <div
-                data-slot="attachment-card-description"
-                className="astw:text-sm astw:text-muted-foreground"
-              >
-                {description}
+      <div className="astw:px-5 astw:pt-5 astw:pb-4">
+        <h3 className="astw:text-lg astw:font-semibold astw:text-card-foreground">{title}</h3>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept={accept}
+          disabled={disabled}
+          className="astw:hidden"
+          data-testid="attachment-upload-input"
+          onChange={handleInputChange}
+        />
+      </div>
+      <Card.Content className="astw:px-5 astw:pb-5">
+        <div className="astw:flex astw:flex-wrap astw:gap-4">
+          {displayItems.map((item) => {
+            const { baseName, extension } = splitFileName(item.fileName);
+            const isUploading = item.status === "uploading";
+            const hasFailedImagePreview = failedImagePreviewIds.has(item.id);
+            const shouldShowImagePreview =
+              isImageItem(item) && !!item.previewUrl && !hasFailedImagePreview;
+
+            return (
+              <div key={item.id} className="astw:group astw:relative">
+                {isImageItem(item) ? (
+                  <div
+                    className={cn(
+                      tileClasses,
+                      shouldShowImagePreview
+                        ? "astw:border-0 astw:bg-muted"
+                        : "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3",
+                    )}
+                  >
+                    {shouldShowImagePreview ? (
+                      <img
+                        src={item.previewUrl}
+                        alt={item.fileName}
+                        className="astw:size-full astw:object-cover"
+                        onError={() => handleImagePreviewError(item.id)}
+                      />
+                    ) : (
+                      <>
+                        <ImageIcon
+                          className="astw:size-5 astw:text-muted-foreground astw:opacity-60"
+                          strokeWidth={1.5}
+                          aria-hidden
+                          data-testid="attachment-image-fallback-icon"
+                        />
+                        <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-xs astw:leading-normal astw:text-foreground">
+                          <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
+                            {baseName}
+                          </span>
+                          {extension ? <span className="astw:shrink-0">{extension}</span> : null}
+                        </p>
+                      </>
+                    )}
+                    {isUploading ? (
+                      <div
+                        className="astw:absolute astw:inset-0 astw:flex astw:items-center astw:justify-center astw:bg-black/60"
+                        data-testid="attachment-upload-overlay"
+                      >
+                        <Loader2
+                          className="astw:size-5 astw:animate-spin astw:text-white"
+                          aria-hidden
+                          data-testid="attachment-upload-spinner"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      tileClasses,
+                      "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3",
+                    )}
+                  >
+                    <File
+                      className="astw:size-5 astw:text-muted-foreground astw:opacity-60"
+                      strokeWidth={1.5}
+                      aria-hidden
+                      data-testid="attachment-file-icon"
+                    />
+                    <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-xs astw:leading-normal astw:text-foreground">
+                      <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
+                        {baseName}
+                      </span>
+                      {extension ? <span className="astw:shrink-0">{extension}</span> : null}
+                    </p>
+                    {isUploading ? (
+                      <div
+                        className="astw:absolute astw:inset-0 astw:flex astw:items-center astw:justify-center astw:bg-black/60"
+                        data-testid="attachment-upload-overlay"
+                      >
+                        <Loader2
+                          className="astw:size-5 astw:animate-spin astw:text-white"
+                          aria-hidden
+                          data-testid="attachment-upload-spinner"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                {!disabled && !isUploading && (
+                  <div className="astw:absolute astw:top-2 astw:right-2 astw:opacity-0 astw:transition-opacity astw:group-hover:opacity-100 astw:group-focus-within:opacity-100">
+                    <Menu.Root>
+                      <Menu.Trigger
+                        className="astw:inline-flex astw:size-7 astw:items-center astw:justify-center astw:rounded-md astw:border astw:bg-background/90 astw:text-foreground astw:shadow-xs astw:hover:bg-accent"
+                        aria-label={`Attachment options for ${item.fileName}`}
+                      >
+                        <Ellipsis className="astw:size-4" aria-hidden />
+                      </Menu.Trigger>
+                      <Menu.Content>
+                        <Menu.Item onClick={() => onDownload?.(item)}>Download</Menu.Item>
+                        <Menu.Item onClick={() => handleDeleteItem(item)}>Delete</Menu.Item>
+                      </Menu.Content>
+                    </Menu.Root>
+                  </div>
+                )}
               </div>
-            ) : null}
-          </div>
-          <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2 astw:text-sm">
-            <span className="astw:hidden astw:@[620px]:inline astw:text-foreground">
-              Drag and drop images/files or
-            </span>
-            <Button
+            );
+          })}
+          {!disabled && (onUpload || uploadFile) && (
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              className="astw:text-foreground"
-              disabled={disabled}
+              data-testid="attachment-upload-tile"
+              className="astw:flex astw:h-30 astw:w-[200px] astw:shrink-0 astw:cursor-pointer astw:flex-col astw:justify-between astw:rounded-lg astw:border-2 astw:border-dashed astw:border-border astw:bg-muted/50 astw:p-3 astw:transition-colors astw:hover:bg-muted"
               onClick={() => inputRef.current?.click()}
             >
-              {uploadLabel}
-            </Button>
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              accept={accept}
-              disabled={disabled}
-              className="astw:hidden"
-              data-testid="attachment-upload-input"
-              onChange={handleInputChange}
-            />
-          </div>
+              <CirclePlus
+                className="astw:size-5 astw:text-muted-foreground astw:opacity-60"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+              <div className="astw:min-w-0 astw:self-stretch astw:text-left">
+                <p className="astw:text-sm astw:leading-normal astw:text-foreground">
+                  {uploadLabel}
+                </p>
+                {uploadHint ? (
+                  <p className="astw:text-xs astw:leading-normal astw:text-muted-foreground">
+                    {uploadHint}
+                  </p>
+                ) : null}
+              </div>
+            </button>
+          )}
         </div>
-      </div>
-      {hasItems && (
-        <Card.Content className="astw:px-5 astw:pb-5">
-          <div className="astw:flex astw:flex-wrap astw:gap-4">
-            {displayItems.map((item) => {
-              const { baseName, extension } = splitFileName(item.fileName);
-              const isUploading = item.status === "uploading";
-              const hasFailedImagePreview = failedImagePreviewIds.has(item.id);
-              const shouldShowImagePreview =
-                isImageItem(item) && !!item.previewUrl && !hasFailedImagePreview;
-
-              return (
-                <div key={item.id} className="astw:group astw:relative">
-                  {isImageItem(item) ? (
-                    <div
-                      className={cn(
-                        tileClasses,
-                        shouldShowImagePreview
-                          ? "astw:bg-muted"
-                          : "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3",
-                      )}
-                    >
-                      {shouldShowImagePreview ? (
-                        <img
-                          src={item.previewUrl}
-                          alt={item.fileName}
-                          className="astw:size-full astw:object-cover"
-                          onError={() => handleImagePreviewError(item.id)}
-                        />
-                      ) : (
-                        <>
-                          <ImageIcon
-                            className="astw:size-5 astw:text-muted-foreground astw:opacity-60"
-                            strokeWidth={1.5}
-                            aria-hidden
-                            data-testid="attachment-image-fallback-icon"
-                          />
-                          <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-xs astw:leading-normal astw:text-foreground">
-                            <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
-                              {baseName}
-                            </span>
-                            {extension ? <span className="astw:shrink-0">{extension}</span> : null}
-                          </p>
-                        </>
-                      )}
-                      {isUploading ? (
-                        <div
-                          className="astw:absolute astw:inset-0 astw:flex astw:items-center astw:justify-center astw:bg-black/60"
-                          data-testid="attachment-upload-overlay"
-                        >
-                          <Loader2
-                            className="astw:size-5 astw:animate-spin astw:text-white"
-                            aria-hidden
-                            data-testid="attachment-upload-spinner"
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div
-                      className={cn(
-                        tileClasses,
-                        "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3",
-                      )}
-                    >
-                      <File
-                        className="astw:size-5 astw:text-muted-foreground astw:opacity-60"
-                        strokeWidth={1.5}
-                        aria-hidden
-                        data-testid="attachment-file-icon"
-                      />
-                      <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-xs astw:leading-normal astw:text-foreground">
-                        <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
-                          {baseName}
-                        </span>
-                        {extension ? <span className="astw:shrink-0">{extension}</span> : null}
-                      </p>
-                      {isUploading ? (
-                        <div
-                          className="astw:absolute astw:inset-0 astw:flex astw:items-center astw:justify-center astw:bg-black/60"
-                          data-testid="attachment-upload-overlay"
-                        >
-                          <Loader2
-                            className="astw:size-5 astw:animate-spin astw:text-white"
-                            aria-hidden
-                            data-testid="attachment-upload-spinner"
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-                  {!disabled && !isUploading && (
-                    <div className="astw:absolute astw:top-2 astw:right-2 astw:opacity-0 astw:transition-opacity astw:group-hover:opacity-100 astw:group-focus-within:opacity-100">
-                      <Menu.Root>
-                        <Menu.Trigger
-                          className="astw:inline-flex astw:size-7 astw:items-center astw:justify-center astw:rounded-md astw:border astw:bg-background/90 astw:text-foreground astw:shadow-xs astw:hover:bg-accent"
-                          aria-label={`Attachment options for ${item.fileName}`}
-                        >
-                          <Ellipsis className="astw:size-4" aria-hidden />
-                        </Menu.Trigger>
-                        <Menu.Content>
-                          <Menu.Item onClick={() => onDownload?.(item)}>Download</Menu.Item>
-                          <Menu.Item onClick={() => handleDeleteItem(item)}>Delete</Menu.Item>
-                        </Menu.Content>
-                      </Menu.Root>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </Card.Content>
-      )}
+      </Card.Content>
     </Card.Root>
   );
 }

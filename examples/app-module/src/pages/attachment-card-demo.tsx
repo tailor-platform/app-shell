@@ -47,8 +47,8 @@ const AttachmentCardDemoPage = () => {
         </p>
         <AttachmentCard
           title="Product images (controlled mode)"
-          description="Images, PDF, or Word — max 10 MB per file."
-          uploadLabel="Upload image"
+          uploadLabel="Click to upload"
+          uploadHint="pdf, docx, png, jpg, max 10mb"
           accept="image/*,.pdf,.doc,.docx"
           items={items}
           onUpload={(files) => {
@@ -76,7 +76,8 @@ const AttachmentCardDemoPage = () => {
         <div style={{ height: "1.5rem" }} />
         <AttachmentCard
           title="Product images (async upload mode)"
-          uploadLabel="Upload image"
+          uploadLabel="Click to upload"
+          uploadHint="pdf, docx, png, jpg, max 10mb"
           accept="image/*,.pdf,.doc,.docx"
           items={asyncItems}
           uploadFile={async (file) => {

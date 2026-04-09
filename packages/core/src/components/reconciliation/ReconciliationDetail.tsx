@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LoaderCircleIcon, FilePlusIcon, PencilIcon } from "lucide-react";
+import { LoaderCircleIcon, FilePlusIcon, PencilIcon, CircleAlertIcon, RotateCwIcon } from "lucide-react";
 
 import { cn } from "../../lib/utils";
 import { Badge } from "../badge";
@@ -19,7 +19,7 @@ import type {
   RelatedDocument,
   ProcessingStep,
 } from "./types";
-import { statusBadgeVariant, statusLabel } from "./types";
+import { statusBadgeVariant, statusLabel, lineItemBadgeVariant, lineItemStatusLabel } from "./types";
 
 // ============================================================================
 // FORMATTERS
@@ -40,8 +40,8 @@ function formatVariance(value: number): string {
 // ============================================================================
 
 function scoreColor(score: number): string {
-  if (score >= 90) return "astw:text-green-500";
-  if (score >= 70) return "astw:text-yellow-500";
+  if (score >= 90) return "astw:text-green-700 astw:dark:text-green-500";
+  if (score >= 70) return "astw:text-yellow-700 astw:dark:text-yellow-500";
   return "astw:text-destructive";
 }
 
@@ -95,12 +95,35 @@ function DetailSkeleton() {
 
 function ProcessingState() {
   return (
-    <div className="astw:flex astw:flex-col astw:items-center astw:justify-center astw:py-16 astw:text-center astw:gap-3">
-      <LoaderCircleIcon className="astw:size-8 astw:text-muted-foreground astw:animate-spin" />
-      <p className="astw:text-sm astw:text-muted-foreground">
-        Processing invoice... This may take a moment.
-      </p>
-    </div>
+    <Card.Root>
+      <Card.Content>
+        <div className="astw:flex astw:flex-col astw:items-center astw:justify-center astw:h-[500px] astw:text-center astw:gap-3">
+          <LoaderCircleIcon className="astw:size-8 astw:text-muted-foreground astw:animate-spin" />
+          <p className="astw:text-sm astw:text-muted-foreground">
+            Processing invoice... This may take a moment.
+          </p>
+        </div>
+      </Card.Content>
+    </Card.Root>
+  );
+}
+
+// ============================================================================
+// ERROR EMPTY STATE
+// ============================================================================
+
+function ErrorState({ summary }: { summary?: string }) {
+  return (
+    <Card.Root>
+      <Card.Content>
+        <div className="astw:flex astw:flex-col astw:items-center astw:justify-center astw:h-[500px] astw:text-center astw:gap-3">
+          <CircleAlertIcon className="astw:size-8 astw:text-destructive" />
+          <p className="astw:text-sm astw:text-muted-foreground">
+            {summary || "An error occurred while processing this invoice."}
+          </p>
+        </div>
+      </Card.Content>
+    </Card.Root>
   );
 }
 
@@ -114,17 +137,14 @@ function ScoreBadge({ data }: { data: ReconciliationRecord }) {
   }
 
   return (
-    <div className="astw:flex astw:items-center astw:gap-2">
-      <span
-        className={cn(
-          "astw:text-2xl astw:font-bold astw:tabular-nums",
-          scoreColor(data.matchScore),
-        )}
-      >
-        {data.matchScore}%
-      </span>
-      <Badge variant={statusBadgeVariant[data.status]}>{statusLabel[data.status]}</Badge>
-    </div>
+    <span
+      className={cn(
+        "astw:text-2xl astw:font-bold astw:tabular-nums",
+        scoreColor(data.matchScore),
+      )}
+    >
+      {data.matchScore}%
+    </span>
   );
 }
 
@@ -132,15 +152,12 @@ function ScoreBadge({ data }: { data: ReconciliationRecord }) {
 // MATCH RESULT — DescriptionCard
 // ============================================================================
 
-const statusBadgeMap: Record<string, BadgeVariantType> = {
-  matched: "outline-success",
-  partial_match: "outline-warning",
-  mismatch: "outline-error",
-  processing: "outline-neutral",
-  error: "outline-error",
-};
-
 function MatchResultSection({ data }: { data: ReconciliationRecord }) {
+  // Convert statusBadgeVariant to the BadgeVariantType record DescriptionCard expects
+  const badgeVariantMap: Record<string, BadgeVariantType> = Object.fromEntries(
+    Object.entries(statusBadgeVariant),
+  );
+
   return (
     <DescriptionCard
       data={data as unknown as Record<string, unknown>}
@@ -153,7 +170,7 @@ function MatchResultSection({ data }: { data: ReconciliationRecord }) {
           key: "status",
           label: "Status",
           type: "badge",
-          meta: { badgeVariantMap: statusBadgeMap },
+          meta: { badgeVariantMap },
         },
         { key: "supplier", label: "Supplier" },
         {
@@ -376,16 +393,17 @@ function DiscrepanciesCard({ discrepancies }: { discrepancies: Discrepancy[] }) 
           {discrepancies.map((d) => (
             <div
               key={d.id}
-              className={cn(
-                "astw:rounded-md astw:border astw:p-2.5",
-                d.severity === "error"
-                  ? "astw:border-destructive/30 astw:bg-destructive/5"
-                  : "astw:border-yellow-500/30 astw:bg-yellow-500/5",
-              )}
+              className="astw:relative astw:pl-3 astw:py-2"
             >
-              <p className="astw:text-xs astw:font-semibold">
-                {d.severity === "error" ? "\u26A0" : "\u25B3"} {d.category}
-              </p>
+              <span
+                className={cn(
+                  "astw:absolute astw:left-0 astw:top-2 astw:bottom-2 astw:w-0.5 astw:rounded-full",
+                  d.severity === "error"
+                    ? "astw:bg-destructive"
+                    : "astw:bg-yellow-500",
+                )}
+              />
+              <p className="astw:text-xs astw:font-semibold">{d.category}</p>
               <p className="astw:text-xs astw:text-muted-foreground astw:mt-0.5">{d.message}</p>
             </div>
           ))}
@@ -400,8 +418,8 @@ function DiscrepanciesCard({ discrepancies }: { discrepancies: Discrepancy[] }) 
 // ============================================================================
 
 function varianceColor(value: number): string {
-  if (value === 0) return "astw:text-green-500";
-  if (Math.abs(value) < 5) return "astw:text-yellow-500";
+  if (value === 0) return "astw:text-green-700 astw:dark:text-green-500";
+  if (Math.abs(value) < 5) return "astw:text-yellow-700 astw:dark:text-yellow-500";
   return "astw:text-destructive";
 }
 
@@ -441,22 +459,8 @@ function LineItemsTable({
                 <Table.Cell>{item.lineNumber}</Table.Cell>
                 <Table.Cell className="astw:font-medium">{item.product}</Table.Cell>
                 <Table.Cell>
-                  <Badge
-                    variant={
-                      item.status === "matched"
-                        ? "success"
-                        : item.status === "missing"
-                          ? "error"
-                          : "warning"
-                    }
-                  >
-                    {item.status === "matched"
-                      ? "Matched"
-                      : item.status === "price_mismatch"
-                        ? "Price mismatch"
-                        : item.status === "qty_mismatch"
-                          ? "Qty mismatch"
-                          : "Missing"}
+                  <Badge variant={lineItemBadgeVariant[item.status]}>
+                    {lineItemStatusLabel[item.status]}
                   </Badge>
                 </Table.Cell>
                 <Table.Cell className="astw:text-right">{item.invoiceQty}</Table.Cell>
@@ -497,8 +501,8 @@ function LineItemsTable({
  * - **Layout** for responsive two-column layout
  *
  * Layout:
- * - **Left:** Match Result, Related Documents (PO + GR), Created Purchase Invoice, Line Items Comparison
- * - **Right:** Actions, Discrepancies, Activity
+ * - **Left:** Match Result, Discrepancies, Line Items Comparison
+ * - **Right:** Actions, Created Purchase Invoice, Related Documents, Activity
  *
  * @example
  * ```tsx
@@ -531,6 +535,7 @@ export function ReconciliationDetail({
   }, [data.status, onRefresh, refreshInterval]);
 
   const isProcessing = data.status === "processing";
+  const isError = data.status === "error";
   const showActions = data.status !== "matched" && data.status !== "processing";
 
   // Build action items for ActionPanel
@@ -538,7 +543,15 @@ export function ReconciliationDetail({
     if (!showActions) return [];
     const items: Array<{ key: string; label: string; icon: React.ReactNode; onClick: () => void }> =
       [];
-    if (onUpdatePO) {
+    if (isError && onRefresh) {
+      items.push({
+        key: "retry",
+        label: "Retry processing",
+        icon: <RotateCwIcon />,
+        onClick: onRefresh,
+      });
+    }
+    if (!isError && onUpdatePO) {
       items.push({
         key: "update-po",
         label: "Update PO",
@@ -546,7 +559,7 @@ export function ReconciliationDetail({
         onClick: onUpdatePO,
       });
     }
-    if (onCreateBill) {
+    if (!isError && onCreateBill) {
       items.push({
         key: "create-bill",
         label: "Create purchase bill",
@@ -555,7 +568,7 @@ export function ReconciliationDetail({
       });
     }
     return items;
-  }, [showActions, onUpdatePO, onCreateBill]);
+  }, [showActions, isError, onUpdatePO, onCreateBill, onRefresh]);
 
   const hasRightColumn =
     actionItems.length > 0 ||
@@ -568,12 +581,13 @@ export function ReconciliationDetail({
       <Layout>
         {/* Left column — main content */}
         <Layout.Column>
-          <MatchResultSection data={data} />
-
           {isProcessing ? (
             <ProcessingState />
+          ) : isError ? (
+            <ErrorState summary={data.summary} />
           ) : (
             <>
+              <MatchResultSection data={data} />
               <DiscrepanciesCard discrepancies={data.discrepancies} />
               <LineItemsTable lineItems={data.lineItems} currency={data.currency} />
             </>
@@ -581,7 +595,7 @@ export function ReconciliationDetail({
         </Layout.Column>
 
         {/* Right column — sidebar */}
-        {hasRightColumn && !isProcessing && (
+        {hasRightColumn && (
           <Layout.Column>
             {actionItems.length > 0 && <ActionPanel title="Actions" actions={actionItems} />}
             {actions}

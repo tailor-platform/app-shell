@@ -8,15 +8,15 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "astw:border-transparent astw:bg-primary astw:text-primary-foreground astw:hover:bg-primary/80",
+          "astw:border-transparent astw:bg-blue-500/10 astw:text-blue-700 astw:dark:text-blue-500 astw:hover:bg-blue-500/20",
         success:
-          "astw:border-transparent astw:bg-green-500 astw:text-white astw:hover:bg-green-600",
+          "astw:border-transparent astw:bg-green-500/10 astw:text-green-700 astw:dark:text-green-500 astw:hover:bg-green-500/20",
         warning:
-          "astw:border-transparent astw:bg-yellow-500 astw:text-white astw:hover:bg-yellow-600",
+          "astw:border-transparent astw:bg-yellow-500/10 astw:text-yellow-700 astw:dark:text-yellow-500 astw:hover:bg-yellow-500/20",
         error:
-          "astw:border-transparent astw:bg-destructive astw:text-destructive-foreground astw:hover:bg-destructive/80",
+          "astw:border-transparent astw:bg-destructive/10 astw:text-destructive astw:hover:bg-destructive/20",
         neutral:
-          "astw:border-transparent astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
+          "astw:border-transparent astw:bg-secondary/50 astw:text-secondary-foreground astw:hover:bg-secondary/70",
         // Outline variants with status dots - matches Figma design
         "outline-success":
           "astw:gap-0.5 astw:pl-1.5 astw:pr-2 astw:border-border astw:bg-card astw:text-foreground",

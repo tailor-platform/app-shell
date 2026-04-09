@@ -278,9 +278,9 @@ describe("ReconciliationDetail", () => {
       expect(screen.getByText(/Processing invoice/)).toBeDefined();
     });
 
-    it("still shows DescriptionCard with invoice number", () => {
+    it("hides DescriptionCard during processing", () => {
       renderDetail({ data: processingRecord });
-      expect(screen.getByText("NEW-001")).toBeDefined();
+      expect(screen.queryByText("NEW-001")).toBeNull();
     });
 
     it("hides line items and discrepancies when processing", () => {

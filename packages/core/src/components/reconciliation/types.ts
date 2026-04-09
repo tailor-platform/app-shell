@@ -206,11 +206,11 @@ export interface FileUploadDialogProps {
 /** Maps ReconciliationStatus to Badge variant. */
 export const statusBadgeVariant: Record<
   ReconciliationStatus,
-  "default" | "success" | "neutral" | "error"
+  "default" | "success" | "warning" | "error"
 > = {
   processing: "default",
   matched: "success",
-  partial_match: "neutral",
+  partial_match: "warning",
   mismatch: "error",
   error: "error",
 };
@@ -222,4 +222,20 @@ export const statusLabel: Record<ReconciliationStatus, string> = {
   partial_match: "Partial Match",
   mismatch: "Mismatch",
   error: "Error",
+};
+
+/** Maps LineItemStatus to a Badge variant. */
+export const lineItemBadgeVariant: Record<LineItemStatus, "success" | "warning" | "error"> = {
+  matched: "success",
+  price_mismatch: "warning",
+  qty_mismatch: "warning",
+  missing: "error",
+};
+
+/** Maps LineItemStatus to a human-readable label. */
+export const lineItemStatusLabel: Record<LineItemStatus, string> = {
+  matched: "Matched",
+  price_mismatch: "Price mismatch",
+  qty_mismatch: "Qty mismatch",
+  missing: "Missing",
 };

@@ -30,8 +30,8 @@ function formatDate(date: Date | string): string {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 90) return "astw:text-green-500";
-  if (score >= 70) return "astw:text-yellow-500";
+  if (score >= 90) return "astw:text-green-700 astw:dark:text-green-500";
+  if (score >= 70) return "astw:text-yellow-700 astw:dark:text-yellow-500";
   return "astw:text-destructive";
 }
 

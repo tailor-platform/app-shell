@@ -8,8 +8,9 @@ import { Card } from "../card";
 import { Menu } from "../menu";
 import type { AttachmentCardProps, AttachmentItem } from "./types";
 
-const tileClasses =
-  "astw:relative astw:size-30 astw:shrink-0 astw:overflow-hidden astw:rounded-lg astw:border astw:border-border";
+const tileBaseClasses =
+  "astw:relative astw:size-30 astw:shrink-0 astw:overflow-hidden astw:rounded-lg";
+const tileClasses = `${tileBaseClasses} astw:border astw:border-border`;
 
 type TemporaryUploadItem = {
   item: AttachmentItem;
@@ -260,10 +261,9 @@ export function AttachmentCard({
                 {isImageItem(item) ? (
                   <div
                     className={cn(
-                      tileClasses,
                       shouldShowImagePreview
-                        ? "astw:border-0 astw:bg-muted"
-                        : "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3",
+                        ? cn(tileBaseClasses, "astw:bg-muted")
+                        : cn(tileClasses, "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3"),
                     )}
                   >
                     {shouldShowImagePreview ? (
@@ -357,6 +357,7 @@ export function AttachmentCard({
           {!disabled && (onUpload || uploadFile) && (
             <button
               type="button"
+              aria-label={uploadLabel}
               data-testid="attachment-upload-tile"
               className="astw:flex astw:h-30 astw:w-[200px] astw:shrink-0 astw:cursor-pointer astw:flex-col astw:justify-between astw:rounded-lg astw:border-2 astw:border-dashed astw:border-border astw:bg-muted/50 astw:p-3 astw:transition-colors astw:hover:bg-muted"
               onClick={() => inputRef.current?.click()}

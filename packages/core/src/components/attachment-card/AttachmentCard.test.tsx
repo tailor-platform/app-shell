@@ -50,24 +50,23 @@ describe("AttachmentCard", () => {
     });
   });
 
-  it("renders title and upload button", () => {
-    render(<AttachmentCard title="Product images" uploadLabel="Upload image" />);
+  it("renders title and upload tile", () => {
+    render(<AttachmentCard title="Product images" uploadLabel="Upload image" onUpload={vi.fn()} />);
     expect(screen.getByRole("heading", { name: "Product images" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Upload image" })).toBeDefined();
+    expect(screen.getByTestId("attachment-upload-tile")).toBeDefined();
+    expect(screen.getByText("Upload image")).toBeDefined();
   });
 
-  it("renders optional description under the title", () => {
+  it("renders upload hint text in the upload tile", () => {
     render(
       <AttachmentCard
         title="Documents"
-        description="PDF and images only. Max 5 MB."
         uploadLabel="Add file"
+        uploadHint="PDF and images only. Max 5 MB."
+        onUpload={vi.fn()}
       />,
     );
     expect(screen.getByText("PDF and images only. Max 5 MB.")).toBeDefined();
-    expect(document.querySelector('[data-slot="attachment-card-description"]')?.textContent).toBe(
-      "PDF and images only. Max 5 MB.",
-    );
   });
 
   it("renders image and file preview branches", () => {
@@ -140,8 +139,7 @@ describe("AttachmentCard", () => {
     const onUpload = vi.fn();
     render(<AttachmentCard items={mixedItems} disabled onUpload={onUpload} />);
 
-    const uploadButton = screen.getByRole("button", { name: "Upload" });
-    expect(uploadButton).toHaveProperty("disabled", true);
+    expect(screen.queryByTestId("attachment-upload-tile")).toBeNull();
 
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
     fireEvent.change(input, {

@@ -184,13 +184,13 @@ export interface ReconciliationDetailProps {
 /** Maps ReconciliationStatus to Badge variant. */
 export const statusBadgeVariant: Record<
   ReconciliationStatus,
-  "default" | "success" | "warning" | "error"
+  "subtle-default" | "subtle-success" | "subtle-warning" | "subtle-error"
 > = {
-  processing: "default",
-  matched: "success",
-  partial_match: "warning",
-  mismatch: "error",
-  error: "error",
+  processing: "subtle-default",
+  matched: "subtle-success",
+  partial_match: "subtle-warning",
+  mismatch: "subtle-error",
+  error: "subtle-error",
 };
 
 /** Maps ReconciliationStatus to a human-readable label. */
@@ -203,11 +203,11 @@ export const statusLabel: Record<ReconciliationStatus, string> = {
 };
 
 /** Maps LineItemStatus to a Badge variant. */
-export const lineItemBadgeVariant: Record<LineItemStatus, "success" | "warning" | "error"> = {
-  matched: "success",
-  price_mismatch: "warning",
-  qty_mismatch: "warning",
-  missing: "error",
+export const lineItemBadgeVariant: Record<LineItemStatus, "subtle-success" | "subtle-warning" | "subtle-error"> = {
+  matched: "subtle-success",
+  price_mismatch: "subtle-warning",
+  qty_mismatch: "subtle-warning",
+  missing: "subtle-error",
 };
 
 /** Maps LineItemStatus to a human-readable label. */

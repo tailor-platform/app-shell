@@ -1,5 +1,105 @@
 # @tailor-platform/app-shell
 
+## 0.34.0
+
+### Minor Changes
+
+- 0dac517: Add contextual action registration for CommandPalette via `useRegisterCommandPaletteActions` hook. `ActionPanel` actions are now automatically registered to the CommandPalette, making them discoverable and triggerable via keyboard shortcut.
+
+  ```tsx
+  import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+
+  function MyPage() {
+    useRegisterCommandPaletteActions("My Page", [
+      { key: "save", label: "Save", onSelect: handleSave },
+    ]);
+  }
+  ```
+
+- c6afaca: Add `CsvImporter` component — a guided, multi-step CSV import flow with drag-and-drop upload, interactive column mapping, Standard Schema validation, inline cell editing, and async server-side validation support.
+
+  Key features:
+
+  - **Drag & drop upload** with file size limit enforcement
+  - **Auto column matching** via aliases and fuzzy header detection
+  - **Standard Schema validation** with built-in `csv.string()`, `csv.number()`, `csv.boolean()`, `csv.date()`, and `csv.enum()` validators that handle coercion and validation in one step
+  - **Inline error correction** — users can fix validation errors directly in the review table before importing
+  - **Async `onValidate`** callback for server-side checks (e.g. uniqueness constraints)
+  - **Built-in i18n support** — English and Japanese labels included out of the box
+
+  ```tsx
+  import {
+    CsvImporter,
+    useCsvImporter,
+    csv,
+    type CsvCellIssue,
+  } from "@tailor-platform/app-shell";
+
+  const { open, props } = useCsvImporter({
+    schema: {
+      // Each column defines a mapping target for CSV headers
+      columns: [
+        {
+          // Becomes the object key in parsed row data
+          key: "name",
+          // Display label shown in the mapping UI
+          label: "Name",
+          // Must be mapped to a CSV header before proceeding
+          required: true,
+          // Alternative CSV header names for auto-matching
+          aliases: ["product_name"],
+          // Standard Schema validator — coerces and validates in one step
+          schema: csv.string({ min: 1 }),
+        },
+        {
+          key: "price",
+          label: "Price",
+          schema: csv.number({ min: 0 }), // Coerces the raw CSV string to a number and rejects NaN
+        },
+        {
+          key: "active",
+          label: "Active",
+          schema: csv.boolean(), // Recognises "true"/"1"/"yes" and "false"/"0"/"no" (case-insensitive)
+        },
+      ],
+    },
+
+    // Async callback invoked after schema validation passes.
+    // Use it for server-side checks such as uniqueness or foreign-key lookups.
+    onValidate: async (rows) => {
+      // Async API request that returns CsvCellIssue[] — shown inline in the review table
+      return await validateOnServer(rows);
+    },
+
+    // Called when the user confirms the import after resolving all errors.
+    // `event` contains the final rows, mappings, corrections, and summary stats.
+    onImport: async (event) => {
+      // buildRows() returns typed rows inferred from the schema definition.
+      // e.g. { name: string; price: number; active: boolean }[]
+      const rows = await event.buildRows();
+      await saveToBackend(rows);
+    },
+  });
+
+  // open() opens the import drawer
+  <Button onClick={open}>Import CSV</Button>
+
+  // Renders a multi-step flow CSV importer component in drawer
+  <CsvImporter {...props} />
+  ```
+
+### Patch Changes
+
+- 6a39f50: Updated [react-router](https://www.npmjs.com/package/react-router) (^7.13.1 -> ^7.14.0)
+- dc4b24b: Updated [lucide-react](https://www.npmjs.com/package/lucide-react) (^0.577.0 -> ^1.7.0)
+- 3dd41da: Improve authentication initialization
+
+  - Avoids React strict mode double-invocation issues by running auth side effects outside of React's lifecycle
+  - OAuth redirections are now handled before component rendering, eliminating unnecessary UI renders during the callback flow
+
+- Updated dependencies [01984ee]
+  - @tailor-platform/app-shell-vite-plugin@0.2.1
+
 ## 0.33.0
 
 ### Minor Changes

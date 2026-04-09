@@ -24,6 +24,8 @@ import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
 
+// Always rendered regardless of searchSources — the palette searches routes
+// and contextual actions too, so there is always something to search.
 const SearchEntry = () => {
   const { setOpen: openPalette } = useCommandPaletteState();
   const t = useT();

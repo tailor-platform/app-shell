@@ -7,15 +7,9 @@ description: Keyboard-driven quick navigation with fuzzy search for all routes i
 
 `CommandPalette` provides a keyboard-driven quick navigation interface that allows users to search and navigate to any page in your application. Activated with `Cmd+K` (Mac) or `Ctrl+K` (Windows), it offers fuzzy search across all accessible routes.
 
-## Import
-
-```tsx
-import { CommandPalette } from "@tailor-platform/app-shell";
-```
-
 ## Usage
 
-The CommandPalette is automatically included when you use `AppShell` with `SidebarLayout`. It requires no additional configuration:
+The CommandPalette is built into `AppShell` and rendered automatically. No explicit import or placement is needed:
 
 ```tsx
 import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";

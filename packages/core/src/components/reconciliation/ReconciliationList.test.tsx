@@ -107,7 +107,7 @@ describe("ReconciliationList", () => {
       />,
     );
     // Dialog title rendered via Dialog.Title
-    expect(screen.getByRole("heading", { name: "Upload Invoice" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Upload Document" })).toBeDefined();
   });
 
   it("renders empty state when no items", () => {

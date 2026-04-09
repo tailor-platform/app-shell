@@ -94,19 +94,80 @@ const demoListItems: ReconciliationListItem[] = [
   },
 ];
 
+// 🧪 Field and column configurations for the invoice reconciliation use case
+const INVOICE_FIELDS = [
+  { key: "invoiceNumber", label: "Invoice Number", meta: { copyable: true } },
+  {
+    key: "status",
+    label: "Status",
+    type: "badge" as const,
+    meta: {
+      badgeVariantMap: {
+        matched: "subtle-success",
+        partial_match: "subtle-warning",
+        mismatch: "subtle-error",
+        processing: "subtle-default",
+        error: "subtle-error",
+      },
+    },
+  },
+  { key: "supplier", label: "Supplier" },
+  {
+    key: "totalAmount",
+    label: "Total Amount",
+    type: "money" as const,
+    meta: { currencyKey: "currency" },
+  },
+  {
+    key: "invoiceDate",
+    label: "Invoice Date",
+    type: "date" as const,
+    meta: { dateFormat: "medium" as const },
+  },
+  { type: "divider" as const },
+  { key: "summary", label: "Summary", emptyBehavior: "hide" as const },
+];
+
+const LINE_ITEM_COLUMNS = [
+  { key: "lineNumber", header: "#" },
+  { key: "product", header: "Product" },
+  {
+    key: "status",
+    header: "Status",
+    type: "badge" as const,
+    meta: {
+      badgeVariantMap: {
+        matched: "subtle-success",
+        price_mismatch: "subtle-warning",
+        qty_mismatch: "subtle-warning",
+        missing: "subtle-error",
+      },
+    },
+  },
+  { key: "invoiceQty", header: "Inv Qty", type: "number" as const, align: "right" as const },
+  { key: "poQty", header: "PO Qty", type: "number" as const, align: "right" as const },
+  { key: "grQty", header: "GR Qty", type: "number" as const, align: "right" as const },
+  { key: "qtyVariance", header: "Qty Var", type: "variance" as const, align: "right" as const },
+  { key: "invoicePrice", header: "Inv Price", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  { key: "poPrice", header: "PO Price", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  { key: "priceVariance", header: "Price Var", type: "variance" as const, align: "right" as const },
+];
+
 // 🧪 Dummy Data: Full records by ID
 const recordsById: Record<string, ReconciliationRecord> = {
   "1": {
     id: "1",
-    invoiceNumber: "26TKC-00200",
     status: "matched",
     matchScore: 100,
-    supplier: "CADICA Tekstil VE Tic. Ltd. Sti.",
-    totalAmount: 7854.01,
-    currency: "USD",
-    invoiceDate: new Date("2026-03-04"),
-    createdAt: new Date("2026-04-07"),
-    updatedAt: new Date("2026-04-07"),
+    data: {
+      invoiceNumber: "26TKC-00200",
+      status: "matched",
+      supplier: "CADICA Tekstil VE Tic. Ltd. Sti.",
+      totalAmount: 7854.01,
+      currency: "USD",
+      invoiceDate: new Date("2026-03-04"),
+      summary: "All 2 line items matched successfully.",
+    },
     summary: "All 2 line items matched successfully.",
     processingSteps: [
       {
@@ -201,15 +262,17 @@ const recordsById: Record<string, ReconciliationRecord> = {
   },
   "2": {
     id: "2",
-    invoiceNumber: "SS26-0522",
     status: "partial_match",
     matchScore: 75,
-    supplier: "Karmen Deri Urunleri Sanayi ve Ticaret A.S.",
-    totalAmount: 157990.0,
-    currency: "USD",
-    invoiceDate: new Date("2026-07-03"),
-    createdAt: new Date("2026-04-07"),
-    updatedAt: new Date("2026-04-07"),
+    data: {
+      invoiceNumber: "SS26-0522",
+      status: "partial_match",
+      supplier: "Karmen Deri Urunleri Sanayi ve Ticaret A.S.",
+      totalAmount: 157990.0,
+      currency: "USD",
+      invoiceDate: new Date("2026-07-03"),
+      summary: "0/2 line items matched. 2 price discrepancies.",
+    },
     summary: "0/2 line items matched. 2 price discrepancies.",
     processingSteps: [
       {
@@ -311,15 +374,17 @@ const recordsById: Record<string, ReconciliationRecord> = {
   },
   "4": {
     id: "4",
-    invoiceNumber: "MZ26-04187",
     status: "mismatch",
     matchScore: 42,
-    supplier: "Mazzucchelli 1849 S.p.A.",
-    totalAmount: 18720.0,
-    currency: "EUR",
-    invoiceDate: new Date("2026-03-28"),
-    createdAt: new Date("2026-04-06"),
-    updatedAt: new Date("2026-04-06"),
+    data: {
+      invoiceNumber: "MZ26-04187",
+      status: "mismatch",
+      supplier: "Mazzucchelli 1849 S.p.A.",
+      totalAmount: 18720.0,
+      currency: "EUR",
+      invoiceDate: new Date("2026-03-28"),
+      summary: "1/3 line items matched. 1 quantity mismatch, 1 price mismatch.",
+    },
     summary: "1/3 line items matched. 1 quantity mismatch, 1 price mismatch.",
     processingSteps: [
       {
@@ -434,15 +499,9 @@ const recordsById: Record<string, ReconciliationRecord> = {
   },
   "5": {
     id: "5",
-    invoiceNumber: "PT26-00891",
     status: "processing",
     matchScore: 0,
-    supplier: "Premiata S.r.l.",
-    totalAmount: 34500.0,
-    currency: "EUR",
-    invoiceDate: new Date("2026-04-08"),
-    createdAt: new Date("2026-04-08"),
-    updatedAt: new Date("2026-04-08"),
+    data: {},
     summary: "",
     processingSteps: [
       {
@@ -464,15 +523,9 @@ const recordsById: Record<string, ReconciliationRecord> = {
   },
   "6": {
     id: "6",
-    invoiceNumber: "HK26-SL0044",
     status: "error",
     matchScore: 0,
-    supplier: "Sun Hing Leather Co., Ltd.",
-    totalAmount: 8900.0,
-    currency: "USD",
-    invoiceDate: new Date("2026-04-09"),
-    createdAt: new Date("2026-04-09"),
-    updatedAt: new Date("2026-04-09"),
+    data: {},
     summary:
       "OCR extraction failed — scanned image is too low resolution (below 150 DPI minimum).",
     processingSteps: [
@@ -532,15 +585,17 @@ function useDemoStore() {
 function buildMatchedRecord(id: string, fileName: string, uploadTime: Date): ReconciliationRecord {
   return {
     id,
-    invoiceNumber: fileName.replace(/\.[^.]+$/, ""),
     status: "matched",
     matchScore: 100,
-    supplier: "CADICA Tekstil VE Tic. Ltd. Sti.",
-    totalAmount: 7854.01,
-    currency: "USD",
-    invoiceDate: new Date("2026-03-04"),
-    createdAt: uploadTime,
-    updatedAt: uploadTime,
+    data: {
+      invoiceNumber: fileName.replace(/\.[^.]+$/, ""),
+      status: "matched",
+      supplier: "CADICA Tekstil VE Tic. Ltd. Sti.",
+      totalAmount: 7854.01,
+      currency: "USD",
+      invoiceDate: new Date("2026-03-04"),
+      summary: "All 2 line items matched successfully.",
+    },
     summary: "All 2 line items matched successfully.",
     processingSteps: [
       {
@@ -642,15 +697,9 @@ function addUploadedRecord(file: File): string {
 
   const processingRecord: ReconciliationRecord = {
     id,
-    invoiceNumber: fileName.replace(/\.[^.]+$/, ""),
     status: "processing",
     matchScore: 0,
-    supplier: "",
-    totalAmount: 0,
-    currency: "USD",
-    invoiceDate: now,
-    createdAt: now,
-    updatedAt: now,
+    data: { invoiceNumber: fileName.replace(/\.[^.]+$/, "") },
     summary: "",
     processingSteps: [
       {
@@ -774,10 +823,14 @@ const ReconciliationDetailPage = () => {
   return (
     <ReconciliationDetail
       data={record}
-      onCreateBill={() =>
+      fields={INVOICE_FIELDS}
+      lineItemColumns={LINE_ITEM_COLUMNS}
+      onCreate={() =>
         alert("Create Purchase Bill — navigates to bill form with OCR-extracted data pre-filled")
       }
-      onUpdatePO={() => alert("Update PO — navigates to purchase order edit page")}
+      createLabel="Create purchase bill"
+      onUpdate={() => alert("Update PO — navigates to purchase order edit page")}
+      updateLabel="Update PO"
     />
   );
 };

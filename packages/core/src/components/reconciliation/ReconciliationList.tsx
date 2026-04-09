@@ -89,7 +89,7 @@ function DefaultEmptyState() {
     <div className="astw:flex astw:flex-col astw:items-center astw:justify-center astw:py-12 astw:text-center">
       <p className="astw:text-sm astw:text-muted-foreground">No reconciliation records found.</p>
       <p className="astw:text-xs astw:text-muted-foreground astw:mt-1">
-        Upload an invoice to get started.
+        Upload a document to get started.
       </p>
     </div>
   );
@@ -265,13 +265,13 @@ export function ReconciliationList({
           open={uploadOpen}
           onOpenChange={setUploadOpen}
           onUpload={onUpload}
-          title={uploadDialogProps?.title ?? "Upload Invoice"}
+          title={uploadDialogProps?.title ?? "Upload Document"}
           description={
             uploadDialogProps?.description ??
-            "Upload a PDF or image of a supplier invoice. The system will extract data and match it against existing purchase orders and goods receipts."
+            "Upload a PDF or image to process. The system will extract data and run matching."
           }
           accept={uploadDialogProps?.accept ?? ".pdf,.png,.jpg,.tiff"}
-          uploadLabel={uploadDialogProps?.uploadLabel ?? "Upload Invoice"}
+          uploadLabel={uploadDialogProps?.uploadLabel ?? "Upload"}
         />
       )}
     </div>

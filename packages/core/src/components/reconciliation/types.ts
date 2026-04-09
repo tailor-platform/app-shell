@@ -1,4 +1,5 @@
 import type * as React from "react";
+import type { FieldConfig } from "../description-card/types";
 
 // ============================================================================
 // STATUS TYPES
@@ -19,10 +20,6 @@ export type ReconciliationStatus =
  */
 export type DiscrepancySeverity = "warning" | "error";
 
-/**
- * Status of an individual line item in the three-way comparison.
- */
-export type LineItemStatus = "matched" | "price_mismatch" | "qty_mismatch" | "missing";
 
 // ============================================================================
 // LIST PAGE
@@ -70,20 +67,29 @@ export interface Discrepancy {
 }
 
 /**
- * A single row in the three-way line-item comparison table (read-only).
+ * Column type for the line items comparison table.
  */
-export interface LineItemComparison {
-  lineNumber: number;
-  product: string;
-  status: LineItemStatus;
-  invoiceQty: number;
-  poQty: number;
-  grQty: number;
-  qtyVariance: number;
-  invoicePrice: number;
-  poPrice: number;
-  priceVariance: number;
-  currency: string;
+export type LineItemColumnType = "text" | "number" | "badge" | "money" | "variance";
+
+/**
+ * A single column definition for the line items table.
+ */
+export interface LineItemColumn {
+  /** Key path to the value in each line item row. */
+  key: string;
+  /** Column header text. */
+  header: string;
+  /** Rendering type. Default: "text". */
+  type?: LineItemColumnType;
+  /** Column alignment. Default: "left". */
+  align?: "left" | "right";
+  /** Type-specific configuration. */
+  meta?: {
+    /** Badge variant map for "badge" type columns. */
+    badgeVariantMap?: Record<string, string>;
+    /** Key path to the currency code in the row, for "money" type columns. */
+    currencyKey?: string;
+  };
 }
 
 /**
@@ -108,19 +114,15 @@ export interface RelatedDocument {
  */
 export interface ReconciliationRecord {
   id: string;
-  invoiceNumber: string;
   status: ReconciliationStatus;
   matchScore: number;
-  supplier: string;
-  totalAmount: number;
-  currency: string;
-  invoiceDate: Date | string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  /** Generic data bag — all backend fields. DescriptionCard reads from this via field keys. */
+  data: Record<string, unknown>;
   summary: string;
   processingSteps: ProcessingStep[];
   discrepancies: Discrepancy[];
-  lineItems: LineItemComparison[];
+  /** Generic line items — column config defines how to render each field. */
+  lineItems: Record<string, unknown>[];
   relatedDocuments: RelatedDocument[];
 }
 
@@ -163,10 +165,18 @@ export interface ReconciliationListProps {
 export interface ReconciliationDetailProps {
   /** Full reconciliation record. */
   data: ReconciliationRecord;
-  /** "Create Purchase Bill" action. Omit to hide. */
-  onCreateBill?: () => void;
-  /** "Update PO" action. Omit to hide. */
-  onUpdatePO?: () => void;
+  /** DescriptionCard field configuration for the match result section. */
+  fields: FieldConfig[];
+  /** Column configuration for the line items comparison table. */
+  lineItemColumns: LineItemColumn[];
+  /** Primary create action. Omit to hide. */
+  onCreate?: () => void;
+  /** Label for the create action button. */
+  createLabel?: string;
+  /** Primary update action. Omit to hide. */
+  onUpdate?: () => void;
+  /** Label for the update action button. */
+  updateLabel?: string;
   /** Called on polling interval while status is "processing". */
   onRefresh?: () => void;
   /** Polling interval in ms while processing (default 5000). */
@@ -202,21 +212,3 @@ export const statusLabel: Record<ReconciliationStatus, string> = {
   error: "Error",
 };
 
-/** Maps LineItemStatus to a Badge variant. */
-export const lineItemBadgeVariant: Record<
-  LineItemStatus,
-  "subtle-success" | "subtle-warning" | "subtle-error"
-> = {
-  matched: "subtle-success",
-  price_mismatch: "subtle-warning",
-  qty_mismatch: "subtle-warning",
-  missing: "subtle-error",
-};
-
-/** Maps LineItemStatus to a human-readable label. */
-export const lineItemStatusLabel: Record<LineItemStatus, string> = {
-  matched: "Matched",
-  price_mismatch: "Price mismatch",
-  qty_mismatch: "Qty mismatch",
-  missing: "Missing",
-};

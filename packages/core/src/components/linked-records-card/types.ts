@@ -6,10 +6,12 @@ import type * as React from "react";
 export interface LinkedRecord {
   /** Unique identifier. */
   id: string;
-  /** Record type key, used for icon selection (e.g. "purchase_order", "goods_receipt"). */
+  /** Record type key. */
   type: string;
   /** Display label (e.g. "PO-105539"). */
   label: string;
+  /** Optional icon to display before the label. */
+  icon?: React.ReactNode;
   /** Navigation href. */
   href: string;
   /** Human-readable status text (e.g. "Approved", "Draft"). */

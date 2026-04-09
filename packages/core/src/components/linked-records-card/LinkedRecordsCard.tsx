@@ -1,29 +1,18 @@
 import * as React from "react";
-import { FileTextIcon, TruckIcon, ReceiptIcon, PackageIcon, ExternalLinkIcon } from "lucide-react";
+import { FileTextIcon, ExternalLinkIcon } from "lucide-react";
 
 import { Badge } from "../badge";
 import { Card } from "../card";
 import type { LinkedRecordsCardProps, LinkedRecord } from "./types";
 
-// ============================================================================
-// DEFAULT ICONS
-// ============================================================================
-
-const DEFAULT_TYPE_ICONS: Record<string, React.ReactNode> = {
-  purchase_order: <FileTextIcon className="astw:size-4" />,
-  goods_receipt: <TruckIcon className="astw:size-4" />,
-  purchase_invoice: <ReceiptIcon className="astw:size-4" />,
-  purchase_bill: <ReceiptIcon className="astw:size-4" />,
-};
-
-const FALLBACK_ICON = <PackageIcon className="astw:size-4" />;
+const DEFAULT_ICON = <FileTextIcon className="astw:size-4" />;
 
 // ============================================================================
 // SUB-COMPONENTS
 // ============================================================================
 
 function RecordRow({ record }: { record: LinkedRecord }) {
-  const icon = DEFAULT_TYPE_ICONS[record.type] ?? FALLBACK_ICON;
+  const icon = record.icon ?? DEFAULT_ICON;
 
   return (
     <div className="astw:flex astw:items-center astw:gap-2 astw:min-w-0">
@@ -56,8 +45,8 @@ function RecordRow({ record }: { record: LinkedRecord }) {
  * <LinkedRecordsCard
  *   title="Related Documents"
  *   records={[
- *     { id: "po-1", type: "purchase_order", label: "PO-105539", href: "/po/105539", status: "Approved", statusVariant: "outline-success" },
- *     { id: "gr-1", type: "goods_receipt", label: "GR-200145", href: "/gr/200145", status: "Received", statusVariant: "outline-success" },
+ *     { id: "1", type: "order", label: "ORD-001", href: "/orders/1", status: "Confirmed", statusVariant: "outline-success" },
+ *     { id: "2", type: "receipt", label: "REC-001", href: "/receipts/1", status: "Received", statusVariant: "outline-success" },
  *   ]}
  * />
  * ```
@@ -68,7 +57,7 @@ export function LinkedRecordsCard({
   className,
 }: LinkedRecordsCardProps) {
   return (
-    <Card.Root className={className}>
+    <Card.Root data-slot="linked-records-card" className={className}>
       <Card.Header>
         {typeof title === "string" ? (
           <h3 className="astw:leading-none astw:font-semibold">{title}</h3>

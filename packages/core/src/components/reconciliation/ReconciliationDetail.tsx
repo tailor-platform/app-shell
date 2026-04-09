@@ -2,6 +2,9 @@ import * as React from "react";
 import {
   LoaderCircleIcon,
   FilePlusIcon,
+  FileTextIcon,
+  TruckIcon,
+  ReceiptIcon,
   PencilIcon,
   CircleAlertIcon,
   RotateCwIcon,
@@ -19,22 +22,16 @@ import { ActionPanel } from "../action-panel";
 import { Layout } from "../layout/Layout";
 import { LinkedRecordsCard } from "../linked-records-card";
 import type { LinkedRecord } from "../linked-records-card/types";
-import type { BadgeVariantType } from "../description-card/types";
 import type { ActivityCardBaseItem } from "../activity-card/types";
 import type {
   ReconciliationDetailProps,
   ReconciliationRecord,
-  LineItemComparison,
   Discrepancy,
   RelatedDocument,
   ProcessingStep,
+  LineItemColumn,
 } from "./types";
-import {
-  statusBadgeVariant,
-  statusLabel,
-  lineItemBadgeVariant,
-  lineItemStatusLabel,
-} from "./types";
+import { statusBadgeVariant, statusLabel } from "./types";
 
 // ============================================================================
 // FORMATTERS
@@ -60,6 +57,13 @@ const STATUS_VARIANT_MAP: Record<string, LinkedRecord["statusVariant"]> = {
   Cancelled: "outline-error",
 };
 
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  purchase_order: <FileTextIcon className="astw:size-4" />,
+  goods_receipt: <TruckIcon className="astw:size-4" />,
+  purchase_invoice: <ReceiptIcon className="astw:size-4" />,
+  purchase_bill: <ReceiptIcon className="astw:size-4" />,
+};
+
 function toLinkedRecord(doc: RelatedDocument): LinkedRecord {
   return {
     id: doc.id,
@@ -67,6 +71,7 @@ function toLinkedRecord(doc: RelatedDocument): LinkedRecord {
     label: doc.label,
     href: doc.href,
     status: doc.status,
+    icon: TYPE_ICONS[doc.type],
     statusVariant: doc.statusVariant
       ? (`outline-${doc.statusVariant}` as LinkedRecord["statusVariant"])
       : (STATUS_VARIANT_MAP[doc.status] ?? "outline-neutral"),
@@ -128,7 +133,7 @@ function ProcessingState() {
         <div className="astw:flex astw:flex-col astw:items-center astw:justify-center astw:h-[500px] astw:text-center astw:gap-3">
           <LoaderCircleIcon className="astw:size-8 astw:text-muted-foreground astw:animate-spin" />
           <p className="astw:text-sm astw:text-muted-foreground">
-            Processing invoice... This may take a moment.
+            Processing... This may take a moment.
           </p>
         </div>
       </Card.Content>
@@ -147,7 +152,7 @@ function ErrorState({ summary }: { summary?: string }) {
         <div className="astw:flex astw:flex-col astw:items-center astw:justify-center astw:h-[500px] astw:text-center astw:gap-3">
           <CircleAlertIcon className="astw:size-8 astw:text-destructive" />
           <p className="astw:text-sm astw:text-muted-foreground">
-            {summary || "An error occurred while processing this invoice."}
+            {summary || "An error occurred during processing."}
           </p>
         </div>
       </Card.Content>
@@ -156,48 +161,22 @@ function ErrorState({ summary }: { summary?: string }) {
 }
 
 // ============================================================================
-// MATCH RESULT — DescriptionCard
+// MATCH RESULT — DescriptionCard with consumer-provided fields
 // ============================================================================
 
-function MatchResultSection({ data }: { data: ReconciliationRecord }) {
-  // Convert statusBadgeVariant to the BadgeVariantType record DescriptionCard expects
-  const badgeVariantMap: Record<string, BadgeVariantType> = Object.fromEntries(
-    Object.entries(statusBadgeVariant),
-  );
-
+function MatchResultSection({
+  data,
+  fields,
+}: {
+  data: ReconciliationRecord;
+  fields: ReconciliationDetailProps["fields"];
+}) {
   return (
     <DescriptionCard
-      data={data as unknown as Record<string, unknown>}
+      data={data.data}
       title="Match Result"
       columns={3}
-      fields={[
-        { key: "invoiceNumber", label: "Invoice Number", meta: { copyable: true } },
-        {
-          key: "status",
-          label: "Status",
-          type: "badge",
-          meta: { badgeVariantMap },
-        },
-        { key: "supplier", label: "Supplier" },
-        {
-          key: "totalAmount",
-          label: "Total Amount",
-          type: "money",
-          meta: { currencyKey: "currency" },
-        },
-        {
-          key: "invoiceDate",
-          label: "Invoice Date",
-          type: "date",
-          meta: { dateFormat: "medium" },
-        },
-        { type: "divider" },
-        {
-          key: "summary",
-          label: "Summary",
-          emptyBehavior: "hide",
-        },
-      ]}
+      fields={fields}
     />
   );
 }
@@ -314,14 +293,43 @@ function varianceColor(value: number): string {
   return "astw:text-destructive";
 }
 
+function renderCell(
+  row: Record<string, unknown>,
+  col: LineItemColumn,
+): React.ReactNode {
+  const value = row[col.key];
+  const type = col.type ?? "text";
+
+  switch (type) {
+    case "badge": {
+      const variant = col.meta?.badgeVariantMap?.[String(value)] ?? "neutral";
+      return <Badge variant={variant as Parameters<typeof Badge>[0]["variant"]}>{String(value)}</Badge>;
+    }
+    case "money": {
+      const currency = col.meta?.currencyKey ? String(row[col.meta.currencyKey] ?? "USD") : "USD";
+      return formatCurrency(Number(value), currency);
+    }
+    case "variance":
+      return (
+        <span className={varianceColor(Number(value))}>
+          {formatVariance(Number(value))}
+        </span>
+      );
+    case "number":
+      return String(value ?? "");
+    default:
+      return String(value ?? "");
+  }
+}
+
 function LineItemsTable({
   lineItems,
-  currency,
+  columns,
 }: {
-  lineItems: LineItemComparison[];
-  currency: string;
+  lineItems: Record<string, unknown>[];
+  columns: LineItemColumn[];
 }) {
-  if (lineItems.length === 0) return null;
+  if (lineItems.length === 0 || columns.length === 0) return null;
 
   return (
     <Card.Root>
@@ -332,45 +340,35 @@ function LineItemsTable({
         <Table.Root>
           <Table.Header>
             <Table.Row className="astw:hover:bg-transparent">
-              <Table.Head className="astw:pl-6">#</Table.Head>
-              <Table.Head>Product</Table.Head>
-              <Table.Head>Status</Table.Head>
-              <Table.Head className="astw:text-right">Inv Qty</Table.Head>
-              <Table.Head className="astw:text-right">PO Qty</Table.Head>
-              <Table.Head className="astw:text-right">GR Qty</Table.Head>
-              <Table.Head className="astw:text-right">Qty Var</Table.Head>
-              <Table.Head className="astw:text-right">Inv Price</Table.Head>
-              <Table.Head className="astw:text-right">PO Price</Table.Head>
-              <Table.Head className="astw:text-right astw:pr-6">Price Var</Table.Head>
+              {columns.map((col, i) => (
+                <Table.Head
+                  key={col.key}
+                  className={cn(
+                    col.align === "right" && "astw:text-right",
+                    i === 0 && "astw:pl-6",
+                    i === columns.length - 1 && "astw:pr-6",
+                  )}
+                >
+                  {col.header}
+                </Table.Head>
+              ))}
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {lineItems.map((item) => (
-              <Table.Row key={item.lineNumber}>
-                <Table.Cell className="astw:pl-6">{item.lineNumber}</Table.Cell>
-                <Table.Cell className="astw:font-medium">{item.product}</Table.Cell>
-                <Table.Cell>
-                  <Badge variant={lineItemBadgeVariant[item.status]}>
-                    {lineItemStatusLabel[item.status]}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell className="astw:text-right">{item.invoiceQty}</Table.Cell>
-                <Table.Cell className="astw:text-right">{item.poQty}</Table.Cell>
-                <Table.Cell className="astw:text-right">{item.grQty}</Table.Cell>
-                <Table.Cell className={cn("astw:text-right", varianceColor(item.qtyVariance))}>
-                  {formatVariance(item.qtyVariance)}
-                </Table.Cell>
-                <Table.Cell className="astw:text-right">
-                  {formatCurrency(item.invoicePrice, currency)}
-                </Table.Cell>
-                <Table.Cell className="astw:text-right">
-                  {formatCurrency(item.poPrice, currency)}
-                </Table.Cell>
-                <Table.Cell
-                  className={cn("astw:text-right astw:pr-6", varianceColor(item.priceVariance))}
-                >
-                  {formatVariance(item.priceVariance)}
-                </Table.Cell>
+            {lineItems.map((item, rowIdx) => (
+              <Table.Row key={String(item.id ?? rowIdx)}>
+                {columns.map((col, i) => (
+                  <Table.Cell
+                    key={col.key}
+                    className={cn(
+                      col.align === "right" && "astw:text-right",
+                      i === 0 && "astw:pl-6",
+                      i === columns.length - 1 && "astw:pr-6",
+                    )}
+                  >
+                    {renderCell(item, col)}
+                  </Table.Cell>
+                ))}
               </Table.Row>
             ))}
           </Table.Body>
@@ -402,16 +400,24 @@ function LineItemsTable({
  * ```tsx
  * <ReconciliationDetail
  *   data={record}
- *   onCreateBill={() => navigate("/bills/new", { state: record })}
- *   onUpdatePO={() => navigate(`/purchase-orders/${record.id}/edit`)}
+ *   fields={matchResultFields}
+ *   lineItemColumns={comparisonColumns}
+ *   onCreate={() => navigate("/documents/new")}
+ *   createLabel="Create document"
+ *   onUpdate={() => navigate(`/documents/${record.id}/edit`)}
+ *   updateLabel="Update reference"
  *   onRefresh={() => refetch()}
  * />
  * ```
  */
 export function ReconciliationDetail({
   data,
-  onCreateBill,
-  onUpdatePO,
+  fields,
+  lineItemColumns,
+  onCreate,
+  createLabel = "Create",
+  onUpdate,
+  updateLabel = "Update",
   onRefresh,
   refreshInterval = 5000,
   actions,
@@ -445,24 +451,24 @@ export function ReconciliationDetail({
         onClick: onRefresh,
       });
     }
-    if (!isError && onUpdatePO) {
+    if (!isError && onUpdate) {
       items.push({
-        key: "update-po",
-        label: "Update PO",
+        key: "update",
+        label: updateLabel,
         icon: <PencilIcon />,
-        onClick: onUpdatePO,
+        onClick: onUpdate,
       });
     }
-    if (!isError && onCreateBill) {
+    if (!isError && onCreate) {
       items.push({
-        key: "create-bill",
-        label: "Create purchase bill",
+        key: "create",
+        label: createLabel,
         icon: <FilePlusIcon />,
-        onClick: onCreateBill,
+        onClick: onCreate,
       });
     }
     return items;
-  }, [showActions, isError, onUpdatePO, onCreateBill, onRefresh]);
+  }, [showActions, isError, onUpdate, onCreate, onRefresh, updateLabel, createLabel]);
 
   const sourceDocs = data.relatedDocuments.filter((d) => !d.autoGenerated);
   const autoGenDocs = data.relatedDocuments.filter((d) => d.autoGenerated);
@@ -484,9 +490,9 @@ export function ReconciliationDetail({
             <ErrorState summary={data.summary} />
           ) : (
             <>
-              <MatchResultSection data={data} />
+              <MatchResultSection data={data} fields={fields} />
               <DiscrepanciesCard discrepancies={data.discrepancies} />
-              <LineItemsTable lineItems={data.lineItems} currency={data.currency} />
+              <LineItemsTable lineItems={data.lineItems} columns={lineItemColumns} />
             </>
           )}
         </Layout.Column>

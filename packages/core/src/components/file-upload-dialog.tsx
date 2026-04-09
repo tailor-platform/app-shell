@@ -122,7 +122,7 @@ export function FileUploadDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content className={cn("astw:sm:max-w-md", className)}>
+      <Dialog.Content data-slot="file-upload-dialog" className={cn("astw:sm:max-w-md", className)}>
         <Dialog.Header>
           <Dialog.Title>{title}</Dialog.Title>
           {description && <Dialog.Description>{description}</Dialog.Description>}

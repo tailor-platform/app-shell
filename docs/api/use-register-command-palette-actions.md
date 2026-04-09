@@ -19,18 +19,15 @@ import {
 ## Signature
 
 ```typescript
-function useRegisterCommandPaletteActions(
-  group: string,
-  actions: CommandPaletteAction[],
-): void;
+function useRegisterCommandPaletteActions(group: string, actions: CommandPaletteAction[]): void;
 ```
 
 ## Parameters
 
-| Parameter | Type                     | Description                                              |
-| --------- | ------------------------ | -------------------------------------------------------- |
+| Parameter | Type                     | Description                                               |
+| --------- | ------------------------ | --------------------------------------------------------- |
 | `group`   | `string`                 | Display group name shown in the palette for these actions |
-| `actions` | `CommandPaletteAction[]` | List of actions to register                              |
+| `actions` | `CommandPaletteAction[]` | List of actions to register                               |
 
 ## `CommandPaletteAction`
 
@@ -46,7 +43,7 @@ type CommandPaletteAction = {
 
 | Property   | Type                          | Description                                                                   |
 | ---------- | ----------------------------- | ----------------------------------------------------------------------------- |
-| `key`      | `string`                      | Unique key for React reconciliation                                            |
+| `key`      | `string`                      | Unique key for React reconciliation                                           |
 | `label`    | `string`                      | Visible label shown in the palette; also used for search matching             |
 | `icon`     | `ReactNode`                   | Optional icon rendered next to the label                                      |
 | `group`    | `string`                      | Optional group override; defaults to the `group` parameter passed to the hook |

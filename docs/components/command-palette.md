@@ -121,20 +121,20 @@ function OrderDetailPage() {
 
 ### Parameters
 
-| Parameter | Type                     | Description                                                |
-| --------- | ------------------------ | ---------------------------------------------------------- |
-| `group`   | `string`                 | Display group name for the actions shown in the palette    |
-| `actions` | `CommandPaletteAction[]` | List of actions to register (see `CommandPaletteAction`)   |
+| Parameter | Type                     | Description                                              |
+| --------- | ------------------------ | -------------------------------------------------------- |
+| `group`   | `string`                 | Display group name for the actions shown in the palette  |
+| `actions` | `CommandPaletteAction[]` | List of actions to register (see `CommandPaletteAction`) |
 
 ### `CommandPaletteAction`
 
-| Property   | Type                          | Description                                                                              |
-| ---------- | ----------------------------- | ---------------------------------------------------------------------------------------- |
-| `key`      | `string`                      | Unique key for React reconciliation                                                      |
-| `label`    | `string`                      | Visible label shown in the palette; also used for search matching                        |
-| `icon`     | `ReactNode`                   | Optional icon rendered next to the label                                                 |
-| `group`    | `string`                      | Optional group override; defaults to the `group` parameter passed to the hook            |
-| `onSelect` | `() => void \| Promise<void>` | Callback invoked when the user selects the action                                        |
+| Property   | Type                          | Description                                                                   |
+| ---------- | ----------------------------- | ----------------------------------------------------------------------------- |
+| `key`      | `string`                      | Unique key for React reconciliation                                           |
+| `label`    | `string`                      | Visible label shown in the palette; also used for search matching             |
+| `icon`     | `ReactNode`                   | Optional icon rendered next to the label                                      |
+| `group`    | `string`                      | Optional group override; defaults to the `group` parameter passed to the hook |
+| `onSelect` | `() => void \| Promise<void>` | Callback invoked when the user selects the action                             |
 
 > **Note:** `icon` changes alone do not trigger re-registration. To reflect a dynamic icon update, also change the action's `key` or `label`.
 

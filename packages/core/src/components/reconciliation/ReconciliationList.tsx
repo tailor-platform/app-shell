@@ -2,6 +2,8 @@ import * as React from "react";
 import { ExternalLinkIcon } from "lucide-react";
 
 import { cn } from "../../lib/utils";
+import { scoreColor } from "../../lib/score-color";
+import { formatCurrency } from "../../lib/format";
 import { Badge } from "../badge";
 import { Card } from "../card";
 import { Table } from "../table";
@@ -26,13 +28,6 @@ const STATUS_TABS: Array<{ key: ReconciliationStatus | "all"; label: string }> =
 // HELPERS
 // ============================================================================
 
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(amount);
-}
-
 function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("en-US", {
@@ -40,12 +35,6 @@ function formatDate(date: Date | string): string {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function scoreColor(score: number): string {
-  if (score >= 90) return "astw:text-green-700 astw:dark:text-green-500";
-  if (score >= 70) return "astw:text-yellow-700 astw:dark:text-yellow-500";
-  return "astw:text-destructive";
 }
 
 // ============================================================================

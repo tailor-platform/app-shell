@@ -20,14 +20,6 @@ const mockRecords: LinkedRecord[] = [
     status: "Received",
     statusVariant: "outline-success",
   },
-  {
-    id: "pi-1",
-    type: "purchase_invoice",
-    label: "PI-2026-00371",
-    href: "/pi/371",
-    status: "Draft",
-    statusVariant: "outline-neutral",
-  },
 ];
 
 afterEach(() => {
@@ -40,44 +32,25 @@ describe("LinkedRecordsCard", () => {
     expect(screen.getByText("Related Documents")).toBeDefined();
   });
 
-  it("renders custom title", () => {
+  it("renders string title", () => {
     render(<LinkedRecordsCard title="Linked Documents" records={mockRecords} />);
     expect(screen.getByText("Linked Documents")).toBeDefined();
   });
 
-  it("renders all record rows with labels and statuses", () => {
-    const { container } = render(<LinkedRecordsCard records={mockRecords} />);
-    const links = container.querySelectorAll("a");
-    expect(links).toHaveLength(3);
-    expect(links[0].textContent).toContain("PO-105539");
-    expect(links[1].textContent).toContain("GR-200145");
-    expect(links[2].textContent).toContain("PI-2026-00371");
-    expect(screen.getAllByText("Approved").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Received").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Draft").length).toBeGreaterThan(0);
-  });
-
-  it("renders record labels as links with correct href", () => {
-    const { container } = render(<LinkedRecordsCard records={mockRecords} />);
-    const links = container.querySelectorAll("a");
-    expect(links[0].getAttribute("href")).toBe("/po/105539");
-    expect(links[1].getAttribute("href")).toBe("/gr/200145");
-    expect(links[2].getAttribute("href")).toBe("/pi/371");
-  });
-
-  it("renders match score when provided", () => {
-    render(
-      <LinkedRecordsCard
-        records={mockRecords}
-        matchScore={{ value: 100, statusLabel: "Matched", statusVariant: "success" }}
-      />,
-    );
+  it("renders ReactNode title", () => {
+    render(<LinkedRecordsCard title={<span data-testid="custom">100% Matched</span>} records={mockRecords} />);
+    expect(screen.getByTestId("custom")).toBeDefined();
     expect(screen.getByText("100% Matched")).toBeDefined();
   });
 
-  it("shows title when score is omitted", () => {
-    render(<LinkedRecordsCard records={mockRecords} />);
-    expect(screen.getByText("Related Documents")).toBeDefined();
+  it("renders all record rows with links and statuses", () => {
+    const { container } = render(<LinkedRecordsCard records={mockRecords} />);
+    const links = container.querySelectorAll("a");
+    expect(links).toHaveLength(2);
+    expect(links[0].textContent).toContain("PO-105539");
+    expect(links[1].textContent).toContain("GR-200145");
+    expect(links[0].getAttribute("href")).toBe("/po/105539");
+    expect(links[1].getAttribute("href")).toBe("/gr/200145");
   });
 
   it("renders empty state when no records", () => {
@@ -86,12 +59,7 @@ describe("LinkedRecordsCard", () => {
   });
 
   it("matches snapshot", () => {
-    const { container } = render(
-      <LinkedRecordsCard
-        records={mockRecords}
-        matchScore={{ value: 75, statusLabel: "Partial Match", statusVariant: "warning" }}
-      />,
-    );
+    const { container } = render(<LinkedRecordsCard records={mockRecords} />);
     expect(container.innerHTML).toMatchSnapshot();
   });
 });

@@ -4,7 +4,29 @@ import { UploadIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog } from "./dialog";
 import { Button } from "./button";
-import type { FileUploadDialogProps } from "./reconciliation/types";
+/**
+ * Props for the FileUploadDialog component.
+ */
+export interface FileUploadDialogProps {
+  /** Controlled open state. */
+  open: boolean;
+  /** Open state change handler. */
+  onOpenChange: (open: boolean) => void;
+  /** Called when a file is selected or dropped (single file). */
+  onUpload: (file: File) => void;
+  /** Dialog title. */
+  title?: string;
+  /** Helper text below the title. */
+  description?: string;
+  /** Accepted file types (e.g. ".pdf,.png,.jpg,.tiff"). */
+  accept?: string;
+  /** Upload button label. */
+  uploadLabel?: string;
+  /** Disable the upload area and button. */
+  disabled?: boolean;
+  /** Additional CSS classes on the dialog content. */
+  className?: string;
+}
 
 /**
  * A reusable file upload dialog with drag-and-drop support.
@@ -156,5 +178,3 @@ export function FileUploadDialog({
     </Dialog.Root>
   );
 }
-
-export type { FileUploadDialogProps };

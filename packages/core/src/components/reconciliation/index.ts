@@ -2,17 +2,5 @@
 export { ReconciliationList, default } from "./ReconciliationList";
 export { ReconciliationDetail } from "./ReconciliationDetail";
 
-// Types
-export type {
-  ReconciliationStatus,
-  DiscrepancySeverity,
-  LineItemStatus,
-  ReconciliationListItem,
-  ReconciliationRecord,
-  ProcessingStep,
-  Discrepancy,
-  LineItemComparison,
-  RelatedDocument,
-  ReconciliationListProps,
-  ReconciliationDetailProps,
-} from "./types";
+// Props types only — internal types are inferred via Props
+export type { ReconciliationListProps, ReconciliationDetailProps } from "./types";

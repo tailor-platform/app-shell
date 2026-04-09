@@ -125,22 +125,10 @@ export {
   type InferCsvRow,
 } from "./components/csv-importer";
 export { FileUploadDialog, type FileUploadDialogProps } from "./components/file-upload-dialog";
-export {
-  LinkedRecordsCard,
-  type LinkedRecordsCardProps,
-  type LinkedRecord,
-  type MatchScoreConfig,
-} from "./components/linked-records-card";
+export { LinkedRecordsCard, type LinkedRecordsCardProps } from "./components/linked-records-card";
 export {
   ReconciliationList,
   ReconciliationDetail,
-  type ReconciliationStatus,
-  type ReconciliationListItem,
-  type ReconciliationRecord,
   type ReconciliationListProps,
   type ReconciliationDetailProps,
-  type ProcessingStep,
-  type Discrepancy,
-  type LineItemComparison,
-  type RelatedDocument,
 } from "./components/reconciliation";

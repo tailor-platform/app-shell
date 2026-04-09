@@ -177,30 +177,6 @@ export interface ReconciliationDetailProps {
   className?: string;
 }
 
-/**
- * Props for the FileUploadDialog component.
- */
-export interface FileUploadDialogProps {
-  /** Controlled open state. */
-  open: boolean;
-  /** Open state change handler. */
-  onOpenChange: (open: boolean) => void;
-  /** Called when a file is selected or dropped (single file). */
-  onUpload: (file: File) => void;
-  /** Dialog title. */
-  title?: string;
-  /** Helper text below the title. */
-  description?: string;
-  /** Accepted file types (e.g. ".pdf,.png,.jpg,.tiff"). */
-  accept?: string;
-  /** Upload button label. */
-  uploadLabel?: string;
-  /** Disable the upload area and button. */
-  disabled?: boolean;
-  /** Additional CSS classes on the dialog content. */
-  className?: string;
-}
-
 // ============================================================================
 // STATUS HELPERS
 // ============================================================================

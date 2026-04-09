@@ -7,7 +7,10 @@ import {
   useParams,
   useNavigate,
 } from "@tailor-platform/app-shell";
-import type { ReconciliationListItem, ReconciliationRecord } from "@tailor-platform/app-shell";
+import type { ReconciliationListProps, ReconciliationDetailProps } from "@tailor-platform/app-shell";
+
+type ReconciliationListItem = ReconciliationListProps["items"][number];
+type ReconciliationRecord = ReconciliationDetailProps["data"];
 import { useState, useEffect } from "react";
 
 // Inline upload icon to avoid direct lucide-react dependency in app-module

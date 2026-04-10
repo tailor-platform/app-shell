@@ -43,22 +43,26 @@ function renderListCell(
 
   switch (type) {
     case "badge": {
-      const variant = col.meta?.badgeVariantMap?.[String(value)] ?? statusConfig.badgeVariantMap[String(value)] ?? "neutral";
-      const label = col.meta?.labelMap?.[String(value)] ?? statusConfig.labelMap[String(value)] ?? String(value);
+      const variant =
+        col.meta?.badgeVariantMap?.[String(value)] ??
+        statusConfig.badgeVariantMap[String(value)] ??
+        "neutral";
+      const label =
+        col.meta?.labelMap?.[String(value)] ??
+        statusConfig.labelMap[String(value)] ??
+        String(value);
       return <Badge variant={variant as Parameters<typeof Badge>[0]["variant"]}>{label}</Badge>;
     }
     case "money": {
-      const currency = col.meta?.currencyKey ? String(item.data[col.meta.currencyKey] ?? "USD") : "USD";
+      const currency = col.meta?.currencyKey
+        ? String(item.data[col.meta.currencyKey] ?? "USD")
+        : "USD";
       return formatCurrency(Number(value), currency);
     }
     case "score": {
       if (item.status === statusConfig.processingStatus) return "—";
       const score = Number(value);
-      return (
-        <span className={cn("astw:font-medium", scoreColor(score))}>
-          {score}%
-        </span>
-      );
+      return <span className={cn("astw:font-medium", scoreColor(score))}>{score}%</span>;
     }
     case "date":
       return value ? formatDate(value as Date | string) : "—";

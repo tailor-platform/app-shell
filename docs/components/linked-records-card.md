@@ -10,10 +10,7 @@ A lightweight sidebar card that displays a flat list of linked records. Each row
 ## Import
 
 ```tsx
-import {
-  LinkedRecordsCard,
-  type LinkedRecordsCardProps,
-} from "@tailor-platform/app-shell";
+import { LinkedRecordsCard, type LinkedRecordsCardProps } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
@@ -48,11 +45,7 @@ Pass any ReactNode as `title` for custom header content:
 
 ```tsx
 <LinkedRecordsCard
-  title={
-    <span className="astw:text-lg astw:font-bold astw:text-green-700">
-      100% Matched
-    </span>
-  }
+  title={<span className="astw:text-lg astw:font-bold astw:text-green-700">100% Matched</span>}
   records={records}
 />
 ```
@@ -86,28 +79,28 @@ import { TruckIcon, ReceiptIcon } from "lucide-react";
       icon: <ReceiptIcon className="astw:size-4" />,
     },
   ]}
-/>
+/>;
 ```
 
 ## Props
 
-| Prop | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `title` | `ReactNode` | No | `"Related Documents"` | Card header. String renders as `<h3>`, ReactNode renders as-is |
-| `records` | `LinkedRecord[]` | Yes | — | Flat list of records to display |
-| `className` | `string` | No | — | Additional CSS classes on the root card |
+| Prop        | Type             | Required | Default               | Description                                                    |
+| ----------- | ---------------- | -------- | --------------------- | -------------------------------------------------------------- |
+| `title`     | `ReactNode`      | No       | `"Related Documents"` | Card header. String renders as `<h3>`, ReactNode renders as-is |
+| `records`   | `LinkedRecord[]` | Yes      | —                     | Flat list of records to display                                |
+| `className` | `string`         | No       | —                     | Additional CSS classes on the root card                        |
 
 ### LinkedRecord
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | `string` | Yes | Unique identifier |
-| `type` | `string` | Yes | Record type key |
-| `label` | `string` | Yes | Display label (truncated if long) |
-| `href` | `string` | Yes | Navigation link |
-| `status` | `string` | Yes | Status text shown in badge |
-| `statusVariant` | `string` | No | Badge variant. Default: `"outline-neutral"` |
-| `icon` | `ReactNode` | No | Custom icon. Default: `FileTextIcon` |
+| Field           | Type        | Required | Description                                 |
+| --------------- | ----------- | -------- | ------------------------------------------- |
+| `id`            | `string`    | Yes      | Unique identifier                           |
+| `type`          | `string`    | Yes      | Record type key                             |
+| `label`         | `string`    | Yes      | Display label (truncated if long)           |
+| `href`          | `string`    | Yes      | Navigation link                             |
+| `status`        | `string`    | Yes      | Status text shown in badge                  |
+| `statusVariant` | `string`    | No       | Badge variant. Default: `"outline-neutral"` |
+| `icon`          | `ReactNode` | No       | Custom icon. Default: `FileTextIcon`        |
 
 ## Empty State
 

@@ -65,9 +65,20 @@ const LIST_COLUMNS = [
   { key: "supplier", header: "Supplier", truncate: true },
   { key: "status", header: "Status", type: "badge" as const },
   { key: "matchScore", header: "Score", type: "score" as const, align: "right" as const },
-  { key: "totalAmount", header: "Amount", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  {
+    key: "totalAmount",
+    header: "Amount",
+    type: "money" as const,
+    align: "right" as const,
+    meta: { currencyKey: "currency" },
+  },
   { key: "date", header: "Date", type: "date" as const },
-  { key: "createdInvoiceLabel", header: "Created Invoice", type: "link" as const, meta: { hrefKey: "createdInvoiceHref" } },
+  {
+    key: "createdInvoiceLabel",
+    header: "Created Invoice",
+    type: "link" as const,
+    meta: { hrefKey: "createdInvoiceHref" },
+  },
 ];
 
 const demoListItems: ReconciliationListItem[] = [
@@ -201,8 +212,20 @@ const LINE_ITEM_COLUMNS = [
   { key: "poQty", header: "PO Qty", type: "number" as const, align: "right" as const },
   { key: "grQty", header: "GR Qty", type: "number" as const, align: "right" as const },
   { key: "qtyVariance", header: "Qty Var", type: "variance" as const, align: "right" as const },
-  { key: "invoicePrice", header: "Inv Price", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
-  { key: "poPrice", header: "PO Price", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  {
+    key: "invoicePrice",
+    header: "Inv Price",
+    type: "money" as const,
+    align: "right" as const,
+    meta: { currencyKey: "currency" },
+  },
+  {
+    key: "poPrice",
+    header: "PO Price",
+    type: "money" as const,
+    align: "right" as const,
+    meta: { currencyKey: "currency" },
+  },
   { key: "priceVariance", header: "Price Var", type: "variance" as const, align: "right" as const },
 ];
 
@@ -476,8 +499,7 @@ const recordsById: Record<string, ReconciliationRecord> = {
         id: "d1",
         severity: "error",
         category: "Qty mismatch",
-        message:
-          "MZ-CA-BLK-3MM: Invoice qty 600, PO qty 500 — 100 units over ordered quantity",
+        message: "MZ-CA-BLK-3MM: Invoice qty 600, PO qty 500 — 100 units over ordered quantity",
         resolved: false,
       },
       {
@@ -579,8 +601,7 @@ const recordsById: Record<string, ReconciliationRecord> = {
     status: "error",
     matchScore: 0,
     data: {},
-    summary:
-      "OCR extraction failed — scanned image is too low resolution (below 150 DPI minimum).",
+    summary: "OCR extraction failed — scanned image is too low resolution (below 150 DPI minimum).",
     processingSteps: [
       {
         id: "s1",
@@ -779,7 +800,9 @@ function addUploadedRecord(file: File): string {
       id,
       status: "processing",
       data: {
-        invoiceNumber: String(processingRecord.data.invoiceNumber ?? fileName.replace(/\.[^.]+$/, "")),
+        invoiceNumber: String(
+          processingRecord.data.invoiceNumber ?? fileName.replace(/\.[^.]+$/, ""),
+        ),
         supplier: "—",
         matchScore: 0,
         totalAmount: 0,

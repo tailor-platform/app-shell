@@ -32,6 +32,7 @@ The Reconciliation components expect the backend to provide:
 ### For the list page
 
 An array of records, each with:
+
 - `id` — unique identifier
 - `status` — a string status value (you define what statuses exist)
 - `data` — a flat object with all display fields (the component reads from this based on your column config)
@@ -59,6 +60,7 @@ const items: ReconciliationListItem[] = records.map((r) => ({
 ### For the detail page
 
 A single record with:
+
 - `id`, `status`, `matchScore` — core matching fields
 - `data` — flat object for the DescriptionCard metadata section
 - `summary` — text summary (also used as error message in error state)
@@ -121,7 +123,13 @@ const columns = [
   { key: "supplier", header: "Supplier" },
   { key: "status", header: "Status", type: "badge" },
   { key: "matchScore", header: "Score", type: "score", align: "right" },
-  { key: "totalAmount", header: "Amount", type: "money", align: "right", meta: { currencyKey: "currency" } },
+  {
+    key: "totalAmount",
+    header: "Amount",
+    type: "money",
+    align: "right",
+    meta: { currencyKey: "currency" },
+  },
   { key: "date", header: "Date", type: "date" },
 ];
 
@@ -131,7 +139,7 @@ const columns = [
   tabs={tabs}
   columns={columns}
   onItemClick={(item) => navigate(`/reconciliation/${item.id}`)}
-/>
+/>;
 ```
 
 ### With Upload Dialog
@@ -157,37 +165,37 @@ const [uploadOpen, setUploadOpen] = useState(false);
     description: "Upload a PDF or image of a supplier invoice.",
     uploadLabel: "Upload Invoice",
   }}
-/>
+/>;
 ```
 
 ### Column Types
 
-| Type | Renders | Meta |
-|------|---------|------|
-| `"text"` | Plain text (default) | — |
-| `"number"` | Right-aligned number | — |
-| `"badge"` | Badge with variant from `statusConfig` or column `meta.badgeVariantMap` | `badgeVariantMap`, `labelMap` |
-| `"money"` | Currency-formatted number | `currencyKey` |
-| `"score"` | Color-coded percentage (green/yellow/red). Shows "—" for processing status | — |
-| `"date"` | Formatted date string | — |
-| `"link"` | Clickable link with external icon | `hrefKey` |
+| Type       | Renders                                                                    | Meta                          |
+| ---------- | -------------------------------------------------------------------------- | ----------------------------- |
+| `"text"`   | Plain text (default)                                                       | —                             |
+| `"number"` | Right-aligned number                                                       | —                             |
+| `"badge"`  | Badge with variant from `statusConfig` or column `meta.badgeVariantMap`    | `badgeVariantMap`, `labelMap` |
+| `"money"`  | Currency-formatted number                                                  | `currencyKey`                 |
+| `"score"`  | Color-coded percentage (green/yellow/red). Shows "—" for processing status | —                             |
+| `"date"`   | Formatted date string                                                      | —                             |
+| `"link"`   | Clickable link with external icon                                          | `hrefKey`                     |
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `items` | `ReconciliationListItem[]` | Yes | List of records |
-| `statusConfig` | `StatusConfig` | Yes | Status interpretation config |
-| `tabs` | `StatusTab[]` | Yes | Filter tab definitions |
-| `columns` | `ListColumn[]` | Yes | Table column definitions |
-| `onItemClick` | `(item) => void` | No | Row click handler |
-| `onUpload` | `(file: File) => void` | No | Upload handler. Omit to hide upload dialog |
-| `uploadOpen` | `boolean` | No | Controlled dialog open state |
-| `onUploadOpenChange` | `(open: boolean) => void` | No | Dialog open state change |
-| `uploadDialogProps` | `object` | No | Override dialog title, description, accept, uploadLabel |
-| `emptyState` | `ReactNode` | No | Custom empty state |
-| `loading` | `boolean` | No | Show skeleton loading state |
-| `className` | `string` | No | Additional CSS classes |
+| Prop                 | Type                       | Required | Description                                             |
+| -------------------- | -------------------------- | -------- | ------------------------------------------------------- |
+| `items`              | `ReconciliationListItem[]` | Yes      | List of records                                         |
+| `statusConfig`       | `StatusConfig`             | Yes      | Status interpretation config                            |
+| `tabs`               | `StatusTab[]`              | Yes      | Filter tab definitions                                  |
+| `columns`            | `ListColumn[]`             | Yes      | Table column definitions                                |
+| `onItemClick`        | `(item) => void`           | No       | Row click handler                                       |
+| `onUpload`           | `(file: File) => void`     | No       | Upload handler. Omit to hide upload dialog              |
+| `uploadOpen`         | `boolean`                  | No       | Controlled dialog open state                            |
+| `onUploadOpenChange` | `(open: boolean) => void`  | No       | Dialog open state change                                |
+| `uploadDialogProps`  | `object`                   | No       | Override dialog title, description, accept, uploadLabel |
+| `emptyState`         | `ReactNode`                | No       | Custom empty state                                      |
+| `loading`            | `boolean`                  | No       | Show skeleton loading state                             |
+| `className`          | `string`                   | No       | Additional CSS classes                                  |
 
 ## ReconciliationDetail
 
@@ -208,7 +216,12 @@ const fields: FieldConfig[] = [
 const lineItemColumns: LineItemColumn[] = [
   { key: "lineNumber", header: "#" },
   { key: "product", header: "Product" },
-  { key: "status", header: "Status", type: "badge", meta: { badgeVariantMap: { matched: "subtle-success", price_mismatch: "subtle-warning" } } },
+  {
+    key: "status",
+    header: "Status",
+    type: "badge",
+    meta: { badgeVariantMap: { matched: "subtle-success", price_mismatch: "subtle-warning" } },
+  },
   { key: "invoiceQty", header: "Inv Qty", type: "number", align: "right" },
   { key: "poQty", header: "PO Qty", type: "number", align: "right" },
   { key: "priceVariance", header: "Price Var", type: "variance", align: "right" },
@@ -224,47 +237,47 @@ const lineItemColumns: LineItemColumn[] = [
   onUpdate={() => navigate(`/po/${record.id}/edit`)}
   updateLabel="Update PO"
   onRefresh={() => refetch()}
-/>
+/>;
 ```
 
 ### Layout by Status
 
 The component automatically adjusts its layout based on the record's status:
 
-| Status | Left Column | Right Column |
-|--------|-------------|--------------|
-| **Processing** (`statusConfig.processingStatus`) | Spinner card | Activity timeline |
-| **Error** (`statusConfig.errorStatus`) | Error card with summary | Retry action + Activity timeline |
-| **Any other status** | Match Result (DescriptionCard) + Discrepancies + Line Items Table | Actions + LinkedRecordsCards + Activity |
+| Status                                           | Left Column                                                       | Right Column                            |
+| ------------------------------------------------ | ----------------------------------------------------------------- | --------------------------------------- |
+| **Processing** (`statusConfig.processingStatus`) | Spinner card                                                      | Activity timeline                       |
+| **Error** (`statusConfig.errorStatus`)           | Error card with summary                                           | Retry action + Activity timeline        |
+| **Any other status**                             | Match Result (DescriptionCard) + Discrepancies + Line Items Table | Actions + LinkedRecordsCards + Activity |
 
 ### Line Item Column Types
 
-| Type | Renders | Meta |
-|------|---------|------|
-| `"text"` | Plain text (default) | — |
-| `"number"` | Plain number | — |
-| `"badge"` | Badge with variant from `meta.badgeVariantMap` | `badgeVariantMap` |
-| `"money"` | Currency-formatted number | `currencyKey` |
-| `"variance"` | Color-coded percentage (green for 0, yellow for <5%, red for >=5%) | — |
+| Type         | Renders                                                            | Meta              |
+| ------------ | ------------------------------------------------------------------ | ----------------- |
+| `"text"`     | Plain text (default)                                               | —                 |
+| `"number"`   | Plain number                                                       | —                 |
+| `"badge"`    | Badge with variant from `meta.badgeVariantMap`                     | `badgeVariantMap` |
+| `"money"`    | Currency-formatted number                                          | `currencyKey`     |
+| `"variance"` | Color-coded percentage (green for 0, yellow for <5%, red for >=5%) | —                 |
 
 ### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `data` | `ReconciliationRecord` | Yes | The full record |
-| `statusConfig` | `StatusConfig` | Yes | Status interpretation config |
-| `fields` | `FieldConfig[]` | Yes | DescriptionCard field config for match result |
-| `lineItemColumns` | `LineItemColumn[]` | Yes | Column config for line items table |
-| `title` | `string` | No | Match result section title (default: "Match Result") |
-| `onCreate` | `() => void` | No | Create action. Omit to hide |
-| `createLabel` | `string` | No | Create button label (default: "Create") |
-| `onUpdate` | `() => void` | No | Update action. Omit to hide |
-| `updateLabel` | `string` | No | Update button label (default: "Update") |
-| `onRefresh` | `() => void` | No | Polling callback during processing / retry on error |
-| `refreshInterval` | `number` | No | Polling interval in ms (default: 5000) |
-| `retryLabel` | `string` | No | Retry button label (default: "Retry") |
-| `actions` | `ReactNode` | No | Additional custom action buttons |
-| `className` | `string` | No | Additional CSS classes |
+| Prop              | Type                   | Required | Description                                          |
+| ----------------- | ---------------------- | -------- | ---------------------------------------------------- |
+| `data`            | `ReconciliationRecord` | Yes      | The full record                                      |
+| `statusConfig`    | `StatusConfig`         | Yes      | Status interpretation config                         |
+| `fields`          | `FieldConfig[]`        | Yes      | DescriptionCard field config for match result        |
+| `lineItemColumns` | `LineItemColumn[]`     | Yes      | Column config for line items table                   |
+| `title`           | `string`               | No       | Match result section title (default: "Match Result") |
+| `onCreate`        | `() => void`           | No       | Create action. Omit to hide                          |
+| `createLabel`     | `string`               | No       | Create button label (default: "Create")              |
+| `onUpdate`        | `() => void`           | No       | Update action. Omit to hide                          |
+| `updateLabel`     | `string`               | No       | Update button label (default: "Update")              |
+| `onRefresh`       | `() => void`           | No       | Polling callback during processing / retry on error  |
+| `refreshInterval` | `number`               | No       | Polling interval in ms (default: 5000)               |
+| `retryLabel`      | `string`               | No       | Retry button label (default: "Retry")                |
+| `actions`         | `ReactNode`            | No       | Additional custom action buttons                     |
+| `className`       | `string`               | No       | Additional CSS classes                               |
 
 ## Complete Example: Invoice Reconciliation
 
@@ -305,16 +318,37 @@ export const LIST_COLUMNS = [
   { key: "supplier", header: "Supplier" },
   { key: "status", header: "Status", type: "badge" as const },
   { key: "matchScore", header: "Score", type: "score" as const, align: "right" as const },
-  { key: "totalAmount", header: "Amount", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  {
+    key: "totalAmount",
+    header: "Amount",
+    type: "money" as const,
+    align: "right" as const,
+    meta: { currencyKey: "currency" },
+  },
   { key: "date", header: "Date", type: "date" as const },
 ];
 
 export const DETAIL_FIELDS = [
   { key: "invoiceNumber", label: "Invoice Number", meta: { copyable: true } },
-  { key: "status", label: "Status", type: "badge" as const, meta: { badgeVariantMap: STATUS_CONFIG.badgeVariantMap } },
+  {
+    key: "status",
+    label: "Status",
+    type: "badge" as const,
+    meta: { badgeVariantMap: STATUS_CONFIG.badgeVariantMap },
+  },
   { key: "supplier", label: "Supplier" },
-  { key: "totalAmount", label: "Total Amount", type: "money" as const, meta: { currencyKey: "currency" } },
-  { key: "invoiceDate", label: "Invoice Date", type: "date" as const, meta: { dateFormat: "medium" as const } },
+  {
+    key: "totalAmount",
+    label: "Total Amount",
+    type: "money" as const,
+    meta: { currencyKey: "currency" },
+  },
+  {
+    key: "invoiceDate",
+    label: "Invoice Date",
+    type: "date" as const,
+    meta: { dateFormat: "medium" as const },
+  },
   { type: "divider" as const },
   { key: "summary", label: "Summary", emptyBehavior: "hide" as const },
 ];
@@ -322,13 +356,37 @@ export const DETAIL_FIELDS = [
 export const LINE_ITEM_COLUMNS = [
   { key: "lineNumber", header: "#" },
   { key: "product", header: "Product" },
-  { key: "status", header: "Status", type: "badge" as const, meta: { badgeVariantMap: { matched: "subtle-success", price_mismatch: "subtle-warning", qty_mismatch: "subtle-warning", missing: "subtle-error" } } },
+  {
+    key: "status",
+    header: "Status",
+    type: "badge" as const,
+    meta: {
+      badgeVariantMap: {
+        matched: "subtle-success",
+        price_mismatch: "subtle-warning",
+        qty_mismatch: "subtle-warning",
+        missing: "subtle-error",
+      },
+    },
+  },
   { key: "invoiceQty", header: "Inv Qty", type: "number" as const, align: "right" as const },
   { key: "poQty", header: "PO Qty", type: "number" as const, align: "right" as const },
   { key: "grQty", header: "GR Qty", type: "number" as const, align: "right" as const },
   { key: "qtyVariance", header: "Qty Var", type: "variance" as const, align: "right" as const },
-  { key: "invoicePrice", header: "Inv Price", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
-  { key: "poPrice", header: "PO Price", type: "money" as const, align: "right" as const, meta: { currencyKey: "currency" } },
+  {
+    key: "invoicePrice",
+    header: "Inv Price",
+    type: "money" as const,
+    align: "right" as const,
+    meta: { currencyKey: "currency" },
+  },
+  {
+    key: "poPrice",
+    header: "PO Price",
+    type: "money" as const,
+    align: "right" as const,
+    meta: { currencyKey: "currency" },
+  },
   { key: "priceVariance", header: "Price Var", type: "variance" as const, align: "right" as const },
 ];
 ```
@@ -342,18 +400,19 @@ function ReconciliationListPage() {
   const { data, loading } = useQuery(GET_RECONCILIATIONS);
   const navigate = useNavigate();
 
-  const items = data?.reconciliations.map((r) => ({
-    id: r.id,
-    status: r.status,
-    data: {
-      invoiceNumber: r.invoiceNumber,
-      supplier: r.supplier.name,
-      matchScore: r.matchScore,
-      totalAmount: r.totalAmount,
-      currency: r.currency,
-      date: r.createdAt,
-    },
-  })) ?? [];
+  const items =
+    data?.reconciliations.map((r) => ({
+      id: r.id,
+      status: r.status,
+      data: {
+        invoiceNumber: r.invoiceNumber,
+        supplier: r.supplier.name,
+        matchScore: r.matchScore,
+        totalAmount: r.totalAmount,
+        currency: r.currency,
+        date: r.createdAt,
+      },
+    })) ?? [];
 
   return (
     <Layout>

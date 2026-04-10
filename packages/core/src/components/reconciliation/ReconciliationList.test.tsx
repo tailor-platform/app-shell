@@ -36,7 +36,13 @@ const TEST_COLUMNS: ListColumn[] = [
   { key: "supplier", header: "Supplier" },
   { key: "status", header: "Status", type: "badge" },
   { key: "matchScore", header: "Score", type: "score", align: "right" },
-  { key: "totalAmount", header: "Amount", type: "money", align: "right", meta: { currencyKey: "currency" } },
+  {
+    key: "totalAmount",
+    header: "Amount",
+    type: "money",
+    align: "right",
+    meta: { currencyKey: "currency" },
+  },
   { key: "date", header: "Date", type: "date" },
 ];
 
@@ -168,7 +174,9 @@ describe("ReconciliationList", () => {
   });
 
   it("renders custom empty state", () => {
-    render(<ReconciliationList {...defaultProps({ items: [], emptyState: <p>Custom empty</p> })} />);
+    render(
+      <ReconciliationList {...defaultProps({ items: [], emptyState: <p>Custom empty</p> })} />,
+    );
     expect(screen.getByText("Custom empty")).toBeDefined();
   });
 
@@ -212,9 +220,7 @@ describe("ReconciliationList", () => {
   });
 
   it("matches snapshot", () => {
-    const { container } = render(
-      <ReconciliationList {...defaultProps({ onUpload: () => {} })} />,
-    );
+    const { container } = render(<ReconciliationList {...defaultProps({ onUpload: () => {} })} />);
     expect(container.innerHTML).toMatchSnapshot();
   });
 });

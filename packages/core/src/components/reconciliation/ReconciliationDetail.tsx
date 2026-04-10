@@ -173,14 +173,7 @@ function MatchResultSection({
   fields: ReconciliationDetailProps["fields"];
   title: string;
 }) {
-  return (
-    <DescriptionCard
-      data={data.data}
-      title={title}
-      columns={3}
-      fields={fields}
-    />
-  );
+  return <DescriptionCard data={data.data} title={title} columns={3} fields={fields} />;
 }
 
 // ============================================================================
@@ -295,28 +288,23 @@ function varianceColor(value: number): string {
   return "astw:text-destructive";
 }
 
-function renderCell(
-  row: Record<string, unknown>,
-  col: LineItemColumn,
-): React.ReactNode {
+function renderCell(row: Record<string, unknown>, col: LineItemColumn): React.ReactNode {
   const value = row[col.key];
   const type = col.type ?? "text";
 
   switch (type) {
     case "badge": {
       const variant = col.meta?.badgeVariantMap?.[String(value)] ?? "neutral";
-      return <Badge variant={variant as Parameters<typeof Badge>[0]["variant"]}>{String(value)}</Badge>;
+      return (
+        <Badge variant={variant as Parameters<typeof Badge>[0]["variant"]}>{String(value)}</Badge>
+      );
     }
     case "money": {
       const currency = col.meta?.currencyKey ? String(row[col.meta.currencyKey] ?? "USD") : "USD";
       return formatCurrency(Number(value), currency);
     }
     case "variance":
-      return (
-        <span className={varianceColor(Number(value))}>
-          {formatVariance(Number(value))}
-        </span>
-      );
+      return <span className={varianceColor(Number(value))}>{formatVariance(Number(value))}</span>;
     case "number":
       return String(value ?? "");
     default:

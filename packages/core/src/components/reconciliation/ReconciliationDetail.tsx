@@ -26,7 +26,6 @@ import type { ActivityCardBaseItem } from "../activity-card/types";
 import type {
   ReconciliationDetailProps,
   ReconciliationRecord,
-  StatusConfig,
   Discrepancy,
   RelatedDocument,
   ProcessingStep,

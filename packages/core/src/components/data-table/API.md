@@ -1,15 +1,17 @@
-# DataTable API Reference (Source → app-shell)
+# DataTable API Reference
 
-This document describes the source DataTable API as-is, with notes on what changes during migration.
+This document describes the DataTable API as currently implemented in `@tailor-platform/app-shell`.
 
 ## Compound Component: `DataTable`
 
 ```tsx
 export const DataTable = {
-  Provider, // Context provider wrapping useDataTable return value
-  Root, // Table container (renders Table.Root internally)
-  Headers, // Auto-generated header row from columns + sort controls
-  Body, // Auto-generated rows, or custom children for manual rendering
+  Root, // Context provider + outer container (accepts useDataTable return value)
+  Toolbar, // Toolbar container for filters and actions
+  Filters, // Auto-generated filter chips from column filter configs
+  Table, // <table> with built-in Headers + Body
+  Footer, // Footer container for pagination and other content
+  Pagination, // Pre-built pagination controls
   Row, // Thin wrapper around Table.Row (for custom Body children)
   Cell, // Thin wrapper around Table.Cell (for custom Body children)
 } as const;
@@ -23,35 +25,45 @@ const [result] = useQuery({
   query: GET_ORDERS,
   variables: { ...variables.pagination, query: variables.query, order: variables.order },
 });
-const table = useDataTable({ columns, data: result.data?.orders, control });
 
-<DataTable.Provider value={table}>
-  <DataTable.Root>
-    <DataTable.Headers />
-    <DataTable.Body />
-  </DataTable.Root>
-  <Pagination />
-</DataTable.Provider>;
+const table = useDataTable({
+  columns,
+  data: {
+    rows: result.data?.orders?.edges.map((e) => e.node) ?? [],
+    pageInfo: result.data?.orders?.pageInfo,
+    total: result.data?.orders?.total,
+  },
+  loading: result.fetching,
+  control,
+  onClickRow: (row) => navigate(`/orders/${row.id}`),
+  rowActions: [
+    { id: "delete", label: "Delete", variant: "destructive", onClick: (row) => handleDelete(row) },
+  ],
+});
+
+<DataTable.Root value={table}>
+  <DataTable.Toolbar>
+    <DataTable.Filters />
+  </DataTable.Toolbar>
+  <DataTable.Table />
+  <DataTable.Footer>
+    <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
+  </DataTable.Footer>
+</DataTable.Root>;
 ```
 
 **Sub-component props:**
 
-| Sub-component        | Props                                                         |
-| -------------------- | ------------------------------------------------------------- |
-| `DataTable.Provider` | `value: UseDataTableReturn<TRow>`, `children`                 |
-| `DataTable.Root`     | `className?`, `children`                                      |
-| `DataTable.Headers`  | `className?` (reads columns/sort/rowActions from context)     |
-| `DataTable.Body`     | `className?`, `children?` (if provided, skips auto-rendering) |
-| `DataTable.Row`      | `ComponentProps<"tr">` (pass-through to `Table.Row`)          |
-| `DataTable.Cell`     | `ComponentProps<"td">` (pass-through to `Table.Cell`)         |
-
-**Migration notes:**
-
-- `DataTable.Root` will hardcode `astw:border astw:rounded-md astw:bg-card` on wrapper
-- Internal `Table.Headers` → `Table.Header`, `Table.HeaderRow` → `Table.Row`, `Table.HeaderCell` → `Table.Head`
-- `RowActionsMenu` (internal): replace raw `<button>` / `<div role="menu">` with app-shell `Menu`
-- `SortIndicator` (internal): replace `▲`/`▼` text with `lucide-react` icons
-- Source `locale` prop on `UseDataTableOptions` → replaced by `defineI18nLabels` + `useT()`
+| Sub-component          | Props                                                       |
+| ---------------------- | ----------------------------------------------------------- |
+| `DataTable.Root`       | `value: UseDataTableReturn<TRow>`, `className?`, `children` |
+| `DataTable.Toolbar`    | `className?`, `children`                                    |
+| `DataTable.Filters`    | `className?` (reads columns/filters from context)           |
+| `DataTable.Table`      | `className?` (renders Headers + Body internally)            |
+| `DataTable.Footer`     | `className?`, `children`                                    |
+| `DataTable.Pagination` | `pageSizeOptions?: number[]`                                |
+| `DataTable.Row`        | `ComponentProps<"tr">` (pass-through to `Table.Row`)        |
+| `DataTable.Cell`       | `ComponentProps<"td">` (pass-through to `Table.Cell`)       |
 
 ## Hook: `useDataTable<TRow>(options)`
 
@@ -60,18 +72,23 @@ function useDataTable<TRow extends Record<string, unknown>>(
   options: UseDataTableOptions<TRow>,
 ): UseDataTableReturn<TRow>;
 
-interface UseDataTableOptions<TRow> {
+interface DataTableData<TRow> {
+  rows: TRow[];
+  pageInfo?: PageInfo;
+  total?: number | null;
+}
+
+interface UseDataTableOptions<TRow extends Record<string, unknown>> {
   columns: Column<TRow>[];
-  data: CollectionResult<TRow> | undefined;
+  data: DataTableData<TRow> | undefined;
   loading?: boolean;
   error?: Error | null;
   control?: CollectionControl;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  locale?: "en" | "ja"; // ← Removed in migration (use defineI18nLabels)
 }
 
-interface UseDataTableReturn<TRow> {
+interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Data
   rows: TRow[];
   loading: boolean;
@@ -79,10 +96,12 @@ interface UseDataTableReturn<TRow> {
   sortStates: SortState[];
   onSort?: (field: string, direction?: "Asc" | "Desc") => void;
 
-  // Pagination (delegated from collection)
+  // Pagination (derived from data + control)
   pageInfo: PageInfo;
-  nextPage: (endCursor: string) => void;
-  prevPage: (startCursor: string) => void;
+  total: number | null;
+  totalPages: number | null;
+  nextPage: (token: string) => void;
+  prevPage: (token: string) => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
 
@@ -103,9 +122,16 @@ interface UseDataTableReturn<TRow> {
   control: CollectionControl | undefined;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  locale: "en" | "ja"; // ← Removed in migration
 }
 ```
+
+## Hook: `useDataTableContext<TRow>()`
+
+```ts
+function useDataTableContext<TRow extends Record<string, unknown>>(): DataTableContextValue<TRow>;
+```
+
+Accesses the DataTable context from within `DataTable.Root`. Throws if used outside of `DataTable.Root`.
 
 ## Hook: `useCollectionVariables(options)`
 
@@ -137,11 +163,10 @@ interface UseCollectionReturn<TFieldName, TVariables, TFilter = Filter<TFieldNam
   control: CollectionControl<TFieldName, TFilter>;
 }
 
-// CollectionControl — separated from UseCollectionReturn for passing to useDataTable / context
 interface CollectionControl<TFieldName = string, TFilter = Filter<TFieldName>> {
   // Filters
   filters: Filter[];
-  addFilter(field: TFieldName, operator: FilterOperator, value: unknown): void;
+  addFilter<F extends TFieldName>(field: F, operator: OperatorForField<TFilter, F>, value: unknown): void;
   setFilters(filters: Filter[]): void;
   removeFilter(field: TFieldName): void;
   clearFilters(): void;
@@ -156,42 +181,35 @@ interface CollectionControl<TFieldName = string, TFilter = Filter<TFieldName>> {
   setPageSize(size: number): void;
   cursor: string | null;
   paginationDirection: "forward" | "backward";
-  nextPage(endCursor: string): void;
-  prevPage(startCursor: string): void;
+  nextPage(token: string): void;
+  prevPage(token: string): void;
   resetPage(): void;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  setPageInfo(pageInfo: PageInfo): void;
   currentPage: number;
-  totalPages: number | null;
   goToFirstPage(): void;
-  goToLastPage(): void;
-  setTotal(total: number): void;
+  goToLastPage(lastPage: number): void;
 }
 ```
 
-## Component: `Pagination`
+## Component: `DataTable.Pagination`
 
 ```tsx
-function Pagination(props?: PaginationProps): JSX.Element;
-
-interface PaginationProps {
-  labels?: PaginationLabels;
+interface DataTablePaginationProps {
   pageSizeOptions?: number[]; // e.g. [10, 20, 50, 100]
-}
-
-interface PaginationLabels {
-  first?: string;
-  previous?: string;
-  next?: string;
-  last?: string;
-  rowsPerPage?: string;
 }
 ```
 
-Reads context from `useDataTableContext()` and `useCollectionControl()`. Must be used within `DataTable.Provider`.
+Reads context from `useDataTableContext()` and `useCollectionControl()`. Must be used within `DataTable.Root` (which provides `CollectionControlProvider` when `control` is given).
 
-**Migration notes:** Replace inline SVG icons with `lucide-react` (`ChevronsLeft`, `ChevronLeft`, `ChevronRight`, `ChevronsRight`). Replace raw `<button>` / `<select>` with app-shell `Button` / `Select`. Labels will move to `defineI18nLabels`.
+Uses `lucide-react` icons (`ChevronsLeft`, `ChevronLeft`, `ChevronRight`, `ChevronsRight`) and app-shell `Button` / `Select` components. Labels are provided via `defineI18nLabels`.
+
+## Component: `DataTable.Filters`
+
+Reads filterable columns (columns with a `filter` config) from context and renders:
+
+- **Active filter chips** — popover-based editors per filter type (enum, boolean, string, uuid, number, date)
+- **Add filter button** — popover to select field, operator, and value
+
+Requires `CollectionControl` from context (provided by `DataTable.Root` when `control` is passed to `useDataTable`).
 
 ## Helper: `createColumnHelper<TRow>()`
 
@@ -208,6 +226,7 @@ function createColumnHelper<TRow extends Record<string, unknown>>(): {
 
 ```tsx
 const { column, inferColumns } = createColumnHelper<Order>();
+
 const infer = inferColumns(tableMetadata.order);
 const columns = [
   column(infer("title")),
@@ -216,7 +235,25 @@ const columns = [
 ];
 ```
 
-## Key Types
+## Types
+
+### Column Definition
+
+```ts
+interface ColumnOptions<TRow extends Record<string, unknown>> {
+  label?: string;
+  render: (row: TRow) => ReactNode;
+  id?: string;
+  width?: number;
+  accessor?: (row: TRow) => unknown;
+  sort?: SortConfig;
+  filter?: FilterConfig;
+}
+
+type Column<TRow extends Record<string, unknown>> = ColumnOptions<TRow>;
+```
+
+### Sort & Filter Configuration
 
 ```ts
 type SortConfig =
@@ -233,17 +270,64 @@ type FilterConfig =
   | { field: string; type: "boolean" }
   | { field: string; type: "uuid" };
 
-interface Column<TRow> {
-  label?: string;
-  render: (row: TRow) => ReactNode;
-  id?: string;
-  width?: number;
-  accessor?: (row: TRow) => unknown;
-  sort?: SortConfig;
-  filter?: FilterConfig;
+interface SelectOption {
+  value: string;
+  label: string;
+}
+```
+
+### Filter Operators
+
+```ts
+const OPERATORS_BY_FILTER_TYPE = {
+  string: ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix", "notHasPrefix", "notHasSuffix", "in", "nin"],
+  number: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
+  date:   ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
+  enum:   ["eq", "ne", "in", "nin"],
+  boolean: ["eq", "ne"],
+  uuid:   ["eq", "ne", "in", "nin"],
+} as const;
+
+type FilterOperator = /* union of all operators above */;
+```
+
+### Filter & Sort State
+
+```ts
+interface Filter<TFieldName extends string = string> {
+  field: TFieldName;
+  operator: FilterOperator;
+  value: unknown;
 }
 
-interface RowAction<TRow> {
+interface SortState {
+  field: string;
+  direction: "Asc" | "Desc";
+}
+```
+
+### Pagination
+
+```ts
+interface PageInfo {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPageToken: string | null;
+  previousPageToken: string | null;
+}
+
+interface PaginationVariables {
+  first?: number;
+  after?: string | null;
+  last?: number;
+  before?: string | null;
+}
+```
+
+### Row Actions
+
+```ts
+interface RowAction<TRow extends Record<string, unknown>> {
   id: string;
   label: string;
   icon?: ReactNode;
@@ -251,32 +335,92 @@ interface RowAction<TRow> {
   isDisabled?: (row: TRow) => boolean;
   onClick: (row: TRow) => void;
 }
+```
 
+### Row Operations (Optimistic Updates)
+
+```ts
+interface RowOperations<TRow extends Record<string, unknown>> {
+  updateRow: (rowId: string, fields: Partial<TRow>) => { rollback: () => void };
+  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow };
+  insertRow: (row: TRow) => { rollback: () => void };
+}
+```
+
+### Collection Result
+
+```ts
 interface CollectionResult<T> {
   edges: { node: T }[];
   pageInfo: PageInfo;
   total?: number | null;
 }
 
-interface PageInfo {
-  hasNextPage: boolean;
-  endCursor: string | null;
-  hasPreviousPage: boolean;
-  startCursor: string | null;
+type NodeType<T extends { edges: { node: unknown }[] } | null | undefined> =
+  NonNullable<T>["edges"][number]["node"];
+```
+
+### Metadata Types
+
+```ts
+interface TableMetadata {
+  readonly name: string;
+  readonly pluralForm: string;
+  readonly description?: string;
+  readonly fields: readonly FieldMetadata[];
+  readonly relations?: readonly { ... }[];
 }
 
-interface SortState {
-  field: string;
-  direction: "Asc" | "Desc";
+interface FieldMetadata {
+  readonly name: string;
+  readonly type: FieldType;
+  readonly required: boolean;
+  readonly enumValues?: readonly string[];
+  readonly arrayItemType?: FieldType;
+  readonly description?: string;
+  readonly relation?: { readonly fieldName: string; readonly targetTable: string };
 }
 
-interface Filter<TFieldName extends string = string> {
-  field: TFieldName;
-  operator: FilterOperator;
-  value: unknown;
+type FieldType =
+  | "string" | "number" | "boolean" | "uuid"
+  | "datetime" | "date" | "time"
+  | "enum" | "array" | "nested" | "file";
+
+type TableFieldName<TTable extends TableMetadata> = TTable["fields"][number]["name"];
+
+interface MetadataFieldOptions {
+  label?: string;
+  width?: number;
+  sort?: boolean;   // default: true (auto-derived from field type)
+  filter?: boolean;  // default: true (auto-derived from field type)
 }
 ```
 
-## i18n (Source → Migration)
+### Type Mapping Utilities
 
-Source uses `getLabels(locale: "en" | "ja")` returning a `DataTableLabels` object. Migration replaces this with `defineI18nLabels` integrated into app-shell's i18n system. The `locale` prop is removed from `UseDataTableOptions`; locale is resolved from `AppShellConfig.locale` via `useT()`.
+```ts
+function fieldTypeToSortConfig(field: string, type: FieldType): SortConfig | undefined;
+function fieldTypeToFilterConfig(
+  field: string,
+  type: FieldType,
+  enumValues?: readonly string[],
+): FilterConfig | undefined;
+```
+
+## i18n
+
+```ts
+import { dataTableLabels } from "@tailor-platform/app-shell";
+```
+
+All user-facing strings (loading, error, pagination labels, filter operator labels, etc.) are defined via `defineI18nLabels` and support `en` / `ja` locales.
+
+## Exports (from `index.ts`)
+
+```ts
+export { DataTable, type DataTablePaginationProps } from "./data-table";
+export { useDataTable } from "./use-data-table";
+export { useDataTableContext } from "./data-table-context";
+export { createColumnHelper } from "./field-helpers";
+export { dataTableLabels } from "./i18n";
+```

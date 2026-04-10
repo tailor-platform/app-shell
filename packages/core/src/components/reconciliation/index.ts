@@ -8,4 +8,8 @@ export type {
   ReconciliationDetailProps,
   ReconciliationListItem,
   ReconciliationRecord,
+  StatusConfig,
+  StatusTab,
+  ListColumn,
+  LineItemColumn,
 } from "./types";

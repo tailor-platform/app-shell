@@ -72,7 +72,7 @@ function toLinkedRecord(doc: RelatedDocument): LinkedRecord {
     status: doc.status,
     icon: TYPE_ICONS[doc.type],
     statusVariant: doc.statusVariant
-      ? (`outline-${doc.statusVariant}` as LinkedRecord["statusVariant"])
+      ? (`outline-${doc.statusVariant === "default" ? "neutral" : doc.statusVariant}` as LinkedRecord["statusVariant"])
       : (STATUS_VARIANT_MAP[doc.status] ?? "outline-neutral"),
   };
 }

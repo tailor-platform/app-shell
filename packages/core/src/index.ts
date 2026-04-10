@@ -133,4 +133,8 @@ export {
   type ReconciliationDetailProps,
   type ReconciliationListItem,
   type ReconciliationRecord,
+  type StatusConfig,
+  type StatusTab,
+  type ListColumn,
+  type LineItemColumn,
 } from "./components/reconciliation";

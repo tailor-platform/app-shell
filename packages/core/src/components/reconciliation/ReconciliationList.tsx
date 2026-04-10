@@ -171,9 +171,8 @@ export function ReconciliationList({
   loading = false,
   className,
 }: ReconciliationListProps) {
-  const [internalOpen, setInternalOpen] = React.useState(false);
-  const uploadOpen = controlledOpen ?? internalOpen;
-  const setUploadOpen = onUploadOpenChange ?? setInternalOpen;
+  const uploadOpen = controlledOpen ?? false;
+  const setUploadOpen = onUploadOpenChange ?? (() => {});
   const [activeTab, setActiveTab] = React.useState<string>("all");
 
   // Clamp to "all" if the active tab has no matching items

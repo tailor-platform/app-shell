@@ -50,7 +50,7 @@
     "@types/node": "catalog:",
     "tsdown": "^0.21.7",
     "typescript": "^5",
-    "vite": "^7.3.2",
+    "vite": "catalog:",
     "vitest": "^4.1.4"
   },
   "peerDependencies": {

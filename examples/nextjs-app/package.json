@@ -9,11 +9,13 @@
     "type-check": "tsc --incremental"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@tailor-platform/app-shell": "workspace:*",
-    "app-module": "workspace:*",
     "next": "16.2.3",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "react-hook-form": "^7.71.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",

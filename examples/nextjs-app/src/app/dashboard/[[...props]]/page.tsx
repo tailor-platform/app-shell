@@ -6,7 +6,7 @@ import {
   RoleSwitcherProvider,
   SidebarMenu,
   useRoleSwitcher,
-} from "app-module";
+} from "@/modules";
 
 const App = () => {
   const { role } = useRoleSwitcher();

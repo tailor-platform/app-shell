@@ -138,9 +138,13 @@ type SharedAppShellProps = React.PropsWithChildren<{
   /**
    * Async search sources for the built-in CommandPalette.
    *
-   * When provided, the DefaultSidebar will automatically show a "Search"
-   * entry at the top. Clicking it (or pressing Cmd+K / Ctrl+K) opens
-   * the CommandPalette with these search sources available.
+   * The CommandPalette (opened via Cmd+K / Ctrl+K, or the sidebar Search
+   * button) always searches pages and contextual actions. When
+   * `searchSources` is also provided, those async sources are available
+   * as prefix-activated search modes.
+   *
+   * Note: `DefaultSidebar` always renders a Search entry at the top of
+   * the navigation menu, regardless of whether this prop is supplied.
    *
    * @example
    * ```tsx

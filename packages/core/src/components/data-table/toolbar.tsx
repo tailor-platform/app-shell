@@ -964,19 +964,20 @@ function getChipDisplayLabel(
   if (!valueLabel) return columnLabel;
 
   const operatorLabel = getOperatorLabel(filter.operator, t);
-  if (config.type === "number" || config.type === "date") {
-    return `${columnLabel} ${operatorLabel} ${valueLabel}`;
-  }
-
-  if (config.type === "string" || config.type === "uuid") {
-    return `${columnLabel} ${operatorLabel} ${valueLabel}`;
-  }
 
   if (config.type === "enum" || config.type === "boolean") {
-    return `${columnLabel} ${operatorLabel}: ${valueLabel}`;
+    return t("filterChipLabelEnum", {
+      column: columnLabel,
+      operator: operatorLabel,
+      value: valueLabel,
+    });
   }
 
-  return columnLabel;
+  return t("filterChipLabel", {
+    column: columnLabel,
+    operator: operatorLabel,
+    value: valueLabel,
+  });
 }
 
 export { DataTableToolbar, DataTableFilters };

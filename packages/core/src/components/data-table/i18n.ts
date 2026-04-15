@@ -41,6 +41,12 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_between: "between",
     filterOperator_in: "in",
     filterOperator_nin: "not in",
+
+    // Filter chip label templates
+    filterChipLabel: (props: { column: string; operator: string; value: string }) =>
+      `${props.column} ${props.operator} ${props.value}`,
+    filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
+      `${props.column} ${props.operator}: ${props.value}`,
   },
   ja: {
     loading: "読み込み中...",
@@ -60,21 +66,27 @@ export const dataTableLabels = defineI18nLabels({
     removeFilter: "フィルタを削除",
     filterBooleanTrue: "真",
     filterBooleanFalse: "偽",
-    filterOperator_eq: "等しい",
-    filterOperator_ne: "等しくない",
+    filterOperator_eq: "と等しい",
+    filterOperator_ne: "と等しくない",
     filterOperator_gt: "より大きい",
     filterOperator_gte: "以上",
     filterOperator_lt: "より小さい",
     filterOperator_lte: "以下",
-    filterOperator_contains: "含む",
-    filterOperator_notContains: "含まない",
+    filterOperator_contains: "を含む",
+    filterOperator_notContains: "を含まない",
     filterOperator_hasPrefix: "で始まる",
     filterOperator_hasSuffix: "で終わる",
     filterOperator_notHasPrefix: "で始まらない",
     filterOperator_notHasSuffix: "で終わらない",
-    filterOperator_between: "範囲内",
+    filterOperator_between: "の範囲内",
     filterOperator_in: "次のいずれか",
     filterOperator_nin: "次のいずれでもない",
+
+    // Filter chip label templates (Japanese: column: value operator)
+    filterChipLabel: (props: { column: string; operator: string; value: string }) =>
+      `${props.column}: ${props.value} ${props.operator}`,
+    filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
+      `${props.column} ${props.operator}: ${props.value}`,
   },
 });
 

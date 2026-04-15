@@ -11,9 +11,7 @@ export interface AttachmentItem {
   status?: "ready" | "uploading";
 }
 
-interface AttachmentCardBaseProps {
-  /** Card title text. */
-  title?: string;
+interface AttachmentBaseProps {
   /** List of attachments to render. */
   items?: AttachmentItem[];
   /** Called when delete action is selected for an item. */
@@ -28,7 +26,10 @@ interface AttachmentCardBaseProps {
   accept?: string;
   /** Disable upload and item actions. */
   disabled?: boolean;
-  /** Additional classes applied on the card root. */
+  /**
+   * Classes on the root wrapper. The component does not apply outer padding or borders—use
+   * this, or a parent such as `Card.Content`, for spacing and chrome.
+   */
   className?: string;
 }
 
@@ -53,5 +54,5 @@ type ReadOnlyListProps = {
   onUploadError?: never;
 };
 
-export type AttachmentCardProps = AttachmentCardBaseProps &
+export type AttachmentProps = AttachmentBaseProps &
   (ControlledUploadProps | AsyncUploadProps | ReadOnlyListProps);

@@ -11,6 +11,8 @@ import {
   Select,
   Combobox,
   Autocomplete,
+  Attachment,
+  type AttachmentItem,
 } from "@tailor-platform/app-shell";
 import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -26,6 +28,7 @@ type ProfileFormData = {
 const FormComponentsDemoPage = () => {
   const [serverErrors, setServerErrors] = React.useState<Record<string, string>>({});
   const [submittedData, setSubmittedData] = React.useState<ProfileFormData | null>(null);
+  const [formAttachments, setFormAttachments] = React.useState<AttachmentItem[]>([]);
 
   // Select / Combobox / Autocomplete data
   type FruitOption = { id: string; name: string };
@@ -335,6 +338,70 @@ const FormComponentsDemoPage = () => {
                   <Field.Error />
                 </Field.Root>
               </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Form + Attachment — spans full width */}
+          <Card.Root style={{ gridColumn: "1 / -1" }}>
+            <Card.Header title="Form + Attachment" />
+            <Card.Content>
+              <p style={labelStyle}>
+                <code>Attachment</code> can live inside a <code>Form</code> with other fields. Track
+                files in component state and submit them with the rest of the payload (this demo
+                only shows an alert).
+              </p>
+              <Form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const fd = new FormData(event.currentTarget);
+                  const note = String(fd.get("orderNote") ?? "");
+                  alert(
+                    `Note: ${note || "(empty)"}\nAttachments: ${formAttachments.length} file(s)`,
+                  );
+                }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                  maxWidth: "640px",
+                }}
+              >
+                <Field.Root name="orderNote">
+                  <Field.Label>Order note</Field.Label>
+                  <Field.Control placeholder="Optional instructions for fulfillment" />
+                  <Field.Description>Shown on the packing slip.</Field.Description>
+                </Field.Root>
+
+                <div>
+                  <p style={{ ...labelStyle, fontWeight: 600, color: "var(--foreground)" }}>
+                    Supporting documents
+                  </p>
+                  <Attachment
+                    uploadLabel="Add files"
+                    uploadHint="PDF or images"
+                    accept="image/*,.pdf"
+                    items={formAttachments}
+                    onUpload={(files) => {
+                      const mapped = files.map((file, index) => ({
+                        id: `form-${Date.now()}-${index}`,
+                        fileName: file.name,
+                        mimeType: file.type || "application/octet-stream",
+                        previewUrl: file.type.startsWith("image/")
+                          ? URL.createObjectURL(file)
+                          : undefined,
+                      }));
+                      setFormAttachments((prev) => [...mapped, ...prev]);
+                    }}
+                    onDelete={(item) => {
+                      setFormAttachments((prev) => prev.filter((c) => c.id !== item.id));
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Button type="submit">Submit order</Button>
+                </div>
+              </Form>
             </Card.Content>
           </Card.Root>
 

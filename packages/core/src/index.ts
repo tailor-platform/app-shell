@@ -95,11 +95,7 @@ export {
   type ActivityCardItemProps,
 } from "./components/activity-card";
 export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
-export {
-  AttachmentCard,
-  type AttachmentCardProps,
-  type AttachmentItem,
-} from "./components/attachment-card";
+export { Attachment, type AttachmentProps, type AttachmentItem } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";

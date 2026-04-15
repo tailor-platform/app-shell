@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { AttachmentCard } from "./AttachmentCard";
+import { Attachment } from "./Attachment";
 import type { AttachmentItem } from "./types";
 
 const toastError = vi.fn();
@@ -32,35 +32,33 @@ const mixedItems: AttachmentItem[] = [
   },
 ];
 
-describe("AttachmentCard", () => {
+describe("Attachment", () => {
   describe("snapshots", () => {
     it("empty default", () => {
-      const { container } = render(<AttachmentCard />);
+      const { container } = render(<Attachment />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("populated mixed items", () => {
-      const { container } = render(<AttachmentCard items={mixedItems} />);
+      const { container } = render(<Attachment items={mixedItems} />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("disabled", () => {
-      const { container } = render(<AttachmentCard items={mixedItems} disabled />);
+      const { container } = render(<Attachment items={mixedItems} disabled />);
       expect(container.innerHTML).toMatchSnapshot();
     });
   });
 
-  it("renders title and upload tile", () => {
-    render(<AttachmentCard title="Product images" uploadLabel="Upload image" onUpload={vi.fn()} />);
-    expect(screen.getByRole("heading", { name: "Product images" })).toBeDefined();
+  it("renders upload tile and labels", () => {
+    render(<Attachment uploadLabel="Upload image" onUpload={vi.fn()} />);
     expect(screen.getByTestId("attachment-upload-tile")).toBeDefined();
     expect(screen.getByText("Upload image")).toBeDefined();
   });
 
   it("renders upload hint text in the upload tile", () => {
     render(
-      <AttachmentCard
-        title="Documents"
+      <Attachment
         uploadLabel="Add file"
         uploadHint="PDF and images only. Max 5 MB."
         onUpload={vi.fn()}
@@ -70,7 +68,7 @@ describe("AttachmentCard", () => {
   });
 
   it("renders image and file preview branches", () => {
-    render(<AttachmentCard items={mixedItems} />);
+    render(<Attachment items={mixedItems} />);
     expect(screen.getByRole("img", { name: "shoe-red.png" })).toBeDefined();
     expect(screen.getByRole("button", { name: /Aug-Sep 2025_1234-12\.pdf/ })).toBeDefined();
     expect(screen.getByTestId("attachment-file-icon")).toBeDefined();
@@ -78,7 +76,7 @@ describe("AttachmentCard", () => {
 
   it("calls onUpload when files are selected through input", () => {
     const onUpload = vi.fn();
-    render(<AttachmentCard onUpload={onUpload} />);
+    render(<Attachment onUpload={onUpload} />);
 
     const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
@@ -89,14 +87,14 @@ describe("AttachmentCard", () => {
     expect(onUpload.mock.calls[0]?.[0][0]?.name).toBe("invoice.pdf");
   });
 
-  it("calls onUpload when files are dropped on the card", () => {
+  it("calls onUpload when files are dropped on the upload tile", () => {
     const onUpload = vi.fn();
-    const { container } = render(<AttachmentCard onUpload={onUpload} />);
-    const cardRoot = container.querySelector('[data-slot="attachment-card"]');
-    expect(cardRoot).toBeTruthy();
+    render(<Attachment onUpload={onUpload} />);
+    const uploadTile = screen.getByTestId("attachment-upload-tile");
+    expect(uploadTile).toBeTruthy();
 
     const file = new File(["hello"], "receipt.pdf", { type: "application/pdf" });
-    fireEvent.drop(cardRoot as HTMLElement, {
+    fireEvent.drop(uploadTile, {
       dataTransfer: {
         files: [file],
       },
@@ -111,7 +109,7 @@ describe("AttachmentCard", () => {
     const onDownload = vi.fn();
     const onDelete = vi.fn();
 
-    render(<AttachmentCard items={mixedItems} onDownload={onDownload} onDelete={onDelete} />);
+    render(<Attachment items={mixedItems} onDownload={onDownload} onDelete={onDelete} />);
 
     const trigger = screen.getByRole("button", {
       name: /Attachment options for Aug-Sep 2025_1234-12\.pdf/,
@@ -137,7 +135,7 @@ describe("AttachmentCard", () => {
 
   it("disables upload and hides menu actions when disabled", () => {
     const onUpload = vi.fn();
-    render(<AttachmentCard items={mixedItems} disabled onUpload={onUpload} />);
+    render(<Attachment items={mixedItems} disabled onUpload={onUpload} />);
 
     expect(screen.queryByTestId("attachment-upload-tile")).toBeNull();
 
@@ -164,7 +162,7 @@ describe("AttachmentCard", () => {
         }),
     );
 
-    render(<AttachmentCard uploadFile={uploadFile} />);
+    render(<Attachment uploadFile={uploadFile} />);
 
     const pendingFile = new File(["hello"], "pending.pdf", { type: "application/pdf" });
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
@@ -199,7 +197,7 @@ describe("AttachmentCard", () => {
     });
     const onUploadError = vi.fn();
 
-    render(<AttachmentCard uploadFile={uploadFile} onUploadError={onUploadError} />);
+    render(<Attachment uploadFile={uploadFile} onUploadError={onUploadError} />);
 
     const failedFile = new File(["hello"], "bad-file.pdf", { type: "application/pdf" });
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
@@ -218,7 +216,7 @@ describe("AttachmentCard", () => {
 
   it("falls back to image icon tile when image preview fails to load", async () => {
     render(
-      <AttachmentCard
+      <Attachment
         items={[
           {
             id: "img-broken",
@@ -249,7 +247,7 @@ describe("AttachmentCard", () => {
       status: "ready" as const,
     }));
 
-    render(<AttachmentCard uploadFile={uploadFile} onDelete={onDelete} />);
+    render(<Attachment uploadFile={uploadFile} onDelete={onDelete} />);
 
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
     fireEvent.change(input, {
@@ -278,7 +276,7 @@ describe("AttachmentCard", () => {
   it("revokes pending object URLs when unmounted during async upload", async () => {
     const createObjectUrlSpy = vi
       .spyOn(URL, "createObjectURL")
-      .mockReturnValue("blob:attachment-card-pending-image");
+      .mockReturnValue("blob:attachment-pending-image");
     const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
 
     const uploadFile = vi.fn(
@@ -288,7 +286,7 @@ describe("AttachmentCard", () => {
         }),
     );
 
-    const { unmount } = render(<AttachmentCard uploadFile={uploadFile} />);
+    const { unmount } = render(<Attachment uploadFile={uploadFile} />);
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
 
     fireEvent.change(input, {
@@ -303,7 +301,7 @@ describe("AttachmentCard", () => {
 
     unmount();
 
-    expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-card-pending-image");
+    expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-pending-image");
 
     createObjectUrlSpy.mockRestore();
     revokeObjectUrlSpy.mockRestore();

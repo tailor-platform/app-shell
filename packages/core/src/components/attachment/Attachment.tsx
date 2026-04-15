@@ -1,12 +1,11 @@
 import * as React from "react";
-import { CirclePlus, Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
+import { CloudUpload, Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-import { Card } from "../card";
 import { Menu } from "../menu";
-import type { AttachmentCardProps, AttachmentItem } from "./types";
+import type { AttachmentProps, AttachmentItem } from "./types";
 
 const tileBaseClasses =
   "astw:relative astw:size-30 astw:shrink-0 astw:overflow-hidden astw:rounded-lg";
@@ -66,8 +65,7 @@ function mergeAttachmentItems(externalItems: AttachmentItem[], localItems: Attac
   return merged;
 }
 
-export function AttachmentCard({
-  title = "Attachments",
+export function Attachment({
   items = [],
   onUpload,
   uploadFile,
@@ -79,7 +77,7 @@ export function AttachmentCard({
   accept,
   disabled = false,
   className,
-}: AttachmentCardProps) {
+}: AttachmentProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const [localItems, setLocalItems] = React.useState<AttachmentItem[]>([]);
@@ -160,7 +158,7 @@ export function AttachmentCard({
   );
 
   const handleDrop = React.useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
+    (event: React.DragEvent<HTMLButtonElement>) => {
       event.preventDefault();
       if (disabled) return;
       dragDepthRef.current = 0;
@@ -171,7 +169,7 @@ export function AttachmentCard({
   );
 
   const handleDragEnter = React.useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
+    (event: React.DragEvent<HTMLButtonElement>) => {
       event.preventDefault();
       if (disabled) return;
       dragDepthRef.current += 1;
@@ -181,7 +179,7 @@ export function AttachmentCard({
   );
 
   const handleDragLeave = React.useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
+    (event: React.DragEvent<HTMLButtonElement>) => {
       event.preventDefault();
       if (disabled) return;
       dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
@@ -220,34 +218,21 @@ export function AttachmentCard({
   );
 
   return (
-    <Card.Root
-      data-slot="attachment-card"
-      className={cn(
-        "astw:@container astw:transition-colors",
-        isDragOver &&
-          !disabled &&
-          "astw:border-dashed astw:border-primary astw:ring-1 astw:ring-primary/30",
-        className,
-      )}
-      onDragOver={(event) => event.preventDefault()}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+    <div
+      data-slot="attachment"
+      className={cn("astw:@container astw:flex astw:min-w-0 astw:flex-col", className)}
     >
-      <div className="astw:px-5 astw:pt-5 astw:pb-4">
-        <h3 className="astw:text-lg astw:font-semibold astw:text-card-foreground">{title}</h3>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept={accept}
-          disabled={disabled}
-          className="astw:hidden"
-          data-testid="attachment-upload-input"
-          onChange={handleInputChange}
-        />
-      </div>
-      <Card.Content className="astw:px-5 astw:pb-5">
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={accept}
+        disabled={disabled}
+        className="astw:hidden"
+        data-testid="attachment-upload-input"
+        onChange={handleInputChange}
+      />
+      <div data-slot="attachment-content" className="astw:min-w-0">
         <div className="astw:flex astw:flex-wrap astw:gap-4">
           {displayItems.map((item) => {
             const { baseName, extension } = splitFileName(item.fileName);
@@ -263,7 +248,10 @@ export function AttachmentCard({
                     className={cn(
                       shouldShowImagePreview
                         ? cn(tileBaseClasses, "astw:bg-muted")
-                        : cn(tileClasses, "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3"),
+                        : cn(
+                            tileClasses,
+                            "astw:flex astw:flex-col astw:justify-between astw:bg-card astw:p-3",
+                          ),
                     )}
                   >
                     {shouldShowImagePreview ? (
@@ -359,10 +347,17 @@ export function AttachmentCard({
               type="button"
               aria-label={uploadLabel}
               data-testid="attachment-upload-tile"
-              className="astw:flex astw:h-30 astw:w-[200px] astw:shrink-0 astw:cursor-pointer astw:flex-col astw:justify-between astw:rounded-lg astw:border-2 astw:border-dashed astw:border-border astw:bg-muted/50 astw:p-3 astw:transition-colors astw:hover:bg-muted"
+              className={cn(
+                "astw:flex astw:h-30 astw:w-[200px] astw:shrink-0 astw:cursor-pointer astw:flex-col astw:justify-between astw:rounded-lg astw:border-2 astw:border-dashed astw:border-border astw:bg-muted/50 astw:p-3 astw:transition-colors astw:hover:bg-muted",
+                isDragOver && "astw:border-primary astw:ring-1 astw:ring-primary/30 astw:bg-muted",
+              )}
               onClick={() => inputRef.current?.click()}
+              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
-              <CirclePlus
+              <CloudUpload
                 className="astw:size-5 astw:text-muted-foreground astw:opacity-60"
                 strokeWidth={1.5}
                 aria-hidden
@@ -380,9 +375,9 @@ export function AttachmentCard({
             </button>
           )}
         </div>
-      </Card.Content>
-    </Card.Root>
+      </div>
+    </div>
   );
 }
 
-export default AttachmentCard;
+export default Attachment;

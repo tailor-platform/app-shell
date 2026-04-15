@@ -138,6 +138,97 @@ When you use the [`ActionPanel`](./action-panel.md) component, its enabled actio
 
 For more details see [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md).
 
+## Async Search Sources
+
+In addition to built-in page search and contextual actions, you can wire async, prefix-activated search sources into the CommandPalette via the `searchSources` prop on `AppShell`.
+
+### How It Works
+
+1. Pass an array of `SearchSource` objects to `AppShell`'s `searchSources` prop.
+2. When the user types a source's `prefix` followed by `:` (e.g. `ORD:`), the palette switches into **search mode**: the Actions and Pages sections are hidden and only results from that source are shown.
+3. On the **empty-input** state, the palette renders a **Search Modes** section listing every registered source so users can activate a mode with a single click.
+
+### Basic Example
+
+```tsx
+import {
+  AppShell,
+  SidebarLayout,
+  DefaultSidebar,
+  type SearchSource,
+} from "@tailor-platform/app-shell";
+
+const searchSources: readonly SearchSource[] = [
+  {
+    prefix: "ORD",
+    title: "Orders",
+    search: async (query, { signal }) => {
+      const results = await api.searchOrders(query, { signal });
+      return results.map((o) => ({
+        key: o.id,
+        label: o.number,
+        description: `${o.customerName} — ${o.date}`,
+        path: `/orders/${o.id}`,
+      }));
+    },
+  },
+  {
+    prefix: "CUST",
+    title: "Customers",
+    search: async (query, { signal }) => {
+      const results = await api.searchCustomers(query, { signal });
+      return results.map((c) => ({
+        key: c.id,
+        label: c.name,
+        path: `/customers/${c.id}`,
+      }));
+    },
+  },
+];
+
+function App() {
+  return (
+    <AppShell modules={modules} searchSources={searchSources}>
+      <SidebarLayout sidebar={<DefaultSidebar />} />
+    </AppShell>
+  );
+}
+```
+
+### `SearchSource`
+
+| Property | Type                                                                                         | Required | Description                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `prefix` | `string`                                                                                     | ✅       | Mode-activating prefix (e.g. `"ORD"`). Case-sensitive, alphanumeric only.                          |
+| `title`  | `string`                                                                                     | ✅       | Heading shown above results and in the Search Modes list (e.g. `"Orders"`).                        |
+| `icon`   | `ReactNode`                                                                                  | No       | Optional icon shown next to each result that lacks its own icon.                                   |
+| `search` | `(query: string, options: { signal: AbortSignal }) => Promise<CommandPaletteSearchResult[]>` | ✅       | Async function invoked with the query text after the prefix and an `AbortSignal` for cancellation. |
+
+### `CommandPaletteSearchResult`
+
+| Property      | Type        | Required | Description                                                    |
+| ------------- | ----------- | -------- | -------------------------------------------------------------- |
+| `key`         | `string`    | ✅       | Unique key for React reconciliation.                           |
+| `label`       | `string`    | ✅       | Visible label shown in the palette (e.g. `"Order #ORD-1234"`). |
+| `description` | `string`    | No       | Optional secondary text (e.g. `"山田太郎 - 2024/01/15"`).      |
+| `icon`        | `ReactNode` | No       | Optional icon for this specific result.                        |
+| `path`        | `string`    | ✅       | Resolved navigation path (e.g. `"/orders/abc-123"`).           |
+
+### Prefix Syntax
+
+The prefix match is **case-sensitive**. When a user types `ORD:`, the string after the colon (including any space) is forwarded to `search` as the query:
+
+```
+User types: ORD:
+  → search("", { signal })  — empty query, show all or hint
+
+User types: ORD:12345
+  → search("12345", { signal })
+
+User types: ORD: alice
+  → search(" alice", { signal })  — leading space preserved
+```
+
 ## Customization
 
 ### Custom Palette (Advanced)

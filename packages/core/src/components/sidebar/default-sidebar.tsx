@@ -65,6 +65,9 @@ export type DefaultSidebarProps = {
 /**
  * Default sidebar component with auto-generated navigation items.
  *
+ * Must be rendered inside `AppShell` (or a `CommandPaletteProvider`) — the
+ * built-in Search button requires the palette context.
+ *
  * It works in both auto-generation mode and composition mode.
  * - Auto-generation mode: when no children are provided, it automatically generates sidebar items based on the application's resource definitions.
  * - Composition mode: when children are provided, it allows developers to manually define the sidebar structure using SidebarItem, SidebarGroup, and other components.

@@ -5,6 +5,7 @@ import {
   CommandPaletteProvider,
   useCommandPaletteDispatch,
   useCommandPaletteActions,
+  useCommandPaletteState,
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
 } from "./command-palette-context";
@@ -190,6 +191,51 @@ describe("CommandPaletteProvider", () => {
       result.current[0].onSelect();
       expect(first).not.toHaveBeenCalled();
       expect(second).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("global keyboard shortcut (Cmd+K / Ctrl+K)", () => {
+    it("opens the palette with Cmd+K", () => {
+      const { result } = renderHook(() => useCommandPaletteState(), { wrapper });
+      expect(result.current.open).toBe(false);
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+      });
+      expect(result.current.open).toBe(true);
+    });
+
+    it("opens the palette with Ctrl+K", () => {
+      const { result } = renderHook(() => useCommandPaletteState(), { wrapper });
+      expect(result.current.open).toBe(false);
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+      });
+      expect(result.current.open).toBe(true);
+    });
+
+    it("toggles the palette closed on repeated Cmd+K", () => {
+      const { result } = renderHook(() => useCommandPaletteState(), { wrapper });
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+      });
+      expect(result.current.open).toBe(true);
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+      });
+      expect(result.current.open).toBe(false);
+    });
+
+    it("does not open the palette with plain K (no modifier)", () => {
+      const { result } = renderHook(() => useCommandPaletteState(), { wrapper });
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k" }));
+      });
+      expect(result.current.open).toBe(false);
     });
   });
 });

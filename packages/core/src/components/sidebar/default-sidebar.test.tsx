@@ -3,6 +3,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
+import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { DefaultSidebar } from "./default-sidebar";
 import { SidebarLayout } from "./sidebar-layout";
 import { SidebarItem } from "./sidebar-item";
@@ -58,9 +59,11 @@ const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboa
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
-        <SidebarProvider>
-          <DefaultSidebar>{children}</DefaultSidebar>
-        </SidebarProvider>
+        <CommandPaletteProvider>
+          <SidebarProvider>
+            <DefaultSidebar>{children}</DefaultSidebar>
+          </SidebarProvider>
+        </CommandPaletteProvider>
       </AppShellConfigContext.Provider>
     </MemoryRouter>,
   );

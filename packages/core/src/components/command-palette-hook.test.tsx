@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useCommandPalette, navItemsToRoutes } from "./command-palette";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { useCommandPalette, navItemsToRoutes, parseSearchMode } from "./command-palette";
 import { NavigatableRoute } from "@/routing/path";
-import { CommandPaletteAction } from "@/contexts/command-palette-context";
+import { CommandPaletteAction, SearchSource } from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 // Helper to create a mock React.KeyboardEvent
 const createKeyboardEvent = (key: string, isComposing = false): React.KeyboardEvent => {
@@ -47,7 +47,13 @@ const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{childr
 
 describe("useCommandPalette", () => {
   const renderCommandPaletteHook = (routes = createTestRoutes()) => {
-    return renderHook(() => useCommandPalette({ routes }), { wrapper });
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({ routes, open, setOpen });
+      },
+      { wrapper },
+    );
   };
 
   beforeEach(() => {
@@ -98,54 +104,6 @@ describe("useCommandPalette", () => {
       });
       expect(result.current.search).toBe("");
       expect(result.current.selectedIndex).toBe(0);
-    });
-  });
-
-  describe("global keyboard shortcut", () => {
-    it("should open with Cmd+K", () => {
-      const { result } = renderCommandPaletteHook();
-      expect(result.current.open).toBe(false);
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-      });
-
-      expect(result.current.open).toBe(true);
-    });
-
-    it("should open with Ctrl+K", () => {
-      const { result } = renderCommandPaletteHook();
-      expect(result.current.open).toBe(false);
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
-      });
-
-      expect(result.current.open).toBe(true);
-    });
-
-    it("should toggle with repeated Cmd+K", () => {
-      const { result } = renderCommandPaletteHook();
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-      });
-      expect(result.current.open).toBe(true);
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-      });
-      expect(result.current.open).toBe(false);
-    });
-
-    it("should not open with just K key (no modifier)", () => {
-      const { result } = renderCommandPaletteHook();
-
-      act(() => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "k" }));
-      });
-
-      expect(result.current.open).toBe(false);
     });
   });
 
@@ -481,9 +439,15 @@ describe("useCommandPalette with contextualActions", () => {
     routes = createTestRoutes2(),
     contextualActions = createTestActions(),
   ) => {
-    return renderHook(() => useCommandPalette({ routes, contextualActions }), {
-      wrapper,
-    });
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({ routes, contextualActions, open, setOpen });
+      },
+      {
+        wrapper,
+      },
+    );
   };
 
   beforeEach(() => {
@@ -644,5 +608,375 @@ describe("useCommandPalette with contextualActions", () => {
       expect(mockNavigate).toHaveBeenCalledWith("dashboard");
       expect(mockOnSelect).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("parseSearchMode", () => {
+  const sources: Array<SearchSource> = [
+    { prefix: "PO", title: "Purchase Orders", search: vi.fn() },
+    { prefix: "CU", title: "Customers", search: vi.fn() },
+  ];
+
+  it("returns null activeSource when no colon is present", () => {
+    const result = parseSearchMode("hello", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("hello");
+  });
+
+  it("returns null activeSource when colon is at position 0", () => {
+    const result = parseSearchMode(":query", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe(":query");
+  });
+
+  it("detects matching prefix (case-sensitive)", () => {
+    const result = parseSearchMode("PO: 12345", sources);
+    expect(result.activeSource).toBe(sources[0]);
+    expect(result.searchQuery).toBe("12345");
+  });
+
+  it("does not match lowercase prefix", () => {
+    const result = parseSearchMode("po: 12345", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("po: 12345");
+  });
+
+  it("trims leading whitespace from query", () => {
+    const result = parseSearchMode("CU:   some query", sources);
+    expect(result.activeSource).toBe(sources[1]);
+    expect(result.searchQuery).toBe("some query");
+  });
+
+  it("returns empty query when only prefix is typed", () => {
+    const result = parseSearchMode("PO:", sources);
+    expect(result.activeSource).toBe(sources[0]);
+    expect(result.searchQuery).toBe("");
+  });
+
+  it("returns null for unknown prefix", () => {
+    const result = parseSearchMode("XX: query", sources);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("XX: query");
+  });
+
+  it("handles empty search sources", () => {
+    const result = parseSearchMode("PO: query", []);
+    expect(result.activeSource).toBeNull();
+    expect(result.searchQuery).toBe("PO: query");
+  });
+});
+
+describe("useCommandPalette with searchSources", () => {
+  const mockSearch = vi.fn();
+
+  const createTestSearchSources = (): Array<SearchSource> => [
+    {
+      prefix: "PO",
+      title: "Purchase Orders",
+      search: mockSearch,
+    },
+    {
+      prefix: "CU",
+      title: "Customers",
+      search: vi.fn().mockResolvedValue([]),
+    },
+  ];
+
+  const renderWithSources = (
+    routes = createTestRoutes2(),
+    searchSources = createTestSearchSources(),
+  ) => {
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({
+          routes,
+          searchSources,
+          contextualActions: [],
+          open,
+          setOpen,
+        });
+      },
+      {
+        wrapper,
+      },
+    );
+  };
+
+  beforeEach(() => {
+    mockSearch.mockReset();
+    mockSearch.mockResolvedValue([]);
+    mockNavigate.mockClear();
+  });
+
+  describe("default mode with search sources", () => {
+    it("should include search-mode items when search is empty", () => {
+      const { result } = renderWithSources();
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      expect(modeItems).toHaveLength(2);
+    });
+
+    it("should not include search-mode items when search has text", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("dashboard");
+      });
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      expect(modeItems).toHaveLength(0);
+    });
+
+    it("should filter search-mode items by title match", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("order");
+      });
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      // "Purchase Orders" title matches "order"
+      expect(modeItems).toHaveLength(1);
+      expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("PO");
+    });
+
+    it("should filter search-mode items by prefix match (case-insensitive)", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("cu");
+      });
+      const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+      // "CU" prefix matches "cu"
+      expect(modeItems).toHaveLength(1);
+      expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("CU");
+    });
+
+    it("should show routes in default mode", () => {
+      const { result } = renderWithSources();
+      expect(result.current.filteredRoutes).toHaveLength(2);
+    });
+  });
+
+  describe("entering search mode", () => {
+    it("should detect search mode when prefix is typed", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: ");
+      });
+      expect(result.current.activeSearchSource).not.toBeNull();
+      expect(result.current.activeSearchSource?.prefix).toBe("PO");
+      // Prefix is locked in state; input shows only the query part
+      expect(result.current.search).toBe("");
+    });
+
+    it("should hide actions and routes in search mode", () => {
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+      expect(result.current.filteredActions).toHaveLength(0);
+      expect(result.current.filteredRoutes).toHaveLength(0);
+    });
+
+    it("should set search input to empty and lock source when selecting a search-mode item", () => {
+      const { result } = renderWithSources();
+      const modeItem = result.current.selectableItems.find((i) => i.type === "search-mode");
+      expect(modeItem).toBeDefined();
+
+      act(() => {
+        result.current.handleSelectItem(modeItem!);
+      });
+
+      // Should keep palette open with source locked; input is empty
+      expect(result.current.search).toBe("");
+      expect(result.current.activeSearchSource?.prefix).toBe("PO");
+    });
+  });
+
+  describe("async search", () => {
+    it("should call search function after debounce", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+
+      // isSearching is false until the debounce fires
+      expect(result.current.isSearching).toBe(false);
+
+      await waitFor(() => {
+        expect(mockSearch).toHaveBeenCalledWith("test", {
+          signal: expect.any(AbortSignal),
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSearching).toBe(false);
+        expect(result.current.searchResults).toHaveLength(1);
+        expect(result.current.searchResults[0].label).toBe("PO #1");
+      });
+    });
+
+    it("should navigate when selecting a search result", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.handleSelectItem(result.current.selectableItems[0]);
+      });
+
+      expect(mockNavigate).toHaveBeenCalledWith("/orders/1");
+      expect(result.current.open).toBe(false);
+    });
+
+    it("should clear search results when leaving search mode via Backspace", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.setSearch("PO: test");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(1);
+      });
+
+      // Clear query first, then Backspace to exit search mode
+      act(() => {
+        result.current.setSearch("");
+      });
+      act(() => {
+        result.current.handleKeyDown(createKeyboardEvent("Backspace"));
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(0);
+        expect(result.current.activeSearchSource).toBeNull();
+      });
+    });
+
+    it("should clear search results when dialog closes", async () => {
+      mockSearch.mockResolvedValue([{ key: "1", label: "PO #1", path: "/orders/1" }]);
+
+      const { result } = renderWithSources();
+      act(() => {
+        result.current.handleOpenChange(true);
+        result.current.setSearch("PO: test");
+      });
+
+      await waitFor(() => {
+        expect(result.current.searchResults).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.handleOpenChange(false);
+      });
+
+      expect(result.current.searchResults).toHaveLength(0);
+      expect(result.current.search).toBe("");
+      expect(result.current.isSearching).toBe(false);
+    });
+  });
+});
+
+describe("useCommandPalette with actions, routes, and searchSources combined", () => {
+  const mockOnSelect = vi.fn();
+
+  const createMixedActions = (): Array<CommandPaletteAction> => [
+    {
+      key: "create-order",
+      label: "Create Order",
+      group: "Actions",
+      onSelect: mockOnSelect,
+    },
+    {
+      key: "export-csv",
+      label: "Export CSV",
+      group: "Actions",
+      onSelect: vi.fn(),
+    },
+  ];
+
+  const createMixedSources = (): Array<SearchSource> => [
+    {
+      prefix: "ORD",
+      title: "Orders",
+      search: vi.fn().mockResolvedValue([]),
+    },
+    {
+      prefix: "CU",
+      title: "Customers",
+      search: vi.fn().mockResolvedValue([]),
+    },
+  ];
+
+  const renderMixed = (
+    routes = createTestRoutes2(),
+    contextualActions = createMixedActions(),
+    searchSources = createMixedSources(),
+  ) => {
+    return renderHook(
+      () => {
+        const [open, setOpen] = useState(false);
+        return useCommandPalette({
+          routes,
+          contextualActions,
+          searchSources,
+          open,
+          setOpen,
+        });
+      },
+      { wrapper },
+    );
+  };
+
+  beforeEach(() => {
+    mockOnSelect.mockClear();
+  });
+
+  it("should show all item types when search is empty", () => {
+    const { result } = renderMixed();
+    const types = result.current.selectableItems.map((i) => i.type);
+    // 2 search-modes + 2 actions + 2 routes
+    expect(types).toEqual(["search-mode", "search-mode", "action", "action", "route", "route"]);
+  });
+
+  it("should filter across all types when search matches multiple", () => {
+    const { result } = renderMixed();
+    act(() => {
+      // "order" matches: route "Orders", action "Create Order", search-mode "Orders" (title)
+      result.current.setSearch("order");
+    });
+    const types = result.current.selectableItems.map((i) => i.type);
+    expect(types).toContain("search-mode");
+    expect(types).toContain("action");
+    expect(types).toContain("route");
+    expect(result.current.selectableItems).toHaveLength(3);
+  });
+
+  it("should show only routes when search matches no action or source", () => {
+    const { result } = renderMixed();
+    act(() => {
+      result.current.setSearch("dashboard");
+    });
+    const types = result.current.selectableItems.map((i) => i.type);
+    expect(types).toEqual(["route"]);
+  });
+
+  it("should show only search-mode when search matches only a source prefix", () => {
+    const { result } = renderMixed();
+    act(() => {
+      result.current.setSearch("cu");
+    });
+    const modeItems = result.current.selectableItems.filter((i) => i.type === "search-mode");
+    expect(modeItems).toHaveLength(1);
+    expect(modeItems[0].type === "search-mode" && modeItems[0].source.prefix).toBe("CU");
+    // No actions or routes match "cu"
+    expect(result.current.selectableItems).toHaveLength(1);
   });
 });

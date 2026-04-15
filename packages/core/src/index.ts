@@ -5,6 +5,8 @@ export { CommandPalette } from "./components/command-palette";
 export {
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
+  type CommandPaletteSearchResult,
+  type SearchSource,
 } from "./contexts/command-palette-context";
 
 // Sidebar navigation components

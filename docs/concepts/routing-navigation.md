@@ -106,17 +106,14 @@ AppShell includes a `CommandPalette` component that provides keyboard-driven qui
 
 ### Setup
 
-Add the `CommandPalette` component to your AppShell layout:
+The CommandPalette is built into `AppShell` and rendered automatically:
 
 ```tsx
-import { AppShell, SidebarLayout, CommandPalette } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
 
 const App = () => (
   <AppShell modules={modules} locale="en">
-    <>
-      <SidebarLayout />
-      <CommandPalette />
-    </>
+    <SidebarLayout />
   </AppShell>
 );
 ```

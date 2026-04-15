@@ -10,7 +10,8 @@ import {
 import { RouterContainer } from "@/routing/router";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
-import { CommandPaletteProvider } from "@/contexts/command-palette-context";
+import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
+import { BuiltInCommandPalette } from "@/components/command-palette";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
@@ -133,6 +134,40 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * ```
    */
   contextData?: ContextData;
+
+  /**
+   * Async search sources for the built-in CommandPalette.
+   *
+   * The CommandPalette (opened via Cmd+K / Ctrl+K, or the sidebar Search
+   * button) always searches pages and contextual actions. When
+   * `searchSources` is also provided, those async sources are available
+   * as prefix-activated search modes.
+   *
+   * Note: `DefaultSidebar` always renders a Search entry at the top of
+   * the navigation menu, regardless of whether this prop is supplied.
+   *
+   * @example
+   * ```tsx
+   * <AppShell
+   *   modules={modules}
+   *   searchSources={[
+   *     {
+   *       prefix: "PO",
+   *       title: "Purchase Orders",
+   *       search: async (query, { signal }) => {
+   *         const results = await api.searchOrders(query, { signal });
+   *         return results.map((o) => ({
+   *           key: o.id,
+   *           label: o.number,
+   *           path: `/orders/${o.id}`,
+   *         }));
+   *       },
+   *     },
+   *   ]}
+   * />
+   * ```
+   */
+  searchSources?: readonly SearchSource[];
 }>;
 
 /**
@@ -238,10 +273,11 @@ export const AppShell = (props: AppShellProps) => {
     <AppShellConfigContext.Provider value={configValue}>
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
-          <CommandPaletteProvider>
+          <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
               <RouterContainer rootComponent={props.rootComponent} rootGuards={props.rootGuards}>
                 {props.children}
+                <BuiltInCommandPalette />
               </RouterContainer>
             </ThemeProvider>
           </CommandPaletteProvider>

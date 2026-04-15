@@ -17,10 +17,13 @@ export const labels = defineI18nLabels({
     sidebarDesc: "Displays the mobile sidebar.",
     close: "Close",
     more: "More",
+    search: "Search",
     commandPaletteSearch: "Search pages...",
     commandPaletteNoResults: "No results found",
     commandPaletteActions: "Actions",
     commandPalettePages: "Pages",
+    commandPaletteSearchModes: "Search Modes",
+    commandPaletteSearching: "Searching...",
   },
   ja: {
     error404Title: "404 ページが見つかりません",
@@ -38,10 +41,13 @@ export const labels = defineI18nLabels({
     sidebarDesc: "モバイル用サイドバーを表示します。",
     close: "閉じる",
     more: "その他",
+    search: "検索",
     commandPaletteSearch: "ページを検索...",
     commandPaletteNoResults: "結果が見つかりません",
     commandPaletteActions: "アクション",
     commandPalettePages: "ページ",
+    commandPaletteSearchModes: "検索モード",
+    commandPaletteSearching: "検索中...",
   },
 });
 

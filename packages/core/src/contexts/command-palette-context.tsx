@@ -34,19 +34,61 @@ export type CommandPaletteAction = {
   onSelect: () => void | Promise<void>;
 };
 
+/**
+ * A single search result returned by a `SearchSource`.
+ *
+ * Selecting a result navigates to `path`.
+ */
+export type CommandPaletteSearchResult = {
+  /** Unique key for React reconciliation */
+  key: string;
+  /** Visible label shown in the palette (e.g. "Order #ORD-1234") */
+  label: string;
+  /** Optional secondary text (e.g. "山田太郎 - 2024/01/15") */
+  description?: string;
+  /** Optional icon for this specific result */
+  icon?: ReactNode;
+  /** Resolved navigation path (e.g. "/orders/abc-123") */
+  path: string;
+};
+
+/**
+ * An async search source that can be plugged into the CommandPalette.
+ *
+ * Each source is activated by typing its `prefix` followed by `:` in the
+ * search input (e.g. `PO:` for Purchase Orders). The prefix match is
+ * case-sensitive.
+ */
+export type SearchSource = {
+  /** Mode-switching prefix (e.g. "PO"). Case-sensitive, alphanumeric only. */
+  prefix: string;
+  /** Heading shown above search results (e.g. "Purchase Orders") */
+  title: string;
+  /** Optional icon shown next to each result that lacks its own icon */
+  icon?: ReactNode;
+  /** Async search function. Receives the query after the prefix and an AbortSignal. */
+  search: (
+    query: string,
+    options: { signal: AbortSignal },
+  ) => Promise<CommandPaletteSearchResult[]>;
+};
+
 type DispatchContextValue = {
   register: (sourceId: string, actions: CommandPaletteAction[]) => () => void;
 };
 
 type StateContextValue = {
   actions: CommandPaletteAction[];
+  searchSources: readonly SearchSource[];
+  open: boolean;
+  setOpen: (open: boolean) => void;
 };
 
 const CommandPaletteDispatchContext = createContext<DispatchContextValue | null>(null);
 const CommandPaletteStateContext = createContext<StateContextValue | null>(null);
 
 /**
- * Provider that manages contextual actions for the CommandPalette.
+ * Provider that manages contextual actions and open state for the CommandPalette.
  *
  * Placed inside `AppShell`; consumers register/unregister actions via
  * `useRegisterCommandPaletteActions`, and the `CommandPalette` component
@@ -54,9 +96,16 @@ const CommandPaletteStateContext = createContext<StateContextValue | null>(null)
  *
  * @internal — mounted automatically by AppShell; not intended for direct use.
  */
-export function CommandPaletteProvider({ children }: { children: ReactNode }) {
+export function CommandPaletteProvider({
+  children,
+  searchSources = [],
+}: {
+  children: ReactNode;
+  searchSources?: readonly SearchSource[];
+}) {
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
+  const [open, setOpen] = useState(false);
 
   const updateActions = useCallback(() => {
     setActions(Array.from(registryRef.current.values()).flat());
@@ -74,8 +123,23 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
     [updateActions],
   );
 
+  // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
   const dispatchValue = useMemo(() => ({ register }), [register]);
-  const stateValue = useMemo(() => ({ actions }), [actions]);
+  const stateValue = useMemo(
+    () => ({ actions, searchSources, open, setOpen }),
+    [actions, searchSources, open],
+  );
 
   return (
     <CommandPaletteDispatchContext.Provider value={dispatchValue}>
@@ -142,6 +206,20 @@ export function useRegisterCommandPaletteActions(group: string, actions: Command
       })),
     );
   }, [id, register, depsKey, group]);
+}
+
+/**
+ * Returns the current state of the CommandPalette context including
+ * actions, search sources, and palette open state.
+ *
+ * @internal — used by the `CommandPalette` component and `DefaultSidebar`.
+ */
+export function useCommandPaletteState(): StateContextValue {
+  const ctx = useContext(CommandPaletteStateContext);
+  if (!ctx) {
+    throw new Error("useCommandPaletteState must be used within CommandPaletteProvider");
+  }
+  return ctx;
 }
 
 /**

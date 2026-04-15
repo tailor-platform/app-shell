@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Await, useLocation } from "react-router";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, SearchIcon } from "lucide-react";
 import { Collapsible } from "@base-ui/react/collapsible";
 import {
   Sidebar,
@@ -18,10 +18,31 @@ import {
   useSidebar,
 } from "@/components/sidebar";
 import { useAppShellConfig } from "@/contexts/appshell-context";
+import { useCommandPaletteState } from "@/contexts/command-palette-context";
 import { Link } from "react-router";
 import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
+
+// Always rendered regardless of searchSources — the palette searches routes
+// and contextual actions too, so there is always something to search.
+const SearchEntry = () => {
+  const { setOpen: openPalette } = useCommandPaletteState();
+  const t = useT();
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        render={<button type="button" />}
+        tooltip={t("search")}
+        onClick={() => openPalette(true)}
+      >
+        <SearchIcon className="astw:size-4" />
+        <span>{t("search")}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+};
 
 export type DefaultSidebarProps = {
   /**
@@ -43,6 +64,9 @@ export type DefaultSidebarProps = {
 
 /**
  * Default sidebar component with auto-generated navigation items.
+ *
+ * Must be rendered inside `AppShell` (or a `CommandPaletteProvider`) — the
+ * built-in Search button requires the palette context.
  *
  * It works in both auto-generation mode and composition mode.
  * - Auto-generation mode: when no children are provided, it automatically generates sidebar items based on the application's resource definitions.
@@ -92,7 +116,10 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
         {props.children ? (
           // New API: children-based explicit definition
           <SidebarGroup>
-            <SidebarMenu>{props.children}</SidebarMenu>
+            <SidebarMenu>
+              <SearchEntry />
+              {props.children}
+            </SidebarMenu>
           </SidebarGroup>
         ) : (
           // Existing behavior: auto-generation from resources
@@ -138,6 +165,7 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
   return (
     <SidebarGroup>
       <SidebarMenu>
+        <SearchEntry />
         {props.items.map((item) => {
           return (
             <Collapsible.Root key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>

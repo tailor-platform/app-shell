@@ -296,6 +296,9 @@ export function useProductsQuery(variables: CollectionVariables) {
       page = Number(variables.pagination.after);
     } else if (variables.pagination.before) {
       page = Number(variables.pagination.before);
+    } else if (variables.pagination.last && !variables.pagination.before) {
+      // last without before = last page
+      page = Math.max(1, Math.ceil(rows.length / pageSize));
     }
     const start = (page - 1) * pageSize;
     const end = Math.min(start + pageSize, rows.length);

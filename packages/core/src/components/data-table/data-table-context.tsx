@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
-import type { Column, PageInfo, RowAction, RowOperations, SortState } from "./types";
+import type { PageInfo, SortState } from "@/types/collection";
+import type { Column, RowAction, RowOperations } from "./types";
 
 /**
  * Context value provided by `DataTable.Root`.

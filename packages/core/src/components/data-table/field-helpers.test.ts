@@ -1,8 +1,7 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
 import { column, inferColumns, createColumnHelper } from "./field-helpers";
-import type { TableMetadataMap } from "./types";
-import { fieldTypeToSortConfig, fieldTypeToFilterConfig } from "./types";
-import type { NodeType, TableFieldName } from "./types";
+import type { NodeType, TableFieldName, TableMetadataMap } from "@/types/collection";
+import { fieldTypeToSortConfig, fieldTypeToFilterConfig } from "@/types/collection";
 
 describe("NodeType", () => {
   it("extracts node type from a collection result", () => {

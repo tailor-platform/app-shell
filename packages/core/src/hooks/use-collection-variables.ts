@@ -13,7 +13,7 @@ import type {
   TableOrderableFieldName,
   UseCollectionOptions,
   UseCollectionReturn,
-} from "@/components/data-table/types";
+} from "@/types/collection";
 
 // -----------------------------------------------------------------------------
 // Overload signatures

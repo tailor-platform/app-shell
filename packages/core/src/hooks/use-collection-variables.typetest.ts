@@ -13,7 +13,7 @@ import type {
   TableFieldName,
   TableMetadata,
   TableOrderableFieldName,
-} from "@/components/data-table/types";
+} from "@/types/collection";
 
 // =============================================================================
 // 1. BuildQueryVariables produces correct filter types per field type

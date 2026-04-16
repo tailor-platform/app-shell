@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import type { CollectionControl } from "@/components/data-table/types";
+import type { CollectionControl } from "@/types/collection";
 
 const CollectionControlContext = createContext<CollectionControl | null>(null);
 

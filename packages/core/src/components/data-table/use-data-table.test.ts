@@ -1,7 +1,8 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { useDataTable } from "./use-data-table";
-import type { Column, CollectionControl, DataTableData } from "./types";
+import type { CollectionControl } from "@/types/collection";
+import type { Column, DataTableData } from "./types";
 
 // ---------------------------------------------------------------------------
 // Helpers

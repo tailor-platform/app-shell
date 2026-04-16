@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import type { Column, PageInfo, SortState, UseDataTableOptions, UseDataTableReturn } from "./types";
+import type { PageInfo, SortState } from "@/types/collection";
+import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
  * Hook that integrates data management, column visibility, row operations, and

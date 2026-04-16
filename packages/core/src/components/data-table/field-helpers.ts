@@ -1,14 +1,7 @@
 import type { ReactNode } from "react";
-import type {
-  Column,
-  ColumnOptions,
-  FilterConfig,
-  MetadataFieldOptions,
-  SortConfig,
-  TableFieldName,
-  TableMetadata,
-} from "./types";
-import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "./types";
+import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
+import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
+import type { Column, ColumnOptions, MetadataFieldOptions } from "./types";
 
 // =============================================================================
 // column() helper

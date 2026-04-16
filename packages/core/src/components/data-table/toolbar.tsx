@@ -9,7 +9,8 @@ import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import type { Column, FilterConfig, Filter, FilterOperator } from "./types";
+import type { Filter, FilterConfig, FilterOperator } from "@/types/collection";
+import type { Column } from "./types";
 
 // =============================================================================
 // DataTable.Toolbar

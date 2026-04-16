@@ -7,7 +7,8 @@ import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import { Select } from "@/components/select-standalone";
-import type { RowAction, SortConfig, UseDataTableReturn } from "./types";
+import type { SortConfig } from "@/types/collection";
+import type { RowAction, UseDataTableReturn } from "./types";
 import {
   DataTableContext,
   useDataTableContext,

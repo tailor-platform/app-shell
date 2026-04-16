@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import type { TableMetadataMap } from "@/components/data-table/types";
+import type { TableMetadataMap } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
 
 describe("useCollectionVariables", () => {

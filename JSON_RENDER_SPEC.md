@@ -56,21 +56,21 @@ type RenderJSONProps = {
 
 ### Components
 
-| catalog 名   | AppShell コンポーネント                                      | slots     | 主な props                                                                                                   |
-| ------------ | ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------ |
-| `Form`       | `Form`                                                       | `default` | `title?: string`                                                                                             |
-| `Card`       | `Card.Root` + `Card.Header` + `Card.Content`                 | `default` | `title?: string`, `description?: string`                                                                     |
-| `Grid`       | `div` (CSS Grid / `grid-cols-{n}` クラス、新規実装)           | `default` | `cols` (1–6), `gap?` (none/sm/md/lg)                                                                         |
-| `Fieldset`   | `Fieldset.Root` + `Fieldset.Legend`                          | `default` | `legend?: string`, `disabled?: boolean`                                                                      |
-| `TextField`       | `Field.Root` + `Field.Label` + `Input` + `Field.Error`                  | —         | `name`, `label`, `type?`, `placeholder?`, `description?`, `required?`, `disabled?`, `value`, `min?`, `max?`, `minLength?`, `maxLength?`, `pattern?` |
-| `SelectField`     | `Field.Root` + `Field.Label` + `Select` + `Field.Error`                 | —         | `name`, `label`, `options[]`, `placeholder?`, `description?`, `required?`, `disabled?`, `value`                   |
-| `CheckboxField`   | `Field.Root` + `Field.Label` + `Checkbox` + `Field.Error` (新規実装)    | —         | `name`, `label`, `description?`, `required?`, `disabled?`, `checked`                                              |
-| `RadioGroupField` | `Field.Root` + `Field.Label` + `RadioGroup` + `Field.Error` (新規実装)  | —         | `name`, `label`, `options[]`, `description?`, `required?`, `disabled?`, `value`                                   |
+| catalog 名        | AppShell コンポーネント                                                | slots     | 主な props                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Form`            | `Form`                                                                 | `default` | `title?: string`                                                                                                                                    |
+| `Card`            | `Card.Root` + `Card.Header` + `Card.Content`                           | `default` | `title?: string`, `description?: string`                                                                                                            |
+| `Grid`            | `div` (CSS Grid / `grid-cols-{n}` クラス、新規実装)                    | `default` | `cols` (1–6), `gap?` (none/sm/md/lg)                                                                                                                |
+| `Fieldset`        | `Fieldset.Root` + `Fieldset.Legend`                                    | `default` | `legend?: string`, `disabled?: boolean`                                                                                                             |
+| `TextField`       | `Field.Root` + `Field.Label` + `Input` + `Field.Error`                 | —         | `name`, `label`, `type?`, `placeholder?`, `description?`, `required?`, `disabled?`, `value`, `min?`, `max?`, `minLength?`, `maxLength?`, `pattern?` |
+| `SelectField`     | `Field.Root` + `Field.Label` + `Select` + `Field.Error`                | —         | `name`, `label`, `options[]`, `placeholder?`, `description?`, `required?`, `disabled?`, `value`                                                     |
+| `CheckboxField`   | `Field.Root` + `Field.Label` + `Checkbox` + `Field.Error` (新規実装)   | —         | `name`, `label`, `description?`, `required?`, `disabled?`, `checked`                                                                                |
+| `RadioGroupField` | `Field.Root` + `Field.Label` + `RadioGroup` + `Field.Error` (新規実装) | —         | `name`, `label`, `options[]`, `description?`, `required?`, `disabled?`, `value`                                                                     |
 
 ### Actions
 
-| action 名     | 用途                                    | params |
-| ------------- | --------------------------------------- | ------ |
+| action 名     | 用途                                     | params |
+| ------------- | ---------------------------------------- | ------ |
 | `submit_form` | フォーム送信。state を `onSubmit` へ渡す | `{}`   |
 
 ### Zod スキーマ例
@@ -97,7 +97,14 @@ export const catalog = defineCatalog(schema, {
     },
     Grid: {
       props: z.object({
-        cols: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]),
+        cols: z.union([
+          z.literal(1),
+          z.literal(2),
+          z.literal(3),
+          z.literal(4),
+          z.literal(5),
+          z.literal(6),
+        ]),
         gap: z.enum(["none", "sm", "md", "lg"]).nullable(),
       }),
       slots: ["default"],
@@ -203,8 +210,7 @@ function RenderJSON({ spec, onSubmit, initialState, errors }: RenderJSONProps) {
         actions: {
           submit_form: async (_params, _setState, state) => {
             await onSubmitRef.current?.(
-              (state as Record<string, unknown>).form ??
-              (state as Record<string, unknown>),
+              (state as Record<string, unknown>).form ?? (state as Record<string, unknown>),
             );
           },
         },
@@ -216,7 +222,11 @@ function RenderJSON({ spec, onSubmit, initialState, errors }: RenderJSONProps) {
   const setStateRef = useRef<(fn: unknown) => void>(() => {});
 
   const actionHandlers = useMemo(
-    () => handlers(() => setStateRef.current, () => stateRef.current),
+    () =>
+      handlers(
+        () => setStateRef.current,
+        () => stateRef.current,
+      ),
     [],
   );
 
@@ -283,21 +293,21 @@ function RenderJSON({ spec, onSubmit, initialState, errors }: RenderJSONProps) {
 以下は AppShell にまだ存在せず、`src/components/` への追加実装が必要なもの。
 Base UI (`@base-ui/react`) に対応するプリミティブが存在するため、他のコンポーネントと同じラッピングパターンで実装できる。
 
-| コンポーネント | Base UI プリミティブ | 備考 |
-| --- | --- | --- |
-| `Checkbox` (+ `Field` 統合) | `@base-ui/react/checkbox` | `Field.Root` 内で使えるよう Base UI の context に接続する |
-| `RadioGroup` + `Radio` (+ `Field` 統合) | `@base-ui/react/radio-group` | `RadioGroup.Root` > `Radio.Root` の compound component |
-| `Grid` | なし (純粋な div wrapper) | `grid grid-cols-{n}` と gap クラスを出力するだけ |
+| コンポーネント                          | Base UI プリミティブ         | 備考                                                      |
+| --------------------------------------- | ---------------------------- | --------------------------------------------------------- |
+| `Checkbox` (+ `Field` 統合)             | `@base-ui/react/checkbox`    | `Field.Root` 内で使えるよう Base UI の context に接続する |
+| `RadioGroup` + `Radio` (+ `Field` 統合) | `@base-ui/react/radio-group` | `RadioGroup.Root` > `Radio.Root` の compound component    |
+| `Grid`                                  | なし (純粋な div wrapper)    | `grid grid-cols-{n}` と gap クラスを出力するだけ          |
 
 ---
 
 ## 追加が必要な依存パッケージ
 
-| パッケージ            | 用途                                                             |
-| --------------------- | ---------------------------------------------------------------- |
-| `@json-render/core`   | `defineCatalog` (`catalog.validate()` / `catalog.prompt()` を含む) |
-| `@json-render/react`  | `defineRegistry`, `Renderer`, `StateProvider`, `VisibilityProvider`, `ActionProvider`, `useBoundProp` |
-| `zod`                 | catalog の props スキーマ定義                                     |
+| パッケージ           | 用途                                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| `@json-render/core`  | `defineCatalog` (`catalog.validate()` / `catalog.prompt()` を含む)                                    |
+| `@json-render/react` | `defineRegistry`, `Renderer`, `StateProvider`, `VisibilityProvider`, `ActionProvider`, `useBoundProp` |
+| `zod`                | catalog の props スキーマ定義                                                                         |
 
 ---
 

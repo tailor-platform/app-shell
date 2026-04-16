@@ -273,20 +273,17 @@ describe("Attachment", () => {
     });
   });
 
-  it("revokes pending object URLs when unmounted during async upload", async () => {
+  it("revokes object URLs after async upload completes (via finally)", async () => {
     const createObjectUrlSpy = vi
       .spyOn(URL, "createObjectURL")
       .mockReturnValue("blob:attachment-pending-image");
     const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
 
-    const uploadFile = vi.fn(
-      () =>
-        new Promise<AttachmentItem>(() => {
-          // Intentionally unresolved promise to simulate in-flight upload.
-        }),
-    );
+    const uploadFile = vi.fn(async () => {
+      throw new Error("Upload failed");
+    });
 
-    const { unmount } = render(<Attachment uploadFile={uploadFile} />);
+    render(<Attachment uploadFile={uploadFile} />);
     const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
 
     fireEvent.change(input, {
@@ -296,12 +293,38 @@ describe("Attachment", () => {
     });
 
     await waitFor(() => {
-      expect(uploadFile).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-pending-image");
     });
 
-    unmount();
+    createObjectUrlSpy.mockRestore();
+    revokeObjectUrlSpy.mockRestore();
+  });
 
-    expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-pending-image");
+  it("revokes object URLs after successful async image upload", async () => {
+    const createObjectUrlSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:attachment-success-image");
+    const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+
+    const uploadFile = vi.fn(async () => ({
+      id: "uploaded-img-1",
+      fileName: "success-image.jpg",
+      mimeType: "image/jpeg",
+      status: "ready" as const,
+    }));
+
+    render(<Attachment uploadFile={uploadFile} />);
+    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
+
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["image-bytes"], "success-image.jpg", { type: "image/jpeg" })],
+      },
+    });
+
+    await waitFor(() => {
+      expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-success-image");
+    });
 
     createObjectUrlSpy.mockRestore();
     revokeObjectUrlSpy.mockRestore();

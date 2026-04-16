@@ -83,21 +83,7 @@ export function Attachment({
   const [localItems, setLocalItems] = React.useState<AttachmentItem[]>([]);
   const [failedImagePreviewIds, setFailedImagePreviewIds] = React.useState<Set<string>>(new Set());
   const dragDepthRef = React.useRef(0);
-  const objectUrlsRef = React.useRef<Set<string>>(new Set());
-  const isMountedRef = React.useRef(true);
   const toast = useToast();
-
-  React.useEffect(() => {
-    isMountedRef.current = true;
-    const trackedObjectUrls = objectUrlsRef.current;
-    return () => {
-      isMountedRef.current = false;
-      for (const objectUrl of trackedObjectUrls) {
-        URL.revokeObjectURL(objectUrl);
-      }
-      trackedObjectUrls.clear();
-    };
-  }, []);
 
   const handleUpload = React.useCallback(
     async (files: File[]) => {
@@ -108,18 +94,12 @@ export function Attachment({
       }
 
       const temporaryItems = files.map(createTemporaryUploadItem);
-      for (const temporaryItem of temporaryItems) {
-        if (temporaryItem.previewUrl) {
-          objectUrlsRef.current.add(temporaryItem.previewUrl);
-        }
-      }
       setLocalItems((prev) => [...temporaryItems.map((entry) => entry.item), ...prev]);
 
       await Promise.all(
         temporaryItems.map(async (entry) => {
           try {
             const uploadedItem = await uploadFile(entry.file);
-            if (!isMountedRef.current) return;
             setLocalItems((prev) =>
               prev.map((item) =>
                 item.id === entry.item.id
@@ -131,7 +111,6 @@ export function Attachment({
               ),
             );
           } catch (error: unknown) {
-            if (!isMountedRef.current) return;
             const uploadError =
               error instanceof Error ? error : new Error("Failed to upload attachment");
             toast.error(`Failed to upload ${entry.file.name}`);
@@ -140,7 +119,6 @@ export function Attachment({
           } finally {
             if (entry.previewUrl) {
               URL.revokeObjectURL(entry.previewUrl);
-              objectUrlsRef.current.delete(entry.previewUrl);
             }
           }
         }),

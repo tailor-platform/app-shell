@@ -2,7 +2,7 @@ import { useContext, type ComponentProps, type ReactNode } from "react";
 import { Ellipsis, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
-import { useCollectionControl } from "@/contexts/collection-control-context";
+import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
@@ -354,8 +354,13 @@ export interface DataTablePaginationProps {
 function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {}) {
   const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =
     useDataTableContext();
-  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } =
-    useCollectionControl();
+  const control = useCollectionControlOptional();
+  if (!control) {
+    throw new Error(
+      "<DataTable.Pagination> requires collection control. Pass `control` from `useCollectionVariables()` to `useDataTable()`.",
+    );
+  }
+  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } = control;
   const t = useDataTableT();
 
   return (

@@ -37,11 +37,6 @@ export interface Column<TRow extends Record<string, unknown>> {
   filter?: FilterConfig;
 }
 
-/**
- * Column definition used by `useDataTable` (same as `Column`).
- */
-export type ColumnDefinition<TRow extends Record<string, unknown>> = Column<TRow>;
-
 // =============================================================================
 // useDataTable Types
 // =============================================================================
@@ -66,6 +61,7 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
   control?: CollectionControl;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  rowKey?: keyof TRow & string;
 }
 
 /**
@@ -73,7 +69,7 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
  */
 export interface RowOperations<TRow extends Record<string, unknown>> {
   updateRow: (rowId: string, fields: Partial<TRow>) => { rollback: () => void };
-  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow };
+  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow | undefined };
   insertRow: (row: TRow) => { rollback: () => void };
 }
 
@@ -123,7 +119,7 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 
   // Row Operations (Optimistic Updates)
   updateRow: (rowId: string, fields: Partial<TRow>) => { rollback: () => void };
-  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow };
+  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow | undefined };
   insertRow: (row: TRow) => { rollback: () => void };
 
   // Control (passthrough for DataTable.Provider)

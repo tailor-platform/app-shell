@@ -144,7 +144,6 @@ export {
   type CollectionControl,
   type CollectionResult,
   type NodeType,
-  type QueryVariables,
   type PaginationVariables,
   type UseCollectionOptions,
   type UseCollectionReturn,
@@ -154,12 +153,8 @@ export {
   type TableMetadataMap,
   type BuildQueryVariables,
   type TableMetadataFilter,
-  type MetadataFilter,
   type TableFieldName,
   type TableOrderableFieldName,
-  type OrderableFieldName,
-  type FieldName,
-  type MatchingTableName,
 } from "./types/collection";
 
 // DataTable
@@ -172,7 +167,6 @@ export {
   type DataTablePaginationProps,
   type Column,
   type ColumnOptions,
-  type ColumnDefinition,
   type DataTableData,
   type RowAction,
   type RowOperations,

@@ -3,13 +3,13 @@ import { Popover } from "@base-ui/react/popover";
 import { Checkbox } from "@base-ui/react/checkbox";
 import { ChevronDown, Plus, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCollectionControl } from "@/contexts/collection-control-context";
+import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import type { Filter, FilterConfig, FilterOperator } from "@/types/collection";
+import type { CollectionControl, Filter, FilterConfig, FilterOperator } from "@/types/collection";
 import type { Column } from "./types";
 
 // =============================================================================
@@ -56,7 +56,12 @@ type AddFilterDraftValue = string | string[] | boolean[];
 
 function DataTableFilters({ className }: { className?: string }) {
   const ctx = useDataTableContext();
-  const control = useCollectionControl();
+  const control = useCollectionControlOptional();
+  if (!control) {
+    throw new Error(
+      "<DataTable.Filters> requires collection control. Pass `control` from `useCollectionVariables()` to `useDataTable()`.",
+    );
+  }
 
   // Collect all columns that have a filter config
   const filterableColumns = useMemo(
@@ -104,7 +109,7 @@ function AddFilterPopover({
   control,
 }: {
   availableColumns: FilterableColumn[];
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const t = useDataTableT();
   const [open, setOpen] = useState(false);
@@ -389,7 +394,7 @@ function FilterChip({
 }: {
   column: Column<Record<string, unknown>> & { filter: FilterConfig };
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const t = useDataTableT();
   const config = column.filter;
@@ -460,7 +465,7 @@ function FilterPopoverContent({
 }: {
   column: Column<Record<string, unknown>> & { filter: FilterConfig };
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const config = column.filter;
 
@@ -491,7 +496,7 @@ function EnumFilterEditor({
 }: {
   config: Extract<FilterConfig, { type: "enum" }>;
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const selectedValues = useMemo(
     () => (Array.isArray(filter.value) ? (filter.value as string[]) : []),
@@ -559,7 +564,7 @@ function BooleanFilterEditor({
 }: {
   config: Extract<FilterConfig, { type: "boolean" }>;
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const t = useDataTableT();
   const selectedValues = useMemo(
@@ -633,7 +638,7 @@ function StringFilterEditor({
 }: {
   config: Extract<FilterConfig, { type: "string" }>;
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<StringOperator>(
@@ -689,7 +694,7 @@ function UuidFilterEditor({
 }: {
   config: Extract<FilterConfig, { type: "uuid" }>;
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
 
@@ -727,7 +732,7 @@ function NumericFilterEditor({
 }: {
   config: Extract<FilterConfig, { type: "number" }>;
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<NumericDateOperator>(
@@ -785,7 +790,7 @@ function DateFilterEditor({
 }: {
   config: Extract<FilterConfig, { type: "date" }>;
   filter: Filter;
-  control: ReturnType<typeof useCollectionControl>;
+  control: CollectionControl;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<NumericDateOperator>(

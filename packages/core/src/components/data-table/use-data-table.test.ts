@@ -250,7 +250,7 @@ describe("useDataTable", () => {
     it("deleteRow removes row optimistically", () => {
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
 
-      let deletedRow: TestRow;
+      let deletedRow: TestRow | undefined;
       act(() => {
         ({ deletedRow } = result.current.deleteRow("1"));
       });

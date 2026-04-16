@@ -202,6 +202,9 @@ export function useCollectionVariables(
   }, []);
 
   const goToLastPage = useCallback((lastPage: number) => {
+    // Cursor-based pagination has no "jump to page N" — we request the last
+    // `pageSize` items by setting direction="backward" with no cursor.
+    // The displayed page number may drift if `total` is stale.
     setCursor(null);
     setPaginationDirection("backward");
     setCurrentPage(lastPage);

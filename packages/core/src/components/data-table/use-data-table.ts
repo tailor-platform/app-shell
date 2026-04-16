@@ -44,6 +44,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     control,
     onClickRow,
     rowActions,
+    rowKey = "id",
   } = options;
 
   // ---------------------------------------------------------------------------
@@ -136,7 +137,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     (rowId: string, fields: Partial<TRow>) => {
       const currentRows = optimisticRows ?? sourceRows;
       const updatedRows = currentRows.map((row) => {
-        if ((row as Record<string, unknown>).id === rowId) {
+        if ((row as Record<string, unknown>)[rowKey] === rowId) {
           return { ...row, ...fields };
         }
         return row;
@@ -149,15 +150,17 @@ export function useDataTable<TRow extends Record<string, unknown>>(
         },
       };
     },
-    [optimisticRows, sourceRows],
+    [optimisticRows, sourceRows, rowKey],
   );
 
   const deleteRow = useCallback(
     (rowId: string) => {
       const currentRows = optimisticRows ?? sourceRows;
-      const deletedRow = currentRows.find((row) => (row as Record<string, unknown>).id === rowId);
+      const deletedRow = currentRows.find(
+        (row) => (row as Record<string, unknown>)[rowKey] === rowId,
+      );
       const filteredRows = currentRows.filter(
-        (row) => (row as Record<string, unknown>).id !== rowId,
+        (row) => (row as Record<string, unknown>)[rowKey] !== rowId,
       );
       setOptimisticRows(filteredRows);
 
@@ -165,10 +168,10 @@ export function useDataTable<TRow extends Record<string, unknown>>(
         rollback: () => {
           setOptimisticRows(null);
         },
-        deletedRow: deletedRow as TRow,
+        deletedRow,
       };
     },
-    [optimisticRows, sourceRows],
+    [optimisticRows, sourceRows, rowKey],
   );
 
   const insertRow = useCallback(

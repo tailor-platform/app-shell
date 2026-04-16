@@ -45,3 +45,12 @@ export function useCollectionControl<
   }
   return ctx as CollectionControl<TFieldName>;
 }
+
+/**
+ * Internal variant that returns `null` instead of throwing when no provider exists.
+ */
+export function useCollectionControlOptional<
+  TFieldName extends string = string,
+>(): CollectionControl<TFieldName> | null {
+  return useContext(CollectionControlContext) as CollectionControl<TFieldName> | null;
+}

@@ -13,7 +13,6 @@ export { dataTableLabels } from "./i18n";
 export type {
   Column,
   ColumnOptions,
-  ColumnDefinition,
   DataTableData,
   RowAction,
   RowOperations,

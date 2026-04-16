@@ -1,18 +1,17 @@
 import * as React from "react";
-import {
-  ActionProvider,
-  defineRegistry,
-  Renderer,
-  StateProvider,
-  VisibilityProvider,
-  type SetState,
-  type StateStore,
-} from "@json-render/react";
+import type { Spec } from "@json-render/core";
+import { JSONUIProvider, defineRegistry, Renderer, type StateStore } from "@json-render/react";
 
+import { builtInFunctions } from "./built-in-functions";
 import { catalog } from "./catalog";
 import { buildFormComponents } from "./form-components";
 
-export type FormSpec = (typeof catalog)["_specType"];
+// FormSpec is the typed spec inferred from the catalog.
+// We intersect with `{ state?: Record<string, unknown> }` because the base
+// react schema does not model the `state` field, but the Spec interface does.
+export type FormSpec = (typeof catalog)["_specType"] & {
+  state?: Record<string, unknown>;
+};
 
 export type RenderJSONProps = {
   /** json-render の React schema に準拠した JSON 構造 */
@@ -55,16 +54,11 @@ export function RenderJSON({ spec, onSubmit, initialState, store, errors }: Rend
     [],
   );
 
-  const stateRef = React.useRef<Record<string, unknown>>(
-    (initialState ?? (spec as any).state ?? {}) as Record<string, unknown>,
-  );
-  const setStateRef = React.useRef<SetState | undefined>(undefined);
-
   const actionHandlers = React.useMemo(
     () =>
       handlers(
-        () => setStateRef.current,
-        () => stateRef.current,
+        () => undefined,
+        () => ({}),
       ),
     [handlers],
   );
@@ -73,12 +67,14 @@ export function RenderJSON({ spec, onSubmit, initialState, store, errors }: Rend
   if (!validation.success) throw validation.error;
 
   return (
-    <StateProvider store={store} initialState={initialState ?? (spec as any).state ?? {}}>
-      <VisibilityProvider>
-        <ActionProvider handlers={actionHandlers}>
-          <Renderer spec={spec as any} registry={registry} />
-        </ActionProvider>
-      </VisibilityProvider>
-    </StateProvider>
+    <JSONUIProvider
+      registry={registry}
+      store={store}
+      initialState={initialState ?? spec.state ?? {}}
+      handlers={actionHandlers}
+      functions={builtInFunctions}
+    >
+      <Renderer spec={spec as unknown as Spec} registry={registry} />
+    </JSONUIProvider>
   );
 }

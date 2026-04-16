@@ -14,7 +14,8 @@
   "scripts": {
     "dev": "NODE_ENV=development tsup --watch",
     "build": "tsup",
-    "lint": "oxlint -c .oxlintrc.jsonc"
+    "lint": "oxlint -c .oxlintrc.jsonc",
+    "type-check": "tsc --incremental"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

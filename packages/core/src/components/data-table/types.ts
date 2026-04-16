@@ -12,20 +12,7 @@ import type {
 // =============================================================================
 
 /**
- * Options for defining a column (used with `column()` helper).
- */
-export interface ColumnOptions<TRow extends Record<string, unknown>> {
-  label?: string;
-  render: (row: TRow) => ReactNode;
-  id?: string;
-  width?: number;
-  accessor?: (row: TRow) => unknown;
-  sort?: SortConfig;
-  filter?: FilterConfig;
-}
-
-/**
- * A column definition (produced by `column()` helper).
+ * A column definition for DataTable.
  */
 export interface Column<TRow extends Record<string, unknown>> {
   label?: string;
@@ -69,7 +56,10 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
  */
 export interface RowOperations<TRow extends Record<string, unknown>> {
   updateRow: (rowId: string, fields: Partial<TRow>) => { rollback: () => void };
-  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow | undefined };
+  deleteRow: (rowId: string) => {
+    rollback: () => void;
+    deletedRow: TRow | undefined;
+  };
   insertRow: (row: TRow) => { rollback: () => void };
 }
 
@@ -119,7 +109,10 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 
   // Row Operations (Optimistic Updates)
   updateRow: (rowId: string, fields: Partial<TRow>) => { rollback: () => void };
-  deleteRow: (rowId: string) => { rollback: () => void; deletedRow: TRow | undefined };
+  deleteRow: (rowId: string) => {
+    rollback: () => void;
+    deletedRow: TRow | undefined;
+  };
   insertRow: (row: TRow) => { rollback: () => void };
 
   // Control (passthrough for DataTable.Provider)

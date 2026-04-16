@@ -12,12 +12,10 @@ export { dataTableLabels } from "./i18n";
 // Types — DataTable-specific
 export type {
   Column,
-  ColumnOptions,
   DataTableData,
   RowAction,
   RowOperations,
   UseDataTableOptions,
   UseDataTableReturn,
   MetadataFieldOptions,
-  MetadataFieldsOptions,
 } from "./types";

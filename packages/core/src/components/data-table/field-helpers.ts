@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
-import type { Column, ColumnOptions, MetadataFieldOptions } from "./types";
+import type { Column, MetadataFieldOptions } from "./types";
 
 // =============================================================================
 // column() helper
@@ -10,9 +10,7 @@ import type { Column, ColumnOptions, MetadataFieldOptions } from "./types";
 /**
  * Define a column with explicit render and optional sort/filter/accessor.
  */
-export function column<TRow extends Record<string, unknown>>(
-  options: ColumnOptions<TRow>,
-): Column<TRow> {
+export function column<TRow extends Record<string, unknown>>(options: Column<TRow>): Column<TRow> {
   return {
     label: options.label,
     render: options.render,
@@ -37,7 +35,7 @@ function formatValue(value: unknown): ReactNode {
 }
 
 /**
- * Return a function that produces `ColumnOptions` from metadata field names.
+ * Return a function that produces `Column` from metadata field names.
  *
  * @example
  * ```tsx
@@ -53,13 +51,10 @@ export function inferColumns<
   const TTable extends TableMetadata = TableMetadata,
 >(
   tableMetadata: TTable,
-): (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => ColumnOptions<TRow> {
+): (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => Column<TRow> {
   const fields = tableMetadata.fields;
 
-  return (
-    dataKey: TableFieldName<TTable>,
-    columnOptions?: MetadataFieldOptions,
-  ): ColumnOptions<TRow> => {
+  return (dataKey: TableFieldName<TTable>, columnOptions?: MetadataFieldOptions): Column<TRow> => {
     const fieldName = dataKey as string;
     const fieldMeta = fields.find((f) => f.name === fieldName);
     if (!fieldMeta) {
@@ -117,13 +112,13 @@ export function inferColumns<
  * ```
  */
 export function createColumnHelper<TRow extends Record<string, unknown>>(): {
-  column: (options: ColumnOptions<TRow>) => Column<TRow>;
+  column: (options: Column<TRow>) => Column<TRow>;
   inferColumns: <const TTable extends TableMetadata = TableMetadata>(
     tableMetadata: TTable,
-  ) => (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => ColumnOptions<TRow>;
+  ) => (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => Column<TRow>;
 } {
   return {
-    column: (options: ColumnOptions<TRow>) => column<TRow>(options),
+    column: (options: Column<TRow>) => column<TRow>(options),
     inferColumns: <const TTable extends TableMetadata = TableMetadata>(tableMetadata: TTable) =>
       inferColumns<TRow, TTable>(tableMetadata),
   };

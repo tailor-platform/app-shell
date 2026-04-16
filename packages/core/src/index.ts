@@ -166,14 +166,12 @@ export {
   dataTableLabels,
   type DataTablePaginationProps,
   type Column,
-  type ColumnOptions,
   type DataTableData,
   type RowAction,
   type RowOperations,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,
-  type MetadataFieldsOptions,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export {

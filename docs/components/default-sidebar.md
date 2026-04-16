@@ -79,6 +79,7 @@ function Layout() {
 ## Features
 
 - **Auto-Navigation**: Automatically renders all modules and resources from AppShell
+- **Search Entry**: Always renders a **Search** button at the top of the navigation menu that opens the CommandPalette (equivalent to `Cmd+K` / `Ctrl+K`). This is available regardless of whether `searchSources` are configured on `AppShell`.
 - **Active State**: Highlights the current route
 - **Collapsible Groups**: Supports nested resource groups
 - **Responsive**: Adapts to mobile and desktop layouts

@@ -262,6 +262,38 @@ const requireAuth: Guard = ({ context }) => {
 };
 ```
 
+### searchSources
+
+- **Type:** `readonly SearchSource[]` (optional)
+- **Description:** Async search sources wired into the built-in CommandPalette. Each source is activated by typing its `prefix` followed by `:` in the palette. When active, the Actions and Pages sections are hidden and only results from that source are shown. The empty-input state of the palette lists all registered sources in a **Search Modes** section so users can discover them with a single click.
+
+```tsx
+import { AppShell, type SearchSource } from "@tailor-platform/app-shell";
+
+const searchSources: readonly SearchSource[] = [
+  {
+    prefix: "ORD",
+    title: "Orders",
+    search: async (query, { signal }) => {
+      const results = await api.searchOrders(query, { signal });
+      return results.map((o) => ({
+        key: o.id,
+        label: o.number,
+        path: `/orders/${o.id}`,
+      }));
+    },
+  },
+];
+
+<AppShell modules={modules} searchSources={searchSources}>
+  <SidebarLayout sidebar={<DefaultSidebar />} />
+</AppShell>;
+```
+
+See [`SearchSource`](./command-palette.md#searchsource) for the full type reference.
+
+> **Note:** `DefaultSidebar` always renders a **Search** entry that opens the palette regardless of whether `searchSources` is configured. The `Cmd+K` / `Ctrl+K` shortcut also works globally.
+
 ### children
 
 - **Type:** `React.ReactNode` (required)

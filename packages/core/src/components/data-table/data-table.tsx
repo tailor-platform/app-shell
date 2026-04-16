@@ -350,6 +350,9 @@ export interface DataTablePaginationProps {
 
 /**
  * Pre-built pagination controls. Place inside `DataTable.Footer`.
+ *
+ * **Requires `control`** — `useDataTable()` must receive `control` from
+ * `useCollectionVariables()`, otherwise this component throws at render time.
  */
 function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {}) {
   const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =

@@ -419,7 +419,7 @@ export interface CollectionControl<
   TFilter = Filter<TFieldName>,
 > {
   // Filter operations
-  filters: Filter[];
+  filters: Filter<TFieldName>[];
   addFilter<F extends TFieldName>(
     field: F,
     operator: OperatorForField<TFilter, F>,

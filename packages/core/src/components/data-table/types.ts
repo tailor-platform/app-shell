@@ -48,6 +48,14 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
   control?: CollectionControl;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  /**
+   * The field name used as the unique row identifier for optimistic updates.
+   *
+   * @default "id"
+   * @warning If `TRow` does not have an `"id"` field, you **must** specify `rowKey`.
+   * Omitting it when no `"id"` field exists will cause `updateRow`, `deleteRow`,
+   * and `insertRow` to silently no-op instead of updating the correct row.
+   */
   rowKey?: keyof TRow & string;
 }
 
@@ -137,11 +145,4 @@ export interface MetadataFieldOptions {
   filter?: boolean;
 }
 
-/**
- * Options for metadata-based multi-field definition.
- */
-export interface MetadataFieldsOptions {
-  overrides?: Record<string, Partial<MetadataFieldOptions>>;
-  sort?: boolean;
-  filter?: boolean;
-}
+

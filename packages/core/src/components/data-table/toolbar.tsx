@@ -35,7 +35,7 @@ DataTableToolbar.displayName = "DataTable.Toolbar";
 /** Default operator per filter type used when adding a new filter chip. */
 const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
   enum: "in",
-  boolean: "in",
+  boolean: "eq",
   string: "contains",
   number: "eq",
   date: "eq",
@@ -54,6 +54,12 @@ type FilterableColumn = Column<Record<string, unknown>> & {
 };
 type AddFilterDraftValue = string | string[] | boolean[];
 
+/**
+ * Auto-generated filter chips from column filter configs.
+ *
+ * **Requires `control`** — `useDataTable()` must receive `control` from
+ * `useCollectionVariables()`, otherwise this component throws at render time.
+ */
 function DataTableFilters({ className }: { className?: string }) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();

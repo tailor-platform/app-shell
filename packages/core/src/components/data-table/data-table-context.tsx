@@ -5,10 +5,12 @@ import type { Column, RowAction, RowOperations } from "./types";
 /**
  * Context value provided by `DataTable.Root`.
  */
-export interface DataTableContextValue<TRow extends Record<string, unknown>> {
-  updateRow: RowOperations<TRow>["updateRow"];
-  deleteRow: RowOperations<TRow>["deleteRow"];
+export interface DataTableContextValue<TRow extends Record<string, unknown>, TRowId = string> {
+  updateRow: RowOperations<TRow, TRowId>["updateRow"];
+  deleteRow: RowOperations<TRow, TRowId>["deleteRow"];
   insertRow: RowOperations<TRow>["insertRow"];
+
+  rowKey: string;
 
   columns: Column<TRow>[];
   rows: TRow[];
@@ -36,21 +38,23 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DataTableContext = createContext<DataTableContextValue<any> | null>(null);
+const DataTableContext = createContext<DataTableContextValue<any, any> | null>(null);
 
 export { DataTableContext };
 
 /**
- * Hook to access row operations from the nearest `DataTable.Root`.
+ * Hook to access the full DataTable state (rows, columns, sorting, pagination,
+ * column visibility, and row operations) from the nearest `DataTable.Root`.
  *
  * @throws Error if used outside of `DataTable.Root`.
  */
 export function useDataTableContext<
   TRow extends Record<string, unknown>,
->(): DataTableContextValue<TRow> {
+  TRowId = string,
+>(): DataTableContextValue<TRow, TRowId> {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
     throw new Error("useDataTableContext must be used within <DataTable.Root>");
   }
-  return ctx as DataTableContextValue<TRow>;
+  return ctx as DataTableContextValue<TRow, TRowId>;
 }

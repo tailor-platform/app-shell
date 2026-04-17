@@ -33,9 +33,23 @@ import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
  * </DataTable.Root>
  * ```
  */
+// Overload: explicit rowKey with inferred TKey — rowId is typed as TRow[TKey]
+export function useDataTable<
+  TRow extends Record<string, unknown>,
+  const TKey extends keyof TRow & string,
+>(
+  options: UseDataTableOptions<TRow> & { rowKey: TKey },
+): UseDataTableReturn<TRow, TRow[TKey]>;
+
+// Overload: no explicit rowKey — rowId stays string (default key "id" is typically string)
 export function useDataTable<TRow extends Record<string, unknown>>(
   options: UseDataTableOptions<TRow>,
-): UseDataTableReturn<TRow> {
+): UseDataTableReturn<TRow, string>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useDataTable<TRow extends Record<string, unknown>>(
+  options: UseDataTableOptions<TRow>,
+): UseDataTableReturn<TRow, any> {
   const {
     columns: allColumns,
     data,
@@ -81,9 +95,12 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const pageSize = control?.pageSize ?? 0;
   const currentPage = control?.currentPage ?? 1;
   const totalPages =
-    total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
+    total !== null && pageSize > 0
+      ? Math.max(1, Math.ceil(total / pageSize))
+      : null;
   const hasPrevPage = currentPage > 1;
-  const hasNextPage = totalPages !== null ? currentPage < totalPages : pageInfo.hasNextPage;
+  const hasNextPage =
+    totalPages !== null ? currentPage < totalPages : pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
   // Column visibility management
@@ -209,9 +226,12 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     return control?.sortStates ?? [];
   }, [control?.sortStates]);
 
-  const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
+  const onSort = useMemo<
+    ((field: string, direction?: "Asc" | "Desc") => void) | undefined
+  >(() => {
     if (!control) return undefined;
-    return (field: string, direction?: "Asc" | "Desc") => control.setSort(field, direction);
+    return (field: string, direction?: "Asc" | "Desc") =>
+      control.setSort(field, direction);
   }, [control]);
 
   // ---------------------------------------------------------------------------
@@ -239,6 +259,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     updateRow,
     deleteRow,
     insertRow,
+    rowKey: rowKey as string,
     control,
     onClickRow,
     rowActions,

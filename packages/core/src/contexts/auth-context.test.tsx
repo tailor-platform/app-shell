@@ -116,8 +116,17 @@ describe("AuthProvider", () => {
       let resolveCheckAuthStatus: (() => void) | undefined;
       const mockCheckAuthStatus = vi.fn(
         () =>
-          new Promise<void>((resolve) => {
-            resolveCheckAuthStatus = resolve;
+          new Promise<{
+            isAuthenticated: boolean;
+            error: null;
+            isReady: true;
+          }>((resolve) => {
+            resolveCheckAuthStatus = () =>
+              resolve({
+                isAuthenticated: true,
+                error: null,
+                isReady: true,
+              });
           }),
       );
 

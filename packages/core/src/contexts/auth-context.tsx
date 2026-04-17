@@ -12,6 +12,7 @@ import {
   type AuthClient,
 } from "@tailor-platform/auth-public-client";
 import { RootRouteContext } from "@/contexts/root-route-context";
+import { A } from "node_modules/react-router/dist/development/context-phCt_zmH.mjs";
 
 // ============================================================================
 // Auth Client
@@ -212,7 +213,10 @@ type AuthProviderProps = {
  * - initial deferred auto-login attempt
  * - duplicate login prevention
  */
-const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) => {
+const useAutoLogin = (props: {
+  client: EnhancedAuthClient;
+  enabled?: boolean;
+}) => {
   // Prevent duplicate login redirects when multiple auth_state_changed
   // events fire before the first login attempt settles.
   const loginInFlightRef = useRef<Promise<void> | null>(null);
@@ -264,6 +268,44 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
 };
 
 /**
+ * Starts auth initialization on mount and coalesces overlapping readiness checks.
+ * Returns a function that callers can reuse as a retry path when auth is still unresolved.
+ */
+export const useAuthInitialization = (client: EnhancedAuthClient) => {
+  const initInFlightRef = useRef<Promise<void> | null>(null);
+
+  const ensureInitialized = useCallback(async (): Promise<void> => {
+    if (client.getState().isReady) {
+      return;
+    }
+
+    if (initInFlightRef.current) {
+      return initInFlightRef.current;
+    }
+
+    initInFlightRef.current = client
+      .checkAuthStatus()
+      .then(() => undefined)
+      .finally(() => {
+        initInFlightRef.current = null;
+      });
+
+    return initInFlightRef.current;
+  }, [client]);
+
+  // Kick off initialization on mount instead of waiting for the first router load.
+  // Router-driven loads still reuse the returned function as a retry path when
+  // auth remains unresolved, but AuthProvider should not depend on navigation.
+  useEffect(() => {
+    ensureInitialized().catch((error) => {
+      console.error("Failed to check auth status:", error);
+    });
+  }, [ensureInitialized]);
+
+  return ensureInitialized;
+};
+
+/**
  * Authentication provider component.
  *
  * Wrap your application with this component to provide authentication context.
@@ -287,9 +329,10 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
  * }
  * ```
  */
-export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
+export const AuthProvider = (
+  props: React.PropsWithChildren<AuthProviderProps>,
+) => {
   const client = props.client;
-  const initInFlightRef = useRef<Promise<void> | null>(null);
 
   // Set up auth state subscription for auto-login orchestration
   const { subscribeAuthState } = useAutoLogin({
@@ -303,37 +346,9 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
-  // Start the initial auth check from the provider as well as the router loader so
-  // consumers outside AppShell do not get stuck in an unresolved auth state. The
-  // in-flight ref also coalesces overlapping checkAuthStatus() calls into one request.
-  const ensureInitialized = useCallback(async (): Promise<void> => {
-    if (client.getState().isReady) {
-      return;
-    }
-
-    if (initInFlightRef.current) {
-      return initInFlightRef.current;
-    }
-
-    initInFlightRef.current = client
-      .checkAuthStatus()
-      .then(() => undefined)
-      .finally(() => {
-        initInFlightRef.current = null;
-      });
-
-    return initInFlightRef.current;
-  }, [client]);
-
-  // Kick off initialization on mount instead of waiting for the first router load.
-  // authLoader remains as a retry path for unresolved auth state during navigation,
-  // but components that only use AuthProvider should not depend on RouterContainer
-  // being present or a navigation happening before auth becomes ready.
-  useEffect(() => {
-    ensureInitialized().catch((error) => {
-      console.error("Failed to check auth status:", error);
-    });
-  }, [ensureInitialized]);
+  // Reuse the same initialization path for mount-time bootstrapping and
+  // loader-time retries so unresolved auth state is handled consistently.
+  const ensureInitialized = useAuthInitialization(client);
 
   // Build the root loader inside AuthProvider so that the router layer
   // never needs to know about EnhancedAuthClient internals.
@@ -408,7 +423,9 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
+    throw new Error(
+      "useAuth/useAuthSuspense must be used within an AuthProvider",
+    );
   }
   return context;
 };

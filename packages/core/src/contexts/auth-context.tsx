@@ -213,10 +213,7 @@ type AuthProviderProps = {
  * - initial deferred auto-login attempt
  * - duplicate login prevention
  */
-const useAutoLogin = (props: {
-  client: EnhancedAuthClient;
-  enabled?: boolean;
-}) => {
+const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) => {
   // Prevent duplicate login redirects when multiple auth_state_changed
   // events fire before the first login attempt settles.
   const loginInFlightRef = useRef<Promise<void> | null>(null);
@@ -329,9 +326,7 @@ export const useAuthInitialization = (client: EnhancedAuthClient) => {
  * }
  * ```
  */
-export const AuthProvider = (
-  props: React.PropsWithChildren<AuthProviderProps>,
-) => {
+export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
   // Set up auth state subscription for auto-login orchestration
@@ -423,9 +418,7 @@ export const AuthProvider = (
 const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error(
-      "useAuth/useAuthSuspense must be used within an AuthProvider",
-    );
+    throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
   }
   return context;
 };

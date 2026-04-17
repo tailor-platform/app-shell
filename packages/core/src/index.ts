@@ -164,7 +164,7 @@ export {
   useDataTableContext,
   type DataTableContextValue,
   createColumnHelper,
-  dataTableLabels,
+  useDataTableT,
   type DataTablePaginationProps,
   type Column,
   type DataTableData,

@@ -7,7 +7,7 @@ export { useDataTableContext, type DataTableContextValue } from "./data-table-co
 export { createColumnHelper } from "./field-helpers";
 
 // i18n
-export { dataTableLabels } from "./i18n";
+export { useDataTableT } from "./i18n";
 
 // Types — DataTable-specific
 export type {

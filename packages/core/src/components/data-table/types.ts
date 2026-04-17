@@ -108,7 +108,7 @@ export interface RowAction<TRow extends Record<string, unknown>> {
 export interface UseDataTableReturn<
   TRow extends Record<string, unknown>,
   TRowId = string,
-> {
+> extends RowOperations<TRow, TRowId> {
   // Data
   rows: TRow[];
   loading: boolean;
@@ -132,14 +132,6 @@ export interface UseDataTableReturn<
   showAllColumns: () => void;
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
-
-  // Row Operations (Optimistic Updates)
-  updateRow: (rowId: TRowId, fields: Partial<TRow>) => { rollback: () => void };
-  deleteRow: (rowId: TRowId) => {
-    rollback: () => void;
-    deletedRow: TRow | undefined;
-  };
-  insertRow: (row: TRow) => { rollback: () => void };
 
   // Row key identifier
   rowKey: string;

@@ -428,6 +428,15 @@ export interface CollectionControl<
   resetPage: () => void;
   currentPage: number;
   goToFirstPage: () => void;
+  /**
+   * Navigate to the last page.
+   *
+   * @param lastPage - The total page count. Only call this when `totalPages`
+   * is known (non-null). If called with an unknown total, `paginationDirection`
+   * will be set to `"backward"` while `currentPage` is set to the supplied
+   * value, causing the UI page number and the actual data window to contradict
+   * each other.
+   */
   goToLastPage: (lastPage: number) => void;
 }
 
@@ -448,7 +457,7 @@ export interface UseCollectionReturn<
 // =============================================================================
 
 /**
- * Default operator labels used by SearchFilterForm.
+ * Default human-readable labels for each filter operator.
  */
 export const DEFAULT_OPERATOR_LABELS: Record<FilterOperator, string> = {
   eq: "=",

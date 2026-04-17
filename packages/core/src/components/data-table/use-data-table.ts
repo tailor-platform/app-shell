@@ -50,10 +50,21 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // ---------------------------------------------------------------------------
   // Data extraction
   // ---------------------------------------------------------------------------
-  const [optimisticRows, setOptimisticRows] = useState<TRow[] | null>(null);
+
+  // `optimisticState` pairs the optimistic row list with the `sourceRows`
+  // reference it was applied against. When `data` changes (server refetch
+  // completes), `sourceRows` gets a new reference and the comparison fails,
+  // automatically falling back to fresh server rows — no useEffect needed.
+  const [optimisticState, setOptimisticState] = useState<{
+    baseRows: TRow[];
+    rows: TRow[];
+  } | null>(null);
 
   const sourceRows = useMemo(() => data?.rows ?? [], [data?.rows]);
-  const rows = optimisticRows ?? sourceRows;
+  const rows =
+    optimisticState !== null && optimisticState.baseRows === sourceRows
+      ? optimisticState.rows
+      : sourceRows;
 
   const pageInfo: PageInfo = data?.pageInfo ?? {
     hasNextPage: false,
@@ -135,60 +146,60 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // ---------------------------------------------------------------------------
   const updateRow = useCallback(
     (rowId: string, fields: Partial<TRow>) => {
-      const currentRows = optimisticRows ?? sourceRows;
-      const previousRows = currentRows;
+      const currentRows = optimisticState?.rows ?? sourceRows;
+      const previousState = optimisticState;
       const updatedRows = currentRows.map((row) => {
         if ((row as Record<string, unknown>)[rowKey] === rowId) {
           return { ...row, ...fields };
         }
         return row;
       });
-      setOptimisticRows(updatedRows);
+      setOptimisticState({ baseRows: sourceRows, rows: updatedRows });
 
       return {
         rollback: () => {
-          setOptimisticRows(previousRows);
+          setOptimisticState(previousState);
         },
       };
     },
-    [optimisticRows, sourceRows, rowKey],
+    [optimisticState, sourceRows, rowKey],
   );
 
   const deleteRow = useCallback(
     (rowId: string) => {
-      const currentRows = optimisticRows ?? sourceRows;
-      const previousRows = currentRows;
+      const currentRows = optimisticState?.rows ?? sourceRows;
+      const previousState = optimisticState;
       const deletedRow = currentRows.find(
         (row) => (row as Record<string, unknown>)[rowKey] === rowId,
       );
       const filteredRows = currentRows.filter(
         (row) => (row as Record<string, unknown>)[rowKey] !== rowId,
       );
-      setOptimisticRows(filteredRows);
+      setOptimisticState({ baseRows: sourceRows, rows: filteredRows });
 
       return {
         rollback: () => {
-          setOptimisticRows(previousRows);
+          setOptimisticState(previousState);
         },
         deletedRow,
       };
     },
-    [optimisticRows, sourceRows, rowKey],
+    [optimisticState, sourceRows, rowKey],
   );
 
   const insertRow = useCallback(
     (row: TRow) => {
-      const currentRows = optimisticRows ?? sourceRows;
-      const previousRows = currentRows;
-      setOptimisticRows([row, ...currentRows]);
+      const currentRows = optimisticState?.rows ?? sourceRows;
+      const previousState = optimisticState;
+      setOptimisticState({ baseRows: sourceRows, rows: [row, ...currentRows] });
 
       return {
         rollback: () => {
-          setOptimisticRows(previousRows);
+          setOptimisticState(previousState);
         },
       };
     },
-    [optimisticRows, sourceRows],
+    [optimisticState, sourceRows],
   );
 
   // ---------------------------------------------------------------------------

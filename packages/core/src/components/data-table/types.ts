@@ -61,13 +61,25 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
 
 /**
  * Row operations with optimistic update support.
+ *
+ * Each operation returns a `rollback()` function that restores row state to
+ * the **snapshot taken immediately before that specific call**. If multiple
+ * operations are chained, rolling back an earlier one also undoes all later
+ * ones, because the snapshot predates those subsequent operations.
+ *
+ * Optimistic state is automatically discarded when the `data` prop reference
+ * changes (i.e., after a server refetch completes), so explicit cleanup is
+ * not required on the success path.
  */
 export interface RowOperations<TRow extends Record<string, unknown>> {
+  /** Optimistically update fields of a row identified by `rowId`. */
   updateRow: (rowId: string, fields: Partial<TRow>) => { rollback: () => void };
+  /** Optimistically remove a row identified by `rowId`. Returns the deleted row for undo. */
   deleteRow: (rowId: string) => {
     rollback: () => void;
     deletedRow: TRow | undefined;
   };
+  /** Optimistically prepend a new row to the list. */
   insertRow: (row: TRow) => { rollback: () => void };
 }
 

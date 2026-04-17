@@ -161,6 +161,17 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const isOAuthCallbackUrl = (url: URL) =>
+  url.searchParams.has("code") || url.searchParams.has("error");
+
+const isCurrentOAuthCallbackUrl = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return isOAuthCallbackUrl(new URL(window.location.href));
+};
+
 /**
  * Guard component that shows a fallback UI while auth is not ready or
  * not authenticated. Defined here so that the router layer does not
@@ -222,6 +233,7 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
     const authState = props.client.getState();
     if (
       !props.enabled ||
+      isCurrentOAuthCallbackUrl() ||
       !authState.isReady ||
       authState.isAuthenticated ||
       loginInFlightRef.current
@@ -271,7 +283,7 @@ export const useAuthInitialization = (client: EnhancedAuthClient) => {
   const initInFlightRef = useRef<Promise<void> | null>(null);
 
   const ensureInitialized = useCallback(async (): Promise<void> => {
-    if (client.getState().isReady) {
+    if (isCurrentOAuthCallbackUrl() || client.getState().isReady) {
       return;
     }
 
@@ -351,7 +363,7 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
       // The "code" query parameter indicates a redirect back from the OAuth provider.
       // handleCallback() internally cleans up the OAuth-related query parameters
       // from the URL, so no additional URL cleanup is needed here.
-      if (requestUrl.searchParams.has("code")) {
+      if (isOAuthCallbackUrl(requestUrl)) {
         try {
           await client.handleCallback();
         } catch (error) {

@@ -21,6 +21,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.unstubAllGlobals();
+  window.history.replaceState({}, "", "/");
 });
 
 const LoadingGuard = () => <div>Loading...</div>;
@@ -147,6 +148,33 @@ describe("AuthProvider", () => {
 
       resolveCheckAuthStatus?.();
       await Promise.all([firstRetry, secondRetry]);
+    });
+
+    it("should skip auth initialization while handling an OAuth callback", async () => {
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=abc");
+
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      renderHook(() => useAuthInitialization(mockClient));
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockCheckAuthStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -731,6 +759,59 @@ describe("AuthProvider", () => {
         },
         { timeout: 1000 },
       );
+    });
+
+    it("should not login while the current URL is an OAuth callback", async () => {
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=abc");
+
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+
+      const mockAddEventListener = vi.fn(
+        (listener: (event: { type: string; data?: unknown }) => void) => {
+          authEventListener = listener;
+          return () => {};
+        },
+      );
+
+      let currentState = {
+        isAuthenticated: false,
+        error: null as string | null,
+        isReady: true,
+      };
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockClient = createMockAuthClient(undefined, {
+        login: mockLogin,
+        addEventListener: mockAddEventListener,
+        getState: vi.fn(() => currentState),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+
+      act(() => {
+        currentState = {
+          isAuthenticated: false,
+          error: null,
+          isReady: true,
+        };
+        authEventListener?.({ type: "auth_state_changed", data: {} });
+      });
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
     });
   });
 

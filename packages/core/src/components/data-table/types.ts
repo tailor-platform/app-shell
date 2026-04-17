@@ -144,5 +144,3 @@ export interface MetadataFieldOptions {
   sort?: boolean;
   filter?: boolean;
 }
-
-

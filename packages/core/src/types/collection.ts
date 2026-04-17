@@ -226,22 +226,6 @@ export interface PageInfo {
 }
 
 // =============================================================================
-// Query Variables (Tailor Platform format)
-// =============================================================================
-
-/**
- * GraphQL query variables in Tailor Platform format.
- */
-export interface QueryVariables {
-  query?: Record<string, unknown>;
-  order?: { field: string; direction: "Asc" | "Desc" }[];
-  first?: number | null;
-  after?: string | null;
-  last?: number | null;
-  before?: string | null;
-}
-
-// =============================================================================
 // Collection Variables (split into explicit sub-properties)
 // =============================================================================
 
@@ -425,7 +409,7 @@ export interface CollectionControl<
     operator: OperatorForField<TFilter, F>,
     value: unknown,
   ): void;
-  setFilters: (filters: Filter[]) => void;
+  setFilters: (filters: Filter<TFieldName>[]) => void;
   removeFilter(field: TFieldName): void;
   clearFilters: () => void;
 

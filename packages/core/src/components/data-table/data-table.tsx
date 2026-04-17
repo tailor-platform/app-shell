@@ -358,6 +358,11 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
   const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =
     useDataTableContext();
   const control = useCollectionControlOptional();
+  // Intentional throw: <DataTable.Pagination> cannot function without collection
+  // control (needs pageSize, currentPage, goToFirstPage, etc.). Rendering a
+  // disabled/empty fallback would silently hide a misconfiguration, so we fail
+  // loudly instead. Consumers must pass `control` from useCollectionVariables()
+  // to useDataTable() when using this component.
   if (!control) {
     throw new Error(
       "<DataTable.Pagination> requires collection control. Pass `control` from `useCollectionVariables()` to `useDataTable()`.",

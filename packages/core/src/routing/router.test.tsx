@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterContainer } from "./router";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
+import * as ReactRouter from "react-router";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
@@ -22,6 +23,7 @@ afterEach(() => {
 const renderWithConfig = ({
   modules = [],
   basePath,
+  locale = "en",
   rootComponent,
   initialEntries,
   contextData = {},
@@ -31,6 +33,7 @@ const renderWithConfig = ({
 }: {
   modules?: Array<Module>;
   basePath?: string;
+  locale?: string;
   rootComponent?: () => ReactNode;
   initialEntries: Array<string>;
   contextData?: ContextData;
@@ -43,7 +46,7 @@ const renderWithConfig = ({
     settingsResources: [] as Array<Resource>,
     basePath,
     errorBoundary: undefined,
-    locale: "en",
+    locale,
   };
 
   setContextData(contextData);
@@ -58,7 +61,7 @@ const renderWithConfig = ({
     </AppShellConfigContext.Provider>
   );
 
-  render(
+  return render(
     authClient ? (
       <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
         {tree}
@@ -482,6 +485,102 @@ describe("RouterContainer with AuthProvider", () => {
 
     await screen.findByText("Home");
     expect(mockHandleCallback).toHaveBeenCalled();
+  });
+
+  it("does not recreate the router when auth state changes", async () => {
+    let snapshot = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: false,
+    };
+    const listeners: Array<(event: { type: string }) => void> = [];
+    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+
+    const authClient = createMockAuthClient(snapshot, {
+      getState: vi.fn(() => snapshot),
+      addEventListener: vi.fn((listener) => {
+        listeners.push(listener);
+        return () => {
+          const idx = listeners.indexOf(listener);
+          if (idx >= 0) listeners.splice(idx, 1);
+        };
+      }),
+    });
+
+    try {
+      renderWithConfig({
+        modules: [],
+        rootComponent: () => <div>Home</div>,
+        initialEntries: ["/"],
+        authClient,
+        guardComponent: () => <div>Loading...</div>,
+      });
+
+      expect(await screen.findByText("Loading...")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        snapshot = {
+          isAuthenticated: true,
+          error: null,
+          isReady: true,
+        };
+        for (const listener of listeners) {
+          listener({ type: "auth_state_changed" });
+        }
+      });
+
+      expect(await screen.findByText("Home")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      createMemoryRouterSpy.mockRestore();
+    }
+  });
+
+  it("recreates the router when route-defining config changes", async () => {
+    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+    const module = defineModule({
+      path: "dashboard",
+      component: () => <div>Dashboard</div>,
+      meta: { title: "Dashboard" },
+      resources: [],
+    });
+
+    try {
+      const view = renderWithConfig({
+        modules: [module],
+        locale: "en",
+        initialEntries: ["/dashboard"],
+      });
+
+      expect(await screen.findByText("Dashboard")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+
+      view.rerender(
+        <AppShellConfigContext.Provider
+          value={{
+            configurations: {
+              modules: [module],
+              settingsResources: [],
+              basePath: undefined,
+              errorBoundary: undefined,
+              locale: "ja",
+            },
+          }}
+        >
+          <AppShellDataContext.Provider value={{ contextData: {} }}>
+            <RouterContainer memory initialEntries={["/dashboard"]}>
+              <Outlet />
+            </RouterContainer>
+          </AppShellDataContext.Provider>
+        </AppShellConfigContext.Provider>,
+      );
+
+      expect(await screen.findByText("Dashboard")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      createMemoryRouterSpy.mockRestore();
+    }
   });
 
   it("calls login automatically when autoLogin is enabled and not authenticated", async () => {

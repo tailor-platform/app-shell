@@ -38,12 +38,27 @@ describe("AuthProvider", () => {
       isReady: false,
     };
 
+    const baseHandleCallback = overrides?.handleCallback ?? vi.fn();
+    let handleCallbackInFlight: Promise<void> | null = null;
+    const handleCallback = vi.fn(() => {
+      if (handleCallbackInFlight) {
+        return handleCallbackInFlight;
+      }
+
+      const callbackPromise = Promise.resolve(baseHandleCallback()).finally(() => {
+        handleCallbackInFlight = null;
+      });
+      handleCallbackInFlight = callbackPromise;
+      return callbackPromise;
+    });
+
+    const { handleCallback: _ignoredHandleCallback, ...otherOverrides } = overrides ?? {};
+
     return {
       getState: vi.fn(() => state),
       login: vi.fn(),
       logout: vi.fn(),
       getAuthUrl: vi.fn(),
-      handleCallback: vi.fn(),
       checkAuthStatus: vi.fn().mockResolvedValue({
         isAuthenticated: false,
         error: null,
@@ -56,7 +71,8 @@ describe("AuthProvider", () => {
       getAuthHeaders: vi.fn(),
       fetch: vi.fn(),
       getAppUri: vi.fn(() => "https://api.test.com"),
-      ...overrides,
+      ...otherOverrides,
+      handleCallback,
     } as EnhancedAuthClient;
   };
 
@@ -137,6 +153,33 @@ describe("AuthProvider", () => {
   });
 
   describe("authentication flow", () => {
+    it("should initialize auth status on mount without requiring the router loader", async () => {
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      render(
+        <AuthProvider client={mockClient}>
+          <div>Test Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it("should check auth status via useRootRouteContext", async () => {
       const state = {
         isAuthenticated: false,
@@ -185,6 +228,51 @@ describe("AuthProvider", () => {
       );
       expect(mockHandleCallback).toHaveBeenCalled();
       expect(response).toBeNull();
+    });
+
+    it("should deduplicate concurrent OAuth callback handling", async () => {
+      const state = {
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      };
+
+      let resolveFirstCallback: (() => void) | undefined;
+      const mockHandleCallback = vi.fn(() => {
+        if (mockHandleCallback.mock.calls.length === 0) {
+          return Promise.resolve();
+        }
+
+        if (mockHandleCallback.mock.calls.length === 1) {
+          return new Promise<void>((resolve) => {
+            resolveFirstCallback = resolve;
+          });
+        }
+
+        return Promise.resolve();
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        handleCallback: mockHandleCallback,
+      });
+
+      const { result } = renderHook(() => useRootRouteContext(), {
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+      });
+
+      expect(result.current).not.toBeNull();
+
+      const requestUrl = new URL("http://localhost/?code=auth-code-123&state=abc");
+      const firstLoad = result.current!.loader(requestUrl);
+      const secondLoad = result.current!.loader(requestUrl);
+
+      expect(mockHandleCallback).toHaveBeenCalledTimes(1);
+
+      resolveFirstCallback?.();
+      await Promise.all([firstLoad, secondLoad]);
+
+      await result.current!.loader(requestUrl);
+      expect(mockHandleCallback).toHaveBeenCalledTimes(2);
     });
 
     it("should be authenticated when logged in", async () => {

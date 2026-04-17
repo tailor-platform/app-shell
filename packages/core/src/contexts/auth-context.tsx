@@ -3,6 +3,7 @@ import {
   useContext,
   useSyncExternalStore,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
 } from "react";
@@ -288,6 +289,7 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
  */
 export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
+  const initInFlightRef = useRef<Promise<void> | null>(null);
 
   // Set up auth state subscription for auto-login orchestration
   const { subscribeAuthState } = useAutoLogin({
@@ -300,6 +302,38 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
+
+  // Start the initial auth check from the provider as well as the router loader so
+  // consumers outside AppShell do not get stuck in an unresolved auth state. The
+  // in-flight ref also coalesces overlapping checkAuthStatus() calls into one request.
+  const ensureInitialized = useCallback(async (): Promise<void> => {
+    if (client.getState().isReady) {
+      return;
+    }
+
+    if (initInFlightRef.current) {
+      return initInFlightRef.current;
+    }
+
+    initInFlightRef.current = client
+      .checkAuthStatus()
+      .then(() => undefined)
+      .finally(() => {
+        initInFlightRef.current = null;
+      });
+
+    return initInFlightRef.current;
+  }, [client]);
+
+  // Kick off initialization on mount instead of waiting for the first router load.
+  // authLoader remains as a retry path for unresolved auth state during navigation,
+  // but components that only use AuthProvider should not depend on RouterContainer
+  // being present or a navigation happening before auth becomes ready.
+  useEffect(() => {
+    ensureInitialized().catch((error) => {
+      console.error("Failed to check auth status:", error);
+    });
+  }, [ensureInitialized]);
 
   // Build the root loader inside AuthProvider so that the router layer
   // never needs to know about EnhancedAuthClient internals.
@@ -314,14 +348,14 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
         } catch (error) {
           console.error("Failed to handle callback:", error);
         }
+        return null;
       }
 
-      // Only check auth status on first load (when isReady is false).
-      // Subsequent navigations skip this because the client already holds
-      // the cached auth state via useSyncExternalStore.
+      // Retry the initialization flow on navigation when auth state is still unresolved.
+      // The provider also kicks this off on mount so consumers outside AppShell do not deadlock.
       if (!client.getState().isReady) {
         try {
-          await client.checkAuthStatus();
+          await ensureInitialized();
         } catch (error) {
           // Intentionally swallow errors to avoid rendering the error boundary
           // on transient failures (e.g. network timeouts). The next navigation
@@ -332,7 +366,7 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 
       return null;
     },
-    [client],
+    [client, ensureInitialized],
   );
 
   const guardComponent = props.guardComponent;

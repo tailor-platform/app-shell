@@ -1,4 +1,4 @@
-import { type PropsWithChildren, type ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
 import type { LoaderFunctionArgs, RouteObject } from "react-router";
 import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
@@ -91,25 +91,48 @@ export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) 
   const { rootComponent, children } = props;
   const { configurations } = useAppShellConfig();
   const rootRouteCtx = useRootRouteContext();
-  const contentRoutes = createContentRoutes({
-    modules: configurations.modules,
-    settingsResources: configurations.settingsResources,
-    rootComponent,
-    rootGuards: props.rootGuards,
-  });
-  const routes = [
-    createRootRoute({ configurations, rootRouteCtx, contentRoutes, children }),
-  ] satisfies Array<RouteObject>;
+  const contentRoutes = useMemo(
+    () =>
+      createContentRoutes({
+        modules: configurations.modules,
+        settingsResources: configurations.settingsResources,
+        rootComponent,
+        rootGuards: props.rootGuards,
+      }),
+    [configurations.modules, configurations.settingsResources, rootComponent, props.rootGuards],
+  );
+  const routes = useMemo(
+    () =>
+      [
+        createRootRoute({
+          configurations,
+          rootRouteCtx,
+          contentRoutes,
+          children,
+        }),
+      ] satisfies Array<RouteObject>,
+    [configurations, rootRouteCtx, contentRoutes, children],
+  );
 
   const basename = configurations.basePath ? "/" + configurations.basePath : undefined;
-  const router = props.memory
-    ? createMemoryRouter(routes, {
-        basename,
-        ...(props.initialEntries ? { initialEntries: props.initialEntries } : {}),
-      })
-    : createBrowserRouter(routes, {
-        basename,
-      });
+  const initialEntries = props.memory ? props.initialEntries : undefined;
+
+  // Keep the router instance stable across auth-driven rerenders. Recreating the
+  // router would re-run the root loader for the same location, which can cause
+  // OAuth callback URLs to be processed more than once. Still rebuild when
+  // route-defining inputs such as routes, basename, or initial entries change.
+  const router = useMemo(
+    () =>
+      props.memory
+        ? createMemoryRouter(routes, {
+            basename,
+            ...(initialEntries ? { initialEntries } : {}),
+          })
+        : createBrowserRouter(routes, {
+            basename,
+          }),
+    [basename, initialEntries, props.memory, routes],
+  );
 
   return <RouterProvider router={router} />;
 };

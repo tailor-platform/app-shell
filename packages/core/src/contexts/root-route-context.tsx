@@ -7,8 +7,7 @@ export type RootRouteLoaderFn = (requestUrl: URL) => Promise<Response | null>;
 export type RootRouteContextType = {
   /**
    * Runs in the react-router loader phase (before rendering).
-   * Used for side effects such as OAuth callback handling and auth
-   * status checks.
+   * Used for side effects such as OAuth callback handling.
    *
    * ```
    * loader runs  ──▶  rendering starts  ──▶  wrapComponent applied

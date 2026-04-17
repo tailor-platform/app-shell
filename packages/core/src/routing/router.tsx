@@ -16,7 +16,7 @@ import { useRootRouteContext, type RootRouteContextType } from "@/contexts/root-
  * error boundary, and optional element wrapping into a single RouteObject.
  *
  * When AuthProvider wraps AppShell, rootRouteCtx provides:
- *   - loader: runs before rendering (e.g. OAuth callback, auth status check)
+ *   - loader: runs before rendering (e.g. OAuth callback handling)
  *   - wrapComponent: wraps the root component (e.g. guard UI while loading)
  * When AuthProvider is not used, rootRouteCtx is null and these are skipped.
  */

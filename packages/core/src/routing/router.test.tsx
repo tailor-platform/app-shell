@@ -433,7 +433,7 @@ const createMockAuthClient = (
 };
 
 describe("RouterContainer with AuthProvider", () => {
-  it("calls checkAuthStatus via loader on initial load", async () => {
+  it("does not call checkAuthStatus via loader on initial load", async () => {
     const mockCheckAuthStatus = vi.fn().mockResolvedValue({
       isAuthenticated: true,
       error: null,
@@ -458,7 +458,7 @@ describe("RouterContainer with AuthProvider", () => {
     });
 
     await screen.findByText("Dashboard");
-    expect(mockCheckAuthStatus).toHaveBeenCalled();
+    expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
   });
 
   it("calls handleCallback when OAuth code is present in URL", async () => {
@@ -694,8 +694,8 @@ describe("RouterContainer with AuthProvider", () => {
 
   it("transitions from guard to children when auth state changes", async () => {
     // Mutable snapshot; initially not ready, not authenticated.
-    // The loader calls checkAuthStatus, but the mock does NOT update the
-    // snapshot during the loader — so the guard is shown on first render.
+    // Mount-time initialization runs outside the router loader, so the guard
+    // remains visible until the auth client publishes a ready state.
     let snapshot = {
       isAuthenticated: false,
       error: null as string | null,

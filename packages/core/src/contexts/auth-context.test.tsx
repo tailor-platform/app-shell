@@ -11,7 +11,7 @@ vi.mock("@tailor-platform/auth-public-client", () => ({
 import {
   AuthProvider,
   useAuth,
-  useAuthInitialization,
+  useEnsureAuthInitialized,
   useAuthSuspense,
   type EnhancedAuthClient,
 } from "./auth-context";
@@ -83,7 +83,7 @@ describe("AuthProvider", () => {
     } as EnhancedAuthClient;
   };
 
-  describe("useAuthInitialization", () => {
+  describe("useEnsureAuthInitialized", () => {
     it("should initialize auth status on mount", async () => {
       const state = {
         isAuthenticated: false,
@@ -100,11 +100,13 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      renderHook(() => useAuthInitialization(mockClient));
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient));
 
-      await waitFor(() => {
-        expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        await result.current();
       });
+
+      expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
     });
 
     it("should coalesce overlapping auth initialization checks", async () => {
@@ -135,7 +137,9 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useAuthInitialization(mockClient));
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient));
+
+      const mountRetry = result.current();
 
       await waitFor(() => {
         expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
@@ -147,7 +151,7 @@ describe("AuthProvider", () => {
       expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
 
       resolveCheckAuthStatus?.();
-      await Promise.all([firstRetry, secondRetry]);
+      await Promise.all([mountRetry, firstRetry, secondRetry]);
     });
 
     it("should skip auth initialization while handling an OAuth callback", async () => {
@@ -168,10 +172,10 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      renderHook(() => useAuthInitialization(mockClient));
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient));
 
       await act(async () => {
-        await Promise.resolve();
+        await result.current();
       });
 
       expect(mockCheckAuthStatus).not.toHaveBeenCalled();
@@ -255,7 +259,7 @@ describe("AuthProvider", () => {
   });
 
   describe("authentication flow", () => {
-    it("should check auth status via useRootRouteContext", async () => {
+    it("should not check auth status via useRootRouteContext on non-callback URLs", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -276,8 +280,12 @@ describe("AuthProvider", () => {
       });
 
       expect(result.current).not.toBeNull();
+      await waitFor(() => {
+        expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+      });
+
       const response = await result.current!.loader(new URL("http://localhost/"));
-      expect(mockCheckAuthStatus).toHaveBeenCalled();
+      expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
       expect(response).toBeNull();
     });
 

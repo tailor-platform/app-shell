@@ -276,10 +276,13 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
 };
 
 /**
- * Starts auth initialization on mount and coalesces overlapping readiness checks.
- * Returns a function that callers can reuse as a retry path when auth is still unresolved.
+ * Builds a stable function that resolves the initial auth state once.
+ *
+ * AuthProvider uses the returned function from its own useEffect so the
+ * initialization flow stays visible at the call site, while overlapping
+ * checks still collapse into a single request.
  */
-export const useAuthInitialization = (client: EnhancedAuthClient) => {
+export const useEnsureAuthInitialized = (client: EnhancedAuthClient) => {
   const initInFlightRef = useRef<Promise<void> | null>(null);
 
   const ensureInitialized = useCallback(async (): Promise<void> => {
@@ -300,15 +303,6 @@ export const useAuthInitialization = (client: EnhancedAuthClient) => {
 
     return initInFlightRef.current;
   }, [client]);
-
-  // Kick off initialization on mount instead of waiting for the first router load.
-  // Router-driven loads still reuse the returned function as a retry path when
-  // auth remains unresolved, but AuthProvider should not depend on navigation.
-  useEffect(() => {
-    ensureInitialized().catch((error) => {
-      console.error("Failed to check auth status:", error);
-    });
-  }, [ensureInitialized]);
 
   return ensureInitialized;
 };
@@ -352,17 +346,23 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
-  // Reuse the same initialization path for mount-time bootstrapping and
-  // loader-time retries so unresolved auth state is handled consistently.
-  const ensureInitialized = useAuthInitialization(client);
+  // Prepare a shared initialization function so AuthProvider can start the
+  // first auth check itself without depending on router navigation.
+  const ensureAuthInitialized = useEnsureAuthInitialized(client);
 
-  // Build the root loader inside AuthProvider so that the router layer
-  // never needs to know about EnhancedAuthClient internals.
+  useEffect(() => {
+    ensureAuthInitialized().catch((error) => {
+      console.error("Failed to check auth status:", error);
+    });
+  }, [ensureAuthInitialized]);
+
+  // When the auth server redirects back with OAuth parameters, resolve that
+  // callback before the route tree continues so the app renders from the
+  // post-login URL and final auth state.
   const authLoader = useCallback(
     async (requestUrl: URL): Promise<Response | null> => {
-      // The "code" query parameter indicates a redirect back from the OAuth provider.
-      // handleCallback() internally cleans up the OAuth-related query parameters
-      // from the URL, so no additional URL cleanup is needed here.
+      // handleCallback() exchanges the callback parameters, stores the new
+      // session, and removes the temporary OAuth query parameters from the URL.
       if (isOAuthCallbackUrl(requestUrl)) {
         try {
           await client.handleCallback();
@@ -372,22 +372,9 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
         return null;
       }
 
-      // Retry the initialization flow on navigation when auth state is still unresolved.
-      // The provider also kicks this off on mount so consumers outside AppShell do not deadlock.
-      if (!client.getState().isReady) {
-        try {
-          await ensureInitialized();
-        } catch (error) {
-          // Intentionally swallow errors to avoid rendering the error boundary
-          // on transient failures (e.g. network timeouts). The next navigation
-          // will re-run this loader and retry automatically.
-          console.error("Failed to check auth status:", error);
-        }
-      }
-
       return null;
     },
-    [client, ensureInitialized],
+    [client],
   );
 
   const guardComponent = props.guardComponent;

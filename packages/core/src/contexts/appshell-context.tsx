@@ -1,6 +1,5 @@
 import { ErrorBoundaryComponent, Modules, Resource } from "@/resource";
 import { createContext, useContext, type ReactNode } from "react";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import { DEFAULT_LOCALE, detectBrowserLocale } from "@/lib/i18n";
 
 /**
@@ -70,7 +69,7 @@ export type ConfigurationOptions = {
 export const buildConfigurations = (options: ConfigurationOptions): RootConfiguration => ({
   modules: options.modules,
   settingsResources: options.settingsResources ?? [],
-  errorBoundary: options.errorBoundary ?? <DefaultErrorBoundary />,
+  errorBoundary: options.errorBoundary,
   basePath: options.basePath,
   locale: options.locale ?? detectBrowserLocale(),
 });
@@ -127,18 +126,4 @@ export const useAppShellConfig = () => {
  */
 export const useAppShellData = () => {
   return useContext(AppShellDataContext);
-};
-
-/**
- * Hook to access the full AppShell context (both config and data).
- * For better performance, prefer useAppShellConfig() or useAppShellData()
- * depending on what you need, as this hook subscribes to both contexts.
- */
-export const useAppShell = () => {
-  const config = useContext(AppShellConfigContext);
-  const data = useContext(AppShellDataContext);
-  return {
-    ...config,
-    ...data,
-  };
 };

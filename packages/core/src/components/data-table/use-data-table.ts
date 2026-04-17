@@ -136,6 +136,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const updateRow = useCallback(
     (rowId: string, fields: Partial<TRow>) => {
       const currentRows = optimisticRows ?? sourceRows;
+      const previousRows = currentRows;
       const updatedRows = currentRows.map((row) => {
         if ((row as Record<string, unknown>)[rowKey] === rowId) {
           return { ...row, ...fields };
@@ -146,7 +147,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
 
       return {
         rollback: () => {
-          setOptimisticRows(null);
+          setOptimisticRows(previousRows);
         },
       };
     },
@@ -156,6 +157,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const deleteRow = useCallback(
     (rowId: string) => {
       const currentRows = optimisticRows ?? sourceRows;
+      const previousRows = currentRows;
       const deletedRow = currentRows.find(
         (row) => (row as Record<string, unknown>)[rowKey] === rowId,
       );
@@ -166,7 +168,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
 
       return {
         rollback: () => {
-          setOptimisticRows(null);
+          setOptimisticRows(previousRows);
         },
         deletedRow,
       };
@@ -177,11 +179,12 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const insertRow = useCallback(
     (row: TRow) => {
       const currentRows = optimisticRows ?? sourceRows;
+      const previousRows = currentRows;
       setOptimisticRows([row, ...currentRows]);
 
       return {
         rollback: () => {
-          setOptimisticRows(null);
+          setOptimisticRows(previousRows);
         },
       };
     },

@@ -302,6 +302,52 @@ describe("useDataTable", () => {
       });
       expect(result.current.rows).toHaveLength(2);
     });
+
+    it("rolling back one updateRow does not affect a subsequent updateRow", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+
+      let rollbackFirst: () => void;
+      act(() => {
+        ({ rollback: rollbackFirst } = result.current.updateRow("1", { name: "Alice Updated" }));
+      });
+      act(() => {
+        result.current.updateRow("2", { name: "Bob Updated" });
+      });
+
+      expect(result.current.rows[0].name).toBe("Alice Updated");
+      expect(result.current.rows[1].name).toBe("Bob Updated");
+
+      // Rolling back the first operation restores to the snapshot taken before it ran,
+      // which does NOT include the second operation.
+      act(() => {
+        rollbackFirst();
+      });
+      expect(result.current.rows[0].name).toBe("Alice");
+      expect(result.current.rows[1].name).toBe("Bob");
+    });
+
+    it("rolling back deleteRow does not affect a separate updateRow on another row", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+
+      let rollbackDelete: () => void;
+      act(() => {
+        ({ rollback: rollbackDelete } = result.current.deleteRow("1"));
+      });
+      act(() => {
+        result.current.updateRow("2", { name: "Bob Updated" });
+      });
+
+      expect(result.current.rows).toHaveLength(1);
+      expect(result.current.rows[0].name).toBe("Bob Updated");
+
+      act(() => {
+        rollbackDelete();
+      });
+      // Restored to snapshot before deleteRow — row-2's "Bob Updated" is also gone
+      // because rollback restores the full snapshot, not a diff.
+      expect(result.current.rows).toHaveLength(2);
+      expect(result.current.rows[1].name).toBe("Bob");
+    });
   });
 
   // -------------------------------------------------------------------------

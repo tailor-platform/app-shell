@@ -12,7 +12,6 @@ import {
   type AuthClient,
 } from "@tailor-platform/auth-public-client";
 import { RootRouteContext } from "@/contexts/root-route-context";
-import { A } from "node_modules/react-router/dist/development/context-phCt_zmH.mjs";
 
 // ============================================================================
 // Auth Client

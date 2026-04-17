@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router";
 import { Toaster } from "sonner";
-import { useAppShell } from "@/contexts/appshell-context";
+import { useAppShellConfig } from "@/contexts/appshell-context";
 import { Button } from "./button";
 import { useT } from "@/i18n-labels";
 import { useTitleResolver } from "@/hooks/i18n";
@@ -26,7 +26,7 @@ export const AppShellOutlet = () => (
 );
 
 export const SettingsWrapper = () => {
-  const { configurations } = useAppShell();
+  const { configurations } = useAppShellConfig();
   const t = useT();
   const resolveTitle = useTitleResolver();
 

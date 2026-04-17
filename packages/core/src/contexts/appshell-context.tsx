@@ -127,3 +127,17 @@ export const useAppShellConfig = () => {
 export const useAppShellData = () => {
   return useContext(AppShellDataContext);
 };
+
+/**
+ * Hook to access the full AppShell context (both config and data).
+ * For better performance, prefer useAppShellConfig() or useAppShellData()
+ * depending on what you need, as this hook subscribes to both contexts.
+ */
+export const useAppShell = () => {
+  const config = useContext(AppShellConfigContext);
+  const data = useContext(AppShellDataContext);
+  return {
+    ...config,
+    ...data,
+  };
+};

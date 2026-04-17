@@ -1,5 +1,5 @@
 import { type ReactNode, Suspense, useRef } from "react";
-import { useAppShell, type ContextData } from "@/contexts/appshell-context";
+import { useAppShellData, type ContextData } from "@/contexts/appshell-context";
 import type { Guard, GuardContext, GuardResult } from "@/resource";
 
 // ============================================
@@ -139,7 +139,7 @@ export type WithGuardProps = {
  */
 export const WithGuard = (props: WithGuardProps) => {
   const { guards, children, fallback = null, loading = null } = props;
-  const { contextData } = useAppShell();
+  const { contextData } = useAppShellData();
 
   // Cache ref lives here (outside Suspense) so it persists across suspensions
   const cacheRef = useRef<GuardCache | null>(null);

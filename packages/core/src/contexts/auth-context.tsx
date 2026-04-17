@@ -350,15 +350,18 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // first auth check itself without depending on router navigation.
   const ensureAuthInitialized = useEnsureAuthInitialized(client);
 
+  // AuthProvider owns the normal startup path: on mount, ask the auth client
+  // to resolve the current session so consumers can rely on authState even
+  // before any router loader has run.
   useEffect(() => {
     ensureAuthInitialized().catch((error) => {
       console.error("Failed to check auth status:", error);
     });
   }, [ensureAuthInitialized]);
 
-  // When the auth server redirects back with OAuth parameters, resolve that
-  // callback before the route tree continues so the app renders from the
-  // post-login URL and final auth state.
+  // The router loader is reserved for OAuth callback URLs. Its job is to
+  // finish the redirect handshake before rendering continues, while the
+  // ordinary "am I already signed in?" check stays with AuthProvider.
   const authLoader = useCallback(
     async (requestUrl: URL): Promise<Response | null> => {
       // handleCallback() exchanges the callback parameters, stores the new

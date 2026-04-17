@@ -15,6 +15,7 @@ import { BuiltInCommandPalette } from "@/components/command-palette";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
+import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
 /**
  * Shared props between `AppShellProps` and the internal `WithPages` wrapper.
@@ -226,7 +227,7 @@ export const AppShell = (props: AppShellProps) => {
             modules: modules,
             settingsResources: props.settingsResources,
             basePath: props.basePath,
-            errorBoundary: props.errorBoundary,
+            errorBoundary: props.errorBoundary ?? <DefaultErrorBoundary />,
             locale: props.locale,
           })
         : null,

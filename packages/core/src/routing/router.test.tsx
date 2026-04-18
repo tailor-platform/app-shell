@@ -20,6 +20,8 @@ afterEach(() => {
   cleanup();
 });
 
+const homeRootComponent = () => <div>Home</div>;
+
 const renderWithConfig = ({
   modules = [],
   basePath,
@@ -531,6 +533,113 @@ describe("RouterContainer with AuthProvider", () => {
       });
 
       expect(await screen.findByText("Home")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      createMemoryRouterSpy.mockRestore();
+    }
+  });
+
+  it("does not recreate the router when shell children change", async () => {
+    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+    const initialEntries = ["/"];
+    const configurations = {
+      modules: [],
+      settingsResources: [] as Array<Resource>,
+      basePath: undefined,
+      errorBoundary: undefined,
+      locale: "en",
+    };
+
+    try {
+      const view = render(
+        <AppShellConfigContext.Provider value={{ configurations }}>
+          <AppShellDataContext.Provider value={{ contextData: {} }}>
+            <RouterContainer
+              memory
+              rootComponent={homeRootComponent}
+              initialEntries={initialEntries}
+            >
+              <div>
+                <span>Shell A</span>
+                <Outlet />
+              </div>
+            </RouterContainer>
+          </AppShellDataContext.Provider>
+        </AppShellConfigContext.Provider>,
+      );
+
+      expect(await screen.findByText("Shell A")).toBeDefined();
+      expect(await screen.findByText("Home")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+
+      view.rerender(
+        <AppShellConfigContext.Provider value={{ configurations }}>
+          <AppShellDataContext.Provider value={{ contextData: {} }}>
+            <RouterContainer
+              memory
+              rootComponent={homeRootComponent}
+              initialEntries={initialEntries}
+            >
+              <div>
+                <span>Shell B</span>
+                <Outlet />
+              </div>
+            </RouterContainer>
+          </AppShellDataContext.Provider>
+        </AppShellConfigContext.Provider>,
+      );
+
+      expect(await screen.findByText("Shell B")).toBeDefined();
+      expect(screen.queryByText("Shell A")).toBeNull();
+      expect(await screen.findByText("Home")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      createMemoryRouterSpy.mockRestore();
+    }
+  });
+
+  it("does not recreate the router when guard wrapper changes", async () => {
+    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+    const initialEntries = ["/"];
+    const authClient = createMockAuthClient({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    });
+    const configurations = {
+      modules: [],
+      settingsResources: [] as Array<Resource>,
+      basePath: undefined,
+      errorBoundary: undefined,
+      locale: "en",
+    };
+
+    try {
+      const tree = (guardComponent: () => React.ReactNode) => (
+        <AuthProvider client={authClient} guardComponent={guardComponent}>
+          <AppShellConfigContext.Provider value={{ configurations }}>
+            <AppShellDataContext.Provider value={{ contextData: {} }}>
+              <RouterContainer
+                memory
+                rootComponent={homeRootComponent}
+                initialEntries={initialEntries}
+              >
+                <Outlet />
+              </RouterContainer>
+            </AppShellDataContext.Provider>
+          </AppShellConfigContext.Provider>
+        </AuthProvider>
+      );
+
+      const view = render(tree(() => <div>Guard A</div>));
+
+      expect(await screen.findByText("Guard A")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+
+      view.rerender(tree(() => <div>Guard B</div>));
+
+      expect(await screen.findByText("Guard B")).toBeDefined();
+      expect(screen.queryByText("Guard A")).toBeNull();
       expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
     } finally {
       createMemoryRouterSpy.mockRestore();

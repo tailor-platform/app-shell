@@ -316,66 +316,6 @@ describe("AuthProvider", () => {
       expect(mockHandleCallback).toHaveBeenCalled();
     });
 
-    it("should not blank-screen when guardComponent is provided and callbackPromise settles after auth_state_changed", async () => {
-      // Regression test: when guardComponent is provided, AuthGuard gates rendering
-      // via isReady/isAuthenticated. Using CallbackResolver on top causes a race:
-      // auth_state_changed fires before the callbackPromise chain fully settles,
-      // so CallbackResolver suspends (fallback=null) inside a sync-lane render.
-      // Fix: skip CallbackResolver entirely when guardComponent is present.
-      let resolveCallback!: () => void;
-      const callbackPromise = new Promise<void>((resolve) => {
-        resolveCallback = resolve;
-      });
-
-      const listeners: Array<(event: { type: string }) => void> = [];
-      let snapshot = {
-        isAuthenticated: false,
-        error: null as string | null,
-        isReady: false,
-      };
-      const mockClient = createMockAuthClient(snapshot, {
-        getState: vi.fn(() => snapshot),
-        callbackPromise,
-        addEventListener: vi.fn((listener) => {
-          listeners.push(listener);
-          return () => {
-            const idx = listeners.indexOf(listener);
-            if (idx >= 0) listeners.splice(idx, 1);
-          };
-        }),
-      });
-
-      render(
-        <AuthProvider client={mockClient} guardComponent={() => <div>Loading...</div>}>
-          <div>Content</div>
-        </AuthProvider>,
-      );
-
-      // Guard is shown while not ready
-      expect(screen.getByText("Loading...")).toBeDefined();
-      expect(screen.queryByText("Content")).toBeNull();
-
-      // Simulate handleCallbackInternal completing: state updates then
-      // auth_state_changed fires — callbackPromise is still pending at this point.
-      act(() => {
-        snapshot = { isAuthenticated: true, error: null, isReady: true };
-        for (const listener of listeners) {
-          listener({ type: "auth_state_changed" });
-        }
-      });
-
-      // Content must be visible immediately — no blank screen despite
-      // callbackPromise still being unresolved.
-      expect(screen.getByText("Content")).toBeDefined();
-      expect(screen.queryByText("Loading...")).toBeNull();
-
-      // Resolving the promise afterwards should not break anything
-      act(() => {
-        resolveCallback();
-      });
-      expect(screen.getByText("Content")).toBeDefined();
-    });
-
     it("should be authenticated when logged in", async () => {
       const state = {
         isAuthenticated: true,

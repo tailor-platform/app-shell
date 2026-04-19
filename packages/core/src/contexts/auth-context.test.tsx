@@ -9,12 +9,14 @@ vi.mock("@tailor-platform/auth-public-client", () => ({
 }));
 
 import {
+  createAuthClient,
   AuthProvider,
   useAuth,
   useEnsureAuthInitialized,
   useAuthSuspense,
   type EnhancedAuthClient,
 } from "./auth-context";
+import { createAuthClient as createAuthClientMock } from "@tailor-platform/auth-public-client";
 
 afterEach(() => {
   cleanup();
@@ -77,8 +79,6 @@ describe("AuthProvider", () => {
       getAuthHeaders: vi.fn(),
       fetch: vi.fn(),
       getAppUri: vi.fn(() => "https://api.test.com"),
-      getCallbackStatusSnapshot: vi.fn(() => "idle"),
-      subscribeCallbackStatus: vi.fn(() => () => {}),
       ...otherOverrides,
       handleCallback,
     } as EnhancedAuthClient;
@@ -101,7 +101,7 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient));
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "idle"));
 
       await act(async () => {
         await result.current();
@@ -138,7 +138,7 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient));
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "idle"));
 
       const mountRetry = result.current();
 
@@ -173,13 +173,41 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient));
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "pending"));
 
       await act(async () => {
         await result.current();
       });
 
       expect(mockCheckAuthStatus).not.toHaveBeenCalled();
+    });
+
+    it("should run auth initialization after callback is rejected", async () => {
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=abc");
+
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      // callbackStatus "rejected" means handleCallback failed — initialization should proceed
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "rejected"));
+
+      await act(async () => {
+        await result.current();
+      });
+
+      expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -327,15 +355,13 @@ describe("AuthProvider", () => {
     });
 
     it("should render guarded children while callback is pending", async () => {
-      const pendingCallbackStatus: ReturnType<EnhancedAuthClient["getCallbackStatusSnapshot"]> =
-        "pending";
       const state = {
         isAuthenticated: true,
         error: null,
         isReady: true,
       };
       const mockClient = createMockAuthClient(state, {
-        getCallbackStatusSnapshot: vi.fn(() => pendingCallbackStatus),
+        getCallbackStatusSnapshot: vi.fn(() => "pending" as const),
       });
 
       render(
@@ -893,5 +919,51 @@ describe("AuthProvider", () => {
       expect(authState.isReady).toBe(true);
       expect(authState.error).toBeNull();
     });
+  });
+});
+
+describe("createAuthClient", () => {
+  const makeBaseClient = (mockHandleCallback: ReturnType<typeof vi.fn>) => ({
+    handleCallback: mockHandleCallback,
+    getState: vi.fn(() => ({
+      isAuthenticated: false,
+      error: null,
+      isReady: false,
+    })),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAuthUrl: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    refreshTokens: vi.fn(),
+    ready: vi.fn(() => Promise.resolve()),
+    configure: vi.fn(),
+    addEventListener: vi.fn(() => () => {}),
+    getAuthHeaders: vi.fn(),
+    fetch: vi.fn(),
+    getAuthHeadersForQuery: vi.fn(),
+  });
+
+  it("calls handleCallback immediately when URL contains OAuth callback parameters", () => {
+    window.history.replaceState({}, "", "/?code=auth-code-123");
+
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(createAuthClientMock).mockReturnValue(makeBaseClient(mockHandleCallback) as any);
+
+    createAuthClient({ clientId: "test", appUri: "https://test.com" });
+
+    expect(mockHandleCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call handleCallback when URL has no OAuth parameters", () => {
+    // URL is already "/" from afterEach reset
+
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(createAuthClientMock).mockReturnValue(makeBaseClient(mockHandleCallback) as any);
+
+    createAuthClient({ clientId: "test", appUri: "https://test.com" });
+
+    expect(mockHandleCallback).not.toHaveBeenCalled();
   });
 });

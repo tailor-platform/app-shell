@@ -13,7 +13,7 @@
     "changeset:publish": "pnpm build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.30.0",
+    "@changesets/cli": "^2.31.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "turbo": "^2.8.21"

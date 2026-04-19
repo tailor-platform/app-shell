@@ -408,8 +408,14 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // at module load time — before any React render — so no render-phase
   // side effects occur here.
   const callbackPromise = props.client.callbackPromise;
-
-  const { guardComponent } = props;
+  const resolvedChildren =
+    callbackPromise != null ? (
+      <Suspense fallback={null}>
+        <CallbackResolver promise={callbackPromise}>{props.children}</CallbackResolver>
+      </Suspense>
+    ) : (
+      props.children
+    );
 
   const authContextValue = useMemo(
     () => ({
@@ -422,19 +428,10 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     [authState, client],
   );
 
-  const resolvedChildren =
-    callbackPromise != null ? (
-      <Suspense fallback={null}>
-        <CallbackResolver promise={callbackPromise}>{props.children}</CallbackResolver>
-      </Suspense>
-    ) : (
-      props.children
-    );
-
   return (
     <AuthContext.Provider value={authContextValue}>
-      {guardComponent ? (
-        <AuthGuard guardComponent={guardComponent}>{resolvedChildren}</AuthGuard>
+      {props.guardComponent ? (
+        <AuthGuard guardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
       ) : (
         resolvedChildren
       )}

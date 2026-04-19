@@ -316,10 +316,7 @@ type AuthProviderProps = {
  * - initial deferred auto-login attempt
  * - duplicate login prevention
  */
-const useAutoLogin = (props: {
-  client: EnhancedAuthClient;
-  enabled?: boolean;
-}) => {
+const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) => {
   // Prevent duplicate login redirects when multiple auth_state_changed
   // events fire before the first login attempt settles.
   const loginInFlightRef = useRef<Promise<void> | null>(null);
@@ -420,10 +417,7 @@ const useCallbackStatus = (client: EnhancedAuthClient) => {
     (notify: () => void) => client.subscribeCallbackStatus(notify),
     [client],
   );
-  const getSnapshot = useCallback(
-    () => client.getCallbackStatusSnapshot(),
-    [client],
-  );
+  const getSnapshot = useCallback(() => client.getCallbackStatusSnapshot(), [client]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
 };
@@ -452,9 +446,7 @@ const useCallbackStatus = (client: EnhancedAuthClient) => {
  * }
  * ```
  */
-export const AuthProvider = (
-  props: React.PropsWithChildren<AuthProviderProps>,
-) => {
+export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
   // Set up auth state subscription for auto-login orchestration
@@ -484,9 +476,7 @@ export const AuthProvider = (
   // the callback settles. Guarded trees already wait on auth state instead.
   const callbackStatus = useCallbackStatus(client);
   const resolvedChildren =
-    callbackStatus === "pending" && props.guardComponent == null
-      ? null
-      : props.children;
+    callbackStatus === "pending" && props.guardComponent == null ? null : props.children;
 
   const authContextValue = useMemo(
     () => ({
@@ -502,9 +492,7 @@ export const AuthProvider = (
   return (
     <AuthContext.Provider value={authContextValue}>
       {props.guardComponent ? (
-        <AuthGuard guardComponent={props.guardComponent}>
-          {resolvedChildren}
-        </AuthGuard>
+        <AuthGuard guardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
       ) : (
         resolvedChildren
       )}
@@ -518,9 +506,7 @@ export const AuthProvider = (
 const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error(
-      "useAuth/useAuthSuspense must be used within an AuthProvider",
-    );
+    throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
   }
   return context;
 };

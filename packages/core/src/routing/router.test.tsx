@@ -1,17 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterContainer } from "./router";
-import {
-  AppShellConfigContext,
-  AppShellDataContext,
-} from "@/contexts/appshell-context";
+import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
 import * as ReactRouter from "react-router";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
@@ -65,11 +55,7 @@ const renderWithConfig = ({
   const tree = (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData }}>
-        <RouterContainer
-          memory
-          rootComponent={rootComponent}
-          initialEntries={initialEntries}
-        >
+        <RouterContainer memory rootComponent={rootComponent} initialEntries={initialEntries}>
           <Outlet />
         </RouterContainer>
       </AppShellDataContext.Provider>
@@ -78,11 +64,7 @@ const renderWithConfig = ({
 
   return render(
     authClient ? (
-      <AuthProvider
-        client={authClient}
-        autoLogin={autoLogin}
-        guardComponent={guardComponent}
-      >
+      <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
         {tree}
       </AuthProvider>
     ) : (
@@ -232,9 +214,7 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard"],
       });
 
-      expect(
-        await screen.findByRole("alert", { name: "default-error-boundary" }),
-      ).toBeDefined();
+      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
 
       cleanup();
 
@@ -243,9 +223,7 @@ describe("RouterContainer (memory)", () => {
         initialEntries: ["/dashboard/overview"],
       });
 
-      expect(
-        await screen.findByRole("alert", { name: "default-error-boundary" }),
-      ).toBeDefined();
+      expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
     } finally {
       consoleSpy.mockRestore();
     }
@@ -257,9 +235,7 @@ describe("RouterContainer (memory)", () => {
       initialEntries: ["/unknown-path"],
     });
 
-    expect(
-      await screen.findByRole("alert", { name: "default-error-boundary" }),
-    ).toBeDefined();
+    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
     expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 
@@ -390,9 +366,7 @@ describe("RouterContainer (memory)", () => {
       initialEntries: ["/admin"],
     });
 
-    expect(
-      await screen.findByRole("alert", { name: "default-error-boundary" }),
-    ).toBeDefined();
+    expect(await screen.findByRole("alert", { name: "default-error-boundary" })).toBeDefined();
     expect(await screen.findByText("404 Not Found")).toBeDefined();
   });
 
@@ -491,8 +465,7 @@ describe("RouterContainer with AuthProvider", () => {
   });
 
   it("waits to render until callback handling finishes", async () => {
-    let callbackStatus: "idle" | "pending" | "resolved" | "rejected" =
-      "pending";
+    let callbackStatus: "idle" | "pending" | "resolved" | "rejected" = "pending";
     let callbackStatusListener: (() => void) | undefined;
     const authClient = createMockAuthClient(
       { isAuthenticated: true, error: null, isReady: true },
@@ -847,8 +820,7 @@ describe("RouterContainer with AuthProvider", () => {
   });
 
   it("renders the correct page after OAuth callback with a specific path", async () => {
-    let callbackStatus: "idle" | "pending" | "resolved" | "rejected" =
-      "pending";
+    let callbackStatus: "idle" | "pending" | "resolved" | "rejected" = "pending";
     let callbackStatusListener: (() => void) | undefined;
     const authClient = createMockAuthClient(
       { isAuthenticated: true, error: null, isReady: true },
@@ -956,10 +928,7 @@ describe("RouterContainer with AuthProvider", () => {
         return (
           <div>
             <h1>Dashboard</h1>
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard/settings")}
-            >
+            <button type="button" onClick={() => navigate("/dashboard/settings")}>
               Go to Settings
             </button>
             <Outlet />

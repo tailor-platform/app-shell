@@ -6,12 +6,13 @@ import {
   useEffect,
   useMemo,
   useRef,
+  use,
+  Suspense,
 } from "react";
 import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
 } from "@tailor-platform/auth-public-client";
-import { RootRouteContext } from "@/contexts/root-route-context";
 
 // ============================================================================
 // Auth Client
@@ -43,6 +44,15 @@ export interface EnhancedAuthClient extends AuthClient {
    * Same signature as the standard `fetch` API.
    */
   fetch: AuthClient["fetch"];
+
+  /**
+   * Promise that resolves when the OAuth callback has been handled.
+   * Non-null only when the client was created while an OAuth callback URL
+   * was present (i.e. `?code=` or `?error=` in window.location).
+   * Starts immediately at module load time, before any React render.
+   * @internal
+   */
+  callbackPromise: Promise<void> | null;
 }
 
 /**
@@ -83,12 +93,28 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
   const baseClient = createAuthClientOriginal(config);
   const { appUri } = config;
 
+  // Start OAuth callback handling immediately at module load time (before any
+  // React render). This is intentionally a side effect outside the React
+  // lifecycle — network I/O should not happen in the render phase.
+  const callbackPromise: Promise<void> | null = (() => {
+    if (typeof window === "undefined") return null;
+    if (!isOAuthCallbackUrl(new URL(window.location.href))) return null;
+    return baseClient
+      .handleCallback()
+      .then(() => undefined)
+      .catch((error) => {
+        console.error("Failed to handle OAuth callback:", error);
+      });
+  })();
+
   const enhancedClient: EnhancedAuthClient = {
     ...baseClient,
 
     getAppUri(): string {
       return appUri;
     },
+
+    callbackPromise,
   };
 
   return enhancedClient;
@@ -173,6 +199,22 @@ const isCurrentOAuthCallbackUrl = () => {
 };
 
 /**
+ * Suspends children until the OAuth callback promise resolves.
+ * Used so that any component tree under AuthProvider is blocked from
+ * rendering until handleCallback() completes on the first load.
+ */
+const CallbackResolver = ({
+  promise,
+  children,
+}: {
+  promise: Promise<void>;
+  children: React.ReactNode;
+}) => {
+  use(promise);
+  return <>{children}</>;
+};
+
+/**
  * Guard component that shows a fallback UI while auth is not ready or
  * not authenticated. Defined here so that the router layer does not
  * need to depend on useAuth.
@@ -211,6 +253,8 @@ type AuthProviderProps = {
    * Note: This prop only takes effect when AuthProvider wraps an AppShell
    * component. The guard is rendered by the router's root route element,
    * so it requires RouterContainer to be present in the component tree.
+   * For guarding components placed between AuthProvider and AppShell,
+   * rely on the authState from useAuth() directly.
    */
   guardComponent?: () => React.ReactNode;
 };
@@ -359,57 +403,42 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     });
   }, [ensureAuthInitialized]);
 
-  // The router loader is reserved for OAuth callback URLs. Its job is to
-  // finish the redirect handshake before rendering continues, while the
-  // ordinary "am I already signed in?" check stays with AuthProvider.
-  const authLoader = useCallback(
-    async (requestUrl: URL): Promise<Response | null> => {
-      // handleCallback() exchanges the callback parameters, stores the new
-      // session, and removes the temporary OAuth query parameters from the URL.
-      if (isOAuthCallbackUrl(requestUrl)) {
-        try {
-          await client.handleCallback();
-        } catch (error) {
-          console.error("Failed to handle callback:", error);
-        }
-        return null;
-      }
+  // Handle OAuth callback URLs: block children from rendering until
+  // handleCallback() resolves. The promise is started in createAuthClient()
+  // at module load time — before any React render — so no render-phase
+  // side effects occur here.
+  const callbackPromise = props.client.callbackPromise;
 
-      return null;
-    },
-    [client],
+  const { guardComponent } = props;
+
+  const authContextValue = useMemo(
+    () => ({
+      authState,
+      login: () => client.login(),
+      logout: () => client.logout(),
+      checkAuthStatus: () => client.checkAuthStatus(),
+      ready: () => client.ready(),
+    }),
+    [authState, client],
   );
 
-  const guardComponent = props.guardComponent;
-  const guardComponentWrapper = useMemo(
-    () =>
-      guardComponent
-        ? (children: React.ReactNode) => (
-            <AuthGuard guardComponent={guardComponent}>{children}</AuthGuard>
-          )
-        : undefined,
-    [guardComponent],
-  );
-
-  const rootRouteCtxValue = useMemo(
-    () => ({ loader: authLoader, wrapComponent: guardComponentWrapper }),
-    [authLoader, guardComponentWrapper],
-  );
+  const resolvedChildren =
+    callbackPromise != null ? (
+      <Suspense fallback={null}>
+        <CallbackResolver promise={callbackPromise}>{props.children}</CallbackResolver>
+      </Suspense>
+    ) : (
+      props.children
+    );
 
   return (
-    <RootRouteContext.Provider value={rootRouteCtxValue}>
-      <AuthContext.Provider
-        value={{
-          authState,
-          login: () => client.login(),
-          logout: () => client.logout(),
-          checkAuthStatus: () => client.checkAuthStatus(),
-          ready: () => client.ready(),
-        }}
-      >
-        {props.children}
-      </AuthContext.Provider>
-    </RootRouteContext.Provider>
+    <AuthContext.Provider value={authContextValue}>
+      {guardComponent ? (
+        <AuthGuard guardComponent={guardComponent}>{resolvedChildren}</AuthGuard>
+      ) : (
+        resolvedChildren
+      )}
+    </AuthContext.Provider>
   );
 };
 

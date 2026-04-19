@@ -18,6 +18,7 @@ import { AuthProvider, type EnhancedAuthClient } from "@/contexts/auth-context";
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState({}, "", "/");
 });
 
 const renderWithConfig = ({
@@ -428,6 +429,7 @@ const createMockAuthClient = (
     getAuthHeaders: vi.fn(),
     getAppUri: vi.fn(() => "https://api.test.com"),
     getAuthHeadersForQuery: vi.fn(),
+    callbackPromise: null,
     ...overrides,
   } as EnhancedAuthClient;
 };
@@ -461,29 +463,26 @@ describe("RouterContainer with AuthProvider", () => {
     expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
   });
 
-  it("calls handleCallback when OAuth code is present in URL", async () => {
+  it("calls handleCallback when OAuth callbackPromise is set on client", async () => {
     const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
-    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
-      isAuthenticated: true,
-      error: null,
-      isReady: true,
-    });
+    // Simulate what createAuthClient does: kick off handleCallback() and store the promise.
+    const callbackPromise = Promise.resolve().then(() => mockHandleCallback());
     const authClient = createMockAuthClient(
       { isAuthenticated: true, error: null, isReady: true },
-      {
-        handleCallback: mockHandleCallback,
-        checkAuthStatus: mockCheckAuthStatus,
-      },
+      { handleCallback: mockHandleCallback, callbackPromise },
     );
 
-    renderWithConfig({
-      modules: [],
-      rootComponent: () => <div>Home</div>,
-      initialEntries: ["/?code=auth-code-123&state=abc"],
-      authClient,
+    await act(async () => {
+      renderWithConfig({
+        modules: [],
+        rootComponent: () => <div>Home</div>,
+        initialEntries: ["/"],
+        authClient,
+      });
+      await callbackPromise;
     });
 
-    await screen.findByText("Home");
+    expect(await screen.findByText("Home")).toBeDefined();
     expect(mockHandleCallback).toHaveBeenCalled();
   });
 
@@ -517,7 +516,9 @@ describe("RouterContainer with AuthProvider", () => {
       });
 
       expect(await screen.findByText("Loading...")).toBeDefined();
-      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+      // With guardComponent now applied in AuthProvider (not the router),
+      // RouterContainer is not mounted until auth is ready.
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(0);
 
       act(() => {
         snapshot = {
@@ -531,6 +532,7 @@ describe("RouterContainer with AuthProvider", () => {
       });
 
       expect(await screen.findByText("Home")).toBeDefined();
+      // Router is created once when children first render after auth is ready.
       expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
     } finally {
       createMemoryRouterSpy.mockRestore();
@@ -808,22 +810,27 @@ describe("RouterContainer with AuthProvider", () => {
 
   it("renders the correct page after OAuth callback with a specific path", async () => {
     const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    // Simulate what createAuthClient does when ?code= is in the URL.
+    const callbackPromise = Promise.resolve().then(() => mockHandleCallback());
     const authClient = createMockAuthClient(
       { isAuthenticated: true, error: null, isReady: true },
-      { handleCallback: mockHandleCallback },
+      { handleCallback: mockHandleCallback, callbackPromise },
     );
 
-    renderWithConfig({
-      modules: [
-        defineModule({
-          path: "dashboard",
-          component: () => <div>Dashboard</div>,
-          meta: { title: "Dashboard" },
-          resources: [],
-        }),
-      ],
-      initialEntries: ["/dashboard?code=auth-code-123&state=abc"],
-      authClient,
+    await act(async () => {
+      renderWithConfig({
+        modules: [
+          defineModule({
+            path: "dashboard",
+            component: () => <div>Dashboard</div>,
+            meta: { title: "Dashboard" },
+            resources: [],
+          }),
+        ],
+        initialEntries: ["/dashboard"],
+        authClient,
+      });
+      await callbackPromise;
     });
 
     expect(await screen.findByText("Dashboard")).toBeDefined();

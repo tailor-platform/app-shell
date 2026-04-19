@@ -1,50 +1,31 @@
 import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
-import type { LoaderFunctionArgs, RouteObject } from "react-router";
+import type { RouteObject } from "react-router";
 import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
 import type { Guard } from "@/resource";
-import { useRootRouteContext, type RootRouteContextType } from "@/contexts/root-route-context";
 
 // ============================================================================
 // Root Route
 // ============================================================================
 
 /**
- * Create the root route that combines root loader, navigation loading,
- * error boundary, and optional element wrapping into a single RouteObject.
- *
- * When AuthProvider wraps AppShell, rootRouteCtx provides:
- *   - loader: runs before rendering (e.g. OAuth callback handling)
- *   - wrapComponent: wraps the root component (e.g. guard UI while loading)
- * When AuthProvider is not used, rootRouteCtx is null and these are skipped.
+ * Create the root route that combines navigation loading and error boundary
+ * into a single RouteObject.
  */
 const createRootRoute = (params: {
   configurations: RootConfiguration;
-  rootRouteCtx: RootRouteContextType | null;
   contentRoutes: Array<RouteObject>;
   children: ReactNode;
 }): RouteObject => {
-  const { configurations, rootRouteCtx, contentRoutes, children } = params;
+  const { configurations, contentRoutes, children } = params;
 
-  // --- Loader: combine auth callback handling with navigation loading ---
-  const rootLoader = rootRouteCtx?.loader ?? null;
-  const { loaderID, loader: navLoader } = createNavItemsLoader({
+  // --- Loader: load navigation items ---
+  const { loaderID, loader } = createNavItemsLoader({
     modules: configurations.modules,
     locale: configurations.locale,
   });
-  const loader = async (args: LoaderFunctionArgs) => {
-    if (rootLoader) {
-      const result = await rootLoader(new URL(args.request.url));
-      if (result) return result;
-    }
-    return navLoader();
-  };
-
-  // --- Element: apply wrapper when provided (e.g. auth guard) ---
-  const wrapComponent = rootRouteCtx?.wrapComponent;
-  const element = wrapComponent ? wrapComponent(children) : children;
 
   // --- Children: wrap with error boundary when configured ---
   const globalErrorBoundary = configurations.errorBoundary;
@@ -61,7 +42,7 @@ const createRootRoute = (params: {
   return {
     id: loaderID,
     loader,
-    element,
+    element: children,
     children: routeChildren,
     // Hydration fallback is unused in CSR-only usage of AppShell.
     // Return null to silence hydration warnings.
@@ -90,7 +71,6 @@ export type RouterContainerProps =
 export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
   const { rootComponent, children } = props;
   const { configurations } = useAppShellConfig();
-  const rootRouteCtx = useRootRouteContext();
   const contentRoutes = useMemo(
     () =>
       createContentRoutes({
@@ -106,12 +86,11 @@ export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) 
       [
         createRootRoute({
           configurations,
-          rootRouteCtx,
           contentRoutes,
           children,
         }),
       ] satisfies Array<RouteObject>,
-    [configurations, rootRouteCtx, contentRoutes, children],
+    [configurations, contentRoutes, children],
   );
 
   const basename = configurations.basePath ? "/" + configurations.basePath : undefined;

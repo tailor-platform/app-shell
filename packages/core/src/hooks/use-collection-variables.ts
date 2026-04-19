@@ -41,6 +41,7 @@ import type {
  * });
  * ```
  */
+// @ts-expect-error TS2394 – TypeScript cannot verify the concrete return type against UseCollectionReturn<TableFieldName<TTable>, …> for uninstantiated TTable; structurally safe at runtime.
 export function useCollectionVariables<const TTable extends TableMetadata>(
   options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
     tableMetadata: TTable;
@@ -86,9 +87,7 @@ export function useCollectionVariables(
 // Implementation
 // -----------------------------------------------------------------------------
 export function useCollectionVariables(
-  options: UseCollectionOptions & {
-    tableMetadata?: TableMetadata;
-  },
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): UseCollectionReturn<string, CollectionVariables> {
   const { params = {} } = options;
   const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;

@@ -1,11 +1,5 @@
-import { useContext, type ComponentProps, type ReactNode } from "react";
-import {
-  Ellipsis,
-  ChevronsLeft,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsRight,
-} from "lucide-react";
+import { useContext, type ReactNode } from "react";
+import { Ellipsis, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
@@ -77,11 +71,7 @@ function DataTableRoot<TRow extends Record<string, unknown>, TRowId = string>({
   );
 
   if (controlValue) {
-    return (
-      <CollectionControlProvider value={controlValue}>
-        {inner}
-      </CollectionControlProvider>
-    );
+    return <CollectionControlProvider value={controlValue}>{inner}</CollectionControlProvider>;
   }
 
   return inner;
@@ -97,7 +87,7 @@ function DataTableHeaders({ className }: { className?: string }) {
   if (!ctx) {
     throw new Error("<DataTable.Headers> must be used within <DataTable.Root>");
   }
-  const { columns, sortStates, onSort, rowActions } = ctx;
+  const { visibleColumns: columns, sortStates, onSort, rowActions } = ctx;
   const t = useDataTableT();
 
   return (
@@ -109,9 +99,7 @@ function DataTableHeaders({ className }: { className?: string }) {
 
           const isSortable = !!col.sort;
           const currentSort = col.sort
-            ? sortStates?.find(
-                (s) => s.field === (col.sort as SortConfig).field,
-              )
+            ? sortStates?.find((s) => s.field === (col.sort as SortConfig).field)
             : undefined;
 
           const handleClick = () => {
@@ -129,16 +117,12 @@ function DataTableHeaders({ className }: { className?: string }) {
             <Table.Head
               key={key}
               style={col.width ? { width: col.width } : undefined}
-              className={cn(
-                isSortable && "astw:cursor-pointer astw:select-none",
-              )}
+              className={cn(isSortable && "astw:cursor-pointer astw:select-none")}
               onClick={isSortable ? handleClick : undefined}
             >
               <span className="astw:inline-flex astw:items-center astw:gap-1">
                 {label}
-                {currentSort && (
-                  <SortIndicator direction={currentSort.direction} />
-                )}
+                {currentSort && <SortIndicator direction={currentSort.direction} />}
               </span>
             </Table.Head>
           );
@@ -170,42 +154,22 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
 // DataTable.Body
 // =============================================================================
 
-function DataTableBody({
-  children,
-  className,
-}: {
-  children?: ReactNode;
-  className?: string;
-}) {
+function DataTableBody({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
     throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
   }
-  const { columns, rows, loading, error, onClickRow, rowActions } = ctx;
+  const { visibleColumns: columns, rows, loading, error, onClickRow, rowActions } = ctx;
   const t = useDataTableT();
   const hasRowActions = rowActions && rowActions.length > 0;
   const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0);
-
-  if (children) {
-    return (
-      <Table.Body data-slot="data-table-body" className={className}>
-        {children}
-      </Table.Body>
-    );
-  }
 
   return (
     <Table.Body data-slot="data-table-body" className={className}>
       {loading && (!rows || rows.length === 0) && (
         <Table.Row>
-          <Table.Cell
-            colSpan={totalColSpan}
-            className="astw:h-24 astw:text-center"
-          >
-            <span
-              className="astw:text-muted-foreground"
-              data-datatable-state="loading"
-            >
+          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
+            <span className="astw:text-muted-foreground" data-datatable-state="loading">
               {t("loading")}
             </span>
           </Table.Cell>
@@ -213,14 +177,8 @@ function DataTableBody({
       )}
       {error && (
         <Table.Row>
-          <Table.Cell
-            colSpan={totalColSpan}
-            className="astw:h-24 astw:text-center"
-          >
-            <span
-              className="astw:text-destructive"
-              data-datatable-state="error"
-            >
+          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
+            <span className="astw:text-destructive" data-datatable-state="error">
               {t("errorPrefix")} {error.message}
             </span>
           </Table.Cell>
@@ -228,14 +186,8 @@ function DataTableBody({
       )}
       {!loading && !error && (!rows || rows.length === 0) && (
         <Table.Row>
-          <Table.Cell
-            colSpan={totalColSpan}
-            className="astw:h-24 astw:text-center"
-          >
-            <span
-              className="astw:text-muted-foreground"
-              data-datatable-state="empty"
-            >
+          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
+            <span className="astw:text-muted-foreground" data-datatable-state="empty">
               {t("noData")}
             </span>
           </Table.Cell>
@@ -263,10 +215,7 @@ function DataTableBody({
               );
             })}
             {hasRowActions && (
-              <Table.Cell
-                style={{ width: 50 }}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <Table.Cell style={{ width: 50 }} onClick={(e) => e.stopPropagation()}>
                 <RowActionsMenu actions={rowActions} row={row} />
               </Table.Cell>
             )}
@@ -277,24 +226,6 @@ function DataTableBody({
   );
 }
 DataTableBody.displayName = "DataTable.Body";
-
-// =============================================================================
-// DataTable.Row
-// =============================================================================
-
-function DataTableRow(props: ComponentProps<"tr">) {
-  return <Table.Row data-slot="data-table-row" {...props} />;
-}
-DataTableRow.displayName = "DataTable.Row";
-
-// =============================================================================
-// DataTable.Cell
-// =============================================================================
-
-function DataTableCell(props: ComponentProps<"td">) {
-  return <Table.Cell data-slot="data-table-cell" {...props} />;
-}
-DataTableCell.displayName = "DataTable.Cell";
 
 // =============================================================================
 // RowActionsMenu (internal — uses app-shell Menu)
@@ -331,9 +262,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
                     action.onClick(row);
                   }
                 }}
-                className={cn(
-                  action.variant === "destructive" && "astw:text-destructive",
-                )}
+                className={cn(action.variant === "destructive" && "astw:text-destructive")}
               >
                 {action.icon}
                 {action.label}
@@ -373,20 +302,11 @@ DataTableTable.displayName = "DataTable.Table";
  * Footer container for pagination and other footer content.
  * Place inside `DataTable.Root`, after `DataTable.Table`.
  */
-function DataTableFooter({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+function DataTableFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       data-slot="data-table-footer"
-      className={cn(
-        "astw:flex astw:items-center astw:border-t astw:px-4 astw:py-2",
-        className,
-      )}
+      className={cn("astw:flex astw:items-center astw:border-t astw:px-4 astw:py-2", className)}
     >
       {children}
     </div>
@@ -412,9 +332,7 @@ export interface DataTablePaginationProps {
  * **Requires `control`** — `useDataTable()` must receive `control` from
  * `useCollectionVariables()`, otherwise this component throws at render time.
  */
-function DataTablePagination({
-  pageSizeOptions,
-}: DataTablePaginationProps = {}) {
+function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {}) {
   const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =
     useDataTableContext();
   const control = useCollectionControlOptional();
@@ -428,8 +346,7 @@ function DataTablePagination({
       "<DataTable.Pagination> requires collection control. Pass `control` from `useCollectionVariables()` to `useDataTable()`.",
     );
   }
-  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } =
-    control;
+  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } = control;
   const t = useDataTableT();
 
   return (
@@ -514,6 +431,4 @@ export const DataTable = {
   Table: DataTableTable,
   Footer: DataTableFooter,
   Pagination: DataTablePagination,
-  Row: DataTableRow,
-  Cell: DataTableCell,
 } as const;

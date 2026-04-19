@@ -43,7 +43,7 @@ export function useCollectionControl<
   if (!ctx) {
     throw new Error("useCollectionControl must be used within <CollectionControlProvider>");
   }
-  return ctx as CollectionControl<TFieldName>;
+  return ctx as unknown as CollectionControl<TFieldName>;
 }
 
 /**

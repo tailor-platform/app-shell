@@ -71,10 +71,7 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
  * changes (i.e., after a server refetch completes), so explicit cleanup is
  * not required on the success path.
  */
-export interface RowOperations<
-  TRow extends Record<string, unknown>,
-  TRowId = string,
-> {
+export interface RowOperations<TRow extends Record<string, unknown>, TRowId = string> {
   /** Optimistically update fields of a row identified by `rowId`. */
   updateRow: (rowId: TRowId, fields: Partial<TRow>) => { rollback: () => void };
   /** Optimistically remove a row identified by `rowId`. Returns the deleted row for undo. */
@@ -136,7 +133,7 @@ export interface UseDataTableReturn<
   // Row key identifier
   rowKey: string;
 
-  // Control (passthrough for DataTable.Provider)
+  // Control (passthrough for DataTable.Root)
   control: CollectionControl | undefined;
 
   // Row interaction (passthrough for DataTable.Provider)

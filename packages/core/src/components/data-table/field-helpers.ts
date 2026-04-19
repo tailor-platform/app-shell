@@ -10,7 +10,7 @@ import type { Column, MetadataFieldOptions } from "./types";
 /**
  * Define a column with explicit render and optional sort/filter/accessor.
  */
-function column<TRow extends Record<string, unknown>>(options: Column<TRow>): Column<TRow> {
+export function column<TRow extends Record<string, unknown>>(options: Column<TRow>): Column<TRow> {
   return {
     label: options.label,
     render: options.render,
@@ -46,7 +46,7 @@ function formatValue(value: unknown): ReactNode {
  * ];
  * ```
  */
-function inferColumns<
+export function inferColumns<
   TRow extends Record<string, unknown>,
   const TTable extends TableMetadata = TableMetadata,
 >(

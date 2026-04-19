@@ -407,9 +407,19 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   // handleCallback() resolves. The promise is started in createAuthClient()
   // at module load time — before any React render — so no render-phase
   // side effects occur here.
+  //
+  // When guardComponent is provided, AuthGuard already gates children until
+  // isReady && isAuthenticated, which is only set inside handleCallbackInternal
+  // *before* auth_state_changed fires. Wrapping with CallbackResolver in this
+  // case causes a race condition: auth_state_changed fires (triggering AuthGuard
+  // to show children) a few microtasks before the callbackPromise chain fully
+  // settles. CallbackResolver then suspends inside a sync-lane render, showing
+  // fallback={null} — a blank screen — and Suspense retry is unreliable in that
+  // context. Since AuthGuard already provides the required guard, skip
+  // CallbackResolver entirely when guardComponent is present.
   const callbackPromise = props.client.callbackPromise;
   const resolvedChildren =
-    callbackPromise != null ? (
+    callbackPromise != null && !props.guardComponent ? (
       <Suspense fallback={null}>
         <CallbackResolver promise={callbackPromise}>{props.children}</CallbackResolver>
       </Suspense>

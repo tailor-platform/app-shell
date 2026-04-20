@@ -412,6 +412,10 @@ function FilterChip({
     setOpen(isOpen);
   }, []);
 
+  const handleClose = useCallback(() => {
+    setOpen(false);
+  }, []);
+
   const handleRemove = useCallback(() => {
     control.removeFilter(config.field);
   }, [control, config.field]);
@@ -442,7 +446,12 @@ function FilterChip({
                 "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
               )}
             >
-              <FilterPopoverContent column={column} filter={filter} control={control} />
+              <FilterPopoverContent
+                column={column}
+                filter={filter}
+                control={control}
+                onClose={handleClose}
+              />
             </Popover.Popup>
           </Popover.Positioner>
         </Popover.Portal>
@@ -468,10 +477,12 @@ function FilterPopoverContent({
   column,
   filter,
   control,
+  onClose,
 }: {
   column: Column<Record<string, unknown>> & { filter: FilterConfig };
   filter: Filter;
   control: CollectionControl;
+  onClose: () => void;
 }) {
   const config = column.filter;
 
@@ -481,13 +492,21 @@ function FilterPopoverContent({
     case "boolean":
       return <BooleanFilterEditor config={config} filter={filter} control={control} />;
     case "string":
-      return <StringFilterEditor config={config} filter={filter} control={control} />;
+      return (
+        <StringFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+      );
     case "uuid":
-      return <UuidFilterEditor config={config} filter={filter} control={control} />;
+      return (
+        <UuidFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+      );
     case "number":
-      return <NumericFilterEditor config={config} filter={filter} control={control} />;
+      return (
+        <NumericFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+      );
     case "date":
-      return <DateFilterEditor config={config} filter={filter} control={control} />;
+      return (
+        <DateFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+      );
   }
 }
 
@@ -641,10 +660,12 @@ function StringFilterEditor({
   config,
   filter,
   control,
+  onClose,
 }: {
   config: Extract<FilterConfig, { type: "string" }>;
   filter: Filter;
   control: CollectionControl;
+  onClose: () => void;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<StringOperator>(
@@ -660,7 +681,8 @@ function StringFilterEditor({
     } else {
       control.addFilter(config.field, localOp, localValue);
     }
-  }, [localValue, localOp, control, config.field]);
+    onClose();
+  }, [localValue, localOp, control, config.field, onClose]);
 
   return (
     <div
@@ -682,9 +704,11 @@ function StringFilterEditor({
         onKeyDown={(e) => {
           if (e.key === "Enter") handleCommit();
         }}
-        onBlur={handleCommit}
         className="astw:h-8 astw:text-sm"
       />
+      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+        {t("applyFilter")}
+      </Button>
     </div>
   );
 }
@@ -697,11 +721,14 @@ function UuidFilterEditor({
   config,
   filter,
   control,
+  onClose,
 }: {
   config: Extract<FilterConfig, { type: "uuid" }>;
   filter: Filter;
   control: CollectionControl;
+  onClose: () => void;
 }) {
+  const t = useDataTableT();
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
 
   const handleCommit = useCallback(() => {
@@ -710,19 +737,22 @@ function UuidFilterEditor({
     } else {
       control.addFilter(config.field, "eq", localValue);
     }
-  }, [localValue, control, config.field]);
+    onClose();
+  }, [localValue, control, config.field, onClose]);
 
   return (
-    <div data-slot="data-table-filter-uuid" className="astw:p-2">
+    <div data-slot="data-table-filter-uuid" className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
       <Input
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") handleCommit();
         }}
-        onBlur={handleCommit}
         className="astw:h-8 astw:text-sm"
       />
+      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+        {t("applyFilter")}
+      </Button>
     </div>
   );
 }
@@ -735,10 +765,12 @@ function NumericFilterEditor({
   config,
   filter,
   control,
+  onClose,
 }: {
   config: Extract<FilterConfig, { type: "number" }>;
   filter: Filter;
   control: CollectionControl;
+  onClose: () => void;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<NumericDateOperator>(
@@ -755,7 +787,8 @@ function NumericFilterEditor({
     } else {
       control.addFilter(config.field, localOp, num);
     }
-  }, [localValue, localOp, control, config.field]);
+    onClose();
+  }, [localValue, localOp, control, config.field, onClose]);
 
   return (
     <div
@@ -778,9 +811,11 @@ function NumericFilterEditor({
         onKeyDown={(e) => {
           if (e.key === "Enter") handleCommit();
         }}
-        onBlur={handleCommit}
         className="astw:h-8 astw:text-sm"
       />
+      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+        {t("applyFilter")}
+      </Button>
     </div>
   );
 }
@@ -793,10 +828,12 @@ function DateFilterEditor({
   config,
   filter,
   control,
+  onClose,
 }: {
   config: Extract<FilterConfig, { type: "date" }>;
   filter: Filter;
   control: CollectionControl;
+  onClose: () => void;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<NumericDateOperator>(
@@ -812,7 +849,8 @@ function DateFilterEditor({
     } else {
       control.addFilter(config.field, localOp, localValue);
     }
-  }, [localValue, localOp, control, config.field]);
+    onClose();
+  }, [localValue, localOp, control, config.field, onClose]);
 
   return (
     <div data-slot="data-table-filter-date" className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
@@ -831,9 +869,11 @@ function DateFilterEditor({
         onChange={(e) => {
           setLocalValue(e.target.value);
         }}
-        onBlur={handleCommit}
         className="astw:h-8 astw:text-sm"
       />
+      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+        {t("applyFilter")}
+      </Button>
     </div>
   );
 }

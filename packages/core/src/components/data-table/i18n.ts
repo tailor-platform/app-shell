@@ -23,6 +23,7 @@ export const dataTableLabels = defineI18nLabels({
 
     // Filters
     addFilter: "Add filter",
+    applyFilter: "Apply",
     removeFilter: "Remove filter",
     filterBooleanTrue: "True",
     filterBooleanFalse: "False",
@@ -63,6 +64,7 @@ export const dataTableLabels = defineI18nLabels({
 
     // Filters
     addFilter: "フィルタを追加",
+    applyFilter: "適用",
     removeFilter: "フィルタを削除",
     filterBooleanTrue: "真",
     filterBooleanFalse: "偽",

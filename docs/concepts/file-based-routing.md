@@ -25,6 +25,18 @@ src/pages/
         └── page.tsx          # /settings
 ```
 
+Pages with no sub-pages (leaf pages) appear correctly in the CommandPalette and DefaultSidebar auto-generated navigation:
+
+```
+src/pages/
+├── dashboard/
+│   └── page.tsx   # /dashboard — leaf page, appears in sidebar and CommandPalette
+└── orders/
+    ├── page.tsx   # /orders
+    └── [id]/
+        └── page.tsx   # /orders/:id
+```
+
 Directories **without** a `page.tsx` still contribute a path segment — navigating to that path returns a 404 while their children remain accessible:
 
 ```
@@ -74,7 +86,11 @@ export default defineConfig({
 
 ```tsx
 // App.tsx
-import { AppShell, SidebarLayout, DefaultSidebar } from "@tailor-platform/app-shell";
+import {
+  AppShell,
+  SidebarLayout,
+  DefaultSidebar,
+} from "@tailor-platform/app-shell";
 
 const App = () => {
   return (
@@ -228,7 +244,10 @@ paths.for("/invalid");              // Error: route doesn't exist
 ### Before: Explicit Hierarchy Assembly
 
 ```tsx
-const orderDetailResource = defineResource({ path: ":id", component: OrderDetail });
+const orderDetailResource = defineResource({
+  path: ":id",
+  component: OrderDetail,
+});
 const ordersResource = defineResource({
   path: "orders",
   component: OrdersList,

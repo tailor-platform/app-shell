@@ -431,13 +431,12 @@ export interface CollectionControl<
   /**
    * Navigate to the last page.
    *
-   * @param lastPage - The total page count. Only call this when `totalPages`
-   * is known (non-null). If called with an unknown total, `paginationDirection`
-   * will be set to `"backward"` while `currentPage` is set to the supplied
-   * value, causing the UI page number and the actual data window to contradict
-   * each other.
+   * Requests the last `pageSize` items by setting `paginationDirection` to
+   * `"backward"` with no cursor. Note: `currentPage` is not updated because
+   * cursor-based pagination does not track absolute page numbers — the display
+   * counter is approximate.
    */
-  goToLastPage: (lastPage: number) => void;
+  goToLastPage: () => void;
 }
 
 /**

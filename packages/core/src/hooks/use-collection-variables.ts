@@ -41,7 +41,6 @@ import type {
  * });
  * ```
  */
-// @ts-expect-error TS2394 – TypeScript cannot verify the concrete return type against UseCollectionReturn<TableFieldName<TTable>, …> for uninstantiated TTable; structurally safe at runtime.
 export function useCollectionVariables<const TTable extends TableMetadata>(
   options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
     tableMetadata: TTable;
@@ -86,9 +85,13 @@ export function useCollectionVariables(
 // -----------------------------------------------------------------------------
 // Implementation
 // -----------------------------------------------------------------------------
+// Returns `unknown` so that both overload return types (which are mutually
+// incompatible via CollectionControl's contravariant TFieldName) are assignable
+// to it — every type is assignable to `unknown`. Callers always see the narrower
+// type from the overload signatures above, never `unknown`.
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
-): UseCollectionReturn<string, CollectionVariables> {
+): unknown {
   const { params = {} } = options;
   const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
 
@@ -200,13 +203,13 @@ export function useCollectionVariables(
     setCurrentPage(1);
   }, []);
 
-  const goToLastPage = useCallback((lastPage: number) => {
+  const goToLastPage = useCallback(() => {
     // Cursor-based pagination has no "jump to page N" — we request the last
     // `pageSize` items by setting direction="backward" with no cursor.
-    // The displayed page number may drift if `total` is stale.
+    // `currentPage` is intentionally not updated here because we don't know
+    // the total page count at this layer.
     setCursor(null);
     setPaginationDirection("backward");
-    setCurrentPage(lastPage);
   }, []);
 
   // ---------------------------------------------------------------------------

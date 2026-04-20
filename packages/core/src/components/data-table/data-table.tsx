@@ -409,8 +409,8 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       <Button
         variant="outline"
         size="icon"
-        onClick={() => goToLastPage(totalPages ?? 1)}
-        disabled={!hasNextPage || totalPages === null}
+        onClick={goToLastPage}
+        disabled={!hasNextPage}
         aria-label={t("paginationLast")}
       >
         <ChevronsRight className="astw:size-4" />

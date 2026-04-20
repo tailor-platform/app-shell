@@ -32,7 +32,10 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       {...props}
     >
       {title && (
-        <h3 data-slot="card-title" className="astw:leading-none astw:font-semibold">
+        <h3
+          data-slot="card-title"
+          className="astw:text-lg astw:font-semibold astw:leading-none astw:text-card-foreground"
+        >
           {title}
         </h3>
       )}

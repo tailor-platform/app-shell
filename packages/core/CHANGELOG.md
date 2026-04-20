@@ -1,5 +1,49 @@
 # @tailor-platform/app-shell
 
+## 0.35.0
+
+### Minor Changes
+
+- d284d6a: Add `searchSources` prop to `AppShell` to wire async, prefix-based search into the CommandPalette. Each source declares a short `prefix` (e.g. `"ORD"`) and an async `search` function. When the user types that prefix followed by `:`, the palette switches into search mode: Actions and Pages sections are hidden and only results from that source are shown.
+
+  The empty-input state of the palette now includes a **Search Modes** section that lists every registered source, so users can discover and activate a mode with a single click instead of remembering the prefix syntax.
+
+  `DefaultSidebar` always renders a **Search** entry that opens the palette (Cmd+K also works globally), because routes and registered actions are always searchable regardless of whether any `searchSources` are configured.
+
+  ```tsx
+  import { AppShell, type SearchSource } from "@tailor-platform/app-shell";
+
+  const searchSources: readonly SearchSource[] = [
+    {
+      prefix: "ORD",
+      title: "Orders",
+      search: async (query, { signal }) => {
+        const results = await api.searchOrders(query, { signal });
+        return results.map((o) => ({
+          key: o.id,
+          label: o.number,
+          path: `/orders/${o.id}`,
+        }));
+      },
+    },
+  ];
+
+  <AppShell searchSources={searchSources}>
+    <SidebarLayout sidebar={<DefaultSidebar />} />
+  </AppShell>;
+  ```
+
+### Patch Changes
+
+- 5dc2d7f: Dependencies updated
+
+  - Updated [react](https://www.npmjs.com/package/react) (^19.2.4 -> ^19.2.5)
+  - Updated [react-dom](https://www.npmjs.com/package/react-dom) (^19.2.4 -> ^19.2.5)
+
+- 202f046: Updated [react-router](https://www.npmjs.com/package/react-router) (^7.14.0 -> ^7.14.1)
+- 307c4ef: Updated [lucide-react](https://www.npmjs.com/package/lucide-react) (^1.7.0 -> ^1.8.0)
+- b5e4352: Fixed a bug where placing a guard component between `AuthProvider` and `AppShell` could block `AppShell` from mounting, preventing the authentication flow from ever starting and leaving the app stuck in an unauthenticated state.
+
 ## 0.34.0
 
 ### Minor Changes

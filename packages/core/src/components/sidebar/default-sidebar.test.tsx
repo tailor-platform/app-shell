@@ -199,4 +199,38 @@ describe("DefaultSidebar auto-generation", () => {
     expect(linkTexts).not.toContain("Settings");
     expect(linkTexts).not.toContain("General");
   });
+
+  it("renders a leaf module (no child resources) as a top-level link without an expand button", async () => {
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+      }),
+    ];
+
+    window.history.pushState({}, "", "/dashboard");
+    render(
+      <AppShell title="Test" modules={modules}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+    });
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+    const links = sidebar.querySelectorAll("a");
+    const dashboardLink = Array.from(links).find((link) => link.textContent === "Dashboard");
+
+    // The leaf module should appear as a navigable link
+    expect(dashboardLink).toBeDefined();
+    expect(dashboardLink!.getAttribute("href")).toBe("/dashboard");
+
+    // No expand/collapse trigger should be rendered (no children)
+    const triggers = sidebar.querySelectorAll('[data-slot="sidebar-menu-action"]');
+    expect(triggers.length).toBe(0);
+  });
 });

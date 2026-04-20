@@ -338,4 +338,26 @@ describe("useNavItems", () => {
     expect(resources[0].items![1].title).toBe("Advanced");
     expect(resources[0].items![1].url).toBe("app/settings/advanced");
   });
+
+  it("includes a clickable module with no resources as a leaf nav item", async () => {
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard" },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/dashboard");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(1);
+    });
+
+    const navItems = await result.current!;
+    expect(navItems[0].title).toBe("Dashboard");
+    expect(navItems[0].url).toBe("dashboard");
+    expect(navItems[0].items).toHaveLength(0);
+  });
 });

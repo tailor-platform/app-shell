@@ -133,6 +133,9 @@ importers:
       app-module:
         specifier: workspace:*
         version: link:../app-module
+      lucide-react:
+        specifier: ^1.8.0
+        version: 1.8.0(react@19.2.5)
       react:
         specifier: ^19.2.5
         version: 19.2.5

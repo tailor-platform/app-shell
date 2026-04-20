@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterContainer } from "./router";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
+import * as ReactRouter from "react-router";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
@@ -17,11 +18,13 @@ import { AuthProvider, type EnhancedAuthClient } from "@/contexts/auth-context";
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState({}, "", "/");
 });
 
 const renderWithConfig = ({
   modules = [],
   basePath,
+  locale = "en",
   rootComponent,
   initialEntries,
   contextData = {},
@@ -31,6 +34,7 @@ const renderWithConfig = ({
 }: {
   modules?: Array<Module>;
   basePath?: string;
+  locale?: string;
   rootComponent?: () => ReactNode;
   initialEntries: Array<string>;
   contextData?: ContextData;
@@ -43,7 +47,7 @@ const renderWithConfig = ({
     settingsResources: [] as Array<Resource>,
     basePath,
     errorBoundary: undefined,
-    locale: "en",
+    locale,
   };
 
   setContextData(contextData);
@@ -58,7 +62,7 @@ const renderWithConfig = ({
     </AppShellConfigContext.Provider>
   );
 
-  render(
+  return render(
     authClient ? (
       <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
         {tree}
@@ -425,12 +429,14 @@ const createMockAuthClient = (
     getAuthHeaders: vi.fn(),
     getAppUri: vi.fn(() => "https://api.test.com"),
     getAuthHeadersForQuery: vi.fn(),
+    getCallbackStatusSnapshot: vi.fn(() => "idle"),
+    subscribeCallbackStatus: vi.fn(() => () => {}),
     ...overrides,
   } as EnhancedAuthClient;
 };
 
 describe("RouterContainer with AuthProvider", () => {
-  it("calls checkAuthStatus via loader on initial load", async () => {
+  it("does not call checkAuthStatus via loader on initial load", async () => {
     const mockCheckAuthStatus = vi.fn().mockResolvedValue({
       isAuthenticated: true,
       error: null,
@@ -455,33 +461,139 @@ describe("RouterContainer with AuthProvider", () => {
     });
 
     await screen.findByText("Dashboard");
-    expect(mockCheckAuthStatus).toHaveBeenCalled();
+    expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
   });
 
-  it("calls handleCallback when OAuth code is present in URL", async () => {
-    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
-    const mockCheckAuthStatus = vi.fn().mockResolvedValue({
-      isAuthenticated: true,
-      error: null,
-      isReady: true,
-    });
+  it("waits to render until callback handling finishes", async () => {
+    let callbackStatus: "idle" | "pending" | "resolved" | "rejected" = "pending";
+    let callbackStatusListener: (() => void) | undefined;
     const authClient = createMockAuthClient(
       { isAuthenticated: true, error: null, isReady: true },
       {
-        handleCallback: mockHandleCallback,
-        checkAuthStatus: mockCheckAuthStatus,
+        getCallbackStatusSnapshot: vi.fn(() => callbackStatus),
+        subscribeCallbackStatus: vi.fn((listener: () => void) => {
+          callbackStatusListener = listener;
+          return () => {
+            callbackStatusListener = undefined;
+          };
+        }),
       },
     );
 
     renderWithConfig({
       modules: [],
       rootComponent: () => <div>Home</div>,
-      initialEntries: ["/?code=auth-code-123&state=abc"],
+      initialEntries: ["/"],
       authClient,
     });
 
-    await screen.findByText("Home");
-    expect(mockHandleCallback).toHaveBeenCalled();
+    expect(screen.queryByText("Home")).toBeNull();
+
+    await act(async () => {
+      callbackStatus = "resolved";
+      callbackStatusListener?.();
+    });
+
+    expect(await screen.findByText("Home")).toBeDefined();
+  });
+
+  it("does not recreate the router when auth state changes", async () => {
+    let snapshot = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: false,
+    };
+    const listeners: Array<(event: { type: string }) => void> = [];
+    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+
+    const authClient = createMockAuthClient(snapshot, {
+      getState: vi.fn(() => snapshot),
+      addEventListener: vi.fn((listener) => {
+        listeners.push(listener);
+        return () => {
+          const idx = listeners.indexOf(listener);
+          if (idx >= 0) listeners.splice(idx, 1);
+        };
+      }),
+    });
+
+    try {
+      renderWithConfig({
+        modules: [],
+        rootComponent: () => <div>Home</div>,
+        initialEntries: ["/"],
+        authClient,
+        guardComponent: () => <div>Loading...</div>,
+      });
+
+      expect(await screen.findByText("Loading...")).toBeDefined();
+      // With guardComponent now applied in AuthProvider (not the router),
+      // RouterContainer is not mounted until auth is ready.
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(0);
+
+      act(() => {
+        snapshot = {
+          isAuthenticated: true,
+          error: null,
+          isReady: true,
+        };
+        for (const listener of listeners) {
+          listener({ type: "auth_state_changed" });
+        }
+      });
+
+      expect(await screen.findByText("Home")).toBeDefined();
+      // Router is created once when children first render after auth is ready.
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      createMemoryRouterSpy.mockRestore();
+    }
+  });
+
+  it("recreates the router when route-defining config changes", async () => {
+    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+    const module = defineModule({
+      path: "dashboard",
+      component: () => <div>Dashboard</div>,
+      meta: { title: "Dashboard" },
+      resources: [],
+    });
+
+    try {
+      const view = renderWithConfig({
+        modules: [module],
+        locale: "en",
+        initialEntries: ["/dashboard"],
+      });
+
+      expect(await screen.findByText("Dashboard")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
+
+      view.rerender(
+        <AppShellConfigContext.Provider
+          value={{
+            configurations: {
+              modules: [module],
+              settingsResources: [],
+              basePath: undefined,
+              errorBoundary: undefined,
+              locale: "ja",
+            },
+          }}
+        >
+          <AppShellDataContext.Provider value={{ contextData: {} }}>
+            <RouterContainer memory initialEntries={["/dashboard"]}>
+              <Outlet />
+            </RouterContainer>
+          </AppShellDataContext.Provider>
+        </AppShellConfigContext.Provider>,
+      );
+
+      expect(await screen.findByText("Dashboard")).toBeDefined();
+      expect(createMemoryRouterSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      createMemoryRouterSpy.mockRestore();
+    }
   });
 
   it("calls login automatically when autoLogin is enabled and not authenticated", async () => {
@@ -595,8 +707,8 @@ describe("RouterContainer with AuthProvider", () => {
 
   it("transitions from guard to children when auth state changes", async () => {
     // Mutable snapshot; initially not ready, not authenticated.
-    // The loader calls checkAuthStatus, but the mock does NOT update the
-    // snapshot during the loader — so the guard is shown on first render.
+    // Mount-time initialization runs outside the router loader, so the guard
+    // remains visible until the auth client publishes a ready state.
     let snapshot = {
       isAuthenticated: false,
       error: null as string | null,
@@ -708,10 +820,19 @@ describe("RouterContainer with AuthProvider", () => {
   });
 
   it("renders the correct page after OAuth callback with a specific path", async () => {
-    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    let callbackStatus: "idle" | "pending" | "resolved" | "rejected" = "pending";
+    let callbackStatusListener: (() => void) | undefined;
     const authClient = createMockAuthClient(
       { isAuthenticated: true, error: null, isReady: true },
-      { handleCallback: mockHandleCallback },
+      {
+        getCallbackStatusSnapshot: vi.fn(() => callbackStatus),
+        subscribeCallbackStatus: vi.fn((listener: () => void) => {
+          callbackStatusListener = listener;
+          return () => {
+            callbackStatusListener = undefined;
+          };
+        }),
+      },
     );
 
     renderWithConfig({
@@ -723,12 +844,16 @@ describe("RouterContainer with AuthProvider", () => {
           resources: [],
         }),
       ],
-      initialEntries: ["/dashboard?code=auth-code-123&state=abc"],
+      initialEntries: ["/dashboard"],
       authClient,
     });
 
+    await act(async () => {
+      callbackStatus = "resolved";
+      callbackStatusListener?.();
+    });
+
     expect(await screen.findByText("Dashboard")).toBeDefined();
-    expect(mockHandleCallback).toHaveBeenCalled();
   });
 
   it("applies both auth guard and route-level guards correctly", async () => {

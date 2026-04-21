@@ -277,4 +277,43 @@ describe("useAttachment", () => {
     expect(ops[0]?.type).toBe("upload");
     expect((ops[0] as { type: "upload"; file: File }).file).toBe(file2);
   });
+
+  it("pending upload deleted during applyChanges does not corrupt the remaining buffer", async () => {
+    const { result } = renderHook(() => useAttachment());
+    const file1 = new File(["a"], "first.pdf", { type: "application/pdf" });
+    const file2 = new File(["b"], "second.pdf", { type: "application/pdf" });
+
+    act(() => {
+      result.current.props.onUpload?.([file1, file2]);
+    });
+
+    const itemToDelete = result.current.props.items[0]!; // file1 (prepended, so index 0)
+
+    let resolveFirst!: () => void;
+    const firstFlush = result.current.applyChanges(
+      () =>
+        new Promise<void>((res) => {
+          resolveFirst = res;
+        }),
+    );
+
+    // Cancel file1's pending upload while applyChanges is in flight
+    act(() => {
+      result.current.props.onDelete?.(itemToDelete);
+    });
+
+    resolveFirst();
+    await act(async () => {
+      await firstFlush;
+    });
+
+    // Both ops were in the snapshot → both should be cleared; the splice of file1
+    // mid-flight must not cause file2's op to survive into the next flush.
+    const fn = vi.fn<(operations: AttachmentOperation[]) => Promise<void>>(async () => {});
+    await act(async () => {
+      await result.current.applyChanges(fn);
+    });
+
+    expect(fn.mock.calls[0]?.[0] ?? []).toHaveLength(0);
+  });
 });

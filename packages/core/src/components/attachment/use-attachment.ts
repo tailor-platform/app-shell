@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 
 import type {
   AttachmentItem,
@@ -16,6 +16,105 @@ type UseAttachmentProps = Omit<AttachmentControlledProps, "items"> & {
   items: AttachmentItem[];
 };
 
+/**
+ * Internal wrapper that tags each buffered operation with a stable unique key.
+ * `opKey` lets applyChanges identify exactly which entries were snapshotted for
+ * a flush and remove them by identity after `fn` resolves — regardless of any
+ * concurrent index shifts caused by onDelete mutating the buffer mid-flight.
+ */
+type OperationEntry = AttachmentOperation & { readonly opKey: string };
+
+// ---------------------------------------------------------------------------
+// Item lifecycle helpers
+// These are the only two places that call URL.createObjectURL / revokeObjectURL.
+// Keeping side effects here makes the rest of the hook free of URL management.
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a pending AttachmentItem for a newly selected file.
+ * Side effect: calls URL.createObjectURL for image files to generate a preview URL.
+ */
+function buildPendingItem(file: File): AttachmentItem {
+  return {
+    id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    fileName: file.name,
+    mimeType: file.type || "application/octet-stream",
+    previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+  };
+}
+
+/**
+ * Releases the blob preview URL held by an item, if any.
+ * Side effect: calls URL.revokeObjectURL when previewUrl is a blob: URL.
+ * Safe to call on server-side items (https: URLs are ignored).
+ */
+function releasePendingItem(item: AttachmentItem): void {
+  if (item.previewUrl?.startsWith("blob:")) {
+    URL.revokeObjectURL(item.previewUrl);
+  }
+}
+
+// ---------------------------------------------------------------------------
+
+type State = {
+  items: AttachmentItem[];
+  operations: OperationEntry[];
+  isApplying: boolean;
+};
+
+type Action =
+  /** Files are selected or dropped onto the upload tile. */
+  | { type: "UPLOAD"; newItems: AttachmentItem[]; newOps: OperationEntry[] }
+  /** Delete is chosen from a preview item's action menu. */
+  | { type: "DELETE"; itemId: string }
+  /** applyChanges begins — locks the buffer against concurrent flushes. */
+  | { type: "FLUSH_START" }
+  /** fn resolved successfully — removes the snapshotted ops from the buffer. */
+  | { type: "FLUSH_COMPLETE"; flushedKeys: Set<string> }
+  /** fn threw — resets isApplying without touching the buffer so the call can be retried. */
+  | { type: "FLUSH_ROLLBACK" };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "UPLOAD":
+      return {
+        ...state,
+        items: [...action.newItems, ...state.items],
+        operations: [...state.operations, ...action.newOps],
+      };
+    case "DELETE": {
+      const uploadOpIndex = state.operations.findIndex(
+        (op) => op.type === "upload" && op.item.id === action.itemId,
+      );
+      const isRemovingPendingUpload = uploadOpIndex !== -1;
+      return {
+        ...state,
+        items: state.items.filter((i) => i.id !== action.itemId),
+        operations: isRemovingPendingUpload
+          ? state.operations.filter((_, i) => i !== uploadOpIndex)
+          : [
+              ...state.operations,
+              {
+                type: "delete",
+                item: state.items.find((i) => i.id === action.itemId)!,
+                opKey: crypto.randomUUID(),
+              },
+            ],
+      };
+    }
+    case "FLUSH_START":
+      return { ...state, isApplying: true };
+    case "FLUSH_COMPLETE":
+      return {
+        ...state,
+        isApplying: false,
+        operations: state.operations.filter((op) => !action.flushedKeys.has(op.opKey)),
+      };
+    case "FLUSH_ROLLBACK":
+      return { ...state, isApplying: false };
+  }
+}
+
 type UseAttachmentReturn = {
   props: UseAttachmentProps;
   /**
@@ -30,53 +129,36 @@ type UseAttachmentReturn = {
 
 export function useAttachment(options: UseAttachmentOptions = {}): UseAttachmentReturn {
   const { initialItems = [], accept, disabled = false } = options;
-  const [items, setItems] = useState<AttachmentItem[]>(initialItems);
-  const [isApplying, setIsApplying] = useState(false);
 
-  // Pending operations buffer: accumulates upload/delete ops until applyChanges is called.
-  const operationsRef = useRef<AttachmentOperation[]>([]);
+  const [state, dispatch] = useReducer(reducer, {
+    items: initialItems,
+    operations: [],
+    isApplying: false,
+  });
 
   // Flush guard: prevents concurrent applyChanges calls from sending duplicate operations.
   const isApplyingRef = useRef(false);
 
+  // Used only by the useEffect cleanup on unmount to revoke any remaining blob URLs.
+  // A ref is needed here because the cleanup function captures the ref object (stable),
+  // not state.operations (which would be stale inside the effect's closure).
+  const operationsRef = useRef(state.operations);
+  operationsRef.current = state.operations;
+
   const onUpload = useCallback((files: File[]) => {
-    const newItems = files.map(
-      (file): AttachmentItem => ({
-        id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        fileName: file.name,
-        mimeType: file.type || "application/octet-stream",
-        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-      }),
-    );
-
-    files.forEach((file, i) => {
-      const item = newItems[i];
-      if (item) {
-        operationsRef.current.push({ type: "upload", file, item });
-      }
-    });
-
-    setItems((prev) => [...newItems, ...prev]); // newly uploaded files are prepended to the list
+    const newItems = files.map(buildPendingItem);
+    const newOps: OperationEntry[] = files.map((file, i) => ({
+      type: "upload",
+      file,
+      item: newItems[i]!,
+      opKey: crypto.randomUUID(),
+    }));
+    dispatch({ type: "UPLOAD", newItems, newOps });
   }, []);
 
   const onDelete = useCallback((item: AttachmentItem) => {
-    setItems((prev) => prev.filter((i) => i.id !== item.id));
-
-    const uploadOpIndex = operationsRef.current.findIndex(
-      (op) => op.type === "upload" && op.item.id === item.id,
-    );
-
-    if (uploadOpIndex !== -1) {
-      // Cancelling a pending upload — revoke preview URL and drop the op
-      const op = operationsRef.current[uploadOpIndex];
-      if (op?.type === "upload" && op.item.previewUrl) {
-        URL.revokeObjectURL(op.item.previewUrl);
-      }
-      operationsRef.current.splice(uploadOpIndex, 1);
-    } else {
-      // Not a pending upload → must be a server-side item; always emit delete
-      operationsRef.current.push({ type: "delete", item });
-    }
+    releasePendingItem(item);
+    dispatch({ type: "DELETE", itemId: item.id });
   }, []);
 
   // Revoke all blob URLs for pending image uploads on unmount to prevent memory leaks.
@@ -86,9 +168,7 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
   useEffect(() => {
     return () => {
       for (const op of operationsRef.current) {
-        if (op.type === "upload" && op.item.previewUrl) {
-          URL.revokeObjectURL(op.item.previewUrl);
-        }
+        if (op.type === "upload") releasePendingItem(op.item);
       }
     };
   }, []);
@@ -99,26 +179,32 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
         throw new Error("applyChanges is already in progress");
       }
       isApplyingRef.current = true;
-      setIsApplying(true);
-      const opsToFlush = [...operationsRef.current];
+      dispatch({ type: "FLUSH_START" });
+
+      const snapshot = [...state.operations];
+      const flushedKeys = new Set(snapshot.map((op) => op.opKey));
+      // Strip internal opKey before passing to the consumer
+      const opsToFlush: AttachmentOperation[] = snapshot.map(({ opKey: _opKey, ...op }) => op);
       try {
         await fn(opsToFlush);
-        operationsRef.current = operationsRef.current.slice(opsToFlush.length);
+        dispatch({ type: "FLUSH_COMPLETE", flushedKeys });
+      } catch (err) {
+        dispatch({ type: "FLUSH_ROLLBACK" });
+        throw err;
       } finally {
         isApplyingRef.current = false;
-        setIsApplying(false);
       }
     },
-    [],
+    [state.operations],
   );
 
   const props: UseAttachmentProps = {
-    items,
+    items: state.items,
     onUpload,
     onDelete,
     accept,
     disabled,
   };
 
-  return { props, applyChanges, isApplying };
+  return { props, applyChanges, isApplying: state.isApplying };
 }

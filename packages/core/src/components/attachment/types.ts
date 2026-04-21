@@ -7,8 +7,6 @@ export interface AttachmentItem {
   mimeType: string;
   /** Optional preview URL for image attachments. */
   previewUrl?: string;
-  /** Lifecycle status used for upload rendering. */
-  status?: "ready" | "uploading";
 }
 
 export type AttachmentOperation =
@@ -18,7 +16,7 @@ export type AttachmentOperation =
 export type AttachmentProps = {
   /** List of attachments to render. */
   items?: AttachmentItem[];
-  /** Called when files are selected or dropped. Required to show the upload tile. */
+  /** Called when files are selected or dropped. */
   onUpload: (files: File[]) => void;
   /** Called when delete action is selected for an item. */
   onDelete?: (item: AttachmentItem) => void;

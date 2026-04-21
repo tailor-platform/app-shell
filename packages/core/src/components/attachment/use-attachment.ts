@@ -13,6 +13,11 @@ type UseAttachmentProps = Omit<AttachmentControlledProps, "items"> & {
 
 type UseAttachmentReturn = {
   props: UseAttachmentProps;
+  /**
+   * Flushes buffered operations to your backend by passing them to `fn`.
+   * If `fn` throws, the buffer is preserved so the call can be retried.
+   * The buffer is cleared only after `fn` resolves successfully.
+   */
   applyChanges: (fn: (operations: AttachmentOperation[]) => Promise<void>) => Promise<void>;
 };
 
@@ -30,7 +35,6 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
         fileName: file.name,
         mimeType: file.type || "application/octet-stream",
         previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-        status: "ready",
       }),
     );
 
@@ -41,7 +45,7 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
       }
     });
 
-    setItems((prev) => [...newItems, ...prev]);
+    setItems((prev) => [...newItems, ...prev]); // newly uploaded files are prepended to the list
   }, []);
 
   const onDelete = useCallback((item: AttachmentItem) => {

@@ -43,7 +43,6 @@ describe("useAttachment", () => {
 
     expect(result.current.props.items).toHaveLength(1);
     expect(result.current.props.items[0]?.fileName).toBe("invoice.pdf");
-    expect(result.current.props.items[0]?.status).toBe("ready");
   });
 
   it("creates image preview URL for image uploads", () => {
@@ -155,6 +154,33 @@ describe("useAttachment", () => {
     });
 
     expect(fn.mock.calls[0]?.[0] ?? []).toHaveLength(0);
+  });
+
+  it("preserves operations buffer when applyChanges fn throws", async () => {
+    const { result } = renderHook(() => useAttachment());
+    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+
+    act(() => {
+      result.current.props.onUpload?.([file]);
+    });
+
+    // fn throws — buffer must be preserved for retry
+    await act(async () => {
+      await expect(
+        result.current.applyChanges(async () => {
+          throw new Error("upload failed");
+        }),
+      ).rejects.toThrow("upload failed");
+    });
+
+    // retry: operations are still available
+    const fn = vi.fn<(operations: AttachmentOperation[]) => Promise<void>>(async () => {});
+    await act(async () => {
+      await result.current.applyChanges(fn);
+    });
+
+    expect(fn.mock.calls[0]?.[0] ?? []).toHaveLength(1);
+    expect(fn.mock.calls[0]?.[0]?.[0]?.type).toBe("upload");
   });
 
   it("clears operations after applyChanges", async () => {

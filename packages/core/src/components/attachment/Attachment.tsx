@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CloudUpload, Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
+import { CloudUpload, Ellipsis, File, Image as ImageIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,7 @@ export function Attachment({
   const handleUpload = React.useCallback(
     (files: File[]) => {
       if (disabled || files.length === 0) return;
-      onUpload?.(files);
+      onUpload(files);
     },
     [disabled, onUpload],
   );
@@ -138,7 +138,6 @@ export function Attachment({
         <div className="astw:flex astw:flex-wrap astw:gap-4">
           {items.map((item) => {
             const { baseName, extension } = splitFileName(item.fileName);
-            const isUploading = item.status === "uploading";
             const hasFailedImagePreview = failedImagePreviewIds.has(item.id);
             const shouldShowImagePreview =
               isImageItem(item) && !!item.previewUrl && !hasFailedImagePreview;
@@ -179,18 +178,6 @@ export function Attachment({
                         </p>
                       </>
                     )}
-                    {isUploading ? (
-                      <div
-                        className="astw:absolute astw:inset-0 astw:flex astw:items-center astw:justify-center astw:bg-black/60"
-                        data-testid="attachment-upload-overlay"
-                      >
-                        <Loader2
-                          className="astw:size-5 astw:animate-spin astw:text-white"
-                          aria-hidden
-                          data-testid="attachment-upload-spinner"
-                        />
-                      </div>
-                    ) : null}
                   </div>
                 ) : (
                   <div
@@ -211,21 +198,9 @@ export function Attachment({
                       </span>
                       {extension ? <span className="astw:shrink-0">{extension}</span> : null}
                     </p>
-                    {isUploading ? (
-                      <div
-                        className="astw:absolute astw:inset-0 astw:flex astw:items-center astw:justify-center astw:bg-black/60"
-                        data-testid="attachment-upload-overlay"
-                      >
-                        <Loader2
-                          className="astw:size-5 astw:animate-spin astw:text-white"
-                          aria-hidden
-                          data-testid="attachment-upload-spinner"
-                        />
-                      </div>
-                    ) : null}
                   </div>
                 )}
-                {!disabled && !isUploading && (
+                {!disabled && (
                   <div className="astw:absolute astw:top-2 astw:right-2 astw:opacity-0 astw:transition-opacity astw:group-hover:opacity-100 astw:group-focus-within:opacity-100">
                     <Menu.Root>
                       <Menu.Trigger

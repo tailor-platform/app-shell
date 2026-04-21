@@ -75,7 +75,9 @@ function ProductForm() {
 | Field          | Type                                                                   | Description                                                                      |
 | -------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `props`        | `{ items, onUpload, onDelete, accept, disabled }`                      | Spread directly onto `<Attachment />`                                            |
-| `applyChanges` | `(fn: (ops: AttachmentOperation[]) => Promise<void>) => Promise<void>` | Flush buffered operations to your backend; clears the buffer after `fn` resolves |
+| `applyChanges` | `(fn: (ops: AttachmentOperation[]) => Promise<void>) => Promise<void>` | Flush buffered operations to your backend; clears the buffer after `fn` resolves. If `fn` throws, the buffer is preserved so the call can be retried. |
+
+> **Upload ordering:** newly uploaded files are prepended to `items`, so the most recent uploads appear first in the tile list.
 
 ## AttachmentOperation
 
@@ -95,7 +97,6 @@ interface AttachmentItem {
   fileName: string;
   mimeType: string;
   previewUrl?: string;
-  status?: "ready" | "uploading";
 }
 ```
 
@@ -120,8 +121,7 @@ interface AttachmentItem {
 - **Non-image items** render as 120×120 file tiles with icon and wrapped filename.
 - **Drag and drop** applies only to the **upload tile** (dashed “click to upload” control), not the full attachment block. Use the file picker from the same tile for click-to-upload.
 - **Disabled state** (`disabled={true}`): the upload tile and drop target are hidden; per-item menu actions are also hidden.
-- **Uploading state** (`item.status === "uploading"`) renders a dark overlay and centered spinner on the 120×120 tile.
-- **Item actions** are available through the preview menu (`Download`, `Delete`) when not disabled and not uploading.
+- **Item actions** are available through the preview menu (`Download`, `Delete`) when not disabled.
 
 ### DOM
 

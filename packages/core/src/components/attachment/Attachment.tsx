@@ -258,5 +258,3 @@ export function Attachment({
     </div>
   );
 }
-
-export default Attachment;

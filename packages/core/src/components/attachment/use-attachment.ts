@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {
   AttachmentItem,
@@ -23,10 +23,13 @@ type UseAttachmentReturn = {
 
 export function useAttachment(options: UseAttachmentOptions = {}): UseAttachmentReturn {
   const { initialItems = [], accept, disabled = false } = options;
-
   const [items, setItems] = useState<AttachmentItem[]>(initialItems);
+
+  // Pending operations buffer: accumulates upload/delete ops until applyChanges is called.
   const operationsRef = useRef<AttachmentOperation[]>([]);
-  const pendingUploadIdsRef = useRef(new Set<string>());
+
+  // Flush guard: prevents concurrent applyChanges calls from sending duplicate operations.
+  const isFlushingRef = useRef(false);
 
   const onUpload = useCallback((files: File[]) => {
     const newItems = files.map(
@@ -41,7 +44,6 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
     files.forEach((file, i) => {
       const item = newItems[i];
       if (item) {
-        pendingUploadIdsRef.current.add(item.id);
         operationsRef.current.push({ type: "upload", file, item });
       }
     });
@@ -62,7 +64,6 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
       if (op?.type === "upload" && op.item.previewUrl) {
         URL.revokeObjectURL(op.item.previewUrl);
       }
-      pendingUploadIdsRef.current.delete(item.id);
       operationsRef.current.splice(uploadOpIndex, 1);
     } else {
       // Not a pending upload → must be a server-side item; always emit delete
@@ -70,10 +71,32 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
     }
   }, []);
 
+  // Revoke all blob URLs for pending image uploads on unmount to prevent memory leaks.
+  // onDelete handles revocation for items removed during the component's lifetime;
+  // this cleanup covers any remaining pending uploads when the component is unmounted
+  // (e.g. the user navigates away without submitting).
+  useEffect(() => {
+    return () => {
+      for (const op of operationsRef.current) {
+        if (op.type === "upload" && op.item.previewUrl) {
+          URL.revokeObjectURL(op.item.previewUrl);
+        }
+      }
+    };
+  }, []);
+
   const applyChanges = useCallback(
     async (fn: (operations: AttachmentOperation[]) => Promise<void>) => {
-      await fn([...operationsRef.current]);
-      operationsRef.current = [];
+      if (isFlushingRef.current) {
+        throw new Error("applyChanges is already in progress");
+      }
+      isFlushingRef.current = true;
+      try {
+        await fn([...operationsRef.current]);
+        operationsRef.current = [];
+      } finally {
+        isFlushingRef.current = false;
+      }
     },
     [],
   );

@@ -1,7 +1,12 @@
 import * as React from "react";
-import { CloudUpload, Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
+import {
+  CloudUpload,
+  Ellipsis,
+  File,
+  Image as ImageIcon,
+  Loader2,
+} from "lucide-react";
 
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 import { Menu } from "../menu";
@@ -11,12 +16,6 @@ const tileBaseClasses =
   "astw:relative astw:size-30 astw:shrink-0 astw:overflow-hidden astw:rounded-lg";
 const tileClasses = `${tileBaseClasses} astw:border astw:border-border`;
 
-type TemporaryUploadItem = {
-  item: AttachmentItem;
-  file: File;
-  previewUrl?: string;
-};
-
 function isImageItem(item: AttachmentItem): boolean {
   return item.mimeType.startsWith("image/");
 }
@@ -25,7 +24,10 @@ function toFiles(fileList: FileList | null): File[] {
   return fileList ? Array.from(fileList) : [];
 }
 
-function splitFileName(fileName: string): { baseName: string; extension: string } {
+function splitFileName(fileName: string): {
+  baseName: string;
+  extension: string;
+} {
   const lastDotIndex = fileName.lastIndexOf(".");
   if (lastDotIndex <= 0 || lastDotIndex === fileName.length - 1) {
     return { baseName: fileName, extension: "" };
@@ -37,39 +39,9 @@ function splitFileName(fileName: string): { baseName: string; extension: string 
   };
 }
 
-function createTemporaryUploadItem(file: File): TemporaryUploadItem {
-  const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
-  return {
-    file,
-    previewUrl,
-    item: {
-      id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-      fileName: file.name,
-      mimeType: file.type || "application/octet-stream",
-      previewUrl,
-      status: "uploading",
-    },
-  };
-}
-
-function mergeAttachmentItems(externalItems: AttachmentItem[], localItems: AttachmentItem[]) {
-  const merged: AttachmentItem[] = [];
-  const seen = new Set<string>();
-
-  for (const item of [...localItems, ...externalItems]) {
-    if (seen.has(item.id)) continue;
-    seen.add(item.id);
-    merged.push(item);
-  }
-
-  return merged;
-}
-
 export function Attachment({
   items = [],
   onUpload,
-  uploadFile,
-  onUploadError,
   onDelete,
   onDownload,
   uploadLabel = "Click to upload",
@@ -80,56 +52,22 @@ export function Attachment({
 }: AttachmentProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const [localItems, setLocalItems] = React.useState<AttachmentItem[]>([]);
-  const [failedImagePreviewIds, setFailedImagePreviewIds] = React.useState<Set<string>>(new Set());
+  const [failedImagePreviewIds, setFailedImagePreviewIds] = React.useState<
+    Set<string>
+  >(new Set());
   const dragDepthRef = React.useRef(0);
-  const toast = useToast();
 
   const handleUpload = React.useCallback(
-    async (files: File[]) => {
+    (files: File[]) => {
       if (disabled || files.length === 0) return;
-      if (!uploadFile) {
-        onUpload?.(files);
-        return;
-      }
-
-      const temporaryItems = files.map(createTemporaryUploadItem);
-      setLocalItems((prev) => [...temporaryItems.map((entry) => entry.item), ...prev]);
-
-      await Promise.all(
-        temporaryItems.map(async (entry) => {
-          try {
-            const uploadedItem = await uploadFile(entry.file);
-            setLocalItems((prev) =>
-              prev.map((item) =>
-                item.id === entry.item.id
-                  ? {
-                      ...uploadedItem,
-                      status: uploadedItem.status ?? "ready",
-                    }
-                  : item,
-              ),
-            );
-          } catch (error: unknown) {
-            const uploadError =
-              error instanceof Error ? error : new Error("Failed to upload attachment");
-            toast.error(`Failed to upload ${entry.file.name}`);
-            onUploadError?.({ file: entry.file, error: uploadError });
-            setLocalItems((prev) => prev.filter((item) => item.id !== entry.item.id));
-          } finally {
-            if (entry.previewUrl) {
-              URL.revokeObjectURL(entry.previewUrl);
-            }
-          }
-        }),
-      );
+      onUpload?.(files);
     },
-    [disabled, onUpload, onUploadError, toast, uploadFile],
+    [disabled, onUpload],
   );
 
   const handleInputChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      void handleUpload(toFiles(event.target.files));
+      handleUpload(toFiles(event.target.files));
       event.target.value = "";
     },
     [handleUpload],
@@ -141,7 +79,7 @@ export function Attachment({
       if (disabled) return;
       dragDepthRef.current = 0;
       setIsDragOver(false);
-      void handleUpload(toFiles(event.dataTransfer.files));
+      handleUpload(toFiles(event.dataTransfer.files));
     },
     [disabled, handleUpload],
   );
@@ -178,7 +116,6 @@ export function Attachment({
 
   const handleDeleteItem = React.useCallback(
     (item: AttachmentItem) => {
-      setLocalItems((prev) => prev.filter((candidate) => candidate.id !== item.id));
       setFailedImagePreviewIds((prev) => {
         if (!prev.has(item.id)) return prev;
         const next = new Set(prev);
@@ -190,15 +127,13 @@ export function Attachment({
     [onDelete],
   );
 
-  const displayItems = React.useMemo(
-    () => mergeAttachmentItems(items, localItems),
-    [items, localItems],
-  );
-
   return (
     <div
       data-slot="attachment"
-      className={cn("astw:@container astw:flex astw:min-w-0 astw:flex-col", className)}
+      className={cn(
+        "astw:@container astw:flex astw:w-full astw:min-w-0 astw:flex-col",
+        className,
+      )}
     >
       <input
         ref={inputRef}
@@ -212,7 +147,7 @@ export function Attachment({
       />
       <div data-slot="attachment-content" className="astw:min-w-0">
         <div className="astw:flex astw:flex-wrap astw:gap-4">
-          {displayItems.map((item) => {
+          {items.map((item) => {
             const { baseName, extension } = splitFileName(item.fileName);
             const isUploading = item.status === "uploading";
             const hasFailedImagePreview = failedImagePreviewIds.has(item.id);
@@ -251,7 +186,9 @@ export function Attachment({
                           <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
                             {baseName}
                           </span>
-                          {extension ? <span className="astw:shrink-0">{extension}</span> : null}
+                          {extension ? (
+                            <span className="astw:shrink-0">{extension}</span>
+                          ) : null}
                         </p>
                       </>
                     )}
@@ -285,7 +222,9 @@ export function Attachment({
                       <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
                         {baseName}
                       </span>
-                      {extension ? <span className="astw:shrink-0">{extension}</span> : null}
+                      {extension ? (
+                        <span className="astw:shrink-0">{extension}</span>
+                      ) : null}
                     </p>
                     {isUploading ? (
                       <div
@@ -311,8 +250,14 @@ export function Attachment({
                         <Ellipsis className="astw:size-4" aria-hidden />
                       </Menu.Trigger>
                       <Menu.Content>
-                        <Menu.Item onClick={() => onDownload?.(item)}>Download</Menu.Item>
-                        <Menu.Item onClick={() => handleDeleteItem(item)}>Delete</Menu.Item>
+                        {onDownload ? (
+                          <Menu.Item onClick={() => onDownload(item)}>
+                            Download
+                          </Menu.Item>
+                        ) : null}
+                        <Menu.Item onClick={() => handleDeleteItem(item)}>
+                          Delete
+                        </Menu.Item>
                       </Menu.Content>
                     </Menu.Root>
                   </div>
@@ -320,14 +265,15 @@ export function Attachment({
               </div>
             );
           })}
-          {!disabled && (onUpload || uploadFile) && (
+          {!disabled && (
             <button
               type="button"
               aria-label={uploadLabel}
               data-testid="attachment-upload-tile"
               className={cn(
                 "astw:flex astw:h-30 astw:w-[200px] astw:shrink-0 astw:cursor-pointer astw:flex-col astw:justify-between astw:rounded-lg astw:border-2 astw:border-dashed astw:border-border astw:bg-muted/50 astw:p-3 astw:transition-colors astw:hover:bg-muted",
-                isDragOver && "astw:border-primary astw:ring-1 astw:ring-primary/30 astw:bg-muted",
+                isDragOver &&
+                  "astw:border-primary astw:ring-1 astw:ring-primary/30 astw:bg-muted",
               )}
               onClick={() => inputRef.current?.click()}
               onDragOver={(event) => event.preventDefault()}

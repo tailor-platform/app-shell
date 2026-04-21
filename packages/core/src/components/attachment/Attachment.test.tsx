@@ -1,17 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Attachment } from "./Attachment";
 import type { AttachmentItem } from "./types";
-
-const toastError = vi.fn();
-
-vi.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({
-    error: toastError,
-  }),
-}));
 
 afterEach(() => {
   cleanup();
@@ -35,17 +33,21 @@ const mixedItems: AttachmentItem[] = [
 describe("Attachment", () => {
   describe("snapshots", () => {
     it("empty default", () => {
-      const { container } = render(<Attachment />);
+      const { container } = render(<Attachment onUpload={vi.fn()} />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("populated mixed items", () => {
-      const { container } = render(<Attachment items={mixedItems} />);
+      const { container } = render(
+        <Attachment items={mixedItems} onUpload={vi.fn()} />,
+      );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("disabled", () => {
-      const { container } = render(<Attachment items={mixedItems} disabled />);
+      const { container } = render(
+        <Attachment items={mixedItems} onUpload={vi.fn()} disabled />,
+      );
       expect(container.innerHTML).toMatchSnapshot();
     });
   });
@@ -68,9 +70,11 @@ describe("Attachment", () => {
   });
 
   it("renders image and file preview branches", () => {
-    render(<Attachment items={mixedItems} />);
+    render(<Attachment items={mixedItems} onUpload={vi.fn()} />);
     expect(screen.getByRole("img", { name: "shoe-red.png" })).toBeDefined();
-    expect(screen.getByRole("button", { name: /Aug-Sep 2025_1234-12\.pdf/ })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: /Aug-Sep 2025_1234-12\.pdf/ }),
+    ).toBeDefined();
     expect(screen.getByTestId("attachment-file-icon")).toBeDefined();
   });
 
@@ -78,8 +82,12 @@ describe("Attachment", () => {
     const onUpload = vi.fn();
     render(<Attachment onUpload={onUpload} />);
 
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
+    const input = screen.getByTestId(
+      "attachment-upload-input",
+    ) as HTMLInputElement;
     fireEvent.change(input, { target: { files: [file] } });
 
     expect(onUpload).toHaveBeenCalledTimes(1);
@@ -93,7 +101,9 @@ describe("Attachment", () => {
     const uploadTile = screen.getByTestId("attachment-upload-tile");
     expect(uploadTile).toBeTruthy();
 
-    const file = new File(["hello"], "receipt.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "receipt.pdf", {
+      type: "application/pdf",
+    });
     fireEvent.drop(uploadTile, {
       dataTransfer: {
         files: [file],
@@ -109,7 +119,14 @@ describe("Attachment", () => {
     const onDownload = vi.fn();
     const onDelete = vi.fn();
 
-    render(<Attachment items={mixedItems} onDownload={onDownload} onDelete={onDelete} />);
+    render(
+      <Attachment
+        items={mixedItems}
+        onUpload={vi.fn()}
+        onDownload={onDownload}
+        onDelete={onDelete}
+      />,
+    );
 
     const trigger = screen.getByRole("button", {
       name: /Attachment options for Aug-Sep 2025_1234-12\.pdf/,
@@ -135,11 +152,13 @@ describe("Attachment", () => {
 
   it("disables upload and hides menu actions when disabled", () => {
     const onUpload = vi.fn();
-    render(<Attachment items={mixedItems} disabled onUpload={onUpload} />);
+    render(<Attachment items={mixedItems} onUpload={onUpload} disabled />);
 
     expect(screen.queryByTestId("attachment-upload-tile")).toBeNull();
 
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
+    const input = screen.getByTestId(
+      "attachment-upload-input",
+    ) as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [new File(["x"], "blocked.pdf", { type: "application/pdf" })],
@@ -153,67 +172,6 @@ describe("Attachment", () => {
     expect(menuTrigger).toBeNull();
   });
 
-  it("renders upload overlay and resolves async uploadFile results", async () => {
-    let resolveUpload: ((value: AttachmentItem) => void) | undefined;
-    const uploadFile = vi.fn(
-      () =>
-        new Promise<AttachmentItem>((resolve) => {
-          resolveUpload = resolve;
-        }),
-    );
-
-    render(<Attachment uploadFile={uploadFile} />);
-
-    const pendingFile = new File(["hello"], "pending.pdf", { type: "application/pdf" });
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [pendingFile] } });
-
-    await waitFor(() => {
-      expect(uploadFile).toHaveBeenCalledTimes(1);
-      expect(screen.getAllByTestId("attachment-upload-overlay")).toHaveLength(1);
-      expect(screen.getAllByTestId("attachment-upload-spinner")).toHaveLength(1);
-    });
-
-    expect(
-      screen.queryByRole("button", { name: /Attachment options for pending\.pdf/ }),
-    ).toBeNull();
-
-    resolveUpload?.({
-      id: "uploaded-1",
-      fileName: "pending.pdf",
-      mimeType: "application/pdf",
-      status: "ready",
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByTestId("attachment-upload-overlay")).toBeNull();
-      expect(screen.getByRole("button", { name: /pending\.pdf/ })).toBeDefined();
-    });
-  });
-
-  it("shows toast and removes failed temporary items in async upload mode", async () => {
-    const uploadFile = vi.fn(async () => {
-      throw new Error("Network failed");
-    });
-    const onUploadError = vi.fn();
-
-    render(<Attachment uploadFile={uploadFile} onUploadError={onUploadError} />);
-
-    const failedFile = new File(["hello"], "bad-file.pdf", { type: "application/pdf" });
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [failedFile] } });
-
-    await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith("Failed to upload bad-file.pdf");
-      expect(onUploadError).toHaveBeenCalledTimes(1);
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: /bad-file\.pdf/ })).toBeNull();
-      expect(screen.queryByTestId("attachment-upload-overlay")).toBeNull();
-    });
-  });
-
   it("falls back to image icon tile when image preview fails to load", async () => {
     render(
       <Attachment
@@ -225,6 +183,7 @@ describe("Attachment", () => {
             previewUrl: "https://example.com/missing-image.jpg",
           },
         ]}
+        onUpload={vi.fn()}
       />,
     );
 
@@ -232,101 +191,12 @@ describe("Attachment", () => {
     fireEvent.error(image);
 
     await waitFor(() => {
-      expect(screen.getByTestId("attachment-image-fallback-icon")).toBeDefined();
-      expect(screen.getByRole("button", { name: /IMG_0689_Original\.jpg/ })).toBeDefined();
+      expect(
+        screen.getByTestId("attachment-image-fallback-icon"),
+      ).toBeDefined();
+      expect(
+        screen.getByRole("button", { name: /IMG_0689_Original\.jpg/ }),
+      ).toBeDefined();
     });
-  });
-
-  it("removes async-uploaded local item when delete is selected", async () => {
-    const user = userEvent.setup();
-    const onDelete = vi.fn();
-    const uploadFile = vi.fn(async () => ({
-      id: "local-uploaded-1",
-      fileName: "local-delete.pdf",
-      mimeType: "application/pdf",
-      status: "ready" as const,
-    }));
-
-    render(<Attachment uploadFile={uploadFile} onDelete={onDelete} />);
-
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
-    fireEvent.change(input, {
-      target: { files: [new File(["x"], "local-delete.pdf", { type: "application/pdf" })] },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /local-delete\.pdf/ })).toBeDefined();
-    });
-
-    const trigger = screen.getByRole("button", {
-      name: /Attachment options for local-delete\.pdf/,
-    });
-    await user.click(trigger);
-    await waitFor(() => {
-      expect(screen.getByText("Delete")).toBeDefined();
-    });
-    await user.click(screen.getByText("Delete"));
-
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: /local-delete\.pdf/ })).toBeNull();
-      expect(onDelete).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it("revokes object URLs after async upload completes (via finally)", async () => {
-    const createObjectUrlSpy = vi
-      .spyOn(URL, "createObjectURL")
-      .mockReturnValue("blob:attachment-pending-image");
-    const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
-
-    const uploadFile = vi.fn(async () => {
-      throw new Error("Upload failed");
-    });
-
-    render(<Attachment uploadFile={uploadFile} />);
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
-
-    fireEvent.change(input, {
-      target: {
-        files: [new File(["image-bytes"], "pending-image.jpg", { type: "image/jpeg" })],
-      },
-    });
-
-    await waitFor(() => {
-      expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-pending-image");
-    });
-
-    createObjectUrlSpy.mockRestore();
-    revokeObjectUrlSpy.mockRestore();
-  });
-
-  it("revokes object URLs after successful async image upload", async () => {
-    const createObjectUrlSpy = vi
-      .spyOn(URL, "createObjectURL")
-      .mockReturnValue("blob:attachment-success-image");
-    const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
-
-    const uploadFile = vi.fn(async () => ({
-      id: "uploaded-img-1",
-      fileName: "success-image.jpg",
-      mimeType: "image/jpeg",
-      status: "ready" as const,
-    }));
-
-    render(<Attachment uploadFile={uploadFile} />);
-    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
-
-    fireEvent.change(input, {
-      target: {
-        files: [new File(["image-bytes"], "success-image.jpg", { type: "image/jpeg" })],
-      },
-    });
-
-    await waitFor(() => {
-      expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:attachment-success-image");
-    });
-
-    createObjectUrlSpy.mockRestore();
-    revokeObjectUrlSpy.mockRestore();
   });
 });

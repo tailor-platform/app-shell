@@ -11,9 +11,15 @@ export interface AttachmentItem {
   status?: "ready" | "uploading";
 }
 
-interface AttachmentBaseProps {
+export type AttachmentOperation =
+  | { type: "upload"; file: File; item: AttachmentItem }
+  | { type: "delete"; item: AttachmentItem };
+
+export type AttachmentProps = {
   /** List of attachments to render. */
   items?: AttachmentItem[];
+  /** Called when files are selected or dropped. Required to show the upload tile. */
+  onUpload: (files: File[]) => void;
   /** Called when delete action is selected for an item. */
   onDelete?: (item: AttachmentItem) => void;
   /** Called when download action is selected for an item. */
@@ -31,28 +37,19 @@ interface AttachmentBaseProps {
    * this, or a parent such as `Card.Content`, for spacing and chrome.
    */
   className?: string;
-}
-
-type ControlledUploadProps = {
-  /** Called when files are selected or dropped. */
-  onUpload: (files: File[]) => void;
-  uploadFile?: never;
-  onUploadError?: never;
 };
 
-type AsyncUploadProps = {
-  onUpload?: never;
-  /** Optional async upload handler for built-in upload lifecycle UX. */
-  uploadFile: (file: File) => Promise<AttachmentItem>;
-  /** Called when an async upload fails. */
-  onUploadError?: (ctx: { file: File; error: Error }) => void;
-};
+/** Props returned by useAttachment that can be spread directly onto Attachment. */
+export type AttachmentControlledProps = Pick<
+  AttachmentProps,
+  "items" | "onUpload" | "onDelete" | "accept" | "disabled"
+>;
 
-type ReadOnlyListProps = {
-  onUpload?: undefined;
-  uploadFile?: undefined;
-  onUploadError?: never;
+export type UseAttachmentOptions = {
+  /** Initial items to populate (e.g. from an existing record). */
+  initialItems?: AttachmentItem[];
+  /** Accepted file types passed to the hidden file input. */
+  accept?: string;
+  /** Disable upload and item actions. */
+  disabled?: boolean;
 };
-
-export type AttachmentProps = AttachmentBaseProps &
-  (ControlledUploadProps | AsyncUploadProps | ReadOnlyListProps);

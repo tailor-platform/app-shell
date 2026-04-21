@@ -1,0 +1,88 @@
+import { useCallback, useRef, useState } from "react";
+
+import type {
+  AttachmentItem,
+  AttachmentOperation,
+  AttachmentControlledProps,
+  UseAttachmentOptions,
+} from "./types";
+
+type UseAttachmentProps = Omit<AttachmentControlledProps, "items"> & {
+  items: AttachmentItem[];
+};
+
+type UseAttachmentReturn = {
+  props: UseAttachmentProps;
+  applyChanges: (
+    fn: (operations: AttachmentOperation[]) => Promise<void>,
+  ) => Promise<void>;
+};
+
+export function useAttachment(
+  options: UseAttachmentOptions = {},
+): UseAttachmentReturn {
+  const { initialItems = [], accept, disabled = false } = options;
+
+  const [items, setItems] = useState<AttachmentItem[]>(initialItems);
+  const operationsRef = useRef<AttachmentOperation[]>([]);
+  const initialItemIdsRef = useRef(new Set(initialItems.map((i) => i.id)));
+
+  const onUpload = useCallback((files: File[]) => {
+    const newItems = files.map(
+      (file): AttachmentItem => ({
+        id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        previewUrl: file.type.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : undefined,
+        status: "ready",
+      }),
+    );
+
+    files.forEach((file, i) => {
+      const item = newItems[i];
+      if (item) {
+        operationsRef.current.push({ type: "upload", file, item });
+      }
+    });
+
+    setItems((prev) => [...newItems, ...prev]);
+  }, []);
+
+  const onDelete = useCallback((item: AttachmentItem) => {
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+
+    const uploadOpIndex = operationsRef.current.findIndex(
+      (op) => op.type === "upload" && op.item.id === item.id,
+    );
+
+    if (uploadOpIndex !== -1) {
+      const op = operationsRef.current[uploadOpIndex];
+      if (op?.type === "upload" && op.item.previewUrl) {
+        URL.revokeObjectURL(op.item.previewUrl);
+      }
+      operationsRef.current.splice(uploadOpIndex, 1);
+    } else if (initialItemIdsRef.current.has(item.id)) {
+      operationsRef.current.push({ type: "delete", item });
+    }
+  }, []);
+
+  const applyChanges = useCallback(
+    async (fn: (operations: AttachmentOperation[]) => Promise<void>) => {
+      await fn([...operationsRef.current]);
+      operationsRef.current = [];
+    },
+    [],
+  );
+
+  const props: UseAttachmentProps = {
+    items,
+    onUpload: onUpload as (files: File[]) => void,
+    onDelete,
+    accept,
+    disabled,
+  };
+
+  return { props, applyChanges };
+}

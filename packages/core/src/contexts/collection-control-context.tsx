@@ -6,6 +6,15 @@ const CollectionControlContext = createContext<CollectionControl | null>(null);
 /**
  * Provider that shares collection control state via React Context.
  *
+ * > **Note:** `DataTable.Root` automatically wraps its children with this provider
+ * > when `control` is supplied to `useDataTable`. Use `CollectionControlProvider`
+ * > directly only when you need to share control state with components that live
+ * > **outside** of `DataTable.Root` (e.g. a sibling filter panel or pagination
+ * > widget). Wrapping `DataTable.Root` with an outer `CollectionControlProvider`
+ * > while also passing `control` to `useDataTable` results in a double-wrap: the
+ * > inner provider (created by `DataTable.Root`) will silently shadow the outer
+ * > one for all descendants inside the table.
+ *
  * @example
  * ```tsx
  * const { variables, control } = useCollectionVariables({ params: { pageSize: 20 } });

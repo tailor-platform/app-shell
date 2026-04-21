@@ -91,7 +91,6 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // Pagination (derived from data + control)
   // ---------------------------------------------------------------------------
   const pageSize = control?.pageSize ?? 0;
-  const currentPage = control?.currentPage ?? 1;
   const totalPages =
     total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
   const hasPrevPage = pageInfo.hasPreviousPage;
@@ -102,12 +101,12 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // ---------------------------------------------------------------------------
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
 
-  const getColumnKey = useCallback((col: Column<TRow>): string => {
-    return col.id ?? col.label ?? "";
+  const getColumnKey = useCallback((col: Column<TRow>, colIndex: number): string => {
+    return col.id ?? col.label ?? String(colIndex);
   }, []);
 
   const visibleColumns = useMemo<Column<TRow>[]>(() => {
-    return allColumns.filter((col) => !hiddenColumns.has(getColumnKey(col)));
+    return allColumns.filter((col, i) => !hiddenColumns.has(getColumnKey(col, i)));
   }, [allColumns, hiddenColumns, getColumnKey]);
 
   const toggleColumn = useCallback((fieldOrId: string) => {
@@ -127,7 +126,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   }, []);
 
   const hideAllColumns = useCallback(() => {
-    const allKeys = new Set(allColumns.map(getColumnKey));
+    const allKeys = new Set(allColumns.map((col, i) => getColumnKey(col, i)));
     setHiddenColumns(allKeys);
   }, [allColumns, getColumnKey]);
 

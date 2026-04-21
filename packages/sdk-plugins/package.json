@@ -38,10 +38,9 @@
     "test": "vitest run",
     "type-check": "tsc --incremental"
   },
-  "dependencies": {
-    "@tailor-platform/app-shell": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
     "@tailor-platform/sdk": "^1.33.0",
     "oxlint": "catalog:",
     "tsdown": "^0.21.7",

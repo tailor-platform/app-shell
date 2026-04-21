@@ -37,10 +37,7 @@ export interface DataTableData<TRow> {
   total?: number | null;
 }
 
-/**
- * Options for `useDataTable` hook.
- */
-export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
+type UseDataTableBaseOptions<TRow extends Record<string, unknown>> = {
   columns: Column<TRow>[];
   data: DataTableData<TRow> | undefined;
   loading?: boolean;
@@ -48,16 +45,19 @@ export interface UseDataTableOptions<TRow extends Record<string, unknown>> {
   control?: CollectionControl;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  /**
-   * The field name used as the unique row identifier for optimistic updates.
-   *
-   * @default "id"
-   * @warning If `TRow` does not have an `"id"` field, you **must** specify `rowKey`.
-   * Omitting it when no `"id"` field exists will cause `updateRow`, `deleteRow`,
-   * and `insertRow` to silently no-op instead of updating the correct row.
-   */
-  rowKey?: keyof TRow & string;
-}
+};
+
+/**
+ * Options for `useDataTable` hook.
+ *
+ * `rowKey` identifies the unique row field used for optimistic updates.
+ * - When `TRow` has an `"id"` field, `rowKey` defaults to `"id"` and may be omitted.
+ * - When `TRow` has no `"id"` field, `rowKey` is **required**. Omitting it would
+ *   cause `updateRow`, `deleteRow`, and `insertRow` to silently no-op.
+ */
+export type UseDataTableOptions<TRow extends Record<string, unknown>> =
+  UseDataTableBaseOptions<TRow> &
+    ("id" extends keyof TRow ? { rowKey?: keyof TRow & string } : { rowKey: keyof TRow & string });
 
 /**
  * Row operations with optimistic update support.

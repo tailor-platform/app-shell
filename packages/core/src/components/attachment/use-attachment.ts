@@ -3,9 +3,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   AttachmentItem,
   AttachmentOperation,
-  AttachmentControlledProps,
+  AttachmentProps,
   UseAttachmentOptions,
 } from "./types";
+
+type AttachmentControlledProps = Pick<
+  AttachmentProps,
+  "items" | "onUpload" | "onDelete" | "accept" | "disabled"
+>;
 
 type UseAttachmentProps = Omit<AttachmentControlledProps, "items"> & {
   items: AttachmentItem[];
@@ -19,17 +24,20 @@ type UseAttachmentReturn = {
    * The buffer is cleared only after `fn` resolves successfully.
    */
   applyChanges: (fn: (operations: AttachmentOperation[]) => Promise<void>) => Promise<void>;
+  /** True while applyChanges is in progress. */
+  isApplying: boolean;
 };
 
 export function useAttachment(options: UseAttachmentOptions = {}): UseAttachmentReturn {
   const { initialItems = [], accept, disabled = false } = options;
   const [items, setItems] = useState<AttachmentItem[]>(initialItems);
+  const [isApplying, setIsApplying] = useState(false);
 
   // Pending operations buffer: accumulates upload/delete ops until applyChanges is called.
   const operationsRef = useRef<AttachmentOperation[]>([]);
 
   // Flush guard: prevents concurrent applyChanges calls from sending duplicate operations.
-  const isFlushingRef = useRef(false);
+  const isApplyingRef = useRef(false);
 
   const onUpload = useCallback((files: File[]) => {
     const newItems = files.map(
@@ -87,15 +95,18 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
 
   const applyChanges = useCallback(
     async (fn: (operations: AttachmentOperation[]) => Promise<void>) => {
-      if (isFlushingRef.current) {
+      if (isApplyingRef.current) {
         throw new Error("applyChanges is already in progress");
       }
-      isFlushingRef.current = true;
+      isApplyingRef.current = true;
+      setIsApplying(true);
+      const opsToFlush = [...operationsRef.current];
       try {
-        await fn([...operationsRef.current]);
-        operationsRef.current = [];
+        await fn(opsToFlush);
+        operationsRef.current = operationsRef.current.slice(opsToFlush.length);
       } finally {
-        isFlushingRef.current = false;
+        isApplyingRef.current = false;
+        setIsApplying(false);
       }
     },
     [],
@@ -103,11 +114,11 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
 
   const props: UseAttachmentProps = {
     items,
-    onUpload: onUpload as (files: File[]) => void,
+    onUpload,
     onDelete,
     accept,
     disabled,
   };
 
-  return { props, applyChanges };
+  return { props, applyChanges, isApplying };
 }

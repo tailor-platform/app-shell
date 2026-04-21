@@ -37,12 +37,6 @@ export type AttachmentProps = {
   className?: string;
 };
 
-/** Props returned by useAttachment that can be spread directly onto Attachment. */
-export type AttachmentControlledProps = Pick<
-  AttachmentProps,
-  "items" | "onUpload" | "onDelete" | "accept" | "disabled"
->;
-
 export type UseAttachmentOptions = {
   /** Initial items to populate (e.g. from an existing record). */
   initialItems?: AttachmentItem[];

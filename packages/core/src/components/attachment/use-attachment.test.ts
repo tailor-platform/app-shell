@@ -226,4 +226,43 @@ describe("useAttachment", () => {
     resolveFirst();
     await firstCall;
   });
+
+  it("ops added during applyChanges are not lost", async () => {
+    const { result } = renderHook(() => useAttachment());
+    const file1 = new File(["a"], "first.pdf", { type: "application/pdf" });
+    const file2 = new File(["b"], "second.pdf", { type: "application/pdf" });
+
+    act(() => {
+      result.current.props.onUpload?.([file1]);
+    });
+
+    let resolveFirst!: () => void;
+    const firstFlush = result.current.applyChanges(
+      () =>
+        new Promise<void>((res) => {
+          resolveFirst = res;
+        }),
+    );
+
+    // Add another file while the first applyChanges is still in flight
+    act(() => {
+      result.current.props.onUpload?.([file2]);
+    });
+
+    resolveFirst();
+    await act(async () => {
+      await firstFlush;
+    });
+
+    // file2's op must survive and appear in the next applyChanges call
+    const fn = vi.fn<(operations: AttachmentOperation[]) => Promise<void>>(async () => {});
+    await act(async () => {
+      await result.current.applyChanges(fn);
+    });
+
+    const ops = fn.mock.calls[0]?.[0] ?? [];
+    expect(ops).toHaveLength(1);
+    expect(ops[0]?.type).toBe("upload");
+    expect((ops[0] as { type: "upload"; file: File }).file).toBe(file2);
+  });
 });

@@ -167,6 +167,7 @@ export {
   dataTableLabels,
   useDataTableT,
   type DataTablePaginationProps,
+  type DataTableRootProps,
   type Column,
   type DataTableData,
   type RowAction,

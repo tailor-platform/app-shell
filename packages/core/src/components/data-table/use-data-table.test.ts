@@ -114,46 +114,46 @@ describe("useDataTable", () => {
       expect(result.current.totalPages).toBeNull();
     });
 
-    it("derives hasPrevPage from currentPage > 1", () => {
-      const control = makeControl({ currentPage: 1 });
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+    it("reflects hasPreviousPage: false from pageInfo", () => {
+      // testData has hasPreviousPage: false
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasPrevPage).toBe(false);
     });
 
-    it("derives hasPrevPage as true when currentPage > 1", () => {
-      const control = makeControl({ currentPage: 3 });
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+    it("reflects hasPreviousPage: true from pageInfo", () => {
+      const dataWithPrev: DataTableData<TestRow> = {
+        rows: testData.rows,
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: true,
+          nextPageToken: null,
+          previousPageToken: "tok-prev",
+        },
+        total: 50,
+      };
+      const { result } = renderHook(() => useDataTable({ columns, data: dataWithPrev }));
       expect(result.current.hasPrevPage).toBe(true);
     });
 
-    it("derives hasNextPage from totalPages when total is known", () => {
-      const control = makeControl({ pageSize: 10, currentPage: 5 });
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
-      // currentPage 5, totalPages 5 → no next
-      expect(result.current.hasNextPage).toBe(false);
-    });
-
-    it("derives hasNextPage from totalPages when not on last page", () => {
-      const control = makeControl({ pageSize: 10, currentPage: 3 });
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+    it("reflects hasNextPage: true from pageInfo", () => {
+      // testData has hasNextPage: true
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasNextPage).toBe(true);
     });
 
-    it("falls back to pageInfo.hasNextPage when total is unknown", () => {
-      const control = makeControl({ pageSize: 10, currentPage: 1 });
-      const dataWithoutTotal: DataTableData<TestRow> = {
+    it("reflects hasNextPage: false from pageInfo", () => {
+      const dataLastPage: DataTableData<TestRow> = {
         rows: testData.rows,
         pageInfo: {
-          hasNextPage: true,
-          hasPreviousPage: false,
-          nextPageToken: "tok",
-          previousPageToken: null,
+          hasNextPage: false,
+          hasPreviousPage: true,
+          nextPageToken: null,
+          previousPageToken: "tok-prev",
         },
+        total: 50,
       };
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: dataWithoutTotal, control }),
-      );
-      expect(result.current.hasNextPage).toBe(true);
+      const { result } = renderHook(() => useDataTable({ columns, data: dataLastPage }));
+      expect(result.current.hasNextPage).toBe(false);
     });
 
     it("delegates nextPage to control", () => {
@@ -308,7 +308,9 @@ describe("useDataTable", () => {
 
       let rollbackFirst: () => void;
       act(() => {
-        ({ rollback: rollbackFirst } = result.current.updateRow("1", { name: "Alice Updated" }));
+        ({ rollback: rollbackFirst } = result.current.updateRow("1", {
+          name: "Alice Updated",
+        }));
       });
       act(() => {
         result.current.updateRow("2", { name: "Bob Updated" });

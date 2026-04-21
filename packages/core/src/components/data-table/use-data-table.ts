@@ -94,8 +94,8 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const currentPage = control?.currentPage ?? 1;
   const totalPages =
     total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
-  const hasPrevPage = currentPage > 1;
-  const hasNextPage = totalPages !== null ? currentPage < totalPages : pageInfo.hasNextPage;
+  const hasPrevPage = pageInfo.hasPreviousPage;
+  const hasNextPage = pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
   // Column visibility management

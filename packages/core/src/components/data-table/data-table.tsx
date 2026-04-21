@@ -21,15 +21,17 @@ import { DataTableToolbar, DataTableFilters } from "./toolbar";
 // DataTable.Root
 // =============================================================================
 
+export interface DataTableRootProps<TRow extends Record<string, unknown>, TRowId = string> {
+  value: UseDataTableReturn<TRow, TRowId>;
+  children: ReactNode;
+  className?: string;
+}
+
 function DataTableRoot<TRow extends Record<string, unknown>, TRowId = string>({
   value,
   children,
   className,
-}: {
-  value: UseDataTableReturn<TRow, TRowId>;
-  children: ReactNode;
-  className?: string;
-}) {
+}: DataTableRootProps<TRow, TRowId>) {
   const dataTableValue: DataTableContextValue<TRow, TRowId> = {
     columns: value.columns,
     rows: value.rows,

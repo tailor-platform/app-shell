@@ -213,7 +213,10 @@ describe("useAttachment", () => {
 
     let resolveFirst!: () => void;
     const firstCall = result.current.applyChanges(
-      () => new Promise<void>((res) => { resolveFirst = res; }),
+      () =>
+        new Promise<void>((res) => {
+          resolveFirst = res;
+        }),
     );
 
     await expect(result.current.applyChanges(async () => {})).rejects.toThrow(

@@ -36,7 +36,7 @@ type OperationEntry = AttachmentOperation & { readonly opKey: string };
  */
 function buildPendingItem(file: File): AttachmentItem {
   return {
-    id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: `pending-${crypto.randomUUID()}`,
     fileName: file.name,
     mimeType: file.type || "application/octet-stream",
     previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,

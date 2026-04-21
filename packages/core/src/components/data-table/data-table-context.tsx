@@ -64,6 +64,16 @@ export { DataTableContext };
  * Hook to access the full DataTable state (rows, columns, sorting, pagination,
  * column visibility, and row operations) from the nearest `DataTable.Root`.
  *
+ * This hook is intentionally part of the public API to support **custom
+ * sub-components** rendered inside `DataTable.Root`. Use it when the built-in
+ * `DataTable.*` sub-components (Table, Toolbar, Pagination, etc.) are not
+ * sufficient and you need to build your own compound component that reads from
+ * or writes to the same DataTable context — for example, a column-visibility
+ * toggle panel or a custom row-action toolbar.
+ *
+ * For most use cases, prefer passing values from `useDataTable()` as props
+ * rather than reaching into the context directly.
+ *
  * @throws Error if used outside of `DataTable.Root`.
  */
 export function useDataTableContext<

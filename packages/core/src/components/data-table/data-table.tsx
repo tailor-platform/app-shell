@@ -370,7 +370,11 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       )}
       {totalPages !== null && (
         <span className="astw:text-sm astw:text-muted-foreground astw:tabular-nums">
-          {t("paginationPage")} {currentPage} / {totalPages}
+          {t("paginationPage")}{" "}
+          {/* When on the last page (hasNextPage=false), currentPage in
+              useCollectionVariables may be stale (e.g. after goToLastPage).
+              Using totalPages as the display value is always accurate here. */}
+          {!hasNextPage ? totalPages : currentPage} / {totalPages}
         </span>
       )}
       <Button
@@ -390,7 +394,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
             prevPage(pageInfo.previousPageToken);
           }
         }}
-        disabled={!hasPrevPage}
+        disabled={!hasPrevPage || !pageInfo.previousPageToken}
         aria-label={t("paginationPrevious")}
       >
         <ChevronLeft className="astw:size-4" />
@@ -403,7 +407,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
             nextPage(pageInfo.nextPageToken);
           }
         }}
-        disabled={!hasNextPage}
+        disabled={!hasNextPage || !pageInfo.nextPageToken}
         aria-label={t("paginationNext")}
       >
         <ChevronRight className="astw:size-4" />

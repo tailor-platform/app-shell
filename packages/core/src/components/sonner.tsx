@@ -8,7 +8,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       richColors
       theme={theme as ToasterProps["theme"]}
-      richColors
       className="astw:toaster astw:group"
       style={
         {

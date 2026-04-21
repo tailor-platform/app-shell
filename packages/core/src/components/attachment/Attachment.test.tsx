@@ -32,12 +32,16 @@ describe("Attachment", () => {
     });
 
     it("populated mixed items", () => {
-      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} />);
+      const { container } = render(
+        <Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} />,
+      );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("disabled", () => {
-      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} disabled />);
+      const { container } = render(
+        <Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} disabled />,
+      );
       expect(container.innerHTML).toMatchSnapshot();
     });
   });

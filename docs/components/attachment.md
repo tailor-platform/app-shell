@@ -72,9 +72,9 @@ function ProductForm() {
 
 ### Return value
 
-| Field          | Type                                                                   | Description                                                                      |
-| -------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `props`        | `{ items, onUpload, onDelete, accept, disabled }`                      | Spread directly onto `<Attachment />`                                            |
+| Field          | Type                                                                   | Description                                                                                                                                           |
+| -------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `props`        | `{ items, onUpload, onDelete, accept, disabled }`                      | Spread directly onto `<Attachment />`                                                                                                                 |
 | `applyChanges` | `(fn: (ops: AttachmentOperation[]) => Promise<void>) => Promise<void>` | Flush buffered operations to your backend; clears the buffer after `fn` resolves. If `fn` throws, the buffer is preserved so the call can be retried. |
 
 > **Upload ordering:** newly uploaded files are prepended to `items`, so the most recent uploads appear first in the tile list.

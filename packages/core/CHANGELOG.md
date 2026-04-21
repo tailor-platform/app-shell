@@ -1,5 +1,17 @@
 # @tailor-platform/app-shell
 
+## 0.35.1
+
+### Patch Changes
+
+- 3b11ca4: Fix CommandPalette and DefaultSidebar not showing top-level pages that have no child pages.
+
+  When using file-based routing with a flat page structure (e.g. `pages/dashboard/page.tsx` with no sub-pages), those pages were silently excluded from the CommandPalette and the DefaultSidebar auto-generation. They now appear correctly as navigable entries.
+
+- 0d8d87e: Add top-padding in Card component"
+- 8c0eed5: Adjust `Table` cell padding so the first column uses 24px left inset and the last column uses 24px right inset (middle columns unchanged). Update `Card.Header` titles to `text-lg` to align with `DescriptionCard`, `ActivityCard`, and `ActionPanel`.
+- e841014: Enable richColors in toast
+
 ## 0.35.0
 
 ### Minor Changes

@@ -106,7 +106,7 @@ interface AttachmentItem {
 | ------------- | -------------------------------- | ------------------- | --------------------------------------------------------------------------------------------- |
 | `items`       | `AttachmentItem[]`               | `[]`                | Attachment list rendered as preview tiles                                                     |
 | `onUpload`    | `(files: File[]) => void`        | _(required)_        | Called when files are selected or dropped on the upload tile                                  |
-| `onDelete`    | `(item: AttachmentItem) => void` | -                   | Called when Delete is chosen in a preview menu                                                |
+| `onDelete`    | `(item: AttachmentItem) => void` | _(required)_        | Called when Delete is chosen in a preview menu                                                |
 | `onDownload`  | `(item: AttachmentItem) => void` | -                   | Called when Download is chosen in a preview menu                                              |
 | `uploadLabel` | `string`                         | `"Click to upload"` | Primary label on the upload tile                                                              |
 | `uploadHint`  | `string`                         | -                   | Supporting text below the upload label                                                        |

@@ -114,7 +114,7 @@ export function Attachment({
         next.delete(item.id);
         return next;
       });
-      onDelete?.(item);
+      onDelete(item);
     },
     [onDelete],
   );

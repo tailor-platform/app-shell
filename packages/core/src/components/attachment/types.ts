@@ -19,7 +19,7 @@ export type AttachmentProps = {
   /** Called when files are selected or dropped. */
   onUpload: (files: File[]) => void;
   /** Called when delete action is selected for an item. */
-  onDelete?: (item: AttachmentItem) => void;
+  onDelete: (item: AttachmentItem) => void;
   /** Called when download action is selected for an item. */
   onDownload?: (item: AttachmentItem) => void;
   /** Upload label shown in the upload tile. */

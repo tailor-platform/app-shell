@@ -26,7 +26,7 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
 
   const [items, setItems] = useState<AttachmentItem[]>(initialItems);
   const operationsRef = useRef<AttachmentOperation[]>([]);
-  const initialItemIdsRef = useRef(new Set(initialItems.map((i) => i.id)));
+  const pendingUploadIdsRef = useRef(new Set<string>());
 
   const onUpload = useCallback((files: File[]) => {
     const newItems = files.map(
@@ -41,6 +41,7 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
     files.forEach((file, i) => {
       const item = newItems[i];
       if (item) {
+        pendingUploadIdsRef.current.add(item.id);
         operationsRef.current.push({ type: "upload", file, item });
       }
     });
@@ -56,12 +57,15 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
     );
 
     if (uploadOpIndex !== -1) {
+      // Cancelling a pending upload — revoke preview URL and drop the op
       const op = operationsRef.current[uploadOpIndex];
       if (op?.type === "upload" && op.item.previewUrl) {
         URL.revokeObjectURL(op.item.previewUrl);
       }
+      pendingUploadIdsRef.current.delete(item.id);
       operationsRef.current.splice(uploadOpIndex, 1);
-    } else if (initialItemIdsRef.current.has(item.id)) {
+    } else {
+      // Not a pending upload → must be a server-side item; always emit delete
       operationsRef.current.push({ type: "delete", item });
     }
   }, []);

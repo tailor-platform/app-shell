@@ -30,7 +30,7 @@ import { Card } from "@tailor-platform/app-shell";
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied.                                                                         |
 | `Card.Header`  | Top section with an optional title and description.                                                                                      |
-| `Card.Content` | Body section with horizontal and bottom padding; **top padding** when it is the **first child** of `Card.Root` (no `Card.Header` above). |
+| `Card.Content` | Body section with horizontal and bottom padding.                                                                                         |
 
 ## Card.Root Props
 

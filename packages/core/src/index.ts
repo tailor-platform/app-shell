@@ -101,6 +101,7 @@ export {
   type AttachmentProps,
   type AttachmentItem,
   type AttachmentOperation,
+  type UseAttachmentOptions,
 } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";

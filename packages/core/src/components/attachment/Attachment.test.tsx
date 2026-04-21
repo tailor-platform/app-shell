@@ -27,23 +27,23 @@ const mixedItems: AttachmentItem[] = [
 describe("Attachment", () => {
   describe("snapshots", () => {
     it("empty default", () => {
-      const { container } = render(<Attachment onUpload={vi.fn()} />);
+      const { container } = render(<Attachment onUpload={vi.fn()} onDelete={vi.fn()} />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("populated mixed items", () => {
-      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} />);
+      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("disabled", () => {
-      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} disabled />);
+      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} disabled />);
       expect(container.innerHTML).toMatchSnapshot();
     });
   });
 
   it("renders upload tile and labels", () => {
-    render(<Attachment uploadLabel="Upload image" onUpload={vi.fn()} />);
+    render(<Attachment uploadLabel="Upload image" onUpload={vi.fn()} onDelete={vi.fn()} />);
     expect(screen.getByTestId("attachment-upload-tile")).toBeDefined();
     expect(screen.getByText("Upload image")).toBeDefined();
   });
@@ -54,13 +54,14 @@ describe("Attachment", () => {
         uploadLabel="Add file"
         uploadHint="PDF and images only. Max 5 MB."
         onUpload={vi.fn()}
+        onDelete={vi.fn()}
       />,
     );
     expect(screen.getByText("PDF and images only. Max 5 MB.")).toBeDefined();
   });
 
   it("renders image and file preview branches", () => {
-    render(<Attachment items={mixedItems} onUpload={vi.fn()} />);
+    render(<Attachment items={mixedItems} onUpload={vi.fn()} onDelete={vi.fn()} />);
     expect(screen.getByRole("img", { name: "shoe-red.png" })).toBeDefined();
     expect(screen.getByRole("button", { name: /Aug-Sep 2025_1234-12\.pdf/ })).toBeDefined();
     expect(screen.getByTestId("attachment-file-icon")).toBeDefined();
@@ -68,7 +69,7 @@ describe("Attachment", () => {
 
   it("calls onUpload when files are selected through input", () => {
     const onUpload = vi.fn();
-    render(<Attachment onUpload={onUpload} />);
+    render(<Attachment onUpload={onUpload} onDelete={vi.fn()} />);
 
     const file = new File(["hello"], "invoice.pdf", {
       type: "application/pdf",
@@ -83,7 +84,7 @@ describe("Attachment", () => {
 
   it("calls onUpload when files are dropped on the upload tile", () => {
     const onUpload = vi.fn();
-    render(<Attachment onUpload={onUpload} />);
+    render(<Attachment onUpload={onUpload} onDelete={vi.fn()} />);
     const uploadTile = screen.getByTestId("attachment-upload-tile");
     expect(uploadTile).toBeTruthy();
 
@@ -138,7 +139,7 @@ describe("Attachment", () => {
 
   it("disables upload and hides menu actions when disabled", () => {
     const onUpload = vi.fn();
-    render(<Attachment items={mixedItems} onUpload={onUpload} disabled />);
+    render(<Attachment items={mixedItems} onUpload={onUpload} onDelete={vi.fn()} disabled />);
 
     expect(screen.queryByTestId("attachment-upload-tile")).toBeNull();
 
@@ -168,6 +169,7 @@ describe("Attachment", () => {
           },
         ]}
         onUpload={vi.fn()}
+        onDelete={vi.fn()}
       />,
     );
 

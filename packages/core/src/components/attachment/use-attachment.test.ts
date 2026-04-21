@@ -36,7 +36,9 @@ describe("useAttachment", () => {
   it("adds items when onUpload is called", () => {
     const { result } = renderHook(() => useAttachment());
 
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
     act(() => {
       result.current.props.onUpload?.([file]);
     });
@@ -63,7 +65,9 @@ describe("useAttachment", () => {
 
   it("removes item when onDelete is called for a pending upload", () => {
     const { result } = renderHook(() => useAttachment());
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
 
     act(() => {
       result.current.props.onUpload?.([file]);
@@ -100,7 +104,9 @@ describe("useAttachment", () => {
 
   it("applyChanges receives upload operation for new files", async () => {
     const { result } = renderHook(() => useAttachment());
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
 
     act(() => {
       result.current.props.onUpload?.([file]);
@@ -138,7 +144,9 @@ describe("useAttachment", () => {
 
   it("does not add delete operation when a pending upload is deleted", async () => {
     const { result } = renderHook(() => useAttachment());
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
 
     act(() => {
       result.current.props.onUpload?.([file]);
@@ -158,7 +166,9 @@ describe("useAttachment", () => {
 
   it("preserves operations buffer when applyChanges fn throws", async () => {
     const { result } = renderHook(() => useAttachment());
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
 
     act(() => {
       result.current.props.onUpload?.([file]);
@@ -185,7 +195,9 @@ describe("useAttachment", () => {
 
   it("clears operations after applyChanges", async () => {
     const { result } = renderHook(() => useAttachment());
-    const file = new File(["hello"], "invoice.pdf", { type: "application/pdf" });
+    const file = new File(["hello"], "invoice.pdf", {
+      type: "application/pdf",
+    });
 
     act(() => {
       result.current.props.onUpload?.([file]);

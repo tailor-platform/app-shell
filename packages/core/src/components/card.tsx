@@ -52,11 +52,7 @@ Header.displayName = "Card.Header";
 
 function Content({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div
-      data-slot="card-content"
-      className={cn("astw:px-6 astw:pb-6 astw:first:pt-6", className)}
-      {...props}
-    />
+    <div data-slot="card-content" className={cn("astw:px-6 astw:pb-6", className)} {...props} />
   );
 }
 Content.displayName = "Card.Content";

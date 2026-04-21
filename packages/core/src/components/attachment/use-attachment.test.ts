@@ -202,4 +202,25 @@ describe("useAttachment", () => {
 
     expect(fn.mock.calls[0]?.[0] ?? []).toHaveLength(0);
   });
+
+  it("applyChanges throws if called while already flushing", async () => {
+    const { result } = renderHook(() => useAttachment());
+    const file = new File(["x"], "doc.pdf", { type: "application/pdf" });
+
+    act(() => {
+      result.current.props.onUpload?.([file]);
+    });
+
+    let resolveFirst!: () => void;
+    const firstCall = result.current.applyChanges(
+      () => new Promise<void>((res) => { resolveFirst = res; }),
+    );
+
+    await expect(result.current.applyChanges(async () => {})).rejects.toThrow(
+      "applyChanges is already in progress",
+    );
+
+    resolveFirst();
+    await firstCall;
+  });
 });

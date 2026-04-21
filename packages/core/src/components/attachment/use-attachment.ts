@@ -13,14 +13,10 @@ type UseAttachmentProps = Omit<AttachmentControlledProps, "items"> & {
 
 type UseAttachmentReturn = {
   props: UseAttachmentProps;
-  applyChanges: (
-    fn: (operations: AttachmentOperation[]) => Promise<void>,
-  ) => Promise<void>;
+  applyChanges: (fn: (operations: AttachmentOperation[]) => Promise<void>) => Promise<void>;
 };
 
-export function useAttachment(
-  options: UseAttachmentOptions = {},
-): UseAttachmentReturn {
+export function useAttachment(options: UseAttachmentOptions = {}): UseAttachmentReturn {
   const { initialItems = [], accept, disabled = false } = options;
 
   const [items, setItems] = useState<AttachmentItem[]>(initialItems);
@@ -33,9 +29,7 @@ export function useAttachment(
         id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         fileName: file.name,
         mimeType: file.type || "application/octet-stream",
-        previewUrl: file.type.startsWith("image/")
-          ? URL.createObjectURL(file)
-          : undefined,
+        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
         status: "ready",
       }),
     );

@@ -1,11 +1,5 @@
 import * as React from "react";
-import {
-  CloudUpload,
-  Ellipsis,
-  File,
-  Image as ImageIcon,
-  Loader2,
-} from "lucide-react";
+import { CloudUpload, Ellipsis, File, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -52,9 +46,7 @@ export function Attachment({
 }: AttachmentProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const [failedImagePreviewIds, setFailedImagePreviewIds] = React.useState<
-    Set<string>
-  >(new Set());
+  const [failedImagePreviewIds, setFailedImagePreviewIds] = React.useState<Set<string>>(new Set());
   const dragDepthRef = React.useRef(0);
 
   const handleUpload = React.useCallback(
@@ -130,10 +122,7 @@ export function Attachment({
   return (
     <div
       data-slot="attachment"
-      className={cn(
-        "astw:@container astw:flex astw:w-full astw:min-w-0 astw:flex-col",
-        className,
-      )}
+      className={cn("astw:@container astw:flex astw:w-full astw:min-w-0 astw:flex-col", className)}
     >
       <input
         ref={inputRef}
@@ -186,9 +175,7 @@ export function Attachment({
                           <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
                             {baseName}
                           </span>
-                          {extension ? (
-                            <span className="astw:shrink-0">{extension}</span>
-                          ) : null}
+                          {extension ? <span className="astw:shrink-0">{extension}</span> : null}
                         </p>
                       </>
                     )}
@@ -222,9 +209,7 @@ export function Attachment({
                       <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
                         {baseName}
                       </span>
-                      {extension ? (
-                        <span className="astw:shrink-0">{extension}</span>
-                      ) : null}
+                      {extension ? <span className="astw:shrink-0">{extension}</span> : null}
                     </p>
                     {isUploading ? (
                       <div
@@ -251,13 +236,9 @@ export function Attachment({
                       </Menu.Trigger>
                       <Menu.Content>
                         {onDownload ? (
-                          <Menu.Item onClick={() => onDownload(item)}>
-                            Download
-                          </Menu.Item>
+                          <Menu.Item onClick={() => onDownload(item)}>Download</Menu.Item>
                         ) : null}
-                        <Menu.Item onClick={() => handleDeleteItem(item)}>
-                          Delete
-                        </Menu.Item>
+                        <Menu.Item onClick={() => handleDeleteItem(item)}>Delete</Menu.Item>
                       </Menu.Content>
                     </Menu.Root>
                   </div>
@@ -272,8 +253,7 @@ export function Attachment({
               data-testid="attachment-upload-tile"
               className={cn(
                 "astw:flex astw:h-30 astw:w-[200px] astw:shrink-0 astw:cursor-pointer astw:flex-col astw:justify-between astw:rounded-lg astw:border-2 astw:border-dashed astw:border-border astw:bg-muted/50 astw:p-3 astw:transition-colors astw:hover:bg-muted",
-                isDragOver &&
-                  "astw:border-primary astw:ring-1 astw:ring-primary/30 astw:bg-muted",
+                isDragOver && "astw:border-primary astw:ring-1 astw:ring-primary/30 astw:bg-muted",
               )}
               onClick={() => inputRef.current?.click()}
               onDragOver={(event) => event.preventDefault()}

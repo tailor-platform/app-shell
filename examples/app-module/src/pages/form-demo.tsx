@@ -49,11 +49,8 @@ const initialAttachmentItems: AttachmentItem[] = [
 ];
 
 const FormComponentsDemoPage = () => {
-  const [serverErrors, setServerErrors] = React.useState<
-    Record<string, string>
-  >({});
-  const [submittedData, setSubmittedData] =
-    React.useState<ProfileFormData | null>(null);
+  const [serverErrors, setServerErrors] = React.useState<Record<string, string>>({});
+  const [submittedData, setSubmittedData] = React.useState<ProfileFormData | null>(null);
   const orderAttachment = useAttachment({
     initialItems: initialAttachmentItems,
     accept: "image/*,.pdf",
@@ -93,8 +90,8 @@ const FormComponentsDemoPage = () => {
             <Card.Header title="Field" />
             <Card.Content>
               <p style={labelStyle}>
-                A compound component that groups label, control, description,
-                and error message. Wrapped in a Form to demonstrate submit.
+                A compound component that groups label, control, description, and error message.
+                Wrapped in a Form to demonstrate submit.
               </p>
               <Form
                 onSubmit={(event) => {
@@ -115,24 +112,14 @@ const FormComponentsDemoPage = () => {
                 <Field.Root name="username">
                   <Field.Label>Username</Field.Label>
                   <Field.Control placeholder="Enter your username" required />
-                  <Field.Description>
-                    Your unique display name.
-                  </Field.Description>
-                  <Field.Error match="valueMissing">
-                    Username is required.
-                  </Field.Error>
+                  <Field.Description>Your unique display name.</Field.Description>
+                  <Field.Error match="valueMissing">Username is required.</Field.Error>
                 </Field.Root>
 
                 <Field.Root name="email">
                   <Field.Label>Email</Field.Label>
-                  <Field.Control
-                    type="email"
-                    placeholder="you@example.com"
-                    required
-                  />
-                  <Field.Error match="valueMissing">
-                    Email is required.
-                  </Field.Error>
+                  <Field.Control type="email" placeholder="you@example.com" required />
+                  <Field.Error match="valueMissing">Email is required.</Field.Error>
                   <Field.Error match="typeMismatch">
                     Please enter a valid email address.
                   </Field.Error>
@@ -140,13 +127,8 @@ const FormComponentsDemoPage = () => {
 
                 <Field.Root name="bio">
                   <Field.Label>Bio</Field.Label>
-                  <Field.Control
-                    render={<textarea />}
-                    placeholder="Tell us about yourself"
-                  />
-                  <Field.Description>
-                    Optional — max 200 characters.
-                  </Field.Description>
+                  <Field.Control render={<textarea />} placeholder="Tell us about yourself" />
+                  <Field.Description>Optional — max 200 characters.</Field.Description>
                 </Field.Root>
 
                 <Field.Root name="disabled-field" disabled>
@@ -169,9 +151,7 @@ const FormComponentsDemoPage = () => {
                 <Dialog.Content>
                   <Dialog.Header>
                     <Dialog.Title>Submitted Data</Dialog.Title>
-                    <Dialog.Description>
-                      The following values were submitted:
-                    </Dialog.Description>
+                    <Dialog.Description>The following values were submitted:</Dialog.Description>
                   </Dialog.Header>
                   <Table.Root>
                     <Table.Header>
@@ -184,44 +164,26 @@ const FormComponentsDemoPage = () => {
                       {submittedData && (
                         <>
                           <Table.Row>
-                            <Table.Cell style={{ fontWeight: 500 }}>
-                              Username
-                            </Table.Cell>
+                            <Table.Cell style={{ fontWeight: 500 }}>Username</Table.Cell>
                             <Table.Cell>
                               {submittedData.username || (
-                                <span
-                                  style={{ color: "var(--muted-foreground)" }}
-                                >
-                                  (empty)
-                                </span>
+                                <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
                               )}
                             </Table.Cell>
                           </Table.Row>
                           <Table.Row>
-                            <Table.Cell style={{ fontWeight: 500 }}>
-                              Email
-                            </Table.Cell>
+                            <Table.Cell style={{ fontWeight: 500 }}>Email</Table.Cell>
                             <Table.Cell>
                               {submittedData.email || (
-                                <span
-                                  style={{ color: "var(--muted-foreground)" }}
-                                >
-                                  (empty)
-                                </span>
+                                <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
                               )}
                             </Table.Cell>
                           </Table.Row>
                           <Table.Row>
-                            <Table.Cell style={{ fontWeight: 500 }}>
-                              Bio
-                            </Table.Cell>
+                            <Table.Cell style={{ fontWeight: 500 }}>Bio</Table.Cell>
                             <Table.Cell>
                               {submittedData.bio || (
-                                <span
-                                  style={{ color: "var(--muted-foreground)" }}
-                                >
-                                  (empty)
-                                </span>
+                                <span style={{ color: "var(--muted-foreground)" }}>(empty)</span>
                               )}
                             </Table.Cell>
                           </Table.Row>
@@ -242,9 +204,8 @@ const FormComponentsDemoPage = () => {
             <Card.Header title="Fieldset" />
             <Card.Content>
               <p style={labelStyle}>
-                Groups related fields under a semantic{" "}
-                <code>&lt;fieldset&gt;</code> with a <code>&lt;legend&gt;</code>
-                .
+                Groups related fields under a semantic <code>&lt;fieldset&gt;</code> with a{" "}
+                <code>&lt;legend&gt;</code>.
               </p>
               <Fieldset.Root
                 style={{
@@ -294,10 +255,7 @@ const FormComponentsDemoPage = () => {
                 }}
               >
                 <Field.Label>Password</Field.Label>
-                <Field.Control
-                  type="password"
-                  placeholder="At least 8 characters"
-                />
+                <Field.Control type="password" placeholder="At least 8 characters" />
                 <Field.Error />
               </Field.Root>
             </Card.Content>
@@ -308,17 +266,12 @@ const FormComponentsDemoPage = () => {
             <Card.Header title="Field.Validity" />
             <Card.Content>
               <p style={labelStyle}>
-                Render-prop that exposes the field's <code>ValidityState</code>{" "}
-                for custom rendering.
+                Render-prop that exposes the field's <code>ValidityState</code> for custom
+                rendering.
               </p>
               <Field.Root name="age" validationMode="onChange">
                 <Field.Label>Age</Field.Label>
-                <Field.Control
-                  type="number"
-                  min={0}
-                  max={150}
-                  placeholder="0–150"
-                />
+                <Field.Control type="number" min={0} max={150} placeholder="0–150" />
                 <Field.Validity>
                   {(state) =>
                     state.validity.rangeOverflow ? (
@@ -342,8 +295,8 @@ const FormComponentsDemoPage = () => {
             <Card.Header title="Field + Dropdown Components" />
             <Card.Content>
               <p style={labelStyle}>
-                Select, Combobox, Autocomplete composed with Field for labeling,
-                description, and validation.
+                Select, Combobox, Autocomplete composed with Field for labeling, description, and
+                validation.
               </p>
               <div style={{ display: "flex", gap: "1.5rem" }}>
                 <Field.Root
@@ -383,14 +336,8 @@ const FormComponentsDemoPage = () => {
                   validationMode="onChange"
                 >
                   <Field.Label>Combobox</Field.Label>
-                  <Combobox
-                    items={comboItems}
-                    multiple
-                    placeholder="Search fruits..."
-                  />
-                  <Field.Description>
-                    Required — at least one.
-                  </Field.Description>
+                  <Combobox items={comboItems} multiple placeholder="Search fruits..." />
+                  <Field.Description>Required — at least one.</Field.Description>
                   <Field.Error />
                 </Field.Root>
 
@@ -425,9 +372,9 @@ const FormComponentsDemoPage = () => {
             <Card.Header title="Form + Attachment" />
             <Card.Content>
               <p style={labelStyle}>
-                <code>Attachment</code> can live inside a <code>Form</code> with
-                other fields. Track files in component state and submit them
-                with the rest of the payload (this demo only shows an alert).
+                <code>Attachment</code> can live inside a <code>Form</code> with other fields. Track
+                files in component state and submit them with the rest of the payload (this demo
+                only shows an alert).
               </p>
               <Form
                 onSubmit={(event) => {
@@ -448,9 +395,7 @@ const FormComponentsDemoPage = () => {
                 <Field.Root name="orderNote">
                   <Field.Label>Order note</Field.Label>
                   <Field.Control placeholder="Optional instructions for fulfillment" />
-                  <Field.Description>
-                    Shown on the packing slip.
-                  </Field.Description>
+                  <Field.Description>Shown on the packing slip.</Field.Description>
                 </Field.Root>
 
                 <Field.Root name="supporting-documents">
@@ -474,8 +419,7 @@ const FormComponentsDemoPage = () => {
             <Card.Header title="Form — Submit & Server Errors" />
             <Card.Content>
               <p style={labelStyle}>
-                Wraps fields in a <code>&lt;form&gt;</code> with consolidated
-                error handling.
+                Wraps fields in a <code>&lt;form&gt;</code> with consolidated error handling.
               </p>
               <Form
                 errors={serverErrors}
@@ -502,20 +446,10 @@ const FormComponentsDemoPage = () => {
               >
                 <Field.Root name="url">
                   <Field.Label>Homepage URL</Field.Label>
-                  <Field.Control
-                    type="url"
-                    required
-                    placeholder="https://example.com"
-                  />
-                  <Field.Description>
-                    Must start with https://
-                  </Field.Description>
-                  <Field.Error match="valueMissing">
-                    URL is required.
-                  </Field.Error>
-                  <Field.Error match="typeMismatch">
-                    Please enter a valid URL.
-                  </Field.Error>
+                  <Field.Control type="url" required placeholder="https://example.com" />
+                  <Field.Description>Must start with https://</Field.Description>
+                  <Field.Error match="valueMissing">URL is required.</Field.Error>
+                  <Field.Error match="typeMismatch">Please enter a valid URL.</Field.Error>
                 </Field.Root>
                 <div>
                   <Button type="submit">Submit</Button>
@@ -542,26 +476,20 @@ export const formComponentsDemoResource = defineResource({
 // ---------------------------------------------------------------------------
 
 const contactSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Name is required")
-    .max(50, "Name must be 50 characters or less"),
+  name: z.string().min(1, "Name is required").max(50, "Name must be 50 characters or less"),
   email: z.string().email("Please enter a valid email address"),
   age: z
     .number({ error: "Age is required" })
     .min(18, "Must be at least 18")
     .max(120, "Must be 120 or less"),
-  website: z
-    .union([z.url("Please enter a valid URL"), z.literal("")])
-    .optional(),
+  website: z.union([z.url("Please enter a valid URL"), z.literal("")]).optional(),
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
 
 const ZodRHFFormDemoPage = () => {
-  const [submittedData, setSubmittedData] =
-    React.useState<ContactFormValues | null>(null);
+  const [submittedData, setSubmittedData] = React.useState<ContactFormValues | null>(null);
 
   const { control, handleSubmit, reset } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
@@ -582,17 +510,13 @@ const ZodRHFFormDemoPage = () => {
     <Layout>
       <Layout.Column>
         <div style={{ maxWidth: 480 }}>
-          <h2 style={{ fontWeight: "bold", marginBottom: "1rem" }}>
-            Zod + React Hook Form Demo
-          </h2>
+          <h2 style={{ fontWeight: "bold", marginBottom: "1rem" }}>Zod + React Hook Form Demo</h2>
 
           <Form
             onSubmit={handleSubmit(onSubmit)}
             style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
           >
-            <Fieldset.Root
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
+            <Fieldset.Root style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <Fieldset.Legend>Contact Information</Fieldset.Legend>
 
               <Controller
@@ -615,14 +539,8 @@ const ZodRHFFormDemoPage = () => {
                 render={({ field, fieldState }) => (
                   <Field.Root {...fieldState}>
                     <Field.Label>Email</Field.Label>
-                    <Field.Control
-                      {...field}
-                      type="email"
-                      placeholder="john@example.com"
-                    />
-                    <Field.Description>
-                      We will never share your email.
-                    </Field.Description>
+                    <Field.Control {...field} type="email" placeholder="john@example.com" />
+                    <Field.Description>We will never share your email.</Field.Description>
                     <Field.Error match={fieldState.invalid}>
                       {fieldState.error?.message}
                     </Field.Error>
@@ -633,10 +551,7 @@ const ZodRHFFormDemoPage = () => {
               <Controller
                 name="age"
                 control={control}
-                render={({
-                  field: { onChange, value, ...field },
-                  fieldState,
-                }) => (
+                render={({ field: { onChange, value, ...field }, fieldState }) => (
                   <Field.Root {...fieldState}>
                     <Field.Label>Age</Field.Label>
                     <Field.Control
@@ -645,11 +560,7 @@ const ZodRHFFormDemoPage = () => {
                       placeholder="25"
                       value={value ?? ""}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        onChange(
-                          e.target.value === ""
-                            ? undefined
-                            : Number(e.target.value),
-                        )
+                        onChange(e.target.value === "" ? undefined : Number(e.target.value))
                       }
                     />
                     <Field.Error match={fieldState.invalid}>
@@ -665,11 +576,7 @@ const ZodRHFFormDemoPage = () => {
                 render={({ field, fieldState }) => (
                   <Field.Root {...fieldState}>
                     <Field.Label>Website</Field.Label>
-                    <Field.Control
-                      {...field}
-                      type="url"
-                      placeholder="https://example.com"
-                    />
+                    <Field.Control {...field} type="url" placeholder="https://example.com" />
                     <Field.Description>Optional</Field.Description>
                     <Field.Error match={fieldState.invalid}>
                       {fieldState.error?.message}
@@ -684,13 +591,8 @@ const ZodRHFFormDemoPage = () => {
                 render={({ field, fieldState }) => (
                   <Field.Root {...fieldState}>
                     <Field.Label>Message</Field.Label>
-                    <Field.Control
-                      {...field}
-                      placeholder="Tell us something..."
-                    />
-                    <Field.Description>
-                      At least 10 characters
-                    </Field.Description>
+                    <Field.Control {...field} placeholder="Tell us something..." />
+                    <Field.Description>At least 10 characters</Field.Description>
                     <Field.Error match={fieldState.invalid}>
                       {fieldState.error?.message}
                     </Field.Error>

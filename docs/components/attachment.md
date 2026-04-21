@@ -64,18 +64,18 @@ function ProductForm() {
 
 ### Options
 
-| Option         | Type               | Default | Description                                     |
-| -------------- | ------------------ | ------- | ----------------------------------------------- |
-| `initialItems` | `AttachmentItem[]` | `[]`    | Existing items to populate on mount             |
-| `accept`       | `string`           | -       | Accepted file types passed to the file input    |
-| `disabled`     | `boolean`          | `false` | Disable upload and item actions                 |
+| Option         | Type               | Default | Description                                  |
+| -------------- | ------------------ | ------- | -------------------------------------------- |
+| `initialItems` | `AttachmentItem[]` | `[]`    | Existing items to populate on mount          |
+| `accept`       | `string`           | -       | Accepted file types passed to the file input |
+| `disabled`     | `boolean`          | `false` | Disable upload and item actions              |
 
 ### Return value
 
-| Field          | Type                                                                   | Description                                                                       |
-| -------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `props`        | `{ items, onUpload, onDelete, accept, disabled }`                      | Spread directly onto `<Attachment />`                                             |
-| `applyChanges` | `(fn: (ops: AttachmentOperation[]) => Promise<void>) => Promise<void>` | Flush buffered operations to your backend; clears the buffer after `fn` resolves  |
+| Field          | Type                                                                   | Description                                                                      |
+| -------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `props`        | `{ items, onUpload, onDelete, accept, disabled }`                      | Spread directly onto `<Attachment />`                                            |
+| `applyChanges` | `(fn: (ops: AttachmentOperation[]) => Promise<void>) => Promise<void>` | Flush buffered operations to your backend; clears the buffer after `fn` resolves |
 
 ## AttachmentOperation
 
@@ -104,7 +104,7 @@ interface AttachmentItem {
 | Prop          | Type                             | Default             | Description                                                                                   |
 | ------------- | -------------------------------- | ------------------- | --------------------------------------------------------------------------------------------- |
 | `items`       | `AttachmentItem[]`               | `[]`                | Attachment list rendered as preview tiles                                                     |
-| `onUpload`    | `(files: File[]) => void`        | *(required)*        | Called when files are selected or dropped on the upload tile                                  |
+| `onUpload`    | `(files: File[]) => void`        | _(required)_        | Called when files are selected or dropped on the upload tile                                  |
 | `onDelete`    | `(item: AttachmentItem) => void` | -                   | Called when Delete is chosen in a preview menu                                                |
 | `onDownload`  | `(item: AttachmentItem) => void` | -                   | Called when Download is chosen in a preview menu                                              |
 | `uploadLabel` | `string`                         | `"Click to upload"` | Primary label on the upload tile                                                              |

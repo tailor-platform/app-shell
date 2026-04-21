@@ -24,9 +24,5 @@ async function handleSubmit() {
   });
 }
 
-<Attachment
-  {...props}
-  uploadLabel="Upload"
-  onDownload={handleDownload}
-/>;
+<Attachment {...props} uploadLabel="Upload" onDownload={handleDownload} />;
 ```

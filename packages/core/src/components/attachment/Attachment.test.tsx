@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Attachment } from "./Attachment";
@@ -38,16 +32,12 @@ describe("Attachment", () => {
     });
 
     it("populated mixed items", () => {
-      const { container } = render(
-        <Attachment items={mixedItems} onUpload={vi.fn()} />,
-      );
+      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("disabled", () => {
-      const { container } = render(
-        <Attachment items={mixedItems} onUpload={vi.fn()} disabled />,
-      );
+      const { container } = render(<Attachment items={mixedItems} onUpload={vi.fn()} disabled />);
       expect(container.innerHTML).toMatchSnapshot();
     });
   });
@@ -72,9 +62,7 @@ describe("Attachment", () => {
   it("renders image and file preview branches", () => {
     render(<Attachment items={mixedItems} onUpload={vi.fn()} />);
     expect(screen.getByRole("img", { name: "shoe-red.png" })).toBeDefined();
-    expect(
-      screen.getByRole("button", { name: /Aug-Sep 2025_1234-12\.pdf/ }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: /Aug-Sep 2025_1234-12\.pdf/ })).toBeDefined();
     expect(screen.getByTestId("attachment-file-icon")).toBeDefined();
   });
 
@@ -85,9 +73,7 @@ describe("Attachment", () => {
     const file = new File(["hello"], "invoice.pdf", {
       type: "application/pdf",
     });
-    const input = screen.getByTestId(
-      "attachment-upload-input",
-    ) as HTMLInputElement;
+    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
     fireEvent.change(input, { target: { files: [file] } });
 
     expect(onUpload).toHaveBeenCalledTimes(1);
@@ -156,9 +142,7 @@ describe("Attachment", () => {
 
     expect(screen.queryByTestId("attachment-upload-tile")).toBeNull();
 
-    const input = screen.getByTestId(
-      "attachment-upload-input",
-    ) as HTMLInputElement;
+    const input = screen.getByTestId("attachment-upload-input") as HTMLInputElement;
     fireEvent.change(input, {
       target: {
         files: [new File(["x"], "blocked.pdf", { type: "application/pdf" })],
@@ -191,12 +175,8 @@ describe("Attachment", () => {
     fireEvent.error(image);
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("attachment-image-fallback-icon"),
-      ).toBeDefined();
-      expect(
-        screen.getByRole("button", { name: /IMG_0689_Original\.jpg/ }),
-      ).toBeDefined();
+      expect(screen.getByTestId("attachment-image-fallback-icon")).toBeDefined();
+      expect(screen.getByRole("button", { name: /IMG_0689_Original\.jpg/ })).toBeDefined();
     });
   });
 });

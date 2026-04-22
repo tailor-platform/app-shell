@@ -130,7 +130,6 @@ export {
 // Collection (shared across DataTable, Kanban, Gantt, etc.)
 export {
   OPERATORS_BY_FILTER_TYPE,
-  DEFAULT_OPERATOR_LABELS,
   fieldTypeToSortConfig,
   fieldTypeToFilterConfig,
   type SortConfig,

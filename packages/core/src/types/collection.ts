@@ -198,16 +198,6 @@ export type TableMetadataFilter<TTable extends TableMetadata> =
     : never;
 
 /**
- * Metadata-aware filter type.
- *
- * @deprecated Use `TableMetadataFilter<TMetadata[TTableName]>` instead.
- */
-export type MetadataFilter<
-  TMetadata extends TableMetadataMap,
-  TTableName extends string & keyof TMetadata,
-> = TableMetadataFilter<TMetadata[TTableName]>;
-
-/**
  * Active sort state for a single field.
  */
 export interface SortState {
@@ -335,16 +325,6 @@ export type TableFieldName<TTable extends TableMetadata> = TTable["fields"][numb
     : never
   : never;
 
-/**
- * Extract field names from table metadata map + table name.
- *
- * @deprecated Use `TableFieldName<TMetadata[TTableName]>` instead.
- */
-export type FieldName<
-  TMetadata extends TableMetadataMap,
-  TTableName extends keyof TMetadata,
-> = TableFieldName<TMetadata[TTableName]>;
-
 type OrderableFieldType = "string" | "number" | "boolean" | "datetime" | "date" | "time" | "enum";
 
 /**
@@ -358,23 +338,6 @@ export type TableOrderableFieldName<TTable extends TableMetadata> =
       ? N
       : never
     : never;
-
-/**
- * Extract only orderable field names from table metadata map + table name.
- *
- * @deprecated Use `TableOrderableFieldName<TMetadata[TTableName]>` instead.
- */
-export type OrderableFieldName<
-  TMetadata extends TableMetadataMap,
-  TTableName extends keyof TMetadata,
-> = TableOrderableFieldName<TMetadata[TTableName]>;
-
-/**
- * Find table names in metadata whose fields are a superset of `TFieldName`.
- */
-export type MatchingTableName<TMetadata extends TableMetadataMap, TFieldName extends string> = {
-  [K in string & keyof TMetadata]: TFieldName extends FieldName<TMetadata, K> ? K : never;
-}[string & keyof TMetadata];
 
 // =============================================================================
 // Collection Control & Options

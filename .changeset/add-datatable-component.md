@@ -119,8 +119,8 @@ const { column, inferColumns } = createColumnHelper<Order>();
 const infer = inferColumns(tableMetadata.order);
 
 const columns = [
-  column(infer("title")),         // string column → text filter
-  column(infer("status")),        // enum column  → dropdown filter with generated values
-  column(infer("createdAt")),     // datetime column → date picker filter
+  column(infer("title")), // string column → text filter
+  column(infer("status")), // enum column  → dropdown filter with generated values
+  column(infer("createdAt")), // datetime column → date picker filter
 ];
 ```

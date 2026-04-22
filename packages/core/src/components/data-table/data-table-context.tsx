@@ -14,7 +14,7 @@ import type { PageInfo, SortState } from "@/types/collection";
  * to `UseDataTableReturn` — changes to `UseDataTableReturn` require an
  * explicit decision about whether they should appear in the context.
  */
-export interface DataTableContextValue<TRow extends Record<string, unknown>, TRowId = string> {
+export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   // Data
   rows: TRow[];
   loading: boolean;
@@ -39,24 +39,13 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>, TRo
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
 
-  // Row key identifier
-  rowKey: string;
-
   // Row interaction
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-
-  // Row operations
-  updateRow: (rowId: TRowId, fields: Partial<TRow>) => { rollback: () => void };
-  deleteRow: (rowId: TRowId) => {
-    rollback: () => void;
-    deletedRow: TRow | undefined;
-  };
-  insertRow: (row: TRow) => { rollback: () => void };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DataTableContext = createContext<DataTableContextValue<any, any> | null>(null);
+const DataTableContext = createContext<DataTableContextValue<any> | null>(null);
 
 export { DataTableContext };
 
@@ -78,11 +67,10 @@ export { DataTableContext };
  */
 export function useDataTableContext<
   TRow extends Record<string, unknown>,
-  TRowId = string,
->(): DataTableContextValue<TRow, TRowId> {
+>(): DataTableContextValue<TRow> {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
     throw new Error("useDataTableContext must be used within <DataTable.Root>");
   }
-  return ctx as DataTableContextValue<TRow, TRowId>;
+  return ctx as DataTableContextValue<TRow>;
 }

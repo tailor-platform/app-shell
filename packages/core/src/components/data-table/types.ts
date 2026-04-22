@@ -49,39 +49,8 @@ type UseDataTableBaseOptions<TRow extends Record<string, unknown>> = {
 
 /**
  * Options for `useDataTable` hook.
- *
- * `rowKey` identifies the unique row field used for optimistic updates.
- * - When `TRow` has an `"id"` field, `rowKey` defaults to `"id"` and may be omitted.
- * - When `TRow` has no `"id"` field, `rowKey` is **required**. Omitting it would
- *   cause `updateRow`, `deleteRow`, and `insertRow` to silently no-op.
  */
-export type UseDataTableOptions<TRow extends Record<string, unknown>> =
-  UseDataTableBaseOptions<TRow> &
-    ("id" extends keyof TRow ? { rowKey?: keyof TRow & string } : { rowKey: keyof TRow & string });
-
-/**
- * Row operations with optimistic update support.
- *
- * Each operation returns a `rollback()` function that restores row state to
- * the **snapshot taken immediately before that specific call**. If multiple
- * operations are chained, rolling back an earlier one also undoes all later
- * ones, because the snapshot predates those subsequent operations.
- *
- * Optimistic state is automatically discarded when the `data` prop reference
- * changes (i.e., after a server refetch completes), so explicit cleanup is
- * not required on the success path.
- */
-export interface RowOperations<TRow extends Record<string, unknown>, TRowId = string> {
-  /** Optimistically update fields of a row identified by `rowId`. */
-  updateRow: (rowId: TRowId, fields: Partial<TRow>) => { rollback: () => void };
-  /** Optimistically remove a row identified by `rowId`. Returns the deleted row for undo. */
-  deleteRow: (rowId: TRowId) => {
-    rollback: () => void;
-    deletedRow: TRow | undefined;
-  };
-  /** Optimistically prepend a new row to the list. */
-  insertRow: (row: TRow) => { rollback: () => void };
-}
+export type UseDataTableOptions<TRow extends Record<string, unknown>> = UseDataTableBaseOptions<TRow>;
 
 // =============================================================================
 // Row Actions
@@ -102,10 +71,7 @@ export interface RowAction<TRow extends Record<string, unknown>> {
 /**
  * Return type of `useDataTable` hook.
  */
-export interface UseDataTableReturn<
-  TRow extends Record<string, unknown>,
-  TRowId = string,
-> extends RowOperations<TRow, TRowId> {
+export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Data
   rows: TRow[];
   loading: boolean;
@@ -129,9 +95,6 @@ export interface UseDataTableReturn<
   showAllColumns: () => void;
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
-
-  // Row key identifier
-  rowKey: string;
 
   // Control (passthrough for DataTable.Root)
   control: CollectionControl | undefined;

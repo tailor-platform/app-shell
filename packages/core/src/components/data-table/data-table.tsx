@@ -21,27 +21,24 @@ import { DataTableToolbar, DataTableFilters } from "./toolbar";
 // DataTable.Root
 // =============================================================================
 
-export interface DataTableRootProps<TRow extends Record<string, unknown>, TRowId = string> {
-  value: UseDataTableReturn<TRow, TRowId>;
+export interface DataTableRootProps<TRow extends Record<string, unknown>> {
+  value: UseDataTableReturn<TRow>;
   children: ReactNode;
   className?: string;
 }
 
-function DataTableRoot<TRow extends Record<string, unknown>, TRowId = string>({
+function DataTableRoot<TRow extends Record<string, unknown>>({
   value,
   children,
   className,
-}: DataTableRootProps<TRow, TRowId>) {
-  const dataTableValue: DataTableContextValue<TRow, TRowId> = {
+}: DataTableRootProps<TRow>) {
+  const dataTableValue: DataTableContextValue<TRow> = {
     columns: value.columns,
     rows: value.rows,
     loading: value.loading,
     error: value.error,
     sortStates: value.sortStates ?? [],
     onSort: value.onSort,
-    updateRow: value.updateRow,
-    deleteRow: value.deleteRow,
-    insertRow: value.insertRow,
     visibleColumns: value.visibleColumns,
     isColumnVisible: value.isColumnVisible,
     toggleColumn: value.toggleColumn,
@@ -56,7 +53,6 @@ function DataTableRoot<TRow extends Record<string, unknown>, TRowId = string>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
-    rowKey: value.rowKey,
   };
 
   const controlValue = value.control ?? null;
@@ -196,7 +192,7 @@ function DataTableBody({ className }: { className?: string }) {
         </Table.Row>
       )}
       {rows?.map((row, rowIndex) => {
-        const rowId = (row as Record<string, unknown>)[ctx.rowKey];
+        const rowId = (row as Record<string, unknown>)["id"];
         return (
           <Table.Row
             key={rowId != null ? String(rowId) : rowIndex}

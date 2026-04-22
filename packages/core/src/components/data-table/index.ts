@@ -11,7 +11,6 @@ export type {
   Column,
   DataTableData,
   RowAction,
-  RowOperations,
   UseDataTableOptions,
   UseDataTableReturn,
   MetadataFieldOptions,

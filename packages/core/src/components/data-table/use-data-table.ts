@@ -33,21 +33,9 @@ import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
  * </DataTable.Root>
  * ```
  */
-// Overload: explicit rowKey with inferred TKey — rowId is typed as TRow[TKey]
-export function useDataTable<
-  TRow extends Record<string, unknown>,
-  const TKey extends keyof TRow & string,
->(options: UseDataTableOptions<TRow> & { rowKey: TKey }): UseDataTableReturn<TRow, TRow[TKey]>;
-
-// Overload: no explicit rowKey — rowId stays string (default key "id" is typically string)
 export function useDataTable<TRow extends Record<string, unknown>>(
   options: UseDataTableOptions<TRow>,
-): UseDataTableReturn<TRow, string>;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useDataTable<TRow extends Record<string, unknown>>(
-  options: UseDataTableOptions<TRow>,
-): UseDataTableReturn<TRow, any> {
+): UseDataTableReturn<TRow> {
   const {
     columns: allColumns,
     data,
@@ -56,27 +44,12 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     control,
     onClickRow,
     rowActions,
-    rowKey = "id",
   } = options;
 
   // ---------------------------------------------------------------------------
   // Data extraction
   // ---------------------------------------------------------------------------
-
-  // `optimisticState` pairs the optimistic row list with the `sourceRows`
-  // reference it was applied against. When `data` changes (server refetch
-  // completes), `sourceRows` gets a new reference and the comparison fails,
-  // automatically falling back to fresh server rows — no useEffect needed.
-  const [optimisticState, setOptimisticState] = useState<{
-    baseRows: TRow[];
-    rows: TRow[];
-  } | null>(null);
-
-  const sourceRows = useMemo(() => data?.rows ?? [], [data?.rows]);
-  const rows =
-    optimisticState !== null && optimisticState.baseRows === sourceRows
-      ? optimisticState.rows
-      : sourceRows;
+  const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
 
   const pageInfo: PageInfo = data?.pageInfo ?? {
     hasNextPage: false,
@@ -153,67 +126,6 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   );
 
   // ---------------------------------------------------------------------------
-  // Row Operations (Optimistic Updates)
-  // ---------------------------------------------------------------------------
-  const updateRow = useCallback(
-    (rowId: string, fields: Partial<TRow>) => {
-      const currentRows = optimisticState?.rows ?? sourceRows;
-      const previousState = optimisticState;
-      const updatedRows = currentRows.map((row) => {
-        if ((row as Record<string, unknown>)[rowKey] === rowId) {
-          return { ...row, ...fields };
-        }
-        return row;
-      });
-      setOptimisticState({ baseRows: sourceRows, rows: updatedRows });
-
-      return {
-        rollback: () => {
-          setOptimisticState(previousState);
-        },
-      };
-    },
-    [optimisticState, sourceRows, rowKey],
-  );
-
-  const deleteRow = useCallback(
-    (rowId: string) => {
-      const currentRows = optimisticState?.rows ?? sourceRows;
-      const previousState = optimisticState;
-      const deletedRow = currentRows.find(
-        (row) => (row as Record<string, unknown>)[rowKey] === rowId,
-      );
-      const filteredRows = currentRows.filter(
-        (row) => (row as Record<string, unknown>)[rowKey] !== rowId,
-      );
-      setOptimisticState({ baseRows: sourceRows, rows: filteredRows });
-
-      return {
-        rollback: () => {
-          setOptimisticState(previousState);
-        },
-        deletedRow,
-      };
-    },
-    [optimisticState, sourceRows, rowKey],
-  );
-
-  const insertRow = useCallback(
-    (row: TRow) => {
-      const currentRows = optimisticState?.rows ?? sourceRows;
-      const previousState = optimisticState;
-      setOptimisticState({ baseRows: sourceRows, rows: [row, ...currentRows] });
-
-      return {
-        rollback: () => {
-          setOptimisticState(previousState);
-        },
-      };
-    },
-    [optimisticState, sourceRows],
-  );
-
-  // ---------------------------------------------------------------------------
   // Sort (delegated from control)
   // ---------------------------------------------------------------------------
   const sortStates = useMemo<SortState[]>(() => {
@@ -247,10 +159,6 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     showAllColumns,
     hideAllColumns,
     isColumnVisible,
-    updateRow,
-    deleteRow,
-    insertRow,
-    rowKey: rowKey as string,
     control,
     onClickRow,
     rowActions,

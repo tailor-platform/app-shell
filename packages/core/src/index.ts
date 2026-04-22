@@ -169,7 +169,6 @@ export {
   type Column,
   type DataTableData,
   type RowAction,
-  type RowOperations,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,

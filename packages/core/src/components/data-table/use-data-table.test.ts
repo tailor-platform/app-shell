@@ -23,8 +23,8 @@ const testData: DataTableData<TestRow> = {
   pageInfo: {
     hasNextPage: true,
     hasPreviousPage: false,
-    nextPageToken: "token-next",
-    previousPageToken: null,
+    endCursor: "token-next",
+    startCursor: null,
   },
   total: 50,
 };
@@ -76,8 +76,8 @@ describe("useDataTable", () => {
       expect(result.current.pageInfo).toEqual({
         hasNextPage: false,
         hasPreviousPage: false,
-        nextPageToken: null,
-        previousPageToken: null,
+        endCursor: null,
+        startCursor: null,
       });
     });
 
@@ -125,8 +125,8 @@ describe("useDataTable", () => {
         pageInfo: {
           hasNextPage: false,
           hasPreviousPage: true,
-          nextPageToken: null,
-          previousPageToken: "tok-prev",
+          endCursor: null,
+          startCursor: "tok-prev",
         },
         total: 50,
       };
@@ -146,8 +146,8 @@ describe("useDataTable", () => {
         pageInfo: {
           hasNextPage: false,
           hasPreviousPage: true,
-          nextPageToken: null,
-          previousPageToken: "tok-prev",
+          endCursor: null,
+          startCursor: "tok-prev",
         },
         total: 50,
       };

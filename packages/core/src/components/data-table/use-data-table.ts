@@ -55,8 +55,8 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   const pageInfo: PageInfo = data?.pageInfo ?? {
     hasNextPage: false,
     hasPreviousPage: false,
-    nextPageToken: null,
-    previousPageToken: null,
+    endCursor: null,
+    startCursor: null,
   };
 
   const total = data?.total ?? null;

@@ -111,8 +111,8 @@ const DataTableDemoPage = () => {
           pageInfo: {
             hasNextPage: data.pageInfo.hasNextPage,
             hasPreviousPage: data.pageInfo.hasPreviousPage,
-            nextPageToken: data.pageInfo.endCursor,
-            previousPageToken: data.pageInfo.startCursor,
+            endCursor: data.pageInfo.endCursor,
+            startCursor: data.pageInfo.startCursor,
           },
           total: data.total,
         }

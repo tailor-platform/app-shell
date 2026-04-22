@@ -152,15 +152,15 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
   });
 
   const handleNextPage = () => {
-    if (pageInfo.nextPageToken) {
-      nextPage(pageInfo.nextPageToken);
+    if (pageInfo.endCursor) {
+      nextPage(pageInfo.endCursor);
       increment();
     }
   };
 
   const handlePrevPage = () => {
-    if (pageInfo.previousPageToken) {
-      prevPage(pageInfo.previousPageToken);
+    if (pageInfo.startCursor) {
+      prevPage(pageInfo.startCursor);
       decrement();
     }
   };
@@ -217,7 +217,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
         variant="outline"
         size="icon"
         onClick={handlePrevPage}
-        disabled={!hasPrevPage || !pageInfo.previousPageToken}
+        disabled={!hasPrevPage || !pageInfo.startCursor}
         aria-label={t("paginationPrevious")}
       >
         <ChevronLeft className="astw:size-4" />
@@ -226,7 +226,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
         variant="outline"
         size="icon"
         onClick={handleNextPage}
-        disabled={!hasNextPage || !pageInfo.nextPageToken}
+        disabled={!hasNextPage || !pageInfo.endCursor}
         aria-label={t("paginationNext")}
       >
         <ChevronRight className="astw:size-4" />

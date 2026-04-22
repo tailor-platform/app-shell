@@ -206,13 +206,13 @@ export interface SortState {
 }
 
 /**
- * Page info for cursor/token-based pagination.
+ * Page info for cursor-based pagination (Relay Connection spec).
  */
 export interface PageInfo {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  nextPageToken: string | null;
-  previousPageToken: string | null;
+  endCursor: string | null;
+  startCursor: string | null;
 }
 
 // =============================================================================

@@ -66,8 +66,8 @@ const dataWithTotal: DataTableData<TestRow> = {
   pageInfo: {
     hasNextPage: true,
     hasPreviousPage: true,
-    nextPageToken: "next-tok",
-    previousPageToken: "prev-tok",
+    endCursor: "next-tok",
+    startCursor: "prev-tok",
   },
   total: 50, // totalPages = ceil(50/10) = 5
 };
@@ -77,8 +77,8 @@ const dataWithoutTotal: DataTableData<TestRow> = {
   pageInfo: {
     hasNextPage: true,
     hasPreviousPage: false,
-    nextPageToken: "tok",
-    previousPageToken: null,
+    endCursor: "tok",
+    startCursor: null,
   },
 };
 

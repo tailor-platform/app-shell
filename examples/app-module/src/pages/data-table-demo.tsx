@@ -8,6 +8,7 @@ import {
   Layout,
   type RowAction,
 } from "@tailor-platform/app-shell";
+import { useState } from "react";
 import { type Product, useProductsQuery } from "./mock-data";
 
 // ---------------------------------------------------------------------------
@@ -99,8 +100,8 @@ const DataTableDemoPage = () => {
   const { variables, control } = useCollectionVariables({
     params: { pageSize: 5 },
   });
-
   const { data, loading } = useProductsQuery(variables);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const table = useDataTable<Product>({
     columns: productColumns,
@@ -120,6 +121,7 @@ const DataTableDemoPage = () => {
     control,
     rowActions: productRowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
+    onSelectionChange: (ids) => setSelectedIds(ids),
   });
 
   return (
@@ -127,7 +129,7 @@ const DataTableDemoPage = () => {
       <Layout.Header title="DataTable Demo" />
       <Layout.Column>
         <p className="mb-4 text-muted-foreground">
-          DataTable demo with sortable columns, row actions, and pagination.
+          DataTable demo with sortable columns, row actions, pagination, and multi-select.
         </p>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>
@@ -138,6 +140,11 @@ const DataTableDemoPage = () => {
             <DataTable.Pagination pageSizeOptions={[5, 10, 20]} />
           </DataTable.Footer>
         </DataTable.Root>
+        {selectedIds.length > 0 && (
+          <p className="mb-2 text-sm font-medium">
+            {selectedIds.length} row(s) selected: {selectedIds.join(", ")}
+          </p>
+        )}
       </Layout.Column>
     </Layout>
   );

@@ -44,6 +44,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     control,
     onClickRow,
     rowActions,
+    onSelectionChange,
   } = options;
 
   // ---------------------------------------------------------------------------
@@ -138,6 +139,60 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   }, [control]);
 
   // ---------------------------------------------------------------------------
+  // Row selection
+  // ---------------------------------------------------------------------------
+  const getRowId = useCallback((row: TRow, index: number): string => {
+    const id = (row as Record<string, unknown>)["id"];
+    return id != null ? String(id) : String(index);
+  }, []);
+
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+
+  const isRowSelected = useCallback(
+    (row: TRow) => {
+      const id = getRowId(row, rows.indexOf(row));
+      return selectedRowIds.has(id);
+    },
+    [selectedRowIds, rows, getRowId],
+  );
+
+  const toggleRowSelection = onSelectionChange
+    ? (row: TRow) => {
+        const id = getRowId(row, rows.indexOf(row));
+        setSelectedRowIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(id)) {
+            next.delete(id);
+          } else {
+            next.add(id);
+          }
+          onSelectionChange([...next]);
+          return next;
+        });
+      }
+    : undefined;
+
+  const selectAllRows = onSelectionChange
+    ? () => {
+        const allIds = new Set(rows.map((r, i) => getRowId(r, i)));
+        setSelectedRowIds(allIds);
+        onSelectionChange([...allIds]);
+      }
+    : undefined;
+
+  const clearSelection = onSelectionChange
+    ? () => {
+        setSelectedRowIds(new Set());
+        onSelectionChange([]);
+      }
+    : undefined;
+
+  const selectedIds = useMemo(() => [...selectedRowIds], [selectedRowIds]);
+
+  const isAllSelected = rows.length > 0 && selectedRowIds.size === rows.length;
+  const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
+
+  // ---------------------------------------------------------------------------
   // Return
   // ---------------------------------------------------------------------------
   return {
@@ -162,5 +217,12 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     control,
     onClickRow,
     rowActions,
+    selectedIds,
+    isRowSelected,
+    toggleRowSelection,
+    selectAllRows,
+    clearSelection,
+    isAllSelected,
+    isIndeterminate,
   };
 }

@@ -268,4 +268,136 @@ describe("useDataTable", () => {
       expect(result.current.error).toBe(err);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Row selection
+  // -------------------------------------------------------------------------
+  describe("row selection", () => {
+    it("selectedIds is empty by default", () => {
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
+      );
+      expect(result.current.selectedIds).toEqual([]);
+    });
+
+    it("isRowSelected returns false for unselected row", () => {
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
+      );
+      expect(result.current.isRowSelected(testData.rows[0])).toBe(false);
+    });
+
+    it("toggleRowSelection selects a row", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+
+      expect(result.current.isRowSelected(testData.rows[0])).toBe(true);
+      expect(result.current.selectedIds).toEqual(["1"]);
+      expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
+    });
+
+    it("toggleRowSelection deselects an already-selected row", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+
+      expect(result.current.isRowSelected(testData.rows[0])).toBe(false);
+      expect(result.current.selectedIds).toEqual([]);
+    });
+
+    it("selectAllRows selects every row on current page", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.selectAllRows!();
+      });
+
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
+      expect(result.current.isAllSelected).toBe(true);
+      expect(result.current.isIndeterminate).toBe(false);
+      expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
+    });
+
+    it("clearSelection removes all selections", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.selectAllRows!();
+      });
+      act(() => {
+        result.current.clearSelection!();
+      });
+
+      expect(result.current.selectedIds).toEqual([]);
+      expect(result.current.isAllSelected).toBe(false);
+      expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it("isIndeterminate is true when some but not all rows are selected", () => {
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+
+      expect(result.current.isIndeterminate).toBe(true);
+      expect(result.current.isAllSelected).toBe(false);
+    });
+
+    it("selectedIds persists across rows update (simulates page change)", () => {
+      const onSelectionChange = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ data }: { data: DataTableData<TestRow> }) =>
+          useDataTable({ columns, data, onSelectionChange }),
+        { initialProps: { data: testData } },
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+      expect(result.current.selectedIds).toEqual(["1"]);
+
+      // Simulate page change: rows are replaced with a different page
+      const nextPageData: DataTableData<TestRow> = {
+        rows: [
+          { id: "3", name: "Carol", value: 30 },
+          { id: "4", name: "Dave", value: 40 },
+        ],
+      };
+      rerender({ data: nextPageData });
+
+      // ID "1" is still in selectedIds even though it's not in current rows
+      expect(result.current.selectedIds).toEqual(["1"]);
+    });
+
+    it("toggleRowSelection is undefined when onSelectionChange is not provided", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+
+      expect(result.current.toggleRowSelection).toBeUndefined();
+      expect(result.current.selectAllRows).toBeUndefined();
+      expect(result.current.clearSelection).toBeUndefined();
+    });
+  });
 });

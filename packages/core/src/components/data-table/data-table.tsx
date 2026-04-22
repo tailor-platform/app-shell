@@ -1,5 +1,7 @@
 import { useContext, type ReactNode } from "react";
 import { Ellipsis } from "lucide-react";
+import { Checkbox } from "@base-ui/react/checkbox";
+import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
@@ -49,6 +51,13 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
+    selectedIds: value.selectedIds,
+    isRowSelected: value.isRowSelected,
+    toggleRowSelection: value.toggleRowSelection,
+    selectAllRows: value.selectAllRows,
+    clearSelection: value.clearSelection,
+    isAllSelected: value.isAllSelected,
+    isIndeterminate: value.isIndeterminate,
   };
 
   const controlValue = value.control ?? null;
@@ -81,12 +90,54 @@ function DataTableHeaders({ className }: { className?: string }) {
   if (!ctx) {
     throw new Error("<DataTable.Headers> must be used within <DataTable.Root>");
   }
-  const { visibleColumns: columns, sortStates, onSort, rowActions } = ctx;
+  const {
+    visibleColumns: columns,
+    sortStates,
+    onSort,
+    rowActions,
+    toggleRowSelection,
+    selectAllRows,
+    clearSelection,
+    isAllSelected,
+    isIndeterminate,
+  } = ctx;
   const t = useDataTableT();
+  const hasSelection = !!toggleRowSelection;
 
   return (
     <Table.Header data-slot="data-table-header" className={className}>
       <Table.Row>
+        {hasSelection && (
+          <Table.Head style={{ width: 52 }} className="astw:pl-3!">
+            <div className="astw:flex astw:items-center">
+              <Checkbox.Root
+                checked={isAllSelected}
+                indeterminate={isIndeterminate}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    selectAllRows?.();
+                  } else {
+                    clearSelection?.();
+                  }
+                }}
+                aria-label={t("selectAll")}
+                className={cn(
+                  "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
+                  "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
+                  "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
+                )}
+              >
+                <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+                  {isIndeterminate ? (
+                    <Minus className="astw:size-3" />
+                  ) : (
+                    <Check className="astw:size-3" />
+                  )}
+                </Checkbox.Indicator>
+              </Checkbox.Root>
+            </div>
+          </Table.Head>
+        )}
         {columns?.map((col, colIndex) => {
           const key = col.id ?? col.label ?? String(colIndex);
           const label = col.label;
@@ -153,10 +204,20 @@ function DataTableBody({ className }: { className?: string }) {
   if (!ctx) {
     throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
   }
-  const { visibleColumns: columns, rows, loading, error, onClickRow, rowActions } = ctx;
+  const {
+    visibleColumns: columns,
+    rows,
+    loading,
+    error,
+    onClickRow,
+    rowActions,
+    isRowSelected,
+    toggleRowSelection,
+  } = ctx;
   const t = useDataTableT();
   const hasRowActions = rowActions && rowActions.length > 0;
-  const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0);
+  const hasSelection = !!toggleRowSelection;
+  const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
 
   return (
     <Table.Body data-slot="data-table-body" className={className}>
@@ -189,13 +250,38 @@ function DataTableBody({ className }: { className?: string }) {
       )}
       {rows?.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
+        const selected = isRowSelected?.(row) ?? false;
         return (
           <Table.Row
             key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
+            aria-selected={hasSelection ? selected : undefined}
             className={cn(onClickRow && "astw:cursor-pointer")}
             onClick={onClickRow ? () => onClickRow(row) : undefined}
           >
+            {hasSelection && (
+              <Table.Cell
+                style={{ width: 52 }}
+                className="astw:pl-3!"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="astw:flex astw:items-center">
+                  <Checkbox.Root
+                    checked={selected}
+                    onCheckedChange={() => toggleRowSelection(row)}
+                    aria-label={t("selectRow")}
+                    className={cn(
+                      "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
+                      "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
+                    )}
+                  >
+                    <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+                      <Check className="astw:size-3" />
+                    </Checkbox.Indicator>
+                  </Checkbox.Root>
+                </div>
+              </Table.Cell>
+            )}
             {columns?.map((col, colIndex) => {
               const key = col.id ?? col.label ?? String(colIndex);
               return (

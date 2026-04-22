@@ -45,6 +45,7 @@ type UseDataTableBaseOptions<TRow extends Record<string, unknown>> = {
   control?: CollectionControl;
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  onSelectionChange?: (ids: string[]) => void;
 };
 
 /**
@@ -103,6 +104,15 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+
+  // Row selection
+  selectedIds: string[];
+  isRowSelected: (row: TRow) => boolean;
+  toggleRowSelection?: (row: TRow) => void;
+  selectAllRows?: () => void;
+  clearSelection?: () => void;
+  isAllSelected: boolean;
+  isIndeterminate: boolean;
 }
 
 // =============================================================================

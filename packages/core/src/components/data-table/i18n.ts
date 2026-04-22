@@ -13,6 +13,10 @@ export const dataTableLabels = defineI18nLabels({
     // RowActionsMenu aria-label
     rowActions: "Row actions",
 
+    // Row selection
+    selectAll: "Select all rows",
+    selectRow: "Select row",
+
     // Pagination
     paginationFirst: "First page",
     paginationPrevious: "Previous page",
@@ -55,6 +59,8 @@ export const dataTableLabels = defineI18nLabels({
     errorPrefix: "エラー:",
     actionsHeader: "操作",
     rowActions: "行の操作",
+    selectAll: "全行を選択",
+    selectRow: "行を選択",
     paginationFirst: "最初のページ",
     paginationPrevious: "前のページ",
     paginationNext: "次のページ",

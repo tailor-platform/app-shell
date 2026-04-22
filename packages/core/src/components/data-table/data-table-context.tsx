@@ -42,6 +42,15 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   // Row interaction
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+
+  // Row selection (undefined when onSelectionChange is not provided)
+  selectedIds?: string[];
+  isRowSelected?: (row: TRow) => boolean;
+  toggleRowSelection?: (row: TRow) => void;
+  selectAllRows?: () => void;
+  clearSelection?: () => void;
+  isAllSelected?: boolean;
+  isIndeterminate?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

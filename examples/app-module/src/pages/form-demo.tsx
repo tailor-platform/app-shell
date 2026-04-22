@@ -11,6 +11,9 @@ import {
   Select,
   Combobox,
   Autocomplete,
+  Attachment,
+  useAttachment,
+  type AttachmentItem,
 } from "@tailor-platform/app-shell";
 import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -23,9 +26,35 @@ type ProfileFormData = {
   bio: string;
 };
 
+const initialAttachmentItems: AttachmentItem[] = [
+  {
+    id: "img-1",
+    fileName: "shoe-red.png",
+    mimeType: "image/png",
+    previewUrl:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80",
+  },
+  {
+    id: "img-2",
+    fileName: "shoe-green.png",
+    mimeType: "image/png",
+    previewUrl:
+      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=400&q=80",
+  },
+  {
+    id: "doc-1",
+    fileName: "Aug-Sep 2025_1234-12.pdf",
+    mimeType: "application/pdf",
+  },
+];
+
 const FormComponentsDemoPage = () => {
   const [serverErrors, setServerErrors] = React.useState<Record<string, string>>({});
   const [submittedData, setSubmittedData] = React.useState<ProfileFormData | null>(null);
+  const orderAttachment = useAttachment({
+    initialItems: initialAttachmentItems,
+    accept: "image/*,.pdf",
+  });
 
   // Select / Combobox / Autocomplete data
   type FruitOption = { id: string; name: string };
@@ -335,6 +364,53 @@ const FormComponentsDemoPage = () => {
                   <Field.Error />
                 </Field.Root>
               </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Form + Attachment — spans full width */}
+          <Card.Root style={{ gridColumn: "1 / -1" }}>
+            <Card.Header title="Form + Attachment" />
+            <Card.Content>
+              <p style={labelStyle}>
+                <code>Attachment</code> can live inside a <code>Form</code> with other fields. Track
+                files in component state and submit them with the rest of the payload (this demo
+                only shows an alert).
+              </p>
+              <Form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const fd = new FormData(event.currentTarget);
+                  const note = String(fd.get("orderNote") ?? "");
+                  alert(
+                    `Note: ${note || "(empty)"}\nAttachments: ${orderAttachment.props.items.length} file(s)`,
+                  );
+                }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                  maxWidth: "640px",
+                }}
+              >
+                <Field.Root name="orderNote">
+                  <Field.Label>Order note</Field.Label>
+                  <Field.Control placeholder="Optional instructions for fulfillment" />
+                  <Field.Description>Shown on the packing slip.</Field.Description>
+                </Field.Root>
+
+                <Field.Root name="supporting-documents">
+                  <Field.Label>Supporting documents</Field.Label>
+                  <Attachment
+                    {...orderAttachment.props}
+                    uploadLabel="Add files"
+                    uploadHint="PDF or images"
+                  />
+                </Field.Root>
+
+                <div>
+                  <Button type="submit">Submit order</Button>
+                </div>
+              </Form>
             </Card.Content>
           </Card.Root>
 

@@ -486,26 +486,81 @@ describe("EnumFilterEditor", () => {
 });
 
 // ---------------------------------------------------------------------------
-// BooleanFilterEditor — immediate update on checkbox toggle
+// BooleanFilterEditor — operator selector + value select + Apply button
 // ---------------------------------------------------------------------------
 
 describe("BooleanFilterEditor", () => {
-  it("toggling a checkbox calls addFilter immediately without an Apply button", async () => {
+  it("shows an Apply button after opening the chip popover", async () => {
     const user = userEvent.setup();
     const control = makeControl({
-      filters: [{ field: "enabled", operator: "in", value: [true] }],
+      filters: [{ field: "enabled", operator: "eq", value: true }],
     });
     render(<TestFilters control={control} columns={[booleanColumn]} />, {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Enabled in: True/ }));
+    await user.click(screen.getByRole("button", { name: /Enabled equals True/ }));
 
-    // Click "False" option
-    await user.click(await screen.findByText("False"));
+    expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
+  });
 
-    expect(control.addFilter).toHaveBeenCalledWith("enabled", "in", [true, false]);
-    // No Apply button for boolean
-    expect(screen.queryByRole("button", { name: "Apply" })).toBeNull();
+  it("does not call addFilter immediately on open", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "enabled", operator: "eq", value: true }],
+    });
+    render(<TestFilters control={control} columns={[booleanColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Enabled equals True/ }));
+    await screen.findByRole("button", { name: "Apply" });
+
+    expect(control.addFilter).not.toHaveBeenCalled();
+  });
+
+  it("Apply button calls addFilter with the current value", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "enabled", operator: "eq", value: true }],
+    });
+    render(<TestFilters control={control} columns={[booleanColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Enabled equals True/ }));
+    await user.click(await screen.findByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("enabled", "eq", true);
+  });
+
+  it("Apply button calls addFilter with false when value is false", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "enabled", operator: "eq", value: false }],
+    });
+    render(<TestFilters control={control} columns={[booleanColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Enabled equals False/ }));
+    await user.click(await screen.findByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("enabled", "eq", false);
+  });
+
+  it("Apply button calls addFilter with ne operator when filter has ne", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "enabled", operator: "ne", value: true }],
+    });
+    render(<TestFilters control={control} columns={[booleanColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Enabled not equals True/ }));
+    await user.click(await screen.findByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("enabled", "ne", true);
   });
 });

@@ -56,16 +56,10 @@ export function inferColumns<
     if (columnOptions?.sort !== false) {
       sort = fieldTypeToSortConfig(fieldName, fieldMeta.type);
     }
-    if (columnOptions?.sort === false) {
-      sort = undefined;
-    }
 
     let filter: FilterConfig | undefined;
     if (columnOptions?.filter !== false) {
       filter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
-    }
-    if (columnOptions?.filter === false) {
-      filter = undefined;
     }
 
     const label = columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;

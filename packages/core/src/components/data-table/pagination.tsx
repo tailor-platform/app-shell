@@ -21,6 +21,13 @@ import { useDataTableT } from "./i18n";
  * - `reset()` — call after jumping to the first page
  * - `setToLast()` — call after jumping to the last page
  *
+ * @warning **Action functions must always be paired with their corresponding
+ * `CollectionControl` calls.** Calling `control.nextPage(token)` without
+ * `increment()`, or `control.goToFirstPage()` without `reset()`, causes the
+ * page counter to desync permanently with no error. Each navigation handler
+ * must invoke both the control method and the matching counter function in the
+ * same event handler.
+ *
  * @example
  * ```tsx
  * const { currentPage, increment, decrement, reset, setToLast } = useCurrentPage({

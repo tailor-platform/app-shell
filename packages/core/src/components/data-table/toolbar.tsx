@@ -53,7 +53,7 @@ type StringOperator = (typeof STRING_OPERATORS)[number];
 type FilterableColumn = Column<Record<string, unknown>> & {
   filter: FilterConfig;
 };
-type AddFilterDraftValue = string | string[] | boolean[];
+type AddFilterDraftValue = string | string[];
 
 /** Use `DataTable.Filters` instead of calling this directly. */
 function DataTableFilters({ className }: { className?: string }) {
@@ -237,49 +237,19 @@ function AddFilterPopover({
     }
 
     if (config.type === "boolean") {
-      const selectedValues = Array.isArray(value) ? (value as boolean[]) : [];
-      const options = [
-        { value: true, label: t("filterBooleanTrue") },
-        { value: false, label: t("filterBooleanFalse") },
-      ] as const;
-
       return (
-        <div className="astw:rounded-md astw:border astw:py-1">
-          {options.map((option) => {
-            const isChecked = selectedValues.includes(option.value);
-            return (
-              <label
-                key={String(option.value)}
-                className={cn(
-                  "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:px-3 astw:py-1.5 astw:text-sm",
-                  "astw:hover:bg-accent astw:hover:text-accent-foreground",
-                )}
-              >
-                <Checkbox.Root
-                  checked={isChecked}
-                  onCheckedChange={() => {
-                    const current = new Set(selectedValues);
-                    if (current.has(option.value)) {
-                      current.delete(option.value);
-                    } else {
-                      current.add(option.value);
-                    }
-                    setValue([...current]);
-                  }}
-                  className={cn(
-                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-[checked]:bg-primary astw:data-[checked]:border-primary astw:data-[checked]:text-primary-foreground",
-                  )}
-                >
-                  <Checkbox.Indicator className="astw:flex astw:data-[unchecked]:hidden">
-                    <Check className="astw:size-3" />
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
-                {option.label}
-              </label>
-            );
+        <Select
+          items={["true", "false"]}
+          value={typeof value === "string" ? value : ""}
+          onValueChange={(v) => {
+            if (v) setValue(v);
+          }}
+          mapItem={(v) => ({
+            value: v,
+            label: v === "true" ? t("filterBooleanTrue") : t("filterBooleanFalse"),
           })}
-        </div>
+          className="astw:h-8 astw:text-sm"
+        />
       );
     }
 
@@ -486,7 +456,9 @@ function FilterPopoverContent({
     case "enum":
       return <EnumFilterEditor config={config} filter={filter} control={control} />;
     case "boolean":
-      return <BooleanFilterEditor config={config} filter={filter} control={control} />;
+      return (
+        <BooleanFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+      );
     case "string":
       return (
         <StringFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
@@ -575,75 +547,67 @@ function EnumFilterEditor({
 }
 
 // =============================================================================
-// Boolean filter — True/False checkboxes
+// Boolean filter — operator selector + True/False select
 // =============================================================================
+
+type BooleanOperator = "eq" | "ne";
+const BOOLEAN_OPERATORS = ["eq", "ne"] as const;
 
 function BooleanFilterEditor({
   config,
   filter,
   control,
+  onClose,
 }: {
   config: Extract<FilterConfig, { type: "boolean" }>;
   filter: Filter;
   control: CollectionControl;
+  onClose: () => void;
 }) {
   const t = useDataTableT();
-  const selectedValues = useMemo(
-    () => (Array.isArray(filter.value) ? (filter.value as boolean[]) : []),
-    [filter.value],
+  const [localOp, setLocalOp] = useState<BooleanOperator>(
+    BOOLEAN_OPERATORS.includes(filter.operator as BooleanOperator)
+      ? (filter.operator as BooleanOperator)
+      : "eq",
+  );
+  const [localValue, setLocalValue] = useState(
+    typeof filter.value === "boolean" ? String(filter.value) : "true",
   );
 
-  const handleToggle = useCallback(
-    (boolValue: boolean) => {
-      const current = new Set(selectedValues);
-      if (current.has(boolValue)) {
-        current.delete(boolValue);
-      } else {
-        current.add(boolValue);
-      }
-      const next = [...current];
-      if (next.length === 0) {
-        control.removeFilter(config.field);
-      } else {
-        control.addFilter(config.field, "in", next);
-      }
-    },
-    [selectedValues, control, config.field],
-  );
-
-  const options = [
-    { value: true, label: t("filterBooleanTrue") },
-    { value: false, label: t("filterBooleanFalse") },
-  ] as const;
+  const handleCommit = useCallback(() => {
+    control.addFilter(config.field, localOp, localValue === "true");
+    onClose();
+  }, [localValue, localOp, control, config.field, onClose]);
 
   return (
-    <div data-slot="data-table-filter-boolean" className="astw:py-1">
-      {options.map((option) => {
-        const isChecked = selectedValues.includes(option.value);
-        return (
-          <label
-            key={String(option.value)}
-            className={cn(
-              "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:px-3 astw:py-1.5 astw:text-sm",
-              "astw:hover:bg-accent astw:hover:text-accent-foreground",
-            )}
-          >
-            <Checkbox.Root
-              checked={isChecked}
-              onCheckedChange={() => handleToggle(option.value)}
-              className={cn(
-                "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                "astw:data-[checked]:bg-primary astw:data-[checked]:border-primary astw:data-[checked]:text-primary-foreground",
-              )}
-            >
-              <Checkbox.Indicator className="astw:flex astw:data-[unchecked]:hidden">
-                <Check className="astw:size-3" />
-              </Checkbox.Indicator>
-            </Checkbox.Root>
-            {option.label}
-          </label>
-        );
-      })}
+    <div
+      data-slot="data-table-filter-boolean"
+      className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
+    >
+      <Select
+        items={[...BOOLEAN_OPERATORS]}
+        value={localOp}
+        onValueChange={(v) => {
+          if (v) setLocalOp(v as BooleanOperator);
+        }}
+        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t) })}
+        className="astw:h-8 astw:text-sm"
+      />
+      <Select
+        items={["true", "false"]}
+        value={localValue}
+        onValueChange={(v) => {
+          if (v) setLocalValue(v);
+        }}
+        mapItem={(v) => ({
+          value: v,
+          label: v === "true" ? t("filterBooleanTrue") : t("filterBooleanFalse"),
+        })}
+        className="astw:h-8 astw:text-sm"
+      />
+      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+        {t("applyFilter")}
+      </Button>
     </div>
   );
 }
@@ -886,15 +850,16 @@ function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
     case "date":
       return [...NUMERIC_DATE_OPERATORS];
     case "enum":
-    case "boolean":
       return ["in"];
+    case "boolean":
+      return [...BOOLEAN_OPERATORS];
     case "uuid":
       return ["eq"];
   }
 }
 
 function getInitialAddFilterDraftValue(type: FilterConfig["type"]): AddFilterDraftValue {
-  if (type === "enum" || type === "boolean") return [];
+  if (type === "enum") return [];
   return "";
 }
 
@@ -902,8 +867,11 @@ function isAddFilterDraftValueValid(
   type: FilterConfig["type"],
   value: AddFilterDraftValue,
 ): boolean {
-  if (type === "enum" || type === "boolean") {
+  if (type === "enum") {
     return Array.isArray(value) && value.length > 0;
+  }
+  if (type === "boolean") {
+    return value === "true" || value === "false";
   }
 
   if (typeof value !== "string") return false;
@@ -922,7 +890,7 @@ function toAddFilterSubmittedValue(
     return Array.isArray(value) ? (value as string[]) : [];
   }
   if (type === "boolean") {
-    return Array.isArray(value) ? (value as boolean[]) : [];
+    return value === "true";
   }
   if (type === "number") {
     return Number(value);
@@ -979,11 +947,8 @@ function formatFilterValue(
     return labels.join(", ");
   }
 
-  if (config.type === "boolean" && Array.isArray(filter.value)) {
-    const labels = (filter.value as boolean[]).map((v) =>
-      v ? t("filterBooleanTrue") : t("filterBooleanFalse"),
-    );
-    return labels.join(", ");
+  if (config.type === "boolean") {
+    return filter.value === true ? t("filterBooleanTrue") : t("filterBooleanFalse");
   }
 
   if (config.type === "number" && filter.operator === "between") {
@@ -1013,7 +978,7 @@ function getChipDisplayLabel(
 
   const operatorLabel = getOperatorLabel(filter.operator, t);
 
-  if (config.type === "enum" || config.type === "boolean") {
+  if (config.type === "enum") {
     return t("filterChipLabelEnum", {
       column: columnLabel,
       operator: operatorLabel,

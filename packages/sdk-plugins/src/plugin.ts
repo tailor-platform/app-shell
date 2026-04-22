@@ -140,7 +140,7 @@ export function appShellPlugin(
           }
 
           // Process forward relationships (manyToOne / oneToOne)
-          for (const [relName, rel] of Object.entries(type.forwardRelationships)) {
+          for (const [relName, rel] of Object.entries(type.forwardRelationships ?? {})) {
             const fkField = type.fields[rel.sourceField];
             const isOneToOne =
               fkField?.config.rawRelation?.type === "1-1" ||
@@ -155,7 +155,7 @@ export function appShellPlugin(
           }
 
           // Process backward relationships (oneToMany)
-          for (const [relName, rel] of Object.entries(type.backwardRelationships)) {
+          for (const [relName, rel] of Object.entries(type.backwardRelationships ?? {})) {
             relations.push({
               fieldName: relName,
               targetTable: toCamelCase(rel.targetType),

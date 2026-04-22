@@ -142,6 +142,16 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   isColumnVisible: (fieldOrId: string) => boolean;
 
   // Control (passthrough for DataTable.Root)
+  /**
+   * The collection control passed to `useDataTable`, stored here for
+   * forwarding to `DataTable.Root`.
+   *
+   * **Note:** The type is widened to `CollectionControl` (i.e.
+   * `CollectionControl<string>`) here — field-name and operator narrowing from
+   * `useCollectionVariables({ tableMetadata })` is lost. For type-safe
+   * `addFilter` calls, use the `control` returned directly by
+   * `useCollectionVariables` rather than accessing it via this field.
+   */
   control: CollectionControl | undefined;
 
   // Row interaction (passthrough for DataTable.Provider)

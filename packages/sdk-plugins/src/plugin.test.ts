@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { appShellPlugin } from "./metadata-plugin";
+import { appShellPlugin } from "./plugin";
 
 /**
  * Minimal mock for TailorDBReadyContext.
@@ -87,7 +87,9 @@ describe("appShellPlugin", () => {
   });
 
   it("generates metadata for simple types", () => {
-    const plugin = appShellPlugin({ dataTable: { metadataOutputPath: "out.ts" } });
+    const plugin = appShellPlugin({
+      dataTable: { metadataOutputPath: "out.ts" },
+    });
     const context = createMockContext({
       Order: {
         name: "Order",

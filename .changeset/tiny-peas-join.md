@@ -16,12 +16,15 @@ const { props, applyChanges } = useAttachment({
 });
 
 async function handleSubmit() {
-  await applyChanges(async (operations) => {
-    for (const op of operations) {
-      if (op.type === "upload") await uploadToServer(op.file);
-      if (op.type === "delete") await deleteFromServer(op.item.id);
-    }
-  });
+  // The component is agnostic to backend shape — run all operations in parallel.
+  await applyChanges((operations) =>
+    Promise.all(
+      operations.map((op) => {
+        if (op.type === "upload") return uploadToServer(op.file);
+        if (op.type === "delete") return deleteFromServer(op.item.id);
+      }),
+    ),
+  );
 }
 
 <Attachment {...props} uploadLabel="Upload" onDownload={handleDownload} />;

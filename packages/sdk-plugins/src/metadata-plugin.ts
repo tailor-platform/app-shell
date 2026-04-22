@@ -2,14 +2,16 @@ import type { Plugin, TailorDBReadyContext } from "@tailor-platform/sdk";
 import type { FieldType, FieldMetadata, TableMetadata } from "@tailor-platform/app-shell";
 
 /**
- * Options for the AppShell metadata plugin.
+ * Options for the AppShell plugin.
  */
-export interface AppShellMetadataPluginOptions {
-  /**
-   * Output file path relative to project root.
-   * @default "app-shell-metadata.generated.ts"
-   */
-  distPath?: string;
+export interface AppShellPluginOptions {
+  dataTable?: {
+    /**
+     * Output file path for generated DataTable metadata (relative to project root).
+     * @default "app-shell-datatable.generated.ts"
+     */
+    metadataOutputPath?: string;
+  };
 }
 
 /**
@@ -58,21 +60,23 @@ function toCamelCase(str: string): string {
  *
  * ```ts
  * import { definePlugins } from "@tailor-platform/sdk";
- * import { appShellMetadataPlugin } from "@tailor-platform/app-shell-sdk-plugins";
+ * import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugins";
  *
  * export const plugins = definePlugins(
- *   appShellMetadataPlugin({
- *     distPath: "src/generated/app-shell-metadata.generated.ts",
+ *   appShellPlugin({
+ *     dataTable: {
+ *       metadataOutputPath: "src/generated/app-shell-datatable.generated.ts",
+ *     },
  *   }),
  * );
  * ```
  *
  * Then run `tailor-sdk generate` to produce the metadata file.
  */
-export function appShellMetadataPlugin(
-  options: AppShellMetadataPluginOptions = {},
-): Plugin<void, AppShellMetadataPluginOptions> {
-  const { distPath = "app-shell-metadata.generated.ts" } = options;
+export function appShellPlugin(
+  options: AppShellPluginOptions = {},
+): Plugin<void, AppShellPluginOptions> {
+  const { metadataOutputPath = "app-shell-datatable.generated.ts" } = options.dataTable ?? {};
 
   return {
     id: "app-shell-metadata",
@@ -80,7 +84,7 @@ export function appShellMetadataPlugin(
       "Generates table metadata for AppShell DataTable (inferColumns, createColumnHelper)",
     pluginConfig: options,
 
-    onTailorDBReady(context: TailorDBReadyContext<AppShellMetadataPluginOptions>) {
+    onTailorDBReady(context: TailorDBReadyContext<AppShellPluginOptions>) {
       const metadataMap: Record<string, TableMetadata> = {};
 
       for (const ns of context.tailordb) {
@@ -184,7 +188,7 @@ export function appShellMetadataPlugin(
       ].join("\n");
 
       return {
-        files: [{ path: distPath, content }],
+        files: [{ path: metadataOutputPath, content }],
       };
     },
   };

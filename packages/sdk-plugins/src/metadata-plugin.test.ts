@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { appShellMetadataPlugin } from "./metadata-plugin";
+import { appShellPlugin } from "./metadata-plugin";
 
 /**
  * Minimal mock for TailorDBReadyContext.
@@ -79,15 +79,15 @@ function createMockContext(
   };
 }
 
-describe("appShellMetadataPlugin", () => {
+describe("appShellPlugin", () => {
   it("returns a plugin with correct id and description", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     expect(plugin.id).toBe("app-shell-metadata");
     expect(plugin.description).toContain("AppShell");
   });
 
   it("generates metadata for simple types", () => {
-    const plugin = appShellMetadataPlugin({ distPath: "out.ts" });
+    const plugin = appShellPlugin({ dataTable: { metadataOutputPath: "out.ts" } });
     const context = createMockContext({
       Order: {
         name: "Order",
@@ -167,7 +167,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("maps field types correctly", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       TestType: {
         name: "TestType",
@@ -225,7 +225,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("handles enum fields", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       Item: {
         name: "Item",
@@ -260,7 +260,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("handles manyToOne relationships", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       OrderItem: {
         name: "OrderItem",
@@ -326,7 +326,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("handles oneToOne relationships", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       User: {
         name: "User",
@@ -376,7 +376,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("handles backward (oneToMany) relationships", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       Order: {
         name: "Order",
@@ -420,7 +420,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("generates tableNames export", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       Order: {
         name: "Order",
@@ -452,8 +452,8 @@ describe("appShellMetadataPlugin", () => {
     expect(content).toContain("export type TableName");
   });
 
-  it("uses default distPath", () => {
-    const plugin = appShellMetadataPlugin();
+  it("uses default metadataOutputPath", () => {
+    const plugin = appShellPlugin();
     const context = createMockContext({
       Foo: {
         name: "Foo",
@@ -469,12 +469,12 @@ describe("appShellMetadataPlugin", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = plugin.onTailorDBReady!(context as any);
     expect((result as { files: { path: string }[] }).files[0].path).toBe(
-      "app-shell-metadata.generated.ts",
+      "app-shell-datatable.generated.ts",
     );
   });
 
   it("handles multiple namespaces", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = {
       tailordb: [
         {
@@ -536,7 +536,7 @@ describe("appShellMetadataPlugin", () => {
   });
 
   it("omits relations array when no relations exist", () => {
-    const plugin = appShellMetadataPlugin();
+    const plugin = appShellPlugin();
     const context = createMockContext({
       Simple: {
         name: "Simple",

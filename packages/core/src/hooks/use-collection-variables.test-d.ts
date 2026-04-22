@@ -20,18 +20,38 @@ type TestTable = {
   readonly pluralForm: "tests";
   readonly fields: readonly [
     { readonly name: "id"; readonly type: "uuid"; readonly required: true },
-    { readonly name: "title"; readonly type: "string"; readonly required: true },
-    { readonly name: "amount"; readonly type: "number"; readonly required: false },
+    {
+      readonly name: "title";
+      readonly type: "string";
+      readonly required: true;
+    },
+    {
+      readonly name: "amount";
+      readonly type: "number";
+      readonly required: false;
+    },
     {
       readonly name: "status";
       readonly type: "enum";
       readonly required: true;
       readonly enumValues: readonly ["active", "inactive"];
     },
-    { readonly name: "isActive"; readonly type: "boolean"; readonly required: false },
-    { readonly name: "createdAt"; readonly type: "datetime"; readonly required: false },
+    {
+      readonly name: "isActive";
+      readonly type: "boolean";
+      readonly required: false;
+    },
+    {
+      readonly name: "createdAt";
+      readonly type: "datetime";
+      readonly required: false;
+    },
     { readonly name: "tags"; readonly type: "array"; readonly required: false },
-    { readonly name: "config"; readonly type: "nested"; readonly required: false },
+    {
+      readonly name: "config";
+      readonly type: "nested";
+      readonly required: false;
+    },
   ];
 };
 
@@ -39,24 +59,28 @@ type TestQuery = BuildQueryVariables<TestTable>;
 
 describe("BuildQueryVariables", () => {
   it("TestTable is assignable to TableMetadata", () => {
-    expectTypeOf<TestTable>().toMatchTypeOf<TableMetadata>();
+    expectTypeOf<TestTable>().toExtend<TableMetadata>();
   });
 
   describe("produces correct filter types per field type", () => {
     it("string fields produce string operators", () => {
-      expectTypeOf<TestQuery>().toMatchTypeOf<{
+      expectTypeOf<TestQuery>().toExtend<{
         title?: { eq?: string; contains?: string };
       }>();
     });
 
     it("number fields produce number operators with between", () => {
-      expectTypeOf<TestQuery>().toMatchTypeOf<{
-        amount?: { eq?: number; gt?: number; between?: { min: number; max: number } };
+      expectTypeOf<TestQuery>().toExtend<{
+        amount?: {
+          eq?: number;
+          gt?: number;
+          between?: { min: number; max: number };
+        };
       }>();
     });
 
     it("enum fields produce literal union types from enumValues", () => {
-      expectTypeOf<TestQuery>().toMatchTypeOf<{
+      expectTypeOf<TestQuery>().toExtend<{
         status?: {
           eq?: "active" | "inactive";
           in?: ("active" | "inactive")[];
@@ -66,20 +90,24 @@ describe("BuildQueryVariables", () => {
     });
 
     it("boolean fields produce eq/ne operators", () => {
-      expectTypeOf<TestQuery>().toMatchTypeOf<{
+      expectTypeOf<TestQuery>().toExtend<{
         isActive?: { eq?: boolean; ne?: boolean };
       }>();
     });
 
     it("uuid fields produce eq/ne/in/nin operators", () => {
-      expectTypeOf<TestQuery>().toMatchTypeOf<{
+      expectTypeOf<TestQuery>().toExtend<{
         id?: { eq?: string; ne?: string; in?: string[]; nin?: string[] };
       }>();
     });
 
     it("datetime fields produce date operators", () => {
-      expectTypeOf<TestQuery>().toMatchTypeOf<{
-        createdAt?: { eq?: string; gt?: string; between?: { min: string; max: string } };
+      expectTypeOf<TestQuery>().toExtend<{
+        createdAt?: {
+          eq?: string;
+          gt?: string;
+          between?: { min: string; max: string };
+        };
       }>();
     });
 
@@ -104,7 +132,7 @@ describe("TableFieldName", () => {
       | "createdAt"
       | "tags"
       | "config";
-    expectTypeOf<AllNames>().toMatchTypeOf<TableFieldName<TestTable>>();
+    expectTypeOf<AllNames>().toExtend<TableFieldName<TestTable>>();
   });
 });
 
@@ -118,14 +146,14 @@ describe("TableOrderableFieldName", () => {
   });
 
   it("includes string fields", () => {
-    expectTypeOf<"title">().toMatchTypeOf<TableOrderableFieldName<TestTable>>();
+    expectTypeOf<"title">().toExtend<TableOrderableFieldName<TestTable>>();
   });
 
   it("includes number fields", () => {
-    expectTypeOf<"amount">().toMatchTypeOf<TableOrderableFieldName<TestTable>>();
+    expectTypeOf<"amount">().toExtend<TableOrderableFieldName<TestTable>>();
   });
 
   it("includes enum fields", () => {
-    expectTypeOf<"status">().toMatchTypeOf<TableOrderableFieldName<TestTable>>();
+    expectTypeOf<"status">().toExtend<TableOrderableFieldName<TestTable>>();
   });
 });

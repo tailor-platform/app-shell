@@ -1,5 +1,9 @@
 import type { Plugin, TailorDBReadyContext } from "@tailor-platform/sdk";
-import type { FieldType, FieldMetadata, TableMetadata } from "@tailor-platform/app-shell";
+import type {
+  FieldType,
+  FieldMetadata,
+  TableMetadata,
+} from "@tailor-platform/app-shell";
 
 /**
  * Options for the AppShell plugin.
@@ -60,7 +64,7 @@ function toCamelCase(str: string): string {
  *
  * ```ts
  * import { definePlugins } from "@tailor-platform/sdk";
- * import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugins";
+ * import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
  *
  * export const plugins = definePlugins(
  *   appShellPlugin({
@@ -76,7 +80,8 @@ function toCamelCase(str: string): string {
 export function appShellPlugin(
   options: AppShellPluginOptions = {},
 ): Plugin<void, AppShellPluginOptions> {
-  const { metadataOutputPath = "app-shell-datatable.generated.ts" } = options.dataTable ?? {};
+  const { metadataOutputPath = "app-shell-datatable.generated.ts" } =
+    options.dataTable ?? {};
 
   return {
     id: "app-shell-metadata",
@@ -90,14 +95,19 @@ export function appShellPlugin(
       for (const ns of context.tailordb) {
         for (const [_typeName, type] of Object.entries(ns.types)) {
           const fields: FieldMetadata[] = [];
-          const relations: TableMetadata["relations"] extends readonly (infer R)[] | undefined
+          const relations: TableMetadata["relations"] extends
+            | readonly (infer R)[]
+            | undefined
             ? R[]
             : never = [];
 
           // Process fields
           for (const [fieldName, field] of Object.entries(type.fields)) {
             const config = field.config;
-            const { type: fieldType, arrayItemType } = mapFieldType(config.type, config.array);
+            const { type: fieldType, arrayItemType } = mapFieldType(
+              config.type,
+              config.array,
+            );
 
             // Extract relation info from rawRelation
             let fieldRelation: FieldMetadata["relation"] | undefined;
@@ -112,7 +122,8 @@ export function appShellPlugin(
 
               if (isForeignKey && raw.toward) {
                 const targetTableName = toCamelCase(raw.toward.type);
-                const relationFieldName = raw.toward.as ?? toCamelCase(raw.toward.type);
+                const relationFieldName =
+                  raw.toward.as ?? toCamelCase(raw.toward.type);
                 fieldRelation = {
                   fieldName: relationFieldName,
                   targetTable: targetTableName,
@@ -123,7 +134,9 @@ export function appShellPlugin(
             // Enum values
             const enumValues =
               config.allowedValues && config.allowedValues.length > 0
-                ? config.allowedValues.map((v) => (typeof v === "string" ? v : v.value))
+                ? config.allowedValues.map((v) =>
+                    typeof v === "string" ? v : v.value,
+                  )
                 : undefined;
 
             const fieldMetadata: FieldMetadata = {
@@ -140,7 +153,9 @@ export function appShellPlugin(
           }
 
           // Process forward relationships (manyToOne / oneToOne)
-          for (const [relName, rel] of Object.entries(type.forwardRelationships ?? {})) {
+          for (const [relName, rel] of Object.entries(
+            type.forwardRelationships ?? {},
+          )) {
             const fkField = type.fields[rel.sourceField];
             const isOneToOne =
               fkField?.config.rawRelation?.type === "1-1" ||
@@ -155,7 +170,9 @@ export function appShellPlugin(
           }
 
           // Process backward relationships (oneToMany)
-          for (const [relName, rel] of Object.entries(type.backwardRelationships ?? {})) {
+          for (const [relName, rel] of Object.entries(
+            type.backwardRelationships ?? {},
+          )) {
             relations.push({
               fieldName: relName,
               targetTable: toCamelCase(rel.targetType),

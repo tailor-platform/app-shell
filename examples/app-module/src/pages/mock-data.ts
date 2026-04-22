@@ -260,7 +260,7 @@ function matchOperator(fieldValue: unknown, operator: string, expected: unknown)
 }
 
 function applyQueryFilters(products: Product[], variables: CollectionVariables): Product[] {
-  if (!variables.query) return products;
+  if (!variables.query) return [...products];
 
   return products.filter((product) => {
     return Object.entries(variables.query ?? {}).every(([field, operators]) => {
@@ -279,13 +279,15 @@ export function useProductsQuery(variables: CollectionVariables) {
 
     // Sort
     if (variables.order && variables.order.length > 0) {
-      const { field, direction } = variables.order[0];
       rows.sort((a, b) => {
-        const aVal = a[field as keyof Product];
-        const bVal = b[field as keyof Product];
-        if (aVal == null || bVal == null) return 0;
-        const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-        return direction === "Desc" ? -cmp : cmp;
+        for (const { field, direction } of variables.order!) {
+          const aVal = a[field as keyof Product];
+          const bVal = b[field as keyof Product];
+          if (aVal == null || bVal == null) continue;
+          const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+          if (cmp !== 0) return direction === "Desc" ? -cmp : cmp;
+        }
+        return 0;
       });
     }
 

@@ -309,7 +309,6 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.cursor).toBeNull();
       expect(result.current.control.paginationDirection).toBe("forward");
     });
-
   });
 
   // ---------------------------------------------------------------------------

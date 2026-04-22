@@ -91,6 +91,9 @@ export type UseDataTableOptions<TRow extends Record<string, unknown>> = {
    * changes. Providing this prop enables the checkbox selection column.
    * Selection is ID-based (`row.id`) and persists across page changes.
    *
+   * **Requirement:** Each row must have a string or number `id` field.
+   * Rows without `id` are excluded from selection.
+   *
    * **Note:** `selectAllRows` (triggered by the header checkbox) selects only
    * the rows on the **current page**, not all pages.
    */

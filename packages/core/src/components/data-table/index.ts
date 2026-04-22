@@ -1,6 +1,6 @@
 // DataTable compound component
 export { DataTable, type DataTablePaginationProps, type DataTableRootProps } from "./data-table";
-export { useCurrentPage } from "./pagination";
+
 export { useDataTable } from "./use-data-table";
 export { useDataTableContext } from "./data-table-context";
 

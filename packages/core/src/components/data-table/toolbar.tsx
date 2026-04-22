@@ -860,6 +860,7 @@ function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
 
 function getInitialAddFilterDraftValue(type: FilterConfig["type"]): AddFilterDraftValue {
   if (type === "enum") return [];
+  if (type === "boolean") return "true";
   return "";
 }
 

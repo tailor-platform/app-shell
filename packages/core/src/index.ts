@@ -161,7 +161,6 @@ export {
   DataTable,
   useDataTable,
   useDataTableContext,
-  useCurrentPage,
   createColumnHelper,
   type DataTablePaginationProps,
   type DataTableRootProps,

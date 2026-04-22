@@ -46,7 +46,6 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     nextPage: vi.fn(),
     prevPage: vi.fn(),
     resetPage: vi.fn(),
-    currentPage: 1,
     goToFirstPage: vi.fn(),
     goToLastPage: vi.fn(),
     ...overrides,
@@ -103,7 +102,7 @@ describe("useDataTable", () => {
   // -------------------------------------------------------------------------
   describe("pagination derivation", () => {
     it("derives totalPages from total and pageSize", () => {
-      const control = makeControl({ pageSize: 10, currentPage: 1 });
+      const control = makeControl({ pageSize: 10 });
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
       expect(result.current.totalPages).toBe(5); // 50 / 10
     });

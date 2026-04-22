@@ -16,7 +16,6 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.filters).toEqual([]);
       expect(result.current.control.sortStates).toEqual([]);
       expect(result.current.control.cursor).toBeNull();
-      expect(result.current.control.currentPage).toBe(1);
     });
 
     it("uses custom pageSize", () => {
@@ -161,7 +160,6 @@ describe("useCollectionVariables", () => {
         result.current.control.addFilter("status", "eq", "ACTIVE");
       });
       expect(result.current.control.cursor).toBeNull();
-      expect(result.current.control.currentPage).toBe(1);
     });
   });
 
@@ -312,17 +310,6 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.paginationDirection).toBe("forward");
     });
 
-    it("tracks currentPage on navigation", () => {
-      const { result } = renderHook(() => useCollectionVariables({}));
-
-      expect(result.current.control.currentPage).toBe(1);
-
-      act(() => {
-        result.current.control.nextPage("cursor-end");
-      });
-
-      expect(result.current.control.currentPage).toBe(2);
-    });
   });
 
   // ---------------------------------------------------------------------------

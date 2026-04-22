@@ -34,7 +34,6 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     nextPage: vi.fn(),
     prevPage: vi.fn(),
     resetPage: vi.fn(),
-    currentPage: 1,
     goToFirstPage: vi.fn(),
     goToLastPage: vi.fn(),
     ...overrides,

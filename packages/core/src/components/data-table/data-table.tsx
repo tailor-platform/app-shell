@@ -1,4 +1,4 @@
-import { useContext, type ReactNode } from "react";
+import { useContext, useState, type ReactNode } from "react";
 import { Ellipsis, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
@@ -339,7 +339,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
     useDataTableContext();
   const control = useCollectionControlOptional();
   // Intentional throw: <DataTable.Pagination> cannot function without collection
-  // control (needs pageSize, currentPage, goToFirstPage, etc.). Rendering a
+  // control (needs pageSize, goToFirstPage, etc.). Rendering a
   // disabled/empty fallback would silently hide a misconfiguration, so we fail
   // loudly instead. Consumers must pass `control` from useCollectionVariables()
   // to useDataTable() when using this component.
@@ -348,8 +348,42 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       "<DataTable.Pagination> requires collection control. Pass `control` from `useCollectionVariables()` to `useDataTable()`.",
     );
   }
-  const { currentPage, goToFirstPage, goToLastPage, pageSize, setPageSize } = control;
+  const { goToFirstPage, goToLastPage, pageSize, setPageSize } = control;
   const t = useDataTableT();
+
+  // currentPage is tracked locally because CollectionControl uses cursor-based
+  // pagination and cannot reliably derive an absolute page number in all cases
+  // (e.g. goToLastPage does not know the total page count).
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const handleNextPage = () => {
+    if (pageInfo.nextPageToken) {
+      nextPage(pageInfo.nextPageToken);
+      setCurrentPage((p) => p + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (pageInfo.previousPageToken) {
+      prevPage(pageInfo.previousPageToken);
+      setCurrentPage((p) => Math.max(1, p - 1));
+    }
+  };
+
+  const handleGoToFirstPage = () => {
+    goToFirstPage();
+    setCurrentPage(1);
+  };
+
+  const handleGoToLastPage = () => {
+    goToLastPage();
+    if (totalPages !== null) setCurrentPage(totalPages);
+  };
+
+  const handleSetPageSize = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="astw:flex astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
@@ -362,7 +396,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
             items={pageSizeOptions.map(String)}
             value={String(pageSize)}
             onValueChange={(item) => {
-              if (item) setPageSize(Number(item));
+              if (item) handleSetPageSize(Number(item));
             }}
             className="astw:w-[70px]"
           />
@@ -370,17 +404,13 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       )}
       {totalPages !== null && (
         <span className="astw:text-sm astw:text-muted-foreground astw:tabular-nums">
-          {t("paginationPage")}{" "}
-          {/* When on the last page (hasNextPage=false), currentPage in
-              useCollectionVariables may be stale (e.g. after goToLastPage).
-              Using totalPages as the display value is always accurate here. */}
-          {!hasNextPage ? totalPages : currentPage} / {totalPages}
+          {t("paginationPage")} {currentPage} / {totalPages}
         </span>
       )}
       <Button
         variant="outline"
         size="icon"
-        onClick={goToFirstPage}
+        onClick={handleGoToFirstPage}
         disabled={!hasPrevPage}
         aria-label={t("paginationFirst")}
       >
@@ -389,11 +419,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       <Button
         variant="outline"
         size="icon"
-        onClick={() => {
-          if (pageInfo.previousPageToken) {
-            prevPage(pageInfo.previousPageToken);
-          }
-        }}
+        onClick={handlePrevPage}
         disabled={!hasPrevPage || !pageInfo.previousPageToken}
         aria-label={t("paginationPrevious")}
       >
@@ -402,11 +428,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       <Button
         variant="outline"
         size="icon"
-        onClick={() => {
-          if (pageInfo.nextPageToken) {
-            nextPage(pageInfo.nextPageToken);
-          }
-        }}
+        onClick={handleNextPage}
         disabled={!hasNextPage || !pageInfo.nextPageToken}
         aria-label={t("paginationNext")}
       >
@@ -415,7 +437,7 @@ function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {})
       <Button
         variant="outline"
         size="icon"
-        onClick={goToLastPage}
+        onClick={handleGoToLastPage}
         disabled={!hasNextPage}
         aria-label={t("paginationLast")}
       >

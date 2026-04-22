@@ -103,7 +103,6 @@ export function useCollectionVariables(
   const [pageSize, setPageSizeState] = useState(initialPageSize);
   const [cursor, setCursor] = useState<string | null>(null);
   const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
-  const [currentPage, setCurrentPage] = useState(1);
 
   // ---------------------------------------------------------------------------
   // Filter operations
@@ -121,28 +120,24 @@ export function useCollectionVariables(
     });
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const setFilters = useCallback((newFilters: Filter[]) => {
     setFiltersState(newFilters);
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const removeFilter = useCallback((field: string) => {
     setFiltersState((prev) => prev.filter((f) => f.field !== field));
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const clearFilters = useCallback(() => {
     setFiltersState([]);
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -159,14 +154,12 @@ export function useCollectionVariables(
     });
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const clearSort = useCallback(() => {
     setSortStates([]);
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -175,39 +168,32 @@ export function useCollectionVariables(
   const nextPage = useCallback((token: string) => {
     setCursor(token);
     setPaginationDirection("forward");
-    setCurrentPage((p) => p + 1);
   }, []);
 
   const prevPage = useCallback((token: string) => {
     setCursor(token);
     setPaginationDirection("backward");
-    setCurrentPage((p) => Math.max(1, p - 1));
   }, []);
 
   const resetPage = useCallback(() => {
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const setPageSize = useCallback((size: number) => {
     setPageSizeState(size);
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const goToFirstPage = useCallback(() => {
     setCursor(null);
     setPaginationDirection("forward");
-    setCurrentPage(1);
   }, []);
 
   const goToLastPage = useCallback(() => {
     // Cursor-based pagination has no "jump to page N" — we request the last
     // `pageSize` items by setting direction="backward" with no cursor.
-    // `currentPage` is intentionally not updated here because we don't know
-    // the total page count at this layer.
     setCursor(null);
     setPaginationDirection("backward");
   }, []);
@@ -274,7 +260,6 @@ export function useCollectionVariables(
       nextPage,
       prevPage,
       resetPage,
-      currentPage,
       goToFirstPage,
       goToLastPage,
     },

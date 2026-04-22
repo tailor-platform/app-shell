@@ -426,15 +426,12 @@ export interface CollectionControl<
   nextPage: (token: string) => void;
   prevPage: (token: string) => void;
   resetPage: () => void;
-  currentPage: number;
   goToFirstPage: () => void;
   /**
    * Navigate to the last page.
    *
    * Requests the last `pageSize` items by setting `paginationDirection` to
-   * `"backward"` with no cursor. Note: `currentPage` is not updated because
-   * cursor-based pagination does not track absolute page numbers — the display
-   * counter is approximate.
+   * `"backward"` with no cursor.
    */
   goToLastPage: () => void;
 }

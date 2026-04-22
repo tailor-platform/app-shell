@@ -50,7 +50,8 @@ type UseDataTableBaseOptions<TRow extends Record<string, unknown>> = {
 /**
  * Options for `useDataTable` hook.
  */
-export type UseDataTableOptions<TRow extends Record<string, unknown>> = UseDataTableBaseOptions<TRow>;
+export type UseDataTableOptions<TRow extends Record<string, unknown>> =
+  UseDataTableBaseOptions<TRow>;
 
 // =============================================================================
 // Row Actions

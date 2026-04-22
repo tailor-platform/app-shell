@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { createAppShellWrapper } from "@/test-utils";
+import { createAppShellWrapper } from "../../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import type { Column, DataTableData } from "./types";

@@ -163,6 +163,8 @@ export {
   useDataTableContext,
   type DataTableContextValue,
   createColumnHelper,
+  type ColumnHelper,
+  type ColumnInferFn,
   type DataTablePaginationProps,
   type DataTableRootProps,
   type Column,

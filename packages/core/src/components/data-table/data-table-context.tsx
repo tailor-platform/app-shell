@@ -48,6 +48,10 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   selectedIds: string[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
+  /**
+   * Selects all rows on the **current page** only. Cross-page selection is not supported.
+   * Undefined when `onSelectionChange` is not provided.
+   */
   selectAllRows?: () => void;
   clearSelection?: () => void;
   isAllSelected: boolean;

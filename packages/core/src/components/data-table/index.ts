@@ -4,7 +4,7 @@ export { useDataTable } from "./use-data-table";
 export { useDataTableContext, type DataTableContextValue } from "./data-table-context";
 
 // Field helpers
-export { createColumnHelper } from "./field-helpers";
+export { createColumnHelper, type ColumnHelper, type ColumnInferFn } from "./field-helpers";
 
 // Types — DataTable-specific
 export type {

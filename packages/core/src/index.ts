@@ -161,6 +161,7 @@ export {
   DataTable,
   useDataTable,
   useDataTableContext,
+  useCurrentPage,
   type DataTableContextValue,
   createColumnHelper,
   type ColumnHelper,

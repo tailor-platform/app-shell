@@ -6,6 +6,112 @@ import { Select } from "@/components/select-standalone";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 
+/**
+ * Tracks the current page number for cursor-based pagination.
+ *
+ * Pass `cursor`, `paginationDirection`, and `totalPages` from
+ * `useCollectionVariables` / `CollectionControl`. The hook syncs
+ * `currentPage` automatically when the cursor is externally reset
+ * (e.g. after a filter or sort change).
+ *
+ * Returns `currentPage` and four action functions to keep the counter
+ * in sync with your navigation handlers:
+ * - `increment()` — call after navigating to the next page
+ * - `decrement()` — call after navigating to the previous page
+ * - `reset()` — call after jumping to the first page
+ * - `setToLast()` — call after jumping to the last page
+ *
+ * @example
+ * ```tsx
+ * const { currentPage, increment, decrement, reset, setToLast } = useCurrentPage({
+ *   cursor: control.cursor,
+ *   paginationDirection: control.paginationDirection,
+ *   totalPages,
+ * });
+ *
+ * const handleNext = () => { control.nextPage(token); increment(); };
+ * const handleFirst = () => { control.goToFirstPage(); reset(); };
+ * ```
+ *
+ * @remarks
+ * **Why is the page counter separate from `CollectionControl`?**
+ * `CollectionControl` manages server query state: cursors, filters, and sort
+ * are all passed directly to the API. The cursor is an opaque server-issued
+ * token and carries no page-number information, so an absolute page index
+ * cannot be derived from it. Embedding a display-only counter in
+ * `CollectionControl` would pollute the query interface with UI concerns, so
+ * `useCurrentPage` owns that responsibility instead.
+ *
+ * `currentPage` is therefore a **display counter** only — it is not derived
+ * from the cursor token and will drift if you call navigation functions without
+ * invoking the corresponding action. Desync caused by filter/sort resets is
+ * handled automatically via a derived-state pattern.
+ */
+export function useCurrentPage({
+  cursor,
+  paginationDirection,
+  totalPages,
+}: {
+  cursor: string | null;
+  paginationDirection: "forward" | "backward";
+  totalPages: number | null;
+}) {
+  // ---------------------------------------------------------------------------
+  // Why local state?
+  //   CollectionControl uses opaque cursor tokens that do not encode an absolute
+  //   page number, so currentPage cannot be derived from the cursor alone.
+  //
+  //   An earlier design lifted currentPage into DataTableContext, but goToLastPage
+  //   sets cursor=null with direction="backward", which is indistinguishable from
+  //   "reset to page 1" at the context level — the correct target (totalPages) is
+  //   only available inside DataTablePagination. That forced the counter back here.
+  //
+  // Known limitation — desync on filter/sort change:
+  //   useCollectionVariables resets cursor→null + direction="forward" when filters
+  //   or sorts change, but this hook is not directly notified. The derived-state
+  //   block below patches this specific case without useEffect, which would paint
+  //   the stale value for one frame before correcting it.
+  //   Non-null cursor changes (nextPage/prevPage) are still handled by the action
+  //   functions returned from this hook.
+  //
+  // Derived-state pattern:
+  //   We snapshot (lastCursor, lastDirection) and call setState during render when
+  //   they differ from the current props. React discards the current render and
+  //   immediately re-renders with corrected state, so the stale value is never
+  //   committed to the DOM.
+  //   See: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  // ---------------------------------------------------------------------------
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [lastCursor, setLastCursor] = useState(cursor);
+  const [lastDirection, setLastDirection] = useState(paginationDirection);
+  if (lastCursor !== cursor || lastDirection !== paginationDirection) {
+    setLastCursor(cursor);
+    setLastDirection(paginationDirection);
+    if (cursor === null) {
+      if (paginationDirection === "backward" && totalPages !== null) {
+        // goToLastPage: cursor=null + direction="backward"
+        setCurrentPage(totalPages);
+      } else {
+        // All other resets (filter, sort, setPageSize, goToFirstPage, resetPage)
+        setCurrentPage(1);
+      }
+    }
+  }
+
+  return {
+    currentPage,
+    increment: () => setCurrentPage((p) => p + 1),
+    decrement: () => setCurrentPage((p) => Math.max(1, p - 1)),
+    reset: () => setCurrentPage(1),
+    setToLast: () => {
+      // totalPages is guaranteed non-null at the call site (button only renders
+      // when totalPages !== null), but we guard anyway for type safety.
+      if (totalPages !== null) setCurrentPage(totalPages);
+    },
+  };
+}
+
 export interface DataTablePaginationProps {
   /**
    * Available page-size options shown in a dropdown selector.
@@ -32,40 +138,39 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
   const { goToFirstPage, goToLastPage, pageSize, setPageSize } = control;
   const t = useDataTableT();
 
-  // currentPage is tracked locally because CollectionControl uses cursor-based
-  // pagination and cannot reliably derive an absolute page number in all cases
-  // (e.g. goToLastPage does not know the total page count).
-  const [currentPage, setCurrentPage] = useState(1);
+  const { currentPage, increment, decrement, reset, setToLast } = useCurrentPage({
+    cursor: control.cursor,
+    paginationDirection: control.paginationDirection,
+    totalPages,
+  });
 
   const handleNextPage = () => {
     if (pageInfo.nextPageToken) {
       nextPage(pageInfo.nextPageToken);
-      setCurrentPage((p) => p + 1);
+      increment();
     }
   };
 
   const handlePrevPage = () => {
     if (pageInfo.previousPageToken) {
       prevPage(pageInfo.previousPageToken);
-      setCurrentPage((p) => Math.max(1, p - 1));
+      decrement();
     }
   };
 
   const handleGoToFirstPage = () => {
     goToFirstPage();
-    setCurrentPage(1);
+    reset();
   };
 
   const handleGoToLastPage = () => {
     goToLastPage();
-    // totalPages is guaranteed non-null here: this handler is only called from
-    // the "last page" button which is rendered only when totalPages !== null.
-    setCurrentPage(totalPages!);
+    setToLast();
   };
 
   const handleSetPageSize = (size: number) => {
     setPageSize(size);
-    setCurrentPage(1);
+    reset();
   };
 
   return (

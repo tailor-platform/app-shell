@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     environment: "happy-dom",
+    typecheck: {
+      enabled: true,
+    },
     resolveSnapshotPath: (testPath, snapExtension) => {
       const relativePath = path.relative(__dirname, testPath);
       const snapshotName = relativePath.replaceAll(path.sep, "__");

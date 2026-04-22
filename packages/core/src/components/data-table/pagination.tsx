@@ -14,7 +14,7 @@ export interface DataTablePaginationProps {
   pageSizeOptions?: number[];
 }
 
-/** @internal Use `DataTable.Pagination` instead. */
+/** Use `DataTable.Pagination` instead of calling this directly. */
 export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {}) {
   const { pageInfo, totalPages, nextPage, prevPage, hasPrevPage, hasNextPage } =
     useDataTableContext();

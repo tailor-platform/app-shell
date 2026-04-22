@@ -16,7 +16,7 @@ import type { Column } from "./types";
 // DataTable.Toolbar
 // =============================================================================
 
-/** @internal Use `DataTable.Toolbar` instead. */
+/** Use `DataTable.Toolbar` instead of calling this directly. */
 function DataTableToolbar({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
@@ -55,7 +55,7 @@ type FilterableColumn = Column<Record<string, unknown>> & {
 };
 type AddFilterDraftValue = string | string[] | boolean[];
 
-/** @internal Use `DataTable.Filters` instead. */
+/** Use `DataTable.Filters` instead of calling this directly. */
 function DataTableFilters({ className }: { className?: string }) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();

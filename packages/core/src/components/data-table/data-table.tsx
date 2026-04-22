@@ -25,7 +25,7 @@ export interface DataTableRootProps<TRow extends Record<string, unknown>> {
   className?: string;
 }
 
-/** @internal Use `DataTable.Root` instead. */
+/** Use `DataTable.Root` instead of calling this directly. */
 function DataTableRoot<TRow extends Record<string, unknown>>({
   value,
   children,
@@ -363,7 +363,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 // DataTable.Table
 // =============================================================================
 
-/** @internal Use `DataTable.Table` instead. */
+/** Use `DataTable.Table` instead of calling this directly. */
 function DataTableTable({ className }: { className?: string }) {
   return (
     <Table.Root data-slot="data-table-table" className={className}>
@@ -378,7 +378,7 @@ DataTableTable.displayName = "DataTable.Table";
 // DataTable.Footer
 // =============================================================================
 
-/** @internal Use `DataTable.Footer` instead. */
+/** Use `DataTable.Footer` instead of calling this directly. */
 function DataTableFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div

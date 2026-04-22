@@ -25,6 +25,7 @@ export interface DataTableRootProps<TRow extends Record<string, unknown>> {
   className?: string;
 }
 
+/** @internal Use `DataTable.Root` instead. */
 function DataTableRoot<TRow extends Record<string, unknown>>({
   value,
   children,
@@ -85,6 +86,7 @@ DataTableRoot.displayName = "DataTable.Root";
 // DataTable.Headers
 // =============================================================================
 
+/** @internal */
 function DataTableHeaders({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
@@ -183,6 +185,7 @@ function DataTableHeaders({ className }: { className?: string }) {
 }
 DataTableHeaders.displayName = "DataTable.Headers";
 
+/** @internal */
 function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
   return (
     <span
@@ -199,6 +202,7 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
 // DataTable.Body
 // =============================================================================
 
+/** @internal */
 function DataTableBody({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
@@ -359,10 +363,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 // DataTable.Table
 // =============================================================================
 
-/**
- * Table component that renders `<table>` with built-in Headers and Body.
- * Place inside `DataTable.Root`.
- */
+/** @internal Use `DataTable.Table` instead. */
 function DataTableTable({ className }: { className?: string }) {
   return (
     <Table.Root data-slot="data-table-table" className={className}>
@@ -377,10 +378,7 @@ DataTableTable.displayName = "DataTable.Table";
 // DataTable.Footer
 // =============================================================================
 
-/**
- * Footer container for pagination and other footer content.
- * Place inside `DataTable.Root`, after `DataTable.Table`.
- */
+/** @internal Use `DataTable.Footer` instead. */
 function DataTableFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
@@ -398,10 +396,42 @@ DataTableFooter.displayName = "DataTable.Footer";
 // =============================================================================
 
 export const DataTable = {
+  /**
+   * Context/provider root. Wraps all other `DataTable.*` components and
+   * wires state from `useDataTable()` into context.
+   */
   Root: DataTableRoot,
+  /**
+   * Container for toolbar content (column visibility, search, etc.).
+   * Place inside `DataTable.Root`, before `DataTable.Table`.
+   */
   Toolbar: DataTableToolbar,
+  /**
+   * Auto-generated filter chips from column filter configs.
+   *
+   * **Requires `control`** — `useDataTable()` must receive `control` from
+   * `useCollectionVariables()`, otherwise this component throws at render time.
+   */
   Filters: DataTableFilters,
+  /**
+   * Renders `<table>` with built-in `Headers` and `Body`.
+   * Place inside `DataTable.Root`.
+   */
   Table: DataTableTable,
+  /**
+   * Footer container for pagination and other footer content.
+   * Place inside `DataTable.Root`, after `DataTable.Table`.
+   */
   Footer: DataTableFooter,
+  /**
+   * Pre-built pagination controls. Place inside `DataTable.Footer`.
+   *
+   * **Requires `control`** — `useDataTable()` must receive `control` from
+   * `useCollectionVariables()`, otherwise this component throws at render time.
+   *
+   * **Go-to-first / go-to-last buttons** — Rendered only when `totalPages` is
+   * non-null (i.e. the backend returns a total count). When `totalPages` is
+   * `null`, these buttons and the page counter are omitted.
+   */
   Pagination: DataTablePagination,
 } as const;

@@ -15,12 +15,34 @@ import type {
  * A column definition for DataTable.
  */
 export interface Column<TRow extends Record<string, unknown>> {
+  /** Column header text. Omit for action or icon-only columns. */
   label?: string;
+  /** Renders the cell content for a given row. Required. */
   render: (row: TRow) => ReactNode;
+  /**
+   * Stable identifier used for column visibility toggling and as the React key.
+   * Falls back to `label` when omitted. Set this explicitly when `label` is
+   * absent or not unique.
+   */
   id?: string;
+  /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
+  /**
+   * Extracts the raw value from a row for purposes such as sorting or
+   * clipboard copying. Not used for rendering — use `render` for that.
+   */
   accessor?: (row: TRow) => unknown;
+  /**
+   * Sort configuration. When set, the column header becomes clickable and
+   * cycles through `Asc → Desc → undefined`.
+   * Use `fieldTypeToSortConfig` or `inferColumns` to derive this automatically.
+   */
   sort?: SortConfig;
+  /**
+   * Filter configuration. When set, this column appears as an option in
+   * `DataTable.Filters`.
+   * Use `fieldTypeToFilterConfig` or `inferColumns` to derive this automatically.
+   */
   filter?: FilterConfig;
 }
 
@@ -37,22 +59,40 @@ export interface DataTableData<TRow> {
   total?: number | null;
 }
 
-type UseDataTableBaseOptions<TRow extends Record<string, unknown>> = {
-  columns: Column<TRow>[];
-  data: DataTableData<TRow> | undefined;
-  loading?: boolean;
-  error?: Error | null;
-  control?: CollectionControl;
-  onClickRow?: (row: TRow) => void;
-  rowActions?: RowAction<TRow>[];
-  onSelectionChange?: (ids: string[]) => void;
-};
-
 /**
  * Options for `useDataTable` hook.
  */
-export type UseDataTableOptions<TRow extends Record<string, unknown>> =
-  UseDataTableBaseOptions<TRow>;
+export type UseDataTableOptions<TRow extends Record<string, unknown>> = {
+  /** Column definitions that describe what to render in each column. */
+  columns: Column<TRow>[];
+  /**
+   * Fetched data to display. Pass `undefined` while loading; the table will
+   * show a loading state automatically.
+   */
+  data: DataTableData<TRow> | undefined;
+  /** When `true`, the table renders a loading indicator. */
+  loading?: boolean;
+  /** If set, an error message is rendered in the table body. */
+  error?: Error | null;
+  /**
+   * Collection control returned by `useCollectionVariables()`. Required when
+   * using `DataTable.Pagination` or `DataTable.Filters`.
+   */
+  control?: CollectionControl;
+  /** Called when the user clicks a row. Adds a pointer cursor to rows. */
+  onClickRow?: (row: TRow) => void;
+  /**
+   * Per-row action items rendered in a kebab-menu column on the right.
+   * The column is omitted when this array is empty or not provided.
+   */
+  rowActions?: RowAction<TRow>[];
+  /**
+   * Called with the current array of selected row IDs whenever the selection
+   * changes. Providing this prop enables the checkbox selection column.
+   * Selection is ID-based (`row.id`) and persists across page changes.
+   */
+  onSelectionChange?: (ids: string[]) => void;
+};
 
 // =============================================================================
 // Row Actions
@@ -123,8 +163,18 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
  * Options for metadata-based single field inference.
  */
 export interface MetadataFieldOptions {
+  /** Override the column header text. Defaults to the field's `description` or `name` from metadata. */
   label?: string;
+  /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
+  /**
+   * Set to `false` to suppress the auto-generated sort config for this field.
+   * Defaults to `true` (sort is enabled when the field type supports it).
+   */
   sort?: boolean;
+  /**
+   * Set to `false` to suppress the auto-generated filter config for this field.
+   * Defaults to `true` (filter is enabled when the field type supports it).
+   */
   filter?: boolean;
 }

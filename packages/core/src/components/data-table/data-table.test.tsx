@@ -3,7 +3,7 @@ import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData } from "./types";
+import type { Column, DataTableData, RowAction } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -66,9 +66,13 @@ describe("DataTable", () => {
   });
 
   it("renders loading state", () => {
-    render(<TestDataTable data={undefined} loading />, { wrapper });
+    const { container } = render(<TestDataTable data={undefined} loading />, {
+      wrapper,
+    });
 
-    expect(screen.getByText("Loading...")).toBeDefined();
+    expect(container.querySelectorAll('[data-datatable-state="loading"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("renders error state", () => {
@@ -93,6 +97,155 @@ describe("DataTable", () => {
     expect(container.querySelector('[data-slot="data-table-table"]')).toBeDefined();
     expect(container.querySelector('[data-slot="data-table-header"]')).toBeDefined();
     expect(container.querySelector('[data-slot="data-table-body"]')).toBeDefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // State exclusivity (loading / error / empty / data)
+  // -------------------------------------------------------------------------
+  describe("state exclusivity", () => {
+    it("shows only skeleton when loading=true, regardless of data", () => {
+      const { container } = render(<TestDataTable data={testData} loading />, {
+        wrapper,
+      });
+
+      expect(container.querySelectorAll('[data-datatable-state="loading"]').length).toBeGreaterThan(
+        0,
+      );
+      expect(container.querySelector('[data-datatable-state="error"]')).toBeNull();
+      expect(container.querySelector('[data-datatable-state="empty"]')).toBeNull();
+      expect(container.querySelector('[data-slot="data-table-row"]')).toBeNull();
+    });
+
+    it("shows only skeleton when loading=true and error is also set", () => {
+      const { container } = render(
+        <TestDataTable data={undefined} loading error={new Error("fail")} />,
+        { wrapper },
+      );
+
+      expect(container.querySelectorAll('[data-datatable-state="loading"]').length).toBeGreaterThan(
+        0,
+      );
+      expect(container.querySelector('[data-datatable-state="error"]')).toBeNull();
+    });
+
+    it("shows only error when loading=false and error is set, even with data", () => {
+      const { container } = render(<TestDataTable data={testData} error={new Error("fail")} />, {
+        wrapper,
+      });
+
+      expect(container.querySelector('[data-datatable-state="error"]')).not.toBeNull();
+      expect(container.querySelectorAll('[data-datatable-state="loading"]')).toHaveLength(0);
+      expect(container.querySelector('[data-datatable-state="empty"]')).toBeNull();
+      expect(container.querySelector('[data-slot="data-table-row"]')).toBeNull();
+    });
+
+    it("shows only empty state when loading=false, no error, and rows is empty", () => {
+      const { container } = render(<TestDataTable data={{ rows: [] }} />, {
+        wrapper,
+      });
+
+      expect(container.querySelector('[data-datatable-state="empty"]')).not.toBeNull();
+      expect(container.querySelectorAll('[data-datatable-state="loading"]')).toHaveLength(0);
+      expect(container.querySelector('[data-datatable-state="error"]')).toBeNull();
+      expect(container.querySelector('[data-slot="data-table-row"]')).toBeNull();
+    });
+
+    it("shows only data rows when loading=false, no error, and rows exist", () => {
+      const { container } = render(<TestDataTable />, { wrapper });
+
+      expect(container.querySelectorAll('[data-slot="data-table-row"]').length).toBeGreaterThan(0);
+      expect(container.querySelectorAll('[data-datatable-state="loading"]')).toHaveLength(0);
+      expect(container.querySelector('[data-datatable-state="error"]')).toBeNull();
+      expect(container.querySelector('[data-datatable-state="empty"]')).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Loading skeleton
+  // -------------------------------------------------------------------------
+  describe("loading skeleton", () => {
+    it("renders DEFAULT_ROWS (5) skeleton rows when loading with no data", () => {
+      const { container } = render(<TestDataTable data={undefined} loading />, {
+        wrapper,
+      });
+
+      const skeletonRows = container.querySelectorAll('[data-datatable-state="loading"]');
+      expect(skeletonRows).toHaveLength(5);
+    });
+
+    it("renders skeleton rows even when data is present while loading", () => {
+      const { container } = render(<TestDataTable data={testData} loading />, {
+        wrapper,
+      });
+
+      const skeletonRows = container.querySelectorAll('[data-datatable-state="loading"]');
+      expect(skeletonRows.length).toBeGreaterThan(0);
+    });
+
+    it("hides actual data rows while loading", () => {
+      render(<TestDataTable data={testData} loading />, { wrapper });
+
+      expect(screen.queryByText("Alice")).toBeNull();
+      expect(screen.queryByText("Bob")).toBeNull();
+    });
+
+    it("each skeleton row has one cell per visible column", () => {
+      const { container } = render(<TestDataTable data={undefined} loading />, {
+        wrapper,
+      });
+
+      const skeletonRows = container.querySelectorAll('[data-datatable-state="loading"]');
+      skeletonRows.forEach((row) => {
+        // testColumns has 2 columns, no selection, no row actions
+        expect(row.querySelectorAll("td")).toHaveLength(2);
+      });
+    });
+
+    it("skeleton rows include selection cell when onSelectionChange is provided", () => {
+      const { container } = render(
+        <TestDataTable data={undefined} loading onSelectionChange={vi.fn()} />,
+        { wrapper },
+      );
+
+      const skeletonRows = container.querySelectorAll('[data-datatable-state="loading"]');
+      skeletonRows.forEach((row) => {
+        // 2 columns + 1 selection cell
+        expect(row.querySelectorAll("td")).toHaveLength(3);
+      });
+    });
+
+    it("skeleton rows include actions cell when rowActions are provided", () => {
+      const rowActions: RowAction<TestRow>[] = [{ id: "edit", label: "Edit", onClick: vi.fn() }];
+
+      function TestDataTableWithActions() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: undefined,
+          loading: true,
+          rowActions,
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      const { container } = render(<TestDataTableWithActions />, { wrapper });
+
+      const skeletonRows = container.querySelectorAll('[data-datatable-state="loading"]');
+      skeletonRows.forEach((row) => {
+        // 2 columns + 1 actions cell
+        expect(row.querySelectorAll("td")).toHaveLength(3);
+      });
+    });
+
+    it("does not render skeleton rows when not loading", () => {
+      const { container } = render(<TestDataTable />, { wrapper });
+
+      const skeletonRows = container.querySelectorAll('[data-datatable-state="loading"]');
+      expect(skeletonRows).toHaveLength(0);
+    });
   });
 
   // -------------------------------------------------------------------------

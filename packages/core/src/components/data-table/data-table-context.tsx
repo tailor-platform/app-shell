@@ -30,6 +30,11 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   prevPage: (cursor: string) => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
+  /**
+   * The resolved page size from the collection control. `0` when no control is
+   * configured. Used to render the correct number of skeleton / ghost rows.
+   */
+  pageSize: number;
 
   // Column management
   columns: Column<TRow>[];

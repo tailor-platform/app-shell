@@ -212,6 +212,7 @@ export function useDataTable<
     pageInfo,
     total,
     totalPages,
+    pageSize,
     nextPage,
     prevPage,
     hasPrevPage,

@@ -149,6 +149,13 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
 
+  /**
+   * The resolved page size derived from the collection control.
+   * `0` when no control (or `pageSize`) is configured.
+   * Used by `DataTable.Table` to render the correct number of skeleton / ghost rows.
+   */
+  pageSize: number;
+
   // Control (passthrough for DataTable.Root)
   /**
    * The collection control passed to `useDataTable`, stored here for

@@ -8,12 +8,98 @@ import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import type { SortConfig } from "@/types/collection";
-import type { RowAction, UseDataTableReturn } from "./types";
+import type { Column, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
+
+// Fallback row count when no pageSize is configured (static / uncontrolled tables)
+const DEFAULT_ROWS = 5;
+
+// =============================================================================
+// DataTableLoaderRows (internal)
+// =============================================================================
+
+interface DataTableLoaderRowsProps<TRow extends Record<string, unknown>> {
+  rowCount: number;
+  columns: Column<TRow>[] | undefined;
+  hasSelection: boolean;
+  hasRowActions: boolean;
+}
+
+// Skeleton cell widths (%) — varied per row+col to look natural
+const SKELETON_WIDTHS = [75, 55, 85, 65, 70];
+
+/** @internal */
+function DataTableLoaderRows<TRow extends Record<string, unknown>>({
+  rowCount,
+  columns,
+  hasSelection,
+  hasRowActions,
+}: DataTableLoaderRowsProps<TRow>) {
+  return (
+    <>
+      {Array.from({ length: rowCount }).map((_, rowIndex) => (
+        <Table.Row key={rowIndex} data-datatable-state="loading">
+          {hasSelection && (
+            <Table.Cell style={{ width: 52 }} className="astw:pl-3! astw:h-13.25">
+              <div className="astw:size-4 astw:rounded-xs astw:bg-muted astw:animate-pulse" />
+            </Table.Cell>
+          )}
+          {columns?.map((col, colIndex) => {
+            const key = col.id ?? col.label ?? String(colIndex);
+            const skeletonWidth = SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length];
+            return (
+              <Table.Cell
+                key={key}
+                style={col.width ? { width: col.width } : undefined}
+                className="astw:h-13.25"
+              >
+                <div
+                  className="astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse"
+                  style={{ width: `${skeletonWidth}%` }}
+                />
+              </Table.Cell>
+            );
+          })}
+          {hasRowActions && (
+            <Table.Cell style={{ width: 50 }} className="astw:h-13.25">
+              <div className="astw:size-6 astw:rounded astw:bg-muted astw:animate-pulse astw:mx-auto" />
+            </Table.Cell>
+          )}
+        </Table.Row>
+      ))}
+    </>
+  );
+}
+
+// =============================================================================
+// DataTableStatusRow (internal)
+// =============================================================================
+
+interface DataTableStatusRowProps {
+  rowCount: number;
+  totalColSpan: number;
+  state: string;
+  children: ReactNode;
+}
+
+/** @internal */
+function DataTableStatusRow({ rowCount, totalColSpan, state, children }: DataTableStatusRowProps) {
+  return (
+    <Table.Row data-datatable-state={state} className="astw:border-0 astw:hover:bg-transparent">
+      <Table.Cell
+        colSpan={totalColSpan}
+        style={{ height: `${rowCount * 53}px` }}
+        className="astw:text-center astw:align-middle"
+      >
+        {children}
+      </Table.Cell>
+    </Table.Row>
+  );
+}
 
 // =============================================================================
 // DataTable.Root
@@ -46,6 +132,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     pageInfo: value.pageInfo,
     total: value.total,
     totalPages: value.totalPages,
+    pageSize: value.pageSize,
     nextPage: value.nextPage,
     prevPage: value.prevPage,
     hasPrevPage: value.hasPrevPage,
@@ -217,42 +304,56 @@ function DataTableBody({ className }: { className?: string }) {
     rowActions,
     isRowSelected,
     toggleRowSelection,
+    pageSize,
   } = ctx;
   const t = useDataTableT();
-  const hasRowActions = rowActions && rowActions.length > 0;
+  const hasRowActions = !!(rowActions && rowActions.length > 0);
   const hasSelection = !!toggleRowSelection;
   const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
+  const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
+  const tableBodyProps = {
+    "data-slot": "data-table-body",
+    className,
+  };
+
+  if (loading) {
+    return (
+      <Table.Body {...tableBodyProps}>
+        <DataTableLoaderRows
+          rowCount={rowCount}
+          columns={columns}
+          hasSelection={hasSelection}
+          hasRowActions={hasRowActions}
+        />
+      </Table.Body>
+    );
+  }
+
+  if (error) {
+    return (
+      <Table.Body {...tableBodyProps}>
+        <DataTableStatusRow rowCount={rowCount} totalColSpan={totalColSpan} state="error">
+          <span className="astw:text-destructive">
+            {t("errorPrefix")} {error.message}
+          </span>
+        </DataTableStatusRow>
+      </Table.Body>
+    );
+  }
+
+  if (!rows || rows.length === 0) {
+    return (
+      <Table.Body {...tableBodyProps}>
+        <DataTableStatusRow rowCount={rowCount} totalColSpan={totalColSpan} state="empty">
+          <span className="astw:text-muted-foreground">{t("noData")}</span>
+        </DataTableStatusRow>
+      </Table.Body>
+    );
+  }
 
   return (
-    <Table.Body data-slot="data-table-body" className={className}>
-      {loading && (!rows || rows.length === 0) && (
-        <Table.Row>
-          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
-            <span className="astw:text-muted-foreground" data-datatable-state="loading">
-              {t("loading")}
-            </span>
-          </Table.Cell>
-        </Table.Row>
-      )}
-      {error && (
-        <Table.Row>
-          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
-            <span className="astw:text-destructive" data-datatable-state="error">
-              {t("errorPrefix")} {error.message}
-            </span>
-          </Table.Cell>
-        </Table.Row>
-      )}
-      {!loading && !error && (!rows || rows.length === 0) && (
-        <Table.Row>
-          <Table.Cell colSpan={totalColSpan} className="astw:h-24 astw:text-center">
-            <span className="astw:text-muted-foreground" data-datatable-state="empty">
-              {t("noData")}
-            </span>
-          </Table.Cell>
-        </Table.Row>
-      )}
-      {rows?.map((row, rowIndex) => {
+    <Table.Body {...tableBodyProps}>
+      {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
         return (

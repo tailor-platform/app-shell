@@ -174,8 +174,10 @@ export const allProducts: Product[] = [
 // Mock query hook (simulates a real useQuery call)
 // ---------------------------------------------------------------------------
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CollectionVariables } from "@tailor-platform/app-shell";
+
+const MOCK_LATENCY_MS = 800;
 
 function compareValues(left: unknown, right: unknown): number | null {
   if (typeof left === "number" && typeof right === "number") {
@@ -273,7 +275,7 @@ function applyQueryFilters(products: Product[], variables: CollectionVariables):
 }
 
 export function useProductsQuery(variables: CollectionVariables) {
-  return useMemo(() => {
+  const result = useMemo(() => {
     // Filter
     let rows = applyQueryFilters(allProducts, variables);
 
@@ -309,17 +311,32 @@ export function useProductsQuery(variables: CollectionVariables) {
     const hasPreviousPage = page > 1;
 
     return {
-      data: {
-        edges: pageRows.map((node) => ({ node })),
-        pageInfo: {
-          hasNextPage,
-          endCursor: hasNextPage ? String(page + 1) : null,
-          hasPreviousPage,
-          startCursor: hasPreviousPage ? String(page - 1) : null,
-        },
-        total: rows.length,
+      edges: pageRows.map((node) => ({ node })),
+      pageInfo: {
+        hasNextPage,
+        endCursor: hasNextPage ? String(page + 1) : null,
+        hasPreviousPage,
+        startCursor: hasPreviousPage ? String(page - 1) : null,
       },
-      loading: false,
+      total: rows.length,
     };
   }, [variables]);
+
+  const [data, setData] = useState<typeof result | null>(null);
+  const [loading, setLoading] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setData(result);
+      setLoading(false);
+    }, MOCK_LATENCY_MS);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [result]);
+
+  return { data, loading };
 }

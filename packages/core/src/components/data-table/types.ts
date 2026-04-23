@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type {
   CollectionControl,
+  Filter,
   FilterConfig,
   PageInfo,
   SortConfig,
@@ -62,7 +63,11 @@ export interface DataTableData<TRow> {
 /**
  * Options for `useDataTable` hook.
  */
-export type UseDataTableOptions<TRow extends Record<string, unknown>> = {
+export type UseDataTableOptions<
+  TRow extends Record<string, unknown>,
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> = {
   /** Column definitions that describe what to render in each column. */
   columns: Column<TRow>[];
   /**
@@ -78,7 +83,7 @@ export type UseDataTableOptions<TRow extends Record<string, unknown>> = {
    * Collection control returned by `useCollectionVariables()`. Required when
    * using `DataTable.Pagination` or `DataTable.Filters`.
    */
-  control?: CollectionControl;
+  control?: CollectionControl<TFieldName, TFilter>;
   /** Called when the user clicks a row. Adds a pointer cursor to rows. */
   onClickRow?: (row: TRow) => void;
   /**

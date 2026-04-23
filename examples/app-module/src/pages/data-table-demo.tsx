@@ -99,11 +99,12 @@ const productRowActions: RowAction<Product>[] = [
 const DataTableDemoPage = () => {
   const { variables, control } = useCollectionVariables({
     params: { pageSize: 5 },
+    tableMetadata: productMetadata,
   });
   const { data, loading } = useProductsQuery(variables);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const table = useDataTable<Product>({
+  const table = useDataTable({
     columns: productColumns,
     data: data
       ? {

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import type { PageInfo, SortState } from "@/types/collection";
+import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -33,9 +33,11 @@ import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
  * </DataTable.Root>
  * ```
  */
-export function useDataTable<TRow extends Record<string, unknown>>(
-  options: UseDataTableOptions<TRow>,
-): UseDataTableReturn<TRow> {
+export function useDataTable<
+  TRow extends Record<string, unknown>,
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+>(options: UseDataTableOptions<TRow, TFieldName, TFilter>): UseDataTableReturn<TRow> {
   const {
     columns: allColumns,
     data,
@@ -135,7 +137,8 @@ export function useDataTable<TRow extends Record<string, unknown>>(
 
   const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
     if (!control) return undefined;
-    return (field: string, direction?: "Asc" | "Desc") => control.setSort(field, direction);
+    return (field: string, direction?: "Asc" | "Desc") =>
+      control.setSort(field as TFieldName, direction);
   }, [control]);
 
   // ---------------------------------------------------------------------------
@@ -219,7 +222,7 @@ export function useDataTable<TRow extends Record<string, unknown>>(
     showAllColumns,
     hideAllColumns,
     isColumnVisible,
-    control,
+    control: control as CollectionControl | undefined,
     onClickRow,
     rowActions,
     selectedIds,

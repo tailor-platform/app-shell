@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
-import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
+import type {
+  CollectionControl,
+  Filter,
+  PageInfo,
+  SortState,
+} from "@/types/collection";
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -37,7 +42,9 @@ export function useDataTable<
   TRow extends Record<string, unknown>,
   TFieldName extends string = string,
   TFilter extends Filter<TFieldName> = Filter<TFieldName>,
->(options: UseDataTableOptions<TRow, TFieldName, TFilter>): UseDataTableReturn<TRow> {
+>(
+  options: UseDataTableOptions<TRow, TFieldName, TFilter>,
+): UseDataTableReturn<TRow> {
   const {
     columns: allColumns,
     data,
@@ -68,7 +75,9 @@ export function useDataTable<
   // ---------------------------------------------------------------------------
   const pageSize = control?.pageSize ?? 0;
   const totalPages =
-    total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
+    total !== null && pageSize > 0
+      ? Math.max(1, Math.ceil(total / pageSize))
+      : null;
   const hasPrevPage = pageInfo.hasPreviousPage;
   const hasNextPage = pageInfo.hasNextPage;
 
@@ -77,12 +86,17 @@ export function useDataTable<
   // ---------------------------------------------------------------------------
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
 
-  const getColumnKey = useCallback((col: Column<TRow>, colIndex: number): string => {
-    return col.id ?? col.label ?? String(colIndex);
-  }, []);
+  const getColumnKey = useCallback(
+    (col: Column<TRow>, colIndex: number): string => {
+      return col.id ?? col.label ?? String(colIndex);
+    },
+    [],
+  );
 
   const visibleColumns = useMemo<Column<TRow>[]>(() => {
-    return allColumns.filter((col, i) => !hiddenColumns.has(getColumnKey(col, i)));
+    return allColumns.filter(
+      (col, i) => !hiddenColumns.has(getColumnKey(col, i)),
+    );
   }, [allColumns, hiddenColumns, getColumnKey]);
 
   const toggleColumn = useCallback((fieldOrId: string) => {
@@ -135,7 +149,9 @@ export function useDataTable<
     return control?.sortStates ?? [];
   }, [control?.sortStates]);
 
-  const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
+  const onSort = useMemo<
+    ((field: string, direction?: "Asc" | "Desc") => void) | undefined
+  >(() => {
     if (!control) return undefined;
     return (field: string, direction?: "Asc" | "Desc") =>
       control.setSort(field as TFieldName, direction);
@@ -180,7 +196,9 @@ export function useDataTable<
   const selectAllRows = onSelectionChange
     ? () => {
         const allIds = new Set(
-          rows.map((r) => getRowId(r)).filter((id): id is string => id !== null),
+          rows
+            .map((r) => getRowId(r))
+            .filter((id): id is string => id !== null),
         );
         setSelectedRowIds(allIds);
         onSelectionChange([...allIds]);
@@ -201,7 +219,8 @@ export function useDataTable<
     selectableCount > 0 &&
     rows.every((r) => {
       const id = getRowId(r);
-      return id !== null && selectedRowIds.has(id);
+      // Rows without id are not selectable — skip them in the check
+      return id === null || selectedRowIds.has(id);
     });
   const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
 

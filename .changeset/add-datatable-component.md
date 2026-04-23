@@ -11,71 +11,107 @@ Add `DataTable` compound component. Also introduces `@tailor-platform/app-shell-
 - Cursor-based pagination with optional total-aware First/Last navigation
 - Per-row action menu (kebab menu)
 - Multi-row checkbox selection (current page only)
-- Column visibility toggling
 - Loading, error, and empty states
 - Metadata-driven column inference via `createColumnHelper` and `inferColumns`
 
+### Example with urql (Relay Cursor Connection GraphQL API)
+
 ```tsx
+import { gql, useQuery } from "urql";
 import {
   DataTable,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
-  type RowAction,
 } from "@tailor-platform/app-shell";
 
-const { column } = createColumnHelper<Order>();
+const LIST_JOURNALS = gql`
+  query ListJournals(
+    $after: String
+    $before: String
+    $first: Int
+    $last: Int
+    $order: [JournalOrderInput]
+    $query: JournalQueryInput
+  ) {
+    journals(
+      after: $after
+      before: $before
+      first: $first
+      last: $last
+      order: $order
+      query: $query
+    ) {
+      edges {
+        node {
+          id
+          contents
+          authorID
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      total
+    }
+  }
+`;
+
+const { column } = createColumnHelper<{
+  id: string;
+  contents: string;
+  authorID: string;
+}>();
 
 const columns = [
-  column({
-    field: "title",
-    label: "Title",
-    type: "string",
-  }),
-  column({
-    field: "status",
-    label: "Status",
-    type: "enum",
-    enumValues: ["pending", "shipped", "delivered"],
-    render: (row) => <Badge>{row.status}</Badge>,
-  }),
+  column({ field: "id", label: "ID", type: "uuid" }),
+  column({ field: "authorID", label: "Author", type: "string" }),
+  column({ field: "contents", label: "Contents", type: "string" }),
 ];
 
-const rowActions: RowAction<Order>[] = [
-  {
-    id: "edit",
-    label: "Edit",
-    onClick: (row) => navigate(`/orders/${row.id}`),
-  },
-];
-
-function OrdersPage() {
+function JournalsPage() {
+  // variables: { query, order, pagination } — maps directly to GraphQL variables.
+  // control: holds filter/sort/pagination state and methods (addFilter, setSort, nextPage, …).
+  //          Passing it to useDataTable wires UI interactions (column clicks, filter chips,
+  //          pagination buttons) to state updates, which re-derive variables and re-run the query.
   const { variables, control } = useCollectionVariables({
     params: { pageSize: 20 },
   });
-  const [result] = useQuery({ query: GET_ORDERS, variables });
 
-  const table = useDataTable<Order>({
+  // pagination holds { first, after? } (forward) or { last, before? } (backward).
+  const [result] = useQuery({
+    query: LIST_JOURNALS,
+    variables: {
+      first: variables.pagination.first,
+      after: variables.pagination.after,
+      last: variables.pagination.last,
+      before: variables.pagination.before,
+      query: variables.query,
+      order: variables.order,
+    },
+  });
+
+  const table = useDataTable<Journal>({
     columns,
     data: result.data
       ? {
-          rows: result.data.orders.edges.map((e) => e.node),
-          pageInfo: {
-            hasNextPage: result.data.orders.pageInfo.hasNextPage,
-            hasPreviousPage: result.data.orders.pageInfo.hasPreviousPage,
-            endCursor: result.data.orders.pageInfo.endCursor,
-            startCursor: result.data.orders.pageInfo.startCursor,
-          },
-          total: result.data.orders.total,
+          rows: result.data.journals.edges.map((e) => e.node),
+          pageInfo: result.data.journals.pageInfo,
+          total: result.data.journals.total,
         }
       : undefined,
     loading: result.fetching,
     control,
-    rowActions,
-    onClickRow: (row) => navigate(`/orders/${row.id}`),
-    onSelectionChange: (ids) => setSelectedIds(ids),
   });
 
+  // DataTable.Root + DataTable.Table are the only required sub-components.
+  // DataTable.Toolbar / DataTable.Filters / DataTable.Pagination are opt-in sensible defaults.
+  // If they don't fit, use useDataTableContext() to build your own sub-components —
+  // it exposes the full DataTable state (rows, columns, sort, pagination, selection, etc.)
+  // from the nearest DataTable.Root.
   return (
     <DataTable.Root value={table}>
       <DataTable.Toolbar>
@@ -90,7 +126,9 @@ function OrdersPage() {
 }
 ```
 
-## sdk-plugins (`@tailor-platform/app-shell-sdk-plugin`)
+`useCollectionVariables` is intentionally decoupled from DataTable and any other UI component. The hook owns only the query state and exposes plain `variables` — how those variables are rendered is entirely up to the consumer. This means future collection-based views such as Kanban boards can adopt the same hook without modification, and any custom component you build can use a GraphQL cursor-based API as its backend with minimal wiring.
+
+## sdk-plugin (`@tailor-platform/app-shell-sdk-plugin`)
 
 `tableMetadata` is what bridges your TailorDB schema to the DataTable. It tells `inferColumns` how to render and filter each field — for example, which fields get a date picker, which get an enum dropdown (and with what options), and which are numeric. Without it, you would need to declare all of this manually per column.
 

@@ -170,6 +170,7 @@ export {
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,
+  type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export {

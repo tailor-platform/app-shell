@@ -141,24 +141,26 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // ---------------------------------------------------------------------------
   // Row selection
   // ---------------------------------------------------------------------------
-  const getRowId = useCallback((row: TRow, index: number): string => {
+  const getRowId = useCallback((row: TRow): string | null => {
     const id = (row as Record<string, unknown>)["id"];
-    return id != null ? String(id) : String(index);
+    return id != null ? String(id) : null;
   }, []);
 
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   const isRowSelected = useCallback(
     (row: TRow) => {
-      const id = getRowId(row, rows.indexOf(row));
+      const id = getRowId(row);
+      if (id === null) return false;
       return selectedRowIds.has(id);
     },
-    [selectedRowIds, rows, getRowId],
+    [selectedRowIds, getRowId],
   );
 
   const toggleRowSelection = onSelectionChange
     ? (row: TRow) => {
-        const id = getRowId(row, rows.indexOf(row));
+        const id = getRowId(row);
+        if (id === null) return;
         setSelectedRowIds((prev) => {
           const next = new Set(prev);
           if (next.has(id)) {
@@ -174,7 +176,9 @@ export function useDataTable<TRow extends Record<string, unknown>>(
 
   const selectAllRows = onSelectionChange
     ? () => {
-        const allIds = new Set(rows.map((r, i) => getRowId(r, i)));
+        const allIds = new Set(
+          rows.map((r) => getRowId(r)).filter((id): id is string => id !== null),
+        );
         setSelectedRowIds(allIds);
         onSelectionChange([...allIds]);
       }
@@ -189,7 +193,8 @@ export function useDataTable<TRow extends Record<string, unknown>>(
 
   const selectedIds = useMemo(() => [...selectedRowIds], [selectedRowIds]);
 
-  const isAllSelected = rows.length > 0 && selectedRowIds.size === rows.length;
+  const selectableCount = rows.filter((r) => getRowId(r) !== null).length;
+  const isAllSelected = selectableCount > 0 && selectedRowIds.size === selectableCount;
   const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
 
   // ---------------------------------------------------------------------------

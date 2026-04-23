@@ -400,4 +400,73 @@ describe("useDataTable", () => {
       expect(result.current.clearSelection).toBeUndefined();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Rows without id
+  // -------------------------------------------------------------------------
+  describe("rows without id", () => {
+    type PartialRow = { id?: string; name: string };
+    const columnsPartial: Column<PartialRow>[] = [
+      { id: "name", label: "Name", render: (r) => r.name },
+    ];
+    const dataWithMissingId: DataTableData<PartialRow> = {
+      rows: [
+        { id: "1", name: "Alice" },
+        { name: "Bob" }, // no id
+        { id: "3", name: "Carol" },
+      ],
+    };
+
+    it("isRowSelected returns false for a row without id", () => {
+      const { result } = renderHook(() =>
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange: vi.fn(),
+        }),
+      );
+      expect(result.current.isRowSelected(dataWithMissingId.rows[1])).toBe(false);
+    });
+
+    it("toggleRowSelection is a no-op for rows without id", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(dataWithMissingId.rows[1]);
+      });
+
+      expect(result.current.selectedIds).toEqual([]);
+      expect(onSelectionChange).not.toHaveBeenCalled();
+    });
+
+    it("selectAllRows only selects rows that have an id", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.selectAllRows!();
+      });
+
+      expect(result.current.selectedIds).toEqual(["1", "3"]);
+      expect(onSelectionChange).toHaveBeenCalledWith(["1", "3"]);
+    });
+
+    it("isAllSelected is true when all rows with id are selected (even if some lack id)", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+      );
+
+      act(() => {
+        result.current.selectAllRows!();
+      });
+
+      expect(result.current.isAllSelected).toBe(true);
+    });
+  });
 });

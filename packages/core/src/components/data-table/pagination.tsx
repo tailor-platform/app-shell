@@ -22,7 +22,7 @@ import { useDataTableT } from "./i18n";
  * - `setToLast()` — call after jumping to the last page
  *
  * @warning **Action functions must always be paired with their corresponding
- * `CollectionControl` calls.** Calling `control.nextPage(token)` without
+ * `CollectionControl` calls.** Calling `control.nextPage(cursor)` without
  * `increment()`, or `control.goToFirstPage()` without `reset()`, causes the
  * page counter to desync permanently with no error. Each navigation handler
  * must invoke both the control method and the matching counter function in the
@@ -36,7 +36,7 @@ import { useDataTableT } from "./i18n";
  *   totalPages,
  * });
  *
- * const handleNext = () => { control.nextPage(token); increment(); };
+ * const handleNext = () => { control.nextPage(cursor); increment(); };
  * const handleFirst = () => { control.goToFirstPage(); reset(); };
  * ```
  *

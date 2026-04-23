@@ -113,15 +113,15 @@ export function useDataTable<TRow extends Record<string, unknown>>(
   // Pagination actions (delegated to control)
   // ---------------------------------------------------------------------------
   const nextPage = useCallback(
-    (token: string) => {
-      control?.nextPage(token);
+    (cursor: string) => {
+      control?.nextPage(cursor);
     },
     [control],
   );
 
   const prevPage = useCallback(
-    (token: string) => {
-      control?.prevPage(token);
+    (cursor: string) => {
+      control?.prevPage(cursor);
     },
     [control],
   );

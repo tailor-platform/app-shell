@@ -165,13 +165,13 @@ export function useCollectionVariables(
   // ---------------------------------------------------------------------------
   // Pagination operations
   // ---------------------------------------------------------------------------
-  const nextPage = useCallback((token: string) => {
-    setCursor(token);
+  const nextPage = useCallback((nextCursor: string) => {
+    setCursor(nextCursor);
     setPaginationDirection("forward");
   }, []);
 
-  const prevPage = useCallback((token: string) => {
-    setCursor(token);
+  const prevPage = useCallback((prevCursor: string) => {
+    setCursor(prevCursor);
     setPaginationDirection("backward");
   }, []);
 

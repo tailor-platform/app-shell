@@ -131,8 +131,8 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   pageInfo: PageInfo;
   total: number | null;
   totalPages: number | null;
-  nextPage: (token: string) => void;
-  prevPage: (token: string) => void;
+  nextPage: (cursor: string) => void;
+  prevPage: (cursor: string) => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
 

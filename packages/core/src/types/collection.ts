@@ -386,8 +386,8 @@ export interface CollectionControl<
   setPageSize: (size: number) => void;
   cursor: string | null;
   paginationDirection: "forward" | "backward";
-  nextPage: (token: string) => void;
-  prevPage: (token: string) => void;
+  nextPage: (cursor: string) => void;
+  prevPage: (cursor: string) => void;
   resetPage: () => void;
   goToFirstPage: () => void;
   /**

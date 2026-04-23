@@ -197,7 +197,12 @@ export function useDataTable<
   const selectedIds = useMemo(() => [...selectedRowIds], [selectedRowIds]);
 
   const selectableCount = rows.filter((r) => getRowId(r) !== null).length;
-  const isAllSelected = selectableCount > 0 && selectedRowIds.size === selectableCount;
+  const isAllSelected =
+    selectableCount > 0 &&
+    rows.every((r) => {
+      const id = getRowId(r);
+      return id !== null && selectedRowIds.has(id);
+    });
   const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
 
   // ---------------------------------------------------------------------------

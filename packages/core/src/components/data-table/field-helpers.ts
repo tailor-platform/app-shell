@@ -9,7 +9,7 @@ import type { Column, MetadataFieldOptions } from "./types";
 
 /**
  * Define a column with explicit render and optional sort/filter/accessor.
- * @internal Use `createColumnHelper` instead.
+ * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
  */
 export function column<TRow extends Record<string, unknown>>(options: Column<TRow>): Column<TRow> {
   return {
@@ -37,7 +37,7 @@ function formatValue(value: unknown): ReactNode {
 
 /**
  * Return a function that produces `Column` from metadata field names.
- * @internal Use `createColumnHelper` instead.
+ * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
  */
 export function inferColumns<
   TRow extends Record<string, unknown>,

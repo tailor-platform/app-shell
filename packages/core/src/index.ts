@@ -134,3 +134,54 @@ export {
   type ParsedRow,
   type InferCsvRow,
 } from "./components/csv-importer";
+
+// Collection (shared across DataTable, Kanban, Gantt, etc.)
+export {
+  OPERATORS_BY_FILTER_TYPE,
+  fieldTypeToSortConfig,
+  fieldTypeToFilterConfig,
+  type SortConfig,
+  type FilterConfig,
+  type SortState,
+  type Filter,
+  type FilterOperator,
+  type SelectOption,
+  type PageInfo,
+  type CollectionVariables,
+  type CollectionControl,
+  type CollectionResult,
+  type NodeType,
+  type PaginationVariables,
+  type UseCollectionOptions,
+  type UseCollectionReturn,
+  type FieldType,
+  type FieldMetadata,
+  type TableMetadata,
+  type TableMetadataMap,
+  type BuildQueryVariables,
+  type TableMetadataFilter,
+  type TableFieldName,
+  type TableOrderableFieldName,
+} from "./types/collection";
+
+// DataTable
+export {
+  DataTable,
+  useDataTable,
+  useDataTableContext,
+  createColumnHelper,
+  type DataTablePaginationProps,
+  type DataTableRootProps,
+  type Column,
+  type DataTableData,
+  type RowAction,
+  type UseDataTableOptions,
+  type UseDataTableReturn,
+  type MetadataFieldOptions,
+  type DataTableContextValue,
+} from "./components/data-table";
+export { useCollectionVariables } from "./hooks/use-collection-variables";
+export {
+  CollectionControlProvider,
+  useCollectionControl,
+} from "./contexts/collection-control-context";

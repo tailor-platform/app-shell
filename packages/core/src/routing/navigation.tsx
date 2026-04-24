@@ -58,9 +58,6 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
 
   const resolvedModules = await Promise.all(
     props.modules.map(async (module) => {
-      // Skip root module (path="") — it is handled via rootComponent and
-      // should not appear as a sidebar nav item.
-      if (module.path === "") return null;
       // Skip param routes at module level
       if (module.path.startsWith(":")) return null;
 

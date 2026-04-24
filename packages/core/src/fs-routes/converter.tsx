@@ -1,7 +1,6 @@
-import { capitalCase } from "change-case";
 import { parsePath } from "@tailor-platform/app-shell-vite-plugin/parser";
 import type { Module, Resource, Guard } from "@/resource";
-import { withGuardsLoader } from "@/resource";
+import { withGuardsLoader, titleFromPath } from "@/resource";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import type { LocalizedString } from "@/lib/i18n";
 import type { PageEntry, PageComponent } from "./types";
@@ -69,8 +68,7 @@ function buildPageTree(pages: PageEntry[]): PageNode {
  * Get title from page component or generate from path.
  */
 function getTitle(component: PageComponent | undefined, path: string): LocalizedString {
-  const normalizedPath = path === "/" ? "" : path;
-  return component?.appShellPageProps?.meta?.title ?? capitalCase(normalizedPath || "home");
+  return component?.appShellPageProps?.meta?.title ?? titleFromPath(path);
 }
 
 /**

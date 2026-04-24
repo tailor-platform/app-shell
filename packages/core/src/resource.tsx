@@ -172,6 +172,13 @@ export const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: Loade
   };
 };
 
+/**
+ * Generate a human-readable title from a route path using capitalCase.
+ * Root paths ("" or "/") produce "Home" instead of an empty string or "/".
+ */
+export const titleFromPath = (path: string): string =>
+  capitalCase(path === "" || path === "/" ? "home" : path);
+
 type CommonPageResource = {
   path: string;
   type: "component";
@@ -356,9 +363,8 @@ type DefineModuleProps = CommonProps &
  */
 export function defineModule(props: DefineModuleProps): Module {
   const { path, meta, component, resources, errorBoundary, guards } = props;
-  const normalizedPath = path || "home";
-  const metaTitle: LocalizedString = meta?.title ?? capitalCase(normalizedPath);
-  const fallbackTitle = capitalCase(normalizedPath);
+  const metaTitle: LocalizedString = meta?.title ?? titleFromPath(path);
+  const fallbackTitle = titleFromPath(path);
   const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) => component({ title, resources }))

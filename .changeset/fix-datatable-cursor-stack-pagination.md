@@ -8,6 +8,6 @@ Fix `DataTable.Pagination` cursor-based pagination.
 - Fix navigating back after `goToLastPage` incorrectly returning to page 1.
 - Fix Next button being enabled past the last page when `total` is known.
 
-`CollectionControl` has a new required field `cursorStack: string[]`. If you are constructing a mock `CollectionControl` in tests, add `cursorStack: []`.
+**Breaking:** `CollectionControl.nextPage` / `CollectionControl.prevPage` have been replaced with mode-aware `goToNextPage(pageInfo)` / `goToPrevPage(pageInfo)`. These encapsulate forward/backward logic so callers never branch on `paginationDirection`.
 
-`CollectionControl.prevPage` now accepts an optional `cursor?: string` argument (was required). Existing call sites that pass a cursor continue to work unchanged.
+`CollectionControl` has new required fields: `cursorStack: string[]`, `goToNextPage`, `goToPrevPage`, `getHasPrevPage`, `getHasNextPage`. If you are constructing a mock `CollectionControl` in tests, add these fields.

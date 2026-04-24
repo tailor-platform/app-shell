@@ -30,14 +30,14 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     clearSort: vi.fn(),
     pageSize: 10,
     setPageSize: vi.fn(),
-    cursor: null,
-    cursorStack: [],
-    paginationDirection: "forward",
-    nextPage: vi.fn(),
-    prevPage: vi.fn(),
+    goToNextPage: vi.fn(),
+    goToPrevPage: vi.fn(),
     resetPage: vi.fn(),
     goToFirstPage: vi.fn(),
     goToLastPage: vi.fn(),
+    resetCount: 0,
+    getHasPrevPage: () => false,
+    getHasNextPage: (pageInfo) => pageInfo.hasNextPage,
     ...overrides,
   };
 }
@@ -113,11 +113,11 @@ describe("DataTable.Pagination", () => {
 });
 
 // ---------------------------------------------------------------------------
-// useCurrentPage — page counter behaviour
+// Page counter behaviour
 //
-// The hook is internal, so it is tested through DataTable.Pagination.
+// usePageCounter is internal to useDataTable, tested through DataTable.Pagination.
 // ---------------------------------------------------------------------------
-describe("useCurrentPage", () => {
+describe("page counter", () => {
   it("starts at page 1", () => {
     render(<TestPagination data={dataWithTotal} control={makeControl()} />, {
       wrapper,
@@ -137,9 +137,11 @@ describe("useCurrentPage", () => {
 
   it("decrements on Previous click", async () => {
     const user = userEvent.setup();
-    render(<TestPagination data={dataWithTotal} control={makeControl()} />, {
-      wrapper,
-    });
+    // hasPrevPage must be true for Prev to be enabled
+    render(
+      <TestPagination data={dataWithTotal} control={makeControl({ getHasPrevPage: () => true })} />,
+      { wrapper },
+    );
 
     await user.click(screen.getByLabelText("Next page"));
     await user.click(screen.getByLabelText("Previous page"));
@@ -148,10 +150,10 @@ describe("useCurrentPage", () => {
 
   it("does not decrement below 1", async () => {
     const user = userEvent.setup();
-    // hasPreviousPage: true so the button is enabled, but we're on page 1
-    render(<TestPagination data={dataWithTotal} control={makeControl()} />, {
-      wrapper,
-    });
+    render(
+      <TestPagination data={dataWithTotal} control={makeControl({ getHasPrevPage: () => true })} />,
+      { wrapper },
+    );
 
     await user.click(screen.getByLabelText("Previous page"));
     expect(screen.getByText("Page 1 / 5")).not.toBeNull();
@@ -159,9 +161,10 @@ describe("useCurrentPage", () => {
 
   it("resets to 1 on First-page click", async () => {
     const user = userEvent.setup();
-    render(<TestPagination data={dataWithTotal} control={makeControl()} />, {
-      wrapper,
-    });
+    render(
+      <TestPagination data={dataWithTotal} control={makeControl({ getHasPrevPage: () => true })} />,
+      { wrapper },
+    );
 
     await user.click(screen.getByLabelText("Next page"));
     await user.click(screen.getByLabelText("Next page"));
@@ -179,44 +182,17 @@ describe("useCurrentPage", () => {
     expect(screen.getByText("Page 5 / 5")).not.toBeNull();
   });
 
-  it("resets to 1 when cursor is externally reset to null+forward (e.g. filter change)", () => {
-    // Simulate: user is on page 3, then a filter change resets cursor→null+forward
-    const controlOnPage3 = makeControl({
-      cursor: "page-3-cursor",
-      paginationDirection: "forward",
-    });
-    const { rerender } = render(<TestPagination data={dataWithTotal} control={controlOnPage3} />, {
+  it("resets to 1 when resetCount changes (e.g. filter change)", () => {
+    const control = makeControl({ resetCount: 0 });
+    const { rerender } = render(<TestPagination data={dataWithTotal} control={control} />, {
       wrapper,
     });
 
-    // Advance page counter manually to reflect "we are on page 3"
-    // We simulate this by using a control that already has a non-null cursor
-    // and then re-rendering with the reset control.
-    const resetControl = makeControl({
-      cursor: null,
-      paginationDirection: "forward",
-    });
+    // Simulate filter change bumping resetCount
+    const resetControl = makeControl({ resetCount: 1 });
     rerender(<TestPagination data={dataWithTotal} control={resetControl} />);
 
     expect(screen.getByText("Page 1 / 5")).not.toBeNull();
-  });
-
-  it("jumps to totalPages when cursor is externally reset to null+backward (goToLastPage)", () => {
-    const controlMidPage = makeControl({
-      cursor: "mid-cursor",
-      paginationDirection: "forward",
-    });
-    const { rerender } = render(<TestPagination data={dataWithTotal} control={controlMidPage} />, {
-      wrapper,
-    });
-
-    const lastPageControl = makeControl({
-      cursor: null,
-      paginationDirection: "backward",
-    });
-    rerender(<TestPagination data={dataWithTotal} control={lastPageControl} />);
-
-    expect(screen.getByText("Page 5 / 5")).not.toBeNull();
   });
 
   it("disables Next button when currentPage reaches totalPages", async () => {
@@ -235,23 +211,41 @@ describe("useCurrentPage", () => {
     expect(screen.getByLabelText("Next page")).toHaveProperty("disabled", true);
   });
 
-  it("calls prevPage with startCursor after goToLastPage (not forward stack pop)", async () => {
-    // Regression: after goToLastPage, pressing Prev must call prevPage(startCursor)
-    // using `last + before` backward navigation, NOT pop the empty cursorStack
-    // which would incorrectly return to page 1.
+  it("delegates goToPrevPage to control", async () => {
     const user = userEvent.setup();
-    const control = makeControl({
-      cursor: null,
-      cursorStack: [],
-      paginationDirection: "backward",
-    });
+    const control = makeControl({ getHasPrevPage: () => true });
     render(<TestPagination data={dataWithTotal} control={control} />, {
       wrapper,
     });
 
     await user.click(screen.getByLabelText("Previous page"));
+    expect(control.goToPrevPage).toHaveBeenCalledWith(dataWithTotal.pageInfo);
+  });
 
-    // startCursor of dataWithTotal is "prev-tok"
-    expect(control.prevPage).toHaveBeenCalledWith("prev-tok");
+  it("delegates goToNextPage to control", async () => {
+    const user = userEvent.setup();
+    const control = makeControl();
+    render(<TestPagination data={dataWithTotal} control={control} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByLabelText("Next page"));
+    expect(control.goToNextPage).toHaveBeenCalledWith(dataWithTotal.pageInfo);
+  });
+
+  it("disables Prev/Next based on getHasPrevPage/getHasNextPage", () => {
+    render(
+      <TestPagination
+        data={dataWithTotal}
+        control={makeControl({
+          getHasPrevPage: () => false,
+          getHasNextPage: () => false,
+        })}
+      />,
+      { wrapper },
+    );
+
+    expect(screen.getByLabelText("Previous page")).toHaveProperty("disabled", true);
+    expect(screen.getByLabelText("Next page")).toHaveProperty("disabled", true);
   });
 });

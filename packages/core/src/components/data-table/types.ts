@@ -136,8 +136,18 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   pageInfo: PageInfo;
   total: number | null;
   totalPages: number | null;
-  nextPage: (cursor: string) => void;
-  prevPage: (beforeCursor?: string) => void;
+  /** 1-based page counter, automatically kept in sync by navigation actions. */
+  currentPage: number;
+  /** Navigate to the next page. Mode-aware: pushes cursor in forward, pops stack in backward. */
+  goToNextPage: (pageInfo: Pick<PageInfo, "endCursor">) => void;
+  /** Navigate to the previous page. Mode-aware: pops stack in forward, pushes cursor in backward. */
+  goToPrevPage: (pageInfo: Pick<PageInfo, "startCursor">) => void;
+  /** Jump to the first page. */
+  goToFirstPage: () => void;
+  /** Jump to the last page. Only functional when `totalPages` is known. */
+  goToLastPage: () => void;
+  /** Change the page size and reset to the first page. */
+  setPageSize: (size: number) => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
 

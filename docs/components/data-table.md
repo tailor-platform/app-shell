@@ -328,7 +328,7 @@ Accesses the full DataTable state from any component rendered inside `DataTable.
 import { useDataTableContext } from "@tailor-platform/app-shell";
 
 function MyCustomPagination() {
-  const { pageInfo, nextPage, prevPage, hasNextPage, hasPrevPage } = useDataTableContext();
+  const { pageInfo, goToNextPage, goToPrevPage, hasNextPage, hasPrevPage } = useDataTableContext();
   // ...
 }
 ```

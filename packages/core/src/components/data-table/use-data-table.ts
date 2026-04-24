@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
+import { usePageCounter } from "./use-page-counter";
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -67,10 +68,15 @@ export function useDataTable<
   // Pagination (derived from data + control)
   // ---------------------------------------------------------------------------
   const pageSize = control?.pageSize ?? 0;
-  const totalPages =
-    total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
-  const hasPrevPage = pageInfo.hasPreviousPage || (control?.cursorStack.length ?? 0) > 0;
-  const hasNextPage = pageInfo.hasNextPage;
+
+  const { currentPage, totalPages, increment, decrement, reset, setToLast } = usePageCounter({
+    total,
+    pageSize,
+    resetCount: control?.resetCount ?? 0,
+  });
+
+  const hasPrevPage = control?.getHasPrevPage(pageInfo) ?? false;
+  const hasNextPage = control?.getHasNextPage(pageInfo) ?? pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
   // Column visibility management
@@ -112,20 +118,40 @@ export function useDataTable<
   );
 
   // ---------------------------------------------------------------------------
-  // Pagination actions (delegated to control)
+  // Pagination actions (delegated to control + page counter sync)
   // ---------------------------------------------------------------------------
-  const nextPage = useCallback(
-    (cursor: string) => {
-      control?.nextPage(cursor);
+  const goToNextPage = useCallback(
+    (pi: Pick<PageInfo, "endCursor">) => {
+      control?.goToNextPage(pi);
+      increment();
     },
-    [control],
+    [control, increment],
   );
 
-  const prevPage = useCallback(
-    (beforeCursor?: string) => {
-      control?.prevPage(beforeCursor);
+  const goToPrevPage = useCallback(
+    (pi: Pick<PageInfo, "startCursor">) => {
+      control?.goToPrevPage(pi);
+      decrement();
     },
-    [control],
+    [control, decrement],
+  );
+
+  const goToFirstPage = useCallback(() => {
+    control?.goToFirstPage();
+    reset();
+  }, [control, reset]);
+
+  const goToLastPage = useCallback(() => {
+    control?.goToLastPage();
+    if (totalPages !== null) setToLast(totalPages);
+  }, [control, totalPages, setToLast]);
+
+  const setPageSize = useCallback(
+    (size: number) => {
+      control?.setPageSize(size);
+      reset();
+    },
+    [control, reset],
   );
 
   // ---------------------------------------------------------------------------
@@ -218,9 +244,13 @@ export function useDataTable<
     pageInfo,
     total,
     totalPages,
+    currentPage,
     pageSize,
-    nextPage,
-    prevPage,
+    goToNextPage,
+    goToPrevPage,
+    goToFirstPage,
+    goToLastPage,
+    setPageSize,
     hasPrevPage,
     hasNextPage,
     columns: allColumns,

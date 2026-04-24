@@ -26,8 +26,14 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   pageInfo: PageInfo;
   total: number | null;
   totalPages: number | null;
-  nextPage: (cursor: string) => void;
-  prevPage: (beforeCursor?: string) => void;
+  /** 1-based page counter, automatically kept in sync by navigation actions. */
+  currentPage: number;
+  goToNextPage: (pageInfo: Pick<PageInfo, "endCursor">) => void;
+  goToPrevPage: (pageInfo: Pick<PageInfo, "startCursor">) => void;
+  /** Jump to the first page. */
+  goToFirstPage: () => void;
+  /** Jump to the last page. Only functional when `totalPages` is known. */
+  goToLastPage: () => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
   /**
@@ -35,6 +41,8 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
    * configured. Used to render the correct number of skeleton / ghost rows.
    */
   pageSize: number;
+  /** Change the page size and reset to the first page. */
+  setPageSize: (size: number) => void;
 
   // Column management
   columns: Column<TRow>[];

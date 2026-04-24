@@ -389,7 +389,7 @@ export interface CollectionControl<
   cursorStack: string[];
   paginationDirection: "forward" | "backward";
   nextPage: (cursor: string) => void;
-  prevPage: (cursor?: string) => void;
+  prevPage: (beforeCursor?: string) => void;
   resetPage: () => void;
   goToFirstPage: () => void;
   /**

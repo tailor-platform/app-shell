@@ -178,11 +178,11 @@ export function useCollectionVariables(
     setPaginationDirection("forward");
   }, []);
 
-  const prevPage = useCallback((cursor?: string) => {
-    if (cursor !== undefined) {
+  const prevPage = useCallback((beforeCursor?: string) => {
+    if (beforeCursor !== undefined) {
       // Backward navigation (from goToLastPage or while in backward mode).
       // Use `last + before` so the server returns the page preceding the current one.
-      setCursor(cursor);
+      setCursor(beforeCursor);
       setCursorStack([]);
       setPaginationDirection("backward");
     } else {

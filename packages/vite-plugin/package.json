@@ -49,7 +49,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "tsdown": "^0.21.7",
-    "typescript": "^5",
+    "typescript": "^6",
     "vite": "catalog:",
     "vitest": "^4.1.4"
   },

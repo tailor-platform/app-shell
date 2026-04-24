@@ -166,93 +166,89 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
     <SidebarGroup>
       <SidebarMenu>
         <SearchEntry />
-        {props.items
-          // Exclude root ("/") — it is handled via rootComponent and
-          // should not appear as a sidebar nav item.
-          .filter((item) => item.url !== "/")
-          .map((item) => {
-            return (
-              <Collapsible.Root key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
-                {item.url ? (
-                  <>
+        {props.items.map((item) => {
+          return (
+            <Collapsible.Root key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
+              {item.url ? (
+                <>
+                  <SidebarMenuButton
+                    render={
+                      <Link
+                        to={item.url as string}
+                        className={
+                          isActivePath(item.url, props.currentPath)
+                            ? "astw:bg-sidebar-accent astw:font-medium"
+                            : undefined
+                        }
+                      />
+                    }
+                    tooltip={item.title}
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                  {!!item.items?.length && (
+                    <Collapsible.Trigger
+                      render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
+                    >
+                      <ChevronRight />
+                      <span className="astw:sr-only">{t("toggle")}</span>
+                    </Collapsible.Trigger>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Collapsible.Trigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
                     <SidebarMenuButton
-                      render={
-                        <Link
-                          to={item.url as string}
-                          className={
-                            isActivePath(item.url, props.currentPath)
-                              ? "astw:bg-sidebar-accent astw:font-medium"
-                              : undefined
-                          }
-                        />
-                      }
+                      render={<span className="astw:flex astw:w-full" />}
                       tooltip={item.title}
+                      onClick={(e) =>
+                        // Prevent SidebarMenuButton's auto-close behavior so the mobile sidebar
+                        // stays open when toggling a collapsible group.
+                        e.preventDefault()
+                      }
                     >
                       {item.icon}
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                     {!!item.items?.length && (
-                      <Collapsible.Trigger
-                        render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
-                      >
+                      <SidebarMenuAction className="astw-rotate-target" render={<span />}>
                         <ChevronRight />
                         <span className="astw:sr-only">{t("toggle")}</span>
-                      </Collapsible.Trigger>
+                      </SidebarMenuAction>
                     )}
-                  </>
-                ) : (
-                  <>
-                    <Collapsible.Trigger className="astw:flex astw:w-full astw:[&[data-panel-open]_.astw-rotate-target]:rotate-90">
-                      <SidebarMenuButton
-                        render={<span className="astw:flex astw:w-full" />}
-                        tooltip={item.title}
-                        onClick={(e) =>
-                          // Prevent SidebarMenuButton's auto-close behavior so the mobile sidebar
-                          // stays open when toggling a collapsible group.
-                          e.preventDefault()
-                        }
-                      >
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                      {!!item.items?.length && (
-                        <SidebarMenuAction className="astw-rotate-target" render={<span />}>
-                          <ChevronRight />
-                          <span className="astw:sr-only">{t("toggle")}</span>
-                        </SidebarMenuAction>
-                      )}
-                    </Collapsible.Trigger>
-                  </>
-                )}
-                {!!item.items?.length && (
-                  <Collapsible.Panel>
-                    <SidebarMenuSub>
-                      {item.items
-                        ?.filter((subItem) => subItem.url)
-                        .map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              render={
-                                <Link
-                                  to={subItem.url!}
-                                  className={
-                                    isActivePath(subItem.url, props.currentPath)
-                                      ? "astw:bg-sidebar-accent astw:font-medium"
-                                      : undefined
-                                  }
-                                />
-                              }
-                            >
-                              <span>{subItem.title}</span>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                    </SidebarMenuSub>
-                  </Collapsible.Panel>
-                )}
-              </Collapsible.Root>
-            );
-          })}
+                  </Collapsible.Trigger>
+                </>
+              )}
+              {!!item.items?.length && (
+                <Collapsible.Panel>
+                  <SidebarMenuSub>
+                    {item.items
+                      ?.filter((subItem) => subItem.url)
+                      .map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton
+                            render={
+                              <Link
+                                to={subItem.url!}
+                                className={
+                                  isActivePath(subItem.url, props.currentPath)
+                                    ? "astw:bg-sidebar-accent astw:font-medium"
+                                    : undefined
+                                }
+                              />
+                            }
+                          >
+                            <span>{subItem.title}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                  </SidebarMenuSub>
+                </Collapsible.Panel>
+              )}
+            </Collapsible.Root>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

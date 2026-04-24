@@ -41,13 +41,14 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     clearSort: vi.fn(),
     pageSize: 10,
     setPageSize: vi.fn(),
-    cursor: null,
-    paginationDirection: "forward",
-    nextPage: vi.fn(),
-    prevPage: vi.fn(),
+    goToNextPage: vi.fn(),
+    goToPrevPage: vi.fn(),
     resetPage: vi.fn(),
     goToFirstPage: vi.fn(),
     goToLastPage: vi.fn(),
+    resetCount: 0,
+    getHasPrevPage: () => false,
+    getHasNextPage: (pageInfo) => pageInfo.hasNextPage,
     ...overrides,
   };
 }
@@ -113,13 +114,21 @@ describe("useDataTable", () => {
       expect(result.current.totalPages).toBeNull();
     });
 
-    it("reflects hasPreviousPage: false from pageInfo", () => {
-      // testData has hasPreviousPage: false
+    it("forward mode: hasPrevPage is false when cursorStack is empty", () => {
+      // Default getHasPrevPage returns false
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasPrevPage).toBe(false);
     });
 
-    it("reflects hasPreviousPage: true from pageInfo", () => {
+    it("hasPrevPage is true when getHasPrevPage returns true", () => {
+      const control = makeControl({
+        getHasPrevPage: () => true,
+      });
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+      expect(result.current.hasPrevPage).toBe(true);
+    });
+
+    it("backward mode: hasPrevPage uses pageInfo.hasPreviousPage", () => {
       const dataWithPrev: DataTableData<TestRow> = {
         rows: testData.rows,
         pageInfo: {
@@ -130,17 +139,20 @@ describe("useDataTable", () => {
         },
         total: 50,
       };
-      const { result } = renderHook(() => useDataTable({ columns, data: dataWithPrev }));
+      const control = makeControl({
+        getHasPrevPage: (pi) => pi.hasPreviousPage,
+      });
+      const { result } = renderHook(() => useDataTable({ columns, data: dataWithPrev, control }));
       expect(result.current.hasPrevPage).toBe(true);
     });
 
-    it("reflects hasNextPage: true from pageInfo", () => {
+    it("forward mode: hasNextPage uses pageInfo.hasNextPage", () => {
       // testData has hasNextPage: true
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasNextPage).toBe(true);
     });
 
-    it("reflects hasNextPage: false from pageInfo", () => {
+    it("forward mode: hasNextPage is false from pageInfo", () => {
       const dataLastPage: DataTableData<TestRow> = {
         rows: testData.rows,
         pageInfo: {
@@ -155,24 +167,42 @@ describe("useDataTable", () => {
       expect(result.current.hasNextPage).toBe(false);
     });
 
-    it("delegates nextPage to control", () => {
-      const control = makeControl();
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
-
-      act(() => {
-        result.current.nextPage("tok-1");
+    it("hasNextPage is true when getHasNextPage returns true", () => {
+      const control = makeControl({
+        getHasNextPage: () => true,
       });
-      expect(control.nextPage).toHaveBeenCalledWith("tok-1");
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+      expect(result.current.hasNextPage).toBe(true);
     });
 
-    it("delegates prevPage to control", () => {
+    it("hasNextPage is false when getHasNextPage returns false", () => {
+      const control = makeControl({
+        getHasNextPage: () => false,
+      });
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+      expect(result.current.hasNextPage).toBe(false);
+    });
+
+    it("delegates goToNextPage to control", () => {
       const control = makeControl();
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
 
       act(() => {
-        result.current.prevPage("tok-2");
+        result.current.goToNextPage({ endCursor: "tok-1" });
       });
-      expect(control.prevPage).toHaveBeenCalledWith("tok-2");
+      expect(control.goToNextPage).toHaveBeenCalledWith({ endCursor: "tok-1" });
+    });
+
+    it("delegates goToPrevPage to control", () => {
+      const control = makeControl();
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+
+      act(() => {
+        result.current.goToPrevPage({ startCursor: "start-tok" });
+      });
+      expect(control.goToPrevPage).toHaveBeenCalledWith({
+        startCursor: "start-tok",
+      });
     });
   });
 
@@ -431,7 +461,11 @@ describe("useDataTable", () => {
     it("toggleRowSelection is a no-op for rows without id", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>
-        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange,
+        }),
       );
 
       act(() => {
@@ -445,7 +479,11 @@ describe("useDataTable", () => {
     it("selectAllRows only selects rows that have an id", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>
-        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange,
+        }),
       );
 
       act(() => {
@@ -459,7 +497,11 @@ describe("useDataTable", () => {
     it("isAllSelected is true when all rows with id are selected (even if some lack id)", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>
-        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange,
+        }),
       );
 
       act(() => {

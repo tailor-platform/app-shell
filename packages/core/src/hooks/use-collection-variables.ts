@@ -14,6 +14,7 @@ import type {
   UseCollectionOptions,
   UseCollectionReturn,
 } from "@/types/collection";
+import { useCursorPagination } from "./use-cursor-pagination";
 
 // -----------------------------------------------------------------------------
 // Overload signatures
@@ -100,103 +101,84 @@ export function useCollectionVariables(
   // ---------------------------------------------------------------------------
   const [filters, setFiltersState] = useState<Filter[]>(initialFilters);
   const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
-  const [pageSize, setPageSizeState] = useState(initialPageSize);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
+
+  const {
+    pageSize,
+    paginationVariables,
+    goToNextPage,
+    goToPrevPage,
+    resetPage,
+    goToFirstPage,
+    goToLastPage,
+    setPageSize,
+    getHasPrevPage,
+    getHasNextPage,
+    resetCount,
+  } = useCursorPagination(initialPageSize);
 
   // ---------------------------------------------------------------------------
   // Filter operations
   // ---------------------------------------------------------------------------
-  const addFilter = useCallback((field: string, operator: FilterOperator, value: unknown) => {
-    setFiltersState((prev) => {
-      const existing = prev.findIndex((f) => f.field === field);
-      const newFilter: Filter = { field, operator, value };
-      if (existing >= 0) {
-        const updated = [...prev];
-        updated[existing] = newFilter;
-        return updated;
-      }
-      return [...prev, newFilter];
-    });
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
+  const addFilter = useCallback(
+    (field: string, operator: FilterOperator, value: unknown) => {
+      setFiltersState((prev) => {
+        const existing = prev.findIndex((f) => f.field === field);
+        const newFilter: Filter = { field, operator, value };
+        if (existing >= 0) {
+          const updated = [...prev];
+          updated[existing] = newFilter;
+          return updated;
+        }
+        return [...prev, newFilter];
+      });
+      resetPage();
+    },
+    [resetPage],
+  );
 
-  const setFilters = useCallback((newFilters: Filter[]) => {
-    setFiltersState(newFilters);
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
+  const setFilters = useCallback(
+    (newFilters: Filter[]) => {
+      setFiltersState(newFilters);
+      resetPage();
+    },
+    [resetPage],
+  );
 
-  const removeFilter = useCallback((field: string) => {
-    setFiltersState((prev) => prev.filter((f) => f.field !== field));
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
+  const removeFilter = useCallback(
+    (field: string) => {
+      setFiltersState((prev) => prev.filter((f) => f.field !== field));
+      resetPage();
+    },
+    [resetPage],
+  );
 
   const clearFilters = useCallback(() => {
     setFiltersState([]);
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   // ---------------------------------------------------------------------------
   // Sort operations
   // ---------------------------------------------------------------------------
-  const setSort = useCallback((field: string, direction?: "Asc" | "Desc") => {
-    setSortStates((prev) => {
-      if (direction === undefined) {
-        return prev.filter((s) => s.field !== field);
-      }
-      const newState: SortState = { field, direction };
-      const filtered = prev.filter((s) => s.field !== field);
-      return [...filtered, newState];
-    });
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
+  const setSort = useCallback(
+    (field: string, direction?: "Asc" | "Desc") => {
+      setSortStates((prev) => {
+        if (direction === undefined) {
+          return prev.filter((s) => s.field !== field);
+        }
+        const newState: SortState = { field, direction };
+        const filtered = prev.filter((s) => s.field !== field);
+        return [...filtered, newState];
+      });
+      resetPage();
+    },
+    [resetPage],
+  );
 
   const clearSort = useCallback(() => {
     setSortStates([]);
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
-
-  // ---------------------------------------------------------------------------
-  // Pagination operations
-  // ---------------------------------------------------------------------------
-  const nextPage = useCallback((nextCursor: string) => {
-    setCursor(nextCursor);
-    setPaginationDirection("forward");
-  }, []);
-
-  const prevPage = useCallback((prevCursor: string) => {
-    setCursor(prevCursor);
-    setPaginationDirection("backward");
-  }, []);
-
-  const resetPage = useCallback(() => {
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
-
-  const setPageSize = useCallback((size: number) => {
-    setPageSizeState(size);
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
-
-  const goToFirstPage = useCallback(() => {
-    setCursor(null);
-    setPaginationDirection("forward");
-  }, []);
-
-  const goToLastPage = useCallback(() => {
-    // Cursor-based pagination has no "jump to page N" — we request the last
-    // `pageSize` items by setting direction="backward" with no cursor.
-    setCursor(null);
-    setPaginationDirection("backward");
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   // ---------------------------------------------------------------------------
   // Build collection variables (Tailor Platform format)
@@ -218,25 +200,13 @@ export function useCollectionVariables(
     }));
   }, [sortStates]);
 
-  const paginationVars = useMemo<PaginationVariables>(() => {
-    const p: PaginationVariables = {};
-    if (paginationDirection === "forward") {
-      p.first = pageSize;
-      if (cursor) p.after = cursor;
-    } else {
-      p.last = pageSize;
-      if (cursor) p.before = cursor;
-    }
-    return p;
-  }, [pageSize, cursor, paginationDirection]);
-
   const variables = useMemo<CollectionVariables>(
     () => ({
       query: queryVars,
       order: orderVars,
-      pagination: paginationVars,
+      pagination: paginationVariables,
     }),
-    [queryVars, orderVars, paginationVars],
+    [queryVars, orderVars, paginationVariables],
   );
 
   // ---------------------------------------------------------------------------
@@ -255,13 +225,14 @@ export function useCollectionVariables(
       clearSort,
       pageSize,
       setPageSize,
-      cursor,
-      paginationDirection,
-      nextPage,
-      prevPage,
+      goToNextPage,
+      goToPrevPage,
       resetPage,
       goToFirstPage,
       goToLastPage,
+      getHasPrevPage,
+      getHasNextPage,
+      resetCount,
     },
   };
 }

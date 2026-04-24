@@ -384,10 +384,10 @@ export interface CollectionControl<
   // Pagination operations
   pageSize: number;
   setPageSize: (size: number) => void;
-  cursor: string | null;
-  paginationDirection: "forward" | "backward";
-  nextPage: (cursor: string) => void;
-  prevPage: (cursor: string) => void;
+  /** Navigate to the next page. Mode-aware: pushes cursor in forward, pops stack in backward. */
+  goToNextPage: (pageInfo: Pick<PageInfo, "endCursor">) => void;
+  /** Navigate to the previous page. Mode-aware: pops stack in forward, pushes cursor in backward. */
+  goToPrevPage: (pageInfo: Pick<PageInfo, "startCursor">) => void;
   resetPage: () => void;
   goToFirstPage: () => void;
   /**
@@ -397,6 +397,22 @@ export interface CollectionControl<
    * `"backward"` with no cursor.
    */
   goToLastPage: () => void;
+  /**
+   * Determine whether a previous page exists, given the server's `pageInfo`.
+   * Accounts for the current pagination direction and cursor stack.
+   */
+  getHasPrevPage: (pageInfo: Pick<PageInfo, "hasPreviousPage">) => boolean;
+  /**
+   * Determine whether a next page exists, given the server's `pageInfo`.
+   * Accounts for the current pagination direction and cursor stack.
+   */
+  getHasNextPage: (pageInfo: Pick<PageInfo, "hasNextPage">) => boolean;
+  /**
+   * Monotonically increasing counter that bumps on every pagination reset.
+   * Used internally by `usePageCounter` to detect external resets (e.g.
+   * filter/sort changes) and sync `currentPage`.
+   */
+  resetCount: number;
 }
 
 /**

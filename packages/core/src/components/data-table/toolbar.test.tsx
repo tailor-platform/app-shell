@@ -29,13 +29,14 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     clearSort: vi.fn(),
     pageSize: 10,
     setPageSize: vi.fn(),
-    cursor: null,
-    paginationDirection: "forward",
-    nextPage: vi.fn(),
-    prevPage: vi.fn(),
+    goToNextPage: vi.fn(),
+    goToPrevPage: vi.fn(),
     resetPage: vi.fn(),
     goToFirstPage: vi.fn(),
     goToLastPage: vi.fn(),
+    resetCount: 0,
+    getHasPrevPage: () => false,
+    getHasNextPage: (pageInfo) => pageInfo.hasNextPage,
     ...overrides,
   };
 }

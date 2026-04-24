@@ -356,8 +356,9 @@ type DefineModuleProps = CommonProps &
  */
 export function defineModule(props: DefineModuleProps): Module {
   const { path, meta, component, resources, errorBoundary, guards } = props;
-  const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
-  const fallbackTitle = capitalCase(path);
+  const normalizedPath = path || "home";
+  const metaTitle: LocalizedString = meta?.title ?? capitalCase(normalizedPath);
+  const fallbackTitle = capitalCase(normalizedPath);
   const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) => component({ title, resources }))

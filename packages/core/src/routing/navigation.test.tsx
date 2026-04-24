@@ -388,4 +388,25 @@ describe("useNavItems", () => {
     expect(homeItem).toBeDefined();
     expect(homeItem?.url).toBe("/");
   });
+
+  it("root module (path='') without meta.title falls back to 'Home'", async () => {
+    const modules = [
+      defineModule({
+        path: "",
+        meta: {},
+        component: () => <div>Home</div>,
+        resources: [],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(1);
+    });
+
+    const navItems = await result.current!;
+    expect(navItems[0].title).toBe("Home");
+    expect(navItems[0].url).toBe("/");
+  });
 });

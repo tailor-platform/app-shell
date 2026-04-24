@@ -142,9 +142,9 @@ export function useDataTable<
   }, [control, reset]);
 
   const goToLastPage = useCallback(() => {
-    control?.goToLastPage();
+    control?.goToLastPage(total);
     if (totalPages !== null) setToLast(totalPages);
-  }, [control, totalPages, setToLast]);
+  }, [control, total, totalPages, setToLast]);
 
   const setPageSize = useCallback(
     (size: number) => {

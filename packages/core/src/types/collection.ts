@@ -393,10 +393,11 @@ export interface CollectionControl<
   /**
    * Navigate to the last page.
    *
-   * Requests the last `pageSize` items by setting `paginationDirection` to
-   * `"backward"` with no cursor.
+   * When `total` is provided, the hook computes `total % pageSize` so the last
+   * page aligns with forward-pagination boundaries. Without `total`, it falls
+   * back to a full `pageSize` fetch.
    */
-  goToLastPage: () => void;
+  goToLastPage: (total?: number | null) => void;
   /**
    * Determine whether a previous page exists, given the server's `pageInfo`.
    * Accounts for the current pagination direction and cursor stack.

@@ -69,7 +69,8 @@ function buildPageTree(pages: PageEntry[]): PageNode {
  * Get title from page component or generate from path.
  */
 function getTitle(component: PageComponent | undefined, path: string): LocalizedString {
-  return component?.appShellPageProps?.meta?.title ?? capitalCase(path || "home");
+  const normalizedPath = path === "/" ? "" : path;
+  return component?.appShellPageProps?.meta?.title ?? capitalCase(normalizedPath || "home");
 }
 
 /**

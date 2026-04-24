@@ -119,7 +119,7 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
-              to="/custom-page/layout-slots-demo"
+              to="/custom-page/layout-patterns"
               style={{
                 color: "hsl(var(--primary))",
                 textDecoration: "underline",

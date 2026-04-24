@@ -30,8 +30,8 @@ afterEach(() => {
 const createTestModules = () => [
   defineModule({
     path: "",
-    meta: { title: "Home" },
-    component: () => <div>Home Root</div>,
+    meta: { title: "Root" },
+    component: () => <div>Root</div>,
     resources: [],
   }),
   defineModule({
@@ -145,7 +145,7 @@ describe("SidebarItem", () => {
     renderWithProviders(<SidebarItem to="/" />);
 
     const menu = getSidebarMenu();
-    expect(menu.getByRole("link", { name: /home/i })).toBeDefined();
+    expect(menu.getByRole("link", { name: /root/i })).toBeDefined();
   });
 });
 

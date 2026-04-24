@@ -27,7 +27,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   total: number | null;
   totalPages: number | null;
   nextPage: (cursor: string) => void;
-  prevPage: (startCursor?: string) => void;
+  prevPage: (cursor?: string) => void;
   hasPrevPage: boolean;
   hasNextPage: boolean;
   /**

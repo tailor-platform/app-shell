@@ -1,18 +1,13 @@
 ---
-"@tailor-platform/app-shell": major
+"@tailor-platform/app-shell": patch
 ---
 
-Fix `DataTable.Pagination` to use a client-side cursor stack for backward navigation instead of relying on `hasPreviousPage`, which GraphQL servers may always return as `false` when using `first + after`.
+Fix `DataTable.Pagination` cursor-based pagination.
 
-**Breaking changes:**
+- Use a client-side `cursorStack` instead of relying on `hasPreviousPage`, which GraphQL servers may always return as `false` when using `first + after`.
+- Fix navigating back after `goToLastPage` incorrectly returning to page 1.
+- Fix Next button being enabled past the last page when `total` is known.
 
-`CollectionControl.prevPage` no longer accepts a cursor argument for standard back navigation. Instead, `cursorStack` (a new required field on `CollectionControl`) is managed internally by `useCollectionVariables`.
+`CollectionControl` has a new required field `cursorStack: string[]`. If you are constructing a mock `CollectionControl` in tests, add `cursorStack: []`.
 
-If you are calling `control.prevPage(cursor)` manually, update to `control.prevPage()` for forward-stack navigation, or `control.prevPage(startCursor)` to go back from `goToLastPage`.
-
-`CollectionControl` now requires a `cursorStack: string[]` field. If you are constructing a mock `CollectionControl` in tests, add `cursorStack: []`.
-
-**Bug fixes:**
-
-- Navigating back after `goToLastPage` now correctly uses `last + before` with `startCursor` instead of incorrectly popping the empty cursor stack and returning to page 1.
-- The Next button is now disabled when `currentPage >= totalPages` (when `total` is known), preventing an extra request for a non-existent page beyond the last one.
+`CollectionControl.prevPage` now accepts an optional `cursor?: string` argument (was required). Existing call sites that pass a cursor continue to work unchanged.

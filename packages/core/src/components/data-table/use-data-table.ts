@@ -122,8 +122,8 @@ export function useDataTable<
   );
 
   const prevPage = useCallback(
-    (startCursor?: string) => {
-      control?.prevPage(startCursor);
+    (cursor?: string) => {
+      control?.prevPage(cursor);
     },
     [control],
   );

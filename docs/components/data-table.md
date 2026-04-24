@@ -56,8 +56,19 @@ const LIST_JOURNALS = gql`
       order: $order
       query: $query
     ) {
-      edges { node { id contents authorID } }
-      pageInfo { endCursor hasNextPage hasPreviousPage startCursor }
+      edges {
+        node {
+          id
+          contents
+          authorID
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
       total
     }
   }
@@ -131,27 +142,27 @@ function JournalsPage() {
 
 `DataTable` is a namespace object. All sub-components read state from `DataTable.Root` via context.
 
-| Sub-component         | Description                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `DataTable.Root`      | Context provider. Wraps all other sub-components. Required.                                                        |
-| `DataTable.Table`     | Renders the `<table>` with headers and body. Required.                                                             |
-| `DataTable.Toolbar`   | Container for toolbar content (e.g. filters, column visibility). Optional.                                         |
-| `DataTable.Filters`   | Auto-generated filter chips from column filter configs. Requires `control` from `useCollectionVariables`.          |
-| `DataTable.Footer`    | Footer container for pagination and other footer content. Optional.                                                |
-| `DataTable.Pagination`| Pre-built pagination controls. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.  |
+| Sub-component          | Description                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `DataTable.Root`       | Context provider. Wraps all other sub-components. Required.                                                       |
+| `DataTable.Table`      | Renders the `<table>` with headers and body. Required.                                                            |
+| `DataTable.Toolbar`    | Container for toolbar content (e.g. filters, column visibility). Optional.                                        |
+| `DataTable.Filters`    | Auto-generated filter chips from column filter configs. Requires `control` from `useCollectionVariables`.         |
+| `DataTable.Footer`     | Footer container for pagination and other footer content. Optional.                                               |
+| `DataTable.Pagination` | Pre-built pagination controls. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`. |
 
 ### `DataTable.Root` Props
 
-| Prop        | Type                      | Description                                     |
-| ----------- | ------------------------- | ----------------------------------------------- |
-| `value`     | `UseDataTableReturn<TRow>`| Return value of `useDataTable()`. Required.     |
-| `children`  | `ReactNode`               | Sub-components to render inside the root.       |
-| `className` | `string`                  | Additional CSS class for the root container.    |
+| Prop        | Type                       | Description                                  |
+| ----------- | -------------------------- | -------------------------------------------- |
+| `value`     | `UseDataTableReturn<TRow>` | Return value of `useDataTable()`. Required.  |
+| `children`  | `ReactNode`                | Sub-components to render inside the root.    |
+| `className` | `string`                   | Additional CSS class for the root container. |
 
 ### `DataTable.Pagination` Props
 
-| Prop              | Type       | Default | Description                                                                 |
-| ----------------- | ---------- | ------- | --------------------------------------------------------------------------- |
+| Prop              | Type       | Default | Description                                                                                                                                               |
+| ----------------- | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. First/Last buttons are shown only when the backend returns a `total` count. |
 
 ## `useDataTable`
@@ -169,49 +180,49 @@ const table = useDataTable({
 
 ### Options
 
-| Option            | Type                                         | Description                                                                                                         |
-| ----------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `columns`         | `Column<TRow>[]`                             | Column definitions. Required.                                                                                       |
-| `data`            | `DataTableData<TRow> \| undefined`           | Fetched data. Pass `undefined` while loading.                                                                       |
-| `loading`         | `boolean`                                    | When `true`, renders a loading skeleton.                                                                            |
-| `error`           | `Error \| null`                              | When set, renders an error message in the table body.                                                               |
-| `control`         | `CollectionControl`                          | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.    |
-| `onClickRow`      | `(row: TRow) => void`                        | Called when the user clicks a row. Adds a pointer cursor to rows.                                                   |
-| `rowActions`      | `RowAction<TRow>[]`                          | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.             |
-| `onSelectionChange` | `(ids: string[]) => void`                  | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.   |
+| Option              | Type                               | Description                                                                                                       |
+| ------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                     |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                     |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                          |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                             |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.  |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                 |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.           |
+| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`. |
 
 ### `DataTableData`
 
-| Property   | Type           | Description                                |
-| ---------- | -------------- | ------------------------------------------ |
-| `rows`     | `TRow[]`       | Row data to display.                       |
-| `pageInfo` | `PageInfo`     | Cursor pagination info from the API.       |
+| Property   | Type             | Description                                                          |
+| ---------- | ---------------- | -------------------------------------------------------------------- |
+| `rows`     | `TRow[]`         | Row data to display.                                                 |
+| `pageInfo` | `PageInfo`       | Cursor pagination info from the API.                                 |
 | `total`    | `number \| null` | Total record count. Used for First/Last navigation and page counter. |
 
 ## `Column`
 
 A column definition passed to `useDataTable`.
 
-| Property   | Type                         | Description                                                                                                   |
-| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `label`    | `string`                     | Column header text. Omit for icon-only columns.                                                               |
-| `render`   | `(row: TRow) => ReactNode`   | Renders the cell content. Required.                                                                           |
-| `id`       | `string`                     | Stable identifier for column visibility and React key. Falls back to `label` when omitted.                    |
-| `width`    | `number`                     | Fixed column width in pixels. Optional.                                                                       |
-| `accessor` | `(row: TRow) => unknown`     | Extracts the raw value for sorting. Not used for rendering.                                                   |
-| `sort`     | `SortConfig`                 | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).                        |
-| `filter`   | `FilterConfig`               | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.                       |
+| Property   | Type                       | Description                                                                                |
+| ---------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| `label`    | `string`                   | Column header text. Omit for icon-only columns.                                            |
+| `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Required.                                                        |
+| `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
+| `width`    | `number`                   | Fixed column width in pixels. Optional.                                                    |
+| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value for sorting. Not used for rendering.                                |
+| `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
+| `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
 
 ## `RowAction`
 
-| Property     | Type                          | Description                                         |
-| ------------ | ----------------------------- | --------------------------------------------------- |
-| `id`         | `string`                      | Stable identifier for the action.                   |
-| `label`      | `string`                      | Display label in the kebab menu.                    |
-| `icon`       | `ReactNode`                   | Optional icon shown beside the label.               |
-| `variant`    | `"default" \| "destructive"`  | Visual style of the menu item.                      |
-| `isDisabled` | `(row: TRow) => boolean`      | Return `true` to disable the action for a given row. |
-| `onClick`    | `(row: TRow) => void`         | Called when the action is clicked.                  |
+| Property     | Type                         | Description                                          |
+| ------------ | ---------------------------- | ---------------------------------------------------- |
+| `id`         | `string`                     | Stable identifier for the action.                    |
+| `label`      | `string`                     | Display label in the kebab menu.                     |
+| `icon`       | `ReactNode`                  | Optional icon shown beside the label.                |
+| `variant`    | `"default" \| "destructive"` | Visual style of the menu item.                       |
+| `isDisabled` | `(row: TRow) => boolean`     | Return `true` to disable the action for a given row. |
+| `onClick`    | `(row: TRow) => void`        | Called when the action is clicked.                   |
 
 ## `createColumnHelper`
 
@@ -226,8 +237,8 @@ const { column, inferColumns } = createColumnHelper<Order>();
 Defines a column with an explicit render function.
 
 ```tsx
-column({ label: "Name", render: (row) => row.name })
-column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> })
+column({ label: "Name", render: (row) => row.name });
+column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> });
 ```
 
 ### `inferColumns(tableMetadata)`
@@ -246,12 +257,12 @@ const columns = [
 
 The factory accepts an optional second argument to override per-column defaults:
 
-| Option   | Type      | Default | Description                                                            |
-| -------- | --------- | ------- | ---------------------------------------------------------------------- |
-| `label`  | `string`  | Field `description` or `name` from metadata | Override the column header text. |
-| `width`  | `number`  | —       | Fixed column width in pixels.                                          |
-| `sort`   | `boolean` | `true`  | Set to `false` to suppress the auto-generated sort config.             |
-| `filter` | `boolean` | `true`  | Set to `false` to suppress the auto-generated filter config.           |
+| Option   | Type      | Default                                     | Description                                                  |
+| -------- | --------- | ------------------------------------------- | ------------------------------------------------------------ |
+| `label`  | `string`  | Field `description` or `name` from metadata | Override the column header text.                             |
+| `width`  | `number`  | —                                           | Fixed column width in pixels.                                |
+| `sort`   | `boolean` | `true`                                      | Set to `false` to suppress the auto-generated sort config.   |
+| `filter` | `boolean` | `true`                                      | Set to `false` to suppress the auto-generated filter config. |
 
 ## `useCollectionVariables`
 
@@ -269,18 +280,18 @@ const { variables, control } = useCollectionVariables({
 
 ### Options
 
-| Option                     | Type                          | Description                                                     |
-| -------------------------- | ----------------------------- | --------------------------------------------------------------- |
-| `params.pageSize`          | `number`                      | Initial page size. Default: `20`.                               |
-| `params.initialFilters`    | `Filter[]`                    | Filters applied on first render.                                |
-| `params.initialSort`       | `SortState[]`                 | Sort applied on first render.                                   |
-| `tableMetadata`            | `TableMetadata`               | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
+| Option                  | Type            | Description                                                                                                           |
+| ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `params.pageSize`       | `number`        | Initial page size. Default: `20`.                                                                                     |
+| `params.initialFilters` | `Filter[]`      | Filters applied on first render.                                                                                      |
+| `params.initialSort`    | `SortState[]`   | Sort applied on first render.                                                                                         |
+| `tableMetadata`         | `TableMetadata` | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
 
 ### Return Value
 
-| Property    | Type                  | Description                                                   |
-| ----------- | --------------------- | ------------------------------------------------------------- |
-| `variables` | `CollectionVariables` | Derived `query`, `order`, and `pagination` sub-properties.    |
+| Property    | Type                  | Description                                                    |
+| ----------- | --------------------- | -------------------------------------------------------------- |
+| `variables` | `CollectionVariables` | Derived `query`, `order`, and `pagination` sub-properties.     |
 | `control`   | `CollectionControl`   | State and methods for filter, sort, and pagination management. |
 
 `useCollectionVariables` is decoupled from `DataTable` by design — the hook owns only query state and exposes plain variables. Any collection-based view (Kanban, Gantt, custom components) can use the same hook without modification.
@@ -351,8 +362,8 @@ const { column, inferColumns } = createColumnHelper<Order>();
 const infer = inferColumns(tableMetadata.order);
 
 const columns = [
-  column(infer("title")),     // string → text filter
-  column(infer("status")),    // enum   → dropdown filter with generated values
+  column(infer("title")), // string → text filter
+  column(infer("status")), // enum   → dropdown filter with generated values
   column(infer("createdAt")), // datetime → date picker filter
 ];
 ```

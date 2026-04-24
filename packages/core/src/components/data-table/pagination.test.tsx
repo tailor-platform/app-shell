@@ -245,7 +245,9 @@ describe("useCurrentPage", () => {
       cursorStack: [],
       paginationDirection: "backward",
     });
-    render(<TestPagination data={dataWithTotal} control={control} />, { wrapper });
+    render(<TestPagination data={dataWithTotal} control={control} />, {
+      wrapper,
+    });
 
     await user.click(screen.getByLabelText("Previous page"));
 

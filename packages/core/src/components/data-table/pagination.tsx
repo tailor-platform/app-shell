@@ -232,9 +232,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
         size="icon"
         onClick={handleNextPage}
         disabled={
-          !hasNextPage ||
-          !pageInfo.endCursor ||
-          (totalPages !== null && currentPage >= totalPages)
+          !hasNextPage || !pageInfo.endCursor || (totalPages !== null && currentPage >= totalPages)
         }
         aria-label={t("paginationNext")}
       >

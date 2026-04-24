@@ -442,7 +442,11 @@ describe("useDataTable", () => {
     it("toggleRowSelection is a no-op for rows without id", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>
-        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange,
+        }),
       );
 
       act(() => {
@@ -456,7 +460,11 @@ describe("useDataTable", () => {
     it("selectAllRows only selects rows that have an id", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>
-        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange,
+        }),
       );
 
       act(() => {
@@ -470,7 +478,11 @@ describe("useDataTable", () => {
     it("isAllSelected is true when all rows with id are selected (even if some lack id)", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>
-        useDataTable({ columns: columnsPartial, data: dataWithMissingId, onSelectionChange }),
+        useDataTable({
+          columns: columnsPartial,
+          data: dataWithMissingId,
+          onSelectionChange,
+        }),
       );
 
       act(() => {

@@ -361,7 +361,7 @@ describe("useNavItems", () => {
     expect(navItems[0].items).toHaveLength(0);
   });
 
-  it("root module (path='') gets url '/' in nav items", async () => {
+  it("root module (path='') is excluded from nav items", async () => {
     const modules = [
       defineModule({
         path: "",
@@ -380,16 +380,15 @@ describe("useNavItems", () => {
     const { result } = renderNavItems(modules, "/dashboard");
 
     await waitFor(async () => {
-      expect(await result.current!).toHaveLength(2);
+      expect(await result.current!).toHaveLength(1);
     });
 
     const navItems = await result.current!;
-    const homeItem = navItems.find((i) => i.title === "Home");
-    expect(homeItem).toBeDefined();
-    expect(homeItem?.url).toBe("/");
+    expect(navItems[0].title).toBe("Dashboard");
+    expect(navItems.find((i) => i.title === "Home")).toBeUndefined();
   });
 
-  it("root module (path='') without meta.title falls back to 'Home'", async () => {
+  it("root module (path='') without meta.title is excluded from nav items", async () => {
     const modules = [
       defineModule({
         path: "",
@@ -402,11 +401,10 @@ describe("useNavItems", () => {
     const { result } = renderNavItems(modules, "/");
 
     await waitFor(async () => {
-      expect(await result.current!).toHaveLength(1);
+      expect(await result.current!).toHaveLength(0);
     });
 
     const navItems = await result.current!;
-    expect(navItems[0].title).toBe("Home");
-    expect(navItems[0].url).toBe("/");
+    expect(navItems).toHaveLength(0);
   });
 });

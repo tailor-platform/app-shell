@@ -233,4 +233,39 @@ describe("DefaultSidebar auto-generation", () => {
     const triggers = sidebar.querySelectorAll('[data-slot="sidebar-menu-action"]');
     expect(triggers.length).toBe(0);
   });
+
+  it("excludes root module (path='') from auto-generated sidebar", async () => {
+    const modules = [
+      defineModule({
+        path: "",
+        meta: { title: "Home" },
+        component: () => <div>Home</div>,
+        resources: [],
+      }),
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+      }),
+    ];
+
+    window.history.pushState({}, "", "/dashboard");
+    render(
+      <AppShell title="Test" modules={modules}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+    });
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+    const links = sidebar.querySelectorAll("a");
+    const linkTexts = Array.from(links).map((link) => link.textContent);
+
+    expect(linkTexts).not.toContain("Home");
+    expect(linkTexts).toContain("Dashboard");
+  });
 });

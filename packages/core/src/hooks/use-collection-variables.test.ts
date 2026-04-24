@@ -250,7 +250,7 @@ describe("useCollectionVariables", () => {
   // Pagination operations
   // ---------------------------------------------------------------------------
   describe("pagination operations", () => {
-    it("navigates to next page (forward)", () => {
+    it("navigates to next page (forward) and pushes to cursorStack", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
@@ -258,6 +258,7 @@ describe("useCollectionVariables", () => {
       });
 
       expect(result.current.control.cursor).toBe("cursor1");
+      expect(result.current.control.cursorStack).toEqual(["cursor1"]);
       expect(result.current.control.paginationDirection).toBe("forward");
       expect(result.current.variables.pagination.after).toBe("cursor1");
       expect(result.current.variables.pagination.first).toBe(20);
@@ -265,49 +266,83 @@ describe("useCollectionVariables", () => {
       expect(result.current.variables.pagination.before).toBeUndefined();
     });
 
-    it("navigates to previous page (backward)", () => {
+    it("navigates to previous page using cursor stack (always forward)", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
-        result.current.control.prevPage("cursor1");
+        result.current.control.nextPage("cursor1");
+      });
+      act(() => {
+        result.current.control.nextPage("cursor2");
+      });
+      act(() => {
+        result.current.control.prevPage();
       });
 
       expect(result.current.control.cursor).toBe("cursor1");
-      expect(result.current.control.paginationDirection).toBe("backward");
-      expect(result.current.variables.pagination.before).toBe("cursor1");
-      expect(result.current.variables.pagination.last).toBe(20);
-      expect(result.current.variables.pagination.first).toBeUndefined();
+      expect(result.current.control.cursorStack).toEqual(["cursor1"]);
+      expect(result.current.control.paginationDirection).toBe("forward");
+      expect(result.current.variables.pagination.after).toBe("cursor1");
+      expect(result.current.variables.pagination.first).toBe(20);
+      expect(result.current.variables.pagination.last).toBeUndefined();
+      expect(result.current.variables.pagination.before).toBeUndefined();
+    });
+
+    it("prevPage back to first page clears cursor and stack", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.nextPage("cursor1");
+      });
+      act(() => {
+        result.current.control.prevPage();
+      });
+
+      expect(result.current.control.cursor).toBeNull();
+      expect(result.current.control.cursorStack).toEqual([]);
+      expect(result.current.control.paginationDirection).toBe("forward");
+      expect(result.current.variables.pagination.first).toBe(20);
       expect(result.current.variables.pagination.after).toBeUndefined();
     });
 
-    it("switches direction on nextPage after prevPage", () => {
+    it("resets page and clears cursor stack", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
-        result.current.control.prevPage("cursorB");
-      });
-      expect(result.current.control.paginationDirection).toBe("backward");
-
-      act(() => {
-        result.current.control.nextPage("cursorA");
-      });
-      expect(result.current.control.paginationDirection).toBe("forward");
-      expect(result.current.variables.pagination.after).toBe("cursorA");
-      expect(result.current.variables.pagination.first).toBe(20);
-    });
-
-    it("resets page to forward direction", () => {
-      const { result } = renderHook(() => useCollectionVariables({}));
-
-      act(() => {
-        result.current.control.prevPage("cursor1");
+        result.current.control.nextPage("cursor1");
       });
       act(() => {
         result.current.control.resetPage();
       });
 
       expect(result.current.control.cursor).toBeNull();
+      expect(result.current.control.cursorStack).toEqual([]);
       expect(result.current.control.paginationDirection).toBe("forward");
+    });
+
+    it("prevPage with startCursor uses backward direction (goToLastPage regression)", () => {
+      // Regression: after goToLastPage (cursor=null, direction=backward),
+      // pressing Prev must use `last + before` not the empty cursorStack.
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      // Simulate goToLastPage
+      act(() => {
+        result.current.control.goToLastPage();
+      });
+      expect(result.current.control.paginationDirection).toBe("backward");
+      expect(result.current.control.cursorStack).toEqual([]);
+
+      // Simulate pressing Prev with the startCursor of the last page
+      act(() => {
+        result.current.control.prevPage("last-page-start-cursor");
+      });
+
+      expect(result.current.control.cursor).toBe("last-page-start-cursor");
+      expect(result.current.control.paginationDirection).toBe("backward");
+      expect(result.current.variables.pagination.before).toBe("last-page-start-cursor");
+      expect(result.current.variables.pagination.last).toBe(20);
+      expect(result.current.variables.pagination.first).toBeUndefined();
+      expect(result.current.variables.pagination.after).toBeUndefined();
     });
   });
 

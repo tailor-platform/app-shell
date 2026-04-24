@@ -385,9 +385,11 @@ export interface CollectionControl<
   pageSize: number;
   setPageSize: (size: number) => void;
   cursor: string | null;
+  /** Stack of `endCursor` values pushed on each forward navigation. Used client-side to determine if a previous page exists, since `hasPreviousPage` may always be `false` when using `first + after`. */
+  cursorStack: string[];
   paginationDirection: "forward" | "backward";
   nextPage: (cursor: string) => void;
-  prevPage: (cursor: string) => void;
+  prevPage: (startCursor?: string) => void;
   resetPage: () => void;
   goToFirstPage: () => void;
   /**

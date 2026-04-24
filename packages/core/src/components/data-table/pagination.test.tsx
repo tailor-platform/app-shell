@@ -31,6 +31,7 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     pageSize: 10,
     setPageSize: vi.fn(),
     cursor: null,
+    cursorStack: [],
     paginationDirection: "forward",
     nextPage: vi.fn(),
     prevPage: vi.fn(),
@@ -216,5 +217,39 @@ describe("useCurrentPage", () => {
     rerender(<TestPagination data={dataWithTotal} control={lastPageControl} />);
 
     expect(screen.getByText("Page 5 / 5")).not.toBeNull();
+  });
+
+  it("disables Next button when currentPage reaches totalPages", async () => {
+    const user = userEvent.setup();
+    render(<TestPagination data={dataWithTotal} control={makeControl()} />, {
+      wrapper,
+    });
+
+    // Navigate to page 5 (= totalPages) by clicking Next 4 times
+    await user.click(screen.getByLabelText("Next page")); // page 2
+    await user.click(screen.getByLabelText("Next page")); // page 3
+    await user.click(screen.getByLabelText("Next page")); // page 4
+    await user.click(screen.getByLabelText("Next page")); // page 5
+
+    expect(screen.getByText("Page 5 / 5")).not.toBeNull();
+    expect(screen.getByLabelText("Next page")).toHaveProperty("disabled", true);
+  });
+
+  it("calls prevPage with startCursor after goToLastPage (not forward stack pop)", async () => {
+    // Regression: after goToLastPage, pressing Prev must call prevPage(startCursor)
+    // using `last + before` backward navigation, NOT pop the empty cursorStack
+    // which would incorrectly return to page 1.
+    const user = userEvent.setup();
+    const control = makeControl({
+      cursor: null,
+      cursorStack: [],
+      paginationDirection: "backward",
+    });
+    render(<TestPagination data={dataWithTotal} control={control} />, { wrapper });
+
+    await user.click(screen.getByLabelText("Previous page"));
+
+    // startCursor of dataWithTotal is "prev-tok"
+    expect(control.prevPage).toHaveBeenCalledWith("prev-tok");
   });
 });

@@ -130,7 +130,8 @@ const DataTableDemoPage = () => {
       <Layout.Header title="DataTable Demo" />
       <Layout.Column>
         <p className="mb-4 text-muted-foreground">
-          DataTable demo with sortable columns, row actions, pagination, and multi-select.
+          DataTable demo with sortable columns, row actions, pagination, and
+          multi-select.
         </p>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>

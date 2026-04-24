@@ -69,7 +69,7 @@ export function useDataTable<
   const pageSize = control?.pageSize ?? 0;
   const totalPages =
     total !== null && pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : null;
-  const hasPrevPage = pageInfo.hasPreviousPage;
+  const hasPrevPage = pageInfo.hasPreviousPage || (control?.cursorStack.length ?? 0) > 0;
   const hasNextPage = pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
@@ -122,8 +122,8 @@ export function useDataTable<
   );
 
   const prevPage = useCallback(
-    (cursor: string) => {
-      control?.prevPage(cursor);
+    (startCursor?: string) => {
+      control?.prevPage(startCursor);
     },
     [control],
   );

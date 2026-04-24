@@ -30,6 +30,7 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     pageSize: 10,
     setPageSize: vi.fn(),
     cursor: null,
+    cursorStack: [],
     paginationDirection: "forward",
     nextPage: vi.fn(),
     prevPage: vi.fn(),

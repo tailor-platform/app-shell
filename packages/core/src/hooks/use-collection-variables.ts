@@ -102,6 +102,7 @@ export function useCollectionVariables(
   const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
   const [pageSize, setPageSizeState] = useState(initialPageSize);
   const [cursor, setCursor] = useState<string | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
 
   // ---------------------------------------------------------------------------
@@ -119,24 +120,28 @@ export function useCollectionVariables(
       return [...prev, newFilter];
     });
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
   const setFilters = useCallback((newFilters: Filter[]) => {
     setFiltersState(newFilters);
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
   const removeFilter = useCallback((field: string) => {
     setFiltersState((prev) => prev.filter((f) => f.field !== field));
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
   const clearFilters = useCallback(() => {
     setFiltersState([]);
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
@@ -153,12 +158,14 @@ export function useCollectionVariables(
       return [...filtered, newState];
     });
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
   const clearSort = useCallback(() => {
     setSortStates([]);
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
@@ -166,28 +173,47 @@ export function useCollectionVariables(
   // Pagination operations
   // ---------------------------------------------------------------------------
   const nextPage = useCallback((nextCursor: string) => {
+    setCursorStack((prev) => [...prev, nextCursor]);
     setCursor(nextCursor);
     setPaginationDirection("forward");
   }, []);
 
-  const prevPage = useCallback((prevCursor: string) => {
-    setCursor(prevCursor);
-    setPaginationDirection("backward");
+  const prevPage = useCallback((startCursor?: string) => {
+    if (startCursor !== undefined) {
+      // Backward navigation (from goToLastPage or while in backward mode).
+      // Use `last + before` so the server returns the page preceding the current one.
+      setCursor(startCursor);
+      setCursorStack([]);
+      setPaginationDirection("backward");
+    } else {
+      // Forward cursor-stack pop (normal sequential forward browsing).
+      // Pop the current page's endCursor; the new stack top becomes the next `after`.
+      setCursorStack((prev) => {
+        const newStack = prev.slice(0, -1);
+        const prevCursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+        setCursor(prevCursor);
+        return newStack;
+      });
+      setPaginationDirection("forward");
+    }
   }, []);
 
   const resetPage = useCallback(() => {
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
   const setPageSize = useCallback((size: number) => {
     setPageSizeState(size);
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
   const goToFirstPage = useCallback(() => {
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("forward");
   }, []);
 
@@ -195,6 +221,7 @@ export function useCollectionVariables(
     // Cursor-based pagination has no "jump to page N" — we request the last
     // `pageSize` items by setting direction="backward" with no cursor.
     setCursor(null);
+    setCursorStack([]);
     setPaginationDirection("backward");
   }, []);
 
@@ -256,6 +283,7 @@ export function useCollectionVariables(
       pageSize,
       setPageSize,
       cursor,
+      cursorStack,
       paginationDirection,
       nextPage,
       prevPage,

@@ -159,10 +159,15 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
   };
 
   const handlePrevPage = () => {
-    if (pageInfo.startCursor) {
+    if (control.paginationDirection === "backward" && pageInfo.startCursor) {
+      // Navigating back while in backward mode (e.g. came from goToLastPage).
+      // Use startCursor of the current page as the `before` cursor.
       prevPage(pageInfo.startCursor);
-      decrement();
+    } else {
+      // Normal case: pop the forward cursor stack.
+      prevPage();
     }
+    decrement();
   };
 
   const handleGoToFirstPage = () => {
@@ -217,7 +222,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
         variant="outline"
         size="icon"
         onClick={handlePrevPage}
-        disabled={!hasPrevPage || !pageInfo.startCursor}
+        disabled={!hasPrevPage}
         aria-label={t("paginationPrevious")}
       >
         <ChevronLeft className="astw:size-4" />
@@ -226,7 +231,11 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
         variant="outline"
         size="icon"
         onClick={handleNextPage}
-        disabled={!hasNextPage || !pageInfo.endCursor}
+        disabled={
+          !hasNextPage ||
+          !pageInfo.endCursor ||
+          (totalPages !== null && currentPage >= totalPages)
+        }
         aria-label={t("paginationNext")}
       >
         <ChevronRight className="astw:size-4" />

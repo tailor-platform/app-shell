@@ -42,6 +42,7 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     pageSize: 10,
     setPageSize: vi.fn(),
     cursor: null,
+    cursorStack: [],
     paginationDirection: "forward",
     nextPage: vi.fn(),
     prevPage: vi.fn(),
@@ -113,7 +114,7 @@ describe("useDataTable", () => {
       expect(result.current.totalPages).toBeNull();
     });
 
-    it("reflects hasPreviousPage: false from pageInfo", () => {
+    it("reflects hasPreviousPage: false and empty cursorStack from pageInfo", () => {
       // testData has hasPreviousPage: false
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasPrevPage).toBe(false);
@@ -165,14 +166,24 @@ describe("useDataTable", () => {
       expect(control.nextPage).toHaveBeenCalledWith("tok-1");
     });
 
-    it("delegates prevPage to control", () => {
+    it("delegates prevPage to control without cursor (forward stack pop)", () => {
       const control = makeControl();
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
 
       act(() => {
-        result.current.prevPage("tok-2");
+        result.current.prevPage();
       });
-      expect(control.prevPage).toHaveBeenCalledWith("tok-2");
+      expect(control.prevPage).toHaveBeenCalledWith(undefined);
+    });
+
+    it("delegates prevPage to control with startCursor (backward navigation)", () => {
+      const control = makeControl();
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+
+      act(() => {
+        result.current.prevPage("start-tok");
+      });
+      expect(control.prevPage).toHaveBeenCalledWith("start-tok");
     });
   });
 

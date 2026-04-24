@@ -51,9 +51,7 @@ const OrdersPage = () => {
       <Layout.Column>
         <p className="mb-4 text-muted-foreground">
           This page is at{" "}
-          <code className="bg-muted px-2 py-0.5 rounded">
-            src/pages/dashboard/orders/page.tsx
-          </code>
+          <code className="bg-muted px-2 py-0.5 rounded">src/pages/dashboard/orders/page.tsx</code>
         </p>
         <Table.Root>
           <Table.Header>
@@ -71,9 +69,7 @@ const OrdersPage = () => {
                 <Table.Cell>{order.id}</Table.Cell>
                 <Table.Cell>{order.name}</Table.Cell>
                 <Table.Cell>
-                  <Badge variant={statusVariant(order.status)}>
-                    {order.status}
-                  </Badge>
+                  <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
                 </Table.Cell>
                 <Table.Cell>{order.amount}</Table.Cell>
                 <Table.Cell>

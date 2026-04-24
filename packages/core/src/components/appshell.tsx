@@ -299,15 +299,17 @@ AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
 
-  // Extract root page (path="") and use it as rootComponent
+  // Extract root page (path="") to use as rootComponent/rootGuards.
+  // allModules (including root) is still passed to AppShell so that
+  // usePageMeta("/") can find the root module's meta (title, icon).
+  // routes.tsx filters the root module from routing to avoid conflicts.
   const rootModule = allModules.find((m) => m.path === "");
-  const otherModules = allModules.filter((m) => m.path !== "");
 
   const WrappedAppShell: FC<AppShellProps> = (props) => {
     return (
       <AppShell
         {...props}
-        modules={otherModules}
+        modules={allModules}
         rootComponent={props.rootComponent ?? rootModule?.component}
         rootGuards={props.rootGuards ?? rootModule?.guards}
       />

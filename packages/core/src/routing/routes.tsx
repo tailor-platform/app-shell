@@ -90,7 +90,11 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
+  modules
+    // Root module (path="") is handled separately via rootComponent/rootGuards in
+    // createContentRoutes, so skip it here to avoid a routing conflict.
+    .filter((module) => module.path !== "")
+    .map((module) => createRoute(module, module.resources, module.errorBoundary));
 
 type CreateContentRoutesParams = {
   modules: Modules;

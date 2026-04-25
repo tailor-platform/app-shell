@@ -370,9 +370,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("goToLastPage with total uses remainder for last page size", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 10 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
       // 25 items, pageSize 10 → last page should have 5 items
       act(() => {
@@ -383,9 +381,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("goToLastPage with evenly divisible total uses full pageSize", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 10 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
       // 30 items, pageSize 10 → last page has full 10 items
       act(() => {
@@ -396,9 +392,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("goToLastPage without total uses full pageSize", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 10 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
       act(() => {
         result.current.control.goToLastPage();
@@ -408,9 +402,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("navigating prev from remainder last page uses full pageSize", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 10 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
       act(() => {
         result.current.control.goToLastPage(25);
@@ -427,9 +419,7 @@ describe("useCollectionVariables", () => {
     });
 
     it("navigating back to last page after prev restores remainder", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({ params: { pageSize: 10 } }),
-      );
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
       act(() => {
         result.current.control.goToLastPage(25);

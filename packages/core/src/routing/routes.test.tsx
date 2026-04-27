@@ -540,4 +540,82 @@ describe("createContentRoutes", () => {
     expect((result as Response).status).toBe(302);
     expect((result as Response).headers.get("Location")).toBe("/dashboard");
   });
+
+  it("routes root module (path='') via routesFromModules like any other module", () => {
+    const rootModule = defineModule({
+      path: "",
+      meta: { title: "Home" },
+      component: () => <div>Home</div>,
+      resources: [],
+    });
+
+    const otherModule = defineModule({
+      path: "dashboard",
+      meta: { title: "Dashboard" },
+      component: () => <div>Dashboard</div>,
+      resources: [],
+    });
+
+    const routes = createContentRoutes({
+      modules: [rootModule, otherModule],
+      settingsResources: [],
+    });
+
+    // No rootRouteConfig is generated when a root module exists,
+    // so modules container is at routes[0].
+    const moduleContainer = routes[0];
+    const modulePaths = moduleContainer.children?.map((r) => r.path);
+    expect(modulePaths).toContain("");
+    expect(modulePaths).toContain("dashboard");
+
+    // Root module should have an index route with its component
+    const rootRoute = moduleContainer.children?.find((r) => r.path === "");
+    const indexRoute = rootRoute?.children?.find(
+      (r) => (r as { index?: boolean }).index === true,
+    );
+    expect(indexRoute).toBeDefined();
+    expect(typeof indexRoute?.Component).toBe("function");
+  });
+
+  it("uses rootComponent over root module when both are provided", () => {
+    const rootModule = defineModule({
+      path: "",
+      meta: { title: "Home" },
+      component: () => <div>Module Home</div>,
+      resources: [],
+    });
+
+    const routes = createContentRoutes({
+      modules: [rootModule],
+      settingsResources: [],
+      rootComponent: RootComponent,
+    });
+
+    // When rootComponent is explicitly provided alongside a root module,
+    // rootComponent generates a separate index route AND the root module
+    // also flows through routesFromModules.
+    expect(routes[0].Component).toBe(RootComponent);
+
+    // Root module is still in routesFromModules
+    const moduleContainer = routes[1];
+    const rootRoute = moduleContainer.children?.find((r) => r.path === "");
+    expect(rootRoute).toBeDefined();
+  });
+
+  it("falls back to EmptyOutlet when no root module and no rootComponent", () => {
+    const routes = createContentRoutes({
+      modules: [
+        defineModule({
+          path: "dashboard",
+          meta: { title: "Dashboard" },
+          component: () => <div>Dashboard</div>,
+          resources: [],
+        }),
+      ],
+      settingsResources: [],
+    });
+
+    // First route should be EmptyOutlet fallback
+    expect(routes[0].Component).toBe(EmptyOutlet);
+  });
 });

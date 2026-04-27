@@ -90,11 +90,7 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules
-    // Root module (path="") is handled separately via rootComponent/rootGuards in
-    // createContentRoutes, so skip it here to avoid a routing conflict.
-    .filter((module) => module.path !== "")
-    .map((module) => createRoute(module, module.resources, module.errorBoundary));
+  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -109,12 +105,21 @@ export const createContentRoutes = ({
   rootComponent,
   rootGuards,
 }: CreateContentRoutesParams): Array<RouteObject> => {
-  const rootLoader = rootGuards && rootGuards.length > 0 ? withGuardsLoader(rootGuards) : undefined;
-  const rootRouteConfig = resolveIndexRoute({
-    path: "",
-    component: rootComponent ?? EmptyOutlet,
-    loader: rootLoader,
-  });
+  // When a root module (path="") exists in modules, it flows through
+  // routesFromModules like any other module — no rootRouteConfig needed.
+  // When rootComponent is explicitly provided, it takes precedence and
+  // generates a rootRouteConfig (shadowing any root module).
+  // Otherwise, EmptyOutlet is used as a fallback.
+  const hasRootModule = modules.some((m) => m.path === "");
+  const rootRouteConfig =
+    rootComponent || !hasRootModule
+      ? resolveIndexRoute({
+          path: "",
+          component: rootComponent ?? EmptyOutlet,
+          loader:
+            rootGuards && rootGuards.length > 0 ? withGuardsLoader(rootGuards) : undefined,
+        })
+      : null;
 
   const settingsRoutes =
     settingsResources.length > 0
@@ -148,7 +153,7 @@ export const createContentRoutes = ({
       : [];
 
   return [
-    rootRouteConfig,
+    ...(rootRouteConfig ? [rootRouteConfig] : []),
     {
       children: routesFromModules(modules),
     },

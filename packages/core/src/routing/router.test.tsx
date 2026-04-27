@@ -14,7 +14,7 @@ import {
 } from "@/resource";
 import type { ReactNode } from "react";
 import type { ContextData } from "@/contexts/appshell-context";
-import { AuthProvider, type EnhancedAuthClient } from "@/contexts/auth-context";
+import { AuthProvider, useAuth, type EnhancedAuthClient } from "@/contexts/auth-context";
 
 afterEach(() => {
   cleanup();
@@ -605,9 +605,14 @@ describe("RouterContainer with AuthProvider", () => {
       },
     );
 
+    const HomeWithAuth = () => {
+      useAuth();
+      return <div>Home</div>;
+    };
+
     renderWithConfig({
       modules: [],
-      rootComponent: () => <div>Home</div>,
+      rootComponent: () => <HomeWithAuth />,
       initialEntries: ["/"],
       authClient,
       autoLogin: true,

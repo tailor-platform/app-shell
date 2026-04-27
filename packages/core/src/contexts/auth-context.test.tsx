@@ -681,12 +681,14 @@ describe("AuthProvider", () => {
     });
 
     it("should login when auth state changes to unauthenticated", async () => {
-      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+      const authEventListeners = new Set<(event: { type: string; data?: unknown }) => void>();
 
       const mockAddEventListener = vi.fn(
         (listener: (event: { type: string; data?: unknown }) => void) => {
-          authEventListener = listener;
-          return () => {};
+          authEventListeners.add(listener);
+          return () => {
+            authEventListeners.delete(listener);
+          };
         },
       );
 
@@ -703,9 +705,14 @@ describe("AuthProvider", () => {
         getState: vi.fn(() => currentState),
       });
 
+      const AuthConsumer = () => {
+        useAuth();
+        return <div>Content</div>;
+      };
+
       render(
         <AuthProvider client={mockClient} autoLogin={true}>
-          <div>Content</div>
+          <AuthConsumer />
         </AuthProvider>,
       );
 
@@ -720,7 +727,9 @@ describe("AuthProvider", () => {
       };
 
       act(() => {
-        authEventListener?.({ type: "auth_state_changed", data: {} });
+        for (const listener of authEventListeners) {
+          listener({ type: "auth_state_changed", data: {} });
+        }
       });
 
       await waitFor(() => {
@@ -839,12 +848,14 @@ describe("AuthProvider", () => {
 
   describe("event listeners", () => {
     it("should listen to auth state changes via useSyncExternalStore", async () => {
-      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+      const authEventListeners = new Set<(event: { type: string; data?: unknown }) => void>();
 
       const mockAddEventListener = vi.fn(
         (listener: (event: { type: string; data?: unknown }) => void) => {
-          authEventListener = listener;
-          return () => {};
+          authEventListeners.add(listener);
+          return () => {
+            authEventListeners.delete(listener);
+          };
         },
       );
 
@@ -881,7 +892,9 @@ describe("AuthProvider", () => {
 
       // Trigger auth state change event
       act(() => {
-        authEventListener?.({ type: "auth_state_changed", data: {} });
+        for (const listener of authEventListeners) {
+          listener({ type: "auth_state_changed", data: {} });
+        }
       });
 
       await waitFor(() => {

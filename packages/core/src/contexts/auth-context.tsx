@@ -217,46 +217,24 @@ export type AuthState = {
   isReady: boolean;
 };
 
-type AuthContextType = {
+/**
+ * Internal context type that exposes the auth client and a stable subscribe
+ * function. Consumer hooks (`useAuth`, `useAuthSuspense`) call
+ * `useSyncExternalStore` individually so that auth-state updates only
+ * re-render components that are actually committed — preventing Suspense
+ * loops where a suspended component would be retried on every state change.
+ */
+type AuthClientContextType = {
+  client: EnhancedAuthClient;
   /**
-   * Current authentication state.
-   *
-   * Use `authState.isAuthenticated` to check if authenticated.
-   * Use `authState.isReady` to check if initial auth check has completed.
+   * Pure auth-state subscription (no side-effects like auto-login).
+   * Passed through context so every `useAuth` call can subscribe
+   * independently via `useSyncExternalStore`.
    */
-  authState: AuthState;
-
-  /**
-   * Initiates the login process.
-   *
-   * This redirects the user to the Tailor Platform authentication page.
-   */
-  login: () => Promise<void>;
-
-  /**
-   * Logs out the current user.
-   *
-   * This clears the authentication tokens and user session.
-   */
-  logout: () => Promise<void>;
-
-  /**
-   * Checks the current authentication status.
-   *
-   * Remember that this method always makes a network request to verify the auth status.
-   * This also attempts to refresh tokens internally if they are expired.
-   */
-  checkAuthStatus: () => Promise<AuthState>;
-
-  /**
-   * Returns a Promise that resolves when the initial authentication check has completed.
-   * Useful for Suspense integration.
-   * @internal
-   */
-  ready: () => Promise<void>;
+  subscribeAuthState: (notify: () => void) => () => void;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthClientContext = createContext<AuthClientContextType | null>(null);
 
 const isOAuthCallbackUrl = (url: URL) =>
   url.searchParams.has("code") || url.searchParams.has("error");
@@ -350,28 +328,31 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
       });
   }, [props.client, props.enabled]);
 
-  return {
-    subscribeAuthState: useCallback(
-      (notify: () => void) => {
-        // Run one deferred check so that initial ready+unauthenticated
-        // states are handled even if no auth_state_changed event fires.
-        // queueMicrotask is used instead of a synchronous call to avoid
-        // triggering state changes (via notify()) during the subscribe
-        // phase of useSyncExternalStore, which can cause React warnings.
-        queueMicrotask(() => {
-          attemptAutoLogin();
-        });
+  // Combined auth-state subscription that both notifies useSyncExternalStore
+  // and triggers auto-login. AuthProvider passes this to consumer hooks via
+  // context, so there is only one addEventListener registration per provider.
+  const subscribeAuthState = useCallback(
+    (notify: () => void) => {
+      // Run one deferred check so that initial ready+unauthenticated
+      // states are handled even if no auth_state_changed event fires.
+      // queueMicrotask is used instead of a synchronous call to avoid
+      // triggering state changes (via notify()) during the subscribe
+      // phase of useSyncExternalStore, which can cause React warnings.
+      queueMicrotask(() => {
+        attemptAutoLogin();
+      });
 
-        return props.client.addEventListener((event) => {
-          if (event.type === "auth_state_changed") {
-            notify();
-            attemptAutoLogin();
-          }
-        });
-      },
-      [props.client, attemptAutoLogin],
-    ),
-  };
+      return props.client.addEventListener((event) => {
+        if (event.type === "auth_state_changed") {
+          notify();
+          attemptAutoLogin();
+        }
+      });
+    },
+    [props.client, attemptAutoLogin],
+  );
+
+  return { subscribeAuthState };
 };
 
 /**
@@ -459,15 +440,13 @@ const useCallbackStatus = (client: EnhancedAuthClient): CallbackStatus => {
 export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
-  // Set up auth state subscription for auto-login orchestration
+  // Set up auto-login orchestration and get the auth-state subscription.
+  // The returned subscribeAuthState is reused for context so that there is
+  // only a single addEventListener registration per provider.
   const { subscribeAuthState } = useAutoLogin({
     client,
     enabled: props.autoLogin,
   });
-
-  // Use useSyncExternalStore for state management from auth client.
-  const getSnapshot = useCallback(() => client.getState(), [client]);
-  const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
   // Read callback status first so it can be passed to useEnsureAuthInitialized.
   // This lets initialization retry automatically when a pending callback settles
@@ -492,33 +471,29 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   const resolvedChildren =
     callbackStatus === "pending" && props.guardComponent == null ? null : props.children;
 
-  const authContextValue = useMemo(
-    () => ({
-      authState,
-      login: () => client.login(),
-      logout: () => client.logout(),
-      checkAuthStatus: () => client.checkAuthStatus(),
-      ready: () => client.ready(),
-    }),
-    [authState, client],
+  // Context value is stable: it only changes when the client instance
+  // itself changes, which normally never happens after mount.
+  const contextValue = useMemo(
+    () => ({ client, subscribeAuthState }),
+    [client, subscribeAuthState],
   );
 
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <AuthClientContext.Provider value={contextValue}>
       {props.guardComponent ? (
         <AuthGuard guardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
       ) : (
         resolvedChildren
       )}
-    </AuthContext.Provider>
+    </AuthClientContext.Provider>
   );
 };
 
 /**
- * Internal helper to get common auth values from context.
+ * Internal helper to get the auth client context.
  */
-const useAuthContext = () => {
-  const context = useContext(AuthContext);
+const useAuthClientContext = () => {
+  const context = useContext(AuthClientContext);
   if (!context) {
     throw new Error("useAuth/useAuthSuspense must be used within an AuthProvider");
   }
@@ -545,16 +520,22 @@ const useAuthContext = () => {
  * ```
  */
 export const useAuth = () => {
-  const context = useAuthContext();
-  const { isAuthenticated, error, isReady } = context.authState;
+  const { client, subscribeAuthState } = useAuthClientContext();
+
+  // Each component subscribes to auth state individually via
+  // useSyncExternalStore. The subscription is only established on commit,
+  // so suspended components (e.g. by urql's useQuery with suspense: true)
+  // never become subscribers and are not retried on auth state changes.
+  const getSnapshot = useCallback(() => client.getState(), [client]);
+  const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
   return {
-    error,
-    isAuthenticated,
-    isReady,
-    login: context.login,
-    logout: context.logout,
-    checkAuthStatus: context.checkAuthStatus,
+    error: authState.error,
+    isAuthenticated: authState.isAuthenticated,
+    isReady: authState.isReady,
+    login: () => client.login(),
+    logout: () => client.logout(),
+    checkAuthStatus: () => client.checkAuthStatus(),
   };
 };
 
@@ -610,21 +591,25 @@ export const useAuth = () => {
  * ```
  */
 export const useAuthSuspense = () => {
-  const context = useAuthContext();
+  const { client, subscribeAuthState } = useAuthClientContext();
+
+  // Each component subscribes to auth state individually — same rationale
+  // as useAuth above.
+  const getSnapshot = useCallback(() => client.getState(), [client]);
+  const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
   // Throw the ready() promise for Suspense integration
   // This will suspend the component until the initial auth check is complete
-  if (!context.authState.isReady) {
-    throw context.ready();
+  if (!authState.isReady) {
+    throw client.ready();
   }
 
   // Return only the necessary values (isReady is always true here)
-  const { isAuthenticated, error } = context.authState;
   return {
-    error,
-    isAuthenticated,
-    login: context.login,
-    logout: context.logout,
-    checkAuthStatus: context.checkAuthStatus,
+    error: authState.error,
+    isAuthenticated: authState.isAuthenticated,
+    login: () => client.login(),
+    logout: () => client.logout(),
+    checkAuthStatus: () => client.checkAuthStatus(),
   };
 };

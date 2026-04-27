@@ -1,5 +1,10 @@
 "use client";
-import { AppShell, AppShellProps, DefaultSidebar, SidebarLayout } from "@tailor-platform/app-shell";
+import {
+  AppShell,
+  AppShellProps,
+  DefaultSidebar,
+  SidebarLayout,
+} from "@tailor-platform/app-shell";
 import {
   customPageModule,
   profileResource,
@@ -14,6 +19,7 @@ const App = () => {
     title: "AppShell",
     basePath: "dashboard",
     modules: [customPageModule],
+    rootComponent: () => <div>Dashboard Home (accessible at /dashboard)</div>,
     settingsResources: [profileResource],
     contextData: {
       role,

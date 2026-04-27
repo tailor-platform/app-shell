@@ -1,5 +1,17 @@
 # @tailor-platform/app-shell
 
+## 1.0.1
+
+### Patch Changes
+
+- 598bc90: Fix cursor-based pagination in `DataTable`.
+
+  - Fix "Previous" button not working correctly when the GraphQL server returns unreliable `hasPreviousPage` (common with `first + after` queries per the Relay spec)
+  - Fix navigating back after jumping to the last page incorrectly returning to page 1
+  - Fix "Next" button remaining enabled past the last page when `total` is known
+
+- 4aaf5ab: Fix "Go to Last Page" pagination alignment. When total items aren't evenly divisible by page size, `goToLastPage` now requests `last: total % pageSize` instead of `last: pageSize`, so the last page boundaries match forward pagination.
+
 ## 1.0.0
 
 ### Major Changes

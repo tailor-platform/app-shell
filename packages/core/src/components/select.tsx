@@ -14,6 +14,7 @@ type SelectRootProps<Value, Multiple extends boolean | undefined = false> = Pick
   | "onValueChange"
   | "open"
   | "onOpenChange"
+  | "modal"
   | "multiple"
   | "itemToStringLabel"
   | "disabled"
@@ -62,16 +63,18 @@ SelectValue.displayName = "Select.Value";
 function SelectContent({
   className,
   container,
+  alignItemWithTrigger,
   ...props
 }: React.ComponentProps<typeof BaseSelect.Popup> & {
   container?: React.ComponentProps<typeof BaseSelect.Portal>["container"];
+  alignItemWithTrigger?: React.ComponentProps<typeof BaseSelect.Positioner>["alignItemWithTrigger"];
 }) {
   return (
     <BaseSelect.Portal
       container={container}
       style={{ position: "relative", zIndex: "var(--z-popup)" }}
     >
-      <BaseSelect.Positioner>
+      <BaseSelect.Positioner alignItemWithTrigger={alignItemWithTrigger}>
         <BaseSelect.Popup
           data-slot="select-content"
           className={cn(

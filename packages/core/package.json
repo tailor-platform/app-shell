@@ -1,6 +1,6 @@
 {
   "name": "@tailor-platform/app-shell",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An opinionated React application framework for building ERP applications on Tailor Platform",
   "keywords": [
     "app-shell",

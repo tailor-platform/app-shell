@@ -284,7 +284,12 @@ describe("useDataTable", () => {
     it("onSort delegates directly to control.setSort in multiple mode", () => {
       const control = makeControl();
       const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, control, sort: { multiple: true } }),
+        useDataTable({
+          columns,
+          data: testData,
+          control,
+          sort: { multiple: true },
+        }),
       );
 
       act(() => {

@@ -14,7 +14,6 @@ const App = () => {
     title: "AppShell",
     basePath: "dashboard",
     modules: [customPageModule],
-    locale: "en",
     settingsResources: [profileResource],
     contextData: {
       role,

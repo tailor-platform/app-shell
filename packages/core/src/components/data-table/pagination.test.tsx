@@ -362,9 +362,15 @@ describe("row info text", () => {
   });
 
   it("shows nothing when no total and no selection enabled", () => {
-    render(<TestPagination data={dataWithRowsNoTotal} control={makeControl()} />, { wrapper });
+    const { container } = render(
+      <TestPagination data={dataWithRowsNoTotal} control={makeControl()} />,
+      {
+        wrapper,
+      },
+    );
     // No row info text should be rendered
     expect(screen.queryByText(/row\(s\)/)).toBeNull();
+    expect(container.querySelector(".astw\\:text-sm.astw\\:text-muted-foreground")).toBeNull();
   });
 
   it("shows nothing when no total and selection enabled but nothing selected", () => {

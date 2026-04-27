@@ -253,16 +253,16 @@ const isCurrentOAuthCallbackUrl = () => {
  * need to depend on useAuth.
  */
 const AuthGuard = ({
-  guardComponent,
+  GuardComponent,
   children,
 }: {
-  guardComponent: () => React.ReactNode;
+  GuardComponent: () => React.ReactNode;
   children: React.ReactNode;
 }) => {
   const { isReady, isAuthenticated } = useAuth();
 
   if (!isReady || !isAuthenticated) {
-    return guardComponent();
+    return <GuardComponent />;
   }
   return children;
 };
@@ -481,7 +481,7 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   return (
     <AuthClientContext.Provider value={contextValue}>
       {props.guardComponent ? (
-        <AuthGuard guardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
+        <AuthGuard GuardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
       ) : (
         resolvedChildren
       )}

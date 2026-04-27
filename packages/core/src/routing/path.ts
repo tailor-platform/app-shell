@@ -59,7 +59,7 @@ const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
       if (!resources || resources.length === 0) return;
 
       resources.forEach((resource) => {
-        const resourcePath = `${basePath}/${resource.path}`;
+        const resourcePath = basePath ? `${basePath}/${resource.path}` : resource.path;
         const resourceTitle = resolveTitle(resource.meta.title, resource.path);
         acc[resourcePath] = {
           title: resourceTitle,

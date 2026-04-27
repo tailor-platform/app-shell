@@ -24,7 +24,7 @@ export const dataTableLabels = defineI18nLabels({
     paginationLast: "Last page",
     paginationRowsPerPage: "Rows per page",
     paginationPage: "Page",
-    paginationTotalRows: (props: { total: number }) => `${props.total} rows`,
+    paginationTotalRows: (props: { total: number }) => `${props.total} row(s)`,
     paginationSelectedOfTotal: (props: { selected: number; total: number }) =>
       `${props.selected} of ${props.total} row(s) selected`,
     paginationSelectedRows: (props: { selected: number }) => `${props.selected} row(s) selected`,

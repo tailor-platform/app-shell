@@ -285,7 +285,7 @@ describe("row info text", () => {
 
   it("shows total rows when total is provided and no selection enabled", () => {
     render(<TestPagination data={dataWithRows} control={makeControl()} />, { wrapper });
-    expect(screen.getByText("50 rows")).not.toBeNull();
+    expect(screen.getByText("50 row(s)")).not.toBeNull();
   });
 
   it("shows total rows when total is provided and selection enabled but nothing selected", () => {
@@ -293,7 +293,7 @@ describe("row info text", () => {
       <TestPagination data={dataWithRows} control={makeControl()} onSelectionChange={vi.fn()} />,
       { wrapper },
     );
-    expect(screen.getByText("50 rows")).not.toBeNull();
+    expect(screen.getByText("50 row(s)")).not.toBeNull();
   });
 
   it("shows 'Y of X row(s) selected' when rows are selected and total is provided", async () => {
@@ -357,7 +357,7 @@ describe("row info text", () => {
   it("shows nothing when no total and no selection enabled", () => {
     render(<TestPagination data={dataWithRowsNoTotal} control={makeControl()} />, { wrapper });
     // No row info text should be rendered
-    expect(screen.queryByText(/rows?/)).toBeNull();
+    expect(screen.queryByText(/row\(s\)/)).toBeNull();
   });
 
   it("shows nothing when no total and selection enabled but nothing selected", () => {

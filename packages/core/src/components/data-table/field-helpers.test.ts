@@ -174,6 +174,20 @@ describe("fieldTypeToFilterConfig", () => {
     });
   });
 
+  it("maps datetime to datetime filter", () => {
+    expect(fieldTypeToFilterConfig("createdAt", "datetime")).toEqual({
+      field: "createdAt",
+      type: "datetime",
+    });
+  });
+
+  it("maps time to time filter", () => {
+    expect(fieldTypeToFilterConfig("opensAt", "time")).toEqual({
+      field: "opensAt",
+      type: "time",
+    });
+  });
+
   it("maps enum with values to enum filter", () => {
     expect(fieldTypeToFilterConfig("status", "enum", ["a", "b", "c"])).toEqual({
       field: "status",

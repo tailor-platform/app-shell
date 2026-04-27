@@ -108,8 +108,14 @@ export interface UseCursorPaginationReturn {
   resetPage: () => void;
   /** Jump to the first page (forward mode, no cursor). */
   goToFirstPage: () => void;
-  /** Jump to the last page (`last: pageSize`, backward mode, no cursor). */
-  goToLastPage: () => void;
+  /**
+   * Jump to the last page (backward mode, no cursor).
+   *
+   * When `total` is provided, the hook computes `total % pageSize` so the last
+   * page aligns with forward-pagination boundaries. Without `total`, it falls
+   * back to a full `pageSize` fetch.
+   */
+  goToLastPage: (total?: number | null) => void;
   /** Change the page size and reset to the first page. */
   setPageSize: (size: number) => void;
   /**
@@ -156,6 +162,10 @@ export function useCursorPagination(initialPageSize: number): UseCursorPaginatio
   const [cursor, setCursor] = useState<string | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
+  // When jumping to the last page, if the total isn't evenly divisible by
+  // pageSize the remainder determines how many items the last page contains.
+  // This ensures the last page aligns with forward-pagination boundaries.
+  const [lastPageSize, setLastPageSize] = useState<number | null>(null);
 
   // resetCount is a signal to notify usePageCounter (the page display counter)
   // of pagination resets it cannot otherwise detect.
@@ -177,6 +187,7 @@ export function useCursorPagination(initialPageSize: number): UseCursorPaginatio
     setCursor(null);
     setCursorStack([]);
     setPaginationDirection("forward");
+    setLastPageSize(null);
     setResetCount((c) => c + 1);
   }, []);
 
@@ -229,19 +240,30 @@ export function useCursorPagination(initialPageSize: number): UseCursorPaginatio
     setCursor(null);
     setCursorStack([]);
     setPaginationDirection("forward");
+    setLastPageSize(null);
   }, []);
 
-  const goToLastPage = useCallback(() => {
-    setCursor(null);
-    setCursorStack([]);
-    setPaginationDirection("backward");
-  }, []);
+  const goToLastPage = useCallback(
+    (total?: number | null) => {
+      setCursor(null);
+      setCursorStack([]);
+      setPaginationDirection("backward");
+      if (total != null && total > 0) {
+        const remainder = total % pageSize;
+        setLastPageSize(remainder !== 0 ? remainder : null);
+      } else {
+        setLastPageSize(null);
+      }
+    },
+    [pageSize],
+  );
 
   const setPageSize = useCallback((size: number) => {
     setPageSizeState(size);
     setCursor(null);
     setCursorStack([]);
     setPaginationDirection("forward");
+    setLastPageSize(null);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -253,11 +275,14 @@ export function useCursorPagination(initialPageSize: number): UseCursorPaginatio
       p.first = pageSize;
       if (cursor) p.after = cursor;
     } else {
-      p.last = pageSize;
+      // On the actual last page (no cursor), use lastPageSize if set so the
+      // page aligns with forward-pagination boundaries. Once the user
+      // navigates away (cursor becomes non-null), use the full pageSize.
+      p.last = cursor === null && lastPageSize != null ? lastPageSize : pageSize;
       if (cursor) p.before = cursor;
     }
     return p;
-  }, [pageSize, cursor, paginationDirection]);
+  }, [pageSize, cursor, paginationDirection, lastPageSize]);
 
   // ---------------------------------------------------------------------------
   // Page-existence helpers

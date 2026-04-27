@@ -368,6 +368,73 @@ describe("useCollectionVariables", () => {
       expect(result.current.variables.pagination.last).toBe(20);
       expect(result.current.variables.pagination.before).toBeUndefined();
     });
+
+    it("goToLastPage with total uses remainder for last page size", () => {
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
+
+      // 25 items, pageSize 10 → last page should have 5 items
+      act(() => {
+        result.current.control.goToLastPage(25);
+      });
+
+      expect(result.current.variables.pagination).toEqual({ last: 5 });
+    });
+
+    it("goToLastPage with evenly divisible total uses full pageSize", () => {
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
+
+      // 30 items, pageSize 10 → last page has full 10 items
+      act(() => {
+        result.current.control.goToLastPage(30);
+      });
+
+      expect(result.current.variables.pagination).toEqual({ last: 10 });
+    });
+
+    it("goToLastPage without total uses full pageSize", () => {
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
+
+      act(() => {
+        result.current.control.goToLastPage();
+      });
+
+      expect(result.current.variables.pagination).toEqual({ last: 10 });
+    });
+
+    it("navigating prev from remainder last page uses full pageSize", () => {
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
+
+      act(() => {
+        result.current.control.goToLastPage(25);
+      });
+      expect(result.current.variables.pagination.last).toBe(5);
+
+      // Navigate to previous page — should use full pageSize
+      act(() => {
+        result.current.control.goToPrevPage({ startCursor: "cursor-prev" });
+      });
+
+      expect(result.current.variables.pagination.last).toBe(10);
+      expect(result.current.variables.pagination.before).toBe("cursor-prev");
+    });
+
+    it("navigating back to last page after prev restores remainder", () => {
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
+
+      act(() => {
+        result.current.control.goToLastPage(25);
+      });
+      act(() => {
+        result.current.control.goToPrevPage({ startCursor: "cursor-prev" });
+      });
+      // Pop back to last page
+      act(() => {
+        result.current.control.goToNextPage({ endCursor: "ignored" });
+      });
+
+      expect(result.current.variables.pagination.last).toBe(5);
+      expect(result.current.variables.pagination.before).toBeUndefined();
+    });
   });
 
   // ---------------------------------------------------------------------------

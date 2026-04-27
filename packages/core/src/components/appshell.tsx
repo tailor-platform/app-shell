@@ -1,4 +1,4 @@
-import { Modules, Resource, ErrorBoundaryComponent, Guard, setContextData } from "@/resource";
+import { Modules, Resource, ErrorBoundaryComponent, Guard, setContextData, defineModule } from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
 import {
@@ -215,7 +215,27 @@ export const AppShell = (props: AppShellProps) => {
   const contextData = (props.contextData ?? {}) as ContextData;
   setContextData(contextData);
 
-  const modules = props.modules;
+  const { modules: propsModules, rootComponent } = props;
+
+  const modules = useMemo(() => {
+    if (!propsModules) return propsModules;
+    // When rootComponent is provided but no root module (path="") exists,
+    // inject a synthetic root module so that the sidebar and command palette
+    // can display a "Home" entry and usePageMeta("/") resolves correctly.
+    const hasRootModule = propsModules.some((m) => m.path === "");
+    if (!hasRootModule && rootComponent) {
+      return [
+        defineModule({
+          path: "",
+          meta: {},
+          component: () => rootComponent(),
+          resources: [],
+        }),
+        ...propsModules,
+      ];
+    }
+    return propsModules;
+  }, [propsModules, rootComponent]);
 
   // Memoize configurations to prevent unnecessary re-renders
   // configurations will be null if modules is not provided

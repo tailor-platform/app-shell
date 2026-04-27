@@ -234,7 +234,7 @@ describe("DefaultSidebar auto-generation", () => {
     expect(triggers.length).toBe(0);
   });
 
-  it("excludes root module (path='') from auto-generated sidebar", async () => {
+  it("includes root module (path='') in auto-generated sidebar", async () => {
     const modules = [
       defineModule({
         path: "",
@@ -265,7 +265,7 @@ describe("DefaultSidebar auto-generation", () => {
     const links = sidebar.querySelectorAll("a");
     const linkTexts = Array.from(links).map((link) => link.textContent);
 
-    expect(linkTexts).not.toContain("Home");
+    expect(linkTexts).toContain("Home");
     expect(linkTexts).toContain("Dashboard");
   });
 });

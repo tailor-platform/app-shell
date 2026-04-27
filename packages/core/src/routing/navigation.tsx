@@ -58,9 +58,6 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
 
   const resolvedModules = await Promise.all(
     props.modules.map(async (module) => {
-      // Root module (path="") serves as the landing page and should not
-      // appear in navigation items (sidebar or command palette).
-      if (module.path === "") return null;
       // Skip param routes at module level
       if (module.path.startsWith(":")) return null;
 
@@ -84,7 +81,7 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
     .map(({ module, resources }) => {
       return {
         title: resolveTitle(module.meta.title, module.path),
-        url: module.meta.menuItemClickable ? module.path : undefined,
+        url: module.meta.menuItemClickable ? module.path || "/" : undefined,
         icon: module.meta.icon || <Table />,
         items: resources,
       };

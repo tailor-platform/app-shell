@@ -7,12 +7,8 @@ import {
   Resource,
   ErrorBoundaryComponent,
   createNotFoundError,
-  Guard,
-  withGuardsLoader,
   type LoaderHandler,
 } from "@/resource";
-
-export type RootComponentOption = () => ReactNode;
 
 export const wrapErrorBoundary = (element: ErrorBoundaryComponent): ComponentType => {
   return () => <>{element}</>;
@@ -95,30 +91,22 @@ const routesFromModules = (modules: Modules) =>
 type CreateContentRoutesParams = {
   modules: Modules;
   settingsResources: Array<Resource>;
-  rootComponent?: RootComponentOption;
-  rootGuards?: Guard[];
 };
 
 export const createContentRoutes = ({
   modules,
   settingsResources,
-  rootComponent,
-  rootGuards,
 }: CreateContentRoutesParams): Array<RouteObject> => {
   // When a root module (path="") exists in modules, it flows through
-  // routesFromModules like any other module — no rootRouteConfig needed.
-  // When rootComponent is explicitly provided, it takes precedence and
-  // generates a rootRouteConfig (shadowing any root module).
-  // Otherwise, EmptyOutlet is used as a fallback.
+  // routesFromModules like any other module — no EmptyOutlet needed.
+  // Otherwise, EmptyOutlet provides a passthrough <Outlet /> at "/".
   const hasRootModule = modules.some((m) => m.path === "");
-  const rootRouteConfig =
-    rootComponent || !hasRootModule
-      ? resolveIndexRoute({
-          path: "",
-          component: rootComponent ?? EmptyOutlet,
-          loader: rootGuards && rootGuards.length > 0 ? withGuardsLoader(rootGuards) : undefined,
-        })
-      : null;
+  const rootRouteConfig = !hasRootModule
+    ? resolveIndexRoute({
+        path: "",
+        component: EmptyOutlet,
+      })
+    : null;
 
   const settingsRoutes =
     settingsResources.length > 0

@@ -29,57 +29,56 @@ export function filterRoutes(
   );
 }
 
+type PathMapping = {
+  title: string;
+  breadcrumbTitle?: string | ((segment: string) => string);
+  clickable: boolean;
+};
+
+const resolveBreadcrumbTitle = (mapping: PathMapping, segment: string): string => {
+  if (typeof mapping.breadcrumbTitle === "function") return mapping.breadcrumbTitle(segment);
+  if (typeof mapping.breadcrumbTitle === "string") return mapping.breadcrumbTitle;
+  return mapping.title;
+};
+
 /**
  * Function to build a mapping of paths to titles from modules and resources.
  */
 const buildPathTitleMapping = (modules: Array<Module>, locale: string) => {
   const resolveTitle = buildTitleResolver(locale);
-  return modules.reduce(
-    (
-      acc: Record<
-        string,
-        {
-          title: string;
-          breadcrumbTitle?: string | ((segment: string) => string);
-          clickable: boolean;
+  return modules.reduce((acc: Record<string, PathMapping>, module) => {
+    const moduleTitle = resolveTitle(module.meta.title, module.path);
+
+    acc[module.path] = {
+      title: moduleTitle,
+      breadcrumbTitle: module.meta.breadcrumbTitle,
+      clickable: module.meta.menuItemClickable,
+    };
+
+    const buildResourceMappingRecursively = (resources: Array<Resource>, basePath: string) => {
+      if (!resources || resources.length === 0) return;
+
+      resources.forEach((resource) => {
+        const resourcePath = `${basePath}/${resource.path}`;
+        const resourceTitle = resolveTitle(resource.meta.title, resource.path);
+        acc[resourcePath] = {
+          title: resourceTitle,
+          breadcrumbTitle: resource.meta.breadcrumbTitle,
+          clickable: true,
+        };
+
+        if (resource.subResources && resource.subResources.length > 0) {
+          buildResourceMappingRecursively(resource.subResources, resourcePath);
         }
-      >,
-      module,
-    ) => {
-      const moduleTitle = resolveTitle(module.meta.title, module.path);
+      });
+    };
 
-      acc[module.path] = {
-        title: moduleTitle,
-        breadcrumbTitle: module.meta.breadcrumbTitle,
-        clickable: module.meta.menuItemClickable,
-      };
+    if (module.resources && module.resources.length > 0) {
+      buildResourceMappingRecursively(module.resources, module.path);
+    }
 
-      const buildResourceMappingRecursively = (resources: Array<Resource>, basePath: string) => {
-        if (!resources || resources.length === 0) return;
-
-        resources.forEach((resource) => {
-          const resourcePath = `${basePath}/${resource.path}`;
-          const resourceTitle = resolveTitle(resource.meta.title, resource.path);
-          acc[resourcePath] = {
-            title: resourceTitle,
-            breadcrumbTitle: resource.meta.breadcrumbTitle,
-            clickable: true,
-          };
-
-          if (resource.subResources && resource.subResources.length > 0) {
-            buildResourceMappingRecursively(resource.subResources, resourcePath);
-          }
-        });
-      };
-
-      if (module.resources && module.resources.length > 0) {
-        buildResourceMappingRecursively(module.resources, module.path);
-      }
-
-      return acc;
-    },
-    {},
-  );
+    return acc;
+  }, {});
 };
 
 /**
@@ -108,11 +107,7 @@ export function processPathSegments(
           {
             segment: "",
             path: "",
-            title: rootMapping.breadcrumbTitle
-              ? typeof rootMapping.breadcrumbTitle === "function"
-                ? rootMapping.breadcrumbTitle("")
-                : rootMapping.breadcrumbTitle
-              : rootMapping.title,
+            title: resolveBreadcrumbTitle(rootMapping, ""),
             clickable: rootMapping.clickable,
           },
         ],
@@ -138,13 +133,7 @@ export function processPathSegments(
     }
     let title: string;
     if (mapping) {
-      if (typeof mapping.breadcrumbTitle === "function") {
-        title = mapping.breadcrumbTitle(segment);
-      } else if (typeof mapping.breadcrumbTitle === "string") {
-        title = mapping.breadcrumbTitle;
-      } else {
-        title = mapping.title;
-      }
+      title = resolveBreadcrumbTitle(mapping, segment);
     } else {
       title = decodeURIComponent(segment);
     }

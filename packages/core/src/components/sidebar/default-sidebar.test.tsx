@@ -281,11 +281,7 @@ describe("DefaultSidebar auto-generation", () => {
 
     window.history.pushState({}, "", "/dashboard");
     render(
-      <AppShell
-        title="Test"
-        modules={modules}
-        rootComponent={() => <div>Root Home</div>}
-      >
+      <AppShell title="Test" modules={modules} rootComponent={() => <div>Root Home</div>}>
         <SidebarLayout />
       </AppShell>,
     );
@@ -325,11 +321,7 @@ describe("DefaultSidebar auto-generation", () => {
 
     window.history.pushState({}, "", "/products");
     render(
-      <AppShell
-        title="Test"
-        modules={modules}
-        rootComponent={() => <div>Ignored Root</div>}
-      >
+      <AppShell title="Test" modules={modules} rootComponent={() => <div>Ignored Root</div>}>
         <SidebarLayout />
       </AppShell>,
     );

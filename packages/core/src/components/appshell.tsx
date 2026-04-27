@@ -224,27 +224,43 @@ export const AppShell = (props: AppShellProps) => {
   const contextData = (props.contextData ?? {}) as ContextData;
   setContextData(contextData);
 
-  const { modules: propsModules, rootComponent } = props;
+  const { modules: propsModules, rootComponent, rootGuards } = props;
 
   const modules = useMemo(() => {
     if (!propsModules) return propsModules;
-    // When rootComponent is provided but no root module (path="") exists,
-    // inject a synthetic root module so that the sidebar and command palette
-    // can display a "Home" entry and usePageMeta("/") resolves correctly.
+
     const hasRootModule = propsModules.some((m) => m.path === "");
-    if (!hasRootModule && rootComponent) {
+
+    if (hasRootModule) {
+      if (rootComponent) {
+        console.warn(
+          '[AppShell] Both a root module (path="") and rootComponent are provided. ' +
+            "The root module takes precedence; rootComponent will be ignored.",
+        );
+      }
+      return propsModules;
+    }
+
+    // No explicit root module — synthesize one from rootComponent / rootGuards
+    if (rootComponent || rootGuards?.length) {
       return [
         defineModule({
           path: "",
-          meta: { title: labels.t("home"), icon: <HouseIcon /> },
-          component: () => rootComponent(),
+          ...(rootComponent
+            ? {
+                meta: { title: labels.t("home"), icon: <HouseIcon /> },
+                component: () => rootComponent(),
+              }
+            : { meta: {} }),
+          guards: rootGuards,
           resources: [],
         }),
         ...propsModules,
       ];
     }
+
     return propsModules;
-  }, [propsModules, rootComponent]);
+  }, [propsModules, rootComponent, rootGuards]);
 
   // Memoize configurations to prevent unnecessary re-renders
   // configurations will be null if modules is not provided
@@ -304,7 +320,7 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-              <RouterContainer rootComponent={props.rootComponent} rootGuards={props.rootGuards}>
+              <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />
               </RouterContainer>

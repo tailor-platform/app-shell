@@ -22,7 +22,7 @@ afterEach(() => {
 });
 
 const renderWithConfig = ({
-  modules = [],
+  modules: inputModules = [],
   basePath,
   locale = "en",
   rootComponent,
@@ -42,6 +42,20 @@ const renderWithConfig = ({
   autoLogin?: boolean;
   guardComponent?: () => React.ReactNode;
 }) => {
+  // Convert rootComponent into a root module (path="") so the test mirrors
+  // how AppShell now consolidates root handling before passing to RouterContainer.
+  const modules = rootComponent
+    ? [
+        defineModule({
+          path: "",
+          meta: { title: "Home" },
+          component: () => rootComponent(),
+          resources: [],
+        }),
+        ...inputModules,
+      ]
+    : inputModules;
+
   const configurations = {
     modules,
     settingsResources: [] as Array<Resource>,
@@ -55,7 +69,7 @@ const renderWithConfig = ({
   const tree = (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData }}>
-        <RouterContainer memory rootComponent={rootComponent} initialEntries={initialEntries}>
+        <RouterContainer memory initialEntries={initialEntries}>
           <Outlet />
         </RouterContainer>
       </AppShellDataContext.Provider>

@@ -48,6 +48,7 @@ export function useDataTable<
     onClickRow,
     rowActions,
     onSelectionChange,
+    sort: sortOption,
   } = options;
 
   // ---------------------------------------------------------------------------
@@ -157,15 +158,23 @@ export function useDataTable<
   // ---------------------------------------------------------------------------
   // Sort (delegated from control)
   // ---------------------------------------------------------------------------
+  const sortDisabled = sortOption === false;
+  const sortMultiple = sortOption !== false && sortOption?.multiple === true;
+
   const sortStates = useMemo<SortState[]>(() => {
+    if (sortDisabled) return [];
     return control?.sortStates ?? [];
-  }, [control?.sortStates]);
+  }, [control?.sortStates, sortDisabled]);
 
   const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
-    if (!control) return undefined;
-    return (field: string, direction?: "Asc" | "Desc") =>
+    if (sortDisabled || !control) return undefined;
+    return (field: string, direction?: "Asc" | "Desc") => {
+      if (!sortMultiple && direction !== undefined) {
+        control.clearSort();
+      }
       control.setSort(field as TFieldName, direction);
-  }, [control]);
+    };
+  }, [control, sortDisabled, sortMultiple]);
 
   // ---------------------------------------------------------------------------
   // Row selection

@@ -103,6 +103,14 @@ export type UseDataTableOptions<
    * the rows on the **current page**, not all pages.
    */
   onSelectionChange?: (ids: string[]) => void;
+  /**
+   * Sort behaviour configuration.
+   *
+   * - `false` — disables sorting entirely (headers become non-clickable).
+   * - `{ multiple: true }` — allows sorting by multiple columns at once.
+   * - Omitted or `{}` — single-column sort (default).
+   */
+  sort?: false | { multiple?: boolean };
 };
 
 // =============================================================================

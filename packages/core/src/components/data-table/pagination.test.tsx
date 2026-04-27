@@ -51,7 +51,12 @@ function TestPagination({
   control: CollectionControl;
   onSelectionChange?: (ids: string[]) => void;
 }) {
-  const table = useDataTable<TestRow>({ columns: testColumns, data, control, onSelectionChange });
+  const table = useDataTable<TestRow>({
+    columns: testColumns,
+    data,
+    control,
+    onSelectionChange,
+  });
   return (
     <DataTable.Root value={table}>
       <DataTable.Footer>
@@ -284,7 +289,9 @@ describe("row info text", () => {
   };
 
   it("shows total rows when total is provided and no selection enabled", () => {
-    render(<TestPagination data={dataWithRows} control={makeControl()} />, { wrapper });
+    render(<TestPagination data={dataWithRows} control={makeControl()} />, {
+      wrapper,
+    });
     expect(screen.getByText("50 row(s)")).not.toBeNull();
   });
 

@@ -1,10 +1,5 @@
 "use client";
-import {
-  AppShell,
-  AppShellProps,
-  DefaultSidebar,
-  SidebarLayout,
-} from "@tailor-platform/app-shell";
+import { AppShell, AppShellProps, DefaultSidebar, SidebarLayout } from "@tailor-platform/app-shell";
 import {
   customPageModule,
   profileResource,

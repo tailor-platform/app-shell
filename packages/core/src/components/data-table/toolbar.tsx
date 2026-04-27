@@ -39,13 +39,15 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
   boolean: "eq",
   string: "contains",
   number: "eq",
+  datetime: "eq",
   date: "eq",
+  time: "eq",
   uuid: "eq",
 };
 
-/** Number/date operators available in the operator selector. */
-const NUMERIC_DATE_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte"] as const;
-type NumericDateOperator = (typeof NUMERIC_DATE_OPERATORS)[number];
+/** Number/temporal operators available in the operator selector. */
+const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte"] as const;
+type NumericTemporalOperator = (typeof NUMERIC_TEMPORAL_OPERATORS)[number];
 
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
@@ -221,10 +223,10 @@ function AddFilterPopover({
                   }}
                   className={cn(
                     "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-[checked]:bg-primary astw:data-[checked]:border-primary astw:data-[checked]:text-primary-foreground",
+                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
                   )}
                 >
-                  <Checkbox.Indicator className="astw:flex astw:data-[unchecked]:hidden">
+                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
                     <Check className="astw:size-3" />
                   </Checkbox.Indicator>
                 </Checkbox.Root>
@@ -256,9 +258,30 @@ function AddFilterPopover({
     if (config.type === "date") {
       return (
         <Input
-          type="date"
+          {...getTemporalInputProps(config.type)}
           value={typeof value === "string" ? value : ""}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmit();
+            }
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      );
+    }
+
+    if (isTemporalFilterType(config.type)) {
+      return (
+        <Input
+          {...getTemporalInputProps(config.type)}
+          value={typeof value === "string" ? value : ""}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmit();
+            }
+          }}
           className="astw:h-8 astw:text-sm"
         />
       );
@@ -408,7 +431,7 @@ function FilterChip({
             <Popover.Popup
               data-slot="data-table-filter-popup"
               className={cn(
-                "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-[180px] astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+                "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-45 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
                 "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
               )}
             >
@@ -471,9 +494,11 @@ function FilterPopoverContent({
       return (
         <NumericFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
       );
+    case "datetime":
     case "date":
+    case "time":
       return (
-        <DateFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+        <TemporalFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
       );
   }
 }
@@ -531,10 +556,10 @@ function EnumFilterEditor({
               onCheckedChange={() => handleToggle(option.value)}
               className={cn(
                 "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                "astw:data-[checked]:bg-primary astw:data-[checked]:border-primary astw:data-[checked]:text-primary-foreground",
+                "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
               )}
             >
-              <Checkbox.Indicator className="astw:flex astw:data-[unchecked]:hidden">
+              <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
                 <Check className="astw:size-3" />
               </Checkbox.Indicator>
             </Checkbox.Root>
@@ -733,9 +758,9 @@ function NumericFilterEditor({
   onClose: () => void;
 }) {
   const t = useDataTableT();
-  const [localOp, setLocalOp] = useState<NumericDateOperator>(
-    NUMERIC_DATE_OPERATORS.includes(filter.operator as NumericDateOperator)
-      ? (filter.operator as NumericDateOperator)
+  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
+    NUMERIC_TEMPORAL_OPERATORS.includes(filter.operator as NumericTemporalOperator)
+      ? (filter.operator as NumericTemporalOperator)
       : "eq",
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
@@ -756,7 +781,7 @@ function NumericFilterEditor({
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       <Select
-        items={[...NUMERIC_DATE_OPERATORS]}
+        items={[...NUMERIC_TEMPORAL_OPERATORS]}
         value={localOp}
         onValueChange={(v) => {
           if (v) setLocalOp(v);
@@ -781,41 +806,47 @@ function NumericFilterEditor({
 }
 
 // =============================================================================
-// Date filter — operator selector + date input
+// Temporal filter — operator selector + type-specific input
 // =============================================================================
 
-function DateFilterEditor({
+function TemporalFilterEditor({
   config,
   filter,
   control,
   onClose,
 }: {
-  config: Extract<FilterConfig, { type: "date" }>;
+  config: Extract<FilterConfig, { type: "datetime" | "date" | "time" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
 }) {
   const t = useDataTableT();
-  const [localOp, setLocalOp] = useState<NumericDateOperator>(
-    NUMERIC_DATE_OPERATORS.includes(filter.operator as NumericDateOperator)
-      ? (filter.operator as NumericDateOperator)
+  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
+    NUMERIC_TEMPORAL_OPERATORS.includes(filter.operator as NumericTemporalOperator)
+      ? (filter.operator as NumericTemporalOperator)
       : "eq",
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
+  const canCommit = localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
 
   const handleCommit = useCallback(() => {
     if (localValue.trim() === "") {
       control.removeFilter(config.field);
-    } else {
+    } else if (isTemporalFilterValueValid(config.type, localValue)) {
       control.addFilter(config.field, localOp, localValue);
+    } else {
+      return;
     }
     onClose();
-  }, [localValue, localOp, control, config.field, onClose]);
+  }, [localValue, localOp, control, config.field, config.type, onClose]);
 
   return (
-    <div data-slot="data-table-filter-date" className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
+    <div
+      data-slot={`data-table-filter-${config.type}`}
+      className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
+    >
       <Select
-        items={[...NUMERIC_DATE_OPERATORS]}
+        items={[...NUMERIC_TEMPORAL_OPERATORS]}
         value={localOp}
         onValueChange={(v) => {
           if (v) setLocalOp(v);
@@ -824,14 +855,19 @@ function DateFilterEditor({
         className="astw:h-8 astw:text-sm"
       />
       <Input
-        type="date"
+        {...getTemporalInputProps(config.type)}
         value={localValue}
         onChange={(e) => {
           setLocalValue(e.target.value);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleCommit();
+          }
+        }}
         className="astw:h-8 astw:text-sm"
       />
-      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+      <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
     </div>
@@ -847,8 +883,10 @@ function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
     case "string":
       return [...STRING_OPERATORS];
     case "number":
+    case "datetime":
     case "date":
-      return [...NUMERIC_DATE_OPERATORS];
+    case "time":
+      return [...NUMERIC_TEMPORAL_OPERATORS];
     case "enum":
       return ["in"];
     case "boolean":
@@ -880,6 +918,9 @@ function isAddFilterDraftValueValid(
     if (value.trim() === "") return false;
     return !Number.isNaN(Number(value));
   }
+  if (isTemporalFilterType(type)) {
+    return isTemporalFilterValueValid(type, value);
+  }
   return value.trim() !== "";
 }
 
@@ -897,6 +938,45 @@ function toAddFilterSubmittedValue(
     return Number(value);
   }
   return String(value).trim();
+}
+
+function isTemporalFilterType(type: FilterConfig["type"]): type is "datetime" | "date" | "time" {
+  return type === "datetime" || type === "date" || type === "time";
+}
+
+function isTemporalFilterValueValid(type: "datetime" | "date" | "time", value: string): boolean {
+  const trimmedValue = value.trim();
+  if (trimmedValue === "") return false;
+
+  switch (type) {
+    case "datetime":
+      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
+        trimmedValue,
+      );
+    case "date":
+      return /^\d{4}-\d{2}-\d{2}$/.test(trimmedValue);
+    case "time":
+      return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(trimmedValue);
+  }
+}
+
+function getTemporalInputProps(type: "datetime" | "date" | "time") {
+  switch (type) {
+    case "datetime":
+      return {
+        type: "text" as const,
+        placeholder: "2026-04-27T12:34:56Z",
+      };
+    case "date":
+      return {
+        type: "date" as const,
+      };
+    case "time":
+      return {
+        type: "time" as const,
+        step: 60,
+      };
+  }
 }
 
 function getOperatorLabel(operator: FilterOperator, t: ReturnType<typeof useDataTableT>): string {

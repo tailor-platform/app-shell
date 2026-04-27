@@ -6,7 +6,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
-      richColors
       theme={theme as ToasterProps["theme"]}
       className="astw:toaster astw:group"
       style={

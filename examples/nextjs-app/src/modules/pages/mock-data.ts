@@ -2,12 +2,15 @@ export type Product = {
   id: string;
   name: string;
   category: string;
+  publishedAt: string;
+  availableOn: string;
+  restockAt: string;
   price: number;
   stock: number;
   status: "Active" | "Draft" | "Archived";
 };
 
-export const allProducts: Product[] = [
+const baseProducts = [
   {
     id: "p-001",
     name: "Ergonomic Chair",
@@ -168,7 +171,115 @@ export const allProducts: Product[] = [
     stock: 33,
     status: "Active",
   },
-];
+] as const;
+
+const productSchedule = [
+  {
+    publishedAt: "2026-01-05T09:15:00Z",
+    availableOn: "2026-02-01",
+    restockAt: "09:30",
+  },
+  {
+    publishedAt: "2026-01-12T11:45:00Z",
+    availableOn: "2026-02-05",
+    restockAt: "10:15",
+  },
+  {
+    publishedAt: "2026-01-19T14:00:00Z",
+    availableOn: "2026-02-08",
+    restockAt: "08:45",
+  },
+  {
+    publishedAt: "2026-01-22T16:20:00Z",
+    availableOn: "2026-02-12",
+    restockAt: "13:00",
+  },
+  {
+    publishedAt: "2026-01-28T07:30:00Z",
+    availableOn: "2026-02-15",
+    restockAt: "15:30",
+  },
+  {
+    publishedAt: "2026-02-02T12:10:00Z",
+    availableOn: "2026-02-18",
+    restockAt: "11:00",
+  },
+  {
+    publishedAt: "2026-02-06T18:05:00Z",
+    availableOn: "2026-02-20",
+    restockAt: "17:45",
+  },
+  {
+    publishedAt: "2026-02-10T10:00:00Z",
+    availableOn: "2026-02-22",
+    restockAt: "14:20",
+  },
+  {
+    publishedAt: "2026-02-14T08:50:00Z",
+    availableOn: "2026-02-25",
+    restockAt: "09:10",
+  },
+  {
+    publishedAt: "2026-02-17T13:25:00Z",
+    availableOn: "2026-02-28",
+    restockAt: "16:40",
+  },
+  {
+    publishedAt: "2026-02-20T06:40:00Z",
+    availableOn: "2026-03-02",
+    restockAt: "07:20",
+  },
+  {
+    publishedAt: "2026-02-23T15:55:00Z",
+    availableOn: "2026-03-05",
+    restockAt: "12:30",
+  },
+  {
+    publishedAt: "2026-02-26T09:05:00Z",
+    availableOn: "2026-03-08",
+    restockAt: "10:50",
+  },
+  {
+    publishedAt: "2026-03-01T19:15:00Z",
+    availableOn: "2026-03-11",
+    restockAt: "18:00",
+  },
+  {
+    publishedAt: "2026-03-04T11:35:00Z",
+    availableOn: "2026-03-14",
+    restockAt: "08:15",
+  },
+  {
+    publishedAt: "2026-03-07T17:45:00Z",
+    availableOn: "2026-03-17",
+    restockAt: "11:40",
+  },
+  {
+    publishedAt: "2026-03-10T08:25:00Z",
+    availableOn: "2026-03-20",
+    restockAt: "09:55",
+  },
+  {
+    publishedAt: "2026-03-13T14:30:00Z",
+    availableOn: "2026-03-22",
+    restockAt: "13:35",
+  },
+  {
+    publishedAt: "2026-03-16T10:10:00Z",
+    availableOn: "2026-03-25",
+    restockAt: "15:05",
+  },
+  {
+    publishedAt: "2026-03-19T16:50:00Z",
+    availableOn: "2026-03-28",
+    restockAt: "10:25",
+  },
+] as const;
+
+export const allProducts: Product[] = baseProducts.map((product, index) => ({
+  ...product,
+  ...productSchedule[index],
+}));
 
 // ---------------------------------------------------------------------------
 // Mock query hook (simulates a real useQuery call)

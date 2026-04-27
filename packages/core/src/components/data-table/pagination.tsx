@@ -50,7 +50,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
 
   return (
     <div className="astw:flex astw:w-full astw:items-center astw:justify-between astw:gap-2">
-      <div className="astw:text-sm astw:text-muted-foreground">{rowInfoText}</div>
+      {rowInfoText && <div className="astw:text-sm astw:text-muted-foreground">{rowInfoText}</div>}
       <div className="astw:flex astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
         {pageSizeOptions && pageSizeOptions.length > 0 && (
           <div className="astw:flex astw:items-center astw:gap-1.5">

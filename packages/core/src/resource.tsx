@@ -3,6 +3,7 @@ import { capitalCase } from "change-case";
 import { DefaultErrorBoundary } from "./components/default-error-boundary";
 import { useAppShellConfig, type ContextData } from "./contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "./lib/i18n";
+import { labels } from "./i18n-labels";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
 // ============================================
@@ -172,6 +173,14 @@ export const withGuardsLoader = (guards: Guard[] | undefined, baseLoader?: Loade
   };
 };
 
+/**
+ * Generate a human-readable title from a route path.
+ * Root paths ("" or "/") produce a localized "Home" / "ホーム" title.
+ * Other paths use capitalCase (e.g. "order-items" → "Order Items").
+ */
+export const titleFromPath = (path: string): LocalizedString =>
+  path === "" || path === "/" ? labels.t("home") : capitalCase(path);
+
 type CommonPageResource = {
   path: string;
   type: "component";
@@ -274,7 +283,7 @@ export type ResourceComponentProps = {
 const makeComponent = (
   props: {
     metaTitle: LocalizedString;
-    fallbackTitle: string;
+    fallbackTitle: LocalizedString;
   },
   render: (title: string) => ReactNode,
 ) => {
@@ -282,7 +291,9 @@ const makeComponent = (
     const { configurations } = useAppShellConfig();
     const { metaTitle, fallbackTitle } = props;
     const resolve = buildLocaleResolver(configurations.locale);
-    const title = resolve(metaTitle, fallbackTitle);
+    const resolvedFallback =
+      typeof fallbackTitle === "function" ? fallbackTitle(configurations.locale) : fallbackTitle;
+    const title = resolve(metaTitle, resolvedFallback);
     return render(title);
   };
 };
@@ -356,8 +367,8 @@ type DefineModuleProps = CommonProps &
  */
 export function defineModule(props: DefineModuleProps): Module {
   const { path, meta, component, resources, errorBoundary, guards } = props;
-  const metaTitle: LocalizedString = meta?.title ?? capitalCase(path);
-  const fallbackTitle = capitalCase(path);
+  const metaTitle: LocalizedString = meta?.title ?? titleFromPath(path);
+  const fallbackTitle = titleFromPath(path);
   const loader = guards && guards.length > 0 ? withGuardsLoader(guards) : undefined;
   const wrappedComponent = component
     ? makeComponent({ metaTitle, fallbackTitle }, (title) => component({ title, resources }))

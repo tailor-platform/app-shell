@@ -1,6 +1,15 @@
-import { Modules, Resource, ErrorBoundaryComponent, Guard, setContextData } from "@/resource";
+import {
+  Modules,
+  Resource,
+  ErrorBoundaryComponent,
+  Guard,
+  setContextData,
+  defineModule,
+} from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
+import { HouseIcon } from "lucide-react";
+import { labels } from "@/i18n-labels";
 import {
   AppShellConfigContext,
   AppShellDataContext,
@@ -215,7 +224,44 @@ export const AppShell = (props: AppShellProps) => {
   const contextData = (props.contextData ?? {}) as ContextData;
   setContextData(contextData);
 
-  const modules = props.modules;
+  const { modules: propsModules, rootComponent, rootGuards } = props;
+
+  const modules = useMemo(() => {
+    if (!propsModules) return propsModules;
+
+    const hasRootModule = propsModules.some((m) => m.path === "");
+
+    if (hasRootModule) {
+      if (rootComponent || rootGuards?.length) {
+        console.warn(
+          '[AppShell] Both a root module (path="") and rootComponent/rootGuards are provided. ' +
+            "The root module takes precedence; rootComponent and rootGuards will be ignored. " +
+            "Define guards directly on the root module instead.",
+        );
+      }
+      return propsModules;
+    }
+
+    // No explicit root module — synthesize one from rootComponent / rootGuards
+    if (rootComponent || rootGuards?.length) {
+      return [
+        defineModule({
+          path: "",
+          ...(rootComponent
+            ? {
+                meta: { title: labels.t("home"), icon: <HouseIcon /> },
+                component: () => rootComponent(),
+              }
+            : { meta: {} }),
+          guards: rootGuards,
+          resources: [],
+        }),
+        ...propsModules,
+      ];
+    }
+
+    return propsModules;
+  }, [propsModules, rootComponent, rootGuards]);
 
   // Memoize configurations to prevent unnecessary re-renders
   // configurations will be null if modules is not provided
@@ -275,7 +321,7 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-              <RouterContainer rootComponent={props.rootComponent} rootGuards={props.rootGuards}>
+              <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />
               </RouterContainer>
@@ -299,19 +345,8 @@ AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
 
-  // Extract root page (path="") and use it as rootComponent
-  const rootModule = allModules.find((m) => m.path === "");
-  const otherModules = allModules.filter((m) => m.path !== "");
-
   const WrappedAppShell: FC<AppShellProps> = (props) => {
-    return (
-      <AppShell
-        {...props}
-        modules={otherModules}
-        rootComponent={props.rootComponent ?? rootModule?.component}
-        rootGuards={props.rootGuards ?? rootModule?.guards}
-      />
-    );
+    return <AppShell {...props} modules={allModules} />;
   };
 
   return WrappedAppShell;

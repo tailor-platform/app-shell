@@ -1,10 +1,9 @@
 import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
 import type { RouteObject } from "react-router";
-import { createContentRoutes, RootComponentOption, wrapErrorBoundary } from "./routes";
+import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
-import type { Guard } from "@/resource";
 
 // ============================================================================
 // Root Route
@@ -54,32 +53,25 @@ const createRootRoute = (params: {
 // RouterContainer
 // ============================================================================
 
-type RouterContainerPropsCommon = {
-  rootComponent?: RootComponentOption;
-  rootGuards?: Guard[];
-};
-
 export type RouterContainerProps =
-  | ({
+  | {
       memory?: false;
-    } & RouterContainerPropsCommon)
-  | ({
+    }
+  | {
       memory: true;
       initialEntries: Array<string>;
-    } & RouterContainerPropsCommon);
+    };
 
 export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
-  const { rootComponent, children } = props;
+  const { children } = props;
   const { configurations } = useAppShellConfig();
   const contentRoutes = useMemo(
     () =>
       createContentRoutes({
         modules: configurations.modules,
         settingsResources: configurations.settingsResources,
-        rootComponent,
-        rootGuards: props.rootGuards,
       }),
-    [configurations.modules, configurations.settingsResources, rootComponent, props.rootGuards],
+    [configurations.modules, configurations.settingsResources],
   );
   const routes = useMemo(
     () =>

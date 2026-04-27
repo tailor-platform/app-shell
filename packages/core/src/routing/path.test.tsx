@@ -210,11 +210,72 @@ describe.concurrent("processPathSegments", () => {
     });
   });
 
-  it("should return empty segments array for empty path", () => {
+  it("should return empty segments array for empty path without root module", () => {
     const result = processPathSegments("/", undefined, mockModules, "en");
 
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(0);
+  });
+
+  it("should return root module breadcrumb for root path '/'", () => {
+    const modulesWithRoot = [
+      defineModule({
+        path: "",
+        component: () => null,
+        meta: { title: "Home" },
+        resources: [],
+      }),
+      ...mockModules,
+    ];
+
+    const result = processPathSegments("/", undefined, modulesWithRoot, "en");
+
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Home");
+    expect(result.segments[0].path).toBe("");
+    expect(result.segments[0].clickable).toBe(true);
+  });
+
+  it("should return root module breadcrumb with basePath", () => {
+    const modulesWithRoot = [
+      defineModule({
+        path: "",
+        component: () => null,
+        meta: { title: "Home" },
+        resources: [],
+      }),
+      ...mockModules,
+    ];
+
+    const result = processPathSegments("/dashboard", "dashboard", modulesWithRoot, "en");
+
+    expect(result.basePath).toBe("dashboard");
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Home");
+  });
+
+  it("should resolve resource titles under root module (path='')", () => {
+    const modulesWithRootResources = [
+      defineModule({
+        path: "",
+        component: () => null,
+        meta: { title: "Home" },
+        resources: [
+          defineResource({
+            path: "orders",
+            component: () => null,
+            meta: { title: "Orders" },
+          }),
+        ],
+      }),
+      ...mockModules,
+    ];
+
+    const result = processPathSegments("/orders", undefined, modulesWithRootResources, "en");
+
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Orders");
+    expect(result.segments[0].path).toBe("orders");
   });
 
   it("should use breadcrumbTitle string when defined on a module", () => {

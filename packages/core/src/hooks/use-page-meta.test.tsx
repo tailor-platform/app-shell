@@ -148,4 +148,35 @@ describe("usePageMeta", () => {
     expect(result.current).not.toBeNull();
     expect(result.current?.title).toBe("Orders");
   });
+
+  it("returns meta for root module (path='') when querying '/'", () => {
+    const modulesWithRoot = [
+      defineModule({
+        path: "",
+        meta: { title: "Home", icon: <Home /> },
+        component: () => <div>Home</div>,
+        resources: [],
+      }),
+      ...createTestModules(),
+    ];
+
+    const configWithRoot: RootConfiguration = {
+      ...testConfig,
+      modules: modulesWithRoot,
+    };
+
+    const { result } = renderHook(() => usePageMeta("/"), {
+      wrapper: ({ children }) => (
+        <MemoryRouter initialEntries={["/"]}>
+          <AppShellConfigContext.Provider value={{ configurations: configWithRoot }}>
+            {children}
+          </AppShellConfigContext.Provider>
+        </MemoryRouter>
+      ),
+    });
+
+    expect(result.current).not.toBeNull();
+    expect(result.current?.title).toBe("Home");
+    expect(result.current?.icon).toBeDefined();
+  });
 });

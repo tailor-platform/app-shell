@@ -81,7 +81,7 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
     .map(({ module, resources }) => {
       return {
         title: resolveTitle(module.meta.title, module.path),
-        url: module.meta.menuItemClickable ? module.path : undefined,
+        url: module.meta.menuItemClickable ? module.path || "/" : undefined,
         icon: module.meta.icon || <Table />,
         items: resources,
       };

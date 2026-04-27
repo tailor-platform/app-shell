@@ -360,4 +360,49 @@ describe("useNavItems", () => {
     expect(navItems[0].url).toBe("dashboard");
     expect(navItems[0].items).toHaveLength(0);
   });
+
+  it("root module (path='') is included in nav items with url '/'", async () => {
+    const modules = [
+      defineModule({
+        path: "",
+        meta: { title: "Home" },
+        component: () => <div>Home</div>,
+        resources: [],
+      }),
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard" },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/dashboard");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(2);
+    });
+
+    const navItems = await result.current!;
+    const homeItem = navItems.find((i) => i.title === "Home");
+    expect(homeItem).toBeDefined();
+    expect(homeItem!.url).toBe("/");
+    expect(navItems.find((i) => i.title === "Dashboard")).toBeDefined();
+  });
+
+  it("root module (path='') without component is excluded from nav items", async () => {
+    const modules = [
+      defineModule({
+        path: "",
+        meta: {},
+        resources: [],
+      }),
+    ];
+
+    const { result } = renderNavItems(modules, "/");
+
+    await waitFor(async () => {
+      expect(await result.current!).toHaveLength(0);
+    });
+  });
 });

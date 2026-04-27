@@ -41,7 +41,7 @@
   "dependencies": {},
   "devDependencies": {
     "@tailor-platform/app-shell": "workspace:*",
-    "@tailor-platform/sdk": "^1.33.0",
+    "@tailor-platform/sdk": "^1.40.1",
     "oxlint": "catalog:",
     "tsdown": "^0.21.7",
     "typescript": "^5",

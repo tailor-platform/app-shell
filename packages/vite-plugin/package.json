@@ -1,6 +1,6 @@
 {
   "name": "@tailor-platform/app-shell-vite-plugin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Vite plugin for file-based routing in AppShell applications",
   "keywords": [
     "app-shell",

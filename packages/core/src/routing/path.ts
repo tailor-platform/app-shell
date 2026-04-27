@@ -97,6 +97,29 @@ export function processPathSegments(
   const segments = basePath && rawSegments[0] === basePath ? rawSegments.slice(1) : rawSegments;
 
   const pathTitleMapping = buildPathTitleMapping(modules, locale);
+
+  // When at the root path (no segments), show a breadcrumb for the root module if it exists
+  if (segments.length === 0) {
+    const rootMapping = pathTitleMapping[""];
+    if (rootMapping) {
+      return {
+        basePath: basePath || null,
+        segments: [
+          {
+            segment: "",
+            path: "",
+            title: rootMapping.breadcrumbTitle
+              ? typeof rootMapping.breadcrumbTitle === "function"
+                ? rootMapping.breadcrumbTitle("")
+                : rootMapping.breadcrumbTitle
+              : rootMapping.title,
+            clickable: rootMapping.clickable,
+          },
+        ],
+      };
+    }
+  }
+
   const segmentsWithTitle = segments.map((segment, index) => {
     const currentPath = segments.slice(0, index + 1).join("/");
 

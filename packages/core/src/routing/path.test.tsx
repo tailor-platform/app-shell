@@ -210,11 +210,48 @@ describe.concurrent("processPathSegments", () => {
     });
   });
 
-  it("should return empty segments array for empty path", () => {
+  it("should return empty segments array for empty path without root module", () => {
     const result = processPathSegments("/", undefined, mockModules, "en");
 
     expect(result.basePath).toBeNull();
     expect(result.segments).toHaveLength(0);
+  });
+
+  it("should return root module breadcrumb for root path '/'", () => {
+    const modulesWithRoot = [
+      defineModule({
+        path: "",
+        component: () => null,
+        meta: { title: "Home" },
+        resources: [],
+      }),
+      ...mockModules,
+    ];
+
+    const result = processPathSegments("/", undefined, modulesWithRoot, "en");
+
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Home");
+    expect(result.segments[0].path).toBe("");
+    expect(result.segments[0].clickable).toBe(true);
+  });
+
+  it("should return root module breadcrumb with basePath", () => {
+    const modulesWithRoot = [
+      defineModule({
+        path: "",
+        component: () => null,
+        meta: { title: "Home" },
+        resources: [],
+      }),
+      ...mockModules,
+    ];
+
+    const result = processPathSegments("/dashboard", "dashboard", modulesWithRoot, "en");
+
+    expect(result.basePath).toBe("dashboard");
+    expect(result.segments).toHaveLength(1);
+    expect(result.segments[0].title).toBe("Home");
   });
 
   it("should use breadcrumbTitle string when defined on a module", () => {

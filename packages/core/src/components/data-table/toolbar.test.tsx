@@ -471,7 +471,9 @@ describe("TemporalFilterEditor", () => {
     });
 
     await user.click(
-      screen.getByRole("button", { name: /Published At equals 2025-01-01T10:30:00Z/ }),
+      screen.getByRole("button", {
+        name: /Published At equals 2025-01-01T10:30:00Z/,
+      }),
     );
 
     const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
@@ -496,7 +498,9 @@ describe("TemporalFilterEditor", () => {
     });
 
     await user.click(
-      screen.getByRole("button", { name: /Published At equals 2025-01-01T10:30:00Z/ }),
+      screen.getByRole("button", {
+        name: /Published At equals 2025-01-01T10:30:00Z/,
+      }),
     );
 
     const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");

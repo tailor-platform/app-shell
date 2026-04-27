@@ -23,10 +23,12 @@ const useToast: () => {
 {
   title?: string;
   description?: string;
-  variant?: "default" | "success" | "error" | "warning";
+  variant?: "default" | "success" | "error" | "warning"; // no color-coded styling applied
   duration?: number; // milliseconds
 }
 ```
+
+> **Note:** Toast notifications do not use color-coded styling for variants. All toasts (`success`, `error`, `warning`, `default`) are rendered with the same default appearance.
 
 ## Usage
 

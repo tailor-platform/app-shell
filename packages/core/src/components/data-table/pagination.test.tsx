@@ -383,6 +383,6 @@ describe("row info text", () => {
       { wrapper },
     );
     expect(screen.queryByText(/row\(s\) selected/)).toBeNull();
-    expect(screen.queryByText(/rows$/)).toBeNull();
+    expect(screen.queryByText(/row\(s\)/)).toBeNull();
   });
 });

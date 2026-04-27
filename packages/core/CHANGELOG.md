@@ -1,5 +1,13 @@
 # @tailor-platform/app-shell
 
+## 1.0.2
+
+### Patch Changes
+
+- 27bb5df: Remove `richColors` prop from the `Toaster` component. Toast notifications will no longer use color-coded styling for success, error, warning, and info variants.
+- Updated dependencies [ee7f7c7]
+  - @tailor-platform/app-shell-vite-plugin@0.2.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -53,16 +53,14 @@ const createRootRoute = (params: {
 // RouterContainer
 // ============================================================================
 
-type RouterContainerPropsCommon = {};
-
 export type RouterContainerProps =
-  | ({
+  | {
       memory?: false;
-    } & RouterContainerPropsCommon)
-  | ({
+    }
+  | {
       memory: true;
       initialEntries: Array<string>;
-    } & RouterContainerPropsCommon);
+    };
 
 export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
   const { children } = props;

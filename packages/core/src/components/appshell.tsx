@@ -8,6 +8,8 @@ import {
 } from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
+import { HouseIcon } from "lucide-react";
+import { labels } from "@/i18n-labels";
 import {
   AppShellConfigContext,
   AppShellDataContext,
@@ -234,7 +236,7 @@ export const AppShell = (props: AppShellProps) => {
       return [
         defineModule({
           path: "",
-          meta: {},
+          meta: { title: labels.t("home"), icon: <HouseIcon /> },
           component: () => rootComponent(),
           resources: [],
         }),

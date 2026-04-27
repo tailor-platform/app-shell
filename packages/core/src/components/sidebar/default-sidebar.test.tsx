@@ -268,4 +268,82 @@ describe("DefaultSidebar auto-generation", () => {
     expect(linkTexts).toContain("Home");
     expect(linkTexts).toContain("Dashboard");
   });
+
+  it("shows synthetic root module in sidebar when rootComponent is provided without root module", async () => {
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+      }),
+    ];
+
+    window.history.pushState({}, "", "/dashboard");
+    render(
+      <AppShell
+        title="Test"
+        modules={modules}
+        rootComponent={() => <div>Root Home</div>}
+      >
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+    });
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+    const links = sidebar.querySelectorAll("a");
+    const linkTexts = Array.from(links).map((link) => link.textContent);
+
+    // Synthetic root module should appear with i18n "Home" title
+    expect(linkTexts).toContain("Home");
+    expect(linkTexts).toContain("Dashboard");
+
+    // Synthetic root module should have a house icon
+    const homeLink = Array.from(links).find((link) => link.textContent === "Home")!;
+    expect(homeLink.querySelector("svg.lucide-house")).toBeDefined();
+  });
+
+  it("does not inject synthetic root module when root module already exists", async () => {
+    const modules = [
+      defineModule({
+        path: "",
+        meta: { title: "My Dashboard" },
+        component: () => <div>My Dashboard</div>,
+        resources: [],
+      }),
+      defineModule({
+        path: "products",
+        meta: { title: "Products", icon: <Package /> },
+        component: () => <div>Products</div>,
+        resources: [],
+      }),
+    ];
+
+    window.history.pushState({}, "", "/products");
+    render(
+      <AppShell
+        title="Test"
+        modules={modules}
+        rootComponent={() => <div>Ignored Root</div>}
+      >
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Products").length).toBeGreaterThan(0);
+    });
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+    const links = sidebar.querySelectorAll("a");
+    const linkTexts = Array.from(links).map((link) => link.textContent);
+
+    // Explicit root module title should be used, not "Home"
+    expect(linkTexts).toContain("My Dashboard");
+    expect(linkTexts).not.toContain("Home");
+  });
 });

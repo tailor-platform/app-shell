@@ -1,28 +1,37 @@
-import { renderHook, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
-import { AppShell } from "../components/appshell";
+import { renderHook, waitFor, cleanup } from "@testing-library/react";
+import { afterEach, describe, it, expect } from "vitest";
+import {
+  AppShellConfigContext,
+  AppShellDataContext,
+  buildConfigurations,
+} from "@/contexts/appshell-context";
+import { RouterContainer } from "@/routing/router";
 import { useNavItems } from "./navigation";
 import { defineModule, defineResource, hidden } from "@/resource";
+
+afterEach(() => {
+  cleanup();
+});
 
 const renderNavItems = (
   modules: Array<ReturnType<typeof defineModule>>,
   path = "/dashboard/overview",
 ) => {
-  window.history.pushState({}, "", path);
+  const configurations = buildConfigurations({ modules, locale: "en" });
   return renderHook(() => useNavItems(), {
     wrapper: ({ children }) => (
-      <AppShell title="My App" modules={modules}>
-        {children}
-      </AppShell>
+      <AppShellConfigContext.Provider value={{ configurations }}>
+        <AppShellDataContext.Provider value={{ contextData: {} }}>
+          <RouterContainer memory initialEntries={[path]}>
+            {children}
+          </RouterContainer>
+        </AppShellDataContext.Provider>
+      </AppShellConfigContext.Provider>
     ),
   });
 };
 
 describe("useNavItems", () => {
-  beforeEach(() => {
-    window.history.pushState({}, "", "/dashboard/overview");
-  });
-
   it("builds nav items for visible modules and resources", async () => {
     const modules = [
       defineModule({

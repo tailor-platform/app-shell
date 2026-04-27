@@ -627,7 +627,7 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
                           {route.breadcrumb.join(" > ")}
                         </span>
                         <span className="astw:text-[11px] astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
-                          /{route.path}
+                          {route.path.startsWith("/") ? route.path : `/${route.path}`}
                         </span>
                       </button>
                     );

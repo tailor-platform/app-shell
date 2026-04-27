@@ -116,8 +116,7 @@ export const createContentRoutes = ({
       ? resolveIndexRoute({
           path: "",
           component: rootComponent ?? EmptyOutlet,
-          loader:
-            rootGuards && rootGuards.length > 0 ? withGuardsLoader(rootGuards) : undefined,
+          loader: rootGuards && rootGuards.length > 0 ? withGuardsLoader(rootGuards) : undefined,
         })
       : null;
 

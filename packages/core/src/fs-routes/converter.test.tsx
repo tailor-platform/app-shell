@@ -45,14 +45,18 @@ describe("convertPagesToModules", () => {
     expect(modules[0]._type).toBe("module");
   });
 
-  it("root page without title falls back to 'Home', not '/'", () => {
+  it("root page without title falls back to localized 'Home', not '/'", () => {
     // Regression: when path is "/" and appShellPageProps.meta.title is not set,
     // the title should not be "/" (capitalCase("/") returns "/").
     const pages = [createMockPage("/")];
     const modules = convertPagesToModules(pages);
+    const title = modules[0].meta.title;
 
-    expect(modules[0].meta.title).not.toBe("/");
-    expect(modules[0].meta.title).toBe("Home");
+    expect(title).not.toBe("/");
+    // titleFromPath returns a LocalizedString function for root paths
+    expect(typeof title).toBe("function");
+    expect((title as (locale: string) => string)("en")).toBe("Home");
+    expect((title as (locale: string) => string)("ja")).toBe("ホーム");
   });
 
   it("converts single module page", () => {

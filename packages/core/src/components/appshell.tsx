@@ -1,4 +1,11 @@
-import { Modules, Resource, ErrorBoundaryComponent, Guard, setContextData, defineModule } from "@/resource";
+import {
+  Modules,
+  Resource,
+  ErrorBoundaryComponent,
+  Guard,
+  setContextData,
+  defineModule,
+} from "@/resource";
 import { useMemo } from "react";
 import { type FC } from "react";
 import {

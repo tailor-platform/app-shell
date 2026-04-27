@@ -570,9 +570,7 @@ describe("createContentRoutes", () => {
 
     // Root module should have an index route with its component
     const rootRoute = moduleContainer.children?.find((r) => r.path === "");
-    const indexRoute = rootRoute?.children?.find(
-      (r) => (r as { index?: boolean }).index === true,
-    );
+    const indexRoute = rootRoute?.children?.find((r) => (r as { index?: boolean }).index === true);
     expect(indexRoute).toBeDefined();
     expect(typeof indexRoute?.Component).toBe("function");
   });

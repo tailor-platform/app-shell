@@ -232,10 +232,11 @@ export const AppShell = (props: AppShellProps) => {
     const hasRootModule = propsModules.some((m) => m.path === "");
 
     if (hasRootModule) {
-      if (rootComponent) {
+      if (rootComponent || rootGuards?.length) {
         console.warn(
-          '[AppShell] Both a root module (path="") and rootComponent are provided. ' +
-            "The root module takes precedence; rootComponent will be ignored.",
+          '[AppShell] Both a root module (path="") and rootComponent/rootGuards are provided. ' +
+            "The root module takes precedence; rootComponent and rootGuards will be ignored. " +
+            "Define guards directly on the root module instead.",
         );
       }
       return propsModules;

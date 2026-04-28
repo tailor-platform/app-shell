@@ -2,7 +2,9 @@ import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/com
 import { SunIcon } from "lucide-react";
 import { AppShellOutlet } from "@/components/content";
 import { Button } from "@/components/button";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme, type ResolvedTheme } from "@/contexts/theme-context";
+
+const RESOLVED_THEME_CYCLE: ResolvedTheme[] = ["light", "dark", "tailor-light", "tailor-dark"];
 import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 
@@ -50,9 +52,11 @@ const HidableSidebarTrigger = () => {
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
   const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
-  const themeContext = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const toggleTheme = () => {
-    themeContext.setTheme(themeContext.theme === "dark" ? "light" : "dark");
+    const i = RESOLVED_THEME_CYCLE.indexOf(resolvedTheme);
+    const next = RESOLVED_THEME_CYCLE[(i === -1 ? 0 : i + 1) % RESOLVED_THEME_CYCLE.length];
+    setTheme(next);
   };
 
   return (

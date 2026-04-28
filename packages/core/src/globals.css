@@ -1,3 +1,8 @@
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/400.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/500.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/600.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/700.css");
+
 @import "tailwindcss" prefix(astw);
 @import "tw-animate-css";
 @import "./assets/theme.css";
@@ -34,6 +39,29 @@
   body {
     @apply astw:font-sans astw:antialiased astw:bg-background astw:text-foreground;
   }
+  /*
+    Tailor light: Geist Sans + Apple-style corners (squircle) when the engine supports corner-shape (Chromium).
+    Circles (.rounded-full) stay round; browsers without support keep standard border-radius.
+  */
+  html[data-theme="tailor-light"] body {
+    font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  html[data-theme="tailor-light"] :where(h1, h2, h3, h4, h5, h6) {
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  @supports (corner-shape: squircle) {
+    html[data-theme="tailor-light"] * {
+      corner-shape: squircle;
+    }
+    /* Round radii (.rounded-full) stay circular squircles, not elongated “capsules” */
+    html[data-theme="tailor-light"] [class*="rounded-full"] {
+      corner-shape: round;
+    }
+  }
   ::-webkit-scrollbar {
     @apply astw:w-2 astw:h-2 astw:bg-muted;
   }
@@ -42,5 +70,192 @@
   }
   ::-webkit-scrollbar-corner {
     @apply astw:bg-muted-foreground;
+  }
+}
+
+/*
+ * Tailor light — tactile buttons: inset highlight + bottom shade + outer rim.
+ * Corner radius comes from Button’s rounded-* utilities like other themes (no pill override).
+ * Only html[data-theme="tailor-light"]; raised variants share shadow-xs in button.tsx.
+ * Focus ring is folded into box-shadow so it does not clash with stacked shadows.
+ */
+@layer utilities {
+  html[data-theme="tailor-light"] [data-slot="button"][class*="shadow-xs"] {
+    transition:
+      filter 0.15s ease,
+      box-shadow 0.15s ease,
+      background-image 0.15s ease;
+  }
+
+  /* Primary (brand chroma gradient + dark rim + inset gloss) */
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"] {
+    background-color: transparent;
+    border: 1px solid color-mix(in srgb, #10122b 70%, rgb(83 90 232 / 35%));
+    background-image: linear-gradient(
+      180deg,
+      rgb(126 133 246) 0%,
+      rgb(126 133 246) 10%,
+      rgb(68 73 218) 25%,
+      rgb(68 73 218) 85%,
+      rgb(54 62 178) 100%
+    );
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.28),
+      inset 0 -4px 5px rgb(0 10 54 / 0.36),
+      0 1px 2px rgb(16 18 43 / 0.2);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:hover:not(:disabled) {
+    filter: brightness(1.055);
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.32),
+      inset 0 -4px 5px rgb(0 10 54 / 0.32),
+      0 1px 3px rgb(16 18 43 / 0.18);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:active:not(:disabled) {
+    filter: brightness(0.96);
+    box-shadow:
+      inset 0 3px 6px rgb(0 0 0 / 0.38),
+      inset 0 -1px 1px rgb(255 255 255 / 0.12),
+      0 1px 1px rgb(16 18 43 / 0.12);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:focus-visible {
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.28),
+      inset 0 -4px 5px rgb(0 10 54 / 0.36),
+      0 1px 2px rgb(16 18 43 / 0.2),
+      0 0 0 3px var(--ring) !important;
+  }
+
+  /* Secondary — light violet tactile surface */
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"] {
+    background-color: transparent;
+    border: 1px solid rgb(154 148 209 / 0.45);
+    background-image: linear-gradient(
+      180deg,
+      rgb(239 229 253) 0%,
+      rgb(216 188 246) 50%,
+      rgb(206 174 239) 100%
+    );
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.75),
+      inset 0 -3px 4px rgb(50 42 118 / 0.18),
+      0 1px 2px rgb(16 18 43 / 0.1);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:hover:not(:disabled) {
+    filter: brightness(1.04);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:active:not(:disabled) {
+    filter: brightness(0.97);
+    box-shadow:
+      inset 0 3px 5px rgb(50 42 118 / 0.22),
+      inset 0 -1px 1px rgb(255 255 255 / 0.6),
+      0 1px 1px rgb(16 18 43 / 0.08);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:focus-visible {
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.75),
+      inset 0 -3px 4px rgb(50 42 118 / 0.18),
+      0 1px 2px rgb(16 18 43 / 0.1),
+      0 0 0 3px var(--ring) !important;
+  }
+
+  /* Destructive */
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"] {
+    background-color: transparent;
+    border: 1px solid color-mix(in srgb, #10122b 45%, rgb(156 42 42));
+    background-image: linear-gradient(
+      180deg,
+      rgb(219 71 71) 0%,
+      rgb(175 42 42) 50%,
+      rgb(154 38 42) 100%
+    );
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.26),
+      inset 0 -4px 5px rgb(60 12 14 / 0.45),
+      0 1px 2px rgb(16 18 43 / 0.18);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:active:not(:disabled) {
+    filter: brightness(0.96);
+    box-shadow:
+      inset 0 3px 6px rgb(40 12 14 / 0.45),
+      inset 0 -1px 1px rgb(255 255 255 / 0.2),
+      0 1px 1px rgb(16 18 43 / 0.12);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:focus-visible {
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.26),
+      inset 0 -4px 5px rgb(60 12 14 / 0.45),
+      0 1px 2px rgb(16 18 43 / 0.18),
+      0 0 0 3px color-mix(in srgb, var(--destructive) 42%, transparent) !important;
+  }
+
+  /* Outline — white tactile + gray rim (neutral “secondary” chrome) */
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"] {
+    background-color: transparent;
+    color: rgb(16 18 43);
+    border-color: rgb(185 183 206 / 0.65);
+    background-image: linear-gradient(180deg, rgb(255 255 255) 0%, rgb(246 246 251) 100%);
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.95),
+      inset 0 -3px 4px rgb(16 18 43 / 0.08),
+      0 1px 2px rgb(16 18 43 / 0.08);
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:hover:not(
+      :disabled
+    ) {
+    border-color: rgb(165 160 205 / 0.55);
+    background-image: linear-gradient(180deg, rgb(252 246 253) 0%, rgb(237 229 251) 100%);
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 1),
+      inset 0 -3px 5px rgb(80 74 149 / 0.12),
+      0 1px 3px rgb(16 18 43 / 0.1);
+    filter: none;
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:active:not(
+      :disabled
+    ) {
+    box-shadow:
+      inset 0 3px 5px rgb(16 18 43 / 0.1),
+      inset 0 -1px 1px rgb(255 255 255 / 0.7),
+      0 1px 1px rgb(16 18 43 / 0.06);
+    filter: none;
+  }
+
+  html[data-theme="tailor-light"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:focus-visible {
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.95),
+      inset 0 -3px 4px rgb(16 18 43 / 0.08),
+      0 1px 2px rgb(16 18 43 / 0.08),
+      0 0 0 3px var(--ring) !important;
   }
 }

@@ -8,7 +8,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider } from "@/contexts/theme-context";
+import { ThemeProvider, type Theme } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -168,6 +168,17 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * ```
    */
   searchSources?: readonly SearchSource[];
+
+  /**
+   * Initial theme before any value is loaded from localStorage (`appshell-ui-theme`).
+   * Does not replace a stored preference.
+   *
+   * Includes **Tailor** brand palettes (`tailor-light`, `tailor-dark`) in addition to
+   * default light/dark and `system` (OS preference maps to **default** light or dark only).
+   *
+   * @default "system"
+   */
+  defaultTheme?: Theme;
 }>;
 
 /**
@@ -274,7 +285,10 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
+            <ThemeProvider
+              defaultTheme={props.defaultTheme ?? "system"}
+              storageKey="appshell-ui-theme"
+            >
               <RouterContainer rootComponent={props.rootComponent} rootGuards={props.rootGuards}>
                 {props.children}
                 <BuiltInCommandPalette />

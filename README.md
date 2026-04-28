@@ -38,7 +38,9 @@ pnpm install
 ### Commands
 
 ```bash
-pnpm dev          # Start all packages in development mode with hot reloading
+pnpm dev          # Next.js example only (localhost:3000) — recommended default
+pnpm dev:examples # All examples in parallel (Next + Vite + app-module watch; heavy)
+pnpm dev:vite     # Vite example only
 pnpm build        # Build all packages for production
 pnpm type-check   # Run type checking across all packages
 ```

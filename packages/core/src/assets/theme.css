@@ -34,6 +34,17 @@
   --sidebar-accent-foreground: rgba(23, 23, 23, 1);
   --sidebar-border: rgba(229, 229, 229, 1);
   --sidebar-ring: rgba(163, 163, 163, 1);
+  /* Status (overridable per theme) */
+  --status-default: #737373;
+  --status-neutral: #0ea5e9;
+  --status-completed: #22c55e;
+  --status-attention: #f59e0b;
+  --status-danger: #ef4444;
+  /* Elevation (wired through @theme; override per Tailor palettes) */
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.06);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.09);
 }
 
 .dark {
@@ -70,6 +81,112 @@
   --sidebar-accent-foreground: rgba(250, 250, 250, 1);
   --sidebar-border: rgba(255, 255, 255, 0.10000000149011612);
   --sidebar-ring: rgba(82, 82, 82, 1);
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+}
+
+/**
+ * Tailor brand — light palette (Tailor brand guidelines).
+ * Primary: #535AE8 · Text: #10122B · White: #FFFFFF
+ * Secondary: Deep Cyan #00979C · Dark Green #013742 · Off-White #F8F3E4 · Neutral #EEEEEE · Light Violet #E2D4FE
+ */
+html[data-theme="tailor-light"] {
+  color-scheme: light;
+  /* Off-white app shell; white cards for elevation */
+  --background: rgba(248, 243, 228, 1);
+  --foreground: rgba(16, 18, 43, 1);
+  --card: rgba(255, 255, 255, 1);
+  --card-foreground: rgba(16, 18, 43, 1);
+  --popover: rgba(255, 255, 255, 1);
+  --popover-foreground: rgba(16, 18, 43, 1);
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  /* Light violet surfaces; dark green text (brand text-on-violet pairing) */
+  --secondary: rgba(226, 212, 254, 1);
+  --secondary-foreground: rgba(1, 55, 66, 1);
+  --muted: rgba(238, 238, 238, 1);
+  --muted-foreground: rgba(16, 18, 43, 0.72);
+  --accent: rgba(226, 212, 254, 1);
+  --accent-foreground: rgba(1, 55, 66, 1);
+  --destructive: rgba(185, 28, 28, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: rgba(83, 90, 232, 0.45);
+  --chart-1: rgba(83, 90, 232, 1);
+  --chart-2: rgba(0, 151, 156, 1);
+  --chart-3: rgba(1, 55, 66, 1);
+  --chart-4: rgba(110, 95, 195, 1);
+  --chart-5: rgba(217, 119, 6, 1);
+  /* Larger corner scale; squircle overlays via globals.css where supported */
+  --radius: 1rem;
+  --sidebar: rgba(248, 243, 228, 1);
+  --sidebar-foreground: rgba(16, 18, 43, 1);
+  --sidebar-primary: rgba(83, 90, 232, 1);
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
+  --sidebar-accent: rgba(226, 212, 254, 1);
+  --sidebar-accent-foreground: rgba(1, 55, 66, 1);
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: rgba(83, 90, 232, 0.45);
+  --status-default: rgba(16, 18, 43, 0.55);
+  --status-neutral: #00979c;
+  --status-completed: #00979c;
+  --status-attention: #d97706;
+  --status-danger: #dc2626;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(16 18 43 / 0.07);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(16 18 43 / 0.12), 0 4px 6px -4px rgb(83 90 232 / 0.1);
+}
+
+/**
+ * Tailor brand — dark palette (distinct from default dark for tuning).
+ */
+html[data-theme="tailor-dark"] {
+  color-scheme: dark;
+  --background: rgba(15, 23, 42, 1);
+  --foreground: rgba(241, 245, 249, 1);
+  --card: rgba(30, 41, 59, 1);
+  --card-foreground: rgba(241, 245, 249, 1);
+  --popover: rgba(30, 41, 59, 1);
+  --popover-foreground: rgba(241, 245, 249, 1);
+  --primary: rgba(52, 211, 153, 1);
+  --primary-foreground: rgba(6, 78, 59, 1);
+  --secondary: rgba(51, 65, 85, 1);
+  --secondary-foreground: rgba(241, 245, 249, 1);
+  --muted: rgba(51, 65, 85, 1);
+  --muted-foreground: rgba(148, 163, 184, 1);
+  --accent: rgba(71, 85, 105, 1);
+  --accent-foreground: rgba(241, 245, 249, 1);
+  --destructive: rgba(248, 113, 113, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --border: rgba(71, 85, 105, 1);
+  --input: rgba(71, 85, 105, 1);
+  --ring: rgba(52, 211, 153, 1);
+  --chart-1: rgba(52, 211, 153, 1);
+  --chart-2: rgba(94, 234, 212, 1);
+  --chart-3: rgba(251, 191, 36, 1);
+  --chart-4: rgba(196, 181, 253, 1);
+  --chart-5: rgba(251, 113, 133, 1);
+  --sidebar: rgba(15, 23, 42, 1);
+  --sidebar-foreground: rgba(241, 245, 249, 1);
+  --sidebar-primary: rgba(16, 185, 129, 1);
+  --sidebar-primary-foreground: rgba(6, 78, 59, 1);
+  --sidebar-accent: rgba(51, 65, 85, 1);
+  --sidebar-accent-foreground: rgba(241, 245, 249, 1);
+  --sidebar-border: rgba(71, 85, 105, 1);
+  --sidebar-ring: rgba(52, 211, 153, 1);
+  --status-default: #94a3b8;
+  --status-neutral: #38bdf8;
+  --status-completed: #34d399;
+  --status-attention: #fbbf24;
+  --status-danger: #f87171;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(15 118 110 / 0.22);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 185 129 / 0.28), 0 1px 2px -1px rgb(16 185 129 / 0.22);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(6 95 70 / 0.35), 0 2px 4px -2px rgb(6 95 70 / 0.28);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(6 78 59 / 0.45), 0 4px 6px -4px rgb(6 78 59 / 0.35);
 }
 
 @theme inline {
@@ -110,10 +227,14 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Statuses */
-  --color-status-default: #737373;
-  --color-status-neutral: #0ea5e9;
-  --color-status-completed: #22c55e;
-  --color-status-attention: #f59e0b;
-  --color-status-danger: #ef4444;
+  --color-status-default: var(--status-default);
+  --color-status-neutral: var(--status-neutral);
+  --color-status-completed: var(--status-completed);
+  --color-status-attention: var(--status-attention);
+  --color-status-danger: var(--status-danger);
+
+  --shadow-xs: var(--semantic-shadow-xs);
+  --shadow-sm: var(--semantic-shadow-sm);
+  --shadow-md: var(--semantic-shadow-md);
+  --shadow-lg: var(--semantic-shadow-lg);
 }

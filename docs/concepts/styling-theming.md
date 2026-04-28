@@ -26,18 +26,19 @@ E.g.
 
 Note, many of these are default Tailwind colors, but there are some differences. If you omit this, much of the UI will look the same, but we will lose some of the Tailor-preferred colors.
 
-## Built-in palettes (default and Tailor)
+## Built-in palettes
 
-AppShell ships **four** named semantic palettes controlled by **`data-theme`** on **`<html>`** (see [`useTheme`](../api/use-theme.md)):
+AppShell ships **five** named semantic palettes controlled by **`data-theme`** on **`<html>`** (see [`useTheme`](../api/use-theme.md)):
 
 | Resolved theme | Purpose                                      |
 | -------------- | -------------------------------------------- |
 | `light`        | Default neutral light (historic AppShell UI) |
 | `dark`         | Default neutral dark                         |
-| `tailor-light` | Tailor brand — light tuning surface          |
-| `tailor-dark`  | Tailor brand — dark tuning surface           |
+| `cream`        | Tailor brand — cream shell, violet accents   |
+| `bloom`        | Lavender shell (**Bloom**) and cream accents   |
+| `deep-dark`    | Tailor brand — near-black tuning surface     |
 
-**`system`** resolves to **`light`** or **`dark`** only — not **`tailor-*`**. Apps that want Tailor must set **`tailor-light`** or **`tailor-dark`** explicitly.
+**`system`** resolves to **`light`** or **`dark`** only — not **`cream`**, **`bloom`**, or **`deep-dark`**. Set those with **`setTheme`** or **`AppShell`** **`defaultTheme`**.
 
 Semantic tokens (**`--background`**, **`--primary`**, **`--border`**, sidebar tokens, **`--semantic-shadow-*`**, statuses, **`--radius`**, …) live in **`theme.css`**; override there or in host CSS keyed off **`html[data-theme='…']`**.
 

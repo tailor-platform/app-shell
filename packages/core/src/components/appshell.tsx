@@ -173,7 +173,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * Initial theme before any value is loaded from localStorage (`appshell-ui-theme`).
    * Does not replace a stored preference.
    *
-   * Includes **Tailor** brand palettes (`tailor-light`, `tailor-dark`) in addition to
+   * Named palettes **`cream`**, **`bloom`**, **`deep-dark`**, plus default **`light`** / **`dark`**, in addition to
    * default light/dark and `system` (OS preference maps to **default** light or dark only).
    *
    * @default "system"

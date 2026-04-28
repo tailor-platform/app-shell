@@ -123,7 +123,11 @@ export const SidebarItem = (props: SidebarItemProps) => {
               href={to}
               target="_blank"
               rel="noopener noreferrer"
-              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
+              className={
+                isActive
+                  ? "astw:bg-sidebar-accent astw:font-medium astw:text-sidebar-accent-foreground"
+                  : undefined
+              }
             />
           }
           tooltip={title}
@@ -148,7 +152,11 @@ export const SidebarItem = (props: SidebarItemProps) => {
         render={
           <Link
             to={to}
-            className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
+            className={
+              isActive
+                ? "astw:bg-sidebar-accent astw:font-medium astw:text-sidebar-accent-foreground"
+                : undefined
+            }
           />
         }
         tooltip={title}

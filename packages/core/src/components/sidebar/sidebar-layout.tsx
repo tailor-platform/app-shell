@@ -4,7 +4,13 @@ import { AppShellOutlet } from "@/components/content";
 import { Button } from "@/components/button";
 import { useTheme, type ResolvedTheme } from "@/contexts/theme-context";
 
-const RESOLVED_THEME_CYCLE: ResolvedTheme[] = ["light", "dark", "tailor-light", "tailor-dark"];
+const RESOLVED_THEME_CYCLE: ResolvedTheme[] = [
+  "light",
+  "dark",
+  "deep-dark",
+  "cream",
+  "bloom",
+];
 import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 

@@ -85,7 +85,11 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           render={
             <Link
               to={to}
-              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
+              className={
+                isActive
+                  ? "astw:bg-sidebar-accent astw:font-medium astw:text-sidebar-accent-foreground"
+                  : undefined
+              }
             />
           }
           tooltip={resolvedTitle}

@@ -92,10 +92,12 @@
  * Primary: #535AE8 · Text: #10122B · White: #FFFFFF
  * Secondary: Deep Cyan #00979C · Dark Green #013742 · Off-White #F8F3E4 · Neutral #EEEEEE · Light Violet #E2D4FE
  */
-html[data-theme="tailor-light"] {
+html[data-theme="cream"] {
   color-scheme: light;
   /* Off-white app shell; white cards for elevation */
   --background: rgba(248, 243, 228, 1);
+  /* Bottom stop for fixed shell gradient (globals.css); same cream family, lighter toward white. */
+  --shell-gradient-end: color-mix(in srgb, var(--background) 40%, rgb(255, 255, 255));
   --foreground: rgba(16, 18, 43, 1);
   --card: rgba(255, 255, 255, 1);
   --card-foreground: rgba(16, 18, 43, 1);
@@ -142,51 +144,112 @@ html[data-theme="tailor-light"] {
 }
 
 /**
- * Tailor brand — dark palette (distinct from default dark for tuning).
+ * Bloom — light lavender app shell; cream secondary/accent surfaces (inverse of Tailor light).
  */
-html[data-theme="tailor-dark"] {
+html[data-theme="bloom"] {
+  color-scheme: light;
+  --background: rgba(239, 232, 255, 1);
+  /* Bottom stop for shell gradient (globals.css); lavender family, lighter than top. */
+  --shell-gradient-end: color-mix(in srgb, var(--background) 40%, rgb(255, 255, 255));
+  --foreground: rgba(16, 18, 43, 1);
+  --card: rgba(255, 255, 255, 1);
+  --card-foreground: rgba(16, 18, 43, 1);
+  --popover: rgba(255, 255, 255, 1);
+  --popover-foreground: rgba(16, 18, 43, 1);
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  --secondary: rgba(248, 243, 228, 1);
+  --secondary-foreground: rgba(16, 18, 43, 1);
+  --muted: rgba(238, 238, 238, 1);
+  --muted-foreground: rgba(16, 18, 43, 0.72);
+  --accent: rgba(248, 243, 228, 1);
+  --accent-foreground: rgba(16, 18, 43, 1);
+  /* Softer reds than cream — less harsh against lavender gradient / cream fills */
+  --destructive: rgba(176, 45, 64, 1);
+  --destructive-foreground: rgba(255, 251, 252, 1);
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: rgba(83, 90, 232, 0.45);
+  --chart-1: rgba(83, 90, 232, 1);
+  --chart-2: rgba(0, 151, 156, 1);
+  --chart-3: rgba(1, 55, 66, 1);
+  --chart-4: rgba(110, 95, 195, 1);
+  --chart-5: rgba(217, 119, 6, 1);
+  --radius: 1rem;
+  --sidebar: rgba(239, 232, 255, 1);
+  --sidebar-foreground: rgba(16, 18, 43, 1);
+  --sidebar-primary: rgba(83, 90, 232, 1);
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
+  /* White elevated row on lavender shell (readable vs lavender-on-lavender) */
+  --sidebar-accent: rgba(255, 255, 255, 1);
+  --sidebar-accent-foreground: rgba(16, 18, 43, 1);
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: rgba(83, 90, 232, 0.45);
+  --status-default: rgba(16, 18, 43, 0.55);
+  /* Bloom: teal + violet-tint foregrounds; amber + dusty rose harmonize with shell */
+  --status-neutral: #0b8c9a;
+  --status-completed: #0d7668;
+  --status-attention: #ae6f12;
+  --status-danger: #ae2438;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(16 18 43 / 0.07);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(16 18 43 / 0.12), 0 4px 6px -4px rgb(83 90 232 / 0.1);
+}
+
+/**
+ * Tailor brand — dark palette (`deep-dark`): near-black shell; same primaries / secondaries as cream.
+ */
+html[data-theme="deep-dark"] {
   color-scheme: dark;
-  --background: rgba(15, 23, 42, 1);
-  --foreground: rgba(241, 245, 249, 1);
-  --card: rgba(30, 41, 59, 1);
-  --card-foreground: rgba(241, 245, 249, 1);
-  --popover: rgba(30, 41, 59, 1);
-  --popover-foreground: rgba(241, 245, 249, 1);
-  --primary: rgba(52, 211, 153, 1);
-  --primary-foreground: rgba(6, 78, 59, 1);
-  --secondary: rgba(51, 65, 85, 1);
-  --secondary-foreground: rgba(241, 245, 249, 1);
-  --muted: rgba(51, 65, 85, 1);
-  --muted-foreground: rgba(148, 163, 184, 1);
-  --accent: rgba(71, 85, 105, 1);
-  --accent-foreground: rgba(241, 245, 249, 1);
-  --destructive: rgba(248, 113, 113, 1);
+  --background: rgba(10, 10, 11, 1);
+  --foreground: rgba(237, 238, 242, 1);
+  --card: rgba(18, 18, 21, 1);
+  --card-foreground: rgba(237, 238, 242, 1);
+  --popover: rgba(22, 22, 26, 1);
+  --popover-foreground: rgba(237, 238, 242, 1);
+  /* Match cream — Primary #535AE8 */
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  /* Light violet + dark green text (same pairing as cream) */
+  --secondary: rgba(226, 212, 254, 1);
+  --secondary-foreground: rgba(1, 55, 66, 1);
+  --muted: rgba(28, 28, 34, 1);
+  --muted-foreground: rgba(163, 167, 180, 1);
+  --accent: rgba(226, 212, 254, 1);
+  --accent-foreground: rgba(1, 55, 66, 1);
+  --destructive: rgba(185, 28, 28, 1);
   --destructive-foreground: rgba(254, 242, 242, 1);
-  --border: rgba(71, 85, 105, 1);
-  --input: rgba(71, 85, 105, 1);
-  --ring: rgba(52, 211, 153, 1);
-  --chart-1: rgba(52, 211, 153, 1);
-  --chart-2: rgba(94, 234, 212, 1);
-  --chart-3: rgba(251, 191, 36, 1);
-  --chart-4: rgba(196, 181, 253, 1);
-  --chart-5: rgba(251, 113, 133, 1);
-  --sidebar: rgba(15, 23, 42, 1);
-  --sidebar-foreground: rgba(241, 245, 249, 1);
-  --sidebar-primary: rgba(16, 185, 129, 1);
-  --sidebar-primary-foreground: rgba(6, 78, 59, 1);
-  --sidebar-accent: rgba(51, 65, 85, 1);
-  --sidebar-accent-foreground: rgba(241, 245, 249, 1);
-  --sidebar-border: rgba(71, 85, 105, 1);
-  --sidebar-ring: rgba(52, 211, 153, 1);
-  --status-default: #94a3b8;
-  --status-neutral: #38bdf8;
-  --status-completed: #34d399;
-  --status-attention: #fbbf24;
-  --status-danger: #f87171;
-  --semantic-shadow-xs: 0 1px 2px 0 rgb(15 118 110 / 0.22);
-  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 185 129 / 0.28), 0 1px 2px -1px rgb(16 185 129 / 0.22);
-  --semantic-shadow-md: 0 4px 6px -1px rgb(6 95 70 / 0.35), 0 2px 4px -2px rgb(6 95 70 / 0.28);
-  --semantic-shadow-lg: 0 10px 15px -3px rgb(6 78 59 / 0.45), 0 4px 6px -4px rgb(6 78 59 / 0.35);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: rgba(83, 90, 232, 0.45);
+  --chart-1: rgba(83, 90, 232, 1);
+  --chart-2: rgba(0, 151, 156, 1);
+  --chart-3: rgba(1, 55, 66, 1);
+  --chart-4: rgba(110, 95, 195, 1);
+  --chart-5: rgba(217, 119, 6, 1);
+  --radius: 1rem;
+  --sidebar: rgba(10, 10, 11, 1);
+  --sidebar-foreground: rgba(237, 238, 242, 1);
+  --sidebar-primary: rgba(83, 90, 232, 1);
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
+  /*
+   * Hover + current row: dark elevated chip on near-black sidebar — light label.
+   * (Lavender wash reads as a “light tab” here; a muted lift matches dark UI better.)
+   */
+  --sidebar-accent: rgba(42, 43, 54, 1);
+  --sidebar-accent-foreground: rgba(238, 239, 246, 1);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: rgba(83, 90, 232, 0.45);
+  --status-default: rgba(144, 150, 168, 0.88);
+  --status-neutral: #00979c;
+  --status-completed: #00979c;
+  --status-attention: #d97706;
+  --status-danger: #dc2626;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.42);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.42), 0 1px 2px -1px rgb(0 0 0 / 0.36);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.46), 0 2px 4px -2px rgb(0 0 0 / 0.36);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.54), 0 4px 6px -4px rgb(83 90 232 / 0.12);
 }
 
 @theme inline {

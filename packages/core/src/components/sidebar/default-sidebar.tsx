@@ -190,7 +190,7 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                         to={item.url as string}
                         className={
                           isActivePath(item.url, props.currentPath)
-                            ? "astw:bg-sidebar-accent astw:font-medium"
+                            ? "astw:bg-sidebar-accent astw:font-medium astw:text-sidebar-accent-foreground"
                             : undefined
                         }
                       />
@@ -246,7 +246,7 @@ const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string })
                                 to={subItem.url!}
                                 className={
                                   isActivePath(subItem.url, props.currentPath)
-                                    ? "astw:bg-sidebar-accent astw:font-medium"
+                                    ? "astw:bg-sidebar-accent astw:font-medium astw:text-sidebar-accent-foreground"
                                     : undefined
                                 }
                               />

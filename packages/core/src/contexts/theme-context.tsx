@@ -1,21 +1,32 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-/** User-selectable theme. `system` follows OS light/dark (default palettes only — B1). */
-export type Theme = "light" | "dark" | "tailor-light" | "tailor-dark" | "system";
+/** User-selectable theme. `system` follows OS light/dark (default palettes only — not cream/bloom/deep-dark). */
+export type Theme = "light" | "dark" | "deep-dark" | "cream" | "bloom" | "system";
 
 /** Resolved paint after applying `system`. */
-export type ResolvedTheme = "light" | "dark" | "tailor-light" | "tailor-dark";
+export type ResolvedTheme = "light" | "dark" | "deep-dark" | "cream" | "bloom";
 
 const ALL_THEMES: readonly Theme[] = [
   "light",
   "dark",
-  "tailor-light",
-  "tailor-dark",
+  "deep-dark",
+  "cream",
+  "bloom",
   "system",
 ] as const;
 
+/** Migrate stored values from legacy `tailor-*` ids before the public rename. */
+const LEGACY_THEME_IDS: Partial<Record<string, Theme>> = {
+  "tailor-light": "cream",
+  "tailor-bloom": "bloom",
+  "tailor-dark": "deep-dark",
+};
+
 function parseStoredTheme(value: string | null, fallback: Theme): Theme {
-  if (value && (ALL_THEMES as readonly string[]).includes(value)) return value as Theme;
+  if (!value) return fallback;
+  const legacy = LEGACY_THEME_IDS[value];
+  if (legacy) return legacy;
+  if ((ALL_THEMES as readonly string[]).includes(value)) return value as Theme;
   return fallback;
 }
 
@@ -82,7 +93,7 @@ export function ThemeProvider({
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(
-      resolvedTheme === "dark" || resolvedTheme === "tailor-dark" ? "dark" : "light",
+      resolvedTheme === "dark" || resolvedTheme === "deep-dark" ? "dark" : "light",
     );
     root.dataset.theme = resolvedTheme;
   }, [resolvedTheme]);

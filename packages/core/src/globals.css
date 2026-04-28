@@ -39,26 +39,60 @@
   body {
     @apply astw:font-sans astw:antialiased astw:bg-background astw:text-foreground;
   }
+
   /*
-    Tailor light: Geist Sans + Apple-style corners (squircle) when the engine supports corner-shape (Chromium).
+   * Cream / Bloom — vertical shell gradient (top = --background; bottom lighter via --shell-gradient-end).
+   * Paint on `html` (fixed); shell chrome uses transparent bg so `bg-background` on buttons/cards stays solid.
+   */
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--background);
+    background-image: linear-gradient(to bottom, var(--background), var(--shell-gradient-end));
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) body {
+    background-color: transparent !important;
+    background-image: none;
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-wrapper"],
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-inner"],
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) main[data-slot="sidebar-inset"],
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
+      [data-icon-mode="true"]
+    ) {
+    background-color: transparent !important;
+  }
+
+  /*
+    Tailor light / dark: Geist Sans + Apple-style corners (squircle) when the engine supports corner-shape (Chromium).
     Circles (.rounded-full) stay round; browsers without support keep standard border-radius.
   */
-  html[data-theme="tailor-light"] body {
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) body,
+  html[data-theme="deep-dark"] body {
     font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   }
 
-  html[data-theme="tailor-light"] :where(h1, h2, h3, h4, h5, h6) {
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) :where(h1, h2, h3, h4, h5, h6),
+  html[data-theme="deep-dark"] :where(h1, h2, h3, h4, h5, h6) {
     letter-spacing: -0.03em;
     line-height: 1.2;
     font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   }
 
   @supports (corner-shape: squircle) {
-    html[data-theme="tailor-light"] * {
+    :is(html[data-theme="cream"], html[data-theme="bloom"]) *,
+    html[data-theme="deep-dark"] * {
       corner-shape: squircle;
     }
     /* Round radii (.rounded-full) stay circular squircles, not elongated “capsules” */
-    html[data-theme="tailor-light"] [class*="rounded-full"] {
+    :is(html[data-theme="cream"], html[data-theme="bloom"]) [class*="rounded-full"],
+    html[data-theme="deep-dark"] [class*="rounded-full"] {
       corner-shape: round;
     }
   }
@@ -71,25 +105,40 @@
   ::-webkit-scrollbar-corner {
     @apply astw:bg-muted-foreground;
   }
+
+  /*
+   * WebKit / Firefox autofill: override system yellow so fills follow design tokens
+   * (typically white card surfaces in cream / bloom; --card resolves per theme).
+   */
+  input:is(:-webkit-autofill, :autofill),
+  textarea:is(:-webkit-autofill, :autofill),
+  select:is(:-webkit-autofill, :autofill) {
+    -webkit-box-shadow: 0 0 0 1000px var(--card) inset !important;
+    box-shadow: 0 0 0 1000px var(--card) inset !important;
+    caret-color: var(--foreground);
+    transition: background-color 9999s ease-out 0s;
+  }
 }
 
 /*
- * Tailor light — tactile buttons: solid fill + 2px darker bottom lip (raised);
- * pressed: border 0 + inset shade. Corner radius stays from Button utilities.
- * Only html[data-theme="tailor-light"]; raised variants share shadow-xs in button.tsx.
+ * Cream / Bloom / deep-dark — tactile buttons: solid fill + 2px darker bottom lip (raised);
+ * pressed: borders match fill (lip vanishes visually, no jump) + inset shade + slight translateY on label.
+ * These themes use the same brand tokens and rim recipes (theme.css).
  */
 @layer utilities {
-  html[data-theme="tailor-light"] [data-slot="button"][class*="shadow-xs"] {
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="button"][class*="shadow-xs"],
+  html[data-theme="deep-dark"] [data-slot="button"][class*="shadow-xs"] {
     background-image: none;
     transition:
       filter 0.12s ease,
-      border-width 0.12s ease,
       border-color 0.12s ease,
-      box-shadow 0.12s ease;
+      box-shadow 0.12s ease,
+      transform 0.08s ease;
   }
 
-  html[data-theme="tailor-light"]
-    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"] {
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"],
+  html[data-theme="deep-dark"] [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"] {
     background-color: var(--primary);
     color: var(--primary-foreground);
     border: 1px solid color-mix(in srgb, #10122b 38%, rgb(106 114 226));
@@ -97,26 +146,36 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:hover:not(:disabled),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:hover:not(:disabled) {
     filter: brightness(1.05);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:active:not(:disabled),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:active:not(:disabled) {
-    border: 0;
     filter: brightness(0.96);
-    box-shadow: inset 0 4px 10px rgb(8 14 82 / 0.38);
+    border: 1px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
+    box-shadow: inset 0 3px 8px rgb(8 14 82 / 0.36);
+    transform: translateY(2px);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:focus-visible,
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-primary"]:focus-visible {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.22),
       0 0 0 3px var(--ring) !important;
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"],
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"] {
     background-color: var(--secondary);
     color: var(--secondary-foreground);
@@ -125,26 +184,44 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.65);
   }
 
-  html[data-theme="tailor-light"]
+  /*
+   * Bloom: cream secondary on lavender shell — rims from --background (lighter than cream’s violet lip).
+   */
+  html[data-theme="bloom"] [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"] {
+    border: 1px solid color-mix(in srgb, var(--background) 88%, rgb(118 108 168));
+    border-bottom: 2px solid color-mix(in srgb, var(--background) 70%, rgb(105 96 152));
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:hover:not(:disabled),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:hover:not(:disabled) {
     filter: brightness(1.035);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:active:not(:disabled),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:active:not(:disabled) {
-    border: 0;
     filter: brightness(0.98);
+    border: 1px solid var(--secondary);
+    border-bottom: 2px solid var(--secondary);
     box-shadow: inset 0 3px 8px rgb(50 42 118 / 0.22);
+    transform: translateY(2px);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:focus-visible,
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-secondary"]:focus-visible {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.65),
       0 0 0 3px var(--ring) !important;
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"],
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"] {
     background-color: var(--destructive);
     color: var(--destructive-foreground);
@@ -153,57 +230,178 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:hover:not(:disabled),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:hover:not(:disabled) {
     filter: brightness(1.04);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:active:not(:disabled),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:active:not(:disabled) {
-    border: 0;
     filter: brightness(0.96);
+    border: 1px solid var(--destructive);
+    border-bottom: 2px solid var(--destructive);
     box-shadow: inset 0 4px 10px rgb(70 14 14 / 0.45);
+    transform: translateY(2px);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:focus-visible,
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-destructive"]:focus-visible {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.2),
       0 0 0 3px color-mix(in srgb, var(--destructive) 42%, transparent) !important;
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"] {
     background-color: var(--card);
     color: var(--card-foreground);
-    border: 1px solid rgb(185 183 206 / 0.65);
-    border-bottom: 2px solid rgb(130 134 164 / 0.85);
+    border: 1px solid rgb(203 200 225 / 0.48);
+    border-bottom: 2px solid rgb(154 158 184 / 0.62);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
   }
 
-  html[data-theme="tailor-light"]
+  /* Dark: subtler rims so outline doesn’t read as a bright halo on near-black UI. */
+  html[data-theme="deep-dark"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"] {
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid rgb(58 60 72 / 0.55);
+    border-bottom: 2px solid rgb(34 36 46 / 0.82);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:hover:not(
       :disabled
     ) {
-    border-color: rgb(165 160 205 / 0.55);
-    border-bottom-color: rgb(110 118 168 / 0.75);
+    border-color: rgb(185 180 218 / 0.42);
+    border-bottom-color: rgb(135 142 188 / 0.58);
     filter: brightness(1.015);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.98);
   }
 
-  html[data-theme="tailor-light"]
+  html[data-theme="deep-dark"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:hover:not(
+      :disabled
+    ) {
+    border-color: rgb(78 80 94 / 0.5);
+    border-bottom-color: rgb(52 54 68 / 0.85);
+    filter: brightness(1.04);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:active:not(
+      :disabled
+    ),
+  html[data-theme="deep-dark"]
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:active:not(
       :disabled
     ) {
-    border: 0;
+    border: 1px solid var(--card);
+    border-bottom: 2px solid var(--card);
     box-shadow: inset 0 3px 8px rgb(16 18 43 / 0.12);
     filter: none;
+    transform: translateY(2px);
   }
 
-  html[data-theme="tailor-light"]
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
     [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:focus-visible {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.9),
+      0 0 0 3px var(--ring) !important;
+  }
+
+  html[data-theme="deep-dark"]
+    [data-slot="button"][class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:focus-visible {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 0 0 3px var(--ring) !important;
+  }
+
+  /*
+   * Ghost (no shadow-xs): hover / pressed / focus match tactile outline (card + rim), not secondary.
+   * Invisible border at rest matches outline lip widths so chrome does not shift layout.
+   */
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"],
+  html[data-theme="deep-dark"]
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"] {
+    background-image: none;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    transition:
+      filter 0.12s ease,
+      border-color 0.12s ease,
+      box-shadow 0.12s ease,
+      transform 0.08s ease,
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:hover:not(
+      :disabled
+    ) {
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid rgb(185 180 218 / 0.42);
+    border-bottom: 2px solid rgb(135 142 188 / 0.58);
+    filter: brightness(1.015);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.98);
+  }
+
+  html[data-theme="deep-dark"]
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:hover:not(
+      :disabled
+    ) {
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid rgb(78 80 94 / 0.5);
+    border-bottom: 2px solid rgb(52 54 68 / 0.85);
+    filter: brightness(1.04);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:active:not(
+      :disabled
+    ),
+  html[data-theme="deep-dark"]
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:active:not(
+      :disabled
+    ) {
+    border: 1px solid var(--card);
+    border-bottom: 2px solid var(--card);
+    box-shadow: inset 0 3px 8px rgb(16 18 43 / 0.12);
+    filter: none;
+    transform: translateY(2px);
+    background-color: var(--card);
+    color: var(--card-foreground);
+  }
+
+  /* Match outline tactile: focus-visible adds ring atop existing rim (outline default already painted). */
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:focus-visible:not(
+      :disabled
+    ) {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      0 0 0 3px var(--ring) !important;
+  }
+
+  html[data-theme="deep-dark"]
+    [data-slot="button"]:not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:focus-visible:not(
+      :disabled
+    ) {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
       0 0 0 3px var(--ring) !important;
   }
 }

@@ -33,7 +33,7 @@ export const SidebarMenu = () => {
             border: "1px solid var(--sidebar-border)",
             borderRadius: "4px",
             backgroundColor: "var(--sidebar-accent)",
-            color: "var(--sidebar-foreground)",
+            color: "var(--sidebar-accent-foreground)",
           }}
         >
           <option value="admin">Admin</option>

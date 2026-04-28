@@ -259,14 +259,62 @@ describe("useDataTable", () => {
       expect(result.current.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
-    it("onSort delegates to control.setSort", () => {
+    it("onSort calls clearSort then setSort in single mode (default)", () => {
       const control = makeControl();
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
 
       act(() => {
         result.current.onSort?.("name", "Desc");
       });
+      expect(control.clearSort).toHaveBeenCalled();
       expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
+    });
+
+    it("onSort does not call clearSort when removing sort (direction undefined) in single mode", () => {
+      const control = makeControl();
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
+
+      act(() => {
+        result.current.onSort?.("name", undefined);
+      });
+      expect(control.clearSort).not.toHaveBeenCalled();
+      expect(control.setSort).toHaveBeenCalledWith("name", undefined);
+    });
+
+    it("onSort delegates directly to control.setSort in multiple mode", () => {
+      const control = makeControl();
+      const { result } = renderHook(() =>
+        useDataTable({
+          columns,
+          data: testData,
+          control,
+          sort: { multiple: true },
+        }),
+      );
+
+      act(() => {
+        result.current.onSort?.("name", "Desc");
+      });
+      expect(control.clearSort).not.toHaveBeenCalled();
+      expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
+    });
+
+    it("onSort is undefined when sort is false", () => {
+      const control = makeControl();
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, control, sort: false }),
+      );
+      expect(result.current.onSort).toBeUndefined();
+    });
+
+    it("sortStates is empty when sort is false", () => {
+      const control = makeControl({
+        sortStates: [{ field: "name", direction: "Asc" }],
+      });
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, control, sort: false }),
+      );
+      expect(result.current.sortStates).toEqual([]);
     });
 
     it("onSort is undefined when no control", () => {

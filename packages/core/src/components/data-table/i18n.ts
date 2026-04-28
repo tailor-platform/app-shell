@@ -24,6 +24,10 @@ export const dataTableLabels = defineI18nLabels({
     paginationLast: "Last page",
     paginationRowsPerPage: "Rows per page",
     paginationPage: "Page",
+    paginationTotalRows: (props: { total: number }) => `${props.total} row(s)`,
+    paginationSelectedOfTotal: (props: { selected: number; total: number }) =>
+      `${props.selected} of ${props.total} row(s) selected`,
+    paginationSelectedRows: (props: { selected: number }) => `${props.selected} row(s) selected`,
 
     // Filters
     addFilter: "Add filter",
@@ -67,6 +71,10 @@ export const dataTableLabels = defineI18nLabels({
     paginationLast: "最後のページ",
     paginationRowsPerPage: "表示件数",
     paginationPage: "ページ",
+    paginationTotalRows: (props: { total: number }) => `${props.total} 行`,
+    paginationSelectedOfTotal: (props: { selected: number; total: number }) =>
+      `${props.total} 行中 ${props.selected} 行を選択中`,
+    paginationSelectedRows: (props: { selected: number }) => `${props.selected} 行を選択中`,
 
     // Filters
     addFilter: "フィルタを追加",

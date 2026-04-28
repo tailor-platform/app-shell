@@ -45,11 +45,18 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
 function TestPagination({
   data,
   control,
+  onSelectionChange,
 }: {
   data: DataTableData<TestRow>;
   control: CollectionControl;
+  onSelectionChange?: (ids: string[]) => void;
 }) {
-  const table = useDataTable<TestRow>({ columns: testColumns, data, control });
+  const table = useDataTable<TestRow>({
+    columns: testColumns,
+    data,
+    control,
+    onSelectionChange,
+  });
   return (
     <DataTable.Root value={table}>
       <DataTable.Footer>
@@ -247,5 +254,135 @@ describe("page counter", () => {
 
     expect(screen.getByLabelText("Previous page")).toHaveProperty("disabled", true);
     expect(screen.getByLabelText("Next page")).toHaveProperty("disabled", true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Row info text (total rows / selected rows)
+// ---------------------------------------------------------------------------
+describe("row info text", () => {
+  const dataWithRows: DataTableData<TestRow> = {
+    rows: [
+      { id: "1", name: "A", status: "active" },
+      { id: "2", name: "B", status: "inactive" },
+    ],
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      endCursor: null,
+      startCursor: null,
+    },
+    total: 50,
+  };
+
+  const dataWithRowsNoTotal: DataTableData<TestRow> = {
+    rows: [
+      { id: "1", name: "A", status: "active" },
+      { id: "2", name: "B", status: "inactive" },
+    ],
+    pageInfo: {
+      hasNextPage: true,
+      hasPreviousPage: false,
+      endCursor: "tok",
+      startCursor: null,
+    },
+  };
+
+  it("shows total rows when total is provided and no selection enabled", () => {
+    render(<TestPagination data={dataWithRows} control={makeControl()} />, {
+      wrapper,
+    });
+    expect(screen.getByText("50 row(s)")).not.toBeNull();
+  });
+
+  it("shows total rows when total is provided and selection enabled but nothing selected", () => {
+    render(
+      <TestPagination data={dataWithRows} control={makeControl()} onSelectionChange={vi.fn()} />,
+      { wrapper },
+    );
+    expect(screen.getByText("50 row(s)")).not.toBeNull();
+  });
+
+  it("shows 'Y of X row(s) selected' when rows are selected and total is provided", async () => {
+    const user = userEvent.setup();
+
+    function TestWithTable() {
+      const table = useDataTable<TestRow>({
+        columns: testColumns,
+        data: dataWithRows,
+        control: makeControl(),
+        onSelectionChange: vi.fn(),
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+          <DataTable.Footer>
+            <DataTable.Pagination />
+          </DataTable.Footer>
+        </DataTable.Root>
+      );
+    }
+
+    render(<TestWithTable />, { wrapper });
+
+    // Click the first row's checkbox to select it
+    const checkboxes = screen.getAllByRole("checkbox");
+    // checkboxes[0] is the "select all" checkbox, [1] is the first row
+    await user.click(checkboxes[1]);
+
+    expect(screen.getByText("1 of 50 row(s) selected")).not.toBeNull();
+  });
+
+  it("shows 'Y row(s) selected' when rows are selected and no total", async () => {
+    const user = userEvent.setup();
+
+    function TestWithTable() {
+      const table = useDataTable<TestRow>({
+        columns: testColumns,
+        data: dataWithRowsNoTotal,
+        control: makeControl(),
+        onSelectionChange: vi.fn(),
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+          <DataTable.Footer>
+            <DataTable.Pagination />
+          </DataTable.Footer>
+        </DataTable.Root>
+      );
+    }
+
+    render(<TestWithTable />, { wrapper });
+
+    const checkboxes = screen.getAllByRole("checkbox");
+    await user.click(checkboxes[1]);
+
+    expect(screen.getByText("1 row(s) selected")).not.toBeNull();
+  });
+
+  it("shows nothing when no total and no selection enabled", () => {
+    const { container } = render(
+      <TestPagination data={dataWithRowsNoTotal} control={makeControl()} />,
+      {
+        wrapper,
+      },
+    );
+    // No row info text should be rendered
+    expect(screen.queryByText(/row\(s\)/)).toBeNull();
+    expect(container.querySelector(".astw\\:text-sm.astw\\:text-muted-foreground")).toBeNull();
+  });
+
+  it("shows nothing when no total and selection enabled but nothing selected", () => {
+    render(
+      <TestPagination
+        data={dataWithRowsNoTotal}
+        control={makeControl()}
+        onSelectionChange={vi.fn()}
+      />,
+      { wrapper },
+    );
+    expect(screen.queryByText(/row\(s\) selected/)).toBeNull();
+    expect(screen.queryByText(/row\(s\)/)).toBeNull();
   });
 });

@@ -1,5 +1,44 @@
 # @tailor-platform/app-shell
 
+## 1.1.0
+
+### Minor Changes
+
+- 39a8521: Change `useDataTable()` to use single-column sorting by default and add a `sort` option for configuring sorting behavior.
+
+  Before:
+
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+  });
+  ```
+
+  After:
+
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+    sort: { multiple: true },
+  });
+  ```
+
+  Use `sort: false` to disable sorting entirely.
+
+- c2a50b9: Add row count and selection info to `DataTable.Pagination`.
+
+  - When `total` is provided: shows `"X row(s)"`
+  - When rows are selected with `total`: shows `"Y of X row(s) selected"`
+  - When rows are selected without `total`: shows `"Y row(s) selected"`
+
+### Patch Changes
+
+- 826bd97: Updated [@base-ui/react](https://www.npmjs.com/package/@base-ui/react) (^1.3.0 -> ^1.4.1)
+
 ## 1.0.2
 
 ### Patch Changes

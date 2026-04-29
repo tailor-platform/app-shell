@@ -1,11 +1,11 @@
 ---
 title: SidebarLayout
-description: The default layout component with sidebar navigation, breadcrumbs, and theme toggle
+description: The default layout component with sidebar navigation, breadcrumbs, and theme menu
 ---
 
 # SidebarLayout
 
-`SidebarLayout` is the default layout component that provides a responsive sidebar navigation, breadcrumb trail, and theme toggle. It's designed to work seamlessly with AppShell's module system.
+`SidebarLayout` is the default layout component that provides a responsive sidebar navigation, breadcrumb trail, and theme menu (named palettes plus **System**). It's designed to work seamlessly with AppShell's module system.
 
 ## Import
 
@@ -31,7 +31,7 @@ This gives you:
 
 - ✅ Responsive sidebar with auto-generated navigation from modules
 - ✅ Breadcrumb navigation
-- ✅ Theme toggle (light/dark mode)
+- ✅ Theme menu (all palettes + **System**)
 - ✅ Mobile-friendly collapsible sidebar
 
 ## Props
@@ -54,6 +54,12 @@ This gives you:
 ```
 
 The `Outlet` component renders your current route's component.
+
+### themeSwitcher
+
+- **Type:** `React.ReactNode` (optional)
+- **Default:** `<ThemeSwitcher />` — dropdown listing every [`Theme`](../api/use-theme.md) plus **System**
+- **Description:** Pass **`null`** to hide the header theme control, or pass a custom node to replace it.
 
 ### sidebar
 
@@ -97,9 +103,9 @@ Dashboard > Products > Product Details
 
 Breadcrumbs update automatically as users navigate through your application.
 
-### Theme Toggle
+### Theme menu
 
-A sun/moon icon button in the header allows users to switch between light and dark themes. The theme preference is persisted to localStorage.
+A palette icon button in the header opens a grid of every palette (each with a two-color preview) plus **System**. When **System** is selected, the button’s **tooltip** (`title`) summarizes the effective palette. The choice is persisted to `localStorage`. Override or hide via the **`themeSwitcher`** prop.
 
 ## Customization Examples
 

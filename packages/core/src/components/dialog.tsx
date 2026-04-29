@@ -2,6 +2,7 @@ import * as React from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
+import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 
 // Only the props relevant to the Dialog abstraction are picked from BaseDialog.Root.
@@ -80,16 +81,21 @@ function Content({ className, children, ...props }: React.ComponentProps<typeof 
       <BaseDialog.Popup
         data-slot="dialog-content"
         className={cn(
-          "astw:bg-background astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-(--z-overlay) astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
+          "astw:bg-card astw:text-card-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-(--z-overlay) astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
           className,
         )}
         {...props}
       >
         {children}
-        <BaseDialog.Close className="astw:ring-offset-bg astw:focus:ring-ring astw:data-open:bg-accent astw:data-open:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="astw:absolute astw:top-4 astw:right-4 astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:[&_svg:not([class*='size-'])]:size-4"
+          render={<BaseDialog.Close />}
+        >
           <XIcon />
           <span className="astw:sr-only">Close</span>
-        </BaseDialog.Close>
+        </Button>
       </BaseDialog.Popup>
     </Portal>
   );

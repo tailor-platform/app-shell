@@ -1,20 +1,20 @@
-import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
-import { SunIcon } from "lucide-react";
-import { AppShellOutlet } from "@/components/content";
-import { Button } from "@/components/button";
-import { useTheme, type ResolvedTheme } from "@/contexts/theme-context";
+import type { ReactNode } from "react";
 
-const RESOLVED_THEME_CYCLE: ResolvedTheme[] = [
-  "light",
-  "dark",
-  "deep-dark",
-  "cream",
-  "bloom",
-];
+import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
+import { AppShellOutlet } from "@/components/content";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 
 export type SidebarLayoutProps = {
+  /**
+   * Header theme control.
+   *
+   * @default Built-in **`ThemeSwitcher`** menu (all themes + **System**).
+   * Pass **`null`** to hide. Pass a custom **`ReactNode`** to replace.
+   */
+  themeSwitcher?: ReactNode;
+
   /**
    * Custom content renderer.
    *
@@ -31,7 +31,7 @@ export type SidebarLayoutProps = {
    * </SidebarLayout>
    * ```
    */
-  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
+  children?: (props: { Outlet: () => ReactNode }) => ReactNode;
 
   /**
    * Custom sidebar content.
@@ -58,12 +58,7 @@ const HidableSidebarTrigger = () => {
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
   const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
-  const { resolvedTheme, setTheme } = useTheme();
-  const toggleTheme = () => {
-    const i = RESOLVED_THEME_CYCLE.indexOf(resolvedTheme);
-    const next = RESOLVED_THEME_CYCLE[(i === -1 ? 0 : i + 1) % RESOLVED_THEME_CYCLE.length];
-    setTheme(next);
-  };
+  const themeSwitcher = props.themeSwitcher !== undefined ? props.themeSwitcher : <ThemeSwitcher />;
 
   return (
     <SidebarProvider className="astw:flex astw:flex-col">
@@ -76,11 +71,9 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
                 <HidableSidebarTrigger />
                 <DynamicBreadcrumb />
               </div>
-              <div className="astw:flex astw:items-center astw:gap-2">
-                <Button variant="outline" size="icon" onClick={toggleTheme}>
-                  <SunIcon />
-                </Button>
-              </div>
+              {themeSwitcher !== null ? (
+                <div className="astw:flex astw:items-center astw:gap-2">{themeSwitcher}</div>
+              ) : null}
             </div>
           </header>
           <div className="astw:flex astw:flex-col astw:gap-4 astw:flex-1 astw:min-h-0">

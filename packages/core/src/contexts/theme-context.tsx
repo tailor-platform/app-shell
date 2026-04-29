@@ -15,6 +15,18 @@ const ALL_THEMES: readonly Theme[] = [
   "system",
 ] as const;
 
+/** Dropdown / switcher entries: order matches selectable themes; labels are user-facing. */
+export type ThemeOption = { readonly value: Theme; readonly label: string };
+
+export const THEME_OPTIONS: readonly ThemeOption[] = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "deep-dark", label: "Deep dark" },
+  { value: "cream", label: "Cream" },
+  { value: "bloom", label: "Bloom" },
+  { value: "system", label: "System" },
+] as const;
+
 /** Migrate stored values from legacy `tailor-*` ids before the public rename. */
 const LEGACY_THEME_IDS: Partial<Record<string, Theme>> = {
   "tailor-light": "cream",

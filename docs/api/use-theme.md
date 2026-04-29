@@ -15,6 +15,11 @@ Exported types:
 export type Theme = "light" | "dark" | "deep-dark" | "cream" | "bloom" | "system";
 
 export type ResolvedTheme = "light" | "dark" | "deep-dark" | "cream" | "bloom";
+
+export type ThemeOption = { readonly value: Theme; readonly label: string };
+
+/** Ordered labels for UI (e.g. theme menus); includes System last. */
+export const THEME_OPTIONS: readonly ThemeOption[];
 ```
 
 Hook return value:
@@ -75,24 +80,34 @@ function UseCream() {
 }
 ```
 
-### Theme selector
+### Theme menu (**`ThemeSwitcher`**)
+
+`SidebarLayout` includes a header **`ThemeSwitcher`** by default. You can reuse it elsewhere or build a custom control from **`THEME_OPTIONS`**:
+
+```tsx
+import { ThemeSwitcher } from "@tailor-platform/app-shell";
+
+function Toolbar() {
+  return <ThemeSwitcher />;
+}
+```
 
 ```typescript
-function ThemeSelector() {
+import { THEME_OPTIONS, useTheme, type Theme } from "@tailor-platform/app-shell";
+
+function CustomThemeList() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <select
-      value={theme}
-      onChange={(e) => setTheme(e.target.value as Theme)}
-    >
-      <option value="light">Default light</option>
-      <option value="dark">Default dark</option>
-      <option value="deep-dark">Deep dark</option>
-      <option value="cream">Cream</option>
-      <option value="bloom">Bloom</option>
-      <option value="system">System</option>
-    </select>
+    <ul>
+      {THEME_OPTIONS.map(({ value, label }) => (
+        <li key={value}>
+          <button type="button" aria-pressed={theme === value} onClick={() => setTheme(value as Theme)}>
+            {label}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 ```

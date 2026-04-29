@@ -108,7 +108,8 @@ html[data-theme="cream"] {
   /* Light violet surfaces; dark green text (brand text-on-violet pairing) */
   --secondary: rgba(226, 212, 254, 1);
   --secondary-foreground: rgba(1, 55, 66, 1);
-  --muted: rgba(238, 238, 238, 1);
+  /* Row hovers / `bg-muted`: subtle neutral lift (same alpha family as `--border`), not a second brand tint. */
+  --muted: rgba(0, 0, 0, 0.08);
   --muted-foreground: rgba(16, 18, 43, 0.72);
   --accent: rgba(226, 212, 254, 1);
   --accent-foreground: rgba(1, 55, 66, 1);
@@ -160,7 +161,8 @@ html[data-theme="bloom"] {
   --primary-foreground: rgba(255, 255, 255, 1);
   --secondary: rgba(248, 243, 228, 1);
   --secondary-foreground: rgba(16, 18, 43, 1);
-  --muted: rgba(238, 238, 238, 1);
+  /* Row hovers / `bg-muted`: subtle neutral lift (same alpha family as `--border`). */
+  --muted: rgba(0, 0, 0, 0.08);
   --muted-foreground: rgba(16, 18, 43, 0.72);
   --accent: rgba(248, 243, 228, 1);
   --accent-foreground: rgba(16, 18, 43, 1);

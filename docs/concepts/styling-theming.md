@@ -35,7 +35,7 @@ AppShell ships **five** named semantic palettes controlled by **`data-theme`** o
 | `light`        | Default neutral light (historic AppShell UI) |
 | `dark`         | Default neutral dark                         |
 | `cream`        | Tailor brand — cream shell, violet accents   |
-| `bloom`        | Lavender shell (**Bloom**) and cream accents   |
+| `bloom`        | Lavender shell (**Bloom**) and cream accents |
 | `deep-dark`    | Tailor brand — near-black tuning surface     |
 
 **`system`** resolves to **`light`** or **`dark`** only — not **`cream`**, **`bloom`**, or **`deep-dark`**. Set those with **`setTheme`** or **`AppShell`** **`defaultTheme`**.

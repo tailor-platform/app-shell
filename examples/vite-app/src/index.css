@@ -1,3 +1,9 @@
+/* Unprefixed Tailwind for this app (`mb-4`, `text-muted-foreground`, etc.) must load first.
+ * App Shell styles MUST come second so layered base rules (semantic `border-border` / `--border`)
+ * are not overwritten by Tailwind preflight — otherwise AppShell borders look harsh/black everywhere.
+ *
+ * Theme switcher grid does not rely on this order (inline fallback styles on `ThemeSwitcher`).
+ */
 @import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
 

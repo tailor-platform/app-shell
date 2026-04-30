@@ -1,4 +1,9 @@
-import { defineResource, ActionPanel, useNavigate } from "@tailor-platform/app-shell";
+import {
+  defineResource,
+  ActionPanel,
+  useNavigate,
+  useToast,
+} from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
 
 export const ReceiptIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -62,6 +67,7 @@ export const ExternalLinkIcon = (props: SVGProps<SVGSVGElement>) => (
 
 const ActionPanelDemoPage = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   return (
     <div
       style={{
@@ -73,10 +79,13 @@ const ActionPanelDemoPage = () => {
         maxWidth: "480px",
       }}
     >
-      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Action Panel Demo</h1>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+        Action Panel Demo
+      </h1>
       <p style={{ color: "var(--muted-foreground)", fontSize: "0.875rem" }}>
-        This panel fills the width of its container. All actions use <code>onClick</code>; for
-        navigation use <code>useNavigate()</code> inside the callback.
+        This panel fills the width of its container. All actions use{" "}
+        <code>onClick</code>; for navigation use <code>useNavigate()</code>{" "}
+        inside the callback.
       </p>
       <ActionPanel
         title="Actions"
@@ -85,13 +94,17 @@ const ActionPanelDemoPage = () => {
             key: "create-invoice",
             label: "Create new sales invoice",
             icon: <ReceiptIcon />,
-            onClick: () => alert("Create invoice clicked"),
+            onClick: () => {
+              toast("Create invoice clicked");
+            },
           },
           {
             key: "delivery-note",
             label: "Create new delivery note",
             icon: <FileTextIcon />,
-            onClick: () => alert("Create delivery note clicked"),
+            onClick: () => {
+              toast("Create delivery note clicked");
+            },
           },
           {
             key: "view-po-demo",

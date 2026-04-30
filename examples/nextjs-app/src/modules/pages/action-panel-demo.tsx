@@ -1,9 +1,4 @@
-import {
-  defineResource,
-  ActionPanel,
-  useNavigate,
-  useToast,
-} from "@tailor-platform/app-shell";
+import { defineResource, ActionPanel, useNavigate, useToast } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
 
 export const ReceiptIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -79,13 +74,10 @@ const ActionPanelDemoPage = () => {
         maxWidth: "480px",
       }}
     >
-      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-        Action Panel Demo
-      </h1>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Action Panel Demo</h1>
       <p style={{ color: "var(--muted-foreground)", fontSize: "0.875rem" }}>
-        This panel fills the width of its container. All actions use{" "}
-        <code>onClick</code>; for navigation use <code>useNavigate()</code>{" "}
-        inside the callback.
+        This panel fills the width of its container. All actions use <code>onClick</code>; for
+        navigation use <code>useNavigate()</code> inside the callback.
       </p>
       <ActionPanel
         title="Actions"

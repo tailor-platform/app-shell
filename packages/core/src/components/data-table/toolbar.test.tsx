@@ -653,3 +653,163 @@ describe("BooleanFilterEditor", () => {
     expect(control.addFilter).toHaveBeenCalledWith("enabled", "ne", true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// NumericFilterEditor — between operator (two inputs)
+// ---------------------------------------------------------------------------
+
+describe("NumericFilterEditor (between)", () => {
+  it("shows two number inputs when filter operator is between", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "count", operator: "between", value: { min: 10, max: 50 } }],
+    });
+    render(<TestFilters control={control} columns={[numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Count between 10 - 50/ }));
+
+    const inputs = await screen.findAllByRole("spinbutton");
+    expect(inputs.length).toBe(2);
+    expect((inputs[0] as HTMLInputElement).value).toBe("10");
+    expect((inputs[1] as HTMLInputElement).value).toBe("50");
+  });
+
+  it("Apply button calls addFilter with min/max range object", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "count", operator: "between", value: { min: 10, max: 50 } }],
+    });
+    render(<TestFilters control={control} columns={[numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Count between 10 - 50/ }));
+
+    const inputs = await screen.findAllByRole("spinbutton");
+    await user.clear(inputs[0]);
+    await user.type(inputs[0], "5");
+    await user.clear(inputs[1]);
+    await user.type(inputs[1], "100");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 5, max: 100 });
+  });
+
+  it("Apply button calls addFilter with only min when max is empty", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "count", operator: "between", value: { min: 10 } }],
+    });
+    render(<TestFilters control={control} columns={[numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Count between 10/ }));
+
+    const inputs = await screen.findAllByRole("spinbutton");
+    // min should already be "10", max should be empty
+    expect((inputs[0] as HTMLInputElement).value).toBe("10");
+    expect((inputs[1] as HTMLInputElement).value).toBe("");
+
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 10 });
+  });
+
+  it("Apply button calls removeFilter when both inputs are empty", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "count", operator: "between", value: { min: 10, max: 50 } }],
+    });
+    render(<TestFilters control={control} columns={[numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Count between 10 - 50/ }));
+
+    const inputs = await screen.findAllByRole("spinbutton");
+    await user.clear(inputs[0]);
+    await user.clear(inputs[1]);
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.removeFilter).toHaveBeenCalledWith("count");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TemporalFilterEditor — between operator (two inputs)
+// ---------------------------------------------------------------------------
+
+describe("TemporalFilterEditor (between)", () => {
+  it("shows two date inputs when filter operator is between", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        { field: "createdAt", operator: "between", value: { min: "2025-01-01", max: "2025-12-31" } },
+      ],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: /Created At between 2025-01-01 - 2025-12-31/ }),
+    );
+
+    const inputs = screen.getAllByDisplayValue(/2025/);
+    expect(inputs.length).toBe(2);
+  });
+
+  it("Apply button calls addFilter with min/max range for date between", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        { field: "createdAt", operator: "between", value: { min: "2025-01-01", max: "2025-12-31" } },
+      ],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: /Created At between 2025-01-01 - 2025-12-31/ }),
+    );
+
+    const inputs = screen.getAllByDisplayValue(/2025/);
+    await user.clear(inputs[0]);
+    await user.type(inputs[0], "2026-03-01");
+    await user.clear(inputs[1]);
+    await user.type(inputs[1], "2026-06-30");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("createdAt", "between", {
+      min: "2026-03-01",
+      max: "2026-06-30",
+    });
+  });
+
+  it("Apply button calls removeFilter when both temporal inputs are empty", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        { field: "createdAt", operator: "between", value: { min: "2025-01-01", max: "2025-12-31" } },
+      ],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: /Created At between 2025-01-01 - 2025-12-31/ }),
+    );
+
+    const inputs = screen.getAllByDisplayValue(/2025/);
+    await user.clear(inputs[0]);
+    await user.clear(inputs[1]);
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.removeFilter).toHaveBeenCalledWith("createdAt");
+  });
+});

@@ -92,6 +92,20 @@ const dateColumn: Column<TestRow> = {
   filter: { type: "date", field: "createdAt" },
 };
 
+const datetimeColumn: Column<TestRow> = {
+  id: "publishedAt",
+  label: "Published At",
+  render: (r) => String(r.publishedAt ?? ""),
+  filter: { type: "datetime", field: "publishedAt" },
+};
+
+const timeColumn: Column<TestRow> = {
+  id: "opensAt",
+  label: "Opens At",
+  render: (r) => String(r.opensAt ?? ""),
+  filter: { type: "time", field: "opensAt" },
+};
+
 const enumColumn: Column<TestRow> = {
   id: "status",
   label: "Status",
@@ -415,12 +429,10 @@ describe("DateFilterEditor", () => {
     // Use the data-slot selector since date inputs have no simple ARIA role
     const dateInput = await screen.findByDisplayValue("2025-01-01");
     await user.clear(dateInput);
-    // Simulate typing a date via fireEvent since userEvent date handling varies by env
-    dateInput.focus();
     await user.type(dateInput, "2026-06-15");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(control.addFilter).toHaveBeenCalledWith("createdAt", "eq", expect.any(String));
+    expect(control.addFilter).toHaveBeenCalledWith("createdAt", "eq", "2026-06-15");
     // Verify empty value triggers removeFilter instead
     void container; // suppress unused-var
   });
@@ -441,6 +453,82 @@ describe("DateFilterEditor", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("createdAt");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TemporalFilterEditor — datetime/time inputs preserve backend formats
+// ---------------------------------------------------------------------------
+
+describe("TemporalFilterEditor", () => {
+  it("Apply button calls addFilter with a full RFC3339 datetime", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /Published At equals 2025-01-01T10:30:00Z/,
+      }),
+    );
+
+    const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
+    await user.clear(input);
+    await user.type(input, "2026-06-15T08:45:30+09:00");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith(
+      "publishedAt",
+      "eq",
+      "2026-06-15T08:45:30+09:00",
+    );
+  });
+
+  it("Apply button stays disabled for an invalid RFC3339 datetime", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /Published At equals 2025-01-01T10:30:00Z/,
+      }),
+    );
+
+    const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
+    await user.clear(input);
+    await user.type(input, "2026-06-15T08:45");
+
+    expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it("Apply button calls addFilter with an HH:MM time", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "opensAt", operator: "eq", value: "09:30" }],
+    });
+    render(<TestFilters control={control} columns={[timeColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Opens At equals 09:30/ }));
+
+    const input = await screen.findByDisplayValue("09:30");
+    await user.clear(input);
+    await user.type(input, "18:45");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("opensAt", "eq", "18:45");
   });
 });
 

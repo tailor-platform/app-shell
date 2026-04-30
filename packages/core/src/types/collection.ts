@@ -86,7 +86,9 @@ export interface SelectOption {
 export type FilterConfig =
   | { field: string; type: "string" }
   | { field: string; type: "number" }
+  | { field: string; type: "datetime" }
   | { field: string; type: "date" }
+  | { field: string; type: "time" }
   | { field: string; type: "enum"; options: SelectOption[] }
   | { field: string; type: "boolean" }
   | { field: string; type: "uuid" };
@@ -112,7 +114,9 @@ export const OPERATORS_BY_FILTER_TYPE = {
     "nin",
   ],
   number: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
+  datetime: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
   date: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
+  time: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
   enum: ["eq", "ne", "in", "nin"],
   boolean: ["eq", "ne"],
   uuid: ["eq", "ne", "in", "nin"],
@@ -153,9 +157,9 @@ export type FieldTypeToFilterConfigType = {
   number: "number";
   boolean: "boolean";
   uuid: "uuid";
-  datetime: "date";
+  datetime: "datetime";
   date: "date";
-  time: "date";
+  time: "time";
   enum: "enum";
   array: never;
   nested: never;
@@ -499,9 +503,11 @@ export function fieldTypeToFilterConfig(
     case "uuid":
       return { field, type: "uuid" };
     case "datetime":
+      return { field, type: "datetime" };
     case "date":
-    case "time":
       return { field, type: "date" };
+    case "time":
+      return { field, type: "time" };
     case "enum":
       return {
         field,

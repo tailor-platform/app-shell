@@ -27,6 +27,9 @@ const productMetadata = {
       description: "Product name",
     },
     { name: "category", type: "string", required: true },
+    { name: "publishedAt", type: "datetime", required: true },
+    { name: "availableOn", type: "date", required: true },
+    { name: "restockAt", type: "time", required: true },
     { name: "price", type: "number", required: true },
     { name: "stock", type: "number", required: false },
     {
@@ -54,6 +57,18 @@ const productColumns = [
   column({
     ...infer("price"),
     render: (row) => `$${row.price.toFixed(2)}`,
+  }),
+  column({
+    ...infer("publishedAt"),
+    render: (row) => <span className="font-mono text-xs">{row.publishedAt}</span>,
+  }),
+  column({
+    ...infer("availableOn"),
+    render: (row) => <span className="font-mono text-xs">{row.availableOn}</span>,
+  }),
+  column({
+    ...infer("restockAt"),
+    render: (row) => <span className="font-mono text-xs">{row.restockAt}</span>,
   }),
   column({
     ...infer("stock"),
@@ -130,7 +145,8 @@ const DataTableDemoPage = () => {
       <Layout.Header title="DataTable Demo" />
       <Layout.Column>
         <p className="mb-4 text-muted-foreground">
-          DataTable demo with sortable columns, row actions, pagination, and multi-select.
+          DataTable demo with sortable columns, row actions, pagination, multi-select, and temporal
+          filters for datetime, date, and time fields.
         </p>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>

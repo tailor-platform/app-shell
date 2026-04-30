@@ -35,6 +35,13 @@ export type SidebarLayoutProps = {
    * ```
    */
   sidebar?: React.ReactNode;
+
+  /**
+   * Whether the sidebar is expanded by default.
+   *
+   * @default true
+   */
+  defaultOpen?: boolean;
 };
 
 const HidableSidebarTrigger = () => {
@@ -56,7 +63,7 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
   };
 
   return (
-    <SidebarProvider className="astw:flex astw:flex-col">
+    <SidebarProvider defaultOpen={props.defaultOpen} className="astw:flex astw:flex-col">
       <div className="astw:flex astw:flex-1">
         {props.sidebar ?? <DefaultSidebar />}
         <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">

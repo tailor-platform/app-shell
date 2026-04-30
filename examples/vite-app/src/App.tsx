@@ -1,5 +1,6 @@
 import {
   AppShell,
+  ContentOnlyLayout,
   DefaultSidebar,
   SidebarGroup,
   SidebarItem,

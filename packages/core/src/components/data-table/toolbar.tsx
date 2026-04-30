@@ -255,22 +255,6 @@ function AddFilterPopover({
       );
     }
 
-    if (config.type === "date") {
-      return (
-        <Input
-          {...getTemporalInputProps(config.type)}
-          value={typeof value === "string" ? value : ""}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSubmit();
-            }
-          }}
-          className="astw:h-8 astw:text-sm"
-        />
-      );
-    }
-
     if (isTemporalFilterType(config.type)) {
       return (
         <Input

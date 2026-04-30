@@ -419,6 +419,20 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
 // ============================================================================
 
 const Select = Object.assign(SelectStandalone, {
+  /**
+   * Async select that fetches items when the dropdown opens.
+   *
+   * **Limitation:** This component defaults to `modal={false}` and
+   * `alignItemWithTrigger={false}` to work around Base UI scroll-lock bugs
+   * with dynamically loaded items. As a result, it may not function correctly
+   * inside focus-trapping containers such as `Dialog` or `Sheet` — the
+   * focus trap can block interaction with the dropdown, or the portal may
+   * render outside the modal's visible area.
+   *
+   * If you need an async dropdown inside a `Dialog` or `Sheet`, prefer
+   * `Combobox.Async` which uses Popover-based positioning and does not
+   * suffer from these constraints.
+   */
   Async: SelectAsyncStandalone,
   Parts: SelectParts,
   useAsync,

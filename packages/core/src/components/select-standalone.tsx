@@ -324,7 +324,11 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     fetcher,
     placeholder,
     loadingText = "Loading...",
+    // Base UI's modal + anchored alignment path can leave async selects
+    // scroll-locked or invisible after reopening once items have loaded.
     modal = false,
+    // Base UI also enables anchored popup scroll lock when item/trigger
+    // alignment is on, so async selects opt out of that path too.
     alignItemWithTrigger = false,
     mapItem: mapItemProp,
     className,
@@ -353,8 +357,6 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
       <div className={className}>
         <SelectRoot<T, true>
           multiple
-          // Base UI's modal + anchored alignment path can leave async selects
-          // scroll-locked or invisible after reopening once items have loaded.
           modal={modal}
           value={value as T[] | undefined}
           defaultValue={defaultValue as T[] | undefined}
@@ -372,8 +374,6 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
               <SelectValue placeholder={placeholder} />
             )}
           </SelectTrigger>
-          {/* Base UI also enables anchored popup scroll lock when item/trigger
-                alignment is on, so async selects opt out of that path too. */}
           <SelectContent container={container} alignItemWithTrigger={alignItemWithTrigger}>
             {content}
           </SelectContent>
@@ -387,8 +387,6 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
   return (
     <div className={className}>
       <SelectRoot<T>
-        // Base UI's modal + anchored alignment path can leave async selects
-        // scroll-locked or invisible after reopening once items have loaded.
         modal={modal}
         value={value as T | null | undefined}
         defaultValue={defaultValue as T | null | undefined}
@@ -408,8 +406,6 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
             <SelectValue placeholder={placeholder} />
           )}
         </SelectTrigger>
-        {/* Base UI also enables anchored popup scroll lock when item/trigger
-            alignment is on, so async selects opt out of that path too. */}
         <SelectContent container={container} alignItemWithTrigger={alignItemWithTrigger}>
           {content}
         </SelectContent>

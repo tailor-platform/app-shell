@@ -1,6 +1,7 @@
-import { Link, Button, Layout, Badge } from "@tailor-platform/app-shell";
+import { Link, Button, Layout, Badge, AppShellPageProps } from "@tailor-platform/app-shell";
 import { paths } from "../routes.generated";
-import { useT } from "../i18n-labels";
+import { labels, useT } from "../i18n-labels";
+import { LayoutDashboard } from "lucide-react";
 
 const HomePage = () => {
   const t = useT();
@@ -27,5 +28,12 @@ const HomePage = () => {
     </Layout>
   );
 };
+
+HomePage.appShellPageProps = {
+  meta: {
+    title: labels.t("navRoot"),
+    icon: <LayoutDashboard />,
+  },
+} satisfies AppShellPageProps;
 
 export default HomePage;

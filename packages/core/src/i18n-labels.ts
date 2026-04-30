@@ -2,6 +2,7 @@ import { defineI18nLabels } from "@/hooks/i18n";
 
 export const labels = defineI18nLabels({
   en: {
+    home: "Home",
     error404Title: "404 Not Found",
     error404Body: "The page you requested could not be found.",
     goBack: "Go Back",
@@ -26,6 +27,7 @@ export const labels = defineI18nLabels({
     commandPaletteSearching: "Searching...",
   },
   ja: {
+    home: "ホーム",
     error404Title: "404 ページが見つかりません",
     error404Body: "お探しのページは存在しません。",
     goBack: "戻る",

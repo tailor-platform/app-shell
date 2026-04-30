@@ -14,6 +14,7 @@ const App = () => {
     title: "AppShell",
     basePath: "dashboard",
     modules: [customPageModule],
+    rootComponent: () => <div>Dashboard Home (accessible at /dashboard)</div>,
     settingsResources: [profileResource],
     contextData: {
       role,

@@ -29,6 +29,12 @@ afterEach(() => {
 
 const createTestModules = () => [
   defineModule({
+    path: "",
+    meta: { title: "Root" },
+    component: () => <div>Root</div>,
+    resources: [],
+  }),
+  defineModule({
     path: "dashboard",
     meta: { title: "Dashboard", icon: <Home /> },
     component: () => <div>Dashboard Root</div>,
@@ -133,6 +139,13 @@ describe("SidebarItem", () => {
 
     const menu = getSidebarMenu();
     expect(menu.getByRole("link", { name: /some path/i })).toBeDefined();
+  });
+
+  it("resolves title from root module meta for to='/'", () => {
+    renderWithProviders(<SidebarItem to="/" />);
+
+    const menu = getSidebarMenu();
+    expect(menu.getByRole("link", { name: /root/i })).toBeDefined();
   });
 });
 

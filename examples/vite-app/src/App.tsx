@@ -6,7 +6,6 @@ import {
   SidebarLayout,
   type SearchSource,
 } from "@tailor-platform/app-shell";
-import { ReceiptText } from "lucide-react";
 import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
 
@@ -30,9 +29,10 @@ const App = () => {
       <SidebarLayout
         sidebar={
           <DefaultSidebar>
+            <SidebarItem to="/" />
             <SidebarGroup title={labels.t("navMain")}>
               <SidebarItem to="/dashboard" activeMatch="exact" />
-              <SidebarItem to="/dashboard/orders" icon={<ReceiptText />} />
+              <SidebarItem to="/dashboard/orders" />
             </SidebarGroup>
             <SidebarItem to="/settings" />
           </DefaultSidebar>

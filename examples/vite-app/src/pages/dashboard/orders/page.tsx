@@ -8,6 +8,7 @@ import {
 } from "@tailor-platform/app-shell";
 import { paths } from "../../../routes.generated";
 import { labels } from "../../../i18n-labels";
+import { ReceiptText } from "lucide-react";
 
 const statusVariant = (status: string) => {
   switch (status) {
@@ -98,6 +99,7 @@ const OrdersPage = () => {
 OrdersPage.appShellPageProps = {
   meta: {
     title: labels.t("ordersTitle"),
+    icon: <ReceiptText />,
   },
 } satisfies AppShellPageProps;
 

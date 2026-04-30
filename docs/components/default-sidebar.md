@@ -78,7 +78,7 @@ function Layout() {
 
 ## Features
 
-- **Auto-Navigation**: Automatically renders all modules and resources from AppShell
+- **Auto-Navigation**: Automatically renders all modules and resources from AppShell, including the root module (path `""` or `"/"`) when defined. When a `rootComponent` is passed to `AppShell` without an explicit root module, a synthetic root entry is injected with a localized `"Home"` title.
 - **Search Entry**: Always renders a **Search** button at the top of the navigation menu that opens the CommandPalette (equivalent to `Cmd+K` / `Ctrl+K`). This is available regardless of whether `searchSources` are configured on `AppShell`.
 - **Active State**: Highlights the current route
 - **Collapsible Groups**: Supports nested resource groups

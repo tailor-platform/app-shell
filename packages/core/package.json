@@ -35,6 +35,10 @@
     "./vite-plugin": {
       "types": "./dist/vite-plugin.d.ts",
       "default": "./dist/vite-plugin.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "publishConfig": {

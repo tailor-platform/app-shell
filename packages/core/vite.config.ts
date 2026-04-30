@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => ({
       entry: {
         "app-shell": "src/index.ts",
         "vite-plugin": "src/vite-plugin.ts",
+        testing: "src/testing.ts",
       },
       formats: ["es"],
     },

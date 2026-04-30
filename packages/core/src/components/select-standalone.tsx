@@ -278,6 +278,11 @@ function useAsync<T>({ fetcher }: UseSelectAsyncOptions<T>): UseSelectAsyncRetur
             setLoading(false);
           }
         });
+    } else {
+      // Abort in-flight fetch on close to prevent content changes during
+      // the close animation, which can break Base UI's transition tracking.
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
     }
   }, []);
 
@@ -297,6 +302,17 @@ interface SelectAsyncOwnProps<T> {
   fetcher: SelectAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
+  /**
+   * Whether the select behaves as a modal (traps focus).
+   * Set to `true` when rendering inside a Dialog or Sheet to preserve focus-trap.
+   * @default false
+   */
+  modal?: boolean;
+  /**
+   * Whether to align the selected item with the trigger when the dropdown opens.
+   * @default false
+   */
+  alignItemWithTrigger?: boolean;
 }
 
 type SelectAsyncProps<T> =
@@ -308,6 +324,12 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     fetcher,
     placeholder,
     loadingText = "Loading...",
+    // Base UI's modal + anchored alignment path can leave async selects
+    // scroll-locked or invisible after reopening once items have loaded.
+    modal = false,
+    // Base UI also enables anchored popup scroll lock when item/trigger
+    // alignment is on, so async selects opt out of that path too.
+    alignItemWithTrigger = false,
     mapItem: mapItemProp,
     className,
     disabled,
@@ -335,6 +357,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
       <div className={className}>
         <SelectRoot<T, true>
           multiple
+          modal={modal}
           value={value as T[] | undefined}
           defaultValue={defaultValue as T[] | undefined}
           onValueChange={onValueChange && ((v: T[]) => (onValueChange as (v: T[]) => void)(v))}
@@ -351,7 +374,9 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
               <SelectValue placeholder={placeholder} />
             )}
           </SelectTrigger>
-          <SelectContent container={container}>{content}</SelectContent>
+          <SelectContent container={container} alignItemWithTrigger={alignItemWithTrigger}>
+            {content}
+          </SelectContent>
         </SelectRoot>
       </div>
     );
@@ -362,6 +387,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
   return (
     <div className={className}>
       <SelectRoot<T>
+        modal={modal}
         value={value as T | null | undefined}
         defaultValue={defaultValue as T | null | undefined}
         onValueChange={
@@ -380,7 +406,9 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
             <SelectValue placeholder={placeholder} />
           )}
         </SelectTrigger>
-        <SelectContent container={container}>{content}</SelectContent>
+        <SelectContent container={container} alignItemWithTrigger={alignItemWithTrigger}>
+          {content}
+        </SelectContent>
       </SelectRoot>
     </div>
   );
@@ -391,6 +419,20 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
 // ============================================================================
 
 const Select = Object.assign(SelectStandalone, {
+  /**
+   * Async select that fetches items when the dropdown opens.
+   *
+   * **Limitation:** This component defaults to `modal={false}` and
+   * `alignItemWithTrigger={false}` to work around Base UI scroll-lock bugs
+   * with dynamically loaded items. As a result, it may not function correctly
+   * inside focus-trapping containers such as `Dialog` or `Sheet` — the
+   * focus trap can block interaction with the dropdown, or the portal may
+   * render outside the modal's visible area.
+   *
+   * If you need an async dropdown inside a `Dialog` or `Sheet`, prefer
+   * `Combobox.Async` which uses Popover-based positioning and does not
+   * suffer from these constraints.
+   */
   Async: SelectAsyncStandalone,
   Parts: SelectParts,
   useAsync,

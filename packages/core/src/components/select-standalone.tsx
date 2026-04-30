@@ -302,6 +302,17 @@ interface SelectAsyncOwnProps<T> {
   fetcher: SelectAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
+  /**
+   * Whether the select behaves as a modal (traps focus).
+   * Set to `true` when rendering inside a Dialog or Sheet to preserve focus-trap.
+   * @default false
+   */
+  modal?: boolean;
+  /**
+   * Whether to align the selected item with the trigger when the dropdown opens.
+   * @default false
+   */
+  alignItemWithTrigger?: boolean;
 }
 
 type SelectAsyncProps<T> =
@@ -313,6 +324,8 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     fetcher,
     placeholder,
     loadingText = "Loading...",
+    modal = false,
+    alignItemWithTrigger = false,
     mapItem: mapItemProp,
     className,
     disabled,
@@ -342,7 +355,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
           multiple
           // Base UI's modal + anchored alignment path can leave async selects
           // scroll-locked or invisible after reopening once items have loaded.
-          modal={false}
+          modal={modal}
           value={value as T[] | undefined}
           defaultValue={defaultValue as T[] | undefined}
           onValueChange={onValueChange && ((v: T[]) => (onValueChange as (v: T[]) => void)(v))}
@@ -361,7 +374,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
           </SelectTrigger>
           {/* Base UI also enables anchored popup scroll lock when item/trigger
                 alignment is on, so async selects opt out of that path too. */}
-          <SelectContent container={container} alignItemWithTrigger={false}>
+          <SelectContent container={container} alignItemWithTrigger={alignItemWithTrigger}>
             {content}
           </SelectContent>
         </SelectRoot>
@@ -376,7 +389,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
       <SelectRoot<T>
         // Base UI's modal + anchored alignment path can leave async selects
         // scroll-locked or invisible after reopening once items have loaded.
-        modal={false}
+        modal={modal}
         value={value as T | null | undefined}
         defaultValue={defaultValue as T | null | undefined}
         onValueChange={
@@ -397,7 +410,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
         </SelectTrigger>
         {/* Base UI also enables anchored popup scroll lock when item/trigger
             alignment is on, so async selects opt out of that path too. */}
-        <SelectContent container={container} alignItemWithTrigger={false}>
+        <SelectContent container={container} alignItemWithTrigger={alignItemWithTrigger}>
           {content}
         </SelectContent>
       </SelectRoot>

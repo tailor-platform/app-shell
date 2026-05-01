@@ -694,7 +694,10 @@ describe("NumericFilterEditor (between)", () => {
     await user.type(inputs[1], "100");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 5, max: 100 });
+    expect(control.addFilter).toHaveBeenCalledWith("count", "between", {
+      min: 5,
+      max: 100,
+    });
   });
 
   it("Apply button calls addFilter with only min when max is empty", async () => {
@@ -715,7 +718,9 @@ describe("NumericFilterEditor (between)", () => {
 
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 10 });
+    expect(control.addFilter).toHaveBeenCalledWith("count", "between", {
+      min: 10,
+    });
   });
 
   it("Apply button calls removeFilter when both inputs are empty", async () => {
@@ -759,7 +764,9 @@ describe("TemporalFilterEditor (between)", () => {
     });
 
     await user.click(
-      screen.getByRole("button", { name: /Created At between 2025-01-01 - 2025-12-31/ }),
+      screen.getByRole("button", {
+        name: /Created At between 2025-01-01 - 2025-12-31/,
+      }),
     );
 
     const inputs = screen.getAllByDisplayValue(/2025/);
@@ -782,7 +789,9 @@ describe("TemporalFilterEditor (between)", () => {
     });
 
     await user.click(
-      screen.getByRole("button", { name: /Created At between 2025-01-01 - 2025-12-31/ }),
+      screen.getByRole("button", {
+        name: /Created At between 2025-01-01 - 2025-12-31/,
+      }),
     );
 
     const inputs = screen.getAllByDisplayValue(/2025/);
@@ -814,7 +823,9 @@ describe("TemporalFilterEditor (between)", () => {
     });
 
     await user.click(
-      screen.getByRole("button", { name: /Created At between 2025-01-01 - 2025-12-31/ }),
+      screen.getByRole("button", {
+        name: /Created At between 2025-01-01 - 2025-12-31/,
+      }),
     );
 
     const inputs = screen.getAllByDisplayValue(/2025/);

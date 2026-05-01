@@ -321,7 +321,14 @@ describe("StringFilterEditor", () => {
   it("restores case-sensitive state from existing filter", async () => {
     const user = userEvent.setup();
     const control = makeControl({
-      filters: [{ field: "name", operator: "contains", value: "Alice", caseSensitive: true }],
+      filters: [
+        {
+          field: "name",
+          operator: "contains",
+          value: "Alice",
+          caseSensitive: true,
+        },
+      ],
     });
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,

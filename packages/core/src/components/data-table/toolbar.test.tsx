@@ -769,7 +769,7 @@ describe("TemporalFilterEditor (between)", () => {
       }),
     );
 
-    const inputs = screen.getAllByDisplayValue(/2025/);
+    const inputs = await screen.findAllByDisplayValue(/2025/);
     expect(inputs.length).toBe(2);
   });
 
@@ -794,7 +794,7 @@ describe("TemporalFilterEditor (between)", () => {
       }),
     );
 
-    const inputs = screen.getAllByDisplayValue(/2025/);
+    const inputs = await screen.findAllByDisplayValue(/2025/);
     await user.clear(inputs[0]);
     await user.type(inputs[0], "2026-03-01");
     await user.clear(inputs[1]);
@@ -828,7 +828,7 @@ describe("TemporalFilterEditor (between)", () => {
       }),
     );
 
-    const inputs = screen.getAllByDisplayValue(/2025/);
+    const inputs = await screen.findAllByDisplayValue(/2025/);
     await user.clear(inputs[0]);
     await user.clear(inputs[1]);
     await user.click(screen.getByRole("button", { name: "Apply" }));

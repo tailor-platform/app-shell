@@ -135,6 +135,7 @@ function BetweenInputGroup({
         </span>
         <Input
           {...inputProps}
+          aria-label={labels[0]}
           value={values[0]}
           onChange={(e) => onChangeMin(e.target.value)}
           onKeyDown={(e) => {
@@ -149,6 +150,7 @@ function BetweenInputGroup({
         </span>
         <Input
           {...inputProps}
+          aria-label={labels[1]}
           value={values[1]}
           onChange={(e) => onChangeMax(e.target.value)}
           onKeyDown={(e) => {

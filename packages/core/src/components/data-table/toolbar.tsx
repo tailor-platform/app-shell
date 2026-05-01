@@ -1123,17 +1123,23 @@ function toAddFilterSubmittedValue(
 
   if (operator === "between" && Array.isArray(value)) {
     const [min, max] = value;
+    const trimmedMin = typeof min === "string" ? min.trim() : "";
+    const trimmedMax = typeof max === "string" ? max.trim() : "";
+
     if (type === "number") {
-      const range: { min?: number; max?: number } = {};
-      if (min && min.trim() !== "" && !Number.isNaN(Number(min))) range.min = Number(min);
-      if (max && max.trim() !== "" && !Number.isNaN(Number(max))) range.max = Number(max);
-      return range;
+      if (trimmedMin === "" || trimmedMax === "") return undefined;
+
+      const parsedMin = Number(trimmedMin);
+      const parsedMax = Number(trimmedMax);
+      if (Number.isNaN(parsedMin) || Number.isNaN(parsedMax)) return undefined;
+
+      return { min: parsedMin, max: parsedMax };
     }
+
+    if (trimmedMin === "" || trimmedMax === "") return undefined;
+
     // temporal types
-    const range: { min?: string; max?: string } = {};
-    if (min && min.trim() !== "") range.min = min;
-    if (max && max.trim() !== "") range.max = max;
-    return range;
+    return { min: trimmedMin, max: trimmedMax };
   }
 
   if (type === "number") {

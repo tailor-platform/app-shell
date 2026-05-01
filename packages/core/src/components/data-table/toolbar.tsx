@@ -850,20 +850,33 @@ function NumericFilterEditor({
     return "";
   });
 
+  const canCommit = (() => {
+    if (localOp === "between") {
+      const minEmpty = localValue.trim() === "";
+      const maxEmpty = localValueMax.trim() === "";
+      if (minEmpty && maxEmpty) return true; // will removeFilter
+      if (minEmpty || maxEmpty) return false; // both required
+      return !Number.isNaN(Number(localValue)) && !Number.isNaN(Number(localValueMax));
+    }
+    return localValue.trim() === "" || !Number.isNaN(Number(localValue));
+  })();
+
   const handleCommit = useCallback(() => {
     if (localOp === "between") {
-      const min = Number(localValue);
-      const max = Number(localValueMax);
-      if (
-        (localValue.trim() === "" || Number.isNaN(min)) &&
-        (localValueMax.trim() === "" || Number.isNaN(max))
-      ) {
+      const minEmpty = localValue.trim() === "";
+      const maxEmpty = localValueMax.trim() === "";
+      if (minEmpty && maxEmpty) {
         control.removeFilter(config.field);
+      } else if (!minEmpty && !maxEmpty) {
+        const min = Number(localValue);
+        const max = Number(localValueMax);
+        if (!Number.isNaN(min) && !Number.isNaN(max)) {
+          control.addFilter(config.field, localOp, { min, max });
+        } else {
+          return;
+        }
       } else {
-        const range: { min?: number; max?: number } = {};
-        if (localValue.trim() !== "" && !Number.isNaN(min)) range.min = min;
-        if (localValueMax.trim() !== "" && !Number.isNaN(max)) range.max = max;
-        control.addFilter(config.field, localOp, range);
+        return;
       }
     } else {
       const num = Number(localValue);
@@ -910,7 +923,7 @@ function NumericFilterEditor({
           className="astw:h-8 astw:text-sm"
         />
       )}
-      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+      <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
     </div>

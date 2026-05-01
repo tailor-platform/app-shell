@@ -700,7 +700,7 @@ describe("NumericFilterEditor (between)", () => {
     });
   });
 
-  it("Apply button calls addFilter with only min when max is empty", async () => {
+  it("Apply button does not call addFilter when only min is set and max is empty", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "count", operator: "between", value: { min: 10 } }],
@@ -718,9 +718,7 @@ describe("NumericFilterEditor (between)", () => {
 
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(control.addFilter).toHaveBeenCalledWith("count", "between", {
-      min: 10,
-    });
+    expect(control.addFilter).not.toHaveBeenCalled();
   });
 
   it("Apply button calls removeFilter when both inputs are empty", async () => {

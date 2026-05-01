@@ -225,6 +225,31 @@ A column definition passed to `useDataTable`.
 | `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
 | `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
 
+## `FilterConfig`
+
+The `filter` property on a column accepts a `FilterConfig` object. When set, the column appears as an option in `DataTable.Filters` and the filter chip renders an input editor appropriate for the type.
+
+| Property  | Type             | Description                                                                  |
+| --------- | ---------------- | ---------------------------------------------------------------------------- |
+| `field`   | `string`         | API field name used in the generated query input.                            |
+| `type`    | `FilterType`     | Filter editor type (see table below).                                        |
+| `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values.                 |
+
+### Filter Types and Operators
+
+| Type       | Input editor         | Supported operators                                                                                            |
+| ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `string`   | Text                 | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin`  |
+| `number`   | Number               | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
+| `datetime` | Datetime-local       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
+| `date`     | Date                 | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
+| `time`     | Time                 | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
+| `enum`     | Dropdown             | `eq`, `ne`, `in`, `nin`                                                                                        |
+| `boolean`  | Toggle               | `eq`, `ne`                                                                                                     |
+| `uuid`     | Text                 | `eq`, `ne`, `in`, `nin`                                                                                        |
+
+When the user selects the `between` operator on a `number`, `datetime`, `date`, or `time` column, the filter chip renders a range input with **min** and **max** bounds.
+
 ## `RowAction`
 
 | Property     | Type                         | Description                                          |

@@ -118,6 +118,8 @@ const modules = [
 </AppShell>
 ```
 
+When `rootComponent` is set, the root page is treated as a first-class navigation item: it appears in `DefaultSidebar` and `CommandPalette` just like any other module. The title defaults to the localized `"Home"` / `"ホーム"` if no explicit title is provided.
+
 > **Tip:** For redirects from the root, use a guard with `redirectTo()` instead
 
 ```tsx
@@ -127,6 +129,8 @@ import { redirectTo } from "@tailor-platform/app-shell";
   {/* ... */}
 </AppShell>;
 ```
+
+> **Note:** If a module with `path: ""` is present in `modules`, it takes precedence over `rootComponent`.
 
 ### settingsResources
 

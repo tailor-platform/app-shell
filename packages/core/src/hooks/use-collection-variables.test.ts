@@ -161,6 +161,96 @@ describe("useCollectionVariables", () => {
       expect(result.current.variables.pagination.after).toBeUndefined();
       expect(result.current.variables.pagination).toEqual({ first: 20 });
     });
+
+    it("adds a case-insensitive filter and converts to regex in query variables", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.addFilter("name", "contains", "Alice", {
+          caseInsensitive: true,
+        });
+      });
+
+      expect(result.current.control.filters[0]).toMatchObject({
+        field: "name",
+        operator: "contains",
+        value: "Alice",
+        caseInsensitive: true,
+      });
+      expect(result.current.variables.query).toEqual({
+        name: { regex: "(?i)Alice" },
+      });
+    });
+
+    it("converts eq operator to regex with anchors when case-insensitive", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.addFilter("name", "eq", "Alice", {
+          caseInsensitive: true,
+        });
+      });
+
+      expect(result.current.variables.query).toEqual({
+        name: { regex: "(?i)^Alice$" },
+      });
+    });
+
+    it("converts hasPrefix operator to regex when case-insensitive", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.addFilter("name", "hasPrefix", "Al", {
+          caseInsensitive: true,
+        });
+      });
+
+      expect(result.current.variables.query).toEqual({
+        name: { regex: "(?i)^Al" },
+      });
+    });
+
+    it("converts hasSuffix operator to regex when case-insensitive", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.addFilter("name", "hasSuffix", "ce", {
+          caseInsensitive: true,
+        });
+      });
+
+      expect(result.current.variables.query).toEqual({
+        name: { regex: "(?i)ce$" },
+      });
+    });
+
+    it("escapes regex special characters in case-insensitive filter value", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.addFilter("name", "contains", "a.b*c", {
+          caseInsensitive: true,
+        });
+      });
+
+      expect(result.current.variables.query).toEqual({
+        name: { regex: "(?i)a\\.b\\*c" },
+      });
+    });
+
+    it("uses original operator when caseInsensitive is false", () => {
+      const { result } = renderHook(() => useCollectionVariables({}));
+
+      act(() => {
+        result.current.control.addFilter("name", "contains", "Alice", {
+          caseInsensitive: false,
+        });
+      });
+
+      expect(result.current.variables.query).toEqual({
+        name: { contains: "Alice" },
+      });
+    });
   });
 
   // ---------------------------------------------------------------------------

@@ -17,6 +17,43 @@ import type {
 import { useCursorPagination } from "./use-cursor-pagination";
 
 // -----------------------------------------------------------------------------
+// Case-insensitive regex conversion helpers
+// -----------------------------------------------------------------------------
+
+/** Escape special regex characters in a string. */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Convert a string filter operator + value into a case-insensitive regex pattern.
+ * The resulting string is intended for the Tailor Platform `regex` operator.
+ */
+function toCaseInsensitiveRegex(operator: FilterOperator, value: string): string {
+  const escaped = escapeRegex(value);
+  switch (operator) {
+    case "eq":
+      return `(?i)^${escaped}$`;
+    case "ne":
+      return `(?i)^(?!${escaped}$).*$`;
+    case "contains":
+      return `(?i)${escaped}`;
+    case "notContains":
+      return `(?i)^(?!.*${escaped}).*$`;
+    case "hasPrefix":
+      return `(?i)^${escaped}`;
+    case "hasSuffix":
+      return `(?i)${escaped}$`;
+    case "notHasPrefix":
+      return `(?i)^(?!${escaped})`;
+    case "notHasSuffix":
+      return `(?i)^(?!.*${escaped}$).*$`;
+    default:
+      return `(?i)${escaped}`;
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Overload signatures
 // -----------------------------------------------------------------------------
 
@@ -120,10 +157,20 @@ export function useCollectionVariables(
   // Filter operations
   // ---------------------------------------------------------------------------
   const addFilter = useCallback(
-    (field: string, operator: FilterOperator, value: unknown) => {
+    (
+      field: string,
+      operator: FilterOperator,
+      value: unknown,
+      filterOptions?: { caseInsensitive?: boolean },
+    ) => {
       setFiltersState((prev) => {
         const existing = prev.findIndex((f) => f.field === field);
-        const newFilter: Filter = { field, operator, value };
+        const newFilter: Filter = {
+          field,
+          operator,
+          value,
+          caseInsensitive: filterOptions?.caseInsensitive,
+        };
         if (existing >= 0) {
           const updated = [...prev];
           updated[existing] = newFilter;
@@ -187,7 +234,13 @@ export function useCollectionVariables(
     if (filters.length === 0) return undefined;
     const filterQuery: Record<string, Record<string, unknown>> = {};
     for (const filter of filters) {
-      filterQuery[filter.field] = { [filter.operator]: filter.value };
+      if (filter.caseInsensitive && typeof filter.value === "string") {
+        filterQuery[filter.field] = {
+          regex: toCaseInsensitiveRegex(filter.operator, filter.value),
+        };
+      } else {
+        filterQuery[filter.field] = { [filter.operator]: filter.value };
+      }
     }
     return filterQuery;
   }, [filters]);

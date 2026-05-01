@@ -731,15 +731,18 @@ function StringFilterEditor({
       : "contains",
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
+  const [localCaseInsensitive, setLocalCaseInsensitive] = useState(filter.caseInsensitive ?? false);
 
   const handleCommit = useCallback(() => {
     if (localValue.trim() === "") {
       control.removeFilter(config.field);
     } else {
-      control.addFilter(config.field, localOp, localValue);
+      control.addFilter(config.field, localOp, localValue, {
+        caseInsensitive: localCaseInsensitive,
+      });
     }
     onClose();
-  }, [localValue, localOp, control, config.field, onClose]);
+  }, [localValue, localOp, localCaseInsensitive, control, config.field, onClose]);
 
   return (
     <div
@@ -763,6 +766,18 @@ function StringFilterEditor({
         }}
         className="astw:h-8 astw:text-sm"
       />
+      <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
+        <Checkbox.Root
+          checked={localCaseInsensitive}
+          onCheckedChange={setLocalCaseInsensitive}
+          className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
+        >
+          <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
+            <Check className="astw:size-3" />
+          </Checkbox.Indicator>
+        </Checkbox.Root>
+        {t("filterCaseInsensitive")}
+      </label>
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
@@ -1282,6 +1297,7 @@ function getChipDisplayLabel(
   if (!valueLabel) return columnLabel;
 
   const operatorLabel = getOperatorLabel(filter.operator, t);
+  const ciSuffix = filter.caseInsensitive ? " (Aa)" : "";
 
   if (config.type === "enum") {
     return t("filterChipLabelEnum", {
@@ -1291,11 +1307,13 @@ function getChipDisplayLabel(
     });
   }
 
-  return t("filterChipLabel", {
-    column: columnLabel,
-    operator: operatorLabel,
-    value: valueLabel,
-  });
+  return (
+    t("filterChipLabel", {
+      column: columnLabel,
+      operator: operatorLabel,
+      value: valueLabel,
+    }) + ciSuffix
+  );
 }
 
 export { DataTableToolbar, DataTableFilters };

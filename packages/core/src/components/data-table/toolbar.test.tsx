@@ -239,7 +239,9 @@ describe("StringFilterEditor", () => {
     await user.type(input, "Bob");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob");
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseInsensitive: false,
+    });
   });
 
   it("Enter key calls addFilter with the updated value", async () => {
@@ -258,7 +260,9 @@ describe("StringFilterEditor", () => {
     await user.type(input, "Charlie");
     await user.keyboard("{Enter}");
 
-    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Charlie");
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Charlie", {
+      caseInsensitive: false,
+    });
   });
 
   it("Apply button calls removeFilter when the value is cleared", async () => {
@@ -277,6 +281,56 @@ describe("StringFilterEditor", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("name");
+  });
+
+  it("shows a Case insensitive checkbox", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+
+    expect(await screen.findByText("Case insensitive")).toBeDefined();
+  });
+
+  it("Apply with case-insensitive checked calls addFilter with caseInsensitive option", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+
+    const checkbox = await screen.findByRole("checkbox");
+    await user.click(checkbox);
+
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseInsensitive: true,
+    });
+  });
+
+  it("restores case-insensitive state from existing filter", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice", caseInsensitive: true }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+
+    const checkbox = await screen.findByRole("checkbox");
+    expect((checkbox as HTMLElement).dataset.checked).toBeDefined();
   });
 });
 

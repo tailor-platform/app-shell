@@ -971,9 +971,11 @@ function TemporalFilterEditor({
       const minEmpty = localValue.trim() === "";
       const maxEmpty = localValueMax.trim() === "";
       if (minEmpty && maxEmpty) return true; // will removeFilter
-      const minValid = minEmpty || isTemporalFilterValueValid(config.type, localValue);
-      const maxValid = maxEmpty || isTemporalFilterValueValid(config.type, localValueMax);
-      return minValid && maxValid;
+      if (minEmpty || maxEmpty) return false; // both required
+      return (
+        isTemporalFilterValueValid(config.type, localValue) &&
+        isTemporalFilterValueValid(config.type, localValueMax)
+      );
     }
     return localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
   })();
@@ -984,14 +986,13 @@ function TemporalFilterEditor({
       const maxEmpty = localValueMax.trim() === "";
       if (minEmpty && maxEmpty) {
         control.removeFilter(config.field);
+      } else if (!minEmpty && !maxEmpty) {
+        const minValid = isTemporalFilterValueValid(config.type, localValue);
+        const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
+        if (!minValid || !maxValid) return;
+        control.addFilter(config.field, localOp, { min: localValue, max: localValueMax });
       } else {
-        const minValid = !minEmpty && isTemporalFilterValueValid(config.type, localValue);
-        const maxValid = !maxEmpty && isTemporalFilterValueValid(config.type, localValueMax);
-        if (!minValid && !maxValid) return;
-        const range: { min?: string; max?: string } = {};
-        if (minValid) range.min = localValue;
-        if (maxValid) range.max = localValueMax;
-        control.addFilter(config.field, localOp, range);
+        return;
       }
     } else {
       if (localValue.trim() === "") {
@@ -1095,18 +1096,12 @@ function isAddFilterDraftValueValid(
     const [min, max] = value;
     const minEmpty = !min || min.trim() === "";
     const maxEmpty = !max || max.trim() === "";
-    if (minEmpty && maxEmpty) return false;
+    if (minEmpty || maxEmpty) return false; // both required
     if (type === "number") {
-      return (
-        (!minEmpty ? !Number.isNaN(Number(min)) : true) &&
-        (!maxEmpty ? !Number.isNaN(Number(max)) : true)
-      );
+      return !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
     }
     if (isTemporalFilterType(type)) {
-      return (
-        (!minEmpty ? isTemporalFilterValueValid(type, min) : true) &&
-        (!maxEmpty ? isTemporalFilterValueValid(type, max) : true)
-      );
+      return isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
     }
     return true;
   }

@@ -1,5 +1,60 @@
 # @tailor-platform/app-shell
 
+## 1.1.0
+
+### Minor Changes
+
+- 9654369: Fix root page (`/`) showing `"/"` as its title in `SidebarItem` and breadcrumb.
+
+  The root page is now treated as a first-class page (module) so that title, icon, and guards are resolved consistently. `DefaultSidebar` and `CommandPalette` now include the root page when it is defined. When no title is set, the fallback is localized `"Home"` / `"ホーム"`.
+
+- 39a8521: Change `useDataTable()` to use single-column sorting by default and add a `sort` option for configuring sorting behavior.
+
+  Before:
+
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+  });
+  ```
+
+  After:
+
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+    sort: { multiple: true },
+  });
+  ```
+
+  Use `sort: false` to disable sorting entirely.
+
+- c2a50b9: Add row count and selection info to `DataTable.Pagination`.
+
+  - When `total` is provided: shows `"X row(s)"`
+  - When rows are selected with `total`: shows `"Y of X row(s) selected"`
+  - When rows are selected without `total`: shows `"Y row(s) selected"`
+
+- 642aa1e: Add case-sensitivity control for string filters in `DataTable.Filters`. String filters are now case-insensitive by default (using Tailor Platform's `regex` operator with `(?i)` prefix). A "Case sensitive" checkbox allows users to opt into exact-case matching.
+
+  The `Filter` type and `CollectionControl.addFilter` now accept an optional `caseSensitive` property to control this behavior programmatically.
+
+- a3d0170: Add "between" filter mode to `DataTable.Filters` for numeric and date/time columns, allowing users to filter by a range with min and max bounds.
+
+### Patch Changes
+
+- 2a860d9: Fix DataTable filter types for `datetime` and `time` fields. Previously these were incorrectly mapped to the `date` filter type, causing wrong input formats. Each temporal type now uses its proper HTML input type (`datetime-local`, `date`, `time`) and format handling.
+- 125aee2: Fix a `Select.Async` bug where reopening the dropdown after the first async load could leave the popup invisible while the page stayed scroll-locked.
+
+  This could happen after options were fetched once, the dropdown was closed, and then opened again. The fix cancels in-flight requests on close and avoids the Base UI modal and anchored alignment paths that were leaving the async popup in that broken reopen state.
+
+- 681333f: Remove `next-themes` dependency by using the internal `ThemeProvider` context for the Sonner toast theming.
+- 826bd97: Updated [@base-ui/react](https://www.npmjs.com/package/@base-ui/react) (^1.3.0 -> ^1.4.1)
+
 ## 1.0.2
 
 ### Patch Changes

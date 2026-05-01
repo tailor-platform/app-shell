@@ -253,8 +253,8 @@ function compareValues(left: unknown, right: unknown): number | null {
 }
 
 function matchStringOperator(fieldValue: unknown, operator: string, expected: unknown): boolean {
-  const value = String(fieldValue ?? "").toLowerCase();
-  const needle = String(expected ?? "").toLowerCase();
+  const value = String(fieldValue ?? "");
+  const needle = String(expected ?? "");
 
   switch (operator) {
     case "contains":
@@ -284,6 +284,13 @@ function matchOperator(fieldValue: unknown, operator: string, expected: unknown)
       return Array.isArray(expected) && expected.some((item) => item === fieldValue);
     case "nin":
       return Array.isArray(expected) && !expected.some((item) => item === fieldValue);
+    case "regex": {
+      const pattern = String(expected ?? "");
+      const caseInsensitive = pattern.startsWith("(?i)");
+      const regexBody = caseInsensitive ? pattern.slice(4) : pattern;
+      const re = new RegExp(regexBody, caseInsensitive ? "i" : "");
+      return re.test(String(fieldValue ?? ""));
+    }
     case "contains":
     case "notContains":
     case "hasPrefix":

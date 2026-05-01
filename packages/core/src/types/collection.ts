@@ -112,6 +112,7 @@ export const OPERATORS_BY_FILTER_TYPE = {
     "notHasSuffix",
     "in",
     "nin",
+    "regex",
   ],
   number: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
   datetime: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
@@ -179,6 +180,7 @@ export interface Filter<TFieldName extends string = string> {
   field: TFieldName;
   operator: FilterOperator;
   value: unknown;
+  caseSensitive?: boolean;
 }
 
 /**
@@ -195,6 +197,7 @@ export type TableMetadataFilter<TTable extends TableMetadata> =
                 field: N;
                 operator: OperatorForFilterType[FieldTypeToFilterConfigType[T]];
                 value: unknown;
+                caseSensitive?: boolean;
               }
           : never
         : never
@@ -375,6 +378,7 @@ export interface CollectionControl<
     field: F,
     operator: OperatorForField<TFilter, F>,
     value: unknown,
+    options?: { caseSensitive?: boolean },
   ): void;
   setFilters: (filters: Filter<TFieldName>[]) => void;
   removeFilter(field: TFieldName): void;
@@ -455,6 +459,7 @@ export const DEFAULT_OPERATOR_LABELS: Record<FilterOperator, string> = {
   between: "between",
   in: "in",
   nin: "not in",
+  regex: "regex",
 };
 
 // =============================================================================

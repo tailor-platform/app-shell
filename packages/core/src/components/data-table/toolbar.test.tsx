@@ -240,7 +240,7 @@ describe("StringFilterEditor", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
-      caseInsensitive: false,
+      caseSensitive: false,
     });
   });
 
@@ -261,7 +261,7 @@ describe("StringFilterEditor", () => {
     await user.keyboard("{Enter}");
 
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Charlie", {
-      caseInsensitive: false,
+      caseSensitive: false,
     });
   });
 
@@ -283,7 +283,7 @@ describe("StringFilterEditor", () => {
     expect(control.removeFilter).toHaveBeenCalledWith("name");
   });
 
-  it("shows a Case insensitive checkbox", async () => {
+  it("shows a Case sensitive checkbox", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
@@ -294,10 +294,10 @@ describe("StringFilterEditor", () => {
 
     await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
 
-    expect(await screen.findByText("Case insensitive")).toBeDefined();
+    expect(await screen.findByText("Case sensitive")).toBeDefined();
   });
 
-  it("Apply with case-insensitive checked calls addFilter with caseInsensitive option", async () => {
+  it("Apply with case-sensitive checked calls addFilter with caseSensitive option", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
@@ -314,14 +314,14 @@ describe("StringFilterEditor", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
-      caseInsensitive: true,
+      caseSensitive: true,
     });
   });
 
-  it("restores case-insensitive state from existing filter", async () => {
+  it("restores case-sensitive state from existing filter", async () => {
     const user = userEvent.setup();
     const control = makeControl({
-      filters: [{ field: "name", operator: "contains", value: "Alice", caseInsensitive: true }],
+      filters: [{ field: "name", operator: "contains", value: "Alice", caseSensitive: true }],
     });
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,

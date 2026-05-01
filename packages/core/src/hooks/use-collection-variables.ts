@@ -161,7 +161,7 @@ export function useCollectionVariables(
       field: string,
       operator: FilterOperator,
       value: unknown,
-      filterOptions?: { caseInsensitive?: boolean },
+      filterOptions?: { caseSensitive?: boolean },
     ) => {
       setFiltersState((prev) => {
         const existing = prev.findIndex((f) => f.field === field);
@@ -169,7 +169,7 @@ export function useCollectionVariables(
           field,
           operator,
           value,
-          caseInsensitive: filterOptions?.caseInsensitive,
+          caseSensitive: filterOptions?.caseSensitive,
         };
         if (existing >= 0) {
           const updated = [...prev];
@@ -234,7 +234,7 @@ export function useCollectionVariables(
     if (filters.length === 0) return undefined;
     const filterQuery: Record<string, Record<string, unknown>> = {};
     for (const filter of filters) {
-      if (filter.caseInsensitive && typeof filter.value === "string") {
+      if (filter.caseSensitive === false && typeof filter.value === "string") {
         filterQuery[filter.field] = {
           regex: toCaseInsensitiveRegex(filter.operator, filter.value),
         };

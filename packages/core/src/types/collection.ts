@@ -180,7 +180,7 @@ export interface Filter<TFieldName extends string = string> {
   field: TFieldName;
   operator: FilterOperator;
   value: unknown;
-  caseInsensitive?: boolean;
+  caseSensitive?: boolean;
 }
 
 /**
@@ -197,7 +197,7 @@ export type TableMetadataFilter<TTable extends TableMetadata> =
                 field: N;
                 operator: OperatorForFilterType[FieldTypeToFilterConfigType[T]];
                 value: unknown;
-                caseInsensitive?: boolean;
+                caseSensitive?: boolean;
               }
           : never
         : never
@@ -378,7 +378,7 @@ export interface CollectionControl<
     field: F,
     operator: OperatorForField<TFilter, F>,
     value: unknown,
-    options?: { caseInsensitive?: boolean },
+    options?: { caseSensitive?: boolean },
   ): void;
   setFilters: (filters: Filter<TFieldName>[]) => void;
   removeFilter(field: TFieldName): void;

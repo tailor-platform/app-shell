@@ -54,7 +54,7 @@ export const dataTableLabels = defineI18nLabels({
     filterBetweenTo: "To",
     filterBetweenMin: "Min",
     filterBetweenMax: "Max",
-    filterCaseInsensitive: "Case insensitive",
+    filterCaseSensitive: "Case sensitive",
 
     // Filter chip label templates
     filterChipLabel: (props: { column: string; operator: string; value: string }) =>
@@ -106,7 +106,7 @@ export const dataTableLabels = defineI18nLabels({
     filterBetweenTo: "終了",
     filterBetweenMin: "最小",
     filterBetweenMax: "最大",
-    filterCaseInsensitive: "大文字小文字を区別しない",
+    filterCaseSensitive: "大文字小文字を区別する",
 
     // Filter chip label templates (Japanese: column: value operator)
     filterChipLabel: (props: { column: string; operator: string; value: string }) =>

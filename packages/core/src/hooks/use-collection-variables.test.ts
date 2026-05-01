@@ -162,12 +162,12 @@ describe("useCollectionVariables", () => {
       expect(result.current.variables.pagination).toEqual({ first: 20 });
     });
 
-    it("adds a case-insensitive filter and converts to regex in query variables", () => {
+    it("string filter defaults to case-insensitive regex in query variables", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
         result.current.control.addFilter("name", "contains", "Alice", {
-          caseInsensitive: true,
+          caseSensitive: false,
         });
       });
 
@@ -175,19 +175,19 @@ describe("useCollectionVariables", () => {
         field: "name",
         operator: "contains",
         value: "Alice",
-        caseInsensitive: true,
+        caseSensitive: false,
       });
       expect(result.current.variables.query).toEqual({
         name: { regex: "(?i)Alice" },
       });
     });
 
-    it("converts eq operator to regex with anchors when case-insensitive", () => {
+    it("converts eq operator to regex with anchors when caseSensitive is false", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
         result.current.control.addFilter("name", "eq", "Alice", {
-          caseInsensitive: true,
+          caseSensitive: false,
         });
       });
 
@@ -196,12 +196,12 @@ describe("useCollectionVariables", () => {
       });
     });
 
-    it("converts hasPrefix operator to regex when case-insensitive", () => {
+    it("converts hasPrefix operator to regex when caseSensitive is false", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
         result.current.control.addFilter("name", "hasPrefix", "Al", {
-          caseInsensitive: true,
+          caseSensitive: false,
         });
       });
 
@@ -210,12 +210,12 @@ describe("useCollectionVariables", () => {
       });
     });
 
-    it("converts hasSuffix operator to regex when case-insensitive", () => {
+    it("converts hasSuffix operator to regex when caseSensitive is false", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
         result.current.control.addFilter("name", "hasSuffix", "ce", {
-          caseInsensitive: true,
+          caseSensitive: false,
         });
       });
 
@@ -229,7 +229,7 @@ describe("useCollectionVariables", () => {
 
       act(() => {
         result.current.control.addFilter("name", "contains", "a.b*c", {
-          caseInsensitive: true,
+          caseSensitive: false,
         });
       });
 
@@ -238,12 +238,12 @@ describe("useCollectionVariables", () => {
       });
     });
 
-    it("uses original operator when caseInsensitive is false", () => {
+    it("uses original operator when caseSensitive is true", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 
       act(() => {
         result.current.control.addFilter("name", "contains", "Alice", {
-          caseInsensitive: false,
+          caseSensitive: true,
         });
       });
 

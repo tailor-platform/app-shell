@@ -175,7 +175,7 @@ function AddFilterPopover({
   const [field, setField] = useState<string | null>(null);
   const [operator, setOperator] = useState<FilterOperator>("eq");
   const [value, setValue] = useState<AddFilterDraftValue>("");
-  const [caseInsensitive, setCaseInsensitive] = useState(false);
+  const [caseSensitive, setCaseSensitive] = useState(false);
 
   const fieldLabelMap = useMemo(
     () => new Map(availableColumns.map((col) => [col.filter.field, col.label ?? col.filter.field])),
@@ -202,14 +202,14 @@ function AddFilterPopover({
       setField(null);
       setOperator("eq");
       setValue("");
-      setCaseInsensitive(false);
+      setCaseSensitive(false);
       return;
     }
 
     setField(column.filter.field);
     setOperator(DEFAULT_OPERATOR[column.filter.type]);
     setValue(getInitialAddFilterDraftValue(column.filter.type));
-    setCaseInsensitive(false);
+    setCaseSensitive(false);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -233,7 +233,7 @@ function AddFilterPopover({
       setField(nextField);
       setOperator(DEFAULT_OPERATOR[nextColumn.filter.type]);
       setValue(getInitialAddFilterDraftValue(nextColumn.filter.type));
-      setCaseInsensitive(false);
+      setCaseSensitive(false);
     },
     [availableColumns],
   );
@@ -246,10 +246,10 @@ function AddFilterPopover({
       selectedColumn.filter.field,
       operator,
       toAddFilterSubmittedValue(selectedColumn.filter.type, operator, value),
-      selectedColumn.filter.type === "string" ? { caseInsensitive } : undefined,
+      selectedColumn.filter.type === "string" ? { caseSensitive } : undefined,
     );
     setOpen(false);
-  }, [selectedColumn, value, operator, caseInsensitive, control]);
+  }, [selectedColumn, value, operator, caseSensitive, control]);
 
   const renderValueEditor = () => {
     if (!selectedColumn) return null;
@@ -442,15 +442,15 @@ function AddFilterPopover({
               {selectedColumn?.filter.type === "string" && (
                 <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
                   <Checkbox.Root
-                    checked={caseInsensitive}
-                    onCheckedChange={setCaseInsensitive}
+                    checked={caseSensitive}
+                    onCheckedChange={setCaseSensitive}
                     className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
                   >
                     <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
                       <Check className="astw:size-3" />
                     </Checkbox.Indicator>
                   </Checkbox.Root>
-                  {t("filterCaseInsensitive")}
+                  {t("filterCaseSensitive")}
                 </label>
               )}
               <Button
@@ -750,18 +750,18 @@ function StringFilterEditor({
       : "contains",
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
-  const [localCaseInsensitive, setLocalCaseInsensitive] = useState(filter.caseInsensitive ?? false);
+  const [localCaseSensitive, setLocalCaseSensitive] = useState(filter.caseSensitive ?? false);
 
   const handleCommit = useCallback(() => {
     if (localValue.trim() === "") {
       control.removeFilter(config.field);
     } else {
       control.addFilter(config.field, localOp, localValue, {
-        caseInsensitive: localCaseInsensitive,
+        caseSensitive: localCaseSensitive,
       });
     }
     onClose();
-  }, [localValue, localOp, localCaseInsensitive, control, config.field, onClose]);
+  }, [localValue, localOp, localCaseSensitive, control, config.field, onClose]);
 
   return (
     <div
@@ -787,15 +787,15 @@ function StringFilterEditor({
       />
       <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
         <Checkbox.Root
-          checked={localCaseInsensitive}
-          onCheckedChange={setLocalCaseInsensitive}
+          checked={localCaseSensitive}
+          onCheckedChange={setLocalCaseSensitive}
           className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
         >
           <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
             <Check className="astw:size-3" />
           </Checkbox.Indicator>
         </Checkbox.Root>
-        {t("filterCaseInsensitive")}
+        {t("filterCaseSensitive")}
       </label>
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
@@ -1316,7 +1316,7 @@ function getChipDisplayLabel(
   if (!valueLabel) return columnLabel;
 
   const operatorLabel = getOperatorLabel(filter.operator, t);
-  const ciSuffix = filter.caseInsensitive ? " (Aa)" : "";
+  const ciSuffix = filter.caseSensitive ? " (Aa)" : "";
 
   if (config.type === "enum") {
     return t("filterChipLabelEnum", {

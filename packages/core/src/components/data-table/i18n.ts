@@ -50,6 +50,10 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_between: "between",
     filterOperator_in: "in",
     filterOperator_nin: "not in",
+    filterBetweenFrom: "From",
+    filterBetweenTo: "To",
+    filterBetweenMin: "Min",
+    filterBetweenMax: "Max",
 
     // Filter chip label templates
     filterChipLabel: (props: { column: string; operator: string; value: string }) =>
@@ -97,6 +101,10 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_between: "の範囲内",
     filterOperator_in: "次のいずれか",
     filterOperator_nin: "次のいずれでもない",
+    filterBetweenFrom: "開始",
+    filterBetweenTo: "終了",
+    filterBetweenMin: "最小",
+    filterBetweenMax: "最大",
 
     // Filter chip label templates (Japanese: column: value operator)
     filterChipLabel: (props: { column: string; operator: string; value: string }) =>

@@ -46,7 +46,7 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
 };
 
 /** Number/temporal operators available in the operator selector. */
-const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte"] as const;
+const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte", "between"] as const;
 type NumericTemporalOperator = (typeof NUMERIC_TEMPORAL_OPERATORS)[number];
 
 /** String operators available in the operator selector. */
@@ -108,6 +108,61 @@ function DataTableFilters({ className }: { className?: string }) {
 }
 DataTableFilters.displayName = "DataTable.Filters";
 
+// =============================================================================
+// BetweenInputGroup — shared UI for "between" filter inputs
+// =============================================================================
+
+function BetweenInputGroup({
+  labels,
+  values,
+  onChangeMin,
+  onChangeMax,
+  onSubmit,
+  inputProps,
+}: {
+  labels: [string, string];
+  values: [string, string];
+  onChangeMin: (value: string) => void;
+  onChangeMax: (value: string) => void;
+  onSubmit: () => void;
+  inputProps?: React.ComponentProps<typeof Input>;
+}) {
+  return (
+    <div className="astw:flex astw:flex-col astw:gap-1.5">
+      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
+        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
+          {labels[0]}
+        </span>
+        <Input
+          {...inputProps}
+          aria-label={labels[0]}
+          value={values[0]}
+          onChange={(e) => onChangeMin(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+          }}
+          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+        />
+      </div>
+      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
+        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
+          {labels[1]}
+        </span>
+        <Input
+          {...inputProps}
+          aria-label={labels[1]}
+          value={values[1]}
+          onChange={(e) => onChangeMax(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+          }}
+          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+        />
+      </div>
+    </div>
+  );
+}
+
 function AddFilterPopover({
   availableColumns,
   control,
@@ -138,7 +193,8 @@ function AddFilterPopover({
   );
 
   const canSubmit =
-    selectedColumn != null && isAddFilterDraftValueValid(selectedColumn.filter.type, value);
+    selectedColumn != null &&
+    isAddFilterDraftValueValid(selectedColumn.filter.type, operator, value);
 
   const initDraft = useCallback((column: FilterableColumn | null) => {
     if (!column) {
@@ -180,12 +236,12 @@ function AddFilterPopover({
 
   const handleSubmit = useCallback(() => {
     if (!selectedColumn) return;
-    if (!isAddFilterDraftValueValid(selectedColumn.filter.type, value)) return;
+    if (!isAddFilterDraftValueValid(selectedColumn.filter.type, operator, value)) return;
 
     control.addFilter(
       selectedColumn.filter.field,
       operator,
-      toAddFilterSubmittedValue(selectedColumn.filter.type, value),
+      toAddFilterSubmittedValue(selectedColumn.filter.type, operator, value),
     );
     setOpen(false);
   }, [selectedColumn, value, operator, control]);
@@ -256,6 +312,19 @@ function AddFilterPopover({
     }
 
     if (isTemporalFilterType(config.type)) {
+      if (operator === "between") {
+        const [min, max] = Array.isArray(value) ? value : ["", ""];
+        return (
+          <BetweenInputGroup
+            labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+            values={[min, max]}
+            onChangeMin={(v) => setValue([v, max])}
+            onChangeMax={(v) => setValue([min, v])}
+            onSubmit={handleSubmit}
+            inputProps={getTemporalInputProps(config.type)}
+          />
+        );
+      }
       return (
         <Input
           {...getTemporalInputProps(config.type)}
@@ -272,6 +341,19 @@ function AddFilterPopover({
     }
 
     if (config.type === "number") {
+      if (operator === "between") {
+        const [min, max] = Array.isArray(value) ? value : ["", ""];
+        return (
+          <BetweenInputGroup
+            labels={[t("filterBetweenMin"), t("filterBetweenMax")]}
+            values={[min, max]}
+            onChangeMin={(v) => setValue([v, max])}
+            onChangeMax={(v) => setValue([min, v])}
+            onSubmit={handleSubmit}
+            inputProps={{ type: "number" }}
+          />
+        );
+      }
       return (
         <Input
           type="number"
@@ -316,7 +398,7 @@ function AddFilterPopover({
           <Popover.Popup
             data-slot="data-table-filter-add-popup"
             className={cn(
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-72 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-80 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
@@ -336,7 +418,13 @@ function AddFilterPopover({
                   items={operatorItems}
                   value={operator}
                   onValueChange={(nextOp) => {
-                    if (nextOp) setOperator(nextOp);
+                    if (!nextOp) return;
+                    const wasBetween = operator === "between";
+                    const isBetween = nextOp === "between";
+                    setOperator(nextOp);
+                    if (wasBetween !== isBetween) {
+                      setValue(isBetween ? ["", ""] : "");
+                    }
                   }}
                   mapItem={(op) => ({
                     value: op,
@@ -747,17 +835,59 @@ function NumericFilterEditor({
       ? (filter.operator as NumericTemporalOperator)
       : "eq",
   );
-  const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
+  const [localValue, setLocalValue] = useState(() => {
+    if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
+      const range = filter.value as { min?: unknown; max?: unknown };
+      return String(range.min ?? "");
+    }
+    return String(filter.value ?? "");
+  });
+  const [localValueMax, setLocalValueMax] = useState(() => {
+    if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
+      const range = filter.value as { min?: unknown; max?: unknown };
+      return String(range.max ?? "");
+    }
+    return "";
+  });
+
+  const canCommit = (() => {
+    if (localOp === "between") {
+      const minEmpty = localValue.trim() === "";
+      const maxEmpty = localValueMax.trim() === "";
+      if (minEmpty && maxEmpty) return true; // will removeFilter
+      if (minEmpty || maxEmpty) return false; // both required
+      return !Number.isNaN(Number(localValue)) && !Number.isNaN(Number(localValueMax));
+    }
+    return localValue.trim() === "" || !Number.isNaN(Number(localValue));
+  })();
 
   const handleCommit = useCallback(() => {
-    const num = Number(localValue);
-    if (localValue.trim() === "" || Number.isNaN(num)) {
-      control.removeFilter(config.field);
+    if (localOp === "between") {
+      const minEmpty = localValue.trim() === "";
+      const maxEmpty = localValueMax.trim() === "";
+      if (minEmpty && maxEmpty) {
+        control.removeFilter(config.field);
+      } else if (!minEmpty && !maxEmpty) {
+        const min = Number(localValue);
+        const max = Number(localValueMax);
+        if (!Number.isNaN(min) && !Number.isNaN(max)) {
+          control.addFilter(config.field, localOp, { min, max });
+        } else {
+          return;
+        }
+      } else {
+        return;
+      }
     } else {
-      control.addFilter(config.field, localOp, num);
+      const num = Number(localValue);
+      if (localValue.trim() === "" || Number.isNaN(num)) {
+        control.removeFilter(config.field);
+      } else {
+        control.addFilter(config.field, localOp, num);
+      }
     }
     onClose();
-  }, [localValue, localOp, control, config.field, onClose]);
+  }, [localValue, localValueMax, localOp, control, config.field, onClose]);
 
   return (
     <div
@@ -773,16 +903,27 @@ function NumericFilterEditor({
         mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
         className="astw:h-8 astw:text-sm"
       />
-      <Input
-        type="number"
-        value={localValue}
-        onChange={(e) => setLocalValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleCommit();
-        }}
-        className="astw:h-8 astw:text-sm"
-      />
-      <Button size="xs" onClick={handleCommit} className="astw:self-end">
+      {localOp === "between" ? (
+        <BetweenInputGroup
+          labels={[t("filterBetweenMin"), t("filterBetweenMax")]}
+          values={[localValue, localValueMax]}
+          onChangeMin={setLocalValue}
+          onChangeMax={setLocalValueMax}
+          onSubmit={handleCommit}
+          inputProps={{ type: "number" }}
+        />
+      ) : (
+        <Input
+          type="number"
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleCommit();
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      )}
+      <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
     </div>
@@ -810,19 +951,60 @@ function TemporalFilterEditor({
       ? (filter.operator as NumericTemporalOperator)
       : "eq",
   );
-  const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
-  const canCommit = localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
+  const [localValue, setLocalValue] = useState(() => {
+    if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
+      const range = filter.value as { min?: unknown; max?: unknown };
+      return String(range.min ?? "");
+    }
+    return String(filter.value ?? "");
+  });
+  const [localValueMax, setLocalValueMax] = useState(() => {
+    if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
+      const range = filter.value as { min?: unknown; max?: unknown };
+      return String(range.max ?? "");
+    }
+    return "";
+  });
+
+  const canCommit = (() => {
+    if (localOp === "between") {
+      const minEmpty = localValue.trim() === "";
+      const maxEmpty = localValueMax.trim() === "";
+      if (minEmpty && maxEmpty) return true; // will removeFilter
+      if (minEmpty || maxEmpty) return false; // both required
+      return (
+        isTemporalFilterValueValid(config.type, localValue) &&
+        isTemporalFilterValueValid(config.type, localValueMax)
+      );
+    }
+    return localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
+  })();
 
   const handleCommit = useCallback(() => {
-    if (localValue.trim() === "") {
-      control.removeFilter(config.field);
-    } else if (isTemporalFilterValueValid(config.type, localValue)) {
-      control.addFilter(config.field, localOp, localValue);
+    if (localOp === "between") {
+      const minEmpty = localValue.trim() === "";
+      const maxEmpty = localValueMax.trim() === "";
+      if (minEmpty && maxEmpty) {
+        control.removeFilter(config.field);
+      } else if (!minEmpty && !maxEmpty) {
+        const minValid = isTemporalFilterValueValid(config.type, localValue);
+        const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
+        if (!minValid || !maxValid) return;
+        control.addFilter(config.field, localOp, { min: localValue, max: localValueMax });
+      } else {
+        return;
+      }
     } else {
-      return;
+      if (localValue.trim() === "") {
+        control.removeFilter(config.field);
+      } else if (isTemporalFilterValueValid(config.type, localValue)) {
+        control.addFilter(config.field, localOp, localValue);
+      } else {
+        return;
+      }
     }
     onClose();
-  }, [localValue, localOp, control, config.field, config.type, onClose]);
+  }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
   return (
     <div
@@ -838,19 +1020,30 @@ function TemporalFilterEditor({
         mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
         className="astw:h-8 astw:text-sm"
       />
-      <Input
-        {...getTemporalInputProps(config.type)}
-        value={localValue}
-        onChange={(e) => {
-          setLocalValue(e.target.value);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleCommit();
-          }
-        }}
-        className="astw:h-8 astw:text-sm"
-      />
+      {localOp === "between" ? (
+        <BetweenInputGroup
+          labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+          values={[localValue, localValueMax]}
+          onChangeMin={setLocalValue}
+          onChangeMax={setLocalValueMax}
+          onSubmit={handleCommit}
+          inputProps={getTemporalInputProps(config.type)}
+        />
+      ) : (
+        <Input
+          {...getTemporalInputProps(config.type)}
+          value={localValue}
+          onChange={(e) => {
+            setLocalValue(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleCommit();
+            }
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      )}
       <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
@@ -888,6 +1081,7 @@ function getInitialAddFilterDraftValue(type: FilterConfig["type"]): AddFilterDra
 
 function isAddFilterDraftValueValid(
   type: FilterConfig["type"],
+  operator: FilterOperator,
   value: AddFilterDraftValue,
 ): boolean {
   if (type === "enum") {
@@ -895,6 +1089,21 @@ function isAddFilterDraftValueValid(
   }
   if (type === "boolean") {
     return value === "true" || value === "false";
+  }
+
+  if (operator === "between") {
+    if (!Array.isArray(value)) return false;
+    const [min, max] = value;
+    const minEmpty = !min || min.trim() === "";
+    const maxEmpty = !max || max.trim() === "";
+    if (minEmpty || maxEmpty) return false; // both required
+    if (type === "number") {
+      return !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
+    }
+    if (isTemporalFilterType(type)) {
+      return isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+    }
+    return true;
   }
 
   if (typeof value !== "string") return false;
@@ -910,6 +1119,7 @@ function isAddFilterDraftValueValid(
 
 function toAddFilterSubmittedValue(
   type: FilterConfig["type"],
+  operator: FilterOperator,
   value: AddFilterDraftValue,
 ): unknown {
   if (type === "enum") {
@@ -918,6 +1128,28 @@ function toAddFilterSubmittedValue(
   if (type === "boolean") {
     return value === "true";
   }
+
+  if (operator === "between" && Array.isArray(value)) {
+    const [min, max] = value;
+    const trimmedMin = typeof min === "string" ? min.trim() : "";
+    const trimmedMax = typeof max === "string" ? max.trim() : "";
+
+    if (type === "number") {
+      if (trimmedMin === "" || trimmedMax === "") return undefined;
+
+      const parsedMin = Number(trimmedMin);
+      const parsedMax = Number(trimmedMax);
+      if (Number.isNaN(parsedMin) || Number.isNaN(parsedMax)) return undefined;
+
+      return { min: parsedMin, max: parsedMax };
+    }
+
+    if (trimmedMin === "" || trimmedMax === "") return undefined;
+
+    // temporal types
+    return { min: trimmedMin, max: trimmedMax };
+  }
+
   if (type === "number") {
     return Number(value);
   }
@@ -1017,6 +1249,14 @@ function formatFilterValue(
   }
 
   if (config.type === "number" && filter.operator === "between") {
+    const range = filter.value as { min?: unknown; max?: unknown } | null;
+    if (!range || typeof range !== "object") return "";
+    const min = range.min != null ? String(range.min) : "";
+    const max = range.max != null ? String(range.max) : "";
+    return [min, max].filter(Boolean).join(" - ");
+  }
+
+  if (isTemporalFilterType(config.type) && filter.operator === "between") {
     const range = filter.value as { min?: unknown; max?: unknown } | null;
     if (!range || typeof range !== "object") return "";
     const min = range.min != null ? String(range.min) : "";

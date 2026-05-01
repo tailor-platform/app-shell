@@ -229,26 +229,48 @@ A column definition passed to `useDataTable`.
 
 The `filter` property on a column accepts a `FilterConfig` object. When set, the column appears as an option in `DataTable.Filters` and the filter chip renders an input editor appropriate for the type.
 
-| Property  | Type             | Description                                                                  |
-| --------- | ---------------- | ---------------------------------------------------------------------------- |
-| `field`   | `string`         | API field name used in the generated query input.                            |
-| `type`    | `FilterType`     | Filter editor type (see table below).                                        |
-| `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values.                 |
+| Property  | Type             | Description                                                  |
+| --------- | ---------------- | ------------------------------------------------------------ |
+| `field`   | `string`         | API field name used in the generated query input.            |
+| `type`    | `FilterType`     | Filter editor type (see table below).                        |
+| `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values. |
 
 ### Filter Types and Operators
 
-| Type       | Input editor         | Supported operators                                                                                            |
-| ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `string`   | Text                 | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin`  |
-| `number`   | Number               | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
-| `datetime` | Datetime-local       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
-| `date`     | Date                 | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
-| `time`     | Time                 | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                              |
-| `enum`     | Dropdown             | `eq`, `ne`, `in`, `nin`                                                                                        |
-| `boolean`  | Toggle               | `eq`, `ne`                                                                                                     |
-| `uuid`     | Text                 | `eq`, `ne`, `in`, `nin`                                                                                        |
+| Type       | Input editor   | Supported operators                                                                                          |
+| ---------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
+| `string`   | Text           | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
+| `number`   | Number         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | Datetime-local | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | Date           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `time`     | Time           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `enum`     | Dropdown       | `eq`, `ne`, `in`, `nin`                                                                                      |
+| `boolean`  | Toggle         | `eq`, `ne`                                                                                                   |
+| `uuid`     | Text           | `eq`, `ne`, `in`, `nin`                                                                                      |
 
 When the user selects the `between` operator on a `number`, `datetime`, `date`, or `time` column, the filter chip renders a range input with **min** and **max** bounds.
+
+### String Filter Case Sensitivity
+
+String filters are **case-insensitive by default** — they use the Tailor Platform `regex` operator with an `(?i)` prefix. The filter chip renders a **"Case sensitive"** checkbox that lets users opt into exact-case matching.
+
+To control this behavior programmatically, pass `caseSensitive: true` to `CollectionControl.addFilter`:
+
+```tsx
+control.addFilter("title", "contains", "acme", { caseSensitive: true });
+```
+
+You can also set `caseSensitive` directly on a `Filter` object when using `params.initialFilters` in `useCollectionVariables`:
+
+```tsx
+const { variables, control } = useCollectionVariables({
+  params: {
+    initialFilters: [{ field: "title", operator: "contains", value: "acme", caseSensitive: true }],
+  },
+});
+```
+
+When `caseSensitive` is omitted or `false`, the filter is case-insensitive. When `true`, the filter matches the exact case of the input.
 
 ## `RowAction`
 

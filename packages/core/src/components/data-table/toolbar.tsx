@@ -175,6 +175,7 @@ function AddFilterPopover({
   const [field, setField] = useState<string | null>(null);
   const [operator, setOperator] = useState<FilterOperator>("eq");
   const [value, setValue] = useState<AddFilterDraftValue>("");
+  const [caseInsensitive, setCaseInsensitive] = useState(false);
 
   const fieldLabelMap = useMemo(
     () => new Map(availableColumns.map((col) => [col.filter.field, col.label ?? col.filter.field])),
@@ -201,12 +202,14 @@ function AddFilterPopover({
       setField(null);
       setOperator("eq");
       setValue("");
+      setCaseInsensitive(false);
       return;
     }
 
     setField(column.filter.field);
     setOperator(DEFAULT_OPERATOR[column.filter.type]);
     setValue(getInitialAddFilterDraftValue(column.filter.type));
+    setCaseInsensitive(false);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -230,6 +233,7 @@ function AddFilterPopover({
       setField(nextField);
       setOperator(DEFAULT_OPERATOR[nextColumn.filter.type]);
       setValue(getInitialAddFilterDraftValue(nextColumn.filter.type));
+      setCaseInsensitive(false);
     },
     [availableColumns],
   );
@@ -242,9 +246,10 @@ function AddFilterPopover({
       selectedColumn.filter.field,
       operator,
       toAddFilterSubmittedValue(selectedColumn.filter.type, operator, value),
+      selectedColumn.filter.type === "string" ? { caseInsensitive } : undefined,
     );
     setOpen(false);
-  }, [selectedColumn, value, operator, control]);
+  }, [selectedColumn, value, operator, caseInsensitive, control]);
 
   const renderValueEditor = () => {
     if (!selectedColumn) return null;
@@ -434,6 +439,20 @@ function AddFilterPopover({
                 />
               ) : null}
               {renderValueEditor()}
+              {selectedColumn?.filter.type === "string" && (
+                <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
+                  <Checkbox.Root
+                    checked={caseInsensitive}
+                    onCheckedChange={setCaseInsensitive}
+                    className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
+                  >
+                    <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
+                      <Check className="astw:size-3" />
+                    </Checkbox.Indicator>
+                  </Checkbox.Root>
+                  {t("filterCaseInsensitive")}
+                </label>
+              )}
               <Button
                 size="xs"
                 onClick={handleSubmit}

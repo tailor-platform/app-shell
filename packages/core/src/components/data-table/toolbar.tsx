@@ -1024,7 +1024,10 @@ function TemporalFilterEditor({
         const minValid = isTemporalFilterValueValid(config.type, localValue);
         const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
         if (!minValid || !maxValid) return;
-        control.addFilter(config.field, localOp, { min: localValue, max: localValueMax });
+        control.addFilter(config.field, localOp, {
+          min: localValue,
+          max: localValueMax,
+        });
       } else {
         return;
       }

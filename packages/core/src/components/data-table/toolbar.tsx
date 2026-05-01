@@ -108,6 +108,59 @@ function DataTableFilters({ className }: { className?: string }) {
 }
 DataTableFilters.displayName = "DataTable.Filters";
 
+// =============================================================================
+// BetweenInputGroup — shared UI for "between" filter inputs
+// =============================================================================
+
+function BetweenInputGroup({
+  labels,
+  values,
+  onChangeMin,
+  onChangeMax,
+  onSubmit,
+  inputProps,
+}: {
+  labels: [string, string];
+  values: [string, string];
+  onChangeMin: (value: string) => void;
+  onChangeMax: (value: string) => void;
+  onSubmit: () => void;
+  inputProps?: React.ComponentProps<typeof Input>;
+}) {
+  return (
+    <div className="astw:flex astw:flex-col astw:gap-1.5">
+      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
+        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
+          {labels[0]}
+        </span>
+        <Input
+          {...inputProps}
+          value={values[0]}
+          onChange={(e) => onChangeMin(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+          }}
+          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+        />
+      </div>
+      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
+        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
+          {labels[1]}
+        </span>
+        <Input
+          {...inputProps}
+          value={values[1]}
+          onChange={(e) => onChangeMax(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+          }}
+          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+        />
+      </div>
+    </div>
+  );
+}
+
 function AddFilterPopover({
   availableColumns,
   control,
@@ -260,27 +313,14 @@ function AddFilterPopover({
       if (operator === "between") {
         const [min, max] = Array.isArray(value) ? value : ["", ""];
         return (
-          <div className="astw:flex astw:items-center astw:gap-1">
-            <Input
-              {...getTemporalInputProps(config.type)}
-              value={min}
-              onChange={(e) => setValue([e.target.value, max])}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-              className="astw:h-8 astw:text-sm"
-            />
-            <span className="astw:text-muted-foreground astw:text-xs">–</span>
-            <Input
-              {...getTemporalInputProps(config.type)}
-              value={max}
-              onChange={(e) => setValue([min, e.target.value])}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-              className="astw:h-8 astw:text-sm"
-            />
-          </div>
+          <BetweenInputGroup
+            labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+            values={[min, max]}
+            onChangeMin={(v) => setValue([v, max])}
+            onChangeMax={(v) => setValue([min, v])}
+            onSubmit={handleSubmit}
+            inputProps={getTemporalInputProps(config.type)}
+          />
         );
       }
       return (
@@ -302,29 +342,14 @@ function AddFilterPopover({
       if (operator === "between") {
         const [min, max] = Array.isArray(value) ? value : ["", ""];
         return (
-          <div className="astw:flex astw:items-center astw:gap-1">
-            <Input
-              type="number"
-              value={min}
-              onChange={(e) => setValue([e.target.value, max])}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-              placeholder="Min"
-              className="astw:h-8 astw:text-sm"
-            />
-            <span className="astw:text-muted-foreground astw:text-xs">–</span>
-            <Input
-              type="number"
-              value={max}
-              onChange={(e) => setValue([min, e.target.value])}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-              placeholder="Max"
-              className="astw:h-8 astw:text-sm"
-            />
-          </div>
+          <BetweenInputGroup
+            labels={[t("filterBetweenMin"), t("filterBetweenMax")]}
+            values={[min, max]}
+            onChangeMin={(v) => setValue([v, max])}
+            onChangeMax={(v) => setValue([min, v])}
+            onSubmit={handleSubmit}
+            inputProps={{ type: "number" }}
+          />
         );
       }
       return (
@@ -371,7 +396,7 @@ function AddFilterPopover({
           <Popover.Popup
             data-slot="data-table-filter-add-popup"
             className={cn(
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-72 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-80 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
@@ -864,29 +889,14 @@ function NumericFilterEditor({
         className="astw:h-8 astw:text-sm"
       />
       {localOp === "between" ? (
-        <div className="astw:flex astw:items-center astw:gap-1">
-          <Input
-            type="number"
-            value={localValue}
-            onChange={(e) => setLocalValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCommit();
-            }}
-            placeholder="Min"
-            className="astw:h-8 astw:text-sm"
-          />
-          <span className="astw:text-muted-foreground astw:text-xs">–</span>
-          <Input
-            type="number"
-            value={localValueMax}
-            onChange={(e) => setLocalValueMax(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCommit();
-            }}
-            placeholder="Max"
-            className="astw:h-8 astw:text-sm"
-          />
-        </div>
+        <BetweenInputGroup
+          labels={[t("filterBetweenMin"), t("filterBetweenMax")]}
+          values={[localValue, localValueMax]}
+          onChangeMin={setLocalValue}
+          onChangeMax={setLocalValueMax}
+          onSubmit={handleCommit}
+          inputProps={{ type: "number" }}
+        />
       ) : (
         <Input
           type="number"
@@ -995,27 +1005,14 @@ function TemporalFilterEditor({
         className="astw:h-8 astw:text-sm"
       />
       {localOp === "between" ? (
-        <div className="astw:flex astw:items-center astw:gap-1">
-          <Input
-            {...getTemporalInputProps(config.type)}
-            value={localValue}
-            onChange={(e) => setLocalValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCommit();
-            }}
-            className="astw:h-8 astw:text-sm"
-          />
-          <span className="astw:text-muted-foreground astw:text-xs">–</span>
-          <Input
-            {...getTemporalInputProps(config.type)}
-            value={localValueMax}
-            onChange={(e) => setLocalValueMax(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCommit();
-            }}
-            className="astw:h-8 astw:text-sm"
-          />
-        </div>
+        <BetweenInputGroup
+          labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+          values={[localValue, localValueMax]}
+          onChangeMin={setLocalValue}
+          onChangeMax={setLocalValueMax}
+          onSubmit={handleCommit}
+          inputProps={getTemporalInputProps(config.type)}
+        />
       ) : (
         <Input
           {...getTemporalInputProps(config.type)}
@@ -1085,12 +1082,16 @@ function isAddFilterDraftValueValid(
     const maxEmpty = !max || max.trim() === "";
     if (minEmpty && maxEmpty) return false;
     if (type === "number") {
-      return (!minEmpty ? !Number.isNaN(Number(min)) : true) &&
-        (!maxEmpty ? !Number.isNaN(Number(max)) : true);
+      return (
+        (!minEmpty ? !Number.isNaN(Number(min)) : true) &&
+        (!maxEmpty ? !Number.isNaN(Number(max)) : true)
+      );
     }
     if (isTemporalFilterType(type)) {
-      return (!minEmpty ? isTemporalFilterValueValid(type, min) : true) &&
-        (!maxEmpty ? isTemporalFilterValueValid(type, max) : true);
+      return (
+        (!minEmpty ? isTemporalFilterValueValid(type, min) : true) &&
+        (!maxEmpty ? isTemporalFilterValueValid(type, max) : true)
+      );
     }
     return true;
   }

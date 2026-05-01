@@ -747,7 +747,11 @@ describe("TemporalFilterEditor (between)", () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [
-        { field: "createdAt", operator: "between", value: { min: "2025-01-01", max: "2025-12-31" } },
+        {
+          field: "createdAt",
+          operator: "between",
+          value: { min: "2025-01-01", max: "2025-12-31" },
+        },
       ],
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, {
@@ -766,7 +770,11 @@ describe("TemporalFilterEditor (between)", () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [
-        { field: "createdAt", operator: "between", value: { min: "2025-01-01", max: "2025-12-31" } },
+        {
+          field: "createdAt",
+          operator: "between",
+          value: { min: "2025-01-01", max: "2025-12-31" },
+        },
       ],
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, {
@@ -794,7 +802,11 @@ describe("TemporalFilterEditor (between)", () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [
-        { field: "createdAt", operator: "between", value: { min: "2025-01-01", max: "2025-12-31" } },
+        {
+          field: "createdAt",
+          operator: "between",
+          value: { min: "2025-01-01", max: "2025-12-31" },
+        },
       ],
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, {

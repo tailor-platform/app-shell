@@ -11,6 +11,7 @@ import * as React from "react";
 import { mockPurchaseOrder } from "./purchase-order-demo";
 import { activityCardDemoActivities } from "./activity-card-demo";
 import { ReceiptIcon, FileTextIcon, ExternalLinkIcon } from "./action-panel-demo";
+import { LineItemsSection } from "./line-items-demo";
 
 /**
  * Placeholder component with subtle diagonal lines pattern for empty content areas
@@ -227,6 +228,11 @@ export const twoColumnLayoutResource = defineResource({
               { key: "note", label: "Notes", meta: { truncateLines: 3 } },
             ]}
           />
+
+          {/* Empty-state line-items section: same component as line-items-demo
+              but seeded with `[]` so we can build up a list from scratch via
+              the bottom add-product picker. */}
+          <LineItemsSection initialData={[]} />
         </Layout.Column>
         <Layout.Column>
           <ActionPanel title="Actions" actions={actions} />

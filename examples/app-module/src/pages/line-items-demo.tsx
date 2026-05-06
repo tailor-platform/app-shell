@@ -10,6 +10,7 @@ import {
   LineItems,
   createLineItemHelper,
   defineResource,
+  lineItemsFloatingBarStyles,
   useLineItems,
   type LineItemsField,
   type LineItemsMode,
@@ -30,6 +31,7 @@ type POLine = LineItemsRowData & {
   quantity: number;
   unitPrice: number;
   total: number;
+  expectedReady: string;
   note: string;
 };
 
@@ -83,6 +85,7 @@ const fields: LineItemsField<POLine>[] = [
     type: { kind: "text" },
     sort: { comparator: (a, b) => a.productName.localeCompare(b.productName) },
     search: (l, q) => l.productName.toLowerCase().includes(q.toLowerCase()),
+    flex: true,
   }),
   f.field({
     key: "quantity",
@@ -92,6 +95,7 @@ const fields: LineItemsField<POLine>[] = [
     type: { kind: "number", decimals: 0 },
     align: "right",
     sort: { comparator: (a, b) => a.quantity - b.quantity },
+    width: 90,
   }),
   f.field({
     key: "unitPrice",
@@ -101,12 +105,23 @@ const fields: LineItemsField<POLine>[] = [
     type: { kind: "number", decimals: 2 },
     align: "right",
     sort: { comparator: (a, b) => a.unitPrice - b.unitPrice },
+    width: 110,
   }),
   f.field({
     key: "total",
     label: "Total",
     render: (l) => fmtCurrency(l.total),
     align: "right",
+    width: 110,
+  }),
+  f.field({
+    key: "expectedReady",
+    label: "Expected",
+    render: (l) => l.expectedReady,
+    editable: ["edit"],
+    type: { kind: "date" },
+    sort: { comparator: (a, b) => a.expectedReady.localeCompare(b.expectedReady) },
+    width: 140,
   }),
   f.field({
     key: "note",
@@ -115,6 +130,7 @@ const fields: LineItemsField<POLine>[] = [
     editable: ["edit", "amend"],
     type: { kind: "text" },
     commit: "metadata",
+    width: 200,
   }),
 ];
 
@@ -134,6 +150,10 @@ function buildInitialLines(): POLine[] {
     const base = CATALOG[i % CATALOG.length]!;
     const quantity = ((i * 7) % 90) + 1;
     const unitPrice = round2(base.unitPrice * (1 + ((i % 11) - 5) / 100));
+    // Cycle expected-ready dates +/- a few weeks for visual variety.
+    const baseDate = new Date(2026, 4, 1); // 2026-05-01 — May (month is 0-indexed)
+    baseDate.setDate(baseDate.getDate() + (i % 21));
+    const iso = baseDate.toISOString().slice(0, 10);
     lines.push({
       lineRef: `seed-${i + 1}`,
       sku: base.sku,
@@ -141,6 +161,7 @@ function buildInitialLines(): POLine[] {
       quantity,
       unitPrice,
       total: round2(quantity * unitPrice),
+      expectedReady: iso,
       note: i % 50 === 0 ? "Highlight row" : "",
     });
   }
@@ -193,7 +214,9 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
 
   const handleSave = React.useCallback(() => {
     const cs = lineItems.getChangeSet();
-    // In a real app, send `cs` to the server here.
+    if (cs.isEmpty) return; // true client-side no-op
+    // In a real app, translate `cs.lineChanges` into the document's mutation
+    // shape (PO update, SO update, etc.) and dispatch one transactional submit.
     // eslint-disable-next-line no-console
     console.log("[line-items demo] saving change set", cs);
     lineItems.reset();
@@ -233,7 +256,10 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
       </Card.Root>
 
       <LineItems.Root value={lineItems}>
-        <Card.Root>
+        {/* overflow-hidden clips the edge-to-edge table to the Card's rounded
+            corners. Without it the table fills Card.Content flush to the card's
+            bottom edge with square corners that poke outside `rounded-xl`. */}
+        <Card.Root className="astw:overflow-hidden">
           <Card.Header className="astw:flex astw:flex-row astw:items-center astw:justify-between astw:gap-3 astw:border-b">
             <div className="astw:flex astw:min-w-0 astw:flex-col astw:gap-1">
               <h3 className="astw:leading-none astw:font-semibold">Line items</h3>
@@ -286,6 +312,7 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
                     quantity: 1,
                     unitPrice: picked.unitPrice,
                     total: round2(picked.unitPrice),
+                    expectedReady: new Date().toISOString().slice(0, 10),
                     note: "",
                   });
                 }}
@@ -295,14 +322,32 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
           </Card.Content>
         </Card.Root>
 
-        <FloatingActions
-          selectedCount={lineItems.selectedIds.length}
-          onBulkDelete={() => lineItems.bulkRemove()}
-          onClearSelection={() => lineItems.clearSelection()}
-          isDirty={lineItems.isDirty}
-          onDiscard={() => lineItems.revert()}
-          onSave={() => void handleSave()}
-        />
+        {/* ✅ Library pattern: dirty + selection bars auto-mount/unmount
+            based on hook state. Discard defaults to lineItems.revert();
+            warnOnNav blocks anchor clicks + window unload while dirty. */}
+        <LineItems.FloatingDock>
+          <LineItems.DirtyBar warnOnNav onSave={() => void handleSave()} />
+          <LineItems.SelectionBar<POLine>>
+            {({ bulkRemove, clear }) => (
+              <>
+                <button
+                  type="button"
+                  style={lineItemsFloatingBarStyles.primaryButton}
+                  onClick={bulkRemove}
+                >
+                  Delete selected
+                </button>
+                <button
+                  type="button"
+                  style={lineItemsFloatingBarStyles.secondaryButton}
+                  onClick={clear}
+                >
+                  Clear
+                </button>
+              </>
+            )}
+          </LineItems.SelectionBar>
+        </LineItems.FloatingDock>
       </LineItems.Root>
     </>
   );
@@ -463,218 +508,3 @@ function InlineCatalogueAddRow({
   );
 }
 
-/* ======================================================================== */
-/* Floating bottom action bars                                              */
-/* ======================================================================== */
-
-/**
- * ✅ Reusable Component: floating bottom-center action pills. Mirrors the
- * denim-tears `FloatingActions` pattern (apps/ims/.../purchase-orders-table.tsx)
- * — a single `position: fixed` element rendered inline in the React tree (no
- * portal needed). All styling is inline so no Tailwind class-generation
- * gotchas; theme tokens come from `--foreground` / `--background` /
- * `--muted-foreground` defined in `theme.css`.
- *
- * Two bars stack vertically: the bulk-selection bar (when rows selected) and
- * the dirty-state bar (when there are unsaved changes).
- */
-type FloatingActionsProps = {
-  selectedCount: number;
-  onBulkDelete: () => void;
-  onClearSelection: () => void;
-  isDirty: boolean;
-  onDiscard: () => void;
-  onSave: () => void;
-};
-
-const dockStyle: React.CSSProperties = {
-  position: "fixed",
-  bottom: "20px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  zIndex: 60,
-  pointerEvents: "none",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "8px",
-};
-
-const pillStyle: React.CSSProperties = {
-  pointerEvents: "auto",
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  padding: "12px 20px",
-  borderRadius: "16px",
-  backgroundColor: "var(--foreground)",
-  boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
-};
-
-const labelStyle: React.CSSProperties = {
-  color: "var(--background)",
-  fontSize: "14px",
-  fontWeight: 500,
-  whiteSpace: "nowrap",
-};
-
-const dividerStyle: React.CSSProperties = {
-  width: "1px",
-  height: "24px",
-  backgroundColor: "var(--muted-foreground)",
-  opacity: 0.4,
-};
-
-const primaryButtonStyle: React.CSSProperties = {
-  backgroundColor: "var(--background)",
-  color: "var(--foreground)",
-  padding: "6px 12px",
-  borderRadius: "6px",
-  fontSize: "14px",
-  fontWeight: 500,
-  border: "none",
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  background: "transparent",
-  color: "var(--muted-foreground)",
-  padding: "6px 12px",
-  borderRadius: "6px",
-  fontSize: "14px",
-  fontWeight: 500,
-  border: "none",
-  cursor: "pointer",
-};
-
-/**
- * Jiggles the dirty bar to draw attention when the user is about to navigate
- * away (tab visibility change, window blur). The keyframe is injected as a
- * `<style>` tag below; we re-mount the bar with a bumped React `key` to
- * restart the animation.
- */
-const JIGGLE_KEYFRAMES = `
-@keyframes line-items-jiggle {
-  0%, 100% { transform: translateX(0); }
-  15% { transform: translateX(-8px); }
-  30% { transform: translateX(8px); }
-  45% { transform: translateX(-6px); }
-  60% { transform: translateX(6px); }
-  75% { transform: translateX(-3px); }
-  90% { transform: translateX(3px); }
-}
-`;
-
-function FloatingActions({
-  selectedCount,
-  onBulkDelete,
-  onClearSelection,
-  isDirty,
-  onDiscard,
-  onSave,
-}: FloatingActionsProps) {
-  // Bump when the user attempts to leave the page while dirty; used as a React
-  // key to restart the jiggle animation on the dirty pill.
-  const [jiggleNonce, setJiggleNonce] = React.useState(0);
-  const isDirtyRef = React.useRef(isDirty);
-  React.useEffect(() => {
-    isDirtyRef.current = isDirty;
-  }, [isDirty]);
-
-  React.useEffect(() => {
-    const triggerJiggle = () => setJiggleNonce((n) => n + 1);
-
-    /**
-     * Capture-phase click handler. If the user clicks on a navigational anchor
-     * (sidebar link, breadcrumb, etc.) while there are unsaved changes, we
-     * swallow the click and shake the dirty pill instead of letting the SPA
-     * navigate away.
-     *
-     * Anchor refs starting with `#` (in-page) or with target=_blank are
-     * allowed through — they don't unmount the current page.
-     */
-    const onDocumentClick = (e: MouseEvent) => {
-      if (!isDirtyRef.current) return;
-      if (e.defaultPrevented) return;
-      const target = e.target as Element | null;
-      if (!target) return;
-
-      // Don't block clicks happening inside our own UI surfaces.
-      if (
-        target.closest('[data-slot="floating-actions"]') ||
-        target.closest('[data-slot="card"]')
-      ) {
-        return;
-      }
-
-      const anchor = target.closest("a[href]") as HTMLAnchorElement | null;
-      if (!anchor) return;
-
-      const href = anchor.getAttribute("href") ?? "";
-      if (!href || href.startsWith("#")) return;
-      if (anchor.target && anchor.target !== "" && anchor.target !== "_self") return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      triggerJiggle();
-    };
-
-    /**
-     * Browser-level navigation (close tab, refresh, hard-coded URL change).
-     * `preventDefault` + setting `returnValue` triggers the native confirmation
-     * dialog. We also fire the jiggle so the bar shakes if the user cancels.
-     */
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isDirtyRef.current) return;
-      e.preventDefault();
-      // Required for legacy Chrome/Edge support.
-      e.returnValue = "";
-      triggerJiggle();
-    };
-
-    document.addEventListener("click", onDocumentClick, { capture: true });
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => {
-      document.removeEventListener("click", onDocumentClick, { capture: true });
-      window.removeEventListener("beforeunload", onBeforeUnload);
-    };
-  }, []);
-
-  if (selectedCount === 0 && !isDirty) return null;
-
-  const dirtyPillStyle: React.CSSProperties = {
-    ...pillStyle,
-    animation:
-      jiggleNonce > 0 ? "line-items-jiggle 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97)" : undefined,
-  };
-
-  return (
-    <div data-slot="floating-actions" style={dockStyle}>
-      <style>{JIGGLE_KEYFRAMES}</style>
-      {selectedCount > 0 ? (
-        <div style={pillStyle}>
-          <span style={labelStyle}>{selectedCount} selected</span>
-          <span aria-hidden style={dividerStyle} />
-          <button type="button" style={primaryButtonStyle} onClick={onBulkDelete}>
-            Delete selected
-          </button>
-          <button type="button" style={secondaryButtonStyle} onClick={onClearSelection}>
-            Clear
-          </button>
-        </div>
-      ) : null}
-      {isDirty ? (
-        <div key={jiggleNonce} style={dirtyPillStyle}>
-          <span style={labelStyle}>Unsaved changes</span>
-          <span aria-hidden style={dividerStyle} />
-          <button type="button" style={secondaryButtonStyle} onClick={onDiscard}>
-            Discard
-          </button>
-          <button type="button" style={primaryButtonStyle} onClick={onSave}>
-            Save
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-}

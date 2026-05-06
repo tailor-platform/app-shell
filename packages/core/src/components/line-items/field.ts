@@ -72,9 +72,12 @@ export function fieldAllowsFill<T extends LineItemsRowData>(
  * Translate a single `LineItemsField` into the internal `LineItemsColumnDef`
  * shape consumed by `internals.ts` (change-set + normalization + equality).
  *
- * Numeric fields get a normalizer that coerces strings to numbers (trimming and
- * rounding by `decimals`) and a tolerance-aware `equals` so cosmetic input
- * variations like "1" vs "1.00" don't show up as document changes.
+ * Default behaviors:
+ * - Numeric fields get a normalizer that coerces strings to numbers (trimming
+ *   and rounding by `decimals`) and a tolerance-aware `equals` so cosmetic
+ *   input variations like "1" vs "1.00" don't show up as document changes.
+ * - The field's own `normalize` / `equals` (or those on a `kind: "custom"`
+ *   type) take precedence over the built-in defaults.
  */
 export function fieldToColumnDef<T extends LineItemsRowData>(
   field: LineItemsField<T>,
@@ -110,7 +113,27 @@ export function fieldToColumnDef<T extends LineItemsRowData>(
     };
   }
 
+  // App-supplied overrides on the type take precedence over built-in defaults.
+  if (field.type?.kind === "custom") {
+    if (field.type.normalize) def.normalize = field.type.normalize as typeof def.normalize;
+    if (field.type.equals) def.equals = field.type.equals as typeof def.equals;
+  }
+
+  // Field-level overrides win over both type-level and built-in defaults.
+  if (field.normalize) def.normalize = field.normalize as typeof def.normalize;
+  if (field.equals) def.equals = field.equals as typeof def.equals;
+
   return def;
+}
+
+/** Default column alignment given a field. Numbers right-align; everything else left. */
+export function defaultAlignForField<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+): "left" | "center" | "right" {
+  if (field.align) return field.align;
+  if (field.type?.kind === "number") return "right";
+  if (field.type?.kind === "boolean") return "center";
+  return "left";
 }
 
 /** Translate a list of fields into internal column defs. */

@@ -8,10 +8,18 @@ import type { LineItemsRowData, UseLineItemsReturn } from "./types";
 /* Root context (shared between LineItems.* compound parts)                  */
 /* ======================================================================== */
 
+/** Optional render-fn for a totals row. Returns one value per column key. */
+export type LineItemsTotalsRowFn<T extends LineItemsRowData = LineItemsRowData> = (
+  lines: T[],
+) => Record<string, React.ReactNode>;
+
 export type LineItemsRootContextValue<T extends LineItemsRowData> = {
   hook: UseLineItemsReturn<T>;
   fullscreen: boolean;
   setFullscreen: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Set by `<LineItems.TotalsRow>` when present; consumed by `<LineItems.Table>`. */
+  totalsRowFn: LineItemsTotalsRowFn<T> | null;
+  setTotalsRowFn: React.Dispatch<React.SetStateAction<LineItemsTotalsRowFn<T> | null>>;
 };
 
 const LineItemsRootContext =
@@ -45,6 +53,8 @@ export function LineItemsRoot<T extends LineItemsRowData>({
   children,
 }: LineItemsRootProps<T>) {
   const [fullscreen, setFullscreen] = React.useState(false);
+  const [totalsRowFn, setTotalsRowFn] =
+    React.useState<LineItemsTotalsRowFn<T> | null>(null);
 
   React.useEffect(() => {
     if (!fullscreen) return undefined;
@@ -59,8 +69,8 @@ export function LineItemsRoot<T extends LineItemsRowData>({
   }, [fullscreen]);
 
   const ctx = React.useMemo<LineItemsRootContextValue<T>>(
-    () => ({ hook: value, fullscreen, setFullscreen }),
-    [value, fullscreen],
+    () => ({ hook: value, fullscreen, setFullscreen, totalsRowFn, setTotalsRowFn }),
+    [value, fullscreen, totalsRowFn],
   );
 
   // Click on the backdrop (the wrapper itself, not a child) closes fullscreen.

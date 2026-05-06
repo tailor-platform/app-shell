@@ -1,4 +1,4 @@
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
@@ -133,12 +133,10 @@ describe("DefaultSidebar auto-generation", () => {
       expect(screen.getAllByText("Overview").length).toBeGreaterThan(0);
     });
 
-    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
-    const links = sidebar.querySelectorAll("a");
-    const overviewLink = Array.from(links).find((link) => link.textContent === "Overview");
-
-    expect(overviewLink).toBeDefined();
-    expect(overviewLink!.className).toContain("astw:bg-sidebar-accent");
+    const sidebarEl = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebarEl).not.toBeNull();
+    const overviewLink = within(sidebarEl as HTMLElement).getByRole("link", { name: "Overview" });
+    expect(overviewLink.className).toContain("astw:bg-sidebar-accent");
   });
 
   it("excludes componentless resources from sidebar links", async () => {

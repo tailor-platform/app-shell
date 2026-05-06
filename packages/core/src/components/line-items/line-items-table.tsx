@@ -44,7 +44,7 @@ const alignClass: Record<LineItemsColumnAlign, string> = {
   right: "astw:text-right astw:tabular-nums",
 };
 
-export type LineItemsTableProps = {
+export type LineItemsTableProps<T extends LineItemsRowData = LineItemsRowData> = {
   /** Max body height before vertical scroll kicks in. Defaults to `min(60vh, 480px)`. */
   maxBodyHeight?: React.CSSProperties["maxHeight"];
   className?: string;
@@ -55,9 +55,18 @@ export type LineItemsTableProps = {
   enableDragReorder?: boolean;
   /** Empty-state copy when there are no rows. */
   emptyMessage?: React.ReactNode;
+  /**
+   * Optional render-prop for a trailing per-row actions column (delete, view,
+   * attach, etc.). The cell is automatically pinned to the right edge so the
+   * actions stay visible during horizontal scroll. The actions cell is NOT
+   * part of the spreadsheet selection grid (no fill, no copy/paste).
+   */
+  rowActions?: (line: T) => React.ReactNode;
+  /** Width in px of the row-actions trailing column. Default `80`. */
+  rowActionsWidth?: number;
 };
 
-export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTableProps) {
+export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTableProps<T>) {
   const {
     maxBodyHeight = "min(60vh, 480px)",
     className,
@@ -65,10 +74,16 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
     renderFullscreenToggle = true,
     enableDragReorder = false,
     emptyMessage = "No lines yet.",
+    rowActions,
+    /**
+     * Default 64 — fits two `size-7` icon buttons + a small horizontal gap
+     * snugly. Bump for more icons or wider buttons; lower for one icon.
+     */
+    rowActionsWidth = 64,
   } = props;
 
   const root = useLineItemsRoot<T>();
-  const { hook, fullscreen } = root;
+  const { hook, fullscreen, totalsRowFn } = root;
   const { fields, mode, ordering } = hook;
 
   const internals = getInternals(hook);
@@ -119,6 +134,7 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
           const allSelected =
             live.lines.length > 0 && live.selectedIds.length === live.lines.length;
           return (
+            <div className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
             <input
               type="checkbox"
               aria-label="Select all"
@@ -129,6 +145,7 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
               }}
               className="astw:size-4"
             />
+            </div>
           );
         },
         cell: ({ row }) => (
@@ -204,8 +221,21 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       });
     }
 
+    if (rowActions) {
+      cols.push({
+        id: "__actions",
+        header: "",
+        cell: ({ row }) => (
+          <div className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-end astw:gap-1 astw:px-2">
+            {rowActions(row.original)}
+          </div>
+        ),
+        size: rowActionsWidth,
+      });
+    }
+
     return cols;
-  }, [enableDragReorder, fields, mode, ordering, selectionEnabled]);
+  }, [enableDragReorder, fields, mode, ordering, selectionEnabled, rowActions, rowActionsWidth]);
 
   const table = useReactTable({
     data,
@@ -228,28 +258,6 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
 
   const orderedLineRefs = React.useMemo(() => allRows.map((r) => r.original.lineRef), [allRows]);
 
-  /* ---- Per-column resting / hover-expand width ------------------------ */
-
-  const getColumnWidthStyle = React.useCallback(
-    (colId: string): React.CSSProperties | undefined => {
-      const f = fieldByKey.get(colId);
-      if (!f) return undefined;
-      const expand = f.hoverExpandWidth;
-      const rest = f.width;
-      if (expand == null && rest == null) return undefined;
-      const target = expand != null && hoveredColumnId === colId ? expand : rest;
-      const style: React.CSSProperties = {
-        transition: "width 220ms ease-out, min-width 220ms ease-out",
-      };
-      if (target != null) {
-        style.width = target;
-        style.minWidth = target;
-      }
-      return style;
-    },
-    [fieldByKey, hoveredColumnId],
-  );
-
   const onColumnHoverEnter = React.useCallback(
     (colId: string) => {
       const f = fieldByKey.get(colId);
@@ -261,6 +269,78 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
   const onColumnHoverLeave = React.useCallback((colId: string) => {
     setHoveredColumnId((cur) => (cur === colId ? null : cur));
   }, []);
+
+  /* ---- Special-column widths --------------------------------------------
+     Pinned widths for the bookkeeping columns we add ourselves
+     (__select / __drag / __actions). Combined with `table-fixed` and the
+     `<colgroup>` rendering below, every consumer of the component gets the
+     identical first-column look — without these, browser auto-layout
+     redistributed leftover horizontal space per page so the same `width: 40`
+     rendered at slightly different sizes across demos. */
+  const SELECT_COL_WIDTH = 40;
+  const DRAG_COL_WIDTH = 28;
+
+  /* ---- Pinned columns (left + right offsets) -------------------------- */
+
+  /**
+   * Compute the pixel offset for each pinned column. Order:
+   *   - Left side: __select (if visible, 36px) → __drag (28px) →
+   *     fields with `pinned: "left"` in declared order.
+   *   - Right side: fields with `pinned: "right"` in declared order, with the
+   *     inserted "__actions" column (when `rowActions` is set) pinned right
+   *     after them.
+   *
+   * Pinned data fields require a `width` so we know the offset of the next
+   * pinned column. Unpinned fields are unaffected.
+   */
+  const pinOffsets = React.useMemo(() => {
+    const offsets = new Map<string, { side: "left" | "right"; offset: number }>();
+    const selectVisible = selectionEnabled && mode !== "display";
+    const dragVisible = enableDragReorder && ordering === "manual" && mode !== "display";
+
+    let leftAcc = 0;
+    if (selectVisible) {
+      offsets.set("__select", { side: "left", offset: leftAcc });
+      leftAcc += SELECT_COL_WIDTH;
+    }
+    if (dragVisible) {
+      offsets.set("__drag", { side: "left", offset: leftAcc });
+      leftAcc += DRAG_COL_WIDTH;
+    }
+    for (const f of fields) {
+      if (f.pinned === "left") {
+        offsets.set(f.key, { side: "left", offset: leftAcc });
+        leftAcc += f.width ?? 0;
+      }
+    }
+
+    let rightAcc = 0;
+    // Walk right-to-left so the rightmost pinned column has offset 0.
+    if (rowActions) {
+      offsets.set("__actions", { side: "right", offset: rightAcc });
+      rightAcc += rowActionsWidth;
+    }
+    const rightFields = fields.filter((f) => f.pinned === "right").toReversed();
+    for (const f of rightFields) {
+      offsets.set(f.key, { side: "right", offset: rightAcc });
+      rightAcc += f.width ?? 0;
+    }
+    return offsets;
+  }, [enableDragReorder, fields, mode, ordering, rowActions, rowActionsWidth, selectionEnabled]);
+
+  const getPinStyle = React.useCallback(
+    (colId: string): React.CSSProperties | undefined => {
+      const pin = pinOffsets.get(colId);
+      if (!pin) return undefined;
+      return {
+        position: "sticky",
+        [pin.side]: pin.offset,
+        zIndex: 5,
+        backgroundColor: "var(--card)",
+      } as React.CSSProperties;
+    },
+    [pinOffsets],
+  );
 
   const ssFocusRef = React.useRef<GridCoord | null>(null);
   React.useEffect(() => {
@@ -480,23 +560,34 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       if (mode === "display") return;
       if (fillGestureSource) return;
       if (e.button !== 0) return;
-      const tgt = e.target as HTMLElement | null;
-      const insideInteractive = !!tgt?.closest?.(
-        "input,textarea,button,select,[contenteditable=true]",
-      );
 
+      // Shift-click: extend the existing rectangle to the clicked cell.
+      // Anchor stays where it was (collapses to current focus on first shift).
       if (e.shiftKey) {
         setSsAnchor((a) => a ?? ssFocusRef.current ?? coord);
         setSsFocus(coord);
         return;
       }
 
-      if (insideInteractive) return;
-
+      // Normal click: collapse the selection to a single cell. We do this
+      // unconditionally — even when the click lands on an <input> inside the
+      // cell — because `onCellFocused` no longer resets the anchor after a
+      // shift-click (that fix lives in onCellFocused), so we need to do the
+      // collapse here.
       setSsAnchor(coord);
       setSsFocus(coord);
-      setSsPointerDragActive(true);
-      scrollParentRef.current?.focus();
+
+      // Activate drag-select only when the click started on the cell shell
+      // itself (not inside an input/button) — otherwise we'd fight the input's
+      // native text-selection drag.
+      const tgt = e.target as HTMLElement | null;
+      const insideInteractive = !!tgt?.closest?.(
+        "input,textarea,button,select,[contenteditable=true]",
+      );
+      if (!insideInteractive) {
+        setSsPointerDragActive(true);
+        scrollParentRef.current?.focus();
+      }
     },
     [fillGestureSource, mode],
   );
@@ -506,8 +597,15 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       if (mode === "display") return;
       const cur = ssFocusRef.current;
       if (cur && sameCoord(cur, coord)) return;
-      setSsAnchor(coord);
+      // Only update FOCUS here; the anchor is owned by `onCellPointerDown`
+      // (which preserves it on shift-click) and the keyboard nav handlers
+      // (which set both anchor + focus together). Overwriting the anchor on
+      // every focus event would collapse a shift-click range as soon as the
+      // newly-focused input fired its native focus event.
       setSsFocus(coord);
+      // Initialize anchor if it was previously null (e.g. first focus on the
+      // table without going through pointerdown).
+      setSsAnchor((a) => a ?? coord);
     },
     [mode],
   );
@@ -688,9 +786,46 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
 
   /* ---- Render --------------------------------------------------------- */
 
-  const tableWidthClass = "astw:w-full astw:caption-bottom astw:text-sm";
+  // `table-fixed` is critical: with `auto` layout the browser distributes any
+  // leftover horizontal space across columns based on content, which makes the
+  // 40px checkbox column drift to slightly different widths per page (the
+  // user reported this). `fixed` honors the explicit per-column widths we set
+  // via `<colgroup>` below, plus the inline width styles on every <th>.
+  const tableWidthClass = "astw:w-full astw:table-fixed astw:caption-bottom astw:text-sm";
+
+  /*
+    Compute a `min-width` for the table so the flex column never collapses at
+    narrow viewports. We sum every column's declared width (including the flex
+    column's `width` or a `240` fallback). At wide viewports the table is at
+    container width (so the flex column absorbs leftover); at narrow viewports
+    the table grows beyond the container and horizontal scroll absorbs the
+    overflow — instead of squeezing the flex column to nothing.
+  */
+  const FLEX_FALLBACK_WIDTH = 240;
+  const tableMinWidth = React.useMemo(() => {
+    let total = 0;
+    if (selectionEnabled && mode !== "display") total += SELECT_COL_WIDTH;
+    if (enableDragReorder && ordering === "manual" && mode !== "display")
+      total += DRAG_COL_WIDTH;
+    for (const f of fields) {
+      if (f.flex) {
+        total += f.width ?? FLEX_FALLBACK_WIDTH;
+      } else {
+        total += f.width ?? FLEX_FALLBACK_WIDTH;
+      }
+    }
+    if (rowActions) total += rowActionsWidth;
+    return total;
+  }, [enableDragReorder, fields, mode, ordering, rowActions, rowActionsWidth, selectionEnabled]);
   const vItems = rowVirtualizer.getVirtualItems();
-  const colCount = Math.max(1, table.getVisibleLeafColumns().length);
+  // True when no field absorbs leftover horizontal space; in that case the
+  // table renders a trailing spacer `<col>` + matching cells. Same condition
+  // is recomputed in the colgroup IIFE above — keep them in sync.
+  const renderTrailingSpacer = !fields.some((f) => f.flex || f.width == null);
+  const colCount = Math.max(
+    1,
+    table.getVisibleLeafColumns().length + (renderTrailingSpacer ? 1 : 0),
+  );
   const padTop = vItems.length ? vItems[0]!.start : 0;
   const padBot = vItems.length ? rowVirtualizer.getTotalSize() - vItems[vItems.length - 1]!.end : 0;
 
@@ -757,25 +892,122 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
               {emptyMessage}
             </div>
           ) : (
-            <table className={tableWidthClass}>
+            <table className={tableWidthClass} style={{ minWidth: tableMinWidth }}>
+              {/*
+                `<colgroup>` pins each column to the width we want. This is the
+                most authoritative way to set column widths in HTML tables — the
+                browser respects `<col>` widths over per-cell widths, and
+                combined with `table-fixed` above guarantees the special
+                columns (checkbox / drag / actions) render at the same pixel
+                width on every page.
+
+                Field columns without an explicit `width` get an unset `<col>`
+                so they share remaining space proportionally.
+              */}
+              {(() => {
+                /*
+                  Determine which data column absorbs leftover horizontal space.
+                  Priority:
+                    1. A field with `flex: true` (explicit opt-in).
+                    2. Any field without an explicit `width` (legacy behavior).
+                    3. None — render a trailing spacer column that absorbs
+                       leftover so every real column stays at its declared
+                       width pixel-exact across pages.
+
+                  When a column is hover-expanded, the flex column is FROZEN
+                  at its declared `width` (or `FLEX_FALLBACK_WIDTH` if none was
+                  declared). That way the table grows beyond the container and
+                  horizontal scroll absorbs the slack — instead of squeezing
+                  the flex column to nothing on small viewports.
+                */
+                const explicitFlex = fields.find((f) => f.flex);
+                const hasFlexField =
+                  !!explicitFlex || fields.some((f) => f.width == null && !f.flex);
+                const flexFieldKey = explicitFlex?.key ?? null;
+                const isHovering = hoveredColumnId != null;
+                const flexFrozen = isHovering;
+                return (
+                  <colgroup>
+                    {table.getVisibleLeafColumns().map((col) => {
+                      const colId = col.id;
+                      // Special bookkeeping columns get pinned widths.
+                      if (colId === "__select")
+                        return (
+                          <col key={colId} width={SELECT_COL_WIDTH} style={{ width: SELECT_COL_WIDTH }} />
+                        );
+                      if (colId === "__drag")
+                        return <col key={colId} width={DRAG_COL_WIDTH} style={{ width: DRAG_COL_WIDTH }} />;
+                      if (colId === "__actions")
+                        return (
+                          <col key={colId} width={rowActionsWidth} style={{ width: rowActionsWidth }} />
+                        );
+                      const f = fieldByKey.get(colId);
+                      if (!f) return <col key={colId} />;
+                      // Flex column: unsized normally; frozen to its declared
+                      // width during hover-expand of any other column so the
+                      // table grows rather than the flex column shrinking.
+                      if (flexFieldKey === colId) {
+                        if (flexFrozen) {
+                          const frozen = f.width ?? FLEX_FALLBACK_WIDTH;
+                          return (
+                            <col
+                              key={colId}
+                              width={frozen}
+                              style={{ width: frozen, transition: "width 220ms ease-out" }}
+                            />
+                          );
+                        }
+                        return <col key={colId} />;
+                      }
+                      // Hovered column gets hoverExpandWidth; otherwise the
+                      // declared width (unsized if absent).
+                      const isHovered = hoveredColumnId === colId;
+                      const target =
+                        isHovered && f.hoverExpandWidth != null ? f.hoverExpandWidth : f.width;
+                      if (target == null) return <col key={colId} />;
+                      return (
+                        <col
+                          key={colId}
+                          width={target}
+                          style={{ width: target, transition: "width 220ms ease-out" }}
+                        />
+                      );
+                    })}
+                    {/*
+                      Spacer is only needed when no field is meant to absorb
+                      leftover horizontal space. Without it, browsers
+                      redistribute the leftover inconsistently per page when
+                      every column has an explicit width.
+                    */}
+                    {!hasFlexField ? <col data-slot="line-items-spacer-col" /> : null}
+                  </colgroup>
+                );
+              })()}
               <thead className="astw:sticky astw:top-0 astw:z-10 astw:bg-card">
                 {table.getHeaderGroups().map((hg) => (
                   <tr key={hg.id}>
                     {hg.headers.map((header: Header<T, unknown>) => {
                       const colId = header.column.columnDef.id ?? header.column.id;
-                      const widthStyle = getColumnWidthStyle(colId);
+                      const pinStyle = getPinStyle(colId);
                       return (
                         <th
                           key={header.id}
                           className={cn(
-                            // Right border between columns; last column drops
-                            // it. Inset box-shadow paints the bottom divider so
-                            // it survives sticky-header repaint and any
+                            // Right border between columns; last real column
+                            // drops it (the trailing spacer takes over).
+                            // Inset box-shadow paints the bottom divider so it
+                            // survives sticky-header repaint and any
                             // border-collapse weirdness during scroll.
-                            "astw:text-foreground astw:h-10 astw:px-2 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:border-r astw:border-border astw:last:border-r-0 astw:[box-shadow:inset_0_-1px_0_var(--border)]",
-                            colId.startsWith("__") && "astw:w-px",
+                            "astw:text-foreground astw:h-10 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:border-r astw:border-border astw:[box-shadow:inset_0_-1px_0_var(--border)]",
+                            // Special columns (checkbox / drag / actions)
+                            // drop the inner padding so their content can
+                            // center pixel-perfect against the cell box —
+                            // matching the body cells which use `p-0`.
+                            colId.startsWith("__")
+                              ? "astw:px-0"
+                              : "astw:px-2",
                           )}
-                          style={widthStyle}
+                          style={pinStyle}
                           onMouseEnter={() => onColumnHoverEnter(colId)}
                           onMouseLeave={() => onColumnHoverLeave(colId)}
                         >
@@ -783,6 +1015,14 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                         </th>
                       );
                     })}
+                    {/* Spacer header (matches the trailing <col /> above). */}
+                    {renderTrailingSpacer ? (
+                      <th
+                        aria-hidden
+                        data-slot="line-items-spacer-th"
+                        className="astw:h-10 astw:[box-shadow:inset_0_-1px_0_var(--border)]"
+                      />
+                    ) : null}
                   </tr>
                 ))}
               </thead>
@@ -820,12 +1060,12 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                     >
                       {row.getVisibleCells().map((cell) => {
                         const colId = cell.column.id;
-                        const widthStyle = getColumnWidthStyle(colId);
+                        const pinStyle = getPinStyle(colId);
                         return (
                           <Table.Cell
                             key={cell.id}
-                            className="astw:relative astw:p-0 astw:align-middle astw:border-r astw:border-border astw:last:border-r-0 astw:[&:has([role=checkbox])]:pr-0"
-                            style={{ height: vi.size, ...widthStyle }}
+                            className="astw:relative astw:p-0 astw:align-middle astw:border-r astw:border-border astw:[&:has([role=checkbox])]:pr-0"
+                            style={{ height: vi.size, ...pinStyle }}
                             onMouseEnter={() => onColumnHoverEnter(colId)}
                             onMouseLeave={() => onColumnHoverLeave(colId)}
                           >
@@ -840,6 +1080,10 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                           </Table.Cell>
                         );
                       })}
+                      {/* Trailing spacer cell — matches the trailing <col /> in colgroup. */}
+                      {renderTrailingSpacer ? (
+                        <td aria-hidden data-slot="line-items-spacer-td" style={{ padding: 0 }} />
+                      ) : null}
                     </tr>
                   );
                 })}
@@ -849,6 +1093,43 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                   </tr>
                 ) : null}
               </tbody>
+              {totalsRowFn ? (
+                <tfoot
+                  data-slot="line-items-totals"
+                  className="astw:sticky astw:bottom-0 astw:z-10 astw:bg-muted/50 astw:font-medium"
+                >
+                  <tr>
+                    {table.getVisibleLeafColumns().map((col) => {
+                      const colId = col.id;
+                      const pinStyle = getPinStyle(colId);
+                      const totalsMap = totalsRowFn(hook.allLines);
+                      const value = totalsMap[colId];
+                      const f = fieldByKey.get(colId);
+                      const align = f ? alignClass[f.align ?? "left"] : "astw:text-left";
+                      return (
+                        <td
+                          key={colId}
+                          className={cn(
+                            "astw:px-2 astw:py-2 astw:text-sm astw:border-t astw:border-border astw:[box-shadow:inset_0_1px_0_var(--border)]",
+                            align,
+                          )}
+                          style={{ ...pinStyle, backgroundColor: "var(--muted)" }}
+                        >
+                          {value ?? null}
+                        </td>
+                      );
+                    })}
+                    {/* Trailing spacer matches the colgroup spacer. */}
+                    {renderTrailingSpacer ? (
+                      <td
+                        aria-hidden
+                        data-slot="line-items-spacer-td"
+                        style={{ backgroundColor: "var(--muted)" }}
+                      />
+                    ) : null}
+                  </tr>
+                </tfoot>
+              ) : null}
             </table>
           )}
         </div>

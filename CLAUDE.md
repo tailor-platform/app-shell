@@ -55,8 +55,12 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 # Install dependencies
 pnpm install
 
-# Start dev server (opens localhost:3000 with example app)
-pnpm dev
+# Start one example dev server (avoids running every example watcher at once)
+pnpm dev              # Vite example — localhost:3030
+pnpm dev:next        # Next.js example — localhost:3000
+
+# Heavy: Turbo watch across all ./examples packages
+pnpm dev:examples
 ```
 
 ## Versioning & Publishing

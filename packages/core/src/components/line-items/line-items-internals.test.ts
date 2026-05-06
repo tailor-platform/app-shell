@@ -67,7 +67,7 @@ describe("buildChangeSet", () => {
     expect(cs.lineChanges).toEqual([
       {
         action: "update",
-        lineRef: "a",
+        lineId: "a",
         patch: { qty: 2 },
       },
     ]);
@@ -114,6 +114,7 @@ describe("buildChangeSet", () => {
       "sort",
     );
 
-    expect(cs.lineChanges.some((x) => x.action === "add" && x.lineRef === "n1")).toBe(true);
+    expect(cs.lineChanges.some((x) => x.action === "add" && x.tempId === "n1")).toBe(true);
+    expect(cs.isEmpty).toBe(false);
   });
 });

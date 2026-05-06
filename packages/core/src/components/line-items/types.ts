@@ -5,28 +5,30 @@ import * as React from "react";
 /* ======================================================================== */
 
 /** Discriminated line change operations (transport-agnostic; apps map to GraphQL/REST). */
-export type LineItemsLineChangeAction = "add" | "update" | "remove" | "move";
+export type LineItemsLineChangeAction = "add" | "update" | "remove" | "reorder";
 
 export type LineItemsRowPatch = Record<string, unknown>;
 
+/**
+ * One typed line-change op produced by `getChangeSet()`. Shape matches the
+ * platform PRD ("Generalized Line-Item Component"):
+ *
+ * - `add`     → `{ tempId, data }` — `tempId` is a client-only id; the server
+ *   should mint the real id on insert.
+ * - `update`  → `{ lineId, patch }` — only changed fields appear in `patch`.
+ * - `remove`  → `{ lineId }`.
+ * - `reorder` → `{ lineId, position }` — zero-based final index in the document
+ *   order (manual ordering only).
+ */
 export type LineItemsLineChange =
-  | {
-      action: "add";
-      lineRef: string;
-      /** `null` inserts at the start of the document order. */
-      insertAfterLineRef: string | null;
-      patch: LineItemsRowPatch;
-    }
-  | { action: "update"; lineRef: string; patch: LineItemsRowPatch }
-  | { action: "remove"; lineRef: string }
-  | {
-      action: "move";
-      lineRef: string;
-      /** `null` moves to the front. */
-      afterLineRef: string | null;
-    };
+  | { action: "add"; tempId: string; data: LineItemsRowPatch }
+  | { action: "update"; lineId: string; patch: LineItemsRowPatch }
+  | { action: "remove"; lineId: string }
+  | { action: "reorder"; lineId: string; position: number };
 
+/** Result of `useLineItems().getChangeSet()`. `isEmpty` short-circuits no-op submits. */
 export type LineItemsChangeSet = {
+  isEmpty: boolean;
   lineChanges: LineItemsLineChange[];
 };
 
@@ -57,16 +59,47 @@ export type LineItemsSelectOption = {
 };
 
 /**
+ * Render context handed to a `kind: "custom"` field's `renderEditor`. Mirrors
+ * the contract every other editor cell follows so the table's keyboard +
+ * commit + dirty-tracking wiring keeps working.
+ */
+export type LineItemsCustomEditorContext<T extends LineItemsRowData> = {
+  /** Current cell value (already through `normalize` for the field if provided). */
+  value: unknown;
+  /** Commit a new value back into the line. */
+  onCommit: (next: unknown) => void;
+  /** Cancel the in-flight edit (e.g. Escape). The hook keeps the previous value. */
+  onCancel: () => void;
+  /** The full current row (use for cross-field display). */
+  row: T;
+  /** Active mode at the time of render. */
+  mode: LineItemsMode;
+  /** The field schema entry, including its `type`. */
+  field: LineItemsField<T>;
+};
+
+/**
  * Drives input type, formatting, normalization, and equality for an editable field.
  * Required when the field is editable; omit for read-only / computed fields.
  */
-export type LineItemsFieldType =
+export type LineItemsFieldType<T extends LineItemsRowData = LineItemsRowData> =
   | { kind: "text" }
   | { kind: "number"; decimals?: number }
   | {
       kind: "select";
       options: ReadonlyArray<LineItemsSelectOption>;
       placeholder?: string;
+    }
+  | { kind: "boolean"; trueLabel?: string; falseLabel?: string }
+  | { kind: "date"; min?: string; max?: string }
+  | {
+      kind: "custom";
+      /** Renders the in-cell editor. The component handles selection ring + grip; this controls only the editor. */
+      renderEditor: (ctx: LineItemsCustomEditorContext<T>) => React.ReactNode;
+      /** Optional value coercion before equality. Mirrors `LineItemsField.normalize`. */
+      normalize?: (value: unknown, row: T) => unknown;
+      /** Optional dirty-equality. Mirrors `LineItemsField.equals`. */
+      equals?: (a: unknown, b: unknown, row: T) => boolean;
     };
 
 /**
@@ -102,7 +135,7 @@ export type LineItemsField<T extends LineItemsRowData> = {
    */
   editable?: LineItemsMode[];
   /** Required when the field is editable; drives input type and equality semantics. */
-  type?: LineItemsFieldType;
+  type?: LineItemsFieldType<T>;
   /** "document" (default) bundles into the change-set; "metadata" emits per-cell deltas. */
   commit?: LineItemsFieldCommit;
   /** Adds a sort affordance to the column header; called when the user clicks it. */
@@ -111,6 +144,19 @@ export type LineItemsField<T extends LineItemsRowData> = {
   search?: (line: T, query: string) => boolean;
   align?: LineItemsColumnAlign;
   className?: string | ((line: T) => string | undefined);
+  /**
+   * Coerce raw values before dirty-equality compare and before they're emitted
+   * into the change-set. Defaults to trim-strings; numeric fields with
+   * `decimals` get rounding applied automatically. Override for app-specific
+   * rules (e.g. money rounding by currency, deep-clone for nested objects).
+   */
+  normalize?: (value: unknown, row: T) => unknown;
+  /**
+   * Custom dirty-equality. Defaults to `Object.is` with a 1e-9 epsilon for
+   * numbers. Override for app-specific rules (e.g. compare two attribute
+   * objects by `id`, money equality across currencies, deep-equal JSON).
+   */
+  equals?: (a: unknown, b: unknown, row: T) => boolean;
   /** Resting column width in pixels. Honored when set; otherwise auto-sized. */
   width?: number;
   /**
@@ -119,6 +165,28 @@ export type LineItemsField<T extends LineItemsRowData> = {
    * dense columns that show truncated content (e.g. a SKU + product label).
    */
   hoverExpandWidth?: number;
+  /**
+   * Pin the column to the left or right edge of the scroll container so it
+   * stays visible while the user scrolls horizontally. Multiple pinned columns
+   * stack — their widths are summed to compute the offset.
+   *
+   * Pinned columns must declare a `width`; otherwise the offset for subsequent
+   * pinned columns can't be computed and the layout breaks.
+   */
+  pinned?: "left" | "right";
+  /**
+   * When true, this column absorbs any leftover horizontal space in the table
+   * — useful for the column with the longest content (e.g. a description or
+   * product-name column). Implementation: this column's `<col>` is rendered
+   * without an explicit width, so `table-layout: fixed` routes all leftover
+   * to it.
+   *
+   * If you don't set `flex` on any column AND every column declares an
+   * explicit `width`, the table renders an invisible trailing spacer column
+   * to absorb leftover and keep declared widths pixel-exact. Most consumers
+   * never need to think about this.
+   */
+  flex?: boolean;
 };
 
 /* ======================================================================== */

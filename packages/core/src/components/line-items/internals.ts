@@ -86,7 +86,7 @@ export function computeDocumentPatches<TRow extends LineItemsRowData>(
   /** Removals for ids that existed in baseline. */
   for (const id of baseline.order) {
     if (removedRefs.has(id) || !currentOrder.includes(id)) {
-      if (baseline.rows[id]) lines.push({ action: "remove", lineRef: id });
+      if (baseline.rows[id]) lines.push({ action: "remove", lineId: id });
     }
   }
 
@@ -95,9 +95,8 @@ export function computeDocumentPatches<TRow extends LineItemsRowData>(
     if (!insertedRefs.has(id) || baseline.rows[id]) continue;
     const row = currentByRef[id];
     if (!row) continue;
-    const insertAfter = previousRefInOrder(currentOrder, id);
-    const patch = pickDocumentPatch(cols, row, documentKeys);
-    lines.push({ action: "add", lineRef: id, insertAfterLineRef: insertAfter, patch });
+    const data = pickDocumentPatch(cols, row, documentKeys);
+    lines.push({ action: "add", tempId: id, data });
   }
 
   /** Updates for persisted rows. */
@@ -117,7 +116,7 @@ export function computeDocumentPatches<TRow extends LineItemsRowData>(
       const nBase = normalizeField(cols, key, rawBase, base);
       if (!equalsField(cols, key, nCur, nBase, row)) patch[key] = nCur;
     }
-    if (Object.keys(patch).length > 0) lines.push({ action: "update", lineRef: id, patch });
+    if (Object.keys(patch).length > 0) lines.push({ action: "update", lineId: id, patch });
   }
 
   if (orderingMode === "manual") {
@@ -136,7 +135,7 @@ export function computeDocumentPatches<TRow extends LineItemsRowData>(
   return lines;
 }
 
-/** Emit move ops for persisted ids whose predecessor changed vs baseline. */
+/** Emit reorder ops for persisted ids whose position changed vs baseline. */
 function diffPersistedMoves<TRow extends LineItemsRowData>(
   baseOrderFull: readonly string[],
   curOrderFull: readonly string[],
@@ -154,32 +153,24 @@ function diffPersistedMoves<TRow extends LineItemsRowData>(
   const curIds = persisted(curOrderFull);
   if (baseIds.length !== curIds.length || !setsEqual(new Set(baseIds), new Set(curIds))) return [];
 
-  const basePred = new Map<string, string | null>();
-  for (let i = 0; i < baseIds.length; i++) {
-    basePred.set(baseIds[i]!, i === 0 ? null : baseIds[i - 1]!);
-  }
+  const baseIndex = new Map<string, number>();
+  for (let i = 0; i < baseIds.length; i++) baseIndex.set(baseIds[i]!, i);
 
-  const moves: LineItemsLineChange[] = [];
-  /** Single pass — any id whose predecessor in current differs from predecessor in baseline moved. */
+  const reorders: LineItemsLineChange[] = [];
+  /** Emit a reorder op for each persisted id whose final index differs from baseline. */
   for (let i = 0; i < curIds.length; i++) {
     const id = curIds[i]!;
-    const curPred = i === 0 ? null : curIds[i - 1]!;
-    if (basePred.get(id) !== curPred)
-      moves.push({ action: "move", lineRef: id, afterLineRef: curPred });
+    if (baseIndex.get(id) !== i) {
+      reorders.push({ action: "reorder", lineId: id, position: i });
+    }
   }
-  return moves;
+  return reorders;
 }
 
 function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
   if (a.size !== b.size) return false;
   for (const x of a) if (!b.has(x)) return false;
   return true;
-}
-
-function previousRefInOrder(order: readonly string[], id: string): string | null {
-  const idx = order.indexOf(id);
-  if (idx <= 0) return null;
-  return order[idx - 1]!;
 }
 
 function columnsByScope<TRow extends LineItemsRowData>(
@@ -228,11 +219,11 @@ export function buildChangeSet<TRow extends LineItemsRowData>(
     insertedRefs,
     orderingMode,
   );
-  return { lineChanges };
+  return { isEmpty: lineChanges.length === 0, lineChanges };
 }
 
 export function isChangeSetEmpty(cs: LineItemsChangeSet): boolean {
-  return cs.lineChanges.length === 0;
+  return cs.isEmpty;
 }
 
 /** Deep clone row for baseline using JSON when possible. */

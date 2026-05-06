@@ -75,7 +75,8 @@ describe("useLineItems", () => {
     expect(result.current.allLines).toHaveLength(3);
     expect(result.current.isDirty).toBe(true);
     const cs = result.current.getChangeSet();
-    expect(cs.lineChanges.some((c) => c.action === "add" && c.lineRef === newRef)).toBe(true);
+    expect(cs.lineChanges.some((c) => c.action === "add" && c.tempId === newRef)).toBe(true);
+    expect(cs.isEmpty).toBe(false);
   });
 
   it("updateField writes a single cell and shows up as an update in the change set", () => {
@@ -85,7 +86,7 @@ describe("useLineItems", () => {
     });
     expect(result.current.isDirty).toBe(true);
     const cs = result.current.getChangeSet();
-    expect(cs.lineChanges).toEqual([{ action: "update", lineRef: "a", patch: { qty: 5 } }]);
+    expect(cs.lineChanges).toEqual([{ action: "update", lineId: "a", patch: { qty: 5 } }]);
   });
 
   it("updateLines applies batched patches in one render", () => {
@@ -98,8 +99,8 @@ describe("useLineItems", () => {
     });
     const cs = result.current.getChangeSet();
     expect(cs.lineChanges).toEqual([
-      { action: "update", lineRef: "a", patch: { qty: 7 } },
-      { action: "update", lineRef: "b", patch: { qty: 9 } },
+      { action: "update", lineId: "a", patch: { qty: 7 } },
+      { action: "update", lineId: "b", patch: { qty: 9 } },
     ]);
   });
 
@@ -109,10 +110,10 @@ describe("useLineItems", () => {
       result.current.removeLine("a");
     });
     expect(result.current.allLines).toHaveLength(1);
-    expect(result.current.getChangeSet().lineChanges).toEqual([{ action: "remove", lineRef: "a" }]);
+    expect(result.current.getChangeSet().lineChanges).toEqual([{ action: "remove", lineId: "a" }]);
   });
 
-  it("reorderLine emits a move change in manual ordering", () => {
+  it("reorderLine emits a reorder change in manual ordering", () => {
     const { result } = renderHook(() =>
       useLineItems<DemoLine>({ fields, data: seed(), ordering: "manual" }),
     );
@@ -121,7 +122,7 @@ describe("useLineItems", () => {
     });
     expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["b", "a"]);
     const cs = result.current.getChangeSet();
-    expect(cs.lineChanges.some((c) => c.action === "move" && c.lineRef === "a")).toBe(true);
+    expect(cs.lineChanges.some((c) => c.action === "reorder" && c.lineId === "a")).toBe(true);
   });
 
   it("reorderLine is a no-op in sort ordering", () => {
@@ -259,5 +260,65 @@ describe("useLineItems", () => {
     const last = result.current.allLines.at(-1)!;
     expect(last.lineRef).toBe(newRef);
     expect(last.sku).toBe("Y");
+  });
+
+  it("revert() restores baseline data after edits and inserts", () => {
+    const { result } = renderHook(() => useLineItems<DemoLine>({ fields, data: seed() }));
+
+    // Each mutation in its own act so the hook re-derives between calls; otherwise
+    // closures over `order` from the same render observe the same stale value.
+    act(() => {
+      result.current.updateField("a", "qty", 99);
+    });
+    act(() => {
+      result.current.addLine({ sku: "Z", qty: 3, unitPrice: 5, note: "" });
+    });
+    act(() => {
+      result.current.removeLine("b");
+    });
+    expect(result.current.isDirty).toBe(true);
+    expect(result.current.allLines).toHaveLength(2);
+
+    act(() => {
+      result.current.revert();
+    });
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["a", "b"]);
+    expect(result.current.allLines.find((l) => l.lineRef === "a")!.qty).toBe(1);
+  });
+
+  it("getChangeSet().isEmpty mirrors isDirty", () => {
+    const { result } = renderHook(() => useLineItems<DemoLine>({ fields, data: seed() }));
+    expect(result.current.getChangeSet().isEmpty).toBe(true);
+    act(() => {
+      result.current.updateField("a", "qty", 5);
+    });
+    expect(result.current.getChangeSet().isEmpty).toBe(false);
+  });
+
+  it("field-level equals override skips spurious updates", () => {
+    type AttrLine = LineItemsRowData & { attr: { id: string; label: string } };
+    const af = createLineItemHelper<AttrLine>();
+    const attrFields: LineItemsField<AttrLine>[] = [
+      af.field({
+        key: "attr",
+        label: "Attribute",
+        render: (l) => l.attr.label,
+        editable: ["edit"],
+        type: { kind: "text" },
+        // Two attribute objects compare equal when their `id` matches even if
+        // labels diverge — typical for app-supplied id-based equality.
+        equals: (a, b) =>
+          (a as { id: string } | null)?.id === (b as { id: string } | null)?.id,
+      }),
+    ];
+    const initial: AttrLine[] = [{ lineRef: "a", attr: { id: "x", label: "Old label" } }];
+    const { result } = renderHook(() => useLineItems<AttrLine>({ fields: attrFields, data: initial }));
+    act(() => {
+      // Same id, different label — should not be dirty under custom equals.
+      result.current.updateField("a", "attr", { id: "x", label: "New label" });
+    });
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.getChangeSet().lineChanges).toEqual([]);
   });
 });

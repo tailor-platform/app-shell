@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import {
+  defaultAlignForField,
   fieldAllowsFill,
   fieldAllowsPaste,
   fieldCommitScope,
@@ -205,7 +206,7 @@ function EditableFieldCell<T extends LineItemsRowData>(p: {
       <span
         className={cn(
           "astw:flex astw:h-full astw:min-h-0 astw:w-full astw:flex-1 astw:items-center astw:px-2 astw:py-0 astw:leading-none",
-          alignClass[field.align ?? "left"],
+          alignClass[defaultAlignForField(field)],
         )}
       >
         {field.render(row)}
@@ -216,6 +217,15 @@ function EditableFieldCell<T extends LineItemsRowData>(p: {
   const fieldType = field.type;
   if (fieldType?.kind === "select") {
     return <SelectFieldCell field={field} lineRef={lineRef} row={row} value={value} />;
+  }
+  if (fieldType?.kind === "boolean") {
+    return <BooleanFieldCell field={field} lineRef={lineRef} row={row} value={value} />;
+  }
+  if (fieldType?.kind === "date") {
+    return <DateFieldCell field={field} lineRef={lineRef} row={row} value={value} />;
+  }
+  if (fieldType?.kind === "custom") {
+    return <CustomFieldCell field={field} lineRef={lineRef} row={row} value={value} />;
   }
 
   const isNumeric = field.type?.kind === "number";
@@ -290,7 +300,7 @@ function EditableFieldCell<T extends LineItemsRowData>(p: {
         "astw:placeholder:text-muted-foreground astw:selection:bg-primary astw:selection:text-primary-foreground",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         "astw:[appearance:textfield] astw:[&::-webkit-outer-spin-button]:appearance-none astw:[&::-webkit-outer-spin-button]:m-0 astw:[&::-webkit-inner-spin-button]:appearance-none astw:[&::-webkit-inner-spin-button]:m-0",
-        field.align === "right" && "astw:text-right astw:tabular-nums",
+        defaultAlignForField(field) === "right" && "astw:text-right astw:tabular-nums",
         className,
       )}
       value={local}
@@ -302,6 +312,209 @@ function EditableFieldCell<T extends LineItemsRowData>(p: {
       onFocus={onFocus}
       onKeyDown={onKeyDown}
     />
+  );
+}
+
+/* ======================================================================== */
+/* Boolean cell                                                              */
+/* ======================================================================== */
+
+function BooleanFieldCell<T extends LineItemsRowData>({
+  field,
+  lineRef,
+  value,
+}: {
+  field: LineItemsField<T>;
+  lineRef: string;
+  row: T;
+  value: unknown;
+}) {
+  const ctx = useLineItemsGrid<T>();
+  if (!ctx) return null;
+  const t = field.type;
+  if (!t || t.kind !== "boolean") return null;
+
+  const checked = value === true;
+  const onCommit = (next: boolean) => {
+    ctx.hookRef.current.updateField(lineRef, field.key as keyof T, next as T[keyof T]);
+  };
+  const onFocus = () => ctx.onCellFocused({ lineRef, columnId: field.key });
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.altKey &&
+      (e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight")
+    ) {
+      e.preventDefault();
+      ctx.navigateArrowFromInput(e.key, e.shiftKey);
+      return;
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      ctx.navigateFromEdit("enter-down");
+      return;
+    }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      ctx.navigateFromEdit(e.shiftKey ? "shift-tab" : "tab");
+    }
+  };
+
+  return (
+    <label
+      data-slot="line-items-boolean-cell"
+      className={cn(
+        "astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center astw:px-2",
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onCommit(e.target.checked)}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+        className="astw:size-4"
+        aria-label={typeof field.label === "string" ? field.label : undefined}
+      />
+    </label>
+  );
+}
+
+/* ======================================================================== */
+/* Date cell                                                                 */
+/* ======================================================================== */
+
+function DateFieldCell<T extends LineItemsRowData>({
+  field,
+  lineRef,
+  value,
+}: {
+  field: LineItemsField<T>;
+  lineRef: string;
+  row: T;
+  value: unknown;
+}) {
+  const ctx = useLineItemsGrid<T>();
+  if (!ctx) return null;
+  const t = field.type;
+  if (!t || t.kind !== "date") return null;
+
+  const strVal = value == null ? "" : String(value);
+  const [local, setLocal] = React.useState(strVal);
+  React.useEffect(() => setLocal(strVal), [strVal]);
+
+  const onCommit = (next: string) => {
+    ctx.hookRef.current.updateField(
+      lineRef,
+      field.key as keyof T,
+      (next === "" ? null : next) as T[keyof T],
+    );
+  };
+  const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    ctx.onCellFocused({ lineRef, columnId: field.key });
+    try {
+      e.currentTarget.select();
+    } catch {
+      /* date inputs may reject select() in some browsers; harmless */
+    }
+  };
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.altKey &&
+      (e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight")
+    ) {
+      e.preventDefault();
+      ctx.navigateArrowFromInput(e.key, e.shiftKey);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      setLocal(strVal);
+      if (fieldCommitScope(field) === "document") onCommit(strVal);
+      return;
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      ctx.navigateFromEdit("enter-down");
+      return;
+    }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      ctx.navigateFromEdit(e.shiftKey ? "shift-tab" : "tab");
+    }
+  };
+
+  return (
+    <input
+      type="date"
+      data-slot="line-items-date-cell"
+      className={cn(
+        "astw:m-0 astw:box-border astw:h-full astw:w-full astw:flex-1 astw:rounded-none astw:border-0 astw:bg-transparent astw:px-2 astw:py-0 astw:text-sm astw:text-foreground astw:leading-none astw:shadow-none",
+        "astw:outline-none astw:focus:outline-none astw:focus-visible:outline-none",
+        "astw:ring-0 astw:focus:ring-0 astw:focus-visible:ring-0",
+      )}
+      value={local}
+      min={t.min}
+      max={t.max}
+      onChange={(e) => {
+        const v = e.target.value;
+        setLocal(v);
+        onCommit(v);
+      }}
+      onFocus={onFocus}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
+/* ======================================================================== */
+/* Custom cell                                                               */
+/* ======================================================================== */
+
+function CustomFieldCell<T extends LineItemsRowData>({
+  field,
+  lineRef,
+  row,
+  value,
+}: {
+  field: LineItemsField<T>;
+  lineRef: string;
+  row: T;
+  value: unknown;
+}) {
+  const ctx = useLineItemsGrid<T>();
+  if (!ctx) return null;
+  const t = field.type;
+  if (!t || t.kind !== "custom") return null;
+
+  // Latest committed value goes through the standard update path so the hook's
+  // dirty tracking + change-set work unchanged.
+  const onCommit = (next: unknown) => {
+    ctx.hookRef.current.updateField(lineRef, field.key as keyof T, next as T[keyof T]);
+  };
+  // Cancel is a no-op at the hook level; the custom editor decides whether to
+  // restore the previous value visually. The hook already holds it in `value`.
+  const onCancel = () => {
+    ctx.onCellFocused({ lineRef, columnId: field.key });
+  };
+
+  return (
+    <div
+      data-slot="line-items-custom-cell"
+      className={cn(
+        "astw:flex astw:h-full astw:w-full astw:min-h-0 astw:items-stretch",
+        alignClass[defaultAlignForField(field)],
+      )}
+      onFocus={() => ctx.onCellFocused({ lineRef, columnId: field.key })}
+    >
+      {t.renderEditor({ value, onCommit, onCancel, row, mode: ctx.mode, field })}
+    </div>
   );
 }
 
@@ -323,6 +536,7 @@ function SpreadsheetCellShell({
   selected,
   fillHighlight,
   showFillGrip,
+  readonlyTint,
   children,
   onPointerDown,
   onFillGripPointerDown,
@@ -332,6 +546,12 @@ function SpreadsheetCellShell({
   selected: boolean;
   fillHighlight: boolean;
   showFillGrip: boolean;
+  /**
+   * When true, paints a subtle muted background to differentiate read-only
+   * cells from editable ones. Used in `amend` mode for fields that aren't
+   * editable in amend so users can see at a glance which cells they can touch.
+   */
+  readonlyTint: boolean;
   children: React.ReactNode;
   onPointerDown: (e: React.PointerEvent) => void;
   onFillGripPointerDown: (e: React.PointerEvent) => void;
@@ -346,10 +566,14 @@ function SpreadsheetCellShell({
       data-slot="line-items-grid-cell"
       data-line-ref={coord.lineRef}
       data-column-id={coord.columnId}
+      data-readonly={readonlyTint ? "true" : undefined}
       role="gridcell"
       aria-selected={selected}
       className={cn(
         "astw:absolute astw:inset-0 astw:flex astw:min-h-0 astw:min-w-0 astw:items-stretch",
+        // Read-only base tint sits below selection/fill highlights so the
+        // active selection visually overrides it.
+        readonlyTint && "astw:bg-muted/40",
         selected && !primary && "astw:bg-primary/10",
         fillHighlight && "astw:bg-primary/15",
       )}
@@ -397,7 +621,7 @@ export function LineItemsFieldCell<T extends LineItemsRowData>({
     <span
       className={cn(
         "astw:flex astw:h-full astw:min-h-0 astw:w-full astw:flex-1 astw:items-center astw:px-2 astw:py-0 astw:leading-none",
-        alignClass[field.align ?? "left"],
+        alignClass[defaultAlignForField(field)],
       )}
     >
       {field.render(row)}
@@ -409,6 +633,10 @@ export function LineItemsFieldCell<T extends LineItemsRowData>({
   const inSel = ctx.isInSelection(coord);
   const fillHighlight = ctx.isInFillPreview(coord);
   const showFill = fieldAllowsFill(field, mode) && primary && ctx.fillPreview === null;
+  // In amend mode, fields that aren't editable in amend get a muted tint so
+  // users can see at a glance which cells they can touch. Display mode is the
+  // whole table read-only, so we don't tint there (would just be uniform grey).
+  const readonlyTint = mode === "amend" && !editable;
 
   return (
     <SpreadsheetCellShell
@@ -417,6 +645,7 @@ export function LineItemsFieldCell<T extends LineItemsRowData>({
       selected={inSel}
       fillHighlight={fillHighlight}
       showFillGrip={showFill && editable}
+      readonlyTint={readonlyTint}
       onPointerDown={(e) => ctx.onCellPointerDown(coord, e)}
       onFillGripPointerDown={(e) => ctx.onFillGripPointerDown(coord, e)}
     >

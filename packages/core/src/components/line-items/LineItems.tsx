@@ -1,10 +1,14 @@
 import {
   LineItemsAddRow,
   LineItemsBulkActions,
+  LineItemsDirtyBar,
+  LineItemsFloatingDock,
   LineItemsFullscreenToggle,
   LineItemsSaveActions,
   LineItemsSearch,
   LineItemsSearchToggle,
+  LineItemsSelectionBar,
+  LineItemsTotalsRow,
 } from "./line-items-parts";
 import { LineItemsRoot } from "./line-items-root";
 import { LineItemsTable } from "./line-items-table";
@@ -38,4 +42,8 @@ export const LineItems = {
   AddRow: LineItemsAddRow,
   FullscreenToggle: LineItemsFullscreenToggle,
   SaveActions: LineItemsSaveActions,
+  TotalsRow: LineItemsTotalsRow,
+  FloatingDock: LineItemsFloatingDock,
+  DirtyBar: LineItemsDirtyBar,
+  SelectionBar: LineItemsSelectionBar,
 };

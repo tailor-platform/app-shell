@@ -88,10 +88,16 @@ export function LineItemsRoot<T extends LineItemsRowData>({
     <LineItemsRootContext.Provider
       value={ctx as unknown as LineItemsRootContextValue<LineItemsRowData>}
     >
+      {fullscreen ? <style>{LINE_ITEMS_FULLSCREEN_KEYFRAMES}</style> : null}
       <div
         data-slot="line-items"
         data-fullscreen={fullscreen ? "true" : undefined}
         onPointerDown={onBackdropPointerDown}
+        style={
+          fullscreen
+            ? { animation: "line-items-fullscreen-in 220ms ease-out" }
+            : undefined
+        }
         className={cn(
           "astw:flex astw:w-full astw:flex-col astw:gap-1",
           // Fullscreen overlay: viewport-filling with a dark backdrop. Descendant
@@ -101,6 +107,8 @@ export function LineItemsRoot<T extends LineItemsRowData>({
             "astw:fixed astw:inset-0 astw:z-50 astw:overflow-hidden astw:bg-black/80 astw:p-6 astw:backdrop-blur-sm",
             "astw:[&>[data-slot=card]]:h-full astw:[&>[data-slot=card]]:overflow-hidden",
             "astw:[&_[data-slot=card-content]]:flex astw:[&_[data-slot=card-content]]:flex-1 astw:[&_[data-slot=card-content]]:min-h-0 astw:[&_[data-slot=card-content]]:flex-col",
+            // Card slides up from below as the backdrop fades in.
+            "astw:[&>[data-slot=card]]:[animation:line-items-fullscreen-card-in_280ms_cubic-bezier(0.16,1,0.3,1)]",
           ],
           className,
         )}
@@ -111,3 +119,14 @@ export function LineItemsRoot<T extends LineItemsRowData>({
   );
 }
 LineItemsRoot.displayName = "LineItems.Root";
+
+const LINE_ITEMS_FULLSCREEN_KEYFRAMES = `
+@keyframes line-items-fullscreen-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes line-items-fullscreen-card-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+`;

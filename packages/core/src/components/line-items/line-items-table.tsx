@@ -564,8 +564,30 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       // Shift-click: extend the existing rectangle to the clicked cell.
       // Anchor stays where it was (collapses to current focus on first shift).
       if (e.shiftKey) {
+        // Stop the browser from extending its native text selection across
+        // any editable inputs that happen to sit between the previous focus
+        // anchor and this click — otherwise the OS highlight paints a
+        // black/white run through cells the user didn't actually select.
+        e.preventDefault();
+        if (typeof document !== "undefined") {
+          const ae = document.activeElement as HTMLElement | null;
+          // Blur any currently-focused editor first; without this the browser
+          // re-extends its selection from inside that input even after we
+          // clear ranges.
+          if (
+            ae &&
+            ae !== document.body &&
+            ae.matches?.("input,textarea,select,[contenteditable=true]")
+          ) {
+            ae.blur();
+          }
+        }
+        if (typeof window !== "undefined") {
+          window.getSelection()?.removeAllRanges();
+        }
         setSsAnchor((a) => a ?? ssFocusRef.current ?? coord);
         setSsFocus(coord);
+        scrollParentRef.current?.focus();
         return;
       }
 
@@ -694,39 +716,60 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       if (startRi < 0 || startCi < 0) return;
 
       let skipped = 0;
-      const updates: { lineRef: string; patch: Partial<T> }[] = [];
       const existing = new Map<string, Partial<T>>();
 
-      for (let r = 0; r < gridParsed.length; r++) {
-        const rowLineRef = orderedLineRefs[startRi + r];
-        if (!rowLineRef) break;
-        const rowObj = hook.allLines.find((row) => row.lineRef === rowLineRef);
-        if (!rowObj) continue;
-        const line = gridParsed[r]!;
-        const rowPatch: Partial<T> = {};
-        let rowHas = false;
-        for (let c = 0; c < line.length; c++) {
-          const colId = schemaColumnIds[startCi + c];
-          if (!colId) break;
-          const field = fieldByKey.get(colId);
+      // Single-source broadcast: when the clipboard holds exactly one cell and
+      // the active selection covers more than one cell, fan the single value
+      // out to every selected cell (Excel / Sheets behaviour).
+      const isSingleSource =
+        gridParsed.length === 1 && (gridParsed[0]?.length ?? 0) === 1;
+      if (isSingleSource && selectionCoordsMemo.length > 1) {
+        const raw = gridParsed[0]![0]!;
+        for (const { lineRef, columnId } of selectionCoordsMemo) {
+          const field = fieldByKey.get(columnId);
           if (!field || !fieldAllowsPaste(field, mode)) {
             skipped++;
             continue;
           }
-          const raw = line[c];
           const parsed = coerceForField(field, raw);
-          (rowPatch as Record<string, unknown>)[field.key] = parsed as never;
-          rowHas = true;
+          const prev = existing.get(lineRef) ?? {};
+          (prev as Record<string, unknown>)[field.key] = parsed as never;
+          existing.set(lineRef, prev);
         }
-        if (!rowHas) continue;
-        const prev = existing.get(rowLineRef) ?? {};
-        existing.set(rowLineRef, { ...prev, ...rowPatch });
+      } else {
+        for (let r = 0; r < gridParsed.length; r++) {
+          const rowLineRef = orderedLineRefs[startRi + r];
+          if (!rowLineRef) break;
+          const rowObj = hook.allLines.find((row) => row.lineRef === rowLineRef);
+          if (!rowObj) continue;
+          const line = gridParsed[r]!;
+          const rowPatch: Partial<T> = {};
+          let rowHas = false;
+          for (let c = 0; c < line.length; c++) {
+            const colId = schemaColumnIds[startCi + c];
+            if (!colId) break;
+            const field = fieldByKey.get(colId);
+            if (!field || !fieldAllowsPaste(field, mode)) {
+              skipped++;
+              continue;
+            }
+            const raw = line[c];
+            const parsed = coerceForField(field, raw);
+            (rowPatch as Record<string, unknown>)[field.key] = parsed as never;
+            rowHas = true;
+          }
+          if (!rowHas) continue;
+          const prev = existing.get(rowLineRef) ?? {};
+          existing.set(rowLineRef, { ...prev, ...rowPatch });
+        }
       }
+
+      const updates: { lineRef: string; patch: Partial<T> }[] = [];
       for (const [lineRef, patch] of existing.entries()) updates.push({ lineRef, patch });
       if (updates.length) hook.updateLines(updates);
       if (skipped) toast.info("Some cells were skipped (read-only columns).");
     },
-    [mode, ssFocus, orderedLineRefs, schemaColumnIds, fieldByKey, hook],
+    [mode, ssFocus, orderedLineRefs, schemaColumnIds, fieldByKey, hook, selectionCoordsMemo],
   );
 
   /* ---- Drag-reorder (drop on row / drop on grid background) ----------- */

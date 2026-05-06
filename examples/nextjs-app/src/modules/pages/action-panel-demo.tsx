@@ -1,4 +1,4 @@
-import { defineResource, ActionPanel, useNavigate } from "@tailor-platform/app-shell";
+import { defineResource, ActionPanel, useNavigate, useToast } from "@tailor-platform/app-shell";
 import type { SVGProps } from "react";
 
 export const ReceiptIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -62,6 +62,7 @@ export const ExternalLinkIcon = (props: SVGProps<SVGSVGElement>) => (
 
 const ActionPanelDemoPage = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   return (
     <div
       style={{
@@ -85,13 +86,17 @@ const ActionPanelDemoPage = () => {
             key: "create-invoice",
             label: "Create new sales invoice",
             icon: <ReceiptIcon />,
-            onClick: () => alert("Create invoice clicked"),
+            onClick: () => {
+              toast("Create invoice clicked");
+            },
           },
           {
             key: "delivery-note",
             label: "Create new delivery note",
             icon: <FileTextIcon />,
-            onClick: () => alert("Create delivery note clicked"),
+            onClick: () => {
+              toast("Create delivery note clicked");
+            },
           },
           {
             key: "view-po-demo",

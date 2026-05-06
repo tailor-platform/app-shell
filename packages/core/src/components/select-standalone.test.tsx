@@ -279,6 +279,23 @@ describe("Select (standalone, grouped)", () => {
 });
 
 describe("Select.Async (standalone)", () => {
+  it("does not enter modal mode when opened", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn().mockResolvedValue(["Apple", "Banana"]);
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" />);
+
+    await user.click(screen.getByText("Pick one"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeDefined();
+    });
+
+    expect(document.body.style.overflow).toBe("");
+    expect(document.documentElement.style.overflow).toBe("");
+    expect(document.querySelector("[data-base-ui-portal] [role='presentation'][inert]")).toBeNull();
+  });
+
   it("shows loading text then items after fetch", async () => {
     const user = userEvent.setup();
     let resolve: (value: string[]) => void;
@@ -320,6 +337,85 @@ describe("Select.Async (standalone)", () => {
     });
   });
 
+  it("can reopen after closing while the fetch is still in flight", async () => {
+    const user = userEvent.setup();
+    const pendingRequests: Array<{
+      resolve: (value: string[]) => void;
+      reject: (reason?: unknown) => void;
+      signal: AbortSignal;
+    }> = [];
+
+    const fetcher = vi.fn().mockImplementation(({ signal }: { signal: AbortSignal }) => {
+      return new Promise<string[]>((resolve, reject) => {
+        signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), {
+          once: true,
+        });
+        pendingRequests.push({ resolve, reject, signal });
+      });
+    });
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" />);
+
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => {
+      expect(screen.getByText("Loading...")).toBeDefined();
+    });
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(pendingRequests[0]?.signal.aborted).toBe(true);
+    });
+
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(screen.getByText("Loading...")).toBeDefined();
+    });
+
+    pendingRequests[0]?.resolve(["Stale"]);
+    pendingRequests[1]?.resolve(["Apple", "Banana"]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeDefined();
+      expect(screen.getByText("Banana")).toBeDefined();
+      expect(screen.queryByText("Stale")).toBeNull();
+    });
+  });
+
+  it("can reopen after closing once items have loaded", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi
+      .fn<() => Promise<string[]>>()
+      .mockResolvedValueOnce(["Apple", "Banana"])
+      .mockResolvedValueOnce(["Cherry", "Durian"]);
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" />);
+
+    const trigger = screen.getByRole("combobox");
+
+    await user.click(trigger);
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeDefined();
+      expect(screen.getByText("Banana")).toBeDefined();
+    });
+
+    await user.click(trigger);
+
+    await waitFor(() => {
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    });
+
+    await user.click(trigger);
+
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByText("Cherry")).toBeDefined();
+      expect(screen.getByText("Durian")).toBeDefined();
+    });
+  });
+
   it("calls onValueChange when an item is selected", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -327,14 +423,21 @@ describe("Select.Async (standalone)", () => {
 
     render(<Select.Async fetcher={fetcher} placeholder="Pick one" onValueChange={onValueChange} />);
 
+    const trigger = screen.getByRole("combobox");
+
     await waitFor(() => expect(screen.getByText("Pick one")).toBeDefined());
-    await user.click(screen.getByText("Pick one"));
+    await user.click(trigger);
     await waitFor(() => expect(screen.getByText("Banana")).toBeDefined());
     await user.click(screen.getByText("Banana"));
 
     await waitFor(() => {
       expect(onValueChange).toHaveBeenCalledWith("Banana");
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.queryByRole("listbox")).toBeNull();
     });
+
+    expect(document.body.style.overflow).toBe("");
+    expect(document.documentElement.style.overflow).toBe("");
   });
 
   it("supports mapItem for object items", async () => {

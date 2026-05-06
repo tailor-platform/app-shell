@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout, Input, Button, Dialog, type AppShellPageProps } from "@tailor-platform/app-shell";
+import { labels } from "../../i18n-labels";
 
 const SettingsIcon = () => (
   <svg
@@ -83,7 +84,7 @@ const SettingsPage = () => {
 
 SettingsPage.appShellPageProps = {
   meta: {
-    title: "Settings",
+    title: labels.t("navSettings"),
     icon: <SettingsIcon />,
   },
 } satisfies AppShellPageProps;

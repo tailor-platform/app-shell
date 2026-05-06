@@ -8,13 +8,21 @@ vi.mock("@tailor-platform/auth-public-client", () => ({
   createAuthClient: vi.fn(),
 }));
 
-import { AuthProvider, useAuth, useAuthSuspense, type EnhancedAuthClient } from "./auth-context";
-import { useRootRouteContext } from "./root-route-context";
+import {
+  createAuthClient,
+  AuthProvider,
+  useAuth,
+  useEnsureAuthInitialized,
+  useAuthSuspense,
+  type EnhancedAuthClient,
+} from "./auth-context";
+import { createAuthClient as createAuthClientMock } from "@tailor-platform/auth-public-client";
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.unstubAllGlobals();
+  window.history.replaceState({}, "", "/");
 });
 
 const LoadingGuard = () => <div>Loading...</div>;
@@ -38,12 +46,27 @@ describe("AuthProvider", () => {
       isReady: false,
     };
 
+    const baseHandleCallback = overrides?.handleCallback ?? vi.fn();
+    let handleCallbackInFlight: Promise<void> | null = null;
+    const handleCallback = vi.fn(() => {
+      if (handleCallbackInFlight) {
+        return handleCallbackInFlight;
+      }
+
+      const callbackPromise = Promise.resolve(baseHandleCallback()).finally(() => {
+        handleCallbackInFlight = null;
+      });
+      handleCallbackInFlight = callbackPromise;
+      return callbackPromise;
+    });
+
+    const { handleCallback: _ignoredHandleCallback, ...otherOverrides } = overrides ?? {};
+
     return {
       getState: vi.fn(() => state),
       login: vi.fn(),
       logout: vi.fn(),
       getAuthUrl: vi.fn(),
-      handleCallback: vi.fn(),
       checkAuthStatus: vi.fn().mockResolvedValue({
         isAuthenticated: false,
         error: null,
@@ -56,9 +79,137 @@ describe("AuthProvider", () => {
       getAuthHeaders: vi.fn(),
       fetch: vi.fn(),
       getAppUri: vi.fn(() => "https://api.test.com"),
-      ...overrides,
+      ...otherOverrides,
+      handleCallback,
     } as EnhancedAuthClient;
   };
+
+  describe("useEnsureAuthInitialized", () => {
+    it("should initialize auth status on mount", async () => {
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "idle"));
+
+      await act(async () => {
+        await result.current();
+      });
+
+      expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+    });
+
+    it("should coalesce overlapping auth initialization checks", async () => {
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+
+      let resolveCheckAuthStatus: (() => void) | undefined;
+      const mockCheckAuthStatus = vi.fn(
+        () =>
+          new Promise<{
+            isAuthenticated: boolean;
+            error: null;
+            isReady: true;
+          }>((resolve) => {
+            resolveCheckAuthStatus = () =>
+              resolve({
+                isAuthenticated: true,
+                error: null,
+                isReady: true,
+              });
+          }),
+      );
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "idle"));
+
+      const mountRetry = result.current();
+
+      await waitFor(() => {
+        expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+      });
+
+      const firstRetry = result.current();
+      const secondRetry = result.current();
+
+      expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+
+      resolveCheckAuthStatus?.();
+      await Promise.all([mountRetry, firstRetry, secondRetry]);
+    });
+
+    it("should skip auth initialization while handling an OAuth callback", async () => {
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=abc");
+
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "pending"));
+
+      await act(async () => {
+        await result.current();
+      });
+
+      expect(mockCheckAuthStatus).not.toHaveBeenCalled();
+    });
+
+    it("should run auth initialization after callback is rejected", async () => {
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=abc");
+
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockCheckAuthStatus = vi.fn().mockResolvedValue({
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      });
+
+      const mockClient = createMockAuthClient(state, {
+        checkAuthStatus: mockCheckAuthStatus,
+      });
+
+      // callbackStatus "rejected" means handleCallback failed — initialization should proceed
+      const { result } = renderHook(() => useEnsureAuthInitialized(mockClient, "rejected"));
+
+      await act(async () => {
+        await result.current();
+      });
+
+      expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+    });
+  });
 
   describe("initial state", () => {
     it("should render children when not using guard component", () => {
@@ -73,7 +224,7 @@ describe("AuthProvider", () => {
       expect(screen.getByText("Test Content")).toBeDefined();
     });
 
-    it("should always render children even with guardComponent when not ready", () => {
+    it("should show guard component when not ready", () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -87,11 +238,12 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       );
 
-      // AuthProvider always renders children; guard rendering is handled by the router
-      expect(screen.getByText("Protected Content")).toBeDefined();
+      // Guard is now rendered directly by AuthProvider
+      expect(screen.getByText("Loading...")).toBeDefined();
+      expect(screen.queryByText("Protected Content")).toBeNull();
     });
 
-    it("should always render children even with guardComponent when not authenticated", async () => {
+    it("should show guard component when not authenticated", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -105,8 +257,9 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       );
 
-      // AuthProvider always renders children; guard rendering is handled by the router
-      expect(screen.getByText("Protected Content")).toBeDefined();
+      // Guard is now rendered directly by AuthProvider
+      expect(screen.getByText("Please log in")).toBeDefined();
+      expect(screen.queryByText("Protected Content")).toBeNull();
     });
 
     it("should show children when authenticated", async () => {
@@ -137,7 +290,7 @@ describe("AuthProvider", () => {
   });
 
   describe("authentication flow", () => {
-    it("should check auth status via useRootRouteContext", async () => {
+    it("should call checkAuthStatus once on mount for non-callback URLs", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -153,38 +306,74 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useRootRouteContext(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
-      });
+      render(
+        <AuthProvider client={mockClient}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
 
-      expect(result.current).not.toBeNull();
-      const response = await result.current!.loader(new URL("http://localhost/"));
-      expect(mockCheckAuthStatus).toHaveBeenCalled();
-      expect(response).toBeNull();
+      await waitFor(() => {
+        expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
+      });
     });
 
-    it("should handle OAuth callback via useRootRouteContext when code is present", async () => {
+    it("should wait to render children until callback settles when set on client", async () => {
+      const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+      let callbackStatus: "idle" | "pending" | "resolved" | "rejected" = "pending";
+      let callbackStatusListener: (() => void) | undefined;
       const state = {
         isAuthenticated: true,
         error: null,
         isReady: true,
       };
-      const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
-
       const mockClient = createMockAuthClient(state, {
-        handleCallback: mockHandleCallback,
+        getCallbackStatusSnapshot: vi.fn(() => callbackStatus),
+        subscribeCallbackStatus: vi.fn((listener: () => void) => {
+          callbackStatusListener = listener;
+          return () => {
+            callbackStatusListener = undefined;
+          };
+        }),
       });
 
-      const { result } = renderHook(() => useRootRouteContext(), {
-        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
-      });
-
-      expect(result.current).not.toBeNull();
-      const response = await result.current!.loader(
-        new URL("http://localhost/?code=auth-code-123"),
+      render(
+        <AuthProvider client={mockClient}>
+          <div>Content</div>
+        </AuthProvider>,
       );
+
+      expect(screen.queryByText("Content")).toBeNull();
+
+      await act(async () => {
+        await mockHandleCallback();
+        callbackStatus = "resolved";
+        callbackStatusListener?.();
+      });
+
+      expect(screen.getByText("Content")).toBeDefined();
       expect(mockHandleCallback).toHaveBeenCalled();
-      expect(response).toBeNull();
+    });
+
+    it("should render guarded children while callback is pending", async () => {
+      const state = {
+        isAuthenticated: true,
+        error: null,
+        isReady: true,
+      };
+      const mockClient = createMockAuthClient(state, {
+        getCallbackStatusSnapshot: vi.fn(() => "pending" as const),
+      });
+
+      render(
+        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
+          <div>Protected Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Protected Content")).toBeDefined();
+      });
+      expect(screen.queryByText("Please log in")).toBeNull();
     });
 
     it("should be authenticated when logged in", async () => {
@@ -461,7 +650,7 @@ describe("AuthProvider", () => {
   });
 
   describe("autoLogin", () => {
-    it("should not call login from the loader (autoLogin is handled by provider subscription)", async () => {
+    it("should not call login on initial render when autoLogin is enabled and auth is not yet ready", async () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -478,21 +667,17 @@ describe("AuthProvider", () => {
         checkAuthStatus: mockCheckAuthStatus,
       });
 
-      const { result } = renderHook(() => useRootRouteContext(), {
-        wrapper: ({ children }) => (
-          <AuthProvider client={mockClient} autoLogin={true}>
-            {children}
-          </AuthProvider>
-        ),
-      });
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
 
-      expect(result.current).not.toBeNull();
-      await result.current!.loader(new URL("http://localhost/"));
-      expect(mockCheckAuthStatus).toHaveBeenCalled();
-      // autoLogin is no longer evaluated in the loader; it is handled
-      // reactively by the provider subscription so that it also covers
-      // mid-session expiry while idle on a page.
+      // login should not be called before the auth check completes
       expect(mockLogin).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockCheckAuthStatus).toHaveBeenCalled();
+      });
     });
 
     it("should login when auth state changes to unauthenticated", async () => {
@@ -597,6 +782,59 @@ describe("AuthProvider", () => {
         { timeout: 1000 },
       );
     });
+
+    it("should not login while the current URL is an OAuth callback", async () => {
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=abc");
+
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+
+      const mockAddEventListener = vi.fn(
+        (listener: (event: { type: string; data?: unknown }) => void) => {
+          authEventListener = listener;
+          return () => {};
+        },
+      );
+
+      let currentState = {
+        isAuthenticated: false,
+        error: null as string | null,
+        isReady: true,
+      };
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockClient = createMockAuthClient(undefined, {
+        login: mockLogin,
+        addEventListener: mockAddEventListener,
+        getState: vi.fn(() => currentState),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+
+      act(() => {
+        currentState = {
+          isAuthenticated: false,
+          error: null,
+          isReady: true,
+        };
+        authEventListener?.({ type: "auth_state_changed", data: {} });
+      });
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+    });
   });
 
   describe("event listeners", () => {
@@ -681,5 +919,51 @@ describe("AuthProvider", () => {
       expect(authState.isReady).toBe(true);
       expect(authState.error).toBeNull();
     });
+  });
+});
+
+describe("createAuthClient", () => {
+  const makeBaseClient = (mockHandleCallback: ReturnType<typeof vi.fn>) => ({
+    handleCallback: mockHandleCallback,
+    getState: vi.fn(() => ({
+      isAuthenticated: false,
+      error: null,
+      isReady: false,
+    })),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAuthUrl: vi.fn(),
+    checkAuthStatus: vi.fn(),
+    refreshTokens: vi.fn(),
+    ready: vi.fn(() => Promise.resolve()),
+    configure: vi.fn(),
+    addEventListener: vi.fn(() => () => {}),
+    getAuthHeaders: vi.fn(),
+    fetch: vi.fn(),
+    getAuthHeadersForQuery: vi.fn(),
+  });
+
+  it("calls handleCallback immediately when URL contains OAuth callback parameters", () => {
+    window.history.replaceState({}, "", "/?code=auth-code-123");
+
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(createAuthClientMock).mockReturnValue(makeBaseClient(mockHandleCallback) as any);
+
+    createAuthClient({ clientId: "test", appUri: "https://test.com" });
+
+    expect(mockHandleCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call handleCallback when URL has no OAuth parameters", () => {
+    // URL is already "/" from afterEach reset
+
+    const mockHandleCallback = vi.fn().mockResolvedValue(undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(createAuthClientMock).mockReturnValue(makeBaseClient(mockHandleCallback) as any);
+
+    createAuthClient({ clientId: "test", appUri: "https://test.com" });
+
+    expect(mockHandleCallback).not.toHaveBeenCalled();
   });
 });

@@ -32,7 +32,10 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       {...props}
     >
       {title && (
-        <h3 data-slot="card-title" className="astw:leading-none astw:font-semibold">
+        <h3
+          data-slot="card-title"
+          className="astw:text-lg astw:font-semibold astw:leading-none astw:text-card-foreground"
+        >
           {title}
         </h3>
       )}
@@ -49,7 +52,11 @@ Header.displayName = "Card.Header";
 
 function Content({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div data-slot="card-content" className={cn("astw:px-6 astw:pb-6", className)} {...props} />
+    <div
+      data-slot="card-content"
+      className={cn("astw:px-6 astw:pb-6 astw:first:pt-6", className)}
+      {...props}
+    />
   );
 }
 Content.displayName = "Card.Content";

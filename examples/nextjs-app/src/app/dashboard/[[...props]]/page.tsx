@@ -6,7 +6,7 @@ import {
   RoleSwitcherProvider,
   SidebarMenu,
   useRoleSwitcher,
-} from "app-module";
+} from "@/modules";
 
 const App = () => {
   const { role } = useRoleSwitcher();
@@ -14,6 +14,7 @@ const App = () => {
     title: "AppShell",
     basePath: "dashboard",
     modules: [customPageModule],
+    rootComponent: () => <div>Dashboard Home (accessible at /dashboard)</div>,
     settingsResources: [profileResource],
     contextData: {
       role,

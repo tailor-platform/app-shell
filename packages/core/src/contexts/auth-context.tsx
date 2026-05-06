@@ -3,6 +3,7 @@ import {
   useContext,
   useSyncExternalStore,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
 } from "react";
@@ -10,7 +11,6 @@ import {
   createAuthClient as createAuthClientOriginal,
   type AuthClient,
 } from "@tailor-platform/auth-public-client";
-import { RootRouteContext } from "@/contexts/root-route-context";
 
 // ============================================================================
 // Auth Client
@@ -29,6 +29,11 @@ export interface AuthClientConfig {
 }
 
 /**
+ * Internal type for tracking OAuth callback handling status.
+ */
+type CallbackStatus = "idle" | "pending" | "resolved" | "rejected";
+
+/**
  * Enhanced auth client with additional helper methods
  */
 export interface EnhancedAuthClient extends AuthClient {
@@ -42,13 +47,78 @@ export interface EnhancedAuthClient extends AuthClient {
    * Same signature as the standard `fetch` API.
    */
   fetch: AuthClient["fetch"];
+
+  /**
+   * Returns the current OAuth callback handling state.
+   * Provided automatically by clients created with {@link createAuthClient}.
+   * @internal
+   */
+  getCallbackStatusSnapshot?(): CallbackStatus;
+
+  /**
+   * Subscribe to callback settlement changes.
+   * Provided automatically by clients created with {@link createAuthClient}.
+   * @internal
+   */
+  subscribeCallbackStatus?(listener: () => void): () => void;
 }
+
+/**
+ * Small external-store manager dedicated to the OAuth callback lifecycle.
+ *
+ * AuthProvider reads this state via useSyncExternalStore so it can delay
+ * rendering while the login callback is still being processed, without
+ * coupling that control flow to the auth client's own auth_state_changed
+ * events. The manager exposes callback-specific transitions instead of a
+ * generic setter so createAuthClient can describe the callback flow directly.
+ */
+const createCallbackStatusManager = () => {
+  let callbackStatus: CallbackStatus = "idle";
+  const CALLBACK_STATUS_CHANGE_EVENT = "callbackstatuschange";
+  const target = new EventTarget();
+
+  const updateStatus = (nextStatus: CallbackStatus) => {
+    callbackStatus = nextStatus;
+    target.dispatchEvent(new Event(CALLBACK_STATUS_CHANGE_EVENT));
+  };
+
+  return {
+    getSnapshot: () => callbackStatus,
+    start: () => {
+      updateStatus("pending");
+
+      return {
+        resolve: () => {
+          updateStatus("resolved");
+        },
+        reject: () => {
+          updateStatus("rejected");
+        },
+      };
+    },
+    subscribe: (listener: () => void) => {
+      const eventListener: EventListener = () => {
+        listener();
+      };
+
+      target.addEventListener(CALLBACK_STATUS_CHANGE_EVENT, eventListener);
+      return () => {
+        target.removeEventListener(CALLBACK_STATUS_CHANGE_EVENT, eventListener);
+      };
+    },
+  };
+};
 
 /**
  * Create an enhanced authentication client.
  *
  * This wrapper around the original createAuthClient adds convenience methods
  * to reduce duplication of the appUri across your application.
+ *
+ * **Side effect on call**: If the current URL contains OAuth callback parameters
+ * (`code` or `error`), this function immediately starts `handleCallback()` to
+ * exchange the authorization code. This happens at call time — before any React
+ * render — so it is safe to call at module scope.
  *
  * @example
  * ```tsx
@@ -81,12 +151,40 @@ export interface EnhancedAuthClient extends AuthClient {
 export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
   const baseClient = createAuthClientOriginal(config);
   const { appUri } = config;
+  const callbackManager = createCallbackStatusManager();
+
+  // Start OAuth callback handling immediately at module load time (before any
+  // React render). This is intentionally a side effect outside the React
+  // lifecycle — network I/O should not happen in the render phase.
+  if (typeof window !== "undefined") {
+    const currentUrl = new URL(window.location.href);
+
+    if (isOAuthCallbackUrl(currentUrl)) {
+      const { resolve, reject } = callbackManager.start();
+
+      baseClient
+        .handleCallback()
+        .then(resolve)
+        .catch((error) => {
+          reject();
+          console.error("Failed to handle OAuth callback:", error);
+        });
+    }
+  }
 
   const enhancedClient: EnhancedAuthClient = {
     ...baseClient,
 
     getAppUri(): string {
       return appUri;
+    },
+
+    getCallbackStatusSnapshot() {
+      return callbackManager.getSnapshot();
+    },
+
+    subscribeCallbackStatus(listener) {
+      return callbackManager.subscribe(listener);
     },
   };
 
@@ -160,6 +258,17 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const isOAuthCallbackUrl = (url: URL) =>
+  url.searchParams.has("code") || url.searchParams.has("error");
+
+const isCurrentOAuthCallbackUrl = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return isOAuthCallbackUrl(new URL(window.location.href));
+};
+
 /**
  * Guard component that shows a fallback UI while auth is not ready or
  * not authenticated. Defined here so that the router layer does not
@@ -173,6 +282,7 @@ const AuthGuard = ({
   children: React.ReactNode;
 }) => {
   const { isReady, isAuthenticated } = useAuth();
+
   if (!isReady || !isAuthenticated) {
     return guardComponent();
   }
@@ -194,11 +304,11 @@ type AuthProviderProps = {
   /**
    * Guard UI component to show when loading or unauthenticated.
    *
-   * If not provided, children will be just rendered in any auth state.
+   * When provided, AuthProvider renders this component directly while auth
+   * is not ready or the user is not authenticated. Children are hidden until
+   * auth resolves to an authenticated state.
    *
-   * Note: This prop only takes effect when AuthProvider wraps an AppShell
-   * component. The guard is rendered by the router's root route element,
-   * so it requires RouterContainer to be present in the component tree.
+   * If not provided, children are rendered regardless of auth state.
    */
   guardComponent?: () => React.ReactNode;
 };
@@ -221,6 +331,7 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
     const authState = props.client.getState();
     if (
       !props.enabled ||
+      isCurrentOAuthCallbackUrl() ||
       !authState.isReady ||
       authState.isAuthenticated ||
       loginInFlightRef.current
@@ -230,6 +341,7 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
 
     loginInFlightRef.current = props.client
       .login()
+      .then(() => undefined)
       .catch((error) => {
         console.error("Failed to auto-login after session expiry:", error);
       })
@@ -260,6 +372,64 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
       [props.client, attemptAutoLogin],
     ),
   };
+};
+
+/**
+ * Builds a stable function that resolves the initial auth state once.
+ *
+ * AuthProvider uses the returned function from its own useEffect so the
+ * initialization flow stays visible at the call site, while overlapping
+ * checks still collapse into a single request.
+ */
+export const useEnsureAuthInitialized = (
+  client: EnhancedAuthClient,
+  callbackStatus: CallbackStatus,
+) => {
+  const initInFlightRef = useRef<Promise<void> | null>(null);
+
+  const ensureInitialized = useCallback(async (): Promise<void> => {
+    const authState = client.getState();
+
+    // Skip initialization while a callback exchange is actively in progress.
+    // If the callback fails ("rejected"), we fall through so checkAuthStatus
+    // can still resolve the session instead of leaving isReady permanently false.
+    if (callbackStatus === "pending" || authState.isReady) {
+      return;
+    }
+
+    if (initInFlightRef.current) {
+      return initInFlightRef.current;
+    }
+
+    initInFlightRef.current = client
+      .checkAuthStatus()
+      .then(() => undefined)
+      .catch((error) => {
+        throw error;
+      })
+      .finally(() => {
+        initInFlightRef.current = null;
+      });
+
+    return initInFlightRef.current;
+  }, [client, callbackStatus]);
+
+  return ensureInitialized;
+};
+
+/**
+ * Reads the OAuth callback handling state from the auth client via
+ * useSyncExternalStore so AuthProvider can coordinate rendering while the
+ * callback exchange is still in flight.
+ */
+const useCallbackStatus = (client: EnhancedAuthClient): CallbackStatus => {
+  const subscribe = useCallback(
+    (notify: () => void) => client.subscribeCallbackStatus?.(notify) ?? (() => {}),
+    [client],
+  );
+  const getSnapshot = useCallback(() => client.getCallbackStatusSnapshot?.() ?? "idle", [client]);
+
+  return useSyncExternalStore(subscribe, getSnapshot);
 };
 
 /**
@@ -295,76 +465,52 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     enabled: props.autoLogin,
   });
 
-  // Get current state snapshot (no cache needed - client returns same reference)
+  // Use useSyncExternalStore for state management from auth client.
   const getSnapshot = useCallback(() => client.getState(), [client]);
-
-  // Use useSyncExternalStore for state management
   const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
 
-  // Build the root loader inside AuthProvider so that the router layer
-  // never needs to know about EnhancedAuthClient internals.
-  const authLoader = useCallback(
-    async (requestUrl: URL): Promise<Response | null> => {
-      // The "code" query parameter indicates a redirect back from the OAuth provider.
-      // handleCallback() internally cleans up the OAuth-related query parameters
-      // from the URL, so no additional URL cleanup is needed here.
-      if (requestUrl.searchParams.has("code")) {
-        try {
-          await client.handleCallback();
-        } catch (error) {
-          console.error("Failed to handle callback:", error);
-        }
-      }
+  // Read callback status first so it can be passed to useEnsureAuthInitialized.
+  // This lets initialization retry automatically when a pending callback settles
+  // to rejected — the new ensureInitialized reference triggers the useEffect again.
+  const callbackStatus = useCallbackStatus(client);
 
-      // Only check auth status on first load (when isReady is false).
-      // Subsequent navigations skip this because the client already holds
-      // the cached auth state via useSyncExternalStore.
-      if (!client.getState().isReady) {
-        try {
-          await client.checkAuthStatus();
-        } catch (error) {
-          // Intentionally swallow errors to avoid rendering the error boundary
-          // on transient failures (e.g. network timeouts). The next navigation
-          // will re-run this loader and retry automatically.
-          console.error("Failed to check auth status:", error);
-        }
-      }
+  // Prepare a shared initialization function so AuthProvider can start the
+  // first auth check itself without depending on router navigation.
+  const ensureAuthInitialized = useEnsureAuthInitialized(client, callbackStatus);
 
-      return null;
-    },
-    [client],
-  );
+  // AuthProvider owns the normal startup path: on mount, ask the auth client
+  // to resolve the current session so consumers can rely on authState even
+  // before any router loader has run.
+  useEffect(() => {
+    ensureAuthInitialized().catch((error) => {
+      console.error("Failed to check auth status:", error);
+    });
+  }, [client, ensureAuthInitialized]);
 
-  const guardComponent = props.guardComponent;
-  const guardComponentWrapper = useMemo(
-    () =>
-      guardComponent
-        ? (children: React.ReactNode) => (
-            <AuthGuard guardComponent={guardComponent}>{children}</AuthGuard>
-          )
-        : undefined,
-    [guardComponent],
-  );
+  // While handling an OAuth callback, keep unguarded children hidden until
+  // the callback settles. Guarded trees already wait on auth state instead.
+  const resolvedChildren =
+    callbackStatus === "pending" && props.guardComponent == null ? null : props.children;
 
-  const rootRouteCtxValue = useMemo(
-    () => ({ loader: authLoader, wrapComponent: guardComponentWrapper }),
-    [authLoader, guardComponentWrapper],
+  const authContextValue = useMemo(
+    () => ({
+      authState,
+      login: () => client.login(),
+      logout: () => client.logout(),
+      checkAuthStatus: () => client.checkAuthStatus(),
+      ready: () => client.ready(),
+    }),
+    [authState, client],
   );
 
   return (
-    <RootRouteContext.Provider value={rootRouteCtxValue}>
-      <AuthContext.Provider
-        value={{
-          authState,
-          login: () => client.login(),
-          logout: () => client.logout(),
-          checkAuthStatus: () => client.checkAuthStatus(),
-          ready: () => client.ready(),
-        }}
-      >
-        {props.children}
-      </AuthContext.Provider>
-    </RootRouteContext.Provider>
+    <AuthContext.Provider value={authContextValue}>
+      {props.guardComponent ? (
+        <AuthGuard guardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
+      ) : (
+        resolvedChildren
+      )}
+    </AuthContext.Provider>
   );
 };
 

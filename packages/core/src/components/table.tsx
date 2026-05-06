@@ -99,7 +99,7 @@ function Head({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:[&>[role=checkbox]]:translate-y-[2px]",
+        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:[&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}
@@ -114,7 +114,7 @@ function Cell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "astw:p-2 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:[&>[role=checkbox]]:translate-y-[2px]",
+        "astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:[&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

@@ -7,6 +7,7 @@ import {
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { paths } from "../../routes.generated";
+import { labels } from "../../i18n-labels";
 
 const ZapIcon = () => (
   <svg
@@ -56,7 +57,7 @@ const DashboardPage = () => {
 
 DashboardPage.appShellPageProps = {
   meta: {
-    title: "Dashboard",
+    title: labels.t("dashboardTitle"),
     icon: <ZapIcon />,
   },
 } satisfies AppShellPageProps;

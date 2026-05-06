@@ -126,12 +126,16 @@ const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
 
 Accepts all the same props as `Select` except `items`, plus:
 
-| Prop          | Type                    | Default        | Description                                     |
-| ------------- | ----------------------- | -------------- | ----------------------------------------------- |
-| `fetcher`     | `SelectAsyncFetcher<T>` | -              | Fetcher called each time the dropdown is opened |
-| `loadingText` | `string`                | `"Loading..."` | Text shown while loading                        |
+| Prop                   | Type                    | Default        | Description                                                                                                                        |
+| ---------------------- | ----------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `fetcher`              | `SelectAsyncFetcher<T>` | -              | Fetcher called each time the dropdown is opened                                                                                    |
+| `loadingText`          | `string`                | `"Loading..."` | Text shown while loading                                                                                                           |
+| `modal`                | `boolean`               | `false`        | Whether the select traps focus (modal behavior). Set to `true` when rendering inside a `Dialog` or `Sheet` to preserve focus-trap. |
+| `alignItemWithTrigger` | `boolean`               | `false`        | Whether to align the selected item with the trigger when the dropdown opens.                                                       |
 
 > **Note:** `Select.Async` does not support `ItemGroup<T>[]` — the fetcher must return a flat array.
+
+> **Limitation:** `Select.Async` defaults to `modal={false}` and `alignItemWithTrigger={false}` to work around a Base UI scroll-lock bug with dynamically loaded items. As a result, it may not function correctly inside focus-trapping containers such as `Dialog` or `Sheet` — the focus trap can block interaction with the dropdown, or the portal may render outside the modal's visible area. If you need an async dropdown inside a `Dialog` or `Sheet`, prefer [`Combobox.Async`](./combobox.md) which uses Popover-based positioning and does not have this constraint.
 
 ### SelectAsyncFetcher
 

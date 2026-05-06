@@ -1,5 +1,360 @@
 # @tailor-platform/app-shell
 
+## 1.1.0
+
+### Minor Changes
+
+- 9654369: Fix root page (`/`) showing `"/"` as its title in `SidebarItem` and breadcrumb.
+
+  The root page is now treated as a first-class page (module) so that title, icon, and guards are resolved consistently. `DefaultSidebar` and `CommandPalette` now include the root page when it is defined. When no title is set, the fallback is localized `"Home"` / `"ホーム"`.
+
+- 39a8521: Change `useDataTable()` to use single-column sorting by default and add a `sort` option for configuring sorting behavior.
+
+  Before:
+
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+  });
+  ```
+
+  After:
+
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+    sort: { multiple: true },
+  });
+  ```
+
+  Use `sort: false` to disable sorting entirely.
+
+- c2a50b9: Add row count and selection info to `DataTable.Pagination`.
+
+  - When `total` is provided: shows `"X row(s)"`
+  - When rows are selected with `total`: shows `"Y of X row(s) selected"`
+  - When rows are selected without `total`: shows `"Y row(s) selected"`
+
+- 642aa1e: Add case-sensitivity control for string filters in `DataTable.Filters`. String filters are now case-insensitive by default (using Tailor Platform's `regex` operator with `(?i)` prefix). A "Case sensitive" checkbox allows users to opt into exact-case matching.
+
+  The `Filter` type and `CollectionControl.addFilter` now accept an optional `caseSensitive` property to control this behavior programmatically.
+
+- a3d0170: Add "between" filter mode to `DataTable.Filters` for numeric and date/time columns, allowing users to filter by a range with min and max bounds.
+
+### Patch Changes
+
+- 2a860d9: Fix DataTable filter types for `datetime` and `time` fields. Previously these were incorrectly mapped to the `date` filter type, causing wrong input formats. Each temporal type now uses its proper HTML input type (`datetime-local`, `date`, `time`) and format handling.
+- 125aee2: Fix a `Select.Async` bug where reopening the dropdown after the first async load could leave the popup invisible while the page stayed scroll-locked.
+
+  This could happen after options were fetched once, the dropdown was closed, and then opened again. The fix cancels in-flight requests on close and avoids the Base UI modal and anchored alignment paths that were leaving the async popup in that broken reopen state.
+
+- 681333f: Remove `next-themes` dependency by using the internal `ThemeProvider` context for the Sonner toast theming.
+- 826bd97: Updated [@base-ui/react](https://www.npmjs.com/package/@base-ui/react) (^1.3.0 -> ^1.4.1)
+
+## 1.0.2
+
+### Patch Changes
+
+- 27bb5df: Remove `richColors` prop from the `Toaster` component. Toast notifications will no longer use color-coded styling for success, error, warning, and info variants.
+- Updated dependencies [ee7f7c7]
+  - @tailor-platform/app-shell-vite-plugin@0.2.2
+
+## 1.0.1
+
+### Patch Changes
+
+- 598bc90: Fix cursor-based pagination in `DataTable`.
+
+  - Fix "Previous" button not working correctly when the GraphQL server returns unreliable `hasPreviousPage` (common with `first + after` queries per the Relay spec)
+  - Fix navigating back after jumping to the last page incorrectly returning to page 1
+  - Fix "Next" button remaining enabled past the last page when `total` is known
+
+- 4aaf5ab: Fix "Go to Last Page" pagination alignment. When total items aren't evenly divisible by page size, `goToLastPage` now requests `last: total % pageSize` instead of `last: pageSize`, so the last page boundaries match forward pagination.
+
+## 1.0.0
+
+### Major Changes
+
+- 3f31e8a: Add `DataTable` compound component. Also introduces `@tailor-platform/app-shell-sdk-plugin` — a companion SDK plugin that generates `tableMetadata` from TailorDB type definitions for use with `createColumnHelper`.
+
+  ## DataTable
+
+  - Sortable columns (click header to cycle Asc → Desc → off)
+  - Filter chips with per-type editors (string, number, date, enum, boolean, uuid)
+  - Cursor-based pagination with optional total-aware First/Last navigation
+  - Per-row action menu (kebab menu)
+  - Multi-row checkbox selection (current page only)
+  - Loading, error, and empty states
+  - Metadata-driven column inference via `createColumnHelper` and `inferColumns`
+
+  ### Example with urql (Relay Cursor Connection GraphQL API)
+
+  ```tsx
+  import { gql, useQuery } from "urql";
+  import {
+    DataTable,
+    useDataTable,
+    useCollectionVariables,
+    createColumnHelper,
+  } from "@tailor-platform/app-shell";
+
+  const LIST_JOURNALS = gql`
+    query ListJournals(
+      $after: String
+      $before: String
+      $first: Int
+      $last: Int
+      $order: [JournalOrderInput]
+      $query: JournalQueryInput
+    ) {
+      journals(
+        after: $after
+        before: $before
+        first: $first
+        last: $last
+        order: $order
+        query: $query
+      ) {
+        edges {
+          node {
+            id
+            contents
+            authorID
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+          hasPreviousPage
+          startCursor
+        }
+        total
+      }
+    }
+  `;
+
+  const { column } = createColumnHelper<{
+    id: string;
+    contents: string;
+    authorID: string;
+  }>();
+
+  const columns = [
+    column({ field: "id", label: "ID", type: "uuid" }),
+    column({ field: "authorID", label: "Author", type: "string" }),
+    column({ field: "contents", label: "Contents", type: "string" }),
+  ];
+
+  function JournalsPage() {
+    // variables: { query, order, pagination } — maps directly to GraphQL variables.
+    // control: holds filter/sort/pagination state and methods (addFilter, setSort, nextPage, …).
+    //          Passing it to useDataTable wires UI interactions (column clicks, filter chips,
+    //          pagination buttons) to state updates, which re-derive variables and re-run the query.
+    const { variables, control } = useCollectionVariables({
+      params: { pageSize: 20 },
+    });
+
+    // pagination holds { first, after? } (forward) or { last, before? } (backward).
+    const [result] = useQuery({
+      query: LIST_JOURNALS,
+      variables: {
+        first: variables.pagination.first,
+        after: variables.pagination.after,
+        last: variables.pagination.last,
+        before: variables.pagination.before,
+        query: variables.query,
+        order: variables.order,
+      },
+    });
+
+    const table = useDataTable({
+      columns,
+      data: result.data
+        ? {
+            rows: result.data.journals.edges.map((e) => e.node),
+            pageInfo: result.data.journals.pageInfo,
+            total: result.data.journals.total,
+          }
+        : undefined,
+      loading: result.fetching,
+      control,
+    });
+
+    // DataTable.Root + DataTable.Table are the only required sub-components.
+    // DataTable.Toolbar / DataTable.Filters / DataTable.Pagination are opt-in sensible defaults.
+    // If they don't fit, use useDataTableContext() to build your own sub-components —
+    // it exposes the full DataTable state (rows, columns, sort, pagination, selection, etc.)
+    // from the nearest DataTable.Root.
+    return (
+      <DataTable.Root value={table}>
+        <DataTable.Toolbar>
+          <DataTable.Filters />
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Footer>
+          <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
+        </DataTable.Footer>
+      </DataTable.Root>
+    );
+  }
+  ```
+
+  `useCollectionVariables` is intentionally decoupled from DataTable and any other UI component. The hook owns only the query state and exposes plain `variables` — how those variables are rendered is entirely up to the consumer. This means future collection-based views such as Kanban boards can adopt the same hook without modification, and any custom component you build can use a GraphQL cursor-based API as its backend with minimal wiring.
+
+  ## sdk-plugin (`@tailor-platform/app-shell-sdk-plugin`)
+
+  `tableMetadata` is what bridges your TailorDB schema to the DataTable. It tells `inferColumns` how to render and filter each field — for example, which fields get a date picker, which get an enum dropdown (and with what options), and which are numeric. Without it, you would need to declare all of this manually per column.
+
+  The metadata is generated at SDK code-gen time from your TailorDB type definitions. Register the plugin in `tailor.config.ts` and run `tailor-sdk generate`:
+
+  ```ts
+  import { definePlugins } from "@tailor-platform/sdk";
+  import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+
+  export const plugins = definePlugins(
+    appShellPlugin({
+      dataTable: {
+        metadataOutputPath: "src/generated/app-shell-datatable.generated.ts",
+      },
+    })
+  );
+  ```
+
+  The generated file exports `tableMetadata`, `tableNames`, and `TableName`. Pass `tableMetadata` to `inferColumns` to get type-safe column definitions with filter editors automatically configured:
+
+  ```ts
+  import { tableMetadata } from "@/generated/app-shell-datatable.generated";
+  import { createColumnHelper } from "@tailor-platform/app-shell";
+
+  const { column, inferColumns } = createColumnHelper<Order>();
+  const infer = inferColumns(tableMetadata.order);
+
+  const columns = [
+    column(infer("title")), // string column → text filter
+    column(infer("status")), // enum column  → dropdown filter with generated values
+    column(infer("createdAt")), // datetime column → date picker filter
+  ];
+  ```
+
+  ### Typed query variables with `tableMetadata`
+
+  When using typed GraphQL documents (e.g. `TypedDocumentNode` from `@graphql-typed-document-node/core` or codegen-generated types), urql and other GraphQL clients enforce strict types on the `variables` object passed to `useQuery`. In that case, passing `tableMetadata` to `useCollectionVariables` is **required** — it is what narrows `variables.query` and `variables.order` from `unknown` to the precise types expected by the generated document.
+
+  Without `tableMetadata`, `variables.query` is typed as `Record<string, Record<string, unknown>> | undefined`, which will not satisfy the stricter generated variable types and will cause a TypeScript error at the `useQuery` call site.
+
+  Use `sdk-plugin` to generate `tableMetadata` and pass it to `useCollectionVariables`:
+
+  ```ts
+  const { variables, control } = useCollectionVariables({
+    tableMetadata: tableMetadata.order, // required for typed documents
+    params: { pageSize: 20 },
+  });
+
+  // variables.query is now BuildQueryVariables<typeof tableMetadata.order>
+  // variables.order is now { field: OrderableFieldName; direction: "Asc" | "Desc" }[]
+  // Both satisfy the types generated by GraphQL codegen.
+  const [result] = useQuery({
+    query: LIST_ORDERS, // TypedDocumentNode — variables are fully type-checked
+    variables: {
+      ...variables.pagination,
+      query: variables.query,
+      order: variables.order,
+    },
+  });
+  ```
+
+## 0.36.0
+
+### Minor Changes
+
+- e2a6f81: Add `Attachment` component and `useAttachment` hook for ERP attachment workflows with drag-and-drop upload, image/file previews, and per-item `Download`/`Delete` actions.
+
+  Use `useAttachment` to manage upload/delete state locally and flush operations to your backend on submit via `applyChanges`. Spread the returned `props` directly onto `<Attachment />`.
+
+  ```tsx
+  import { Attachment, useAttachment } from "@tailor-platform/app-shell";
+  import type { AttachmentOperation } from "@tailor-platform/app-shell";
+
+  const { props, applyChanges } = useAttachment({
+    initialItems: existingAttachments,
+    accept: "image/*,.pdf",
+  });
+
+  async function handleSubmit() {
+    // The component is agnostic to backend shape — run all operations in parallel.
+    await applyChanges((operations) =>
+      Promise.all(
+        operations.map((op) => {
+          if (op.type === "upload") return uploadToServer(op.file);
+          if (op.type === "delete") return deleteFromServer(op.item.id);
+        })
+      )
+    );
+  }
+
+  <Attachment {...props} uploadLabel="Upload" onDownload={handleDownload} />;
+  ```
+
+## 0.35.1
+
+### Patch Changes
+
+- 3b11ca4: Fix CommandPalette and DefaultSidebar not showing top-level pages that have no child pages.
+
+  When using file-based routing with a flat page structure (e.g. `pages/dashboard/page.tsx` with no sub-pages), those pages were silently excluded from the CommandPalette and the DefaultSidebar auto-generation. They now appear correctly as navigable entries.
+
+- 0d8d87e: Add top-padding in Card component"
+- 8c0eed5: Adjust `Table` cell padding so the first column uses 24px left inset and the last column uses 24px right inset (middle columns unchanged). Update `Card.Header` titles to `text-lg` to align with `DescriptionCard`, `ActivityCard`, and `ActionPanel`.
+- e841014: Enable richColors in toast
+
+## 0.35.0
+
+### Minor Changes
+
+- d284d6a: Add `searchSources` prop to `AppShell` to wire async, prefix-based search into the CommandPalette. Each source declares a short `prefix` (e.g. `"ORD"`) and an async `search` function. When the user types that prefix followed by `:`, the palette switches into search mode: Actions and Pages sections are hidden and only results from that source are shown.
+
+  The empty-input state of the palette now includes a **Search Modes** section that lists every registered source, so users can discover and activate a mode with a single click instead of remembering the prefix syntax.
+
+  `DefaultSidebar` always renders a **Search** entry that opens the palette (Cmd+K also works globally), because routes and registered actions are always searchable regardless of whether any `searchSources` are configured.
+
+  ```tsx
+  import { AppShell, type SearchSource } from "@tailor-platform/app-shell";
+
+  const searchSources: readonly SearchSource[] = [
+    {
+      prefix: "ORD",
+      title: "Orders",
+      search: async (query, { signal }) => {
+        const results = await api.searchOrders(query, { signal });
+        return results.map((o) => ({
+          key: o.id,
+          label: o.number,
+          path: `/orders/${o.id}`,
+        }));
+      },
+    },
+  ];
+
+  <AppShell searchSources={searchSources}>
+    <SidebarLayout sidebar={<DefaultSidebar />} />
+  </AppShell>;
+  ```
+
+### Patch Changes
+
+- 5dc2d7f: Dependencies updated
+
+  - Updated [react](https://www.npmjs.com/package/react) (^19.2.4 -> ^19.2.5)
+  - Updated [react-dom](https://www.npmjs.com/package/react-dom) (^19.2.4 -> ^19.2.5)
+
+- 202f046: Updated [react-router](https://www.npmjs.com/package/react-router) (^7.14.0 -> ^7.14.1)
+- 307c4ef: Updated [lucide-react](https://www.npmjs.com/package/lucide-react) (^1.7.0 -> ^1.8.0)
+- b5e4352: Fixed a bug where placing a guard component between `AuthProvider` and `AppShell` could block `AppShell` from mounting, preventing the authentication flow from ever starting and leaving the app stuck in an unauthenticated state.
+
 ## 0.34.0
 
 ### Minor Changes

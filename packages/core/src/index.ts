@@ -95,6 +95,14 @@ export {
   type ActivityCardItemProps,
 } from "./components/activity-card";
 export { ActionPanel, type ActionPanelProps } from "./components/action-panel";
+export {
+  Attachment,
+  useAttachment,
+  type AttachmentProps,
+  type AttachmentItem,
+  type AttachmentOperation,
+  type UseAttachmentOptions,
+} from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
@@ -171,3 +179,54 @@ export {
   type UseLineItemsOptions,
   type UseLineItemsReturn,
 } from "./components/line-items";
+
+// Collection (shared across DataTable, Kanban, Gantt, etc.)
+export {
+  OPERATORS_BY_FILTER_TYPE,
+  fieldTypeToSortConfig,
+  fieldTypeToFilterConfig,
+  type SortConfig,
+  type FilterConfig,
+  type SortState,
+  type Filter,
+  type FilterOperator,
+  type SelectOption,
+  type PageInfo,
+  type CollectionVariables,
+  type CollectionControl,
+  type CollectionResult,
+  type NodeType,
+  type PaginationVariables,
+  type UseCollectionOptions,
+  type UseCollectionReturn,
+  type FieldType,
+  type FieldMetadata,
+  type TableMetadata,
+  type TableMetadataMap,
+  type BuildQueryVariables,
+  type TableMetadataFilter,
+  type TableFieldName,
+  type TableOrderableFieldName,
+} from "./types/collection";
+
+// DataTable
+export {
+  DataTable,
+  useDataTable,
+  useDataTableContext,
+  createColumnHelper,
+  type DataTablePaginationProps,
+  type DataTableRootProps,
+  type Column,
+  type DataTableData,
+  type RowAction,
+  type UseDataTableOptions,
+  type UseDataTableReturn,
+  type MetadataFieldOptions,
+  type DataTableContextValue,
+} from "./components/data-table";
+export { useCollectionVariables } from "./hooks/use-collection-variables";
+export {
+  CollectionControlProvider,
+  useCollectionControl,
+} from "./contexts/collection-control-context";

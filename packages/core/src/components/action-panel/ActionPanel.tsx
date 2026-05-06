@@ -132,7 +132,7 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
 
   return (
     <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>
-      <Card.Header title={title} className="astw:text-lg astw:px-8" />
+      <Card.Header title={title} className="astw:px-8" />
       <Card.Content className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
           <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">

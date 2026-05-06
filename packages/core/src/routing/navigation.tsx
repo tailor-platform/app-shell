@@ -69,7 +69,8 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
         module.path,
         resolveTitle,
       );
-      if (visibleResources.length === 0) return null;
+      // Skip if no visible resources AND the module itself is not directly navigable
+      if (visibleResources.length === 0 && !module.meta.menuItemClickable) return null;
 
       return { module, resources: visibleResources };
     }),
@@ -80,7 +81,7 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
     .map(({ module, resources }) => {
       return {
         title: resolveTitle(module.meta.title, module.path),
-        url: module.meta.menuItemClickable ? module.path : undefined,
+        url: module.meta.menuItemClickable ? module.path || "/" : undefined,
         icon: module.meta.icon || <Table />,
         items: resources,
       };

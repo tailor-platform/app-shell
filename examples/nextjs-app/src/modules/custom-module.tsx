@@ -26,6 +26,7 @@ import { salesInvoiceDemoResource } from "./pages/sales-invoice-demo";
 import { goodsReceiptDemoResource } from "./pages/goods-receipt-demo";
 import { workOrderDemoResource } from "./pages/work-order-demo";
 import { stockTransferDemoResource } from "./pages/stock-transfer-demo";
+import { dataTableDemoResource } from "./pages/data-table-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -124,7 +125,7 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
-              to="/custom-page/layout-slots-demo"
+              to="/custom-page/layout-patterns"
               style={{
                 color: "hsl(var(--primary))",
                 textDecoration: "underline",
@@ -253,6 +254,17 @@ export const customPageModule = defineModule({
               Stock transfer (row actions)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/data-table-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              DataTable Demo (sortable columns, row actions, pagination)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -284,5 +296,6 @@ export const customPageModule = defineModule({
     goodsReceiptDemoResource,
     workOrderDemoResource,
     stockTransferDemoResource,
+    dataTableDemoResource,
   ],
 });

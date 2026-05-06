@@ -59,6 +59,8 @@ const dashboardModule = defineModule({
 // Renders as: Dashboard
 ```
 
+For the root path (`/` or `""`), when no `meta.title` is set, the title falls back to the localized string `"Home"` (English) or `"ホーム"` (Japanese).
+
 ### Icon Resolution
 
 Icons are resolved from the module's `meta.icon`:

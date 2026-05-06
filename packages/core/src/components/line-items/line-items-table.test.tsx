@@ -40,15 +40,21 @@ const data: Row[] = [
 function Harness({
   withTotals = false,
   withRowActions = false,
+  loading = false,
+  skeletonRowCount,
 }: {
   withTotals?: boolean;
   withRowActions?: boolean;
+  loading?: boolean;
+  skeletonRowCount?: number;
 }) {
   const lineItems = useLineItems<Row>({ fields, data });
   return (
     <LineItems.Root value={lineItems}>
       <LineItems.Table
         maxBodyHeight={300}
+        loading={loading}
+        skeletonRowCount={skeletonRowCount}
         rowActions={
           withRowActions
             ? (line) => <button data-testid={`act-${line.lineRef}`}>×</button>
@@ -85,6 +91,18 @@ describe("LineItems.Table", () => {
     // Sum of qty = 7, sum of total = 70.
     expect(screen.getByText("7")).toBeTruthy();
     expect(screen.getByText("70")).toBeTruthy();
+  });
+
+  it("renders skeleton rows in place of data rows when loading is true", () => {
+    const { container, rerender } = render(<Harness loading skeletonRowCount={5} />);
+    const skeletons = container.querySelectorAll('[data-slot="line-items-skeleton-row"]');
+    expect(skeletons.length).toBe(5);
+    // No real data rows while loading (virtualizer rows would be `data-slot="table-row"`).
+    expect(container.querySelectorAll('[data-slot="table-row"]').length).toBe(0);
+
+    // Toggling loading off removes the skeleton rows.
+    rerender(<Harness loading={false} />);
+    expect(container.querySelectorAll('[data-slot="line-items-skeleton-row"]').length).toBe(0);
   });
 
   it("registers a trailing pinned-right column when rowActions prop is set", () => {

@@ -304,11 +304,8 @@ function EditableFieldCell<T extends LineItemsRowData>(p: {
         className,
       )}
       value={local}
-      onChange={(e) => {
-        const v = e.target.value;
-        setLocal(v);
-        onCommit(parseLocalToCommit(v));
-      }}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => onCommit(parseLocalToCommit(local))}
       onFocus={onFocus}
       onKeyDown={onKeyDown}
     />
@@ -462,11 +459,8 @@ function DateFieldCell<T extends LineItemsRowData>({
       value={local}
       min={t.min}
       max={t.max}
-      onChange={(e) => {
-        const v = e.target.value;
-        setLocal(v);
-        onCommit(v);
-      }}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => onCommit(local)}
       onFocus={onFocus}
       onKeyDown={onKeyDown}
     />

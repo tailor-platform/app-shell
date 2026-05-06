@@ -53,8 +53,7 @@ export function LineItemsRoot<T extends LineItemsRowData>({
   children,
 }: LineItemsRootProps<T>) {
   const [fullscreen, setFullscreen] = React.useState(false);
-  const [totalsRowFn, setTotalsRowFn] =
-    React.useState<LineItemsTotalsRowFn<T> | null>(null);
+  const [totalsRowFn, setTotalsRowFn] = React.useState<LineItemsTotalsRowFn<T> | null>(null);
 
   React.useEffect(() => {
     if (!fullscreen) return undefined;
@@ -93,11 +92,7 @@ export function LineItemsRoot<T extends LineItemsRowData>({
         data-slot="line-items"
         data-fullscreen={fullscreen ? "true" : undefined}
         onPointerDown={onBackdropPointerDown}
-        style={
-          fullscreen
-            ? { animation: "line-items-fullscreen-in 220ms ease-out" }
-            : undefined
-        }
+        style={fullscreen ? { animation: "line-items-fullscreen-in 220ms ease-out" } : undefined}
         className={cn(
           "astw:flex astw:w-full astw:flex-col astw:gap-1",
           // Fullscreen overlay: viewport-filling with a dark backdrop. Descendant

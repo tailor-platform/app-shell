@@ -10,8 +10,12 @@ Renders a trailing per-row actions column (delete, view, attach, etc.) auto-pinn
 <LineItems.Table
   rowActions={(line) => (
     <>
-      <Button variant="ghost" size="icon" onClick={() => onView(line)}>↗</Button>
-      <Button variant="ghost" size="icon" onClick={() => hook.removeLine(line.lineRef)}>×</Button>
+      <Button variant="ghost" size="icon" onClick={() => onView(line)}>
+        ↗
+      </Button>
+      <Button variant="ghost" size="icon" onClick={() => hook.removeLine(line.lineRef)}>
+        ×
+      </Button>
     </>
   )}
   rowActionsWidth={84}

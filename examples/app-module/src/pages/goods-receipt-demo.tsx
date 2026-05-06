@@ -70,9 +70,7 @@ const fields: LineItemsField<GRLine>[] = [
     width: 110,
     // 🎨 Highlight the cell red when received quantity differs from expected.
     className: (l) =>
-      l.receivedQty !== l.expectedQty
-        ? "astw:bg-destructive/10 astw:text-destructive"
-        : undefined,
+      l.receivedQty !== l.expectedQty ? "astw:bg-destructive/10 astw:text-destructive" : undefined,
   }),
   f.field({
     key: "condition",
@@ -108,10 +106,46 @@ const GR_CATALOG: ReadonlyArray<{ sku: string; productName: string }> = [
 ];
 
 const seed = (): GRLine[] => [
-  { lineRef: "GR1", sku: "SKU-1001", productName: "Indigo Denim Roll",     expectedQty: 50, receivedQty: 50, condition: "OK",      lotNumber: "L-0612", expiryDate: "2027-06-30" },
-  { lineRef: "GR2", sku: "SKU-2040", productName: "Copper Rivet Pack",     expectedQty: 100, receivedQty: 92, condition: "SHORT",  lotNumber: "L-0613", expiryDate: "2028-01-15" },
-  { lineRef: "GR3", sku: "SKU-3300", productName: "Organic Cotton Jersey", expectedQty: 200, receivedQty: 200, condition: "OK",     lotNumber: "L-0614", expiryDate: "2027-03-10" },
-  { lineRef: "GR4", sku: "SKU-4412", productName: "Leather Patch Kit",     expectedQty: 30, receivedQty: 28, condition: "DAMAGED",  lotNumber: "L-0615", expiryDate: "2026-11-22" },
+  {
+    lineRef: "GR1",
+    sku: "SKU-1001",
+    productName: "Indigo Denim Roll",
+    expectedQty: 50,
+    receivedQty: 50,
+    condition: "OK",
+    lotNumber: "L-0612",
+    expiryDate: "2027-06-30",
+  },
+  {
+    lineRef: "GR2",
+    sku: "SKU-2040",
+    productName: "Copper Rivet Pack",
+    expectedQty: 100,
+    receivedQty: 92,
+    condition: "SHORT",
+    lotNumber: "L-0613",
+    expiryDate: "2028-01-15",
+  },
+  {
+    lineRef: "GR3",
+    sku: "SKU-3300",
+    productName: "Organic Cotton Jersey",
+    expectedQty: 200,
+    receivedQty: 200,
+    condition: "OK",
+    lotNumber: "L-0614",
+    expiryDate: "2027-03-10",
+  },
+  {
+    lineRef: "GR4",
+    sku: "SKU-4412",
+    productName: "Leather Patch Kit",
+    expectedQty: 30,
+    receivedQty: 28,
+    condition: "DAMAGED",
+    lotNumber: "L-0615",
+    expiryDate: "2026-11-22",
+  },
 ];
 
 /* ======================================================================== */
@@ -160,7 +194,8 @@ export function GoodsReceiptDemoPage() {
               <div className="astw:flex astw:min-w-0 astw:flex-col astw:gap-1">
                 <h3 className="astw:leading-none astw:font-semibold">Receipt lines</h3>
                 <p className="astw:text-muted-foreground astw:text-sm">
-                  {lineItems.allLines.length} lines · scroll horizontally — SKU + Product stay pinned
+                  {lineItems.allLines.length} lines · scroll horizontally — SKU + Product stay
+                  pinned
                 </p>
               </div>
               <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-1">

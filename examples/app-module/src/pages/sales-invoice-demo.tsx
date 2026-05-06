@@ -108,10 +108,42 @@ const SERVICE_CATALOG: ReadonlyArray<{ description: string; rate: number; taxCod
 ];
 
 const seed = (): InvoiceLine[] => [
-  { lineRef: "L1", description: "Consulting hours — June",  quantity: 24, rate: 150, discountPct: 0,  taxCode: "STD", amount: 0 },
-  { lineRef: "L2", description: "Premium support — Q2",     quantity: 1,  rate: 1200, discountPct: 10, taxCode: "STD", amount: 0 },
-  { lineRef: "L3", description: "Travel reimbursement",     quantity: 1,  rate: 480,  discountPct: 0,  taxCode: "EXM", amount: 0 },
-  { lineRef: "L4", description: "Training session — half day", quantity: 2, rate: 600, discountPct: 5, taxCode: "RED", amount: 0 },
+  {
+    lineRef: "L1",
+    description: "Consulting hours — June",
+    quantity: 24,
+    rate: 150,
+    discountPct: 0,
+    taxCode: "STD",
+    amount: 0,
+  },
+  {
+    lineRef: "L2",
+    description: "Premium support — Q2",
+    quantity: 1,
+    rate: 1200,
+    discountPct: 10,
+    taxCode: "STD",
+    amount: 0,
+  },
+  {
+    lineRef: "L3",
+    description: "Travel reimbursement",
+    quantity: 1,
+    rate: 480,
+    discountPct: 0,
+    taxCode: "EXM",
+    amount: 0,
+  },
+  {
+    lineRef: "L4",
+    description: "Training session — half day",
+    quantity: 2,
+    rate: 600,
+    discountPct: 5,
+    taxCode: "RED",
+    amount: 0,
+  },
 ];
 
 /* ======================================================================== */
@@ -283,10 +315,7 @@ function AddInvoiceLineRow({
 }) {
   const [resetKey, setResetKey] = React.useState(0);
   return (
-    <div
-      style={{ margin: 8 }}
-      className="astw:flex astw:items-center astw:gap-1"
-    >
+    <div style={{ margin: 8 }} className="astw:flex astw:items-center astw:gap-1">
       <Combobox<{ description: string; rate: number; taxCode: string }>
         key={resetKey}
         items={SERVICE_CATALOG as Array<{ description: string; rate: number; taxCode: string }>}

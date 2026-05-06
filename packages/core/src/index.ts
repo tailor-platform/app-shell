@@ -112,6 +112,11 @@ export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
 export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
+export {
+  BulkItemPicker,
+  type BulkItemPickerNode,
+  type BulkItemPickerProps,
+} from "./components/bulk-item-picker";
 export { type MappedItem, type ItemGroup } from "./components/dropdown-items";
 export {
   CsvImporter,

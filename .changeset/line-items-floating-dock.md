@@ -19,8 +19,12 @@ Three new compound parts hosted at the bottom-center of the viewport when the ho
     <LineItems.SelectionBar>
       {({ bulkRemove, clear }) => (
         <>
-          <button style={lineItemsFloatingBarStyles.primaryButton} onClick={bulkRemove}>Delete</button>
-          <button style={lineItemsFloatingBarStyles.secondaryButton} onClick={clear}>Clear</button>
+          <button style={lineItemsFloatingBarStyles.primaryButton} onClick={bulkRemove}>
+            Delete
+          </button>
+          <button style={lineItemsFloatingBarStyles.secondaryButton} onClick={clear}>
+            Clear
+          </button>
         </>
       )}
     </LineItems.SelectionBar>

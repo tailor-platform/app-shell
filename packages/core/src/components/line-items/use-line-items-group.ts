@@ -79,7 +79,9 @@ export type LineItemsGroupReturn<G extends LineItemsGroupInput> = {
  * );
  * ```
  */
-export function useLineItemsGroup<G extends LineItemsGroupInput>(group: G): LineItemsGroupReturn<G> {
+export function useLineItemsGroup<G extends LineItemsGroupInput>(
+  group: G,
+): LineItemsGroupReturn<G> {
   // Aggregate `isDirty` is just an OR — derive on every render. No memo needed
   // because it's an O(N) boolean fold and the React rules-of-hooks don't allow
   // dynamic dep arrays anyway.

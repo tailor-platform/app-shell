@@ -403,8 +403,7 @@ const pillStyle: React.CSSProperties = {
   padding: "12px 20px",
   borderRadius: "16px",
   backgroundColor: "var(--foreground)",
-  boxShadow:
-    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+  boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
 };
 
 const labelStyle: React.CSSProperties = {
@@ -631,9 +630,7 @@ export function LineItemsSelectionBar<T extends LineItemsRowData>({
   const { hook } = useLineItemsRoot<T>();
   if (hook.selectedIds.length === 0) return null;
 
-  const labelText = label
-    ? label(hook.selectedIds)
-    : `${hook.selectedIds.length} selected`;
+  const labelText = label ? label(hook.selectedIds) : `${hook.selectedIds.length} selected`;
 
   return (
     <div data-slot="line-items-selection-bar" style={pillStyle}>

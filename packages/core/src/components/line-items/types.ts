@@ -232,6 +232,11 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   setFilter: (q: string) => void;
   /** Insert a new logical line. Returns the new lineRef. */
   addLine: (data: Partial<Omit<T, "lineRef">>, opts?: { afterLineRef?: string | null }) => string;
+  /** Insert multiple lines in one render. Returns the new lineRefs in input order. */
+  addLines: (
+    items: ReadonlyArray<Partial<Omit<T, "lineRef">>>,
+    opts?: { afterLineRef?: string | null },
+  ) => string[];
   removeLine: (lineRef: string) => void;
   /** Single-cell typed update. */
   updateField: <K extends keyof T>(lineRef: string, key: K, value: T[K]) => void;

@@ -130,30 +130,37 @@ const PARTS_CATALOG: ReadonlyArray<{ partSku: string; partName: string; uom: str
   { partSku: "FAB-002", partName: "Cotton fabric", uom: "M" },
   { partSku: "TR-220", partName: "Cotton thread", uom: "M" },
   { partSku: "BTN-010", partName: "Brass buttons", uom: "EA" },
-  { partSku: "ZIP-007", partName: "YKK zipper 7\"", uom: "EA" },
+  { partSku: "ZIP-007", partName: 'YKK zipper 7"', uom: "EA" },
 ];
 
-const STEP_CATALOG: ReadonlyArray<{ step: string; workstation: string; durationMinutes: number }> = [
-  { step: "Cut fabric", workstation: "WS-01", durationMinutes: 15 },
-  { step: "Sew panels", workstation: "WS-02", durationMinutes: 45 },
-  { step: "Attach zipper", workstation: "WS-02", durationMinutes: 12 },
-  { step: "Press seams", workstation: "WS-03", durationMinutes: 8 },
-  { step: "Final QA inspect", workstation: "WS-04", durationMinutes: 6 },
-];
+const STEP_CATALOG: ReadonlyArray<{ step: string; workstation: string; durationMinutes: number }> =
+  [
+    { step: "Cut fabric", workstation: "WS-01", durationMinutes: 15 },
+    { step: "Sew panels", workstation: "WS-02", durationMinutes: 45 },
+    { step: "Attach zipper", workstation: "WS-02", durationMinutes: 12 },
+    { step: "Press seams", workstation: "WS-03", durationMinutes: 8 },
+    { step: "Final QA inspect", workstation: "WS-04", durationMinutes: 6 },
+  ];
 
 const seedComponents = (): ComponentLine[] => [
-  { lineRef: "C1", partSku: "FAB-001", partName: "Indigo denim",     qtyRequired: 2.5, uom: "M" },
-  { lineRef: "C2", partSku: "TR-220",  partName: "Cotton thread",     qtyRequired: 200, uom: "M" },
-  { lineRef: "C3", partSku: "BTN-010", partName: "Brass buttons",     qtyRequired: 12, uom: "EA" },
-  { lineRef: "C4", partSku: "ZIP-007", partName: "YKK zipper 7\"",    qtyRequired: 1, uom: "EA" },
+  { lineRef: "C1", partSku: "FAB-001", partName: "Indigo denim", qtyRequired: 2.5, uom: "M" },
+  { lineRef: "C2", partSku: "TR-220", partName: "Cotton thread", qtyRequired: 200, uom: "M" },
+  { lineRef: "C3", partSku: "BTN-010", partName: "Brass buttons", qtyRequired: 12, uom: "EA" },
+  { lineRef: "C4", partSku: "ZIP-007", partName: 'YKK zipper 7"', qtyRequired: 1, uom: "EA" },
 ];
 
 const seedOperations = (): OperationLine[] => [
-  { lineRef: "O1", sequence: 10, step: "Cut fabric",       workstation: "WS-01", durationMinutes: 15 },
-  { lineRef: "O2", sequence: 20, step: "Sew panels",       workstation: "WS-02", durationMinutes: 45 },
-  { lineRef: "O3", sequence: 30, step: "Attach zipper",    workstation: "WS-02", durationMinutes: 12 },
-  { lineRef: "O4", sequence: 40, step: "Press seams",      workstation: "WS-03", durationMinutes: 8  },
-  { lineRef: "O5", sequence: 50, step: "Final QA inspect", workstation: "WS-04", durationMinutes: 6  },
+  { lineRef: "O1", sequence: 10, step: "Cut fabric", workstation: "WS-01", durationMinutes: 15 },
+  { lineRef: "O2", sequence: 20, step: "Sew panels", workstation: "WS-02", durationMinutes: 45 },
+  { lineRef: "O3", sequence: 30, step: "Attach zipper", workstation: "WS-02", durationMinutes: 12 },
+  { lineRef: "O4", sequence: 40, step: "Press seams", workstation: "WS-03", durationMinutes: 8 },
+  {
+    lineRef: "O5",
+    sequence: 50,
+    step: "Final QA inspect",
+    workstation: "WS-04",
+    durationMinutes: 6,
+  },
 ];
 
 /* ======================================================================== */
@@ -208,12 +215,7 @@ export function WorkOrderDemoPage() {
           >
             Discard
           </Button>,
-          <Button
-            key="save"
-            size="sm"
-            onClick={() => void handleSave()}
-            disabled={!group.isDirty}
-          >
+          <Button key="save" size="sm" onClick={() => void handleSave()} disabled={!group.isDirty}>
             Save changes
           </Button>,
         ]}
@@ -225,7 +227,9 @@ export function WorkOrderDemoPage() {
             <Stat label="Operations" value={`${operations.allLines.length} steps`} />
             <Stat label="Total duration" value={`${totalDuration} min`} />
             {group.isDirty ? (
-              <span className="astw:text-muted-foreground astw:text-xs">Unsaved changes across both collections</span>
+              <span className="astw:text-muted-foreground astw:text-xs">
+                Unsaved changes across both collections
+              </span>
             ) : null}
           </Card.Content>
         </Card.Root>
@@ -342,11 +346,7 @@ function CollectionSection<T extends LineItemsRowData>({
 type PartItem = { partSku: string; partName: string; uom: string };
 type StepItem = { step: string; workstation: string; durationMinutes: number };
 
-function AddComponentLineRow({
-  onPick,
-}: {
-  onPick: (p: PartItem) => void;
-}) {
+function AddComponentLineRow({ onPick }: { onPick: (p: PartItem) => void }) {
   const [resetKey, setResetKey] = React.useState(0);
   return (
     <div style={{ margin: 8 }} className="astw:flex astw:items-center astw:gap-1">
@@ -384,11 +384,7 @@ function AddComponentLineRow({
   );
 }
 
-function AddOperationLineRow({
-  onPick,
-}: {
-  onPick: (p: StepItem) => void;
-}) {
+function AddOperationLineRow({ onPick }: { onPick: (p: StepItem) => void }) {
   const [resetKey, setResetKey] = React.useState(0);
   return (
     <div style={{ margin: 8 }} className="astw:flex astw:items-center astw:gap-1">

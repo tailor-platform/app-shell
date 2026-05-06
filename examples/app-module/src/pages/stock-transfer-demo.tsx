@@ -103,9 +103,33 @@ const ST_CATALOG: ReadonlyArray<{ sku: string; productName: string }> = [
 ];
 
 const seed = (): TransferLine[] => [
-  { lineRef: "T1", sku: "SKU-1001", productName: "Indigo Denim Roll",     fromWarehouse: "WH-NYC", toWarehouse: "WH-LAX", quantity: 20, lotNumber: "L-0701" },
-  { lineRef: "T2", sku: "SKU-2040", productName: "Copper Rivet Pack",     fromWarehouse: "WH-NYC", toWarehouse: "WH-CHI", quantity: 50, lotNumber: "L-0702" },
-  { lineRef: "T3", sku: "SKU-3300", productName: "Organic Cotton Jersey", fromWarehouse: "WH-DAL", toWarehouse: "WH-LAX", quantity: 80, lotNumber: "L-0703" },
+  {
+    lineRef: "T1",
+    sku: "SKU-1001",
+    productName: "Indigo Denim Roll",
+    fromWarehouse: "WH-NYC",
+    toWarehouse: "WH-LAX",
+    quantity: 20,
+    lotNumber: "L-0701",
+  },
+  {
+    lineRef: "T2",
+    sku: "SKU-2040",
+    productName: "Copper Rivet Pack",
+    fromWarehouse: "WH-NYC",
+    toWarehouse: "WH-CHI",
+    quantity: 50,
+    lotNumber: "L-0702",
+  },
+  {
+    lineRef: "T3",
+    sku: "SKU-3300",
+    productName: "Organic Cotton Jersey",
+    fromWarehouse: "WH-DAL",
+    toWarehouse: "WH-LAX",
+    quantity: 80,
+    lotNumber: "L-0703",
+  },
 ];
 
 /* ======================================================================== */

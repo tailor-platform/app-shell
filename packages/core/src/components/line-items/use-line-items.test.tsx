@@ -79,6 +79,34 @@ describe("useLineItems", () => {
     expect(cs.isEmpty).toBe(false);
   });
 
+  it("addLines inserts multiple rows in a single render and emits one add op per row", () => {
+    const { result } = renderHook(() => useLineItems<DemoLine>({ fields, data: seed() }));
+    let refs: string[] = [];
+    act(() => {
+      refs = result.current.addLines([
+        { sku: "M", qty: 1, unitPrice: 10, note: "" },
+        { sku: "N", qty: 2, unitPrice: 20, note: "" },
+        { sku: "O", qty: 3, unitPrice: 30, note: "" },
+      ]);
+    });
+    expect(refs).toHaveLength(3);
+    expect(result.current.allLines).toHaveLength(5);
+    expect(result.current.allLines.slice(2).map((l) => l.sku)).toEqual(["M", "N", "O"]);
+    const cs = result.current.getChangeSet();
+    const addOps = cs.lineChanges.filter((c) => c.action === "add");
+    expect(addOps).toHaveLength(3);
+    expect(addOps.map((c) => c.tempId)).toEqual(refs);
+  });
+
+  it("addLines is a no-op for an empty input array", () => {
+    const { result } = renderHook(() => useLineItems<DemoLine>({ fields, data: seed() }));
+    act(() => {
+      result.current.addLines([]);
+    });
+    expect(result.current.allLines).toHaveLength(2);
+    expect(result.current.isDirty).toBe(false);
+  });
+
   it("updateField writes a single cell and shows up as an update in the change set", () => {
     const { result } = renderHook(() => useLineItems<DemoLine>({ fields, data: seed() }));
     act(() => {
@@ -308,12 +336,13 @@ describe("useLineItems", () => {
         type: { kind: "text" },
         // Two attribute objects compare equal when their `id` matches even if
         // labels diverge — typical for app-supplied id-based equality.
-        equals: (a, b) =>
-          (a as { id: string } | null)?.id === (b as { id: string } | null)?.id,
+        equals: (a, b) => (a as { id: string } | null)?.id === (b as { id: string } | null)?.id,
       }),
     ];
     const initial: AttrLine[] = [{ lineRef: "a", attr: { id: "x", label: "Old label" } }];
-    const { result } = renderHook(() => useLineItems<AttrLine>({ fields: attrFields, data: initial }));
+    const { result } = renderHook(() =>
+      useLineItems<AttrLine>({ fields: attrFields, data: initial }),
+    );
     act(() => {
       // Same id, different label — should not be dirty under custom equals.
       result.current.updateField("a", "attr", { id: "x", label: "New label" });

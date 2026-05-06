@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   ActionPanel,
   ActivityCard,
+  BulkItemPicker,
   Button,
   Card,
   Combobox,
@@ -12,6 +13,7 @@ import {
   defineResource,
   lineItemsFloatingBarStyles,
   useLineItems,
+  type BulkItemPickerNode,
   type LineItemsField,
   type LineItemsMode,
   type LineItemsRowData,
@@ -20,6 +22,24 @@ import {
 import { activityCardDemoActivities } from "./activity-card-demo";
 import { ExternalLinkIcon, FileTextIcon, ReceiptIcon } from "./action-panel-demo";
 import { mockPurchaseOrder } from "./purchase-order-demo";
+
+const ModeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+  </svg>
+);
 
 /* ======================================================================== */
 /* Domain                                                                    */
@@ -32,21 +52,83 @@ type POLine = LineItemsRowData & {
   unitPrice: number;
   total: number;
   expectedReady: string;
-  note: string;
 };
 
 type CatalogItem = {
   sku: string;
   productName: string;
   unitPrice: number;
+  /** Optional per-variant rows. When present, the bulk picker treats this
+      product as a parent and lets the user pick individual variants. */
+  variants?: CatalogVariant[];
+  /** Available stock for flat products (no variants). */
+  available?: number;
+};
+
+type CatalogVariant = {
+  sku: string;
+  label: string;
+  unitPrice: number;
+  available: number;
 };
 
 const CATALOG: CatalogItem[] = [
-  { sku: "SKU-1001", productName: "Indigo Denim Roll", unitPrice: 24.5 },
-  { sku: "SKU-2040", productName: "Copper Rivet Pack", unitPrice: 8.25 },
-  { sku: "SKU-3300", productName: "Organic Cotton Jersey", unitPrice: 15.0 },
-  { sku: "SKU-4412", productName: "Leather Patch Kit", unitPrice: 12.75 },
+  {
+    sku: "SKU-1001",
+    productName: "Indigo Denim Roll",
+    unitPrice: 24.5,
+    available: 18,
+  },
+  {
+    sku: "SKU-2040",
+    productName: "Copper Rivet Pack",
+    unitPrice: 8.25,
+    available: 42,
+  },
+  {
+    sku: "SKU-3300",
+    productName: "Organic Cotton Jersey",
+    unitPrice: 15.0,
+    variants: [
+      { sku: "SKU-3300-NAT-S", label: "Natural / S", unitPrice: 15.0, available: 9 },
+      { sku: "SKU-3300-NAT-M", label: "Natural / M", unitPrice: 15.0, available: 12 },
+      { sku: "SKU-3300-NAT-L", label: "Natural / L", unitPrice: 15.0, available: 7 },
+      { sku: "SKU-3300-CHA-M", label: "Charcoal / M", unitPrice: 15.0, available: 5 },
+    ],
+  },
+  {
+    sku: "SKU-4412",
+    productName: "Leather Patch Kit",
+    unitPrice: 12.75,
+    variants: [
+      { sku: "SKU-4412-BRN", label: "Brown", unitPrice: 12.75, available: 14 },
+      { sku: "SKU-4412-BLK", label: "Black", unitPrice: 13.5, available: 11 },
+    ],
+  },
 ];
+
+/** Each leaf carries enough info to build a line via `addLines`. */
+type BulkPickerLeaf = { sku: string; productName: string; unitPrice: number };
+
+function catalogToTree(catalog: ReadonlyArray<CatalogItem>): BulkItemPickerNode<BulkPickerLeaf>[] {
+  return catalog.map((item) => {
+    const node: BulkItemPickerNode<BulkPickerLeaf> = {
+      id: item.sku,
+      data: { sku: item.sku, productName: item.productName, unitPrice: item.unitPrice },
+    };
+    if (item.variants?.length) {
+      node.children = item.variants.map((v) => ({
+        id: v.sku,
+        data: {
+          sku: v.sku,
+          productName: `${item.productName} — ${v.label}`,
+          unitPrice: v.unitPrice,
+        },
+      }));
+    }
+    return node;
+  });
+}
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const fmtCurrency = (n: number) => n.toFixed(2);
@@ -85,7 +167,7 @@ const fields: LineItemsField<POLine>[] = [
     type: { kind: "text" },
     sort: { comparator: (a, b) => a.productName.localeCompare(b.productName) },
     search: (l, q) => l.productName.toLowerCase().includes(q.toLowerCase()),
-    flex: true,
+    width: 240,
   }),
   f.field({
     key: "quantity",
@@ -110,7 +192,9 @@ const fields: LineItemsField<POLine>[] = [
   f.field({
     key: "total",
     label: "Total",
-    render: (l) => fmtCurrency(l.total),
+    // Computed live from the row — no data-sync effect, no per-keystroke
+    // 1200-row scan. The stored `total` is unused for display.
+    render: (l) => fmtCurrency(round2(l.quantity * l.unitPrice)),
     align: "right",
     width: 110,
   }),
@@ -122,15 +206,6 @@ const fields: LineItemsField<POLine>[] = [
     type: { kind: "date" },
     sort: { comparator: (a, b) => a.expectedReady.localeCompare(b.expectedReady) },
     width: 140,
-  }),
-  f.field({
-    key: "note",
-    label: "Note",
-    render: (l) => l.note,
-    editable: ["edit", "amend"],
-    type: { kind: "text" },
-    commit: "metadata",
-    width: 200,
   }),
 ];
 
@@ -162,7 +237,6 @@ function buildInitialLines(): POLine[] {
       unitPrice,
       total: round2(quantity * unitPrice),
       expectedReady: iso,
-      note: i % 50 === 0 ? "Highlight row" : "",
     });
   }
   return lines;
@@ -185,9 +259,37 @@ export const lineItemsDemoResource = defineResource({
  * containing demo mode controls + the LineItems card + the floating action
  * dock. Pass `initialData={[]}` to start from empty and exercise the add-row.
  */
-export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {}) {
+export type LineItemsSectionApi = {
+  mode: LineItemsMode;
+  setMode: (m: LineItemsMode) => void;
+};
+
+export function LineItemsSection({
+  initialData,
+  hideDemoControlsCard = false,
+  onApiChange,
+}: {
+  initialData?: POLine[];
+  /** Hide the inline "Mode" demo card (e.g. when those controls have been
+      hoisted into the page's ActionPanel). */
+  hideDemoControlsCard?: boolean;
+  /** Fires whenever the section's mode changes so the parent page can mirror
+      it into a sidebar ActionPanel. */
+  onApiChange?: (api: LineItemsSectionApi) => void;
+} = {}) {
   const initialLines = React.useMemo(() => initialData ?? buildInitialLines(), [initialData]);
   const [mode, setMode] = React.useState<LineItemsMode>("edit");
+  const [bulkOpen, setBulkOpen] = React.useState(false);
+  const tree = React.useMemo(() => catalogToTree(CATALOG), []);
+
+  // 🧪 Demo Dummy: simulate an initial async data fetch so the
+  // `LineItems.Table loading` skeleton is visible on page load. Real apps
+  // would derive `loading` from their query/fetcher state.
+  const [loading, setLoading] = React.useState(true);
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setLoading(false), 600);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const lineItems = useLineItems<POLine>({
     fields,
@@ -196,21 +298,10 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
     selection: true,
   });
 
-  // Keep `total` in sync with quantity / unitPrice so the read-only column
-  // reflects the latest cell edits without an external compute step. Depends
-  // on `allLines` (whose reference only changes when row state actually
-  // changes) instead of the whole hook return — otherwise this effect would
-  // re-fire on every render.
-  const allLines = lineItems.allLines;
-  const updateLines = lineItems.updateLines;
   React.useEffect(() => {
-    const updates: { lineRef: string; patch: Partial<POLine> }[] = [];
-    for (const l of allLines) {
-      const expected = round2(l.quantity * l.unitPrice);
-      if (expected !== l.total) updates.push({ lineRef: l.lineRef, patch: { total: expected } });
-    }
-    if (updates.length) updateLines(updates);
-  }, [allLines, updateLines]);
+    if (!onApiChange) return;
+    onApiChange({ mode, setMode });
+  }, [mode, onApiChange]);
 
   const handleSave = React.useCallback(() => {
     const cs = lineItems.getChangeSet();
@@ -224,36 +315,29 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
 
   return (
     <>
-      {/* 🧪 Demo Dummy: mode + duplicate-last are demo-only knobs to flip the
-          table into different states. They are NOT part of the LineItems
-          component itself — kept in a separate card just for the demo. */}
-      <Card.Root>
-        <Card.Content className="astw:flex astw:flex-wrap astw:items-center astw:gap-2 astw:py-3">
-          <span className="astw:text-muted-foreground astw:text-xs astw:font-medium">Mode</span>
-          {(["edit", "display", "amend"] as const).map((m) => (
-            <Button
-              key={m}
-              type="button"
-              size="sm"
-              variant={mode === m ? "default" : "outline"}
-              onClick={() => setMode(m)}
-            >
-              {m}
-            </Button>
-          ))}
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() =>
-              lineItems.duplicateLastLine((prev, newRef) => ({ ...prev, lineRef: newRef }))
-            }
-            disabled={mode === "display" || lineItems.allLines.length === 0}
-          >
-            Duplicate last
-          </Button>
-        </Card.Content>
-      </Card.Root>
+      {/* 🧪 Demo Dummy: mode toggles flip the table into different states.
+          They are NOT part of the LineItems component itself — kept in a
+          separate card just for the demo. The line-items-demo page hides this
+          card and surfaces the same controls inside its ActionPanel sidebar
+          via `onApiChange`. */}
+      {hideDemoControlsCard ? null : (
+        <Card.Root>
+          <Card.Content className="astw:flex astw:flex-wrap astw:items-center astw:gap-2 astw:py-3">
+            <span className="astw:text-muted-foreground astw:text-xs astw:font-medium">Mode</span>
+            {(["edit", "display", "amend"] as const).map((m) => (
+              <Button
+                key={m}
+                type="button"
+                size="sm"
+                variant={mode === m ? "default" : "outline"}
+                onClick={() => setMode(m)}
+              >
+                {m}
+              </Button>
+            ))}
+          </Card.Content>
+        </Card.Root>
+      )}
 
       <LineItems.Root value={lineItems}>
         {/* overflow-hidden clips the edge-to-edge table to the Card's rounded
@@ -284,12 +368,7 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
               >
                 Import from CSV
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => alert("Bulk add clicked")}
-              >
+              <Button type="button" size="sm" variant="outline" onClick={() => setBulkOpen(true)}>
                 Bulk add
               </Button>
               <LineItems.FullscreenToggle variant="outline" className="astw:size-8" />
@@ -301,6 +380,35 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
               maxBodyHeight={600}
               renderFullscreenToggle={false}
               tableContainerClassName="astw:rounded-none astw:border-0"
+              rowActionsWidth={68}
+              loading={loading}
+              skeletonRowCount={14}
+              rowActions={(line) => (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="astw:size-7"
+                    style={{ boxShadow: "none" }}
+                    onClick={() => alert(`View details for ${line.sku}`)}
+                    aria-label="View details"
+                  >
+                    ↗
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="astw:size-7 astw:text-destructive"
+                    style={{ boxShadow: "none" }}
+                    onClick={() => lineItems.removeLine(line.lineRef)}
+                    aria-label="Remove line"
+                  >
+                    ×
+                  </Button>
+                </>
+              )}
             />
 
             {mode !== "display" ? (
@@ -313,14 +421,54 @@ export function LineItemsSection({ initialData }: { initialData?: POLine[] } = {
                     unitPrice: picked.unitPrice,
                     total: round2(picked.unitPrice),
                     expectedReady: new Date().toISOString().slice(0, 10),
-                    note: "",
                   });
                 }}
+                onBulkAdd={() => setBulkOpen(true)}
                 disabled={mode !== "edit"}
               />
             ) : null}
           </Card.Content>
         </Card.Root>
+
+        {/* ✅ Reusable Pattern: BulkItemPicker is a generic tree-select dialog.
+            Tree shape comes from the consumer's catalog; selected leaves are
+            mapped 1-to-1 to lines and committed via the new `addLines` batch. */}
+        <BulkItemPicker<BulkPickerLeaf>
+          open={bulkOpen}
+          onOpenChange={setBulkOpen}
+          title="Bulk line item picker"
+          rowLabel="Product Name"
+          metricLabel="Total available"
+          searchPlaceholder="Search products"
+          items={tree}
+          renderRow={(node) => <span className="astw:font-medium">{node.data.productName}</span>}
+          renderMetric={(node) => {
+            const item = CATALOG.find((c) => c.sku === node.id);
+            const variant = CATALOG.flatMap((c) => c.variants ?? []).find((v) => v.sku === node.id);
+            const total =
+              item?.variants?.reduce((s, v) => s + v.available, 0) ??
+              item?.available ??
+              variant?.available ??
+              0;
+            return total;
+          }}
+          matchesSearch={(node, q) =>
+            node.data.productName.toLowerCase().includes(q.toLowerCase()) ||
+            node.data.sku.toLowerCase().includes(q.toLowerCase())
+          }
+          onCommit={(picked) => {
+            lineItems.addLines(
+              picked.map((n) => ({
+                sku: n.data.sku,
+                productName: n.data.productName,
+                quantity: 1,
+                unitPrice: n.data.unitPrice,
+                total: round2(n.data.unitPrice),
+                expectedReady: new Date().toISOString().slice(0, 10),
+              })),
+            );
+          }}
+        />
 
         {/* ✅ Library pattern: dirty + selection bars auto-mount/unmount
             based on hook state. Discard defaults to lineItems.revert();
@@ -360,6 +508,11 @@ export function LineItemsDemoPage() {
     alert("Page-level Save changes clicked");
   }, []);
 
+  // 🧪 Demo Dummy: capture the LineItemsSection's mode + duplicate handlers
+  // so the page-level ActionPanel can host them as sidebar actions instead of
+  // the inline demo card sitting above the table.
+  const [sectionApi, setSectionApi] = React.useState<LineItemsSectionApi | null>(null);
+
   const headerActions = [
     <Button key="cancel" variant="secondary" size="sm" onClick={() => alert("Cancel clicked")}>
       Cancel
@@ -389,6 +542,18 @@ export function LineItemsDemoPage() {
       onClick: () => alert("Navigate to PO detail"),
     },
   ];
+
+  const modeActions = sectionApi
+    ? (["edit", "display", "amend"] as const).map((m) => ({
+        key: `mode-${m}`,
+        label: `${sectionApi.mode === m ? "✓ " : ""}${m[0]!.toUpperCase()}${m.slice(1)} mode`,
+        icon: <ModeIcon />,
+        onClick: () => sectionApi.setMode(m),
+        disabled: sectionApi.mode === m,
+      }))
+    : [];
+
+  const demoActions = sectionApi ? modeActions : [];
 
   return (
     <Layout>
@@ -436,10 +601,11 @@ export function LineItemsDemoPage() {
           ]}
         />
 
-        <LineItemsSection />
+        <LineItemsSection hideDemoControlsCard onApiChange={setSectionApi} />
       </Layout.Column>
       <Layout.Column>
         <ActionPanel title="Actions" actions={sidebarActions} />
+        {demoActions.length ? <ActionPanel title="Demo controls" actions={demoActions} /> : null}
         <ActivityCard
           title="Activity"
           maxVisible={6}
@@ -458,17 +624,16 @@ export function LineItemsDemoPage() {
 
 function InlineCatalogueAddRow({
   onPick,
+  onBulkAdd,
   disabled,
 }: {
   onPick: (item: CatalogItem) => void;
+  onBulkAdd: () => void;
   disabled?: boolean;
 }) {
   const [resetKey, setResetKey] = React.useState(0);
   return (
-    <div
-      style={{ margin: 8 }}
-      className="astw:flex astw:items-center astw:gap-1"
-    >
+    <div style={{ margin: 8 }} className="astw:flex astw:items-center astw:gap-1">
       <Combobox<CatalogItem>
         key={resetKey}
         items={CATALOG}
@@ -494,11 +659,10 @@ function InlineCatalogueAddRow({
         }}
         className="astw:flex-1"
       />
-      {/* 🧪 Dummy Data: hook this up to a real flow later */}
       <Button
         type="button"
         variant="outline"
-        onClick={() => alert("Bulk add clicked")}
+        onClick={onBulkAdd}
         disabled={disabled}
         style={{ boxShadow: "none" }}
       >
@@ -507,4 +671,3 @@ function InlineCatalogueAddRow({
     </div>
   );
 }
-

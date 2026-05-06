@@ -26,6 +26,7 @@ import {
 } from "./line-items-grid-context";
 import { LineItemsFullscreenToggle } from "./line-items-parts";
 import { useLineItemsRoot } from "./line-items-root";
+import { LineItemsSkeletonRow } from "./line-items-skeleton-row";
 import { getInternals } from "./use-line-items";
 import {
   coordsToRowsMatrix,
@@ -64,6 +65,15 @@ export type LineItemsTableProps<T extends LineItemsRowData = LineItemsRowData> =
   rowActions?: (line: T) => React.ReactNode;
   /** Width in px of the row-actions trailing column. Default `80`. */
   rowActionsWidth?: number;
+  /**
+   * When true, the tbody renders shimmering skeleton rows in place of real
+   * data rows. All other table chrome (header, search, fullscreen toggle,
+   * floating dock) keeps rendering normally so the layout doesn't flash. Use
+   * for an initial async fetch.
+   */
+  loading?: boolean;
+  /** Number of skeleton rows to render while `loading` is true. Default `12`. */
+  skeletonRowCount?: number;
 };
 
 export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTableProps<T>) {
@@ -80,6 +90,8 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
      * snugly. Bump for more icons or wider buttons; lower for one icon.
      */
     rowActionsWidth = 64,
+    loading = false,
+    skeletonRowCount = 12,
   } = props;
 
   const root = useLineItemsRoot<T>();
@@ -100,6 +112,12 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
   // every input, dropping focus after a single character.
   const hookRef = React.useRef(hook);
   hookRef.current = hook;
+  // `rowActions` is typically inlined in JSX (`rowActions={(line) => ...}`),
+  // so its identity changes every render. Route through a ref so the column
+  // memo below isn't busted on every keystroke (which would re-mount every
+  // cell input and drop focus mid-typing).
+  const rowActionsRef = React.useRef(rowActions);
+  rowActionsRef.current = rowActions;
   const selectionEnabled = hook.selectionEnabled;
 
   /* ---- Cell-selection state ------------------------------------------- */
@@ -114,6 +132,44 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
 
   const scrollParentRef = React.useRef<HTMLDivElement>(null);
   const rowElRefs = React.useRef(new Map<string, HTMLTableRowElement | null>());
+
+  /* ---- Fast-scroll detection ----------------------------------------------
+     Toggles a `data-line-items-fast-scroll` attribute on the scroll container
+     when the user is scroll-flicking, and removes it 120ms after the last
+     scroll event. Cells are visually swapped to a pulse skeleton via CSS so
+     no React re-render fires on transitions. */
+  const lastScrollTopRef = React.useRef(0);
+  const lastScrollAtRef = React.useRef(0);
+  const scrollIdleTimerRef = React.useRef<number | null>(null);
+  const [isFastScrolling, setIsFastScrolling] = React.useState(false);
+  React.useEffect(() => {
+    const el = scrollParentRef.current;
+    if (!el) return undefined;
+    lastScrollTopRef.current = el.scrollTop;
+    lastScrollAtRef.current = performance.now();
+    const onScroll = () => {
+      const now = performance.now();
+      const dt = Math.max(now - lastScrollAtRef.current, 1);
+      const dy = Math.abs(el.scrollTop - lastScrollTopRef.current);
+      const velocity = dy / dt; // px/ms
+      lastScrollTopRef.current = el.scrollTop;
+      lastScrollAtRef.current = now;
+      if (velocity > 0.6) setIsFastScrolling(true);
+      if (scrollIdleTimerRef.current != null) window.clearTimeout(scrollIdleTimerRef.current);
+      scrollIdleTimerRef.current = window.setTimeout(() => {
+        setIsFastScrolling(false);
+        scrollIdleTimerRef.current = null;
+      }, 120);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (scrollIdleTimerRef.current != null) {
+        window.clearTimeout(scrollIdleTimerRef.current);
+        scrollIdleTimerRef.current = null;
+      }
+    };
+  }, []);
 
   /* ---- Schema ids + Tanstack column defs ------------------------------ */
 
@@ -135,16 +191,16 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
             live.lines.length > 0 && live.selectedIds.length === live.lines.length;
           return (
             <div className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
-            <input
-              type="checkbox"
-              aria-label="Select all"
-              checked={allSelected}
-              onChange={(e) => {
-                if (e.target.checked) hookRef.current.selectAllVisible();
-                else hookRef.current.clearSelection();
-              }}
-              className="astw:size-4"
-            />
+              <input
+                type="checkbox"
+                aria-label="Select all"
+                checked={allSelected}
+                onChange={(e) => {
+                  if (e.target.checked) hookRef.current.selectAllVisible();
+                  else hookRef.current.clearSelection();
+                }}
+                className="astw:size-4"
+              />
             </div>
           );
         },
@@ -225,9 +281,13 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       cols.push({
         id: "__actions",
         header: "",
+        // Read from `rowActionsRef.current` so a parent passing a fresh inline
+        // function each render doesn't bust this memo. Presence/absence of the
+        // column itself is still tracked via `!!rowActions` in the memo deps
+        // (next line) — only the per-row content swaps freely.
         cell: ({ row }) => (
-          <div className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-end astw:gap-1 astw:px-2">
-            {rowActions(row.original)}
+          <div className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center astw:gap-1 astw:px-1">
+            {rowActionsRef.current?.(row.original)}
           </div>
         ),
         size: rowActionsWidth,
@@ -235,7 +295,11 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
     }
 
     return cols;
-  }, [enableDragReorder, fields, mode, ordering, selectionEnabled, rowActions, rowActionsWidth]);
+    // `rowActions` -> `!!rowActions` so adding/removing the prop still
+    // rebuilds the columns; identity changes within the same on/off state are
+    // absorbed by `rowActionsRef`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableDragReorder, fields, mode, ordering, selectionEnabled, !!rowActions, rowActionsWidth]);
 
   const table = useReactTable({
     data,
@@ -326,7 +390,9 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       rightAcc += f.width ?? 0;
     }
     return offsets;
-  }, [enableDragReorder, fields, mode, ordering, rowActions, rowActionsWidth, selectionEnabled]);
+    // `rowActions` -> `!!rowActions`: only its presence affects the offset map.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableDragReorder, fields, mode, ordering, !!rowActions, rowActionsWidth, selectionEnabled]);
 
   const getPinStyle = React.useCallback(
     (colId: string): React.CSSProperties | undefined => {
@@ -721,8 +787,7 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       // Single-source broadcast: when the clipboard holds exactly one cell and
       // the active selection covers more than one cell, fan the single value
       // out to every selected cell (Excel / Sheets behaviour).
-      const isSingleSource =
-        gridParsed.length === 1 && (gridParsed[0]?.length ?? 0) === 1;
+      const isSingleSource = gridParsed.length === 1 && (gridParsed[0]?.length ?? 0) === 1;
       if (isSingleSource && selectionCoordsMemo.length > 1) {
         const raw = gridParsed[0]![0]!;
         for (const { lineRef, columnId } of selectionCoordsMemo) {
@@ -848,8 +913,7 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
   const tableMinWidth = React.useMemo(() => {
     let total = 0;
     if (selectionEnabled && mode !== "display") total += SELECT_COL_WIDTH;
-    if (enableDragReorder && ordering === "manual" && mode !== "display")
-      total += DRAG_COL_WIDTH;
+    if (enableDragReorder && ordering === "manual" && mode !== "display") total += DRAG_COL_WIDTH;
     for (const f of fields) {
       if (f.flex) {
         total += f.width ?? FLEX_FALLBACK_WIDTH;
@@ -859,7 +923,9 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
     }
     if (rowActions) total += rowActionsWidth;
     return total;
-  }, [enableDragReorder, fields, mode, ordering, rowActions, rowActionsWidth, selectionEnabled]);
+    // `rowActions` -> `!!rowActions`: only its presence affects the total width.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableDragReorder, fields, mode, ordering, !!rowActions, rowActionsWidth, selectionEnabled]);
   const vItems = rowVirtualizer.getVirtualItems();
   // True when no field absorbs leftover horizontal space; in that case the
   // table renders a trailing spacer `<col>` + matching cells. Same condition
@@ -893,9 +959,11 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
       <LineItemsGridProvider
         value={gridCtx as unknown as LineItemsGridContextValue<LineItemsRowData>}
       >
+        {isFastScrolling ? <style>{LINE_ITEMS_FAST_SCROLL_STYLES}</style> : null}
         <div
           ref={scrollParentRef}
           data-slot="line-items-scroll"
+          data-line-items-fast-scroll={isFastScrolling ? "true" : undefined}
           aria-colcount={mode !== "display" ? schemaColumnIds.length : undefined}
           aria-rowcount={mode !== "display" ? orderedLineRefs.length : undefined}
           role={mode !== "display" ? "grid" : undefined}
@@ -976,13 +1044,27 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                       // Special bookkeeping columns get pinned widths.
                       if (colId === "__select")
                         return (
-                          <col key={colId} width={SELECT_COL_WIDTH} style={{ width: SELECT_COL_WIDTH }} />
+                          <col
+                            key={colId}
+                            width={SELECT_COL_WIDTH}
+                            style={{ width: SELECT_COL_WIDTH }}
+                          />
                         );
                       if (colId === "__drag")
-                        return <col key={colId} width={DRAG_COL_WIDTH} style={{ width: DRAG_COL_WIDTH }} />;
+                        return (
+                          <col
+                            key={colId}
+                            width={DRAG_COL_WIDTH}
+                            style={{ width: DRAG_COL_WIDTH }}
+                          />
+                        );
                       if (colId === "__actions")
                         return (
-                          <col key={colId} width={rowActionsWidth} style={{ width: rowActionsWidth }} />
+                          <col
+                            key={colId}
+                            width={rowActionsWidth}
+                            style={{ width: rowActionsWidth }}
+                          />
                         );
                       const f = fieldByKey.get(colId);
                       if (!f) return <col key={colId} />;
@@ -1046,9 +1128,7 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                             // drop the inner padding so their content can
                             // center pixel-perfect against the cell box —
                             // matching the body cells which use `p-0`.
-                            colId.startsWith("__")
-                              ? "astw:px-0"
-                              : "astw:px-2",
+                            colId.startsWith("__") ? "astw:px-0" : "astw:px-2",
                           )}
                           style={pinStyle}
                           onMouseEnter={() => onColumnHoverEnter(colId)}
@@ -1070,67 +1150,78 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                 ))}
               </thead>
               <tbody>
-                {padTop > 0 ? (
+                {loading
+                  ? Array.from({ length: skeletonRowCount }, (_, i) => (
+                      <LineItemsSkeletonRow
+                        key={`skeleton-${i}`}
+                        colCount={colCount}
+                        rowHeight={36}
+                        rowIndex={i}
+                      />
+                    ))
+                  : null}
+                {!loading && padTop > 0 ? (
                   <tr aria-hidden>
                     <td colSpan={colCount} style={{ height: padTop, padding: 0, border: "none" }} />
                   </tr>
                 ) : null}
-                {vItems.map((vi) => {
-                  const row = allRows[vi.index] as Row<T> | undefined;
-                  if (!row) return null;
-                  return (
-                    <tr
-                      key={row.id}
-                      data-slot="table-row"
-                      data-line-ref={row.original.lineRef}
-                      ref={(el) => {
-                        rowElRefs.current.set(row.original.lineRef, el);
-                      }}
-                      className={cn(
-                        "astw:data-[state=selected]:bg-muted astw:border-b astw:border-border",
-                      )}
-                      style={{ height: vi.size }}
-                      onDragOver={(e) => {
-                        if (!enableDragReorder || ordering !== "manual") return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.dataTransfer.dropEffect = "move";
-                      }}
-                      onDrop={(e) => {
-                        e.stopPropagation();
-                        handleDropOnRow(row.original.lineRef, e);
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const colId = cell.column.id;
-                        const pinStyle = getPinStyle(colId);
-                        return (
-                          <Table.Cell
-                            key={cell.id}
-                            className="astw:relative astw:p-0 astw:align-middle astw:border-r astw:border-border astw:[&:has([role=checkbox])]:pr-0"
-                            style={{ height: vi.size, ...pinStyle }}
-                            onMouseEnter={() => onColumnHoverEnter(colId)}
-                            onMouseLeave={() => onColumnHoverLeave(colId)}
-                          >
-                            {/*
+                {!loading &&
+                  vItems.map((vi) => {
+                    const row = allRows[vi.index] as Row<T> | undefined;
+                    if (!row) return null;
+                    return (
+                      <tr
+                        key={row.id}
+                        data-slot="table-row"
+                        data-line-ref={row.original.lineRef}
+                        ref={(el) => {
+                          rowElRefs.current.set(row.original.lineRef, el);
+                        }}
+                        className={cn(
+                          "astw:data-[state=selected]:bg-muted astw:border-b astw:border-border",
+                        )}
+                        style={{ height: vi.size }}
+                        onDragOver={(e) => {
+                          if (!enableDragReorder || ordering !== "manual") return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.stopPropagation();
+                          handleDropOnRow(row.original.lineRef, e);
+                        }}
+                      >
+                        {row.getVisibleCells().map((cell) => {
+                          const colId = cell.column.id;
+                          const pinStyle = getPinStyle(colId);
+                          return (
+                            <Table.Cell
+                              key={cell.id}
+                              className="astw:relative astw:p-0 astw:align-middle astw:border-r astw:border-border astw:[&:has([role=checkbox])]:pr-0"
+                              style={{ height: vi.size, ...pinStyle }}
+                              onMouseEnter={() => onColumnHoverEnter(colId)}
+                              onMouseLeave={() => onColumnHoverLeave(colId)}
+                            >
+                              {/*
                               Cell content renders directly inside the <td> as a relative flex box.
                               No absolute-positioned wrapper → the cell box, the input, and the
                               selection overlay all share identical bounds. Selection rectangle is
                               painted via an inset box-shadow on the shell so it matches edges
                               pixel-for-pixel without any layout displacement.
                             */}
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </Table.Cell>
-                        );
-                      })}
-                      {/* Trailing spacer cell — matches the trailing <col /> in colgroup. */}
-                      {renderTrailingSpacer ? (
-                        <td aria-hidden data-slot="line-items-spacer-td" style={{ padding: 0 }} />
-                      ) : null}
-                    </tr>
-                  );
-                })}
-                {padBot > 0 ? (
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </Table.Cell>
+                          );
+                        })}
+                        {/* Trailing spacer cell — matches the trailing <col /> in colgroup. */}
+                        {renderTrailingSpacer ? (
+                          <td aria-hidden data-slot="line-items-spacer-td" style={{ padding: 0 }} />
+                        ) : null}
+                      </tr>
+                    );
+                  })}
+                {!loading && padBot > 0 ? (
                   <tr aria-hidden>
                     <td colSpan={colCount} style={{ height: padBot, padding: 0, border: "none" }} />
                   </tr>
@@ -1201,3 +1292,32 @@ function coerceForField<T extends LineItemsRowData>(
   /* text + select: commit trimmed string (select options validated in UI, not here) */
   return raw.trim();
 }
+
+/* ======================================================================== */
+/* Fast-scroll skeleton CSS                                                  */
+/*                                                                            */
+/* Applied via an inline `<style>` block when `isFastScrolling` is true. The  */
+/* React tree itself doesn't change between scroll-velocity transitions —     */
+/* we only toggle a `data-` attribute on the scroll container, and CSS swaps  */
+/* the visual. Keeps inputs / pickers in the DOM so focus state survives a    */
+/* scroll-flick that returns to where the user was editing.                   */
+/* ======================================================================== */
+
+const LINE_ITEMS_FAST_SCROLL_STYLES = `
+[data-line-items-fast-scroll="true"] [data-slot="line-items-grid-cell"] > * {
+  visibility: hidden;
+}
+[data-line-items-fast-scroll="true"] [data-slot="line-items-grid-cell"]::before {
+  content: "";
+  position: absolute;
+  inset: 8px 10px;
+  border-radius: 4px;
+  background: var(--muted);
+  animation: line-items-skeleton-pulse 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes line-items-skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+`;

@@ -269,7 +269,9 @@ function CollectionSection({
                   <div className="astw:flex astw:flex-col astw:gap-0.5">
                     <span className="astw:text-sm astw:font-medium">{p.value}</span>
                     {p.description ? (
-                      <span className="astw:text-muted-foreground astw:text-xs">{p.description}</span>
+                      <span className="astw:text-muted-foreground astw:text-xs">
+                        {p.description}
+                      </span>
                     ) : null}
                   </div>
                 ),

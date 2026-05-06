@@ -151,6 +151,38 @@ export function useLineItems<T extends LineItemsRowData>(
     [byRef, order, replaceAll],
   );
 
+  const addLines = React.useCallback(
+    (
+      items: ReadonlyArray<Partial<Omit<T, "lineRef">>>,
+      opts?: { afterLineRef?: string | null },
+    ): string[] => {
+      if (items.length === 0) return [];
+      const newRefs: string[] = [];
+      const nextByRef = { ...byRef };
+      const inserted: string[] = [];
+      for (const partial of items) {
+        const id = newLineRef();
+        const tmpl = { ...(partial as Record<string, unknown>), lineRef: id } as T;
+        nextByRef[id] = tmpl;
+        insertedRefsRef.current.add(id);
+        newRefs.push(id);
+        inserted.push(id);
+      }
+      const after = opts?.afterLineRef;
+      const nextOrder = [...order];
+      if (after === undefined) nextOrder.push(...inserted);
+      else if (after === null) nextOrder.unshift(...inserted);
+      else {
+        const idx = nextOrder.indexOf(after);
+        if (idx === -1) nextOrder.push(...inserted);
+        else nextOrder.splice(idx + 1, 0, ...inserted);
+      }
+      replaceAll(nextByRef, nextOrder);
+      return newRefs;
+    },
+    [byRef, order, replaceAll],
+  );
+
   const removeLine = React.useCallback(
     (lineRef: string) => {
       if (baseline.current.rows[lineRef]) removedBaselineRefsRef.current.add(lineRef);
@@ -379,6 +411,7 @@ export function useLineItems<T extends LineItemsRowData>(
     setMode,
     setFilter,
     addLine,
+    addLines,
     removeLine,
     updateField,
     updateLines,

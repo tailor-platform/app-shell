@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "pnpm dev:vite",
     "dev:vite": "pnpm --filter vite-app dev",
-    "dev:next": "turbo watch dev --filter=nextjs-app --filter=app-module",
+    "dev:next": "turbo watch dev --filter=nextjs-app --filter=@tailor-platform/app-shell",
     "dev:examples": "turbo watch dev --filter='./examples/*'",
     "build": "turbo build",
     "type-check": "turbo type-check",

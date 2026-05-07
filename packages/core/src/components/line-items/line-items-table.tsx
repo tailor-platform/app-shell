@@ -15,7 +15,6 @@ import { ArrowDownIcon, ArrowUpIcon, GripVerticalIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { Table } from "@/components/table";
 
 import { fieldAllowsPaste } from "./field";
 import { LineItemsFieldCell } from "./line-items-default-cell";
@@ -1196,22 +1195,28 @@ export function LineItemsTable<T extends LineItemsRowData>(props: LineItemsTable
                           const colId = cell.column.id;
                           const pinStyle = getPinStyle(colId);
                           return (
-                            <Table.Cell
+                            <td
                               key={cell.id}
-                              className="astw:relative astw:p-0 astw:align-middle astw:border-r astw:border-border astw:[&:has([role=checkbox])]:pr-0"
+                              data-slot="line-items-data-cell"
+                              className="astw:relative astw:p-0 astw:align-middle astw:border-r astw:border-border astw:whitespace-nowrap"
                               style={{ height: vi.size, ...pinStyle }}
                               onMouseEnter={() => onColumnHoverEnter(colId)}
                               onMouseLeave={() => onColumnHoverLeave(colId)}
                             >
                               {/*
-                              Cell content renders directly inside the <td> as a relative flex box.
-                              No absolute-positioned wrapper → the cell box, the input, and the
-                              selection overlay all share identical bounds. Selection rectangle is
-                              painted via an inset box-shadow on the shell so it matches edges
-                              pixel-for-pixel without any layout displacement.
-                            */}
+                                Cell content renders directly inside the <td> as a relative flex box.
+                                No absolute-positioned wrapper → the cell box, the input, and the
+                                selection overlay all share identical bounds. Selection rectangle is
+                                painted via an inset box-shadow on the shell so it matches edges
+                                pixel-for-pixel without any layout displacement.
+
+                                Uses a raw <td> instead of <Table.Cell> so the table primitive's
+                                first:pl-6 / last:pr-6 outer padding (PR #186) doesn't break our
+                                grid alignment. Headers in this table are also raw <th>; both sides
+                                stay symmetric.
+                              */}
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </Table.Cell>
+                            </td>
                           );
                         })}
                         {/* Trailing spacer cell — matches the trailing <col /> in colgroup. */}

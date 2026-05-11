@@ -30,18 +30,6 @@ function isEmpty(value: unknown): boolean {
 }
 
 /**
- * Convert a string to sentence case (first letter uppercase, rest lowercase)
- * Handles snake_case and SCREAMING_SNAKE_CASE by replacing underscores with spaces
- * Examples: "CONFIRMED" → "Confirmed", "NOT_RECEIVED" → "Not received"
- */
-function toSentenceCase(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
-
-/**
  * Format a date value
  */
 function formatDate(value: unknown, format: DateFormat = "medium"): string {
@@ -286,7 +274,7 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
 
   return (
     <Badge variant={variant} className="astw:w-fit">
-      {toSentenceCase(value)}
+      {value}
     </Badge>
   );
 }

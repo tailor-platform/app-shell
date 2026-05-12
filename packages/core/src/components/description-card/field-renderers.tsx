@@ -278,15 +278,17 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
 
   const value = String(field.value);
   const variantMap = field.meta?.badgeVariantMap || {};
+  const sentenceCaseBadges = field.meta?.sentenceCaseBadges ?? true;
 
   // Try to find a matching variant (case-insensitive)
   const lowerValue = value.toLowerCase();
   const variant: BadgeVariantType =
     variantMap[value] || variantMap[lowerValue] || "outline-neutral";
+  const displayValue = sentenceCaseBadges ? toSentenceCase(value) : value;
 
   return (
     <Badge variant={variant} className="astw:w-fit">
-      {toSentenceCase(value)}
+      {displayValue}
     </Badge>
   );
 }

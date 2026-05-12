@@ -46,6 +46,8 @@ export interface FieldMeta {
   copyable?: boolean;
   /** Map field values to badge variants */
   badgeVariantMap?: Record<string, BadgeVariantType>;
+  /** Render badge labels in sentence case by default; set false to keep the original value */
+  sentenceCaseBadges?: boolean;
   /** Key path to currency code in data object (for money fields) */
   currencyKey?: string;
   /** Key path to href in data object (for link fields) */

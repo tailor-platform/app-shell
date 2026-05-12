@@ -67,7 +67,7 @@ const HidableSidebarTrigger = () => {
  *
  * function ContentOnlyLayout() {
  *   return (
- *     <div className="astw:flex astw:min-h-svh astw:flex-col astw:px-6">
+ *     <div className="astw:flex astw:flex-col astw:min-h-svh astw:px-6">
  *       <Outlet />
  *     </div>
  *   );

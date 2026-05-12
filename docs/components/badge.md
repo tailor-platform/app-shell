@@ -20,13 +20,16 @@ import { Badge } from "@tailor-platform/app-shell";
 <Badge variant="success">Success</Badge>
 <Badge variant="warning">Warning</Badge>
 <Badge variant="error">Error</Badge>
+<Badge variant="subtle-success">Subtle Success</Badge>
+<Badge variant="subtle-warning">Subtle Warning</Badge>
+<Badge variant="subtle-error">Subtle Error</Badge>
 ```
 
 ## Variants
 
-### Solid Variants
+### Solid and Subtle Variants
 
-Filled background variants for high emphasis:
+Filled variants for high emphasis, plus subtle variants for lower-emphasis status labels:
 
 ```tsx
 <Badge variant="default">Default</Badge>
@@ -34,6 +37,9 @@ Filled background variants for high emphasis:
 <Badge variant="warning">Pending</Badge>
 <Badge variant="error">Rejected</Badge>
 <Badge variant="neutral">Draft</Badge>
+<Badge variant="subtle-success">Matched</Badge>
+<Badge variant="subtle-warning">Needs Attention</Badge>
+<Badge variant="subtle-error">Needs Review</Badge>
 ```
 
 ### Outline Variants with Status Dots
@@ -60,12 +66,15 @@ Outlined badges with colored status dots for subtle emphasis:
 
 ```typescript
 type BadgeVariant =
-  // Solid variants
+  // Solid/subtle variants
   | "default" // Primary color
   | "success" // Green
   | "warning" // Yellow
   | "error" // Red/destructive
   | "neutral" // Gray/secondary
+  | "subtle-success" // Low-emphasis green
+  | "subtle-warning" // Low-emphasis yellow
+  | "subtle-error" // Low-emphasis red/destructive
   // Outline variants with status dots
   | "outline-success"
   | "outline-warning"
@@ -163,15 +172,18 @@ function ProductBadge({ product }: { product: Product }) {
 
 ## Visual Reference
 
-### Solid Variants
+### Solid and Subtle Variants
 
-| Variant   | Preview         | Use Case                               |
-| --------- | --------------- | -------------------------------------- |
-| `default` | ![Blue badge]   | Primary actions, default status        |
-| `success` | ![Green badge]  | Completed, approved, active            |
-| `warning` | ![Yellow badge] | Pending, in progress, attention needed |
-| `error`   | ![Red badge]    | Failed, rejected, critical             |
-| `neutral` | ![Gray badge]   | Draft, inactive, disabled              |
+| Variant          | Preview                | Use Case                                   |
+| ---------------- | ---------------------- | ------------------------------------------ |
+| `default`        | ![Blue badge]          | Primary actions, default status            |
+| `success`        | ![Green badge]         | Completed, approved, active                |
+| `warning`        | ![Yellow badge]        | Pending, in progress, attention needed     |
+| `error`          | ![Red badge]           | Failed, rejected, critical                 |
+| `neutral`        | ![Gray badge]          | Draft, inactive, disabled                  |
+| `subtle-success` | ![Subtle green badge]  | Low-emphasis completed or matched statuses |
+| `subtle-warning` | ![Subtle yellow badge] | Low-emphasis pending or attention states   |
+| `subtle-error`   | ![Subtle red badge]    | Low-emphasis failures or exceptions        |
 
 ### Outline Variants
 

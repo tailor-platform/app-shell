@@ -78,10 +78,10 @@ Displays value as a Badge component with variant mapping.
     sentenceCaseBadges: false, // Optional: render the original value instead
     badgeVariantMap: {
       draft: "neutral",
-      pending: "outline-warning",
-      approved: "outline-success",
+      pending: "subtle-warning",
+      approved: "subtle-success",
       shipped: "success",
-      cancelled: "outline-error",
+      cancelled: "subtle-error",
     },
   },
 }
@@ -324,10 +324,10 @@ function OrderDetails() {
           meta: {
             badgeVariantMap: {
               draft: "neutral",
-              pending: "outline-warning",
-              shipped: "outline-success",
+              pending: "subtle-warning",
+              shipped: "subtle-success",
               delivered: "success",
-              cancelled: "outline-error",
+              cancelled: "subtle-error",
             },
           },
         },

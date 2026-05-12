@@ -222,16 +222,14 @@ export type AppShellProps = SharedAppShellProps & {
  * module-driven navigation.
  *
  * If you need a screen without the usual sidebar chrome, create an ad-hoc layout
- * around react-router's `Outlet` instead of using a built-in alternative.
+ * around `AppShellOutlet` instead of using a built-in alternative.
  *
  * @example
  * ```tsx
- * import { Outlet } from "react-router";
- *
  * function ContentOnlyLayout() {
  *   return (
  *     <div className="astw:flex astw:flex-col astw:min-h-svh astw:px-6">
- *       <Outlet />
+ *       <AppShellOutlet />
  *     </div>
  *   );
  * }

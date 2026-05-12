@@ -1,5 +1,11 @@
 # @tailor-platform/app-shell
 
+## 1.1.1
+
+### Patch Changes
+
+- d4d15f5: Add `DescriptionCard` badge field support for `meta.sentenceCaseBadges = false` so apps can opt out of the default sentence-case badge labels.
+
 ## 1.1.0
 
 ### Minor Changes

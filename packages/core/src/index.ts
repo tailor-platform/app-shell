@@ -1,7 +1,6 @@
 import "./globals.css";
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
-export { ContentOnlyLayout, type ContentOnlyLayoutProps } from "./components/content-only-layout";
 export { CommandPalette } from "./components/command-palette";
 export {
   useRegisterCommandPaletteActions,

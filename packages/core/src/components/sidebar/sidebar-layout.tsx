@@ -55,6 +55,25 @@ const HidableSidebarTrigger = () => {
   );
 };
 
+/**
+ * Default AppShell layout with sidebar navigation, breadcrumbs, and theme toggle.
+ *
+ * If you need a screen without the sidebar chrome, create an ad-hoc layout around
+ * react-router's `Outlet` instead of using a built-in alternative.
+ *
+ * @example
+ * ```tsx
+ * import { Outlet } from "react-router";
+ *
+ * function ContentOnlyLayout() {
+ *   return (
+ *     <div className="astw:flex astw:min-h-svh astw:flex-col astw:px-6">
+ *       <Outlet />
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
 export const SidebarLayout = (props: SidebarLayoutProps) => {
   const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
   const themeContext = useTheme();

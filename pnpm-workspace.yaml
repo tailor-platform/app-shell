@@ -6,6 +6,7 @@ catalog:
   "@tailwindcss/postcss": ^4.2.4
   oxlint: ^1.59.0
   oxfmt: ^0.47.0
+  tailwindcss: ^4.2.4
   "@types/node": ^25.6.0
   "@types/react": ^19
   "@types/react-dom": ^19

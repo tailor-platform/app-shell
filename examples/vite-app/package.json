@@ -14,7 +14,7 @@
     "lucide-react": "^1.8.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",

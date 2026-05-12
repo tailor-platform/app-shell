@@ -205,6 +205,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
       key: "status",
       label: "Status",
       meta: {
+        sentenceCaseBadges: false,
         badgeVariantMap: {
           pending: "outline-warning",
           shipped: "outline-success",

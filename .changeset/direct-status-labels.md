@@ -2,4 +2,4 @@
 "@tailor-platform/app-shell": patch
 ---
 
-Render `DescriptionCard` status badge values exactly as provided instead of converting them to sentence case.
+Add `DescriptionCard` badge field support for `meta.sentenceCaseBadges = false` so apps can opt out of the default sentence-case badge labels.

@@ -4,7 +4,7 @@ packages:
 
 catalog:
   oxlint: ^1.59.0
-  oxfmt: ^0.41.0
+  oxfmt: ^0.47.0
   "@types/node": ^25.6.0
   "@types/react": ^19
   "@types/react-dom": ^19

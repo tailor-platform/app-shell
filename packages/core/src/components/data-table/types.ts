@@ -121,6 +121,13 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
   /**
+   * Horizontal alignment for the header and body cell. When omitted, numeric
+   * `type` values (`"number"` and `"money"`) default to `"right"` so digits
+   * align along their decimal place; everything else defaults to `"left"`.
+   * Pass `"left"` explicitly to opt a numeric column out.
+   */
+  align?: "left" | "right";
+  /**
    * Sort configuration. When set, the column header becomes clickable and
    * cycles through `Asc → Desc → undefined`.
    * Use `fieldTypeToSortConfig` or `inferColumns` to derive this automatically.

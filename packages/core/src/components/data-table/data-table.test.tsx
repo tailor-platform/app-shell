@@ -251,6 +251,141 @@ describe("DataTable", () => {
   });
 
   // -------------------------------------------------------------------------
+  // Column alignment
+  // -------------------------------------------------------------------------
+  describe("column alignment", () => {
+    const alignedColumns: Column<TestRow>[] = [
+      { label: "Name", render: (row) => row.name },
+      { label: "Amount", render: (row) => row.status, align: "right" },
+    ];
+
+    it("applies text-right to the header cell when align=right", () => {
+      const { container } = render(<TestDataTable columns={alignedColumns} />, { wrapper });
+      const heads = container.querySelectorAll('[data-slot="data-table-header"] th');
+      expect(heads[0]?.className).not.toContain("text-right");
+      expect(heads[1]?.className).toContain("text-right");
+    });
+
+    it("applies text-right to body cells when align=right", () => {
+      const { container } = render(<TestDataTable columns={alignedColumns} />, { wrapper });
+      const firstRow = container.querySelector('[data-slot="data-table-row"]');
+      const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
+      expect(cells[0]?.className).not.toContain("text-right");
+      expect(cells[1]?.className).toContain("text-right");
+    });
+
+    it("right-aligns the skeleton bar so it doesn't shift on load", () => {
+      const { container } = render(
+        <TestDataTable columns={alignedColumns} data={undefined} loading />,
+        { wrapper },
+      );
+      const firstSkeleton = container.querySelector('[data-datatable-state="loading"]');
+      const skeletonCells = firstSkeleton?.querySelectorAll("td") ?? [];
+      const rightCellBar = skeletonCells[1]?.querySelector("div");
+      expect(rightCellBar?.className).toContain("ml-auto");
+      const leftCellBar = skeletonCells[0]?.querySelector("div");
+      expect(leftCellBar?.className).not.toContain("ml-auto");
+    });
+
+    it("defaults to left alignment when align is unset", () => {
+      const { container } = render(<TestDataTable />, { wrapper });
+      const heads = container.querySelectorAll('[data-slot="data-table-header"] th');
+      heads.forEach((th) => {
+        expect(th.className).not.toContain("text-right");
+      });
+    });
+
+    it("auto-aligns number columns to the right", () => {
+      type NumRow = { id: string; count: number };
+      const numRows: NumRow[] = [{ id: "1", count: 42 }];
+      const cols: Column<NumRow>[] = [{ label: "Count", type: "number", accessor: (r) => r.count }];
+      function Harness() {
+        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const head = container.querySelector('[data-slot="data-table-header"] th');
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(head?.className).toContain("text-right");
+      expect(cell?.className).toContain("text-right");
+    });
+
+    it("auto-aligns money columns to the right", () => {
+      type MoneyRow = { id: string; total: number };
+      const moneyRows: MoneyRow[] = [{ id: "1", total: 100 }];
+      const cols: Column<MoneyRow>[] = [
+        {
+          label: "Total",
+          type: "money",
+          accessor: (r) => r.total,
+          typeOptions: { currency: "USD" },
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<MoneyRow>({ columns: cols, data: { rows: moneyRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const head = container.querySelector('[data-slot="data-table-header"] th');
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(head?.className).toContain("text-right");
+      expect(cell?.className).toContain("text-right");
+    });
+
+    it("does not auto-align non-numeric typed columns (text, date, badge, link)", () => {
+      type Row = { id: string; v: string };
+      const rows: Row[] = [{ id: "1", v: "x" }];
+      const cols: Column<Row>[] = [
+        { label: "Text", type: "text", accessor: (r) => r.v },
+        { label: "Date", type: "date", accessor: (r) => r.v },
+        { label: "Badge", type: "badge", accessor: (r) => r.v },
+        { label: "Link", type: "link", accessor: (r) => r.v, typeOptions: { href: () => "/x" } },
+      ];
+      function Harness() {
+        const table = useDataTable<Row>({ columns: cols, data: { rows } });
+        return (
+          <MemoryRouter>
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          </MemoryRouter>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      container.querySelectorAll('[data-slot="data-table-header"] th').forEach((th) => {
+        expect(th.className).not.toContain("text-right");
+      });
+    });
+
+    it("explicit align=left overrides the numeric-type auto-default", () => {
+      type NumRow = { id: string; count: number };
+      const numRows: NumRow[] = [{ id: "1", count: 42 }];
+      const cols: Column<NumRow>[] = [
+        { label: "Count", type: "number", accessor: (r) => r.count, align: "left" },
+      ];
+      function Harness() {
+        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const head = container.querySelector('[data-slot="data-table-header"] th');
+      expect(head?.className).not.toContain("text-right");
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Row selection (DOM)
   // -------------------------------------------------------------------------
   // -------------------------------------------------------------------------

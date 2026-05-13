@@ -29,8 +29,20 @@ export interface Column<TRow extends Record<string, unknown>> {
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
   /**
-   * Extracts the raw value from a row for purposes such as sorting or
-   * clipboard copying. Not used for rendering — use `render` for that.
+   * When `true`, the cell content is truncated with an ellipsis when it
+   * overflows. A `title` attribute is added automatically when `accessor`
+   * returns a string or number, so hover reveals the full value.
+   *
+   * Truncation requires the cell to be shrinkable — the body cell sets
+   * `max-w-0`, which collapses unless another column anchors the row width.
+   * Pair with `width` on neighboring columns, or rely on the natural width
+   * of fixed-size columns (selection / row actions).
+   */
+  truncate?: boolean;
+  /**
+   * Extracts the raw value from a row for purposes such as sorting,
+   * clipboard copying, or the auto-tooltip on `truncate` cells. Not used
+   * for rendering — use `render` for that.
    */
   accessor?: (row: TRow) => unknown;
   /**

@@ -17,6 +17,7 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
     render: options.render,
     id: options.id,
     width: options.width,
+    truncate: options.truncate,
     accessor: options.accessor,
     sort: options.sort,
     filter: options.filter,

@@ -393,11 +393,20 @@ function DataTableBody({ className }: { className?: string }) {
             )}
             {columns?.map((col, colIndex) => {
               const key = col.id ?? col.label ?? String(colIndex);
+              let title: string | undefined;
+              if (col.truncate && col.accessor) {
+                const raw = col.accessor(row);
+                if (typeof raw === "string" || typeof raw === "number") {
+                  title = String(raw);
+                }
+              }
               return (
                 <Table.Cell
                   key={key}
                   data-slot="data-table-cell"
                   style={col.width ? { width: col.width } : undefined}
+                  className={cn(col.truncate && "astw:truncate astw:max-w-0")}
+                  title={title}
                 >
                   {col.render(row)}
                 </Table.Cell>

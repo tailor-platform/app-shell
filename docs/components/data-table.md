@@ -221,7 +221,8 @@ A column definition passed to `useDataTable`.
 | `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Required.                                                        |
 | `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
 | `width`    | `number`                   | Fixed column width in pixels. Optional.                                                    |
-| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value for sorting. Not used for rendering.                                |
+| `truncate` | `boolean`                  | Truncate overflowing text with an ellipsis. Auto-sets a `title` tooltip from `accessor` when it returns a string or number. |
+| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value for sorting and the auto-tooltip on `truncate` cells. Not used for rendering. |
 | `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
 | `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
 

@@ -249,6 +249,105 @@ describe("DataTable", () => {
   });
 
   // -------------------------------------------------------------------------
+  // Column truncate
+  // -------------------------------------------------------------------------
+  describe("column truncate", () => {
+    it("adds truncate + max-w-0 to body cells when truncate=true", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => row.name,
+          accessor: (row) => row.name,
+          truncate: true,
+        },
+        { label: "Status", render: (row) => row.status },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const firstRow = container.querySelector('[data-slot="data-table-row"]');
+      const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
+      expect(cells[0]?.className).toContain("truncate");
+      expect(cells[0]?.className).toContain("max-w-0");
+      expect(cells[1]?.className).not.toContain("truncate");
+    });
+
+    it("sets title attribute from accessor when value is a string", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => <strong>{row.name}</strong>,
+          accessor: (row) => row.name,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(cells[0]?.getAttribute("title")).toBe("Alice");
+      expect(cells[1]?.getAttribute("title")).toBe("Bob");
+    });
+
+    it("sets title attribute when accessor returns a number", () => {
+      type NumRow = { id: string; count: number };
+      const numRows: NumRow[] = [{ id: "1", count: 42 }];
+      const cols: Column<NumRow>[] = [
+        {
+          label: "Count",
+          render: (row) => row.count,
+          accessor: (row) => row.count,
+          truncate: true,
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(cell?.getAttribute("title")).toBe("42");
+    });
+
+    it("omits title when accessor returns a non-stringifiable value", () => {
+      type ObjRow = { id: string; meta: { tags: string[] } };
+      const objRows: ObjRow[] = [{ id: "1", meta: { tags: ["a"] } }];
+      const cols: Column<ObjRow>[] = [
+        {
+          label: "Meta",
+          render: (row) => JSON.stringify(row.meta),
+          accessor: (row) => row.meta,
+          truncate: true,
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<ObjRow>({ columns: cols, data: { rows: objRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(cell?.getAttribute("title")).toBeNull();
+    });
+
+    it("omits title when accessor is not provided", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => row.name,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(cells[0]?.getAttribute("title")).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Row selection (DOM)
   // -------------------------------------------------------------------------
   describe("row selection", () => {

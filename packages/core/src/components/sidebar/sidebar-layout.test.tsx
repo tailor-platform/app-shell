@@ -29,9 +29,7 @@ const stubDesktopViewport = () => {
   window.dispatchEvent(new Event("resize"));
 };
 
-const renderSidebarLayout = (
-  props: Parameters<typeof SidebarLayout>[0] = {},
-) => {
+const renderSidebarLayout = (props: Parameters<typeof SidebarLayout>[0] = {}) => {
   window.history.pushState({}, "", "/dashboard");
   return render(
     <AppShell title="Test" modules={createMinimalModules()}>
@@ -70,14 +68,12 @@ describe("SidebarLayout", () => {
       renderSidebarLayout({ collapsible: false });
 
       await waitFor(() => {
-        const sidebar = document.querySelector('[data-slot="sidebar"]')!;
-        expect(sidebar).toBeDefined();
+        const sidebar = document.querySelector('[data-slot="sidebar"]');
+        expect(sidebar).not.toBeNull();
+        // collapsible="none" renders a plain div without data-collapsible or data-state
+        expect(sidebar!.getAttribute("data-collapsible")).toBeNull();
+        expect(sidebar!.getAttribute("data-state")).toBeNull();
       });
-
-      const sidebar = document.querySelector('[data-slot="sidebar"]')!;
-      // collapsible="none" renders a plain div without data-collapsible or data-state
-      expect(sidebar.getAttribute("data-collapsible")).toBeNull();
-      expect(sidebar.getAttribute("data-state")).toBeNull();
     });
 
     it("does not render sidebar trigger when collapsible is false", async () => {
@@ -97,9 +93,7 @@ describe("SidebarLayout", () => {
       renderSidebarLayout();
 
       await waitFor(() => {
-        const triggers = document.querySelectorAll(
-          '[data-slot="sidebar-trigger"]',
-        );
+        const triggers = document.querySelectorAll('[data-slot="sidebar-trigger"]');
         expect(triggers.length).toBeGreaterThan(0);
       });
     });

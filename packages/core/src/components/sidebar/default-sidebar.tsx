@@ -95,12 +95,7 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const DefaultHeader = (
     <SidebarHeader>
       {icon}
-      <h1
-        className={cn(
-          "astw:text-sm astw:mb-2 astw:mt-2 astw:px-2",
-          isIconMode && "astw:hidden",
-        )}
-      >
+      <h1 className={cn("astw:text-sm astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}>
         {title}
       </h1>
     </SidebarHeader>
@@ -151,9 +146,7 @@ const AutoSidebar = ({ currentPath }: { currentPath: string }) => {
 
   return (
     <Await resolve={navItems}>
-      {(items) => (
-        <AutoSidebarItems items={items ?? []} currentPath={currentPath} />
-      )}
+      {(items) => <AutoSidebarItems items={items ?? []} currentPath={currentPath} />}
     </Await>
   );
 };
@@ -171,10 +164,7 @@ const isActivePath = (url: string | undefined, currentPath: string) => {
 /**
  * Automatically generates sidebar items from navigation data.
  */
-const AutoSidebarItems = (props: {
-  items: Array<NavItem>;
-  currentPath: string;
-}) => {
+const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string }) => {
   const t = useT();
 
   return (
@@ -183,11 +173,7 @@ const AutoSidebarItems = (props: {
         <SearchEntry />
         {props.items.map((item) => {
           return (
-            <Collapsible.Root
-              key={item.title}
-              render={<SidebarMenuItem />}
-              defaultOpen={true}
-            >
+            <Collapsible.Root key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>
               {item.url ? (
                 <>
                   <SidebarMenuButton
@@ -208,9 +194,7 @@ const AutoSidebarItems = (props: {
                   </SidebarMenuButton>
                   {!!item.items?.length && (
                     <Collapsible.Trigger
-                      render={
-                        <SidebarMenuAction className="astw:data-panel-open:rotate-90" />
-                      }
+                      render={<SidebarMenuAction className="astw:data-panel-open:rotate-90" />}
                     >
                       <ChevronRight />
                       <span className="astw:sr-only">{t("toggle")}</span>
@@ -233,10 +217,7 @@ const AutoSidebarItems = (props: {
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                     {!!item.items?.length && (
-                      <SidebarMenuAction
-                        className="astw-rotate-target"
-                        render={<span />}
-                      >
+                      <SidebarMenuAction className="astw-rotate-target" render={<span />}>
                         <ChevronRight />
                         <span className="astw:sr-only">{t("toggle")}</span>
                       </SidebarMenuAction>

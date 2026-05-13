@@ -1,19 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-/** User-selectable theme. `system` follows OS light/dark (default palettes only — not cream/bloom/deep-dark). */
-export type Theme = "light" | "dark" | "deep-dark" | "cream" | "bloom" | "system";
+/** User-selectable theme. `system` follows OS light/dark (default palettes only — not cream/bloom). */
+export type Theme = "light" | "dark" | "cream" | "bloom" | "system";
 
 /** Resolved paint after applying `system`. */
-export type ResolvedTheme = "light" | "dark" | "deep-dark" | "cream" | "bloom";
+export type ResolvedTheme = "light" | "dark" | "cream" | "bloom";
 
-const ALL_THEMES: readonly Theme[] = [
-  "light",
-  "dark",
-  "deep-dark",
-  "cream",
-  "bloom",
-  "system",
-] as const;
+const ALL_THEMES: readonly Theme[] = ["light", "dark", "cream", "bloom", "system"] as const;
 
 /** Dropdown / switcher entries: order matches selectable themes; labels are user-facing. */
 export type ThemeOption = { readonly value: Theme; readonly label: string };
@@ -21,7 +14,6 @@ export type ThemeOption = { readonly value: Theme; readonly label: string };
 export const THEME_OPTIONS: readonly ThemeOption[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-  { value: "deep-dark", label: "Deep dark" },
   { value: "cream", label: "Cream" },
   { value: "bloom", label: "Bloom" },
   { value: "system", label: "System" },
@@ -31,7 +23,7 @@ export const THEME_OPTIONS: readonly ThemeOption[] = [
 const LEGACY_THEME_IDS: Partial<Record<string, Theme>> = {
   "tailor-light": "cream",
   "tailor-bloom": "bloom",
-  "tailor-dark": "deep-dark",
+  "tailor-dark": "dark",
 };
 
 function parseStoredTheme(value: string | null, fallback: Theme): Theme {
@@ -78,8 +70,8 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-  resolvedTheme: "light",
-  theme: "system",
+  resolvedTheme: "bloom",
+  theme: "bloom",
   setTheme: () => null,
 };
 
@@ -94,7 +86,7 @@ function resolveTheme(theme: Theme): ResolvedTheme {
 export function ThemeProvider({
   children,
   storageKey,
-  defaultTheme = "system",
+  defaultTheme = "bloom",
   ...props
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => readStoredTheme(storageKey, defaultTheme));
@@ -104,9 +96,7 @@ export function ThemeProvider({
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(
-      resolvedTheme === "dark" || resolvedTheme === "deep-dark" ? "dark" : "light",
-    );
+    root.classList.add(resolvedTheme === "dark" ? "dark" : "light");
     root.dataset.theme = resolvedTheme;
   }, [resolvedTheme]);
 

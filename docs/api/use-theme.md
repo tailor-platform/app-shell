@@ -12,9 +12,9 @@ React hook to access and control the current appearance theme.
 Exported types:
 
 ```typescript
-export type Theme = "light" | "dark" | "deep-dark" | "cream" | "bloom" | "system";
+export type Theme = "light" | "dark" | "cream" | "bloom" | "system";
 
-export type ResolvedTheme = "light" | "dark" | "deep-dark" | "cream" | "bloom";
+export type ResolvedTheme = "light" | "dark" | "cream" | "bloom";
 
 export type ThemeOption = { readonly value: Theme; readonly label: string };
 
@@ -37,12 +37,12 @@ const useTheme: () => {
 ### `theme`
 
 - **Type:** `Theme`
-- **Description:** Stored theme preference. **`system`** means “follow OS light/dark” for the **default** light/dark palettes only (not cream, bloom, or deep-dark).
+- **Description:** Stored theme preference. **`system`** means “follow OS light/dark” for the **default** light/dark palettes only (not cream or bloom).
 
 ### `resolvedTheme`
 
 - **Type:** `ResolvedTheme`
-- **Description:** Concrete palette after resolving **`system`** to **`light`** or **`dark`**. **`cream`**, **`bloom`**, and **`deep-dark`** are never produced by **`system`**; pick them explicitly with **`setTheme`**.
+- **Description:** Concrete palette after resolving **`system`** to **`light`** or **`dark`**. **`cream`** and **`bloom`** are never produced by **`system`**; pick them explicitly with **`setTheme`**.
 
 When **`resolvedTheme`** changes, **`document.documentElement`** gets **`data-theme`** set to this value and a **`light`** / **`dark`** class for Tailwind **`dark`** variant compatibility.
 
@@ -51,7 +51,7 @@ When **`resolvedTheme`** changes, **`document.documentElement`** gets **`data-th
 - **Type:** `(theme: Theme) => void`
 - **Description:** Set the theme. Persisted to **`localStorage`** (key **`appshell-ui-theme`** when using AppShell’s built-in provider).
 
-Previously saved ids **`tailor-light`**, **`tailor-bloom`**, **`tailor-dark`** are mapped on read to **`cream`**, **`bloom`**, **`deep-dark`** (see **`LEGACY_THEME_IDS`** in **`theme-context.tsx`**).
+Previously saved ids **`tailor-light`**, **`tailor-bloom`**, **`tailor-dark`** are mapped on read to **`cream`**, **`bloom`**, **`dark`** (see **`LEGACY_THEME_IDS`** in **`theme-context.tsx`**).
 
 ## Usage
 
@@ -114,13 +114,12 @@ function CustomThemeList() {
 
 ### Logo or assets by lightness
 
-Use **`resolvedTheme`** and treat **`light`**, **`cream`**, and **`bloom`** like “light” palettes and **`dark`** and **`deep-dark`** like “dark” for monochrome assets:
+Use **`resolvedTheme`** and treat **`light`**, **`cream`**, and **`bloom`** like “light” palettes and **`dark`** like “dark” for monochrome assets:
 
 ```typescript
 function Logo() {
   const { resolvedTheme } = useTheme();
-  const darkish =
-    resolvedTheme === "dark" || resolvedTheme === "deep-dark";
+  const darkish = resolvedTheme === "dark";
 
   return <img src={darkish ? "/logo-dark.svg" : "/logo-light.svg"} alt="Logo" />;
 }

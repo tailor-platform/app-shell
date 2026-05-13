@@ -73,7 +73,8 @@
   --chart-3: rgba(245, 158, 11, 1);
   --chart-4: rgba(168, 85, 247, 1);
   --chart-5: rgba(244, 63, 94, 1);
-  --sidebar: rgba(23, 23, 23, 1);
+  /* Match --background so sidebar blends with the app surface. */
+  --sidebar: rgba(10, 10, 10, 1);
   --sidebar-foreground: rgba(250, 250, 250, 1);
   --sidebar-primary: rgba(29, 78, 216, 1);
   --sidebar-primary-foreground: rgba(250, 250, 250, 1);
@@ -113,7 +114,8 @@ html[data-theme="cream"] {
   --muted-foreground: rgba(16, 18, 43, 0.72);
   --accent: rgba(226, 212, 254, 1);
   --accent-foreground: rgba(1, 55, 66, 1);
-  --destructive: rgba(185, 28, 28, 1);
+  /* Destructive matches default light theme so the brand red stays consistent across light/cream/bloom. */
+  --destructive: rgba(220, 38, 38, 1);
   --destructive-foreground: rgba(254, 242, 242, 1);
   --border: rgba(0, 0, 0, 0.08);
   --input: rgba(0, 0, 0, 0.08);
@@ -166,9 +168,9 @@ html[data-theme="bloom"] {
   --muted-foreground: rgba(16, 18, 43, 0.72);
   --accent: rgba(248, 243, 228, 1);
   --accent-foreground: rgba(16, 18, 43, 1);
-  /* Softer reds than cream — less harsh against lavender gradient / cream fills */
-  --destructive: rgba(176, 45, 64, 1);
-  --destructive-foreground: rgba(255, 251, 252, 1);
+  /* Destructive matches default light theme so the brand red stays consistent across light/cream/bloom. */
+  --destructive: rgba(220, 38, 38, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
   --border: rgba(0, 0, 0, 0.08);
   --input: rgba(0, 0, 0, 0.08);
   --ring: rgba(83, 90, 232, 0.45);
@@ -197,61 +199,6 @@ html[data-theme="bloom"] {
   --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
   --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
   --semantic-shadow-lg: 0 10px 15px -3px rgb(16 18 43 / 0.12), 0 4px 6px -4px rgb(83 90 232 / 0.1);
-}
-
-/**
- * Tailor brand — dark palette (`deep-dark`): near-black shell; same primaries / secondaries as cream.
- */
-html[data-theme="deep-dark"] {
-  color-scheme: dark;
-  --background: rgba(10, 10, 11, 1);
-  --foreground: rgba(237, 238, 242, 1);
-  --card: rgba(18, 18, 21, 1);
-  --card-foreground: rgba(237, 238, 242, 1);
-  --popover: rgba(22, 22, 26, 1);
-  --popover-foreground: rgba(237, 238, 242, 1);
-  /* Match cream — Primary #535AE8 */
-  --primary: rgba(83, 90, 232, 1);
-  --primary-foreground: rgba(255, 255, 255, 1);
-  /* Light violet + dark green text (same pairing as cream) */
-  --secondary: rgba(226, 212, 254, 1);
-  --secondary-foreground: rgba(1, 55, 66, 1);
-  --muted: rgba(28, 28, 34, 1);
-  --muted-foreground: rgba(163, 167, 180, 1);
-  --accent: rgba(226, 212, 254, 1);
-  --accent-foreground: rgba(1, 55, 66, 1);
-  --destructive: rgba(185, 28, 28, 1);
-  --destructive-foreground: rgba(254, 242, 242, 1);
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: rgba(83, 90, 232, 0.45);
-  --chart-1: rgba(83, 90, 232, 1);
-  --chart-2: rgba(0, 151, 156, 1);
-  --chart-3: rgba(1, 55, 66, 1);
-  --chart-4: rgba(110, 95, 195, 1);
-  --chart-5: rgba(217, 119, 6, 1);
-  --radius: 1rem;
-  --sidebar: rgba(10, 10, 11, 1);
-  --sidebar-foreground: rgba(237, 238, 242, 1);
-  --sidebar-primary: rgba(83, 90, 232, 1);
-  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
-  /*
-   * Hover + current row: dark elevated chip on near-black sidebar — light label.
-   * (Lavender wash reads as a “light tab” here; a muted lift matches dark UI better.)
-   */
-  --sidebar-accent: rgba(42, 43, 54, 1);
-  --sidebar-accent-foreground: rgba(238, 239, 246, 1);
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: rgba(83, 90, 232, 0.45);
-  --status-default: rgba(144, 150, 168, 0.88);
-  --status-neutral: #00979c;
-  --status-completed: #00979c;
-  --status-attention: #d97706;
-  --status-danger: #dc2626;
-  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.42);
-  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.42), 0 1px 2px -1px rgb(0 0 0 / 0.36);
-  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.46), 0 2px 4px -2px rgb(0 0 0 / 0.36);
-  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.54), 0 4px 6px -4px rgb(83 90 232 / 0.12);
 }
 
 @theme inline {

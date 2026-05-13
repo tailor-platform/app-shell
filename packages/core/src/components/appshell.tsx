@@ -173,10 +173,10 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * Initial theme before any value is loaded from localStorage (`appshell-ui-theme`).
    * Does not replace a stored preference.
    *
-   * Named palettes **`cream`**, **`bloom`**, **`deep-dark`**, plus default **`light`** / **`dark`**, in addition to
-   * default light/dark and `system` (OS preference maps to **default** light or dark only).
+   * Named palettes **`cream`**, **`bloom`**, plus default **`light`** / **`dark`**, in addition to
+   * `system` (OS preference maps to **default** light or dark only — not cream or bloom).
    *
-   * @default "system"
+   * @default "bloom"
    */
   defaultTheme?: Theme;
 }>;
@@ -286,7 +286,7 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider
-              defaultTheme={props.defaultTheme ?? "system"}
+              defaultTheme={props.defaultTheme ?? "bloom"}
               storageKey="appshell-ui-theme"
             >
               <RouterContainer rootComponent={props.rootComponent} rootGuards={props.rootGuards}>

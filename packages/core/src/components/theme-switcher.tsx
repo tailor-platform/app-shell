@@ -8,7 +8,6 @@ import { useTheme, type ResolvedTheme, type Theme, THEME_OPTIONS } from "@/conte
 const RESOLVED_THEME_SHORT: Record<ResolvedTheme, string> = {
   light: "Light",
   dark: "Dark",
-  "deep-dark": "Deep dark",
   cream: "Cream",
   bloom: "Bloom",
 };
@@ -19,7 +18,6 @@ const RESOLVED_THEME_SHORT: Record<ResolvedTheme, string> = {
 const THEME_PREVIEW: Record<Theme, { readonly a: `#${string}`; readonly b: `#${string}` }> = {
   light: { a: "#ffffff", b: "#d4d4d8" },
   dark: { a: "#3f3f46", b: "#d4d4d8" },
-  "deep-dark": { a: "#09090b", b: "#a1a1aa" },
   cream: { a: "#f8f3e4", b: "#e2d4fe" },
   bloom: { a: "#535ae8", b: "#f8f3e4" },
   system: { a: "#52525b", b: "#7c73e6" },

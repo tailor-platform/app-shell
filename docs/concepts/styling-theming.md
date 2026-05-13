@@ -36,9 +36,8 @@ AppShell ships **five** named semantic palettes controlled by **`data-theme`** o
 | `dark`         | Default neutral dark                         |
 | `cream`        | Tailor brand — cream shell, violet accents   |
 | `bloom`        | Lavender shell (**Bloom**) and cream accents |
-| `deep-dark`    | Tailor brand — near-black tuning surface     |
 
-**`system`** resolves to **`light`** or **`dark`** only — not **`cream`**, **`bloom`**, or **`deep-dark`**. Set those with **`setTheme`** or **`AppShell`** **`defaultTheme`**.
+**`system`** resolves to **`light`** or **`dark`** only — not **`cream`** or **`bloom`**. Set those with **`setTheme`** or **`AppShell`** **`defaultTheme`**.
 
 Semantic tokens (**`--background`**, **`--primary`**, **`--border`**, sidebar tokens, **`--semantic-shadow-*`**, statuses, **`--radius`**, …) live in **`theme.css`**; override there or in host CSS keyed off **`html[data-theme='…']`**.
 

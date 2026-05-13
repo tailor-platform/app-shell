@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { BadgeProps } from "@/components/badge";
 import type {
   CollectionControl,
   Filter,
@@ -13,13 +14,104 @@ import type {
 // =============================================================================
 
 /**
- * A column definition for DataTable.
+ * Built-in cell renderer types for `Column.type`.
+ *
+ * Each type produces a default render based on the value returned by
+ * `accessor`. Pass `render` to override the built-in renderer.
+ *
+ * - `text` — `String(value)` with `—` placeholder for null/undefined.
+ * - `number` — locale-formatted number with `—` for null/undefined.
+ * - `money` — `Intl.NumberFormat` currency. See `MoneyOptions`.
+ * - `date` — `Intl.DateTimeFormat`. Accepts `Date`, ISO string, or epoch ms.
+ * - `badge` — `<Badge>` keyed off the value. See `BadgeOptions`.
+ * - `link` — app-shell `<Link>` with `href` from `LinkOptions`.
  */
-export interface Column<TRow extends Record<string, unknown>> {
+export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
+
+/** Variant union accepted by the app-shell `<Badge>` component. */
+export type BadgeVariant = NonNullable<BadgeProps["variant"]>;
+
+/** Options for `type: "number"` cells. */
+export interface NumberCellOptions {
+  /** Minimum decimal places. Default: `0`. */
+  minDecimals?: number;
+  /** Maximum decimal places. Default: `minDecimals` (or `0`). */
+  maxDecimals?: number;
+  /** BCP 47 locale tag. Defaults to the runtime locale. */
+  locale?: string;
+}
+
+/** Options for `type: "money"` cells. */
+export interface MoneyCellOptions<TRow extends Record<string, unknown>> {
+  /**
+   * ISO 4217 currency code. Pass a string for a static currency or a function
+   * to read it from the row. Default: `"USD"`.
+   */
+  currency?: string | ((row: TRow) => string);
+  /**
+   * Maximum decimals. Raises the cap above the currency default while keeping
+   * the minimum at the currency default (e.g. USD stays at ≥2, but a price
+   * column can show up to 4).
+   */
+  maxDecimals?: number;
+  /** BCP 47 locale tag. Defaults to the runtime locale. */
+  locale?: string;
+}
+
+/** Options for `type: "date"` cells. */
+export interface DateCellOptions {
+  /**
+   * Format style. `"short"` → `Apr 9, 2026`; `"long"` → `April 9, 2026`;
+   * `"datetime"` → `Apr 9, 2026, 3:45 PM`. Default: `"short"`.
+   */
+  dateFormat?: "short" | "long" | "datetime";
+  /** BCP 47 locale tag. Defaults to the runtime locale. */
+  locale?: string;
+}
+
+/** Options for `type: "badge"` cells. */
+export interface BadgeCellOptions {
+  /**
+   * Maps each cell value (stringified) to a Badge variant. Values not in the
+   * map fall back to `defaultBadgeVariant`.
+   */
+  badgeVariantMap?: Record<string, BadgeVariant>;
+  /**
+   * Maps each cell value (stringified) to a display label. Values not in the
+   * map render the raw cell value.
+   */
+  badgeLabelMap?: Record<string, string>;
+  /** Variant used when the value is not in `badgeVariantMap`. Default: `"neutral"`. */
+  defaultBadgeVariant?: BadgeVariant;
+}
+
+/** Options for `type: "link"` cells. `href` is required. */
+export interface LinkCellOptions<TRow extends Record<string, unknown>> {
+  /**
+   * Extracts the link target. Returning `null` / `undefined` renders the cell
+   * value as plain text instead of a link.
+   */
+  href: (row: TRow) => string | null | undefined;
+}
+
+/**
+ * Fields shared by every `Column` regardless of `type`. Prefer `Column<TRow>`
+ * in most cases; this is exported so consumers can compose more specific
+ * column types (e.g. `type MoneyColumn<TRow> = ColumnBase<TRow> & { type: "money"; … }`).
+ */
+export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Column header text. Omit for action or icon-only columns. */
   label?: string;
-  /** Renders the cell content for a given row. Required. */
-  render: (row: TRow) => ReactNode;
+  /**
+   * Renders the cell content for a given row. Optional — when omitted, the
+   * built-in renderer for `type` takes over (or an `—` placeholder if no
+   * `type` is set). Always wins over the built-in renderer when both are
+   * present.
+   *
+   * Kept on the base (not per-branch) so callback contextual typing works
+   * across spread-then-override patterns like `column({ ...inferred, render })`.
+   */
+  render?: (row: TRow) => ReactNode;
   /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is
@@ -28,11 +120,6 @@ export interface Column<TRow extends Record<string, unknown>> {
   id?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
-  /**
-   * Extracts the raw value from a row for purposes such as sorting or
-   * clipboard copying. Not used for rendering — use `render` for that.
-   */
-  accessor?: (row: TRow) => unknown;
   /**
    * Sort configuration. When set, the column header becomes clickable and
    * cycles through `Asc → Desc → undefined`.
@@ -46,6 +133,68 @@ export interface Column<TRow extends Record<string, unknown>> {
    */
   filter?: FilterConfig;
 }
+
+/**
+ * Discriminated branches keyed off `type`. Each branch narrows `typeOptions`
+ * and `accessor`'s return type to the values its renderer can display.
+ *
+ * - `type: "link"` requires `typeOptions.href`.
+ * - `type: "text"` rejects `typeOptions` entirely.
+ *
+ * `accessor` lives on each branch (rather than `ColumnBase`) so the built-in
+ * renderers can constrain what a column produces. Returning an array or a
+ * non-Date object is a compile error on a typed branch, instead of silently
+ * rendering `[object Object]`. Untyped columns (`type?: undefined`) still
+ * accept `unknown` — they're rendered by an explicit `render`. `null` and
+ * `undefined` are always allowed: every built-in renderer maps them to the
+ * `—` placeholder.
+ *
+ * Prefer `Column<TRow>` in most cases; this is exported so consumers can
+ * compose more specific column types.
+ */
+export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
+  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown }
+  | {
+      type: "text";
+      typeOptions?: never;
+      accessor?: (row: TRow) => string | number | boolean | bigint | null | undefined;
+    }
+  | {
+      type: "number";
+      typeOptions?: NumberCellOptions;
+      accessor?: (row: TRow) => number | null | undefined;
+    }
+  | {
+      type: "money";
+      typeOptions?: MoneyCellOptions<TRow>;
+      accessor?: (row: TRow) => number | null | undefined;
+    }
+  | {
+      type: "date";
+      typeOptions?: DateCellOptions;
+      accessor?: (row: TRow) => Date | string | number | null | undefined;
+    }
+  | {
+      type: "badge";
+      typeOptions?: BadgeCellOptions;
+      accessor?: (row: TRow) => string | number | boolean | null | undefined;
+    }
+  | {
+      type: "link";
+      typeOptions: LinkCellOptions<TRow>;
+      accessor?: (row: TRow) => string | number | boolean | null | undefined;
+    };
+
+/**
+ * A column definition for DataTable. Use one of the built-in `type` values
+ * (`text`, `number`, `money`, `date`, `badge`, `link`) for automatic
+ * rendering, or pass `render` to draw the cell yourself.
+ *
+ * `Column` is a discriminated union on `type`, so wrong-shape `typeOptions`
+ * are a compile error rather than silently ignored at runtime.
+ */
+export type Column<TRow extends Record<string, unknown>> = ColumnBase<TRow> &
+  ColumnTypeBranch<TRow>;
 
 // =============================================================================
 // useDataTable Types

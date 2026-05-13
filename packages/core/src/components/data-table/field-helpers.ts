@@ -12,15 +12,9 @@ import type { Column, MetadataFieldOptions } from "./types";
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
  */
 export function column<TRow extends Record<string, unknown>>(options: Column<TRow>): Column<TRow> {
-  return {
-    label: options.label,
-    render: options.render,
-    id: options.id,
-    width: options.width,
-    accessor: options.accessor,
-    sort: options.sort,
-    filter: options.filter,
-  };
+  // Spread to keep `Column<TRow>` a discriminated union — an explicit field
+  // list would widen `type` / `typeOptions` and lose the branch relationship.
+  return { ...options };
 }
 
 // =============================================================================

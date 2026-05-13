@@ -19,6 +19,15 @@ export type { DataTablePaginationProps } from "./pagination";
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
 const DEFAULT_ROWS = 5;
 
+// Resolve the effective horizontal alignment for a column. Numeric `type`
+// values default to `"right"` so digits line up along their decimal place;
+// everything else defaults to `"left"`. Explicit `col.align` always wins.
+function resolveAlign<TRow extends Record<string, unknown>>(col: Column<TRow>): "left" | "right" {
+  if (col.align) return col.align;
+  if (col.type === "number" || col.type === "money") return "right";
+  return "left";
+}
+
 // =============================================================================
 // DataTableLoaderRows (internal)
 // =============================================================================
@@ -59,7 +68,10 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
                 className="astw:h-13.25"
               >
                 <div
-                  className="astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse"
+                  className={cn(
+                    "astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse",
+                    resolveAlign(col) === "right" && "astw:ml-auto",
+                  )}
                   style={{ width: `${skeletonWidth}%` }}
                 />
               </Table.Cell>
@@ -252,14 +264,23 @@ function DataTableHeaders({ className }: { className?: string }) {
             onSort(col.sort.field, nextDirection);
           };
 
+          const align = resolveAlign(col);
           return (
             <Table.Head
               key={key}
               style={col.width ? { width: col.width } : undefined}
-              className={cn(isSortable && "astw:cursor-pointer astw:select-none")}
+              className={cn(
+                isSortable && "astw:cursor-pointer astw:select-none",
+                align === "right" && "astw:text-right",
+              )}
               onClick={isSortable ? handleClick : undefined}
             >
-              <span className="astw:inline-flex astw:items-center astw:gap-1">
+              <span
+                className={cn(
+                  "astw:inline-flex astw:items-center astw:gap-1",
+                  align === "right" && "astw:justify-end",
+                )}
+              >
                 {label}
                 {currentSort && <SortIndicator direction={currentSort.direction} />}
               </span>
@@ -400,6 +421,7 @@ function DataTableBody({ className }: { className?: string }) {
                   key={key}
                   data-slot="data-table-cell"
                   style={col.width ? { width: col.width } : undefined}
+                  className={cn(resolveAlign(col) === "right" && "astw:text-right")}
                 >
                   {content}
                 </Table.Cell>

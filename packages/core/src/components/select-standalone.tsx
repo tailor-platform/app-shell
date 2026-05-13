@@ -418,7 +418,22 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
 // Export
 // ============================================================================
 
-const Select = Object.assign(SelectStandalone, {
+/**
+ * Keep the exported static API type explicit instead of relying on
+ * `Object.assign(...)` inference.
+ *
+ * Why:
+ * - makes declaration rollup more stable (avoids TS2742/non-portable inferred names)
+ * - keeps public `.d.ts` output resilient to resolver/config changes
+ * - preserves consumer-side callback inference for `Select` and `Select.Async`
+ */
+type SelectComponent = typeof SelectStandalone & {
+  Async: typeof SelectAsyncStandalone;
+  Parts: typeof SelectParts;
+  useAsync: typeof useAsync;
+};
+
+const Select: SelectComponent = Object.assign(SelectStandalone, {
   /**
    * Async select that fetches items when the dropdown opens.
    *

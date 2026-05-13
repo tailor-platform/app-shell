@@ -542,7 +542,24 @@ function ComboboxAsyncStandalone(props: any) {
 // Export
 // ============================================================================
 
-const Combobox = Object.assign(ComboboxStandalone, {
+/**
+ * Keep the exported static API type explicit instead of relying on
+ * `Object.assign(...)` inference.
+ *
+ * Why:
+ * - makes declaration rollup more stable (avoids TS2742/non-portable inferred names)
+ * - keeps public `.d.ts` output resilient to resolver/config changes
+ * - preserves consumer-side callback inference for `Combobox` and `Combobox.Async`
+ */
+type ComboboxComponent = typeof ComboboxStandalone & {
+  Async: typeof ComboboxAsyncStandalone;
+  Parts: typeof ComboboxParts;
+  useAsync: typeof useAsync;
+  useFilter: typeof useFilter;
+  useCreatable: typeof useCreatable;
+};
+
+const Combobox: ComboboxComponent = Object.assign(ComboboxStandalone, {
   Async: ComboboxAsyncStandalone,
   Parts: ComboboxParts,
   useAsync,

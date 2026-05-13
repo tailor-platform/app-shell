@@ -106,7 +106,6 @@ const modules = [
 
 ```tsx
 import { Home } from "lucide-react";
-
 <SidebarItem
   to="/dashboard"
   icon={<Home />} // Override auto-resolved icon
@@ -117,7 +116,6 @@ import { Home } from "lucide-react";
 
 ```tsx
 import { Settings } from "lucide-react";
-
 <SidebarItem to="/settings" title="Settings" icon={<Settings />} />;
 ```
 
@@ -127,7 +125,6 @@ Open links in a new tab with an external link icon:
 
 ```tsx
 import { ExternalLink } from "lucide-react";
-
 <SidebarItem
   to="https://docs.example.com"
   title="Documentation"
@@ -216,7 +213,6 @@ type SidebarItemRenderProps = {
 
 ```tsx
 import { Home, Package, ShoppingCart, Users } from "lucide-react";
-
 <DefaultSidebar>
   <SidebarItem to="/" title="Home" icon={<Home />} />
   <SidebarItem to="/products" title="Products" icon={<Package />} />
@@ -229,7 +225,6 @@ import { Home, Package, ShoppingCart, Users } from "lucide-react";
 
 ```tsx
 import { HelpCircle, FileText, ExternalLink } from "lucide-react";
-
 <DefaultSidebar>
   <SidebarItem to="/dashboard" />
   <SidebarItem to="/products" />
@@ -305,7 +300,6 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
 ```tsx
 import { SidebarGroup, SidebarItem } from "@tailor-platform/app-shell";
 import { Package } from "lucide-react";
-
 <SidebarGroup title="Products" icon={<Package />}>
   <SidebarItem to="/products/all" />
   <SidebarItem to="/products/categories" />

@@ -15,13 +15,17 @@ import { MetricCard } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<MetricCard
-  title="Net total payment"
-  value="$1,500.00"
-  trend={{ direction: "up", value: "+5%" }}
-  description="vs last month"
-/>
+```tsx preview
+import { MetricCard } from "@tailor-platform/app-shell";
+
+export default (
+  <MetricCard
+    title="Net total payment"
+    value="$1,500.00"
+    trend={{ direction: "up", value: "+5%" }}
+    description="vs last month"
+  />
+);
 ```
 
 ## Props
@@ -41,26 +45,26 @@ import { MetricCard } from "@tailor-platform/app-shell";
 - **down** — Negative change (destructive styling, e.g. red).
 - **neutral** — No change or neutral (muted styling).
 
-```tsx
-<MetricCard
-  title="Revenue"
-  value="$2,400"
-  trend={{ direction: "up", value: "+12%" }}
-  description="vs last month"
-/>
+```tsx preview wrap="row" height="600"
+import { MetricCard } from "@tailor-platform/app-shell";
 
-<MetricCard
-  title="Costs"
-  value="$800"
-  trend={{ direction: "down", value: "-5%" }}
-  description="vs last quarter"
-/>
-
-<MetricCard
-  title="Balance"
-  value="$0"
-  trend={{ direction: "neutral", value: "0%" }}
-/>
+export default (
+  <>
+    <MetricCard
+      title="Revenue"
+      value="$2,400"
+      trend={{ direction: "up", value: "+12%" }}
+      description="vs last month"
+    />
+    <MetricCard
+      title="Costs"
+      value="$800"
+      trend={{ direction: "down", value: "-5%" }}
+      description="vs last quarter"
+    />
+    <MetricCard title="Balance" value="$0" trend={{ direction: "neutral", value: "0%" }} />
+  </>
+);
 ```
 
 ## With Icon

@@ -7,27 +7,25 @@ description: Responsive column layout component for organizing page content in 1
 
 `Layout` is a responsive column layout component that helps you organize page content into 1, 2, or 3 columns with automatic responsive behavior. Perfect for detail pages, dashboards, and forms.
 
-## Import
-
-```tsx
-import { Layout } from "@tailor-platform/app-shell";
-```
-
 ## Basic Usage
 
 The column count is auto-detected from the number of `Layout.Column` children:
 
-```tsx
-<Layout>
-  <Layout.Column>
-    <h2>Main Content</h2>
-    <p>Your main content goes here...</p>
-  </Layout.Column>
-  <Layout.Column>
-    <h2>Sidebar</h2>
-    <p>Additional info or actions...</p>
-  </Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Column>
+      <h2>Main Content</h2>
+      <p>Your main content goes here...</p>
+    </Layout.Column>
+    <Layout.Column>
+      <h2>Sidebar</h2>
+      <p>Additional info or actions...</p>
+    </Layout.Column>
+  </Layout>
+);
 ```
 
 ## Props
@@ -69,12 +67,16 @@ The column count is auto-detected from the number of `Layout.Column` children:
 
 Full-width layout, always stacks vertically:
 
-```tsx
-<Layout>
-  <Layout.Column>
-    <DescriptionCard data={data} fields={fields} />
-  </Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Column>
+      <DescriptionCard data={data} fields={fields} />
+    </Layout.Column>
+  </Layout>
+);
 ```
 
 **Responsive behavior:**
@@ -85,18 +87,22 @@ Full-width layout, always stacks vertically:
 
 Main content with sidebar:
 
-```tsx
-<Layout>
-  <Layout.Column>
-    {/* Main content - flexible width */}
-    <DescriptionCard data={orderData} fields={orderFields} />
-  </Layout.Column>
-  <Layout.Column>
-    {/* Sidebar - fixed 280px on desktop */}
-    <Card>Quick Actions</Card>
-    <Card>History</Card>
-  </Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Column>
+      {/* Main content - flexible width */}
+      <DescriptionCard data={orderData} fields={orderFields} />
+    </Layout.Column>
+    <Layout.Column>
+      {/* Sidebar - fixed 280px on desktop */}
+      <Card>Quick Actions</Card>
+      <Card>History</Card>
+    </Layout.Column>
+  </Layout>
+);
 ```
 
 **Responsive behavior:**
@@ -114,21 +120,25 @@ Main content with sidebar:
 
 Left sidebar, main content, right sidebar:
 
-```tsx
-<Layout>
-  <Layout.Column>
-    {/* Left sidebar - fixed 320px */}
-    <Navigation />
-  </Layout.Column>
-  <Layout.Column>
-    {/* Main content - flexible */}
-    <DescriptionCard data={data} fields={fields} />
-  </Layout.Column>
-  <Layout.Column>
-    {/* Right sidebar - fixed 280px */}
-    <ActivityFeed />
-  </Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Column>
+      {/* Left sidebar - fixed 320px */}
+      <Navigation />
+    </Layout.Column>
+    <Layout.Column>
+      {/* Main content - flexible */}
+      <DescriptionCard data={data} fields={fields} />
+    </Layout.Column>
+    <Layout.Column>
+      {/* Right sidebar - fixed 280px */}
+      <ActivityFeed />
+    </Layout.Column>
+  </Layout>
+);
 ```
 
 **Responsive behavior:**
@@ -146,13 +156,17 @@ Left sidebar, main content, right sidebar:
 
 When more than 3 `Layout.Column` children are provided, all columns share equal width:
 
-```tsx
-<Layout>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Column>{/* 25% */}</Layout.Column>
+    <Layout.Column>{/* 25% */}</Layout.Column>
+    <Layout.Column>{/* 25% */}</Layout.Column>
+    <Layout.Column>{/* 25% */}</Layout.Column>
+  </Layout>
+);
 ```
 
 **Responsive behavior:**
@@ -164,20 +178,24 @@ When more than 3 `Layout.Column` children are provided, all columns share equal 
 
 Use `Layout.Header` to add a page-level header with title, actions, and optional full-width content:
 
-```tsx
-<Layout>
-  <Layout.Header
-    title="Order #12345"
-    actions={[
-      <Button key="edit">Edit</Button>,
-      <Button key="delete" variant="destructive">
-        Delete
-      </Button>,
-    ]}
-  />
-  <Layout.Column>{/* ... */}</Layout.Column>
-  <Layout.Column>{/* ... */}</Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout, Button } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Header
+      title="Order #12345"
+      actions={[
+        <Button key="edit">Edit</Button>,
+        <Button key="delete" variant="destructive">
+          Delete
+        </Button>,
+      ]}
+    />
+    <Layout.Column>{/* ... */}</Layout.Column>
+    <Layout.Column>{/* ... */}</Layout.Column>
+  </Layout>
+);
 ```
 
 The header displays:
@@ -189,6 +207,7 @@ The header displays:
 ### Header with Tabs
 
 ```tsx
+import { Layout } from "@tailor-platform/app-shell";
 <Layout>
   <Layout.Header title="Purchase Orders" actions={[<Button key="create">Create</Button>]}>
     <Tabs value={tab} onValueChange={setTab}>
@@ -199,7 +218,7 @@ The header displays:
     </Tabs>
   </Layout.Header>
   <Layout.Column>…</Layout.Column>
-</Layout>
+</Layout>;
 ```
 
 ## Area Mode
@@ -215,15 +234,19 @@ By default, column widths are determined by position (first, second, third). You
 
 If any `Layout.Column` has an `area` prop, all columns switch to area-based widths. Columns without an `area` default to flexible (`1fr`).
 
-```tsx
-<Layout>
-  <Layout.Column area="left">
-    <nav>Sidebar</nav>
-  </Layout.Column>
-  <Layout.Column area="main">
-    <h2>Content</h2>
-  </Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout>
+    <Layout.Column area="left">
+      <nav>Sidebar</nav>
+    </Layout.Column>
+    <Layout.Column area="main">
+      <h2>Content</h2>
+    </Layout.Column>
+  </Layout>
+);
 ```
 
 Columns are rendered in source order — place them in the visual order you want.
@@ -232,11 +255,15 @@ Columns are rendered in source order — place them in the visual order you want
 
 Use `className` to control the space between columns:
 
-```tsx
-<Layout className="astw:gap-6">
-  <Layout.Column>{/* ... */}</Layout.Column>
-  <Layout.Column>{/* ... */}</Layout.Column>
-</Layout>
+```tsx preview standalone
+import { Layout } from "@tailor-platform/app-shell";
+
+export default (
+  <Layout className="astw:gap-6">
+    <Layout.Column>{/* ... */}</Layout.Column>
+    <Layout.Column>{/* ... */}</Layout.Column>
+  </Layout>
+);
 ```
 
 ## Examples

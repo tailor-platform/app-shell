@@ -18,13 +18,12 @@ import type { AttachmentItem, AttachmentOperation } from "@tailor-platform/app-s
 
 Use `useAttachment` to manage upload/delete state locally, then flush operations to your backend on submit via `applyChanges`. Spread the returned `props` directly onto `<Attachment />`.
 
-```tsx
+```tsx preview height="400"
 import { Attachment, Card, useAttachment } from "@tailor-platform/app-shell";
 import type { AttachmentOperation } from "@tailor-platform/app-shell";
 
-function ProductForm() {
+export default function ProductForm() {
   const { props, applyChanges } = useAttachment({
-    initialItems: existingAttachments,
     accept: "image/*,.pdf",
   });
 
@@ -38,7 +37,7 @@ function ProductForm() {
   }
 
   return (
-    <Card.Root>
+    <Card.Root style={{ flex: 1 }}>
       <Card.Header title="Product images" description="PNG, JPG, or PDF — max 10 MB per file." />
       <Card.Content>
         <Attachment

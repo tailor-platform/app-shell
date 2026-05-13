@@ -15,14 +15,20 @@ import { Badge } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<Badge>Default</Badge>
-<Badge variant="success">Success</Badge>
-<Badge variant="warning">Warning</Badge>
-<Badge variant="error">Error</Badge>
-<Badge variant="subtle-success">Subtle Success</Badge>
-<Badge variant="subtle-warning">Subtle Warning</Badge>
-<Badge variant="subtle-error">Subtle Error</Badge>
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
+export default (
+  <>
+    <Badge>Default</Badge>
+    <Badge variant="success">Success</Badge>
+    <Badge variant="warning">Warning</Badge>
+    <Badge variant="error">Error</Badge>
+    <Badge variant="subtle-success">Subtle Success</Badge>
+    <Badge variant="subtle-warning">Subtle Warning</Badge>
+    <Badge variant="subtle-error">Subtle Error</Badge>
+  </>
+);
 ```
 
 ## Variants
@@ -31,27 +37,39 @@ import { Badge } from "@tailor-platform/app-shell";
 
 Filled variants for high emphasis, plus subtle variants for lower-emphasis status labels:
 
-```tsx
-<Badge variant="default">Default</Badge>
-<Badge variant="success">Approved</Badge>
-<Badge variant="warning">Pending</Badge>
-<Badge variant="error">Rejected</Badge>
-<Badge variant="neutral">Draft</Badge>
-<Badge variant="subtle-success">Matched</Badge>
-<Badge variant="subtle-warning">Needs Attention</Badge>
-<Badge variant="subtle-error">Needs Review</Badge>
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
+export default (
+  <>
+    <Badge variant="default">Default</Badge>
+    <Badge variant="success">Approved</Badge>
+    <Badge variant="warning">Pending</Badge>
+    <Badge variant="error">Rejected</Badge>
+    <Badge variant="neutral">Draft</Badge>
+    <Badge variant="subtle-success">Matched</Badge>
+    <Badge variant="subtle-warning">Needs Attention</Badge>
+    <Badge variant="subtle-error">Needs Review</Badge>
+  </>
+);
 ```
 
 ### Outline Variants with Status Dots
 
 Outlined badges with colored status dots for subtle emphasis:
 
-```tsx
-<Badge variant="outline-success">Active</Badge>
-<Badge variant="outline-warning">In Progress</Badge>
-<Badge variant="outline-error">Failed</Badge>
-<Badge variant="outline-info">Info</Badge>
-<Badge variant="outline-neutral">Inactive</Badge>
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
+
+export default (
+  <>
+    <Badge variant="outline-success">Active</Badge>
+    <Badge variant="outline-warning">In Progress</Badge>
+    <Badge variant="outline-error">Failed</Badge>
+    <Badge variant="outline-info">Info</Badge>
+    <Badge variant="outline-neutral">Inactive</Badge>
+  </>
+);
 ```
 
 ## Props
@@ -122,23 +140,26 @@ const priorities = [
 
 ### With Icons
 
-```tsx
+```tsx preview wrap="row"
+import { Badge } from "@tailor-platform/app-shell";
 import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
 
-<div className="astw:flex astw:gap-2">
-  <Badge variant="success">
-    <CheckCircle className="astw:w-3 astw:h-3 astw:mr-1" />
-    Verified
-  </Badge>
-  <Badge variant="warning">
-    <AlertCircle className="astw:w-3 astw:h-3 astw:mr-1" />
-    Review
-  </Badge>
-  <Badge variant="error">
-    <XCircle className="astw:w-3 astw:h-3 astw:mr-1" />
-    Blocked
-  </Badge>
-</div>;
+export default (
+  <div className="astw:flex astw:gap-2">
+    <Badge variant="success">
+      <CheckCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+      Verified
+    </Badge>
+    <Badge variant="warning">
+      <AlertCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+      Review
+    </Badge>
+    <Badge variant="error">
+      <XCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+      Blocked
+    </Badge>
+  </div>
+);
 ```
 
 ### Dynamic Variant Selection
@@ -164,10 +185,14 @@ function ProductBadge({ product }: { product: Product }) {
 
 ### Custom Styling
 
-```tsx
-<Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
-  Premium
-</Badge>
+```tsx preview
+import { Badge } from "@tailor-platform/app-shell";
+
+export default (
+  <Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
+    Premium
+  </Badge>
+);
 ```
 
 ## Visual Reference
@@ -208,7 +233,6 @@ Badges can be used with DescriptionCard for automatic status rendering:
 
 ```tsx
 import { DescriptionCard } from "@tailor-platform/app-shell";
-
 <DescriptionCard
   data={orderData}
   fields={[
@@ -263,6 +287,5 @@ Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
 ```tsx
 import { badgeVariants } from "@tailor-platform/app-shell";
 import { cn } from "@/lib/utils";
-
 <div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>Custom Badge</div>;
 ```

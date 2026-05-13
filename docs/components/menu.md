@@ -7,24 +7,22 @@ description: Dropdown menu with a compound component API, supporting checkbox/ra
 
 The `Menu` component provides a dropdown menu with a compound component API. It is backed by Base UI's Menu primitive.
 
-## Import
-
-```tsx
-import { Menu } from "@tailor-platform/app-shell";
-```
-
 ## Basic Usage
 
-```tsx
-<Menu.Root>
-  <Menu.Trigger>Open menu</Menu.Trigger>
-  <Menu.Content>
-    <Menu.Item>Edit</Menu.Item>
-    <Menu.Item>Duplicate</Menu.Item>
-    <Menu.Separator />
-    <Menu.Item>Delete</Menu.Item>
-  </Menu.Content>
-</Menu.Root>
+```tsx preview align="start"
+import { Menu } from "@tailor-platform/app-shell";
+
+export default (
+  <Menu.Root>
+    <Menu.Trigger>Open menu</Menu.Trigger>
+    <Menu.Content>
+      <Menu.Item>Edit</Menu.Item>
+      <Menu.Item>Duplicate</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item>Delete</Menu.Item>
+    </Menu.Content>
+  </Menu.Root>
+);
 ```
 
 ## Sub-components
@@ -86,24 +84,28 @@ Accepts `className`, `disabled`, and all standard Base UI `Menu.Item` props.
 
 Use `Menu.Group` and `Menu.GroupLabel` to visually group related items:
 
-```tsx
-<Menu.Root>
-  <Menu.Trigger>Actions</Menu.Trigger>
-  <Menu.Content>
-    <Menu.Group>
-      <Menu.GroupLabel>File</Menu.GroupLabel>
-      <Menu.Item>New</Menu.Item>
-      <Menu.Item>Open</Menu.Item>
-    </Menu.Group>
-    <Menu.Separator />
-    <Menu.Group>
-      <Menu.GroupLabel>Edit</Menu.GroupLabel>
-      <Menu.Item>Cut</Menu.Item>
-      <Menu.Item>Copy</Menu.Item>
-      <Menu.Item>Paste</Menu.Item>
-    </Menu.Group>
-  </Menu.Content>
-</Menu.Root>
+```tsx preview align="start" height="330"
+import { Menu } from "@tailor-platform/app-shell";
+
+export default (
+  <Menu.Root>
+    <Menu.Trigger>Actions</Menu.Trigger>
+    <Menu.Content>
+      <Menu.Group>
+        <Menu.GroupLabel>File</Menu.GroupLabel>
+        <Menu.Item>New</Menu.Item>
+        <Menu.Item>Open</Menu.Item>
+      </Menu.Group>
+      <Menu.Separator />
+      <Menu.Group>
+        <Menu.GroupLabel>Edit</Menu.GroupLabel>
+        <Menu.Item>Cut</Menu.Item>
+        <Menu.Item>Copy</Menu.Item>
+        <Menu.Item>Paste</Menu.Item>
+      </Menu.Group>
+    </Menu.Content>
+  </Menu.Root>
+);
 ```
 
 ## Checkbox Items
@@ -155,21 +157,25 @@ const [align, setAlign] = useState("left");
 
 ## Nested Sub-menus
 
-```tsx
-<Menu.Root>
-  <Menu.Trigger>Edit</Menu.Trigger>
-  <Menu.Content>
-    <Menu.Item>Cut</Menu.Item>
-    <Menu.Item>Copy</Menu.Item>
-    <Menu.SubmenuRoot>
-      <Menu.SubmenuTrigger>Paste Special ›</Menu.SubmenuTrigger>
-      <Menu.Content>
-        <Menu.Item>Paste as Plain Text</Menu.Item>
-        <Menu.Item>Paste and Match Style</Menu.Item>
-      </Menu.Content>
-    </Menu.SubmenuRoot>
-  </Menu.Content>
-</Menu.Root>
+```tsx preview align="start" height="350"
+import { Menu } from "@tailor-platform/app-shell";
+
+export default (
+  <Menu.Root>
+    <Menu.Trigger>Edit</Menu.Trigger>
+    <Menu.Content>
+      <Menu.Item>Cut</Menu.Item>
+      <Menu.Item>Copy</Menu.Item>
+      <Menu.SubmenuRoot>
+        <Menu.SubmenuTrigger>Paste Special ›</Menu.SubmenuTrigger>
+        <Menu.Content>
+          <Menu.Item>Paste as Plain Text</Menu.Item>
+          <Menu.Item>Paste and Match Style</Menu.Item>
+        </Menu.Content>
+      </Menu.SubmenuRoot>
+    </Menu.Content>
+  </Menu.Root>
+);
 ```
 
 ## Examples

@@ -55,7 +55,6 @@ function App() {
 
 ```tsx
 import { Building } from "lucide-react";
-
 <AppShell title="My App" icon={<Building />} modules={modules}>
   {/* ... */}
 </AppShell>;
@@ -124,7 +123,6 @@ When `rootComponent` is set, the root page is treated as a first-class navigatio
 
 ```tsx
 import { redirectTo } from "@tailor-platform/app-shell";
-
 <AppShell basePath="/app" modules={modules} rootComponent={() => redirectTo("/app/dashboard")}>
   {/* ... */}
 </AppShell>;
@@ -307,7 +305,6 @@ Typically, you'll use `SidebarLayout`:
 
 ```tsx
 import { SidebarLayout } from "@tailor-platform/app-shell";
-
 <AppShell modules={modules}>
   <SidebarLayout />
 </AppShell>;

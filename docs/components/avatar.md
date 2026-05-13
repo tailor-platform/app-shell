@@ -15,11 +15,15 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Basic usage
 
-```tsx
-<Avatar.Root>
-  <Avatar.Image src="/user.png" alt="Jane Doe" />
-  <Avatar.Fallback>JD</Avatar.Fallback>
-</Avatar.Root>
+```tsx preview
+import { Avatar } from "@tailor-platform/app-shell";
+
+export default (
+  <Avatar.Root>
+    <Avatar.Image src="/user.png" alt="Jane Doe" />
+    <Avatar.Fallback>JD</Avatar.Fallback>
+  </Avatar.Root>
+);
 ```
 
 ## Parts
@@ -42,16 +46,22 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Sizes
 
-```tsx
-<Avatar.Root size="sm">
-  <Avatar.Fallback>AB</Avatar.Fallback>
-</Avatar.Root>
-<Avatar.Root size="default">
-  <Avatar.Fallback>CD</Avatar.Fallback>
-</Avatar.Root>
-<Avatar.Root size="lg">
-  <Avatar.Fallback>EF</Avatar.Fallback>
-</Avatar.Root>
+```tsx preview wrap="row"
+import { Avatar } from "@tailor-platform/app-shell";
+
+export default (
+  <>
+    <Avatar.Root size="sm">
+      <Avatar.Fallback>AB</Avatar.Fallback>
+    </Avatar.Root>
+    <Avatar.Root size="default">
+      <Avatar.Fallback>CD</Avatar.Fallback>
+    </Avatar.Root>
+    <Avatar.Root size="lg">
+      <Avatar.Fallback>EF</Avatar.Fallback>
+    </Avatar.Root>
+  </>
+);
 ```
 
 ## Types

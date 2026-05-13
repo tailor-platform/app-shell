@@ -1,4 +1,9 @@
-import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/sidebar";
 import { SunIcon } from "lucide-react";
 import { AppShellOutlet } from "@/components/content";
 import { Button } from "@/components/button";
@@ -35,6 +40,22 @@ export type SidebarLayoutProps = {
    * ```
    */
   sidebar?: React.ReactNode;
+
+  /**
+   * Whether the sidebar is open by default on desktop.
+   *
+   * @default true
+   */
+  defaultOpen?: boolean;
+
+  /**
+   * Whether the sidebar can be collapsed.
+   * When set to `false`, the sidebar is always visible and cannot be toggled.
+   * `defaultOpen` is ignored when this is `false`.
+   *
+   * @default true
+   */
+  collapsible?: boolean;
 };
 
 const HidableSidebarTrigger = () => {
@@ -49,21 +70,26 @@ const HidableSidebarTrigger = () => {
 };
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
-  const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
+  const Children = props.children
+    ? props.children({ Outlet: AppShellOutlet })
+    : null;
   const themeContext = useTheme();
   const toggleTheme = () => {
     themeContext.setTheme(themeContext.theme === "dark" ? "light" : "dark");
   };
 
   return (
-    <SidebarProvider className="astw:flex astw:flex-col">
+    <SidebarProvider
+      defaultOpen={props.defaultOpen}
+      className="astw:flex astw:flex-col"
+    >
       <div className="astw:flex astw:flex-1">
-        {props.sidebar ?? <DefaultSidebar />}
+        {props.sidebar ?? <DefaultSidebar collapsible={props.collapsible} />}
         <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">
           <header className="astw:flex astw:h-14 astw:shrink-0 astw:items-center astw:gap-2 astw:transition-[width,height] astw:ease-linear astw:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="astw:flex astw:w-full astw:items-center astw:justify-between">
               <div className="astw:flex astw:items-center astw:gap-2">
-                <HidableSidebarTrigger />
+                {props.collapsible !== false && <HidableSidebarTrigger />}
                 <DynamicBreadcrumb />
               </div>
               <div className="astw:flex astw:items-center astw:gap-2">

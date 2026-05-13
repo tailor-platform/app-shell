@@ -213,19 +213,30 @@ const table = useDataTable({
 
 ## `Column`
 
-A column definition passed to `useDataTable`.
+A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated union on `type` — the shape of `typeOptions` and the requirement on `render` change per branch, so mismatches are compile errors rather than silent runtime no-ops.
 
-| Property      | Type                       | Description                                                                                                  |
-| ------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `label`       | `string`                   | Column header text. Omit for icon-only columns.                                                              |
-| `render`      | `(row: TRow) => ReactNode` | Renders the cell content. Optional when `type` is set — built-in renderer is used. Always wins when present. |
-| `type`        | `ColumnCellType`           | Built-in cell renderer: `text`, `number`, `money`, `date`, `badge`, `link`. See [Cell types](#cell-types).   |
-| `typeOptions` | `ColumnTypeOptions<TRow>`  | Type-specific options (currency, badge map, href, etc.). Fields that don't apply to `type` are ignored.      |
-| `id`          | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted.                   |
-| `width`       | `number`                   | Fixed column width in pixels. Optional.                                                                      |
-| `accessor`    | `(row: TRow) => unknown`   | Extracts the raw value. Used by built-in `type` renderers and available for sort/clipboard.                  |
-| `sort`        | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).                        |
-| `filter`      | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.                      |
+### Shared fields
+
+| Property   | Type                     | Description                                                                                |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| `label`    | `string`                 | Column header text. Omit for icon-only columns.                                            |
+| `id`       | `string`                 | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
+| `width`    | `number`                 | Fixed column width in pixels. Optional.                                                    |
+| `accessor` | `(row: TRow) => unknown` | Extracts the raw value. Used by built-in `type` renderers and available for sort.          |
+| `sort`     | `SortConfig`             | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
+| `filter`   | `FilterConfig`           | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
+
+### `type`-specific fields
+
+| `type`      | `render`                                  | `typeOptions`                                                |
+| ----------- | ----------------------------------------- | ------------------------------------------------------------ |
+| _(omitted)_ | **Required** — `(row: TRow) => ReactNode` | _(not allowed)_                                              |
+| `"text"`    | Optional override                         | _(not allowed)_                                              |
+| `"number"`  | Optional override                         | `NumberCellOptions`                                          |
+| `"money"`   | Optional override                         | `MoneyCellOptions<TRow>`                                     |
+| `"date"`    | Optional override                         | `DateCellOptions`                                            |
+| `"badge"`   | Optional override                         | `BadgeCellOptions`                                           |
+| `"link"`    | Optional override                         | **Required** — `LinkCellOptions<TRow>` (must include `href`) |
 
 ## Cell types
 
@@ -240,16 +251,32 @@ column({
 });
 ```
 
-| `type`   | Value handling                                    | Relevant `typeOptions`                                                              |
-| -------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `text`   | `String(value)` — falls back to `—` when nullish. | _(none)_                                                                            |
-| `number` | `Intl.NumberFormat`. `—` for nullish / NaN.       | `minDecimals`, `maxDecimals`, `locale`                                              |
-| `money`  | `Intl.NumberFormat` currency. `—` for nullish.    | `currency` (string or `(row) => string`), `maxDecimals`, `locale`                   |
-| `date`   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                      |
-| `badge`  | `<Badge>` keyed off the stringified value.        | `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`) |
-| `link`   | app-shell `<Link>` to `typeOptions.href(row)`.    | `href: (row) => string \| null \| undefined` (returning nullish renders plain text) |
+| `type`   | Value handling                                    | Options interface                                                                                                          |
+| -------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `text`   | `String(value)` — falls back to `—` when nullish. | _(no options)_                                                                                                             |
+| `number` | `Intl.NumberFormat`. `—` for nullish / NaN.       | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                |
+| `money`  | `Intl.NumberFormat` currency. `—` for nullish.    | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                |
+| `date`   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                          |
+| `badge`  | `<Badge>` keyed off the stringified value.        | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)                    |
+| `link`   | app-shell `<Link>` to `typeOptions.href(row)`.    | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**) |
 
 Empty values (`null`, `undefined`, `""`) render a muted `—` placeholder for every type. Use `render` for custom empty-state handling.
+
+The discriminated-union shape means:
+
+```tsx
+// ❌ Compile error — badgeVariantMap is not a money option
+column({ type: "money", accessor: (r) => r.total, typeOptions: { badgeVariantMap: {} } });
+
+// ❌ Compile error — link columns must provide typeOptions.href
+column({ type: "link", accessor: (r) => r.title });
+
+// ❌ Compile error — text columns reject typeOptions entirely
+column({ type: "text", accessor: (r) => r.title, typeOptions: { locale: "en-US" } });
+
+// ❌ Compile error — untyped columns must provide render
+column({ label: "Name" });
+```
 
 ## `FilterConfig`
 

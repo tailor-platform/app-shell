@@ -411,6 +411,55 @@ describe("DataTable", () => {
       expect(container.querySelector("[data-testid='custom']")).not.toBeNull();
       expect(container.textContent).toContain("SHIPPED");
     });
+
+    // Compile-time tests — these assertions verify the discriminated-union
+    // shape rejects wrong-type options. Runtime behavior is incidental.
+    it("[types] rejects wrong-type options on each branch", () => {
+      const moneyCol: Column<TypedRow> = {
+        type: "money",
+        accessor: (r) => r.total,
+        // @ts-expect-error — badgeVariantMap is not a money option
+        typeOptions: { badgeVariantMap: { shipped: "success" } },
+      };
+      const badgeCol: Column<TypedRow> = {
+        type: "badge",
+        accessor: (r) => r.status,
+        // @ts-expect-error — currency is not a badge option
+        typeOptions: { currency: "USD" },
+      };
+      // @ts-expect-error — text columns reject typeOptions entirely
+      const textCol: Column<TypedRow> = {
+        type: "text",
+        accessor: (r) => r.name,
+        typeOptions: { locale: "en-US" },
+      };
+      // Reference the variables so the binding isn't elided.
+      expect([moneyCol, badgeCol, textCol]).toHaveLength(3);
+    });
+
+    it("[types] requires href on link columns", () => {
+      // @ts-expect-error — link branch requires typeOptions.href
+      const linkColMissingHref: Column<TypedRow> = {
+        type: "link",
+        accessor: (r) => r.name,
+      };
+      const linkColOk: Column<TypedRow> = {
+        type: "link",
+        accessor: (r) => r.name,
+        typeOptions: { href: (r) => r.detailUrl },
+      };
+      expect([linkColMissingHref, linkColOk]).toHaveLength(2);
+    });
+
+    it("[types] requires render when type is omitted", () => {
+      // @ts-expect-error — untyped columns must provide render
+      const untypedNoRender: Column<TypedRow> = { label: "Name" };
+      const untypedOk: Column<TypedRow> = {
+        label: "Name",
+        render: (r) => r.name,
+      };
+      expect([untypedNoRender, untypedOk]).toHaveLength(2);
+    });
   });
 
   describe("row selection", () => {

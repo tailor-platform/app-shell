@@ -21,49 +21,56 @@ import type {
  *
  * - `text` — `String(value)` with `—` placeholder for null/undefined.
  * - `number` — locale-formatted number with `—` for null/undefined.
- * - `money` — `Intl.NumberFormat` currency. See `typeOptions.currency` and
- *   `typeOptions.maxDecimals`.
+ * - `money` — `Intl.NumberFormat` currency. See `MoneyOptions`.
  * - `date` — `Intl.DateTimeFormat`. Accepts `Date`, ISO string, or epoch ms.
- * - `badge` — `<Badge>` keyed off the value. See `typeOptions.badgeVariantMap`.
- * - `link` — app-shell `<Link>` with `href` from `typeOptions.href`.
+ * - `badge` — `<Badge>` keyed off the value. See `BadgeOptions`.
+ * - `link` — app-shell `<Link>` with `href` from `LinkOptions`.
  */
 export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
 
 /** Variant union accepted by the app-shell `<Badge>` component. */
 export type BadgeVariant = NonNullable<BadgeProps["variant"]>;
 
-/**
- * Type-specific options for `Column.type`. Fields that don't apply to the
- * column's `type` are ignored at render time.
- */
-export interface ColumnTypeOptions<TRow extends Record<string, unknown>> {
-  // ---- number / money --------------------------------------------------------
-  /**
-   * BCP 47 locale tag for `number`, `money`, and `date` cells. Defaults to the
-   * runtime locale.
-   */
-  locale?: string;
-  /** Minimum decimal places for `number` cells. Default: `0`. */
+/** Options for `type: "number"` cells. */
+export interface NumberCellOptions {
+  /** Minimum decimal places. Default: `0`. */
   minDecimals?: number;
-  /** Maximum decimal places for `number` cells. Default: `0`. */
+  /** Maximum decimal places. Default: `minDecimals` (or `0`). */
   maxDecimals?: number;
-  // ---- money -----------------------------------------------------------------
+  /** BCP 47 locale tag. Defaults to the runtime locale. */
+  locale?: string;
+}
+
+/** Options for `type: "money"` cells. */
+export interface MoneyCellOptions<TRow extends Record<string, unknown>> {
   /**
-   * ISO 4217 currency code for `money` cells. Pass a string for a static
-   * currency or a function to read from the row. Default: `"USD"`.
+   * ISO 4217 currency code. Pass a string for a static currency or a function
+   * to read it from the row. Default: `"USD"`.
    */
   currency?: string | ((row: TRow) => string);
-  // ---- date ------------------------------------------------------------------
   /**
-   * Format style for `date` cells.
-   * - `"short"` — `Apr 9, 2026`.
-   * - `"long"` — `April 9, 2026`.
-   * - `"datetime"` — `Apr 9, 2026, 3:45 PM`.
-   *
-   * Default: `"short"`.
+   * Maximum decimals. Raises the cap above the currency default while keeping
+   * the minimum at the currency default (e.g. USD stays at ≥2, but a price
+   * column can show up to 4).
+   */
+  maxDecimals?: number;
+  /** BCP 47 locale tag. Defaults to the runtime locale. */
+  locale?: string;
+}
+
+/** Options for `type: "date"` cells. */
+export interface DateCellOptions {
+  /**
+   * Format style. `"short"` → `Apr 9, 2026`; `"long"` → `April 9, 2026`;
+   * `"datetime"` → `Apr 9, 2026, 3:45 PM`. Default: `"short"`.
    */
   dateFormat?: "short" | "long" | "datetime";
-  // ---- badge -----------------------------------------------------------------
+  /** BCP 47 locale tag. Defaults to the runtime locale. */
+  locale?: string;
+}
+
+/** Options for `type: "badge"` cells. */
+export interface BadgeCellOptions {
   /**
    * Maps each cell value (stringified) to a Badge variant. Values not in the
    * map fall back to `defaultBadgeVariant`.
@@ -76,33 +83,25 @@ export interface ColumnTypeOptions<TRow extends Record<string, unknown>> {
   badgeLabelMap?: Record<string, string>;
   /** Variant used when the value is not in `badgeVariantMap`. Default: `"neutral"`. */
   defaultBadgeVariant?: BadgeVariant;
-  // ---- link ------------------------------------------------------------------
+}
+
+/** Options for `type: "link"` cells. `href` is required. */
+export interface LinkCellOptions<TRow extends Record<string, unknown>> {
   /**
-   * Extracts the link target for `link` cells. Returning `null` / `undefined`
-   * renders the value as plain text instead of a link.
+   * Extracts the link target. Returning `null` / `undefined` renders the cell
+   * value as plain text instead of a link.
    */
-  href?: (row: TRow) => string | null | undefined;
+  href: (row: TRow) => string | null | undefined;
 }
 
 /**
- * A column definition for DataTable.
+ * Fields shared by every `Column` regardless of `type`.
+ *
+ * @internal Exported for type composition; prefer `Column<TRow>`.
  */
-export interface Column<TRow extends Record<string, unknown>> {
+export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Column header text. Omit for action or icon-only columns. */
   label?: string;
-  /**
-   * Renders the cell content for a given row. Optional when `type` is set —
-   * the built-in renderer is used instead. Always wins when both are present.
-   */
-  render?: (row: TRow) => ReactNode;
-  /**
-   * Built-in cell renderer. When set, the cell is rendered automatically from
-   * the value returned by `accessor` (or `row[id]` when `accessor` is omitted).
-   * Pass `render` to override.
-   */
-  type?: ColumnCellType;
-  /** Type-specific options applied when `type` is set. */
-  typeOptions?: ColumnTypeOptions<TRow>;
   /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is
@@ -130,6 +129,37 @@ export interface Column<TRow extends Record<string, unknown>> {
    */
   filter?: FilterConfig;
 }
+
+/**
+ * Discriminated branches keyed off `type`. Each branch narrows `typeOptions`
+ * (and the requirement on `render`) accordingly.
+ *
+ * - Untyped columns must provide `render` — same as before this feature shipped.
+ * - Typed columns make `render` optional (the built-in renderer takes over).
+ * - `type: "link"` requires `typeOptions.href`.
+ * - `type: "text"` rejects `typeOptions` entirely.
+ *
+ * @internal Exported for type composition; prefer `Column<TRow>`.
+ */
+export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
+  | { type?: undefined; typeOptions?: never; render: (row: TRow) => ReactNode }
+  | { type: "text"; typeOptions?: never; render?: (row: TRow) => ReactNode }
+  | { type: "number"; typeOptions?: NumberCellOptions; render?: (row: TRow) => ReactNode }
+  | { type: "money"; typeOptions?: MoneyCellOptions<TRow>; render?: (row: TRow) => ReactNode }
+  | { type: "date"; typeOptions?: DateCellOptions; render?: (row: TRow) => ReactNode }
+  | { type: "badge"; typeOptions?: BadgeCellOptions; render?: (row: TRow) => ReactNode }
+  | { type: "link"; typeOptions: LinkCellOptions<TRow>; render?: (row: TRow) => ReactNode };
+
+/**
+ * A column definition for DataTable. Use one of the built-in `type` values
+ * (`text`, `number`, `money`, `date`, `badge`, `link`) for automatic
+ * rendering, or pass `render` to draw the cell yourself.
+ *
+ * `Column` is a discriminated union on `type`, so wrong-shape `typeOptions`
+ * are a compile error rather than silently ignored at runtime.
+ */
+export type Column<TRow extends Record<string, unknown>> = ColumnBase<TRow> &
+  ColumnTypeBranch<TRow>;
 
 // =============================================================================
 // useDataTable Types

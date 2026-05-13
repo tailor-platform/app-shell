@@ -60,13 +60,6 @@ export type DefaultSidebarProps = {
    * Auto-generation is completely disabled when children is specified.
    */
   children?: React.ReactNode;
-
-  /**
-   * Whether the sidebar can be collapsed.
-   *
-   * @default true
-   */
-  collapsible?: boolean;
 };
 
 /**
@@ -97,7 +90,7 @@ export type DefaultSidebarProps = {
 export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const { title, icon } = useAppShellConfig();
   const { pathname: currentPath } = useLocation();
-  const { isIconMode } = useSidebar();
+  const { isIconMode, collapsible } = useSidebar();
 
   const DefaultHeader = (
     <SidebarHeader>
@@ -117,14 +110,12 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   return (
     <Sidebar
       variant="inset"
-      collapsible={
-        props.collapsible === false ? "none" : isIconMode ? "icon" : "offcanvas"
-      }
+      collapsible={!collapsible ? "none" : isIconMode ? "icon" : "offcanvas"}
     >
       {!isIconMode && (
         <div className="astw:flex astw:justify-between astw:items-center">
           {props.header ?? DefaultHeader}
-          {props.collapsible !== false && (
+          {collapsible && (
             <div className="astw:hidden astw:md:block">
               <SidebarTrigger className="astw:-ml-1" />
             </div>

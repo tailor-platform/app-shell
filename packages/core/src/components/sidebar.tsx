@@ -28,6 +28,7 @@ type SidebarContextProps = {
   isIconMode: boolean;
   openIconMode: boolean;
   setOpenIconMode: (open: boolean) => void;
+  collapsible: boolean;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -45,6 +46,7 @@ function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
+  collapsible = true,
   className,
   style,
   children,
@@ -53,6 +55,7 @@ function SidebarProvider({
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  collapsible?: boolean;
 }) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -94,7 +97,10 @@ function SidebarProvider({
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
+      if (
+        event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+        (event.metaKey || event.ctrlKey)
+      ) {
         event.preventDefault();
         toggleSidebar();
       }
@@ -120,6 +126,7 @@ function SidebarProvider({
       isIconMode,
       openIconMode,
       setOpenIconMode,
+      collapsible,
     }),
     [
       state,
@@ -132,6 +139,7 @@ function SidebarProvider({
       isIconMode,
       openIconMode,
       setOpenIconMode,
+      collapsible,
     ],
   );
 
@@ -172,8 +180,15 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
-  const { isMobile, state, openMobile, setOpenMobile, isIconMode, openIconMode, setOpenIconMode } =
-    useSidebar();
+  const {
+    isMobile,
+    state,
+    openMobile,
+    setOpenMobile,
+    isIconMode,
+    openIconMode,
+    setOpenIconMode,
+  } = useSidebar();
 
   if (collapsible === "none") {
     return (
@@ -192,7 +207,12 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet.Root open={openMobile} onOpenChange={setOpenMobile} side={side} {...props}>
+      <Sheet.Root
+        open={openMobile}
+        onOpenChange={setOpenMobile}
+        side={side}
+        {...props}
+      >
         <Sheet.Content
           data-sidebar="sidebar"
           data-slot="sidebar"
@@ -208,7 +228,9 @@ function Sidebar({
             <Sheet.Title>Sidebar</Sheet.Title>
             <Sheet.Description>Displays the mobile sidebar.</Sheet.Description>
           </Sheet.Header>
-          <div className="astw:flex astw:h-full astw:w-full astw:flex-col">{children}</div>
+          <div className="astw:flex astw:h-full astw:w-full astw:flex-col">
+            {children}
+          </div>
         </Sheet.Content>
       </Sheet.Root>
     );
@@ -257,7 +279,12 @@ function Sidebar({
           </div>
         </div>
         {/* Overlay sidebar when opened */}
-        <Sheet.Root open={openIconMode} onOpenChange={setOpenIconMode} side={side} {...props}>
+        <Sheet.Root
+          open={openIconMode}
+          onOpenChange={setOpenIconMode}
+          side={side}
+          {...props}
+        >
           <Sheet.Content
             data-sidebar="sidebar"
             data-slot="sidebar-overlay"
@@ -271,9 +298,13 @@ function Sidebar({
           >
             <Sheet.Header className="astw:sr-only">
               <Sheet.Title>Sidebar</Sheet.Title>
-              <Sheet.Description>Displays the sidebar overlay.</Sheet.Description>
+              <Sheet.Description>
+                Displays the sidebar overlay.
+              </Sheet.Description>
             </Sheet.Header>
-            <div className="astw:flex astw:h-full astw:w-full astw:flex-col">{children}</div>
+            <div className="astw:flex astw:h-full astw:w-full astw:flex-col">
+              {children}
+            </div>
           </Sheet.Content>
         </Sheet.Root>
       </>
@@ -329,7 +360,11 @@ function Sidebar({
   );
 }
 
-function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
+function SidebarTrigger({
+  className,
+  onClick,
+  ...props
+}: React.ComponentProps<typeof Button>) {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -390,12 +425,18 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
   );
 }
 
-function SidebarInput({ className, ...props }: React.ComponentProps<typeof Input>) {
+function SidebarInput({
+  className,
+  ...props
+}: React.ComponentProps<typeof Input>) {
   return (
     <Input
       data-slot="sidebar-input"
       data-sidebar="input"
-      className={cn("astw:bg-background astw:h-8 astw:w-full astw:shadow-none", className)}
+      className={cn(
+        "astw:bg-background astw:h-8 astw:w-full astw:shadow-none",
+        className,
+      )}
       {...props}
     />
   );
@@ -406,7 +447,10 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
-      className={cn("astw:flex astw:flex-row astw:items-center astw:gap-0.5 astw:p-2", className)}
+      className={cn(
+        "astw:flex astw:flex-row astw:items-center astw:gap-0.5 astw:p-2",
+        className,
+      )}
       {...props}
     />
   );
@@ -423,7 +467,10 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function SidebarSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
+function SidebarSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof Separator>) {
   return (
     <Separator
       data-slot="sidebar-separator"
@@ -510,7 +557,10 @@ function SidebarGroupAction({
   });
 }
 
-function SidebarGroupContent({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarGroupContent({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sidebar-group-content"
@@ -526,7 +576,10 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
     <ul
       data-slot="sidebar-menu"
       data-sidebar="menu"
-      className={cn("astw:flex astw:w-full astw:min-w-0 astw:flex-col astw:gap-1", className)}
+      className={cn(
+        "astw:flex astw:w-full astw:min-w-0 astw:flex-col astw:gap-1",
+        className,
+      )}
       {...props}
     />
   );
@@ -548,7 +601,8 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground",
+        default:
+          "astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground",
         outline:
           "astw:bg-background astw:shadow-[0_0_0_1px_hsl(var(--sidebar-border))] astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
@@ -580,7 +634,8 @@ function SidebarMenuButton({
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof Tooltip.Content>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+  const { isMobile, state, setOpenMobile, openIconMode, setOpenIconMode } =
+    useSidebar();
 
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -666,7 +721,10 @@ function SidebarMenuAction({
   });
 }
 
-function SidebarMenuBadge({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarMenuBadge({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sidebar-menu-badge"
@@ -700,7 +758,10 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
   );
 }
 
-function SidebarMenuSubItem({ className, ...props }: React.ComponentProps<"li">) {
+function SidebarMenuSubItem({
+  className,
+  ...props
+}: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="sidebar-menu-sub-item"
@@ -724,7 +785,8 @@ function SidebarMenuSubButton({
   size?: "sm" | "md";
   isActive?: boolean;
 }) {
-  const { isMobile, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+  const { isMobile, setOpenMobile, openIconMode, setOpenIconMode } =
+    useSidebar();
 
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {

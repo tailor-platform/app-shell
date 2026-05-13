@@ -59,7 +59,9 @@ export type SidebarLayoutProps = {
 };
 
 const HidableSidebarTrigger = () => {
-  const { open, isIconMode } = useSidebar();
+  const { open, isIconMode, collapsible } = useSidebar();
+
+  if (!collapsible) return null;
 
   // Hide trigger when sidebar is open (desktop), but show it in icon mode
   return (
@@ -81,15 +83,16 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
   return (
     <SidebarProvider
       defaultOpen={props.defaultOpen}
+      collapsible={props.collapsible}
       className="astw:flex astw:flex-col"
     >
       <div className="astw:flex astw:flex-1">
-        {props.sidebar ?? <DefaultSidebar collapsible={props.collapsible} />}
+        {props.sidebar ?? <DefaultSidebar />}
         <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">
           <header className="astw:flex astw:h-14 astw:shrink-0 astw:items-center astw:gap-2 astw:transition-[width,height] astw:ease-linear astw:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="astw:flex astw:w-full astw:items-center astw:justify-between">
               <div className="astw:flex astw:items-center astw:gap-2">
-                {props.collapsible !== false && <HidableSidebarTrigger />}
+                <HidableSidebarTrigger />
                 <DynamicBreadcrumb />
               </div>
               <div className="astw:flex astw:items-center astw:gap-2">

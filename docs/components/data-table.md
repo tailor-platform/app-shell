@@ -240,14 +240,14 @@ column({
 });
 ```
 
-| `type`   | Value handling                                    | Relevant `typeOptions`                                                                |
-| -------- | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `text`   | `String(value)` — falls back to `—` when nullish. | _(none)_                                                                              |
-| `number` | `Intl.NumberFormat`. `—` for nullish / NaN.       | `minDecimals`, `maxDecimals`, `locale`                                                |
-| `money`  | `Intl.NumberFormat` currency. `—` for nullish.    | `currency` (string or `(row) => string`), `maxDecimals`, `locale`                     |
-| `date`   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                        |
-| `badge`  | `<Badge>` keyed off the stringified value.        | `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)   |
-| `link`   | app-shell `<Link>` to `typeOptions.href(row)`.    | `href: (row) => string \| null \| undefined` (returning nullish renders plain text)   |
+| `type`   | Value handling                                    | Relevant `typeOptions`                                                              |
+| -------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `text`   | `String(value)` — falls back to `—` when nullish. | _(none)_                                                                            |
+| `number` | `Intl.NumberFormat`. `—` for nullish / NaN.       | `minDecimals`, `maxDecimals`, `locale`                                              |
+| `money`  | `Intl.NumberFormat` currency. `—` for nullish.    | `currency` (string or `(row) => string`), `maxDecimals`, `locale`                   |
+| `date`   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                      |
+| `badge`  | `<Badge>` keyed off the stringified value.        | `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`) |
+| `link`   | app-shell `<Link>` to `typeOptions.href(row)`.    | `href: (row) => string \| null \| undefined` (returning nullish renders plain text) |
 
 Empty values (`null`, `undefined`, `""`) render a muted `—` placeholder for every type. Use `render` for custom empty-state handling.
 

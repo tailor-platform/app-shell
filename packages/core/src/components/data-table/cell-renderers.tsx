@@ -9,10 +9,7 @@ const PLACEHOLDER = (
   </span>
 );
 
-function getCellValue<TRow extends Record<string, unknown>>(
-  row: TRow,
-  col: Column<TRow>,
-): unknown {
+function getCellValue<TRow extends Record<string, unknown>>(row: TRow, col: Column<TRow>): unknown {
   if (col.accessor) return col.accessor(row);
   if (col.id) return row[col.id];
   return undefined;
@@ -121,10 +118,7 @@ function renderLink<TRow extends Record<string, unknown>>(
   const href = options.href?.(row);
   if (!href) return label;
   return (
-    <Link
-      to={href}
-      className="astw:text-primary astw:underline-offset-4 astw:hover:underline"
-    >
+    <Link to={href} className="astw:text-primary astw:underline-offset-4 astw:hover:underline">
       {label}
     </Link>
   );

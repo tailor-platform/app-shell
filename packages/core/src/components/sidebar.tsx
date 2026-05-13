@@ -185,7 +185,8 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:h-full astw:w-(--sidebar-width) astw:flex-col",
+          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:w-(--sidebar-width) astw:flex-col",
+          variant === "inset" && "astw:border-x astw:border-x-border",
           className,
         )}
         {...props}

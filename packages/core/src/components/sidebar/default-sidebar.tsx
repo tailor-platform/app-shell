@@ -90,7 +90,7 @@ export type DefaultSidebarProps = {
 export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const { title, icon } = useAppShellConfig();
   const { pathname: currentPath } = useLocation();
-  const { isIconMode } = useSidebar();
+  const { isIconMode, collapsible } = useSidebar();
 
   const DefaultHeader = (
     <SidebarHeader>
@@ -103,13 +103,18 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const DefaultFooter = null;
 
   return (
-    <Sidebar variant="inset" collapsible={isIconMode ? "icon" : "offcanvas"}>
+    <Sidebar
+      variant="inset"
+      collapsible={!collapsible ? "none" : isIconMode ? "icon" : "offcanvas"}
+    >
       {!isIconMode && (
         <div className="astw:flex astw:justify-between astw:items-center">
           {props.header ?? DefaultHeader}
-          <div className="astw:hidden astw:md:block">
-            <SidebarTrigger className="astw:-ml-1" />
-          </div>
+          {collapsible && (
+            <div className="astw:hidden astw:md:block">
+              <SidebarTrigger className="astw:-ml-1" />
+            </div>
+          )}
         </div>
       )}
       <SidebarContent>

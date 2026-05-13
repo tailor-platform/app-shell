@@ -42,6 +42,7 @@ describe("convertPagesToModules", () => {
 
     expect(modules).toHaveLength(1);
     expect(modules[0].path).toBe("");
+    // oxlint-disable-next-line no-underscore-dangle
     expect(modules[0]._type).toBe("module");
   });
 

@@ -322,14 +322,14 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
   const getLabel = (item: T) => mapItem(item).label;
 
   // Bridge onCreateItem → useCreatable's createItem + onItemCreated
-  const createItem = (v: string) => ({ __pending: true, __value: v }) as unknown as T;
+  const createItem = (v: string) => ({ pendingMarker: true, pendingValue: v }) as unknown as T;
 
   const onItemCreated = (item: T) => {
     const pending = item as unknown as {
-      __pending: boolean;
-      __value: string;
+      pendingMarker: boolean;
+      pendingValue: string;
     };
-    return onCreateItem(pending.__value);
+    return onCreateItem(pending.pendingValue);
   };
 
   const creatableOptions = {
@@ -474,14 +474,14 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
   const getLabel = (item: T) => mapItem(item).label;
 
   // Bridge onCreateItem → useCreatable's createItem + onItemCreated
-  const createItem = (v: string) => ({ __pending: true, __value: v }) as unknown as T;
+  const createItem = (v: string) => ({ pendingMarker: true, pendingValue: v }) as unknown as T;
 
   const onItemCreated = (item: T) => {
     const pending = item as unknown as {
-      __pending: boolean;
-      __value: string;
+      pendingMarker: boolean;
+      pendingValue: string;
     };
-    return onCreateItem(pending.__value);
+    return onCreateItem(pending.pendingValue);
   };
 
   const creatableOptions = {

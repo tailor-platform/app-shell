@@ -139,13 +139,13 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
             No actions available
           </p>
         ) : (
-          <div className="astw:flex astw:flex-col astw:gap-0" role="list">
+          <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:m-0 astw:p-0">
             {actions.map((action) => (
-              <div key={action.key} role="listitem">
+              <li key={action.key}>
                 <ActionRow action={action} />
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </Card.Content>
     </Card.Root>

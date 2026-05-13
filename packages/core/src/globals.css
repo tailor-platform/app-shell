@@ -69,30 +69,27 @@
     background-color: transparent !important;
   }
 
+
   /*
-    Tailor light / dark: Geist Sans + Apple-style corners (squircle) when the engine supports corner-shape (Chromium).
+    Cream / Bloom: Geist Sans + Apple-style corners (squircle) when the engine supports corner-shape (Chromium).
     Circles (.rounded-full) stay round; browsers without support keep standard border-radius.
   */
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) body,
-  html[data-theme="deep-dark"] body {
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) body {
     font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   }
 
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) :where(h1, h2, h3, h4, h5, h6),
-  html[data-theme="deep-dark"] :where(h1, h2, h3, h4, h5, h6) {
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) :where(h1, h2, h3, h4, h5, h6) {
     letter-spacing: -0.03em;
     line-height: 1.2;
     font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   }
 
   @supports (corner-shape: squircle) {
-    :is(html[data-theme="cream"], html[data-theme="bloom"]) *,
-    html[data-theme="deep-dark"] * {
+    :is(html[data-theme="cream"], html[data-theme="bloom"]) * {
       corner-shape: squircle;
     }
     /* Round radii (.rounded-full) stay circular squircles, not elongated “capsules” */
-    :is(html[data-theme="cream"], html[data-theme="bloom"]) [class*="rounded-full"],
-    html[data-theme="deep-dark"] [class*="rounded-full"] {
+    :is(html[data-theme="cream"], html[data-theme="bloom"]) [class*="rounded-full"] {
       corner-shape: round;
     }
   }
@@ -121,290 +118,13 @@
 }
 
 /*
- * Cream / Bloom / deep-dark — tactile buttons: solid fill + 2px darker bottom lip (raised);
- * pressed: borders match fill (lip vanishes visually, no jump) + inset shade + slight translateY on label.
- * These themes use the same brand tokens and rim recipes (theme.css).
- *
- * `<Dialog.Trigger render={<Button />}>` and `<Dialog.Close render={<Button />}>` keep
- * `data-slot="dialog-trigger"` / `data-slot="dialog-close"` on the merged control; targets include those plus `button`.
+ * Theme-specific overrides that must beat Tailwind utility classes (which sit in `@layer utilities`).
+ * Keep this block in `@layer utilities` so it loses to no Tailwind utility in earlier layers but wins on specificity.
  */
 @layer utilities {
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"],
-  html[data-theme="deep-dark"] :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"] {
-    background-image: none;
-    transition:
-      filter 0.12s ease,
-      border-color 0.12s ease,
-      box-shadow 0.12s ease,
-      transform 0.08s ease;
-  }
-
+  /* Outline button on cream/bloom: transparent fill so the shell gradient shows through; keep border. */
   :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"],
-  html[data-theme="deep-dark"] :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"] {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-    border: 1px solid color-mix(in srgb, #10122b 38%, rgb(106 114 226));
-    border-bottom: 2px solid color-mix(in srgb, #10122b 58%, rgb(73 76 205));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"]:hover:not(:disabled),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"]:hover:not(:disabled) {
-    filter: brightness(1.05);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"]:active:not(:disabled),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"]:active:not(:disabled) {
-    filter: brightness(0.96);
-    border: 1px solid var(--primary);
-    border-bottom: 2px solid var(--primary);
-    box-shadow: inset 0 3px 8px rgb(8 14 82 / 0.36);
-    transform: translateY(2px);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"]:focus-visible,
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-primary"]:focus-visible {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      0 0 0 3px var(--ring) !important;
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"],
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"] {
-    background-color: var(--secondary);
-    color: var(--secondary-foreground);
-    border: 1px solid color-mix(in srgb, var(--secondary) 18%, rgb(110 94 164));
-    border-bottom: 2px solid color-mix(in srgb, rgb(226 212 254) 30%, rgb(98 74 154));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.65);
-  }
-
-  /*
-   * Bloom: cream secondary on lavender shell — rims from --background (lighter than cream’s violet lip).
-   */
-  html[data-theme="bloom"] :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"] {
-    border: 1px solid color-mix(in srgb, var(--background) 88%, rgb(118 108 168));
-    border-bottom: 2px solid color-mix(in srgb, var(--background) 70%, rgb(105 96 152));
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"]:hover:not(:disabled),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"]:hover:not(:disabled) {
-    filter: brightness(1.035);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"]:active:not(:disabled),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"]:active:not(:disabled) {
-    filter: brightness(0.98);
-    border: 1px solid var(--secondary);
-    border-bottom: 2px solid var(--secondary);
-    box-shadow: inset 0 3px 8px rgb(50 42 118 / 0.22);
-    transform: translateY(2px);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"]:focus-visible,
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-secondary"]:focus-visible {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.65),
-      0 0 0 3px var(--ring) !important;
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"],
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"] {
-    background-color: var(--destructive);
-    color: var(--destructive-foreground);
-    border: 1px solid color-mix(in srgb, var(--destructive) 62%, rgb(92 26 26));
-    border-bottom: 2px solid color-mix(in srgb, var(--destructive) 52%, rgb(76 22 26));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"]:hover:not(:disabled),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"]:hover:not(:disabled) {
-    filter: brightness(1.04);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"]:active:not(:disabled),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"]:active:not(:disabled) {
-    filter: brightness(0.96);
-    border: 1px solid var(--destructive);
-    border-bottom: 2px solid var(--destructive);
-    box-shadow: inset 0 4px 10px rgb(70 14 14 / 0.45);
-    transform: translateY(2px);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"]:focus-visible,
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-destructive"]:focus-visible {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.2),
-      0 0 0 3px color-mix(in srgb, var(--destructive) 42%, transparent) !important;
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"] {
-    background-color: var(--card);
-    color: var(--card-foreground);
-    border: 1px solid rgb(203 200 225 / 0.48);
-    border-bottom: 2px solid rgb(154 158 184 / 0.62);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
-  }
-
-  /* Dark: subtler rims so outline doesn’t read as a bright halo on near-black UI. */
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"] {
-    background-color: var(--card);
-    color: var(--card-foreground);
-    border: 1px solid rgb(58 60 72 / 0.55);
-    border-bottom: 2px solid rgb(34 36 46 / 0.82);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:hover:not(
-      :disabled
-    ) {
-    border-color: rgb(185 180 218 / 0.42);
-    border-bottom-color: rgb(135 142 188 / 0.58);
-    filter: brightness(1.015);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.98);
-  }
-
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:hover:not(
-      :disabled
-    ) {
-    border-color: rgb(78 80 94 / 0.5);
-    border-bottom-color: rgb(52 54 68 / 0.85);
-    filter: brightness(1.04);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:active:not(
-      :disabled
-    ),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:active:not(
-      :disabled
-    ) {
-    border: 1px solid var(--card);
-    border-bottom: 2px solid var(--card);
-    box-shadow: inset 0 3px 8px rgb(16 18 43 / 0.12);
-    filter: none;
-    transform: translateY(2px);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:focus-visible {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.9),
-      0 0 0 3px var(--ring) !important;
-  }
-
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"])[class*="shadow-xs"][class*="astw:bg-background"][class*="astw:border"]:focus-visible {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 0 0 3px var(--ring) !important;
-  }
-
-  /*
-   * Ghost (no shadow-xs): hover / pressed / focus match tactile outline (card + rim), not secondary.
-   * Invisible border at rest matches outline lip widths so chrome does not shift layout.
-   */
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"],
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"] {
-    background-image: none;
-    border: 1px solid transparent;
-    border-bottom: 2px solid transparent;
-    transition:
-      filter 0.12s ease,
-      border-color 0.12s ease,
-      box-shadow 0.12s ease,
-      transform 0.08s ease,
-      background-color 0.12s ease,
-      color 0.12s ease;
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:hover:not(
-      :disabled
-    ) {
-    background-color: var(--card);
-    color: var(--card-foreground);
-    border: 1px solid rgb(185 180 218 / 0.42);
-    border-bottom: 2px solid rgb(135 142 188 / 0.58);
-    filter: brightness(1.015);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.98);
-  }
-
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:hover:not(
-      :disabled
-    ) {
-    background-color: var(--card);
-    color: var(--card-foreground);
-    border: 1px solid rgb(78 80 94 / 0.5);
-    border-bottom: 2px solid rgb(52 54 68 / 0.85);
-    filter: brightness(1.04);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:active:not(
-      :disabled
-    ),
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:active:not(
-      :disabled
-    ) {
-    border: 1px solid var(--card);
-    border-bottom: 2px solid var(--card);
-    box-shadow: inset 0 3px 8px rgb(16 18 43 / 0.12);
-    filter: none;
-    transform: translateY(2px);
-    background-color: var(--card);
-    color: var(--card-foreground);
-  }
-
-  /* Match outline tactile: focus-visible adds ring atop existing rim (outline default already painted). */
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:focus-visible:not(
-      :disabled
-    ) {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.9),
-      0 0 0 3px var(--ring) !important;
-  }
-
-  html[data-theme="deep-dark"]
-    :is([data-slot="button"], [data-slot="dialog-close"], [data-slot="dialog-trigger"]):not([class*="shadow-xs"])[class*="astw:hover:bg-accent"]:focus-visible:not(
-      :disabled
-    ) {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 0 0 3px var(--ring) !important;
+    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
+    background-color: transparent;
   }
 }

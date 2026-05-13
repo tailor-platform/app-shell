@@ -223,7 +223,7 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Optional — overrides the built-in `type` renderer when set.      |
 | `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
 | `width`    | `number`                   | Fixed column width in pixels. Optional.                                                    |
-| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value. Used by built-in `type` renderers and available for sort.          |
+| `accessor` | _(narrowed per `type`)_    | Extracts the raw value. The return type is narrowed per `type` branch — returning an array or a plain object is a compile error on a typed column. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed. |
 | `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
 | `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
 
@@ -252,14 +252,14 @@ column({
 });
 ```
 
-| `type`   | Value handling                                    | Options interface                                                                                                          |
-| -------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `text`   | `String(value)` — falls back to `—` when nullish. | _(no options)_                                                                                                             |
-| `number` | `Intl.NumberFormat`. `—` for nullish / NaN.       | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                |
-| `money`  | `Intl.NumberFormat` currency. `—` for nullish.    | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                |
-| `date`   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                          |
-| `badge`  | `<Badge>` keyed off the stringified value.        | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)                    |
-| `link`   | app-shell `<Link>` to `typeOptions.href(row)`.    | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**) |
+| `type`   | Accessor return type                                              | Value handling                                    | Options interface                                                                                                          |
+| -------- | ----------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `text`   | `string \| number \| boolean \| bigint \| null \| undefined`      | `String(value)` — falls back to `—` when nullish. | _(no options)_                                                                                                             |
+| `number` | `number \| null \| undefined`                                     | `Intl.NumberFormat`. `—` for nullish / NaN.       | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                |
+| `money`  | `number \| null \| undefined`                                     | `Intl.NumberFormat` currency. `—` for nullish.    | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                |
+| `date`   | `Date \| string \| number \| null \| undefined`                   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                          |
+| `badge`  | `string \| number \| boolean \| null \| undefined`                | `<Badge>` keyed off the stringified value.        | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)                    |
+| `link`   | `string \| number \| boolean \| null \| undefined`                | app-shell `<Link>` to `typeOptions.href(row)`.    | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**) |
 
 Empty values (`null`, `undefined`, `""`) render a muted `—` placeholder for every type. Use `render` for custom empty-state handling.
 
@@ -274,6 +274,10 @@ column({ type: "link", accessor: (r) => r.title });
 
 // ❌ Compile error — text columns reject typeOptions entirely
 column({ type: "text", accessor: (r) => r.title, typeOptions: { locale: "en-US" } });
+
+// ❌ Compile error — text/number/money/badge/link accessor cannot return an array or object
+column({ type: "text", accessor: (row) => row.tags }); // row.tags is string[]
+column({ type: "number", accessor: (row) => row.meta }); // row.meta is an object
 ```
 
 ## Adding a typed column

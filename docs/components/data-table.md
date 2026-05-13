@@ -213,30 +213,31 @@ const table = useDataTable({
 
 ## `Column`
 
-A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated union on `type` — the shape of `typeOptions` and the requirement on `render` change per branch, so mismatches are compile errors rather than silent runtime no-ops.
+A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated union on `type` — the shape of `typeOptions` is narrowed per branch, so mismatches are compile errors rather than silent runtime no-ops.
 
 ### Shared fields
 
-| Property   | Type                     | Description                                                                                |
-| ---------- | ------------------------ | ------------------------------------------------------------------------------------------ |
-| `label`    | `string`                 | Column header text. Omit for icon-only columns.                                            |
-| `id`       | `string`                 | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
-| `width`    | `number`                 | Fixed column width in pixels. Optional.                                                    |
-| `accessor` | `(row: TRow) => unknown` | Extracts the raw value. Used by built-in `type` renderers and available for sort.          |
-| `sort`     | `SortConfig`             | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
-| `filter`   | `FilterConfig`           | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
+| Property   | Type                       | Description                                                                                |
+| ---------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| `label`    | `string`                   | Column header text. Omit for icon-only columns.                                            |
+| `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Optional — overrides the built-in `type` renderer when set.      |
+| `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
+| `width`    | `number`                   | Fixed column width in pixels. Optional.                                                    |
+| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value. Used by built-in `type` renderers and available for sort.          |
+| `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
+| `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
 
 ### `type`-specific fields
 
-| `type`      | `render`                                  | `typeOptions`                                                |
-| ----------- | ----------------------------------------- | ------------------------------------------------------------ |
-| _(omitted)_ | **Required** — `(row: TRow) => ReactNode` | _(not allowed)_                                              |
-| `"text"`    | Optional override                         | _(not allowed)_                                              |
-| `"number"`  | Optional override                         | `NumberCellOptions`                                          |
-| `"money"`   | Optional override                         | `MoneyCellOptions<TRow>`                                     |
-| `"date"`    | Optional override                         | `DateCellOptions`                                            |
-| `"badge"`   | Optional override                         | `BadgeCellOptions`                                           |
-| `"link"`    | Optional override                         | **Required** — `LinkCellOptions<TRow>` (must include `href`) |
+| `type`      | `typeOptions`                                                |
+| ----------- | ------------------------------------------------------------ |
+| _(omitted)_ | _(not allowed; provide `render` to draw the cell)_           |
+| `"text"`    | _(not allowed)_                                              |
+| `"number"`  | `NumberCellOptions`                                          |
+| `"money"`   | `MoneyCellOptions<TRow>`                                     |
+| `"date"`    | `DateCellOptions`                                            |
+| `"badge"`   | `BadgeCellOptions`                                           |
+| `"link"`    | **Required** — `LinkCellOptions<TRow>` (must include `href`) |
 
 ## Cell types
 
@@ -273,9 +274,6 @@ column({ type: "link", accessor: (r) => r.title });
 
 // ❌ Compile error — text columns reject typeOptions entirely
 column({ type: "text", accessor: (r) => r.title, typeOptions: { locale: "en-US" } });
-
-// ❌ Compile error — untyped columns must provide render
-column({ label: "Name" });
 ```
 
 ## Adding a typed column

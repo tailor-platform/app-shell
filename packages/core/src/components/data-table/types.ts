@@ -95,13 +95,23 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
 }
 
 /**
- * Fields shared by every `Column` regardless of `type`.
- *
- * @internal Exported for type composition; prefer `Column<TRow>`.
+ * Fields shared by every `Column` regardless of `type`. Prefer `Column<TRow>`
+ * in most cases; this is exported so consumers can compose more specific
+ * column types (e.g. `type MoneyColumn<TRow> = ColumnBase<TRow> & { type: "money"; … }`).
  */
 export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Column header text. Omit for action or icon-only columns. */
   label?: string;
+  /**
+   * Renders the cell content for a given row. Optional — when omitted, the
+   * built-in renderer for `type` takes over (or an `—` placeholder if no
+   * `type` is set). Always wins over the built-in renderer when both are
+   * present.
+   *
+   * Kept on the base (not per-branch) so callback contextual typing works
+   * across spread-then-override patterns like `column({ ...inferred, render })`.
+   */
+  render?: (row: TRow) => ReactNode;
   /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is
@@ -132,23 +142,22 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
 
 /**
  * Discriminated branches keyed off `type`. Each branch narrows `typeOptions`
- * (and the requirement on `render`) accordingly.
+ * to the matching options interface.
  *
- * - Untyped columns must provide `render` — same as before this feature shipped.
- * - Typed columns make `render` optional (the built-in renderer takes over).
  * - `type: "link"` requires `typeOptions.href`.
  * - `type: "text"` rejects `typeOptions` entirely.
  *
- * @internal Exported for type composition; prefer `Column<TRow>`.
+ * Prefer `Column<TRow>` in most cases; this is exported so consumers can
+ * compose more specific column types.
  */
 export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
-  | { type?: undefined; typeOptions?: never; render: (row: TRow) => ReactNode }
-  | { type: "text"; typeOptions?: never; render?: (row: TRow) => ReactNode }
-  | { type: "number"; typeOptions?: NumberCellOptions; render?: (row: TRow) => ReactNode }
-  | { type: "money"; typeOptions?: MoneyCellOptions<TRow>; render?: (row: TRow) => ReactNode }
-  | { type: "date"; typeOptions?: DateCellOptions; render?: (row: TRow) => ReactNode }
-  | { type: "badge"; typeOptions?: BadgeCellOptions; render?: (row: TRow) => ReactNode }
-  | { type: "link"; typeOptions: LinkCellOptions<TRow>; render?: (row: TRow) => ReactNode };
+  | { type?: undefined; typeOptions?: never }
+  | { type: "text"; typeOptions?: never }
+  | { type: "number"; typeOptions?: NumberCellOptions }
+  | { type: "money"; typeOptions?: MoneyCellOptions<TRow> }
+  | { type: "date"; typeOptions?: DateCellOptions }
+  | { type: "badge"; typeOptions?: BadgeCellOptions }
+  | { type: "link"; typeOptions: LinkCellOptions<TRow> };
 
 /**
  * A column definition for DataTable. Use one of the built-in `type` values

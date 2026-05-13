@@ -450,16 +450,6 @@ describe("DataTable", () => {
       };
       expect([linkColMissingHref, linkColOk]).toHaveLength(2);
     });
-
-    it("[types] requires render when type is omitted", () => {
-      // @ts-expect-error — untyped columns must provide render
-      const untypedNoRender: Column<TypedRow> = { label: "Name" };
-      const untypedOk: Column<TypedRow> = {
-        label: "Name",
-        render: (r) => r.name,
-      };
-      expect([untypedNoRender, untypedOk]).toHaveLength(2);
-    });
   });
 
   describe("row selection", () => {

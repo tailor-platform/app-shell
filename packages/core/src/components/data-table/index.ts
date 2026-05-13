@@ -9,7 +9,10 @@ export { createColumnHelper } from "./field-helpers";
 
 // Types — DataTable-specific
 export type {
+  BadgeVariant,
   Column,
+  ColumnCellType,
+  ColumnTypeOptions,
   DataTableData,
   RowAction,
   UseDataTableOptions,

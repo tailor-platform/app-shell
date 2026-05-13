@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { BadgeProps } from "@/components/badge";
 import type {
   CollectionControl,
   Filter,
@@ -13,13 +14,95 @@ import type {
 // =============================================================================
 
 /**
+ * Built-in cell renderer types for `Column.type`.
+ *
+ * Each type produces a default render based on the value returned by
+ * `accessor`. Pass `render` to override the built-in renderer.
+ *
+ * - `text` — `String(value)` with `—` placeholder for null/undefined.
+ * - `number` — locale-formatted number with `—` for null/undefined.
+ * - `money` — `Intl.NumberFormat` currency. See `typeOptions.currency` and
+ *   `typeOptions.maxDecimals`.
+ * - `date` — `Intl.DateTimeFormat`. Accepts `Date`, ISO string, or epoch ms.
+ * - `badge` — `<Badge>` keyed off the value. See `typeOptions.badgeVariantMap`.
+ * - `link` — app-shell `<Link>` with `href` from `typeOptions.href`.
+ */
+export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
+
+/** Variant union accepted by the app-shell `<Badge>` component. */
+export type BadgeVariant = NonNullable<BadgeProps["variant"]>;
+
+/**
+ * Type-specific options for `Column.type`. Fields that don't apply to the
+ * column's `type` are ignored at render time.
+ */
+export interface ColumnTypeOptions<TRow extends Record<string, unknown>> {
+  // ---- number / money --------------------------------------------------------
+  /**
+   * BCP 47 locale tag for `number`, `money`, and `date` cells. Defaults to the
+   * runtime locale.
+   */
+  locale?: string;
+  /** Minimum decimal places for `number` cells. Default: `0`. */
+  minDecimals?: number;
+  /** Maximum decimal places for `number` cells. Default: `0`. */
+  maxDecimals?: number;
+  // ---- money -----------------------------------------------------------------
+  /**
+   * ISO 4217 currency code for `money` cells. Pass a string for a static
+   * currency or a function to read from the row. Default: `"USD"`.
+   */
+  currency?: string | ((row: TRow) => string);
+  // ---- date ------------------------------------------------------------------
+  /**
+   * Format style for `date` cells.
+   * - `"short"` — `Apr 9, 2026`.
+   * - `"long"` — `April 9, 2026`.
+   * - `"datetime"` — `Apr 9, 2026, 3:45 PM`.
+   *
+   * Default: `"short"`.
+   */
+  dateFormat?: "short" | "long" | "datetime";
+  // ---- badge -----------------------------------------------------------------
+  /**
+   * Maps each cell value (stringified) to a Badge variant. Values not in the
+   * map fall back to `defaultBadgeVariant`.
+   */
+  badgeVariantMap?: Record<string, BadgeVariant>;
+  /**
+   * Maps each cell value (stringified) to a display label. Values not in the
+   * map render the raw cell value.
+   */
+  badgeLabelMap?: Record<string, string>;
+  /** Variant used when the value is not in `badgeVariantMap`. Default: `"neutral"`. */
+  defaultBadgeVariant?: BadgeVariant;
+  // ---- link ------------------------------------------------------------------
+  /**
+   * Extracts the link target for `link` cells. Returning `null` / `undefined`
+   * renders the value as plain text instead of a link.
+   */
+  href?: (row: TRow) => string | null | undefined;
+}
+
+/**
  * A column definition for DataTable.
  */
 export interface Column<TRow extends Record<string, unknown>> {
   /** Column header text. Omit for action or icon-only columns. */
   label?: string;
-  /** Renders the cell content for a given row. Required. */
-  render: (row: TRow) => ReactNode;
+  /**
+   * Renders the cell content for a given row. Optional when `type` is set —
+   * the built-in renderer is used instead. Always wins when both are present.
+   */
+  render?: (row: TRow) => ReactNode;
+  /**
+   * Built-in cell renderer. When set, the cell is rendered automatically from
+   * the value returned by `accessor` (or `row[id]` when `accessor` is omitted).
+   * Pass `render` to override.
+   */
+  type?: ColumnCellType;
+  /** Type-specific options applied when `type` is set. */
+  typeOptions?: ColumnTypeOptions<TRow>;
   /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is
@@ -29,8 +112,9 @@ export interface Column<TRow extends Record<string, unknown>> {
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
   /**
-   * Extracts the raw value from a row for purposes such as sorting or
-   * clipboard copying. Not used for rendering — use `render` for that.
+   * Extracts the raw value from a row. Used by built-in `type` renderers and
+   * available to consumers for sorting or clipboard copying. When `type` is
+   * set and `accessor` is omitted, the renderer falls back to `row[id]`.
    */
   accessor?: (row: TRow) => unknown;
   /**

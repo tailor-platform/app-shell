@@ -15,6 +15,8 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
   return {
     label: options.label,
     render: options.render,
+    type: options.type,
+    typeOptions: options.typeOptions,
     id: options.id,
     width: options.width,
     accessor: options.accessor,

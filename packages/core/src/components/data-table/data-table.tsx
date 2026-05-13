@@ -11,6 +11,7 @@ import type { SortConfig } from "@/types/collection";
 import type { Column, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
+import { renderTypedCell } from "./cell-renderers";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
@@ -393,13 +394,14 @@ function DataTableBody({ className }: { className?: string }) {
             )}
             {columns?.map((col, colIndex) => {
               const key = col.id ?? col.label ?? String(colIndex);
+              const content = col.render ? col.render(row) : renderTypedCell(row, col);
               return (
                 <Table.Cell
                   key={key}
                   data-slot="data-table-cell"
                   style={col.width ? { width: col.width } : undefined}
                 >
-                  {col.render(row)}
+                  {content}
                 </Table.Cell>
               );
             })}

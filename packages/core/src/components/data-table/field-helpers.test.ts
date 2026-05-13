@@ -317,7 +317,7 @@ describe("inferColumns() with metadata", () => {
       tags: ["a"],
     };
 
-    expect(opts.render(testRow)).toBe("Test Task");
+    expect(opts.render!(testRow)).toBe("Test Task");
     expect(opts.accessor!(testRow)).toBe("Test Task");
   });
 
@@ -412,6 +412,6 @@ describe("createColumnHelper()", () => {
     });
     expect(col.label).toBe("Custom Name");
     expect(col.sort).toEqual({ field: "name", type: "string" });
-    expect(col.render({ id: "1", name: "Test", amount: 0 })).toBe("Name: Test");
+    expect(col.render!({ id: "1", name: "Test", amount: 0 })).toBe("Name: Test");
   });
 });

@@ -1,5 +1,7 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
@@ -251,6 +253,166 @@ describe("DataTable", () => {
   // -------------------------------------------------------------------------
   // Row selection (DOM)
   // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Type-aware cell renderers
+  // -------------------------------------------------------------------------
+  describe("column type renderers", () => {
+    type TypedRow = {
+      id: string;
+      name: string | null;
+      total: number | null;
+      currency: string;
+      placedAt: string | null;
+      status: string;
+      detailUrl: string | null;
+    };
+
+    const typedRows: TypedRow[] = [
+      {
+        id: "1",
+        name: "Order 1",
+        total: 1234.5,
+        currency: "USD",
+        placedAt: "2026-04-09T12:00:00Z",
+        status: "shipped",
+        detailUrl: "/orders/1",
+      },
+      {
+        id: "2",
+        name: null,
+        total: null,
+        currency: "JPY",
+        placedAt: null,
+        status: "unknown",
+        detailUrl: null,
+      },
+    ];
+
+    function renderTypedTable(columns: Column<TypedRow>[]) {
+      function Harness() {
+        const table = useDataTable<TypedRow>({
+          columns,
+          data: { rows: typedRows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      return render(<Harness />, { wrapper });
+    }
+
+    it("renders text cells with — placeholder for null values", () => {
+      const { container } = renderTypedTable([
+        { label: "Name", type: "text", accessor: (r) => r.name },
+      ]);
+      expect(container.textContent).toContain("Order 1");
+      expect(container.textContent).toContain("—");
+    });
+
+    it("renders money cells with currency formatting", () => {
+      const { container } = renderTypedTable([
+        {
+          label: "Total",
+          type: "money",
+          accessor: (r) => r.total,
+          typeOptions: { currency: "USD", locale: "en-US" },
+        },
+      ]);
+      expect(container.textContent).toContain("$1,234.50");
+    });
+
+    it("reads currency from row via function accessor", () => {
+      const { container } = renderTypedTable([
+        {
+          label: "Total",
+          type: "money",
+          accessor: (r) => r.total ?? 0,
+          typeOptions: { currency: (r) => r.currency, locale: "en-US" },
+        },
+      ]);
+      // First row: USD 1234.5 → "$1,234.50". Second row: JPY 0 → "¥0".
+      expect(container.textContent).toContain("$1,234.50");
+      expect(container.textContent).toContain("¥0");
+    });
+
+    it("renders date cells with short format by default", () => {
+      const { container } = renderTypedTable([
+        {
+          label: "Placed",
+          type: "date",
+          accessor: (r) => r.placedAt,
+          typeOptions: { locale: "en-US" },
+        },
+      ]);
+      expect(container.textContent).toMatch(/Apr 9, 2026/);
+    });
+
+    it("renders badge cells via variant/label maps", () => {
+      const { container } = renderTypedTable([
+        {
+          label: "Status",
+          type: "badge",
+          accessor: (r) => r.status,
+          typeOptions: {
+            badgeVariantMap: { shipped: "success" },
+            badgeLabelMap: { shipped: "Shipped" },
+          },
+        },
+      ]);
+      expect(container.textContent).toContain("Shipped");
+      // Unknown values still render but with default variant + raw label
+      expect(container.textContent).toContain("unknown");
+    });
+
+    it("renders link cells with anchor when href is provided", () => {
+      function RouterWrapper({ children }: { children: ReactNode }) {
+        return <MemoryRouter>{wrapper({ children })}</MemoryRouter>;
+      }
+      function Harness() {
+        const table = useDataTable<TypedRow>({
+          columns: [
+            {
+              label: "Name",
+              type: "link",
+              accessor: (r) => r.name,
+              typeOptions: { href: (r) => r.detailUrl },
+            },
+          ],
+          data: { rows: typedRows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper: RouterWrapper });
+      const anchor = container.querySelector("a[href='/orders/1']");
+      expect(anchor).not.toBeNull();
+      expect(anchor?.textContent).toBe("Order 1");
+    });
+
+    it("falls back to row[id] when accessor is omitted", () => {
+      const { container } = renderTypedTable([{ id: "name", type: "text" }]);
+      expect(container.textContent).toContain("Order 1");
+    });
+
+    it("explicit render overrides type renderer", () => {
+      const { container } = renderTypedTable([
+        {
+          label: "Status",
+          type: "badge",
+          accessor: (r) => r.status,
+          render: (r) => <span data-testid="custom">{r.status.toUpperCase()}</span>,
+        },
+      ]);
+      expect(container.querySelector("[data-testid='custom']")).not.toBeNull();
+      expect(container.textContent).toContain("SHIPPED");
+    });
+  });
+
   describe("row selection", () => {
     it("renders checkboxes when onSelectionChange is provided", () => {
       render(<TestDataTable onSelectionChange={vi.fn()} />, { wrapper });

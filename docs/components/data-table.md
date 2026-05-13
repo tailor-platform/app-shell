@@ -215,15 +215,41 @@ const table = useDataTable({
 
 A column definition passed to `useDataTable`.
 
-| Property   | Type                       | Description                                                                                |
-| ---------- | -------------------------- | ------------------------------------------------------------------------------------------ |
-| `label`    | `string`                   | Column header text. Omit for icon-only columns.                                            |
-| `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Required.                                                        |
-| `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
-| `width`    | `number`                   | Fixed column width in pixels. Optional.                                                    |
-| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value for sorting. Not used for rendering.                                |
-| `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
-| `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
+| Property      | Type                       | Description                                                                                                  |
+| ------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `label`       | `string`                   | Column header text. Omit for icon-only columns.                                                              |
+| `render`      | `(row: TRow) => ReactNode` | Renders the cell content. Optional when `type` is set — built-in renderer is used. Always wins when present. |
+| `type`        | `ColumnCellType`           | Built-in cell renderer: `text`, `number`, `money`, `date`, `badge`, `link`. See [Cell types](#cell-types).   |
+| `typeOptions` | `ColumnTypeOptions<TRow>`  | Type-specific options (currency, badge map, href, etc.). Fields that don't apply to `type` are ignored.      |
+| `id`          | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted.                   |
+| `width`       | `number`                   | Fixed column width in pixels. Optional.                                                                      |
+| `accessor`    | `(row: TRow) => unknown`   | Extracts the raw value. Used by built-in `type` renderers and available for sort/clipboard.                  |
+| `sort`        | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).                        |
+| `filter`      | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.                      |
+
+## Cell types
+
+When `type` is set, the cell is rendered from `accessor(row)` (or `row[id]` when `accessor` is omitted) using a built-in renderer. Pass `render` to override on a per-column basis.
+
+```tsx
+column({
+  label: "Total",
+  accessor: (row) => row.total,
+  type: "money",
+  typeOptions: { currency: "USD", maxDecimals: 4 },
+});
+```
+
+| `type`   | Value handling                                    | Relevant `typeOptions`                                                                |
+| -------- | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `text`   | `String(value)` — falls back to `—` when nullish. | _(none)_                                                                              |
+| `number` | `Intl.NumberFormat`. `—` for nullish / NaN.       | `minDecimals`, `maxDecimals`, `locale`                                                |
+| `money`  | `Intl.NumberFormat` currency. `—` for nullish.    | `currency` (string or `(row) => string`), `maxDecimals`, `locale`                     |
+| `date`   | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                        |
+| `badge`  | `<Badge>` keyed off the stringified value.        | `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)   |
+| `link`   | app-shell `<Link>` to `typeOptions.href(row)`.    | `href: (row) => string \| null \| undefined` (returning nullish renders plain text)   |
+
+Empty values (`null`, `undefined`, `""`) render a muted `—` placeholder for every type. Use `render` for custom empty-state handling.
 
 ## `FilterConfig`
 

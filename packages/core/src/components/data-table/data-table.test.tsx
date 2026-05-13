@@ -450,6 +450,53 @@ describe("DataTable", () => {
       };
       expect([linkColMissingHref, linkColOk]).toHaveLength(2);
     });
+
+    it("[types] rejects array and object accessor return values on typed branches", () => {
+      // Each typed branch narrows accessor's return type to values its
+      // renderer can display. Arrays and plain objects are compile errors —
+      // the built-in renderers never produced anything useful for them. Pass
+      // `render` (and drop `type`) when the cell value isn't a primitive.
+
+      // @ts-expect-error — text accessor cannot return an array
+      const textArr: Column<TypedRow> = { type: "text", accessor: () => [1, 2] };
+      // @ts-expect-error — text accessor cannot return a plain object
+      const textObj: Column<TypedRow> = { type: "text", accessor: () => ({ a: 1 }) };
+      // @ts-expect-error — number accessor cannot return an object
+      const numberObj: Column<TypedRow> = { type: "number", accessor: () => ({ value: 1 }) };
+      // @ts-expect-error — money accessor cannot return an array
+      const moneyArr: Column<TypedRow> = { type: "money", accessor: () => [100] };
+      // @ts-expect-error — date accessor cannot return an array
+      const dateArr: Column<TypedRow> = { type: "date", accessor: () => [2026, 5, 13] };
+      // @ts-expect-error — badge accessor cannot return an array
+      const badgeArr: Column<TypedRow> = { type: "badge", accessor: () => ["a", "b"] };
+      // @ts-expect-error — link accessor cannot return a plain object
+      const linkObj: Column<TypedRow> = {
+        type: "link",
+        accessor: () => ({ label: "x" }),
+        typeOptions: { href: () => "/x" },
+      };
+
+      // Date is allowed on the date branch (and only there).
+      const dateOk: Column<TypedRow> = { type: "date", accessor: () => new Date() };
+      // The untyped branch keeps `unknown` — callers escape the built-in
+      // renderer entirely by providing `render`, so any return is fine.
+      const untypedAny: Column<TypedRow> = {
+        accessor: () => ({ shape: "anything" }),
+        render: () => null,
+      };
+
+      expect([
+        textArr,
+        textObj,
+        numberObj,
+        moneyArr,
+        dateArr,
+        badgeArr,
+        linkObj,
+        dateOk,
+        untypedAny,
+      ]).toHaveLength(9);
+    });
   });
 
   describe("row selection", () => {

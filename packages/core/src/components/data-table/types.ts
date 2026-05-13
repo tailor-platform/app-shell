@@ -121,12 +121,6 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
   /**
-   * Extracts the raw value from a row. Used by built-in `type` renderers and
-   * available to consumers for sorting or clipboard copying. When `type` is
-   * set and `accessor` is omitted, the renderer falls back to `row[id]`.
-   */
-  accessor?: (row: TRow) => unknown;
-  /**
    * Sort configuration. When set, the column header becomes clickable and
    * cycles through `Asc → Desc → undefined`.
    * Use `fieldTypeToSortConfig` or `inferColumns` to derive this automatically.
@@ -142,22 +136,54 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
 
 /**
  * Discriminated branches keyed off `type`. Each branch narrows `typeOptions`
- * to the matching options interface.
+ * and `accessor`'s return type to the values its renderer can display.
  *
  * - `type: "link"` requires `typeOptions.href`.
  * - `type: "text"` rejects `typeOptions` entirely.
+ *
+ * `accessor` lives on each branch (rather than `ColumnBase`) so the built-in
+ * renderers can constrain what a column produces. Returning an array or a
+ * non-Date object is a compile error on a typed branch, instead of silently
+ * rendering `[object Object]`. Untyped columns (`type?: undefined`) still
+ * accept `unknown` — they're rendered by an explicit `render`. `null` and
+ * `undefined` are always allowed: every built-in renderer maps them to the
+ * `—` placeholder.
  *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
  * compose more specific column types.
  */
 export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
-  | { type?: undefined; typeOptions?: never }
-  | { type: "text"; typeOptions?: never }
-  | { type: "number"; typeOptions?: NumberCellOptions }
-  | { type: "money"; typeOptions?: MoneyCellOptions<TRow> }
-  | { type: "date"; typeOptions?: DateCellOptions }
-  | { type: "badge"; typeOptions?: BadgeCellOptions }
-  | { type: "link"; typeOptions: LinkCellOptions<TRow> };
+  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown }
+  | {
+      type: "text";
+      typeOptions?: never;
+      accessor?: (row: TRow) => string | number | boolean | bigint | null | undefined;
+    }
+  | {
+      type: "number";
+      typeOptions?: NumberCellOptions;
+      accessor?: (row: TRow) => number | null | undefined;
+    }
+  | {
+      type: "money";
+      typeOptions?: MoneyCellOptions<TRow>;
+      accessor?: (row: TRow) => number | null | undefined;
+    }
+  | {
+      type: "date";
+      typeOptions?: DateCellOptions;
+      accessor?: (row: TRow) => Date | string | number | null | undefined;
+    }
+  | {
+      type: "badge";
+      typeOptions?: BadgeCellOptions;
+      accessor?: (row: TRow) => string | number | boolean | null | undefined;
+    }
+  | {
+      type: "link";
+      typeOptions: LinkCellOptions<TRow>;
+      accessor?: (row: TRow) => string | number | boolean | null | undefined;
+    };
 
 /**
  * A column definition for DataTable. Use one of the built-in `type` values

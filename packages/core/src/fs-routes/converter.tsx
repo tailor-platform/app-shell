@@ -91,6 +91,7 @@ function nodeToResource(node: PageNode): Resource {
   }
 
   return {
+    // oxlint-disable-next-line no-underscore-dangle
     _type: "resource",
     type: "component",
     path: node.path,
@@ -127,6 +128,7 @@ function nodeToModule(node: PageNode): Module {
   }
 
   return {
+    // oxlint-disable-next-line no-underscore-dangle
     _type: "module",
     type: "component",
     path: node.path,

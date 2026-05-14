@@ -209,7 +209,7 @@ export function DescriptionCard({
               {sections.map((section, index) => (
                 <React.Fragment key={section.id}>
                   {/* Divider between sections (except before first) */}
-                  {index > 0 && <div className="astw:h-px astw:bg-border" role="separator" />}
+                  {index > 0 && <hr className="astw:h-px astw:bg-border astw:border-none" />}
                   {renderSection(section)}
                 </React.Fragment>
               ))}

@@ -322,14 +322,14 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
   const getLabel = (item: T) => mapItem(item).label;
 
   // Bridge onCreateItem → useCreatable's createItem + onItemCreated
-  const createItem = (v: string) => ({ __pending: true, __value: v }) as unknown as T;
+  const createItem = (v: string) => ({ pendingMarker: true, pendingValue: v }) as unknown as T;
 
   const onItemCreated = (item: T) => {
     const pending = item as unknown as {
-      __pending: boolean;
-      __value: string;
+      pendingMarker: boolean;
+      pendingValue: string;
     };
-    return onCreateItem(pending.__value);
+    return onCreateItem(pending.pendingValue);
   };
 
   const creatableOptions = {
@@ -474,14 +474,14 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
   const getLabel = (item: T) => mapItem(item).label;
 
   // Bridge onCreateItem → useCreatable's createItem + onItemCreated
-  const createItem = (v: string) => ({ __pending: true, __value: v }) as unknown as T;
+  const createItem = (v: string) => ({ pendingMarker: true, pendingValue: v }) as unknown as T;
 
   const onItemCreated = (item: T) => {
     const pending = item as unknown as {
-      __pending: boolean;
-      __value: string;
+      pendingMarker: boolean;
+      pendingValue: string;
     };
-    return onCreateItem(pending.__value);
+    return onCreateItem(pending.pendingValue);
   };
 
   const creatableOptions = {
@@ -542,7 +542,24 @@ function ComboboxAsyncStandalone(props: any) {
 // Export
 // ============================================================================
 
-const Combobox = Object.assign(ComboboxStandalone, {
+/**
+ * Keep the exported static API type explicit instead of relying on
+ * `Object.assign(...)` inference.
+ *
+ * Why:
+ * - makes declaration rollup more stable (avoids TS2742/non-portable inferred names)
+ * - keeps public `.d.ts` output resilient to resolver/config changes
+ * - preserves consumer-side callback inference for `Combobox` and `Combobox.Async`
+ */
+type ComboboxComponent = typeof ComboboxStandalone & {
+  Async: typeof ComboboxAsyncStandalone;
+  Parts: typeof ComboboxParts;
+  useAsync: typeof useAsync;
+  useFilter: typeof useFilter;
+  useCreatable: typeof useCreatable;
+};
+
+const Combobox: ComboboxComponent = Object.assign(ComboboxStandalone, {
   Async: ComboboxAsyncStandalone,
   Parts: ComboboxParts,
   useAsync,

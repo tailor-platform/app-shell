@@ -56,7 +56,7 @@ const productColumns = [
   column(infer("category")),
   column({
     ...infer("price"),
-    render: (row) => `$${row.price.toFixed(2)}`,
+    type: "money",
   }),
   column({
     ...infer("publishedAt"),
@@ -72,7 +72,7 @@ const productColumns = [
   }),
   column({
     ...infer("stock"),
-    render: (row) => row.stock.toLocaleString(),
+    type: "number",
   }),
   column({
     ...infer("status"),

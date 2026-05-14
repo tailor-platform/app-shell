@@ -35,10 +35,28 @@ export type SidebarLayoutProps = {
    * ```
    */
   sidebar?: React.ReactNode;
+
+  /**
+   * Whether the sidebar is open by default on desktop.
+   *
+   * @default true
+   */
+  defaultOpen?: boolean;
+
+  /**
+   * Whether the sidebar can be collapsed.
+   * When set to `false`, the sidebar is always visible and cannot be toggled.
+   * `defaultOpen` is ignored when this is `false`.
+   *
+   * @default true
+   */
+  collapsible?: boolean;
 };
 
 const HidableSidebarTrigger = () => {
-  const { open, isIconMode } = useSidebar();
+  const { open, isIconMode, collapsible } = useSidebar();
+
+  if (!collapsible) return null;
 
   // Hide trigger when sidebar is open (desktop), but show it in icon mode
   return (
@@ -56,7 +74,11 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
   };
 
   return (
-    <SidebarProvider className="astw:flex astw:flex-col">
+    <SidebarProvider
+      defaultOpen={props.defaultOpen}
+      collapsible={props.collapsible}
+      className="astw:flex astw:flex-col"
+    >
       <div className="astw:flex astw:flex-1">
         {props.sidebar ?? <DefaultSidebar />}
         <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">

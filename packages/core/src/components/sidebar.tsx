@@ -28,6 +28,7 @@ type SidebarContextProps = {
   isIconMode: boolean;
   openIconMode: boolean;
   setOpenIconMode: (open: boolean) => void;
+  collapsible: boolean;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -45,6 +46,7 @@ function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
+  collapsible = true,
   className,
   style,
   children,
@@ -53,6 +55,7 @@ function SidebarProvider({
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  collapsible?: boolean;
 }) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -120,6 +123,7 @@ function SidebarProvider({
       isIconMode,
       openIconMode,
       setOpenIconMode,
+      collapsible,
     }),
     [
       state,
@@ -132,6 +136,7 @@ function SidebarProvider({
       isIconMode,
       openIconMode,
       setOpenIconMode,
+      collapsible,
     ],
   );
 
@@ -180,7 +185,8 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:h-full astw:w-(--sidebar-width) astw:flex-col",
+          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:w-(--sidebar-width) astw:flex-col",
+          variant === "inset" && "astw:border-x astw:border-x-border",
           className,
         )}
         {...props}

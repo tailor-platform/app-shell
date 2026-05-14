@@ -213,18 +213,251 @@ const table = useDataTable({
 
 ## `Column`
 
-A column definition passed to `useDataTable`.
+A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated union on `type` — the shape of `typeOptions` is narrowed per branch, so mismatches are compile errors rather than silent runtime no-ops.
 
-| Property   | Type                       | Description                                                                                |
-| ---------- | -------------------------- | ------------------------------------------------------------------------------------------ |
-| `label`    | `string`                   | Column header text. Omit for icon-only columns.                                            |
-| `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Required.                                                        |
-| `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted. |
-| `width`    | `number`                   | Fixed column width in pixels. Optional.                                                    |
-| `truncate` | `boolean`                  | Truncate overflowing text with an ellipsis. Auto-sets a `title` tooltip from `accessor` when it returns a string or number. |
-| `accessor` | `(row: TRow) => unknown`   | Extracts the raw value for sorting and the auto-tooltip on `truncate` cells. Not used for rendering. |
-| `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).      |
-| `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.    |
+### Shared fields
+
+| Property   | Type                       | Description                                                                                                                                                                                                                                                                                                        |
+| ---------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `label`    | `string`                   | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                    |
+| `render`   | `(row: TRow) => ReactNode` | Renders the cell content. Optional — overrides the built-in `type` renderer when set.                                                                                                                                                                                                                              |
+| `id`       | `string`                   | Stable identifier for column visibility and React key. Falls back to `label` when omitted.                                                                                                                                                                                                                         |
+| `width`    | `number`                   | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                            |
+| `align`    | `"left" \| "right"`        | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                               |
+| `truncate` | `boolean`                  | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when `accessor` returns a string or number, so hovering the cell reveals the full value. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions). |
+| `accessor` | _(narrowed per `type`)_    | Extracts the raw value. The return type is narrowed per `type` branch — returning an array or a plain object is a compile error on a typed column. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.                                                                   |
+| `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).                                                                                                                                                                                                                              |
+| `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.                                                                                                                                                                                                                            |
+
+### `type`-specific fields
+
+| `type`      | `typeOptions`                                                |
+| ----------- | ------------------------------------------------------------ |
+| _(omitted)_ | _(not allowed; provide `render` to draw the cell)_           |
+| `"text"`    | _(not allowed)_                                              |
+| `"number"`  | `NumberCellOptions`                                          |
+| `"money"`   | `MoneyCellOptions<TRow>`                                     |
+| `"date"`    | `DateCellOptions`                                            |
+| `"badge"`   | `BadgeCellOptions`                                           |
+| `"link"`    | **Required** — `LinkCellOptions<TRow>` (must include `href`) |
+
+## Cell types
+
+When `type` is set, the cell is rendered from `accessor(row)` (or `row[id]` when `accessor` is omitted) using a built-in renderer. Pass `render` to override on a per-column basis.
+
+```tsx
+column({
+  label: "Total",
+  accessor: (row) => row.total,
+  type: "money",
+  typeOptions: { currency: "USD", maxDecimals: 4 },
+});
+```
+
+| `type`   | Accessor return type                                         | Value handling                                    | Options interface                                                                                                          |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `text`   | `string \| number \| boolean \| bigint \| null \| undefined` | `String(value)` — falls back to `—` when nullish. | _(no options)_                                                                                                             |
+| `number` | `number \| null \| undefined`                                | `Intl.NumberFormat`. `—` for nullish / NaN.       | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                |
+| `money`  | `number \| null \| undefined`                                | `Intl.NumberFormat` currency. `—` for nullish.    | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                |
+| `date`   | `Date \| string \| number \| null \| undefined`              | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                          |
+| `badge`  | `string \| number \| boolean \| null \| undefined`           | `<Badge>` keyed off the stringified value.        | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)                    |
+| `link`   | `string \| number \| boolean \| null \| undefined`           | app-shell `<Link>` to `typeOptions.href(row)`.    | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**) |
+
+Empty values (`null`, `undefined`, `""`) render a muted `—` placeholder for every type. Use `render` for custom empty-state handling.
+
+The discriminated-union shape means:
+
+```tsx
+// ❌ Compile error — badgeVariantMap is not a money option
+column({ type: "money", accessor: (r) => r.total, typeOptions: { badgeVariantMap: {} } });
+
+// ❌ Compile error — link columns must provide typeOptions.href
+column({ type: "link", accessor: (r) => r.title });
+
+// ❌ Compile error — text columns reject typeOptions entirely
+column({ type: "text", accessor: (r) => r.title, typeOptions: { locale: "en-US" } });
+
+// ❌ Compile error — text/number/money/badge/link accessor cannot return an array or object
+column({ type: "text", accessor: (row) => row.tags }); // row.tags is string[]
+column({ type: "number", accessor: (row) => row.meta }); // row.meta is an object
+```
+
+## Adding a typed column
+
+Each column type follows the same three-step shape: pick a `type`, point `accessor` at the value, and pass `typeOptions` for the type-specific bits. `label`, `sort`, `filter`, `align`, `width`, and `id` work the same regardless of `type`.
+
+### `text` — plain string
+
+```tsx
+column({
+  label: "Name",
+  accessor: (row) => row.name,
+  type: "text",
+});
+```
+
+- `null` / `undefined` / `""` render a muted `—`.
+- No `typeOptions` are accepted on `text` columns.
+- Omit `type` entirely if you want to keep `render` required for that column.
+
+### `number` — locale-formatted number
+
+```tsx
+column({
+  label: "Stock",
+  accessor: (row) => row.stockOnHand,
+  type: "number",
+  typeOptions: { minDecimals: 0, maxDecimals: 0, locale: "en-US" },
+});
+```
+
+- `minDecimals` / `maxDecimals` default to `0`.
+- `maxDecimals` defaults to `minDecimals` when only `minDecimals` is set — pass both for ranges (e.g. `min: 2, max: 4`).
+- `NaN` and `null` render the `—` placeholder.
+
+### `money` — currency
+
+```tsx
+column({
+  label: "Total",
+  accessor: (row) => row.total,
+  type: "money",
+  typeOptions: { currency: "USD" },
+});
+```
+
+For mixed-currency tables, read `currency` from the row:
+
+```tsx
+column({
+  label: "Total",
+  accessor: (row) => row.total,
+  type: "money",
+  typeOptions: {
+    currency: (row) => row.currencyCode, // "USD", "JPY", "EUR", …
+    maxDecimals: 4, // raise the cap above the currency default
+  },
+});
+```
+
+- Default `currency` is `"USD"` when omitted or when the accessor returns falsy.
+- Invalid ISO codes fall back to USD (rather than throwing).
+- The minimum decimals always stays at the currency default (2 for USD, 0 for JPY); `maxDecimals` raises the cap without padding with trailing zeros.
+
+### `date` — formatted date
+
+```tsx
+column({
+  label: "Placed",
+  accessor: (row) => row.placedAt, // Date | ISO string | epoch ms
+  type: "date",
+  typeOptions: { dateFormat: "short" }, // "short" | "long" | "datetime"
+});
+```
+
+| `dateFormat`        | Example output         |
+| ------------------- | ---------------------- |
+| `"short"` (default) | `Apr 9, 2026`          |
+| `"long"`            | `April 9, 2026`        |
+| `"datetime"`        | `Apr 9, 2026, 3:45 PM` |
+
+- Accepts a `Date`, an ISO 8601 string, or epoch milliseconds.
+- Invalid dates render the `—` placeholder.
+
+### `badge` — status pill
+
+```tsx
+column({
+  label: "Status",
+  accessor: (row) => row.status,
+  type: "badge",
+  typeOptions: {
+    badgeVariantMap: {
+      shipped: "success",
+      processing: "outline-warning",
+      cancelled: "subtle-error",
+    },
+    badgeLabelMap: {
+      shipped: "Shipped",
+      processing: "Processing",
+      cancelled: "Cancelled",
+    },
+    defaultBadgeVariant: "neutral", // unmapped values fall back here
+  },
+});
+```
+
+- The cell value is stringified before lookup, so `accessor` can return strings, numbers, or booleans.
+- Unmapped values render with `defaultBadgeVariant` (or `"neutral"`) and the raw stringified value as the label.
+
+### `link` — clickable text
+
+```tsx
+column({
+  label: "Order",
+  accessor: (row) => row.reference,
+  type: "link",
+  typeOptions: { href: (row) => `/orders/${row.id}` },
+});
+```
+
+- `href` is **required** on `link` columns — it's enforced by the type.
+- Returning `null` / `undefined` from `href` renders the cell value as plain text (useful for "no detail page yet" rows).
+- Uses the app-shell `<Link>` (react-router) so SPA navigation is preserved. For external URLs, fall back to `render` with a plain `<a>`.
+
+### Overriding a built-in renderer
+
+`render` always wins over the built-in renderer, so the escape hatch stays open per column:
+
+```tsx
+column({
+  label: "Status",
+  accessor: (row) => row.status,
+  type: "badge",
+  typeOptions: { badgeVariantMap: { active: "success" } },
+  // Custom render with an icon — type/typeOptions are still required for
+  // sort/filter scaffolding but are bypassed for rendering.
+  render: (row) => (
+    <span className="flex items-center gap-1">
+      <CircleCheck className="size-3" />
+      {row.status}
+    </span>
+  ),
+});
+```
+
+### Combining `type` with `inferColumns`
+
+`inferColumns` (from `@tailor-platform/app-shell-sdk-plugin`) derives `label`, `sort`, `filter`, and a default `render` from TailorDB metadata. You can layer a `type` on top to swap the rendering without losing the inferred sort/filter config:
+
+```tsx
+const infer = inferColumns(tableMetadata.order);
+
+const columns = [
+  // Inferred string column — keeps the default render
+  column(infer("reference")),
+
+  // Inferred datetime column, swapped to a `date` cell with long format
+  column({
+    ...infer("placedAt"),
+    type: "date",
+    typeOptions: { dateFormat: "long" },
+    accessor: (row) => row.placedAt,
+  }),
+
+  // Inferred enum column, rendered as a badge
+  column({
+    ...infer("status"),
+    type: "badge",
+    accessor: (row) => row.status,
+    typeOptions: {
+      badgeVariantMap: { active: "success", draft: "neutral" },
+    },
+  }),
+];
+```
+
+When you spread `...infer("field")`, drop in `accessor` if the inferred render doesn't already match what your `type` expects — built-in renderers read from `accessor` (or `row[id]`), not from the inferred `render`.
 
 ## `FilterConfig`
 

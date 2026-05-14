@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
-import type { Column, MetadataFieldOptions } from "./types";
+import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
 
 // =============================================================================
 // column() helper
@@ -12,16 +12,9 @@ import type { Column, MetadataFieldOptions } from "./types";
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
  */
 export function column<TRow extends Record<string, unknown>>(options: Column<TRow>): Column<TRow> {
-  return {
-    label: options.label,
-    render: options.render,
-    id: options.id,
-    width: options.width,
-    truncate: options.truncate,
-    accessor: options.accessor,
-    sort: options.sort,
-    filter: options.filter,
-  };
+  // Spread to keep `Column<TRow>` a discriminated union — an explicit field
+  // list would widen `type` / `typeOptions` and lose the branch relationship.
+  return { ...options };
 }
 
 // =============================================================================
@@ -46,7 +39,10 @@ export function inferColumns<
 >(tableMetadata: TTable): ColumnInferFn<TRow, TTable> {
   const fields = tableMetadata.fields;
 
-  return (dataKey: TableFieldName<TTable>, columnOptions?: MetadataFieldOptions): Column<TRow> => {
+  return (
+    dataKey: TableFieldName<TTable>,
+    columnOptions?: MetadataFieldOptions,
+  ): InferredColumn<TRow> => {
     const fieldName = dataKey as string;
     const fieldMeta = fields.find((f) => f.name === fieldName);
     if (!fieldMeta) {
@@ -70,7 +66,6 @@ export function inferColumns<
       render: ((row: Record<string, unknown>) => formatValue(row[fieldName])) as (
         row: TRow,
       ) => ReactNode,
-      accessor: ((row: Record<string, unknown>) => row[fieldName]) as (row: TRow) => unknown,
       width: columnOptions?.width,
       sort,
       filter,
@@ -81,6 +76,16 @@ export function inferColumns<
 // =============================================================================
 // createColumnHelper() — factory with TRow bound once
 // =============================================================================
+
+/**
+ * The return type of an infer function — contains the base column fields
+ * without the discriminated `type`/`typeOptions`/`accessor` branches.
+ *
+ * This makes spread-then-override patterns like
+ * `column({ ...infer("stock"), type: "number" })` type-safe without
+ * requiring an explicit accessor cast.
+ */
+export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TRow>;
 
 /**
  * Per-field column factory returned by `inferColumns(tableMetadata)`.
@@ -95,7 +100,7 @@ export function inferColumns<
 export type ColumnInferFn<
   TRow extends Record<string, unknown>,
   TTable extends TableMetadata = TableMetadata,
-> = (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => Column<TRow>;
+> = (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => InferredColumn<TRow>;
 
 /**
  * Object returned by `createColumnHelper`.

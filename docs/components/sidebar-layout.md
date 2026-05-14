@@ -73,6 +73,28 @@ import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app
 />;
 ```
 
+### defaultOpen
+
+- **Type:** `boolean` (optional)
+- **Default:** `true`
+- **Description:** Whether the sidebar is open by default on desktop. Has no effect when `collapsible` is `false`.
+
+```tsx
+// Sidebar closed by default on desktop
+<SidebarLayout defaultOpen={false} />
+```
+
+### collapsible
+
+- **Type:** `boolean` (optional)
+- **Default:** `true`
+- **Description:** Whether the sidebar can be collapsed. When set to `false`, the sidebar is always visible and toggle buttons are hidden. `defaultOpen` is ignored when this is `false`.
+
+```tsx
+// Non-collapsible sidebar (always visible, toggle buttons hidden)
+<SidebarLayout collapsible={false} />
+```
+
 ## Features
 
 ### Responsive Sidebar

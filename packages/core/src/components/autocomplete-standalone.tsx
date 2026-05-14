@@ -207,7 +207,23 @@ AutocompleteAsyncStandalone.displayName = "Autocomplete.Async";
 // Export
 // ============================================================================
 
-const Autocomplete = Object.assign(AutocompleteStandalone, {
+/**
+ * Keep the exported static API type explicit instead of relying on
+ * `Object.assign(...)` inference.
+ *
+ * Why:
+ * - makes declaration rollup more stable (avoids TS2742/non-portable inferred names)
+ * - keeps public `.d.ts` output resilient to resolver/config changes
+ * - preserves consumer-side callback inference for `Autocomplete` and `Autocomplete.Async`
+ */
+type AutocompleteComponent = typeof AutocompleteStandalone & {
+  Async: typeof AutocompleteAsyncStandalone;
+  Parts: typeof AutocompleteParts;
+  useAsync: typeof useAsync;
+  useFilter: typeof useFilter;
+};
+
+const Autocomplete: AutocompleteComponent = Object.assign(AutocompleteStandalone, {
   Async: AutocompleteAsyncStandalone,
   Parts: AutocompleteParts,
   useAsync,

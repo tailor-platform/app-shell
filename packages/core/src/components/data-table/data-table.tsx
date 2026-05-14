@@ -7,16 +7,27 @@ import { CollectionControlProvider } from "@/contexts/collection-control-context
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
+import { Tooltip } from "@/components/tooltip";
 import type { SortConfig } from "@/types/collection";
 import type { Column, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
+import { renderTypedCell } from "./cell-renderers";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
 
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
 const DEFAULT_ROWS = 5;
+
+// Resolve the effective horizontal alignment for a column. Numeric `type`
+// values default to `"right"` so digits line up along their decimal place;
+// everything else defaults to `"left"`. Explicit `col.align` always wins.
+function resolveAlign<TRow extends Record<string, unknown>>(col: Column<TRow>): "left" | "right" {
+  if (col.align) return col.align;
+  if (col.type === "number" || col.type === "money") return "right";
+  return "left";
+}
 
 // =============================================================================
 // DataTableLoaderRows (internal)
@@ -58,7 +69,10 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
                 className="astw:h-13.25"
               >
                 <div
-                  className="astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse"
+                  className={cn(
+                    "astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse",
+                    resolveAlign(col) === "right" && "astw:ml-auto",
+                  )}
                   style={{ width: `${skeletonWidth}%` }}
                 />
               </Table.Cell>
@@ -154,15 +168,19 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
 
   const controlValue = value.control ?? null;
 
+  // Tooltip.Provider shares hover-delay state for the per-cell truncate
+  // tooltips; benign no-op when no column opts into `truncate`.
   const inner = (
-    <DataTableContext.Provider value={dataTableValue}>
-      <div
-        data-slot="data-table"
-        className={cn("astw:border astw:rounded-md astw:bg-card", className)}
-      >
-        {children}
-      </div>
-    </DataTableContext.Provider>
+    <Tooltip.Provider delay={300}>
+      <DataTableContext.Provider value={dataTableValue}>
+        <div
+          data-slot="data-table"
+          className={cn("astw:border astw:rounded-md astw:bg-card", className)}
+        >
+          {children}
+        </div>
+      </DataTableContext.Provider>
+    </Tooltip.Provider>
   );
 
   if (controlValue) {
@@ -251,14 +269,23 @@ function DataTableHeaders({ className }: { className?: string }) {
             onSort(col.sort.field, nextDirection);
           };
 
+          const align = resolveAlign(col);
           return (
             <Table.Head
               key={key}
               style={col.width ? { width: col.width } : undefined}
-              className={cn(isSortable && "astw:cursor-pointer astw:select-none")}
+              className={cn(
+                isSortable && "astw:cursor-pointer astw:select-none",
+                align === "right" && "astw:text-right",
+              )}
               onClick={isSortable ? handleClick : undefined}
             >
-              <span className="astw:inline-flex astw:items-center astw:gap-1">
+              <span
+                className={cn(
+                  "astw:inline-flex astw:items-center astw:gap-1",
+                  align === "right" && "astw:justify-end",
+                )}
+              >
                 {label}
                 {currentSort && <SortIndicator direction={currentSort.direction} />}
               </span>
@@ -393,22 +420,51 @@ function DataTableBody({ className }: { className?: string }) {
             )}
             {columns?.map((col, colIndex) => {
               const key = col.id ?? col.label ?? String(colIndex);
-              let title: string | undefined;
+              const content = col.render ? col.render(row) : renderTypedCell(row, col);
+              const cellClassName = cn(
+                resolveAlign(col) === "right" && "astw:text-right",
+                col.truncate && "astw:truncate astw:max-w-0",
+              );
+              const cellStyle = col.width ? { width: col.width } : undefined;
+
+              // Surface the full value on hover when the cell is truncated
+              // and the accessor returns a stringifiable primitive. Objects /
+              // arrays are skipped — pass a custom `render` for those cases.
+              let tooltipLabel: string | undefined;
               if (col.truncate && col.accessor) {
                 const raw = col.accessor(row);
                 if (typeof raw === "string" || typeof raw === "number") {
-                  title = String(raw);
+                  tooltipLabel = String(raw);
                 }
               }
+
+              if (tooltipLabel !== undefined) {
+                return (
+                  <Tooltip.Root key={key}>
+                    <Tooltip.Trigger
+                      render={
+                        <Table.Cell
+                          data-slot="data-table-cell"
+                          style={cellStyle}
+                          className={cellClassName}
+                        />
+                      }
+                    >
+                      {content}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
+                  </Tooltip.Root>
+                );
+              }
+
               return (
                 <Table.Cell
                   key={key}
                   data-slot="data-table-cell"
-                  style={col.width ? { width: col.width } : undefined}
-                  className={cn(col.truncate && "astw:truncate astw:max-w-0")}
-                  title={title}
+                  style={cellStyle}
+                  className={cellClassName}
                 >
-                  {col.render(row)}
+                  {content}
                 </Table.Cell>
               );
             })}

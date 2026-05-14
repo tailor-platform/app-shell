@@ -10,14 +10,14 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 // Context Data (module scope)
 // ============================================
 
-let _contextData: ContextData = {} as ContextData;
+let contextDataStore: ContextData = {} as ContextData;
 
 /**
  * Set the context data. Called internally by AppShell on mount.
  * @internal
  */
 export const setContextData = (data: ContextData) => {
-  _contextData = data;
+  contextDataStore = data;
 };
 
 // ============================================
@@ -140,7 +140,7 @@ export const runGuards = async (guards: Guard[] | undefined): Promise<GuardResul
   if (!guards || guards.length === 0) return { type: "pass" };
 
   const ctx: GuardContext = {
-    context: _contextData,
+    context: contextDataStore,
   };
 
   for (const guard of guards) {
@@ -197,6 +197,8 @@ export type LoaderHandler = (args: LoaderFunctionArgs) => Promise<unknown> | unk
  * A resource that can be included in the root-level content in the navigation.
  */
 export type Module = Omit<CommonPageResource, "meta"> & {
+  // Keep `_type` for backward compatibility with existing consumers
+  // oxlint-disable-next-line no-underscore-dangle
   _type: "module";
   component?: () => ReactNode;
   meta: CommonPageResource["meta"] & {
@@ -215,6 +217,8 @@ export type Module = Omit<CommonPageResource, "meta"> & {
  * This resource does not have `category` metadata.
  */
 export type Resource = CommonPageResource & {
+  // Keep `_type` for backward compatibility with existing consumers
+  // oxlint-disable-next-line no-underscore-dangle
   _type: "resource";
   component?: () => ReactNode;
   subResources?: Array<Resource>;
@@ -377,6 +381,7 @@ export function defineModule(props: DefineModuleProps): Module {
   return {
     path,
     type: "component" as const,
+    // oxlint-disable-next-line no-underscore-dangle
     _type: "module" as const,
     component: wrappedComponent,
     loader,
@@ -476,6 +481,7 @@ export function defineResource(props: DefineResourceProps): Resource {
     : undefined;
 
   return {
+    // oxlint-disable-next-line no-underscore-dangle
     _type: "resource" as const,
     type: "component" as const,
     path,

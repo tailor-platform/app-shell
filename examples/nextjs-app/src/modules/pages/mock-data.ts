@@ -1,6 +1,7 @@
 export type Product = {
   id: string;
   name: string;
+  description: string;
   category: string;
   publishedAt: string;
   availableOn: string;
@@ -14,6 +15,8 @@ export const allProducts: Product[] = [
   {
     id: "p-001",
     name: "Ergonomic Chair",
+    description:
+      "Adjustable lumbar support, breathable mesh back, and 4D armrests engineered for full-day comfort across body types and desk heights.",
     category: "Furniture",
     publishedAt: "2026-01-05T09:15:00Z",
     availableOn: "2026-02-01",
@@ -25,6 +28,8 @@ export const allProducts: Product[] = [
   {
     id: "p-002",
     name: "Standing Desk",
+    description:
+      "Dual electric motors lift 270 lbs from 24 to 50 inches in seconds, with four programmable height presets and silent sub-50 dB operation.",
     category: "Furniture",
     publishedAt: "2026-01-12T11:45:00Z",
     availableOn: "2026-02-05",
@@ -36,6 +41,7 @@ export const allProducts: Product[] = [
   {
     id: "p-003",
     name: "Mechanical Keyboard",
+    description: "Hot-swappable switches and per-key RGB.",
     category: "Electronics",
     publishedAt: "2026-01-19T14:00:00Z",
     availableOn: "2026-02-08",
@@ -47,6 +53,8 @@ export const allProducts: Product[] = [
   {
     id: "p-004",
     name: "USB-C Hub",
+    description:
+      "Seven-in-one passthrough hub: 100 W power delivery, 4K HDMI, gigabit Ethernet, SD/microSD, and two USB-A ports in a single braided cable.",
     category: "Electronics",
     publishedAt: "2026-01-22T16:20:00Z",
     availableOn: "2026-02-12",
@@ -58,6 +66,8 @@ export const allProducts: Product[] = [
   {
     id: "p-005",
     name: "Monitor Arm",
+    description:
+      "Counter-balanced single-monitor mount supporting screens up to 34 inches and 19 lbs, with full-motion articulation and integrated cable routing.",
     category: "Accessories",
     publishedAt: "2026-01-28T07:30:00Z",
     availableOn: "2026-02-15",
@@ -69,6 +79,7 @@ export const allProducts: Product[] = [
   {
     id: "p-006",
     name: "Webcam HD",
+    description: "1080p sensor with autofocus and a stereo mic.",
     category: "Electronics",
     publishedAt: "2026-02-02T12:10:00Z",
     availableOn: "2026-02-18",
@@ -80,6 +91,8 @@ export const allProducts: Product[] = [
   {
     id: "p-007",
     name: "Desk Lamp",
+    description:
+      "Tunable warm-to-cool LED desk lamp with five brightness levels, a touch dimmer, and a USB charging port built into the weighted base.",
     category: "Accessories",
     publishedAt: "2026-02-06T18:05:00Z",
     availableOn: "2026-02-20",
@@ -91,6 +104,8 @@ export const allProducts: Product[] = [
   {
     id: "p-008",
     name: "Cable Tray",
+    description:
+      "Under-desk steel cable management tray with snap-on cover, mounting hardware, and a perforated channel that keeps power bricks ventilated.",
     category: "Accessories",
     publishedAt: "2026-02-10T10:00:00Z",
     availableOn: "2026-02-22",
@@ -102,6 +117,8 @@ export const allProducts: Product[] = [
   {
     id: "p-009",
     name: "Noise-Cancelling Headphones",
+    description:
+      "Over-ear ANC headphones with a 36-hour battery, adaptive transparency mode, multipoint Bluetooth 5.3, and memory-foam ear cushions for long sessions.",
     category: "Electronics",
     publishedAt: "2026-02-14T08:50:00Z",
     availableOn: "2026-02-25",
@@ -113,6 +130,7 @@ export const allProducts: Product[] = [
   {
     id: "p-010",
     name: "Laptop Stand",
+    description: "Aluminum riser, folds flat for travel.",
     category: "Accessories",
     publishedAt: "2026-02-17T13:25:00Z",
     availableOn: "2026-02-28",
@@ -124,6 +142,8 @@ export const allProducts: Product[] = [
   {
     id: "p-011",
     name: "Wireless Mouse",
+    description:
+      "Ergonomic right-handed wireless mouse with a 4000 DPI optical sensor, six programmable buttons, and a USB-C rechargeable battery rated for 70 days.",
     category: "Electronics",
     publishedAt: "2026-02-20T06:40:00Z",
     availableOn: "2026-03-02",
@@ -135,6 +155,8 @@ export const allProducts: Product[] = [
   {
     id: "p-012",
     name: "Desk Mat",
+    description:
+      "Large 36x18 inch felt-and-cork desk mat with a non-slip backing and a stitched edge that resists curling after months of daily mouse travel.",
     category: "Accessories",
     publishedAt: "2026-02-23T15:55:00Z",
     availableOn: "2026-03-05",
@@ -146,6 +168,8 @@ export const allProducts: Product[] = [
   {
     id: "p-013",
     name: "Bookshelf",
+    description:
+      "Five-shelf engineered-wood bookshelf with steel reinforcement bars, anti-tip wall mounts, and adjustable shelf heights for oversized volumes.",
     category: "Furniture",
     publishedAt: "2026-02-26T09:05:00Z",
     availableOn: "2026-03-08",
@@ -157,6 +181,7 @@ export const allProducts: Product[] = [
   {
     id: "p-014",
     name: "Power Strip",
+    description: "Eight outlets, surge protection, six-foot braided cord.",
     category: "Accessories",
     publishedAt: "2026-03-01T19:15:00Z",
     availableOn: "2026-03-11",
@@ -168,6 +193,8 @@ export const allProducts: Product[] = [
   {
     id: "p-015",
     name: "Whiteboard",
+    description:
+      "Ghost-resistant porcelain steel whiteboard with an aluminum frame, magnetic surface, mounting cleat, and an integrated marker tray along the bottom.",
     category: "Furniture",
     publishedAt: "2026-03-04T11:35:00Z",
     availableOn: "2026-03-14",
@@ -179,6 +206,8 @@ export const allProducts: Product[] = [
   {
     id: "p-016",
     name: "USB Microphone",
+    description:
+      "Cardioid USB condenser with a built-in pop filter, zero-latency headphone monitoring, and a shock mount tuned for desk-strike isolation.",
     category: "Electronics",
     publishedAt: "2026-03-07T17:45:00Z",
     availableOn: "2026-03-17",
@@ -190,6 +219,8 @@ export const allProducts: Product[] = [
   {
     id: "p-017",
     name: "Filing Cabinet",
+    description:
+      "Two-drawer lateral file cabinet built from 22-gauge steel, with a keyed central lock, anti-tilt interlock, and full-extension ball-bearing slides.",
     category: "Furniture",
     publishedAt: "2026-03-10T08:25:00Z",
     availableOn: "2026-03-20",
@@ -201,6 +232,7 @@ export const allProducts: Product[] = [
   {
     id: "p-018",
     name: "HDMI Cable",
+    description: "6 ft, 4K @ 120 Hz, braided jacket.",
     category: "Accessories",
     publishedAt: "2026-03-13T14:30:00Z",
     availableOn: "2026-03-22",
@@ -212,6 +244,8 @@ export const allProducts: Product[] = [
   {
     id: "p-019",
     name: "Ergonomic Footrest",
+    description:
+      "Tilting under-desk footrest with a textured massaging surface, non-slip base, and 14 degrees of adjustable rocking motion for circulation.",
     category: "Furniture",
     publishedAt: "2026-03-16T10:10:00Z",
     availableOn: "2026-03-25",
@@ -223,6 +257,8 @@ export const allProducts: Product[] = [
   {
     id: "p-020",
     name: "Docking Station",
+    description:
+      "Thunderbolt 4 docking station with dual 4K display outputs, 96 W laptop charging, 2.5 GbE Ethernet, and ten downstream USB ports for a complete desk hub.",
     category: "Electronics",
     publishedAt: "2026-03-19T16:50:00Z",
     availableOn: "2026-03-28",

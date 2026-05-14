@@ -55,6 +55,14 @@ function TestDataTable(props: {
 
 const wrapper = createAppShellWrapper("en");
 
+// When a cell is wrapped in `Tooltip.Trigger`, Base UI tags the trigger
+// element with a generated `base-ui-…` id (used for the popup's
+// `aria-describedby` pointer). We assert that id's presence as the
+// structural signal that the tooltip is wired — it sidesteps Base UI's
+// hover-delay timer machinery, which is awkward to drive in jsdom.
+const isTooltipWired = (cell: Element | null) =>
+  typeof cell?.id === "string" && cell.id.startsWith("base-ui-");
+
 describe("DataTable", () => {
   it("renders a basic data table with headers and rows", () => {
     render(<TestDataTable />, { wrapper });
@@ -382,6 +390,126 @@ describe("DataTable", () => {
       const { container } = render(<Harness />, { wrapper });
       const head = container.querySelector('[data-slot="data-table-header"] th');
       expect(head?.className).not.toContain("text-right");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Column truncate
+  // -------------------------------------------------------------------------
+  describe("column truncate", () => {
+    it("adds truncate + max-w-0 to body cells when truncate=true", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => row.name,
+          accessor: (row) => row.name,
+          truncate: true,
+        },
+        { label: "Status", render: (row) => row.status },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const firstRow = container.querySelector('[data-slot="data-table-row"]');
+      const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
+      expect(cells[0]?.className).toContain("truncate");
+      expect(cells[0]?.className).toContain("max-w-0");
+      expect(cells[1]?.className).not.toContain("truncate");
+    });
+
+    it("wires a Tooltip when accessor returns a string", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => <strong>{row.name}</strong>,
+          accessor: (row) => row.name,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(cells[0] ?? null)).toBe(true);
+      expect(isTooltipWired(cells[1] ?? null)).toBe(true);
+    });
+
+    it("wires a Tooltip when accessor returns a number", () => {
+      type NumRow = { id: string; count: number };
+      const numRows: NumRow[] = [{ id: "1", count: 42 }];
+      const cols: Column<NumRow>[] = [
+        {
+          label: "Count",
+          render: (row) => row.count,
+          accessor: (row) => row.count,
+          truncate: true,
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(cell)).toBe(true);
+    });
+
+    it("does not wire a Tooltip when accessor returns a non-stringifiable value", () => {
+      type ObjRow = { id: string; meta: { tags: string[] } };
+      const objRows: ObjRow[] = [{ id: "1", meta: { tags: ["a"] } }];
+      const cols: Column<ObjRow>[] = [
+        {
+          label: "Meta",
+          render: (row) => JSON.stringify(row.meta),
+          accessor: (row) => row.meta,
+          truncate: true,
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<ObjRow>({ columns: cols, data: { rows: objRows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      // Truncate classes still apply, but no Tooltip wraps the cell.
+      expect(cell?.className).toContain("truncate");
+      expect(isTooltipWired(cell)).toBe(false);
+    });
+
+    it("does not wire a Tooltip when accessor is not provided", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => row.name,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const cell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(cell?.className).toContain("truncate");
+      expect(isTooltipWired(cell)).toBe(false);
+    });
+
+    it("wires a Tooltip via row[col.id] when accessor is omitted but id matches a row field", () => {
+      // Mirrors the `infer("...")` shape: no `accessor`, but `id` is pinned
+      // to a row field so the cell renderer's `row[col.id]` fallback can
+      // resolve the value for both rendering and the truncate tooltip.
+      const cols: Column<TestRow>[] = [
+        {
+          id: "name",
+          label: "Name",
+          render: (row) => <strong>{row.name}</strong>,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(cells[0] ?? null)).toBe(true);
+      expect(isTooltipWired(cells[1] ?? null)).toBe(true);
     });
   });
 

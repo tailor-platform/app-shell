@@ -26,6 +26,12 @@ const productMetadata = {
       required: true,
       description: "Product name",
     },
+    {
+      name: "description",
+      type: "string",
+      required: true,
+      description: "Description",
+    },
     { name: "category", type: "string", required: true },
     { name: "publishedAt", type: "datetime", required: true },
     { name: "availableOn", type: "date", required: true },
@@ -52,6 +58,15 @@ const productColumns = [
   column({
     ...infer("name"),
     render: (row) => <span className="font-medium">{row.name}</span>,
+  }),
+  // Demonstrates `truncate: true` — long descriptions are clipped with an
+  // ellipsis and the full value is revealed in a `<Tooltip>` on hover.
+  // No explicit `accessor` needed: `infer("description")` pins the column
+  // `id` to the field name, so the tooltip resolves via `row[col.id]`.
+  column({
+    ...infer("description"),
+    type: "text",
+    truncate: true,
   }),
   column(infer("category")),
   column({

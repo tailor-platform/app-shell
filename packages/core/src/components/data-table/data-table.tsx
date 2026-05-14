@@ -7,11 +7,12 @@ import { CollectionControlProvider } from "@/contexts/collection-control-context
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
+import { Tooltip } from "@/components/tooltip";
 import type { SortConfig } from "@/types/collection";
 import type { Column, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import { renderTypedCell } from "./cell-renderers";
+import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
@@ -167,15 +168,19 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
 
   const controlValue = value.control ?? null;
 
+  // Tooltip.Provider shares hover-delay state for the per-cell truncate
+  // tooltips; benign no-op when no column opts into `truncate`.
   const inner = (
-    <DataTableContext.Provider value={dataTableValue}>
-      <div
-        data-slot="data-table"
-        className={cn("astw:border astw:rounded-md astw:bg-card", className)}
-      >
-        {children}
-      </div>
-    </DataTableContext.Provider>
+    <Tooltip.Provider delay={300}>
+      <DataTableContext.Provider value={dataTableValue}>
+        <div
+          data-slot="data-table"
+          className={cn("astw:border astw:rounded-md astw:bg-card", className)}
+        >
+          {children}
+        </div>
+      </DataTableContext.Provider>
+    </Tooltip.Provider>
   );
 
   if (controlValue) {
@@ -416,12 +421,52 @@ function DataTableBody({ className }: { className?: string }) {
             {columns?.map((col, colIndex) => {
               const key = col.id ?? col.label ?? String(colIndex);
               const content = col.render ? col.render(row) : renderTypedCell(row, col);
+              const cellClassName = cn(
+                resolveAlign(col) === "right" && "astw:text-right",
+                col.truncate && "astw:truncate astw:max-w-0",
+              );
+              const cellStyle = col.width ? { width: col.width } : undefined;
+
+              // Surface the full value on hover when the cell is truncated
+              // and the resolved cell value is a stringifiable primitive.
+              // `getCellValue` is the same precedence rule the built-in
+              // renderers use (`accessor` first, then `row[col.id]`), so
+              // typed and inferred columns get tooltip wiring for free.
+              // Objects / arrays / no value are skipped — pass a custom
+              // `render` for those cases.
+              let tooltipLabel: string | undefined;
+              if (col.truncate) {
+                const raw = getCellValue(row, col);
+                if (typeof raw === "string" || typeof raw === "number") {
+                  tooltipLabel = String(raw);
+                }
+              }
+
+              if (tooltipLabel !== undefined) {
+                return (
+                  <Tooltip.Root key={key}>
+                    <Tooltip.Trigger
+                      render={
+                        <Table.Cell
+                          data-slot="data-table-cell"
+                          style={cellStyle}
+                          className={cellClassName}
+                        />
+                      }
+                    >
+                      {content}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
+                  </Tooltip.Root>
+                );
+              }
+
               return (
                 <Table.Cell
                   key={key}
                   data-slot="data-table-cell"
-                  style={col.width ? { width: col.width } : undefined}
-                  className={cn(resolveAlign(col) === "right" && "astw:text-right")}
+                  style={cellStyle}
+                  className={cellClassName}
                 >
                   {content}
                 </Table.Cell>

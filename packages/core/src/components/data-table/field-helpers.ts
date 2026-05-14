@@ -62,6 +62,12 @@ export function inferColumns<
     const label = columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;
 
     return {
+      // Pin `id` to the field name so the cell renderer's `row[col.id]`
+      // fallback resolves to the same value the inferred `render` reads.
+      // This is what lets `column({ ...infer("description"), truncate: true })`
+      // wire the truncate tooltip without an explicit `accessor` —
+      // `getCellValue` falls through to `row[col.id]`.
+      id: fieldName,
       label,
       render: ((row: Record<string, unknown>) => formatValue(row[fieldName])) as (
         row: TRow,

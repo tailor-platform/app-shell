@@ -128,6 +128,18 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   align?: "left" | "right";
   /**
+   * When `true`, the cell content is truncated with an ellipsis when it
+   * overflows. A `<Tooltip>` is wired up automatically when `accessor`
+   * returns a string or number, so hovering the cell reveals the full
+   * value.
+   *
+   * Truncation requires the cell to be shrinkable — the body cell sets
+   * `max-w-0`, which collapses unless another column anchors the row width.
+   * Pair with `width` on neighboring columns, or rely on the natural width
+   * of fixed-size columns (selection / row actions).
+   */
+  truncate?: boolean;
+  /**
    * Sort configuration. When set, the column header becomes clickable and
    * cycles through `Asc → Desc → undefined`.
    * Use `fieldTypeToSortConfig` or `inferColumns` to derive this automatically.

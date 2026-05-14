@@ -493,6 +493,24 @@ describe("DataTable", () => {
       expect(cell?.className).toContain("truncate");
       expect(isTooltipWired(cell)).toBe(false);
     });
+
+    it("wires a Tooltip via row[col.id] when accessor is omitted but id matches a row field", () => {
+      // Mirrors the `infer("...")` shape: no `accessor`, but `id` is pinned
+      // to a row field so the cell renderer's `row[col.id]` fallback can
+      // resolve the value for both rendering and the truncate tooltip.
+      const cols: Column<TestRow>[] = [
+        {
+          id: "name",
+          label: "Name",
+          render: (row) => <strong>{row.name}</strong>,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(cells[0] ?? null)).toBe(true);
+      expect(isTooltipWired(cells[1] ?? null)).toBe(true);
+    });
   });
 
   // -------------------------------------------------------------------------

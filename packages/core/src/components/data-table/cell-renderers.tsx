@@ -17,7 +17,18 @@ const PLACEHOLDER = (
   </span>
 );
 
-function getCellValue<TRow extends Record<string, unknown>>(row: TRow, col: Column<TRow>): unknown {
+/**
+ * Read the raw cell value for a column. Used by the built-in `type`
+ * renderers and by `truncate`'s tooltip so they share one precedence
+ * rule: explicit `accessor` wins, otherwise fall back to `row[col.id]`
+ * when `id` is set.
+ *
+ * @internal
+ */
+export function getCellValue<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: Column<TRow>,
+): unknown {
   if (col.accessor) return col.accessor(row);
   if (col.id) return row[col.id];
   return undefined;

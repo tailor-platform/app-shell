@@ -12,7 +12,7 @@ import type { SortConfig } from "@/types/collection";
 import type { Column, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import { renderTypedCell } from "./cell-renderers";
+import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
@@ -428,11 +428,15 @@ function DataTableBody({ className }: { className?: string }) {
               const cellStyle = col.width ? { width: col.width } : undefined;
 
               // Surface the full value on hover when the cell is truncated
-              // and the accessor returns a stringifiable primitive. Objects /
-              // arrays are skipped — pass a custom `render` for those cases.
+              // and the resolved cell value is a stringifiable primitive.
+              // `getCellValue` is the same precedence rule the built-in
+              // renderers use (`accessor` first, then `row[col.id]`), so
+              // typed and inferred columns get tooltip wiring for free.
+              // Objects / arrays / no value are skipped — pass a custom
+              // `render` for those cases.
               let tooltipLabel: string | undefined;
-              if (col.truncate && col.accessor) {
-                const raw = col.accessor(row);
+              if (col.truncate) {
+                const raw = getCellValue(row, col);
                 if (typeof raw === "string" || typeof raw === "number") {
                   tooltipLabel = String(raw);
                 }

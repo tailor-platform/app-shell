@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getInitialAppearanceScript } from "@tailor-platform/app-shell";
 import "@tailor-platform/app-shell/styles";
 import "./globals.css";
 
@@ -25,6 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply stored appearance before paint to avoid FOUC + hydration warnings. */}
+        <script dangerouslySetInnerHTML={{ __html: getInitialAppearanceScript() }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
     </html>
   );

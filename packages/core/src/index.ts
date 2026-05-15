@@ -36,6 +36,7 @@ export {
   type FontOption,
 } from "./contexts/theme-context";
 export { ThemeSwitcher } from "./components/theme-switcher";
+export { getInitialAppearanceScript } from "./lib/initial-appearance";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
 export {
   AuthProvider,

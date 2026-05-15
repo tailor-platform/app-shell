@@ -177,6 +177,41 @@ function UseInter() {
 
 Use **`AppShell`**’s **`defaultFont`** prop for the initial value when nothing is stored. Default is **`"geist"`**.
 
+## Avoiding FOUC: `getInitialAppearanceScript()`
+
+`ThemeProvider` writes **`data-theme`** / **`data-font`** to **`<html>`** from a **post-mount effect**. On SSR'd apps that creates a flash of the default palette before the stored preference is applied, plus a React hydration warning.
+
+The package exports **`getInitialAppearanceScript()`** which returns a tiny script string consumers inline in **`<head>`** so the stored preference is applied **before first paint**:
+
+```tsx
+// app/layout.tsx (Next.js App Router)
+import { getInitialAppearanceScript } from "@tailor-platform/app-shell";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: getInitialAppearanceScript() }} />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+The script reads **`localStorage`**, runs the same legacy-id migration as the provider, resolves **`system`** via **`matchMedia`**, and sets **`data-theme`**, **`data-font`**, and **`class="light"|"dark"`** on **`<html>`**. Safe to call without arguments; pass overrides for non-default storage keys / defaults.
+
+```ts
+getInitialAppearanceScript({
+  storageKey: "my-app-theme",
+  fontStorageKey: "my-app-font",
+  defaultTheme: "cream",
+  defaultFont: "inter",
+});
+```
+
+For Vite / static HTML apps, paste the returned string into a **`<script>`** tag in **`index.html`**.
+
 ## Related
 
 - [Styling & Theming](../concepts/styling-theming.md)

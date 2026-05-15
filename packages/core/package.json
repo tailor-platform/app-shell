@@ -34,6 +34,10 @@
       "types": "./dist/app-shell.d.ts",
       "default": "./dist/app-shell.js"
     },
+    "./initial-appearance": {
+      "types": "./dist/initial-appearance.d.ts",
+      "default": "./dist/initial-appearance.js"
+    },
     "./vite-plugin": {
       "types": "./dist/vite-plugin.d.ts",
       "default": "./dist/vite-plugin.js"

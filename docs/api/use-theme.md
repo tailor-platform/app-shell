@@ -181,11 +181,11 @@ Use **`AppShell`**’s **`defaultFont`** prop for the initial value when nothing
 
 `ThemeProvider` writes **`data-theme`** / **`data-font`** to **`<html>`** from a **post-mount effect**. On SSR'd apps that creates a flash of the default palette before the stored preference is applied, plus a React hydration warning.
 
-The package exports **`getInitialAppearanceScript()`** which returns a tiny script string consumers inline in **`<head>`** so the stored preference is applied **before first paint**:
+The package exports **`getInitialAppearanceScript()`** which returns a tiny script string consumers inline in **`<head>`** so the stored preference is applied **before first paint**. Import from the leaf subpath **`@tailor-platform/app-shell/initial-appearance`** — it's a zero-React-dep entry, safe to call from Next.js Server Components / RSC.
 
 ```tsx
 // app/layout.tsx (Next.js App Router)
-import { getInitialAppearanceScript } from "@tailor-platform/app-shell";
+import { getInitialAppearanceScript } from "@tailor-platform/app-shell/initial-appearance";
 
 export default function RootLayout({ children }) {
   return (

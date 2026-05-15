@@ -37,6 +37,9 @@ export default defineConfig(({ mode }) => ({
       entry: {
         "app-shell": "src/index.ts",
         "vite-plugin": "src/vite-plugin.ts",
+        // Leaf entry for Server-Component-safe usage: pure, zero React / react-router
+        // imports, so Next.js RSC can call it from `app/layout.tsx`.
+        "initial-appearance": "src/lib/initial-appearance.ts",
       },
       formats: ["es"],
     },

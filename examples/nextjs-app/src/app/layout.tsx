@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { getInitialAppearanceScript } from "@tailor-platform/app-shell";
+import { getInitialAppearanceScript } from "@tailor-platform/app-shell/initial-appearance";
 import "@tailor-platform/app-shell/styles";
 import "./globals.css";
 

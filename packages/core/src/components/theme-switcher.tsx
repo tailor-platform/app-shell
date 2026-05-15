@@ -55,7 +55,8 @@ function radioItemClasses(active: boolean) {
     "astw:data-highlighted:bg-muted/80 astw:data-highlighted:text-foreground",
     "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
     "[&_[data-slot=menu-radio-item-indicator]]:astw:hidden",
-    active && "astw:bg-primary/12 astw:ring-1 astw:ring-primary/25 astw:data-highlighted:bg-primary/[0.14]",
+    active &&
+      "astw:bg-primary/12 astw:ring-1 astw:ring-primary/25 astw:data-highlighted:bg-primary/[0.14]",
   );
 }
 

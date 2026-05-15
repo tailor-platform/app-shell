@@ -99,9 +99,7 @@ describe("getInitialAppearanceScript", () => {
     storage.set("my-theme", "bloom");
     storage.set("my-font", "geist");
 
-    evalScript(
-      getInitialAppearanceScript({ storageKey: "my-theme", fontStorageKey: "my-font" }),
-    );
+    evalScript(getInitialAppearanceScript({ storageKey: "my-theme", fontStorageKey: "my-font" }));
 
     expect(document.documentElement.dataset.theme).toBe("bloom");
     expect(document.documentElement.dataset.font).toBe("geist");

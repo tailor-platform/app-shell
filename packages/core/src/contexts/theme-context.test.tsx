@@ -85,11 +85,7 @@ describe("ThemeProvider — legacy id migration", () => {
     storageMap.set(storageKey, stored);
 
     const { getByTestId } = render(
-      <ThemeProvider
-        storageKey={storageKey}
-        fontStorageKey={fontStorageKey}
-        defaultTheme="bloom"
-      >
+      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="bloom">
         <ThemeProbe />
       </ThemeProvider>,
     );
@@ -104,11 +100,7 @@ describe("ThemeProvider — legacy id migration", () => {
     storageMap.set(storageKey, "totally-not-a-theme");
 
     const { getByTestId } = render(
-      <ThemeProvider
-        storageKey={storageKey}
-        fontStorageKey={fontStorageKey}
-        defaultTheme="light"
-      >
+      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="light">
         <ThemeProbe />
       </ThemeProvider>,
     );
@@ -120,11 +112,7 @@ describe("ThemeProvider — legacy id migration", () => {
     storageMap.set(fontStorageKey, "wingdings");
 
     const { getByTestId } = render(
-      <ThemeProvider
-        storageKey={storageKey}
-        fontStorageKey={fontStorageKey}
-        defaultFont="inter"
-      >
+      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultFont="inter">
         <FontProbe />
       </ThemeProvider>,
     );

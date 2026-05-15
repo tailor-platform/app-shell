@@ -131,6 +131,52 @@ The built-in **`ThemeProvider`** (used inside **`AppShell`**) persists the **`th
 
 Use **`AppShell`**’s **`defaultTheme`** prop for the initial value when nothing is stored.
 
+# useFont
+
+Sibling hook to **`useTheme`** that controls the **font axis**, independent of color theme. Any color theme works with either font; users pick them separately in **`ThemeSwitcher`**.
+
+## Signature
+
+```typescript
+export type Font = "inter" | "geist";
+
+export type FontOption = { readonly value: Font; readonly label: string };
+
+export const FONT_OPTIONS: readonly FontOption[];
+```
+
+```typescript
+const useFont: () => {
+  font: Font;
+  setFont: (font: Font) => void;
+};
+```
+
+## Return value
+
+### `font`
+
+- **Type:** `Font`
+- **Description:** Stored font preference. Applied to **`<html>`** as **`data-font`**, which the package CSS uses to set **`font-family`** on **`body`** and headings.
+
+### `setFont(font)`
+
+- **Type:** `(font: Font) => void`
+- **Description:** Set the font. Persisted to **`localStorage`** (key **`appshell-ui-font`** when using AppShell’s built-in provider).
+
+## Usage
+
+```typescript
+import { useFont } from "@tailor-platform/app-shell";
+
+function UseInter() {
+  const { setFont } = useFont();
+  return <button onClick={() => setFont("inter")}>Inter</button>;
+}
+```
+
+Use **`AppShell`**’s **`defaultFont`** prop for the initial value when nothing is stored. Default is **`"geist"`**.
+
 ## Related
 
 - [Styling & Theming](../concepts/styling-theming.md)

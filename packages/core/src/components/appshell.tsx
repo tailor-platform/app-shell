@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider, type Theme } from "@/contexts/theme-context";
+import { ThemeProvider, type Theme, type Font } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -188,6 +188,14 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * @default "bloom"
    */
   defaultTheme?: Theme;
+
+  /**
+   * Initial font axis before any value is loaded from localStorage (`appshell-ui-font`).
+   * Independent of `defaultTheme`; any color theme works with either font.
+   *
+   * @default "geist"
+   */
+  defaultFont?: Font;
 }>;
 
 /**
@@ -333,7 +341,9 @@ export const AppShell = (props: AppShellProps) => {
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider
               defaultTheme={props.defaultTheme ?? "bloom"}
+              defaultFont={props.defaultFont ?? "geist"}
               storageKey="appshell-ui-theme"
+              fontStorageKey="appshell-ui-font"
             >
               <RouterContainer>
                 {props.children}

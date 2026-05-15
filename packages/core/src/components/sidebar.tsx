@@ -249,7 +249,8 @@ function Sidebar({
               side === "left" ? "astw:left-0" : "astw:right-0",
               variant === "floating" || variant === "inset"
                 ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-                : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+                : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon) astw:group-data-[side=left]:border-r astw:group-data-[side=right]:border-l",
+              variant === "inset" && "astw:border-x astw:border-x-border",
             )}
           >
             <div
@@ -316,7 +317,8 @@ function Sidebar({
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+            : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon) astw:group-data-[side=left]:border-r astw:group-data-[side=right]:border-l",
+          variant === "inset" && "astw:border-x astw:border-x-border",
           className,
         )}
         {...props}

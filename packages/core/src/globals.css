@@ -2,6 +2,10 @@
 @import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/500.css");
 @import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/600.css");
 @import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/700.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/400.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/500.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/600.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/700.css");
 
 @import "tailwindcss" prefix(astw);
 @import "tw-animate-css";
@@ -41,14 +45,23 @@
   }
 
   /*
-   * Cream / Bloom — vertical shell gradient (top = --background; bottom lighter via --shell-gradient-end).
+   * Cream / Bloom — vertical shell gradient (top = light tint via --shell-gradient-start → bottom = white via --shell-gradient-end).
    * Paint on `html` (fixed); shell chrome uses transparent bg so `bg-background` on buttons/cards stays solid.
    */
   :is(html[data-theme="cream"], html[data-theme="bloom"]) {
     min-height: 100vh;
     min-height: 100dvh;
     background-color: var(--background);
-    background-image: linear-gradient(to bottom, var(--background), var(--shell-gradient-end));
+    background-image: linear-gradient(
+      to bottom,
+      var(--shell-gradient-start) 0%,
+      color-mix(in srgb, var(--background) 45%, white) 20%,
+      color-mix(in srgb, var(--background) 30%, white) 40%,
+      color-mix(in srgb, var(--background) 15%, white) 55%,
+      color-mix(in srgb, var(--background) 6%, white) 65%,
+      var(--shell-gradient-end) 70%,
+      var(--shell-gradient-end) 100%
+    );
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: 100% 100%;
@@ -69,21 +82,27 @@
     background-color: transparent !important;
   }
 
-
   /*
-    Cream / Bloom: Geist Sans + Apple-style corners (squircle) when the engine supports corner-shape (Chromium).
-    Circles (.rounded-full) stay round; browsers without support keep standard border-radius.
-  */
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) body {
+   * Font axis — applied independently of color theme via `data-font` on `<html>`.
+   * Default Tailwind sans is the fallback when no `data-font` is set.
+   */
+  html[data-font="geist"] body,
+  html[data-font="geist"] :where(h1, h2, h3, h4, h5, h6) {
     font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   }
 
+  html[data-font="inter"] body,
+  html[data-font="inter"] :where(h1, h2, h3, h4, h5, h6) {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Tighter heading rhythm on cream/bloom — matches the showcase palettes' display feel. */
   :is(html[data-theme="cream"], html[data-theme="bloom"]) :where(h1, h2, h3, h4, h5, h6) {
     letter-spacing: -0.03em;
     line-height: 1.2;
-    font-family: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   }
 
+  /* Apple-style squircle corners on cream/bloom where engine supports corner-shape (Chromium). */
   @supports (corner-shape: squircle) {
     :is(html[data-theme="cream"], html[data-theme="bloom"]) * {
       corner-shape: squircle;
@@ -126,5 +145,32 @@
   :is(html[data-theme="cream"], html[data-theme="bloom"])
     [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
     background-color: transparent;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+
+  /* Hover state — restore the accent fill that the Tailwind `hover:bg-accent` utility would have provided
+   * if our transparent rule above weren't winning on specificity. */
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  /*
+   * Sidebar active item — hairline border (~0.5px @ 30% black). Wrapper components in
+   * `components/sidebar/*` apply the active state via direct `bg-sidebar-accent` classes
+   * (not the `data-active` attribute), so target the class signature. Inset box-shadow
+   * (not outline) because Tailwind's `outline-hidden` utility sets a transparent 2px
+   * outline that would override us. Lives in `@layer utilities` to win the cascade.
+   */
+  :is(
+    [data-slot="sidebar-menu-button"],
+    [data-slot="sidebar-menu-sub-button"]
+  )[class~="astw:bg-sidebar-accent"] {
+    outline: 0.5px solid var(--border);
+    outline-offset: -0.5px;
+    box-shadow: var(--semantic-shadow-xs);
   }
 }

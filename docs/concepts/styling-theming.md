@@ -41,6 +41,17 @@ AppShell ships **five** named semantic palettes controlled by **`data-theme`** o
 
 Semantic tokens (**`--background`**, **`--primary`**, **`--border`**, sidebar tokens, **`--semantic-shadow-*`**, statuses, **`--radius`**, …) live in **`theme.css`**; override there or in host CSS keyed off **`html[data-theme='…']`**.
 
+### Font axis
+
+Font is an independent axis from color theme — any palette works with either face.
+
+| Font    | When you'd pick it                                       |
+| ------- | -------------------------------------------------------- |
+| `inter` | Neutral workhorse; matches most ERP / dashboard UIs      |
+| `geist` | Vercel-flavoured display sans; default for Tailor themes |
+
+Selected font is applied to **`<html>`** as **`data-font`**. CSS in **`globals.css`** sets **`font-family`** on **`body`** and headings off that attribute. Persisted to **`localStorage`** under **`appshell-ui-font`**; pick via **`setFont`** (see **`useFont`**) or **`AppShell`**'s **`defaultFont`** prop (default **`"geist"`**).
+
 ## A note on AppShell component class names
 
 AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.

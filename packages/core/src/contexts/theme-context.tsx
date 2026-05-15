@@ -12,11 +12,23 @@ const ALL_THEMES: readonly Theme[] = ["light", "dark", "cream", "bloom", "system
 export type ThemeOption = { readonly value: Theme; readonly label: string };
 
 export const THEME_OPTIONS: readonly ThemeOption[] = [
+  { value: "bloom", label: "Bloom" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
   { value: "cream", label: "Cream" },
-  { value: "bloom", label: "Bloom" },
   { value: "system", label: "System" },
+] as const;
+
+/** Font axis — independent of color theme. Applied to `<html>` as `data-font`. */
+export type Font = "geist" | "inter";
+
+const ALL_FONTS: readonly Font[] = ["geist", "inter"] as const;
+
+export type FontOption = { readonly value: Font; readonly label: string };
+
+export const FONT_OPTIONS: readonly FontOption[] = [
+  { value: "geist", label: "Geist" },
+  { value: "inter", label: "Inter" },
 ] as const;
 
 /** Migrate stored values from legacy `tailor-*` ids before the public rename. */
@@ -34,24 +46,34 @@ function parseStoredTheme(value: string | null, fallback: Theme): Theme {
   return fallback;
 }
 
-function readStoredTheme(storageKey: string, fallback: Theme): Theme {
+function parseStoredFont(value: string | null, fallback: Font): Font {
+  if (!value) return fallback;
+  if ((ALL_FONTS as readonly string[]).includes(value)) return value as Font;
+  return fallback;
+}
+
+function readStored<T extends string>(
+  storageKey: string,
+  fallback: T,
+  parse: (value: string | null, fallback: T) => T,
+): T {
   if (typeof window === "undefined") return fallback;
   const ls = window.localStorage;
   const getItem = ls && typeof ls.getItem === "function" ? ls.getItem.bind(ls) : null;
   if (!getItem) return fallback;
   try {
-    return parseStoredTheme(getItem(storageKey), fallback);
+    return parse(getItem(storageKey), fallback);
   } catch {
     return fallback;
   }
 }
 
-function writeStoredTheme(storageKey: string, theme: Theme) {
+function writeStored<T extends string>(storageKey: string, value: T) {
   if (typeof window === "undefined") return;
   const ls = window.localStorage;
   if (!ls || typeof ls.setItem !== "function") return;
   try {
-    ls.setItem(storageKey, theme);
+    ls.setItem(storageKey, value);
   } catch {
     /* storage full or forbidden */
   }
@@ -60,19 +82,25 @@ function writeStoredTheme(storageKey: string, theme: Theme) {
 type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
+  defaultFont?: Font;
   storageKey: string;
+  fontStorageKey: string;
 };
 
 type ThemeProviderState = {
   theme: Theme;
   resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
+  font: Font;
+  setFont: (font: Font) => void;
 };
 
 const initialState: ThemeProviderState = {
   resolvedTheme: "bloom",
   theme: "bloom",
   setTheme: () => null,
+  font: "geist",
+  setFont: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -86,10 +114,17 @@ function resolveTheme(theme: Theme): ResolvedTheme {
 export function ThemeProvider({
   children,
   storageKey,
+  fontStorageKey,
   defaultTheme = "bloom",
+  defaultFont = "geist",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => readStoredTheme(storageKey, defaultTheme));
+  const [theme, setThemeState] = useState<Theme>(() =>
+    readStored(storageKey, defaultTheme, parseStoredTheme),
+  );
+  const [font, setFontState] = useState<Font>(() =>
+    readStored(fontStorageKey, defaultFont, parseStoredFont),
+  );
 
   const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
 
@@ -100,12 +135,21 @@ export function ThemeProvider({
     root.dataset.theme = resolvedTheme;
   }, [resolvedTheme]);
 
+  useEffect(() => {
+    window.document.documentElement.dataset.font = font;
+  }, [font]);
+
   const value = {
     resolvedTheme,
     theme,
     setTheme: (newTheme: Theme) => {
-      writeStoredTheme(storageKey, newTheme);
+      writeStored(storageKey, newTheme);
       setThemeState(newTheme);
+    },
+    font,
+    setFont: (newFont: Font) => {
+      writeStored(fontStorageKey, newFont);
+      setFontState(newFont);
     },
   };
 
@@ -121,5 +165,15 @@ export const useTheme = () => {
 
   if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
 
-  return context;
+  const { theme, resolvedTheme, setTheme } = context;
+  return { theme, resolvedTheme, setTheme };
+};
+
+export const useFont = () => {
+  const context = useContext(ThemeProviderContext);
+
+  if (context === undefined) throw new Error("useFont must be used within a ThemeProvider");
+
+  const { font, setFont } = context;
+  return { font, setFont };
 };

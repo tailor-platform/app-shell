@@ -2,11 +2,12 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { THEME_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
+import { FONT_OPTIONS, THEME_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
 
 import { ThemeSwitcher } from "./theme-switcher";
 
 const storageKey = "theme-switcher-test-key";
+const fontStorageKey = "theme-switcher-test-font-key";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -44,34 +45,39 @@ afterEach(() => {
 });
 
 describe("ThemeSwitcher", () => {
-  it("opens a menu listing every theme option", async () => {
+  it("opens a menu listing every theme and font option", async () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider storageKey={storageKey} defaultTheme="light">
+      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="light">
         <ThemeSwitcher />
       </ThemeProvider>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Theme" }));
+    await user.click(screen.getByRole("button", { name: "Appearance" }));
 
     await waitFor(() => {
-      expect(screen.getAllByRole("menuitemradio").length).toBe(THEME_OPTIONS.length);
+      expect(screen.getAllByRole("menuitemradio").length).toBe(
+        THEME_OPTIONS.length + FONT_OPTIONS.length,
+      );
     });
 
     for (const opt of THEME_OPTIONS) {
+      expect(screen.getByRole("menuitemradio", { name: opt.label })).toBeDefined();
+    }
+    for (const opt of FONT_OPTIONS) {
       expect(screen.getByRole("menuitemradio", { name: opt.label })).toBeDefined();
     }
   });
 
   it("exposes resolved palette on the trigger when system mode is selected", () => {
     render(
-      <ThemeProvider storageKey={storageKey} defaultTheme="system">
+      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="system">
         <ThemeSwitcher />
       </ThemeProvider>,
     );
 
-    const btn = screen.getByRole("button", { name: "Theme" });
+    const btn = screen.getByRole("button", { name: "Appearance" });
     expect(btn.getAttribute("title")).toMatch(/following system/i);
     expect(btn.getAttribute("title")).toMatch(/currently light|currently dark/i);
   });
@@ -80,12 +86,12 @@ describe("ThemeSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider storageKey={storageKey} defaultTheme="light">
+      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="light">
         <ThemeSwitcher />
       </ThemeProvider>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Theme" }));
+    await user.click(screen.getByRole("button", { name: "Appearance" }));
 
     await waitFor(() => {
       expect(screen.getByRole("menu")).toBeDefined();
@@ -97,5 +103,33 @@ describe("ThemeSwitcher", () => {
       expect(document.documentElement.dataset.theme).toBe("bloom");
     });
     expect(localStorage.getItem(storageKey)).toBe("bloom");
+  });
+
+  it("applies selected font when a font radio item is activated", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ThemeProvider
+        storageKey={storageKey}
+        fontStorageKey={fontStorageKey}
+        defaultTheme="light"
+        defaultFont="geist"
+      >
+        <ThemeSwitcher />
+      </ThemeProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Appearance" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("menu")).toBeDefined();
+    });
+
+    await user.click(screen.getByRole("menuitemradio", { name: "Inter" }));
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.font).toBe("inter");
+    });
+    expect(localStorage.getItem(fontStorageKey)).toBe("inter");
   });
 });

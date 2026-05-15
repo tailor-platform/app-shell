@@ -33,10 +33,11 @@ const THEME_PREVIEW: Record<Theme, { readonly a: `#${string}`; readonly b: `#${s
   system: { a: "#52525b", b: "#7c73e6" },
 };
 
-/** Font preview — `font-family` for the "Aa" sample so users see the face before selecting. */
+/** Font preview — `font-family` for the "Aa" sample so users see the face before selecting.
+ *  Mirrors the chain in `globals.css` (variable build first, then static family fallback). */
 const FONT_PREVIEW: Record<Font, string> = {
-  geist: '"Geist Sans", ui-sans-serif, system-ui, sans-serif',
-  inter: '"Inter", ui-sans-serif, system-ui, sans-serif',
+  geist: '"Geist Variable", "Geist Sans", ui-sans-serif, system-ui, sans-serif',
+  inter: '"Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif',
 };
 
 function isTheme(value: string): value is Theme {

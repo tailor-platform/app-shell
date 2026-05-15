@@ -4,6 +4,7 @@
  */
 @import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
+@import "@tailor-platform/app-shell/fonts";
 
 html,
 body {

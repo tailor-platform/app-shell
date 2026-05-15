@@ -52,6 +52,44 @@ Font is an independent axis from color theme — any palette works with either f
 
 Selected font is applied to **`<html>`** as **`data-font`**. CSS in **`globals.css`** sets **`font-family`** on **`body`** and headings off that attribute. Persisted to **`localStorage`** under **`appshell-ui-font`**; pick via **`setFont`** (see **`useFont`**) or **`AppShell`**'s **`defaultFont`** prop (default **`"geist"`**).
 
+### Loading the fonts
+
+AppShell's main stylesheet (**`@tailor-platform/app-shell/styles`**) references the family names but **does not load the font files** — that's up to the consumer so you can choose your own loading strategy. Three common options:
+
+**1. Use the bundled fonts (zero-config)**
+
+```css
+/* Your app's global CSS — typically app/globals.css or src/index.css */
+@import "@tailor-platform/app-shell/styles";
+@import "@tailor-platform/app-shell/fonts"; /* ships Geist + Inter variable */
+```
+
+This pulls **`@fontsource-variable/geist`** and **`@fontsource-variable/inter`** in via the AppShell package — self-hosted, lockfile-pinned, no third-party CDN.
+
+**2. Use Next.js font loader (best for Next.js apps)**
+
+```tsx
+// app/layout.tsx
+import { Geist, Inter } from "next/font/google";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+
+export default function RootLayout({ children }) {
+  return (
+    <html className={`${geist.variable} ${inter.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+AppShell's family chain is **`"Geist Variable", "Geist Sans", …`** — Next's loader registers Geist under **`"Geist Sans"`**, so it participates via the fallback. No extra CSS needed.
+
+**3. Self-host other fonts**
+
+If you don't want either Geist or Inter, you can replace the family on `body` in your own global CSS (post-import order). AppShell's `data-font` attribute still drives which axis is active.
+
 ## A note on AppShell component class names
 
 AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.

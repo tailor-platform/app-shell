@@ -340,8 +340,8 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider
-              defaultTheme={props.defaultTheme ?? "bloom"}
-              defaultFont={props.defaultFont ?? "geist"}
+              defaultTheme={props.defaultTheme}
+              defaultFont={props.defaultFont}
               storageKey="appshell-ui-theme"
               fontStorageKey="appshell-ui-font"
             >

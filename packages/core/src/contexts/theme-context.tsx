@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 /** User-selectable theme. `system` follows OS light/dark (default palettes only — not cream/bloom). */
 export type Theme = "light" | "dark" | "cream" | "bloom" | "system";
@@ -95,15 +95,7 @@ type ThemeProviderState = {
   setFont: (font: Font) => void;
 };
 
-const initialState: ThemeProviderState = {
-  resolvedTheme: "bloom",
-  theme: "bloom",
-  setTheme: () => null,
-  font: "geist",
-  setFont: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
 function resolveTheme(theme: Theme): ResolvedTheme {
   if (theme !== "system") return theme;
@@ -117,7 +109,6 @@ export function ThemeProvider({
   fontStorageKey,
   defaultTheme = "bloom",
   defaultFont = "geist",
-  ...props
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() =>
     readStored(storageKey, defaultTheme, parseStoredTheme),
@@ -139,41 +130,42 @@ export function ThemeProvider({
     window.document.documentElement.dataset.font = font;
   }, [font]);
 
-  const value = {
-    resolvedTheme,
-    theme,
-    setTheme: (newTheme: Theme) => {
+  const setTheme = useCallback(
+    (newTheme: Theme) => {
       writeStored(storageKey, newTheme);
       setThemeState(newTheme);
     },
-    font,
-    setFont: (newFont: Font) => {
+    [storageKey],
+  );
+
+  const setFont = useCallback(
+    (newFont: Font) => {
       writeStored(fontStorageKey, newFont);
       setFontState(newFont);
     },
-  };
-
-  return (
-    <ThemeProviderContext.Provider {...props} value={value}>
-      {children}
-    </ThemeProviderContext.Provider>
+    [fontStorageKey],
   );
+
+  const value = useMemo<ThemeProviderState>(
+    () => ({ theme, resolvedTheme, setTheme, font, setFont }),
+    [theme, resolvedTheme, setTheme, font, setFont],
+  );
+
+  return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;
 }
 
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
-
   if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
 
   const { theme, resolvedTheme, setTheme } = context;
-  return { theme, resolvedTheme, setTheme };
+  return useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
 };
 
 export const useFont = () => {
   const context = useContext(ThemeProviderContext);
-
   if (context === undefined) throw new Error("useFont must be used within a ThemeProvider");
 
   const { font, setFont } = context;
-  return { font, setFont };
+  return useMemo(() => ({ font, setFont }), [font, setFont]);
 };

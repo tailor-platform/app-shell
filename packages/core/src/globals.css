@@ -67,21 +67,6 @@
     background-size: 100% 100%;
   }
 
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) body {
-    background-color: transparent !important;
-    background-image: none;
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-wrapper"],
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-inner"],
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) main[data-slot="sidebar-inset"],
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
-      [data-icon-mode="true"]
-    ) {
-    background-color: transparent !important;
-  }
-
   /*
    * Font axis — applied independently of color theme via `data-font` on `<html>`.
    * Default Tailwind sans is the fallback when no `data-font` is set.
@@ -138,9 +123,30 @@
 
 /*
  * Theme-specific overrides that must beat Tailwind utility classes (which sit in `@layer utilities`).
- * Keep this block in `@layer utilities` so it loses to no Tailwind utility in earlier layers but wins on specificity.
+ * Keep this block in `@layer utilities` so it loses to no Tailwind utility in earlier layers and wins
+ * on selector specificity (no `!important` needed).
  */
 @layer utilities {
+  /*
+   * Cream / Bloom: body and sidebar chrome stay transparent so the html-level shell gradient shows
+   * through. Wins over `body { bg-background }` (base) and the Tailwind `bg-sidebar*` utilities on
+   * sidebar slots via the `:is(html[data-theme=...])` prefix raising specificity.
+   */
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) body {
+    background-color: transparent;
+    background-image: none;
+  }
+
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-wrapper"],
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-inner"],
+  :is(html[data-theme="cream"], html[data-theme="bloom"]) main[data-slot="sidebar-inset"],
+  :is(html[data-theme="cream"], html[data-theme="bloom"])
+    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
+      [data-icon-mode="true"]
+    ) {
+    background-color: transparent;
+  }
+
   /* Outline button on cream/bloom: transparent fill so the shell gradient shows through; keep border. */
   :is(html[data-theme="cream"], html[data-theme="bloom"])
     [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {

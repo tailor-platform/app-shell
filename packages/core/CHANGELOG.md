@@ -1,5 +1,101 @@
 # @tailor-platform/app-shell
 
+## 1.2.0
+
+### Minor Changes
+
+- 8a09b26: Add `align: "left" | "right"` to `DataTable` `Column`. When set to `"right"`, the header label, body cell, and loading-skeleton bar are right-aligned together — eliminating the inline `<span className="text-right">` wrappers callers were adding inside `render` for numeric columns (Amount, Score, Total).
+
+  `align` is **auto-defaulted to `"right"` for `type: "number"` and `type: "money"`** so the common case Just Works without extra config. Other types default to `"left"`. Pass `"left"` explicitly to opt a numeric column out.
+
+  ```tsx
+  // Auto-aligned right — no `align` needed
+  column({
+    label: "Total",
+    type: "money",
+    accessor: (row) => row.total,
+    typeOptions: { currency: "USD" },
+  });
+
+  // Explicit alignment for a custom-render column
+  column({
+    label: "Amount",
+    align: "right",
+    render: (row) => formatMoney(row.amount),
+  });
+  ```
+
+- b644bdb: Add `truncate: boolean` to `DataTable` `Column`. When set, the cell content is truncated with an ellipsis on overflow, and an app-shell `<Tooltip>` is auto-wired to reveal the full value on hover when the cell value is a stringifiable primitive. The tooltip resolves through the same precedence rule the built-in `type` renderers use — `accessor` first, then `row[col.id]` — so `inferColumns` consumers get the tooltip for free without an explicit accessor. Pair `truncate` with `width` on neighboring columns to anchor row width, since truncate cells use `max-w-0` to stay shrinkable.
+
+  ```tsx
+  column({
+    label: "Description",
+    render: (row) => row.description,
+    accessor: (row) => row.description,
+    truncate: true,
+  });
+
+  // Or with `inferColumns`, no explicit `accessor` needed — the inferred
+  // column pins `id` to the field name so the tooltip resolves automatically:
+  column({ ...infer("description"), truncate: true });
+  ```
+
+  `inferColumns` now also pins `id` to the metadata field name (previously omitted). This makes the cell renderer's `row[col.id]` fallback resolve cleanly and stabilizes the React key / column-visibility identifier across re-renders.
+
+- 4c89923: Add `defaultOpen` and `collapsible` props to `SidebarLayout` for controlling sidebar behavior.
+
+  ```tsx
+  // Sidebar closed by default on desktop
+  <SidebarLayout defaultOpen={false} />
+
+  // Non-collapsible sidebar (always visible, toggle buttons hidden)
+  <SidebarLayout collapsible={false} />
+  ```
+
+- c4fbfa2: Add `type` and `typeOptions` to `DataTable` `Column` for built-in cell rendering. Set `type` to `text`, `number`, `money`, `date`, `badge`, or `link` to skip writing a `render` function for the common cases. `render` stays required for untyped columns and becomes an optional override when `type` is set.
+
+  `Column<TRow>` is a discriminated union on `type`, so wrong-shape options are a compile error rather than silently ignored at runtime — and `type: "link"` requires `typeOptions.href`.
+
+  ```tsx
+  column({
+    label: "Total",
+    accessor: (row) => row.total,
+    type: "money",
+    typeOptions: { currency: "USD" },
+  });
+
+  column({
+    label: "Status",
+    accessor: (row) => row.status,
+    type: "badge",
+    typeOptions: {
+      badgeVariantMap: { active: "success", draft: "neutral" },
+      badgeLabelMap: { active: "Active", draft: "Draft" },
+    },
+  });
+  ```
+
+### Patch Changes
+
+- c4fbfa2: Narrow `Column.accessor`'s return type per built-in `type` so the typed cell renderers reject values they can't display. Returning an array or a plain object from a `text` / `number` / `money` / `date` / `badge` / `link` accessor is now a compile error instead of silently rendering `[object Object]` or a stringified list. `null` and `undefined` are still allowed and continue to render the `—` placeholder. Columns without a `type` retain the loose `unknown` return type — they pair with `render` to draw whatever shape they like.
+
+  ```tsx
+  column({
+    label: "Tags",
+    type: "text",
+    // ^ compile error: text accessor cannot return an array.
+    accessor: (row) => row.tags,
+  });
+  ```
+
+- eecff8e: Add `subtle-success`, `subtle-warning`, and `subtle-error` badge variants for low-emphasis status labels.
+
+  ```tsx
+  <Badge variant="subtle-success">Matched</Badge>
+  <Badge variant="subtle-warning">Needs Attention</Badge>
+  <Badge variant="subtle-error">Needs Review</Badge>
+  ```
+
 ## 1.1.1
 
 ### Patch Changes

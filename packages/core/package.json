@@ -57,7 +57,7 @@
     "clsx": "^2.1.1",
     "encoding-japanese": "^2.2.0",
     "es-toolkit": "^1.45.1",
-    "graphql": "^16.13.2",
+    "graphql": "^16.14.0",
     "lucide-react": "^1.8.0",
     "papaparse": "^5.5.3",
     "react": "^19.2.5",

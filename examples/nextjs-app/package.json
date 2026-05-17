@@ -11,7 +11,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@tailor-platform/app-shell": "workspace:*",
-    "next": "16.2.3",
+    "next": "16.2.6",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.71.2",

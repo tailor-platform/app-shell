@@ -270,20 +270,30 @@ const isCurrentOAuthCallbackUrl = () => {
 };
 
 /**
- * Guard component that shows a fallback UI while auth is not ready or
- * not authenticated. Defined here so that the router layer does not
- * need to depend on useAuth.
+ * Renders the appropriate fallback for the current auth state:
+ * - `loadingComponent` while the initial auth check is in progress
+ * - `guardComponent` once the check has resolved but the user is not
+ *   authenticated
+ *
+ * Either slot is optional; when a slot is missing for its state, the
+ * children are rendered instead. Defined here so the router layer does
+ * not need to depend on useAuth.
  */
 const AuthGuard = ({
+  loadingComponent,
   guardComponent,
   children,
 }: {
-  guardComponent: () => React.ReactNode;
+  loadingComponent?: () => React.ReactNode;
+  guardComponent?: () => React.ReactNode;
   children: React.ReactNode;
 }) => {
   const { isReady, isAuthenticated } = useAuth();
 
-  if (!isReady || !isAuthenticated) {
+  if (!isReady) {
+    return loadingComponent ? loadingComponent() : children;
+  }
+  if (!isAuthenticated && guardComponent) {
     return guardComponent();
   }
   return children;
@@ -302,11 +312,29 @@ type AuthProviderProps = {
   autoLogin?: boolean;
 
   /**
-   * Guard UI component to show when loading or unauthenticated.
+   * Loading UI component shown while the initial authentication check is
+   * in progress (i.e., `authState.isReady === false`).
    *
-   * When provided, AuthProvider renders this component directly while auth
-   * is not ready or the user is not authenticated. Children are hidden until
-   * auth resolves to an authenticated state.
+   * When provided, AuthProvider renders this component in place of children
+   * until the auth client has resolved the initial session. After the check
+   * completes, either children or `guardComponent` is rendered depending on
+   * whether the user is authenticated.
+   *
+   * If not provided, children are rendered during the initial check.
+   */
+  loadingComponent?: () => React.ReactNode;
+
+  /**
+   * Guard UI component shown to unauthenticated users.
+   *
+   * When provided, AuthProvider renders this component once the initial
+   * auth check has completed (`isReady === true`) and the user is not
+   * authenticated. Typical use case: a sign-in screen.
+   *
+   * Note: this is NOT shown while the initial auth check is still in
+   * progress — use `loadingComponent` for that state. Otherwise, a
+   * sign-in screen would flash on every reload before the session is
+   * known.
    *
    * If not provided, children are rendered regardless of auth state.
    */
@@ -488,9 +516,11 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   }, [client, ensureAuthInitialized]);
 
   // While handling an OAuth callback, keep unguarded children hidden until
-  // the callback settles. Guarded trees already wait on auth state instead.
+  // the callback settles. When `loadingComponent` is provided the AuthGuard
+  // already covers the !isReady state for us; otherwise hide children here
+  // so the unprotected tree does not flash during the callback exchange.
   const resolvedChildren =
-    callbackStatus === "pending" && props.guardComponent == null ? null : props.children;
+    callbackStatus === "pending" && props.loadingComponent == null ? null : props.children;
 
   const authContextValue = useMemo(
     () => ({
@@ -503,10 +533,14 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     [authState, client],
   );
 
+  const hasGuard = props.loadingComponent || props.guardComponent;
+
   return (
     <AuthContext.Provider value={authContextValue}>
-      {props.guardComponent ? (
-        <AuthGuard guardComponent={props.guardComponent}>{resolvedChildren}</AuthGuard>
+      {hasGuard ? (
+        <AuthGuard loadingComponent={props.loadingComponent} guardComponent={props.guardComponent}>
+          {resolvedChildren}
+        </AuthGuard>
       ) : (
         resolvedChildren
       )}

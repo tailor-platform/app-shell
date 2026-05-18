@@ -25,7 +25,7 @@ const authClient = createAuthClient({
 });
 
 const App = () => (
-  <AuthProvider client={authClient} autoLogin={true} guardComponent={() => <LoadingScreen />}>
+  <AuthProvider client={authClient} autoLogin={true} loadingComponent={() => <LoadingScreen />}>
     <AppShell modules={modules}>
       <SidebarLayout />
     </AppShell>
@@ -46,8 +46,20 @@ Find the above values in Tailor Console:
 The above code will:
 
 - Automatically redirect unauthenticated users to the login page (if `autoLogin` is true)
-- Show the `guardComponent` while loading or when unauthenticated
+- Show the `loadingComponent` while the initial auth check is in progress
 - Handle token management and session persistence automatically
+
+If you want to render a sign-in screen instead of redirecting (i.e., without `autoLogin`), pass it via `guardComponent` — it is only rendered after the initial auth check has completed and the user is not authenticated, so it does not flash on reload:
+
+```tsx
+<AuthProvider
+  client={authClient}
+  loadingComponent={() => <LoadingScreen />}
+  guardComponent={() => <SignInScreen />}
+>
+  {/* ... */}
+</AuthProvider>
+```
 
 ## Authentication Hook
 
@@ -171,11 +183,12 @@ function App() {
 
 ## `AuthProvider` Props
 
-| Prop             | Type                    | Required | Description                                           |
-| ---------------- | ----------------------- | -------- | ----------------------------------------------------- |
-| `client`         | `EnhancedAuthClient`    | Yes      | Auth client created with `createAuthClient`           |
-| `autoLogin`      | `boolean`               | No       | Automatically redirect unauthenticated users to login |
-| `guardComponent` | `() => React.ReactNode` | No       | Rendered while loading or when not authenticated      |
+| Prop               | Type                    | Required | Description                                                                  |
+| ------------------ | ----------------------- | -------- | ---------------------------------------------------------------------------- |
+| `client`           | `EnhancedAuthClient`    | Yes      | Auth client created with `createAuthClient`                                  |
+| `autoLogin`        | `boolean`               | No       | Automatically redirect unauthenticated users to login                        |
+| `loadingComponent` | `() => React.ReactNode` | No       | Rendered while the initial auth check is in progress (`isReady === false`)   |
+| `guardComponent`   | `() => React.ReactNode` | No       | Rendered when the auth check has completed and the user is not authenticated |
 
 ## Integration with AppShell
 

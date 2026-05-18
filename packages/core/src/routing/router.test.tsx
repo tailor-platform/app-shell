@@ -30,6 +30,7 @@ const renderWithConfig = ({
   contextData = {},
   authClient,
   autoLogin,
+  loadingComponent,
   guardComponent,
 }: {
   modules?: Array<Module>;
@@ -40,6 +41,7 @@ const renderWithConfig = ({
   contextData?: ContextData;
   authClient?: EnhancedAuthClient;
   autoLogin?: boolean;
+  loadingComponent?: () => React.ReactNode;
   guardComponent?: () => React.ReactNode;
 }) => {
   // Convert rootComponent into a root module (path="") so the test mirrors
@@ -78,7 +80,12 @@ const renderWithConfig = ({
 
   return render(
     authClient ? (
-      <AuthProvider client={authClient} autoLogin={autoLogin} guardComponent={guardComponent}>
+      <AuthProvider
+        client={authClient}
+        autoLogin={autoLogin}
+        loadingComponent={loadingComponent}
+        guardComponent={guardComponent}
+      >
         {tree}
       </AuthProvider>
     ) : (
@@ -537,11 +544,11 @@ describe("RouterContainer with AuthProvider", () => {
         rootComponent: () => <div>Home</div>,
         initialEntries: ["/"],
         authClient,
-        guardComponent: () => <div>Loading...</div>,
+        loadingComponent: () => <div>Loading...</div>,
       });
 
       expect(await screen.findByText("Loading...")).toBeDefined();
-      // With guardComponent now applied in AuthProvider (not the router),
+      // With loadingComponent now applied in AuthProvider (not the router),
       // RouterContainer is not mounted until auth is ready.
       expect(createMemoryRouterSpy).toHaveBeenCalledTimes(0);
 
@@ -658,7 +665,7 @@ describe("RouterContainer with AuthProvider", () => {
     expect(mockLogin).not.toHaveBeenCalled();
   });
 
-  it("shows guard component when not ready", async () => {
+  it("shows loadingComponent when not ready", async () => {
     const authClient = createMockAuthClient({
       isAuthenticated: false,
       error: null,
@@ -670,7 +677,7 @@ describe("RouterContainer with AuthProvider", () => {
       rootComponent: () => <div>Home</div>,
       initialEntries: ["/"],
       authClient,
-      guardComponent: () => <div>Loading...</div>,
+      loadingComponent: () => <div>Loading...</div>,
     });
 
     expect(await screen.findByText("Loading...")).toBeDefined();
@@ -719,10 +726,11 @@ describe("RouterContainer with AuthProvider", () => {
     expect(screen.queryByText("Please log in")).toBeNull();
   });
 
-  it("transitions from guard to children when auth state changes", async () => {
+  it("transitions from loadingComponent to children when auth state changes", async () => {
     // Mutable snapshot; initially not ready, not authenticated.
-    // Mount-time initialization runs outside the router loader, so the guard
-    // remains visible until the auth client publishes a ready state.
+    // Mount-time initialization runs outside the router loader, so the
+    // loadingComponent remains visible until the auth client publishes a
+    // ready state.
     let snapshot = {
       isAuthenticated: false,
       error: null as string | null,
@@ -758,10 +766,10 @@ describe("RouterContainer with AuthProvider", () => {
       rootComponent: () => <div>Home</div>,
       initialEntries: ["/"],
       authClient,
-      guardComponent: () => <div>Loading...</div>,
+      loadingComponent: () => <div>Loading...</div>,
     });
 
-    // Initially the guard should be shown
+    // Initially the loadingComponent should be shown
     expect(await screen.findByText("Loading...")).toBeDefined();
     expect(screen.queryByText("Home")).toBeNull();
 
@@ -819,7 +827,7 @@ describe("RouterContainer with AuthProvider", () => {
       modules: [dashboardModule, settingsModule],
       initialEntries: ["/dashboard"],
       authClient,
-      guardComponent: () => <div>Loading...</div>,
+      loadingComponent: () => <div>Loading...</div>,
     });
 
     expect(await screen.findByText("Dashboard")).toBeDefined();
@@ -908,10 +916,10 @@ describe("RouterContainer with AuthProvider", () => {
       modules: [publicModule, restrictedModule],
       initialEntries: ["/restricted"],
       authClient,
-      guardComponent: () => <div>Auth Loading...</div>,
+      loadingComponent: () => <div>Auth Loading...</div>,
     });
 
-    // Auth guard should be shown first (auth not ready)
+    // loadingComponent should be shown first (auth not ready)
     expect(await screen.findByText("Auth Loading...")).toBeDefined();
     expect(screen.queryByText("Public Page")).toBeNull();
     expect(screen.queryByText("Restricted Page")).toBeNull();

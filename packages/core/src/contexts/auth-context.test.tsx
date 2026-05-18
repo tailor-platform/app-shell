@@ -224,7 +224,7 @@ describe("AuthProvider", () => {
       expect(screen.getByText("Test Content")).toBeDefined();
     });
 
-    it("should show guard component when not ready", () => {
+    it("should show loadingComponent when not ready", () => {
       const state = {
         isAuthenticated: false,
         error: null,
@@ -233,14 +233,33 @@ describe("AuthProvider", () => {
       const mockClient = createMockAuthClient(state);
 
       render(
-        <AuthProvider client={mockClient} guardComponent={LoadingGuard}>
+        <AuthProvider client={mockClient} loadingComponent={LoadingGuard}>
           <div>Protected Content</div>
         </AuthProvider>,
       );
 
-      // Guard is now rendered directly by AuthProvider
       expect(screen.getByText("Loading...")).toBeDefined();
       expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("should not show guardComponent while not ready", () => {
+      // Regression: guardComponent is for unauthenticated users only. Showing
+      // it during the !isReady state would flash a sign-in screen on every
+      // reload before the session is known.
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockClient = createMockAuthClient(state);
+
+      render(
+        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
+          <div>Protected Content</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText("Please log in")).toBeNull();
     });
 
     it("should show guard component when not authenticated", async () => {
@@ -354,7 +373,12 @@ describe("AuthProvider", () => {
       expect(mockHandleCallback).toHaveBeenCalled();
     });
 
-    it("should render guarded children while callback is pending", async () => {
+    it("should render children while callback is pending when loadingComponent is set", async () => {
+      // When the consumer provides a loadingComponent, AuthProvider trusts
+      // that slot to handle transitions and does not suppress children
+      // during the callback exchange. With auth already ready+authenticated
+      // (e.g., a stale tab revisiting a callback URL) the protected tree
+      // should remain visible.
       const state = {
         isAuthenticated: true,
         error: null,
@@ -365,7 +389,7 @@ describe("AuthProvider", () => {
       });
 
       render(
-        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
+        <AuthProvider client={mockClient} loadingComponent={LoadingGuard}>
           <div>Protected Content</div>
         </AuthProvider>,
       );
@@ -373,7 +397,7 @@ describe("AuthProvider", () => {
       await waitFor(() => {
         expect(screen.getByText("Protected Content")).toBeDefined();
       });
-      expect(screen.queryByText("Please log in")).toBeNull();
+      expect(screen.queryByText("Loading...")).toBeNull();
     });
 
     it("should be authenticated when logged in", async () => {

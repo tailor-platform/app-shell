@@ -185,13 +185,16 @@ The package exports **`getInitialAppearanceScript()`** which returns a tiny scri
 
 ```tsx
 // app/layout.tsx (Next.js App Router)
+import Script from "next/script";
 import { getInitialAppearanceScript } from "@tailor-platform/app-shell/initial-appearance";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: getInitialAppearanceScript() }} />
+        <Script id="app-shell-initial-appearance" strategy="beforeInteractive">
+          {getInitialAppearanceScript()}
+        </Script>
       </head>
       <body>{children}</body>
     </html>

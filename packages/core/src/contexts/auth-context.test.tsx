@@ -434,6 +434,54 @@ describe("AuthProvider", () => {
       expect(mockHandleCallback).toHaveBeenCalled();
     });
 
+    it("should not render guardComponent during a pending callback", () => {
+      // Regression: with guardComponent set but no loadingComponent, a
+      // pending OAuth callback that lands in a stale `isReady &&
+      // !isAuthenticated` state would otherwise let AuthGuard render the
+      // sign-in screen — flashing the very UI the user just returned
+      // from. The callback blackout must suppress guardComponent too.
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      };
+      const mockClient = createMockAuthClient(state, {
+        getCallbackStatusSnapshot: vi.fn(() => "pending" as const),
+      });
+
+      render(
+        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
+          <div>Protected Content</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText("Please log in")).toBeNull();
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("should render nothing during a pending callback when only guardComponent is set and auth is not ready", () => {
+      // Companion to the regression above: the !isReady case is the
+      // other half of the callback blackout. guardComponent must not
+      // render here either (and there is no children fallback to flash).
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockClient = createMockAuthClient(state, {
+        getCallbackStatusSnapshot: vi.fn(() => "pending" as const),
+      });
+
+      render(
+        <AuthProvider client={mockClient} guardComponent={LoginGuard}>
+          <div>Protected Content</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText("Please log in")).toBeNull();
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
     it("should render children while callback is pending when loadingComponent is set", async () => {
       // When the consumer provides a loadingComponent, AuthProvider trusts
       // that slot to handle transitions and does not suppress children

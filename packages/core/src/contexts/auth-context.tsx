@@ -536,12 +536,14 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     });
   }, [client, ensureAuthInitialized]);
 
-  // While handling an OAuth callback, keep unguarded children hidden until
-  // the callback settles. When `loadingComponent` is provided the AuthGuard
-  // already covers the !isReady state for us; otherwise hide children here
-  // so the unprotected tree does not flash during the callback exchange.
-  const resolvedChildren =
-    callbackStatus === "pending" && props.loadingComponent == null ? null : props.children;
+  // While handling an OAuth callback, render nothing until it settles —
+  // bypassing AuthGuard entirely so neither children nor `guardComponent`
+  // can flash during the exchange. (A stale `isReady && !isAuthenticated`
+  // state would otherwise let AuthGuard render the sign-in screen here,
+  // which is exactly the flash we want to prevent.) Providing
+  // `loadingComponent` opts the consumer out of this blackout — they've
+  // taken responsibility for what to show during transitions.
+  const isCallbackBlackout = callbackStatus === "pending" && props.loadingComponent == null;
 
   const authContextValue = useMemo(
     () => ({
@@ -556,13 +558,15 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
 
   return (
     <AuthContext.Provider value={authContextValue}>
-      <AuthGuard
-        loadingComponent={props.loadingComponent}
-        guardComponent={props.guardComponent}
-        hideUnresolved={props.autoLogin === true}
-      >
-        {resolvedChildren}
-      </AuthGuard>
+      {isCallbackBlackout ? null : (
+        <AuthGuard
+          loadingComponent={props.loadingComponent}
+          guardComponent={props.guardComponent}
+          hideUnresolved={props.autoLogin === true}
+        >
+          {props.children}
+        </AuthGuard>
+      )}
     </AuthContext.Provider>
   );
 };

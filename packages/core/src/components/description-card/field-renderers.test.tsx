@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { renderField } from "./field-renderers";
 import type { ResolvedField } from "./types";
 
@@ -188,21 +189,41 @@ describe("renderField", () => {
   });
 
   describe("link", () => {
-    it("renders link with href", () => {
+    it("renders internal link with SPA navigation", () => {
+      const { container } = render(
+        <MemoryRouter>
+          {renderField(
+            makeField({
+              type: "link",
+              value: "Click here",
+              data: { url: "/orders/123" },
+              meta: { hrefKey: "url" },
+            }),
+          )}
+        </MemoryRouter>,
+      );
+      const link = container.querySelector("a");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toBe("/orders/123");
+      expect(link?.textContent).toBe("Click here");
+      expect(link?.getAttribute("target")).toBeNull();
+    });
+
+    it("renders external link with target=_blank", () => {
       const { container } = render(
         renderField(
           makeField({
             type: "link",
             value: "Click here",
             data: { url: "https://example.com" },
-            meta: { hrefKey: "url" },
+            meta: { hrefKey: "url", external: true },
           }),
         ),
       );
       const link = container.querySelector("a");
       expect(link).not.toBeNull();
       expect(link?.getAttribute("href")).toBe("https://example.com");
-      expect(link?.textContent).toBe("Click here");
+      expect(link?.getAttribute("target")).toBe("_blank");
     });
 
     it("renders dash for empty value", () => {
@@ -245,6 +266,50 @@ describe("renderField", () => {
 
     it("renders dash for empty value", () => {
       const { container } = render(renderField(makeField({ type: "address", value: null })));
+      expect(container.textContent).toBe("–");
+    });
+  });
+
+  describe("reference", () => {
+    it("renders reference as SPA link", () => {
+      const { container } = render(
+        <MemoryRouter>
+          {renderField(
+            makeField({
+              type: "reference",
+              value: "Supplier A",
+              data: { supplierId: "abc-123" },
+              meta: {
+                referenceIdKey: "supplierId",
+                referenceUrlPattern: "/master-data/business-partner/{id}",
+              },
+            }),
+          )}
+        </MemoryRouter>,
+      );
+      const link = container.querySelector("a");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toBe("/master-data/business-partner/abc-123");
+      expect(link?.textContent).toBe("Supplier A");
+    });
+
+    it("renders plain text when id or pattern is missing", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "reference",
+            value: "Supplier A",
+            data: {},
+            meta: { referenceIdKey: "supplierId" },
+          }),
+        ),
+      );
+      expect(container.querySelector("a")).toBeNull();
+      expect(container.textContent).toBe("Supplier A");
+    });
+
+    it("renders dash for empty value", () => {
+      const { container } = render(renderField(makeField({ type: "reference", value: null })));
       expect(container.textContent).toBe("–");
     });
   });

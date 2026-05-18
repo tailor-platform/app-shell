@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Link } from "react-router";
 import { Badge } from "../badge";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
@@ -343,16 +344,27 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
     return <span className="astw:text-sm astw:font-medium astw:text-foreground">{value}</span>;
   }
 
+  if (isExternal) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="astw:inline-flex astw:items-center astw:gap-1 astw:text-sm astw:text-primary astw:hover:underline"
+      >
+        {value}
+        <ExternalLink className="astw:h-3 astw:w-3" />
+      </a>
+    );
+  }
+
   return (
-    <a
-      href={href}
-      target={isExternal ? "_blank" : undefined}
-      rel={isExternal ? "noopener noreferrer" : undefined}
+    <Link
+      to={href}
       className="astw:inline-flex astw:items-center astw:gap-1 astw:text-sm astw:text-primary astw:hover:underline"
     >
       {value}
-      {isExternal && <ExternalLink className="astw:h-3 astw:w-3" />}
-    </a>
+    </Link>
   );
 }
 
@@ -404,9 +416,9 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   const href = urlPattern.replace("{id}", id);
 
   return (
-    <a href={href} className="astw:text-sm astw:text-primary astw:hover:underline">
+    <Link to={href} className="astw:text-sm astw:text-primary astw:hover:underline">
       {value}
-    </a>
+    </Link>
   );
 }
 

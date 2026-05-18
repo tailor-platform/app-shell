@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DescriptionCard } from "./DescriptionCard";
+
+const wrapper = createAppShellWrapper();
 
 afterEach(() => {
   cleanup();
@@ -14,6 +17,7 @@ describe("DescriptionCard", () => {
         data={{ status: "NOT_RECEIVED" }}
         fields={[{ key: "status", label: "Status", type: "badge" }]}
       />,
+      { wrapper },
     );
 
     expect(screen.getByText("Not received")).toBeDefined();
@@ -33,6 +37,7 @@ describe("DescriptionCard", () => {
           },
         ]}
       />,
+      { wrapper },
     );
 
     expect(screen.getByText("NOT_RECEIVED")).toBeDefined();

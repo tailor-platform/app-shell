@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { createAppShellWrapper } from "../../../tests/test-utils";
 import { renderField } from "./field-renderers";
 import type { ResolvedField } from "./types";
 
 afterEach(() => {
   cleanup();
 });
+
+const wrapper = createAppShellWrapper();
 
 function makeField(overrides: Partial<ResolvedField>): ResolvedField {
   return {
@@ -62,224 +65,192 @@ describe("renderField", () => {
       vi.useRealTimers();
     });
 
+    const renderDate = (field: ResolvedField) => render(renderField(field), { wrapper });
+
     it("renders dash for empty value", () => {
-      const { container } = render(
-        renderField(
-          makeField({
-            type: "date",
-            value: null,
-            meta: { dateFormat: "relative" },
-          }),
-        ),
+      const { container } = renderDate(
+        makeField({
+          type: "date",
+          value: null,
+          meta: { dateFormat: "relative" },
+        }),
       );
       expect(container.textContent).toBe("–");
     });
 
     describe("relative format - past", () => {
       it("renders 'Just now' for less than 1 minute ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T09:59:30.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T09:59:30.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("Just now");
       });
 
       it("renders 'Just now' for 0 seconds ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("Just now");
       });
 
       it("renders '1 minutes ago' for exactly 1 minute ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T09:59:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T09:59:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("1 minutes ago");
       });
 
       it("renders '30 minutes ago' for 30 minutes ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T09:30:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T09:30:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("30 minutes ago");
       });
 
       it("renders '59 minutes ago' for 59 minutes ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T09:01:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T09:01:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("59 minutes ago");
       });
 
       it("renders '1 hours ago' for exactly 1 hour ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T09:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T09:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("1 hours ago");
       });
 
       it("renders '23 hours ago' for 23 hours ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-17T11:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-17T11:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("23 hours ago");
       });
 
       it("renders 'Yesterday' for exactly 1 day ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-17T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-17T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("Yesterday");
       });
 
       it("renders 'N days ago' for 2-6 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-15T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-15T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("3 days ago");
       });
 
       it("renders '6 days ago' for 6 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-12T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-12T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("6 days ago");
       });
 
       it("renders '1 weeks ago' for 7 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-11T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-11T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("1 weeks ago");
       });
 
       it("renders '4 weeks ago' for 29 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-04-19T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-04-19T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("4 weeks ago");
       });
 
       it("renders '1 months ago' for 30 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-04-18T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-04-18T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("1 months ago");
       });
 
       it("renders '12 months ago' for 364 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2025-05-19T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2025-05-19T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("12 months ago");
       });
 
       it("renders '1 years ago' for 365 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2025-05-18T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2025-05-18T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("1 years ago");
       });
 
       it("renders '2 years ago' for 730 days ago", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2024-05-18T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2024-05-18T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("2 years ago");
       });
@@ -287,196 +258,166 @@ describe("renderField", () => {
 
     describe("relative format - future", () => {
       it("renders 'Just now' for less than 1 minute in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T10:00:30.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T10:00:30.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("Just now");
       });
 
       it("renders 'In 1 minutes' for exactly 1 minute in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T10:01:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T10:01:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 1 minutes");
       });
 
       it("renders 'In 30 minutes' for 30 minutes in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T10:30:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T10:30:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 30 minutes");
       });
 
       it("renders 'In 59 minutes' for 59 minutes in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T10:59:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T10:59:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 59 minutes");
       });
 
       it("renders 'In 1 hours' for exactly 1 hour in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-18T11:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-18T11:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 1 hours");
       });
 
       it("renders 'In 23 hours' for 23 hours in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-19T09:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-19T09:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 23 hours");
       });
 
       it("renders 'Tomorrow' for exactly 1 day in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-19T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-19T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("Tomorrow");
       });
 
       it("renders 'In 3 days' for 3 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-21T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-21T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 3 days");
       });
 
       it("renders 'In 6 days' for 6 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-24T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-24T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 6 days");
       });
 
       it("renders 'In 1 weeks' for 7 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-05-25T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-05-25T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 1 weeks");
       });
 
       it("renders 'In 4 weeks' for 29 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-06-16T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-06-16T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 4 weeks");
       });
 
       it("renders 'In 1 months' for 30 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2026-06-17T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2026-06-17T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 1 months");
       });
 
       it("renders 'In 12 months' for 364 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2027-05-17T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2027-05-17T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 12 months");
       });
 
       it("renders 'In 1 years' for 365 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2027-05-18T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2027-05-18T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 1 years");
       });
 
       it("renders 'In 2 years' for 730 days in the future", () => {
-        const { container } = render(
-          renderField(
-            makeField({
-              type: "date",
-              value: "2028-05-17T10:00:00.000Z",
-              meta: { dateFormat: "relative" },
-            }),
-          ),
+        const { container } = renderDate(
+          makeField({
+            type: "date",
+            value: "2028-05-17T10:00:00.000Z",
+            meta: { dateFormat: "relative" },
+          }),
         );
         expect(container.textContent).toBe("In 2 years");
       });

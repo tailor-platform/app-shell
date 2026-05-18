@@ -6,6 +6,7 @@ import { Badge } from "../badge";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
+import { useDescriptionCardT } from "./i18n";
 
 // ============================================================================
 // UTILITIES
@@ -62,7 +63,11 @@ function toSentenceCase(str: string): string {
  *   | < 365 days          | X months ago       | In X months        |
  *   | >= 365 days         | X years ago        | In X years         |
  */
-function formatDate(value: unknown, format: DateFormat = "medium"): string {
+function formatDate(
+  value: unknown,
+  format: DateFormat = "medium",
+  t?: ReturnType<typeof useDescriptionCardT>,
+): string {
   if (isEmpty(value)) return "";
 
   const date = value instanceof Date ? value : new Date(String(value));
@@ -99,25 +104,47 @@ function formatDate(value: unknown, format: DateFormat = "medium"): string {
       const diffHours = Math.floor(absDiffMs / (1000 * 60 * 60));
       const diffDays = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
 
-      if (diffMinutes < 1) return "Just now";
+      if (diffMinutes < 1) return t ? t("relativeJustNow") : "Just now";
 
       if (isFuture) {
-        if (diffMinutes < 60) return `In ${diffMinutes} minutes`;
-        if (diffHours < 24) return `In ${diffHours} hours`;
-        if (diffDays === 1) return "Tomorrow";
-        if (diffDays < 7) return `In ${diffDays} days`;
-        if (diffDays < 30) return `In ${Math.floor(diffDays / 7)} weeks`;
-        if (diffDays < 365) return `In ${Math.floor(diffDays / 30)} months`;
-        return `In ${Math.floor(diffDays / 365)} years`;
+        if (diffMinutes < 60)
+          return t ? t("relativeInMinutes", { count: diffMinutes }) : `In ${diffMinutes} minutes`;
+        if (diffHours < 24)
+          return t ? t("relativeInHours", { count: diffHours }) : `In ${diffHours} hours`;
+        if (diffDays === 1) return t ? t("relativeTomorrow") : "Tomorrow";
+        if (diffDays < 7)
+          return t ? t("relativeInDays", { count: diffDays }) : `In ${diffDays} days`;
+        if (diffDays < 30)
+          return t
+            ? t("relativeInWeeks", { count: Math.floor(diffDays / 7) })
+            : `In ${Math.floor(diffDays / 7)} weeks`;
+        if (diffDays < 365)
+          return t
+            ? t("relativeInMonths", { count: Math.floor(diffDays / 30) })
+            : `In ${Math.floor(diffDays / 30)} months`;
+        return t
+          ? t("relativeInYears", { count: Math.floor(diffDays / 365) })
+          : `In ${Math.floor(diffDays / 365)} years`;
       }
 
-      if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
-      if (diffHours < 24) return `${diffHours} hours ago`;
-      if (diffDays === 1) return "Yesterday";
-      if (diffDays < 7) return `${diffDays} days ago`;
-      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-      if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-      return `${Math.floor(diffDays / 365)} years ago`;
+      if (diffMinutes < 60)
+        return t ? t("relativeMinutesAgo", { count: diffMinutes }) : `${diffMinutes} minutes ago`;
+      if (diffHours < 24)
+        return t ? t("relativeHoursAgo", { count: diffHours }) : `${diffHours} hours ago`;
+      if (diffDays === 1) return t ? t("relativeYesterday") : "Yesterday";
+      if (diffDays < 7)
+        return t ? t("relativeDaysAgo", { count: diffDays }) : `${diffDays} days ago`;
+      if (diffDays < 30)
+        return t
+          ? t("relativeWeeksAgo", { count: Math.floor(diffDays / 7) })
+          : `${Math.floor(diffDays / 7)} weeks ago`;
+      if (diffDays < 365)
+        return t
+          ? t("relativeMonthsAgo", { count: Math.floor(diffDays / 30) })
+          : `${Math.floor(diffDays / 30)} months ago`;
+      return t
+        ? t("relativeYearsAgo", { count: Math.floor(diffDays / 365) })
+        : `${Math.floor(diffDays / 365)} years ago`;
     }
     default:
       return date.toLocaleDateString();
@@ -352,12 +379,14 @@ function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
  * Render a date field
  */
 function DateFieldRenderer({ field }: { field: ResolvedField }) {
+  const t = useDescriptionCardT();
+
   if (isEmpty(field.value)) {
     return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const format = field.meta?.dateFormat || "medium";
-  const formatted = formatDate(field.value, format);
+  const formatted = formatDate(field.value, format, t);
 
   return <span className="astw:text-sm astw:font-medium astw:text-foreground">{formatted}</span>;
 }

@@ -6,6 +6,7 @@ on:
       - "packages/**"
       - "examples/**"
       - "docs/**"
+      - "e2e/**"
       - ".github/workflows/ci-packages.yaml"
       - ".github/actions/ci/action.yaml"
 

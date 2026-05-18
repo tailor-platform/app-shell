@@ -13,10 +13,7 @@ import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
 /**
  * Get a value from a nested object using dot notation
  */
-export function getNestedValue(
-  obj: Record<string, unknown>,
-  path: string,
-): unknown {
+export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((acc, key) => {
     if (acc && typeof acc === "object" && key in acc) {
       return (acc as Record<string, unknown>)[key];
@@ -97,8 +94,7 @@ function formatDate(value: unknown, format: DateFormat = "medium"): string {
 function formatMoney(value: unknown, currencyCode?: string): string {
   if (isEmpty(value)) return "";
 
-  const numValue =
-    typeof value === "number" ? value : parseFloat(String(value));
+  const numValue = typeof value === "number" ? value : parseFloat(String(value));
 
   if (isNaN(numValue)) return String(value);
 
@@ -133,11 +129,7 @@ function formatAddress(value: unknown): string[] {
     if (addr.line1) lines.push(String(addr.line1));
     if (addr.line2) lines.push(String(addr.line2));
 
-    const cityStateZip = [
-      addr.city,
-      addr.state || addr.province,
-      addr.zip || addr.postalCode,
-    ]
+    const cityStateZip = [addr.city, addr.state || addr.province, addr.zip || addr.postalCode]
       .filter(Boolean)
       .join(", ");
 
@@ -184,9 +176,7 @@ function CopyButton({ value }: { value: string }) {
           <Copy className="astw:h-3 astw:w-3" strokeWidth={2.5} />
         )}
       </Tooltip.Trigger>
-      <Tooltip.Content position={{ side: "top" }}>
-        {copied ? "Copied!" : "Copy"}
-      </Tooltip.Content>
+      <Tooltip.Content position={{ side: "top" }}>{copied ? "Copied!" : "Copy"}</Tooltip.Content>
     </Tooltip.Root>
   );
 }
@@ -268,10 +258,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
         <Tooltip.Trigger render={<span className="astw:cursor-default" />}>
           {content}
         </Tooltip.Trigger>
-        <Tooltip.Content
-          position={{ side: "bottom" }}
-          style={{ maxWidth: 320 }}
-        >
+        <Tooltip.Content position={{ side: "bottom" }} style={{ maxWidth: 320 }}>
           <p className="astw:text-sm">{value}</p>
         </Tooltip.Content>
       </Tooltip.Root>
@@ -286,11 +273,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {EMPTY_DASH}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const value = String(field.value);
@@ -315,17 +298,11 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {EMPTY_DASH}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const currencyKey = field.meta?.currencyKey || "currency";
-  const currency = getNestedValue(field.data, currencyKey) as
-    | string
-    | undefined;
+  const currency = getNestedValue(field.data, currencyKey) as string | undefined;
   const formatted = formatMoney(field.value, currency);
 
   return (
@@ -340,21 +317,13 @@ function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function DateFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {EMPTY_DASH}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const format = field.meta?.dateFormat || "medium";
   const formatted = formatDate(field.value, format);
 
-  return (
-    <span className="astw:text-sm astw:font-medium astw:text-foreground">
-      {formatted}
-    </span>
-  );
+  return <span className="astw:text-sm astw:font-medium astw:text-foreground">{formatted}</span>;
 }
 
 /**
@@ -362,26 +331,16 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {EMPTY_DASH}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const hrefKey = field.meta?.hrefKey;
-  const href = hrefKey
-    ? (getNestedValue(field.data, hrefKey) as string)
-    : undefined;
+  const href = hrefKey ? (getNestedValue(field.data, hrefKey) as string) : undefined;
   const isExternal = field.meta?.external ?? false;
   const value = String(field.value);
 
   if (!href) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {value}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{value}</span>;
   }
 
   return (
@@ -402,11 +361,7 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function AddressFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {EMPTY_DASH}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const lines = formatAddress(field.value);
@@ -434,11 +389,7 @@ function AddressFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {EMPTY_DASH}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const idKey = field.meta?.referenceIdKey;
@@ -447,20 +398,13 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   const value = String(field.value);
 
   if (!id || !urlPattern) {
-    return (
-      <span className="astw:text-sm astw:font-medium astw:text-foreground">
-        {value}
-      </span>
-    );
+    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{value}</span>;
   }
 
   const href = urlPattern.replace("{id}", id);
 
   return (
-    <a
-      href={href}
-      className="astw:text-sm astw:text-primary astw:hover:underline"
-    >
+    <a href={href} className="astw:text-sm astw:text-primary astw:hover:underline">
       {value}
     </a>
   );
@@ -491,9 +435,7 @@ export function renderField(field: ResolvedField): React.ReactNode {
       return <ReferenceFieldRenderer field={field} />;
     default:
       return (
-        <span className="astw:text-sm astw:font-medium astw:text-foreground">
-          {EMPTY_DASH}
-        </span>
+        <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>
       );
   }
 }

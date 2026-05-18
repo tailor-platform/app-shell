@@ -30,6 +30,8 @@ jobs:
           node-version-file: "./package.json"
       - name: Install dependencies
         run: pnpm install
+      - name: Build packages
+        run: pnpm exec turbo run build
       - name: Run E2E tests
         run: pnpm --filter e2e test
         env:

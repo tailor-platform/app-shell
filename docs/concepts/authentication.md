@@ -53,7 +53,7 @@ The above code will:
 
 When `autoLogin` is enabled, `AuthProvider` hides the protected tree by default whenever the auth state is unresolved — that is, during the initial check (`!isReady`) and during the brief window between "ready, unauthenticated" and the login redirect. Providing `loadingComponent` and/or `guardComponent` simply replaces that hidden region with your UI; you do not need to set them to avoid a flash.
 
-When `autoLogin` is off, children render in those windows by default. This preserves the "public app" pattern (where some content is meant to be visible regardless of auth) and the [`useAuthSuspense`](#suspense-integration) pattern (where a `<Suspense>` boundary inside your tree owns the loading UI).
+When `autoLogin` is off, children render in those windows by default. This preserves the "public app" pattern (where some content is meant to be visible regardless of auth) and the [`useAuthSuspense`](#suspense-compatible-hook) pattern (where a `<Suspense>` boundary inside your tree owns the loading UI).
 
 If you want to render a sign-in screen instead of redirecting (i.e., without `autoLogin`), pass it via `guardComponent` — it is only rendered after the initial auth check has completed and the user is not authenticated, so it does not flash on reload:
 
@@ -189,11 +189,11 @@ function App() {
 
 ## `AuthProvider` Props
 
-| Prop               | Type                    | Required | Description                                                                  |
-| ------------------ | ----------------------- | -------- | ---------------------------------------------------------------------------- |
-| `client`           | `EnhancedAuthClient`    | Yes      | Auth client created with `createAuthClient`                                  |
-| `autoLogin`        | `boolean`               | No       | Automatically redirect unauthenticated users to login                        |
-| `loadingComponent` | `() => React.ReactNode` | No       | Rendered while the initial auth check is in progress (`isReady === false`). When omitted: children are hidden if `autoLogin` is on, otherwise children render. |
+| Prop               | Type                    | Required | Description                                                                                                                                                      |
+| ------------------ | ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client`           | `EnhancedAuthClient`    | Yes      | Auth client created with `createAuthClient`                                                                                                                      |
+| `autoLogin`        | `boolean`               | No       | Automatically redirect unauthenticated users to login                                                                                                            |
+| `loadingComponent` | `() => React.ReactNode` | No       | Rendered while the initial auth check is in progress (`isReady === false`). When omitted: children are hidden if `autoLogin` is on, otherwise children render.   |
 | `guardComponent`   | `() => React.ReactNode` | No       | Rendered when the auth check has completed and the user is not authenticated. When omitted: children are hidden if `autoLogin` is on, otherwise children render. |
 
 ## Integration with AppShell

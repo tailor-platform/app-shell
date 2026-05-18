@@ -4,14 +4,41 @@ packages:
 
 catalog:
   "@tailwindcss/postcss": ^4.2.4
-  oxlint: ^1.64.0
-  oxfmt: ^0.47.0
-  tailwindcss: ^4.2.4
   "@types/node": ^25.6.0
   "@types/react": ^19
   "@types/react-dom": ^19
   "@vitejs/plugin-react": ^5.2.0
+  oxfmt: ^0.47.0
+  oxlint: ^1.64.0
+  tailwindcss: ^4.2.4
   tsdown: ^0.21.7
   typescript: ^5
   vite: ^7.3.2
   vitest: ^4.1.0
+
+# Supply-chain security settings.
+# The following are enabled by default in pnpm@11 and intentionally omitted here:
+#   - blockExoticSubdeps: true
+#   - strictDepBuilds: true
+#   - minimumReleaseAge: 1440 (1 day)
+#   - verifyDepsBeforeRun: install
+
+# Require packages to be published for at least 3 days before allowing install (default: 1 day)
+minimumReleaseAge: 4320
+
+# Deny all lifecycle scripts (postinstall, install, preinstall).
+# pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.
+allowBuilds:
+  esbuild: false
+  "@swc/core": false
+  sharp: false
+  protobufjs: false
+  msw: false
+  "@tailor-platform/sdk": false
+  "@prisma/engines": false
+
+# Detect provenance or publisher trust downgrades in dependency updates
+trustPolicy: no-downgrade
+
+# Save exact versions when adding dependencies
+saveExact: true

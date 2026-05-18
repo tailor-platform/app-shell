@@ -7,7 +7,7 @@ runs:
     - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
       with:
         run_install: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         cache: pnpm
         cache-dependency-path: ./pnpm-lock.yaml
@@ -17,5 +17,5 @@ runs:
       shell: bash
     - run: pnpm fmt:check
       shell: bash
-    - run: npx turbo run lint test type-check
+    - run: pnpm exec turbo run lint test type-check
       shell: bash

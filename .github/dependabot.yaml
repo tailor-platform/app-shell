@@ -13,6 +13,8 @@ updates:
         patterns:
           - "react"
           - "react-dom"
+    cooldown:
+      default-days: 3
     ignore:
       - dependency-name: "@vitejs/plugin-react"
         versions:

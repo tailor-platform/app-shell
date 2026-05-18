@@ -44,6 +44,23 @@ function toSentenceCase(str: string): string {
 
 /**
  * Format a date value
+ *
+ * Formats:
+ * - "short": "5/18/26"
+ * - "medium": "May 18, 2026"
+ * - "long": "Monday, May 18, 2026"
+ * - "relative": human-friendly relative time based on the diff from now
+ *
+ *   | Diff from now       | Past output        | Future output      |
+ *   |---------------------|--------------------|--------------------|
+ *   | < 1 minute          | Just now           | Just now           |
+ *   | < 1 hour            | X minutes ago      | In X minutes       |
+ *   | < 24 hours          | X hours ago        | In X hours         |
+ *   | = 1 day             | Yesterday          | Tomorrow           |
+ *   | < 7 days            | X days ago         | In X days          |
+ *   | < 30 days           | X weeks ago        | In X weeks         |
+ *   | < 365 days          | X months ago       | In X months        |
+ *   | >= 365 days         | X years ago        | In X years         |
  */
 function formatDate(value: unknown, format: DateFormat = "medium"): string {
   if (isEmpty(value)) return "";
@@ -75,9 +92,27 @@ function formatDate(value: unknown, format: DateFormat = "medium"): string {
     case "relative": {
       const now = new Date();
       const diffMs = now.getTime() - date.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const absDiffMs = Math.abs(diffMs);
+      const isFuture = diffMs < 0;
 
-      if (diffDays <= 0) return "Today";
+      const diffMinutes = Math.floor(absDiffMs / (1000 * 60));
+      const diffHours = Math.floor(absDiffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
+
+      if (diffMinutes < 1) return "Just now";
+
+      if (isFuture) {
+        if (diffMinutes < 60) return `In ${diffMinutes} minutes`;
+        if (diffHours < 24) return `In ${diffHours} hours`;
+        if (diffDays === 1) return "Tomorrow";
+        if (diffDays < 7) return `In ${diffDays} days`;
+        if (diffDays < 30) return `In ${Math.floor(diffDays / 7)} weeks`;
+        if (diffDays < 365) return `In ${Math.floor(diffDays / 30)} months`;
+        return `In ${Math.floor(diffDays / 365)} years`;
+      }
+
+      if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+      if (diffHours < 24) return `${diffHours} hours ago`;
       if (diffDays === 1) return "Yesterday";
       if (diffDays < 7) return `${diffDays} days ago`;
       if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;

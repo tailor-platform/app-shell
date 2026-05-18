@@ -1,0 +1,39 @@
+name: CI (e2e)
+
+on:
+  push:
+    paths:
+      - "packages/core/**"
+      - "e2e/**"
+      - ".github/workflows/ci-e2e.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          run_install: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+          node-version-file: "./package.json"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Install Playwright browsers
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: pnpm --filter e2e test
+        env:
+          VITE_TAILOR_APP_URL: ${{ secrets.E2E_TAILOR_APP_URL }}
+          VITE_TAILOR_CLIENT_ID: ${{ secrets.E2E_TAILOR_CLIENT_ID }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}

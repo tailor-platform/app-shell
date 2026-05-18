@@ -68,6 +68,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.0
         version: 4.3.0(vite@7.3.2(@types/node@25.6.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.13

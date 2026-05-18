@@ -281,6 +281,67 @@ describe("AuthProvider", () => {
       expect(screen.queryByText("Protected Content")).toBeNull();
     });
 
+    it("should hide children during !isReady when autoLogin is enabled and no loadingComponent is set", () => {
+      // Default flash protection: with autoLogin a redirect is imminent
+      // once the check resolves, so AuthProvider hides children during the
+      // !isReady window even when no loadingComponent is provided.
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockClient = createMockAuthClient(state);
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Protected Content</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("should hide children when autoLogin is enabled, ready, and unauthenticated with no guardComponent", () => {
+      // Default flash protection: the autoLogin redirect is about to fire,
+      // so the protected tree stays hidden until it does.
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      };
+      const mockClient = createMockAuthClient(state, {
+        login: vi.fn().mockResolvedValue(undefined),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Protected Content</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.queryByText("Protected Content")).toBeNull();
+    });
+
+    it("should render children during !isReady when autoLogin is off and no loadingComponent is set", () => {
+      // Preserves the useAuthSuspense pattern: when the consumer is not
+      // using autoLogin, a <Suspense> boundary inside the children may
+      // own the loading UI, so AuthProvider must not suppress the tree.
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: false,
+      };
+      const mockClient = createMockAuthClient(state);
+
+      render(
+        <AuthProvider client={mockClient}>
+          <div>Public Content</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.getByText("Public Content")).toBeDefined();
+    });
+
     it("should show children when authenticated", async () => {
       const state = {
         isAuthenticated: true,

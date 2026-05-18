@@ -275,26 +275,37 @@ const isCurrentOAuthCallbackUrl = () => {
  * - `guardComponent` once the check has resolved but the user is not
  *   authenticated
  *
- * Either slot is optional; when a slot is missing for its state, the
- * children are rendered instead. Defined here so the router layer does
- * not need to depend on useAuth.
+ * When a slot is missing, the fallback depends on `hideUnresolved`:
+ * - `hideUnresolved=true` (set by AuthProvider when `autoLogin` is on):
+ *   render `null` so protected UI does not flash before the session is
+ *   known or before the auto-login redirect happens.
+ * - `hideUnresolved=false`: render children. This preserves the
+ *   `useAuthSuspense` pattern (where a `<Suspense>` boundary inside the
+ *   children tree owns the loading UI) and the "public app" pattern
+ *   (children render regardless of auth state).
+ *
+ * Defined here so the router layer does not need to depend on useAuth.
  */
 const AuthGuard = ({
   loadingComponent,
   guardComponent,
+  hideUnresolved,
   children,
 }: {
   loadingComponent?: () => React.ReactNode;
   guardComponent?: () => React.ReactNode;
+  hideUnresolved: boolean;
   children: React.ReactNode;
 }) => {
   const { isReady, isAuthenticated } = useAuth();
 
   if (!isReady) {
-    return loadingComponent ? loadingComponent() : children;
+    if (loadingComponent) return loadingComponent();
+    return hideUnresolved ? null : children;
   }
-  if (!isAuthenticated && guardComponent) {
-    return guardComponent();
+  if (!isAuthenticated) {
+    if (guardComponent) return guardComponent();
+    return hideUnresolved ? null : children;
   }
   return children;
 };
@@ -320,7 +331,13 @@ type AuthProviderProps = {
    * completes, either children or `guardComponent` is rendered depending on
    * whether the user is authenticated.
    *
-   * If not provided, children are rendered during the initial check.
+   * **Default when omitted:**
+   * - If `autoLogin` is `true`, children are hidden during the initial
+   *   check so protected UI does not flash on reload.
+   * - Otherwise, children render — preserving patterns like
+   *   {@link useAuthSuspense} where a `<Suspense>` boundary inside the
+   *   children owns the loading UI, and public-app cases where content
+   *   should show regardless of auth state.
    */
   loadingComponent?: () => React.ReactNode;
 
@@ -336,7 +353,11 @@ type AuthProviderProps = {
    * sign-in screen would flash on every reload before the session is
    * known.
    *
-   * If not provided, children are rendered regardless of auth state.
+   * **Default when omitted:**
+   * - If `autoLogin` is `true`, children are hidden while unauthenticated
+   *   so protected UI does not flash before the login redirect happens.
+   * - Otherwise, children render — the "public app" case where the
+   *   consumer wants to show content regardless of auth state.
    */
   guardComponent?: () => React.ReactNode;
 };
@@ -533,17 +554,15 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     [authState, client],
   );
 
-  const hasGuard = props.loadingComponent || props.guardComponent;
-
   return (
     <AuthContext.Provider value={authContextValue}>
-      {hasGuard ? (
-        <AuthGuard loadingComponent={props.loadingComponent} guardComponent={props.guardComponent}>
-          {resolvedChildren}
-        </AuthGuard>
-      ) : (
-        resolvedChildren
-      )}
+      <AuthGuard
+        loadingComponent={props.loadingComponent}
+        guardComponent={props.guardComponent}
+        hideUnresolved={props.autoLogin === true}
+      >
+        {resolvedChildren}
+      </AuthGuard>
     </AuthContext.Provider>
   );
 };

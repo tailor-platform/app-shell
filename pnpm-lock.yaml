@@ -167,8 +167,8 @@ importers:
         specifier: ^1.45.1
         version: 1.45.1
       graphql:
-        specifier: ^16.13.2
-        version: 16.13.2
+        specifier: ^16.14.0
+        version: 16.14.0
       lucide-react:
         specifier: ^1.8.0
         version: 1.8.0(react@19.2.5)
@@ -8623,8 +8623,7 @@ snapshots:
 
   graphql@16.13.2: {}
 
-  graphql@16.14.0:
-    optional: true
+  graphql@16.14.0: {}
 
   happy-dom@20.6.2:
     dependencies:

@@ -367,6 +367,66 @@ describe("AuthProvider", () => {
       });
       expect(screen.queryByText("Please log in")).toBeNull();
     });
+
+    it("should isolate slot hooks from AuthGuard's hook scope", async () => {
+      // Regression: previously the slots were invoked as plain function
+      // calls (`guardComponent()`), inlining any hooks they used into
+      // AuthGuard's own hook list. Because the calls were conditional on
+      // auth state, the hook order changed across renders the moment a
+      // consumer passed a slot that used a hook (e.g. a sign-in screen
+      // calling `useAuth`). The fix renders slots via `createElement` so
+      // each gets its own fiber with an isolated hook scope.
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+      const mockAddEventListener = vi.fn(
+        (listener: (event: { type: string; data?: unknown }) => void) => {
+          authEventListener = listener;
+          return () => {};
+        },
+      );
+
+      let currentState = {
+        isAuthenticated: false,
+        error: null as string | null,
+        isReady: true,
+      };
+      const mockClient = createMockAuthClient(undefined, {
+        addEventListener: mockAddEventListener,
+        getState: vi.fn(() => currentState),
+      });
+
+      const SignInUsingHook = () => {
+        const { login } = useAuth();
+        return <button onClick={login}>Sign In</button>;
+      };
+
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      render(
+        <AuthProvider client={mockClient} guardComponent={SignInUsingHook}>
+          <div>Protected</div>
+        </AuthProvider>,
+      );
+
+      expect(screen.getByText("Sign In")).toBeDefined();
+
+      // Transition to authenticated — guardComponent stops rendering.
+      // Without isolated hook scope, this re-render is where React would
+      // warn that AuthGuard's hook order has changed.
+      currentState = { isAuthenticated: true, error: null, isReady: true };
+      act(() => {
+        authEventListener?.({ type: "auth_state_changed", data: {} });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Protected")).toBeDefined();
+      });
+
+      const hookOrderErrors = errorSpy.mock.calls.filter(
+        ([msg]) => typeof msg === "string" && msg.includes("order of Hooks"),
+      );
+      expect(hookOrderErrors).toEqual([]);
+      errorSpy.mockRestore();
+    });
   });
 
   describe("authentication flow", () => {

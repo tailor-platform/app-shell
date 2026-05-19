@@ -1,5 +1,6 @@
 import {
   createContext,
+  createElement,
   useContext,
   useSyncExternalStore,
   useCallback,
@@ -299,12 +300,18 @@ const AuthGuard = ({
 }) => {
   const { isReady, isAuthenticated } = useAuth();
 
+  // Render each slot via createElement so it becomes its own fiber with
+  // an isolated hook scope. Calling `loadingComponent()` / `guardComponent()`
+  // directly would inline any hooks they use into AuthGuard's render — and
+  // because the calls are conditional, that violates React's rules of
+  // hooks the moment a consumer passes a slot that uses one (e.g. a
+  // sign-in screen calling `useAuth`).
   if (!isReady) {
-    if (loadingComponent) return loadingComponent();
+    if (loadingComponent) return createElement(loadingComponent);
     return hideUnresolved ? null : children;
   }
   if (!isAuthenticated) {
-    if (guardComponent) return guardComponent();
+    if (guardComponent) return createElement(guardComponent);
     return hideUnresolved ? null : children;
   }
   return children;

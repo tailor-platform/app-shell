@@ -32,8 +32,10 @@ jobs:
         run: pnpm install
       - name: Build packages
         run: pnpm exec turbo run build
+      - name: Lint & Type-check
+        run: pnpm exec turbo run lint type-check --filter=e2e
       - name: Run E2E tests
-        run: pnpm --filter e2e test
+        run: pnpm --filter e2e exec playwright test
         env:
           VITE_TAILOR_APP_URL: ${{ secrets.E2E_TAILOR_APP_URL }}
           VITE_TAILOR_CLIENT_ID: ${{ secrets.E2E_TAILOR_CLIENT_ID }}

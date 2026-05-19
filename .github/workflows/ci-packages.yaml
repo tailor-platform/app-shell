@@ -6,6 +6,9 @@ on:
       - "packages/**"
       - "examples/**"
       - "docs/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/ci-packages.yaml"
       - ".github/actions/ci/action.yaml"
 

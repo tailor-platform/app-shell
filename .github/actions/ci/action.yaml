@@ -17,5 +17,5 @@ runs:
       shell: bash
     - run: pnpm fmt:check
       shell: bash
-    - run: pnpm exec turbo run lint test type-check --filter='!e2e'
+    - run: pnpm exec turbo run lint test type-check
       shell: bash

@@ -120,6 +120,11 @@ export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
 export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
+export {
+  BulkItemPicker,
+  type BulkItemPickerNode,
+  type BulkItemPickerProps,
+} from "./components/bulk-item-picker";
 export { type MappedItem, type ItemGroup } from "./components/dropdown-items";
 export {
   CsvImporter,
@@ -134,6 +139,46 @@ export {
   type ParsedRow,
   type InferCsvRow,
 } from "./components/csv-importer";
+export {
+  LineItems,
+  useLineItems,
+  useLineItemsGroup,
+  createLineItemHelper,
+  type LineItemsAddRowProps,
+  type LineItemsBulkActionsProps,
+  type LineItemsBulkActionsRenderArgs,
+  type LineItemsChangeSet,
+  type LineItemsColumnAlign,
+  type LineItemsCustomEditorContext,
+  type LineItemsField,
+  type LineItemsFieldCommit,
+  type LineItemsFieldType,
+  type LineItemsSelectOption,
+  type LineItemsFullscreenToggleProps,
+  type LineItemsGroupChangeSet,
+  type LineItemsGroupInput,
+  type LineItemsGroupReturn,
+  type LineItemsLineChange,
+  type LineItemsLineChangeAction,
+  type LineItemsMetadataCommit,
+  type LineItemsMode,
+  type LineItemsOrderingMode,
+  type LineItemsRootProps,
+  type LineItemsRowData,
+  type LineItemsRowPatch,
+  type LineItemsDirtyBarProps,
+  type LineItemsFloatingDockProps,
+  type LineItemsSaveActionsProps,
+  type LineItemsSearchProps,
+  type LineItemsSearchToggleProps,
+  type LineItemsSelectionBarProps,
+  type LineItemsSelectionBarRenderArgs,
+  type LineItemsTableProps,
+  type LineItemsTotalsRowProps,
+  lineItemsFloatingBarStyles,
+  type UseLineItemsOptions,
+  type UseLineItemsReturn,
+} from "./components/line-items";
 
 // Collection (shared across DataTable, Kanban, Gantt, etc.)
 export {

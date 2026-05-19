@@ -38,9 +38,12 @@ pnpm install
 ### Commands
 
 ```bash
-pnpm dev          # Start all packages in development mode with hot reloading
-pnpm build        # Build all packages for production
-pnpm type-check   # Run type checking across all packages
+pnpm dev            # Start the Vite example only (recommended; avoids high RAM use)
+pnpm dev:vite       # Same as `pnpm dev` — http://localhost:3030
+pnpm dev:next       # Next.js example only — http://localhost:3000
+pnpm dev:examples   # All examples via Turbo watch (heavy: Vite + Next + app-module, etc.)
+pnpm build          # Build all packages for production
+pnpm type-check     # Run type checking across all packages
 ```
 
 ### Testing

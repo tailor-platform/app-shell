@@ -20,6 +20,12 @@ import { primitiveComponentsDemoResource } from "./pages/primitives-demo";
 import { dropdownComponentsDemoResource } from "./pages/dropdown-demo";
 import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form-demo";
 import { csvImporterDemoResource } from "./pages/csv-importer-demo";
+import { lineItemsDemoResource } from "./pages/line-items-demo";
+import { journalEntryDemoResource } from "./pages/journal-entry-demo";
+import { salesInvoiceDemoResource } from "./pages/sales-invoice-demo";
+import { goodsReceiptDemoResource } from "./pages/goods-receipt-demo";
+import { workOrderDemoResource } from "./pages/work-order-demo";
+import { stockTransferDemoResource } from "./pages/stock-transfer-demo";
 import { dataTableDemoResource } from "./pages/data-table-demo";
 
 export const customPageModule = defineModule({
@@ -196,6 +202,60 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/line-items-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Line items (document lines)
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/journal-entry-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Journal entry (group helper)
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/sales-invoice-demo"
+              style={{ color: "hsl(var(--primary))", textDecoration: "underline" }}
+            >
+              Sales invoice (totals row)
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/goods-receipt-demo"
+              style={{ color: "hsl(var(--primary))", textDecoration: "underline" }}
+            >
+              Goods receipt (pinned columns)
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/work-order-demo"
+              style={{ color: "hsl(var(--primary))", textDecoration: "underline" }}
+            >
+              Work order (multi-collection)
+            </Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/stock-transfer-demo"
+              style={{ color: "hsl(var(--primary))", textDecoration: "underline" }}
+            >
+              Stock transfer (row actions)
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/data-table-demo"
               style={{
                 color: "hsl(var(--primary))",
@@ -230,6 +290,12 @@ export const customPageModule = defineModule({
     formComponentsDemoResource,
     zodRHFFormDemoResource,
     csvImporterDemoResource,
+    lineItemsDemoResource,
+    journalEntryDemoResource,
+    salesInvoiceDemoResource,
+    goodsReceiptDemoResource,
+    workOrderDemoResource,
+    stockTransferDemoResource,
     dataTableDemoResource,
   ],
 });

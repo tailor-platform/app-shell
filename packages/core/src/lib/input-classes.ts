@@ -12,4 +12,8 @@ export const inputBaseClasses = [
   "astw:placeholder:text-muted-foreground",
   "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
   "astw:disabled:pointer-events-none astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
+  // Hide the native up/down spinner on `<input type="number">`. No-op for other types.
+  "astw:[appearance:textfield]",
+  "astw:[&::-webkit-outer-spin-button]:appearance-none astw:[&::-webkit-outer-spin-button]:m-0",
+  "astw:[&::-webkit-inner-spin-button]:appearance-none astw:[&::-webkit-inner-spin-button]:m-0",
 ] as const;

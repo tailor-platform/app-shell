@@ -127,7 +127,9 @@ Format examples:
 - `short`: 3/6/2026
 - `medium`: Mar 6, 2026
 - `long`: March 6, 2026 at 2:30 PM
-- `relative`: 2 hours ago
+- `relative`: 2 hours ago / In 3 days
+
+Relative dates support both past and future values and are automatically localized based on the AppShell locale (English and Japanese are built in).
 
 ### link
 
@@ -144,6 +146,8 @@ Renders a clickable link.
   },
 }
 ```
+
+Internal links (when `external` is not set or `false`) use react-router `<Link>` for client-side navigation. External links (when `external: true`) open in a new tab using a standard `<a>` tag.
 
 ### address
 
@@ -168,7 +172,7 @@ Formats multi-line address display.
 
 ### reference
 
-Links to related documents with auto-generated URLs.
+Links to related documents with auto-generated URLs using react-router `<Link>` for client-side navigation.
 
 ```tsx
 {

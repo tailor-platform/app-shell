@@ -1,0 +1,27 @@
+{
+  "name": "e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "dev": "vite --config app/vite.config.ts",
+    "deploy:backend": "cd backend && tailor-sdk apply --workspace-id $TAILOR_PLATFORM_WORKSPACE_ID --yes"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.51.1",
+    "@tailor-platform/app-shell": "workspace:*",
+    "@tailor-platform/sdk": "^1.45.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "dotenv": "^16.5.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

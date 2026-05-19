@@ -35,7 +35,7 @@ jobs:
       - name: Lint & Type-check
         run: pnpm exec turbo run lint type-check --filter=e2e
       - name: Run E2E tests
-        run: pnpm --filter e2e exec playwright test
+        run: pnpm exec turbo test --filter e2e
         env:
           VITE_TAILOR_APP_URL: ${{ secrets.E2E_TAILOR_APP_URL }}
           VITE_TAILOR_CLIENT_ID: ${{ secrets.E2E_TAILOR_CLIENT_ID }}

@@ -176,4 +176,72 @@ test.describe("AuthProvider", () => {
     });
     await expect(page.getByTestId("auth-status")).toHaveText("Logged in");
   });
+
+  test("reloading an authenticated session does not flash the auth guard", async ({ page }) => {
+    // Regression for the AuthGuard flash on reload: while the initial
+    // auth check is in flight (`!isReady`), the guardComponent slot
+    // must not render — even for a single frame — when the user has
+    // a valid persisted session. We catch a flash by installing a
+    // MutationObserver via addInitScript (which runs before any page
+    // render), so we observe the very first DOM mutations after
+    // reload.
+    const email = process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_USER_PASSWORD;
+
+    if (!email || !password) {
+      test.skip(true, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
+      return;
+    }
+
+    // The init script re-runs on every navigation and reload, so the
+    // sentinel starts `false` on the reloaded page regardless of what
+    // happened on previous navigations.
+    await page.addInitScript(() => {
+      (window as unknown as { __authGuardEverSeen: boolean }).__authGuardEverSeen = false;
+      const check = () => {
+        if (document.querySelector("[data-testid='auth-guard']")) {
+          (window as unknown as { __authGuardEverSeen: boolean }).__authGuardEverSeen = true;
+        }
+      };
+      const startObserving = () => {
+        if (document.body) {
+          new MutationObserver(check).observe(document.body, {
+            childList: true,
+            subtree: true,
+          });
+          check();
+        } else {
+          requestAnimationFrame(startObserving);
+        }
+      };
+      startObserving();
+    });
+
+    // Log in first to establish a persisted session.
+    await page.goto("/");
+    await page.getByTestId("login-button").click();
+    await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
+    await page.getByLabel(/email/i).fill(email);
+    await page.locator("#password").fill(password);
+    await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
+    await page.waitForURL("http://localhost:3100/**");
+    await expect(page.getByTestId("authenticated-content")).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Reload — the init script reinstalls a fresh observer on the new
+    // document before any React render, so any moment the auth guard
+    // appears (even for one frame) sets the sentinel.
+    await page.reload();
+    await expect(page.getByTestId("authenticated-content")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const guardSeenOnReload = await page.evaluate(
+      () => (window as unknown as { __authGuardEverSeen: boolean }).__authGuardEverSeen,
+    );
+    expect(guardSeenOnReload, "auth-guard appeared during reload of authenticated session").toBe(
+      false,
+    );
+  });
 });

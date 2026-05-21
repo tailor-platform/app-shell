@@ -1,0 +1,7 @@
+pre-commit:
+  parallel: true
+  commands:
+    oxfmt:
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,md,mdx,yaml,yml,css,html}"
+      run: pnpm exec oxfmt {staged_files}
+      stage_fixed: true

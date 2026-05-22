@@ -37,6 +37,9 @@ allowBuilds:
   msw: false
   "@tailor-platform/sdk": false
   "@prisma/engines": false
+  # lefthook's postinstall installs git hooks; the root `prepare` script
+  # handles that via `lefthook install` instead.
+  lefthook: false
 
 # Detect provenance or publisher trust downgrades in dependency updates
 trustPolicy: no-downgrade

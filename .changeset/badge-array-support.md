@@ -9,7 +9,6 @@ Add array badge support to DataTable and DescriptionCard with shared `BadgeList`
 column({
   ...infer("tags"),
   type: "badge",
-  accessor: (row) => row.tags,
   typeOptions: {
     badgeVariantMap: { Premium: "warning", Office: "outline-info" },
     maxVisible: 2,

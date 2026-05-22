@@ -92,7 +92,6 @@ const productColumns = [
   column({
     ...infer("status"),
     type: "badge",
-    accessor: (row) => row.status,
     typeOptions: {
       badgeVariantMap: {
         Active: "success",
@@ -104,7 +103,6 @@ const productColumns = [
   column({
     ...infer("tags"),
     type: "badge",
-    accessor: (row) => row.tags,
     typeOptions: {
       badgeVariantMap: {
         Premium: "warning",

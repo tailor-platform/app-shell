@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { renderField } from "./field-renderers";
@@ -88,6 +89,59 @@ describe("renderField", () => {
       expect(container.textContent).toContain("Active");
       expect(container.textContent).toContain("Featured");
       expect(container.textContent).not.toContain("–");
+    });
+
+    it("renders maxVisible badges with +N overflow indicator", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["a", "b", "c", "d", "e"],
+            meta: { maxVisible: 2 },
+          }),
+        ),
+      );
+      expect(container.textContent).toContain("A");
+      expect(container.textContent).toContain("B");
+      expect(container.textContent).toContain("+3");
+      expect(container.textContent).not.toContain("C");
+      expect(container.textContent).not.toContain("D");
+      expect(container.textContent).not.toContain("E");
+    });
+
+    it("does not show overflow when values fit within maxVisible", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["a", "b"],
+            meta: { maxVisible: 5 },
+          }),
+        ),
+      );
+      expect(container.textContent).toContain("A");
+      expect(container.textContent).toContain("B");
+      expect(container.textContent).not.toContain("+");
+    });
+
+    it("shows overflow badges in popover on click", async () => {
+      const user = userEvent.setup();
+      render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["a", "b", "c", "d"],
+            meta: { maxVisible: 2 },
+          }),
+        ),
+        { wrapper },
+      );
+
+      const trigger = screen.getByText("+2");
+      await user.click(trigger);
+
+      expect(screen.getByText("C")).toBeDefined();
+      expect(screen.getByText("D")).toBeDefined();
     });
   });
 

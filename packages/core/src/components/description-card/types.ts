@@ -46,6 +46,8 @@ export interface FieldMeta {
   defaultBadgeVariant?: BadgeVariant;
   /** Render badge labels in sentence case by default; set false to keep the original value */
   sentenceCaseBadges?: boolean;
+  /** Maximum number of badges to display before showing a "+N" overflow indicator */
+  maxVisible?: number;
   /** Key path to currency code in data object (for money fields) */
   currencyKey?: string;
   /** Key path to href in data object (for link fields) */

@@ -5,3 +5,4 @@ pre-commit:
       glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,md,mdx,yaml,yml,css,html}"
       run: pnpm exec oxfmt {staged_files}
       stage_fixed: true
+      skip_empty: true

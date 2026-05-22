@@ -43,7 +43,7 @@
     "@tailor-platform/app-shell": "workspace:*",
     "@tailor-platform/sdk": "^1.45.1",
     "oxlint": "catalog:",
-    "tsdown": "^0.22.0",
+    "tsdown": "catalog:",
     "typescript": "^5",
     "vitest": "catalog:"
   },

@@ -51,7 +51,7 @@
     "tsdown": "^0.21.7",
     "typescript": "^5",
     "vite": "catalog:",
-    "vitest": "^4.1.6"
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "vite": ">= 5"

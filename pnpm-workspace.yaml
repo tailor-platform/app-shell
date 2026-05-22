@@ -40,6 +40,20 @@ allowBuilds:
 
 # Detect provenance or publisher trust downgrades in dependency updates
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  # @swc/core lost provenance from v1.5.19 due to a publishing workflow change (npm → yarn).
+  # Fixed in v1.15.2+, but older versions in the range still lack provenance.
+  # See: https://github.com/swc-project/swc/issues/11266
+  - "@swc/core@1.12.11"
+  # semver@6.3.1 is a v6 backport published (2023/7/10) after 7.5.1+ which had provenance.
+  # pnpm evaluates trust by publish date (not semver), so this triggers a false downgrade.
+  # The semver maintainer states this is not a security concern.
+  # See: https://github.com/npm/node-semver/issues/838
+  - "semver@6.3.1"
+  # reselect@5.1.1 was published locally by a maintainer without provenance,
+  # while 5.1.0 was published via GitHub Actions with provenance. Fixed in v5.2.0.
+  # See: https://github.com/reduxjs/reselect/issues/752
+  - "reselect@5.1.1"
 
 # Save exact versions when adding dependencies
 saveExact: true

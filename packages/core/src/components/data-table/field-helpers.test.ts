@@ -88,7 +88,7 @@ describe("inferColumns()", () => {
     const titleOpts = infer("title");
     expect(titleOpts.label).toBe("title");
     expect(titleOpts.sort).toEqual({ field: "title", type: "string" });
-    expect(typeof titleOpts.render).toBe("function");
+    expect(titleOpts.render).toBeUndefined();
 
     const titleCol = column(infer("title"));
     expect(titleCol.label).toBe("title");
@@ -248,7 +248,7 @@ describe("inferColumns() with metadata", () => {
     expect(titleOpts.label).toBe("title");
     expect(titleOpts.sort).toEqual({ field: "title", type: "string" });
     expect(titleOpts.filter).toEqual({ field: "title", type: "string" });
-    expect(typeof titleOpts.render).toBe("function");
+    expect(titleOpts.render).toBeUndefined();
   });
 
   it("auto-detects enum options", () => {
@@ -301,21 +301,11 @@ describe("inferColumns() with metadata", () => {
     expect(opts.filter).toBeUndefined();
   });
 
-  it("generates default render function", () => {
+  it("does not set a default render function", () => {
     const infer = inferColumns<TaskRow>(testMetadata.task);
 
     const opts = infer("title");
-    const testRow = {
-      id: "1",
-      title: "Test Task",
-      status: "todo",
-      dueDate: "2024-01-01",
-      count: 5,
-      isActive: true,
-      tags: ["a"],
-    };
-
-    expect(opts.render!(testRow)).toBe("Test Task");
+    expect(opts.render).toBeUndefined();
   });
 
   it("throws for non-existent field", () => {

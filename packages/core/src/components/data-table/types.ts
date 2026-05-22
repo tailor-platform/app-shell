@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { BadgeOptions } from "@/components/badge-utils";
+import type { BadgeOptions } from "@/components/badge-list";
 import type {
   CollectionControl,
   Filter,
@@ -28,7 +28,7 @@ import type {
  */
 export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
 
-export type { BadgeVariant } from "@/components/badge-utils";
+export type { BadgeVariant } from "@/components/badge-list";
 
 /** Options for `type: "number"` cells. */
 export interface NumberCellOptions {

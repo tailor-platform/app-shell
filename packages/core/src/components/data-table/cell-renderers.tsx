@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { Popover } from "@base-ui/react/popover";
-import { Badge } from "@/components/badge";
-import { resolveBadgeVariant, resolveBadgeLabel } from "@/components/badge-utils";
+import { BadgeList } from "@/components/badge-list";
 import type {
   BadgeCellOptions,
   Column,
@@ -51,6 +49,9 @@ function toDate(value: unknown): Date | null {
 
 function renderText(value: unknown): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
+  if (typeof value === "boolean") return value ? "✓" : "✗";
+  if (value instanceof Date) return value.toLocaleDateString();
+  if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
 
@@ -122,52 +123,7 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
 
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
-
-  const values = Array.isArray(value) ? value : [value];
-  if (values.every((v) => isEmpty(v))) return PLACEHOLDER;
-
-  const maxVisible = options?.maxVisible;
-  const nonEmpty = values.filter((v) => !isEmpty(v));
-  const visible = maxVisible != null ? nonEmpty.slice(0, maxVisible) : nonEmpty;
-  const overflow = maxVisible != null ? nonEmpty.slice(maxVisible) : [];
-
-  const renderSingleBadge = (raw: unknown, i: number) => {
-    const key = String(raw);
-    const variant = resolveBadgeVariant(key, options);
-    const label = resolveBadgeLabel(key, options) ?? key;
-    return (
-      <Badge key={i} variant={variant}>
-        {label}
-      </Badge>
-    );
-  };
-
-  // Single badge without array — simple path
-  if (visible.length === 1 && overflow.length === 0) {
-    return renderSingleBadge(visible[0], 0);
-  }
-
-  return (
-    <div className="astw:flex astw:flex-wrap astw:gap-1">
-      {visible.map((raw, i) => renderSingleBadge(raw, i))}
-      {overflow.length > 0 && (
-        <Popover.Root>
-          <Popover.Trigger className="astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-xs astw:font-medium astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors">
-            +{overflow.length}
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Positioner sideOffset={4} side="bottom" align="start">
-              <Popover.Popup className="astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:p-2 astw:shadow-md astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95">
-                <div className="astw:flex astw:flex-wrap astw:gap-1">
-                  {overflow.map((raw, i) => renderSingleBadge(raw, i))}
-                </div>
-              </Popover.Popup>
-            </Popover.Positioner>
-          </Popover.Portal>
-        </Popover.Root>
-      )}
-    </div>
-  );
+  return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;
 }
 
 function renderLink<TRow extends Record<string, unknown>>(

@@ -18,4 +18,4 @@ export type {
   BadgeVariantType,
 } from "./types";
 
-export type { BadgeVariant } from "../badge-utils";
+export type { BadgeVariant } from "../badge-list";

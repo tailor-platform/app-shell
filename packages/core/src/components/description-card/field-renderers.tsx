@@ -2,13 +2,12 @@
 
 import * as React from "react";
 import { Link } from "react-router";
-import { Popover } from "@base-ui/react/popover";
-import { Badge } from "../badge";
+import { BadgeList } from "../badge-list";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat } from "./types";
-import type { BadgeVariant } from "../badge-utils";
-import { resolveBadgeVariant, resolveBadgeLabel } from "../badge-utils";
+import type { BadgeVariant } from "../badge-list";
+import { resolveBadgeLabel } from "../badge-list";
 import { useDescriptionCardT } from "./i18n";
 
 // ============================================================================
@@ -354,58 +353,20 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
     defaultBadgeVariant: field.meta?.defaultBadgeVariant ?? ("outline-neutral" as BadgeVariant),
   };
   const sentenceCaseBadges = field.meta?.sentenceCaseBadges ?? true;
-  const maxVisible = field.meta?.maxVisible;
 
-  const resolveLabel = (raw: unknown) => {
-    const value = String(raw);
+  const resolveLabel = (value: string) => {
     const label = resolveBadgeLabel(value, badgeOptions);
     return label ?? (sentenceCaseBadges ? toSentenceCase(value) : value);
   };
 
-  const nonEmptyValues = values.filter((v) => !isEmpty(v));
-  const visibleValues = maxVisible != null ? nonEmptyValues.slice(0, maxVisible) : nonEmptyValues;
-  const overflowValues = maxVisible != null ? nonEmptyValues.slice(maxVisible) : [];
-
-  const badges = visibleValues.map((raw, i) => {
-    const value = String(raw);
-    const variant = resolveBadgeVariant(value, badgeOptions);
-    const displayValue = resolveLabel(raw);
-    return (
-      <Badge key={i} variant={variant} className="astw:w-fit">
-        {displayValue}
-      </Badge>
-    );
-  });
-
   return (
-    <div className="astw:flex astw:flex-wrap astw:gap-1">
-      {badges}
-      {overflowValues.length > 0 && (
-        <Popover.Root>
-          <Popover.Trigger className="astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-xs astw:font-medium astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors">
-            +{overflowValues.length}
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Positioner sideOffset={4} side="bottom" align="start">
-              <Popover.Popup className="astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:p-2 astw:shadow-md astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95">
-                <div className="astw:flex astw:flex-wrap astw:gap-1">
-                  {overflowValues.map((raw, i) => {
-                    const value = String(raw);
-                    const variant = resolveBadgeVariant(value, badgeOptions);
-                    const displayValue = resolveLabel(raw);
-                    return (
-                      <Badge key={i} variant={variant} className="astw:w-fit">
-                        {displayValue}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              </Popover.Popup>
-            </Popover.Positioner>
-          </Popover.Portal>
-        </Popover.Root>
-      )}
-    </div>
+    <BadgeList
+      value={field.value}
+      options={badgeOptions}
+      maxVisible={field.meta?.maxVisible}
+      resolveLabel={resolveLabel}
+      badgeClassName="astw:w-fit"
+    />
   );
 }
 

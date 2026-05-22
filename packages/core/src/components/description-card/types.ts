@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { BadgeVariant } from "../badge-utils";
+import type { BadgeVariant } from "../badge-list";
 
 // ============================================================================
 // FIELD TYPES

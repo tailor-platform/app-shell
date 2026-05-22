@@ -1,6 +1,5 @@
 import {
   defineResource,
-  Badge,
   DataTable,
   useDataTable,
   useCollectionVariables,
@@ -44,6 +43,7 @@ const productMetadata = {
       required: true,
       enumValues: ["Active", "Draft", "Archived"],
     },
+    { name: "tags", type: "string", required: false },
   ],
 } as const;
 
@@ -91,14 +91,29 @@ const productColumns = [
   }),
   column({
     ...infer("status"),
-    render: (row) => {
-      const variant =
-        row.status === "Active"
-          ? ("success" as const)
-          : row.status === "Draft"
-            ? ("outline-warning" as const)
-            : ("neutral" as const);
-      return <Badge variant={variant}>{row.status}</Badge>;
+    type: "badge",
+    accessor: (row) => row.status,
+    typeOptions: {
+      badgeVariantMap: {
+        Active: "success",
+        Draft: "outline-warning",
+        Archived: "neutral",
+      },
+    },
+  }),
+  column({
+    ...infer("tags"),
+    type: "badge",
+    accessor: (row) => row.tags,
+    typeOptions: {
+      badgeVariantMap: {
+        Premium: "warning",
+        Ergonomic: "success",
+        Office: "outline-info",
+        Wireless: "outline-neutral",
+      },
+      defaultBadgeVariant: "neutral",
+      maxVisible: 2,
     },
   }),
 ];

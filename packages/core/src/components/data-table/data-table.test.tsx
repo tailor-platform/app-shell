@@ -629,6 +629,81 @@ describe("DataTable", () => {
       expect(container.textContent).toContain("unknown");
     });
 
+    it("renders multiple badges from array accessor", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: ["urgent", "fragile"],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+              typeOptions: {
+                badgeVariantMap: { urgent: "error", fragile: "warning" },
+              },
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("urgent");
+      expect(container.textContent).toContain("fragile");
+    });
+
+    it("renders maxVisible badges with +N overflow in DataTable", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: ["a", "b", "c", "d"],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+              typeOptions: { maxVisible: 2 },
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("a");
+      expect(container.textContent).toContain("b");
+      expect(container.textContent).toContain("+2");
+      expect(container.textContent).not.toContain("c");
+      expect(container.textContent).not.toContain("d");
+    });
+
     it("renders link cells with anchor when href is provided", () => {
       function RouterWrapper({ children }: { children: ReactNode }) {
         return <MemoryRouter>{wrapper({ children })}</MemoryRouter>;
@@ -730,7 +805,7 @@ describe("DataTable", () => {
       const moneyArr: Column<TypedRow> = { type: "money", accessor: () => [100] };
       // @ts-expect-error — date accessor cannot return an array
       const dateArr: Column<TypedRow> = { type: "date", accessor: () => [2026, 5, 13] };
-      // @ts-expect-error — badge accessor cannot return an array
+      // badge accessor CAN return an array (multi-badge support)
       const badgeArr: Column<TypedRow> = { type: "badge", accessor: () => ["a", "b"] };
       // @ts-expect-error — link accessor cannot return a plain object
       const linkObj: Column<TypedRow> = {

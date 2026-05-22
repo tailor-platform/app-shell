@@ -69,7 +69,10 @@ export interface DateCellOptions {
 }
 
 /** Options for `type: "badge"` cells. */
-export interface BadgeCellOptions extends BadgeOptions {}
+export interface BadgeCellOptions extends BadgeOptions {
+  /** Maximum number of badges to display before showing a "+N" overflow indicator */
+  maxVisible?: number;
+}
 
 /** Options for `type: "link"` cells. `href` is required. */
 export interface LinkCellOptions<TRow extends Record<string, unknown>> {
@@ -182,7 +185,7 @@ export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
   | {
       type: "badge";
       typeOptions?: BadgeCellOptions;
-      accessor?: (row: TRow) => string | number | boolean | null | undefined;
+      accessor?: (row: TRow) => string | string[] | number | boolean | null | undefined;
     }
   | {
       type: "link";

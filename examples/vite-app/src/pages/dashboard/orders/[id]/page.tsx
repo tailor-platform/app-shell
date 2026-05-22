@@ -68,6 +68,7 @@ const OrderDetailPage = () => {
   const orderData = {
     orderId: id,
     status: "processing",
+    tags: ["wholesale", "priority", "fragile"],
     customer: "Acme Corporation",
     totalAmount: 3450.0,
     currency: "USD",
@@ -106,6 +107,18 @@ const OrderDetailPage = () => {
                   processing: "outline-warning",
                   shipped: "outline-info",
                   delivered: "success",
+                },
+              },
+            },
+            {
+              key: "tags",
+              label: "Tags",
+              type: "badge",
+              meta: {
+                badgeVariantMap: {
+                  wholesale: "outline-info",
+                  priority: "error",
+                  fragile: "warning",
                 },
               },
             },

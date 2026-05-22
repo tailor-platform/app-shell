@@ -5,7 +5,9 @@ import { Link } from "react-router";
 import { Badge } from "../badge";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
-import type { ResolvedField, DateFormat, BadgeVariantType } from "./types";
+import type { ResolvedField, DateFormat } from "./types";
+import type { BadgeVariant } from "../badge-utils";
+import { resolveBadgeVariant, resolveBadgeLabel } from "../badge-utils";
 import { useDescriptionCardT } from "./i18n";
 
 // ============================================================================
@@ -335,25 +337,38 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
  * Render a badge field
  */
 function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
-  if (isEmpty(field.value)) {
+  const values = Array.isArray(field.value)
+    ? (field.value as unknown[])
+    : field.value != null
+      ? [field.value]
+      : [];
+
+  if (values.every((v) => isEmpty(v))) {
     return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
-  const value = String(field.value);
-  const variantMap = field.meta?.badgeVariantMap || {};
+  const badgeOptions = {
+    badgeVariantMap: field.meta?.badgeVariantMap,
+    badgeLabelMap: field.meta?.badgeLabelMap,
+    defaultBadgeVariant: field.meta?.defaultBadgeVariant ?? ("outline-neutral" as BadgeVariant),
+  };
   const sentenceCaseBadges = field.meta?.sentenceCaseBadges ?? true;
 
-  // Try to find a matching variant (case-insensitive)
-  const lowerValue = value.toLowerCase();
-  const variant: BadgeVariantType =
-    variantMap[value] || variantMap[lowerValue] || "outline-neutral";
-  const displayValue = sentenceCaseBadges ? toSentenceCase(value) : value;
+  const badges = values
+    .filter((v) => !isEmpty(v))
+    .map((raw, i) => {
+      const value = String(raw);
+      const variant = resolveBadgeVariant(value, badgeOptions);
+      const label = resolveBadgeLabel(value, badgeOptions);
+      const displayValue = label ?? (sentenceCaseBadges ? toSentenceCase(value) : value);
+      return (
+        <Badge key={i} variant={variant} className="astw:w-fit">
+          {displayValue}
+        </Badge>
+      );
+    });
 
-  return (
-    <Badge variant={variant} className="astw:w-fit">
-      {displayValue}
-    </Badge>
-  );
+  return <div className="astw:flex astw:flex-wrap astw:gap-1">{badges}</div>;
 }
 
 /**

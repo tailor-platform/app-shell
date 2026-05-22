@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Badge } from "@/components/badge";
+import { resolveBadgeVariant, resolveBadgeLabel } from "@/components/badge-utils";
 import type {
   BadgeCellOptions,
-  BadgeVariant,
   Column,
   DateCellOptions,
   LinkCellOptions,
@@ -79,7 +79,10 @@ function renderMoney<TRow extends Record<string, unknown>>(
   // `maxDecimals` raises the cap above the currency default while keeping the
   // minimum at the currency default (e.g. 2 for USD). Lets a JPY column stay
   // at 0 decimals while a USD price-detail column shows up to 4.
-  const formatOptions: Intl.NumberFormatOptions = { style: "currency", currency };
+  const formatOptions: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency,
+  };
   if (options?.maxDecimals != null) {
     formatOptions.maximumFractionDigits = options.maxDecimals;
   }
@@ -119,9 +122,8 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
   const key = String(value);
-  const variant: BadgeVariant =
-    options?.badgeVariantMap?.[key] ?? options?.defaultBadgeVariant ?? "neutral";
-  const label = options?.badgeLabelMap?.[key] ?? key;
+  const variant = resolveBadgeVariant(key, options);
+  const label = resolveBadgeLabel(key, options) ?? key;
   return <Badge variant={variant}>{label}</Badge>;
 }
 

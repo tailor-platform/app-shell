@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { BadgeProps } from "@/components/badge";
+import type { BadgeOptions } from "@/components/badge-utils";
 import type {
   CollectionControl,
   Filter,
@@ -28,8 +28,7 @@ import type {
  */
 export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
 
-/** Variant union accepted by the app-shell `<Badge>` component. */
-export type BadgeVariant = NonNullable<BadgeProps["variant"]>;
+export type { BadgeVariant } from "@/components/badge-utils";
 
 /** Options for `type: "number"` cells. */
 export interface NumberCellOptions {
@@ -70,20 +69,7 @@ export interface DateCellOptions {
 }
 
 /** Options for `type: "badge"` cells. */
-export interface BadgeCellOptions {
-  /**
-   * Maps each cell value (stringified) to a Badge variant. Values not in the
-   * map fall back to `defaultBadgeVariant`.
-   */
-  badgeVariantMap?: Record<string, BadgeVariant>;
-  /**
-   * Maps each cell value (stringified) to a display label. Values not in the
-   * map render the raw cell value.
-   */
-  badgeLabelMap?: Record<string, string>;
-  /** Variant used when the value is not in `badgeVariantMap`. Default: `"neutral"`. */
-  defaultBadgeVariant?: BadgeVariant;
-}
+export interface BadgeCellOptions extends BadgeOptions {}
 
 /** Options for `type: "link"` cells. `href` is required. */
 export interface LinkCellOptions<TRow extends Record<string, unknown>> {

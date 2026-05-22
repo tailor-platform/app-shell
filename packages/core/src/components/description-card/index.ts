@@ -17,3 +17,5 @@ export type {
   DateFormat,
   BadgeVariantType,
 } from "./types";
+
+export type { BadgeVariant } from "../badge-utils";

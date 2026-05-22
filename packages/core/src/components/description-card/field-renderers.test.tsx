@@ -53,6 +53,42 @@ describe("renderField", () => {
       const { container } = render(renderField(makeField({ type: "badge", value: null })));
       expect(container.textContent).toBe("–");
     });
+
+    it("renders multiple badges from array value", () => {
+      const { container } = render(
+        renderField(makeField({ type: "badge", value: ["urgent", "fragile"] })),
+      );
+      expect(container.textContent).toContain("Urgent");
+      expect(container.textContent).toContain("Fragile");
+    });
+
+    it("renders multiple badges with variant map", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["urgent", "low"],
+            meta: { badgeVariantMap: { urgent: "error", low: "neutral" } },
+          }),
+        ),
+      );
+      expect(container.textContent).toContain("Urgent");
+      expect(container.textContent).toContain("Low");
+    });
+
+    it("renders dash for empty array", () => {
+      const { container } = render(renderField(makeField({ type: "badge", value: [] })));
+      expect(container.textContent).toBe("–");
+    });
+
+    it("skips null values in array", () => {
+      const { container } = render(
+        renderField(makeField({ type: "badge", value: ["active", null, "featured"] })),
+      );
+      expect(container.textContent).toContain("Active");
+      expect(container.textContent).toContain("Featured");
+      expect(container.textContent).not.toContain("–");
+    });
   });
 
   describe("date", () => {

@@ -29,7 +29,7 @@ export interface BadgeOptions {
    * map render the raw value (or sentence-cased value if enabled).
    */
   badgeLabelMap?: Record<string, string>;
-  /** Variant used when the value is not in `badgeVariantMap`. Default: `"neutral"`. */
+  /** Variant used when the value is not in `badgeVariantMap`. Default: `"outline-neutral"`. */
   defaultBadgeVariant?: BadgeVariant;
 }
 
@@ -48,7 +48,7 @@ export function resolveBadgeVariant(
     const lower = map[value.toLowerCase()];
     if (lower) return lower;
   }
-  return options?.defaultBadgeVariant ?? "neutral";
+  return options?.defaultBadgeVariant ?? "outline-neutral";
 }
 
 /**

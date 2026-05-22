@@ -122,7 +122,7 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
 }
 
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
-  if (isEmpty(value)) return PLACEHOLDER;
+  if (isEmpty(value) || (Array.isArray(value) && value.length === 0)) return PLACEHOLDER;
   return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;
 }
 

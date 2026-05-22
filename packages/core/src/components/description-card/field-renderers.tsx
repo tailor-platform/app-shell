@@ -6,7 +6,6 @@ import { BadgeList } from "../badge-list";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat } from "./types";
-import type { BadgeVariant } from "../badge-list";
 import { resolveBadgeLabel } from "../badge-list";
 import { useDescriptionCardT } from "./i18n";
 
@@ -350,7 +349,7 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
   const badgeOptions = {
     badgeVariantMap: field.meta?.badgeVariantMap,
     badgeLabelMap: field.meta?.badgeLabelMap,
-    defaultBadgeVariant: field.meta?.defaultBadgeVariant ?? ("outline-neutral" as BadgeVariant),
+    defaultBadgeVariant: field.meta?.defaultBadgeVariant,
   };
   const sentenceCaseBadges = field.meta?.sentenceCaseBadges ?? true;
 

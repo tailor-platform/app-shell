@@ -42,7 +42,7 @@ export interface FieldMeta {
    * map render the raw value (or sentence-cased value if enabled).
    */
   badgeLabelMap?: Record<string, string>;
-  /** Variant used when the value is not in `badgeVariantMap`. Default: `"outline-neutral"`. */
+  /** Variant used when the value is not in `badgeVariantMap`. Default: `"outline-neutral"` (from shared `resolveBadgeVariant`). */
   defaultBadgeVariant?: BadgeVariant;
   /** Render badge labels in sentence case by default; set false to keep the original value */
   sentenceCaseBadges?: boolean;

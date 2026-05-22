@@ -23,8 +23,8 @@ describe("resolveBadgeVariant", () => {
     expect(resolveBadgeVariant("unknown", { defaultBadgeVariant: "warning" })).toBe("warning");
   });
 
-  it("returns 'neutral' when no options", () => {
-    expect(resolveBadgeVariant("anything", undefined)).toBe("neutral");
+  it("returns 'outline-neutral' when no options", () => {
+    expect(resolveBadgeVariant("anything", undefined)).toBe("outline-neutral");
   });
 });
 

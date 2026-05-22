@@ -1,5 +1,5 @@
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, assert } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
@@ -129,16 +129,17 @@ describe("DefaultSidebar auto-generation", () => {
       </AppShell>,
     );
 
-    await waitFor(() => {
-      expect(screen.getAllByText("Overview").length).toBeGreaterThan(0);
+    // waitFor retries until the callback stops throwing, so the assert
+    // must stay inside to wait for the deferred nav items to render.
+    const overviewLink = await waitFor(() => {
+      const sidebar = document.querySelector('[data-slot="sidebar"]')!;
+      const links = sidebar.querySelectorAll("a");
+      const link = Array.from(links).find((el) => el.textContent === "Overview");
+      assert(link, "Expected 'Overview' link to be rendered in the sidebar");
+      return link;
     });
 
-    const sidebar = document.querySelector('[data-slot="sidebar"]')!;
-    const links = sidebar.querySelectorAll("a");
-    const overviewLink = Array.from(links).find((link) => link.textContent === "Overview");
-
-    expect(overviewLink).toBeDefined();
-    expect(overviewLink!.className).toContain("astw:bg-sidebar-accent");
+    expect(overviewLink.className).toContain("astw:bg-sidebar-accent");
   });
 
   it("excludes componentless resources from sidebar links", async () => {

@@ -41,14 +41,14 @@ import { Tabs } from "@tailor-platform/app-shell";
 
 ### Tabs.Root Props
 
-| Prop            | Type                   | Default     | Description                             |
-| --------------- | ---------------------- | ----------- | --------------------------------------- |
-| `defaultValue`  | `Tabs.Tab.Value`       | `0`         | Initial active tab value (uncontrolled) |
-| `value`         | `Tabs.Tab.Value`       | -           | Controlled active tab value             |
-| `onValueChange` | `(value: any) => void` | -           | Callback when the active tab changes    |
-| `variant`       | `'default' \| 'line'`  | `'default'` | Visual style of the tabs                |
-| `className`     | `string`               | -           | Additional CSS classes for root         |
-| `children`      | `React.ReactNode`      | -           | Tabs sub-components                     |
+| Prop            | Type                               | Default     | Description                             |
+| --------------- | ---------------------------------- | ----------- | --------------------------------------- |
+| `defaultValue`  | `Tabs.Tab.Value`                   | `0`         | Initial active tab value (uncontrolled) |
+| `value`         | `Tabs.Tab.Value`                   | -           | Controlled active tab value             |
+| `onValueChange` | `(value: any) => void`             | -           | Callback when the active tab changes    |
+| `variant`       | `'default' \| 'line' \| 'capsule'` | `'default'` | Visual style of the tabs                |
+| `className`     | `string`                           | -           | Additional CSS classes for root         |
+| `children`      | `React.ReactNode`                  | -           | Tabs sub-components                     |
 
 ### Tabs.List Props
 
@@ -103,22 +103,5 @@ const [activeTab, setActiveTab] = useState("overview");
   <Tabs.Panel value="active">Active items</Tabs.Panel>
   <Tabs.Panel value="pending">Pending items</Tabs.Panel>
   <Tabs.Panel value="archived">Archived items</Tabs.Panel>
-</Tabs.Root>
-```
-
-### Line Variant
-
-The `line` variant renders tabs with an underline indicator instead of a background highlight.
-
-```tsx
-<Tabs.Root defaultValue="overview" variant="line">
-  <Tabs.List>
-    <Tabs.Tab value="overview">Overview</Tabs.Tab>
-    <Tabs.Tab value="activity">Activity</Tabs.Tab>
-    <Tabs.Tab value="settings">Settings</Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="overview">Overview content</Tabs.Panel>
-  <Tabs.Panel value="activity">Activity content</Tabs.Panel>
-  <Tabs.Panel value="settings">Settings content</Tabs.Panel>
 </Tabs.Root>
 ```

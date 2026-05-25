@@ -72,6 +72,20 @@ describe("Tabs", () => {
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
+
+    it("capsule variant", () => {
+      const { container } = render(
+        <Tabs.Root defaultValue="tab1" variant="capsule">
+          <Tabs.List>
+            <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
+            <Tabs.Tab value="tab2">Tab 2</Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
+          <Tabs.Panel value="tab2">Content 2</Tabs.Panel>
+        </Tabs.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
   });
 
   it("renders all tabs", () => {

@@ -364,6 +364,21 @@ export const primitiveComponentsDemoResource = defineResource({
                     <Tabs.Panel value="billing">Billing content</Tabs.Panel>
                   </Tabs.Root>
                 </div>
+                <div>
+                  <div style={labelStyle}>Capsule</div>
+                  <Tabs.Root defaultValue="all" variant="capsule">
+                    <Tabs.List>
+                      <Tabs.Tab value="all">All</Tabs.Tab>
+                      <Tabs.Tab value="open">Open</Tabs.Tab>
+                      <Tabs.Tab value="received">Received</Tabs.Tab>
+                      <Tabs.Tab value="closed">Closed</Tabs.Tab>
+                    </Tabs.List>
+                    <Tabs.Panel value="all">All content</Tabs.Panel>
+                    <Tabs.Panel value="open">Open content</Tabs.Panel>
+                    <Tabs.Panel value="received">Received content</Tabs.Panel>
+                    <Tabs.Panel value="closed">Closed content</Tabs.Panel>
+                  </Tabs.Root>
+                </div>
               </div>
             </Card.Content>
           </Card.Root>

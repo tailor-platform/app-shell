@@ -3,7 +3,7 @@ import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 
 import { cn } from "@/lib/utils";
 
-type TabsVariant = "default" | "line";
+type TabsVariant = "default" | "line" | "capsule";
 
 const TabsVariantContext = React.createContext<TabsVariant>("default");
 
@@ -57,7 +57,9 @@ function List({ className, children, ...props }: React.ComponentProps<typeof Bas
         "astw:relative astw:inline-flex astw:items-center astw:justify-center",
         variant === "line"
           ? "astw:h-9 astw:gap-2"
-          : "astw:text-muted-foreground astw:h-9 astw:gap-1",
+          : variant === "capsule"
+            ? "astw:h-10 astw:gap-0.5 astw:rounded-md astw:bg-muted astw:p-1"
+            : "astw:text-muted-foreground astw:h-9 astw:gap-1",
         className,
       )}
       {...props}
@@ -81,7 +83,9 @@ function Tab({ className, children, ...props }: React.ComponentProps<typeof Base
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         variant === "line"
           ? "astw:px-3 astw:py-1.5 astw:-mb-px astw:border-b-2 astw:border-transparent astw:data-active:border-primary astw:data-active:text-foreground"
-          : "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-muted astw:data-active:text-foreground",
+          : variant === "capsule"
+            ? "astw:rounded-md astw:px-3 astw:py-1.5 astw:data-active:bg-background astw:data-active:text-foreground astw:data-active:shadow-sm"
+            : "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-muted astw:data-active:text-foreground",
         className,
       )}
       {...props}

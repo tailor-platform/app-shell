@@ -48,11 +48,18 @@ function toDate(value: unknown): Date | null {
 }
 
 function renderText(value: unknown): ReactNode {
-  if (isEmpty(value)) return PLACEHOLDER;
-  if (typeof value === "boolean") return value ? "✓" : "✗";
-  if (value instanceof Date) return value.toLocaleDateString();
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
+  switch (true) {
+    case isEmpty(value):
+      return PLACEHOLDER;
+    case typeof value === "boolean":
+      return value ? "✓" : "✗";
+    case value instanceof Date:
+      return value.toLocaleDateString();
+    case typeof value === "object":
+      return JSON.stringify(value);
+    default:
+      return String(value);
+  }
 }
 
 function renderNumber(value: unknown, options: NumberCellOptions | undefined): ReactNode {

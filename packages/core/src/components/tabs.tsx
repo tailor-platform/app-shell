@@ -12,7 +12,7 @@ const TabsVariantContext = React.createContext<TabsVariant>("default");
 // don't leak as breaking changes to consumers.
 type RootProps = Pick<
   React.ComponentProps<typeof BaseTabs.Root>,
-  "defaultValue" | "value" | "onValueChange" | "orientation"
+  "defaultValue" | "value" | "onValueChange"
 > & {
   children: React.ReactNode;
   className?: string;

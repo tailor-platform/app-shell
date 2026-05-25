@@ -105,3 +105,24 @@ const [activeTab, setActiveTab] = useState("overview");
   <Tabs.Panel value="archived">Archived items</Tabs.Panel>
 </Tabs.Root>
 ```
+
+### Use Icons in Tab
+
+```tsx
+<Tabs.Root defaultValue="overview" variant="capsule">
+  <Tabs.List>
+    <Tabs.Tab value="overview">
+      <LayoutDashboardIcon />
+    </Tabs.Tab>
+    <Tabs.Tab value="projects">
+      <FolderKanbanIcon />
+    </Tabs.Tab>
+    <Tabs.Tab value="settings">
+      <SettingsIcon />
+    </Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panel value="overview">Overview content</Tabs.Panel>
+  <Tabs.Panel value="projects">Projects content</Tabs.Panel>
+  <Tabs.Panel value="settings">Settings content</Tabs.Panel>
+</Tabs.Root>
+```

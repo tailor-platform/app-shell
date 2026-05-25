@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: true
+  commands:
+    oxfmt:
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,md,mdx,yaml,yml,css,html}"
+      # --no-error-on-unmatched-pattern: oxfmt has built-in ignore rules (lock files,
+      # CHANGELOGs, etc.) that may exclude all staged files after lefthook's glob
+      # matches them. Without this flag, oxfmt exits with code 2 when no files remain.
+      run: pnpm exec oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true

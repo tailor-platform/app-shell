@@ -4,18 +4,20 @@ packages:
   - packages/**
 
 catalog:
-  "@tailwindcss/postcss": ^4.2.4
-  "@types/node": ^25.6.0
+  "@tailwindcss/postcss": ^4.3.0
+  "@types/node": ^25.9.1
   "@types/react": ^19
   "@types/react-dom": ^19
   "@vitejs/plugin-react": ^5.2.0
   oxfmt: ^0.47.0
   oxlint: ^1.64.0
+  react: ^19.2.6
+  react-dom: ^19.2.6
   tailwindcss: ^4.2.4
-  tsdown: ^0.21.7
+  tsdown: ^0.22.0
   typescript: ^5
   vite: ^7.3.2
-  vitest: ^4.1.0
+  vitest: ^4.1.6
 
 # Supply-chain security settings.
 # The following are enabled by default in pnpm@11 and intentionally omitted here:
@@ -37,9 +39,26 @@ allowBuilds:
   msw: false
   "@tailor-platform/sdk": false
   "@prisma/engines": false
+  # lefthook's postinstall installs git hooks; the root `prepare` script
+  # handles that via `lefthook install` instead.
+  lefthook: false
 
 # Detect provenance or publisher trust downgrades in dependency updates
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  # @swc/core lost provenance from v1.5.19 due to a publishing workflow change (npm → yarn).
+  # Fixed in v1.15.2+, but older versions in the range still lack provenance.
+  # See: https://github.com/swc-project/swc/issues/11266
+  - "@swc/core@1.12.11"
+  # semver@6.3.1 is a v6 backport published (2023/7/10) after 7.5.1+ which had provenance.
+  # pnpm evaluates trust by publish date (not semver), so this triggers a false downgrade.
+  # The semver maintainer states this is not a security concern.
+  # See: https://github.com/npm/node-semver/issues/838
+  - "semver@6.3.1"
+  # reselect@5.1.1 was published locally by a maintainer without provenance,
+  # while 5.1.0 was published via GitHub Actions with provenance. Fixed in v5.2.0.
+  # See: https://github.com/reduxjs/reselect/issues/752
+  - "reselect@5.1.1"
 
 # Save exact versions when adding dependencies
 saveExact: true

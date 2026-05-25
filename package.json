@@ -10,10 +10,12 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
-    "changeset:publish": "pnpm build && changeset publish"
+    "changeset:publish": "pnpm build && changeset publish",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
+    "lefthook": "2.1.6",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "turbo": "^2.9.14"

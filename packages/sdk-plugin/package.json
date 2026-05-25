@@ -43,9 +43,9 @@
     "@tailor-platform/app-shell": "workspace:*",
     "@tailor-platform/sdk": "^1.45.1",
     "oxlint": "catalog:",
-    "tsdown": "^0.21.7",
+    "tsdown": "catalog:",
     "typescript": "^5",
-    "vitest": "^4"
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@tailor-platform/sdk": ">= 1.0.0"

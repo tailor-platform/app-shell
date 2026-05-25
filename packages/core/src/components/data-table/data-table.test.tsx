@@ -774,6 +774,72 @@ describe("DataTable", () => {
       expect(container.textContent).toContain("—");
     });
 
+    it("renders placeholder for array of all-null values in badge column", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: [null, null] as (string | null)[],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags as unknown as string[],
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("—");
+    });
+
+    it("renders placeholder for array of empty strings in badge column", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: ["", ""],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("—");
+    });
+
     it("renders link cells with anchor when href is provided", () => {
       function RouterWrapper({ children }: { children: ReactNode }) {
         return <MemoryRouter>{wrapper({ children })}</MemoryRouter>;

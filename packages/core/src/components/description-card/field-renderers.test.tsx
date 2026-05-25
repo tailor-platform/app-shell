@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { createAppShellWrapper } from "../../../tests/test-utils";
@@ -124,7 +124,7 @@ describe("renderField", () => {
       expect(container.textContent).not.toContain("+");
     });
 
-    it("shows overflow badges in popover on click", async () => {
+    it("shows overflow badges in popover on hover", async () => {
       const user = userEvent.setup();
       render(
         renderField(
@@ -138,10 +138,12 @@ describe("renderField", () => {
       );
 
       const trigger = screen.getByText("+2");
-      await user.click(trigger);
+      await user.hover(trigger);
 
-      expect(screen.getByText("C")).toBeDefined();
-      expect(screen.getByText("D")).toBeDefined();
+      await waitFor(() => {
+        expect(screen.getByText("C")).toBeDefined();
+        expect(screen.getByText("D")).toBeDefined();
+      });
     });
   });
 

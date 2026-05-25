@@ -10,6 +10,7 @@ import {
   Sheet,
   Menu,
   Table,
+  Tabs,
 } from "@tailor-platform/app-shell";
 import * as React from "react";
 
@@ -327,6 +328,41 @@ export const primitiveComponentsDemoResource = defineResource({
                       </Menu.Content>
                     </Menu.Root>
                   </div>
+                </div>
+              </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Tabs */}
+          <Card.Root>
+            <Card.Header title="Tabs" />
+            <Card.Content>
+              <div style={{ display: "flex", gap: "2rem" }}>
+                <div>
+                  <div style={labelStyle}>Default</div>
+                  <Tabs.Root defaultValue="overview">
+                    <Tabs.List>
+                      <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                      <Tabs.Tab value="projects">Projects</Tabs.Tab>
+                      <Tabs.Tab value="settings">Settings</Tabs.Tab>
+                    </Tabs.List>
+                    <Tabs.Panel value="overview">Overview content</Tabs.Panel>
+                    <Tabs.Panel value="projects">Projects content</Tabs.Panel>
+                    <Tabs.Panel value="settings">Settings content</Tabs.Panel>
+                  </Tabs.Root>
+                </div>
+                <div>
+                  <div style={labelStyle}>Line</div>
+                  <Tabs.Root defaultValue="activity" variant="line">
+                    <Tabs.List>
+                      <Tabs.Tab value="activity">Activity</Tabs.Tab>
+                      <Tabs.Tab value="members">Members</Tabs.Tab>
+                      <Tabs.Tab value="billing">Billing</Tabs.Tab>
+                    </Tabs.List>
+                    <Tabs.Panel value="activity">Activity content</Tabs.Panel>
+                    <Tabs.Panel value="members">Members content</Tabs.Panel>
+                    <Tabs.Panel value="billing">Billing content</Tabs.Panel>
+                  </Tabs.Root>
                 </div>
               </div>
             </Card.Content>

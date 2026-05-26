@@ -21,6 +21,9 @@ catalogs:
     '@vitejs/plugin-react':
       specifier: ^5.2.0
       version: 5.2.0
+    lucide-react:
+      specifier: ^1.8.0
+      version: 1.8.0
     oxfmt:
       specifier: ^0.47.0
       version: 0.47.0
@@ -123,7 +126,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
       lucide-react:
-        specifier: ^1.8.0
+        specifier: 'catalog:'
         version: 1.8.0(react@19.2.6)
       next:
         specifier: 16.2.6
@@ -172,7 +175,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
       lucide-react:
-        specifier: ^1.8.0
+        specifier: 'catalog:'
         version: 1.8.0(react@19.2.6)
       react:
         specifier: 'catalog:'
@@ -236,7 +239,7 @@ importers:
         specifier: ^16.14.0
         version: 16.14.0
       lucide-react:
-        specifier: ^1.8.0
+        specifier: 'catalog:'
         version: 1.8.0(react@19.2.6)
       papaparse:
         specifier: ^5.5.3

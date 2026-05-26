@@ -24,6 +24,15 @@ import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
 
+function resolveCollapsibleMode(
+  collapsible: boolean | undefined,
+  isIconMode: boolean,
+): "none" | "icon" | "offcanvas" {
+  if (!collapsible) return "none";
+  if (isIconMode) return "icon";
+  return "offcanvas";
+}
+
 // Always rendered regardless of searchSources — the palette searches routes
 // and contextual actions too, so there is always something to search.
 const SearchEntry = () => {
@@ -102,11 +111,10 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   );
   const DefaultFooter = null;
 
+  const collapsibleMode = resolveCollapsibleMode(collapsible, isIconMode);
+
   return (
-    <Sidebar
-      variant="inset"
-      collapsible={!collapsible ? "none" : isIconMode ? "icon" : "offcanvas"}
-    >
+    <Sidebar variant="inset" collapsible={collapsibleMode}>
       {!isIconMode && (
         <div className="astw:flex astw:justify-between astw:items-center">
           {props.header ?? DefaultHeader}

@@ -29,6 +29,12 @@ function resolveAlign<TRow extends Record<string, unknown>>(col: Column<TRow>): 
   return "left";
 }
 
+function nextSortDirection(current: string | undefined): "Asc" | "Desc" | undefined {
+  if (current === "Asc") return "Desc";
+  if (current === "Desc") return undefined;
+  return "Asc";
+}
+
 // =============================================================================
 // DataTableLoaderRows (internal)
 // =============================================================================
@@ -260,13 +266,7 @@ function DataTableHeaders({ className }: { className?: string }) {
 
           const handleClick = () => {
             if (!isSortable || !onSort || !col.sort) return;
-            const nextDirection =
-              currentSort?.direction === "Asc"
-                ? "Desc"
-                : currentSort?.direction === "Desc"
-                  ? undefined
-                  : "Asc";
-            onSort(col.sort.field, nextDirection);
+            onSort(col.sort.field, nextSortDirection(currentSort?.direction));
           };
 
           const align = resolveAlign(col);

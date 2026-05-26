@@ -5,6 +5,20 @@ import { cn } from "@/lib/utils";
 
 type TabsVariant = "default" | "line" | "capsule";
 
+const LIST_VARIANT_CLASSES: Record<TabsVariant, string> = {
+  line: "astw:h-9 astw:gap-2",
+  capsule: "astw:h-10 astw:gap-0.5 astw:rounded-md astw:bg-muted astw:p-1",
+  default: "astw:text-muted-foreground astw:h-9 astw:gap-1",
+};
+
+const TAB_VARIANT_CLASSES: Record<TabsVariant, string> = {
+  line: "astw:px-3 astw:py-1.5 astw:-mb-px astw:border-b-2 astw:border-transparent astw:data-active:border-primary astw:data-active:text-foreground",
+  capsule:
+    "astw:rounded-md astw:px-3 astw:py-1.5 astw:data-active:bg-background astw:data-active:text-foreground astw:data-active:shadow-sm",
+  default:
+    "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-muted astw:data-active:text-foreground",
+};
+
 const TabsVariantContext = React.createContext<TabsVariant>("default");
 
 // Only the props relevant to the Tabs abstraction are picked from BaseTabs.Root.
@@ -55,11 +69,7 @@ function List({ className, children, ...props }: React.ComponentProps<typeof Bas
       data-slot="tabs-list"
       className={cn(
         "astw:relative astw:inline-flex astw:items-center astw:justify-center",
-        variant === "line"
-          ? "astw:h-9 astw:gap-2"
-          : variant === "capsule"
-            ? "astw:h-10 astw:gap-0.5 astw:rounded-md astw:bg-muted astw:p-1"
-            : "astw:text-muted-foreground astw:h-9 astw:gap-1",
+        LIST_VARIANT_CLASSES[variant],
         className,
       )}
       {...props}
@@ -81,11 +91,7 @@ function Tab({ className, children, ...props }: React.ComponentProps<typeof Base
         "astw:text-muted-foreground",
         "astw:focus-visible:outline-ring/70 astw:focus-visible:ring-ring/50 astw:focus-visible:outline-1 astw:focus-visible:ring-[3px]",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
-        variant === "line"
-          ? "astw:px-3 astw:py-1.5 astw:-mb-px astw:border-b-2 astw:border-transparent astw:data-active:border-primary astw:data-active:text-foreground"
-          : variant === "capsule"
-            ? "astw:rounded-md astw:px-3 astw:py-1.5 astw:data-active:bg-background astw:data-active:text-foreground astw:data-active:shadow-sm"
-            : "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-muted astw:data-active:text-foreground",
+        TAB_VARIANT_CLASSES[variant],
         className,
       )}
       {...props}

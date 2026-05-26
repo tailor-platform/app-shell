@@ -11,6 +11,20 @@ import type {
   NumberCellOptions,
 } from "./types";
 
+function resolveDateFormatOptions(format: string): Intl.DateTimeFormatOptions {
+  if (format === "long") return { month: "long", day: "numeric", year: "numeric" };
+  if (format === "datetime") {
+    return {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    };
+  }
+  return { month: "short", day: "numeric", year: "numeric" };
+}
+
 const PLACEHOLDER = (
   <span className="astw:text-muted-foreground" aria-hidden="true">
     —
@@ -79,7 +93,10 @@ function renderMoney<TRow extends Record<string, unknown>>(
   // `maxDecimals` raises the cap above the currency default while keeping the
   // minimum at the currency default (e.g. 2 for USD). Lets a JPY column stay
   // at 0 decimals while a USD price-detail column shows up to 4.
-  const formatOptions: Intl.NumberFormatOptions = { style: "currency", currency };
+  const formatOptions: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency,
+  };
   if (options?.maxDecimals != null) {
     formatOptions.maximumFractionDigits = options.maxDecimals;
   }
@@ -101,18 +118,7 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
   const date = toDate(value);
   if (!date) return PLACEHOLDER;
   const format = options?.dateFormat ?? "short";
-  const formatOptions: Intl.DateTimeFormatOptions =
-    format === "long"
-      ? { month: "long", day: "numeric", year: "numeric" }
-      : format === "datetime"
-        ? {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          }
-        : { month: "short", day: "numeric", year: "numeric" };
+  const formatOptions = resolveDateFormatOptions(format);
   return new Intl.DateTimeFormat(options?.locale, formatOptions).format(date);
 }
 

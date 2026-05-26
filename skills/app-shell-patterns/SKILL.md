@@ -11,11 +11,34 @@ Select and implement the correct UI pattern using @tailor-platform/app-shell com
 
 ## Available Patterns
 
+### pattern/detail
+
+| Slug                               | Name                     | Description                                                           |
+| ---------------------------------- | ------------------------ | --------------------------------------------------------------------- |
+| `pattern/detail/hero-with-actions` | Hero With Actions Detail | Single-record detail view with workflow actions and activity timeline |
+
+### pattern/form
+
+| Slug                       | Name             | Description                                                                       |
+| -------------------------- | ---------------- | --------------------------------------------------------------------------------- |
+| `pattern/form/modal`       | Modal Form       | Default form pattern for Create/Edit — keeps user in context on the parent screen |
+| `pattern/form/sectioned`   | Sectioned Form   | Complex form with 15+ fields organized into named fieldset sections               |
+| `pattern/form/single-page` | Single Page Form | Routed full-page form for moderate field count (6-15) without natural sectioning  |
+| `pattern/form/wizard`      | Wizard Form      | Multi-stage create flow with 3-7 steps and per-step validation gates              |
+
+### pattern/interaction
+
+| Slug                               | Name         | Description                                                           |
+| ---------------------------------- | ------------ | --------------------------------------------------------------------- |
+| `pattern/interaction/confirm`      | Confirm      | Confirmation dialog before destructive or irreversible actions        |
+| `pattern/interaction/multi-select` | Multi Select | Floating bottom action bar for bulk operations on selected list rows  |
+| `pattern/interaction/toast`        | Toast        | Lightweight feedback after mutations — success or error notifications |
+
 ### pattern/list
 
-| Slug                      | Name            | Description                                                |
-| ------------------------- | --------------- | ---------------------------------------------------------- |
-| `pattern/list/dense-scan` | Dense Scan List | High-density scannable list for browsing large record sets |
+| Slug                      | Name            | Description                                                                                             |
+| ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------- |
+| `pattern/list/dense-scan` | Dense Scan List | High-density scannable list backed by GraphQL connections with DataTable, sort, filters, and pagination |
 
 ## How to Use
 

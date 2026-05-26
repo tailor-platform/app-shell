@@ -254,14 +254,14 @@ column({
 });
 ```
 
-| `type`   | Accessor return type                                         | Value handling                                    | Options interface                                                                                                          |
-| -------- | ------------------------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `text`   | `string \| number \| boolean \| bigint \| null \| undefined` | `String(value)` — falls back to `—` when nullish. | _(no options)_                                                                                                             |
-| `number` | `number \| null \| undefined`                                | `Intl.NumberFormat`. `—` for nullish / NaN.       | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                |
-| `money`  | `number \| null \| undefined`                                | `Intl.NumberFormat` currency. `—` for nullish.    | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                |
-| `date`   | `Date \| string \| number \| null \| undefined`              | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.  | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                          |
-| `badge`  | `string \| number \| boolean \| null \| undefined`           | `<Badge>` keyed off the stringified value.        | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"neutral"`)                    |
-| `link`   | `string \| number \| boolean \| null \| undefined`           | app-shell `<Link>` to `typeOptions.href(row)`.    | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**) |
+| `type`   | Accessor return type                                                                     | Value handling                                                            | Options interface                                                                                                             |
+| -------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `text`   | `string \| number \| boolean \| bigint \| null \| undefined`                             | `String(value)` — falls back to `—` when nullish.                         | _(no options)_                                                                                                                |
+| `number` | `number \| null \| undefined`                                                            | `Intl.NumberFormat`. `—` for nullish / NaN.                               | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                   |
+| `money`  | `number \| null \| undefined`                                                            | `Intl.NumberFormat` currency. `—` for nullish.                            | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                   |
+| `date`   | `Date \| string \| number \| null \| undefined`                                          | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.                          | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                             |
+| `badge`  | `string \| number \| boolean \| null \| undefined \| Array<string \| number \| boolean>` | `<Badge>` keyed off the stringified value. Arrays render multiple badges. | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"outline-neutral"`), `maxVisible` |
+| `link`   | `string \| number \| boolean \| null \| undefined`                                       | app-shell `<Link>` to `typeOptions.href(row)`.                            | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**)    |
 
 Empty values (`null`, `undefined`, `""`) render a muted `—` placeholder for every type. Use `render` for custom empty-state handling.
 
@@ -382,13 +382,29 @@ column({
       processing: "Processing",
       cancelled: "Cancelled",
     },
-    defaultBadgeVariant: "neutral", // unmapped values fall back here
+    defaultBadgeVariant: "outline-neutral", // unmapped values fall back here
   },
 });
 ```
 
 - The cell value is stringified before lookup, so `accessor` can return strings, numbers, or booleans.
-- Unmapped values render with `defaultBadgeVariant` (or `"neutral"`) and the raw stringified value as the label.
+- `accessor` may also return an **array** of values — each item is rendered as a separate badge.
+- Unmapped values render with `defaultBadgeVariant` (or `"outline-neutral"`) and the raw stringified value as the label.
+
+#### Array badges with overflow
+
+Use `maxVisible` to cap the number of badges shown. Extra values are hidden behind a hover popover:
+
+```tsx
+column({
+  ...infer("tags"),
+  type: "badge",
+  typeOptions: {
+    badgeVariantMap: { Premium: "warning", Office: "outline-info" },
+    maxVisible: 2,
+  },
+});
+```
 
 ### `link` — clickable text
 

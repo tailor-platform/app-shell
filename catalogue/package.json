@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "type-check": "tsc --noEmit",
-    "generate:skill": "node scripts/generate-skill.mjs"
+    "build": "node scripts/generate-skill.mjs",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@tailor-platform/app-shell": "workspace:*",

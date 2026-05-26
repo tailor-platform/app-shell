@@ -1,5 +1,15 @@
 import type { CsvCellIssue, CsvColumnMapping, CsvCorrection, CsvSchema, ParsedRow } from "./types";
 
+function resolveRawValue(
+  correction: CsvCorrection | undefined,
+  colIdx: number | undefined,
+  row: string[],
+): string {
+  if (correction !== undefined) return String(correction.newValue);
+  if (colIdx !== undefined) return row[colIdx];
+  return "";
+}
+
 /** Single-pass: validate all cells and build parsed rows for onValidate. */
 export function processRows(
   rawRows: string[][],
@@ -24,12 +34,7 @@ export function processRows(
       const correction = corrections.find(
         (c) => c.row === rowIdx && c.columnKey === mapping.columnKey,
       );
-      const rawValue: string =
-        correction !== undefined
-          ? String(correction.newValue)
-          : colIdx !== undefined
-            ? row[colIdx]
-            : "";
+      const rawValue = resolveRawValue(correction, colIdx, row);
 
       const column = schema.columns.find((c) => c.key === mapping.columnKey);
       if (column?.schema) {

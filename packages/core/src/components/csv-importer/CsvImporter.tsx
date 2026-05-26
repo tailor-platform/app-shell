@@ -239,11 +239,11 @@ function MappingStep({
                 >
                   {/* Status icon */}
                   <td className="astw:px-3 astw:py-2 astw:align-middle astw:text-center">
-                    {isMapped ? (
-                      <CheckCircle2Icon className="astw:size-5 astw:text-primary" />
-                    ) : col.required ? (
+                    {isMapped && <CheckCircle2Icon className="astw:size-5 astw:text-primary" />}
+                    {!isMapped && col.required && (
                       <CircleAlertIcon className="astw:size-5 astw:text-destructive" />
-                    ) : (
+                    )}
+                    {!isMapped && !col.required && (
                       <CircleDashedIcon className="astw:size-5 astw:text-muted-foreground/40" />
                     )}
                   </td>
@@ -741,9 +741,7 @@ export function CsvImporter<T extends CsvSchema>({
                               "astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-full astw:text-xs astw:font-medium",
                               step === s
                                 ? "astw:bg-primary astw:text-primary-foreground"
-                                : stepIndex(step) > idx
-                                  ? "astw:bg-primary/20 astw:text-primary"
-                                  : "astw:bg-muted astw:text-muted-foreground",
+                                : stepClassForIndex(step, idx),
                             )}
                           >
                             {idx + 1}
@@ -899,4 +897,10 @@ export function CsvImporter<T extends CsvSchema>({
 function stepIndex(step: CsvImporterStep): number {
   const steps: CsvImporterStep[] = ["upload", "mapping", "review", "complete"];
   return steps.indexOf(step);
+}
+
+function stepClassForIndex(step: CsvImporterStep, idx: number): string {
+  return stepIndex(step) > idx
+    ? "astw:bg-primary/20 astw:text-primary"
+    : "astw:bg-muted astw:text-muted-foreground";
 }

@@ -8,6 +8,7 @@
   "rules": {
     // React 19's JSX Transform handles React imports automatically
     "react/react-in-jsx-scope": "off",
+    "no-nested-ternary": "error",
   },
   "ignorePatterns": ["dist", "node_modules"],
 }

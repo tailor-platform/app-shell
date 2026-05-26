@@ -216,16 +216,12 @@ export function Layout({ columns, className, style, gap, title, actions, childre
     }
   }
 
-  const gapClass =
-    gap === undefined
-      ? "astw:gap-4"
-      : gap === 4
-        ? "astw:gap-4"
-        : gap === 6
-          ? "astw:gap-6"
-          : gap === 8
-            ? "astw:gap-8"
-            : "astw:gap-4";
+  const GAP_CLASSES: Record<number, string> = {
+    4: "astw:gap-4",
+    6: "astw:gap-6",
+    8: "astw:gap-8",
+  };
+  const gapClass = gap === undefined ? "astw:gap-4" : (GAP_CLASSES[gap] ?? "astw:gap-4");
 
   const hasLegacyHeader = !hasHeaderChild && (title || (actions != null && actions.length > 0));
 

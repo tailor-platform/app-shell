@@ -120,7 +120,7 @@ function slugToFilename(slug) {
  * When sourceFile is null, all .md files in the category dir are copied as-is.
  */
 async function processCategory(category) {
-  const categoryDir = join(catalogueRoot, category.name);
+  const categoryDir = join(catalogueRoot, "src", category.name);
   const outputDir = join(referencesDir, category.outputDir);
   await mkdir(outputDir, { recursive: true });
 
@@ -162,7 +162,7 @@ async function processEntryCategory(category, categoryDir, outputDir) {
   for (const { meta, body, rawFrontmatter } of entries) {
     const filename = slugToFilename(meta.slug) + ".md";
     const outputPath = join(outputDir, filename);
-    const output = `---\n${rawFrontmatter}\n---\n\n${body}\n`;
+    const output = `---\n${rawFrontmatter.trim()}\n---\n\n${body}\n`;
     await writeFile(outputPath, output);
     console.log(`  Generated references/${category.outputDir}/${filename}`);
   }

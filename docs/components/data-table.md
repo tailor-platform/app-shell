@@ -225,7 +225,7 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | `width`    | `number`                   | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `align`    | `"left" \| "right"`        | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                          |
 | `truncate` | `boolean`                  | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved cell value is a string or number — resolved via `accessor` first, then `row[col.id]` as a fallback — so hovering the cell reveals the full value. With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions). |
-| `accessor` | _(narrowed per `type`)_    | Extracts the raw value. The return type is narrowed per `type` branch — returning an array or a plain object is a compile error on a typed column. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.                                                                                                                                                                                                                                              |
+| `accessor` | _(narrowed per `type`)_    | Extracts the raw value. The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.                                                                                                                                                                        |
 | `sort`     | `SortConfig`               | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `filter`   | `FilterConfig`             | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.                                                                                                                                                                                                                                                                                                                                                                                                       |
 
@@ -277,7 +277,7 @@ column({ type: "link", accessor: (r) => r.title });
 // ❌ Compile error — text columns reject typeOptions entirely
 column({ type: "text", accessor: (r) => r.title, typeOptions: { locale: "en-US" } });
 
-// ❌ Compile error — text/number/money/badge/link accessor cannot return an array or object
+// ❌ Compile error — text/number/money/link accessor cannot return an array or object
 column({ type: "text", accessor: (row) => row.tags }); // row.tags is string[]
 column({ type: "number", accessor: (row) => row.meta }); // row.meta is an object
 ```
@@ -444,13 +444,13 @@ column({
 
 ### Combining `type` with `inferColumns`
 
-`inferColumns` (from `@tailor-platform/app-shell-sdk-plugin`) derives `label`, `sort`, `filter`, and a default `render` from TailorDB metadata. You can layer a `type` on top to swap the rendering without losing the inferred sort/filter config:
+`inferColumns` (from `@tailor-platform/app-shell-sdk-plugin`) derives `label`, `sort`, `filter`, and `id` from TailorDB metadata. You can layer a `type` on top to get a built-in renderer without losing the inferred sort/filter config:
 
 ```tsx
 const infer = inferColumns(tableMetadata.order);
 
 const columns = [
-  // Inferred string column — keeps the default render
+  // Inferred column — displays row[id] as plain text
   column(infer("reference")),
 
   // Inferred datetime column, swapped to a `date` cell with long format
@@ -473,7 +473,7 @@ const columns = [
 ];
 ```
 
-When you spread `...infer("field")`, drop in `accessor` if the inferred render doesn't already match what your `type` expects — built-in renderers read from `accessor` (or `row[id]`), not from the inferred `render`.
+When you spread `...infer("field")`, add `accessor` when you want a typed renderer to read a specific value — built-in renderers read from `accessor` (or `row[id]`).
 
 ## `FilterConfig`
 

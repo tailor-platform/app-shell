@@ -10,7 +10,7 @@ The `Badge` component displays status indicators, labels, and tags with multiple
 ## Import
 
 ```tsx
-import { Badge } from "@tailor-platform/app-shell";
+import { Badge, type BadgeVariant, type BadgeOptions } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
@@ -81,6 +81,21 @@ type BadgeVariant =
   | "outline-error"
   | "outline-info"
   | "outline-neutral";
+```
+
+### BadgeOptions
+
+Shared options used by `DataTable` and `DescriptionCard` badge fields:
+
+```typescript
+interface BadgeOptions {
+  /** Maps each value (stringified) to a Badge variant. Unmapped values use `defaultBadgeVariant`. */
+  badgeVariantMap?: Record<string, BadgeVariant>;
+  /** Maps each value (stringified) to a display label. Unmapped values render the raw value. */
+  badgeLabelMap?: Record<string, string>;
+  /** Variant used when the value is not in `badgeVariantMap`. Default: `"outline-neutral"`. */
+  defaultBadgeVariant?: BadgeVariant;
+}
 ```
 
 ## Examples

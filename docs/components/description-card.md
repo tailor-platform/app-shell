@@ -67,7 +67,7 @@ Plain text display with optional truncation and copy button.
 
 ### badge
 
-Displays value as a Badge component with variant mapping.
+Displays value as a Badge component with variant mapping. Accepts a single value or an array of values.
 
 ```tsx
 {
@@ -88,6 +88,27 @@ Displays value as a Badge component with variant mapping.
 ```
 
 Badge values are rendered in sentence case by default. Set `meta.sentenceCaseBadges` to `false` when you need to display the original value from your data.
+
+#### Array badges with overflow
+
+When the field value is an array, each item is rendered as a separate badge. Use `maxVisible` to cap the number shown — extra items appear in a hover popover:
+
+```tsx
+<DescriptionCard
+  data={{ tags: ["urgent", "fragile", "international"] }}
+  fields={[
+    {
+      key: "tags",
+      label: "Tags",
+      type: "badge",
+      meta: {
+        badgeVariantMap: { urgent: "error", fragile: "warning", international: "outline-info" },
+        maxVisible: 2,
+      },
+    },
+  ]}
+/>
+```
 
 ### money
 

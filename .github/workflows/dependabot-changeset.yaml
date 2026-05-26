@@ -2,13 +2,13 @@ name: Add Changeset to Dependabot PRs
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, labeled]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   add-changeset:
-    if: github.actor == 'dependabot[bot]'
+    if: contains(github.event.pull_request.labels.*.name, 'dependencies')
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { Link } from "react-router";
-import { BadgeList } from "../badge-list";
+import { BadgeList, resolveBadgeLabel, toValueArray } from "../badge-list";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat } from "./types";
-import { resolveBadgeLabel } from "../badge-list";
 import { useDescriptionCardT } from "./i18n";
 
 // ============================================================================
@@ -336,11 +335,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
  * Render a badge field
  */
 function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
-  const values = Array.isArray(field.value)
-    ? (field.value as unknown[])
-    : field.value != null
-      ? [field.value]
-      : [];
+  const values = toValueArray(field.value);
 
   if (values.every((v) => isEmpty(v))) {
     return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;

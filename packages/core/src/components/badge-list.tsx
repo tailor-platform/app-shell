@@ -61,6 +61,17 @@ export function resolveBadgeLabel(
   return options?.badgeLabelMap?.[value];
 }
 
+/**
+ * Normalize a value into an array. If the value is already an array, return it
+ * as-is. If it is a non-null single value, wrap it in an array. Otherwise
+ * return an empty array.
+ */
+export function toValueArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (value != null) return [value];
+  return [];
+}
+
 // ============================================================================
 // BADGE LIST COMPONENT
 // ============================================================================
@@ -95,7 +106,7 @@ export function BadgeList({
   resolveLabel: resolveLabelProp,
   badgeClassName,
 }: BadgeListProps): React.ReactNode {
-  const values = Array.isArray(value) ? value : [value];
+  const values = toValueArray(value);
   const nonEmpty = values.filter((v) => v != null && v !== "");
 
   if (nonEmpty.length === 0) return null;

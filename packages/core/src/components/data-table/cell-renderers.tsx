@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { BadgeList } from "@/components/badge-list";
+import { BadgeList, toValueArray } from "@/components/badge-list";
 import type {
   BadgeCellOptions,
   Column,
@@ -132,7 +132,7 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
 }
 
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
-  const items = Array.isArray(value) ? value : value != null ? [value] : [];
+  const items = toValueArray(value);
   const nonEmpty = items.filter((v) => v != null && v !== "");
   if (nonEmpty.length === 0) return PLACEHOLDER;
   return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;

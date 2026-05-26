@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tailor-platform/app-shell": "workspace:*",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "tailwindcss": "catalog:"

@@ -1,6 +1,6 @@
 import { defineModule, Link, ResourceComponentProps } from "@tailor-platform/app-shell";
 import { useT, labels } from "./i18n-labels";
-import { ZapIcon } from "./pages/metric-card-demo";
+import { Zap as ZapIcon } from "lucide-react";
 import { actionPanelDemoResource } from "./pages/action-panel-demo";
 import { metricCardDemoResource } from "./pages/metric-card-demo";
 import { activityCardDemoResource } from "./pages/activity-card-demo";

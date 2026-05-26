@@ -363,13 +363,19 @@ export interface CollectionSnapshot<TFieldName extends string = string> {
  * Pluggable synchronizer that persists collection state to an external store
  * (URL search params, localStorage, server, etc.).
  *
- * - `read()` is called synchronously on mount to hydrate initial state.
+ * - `subscribe()` registers a listener for external state changes (e.g. popstate).
+ *   Called immediately with the current snapshot on subscription (BehaviorSubject style).
  * - `write()` is called on every state change. Implementations may internally
  *   debounce, batch, or perform async operations (fire-and-forget).
  */
 export interface CollectionStateSynchronizer<TFieldName extends string = string> {
-  /** Read persisted state synchronously. Returns undefined if nothing is persisted. */
-  read(): CollectionSnapshot<TFieldName> | undefined;
+  /**
+   * Subscribe to external state changes. The callback is invoked immediately
+   * with the current persisted snapshot (or undefined), then again whenever
+   * the external store changes (e.g. browser back/forward).
+   * Returns an unsubscribe function.
+   */
+  subscribe(onChange: (snapshot: CollectionSnapshot<TFieldName> | undefined) => void): () => void;
   /** Write current state. May be async internally — the hook does not await. */
   write(state: Required<CollectionSnapshot<TFieldName>>): void;
 }

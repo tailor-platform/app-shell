@@ -82,8 +82,6 @@ export interface UseCursorPaginationReturn {
   cursorStack: string[];
   /** Current fetch direction — determines whether `first`/`after` or `last`/`before` is sent. */
   paginationDirection: "forward" | "backward";
-  /** Current page size. */
-  pageSize: number;
   /** Ready-to-spread pagination variables for the GraphQL query. */
   paginationVariables: PaginationVariables;
   /**
@@ -116,8 +114,6 @@ export interface UseCursorPaginationReturn {
    * back to a full `pageSize` fetch.
    */
   goToLastPage: (total?: number | null) => void;
-  /** Change the page size and reset to the first page. */
-  setPageSize: (size: number) => void;
   /**
    * Determine whether a previous page exists, given the server's `pageInfo`.
    *
@@ -157,8 +153,7 @@ export interface UseCursorPaginationReturn {
  *
  * @see {@link file://./use-collection-variables.ts useCollectionVariables} — the primary consumer.
  */
-export function useCursorPagination(initialPageSize: number): UseCursorPaginationReturn {
-  const [pageSize, setPageSizeState] = useState(initialPageSize);
+export function useCursorPagination(pageSize: number): UseCursorPaginationReturn {
   const [cursor, setCursor] = useState<string | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [paginationDirection, setPaginationDirection] = useState<"forward" | "backward">("forward");
@@ -258,14 +253,6 @@ export function useCursorPagination(initialPageSize: number): UseCursorPaginatio
     [pageSize],
   );
 
-  const setPageSize = useCallback((size: number) => {
-    setPageSizeState(size);
-    setCursor(null);
-    setCursorStack([]);
-    setPaginationDirection("forward");
-    setLastPageSize(null);
-  }, []);
-
   // ---------------------------------------------------------------------------
   // Computed pagination variables
   // ---------------------------------------------------------------------------
@@ -303,14 +290,12 @@ export function useCursorPagination(initialPageSize: number): UseCursorPaginatio
     cursor,
     cursorStack,
     paginationDirection,
-    pageSize,
     paginationVariables,
     goToNextPage,
     goToPrevPage,
     resetPage: resetPagination,
     goToFirstPage,
     goToLastPage,
-    setPageSize,
     getHasPrevPage,
     getHasNextPage,
     resetCount,

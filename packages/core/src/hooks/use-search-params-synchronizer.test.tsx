@@ -2,6 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
+import type { CollectionSnapshot } from "@/types/collection";
 import { useSearchParamsSynchronizer } from "./use-search-params-synchronizer";
 
 function createWrapper(initialEntries: string[] = ["/"]) {
@@ -10,86 +11,93 @@ function createWrapper(initialEntries: string[] = ["/"]) {
   );
 }
 
+/** Helper: subscribe and capture the immediately-emitted snapshot */
+function getInitialSnapshot(result: { current: ReturnType<typeof useSearchParamsSynchronizer> }) {
+  let snapshot: CollectionSnapshot | undefined;
+  act(() => {
+    const unsub = result.current.subscribe((s) => {
+      snapshot = s;
+    });
+    unsub();
+  });
+  return snapshot;
+}
+
 describe("useSearchParamsSynchronizer", () => {
   // ---------------------------------------------------------------------------
-  // read()
+  // subscribe (initial emit)
   // ---------------------------------------------------------------------------
-  describe("read", () => {
-    it("returns undefined when no search params exist", () => {
+  describe("subscribe (initial emit)", () => {
+    it("emits undefined when no search params exist", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/"]),
       });
 
-      expect(result.current.read()).toBeUndefined();
+      expect(getInitialSnapshot(result)).toBeUndefined();
     });
 
-    it("reads pageSize from URL", () => {
+    it("emits pageSize from URL", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/?p=50"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.pageSize).toBe(50);
+      expect(getInitialSnapshot(result)?.pageSize).toBe(50);
     });
 
-    it("reads sort from URL", () => {
+    it("emits sort from URL", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/?s=name:asc"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.sort).toEqual([{ field: "name", direction: "Asc" }]);
+      expect(getInitialSnapshot(result)?.sort).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
-    it("reads sort desc from URL", () => {
+    it("emits sort desc from URL", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/?s=createdAt:desc"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.sort).toEqual([{ field: "createdAt", direction: "Desc" }]);
+      expect(getInitialSnapshot(result)?.sort).toEqual([{ field: "createdAt", direction: "Desc" }]);
     });
 
-    it("reads single-value filter from URL", () => {
+    it("emits single-value filter from URL", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/?f.status:eq=ACTIVE"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([{ field: "status", operator: "eq", value: "ACTIVE" }]);
+      expect(getInitialSnapshot(result)?.filters).toEqual([
+        { field: "status", operator: "eq", value: "ACTIVE" },
+      ]);
     });
 
-    it("reads multi-value filter from URL (repeated params)", () => {
+    it("emits multi-value filter from URL (repeated params)", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/?f.status:in=ACTIVE&f.status:in=PENDING"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([
+      expect(getInitialSnapshot(result)?.filters).toEqual([
         { field: "status", operator: "in", value: ["ACTIVE", "PENDING"] },
       ]);
     });
 
-    it("reads JSON object filter value (e.g. between)", () => {
+    it("emits JSON object filter value (e.g. between)", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper([
           `/?f.amount:between=${encodeURIComponent(JSON.stringify({ min: 10, max: 100 }))}`,
         ]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([
+      expect(getInitialSnapshot(result)?.filters).toEqual([
         { field: "amount", operator: "between", value: { min: 10, max: 100 } },
       ]);
     });
 
-    it("reads all state together", () => {
+    it("emits all state together", () => {
       const { result } = renderHook(() => useSearchParamsSynchronizer(), {
         wrapper: createWrapper(["/?p=25&s=name:desc&f.status:eq=ACTIVE"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot).toEqual({
+      expect(getInitialSnapshot(result)).toEqual({
         pageSize: 25,
         sort: [{ field: "name", direction: "Desc" }],
         filters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
@@ -101,8 +109,7 @@ describe("useSearchParamsSynchronizer", () => {
         wrapper: createWrapper(["/?t1.p=30&p=10"]),
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.pageSize).toBe(30);
+      expect(getInitialSnapshot(result)?.pageSize).toBe(30);
     });
 
     it("ignores invalid pageSize values", () => {
@@ -110,7 +117,7 @@ describe("useSearchParamsSynchronizer", () => {
         wrapper: createWrapper(["/?p=abc"]),
       });
 
-      expect(result.current.read()).toBeUndefined();
+      expect(getInitialSnapshot(result)).toBeUndefined();
     });
 
     it("ignores filter keys without operator", () => {
@@ -118,7 +125,7 @@ describe("useSearchParamsSynchronizer", () => {
         wrapper: createWrapper(["/?f.status=ACTIVE"]),
       });
 
-      expect(result.current.read()).toBeUndefined();
+      expect(getInitialSnapshot(result)).toBeUndefined();
     });
   });
 
@@ -135,8 +142,7 @@ describe("useSearchParamsSynchronizer", () => {
         result.current.write({ filters: [], sort: [], pageSize: 50 });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.pageSize).toBe(50);
+      expect(getInitialSnapshot(result)?.pageSize).toBe(50);
     });
 
     it("writes sort to URL", () => {
@@ -152,8 +158,7 @@ describe("useSearchParamsSynchronizer", () => {
         });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.sort).toEqual([{ field: "name", direction: "Desc" }]);
+      expect(getInitialSnapshot(result)?.sort).toEqual([{ field: "name", direction: "Desc" }]);
     });
 
     it("writes single-value filter to URL", () => {
@@ -169,8 +174,9 @@ describe("useSearchParamsSynchronizer", () => {
         });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([{ field: "status", operator: "eq", value: "ACTIVE" }]);
+      expect(getInitialSnapshot(result)?.filters).toEqual([
+        { field: "status", operator: "eq", value: "ACTIVE" },
+      ]);
     });
 
     it("writes multi-value filter as repeated params", () => {
@@ -186,8 +192,7 @@ describe("useSearchParamsSynchronizer", () => {
         });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([
+      expect(getInitialSnapshot(result)?.filters).toEqual([
         { field: "status", operator: "in", value: ["A", "B", "C"] },
       ]);
     });
@@ -199,14 +204,19 @@ describe("useSearchParamsSynchronizer", () => {
 
       act(() => {
         result.current.write({
-          filters: [{ field: "amount", operator: "between", value: { min: 1, max: 99 } }],
+          filters: [
+            {
+              field: "amount",
+              operator: "between",
+              value: { min: 1, max: 99 },
+            },
+          ],
           sort: [],
           pageSize: 20,
         });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([
+      expect(getInitialSnapshot(result)?.filters).toEqual([
         { field: "amount", operator: "between", value: { min: 1, max: 99 } },
       ]);
     });
@@ -224,8 +234,9 @@ describe("useSearchParamsSynchronizer", () => {
         });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.filters).toEqual([{ field: "name", operator: "contains", value: "test" }]);
+      expect(getInitialSnapshot(result)?.filters).toEqual([
+        { field: "name", operator: "contains", value: "test" },
+      ]);
     });
 
     it("uses prefix when writing", () => {
@@ -237,8 +248,7 @@ describe("useSearchParamsSynchronizer", () => {
         result.current.write({ filters: [], sort: [], pageSize: 40 });
       });
 
-      const snapshot = result.current.read();
-      expect(snapshot?.pageSize).toBe(40);
+      expect(getInitialSnapshot(result)?.pageSize).toBe(40);
     });
   });
 
@@ -258,14 +268,14 @@ describe("useSearchParamsSynchronizer", () => {
       });
 
       // Not yet written
-      expect(result.current.read()).toBeUndefined();
+      expect(getInitialSnapshot(result)).toBeUndefined();
 
       act(() => {
         vi.advanceTimersByTime(100);
       });
 
       // Now written
-      expect(result.current.read()?.pageSize).toBe(50);
+      expect(getInitialSnapshot(result)?.pageSize).toBe(50);
 
       vi.useRealTimers();
     });
@@ -287,7 +297,7 @@ describe("useSearchParamsSynchronizer", () => {
         vi.advanceTimersByTime(100);
       });
 
-      expect(result.current.read()?.pageSize).toBe(50);
+      expect(getInitialSnapshot(result)?.pageSize).toBe(50);
 
       vi.useRealTimers();
     });

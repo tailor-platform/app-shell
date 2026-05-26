@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { Link } from "react-router";
-import { BadgeList } from "../badge-list";
+import { BadgeList, resolveBadgeLabel, toValueArray } from "../badge-list";
 import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat } from "./types";
-import { resolveBadgeLabel } from "../badge-list";
 import { useDescriptionCardT } from "./i18n";
 
 // ============================================================================
@@ -204,12 +203,6 @@ function formatAddress(value: unknown): string[] {
   }
 
   return [String(value)];
-}
-
-function toValueArray(value: unknown): unknown[] {
-  if (Array.isArray(value)) return value;
-  if (value != null) return [value];
-  return [];
 }
 
 // ============================================================================

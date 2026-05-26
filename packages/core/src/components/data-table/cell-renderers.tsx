@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { BadgeList } from "@/components/badge-list";
+import { BadgeList, toValueArray } from "@/components/badge-list";
 import type {
   BadgeCellOptions,
   Column,
@@ -59,12 +59,6 @@ function toDate(value: unknown): Date | null {
     return Number.isNaN(d.getTime()) ? null : d;
   }
   return null;
-}
-
-function toValueArray(value: unknown): unknown[] {
-  if (Array.isArray(value)) return value;
-  if (value != null) return [value];
-  return [];
 }
 
 function renderText(value: unknown): ReactNode {

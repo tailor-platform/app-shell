@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import type { BadgeVariant } from "../badge-list";
 
 // ============================================================================
 // FIELD TYPES
@@ -10,22 +11,9 @@ import type { CSSProperties, ReactNode } from "react";
 export type FieldType = "text" | "badge" | "money" | "date" | "link" | "address" | "reference";
 
 /**
- * Badge variant mapping for automatic status coloring
+ * @deprecated Use `BadgeVariant` from `@tailor-platform/app-shell` instead.
  */
-export type BadgeVariantType =
-  | "default"
-  | "success"
-  | "warning"
-  | "error"
-  | "neutral"
-  | "subtle-success"
-  | "subtle-warning"
-  | "subtle-error"
-  | "outline-success"
-  | "outline-warning"
-  | "outline-error"
-  | "outline-info"
-  | "outline-neutral";
+export type BadgeVariantType = BadgeVariant;
 
 /**
  * Behavior when a field value is empty/null/undefined
@@ -48,9 +36,18 @@ export interface FieldMeta {
   /** Show copy button for this field */
   copyable?: boolean;
   /** Map field values to badge variants */
-  badgeVariantMap?: Record<string, BadgeVariantType>;
+  badgeVariantMap?: Record<string, BadgeVariant>;
+  /**
+   * Maps each value (stringified) to a display label. Values not in the
+   * map render the raw value (or sentence-cased value if enabled).
+   */
+  badgeLabelMap?: Record<string, string>;
+  /** Variant used when the value is not in `badgeVariantMap`. Default: `"outline-neutral"` (from shared `resolveBadgeVariant`). */
+  defaultBadgeVariant?: BadgeVariant;
   /** Render badge labels in sentence case by default; set false to keep the original value */
   sentenceCaseBadges?: boolean;
+  /** Maximum number of badges to display before showing a "+N" overflow indicator */
+  maxVisible?: number;
   /** Key path to currency code in data object (for money fields) */
   currencyKey?: string;
   /** Key path to href in data object (for link fields) */

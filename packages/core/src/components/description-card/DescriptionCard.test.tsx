@@ -42,4 +42,32 @@ describe("DescriptionCard", () => {
 
     expect(screen.getByText("NOT_RECEIVED")).toBeDefined();
   });
+
+  it("renders multiple badges from array value", () => {
+    render(
+      <DescriptionCard
+        title="Order"
+        data={{ tags: ["urgent", "fragile", "international"] }}
+        fields={[
+          {
+            key: "tags",
+            label: "Tags",
+            type: "badge",
+            meta: {
+              badgeVariantMap: {
+                urgent: "error",
+                fragile: "warning",
+                international: "outline-info",
+              },
+            },
+          },
+        ]}
+      />,
+      { wrapper },
+    );
+
+    expect(screen.getByText("Urgent")).toBeDefined();
+    expect(screen.getByText("Fragile")).toBeDefined();
+    expect(screen.getByText("International")).toBeDefined();
+  });
 });

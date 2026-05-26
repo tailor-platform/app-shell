@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { renderField } from "./field-renderers";
@@ -52,6 +53,97 @@ describe("renderField", () => {
     it("renders dash for empty value", () => {
       const { container } = render(renderField(makeField({ type: "badge", value: null })));
       expect(container.textContent).toBe("–");
+    });
+
+    it("renders multiple badges from array value", () => {
+      const { container } = render(
+        renderField(makeField({ type: "badge", value: ["urgent", "fragile"] })),
+      );
+      expect(container.textContent).toContain("Urgent");
+      expect(container.textContent).toContain("Fragile");
+    });
+
+    it("renders multiple badges with variant map", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["urgent", "low"],
+            meta: { badgeVariantMap: { urgent: "error", low: "neutral" } },
+          }),
+        ),
+      );
+      expect(container.textContent).toContain("Urgent");
+      expect(container.textContent).toContain("Low");
+    });
+
+    it("renders dash for empty array", () => {
+      const { container } = render(renderField(makeField({ type: "badge", value: [] })));
+      expect(container.textContent).toBe("–");
+    });
+
+    it("skips null values in array", () => {
+      const { container } = render(
+        renderField(makeField({ type: "badge", value: ["active", null, "featured"] })),
+      );
+      expect(container.textContent).toContain("Active");
+      expect(container.textContent).toContain("Featured");
+      expect(container.textContent).not.toContain("–");
+    });
+
+    it("renders maxVisible badges with +N overflow indicator", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["a", "b", "c", "d", "e"],
+            meta: { maxVisible: 2 },
+          }),
+        ),
+      );
+      expect(container.textContent).toContain("A");
+      expect(container.textContent).toContain("B");
+      expect(container.textContent).toContain("+3");
+      expect(container.textContent).not.toContain("C");
+      expect(container.textContent).not.toContain("D");
+      expect(container.textContent).not.toContain("E");
+    });
+
+    it("does not show overflow when values fit within maxVisible", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["a", "b"],
+            meta: { maxVisible: 5 },
+          }),
+        ),
+      );
+      expect(container.textContent).toContain("A");
+      expect(container.textContent).toContain("B");
+      expect(container.textContent).not.toContain("+");
+    });
+
+    it("shows overflow badges in popover on hover", async () => {
+      const user = userEvent.setup();
+      render(
+        renderField(
+          makeField({
+            type: "badge",
+            value: ["a", "b", "c", "d"],
+            meta: { maxVisible: 2 },
+          }),
+        ),
+        { wrapper },
+      );
+
+      const trigger = screen.getByText("+2");
+      await user.hover(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText("C")).toBeDefined();
+        expect(screen.getByText("D")).toBeDefined();
+      });
     });
   });
 

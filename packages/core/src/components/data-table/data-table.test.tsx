@@ -268,14 +268,18 @@ describe("DataTable", () => {
     ];
 
     it("applies text-right to the header cell when align=right", () => {
-      const { container } = render(<TestDataTable columns={alignedColumns} />, { wrapper });
+      const { container } = render(<TestDataTable columns={alignedColumns} />, {
+        wrapper,
+      });
       const heads = container.querySelectorAll('[data-slot="data-table-header"] th');
       expect(heads[0]?.className).not.toContain("text-right");
       expect(heads[1]?.className).toContain("text-right");
     });
 
     it("applies text-right to body cells when align=right", () => {
-      const { container } = render(<TestDataTable columns={alignedColumns} />, { wrapper });
+      const { container } = render(<TestDataTable columns={alignedColumns} />, {
+        wrapper,
+      });
       const firstRow = container.querySelector('[data-slot="data-table-row"]');
       const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
       expect(cells[0]?.className).not.toContain("text-right");
@@ -308,7 +312,10 @@ describe("DataTable", () => {
       const numRows: NumRow[] = [{ id: "1", count: 42 }];
       const cols: Column<NumRow>[] = [{ label: "Count", type: "number", accessor: (r) => r.count }];
       function Harness() {
-        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        const table = useDataTable<NumRow>({
+          columns: cols,
+          data: { rows: numRows },
+        });
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -334,7 +341,10 @@ describe("DataTable", () => {
         },
       ];
       function Harness() {
-        const table = useDataTable<MoneyRow>({ columns: cols, data: { rows: moneyRows } });
+        const table = useDataTable<MoneyRow>({
+          columns: cols,
+          data: { rows: moneyRows },
+        });
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -355,7 +365,12 @@ describe("DataTable", () => {
         { label: "Text", type: "text", accessor: (r) => r.v },
         { label: "Date", type: "date", accessor: (r) => r.v },
         { label: "Badge", type: "badge", accessor: (r) => r.v },
-        { label: "Link", type: "link", accessor: (r) => r.v, typeOptions: { href: () => "/x" } },
+        {
+          label: "Link",
+          type: "link",
+          accessor: (r) => r.v,
+          typeOptions: { href: () => "/x" },
+        },
       ];
       function Harness() {
         const table = useDataTable<Row>({ columns: cols, data: { rows } });
@@ -377,10 +392,18 @@ describe("DataTable", () => {
       type NumRow = { id: string; count: number };
       const numRows: NumRow[] = [{ id: "1", count: 42 }];
       const cols: Column<NumRow>[] = [
-        { label: "Count", type: "number", accessor: (r) => r.count, align: "left" },
+        {
+          label: "Count",
+          type: "number",
+          accessor: (r) => r.count,
+          align: "left",
+        },
       ];
       function Harness() {
-        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        const table = useDataTable<NumRow>({
+          columns: cols,
+          data: { rows: numRows },
+        });
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -407,7 +430,9 @@ describe("DataTable", () => {
         },
         { label: "Status", render: (row) => row.status },
       ];
-      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
       const firstRow = container.querySelector('[data-slot="data-table-row"]');
       const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
       expect(cells[0]?.className).toContain("truncate");
@@ -424,7 +449,9 @@ describe("DataTable", () => {
           truncate: true,
         },
       ];
-      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
       const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
       expect(isTooltipWired(cells[0] ?? null)).toBe(true);
       expect(isTooltipWired(cells[1] ?? null)).toBe(true);
@@ -442,7 +469,10 @@ describe("DataTable", () => {
         },
       ];
       function Harness() {
-        const table = useDataTable<NumRow>({ columns: cols, data: { rows: numRows } });
+        const table = useDataTable<NumRow>({
+          columns: cols,
+          data: { rows: numRows },
+        });
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -466,7 +496,10 @@ describe("DataTable", () => {
         },
       ];
       function Harness() {
-        const table = useDataTable<ObjRow>({ columns: cols, data: { rows: objRows } });
+        const table = useDataTable<ObjRow>({
+          columns: cols,
+          data: { rows: objRows },
+        });
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -488,7 +521,9 @@ describe("DataTable", () => {
           truncate: true,
         },
       ];
-      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
       expect(cell?.className).toContain("truncate");
       expect(isTooltipWired(cell)).toBe(false);
@@ -506,7 +541,9 @@ describe("DataTable", () => {
           truncate: true,
         },
       ];
-      const { container } = render(<TestDataTable columns={cols} />, { wrapper });
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
       const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
       expect(isTooltipWired(cells[0] ?? null)).toBe(true);
       expect(isTooltipWired(cells[1] ?? null)).toBe(true);
@@ -629,6 +666,180 @@ describe("DataTable", () => {
       expect(container.textContent).toContain("unknown");
     });
 
+    it("renders multiple badges from array accessor", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: ["urgent", "fragile"],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+              typeOptions: {
+                badgeVariantMap: { urgent: "error", fragile: "warning" },
+              },
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("urgent");
+      expect(container.textContent).toContain("fragile");
+    });
+
+    it("renders maxVisible badges with +N overflow in DataTable", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: ["a", "b", "c", "d"],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+              typeOptions: { maxVisible: 2 },
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("a");
+      expect(container.textContent).toContain("b");
+      expect(container.textContent).toContain("+2");
+      expect(container.textContent).not.toContain("c");
+      expect(container.textContent).not.toContain("d");
+    });
+
+    it("renders placeholder for empty array in badge column", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: [] as string[],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("—");
+    });
+
+    it("renders placeholder for array of all-null values in badge column", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: [null, null] as (string | null)[],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags as unknown as string[],
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("—");
+    });
+
+    it("renders placeholder for array of empty strings in badge column", () => {
+      const rows = [
+        {
+          id: "1",
+          name: "Item",
+          tags: ["", ""],
+          status: "shipped",
+          amount: 100,
+          date: "2026-01-01",
+          detailUrl: "/items/1",
+        },
+      ];
+      function Harness() {
+        const table = useDataTable<(typeof rows)[number]>({
+          columns: [
+            {
+              label: "Tags",
+              type: "badge",
+              accessor: (r) => r.tags,
+            },
+          ],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("—");
+    });
+
     it("renders link cells with anchor when href is provided", () => {
       function RouterWrapper({ children }: { children: ReactNode }) {
         return <MemoryRouter>{wrapper({ children })}</MemoryRouter>;
@@ -660,6 +871,65 @@ describe("DataTable", () => {
     it("falls back to row[id] when accessor is omitted", () => {
       const { container } = renderTypedTable([{ id: "name", type: "text" }]);
       expect(container.textContent).toContain("Order 1");
+    });
+
+    it("renders boolean as ✓/✗ when no type is set", () => {
+      type BoolRow = { id: string; active: boolean };
+      const rows: BoolRow[] = [
+        { id: "1", active: true },
+        { id: "2", active: false },
+      ];
+      function Harness() {
+        const table = useDataTable<BoolRow>({
+          columns: [{ id: "active", label: "Active", accessor: (r) => r.active }],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain("✓");
+      expect(container.textContent).toContain("✗");
+    });
+
+    it("renders Date as locale string when no type is set", () => {
+      type DateRow = { id: string; createdAt: Date };
+      const date = new Date("2026-03-15T00:00:00Z");
+      const rows: DateRow[] = [{ id: "1", createdAt: date }];
+      function Harness() {
+        const table = useDataTable<DateRow>({
+          columns: [{ id: "createdAt", label: "Created", accessor: (r) => r.createdAt }],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain(date.toLocaleDateString());
+    });
+
+    it("renders object as JSON when no type is set", () => {
+      type ObjRow = { id: string; meta: Record<string, unknown> };
+      const rows: ObjRow[] = [{ id: "1", meta: { foo: "bar" } }];
+      function Harness() {
+        const table = useDataTable<ObjRow>({
+          columns: [{ id: "meta", label: "Meta", accessor: (r) => r.meta }],
+          data: { rows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(container.textContent).toContain('{"foo":"bar"}');
     });
 
     it("explicit render overrides type renderer", () => {
@@ -721,17 +991,35 @@ describe("DataTable", () => {
       // `render` (and drop `type`) when the cell value isn't a primitive.
 
       // @ts-expect-error — text accessor cannot return an array
-      const textArr: Column<TypedRow> = { type: "text", accessor: () => [1, 2] };
+      const textArr: Column<TypedRow> = {
+        type: "text",
+        accessor: () => [1, 2],
+      };
       // @ts-expect-error — text accessor cannot return a plain object
-      const textObj: Column<TypedRow> = { type: "text", accessor: () => ({ a: 1 }) };
+      const textObj: Column<TypedRow> = {
+        type: "text",
+        accessor: () => ({ a: 1 }),
+      };
       // @ts-expect-error — number accessor cannot return an object
-      const numberObj: Column<TypedRow> = { type: "number", accessor: () => ({ value: 1 }) };
+      const numberObj: Column<TypedRow> = {
+        type: "number",
+        accessor: () => ({ value: 1 }),
+      };
       // @ts-expect-error — money accessor cannot return an array
-      const moneyArr: Column<TypedRow> = { type: "money", accessor: () => [100] };
+      const moneyArr: Column<TypedRow> = {
+        type: "money",
+        accessor: () => [100],
+      };
       // @ts-expect-error — date accessor cannot return an array
-      const dateArr: Column<TypedRow> = { type: "date", accessor: () => [2026, 5, 13] };
-      // @ts-expect-error — badge accessor cannot return an array
-      const badgeArr: Column<TypedRow> = { type: "badge", accessor: () => ["a", "b"] };
+      const dateArr: Column<TypedRow> = {
+        type: "date",
+        accessor: () => [2026, 5, 13],
+      };
+      // badge accessor CAN return an array (multi-badge support)
+      const badgeArr: Column<TypedRow> = {
+        type: "badge",
+        accessor: () => ["a", "b"],
+      };
       // @ts-expect-error — link accessor cannot return a plain object
       const linkObj: Column<TypedRow> = {
         type: "link",
@@ -740,7 +1028,10 @@ describe("DataTable", () => {
       };
 
       // Date is allowed on the date branch (and only there).
-      const dateOk: Column<TypedRow> = { type: "date", accessor: () => new Date() };
+      const dateOk: Column<TypedRow> = {
+        type: "date",
+        accessor: () => new Date(),
+      };
       // The untyped branch keeps `unknown` — callers escape the built-in
       // renderer entirely by providing `render`, so any return is fine.
       const untypedAny: Column<TypedRow> = {

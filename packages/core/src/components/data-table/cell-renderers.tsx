@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { Badge } from "@/components/badge";
+import { BadgeList } from "@/components/badge-list";
 import type {
   BadgeCellOptions,
-  BadgeVariant,
   Column,
   DateCellOptions,
   LinkCellOptions,
@@ -49,8 +48,18 @@ function toDate(value: unknown): Date | null {
 }
 
 function renderText(value: unknown): ReactNode {
-  if (isEmpty(value)) return PLACEHOLDER;
-  return String(value);
+  switch (true) {
+    case isEmpty(value):
+      return PLACEHOLDER;
+    case typeof value === "boolean":
+      return value ? "✓" : "✗";
+    case value instanceof Date:
+      return value.toLocaleDateString();
+    case typeof value === "object":
+      return JSON.stringify(value);
+    default:
+      return String(value);
+  }
 }
 
 function renderNumber(value: unknown, options: NumberCellOptions | undefined): ReactNode {
@@ -79,7 +88,10 @@ function renderMoney<TRow extends Record<string, unknown>>(
   // `maxDecimals` raises the cap above the currency default while keeping the
   // minimum at the currency default (e.g. 2 for USD). Lets a JPY column stay
   // at 0 decimals while a USD price-detail column shows up to 4.
-  const formatOptions: Intl.NumberFormatOptions = { style: "currency", currency };
+  const formatOptions: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency,
+  };
   if (options?.maxDecimals != null) {
     formatOptions.maximumFractionDigits = options.maxDecimals;
   }
@@ -117,12 +129,10 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
 }
 
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
-  if (isEmpty(value)) return PLACEHOLDER;
-  const key = String(value);
-  const variant: BadgeVariant =
-    options?.badgeVariantMap?.[key] ?? options?.defaultBadgeVariant ?? "neutral";
-  const label = options?.badgeLabelMap?.[key] ?? key;
-  return <Badge variant={variant}>{label}</Badge>;
+  const items = Array.isArray(value) ? value : value != null ? [value] : [];
+  const nonEmpty = items.filter((v) => v != null && v !== "");
+  if (nonEmpty.length === 0) return PLACEHOLDER;
+  return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;
 }
 
 function renderLink<TRow extends Record<string, unknown>>(

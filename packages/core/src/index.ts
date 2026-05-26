@@ -84,6 +84,7 @@ export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 
 // Components
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
+export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,

@@ -9,6 +9,7 @@ export type Product = {
   price: number;
   stock: number;
   status: "Active" | "Draft" | "Archived";
+  tags: string[];
 };
 
 export const allProducts: Product[] = [
@@ -24,6 +25,7 @@ export const allProducts: Product[] = [
     price: 499.99,
     stock: 42,
     status: "Active",
+    tags: ["Ergonomic", "Office", "Best Seller"],
   },
   {
     id: "p-002",
@@ -37,6 +39,7 @@ export const allProducts: Product[] = [
     price: 899.0,
     stock: 15,
     status: "Active",
+    tags: ["Motorized", "Office", "Adjustable", "Premium"],
   },
   {
     id: "p-003",
@@ -49,6 +52,7 @@ export const allProducts: Product[] = [
     price: 159.99,
     stock: 230,
     status: "Active",
+    tags: ["Mechanical", "RGB", "Hot-swap"],
   },
   {
     id: "p-004",
@@ -62,6 +66,7 @@ export const allProducts: Product[] = [
     price: 79.99,
     stock: 0,
     status: "Draft",
+    tags: ["USB-C", "Portable"],
   },
   {
     id: "p-005",
@@ -75,6 +80,7 @@ export const allProducts: Product[] = [
     price: 129.0,
     stock: 57,
     status: "Active",
+    tags: ["Ergonomic", "Adjustable"],
   },
   {
     id: "p-006",
@@ -87,6 +93,7 @@ export const allProducts: Product[] = [
     price: 89.99,
     stock: 120,
     status: "Archived",
+    tags: ["HD", "Autofocus"],
   },
   {
     id: "p-007",
@@ -100,6 +107,7 @@ export const allProducts: Product[] = [
     price: 45.0,
     stock: 88,
     status: "Active",
+    tags: ["LED", "USB Charging"],
   },
   {
     id: "p-008",
@@ -113,6 +121,7 @@ export const allProducts: Product[] = [
     price: 29.99,
     stock: 200,
     status: "Draft",
+    tags: ["Cable Management"],
   },
   {
     id: "p-009",
@@ -126,6 +135,7 @@ export const allProducts: Product[] = [
     price: 349.99,
     stock: 64,
     status: "Active",
+    tags: ["ANC", "Bluetooth", "Wireless", "Premium"],
   },
   {
     id: "p-010",
@@ -138,6 +148,7 @@ export const allProducts: Product[] = [
     price: 59.99,
     stock: 110,
     status: "Active",
+    tags: ["Portable", "Foldable"],
   },
   {
     id: "p-011",
@@ -151,6 +162,7 @@ export const allProducts: Product[] = [
     price: 69.99,
     stock: 180,
     status: "Active",
+    tags: ["Ergonomic", "Wireless", "Rechargeable"],
   },
   {
     id: "p-012",
@@ -164,6 +176,7 @@ export const allProducts: Product[] = [
     price: 34.99,
     stock: 300,
     status: "Active",
+    tags: ["Eco-friendly", "Non-slip"],
   },
   {
     id: "p-013",
@@ -177,6 +190,7 @@ export const allProducts: Product[] = [
     price: 249.0,
     stock: 22,
     status: "Draft",
+    tags: ["Adjustable", "Heavy-duty"],
   },
   {
     id: "p-014",
@@ -189,6 +203,7 @@ export const allProducts: Product[] = [
     price: 24.99,
     stock: 500,
     status: "Active",
+    tags: ["Surge Protection"],
   },
   {
     id: "p-015",
@@ -202,6 +217,7 @@ export const allProducts: Product[] = [
     price: 189.0,
     stock: 18,
     status: "Active",
+    tags: ["Magnetic", "Office"],
   },
   {
     id: "p-016",
@@ -215,6 +231,7 @@ export const allProducts: Product[] = [
     price: 129.99,
     stock: 75,
     status: "Active",
+    tags: ["USB", "Cardioid", "Streaming"],
   },
   {
     id: "p-017",
@@ -228,6 +245,7 @@ export const allProducts: Product[] = [
     price: 349.0,
     stock: 8,
     status: "Draft",
+    tags: ["Lockable", "Heavy-duty", "Office"],
   },
   {
     id: "p-018",
@@ -240,6 +258,7 @@ export const allProducts: Product[] = [
     price: 14.99,
     stock: 600,
     status: "Active",
+    tags: ["4K", "Braided"],
   },
   {
     id: "p-019",
@@ -253,6 +272,7 @@ export const allProducts: Product[] = [
     price: 79.0,
     stock: 45,
     status: "Archived",
+    tags: ["Ergonomic", "Adjustable"],
   },
   {
     id: "p-020",
@@ -266,6 +286,7 @@ export const allProducts: Product[] = [
     price: 199.99,
     stock: 33,
     status: "Active",
+    tags: ["Thunderbolt", "USB-C", "4K", "Ethernet", "Premium"],
   },
 ];
 

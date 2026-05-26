@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
 import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
@@ -20,14 +19,6 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
 // =============================================================================
 // inferColumns() — metadata-driven column defaults
 // =============================================================================
-
-function formatValue(value: unknown): ReactNode {
-  if (value == null) return "";
-  if (typeof value === "boolean") return value ? "✓" : "✗";
-  if (value instanceof Date) return value.toLocaleDateString();
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
 
 /**
  * Return a function that produces `Column` from metadata field names.
@@ -69,9 +60,6 @@ export function inferColumns<
       // `getCellValue` falls through to `row[col.id]`.
       id: fieldName,
       label,
-      render: ((row: Record<string, unknown>) => formatValue(row[fieldName])) as (
-        row: TRow,
-      ) => ReactNode,
       width: columnOptions?.width,
       sort,
       filter,

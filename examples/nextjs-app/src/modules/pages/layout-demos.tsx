@@ -10,7 +10,11 @@ import {
 import * as React from "react";
 import { mockPurchaseOrder } from "./purchase-order-demo";
 import { activityCardDemoActivities } from "./activity-card-demo";
-import { ReceiptIcon, FileTextIcon, ExternalLinkIcon } from "./action-panel-demo";
+import {
+  Receipt as ReceiptIcon,
+  FileText as FileTextIcon,
+  ExternalLink as ExternalLinkIcon,
+} from "lucide-react";
 
 /**
  * Placeholder component with subtle diagonal lines pattern for empty content areas

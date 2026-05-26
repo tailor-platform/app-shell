@@ -61,6 +61,11 @@ export function resolveBadgeLabel(
   return options?.badgeLabelMap?.[value];
 }
 
+/**
+ * Normalize a value into an array. If the value is already an array, return it
+ * as-is. If it is a non-null single value, wrap it in an array. Otherwise
+ * return an empty array.
+ */
 export function toValueArray(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
   if (value != null) return [value];

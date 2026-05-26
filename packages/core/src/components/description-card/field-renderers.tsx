@@ -206,6 +206,12 @@ function formatAddress(value: unknown): string[] {
   return [String(value)];
 }
 
+function toValueArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (value != null) return [value];
+  return [];
+}
+
 // ============================================================================
 // COPY BUTTON
 // ============================================================================
@@ -336,12 +342,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
  * Render a badge field
  */
 function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
-  let values: unknown[] = [];
-  if (Array.isArray(field.value)) {
-    values = field.value as unknown[];
-  } else if (field.value != null) {
-    values = [field.value];
-  }
+  const values = toValueArray(field.value);
 
   if (values.every((v) => isEmpty(v))) {
     return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;

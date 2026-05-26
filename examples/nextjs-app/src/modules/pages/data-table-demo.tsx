@@ -6,6 +6,7 @@ import {
   createColumnHelper,
   Layout,
   type RowAction,
+  useSearchParamsPersistence,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
 import { type Product, useProductsQuery } from "./mock-data";
@@ -140,9 +141,11 @@ const productRowActions: RowAction<Product>[] = [
 // ---------------------------------------------------------------------------
 
 const DataTableDemoPage = () => {
+  const persistence = useSearchParamsPersistence({ prefix: "dt1" });
   const { variables, control } = useCollectionVariables({
     params: { pageSize: 5 },
     tableMetadata: productMetadata,
+    persistence,
   });
   const { data, loading } = useProductsQuery(variables);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

@@ -347,7 +347,7 @@ export type TableOrderableFieldName<TTable extends TableMetadata> =
     : never;
 
 // =============================================================================
-// Collection State Synchronizer
+// Collection State Persistence
 // =============================================================================
 
 /**
@@ -360,22 +360,15 @@ export interface CollectionSnapshot<TFieldName extends string = string> {
 }
 
 /**
- * Pluggable synchronizer that persists collection state to an external store
+ * Pluggable persistence layer that stores collection state to an external store
  * (URL search params, localStorage, server, etc.).
  *
- * - `subscribe()` registers a listener for external state changes (e.g. popstate).
- *   Called immediately with the current snapshot on subscription (BehaviorSubject style).
- * - `write()` is called on every state change. Implementations may internally
- *   debounce, batch, or perform async operations (fire-and-forget).
+ * - `read()` is called once on mount to hydrate initial state.
+ * - `write()` is called on every user-initiated state change.
  */
-export interface CollectionStateSynchronizer<TFieldName extends string = string> {
-  /**
-   * Subscribe to external state changes. The callback is invoked immediately
-   * with the current persisted snapshot (or undefined), then again whenever
-   * the external store changes (e.g. browser back/forward).
-   * Returns an unsubscribe function.
-   */
-  subscribe(onChange: (snapshot: CollectionSnapshot<TFieldName> | undefined) => void): () => void;
+export interface CollectionStatePersistence<TFieldName extends string = string> {
+  /** Read persisted state. Called once on mount to hydrate initial state. */
+  read(): CollectionSnapshot<TFieldName> | undefined;
   /** Write current state. May be async internally — the hook does not await. */
   write(state: Required<CollectionSnapshot<TFieldName>>): void;
 }
@@ -396,8 +389,8 @@ export interface UseCollectionOptions<
     initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
     pageSize?: number;
   };
-  /** Optional synchronizer to persist collection state to an external store. */
-  synchronizer?: CollectionStateSynchronizer<TFieldName>;
+  /** Optional persistence layer to store collection state to an external store. */
+  persistence?: CollectionStatePersistence<TFieldName>;
 }
 
 /**

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router";
+import { useCallback, useMemo, useRef } from "react";
 import type {
   CollectionSnapshot,
-  CollectionStateSynchronizer,
+  CollectionStatePersistence,
   Filter,
   SortState,
 } from "@/types/collection";
@@ -11,7 +10,7 @@ const KEY_PAGE_SIZE = "p";
 const KEY_SORT = "s";
 const FILTER_PREFIX = "f.";
 
-export interface UseSearchParamsSynchronizerOptions {
+export interface UseSearchParamsPersistenceOptions {
   /** Key prefix to avoid collisions when multiple tables share a page. */
   prefix?: string;
   /** Debounce interval in ms for URL writes. Default: no debounce. */
@@ -19,7 +18,10 @@ export interface UseSearchParamsSynchronizerOptions {
 }
 
 /**
- * Synchronizer hook that persists collection state to URL search params.
+ * Persistence hook that stores collection state in URL search params.
+ *
+ * - `read()` parses current `window.location.search` on mount.
+ * - `write()` updates URL via `window.history.replaceState`.
  *
  * URL format:
  * - Page size: `p=20`
@@ -28,98 +30,71 @@ export interface UseSearchParamsSynchronizerOptions {
  *
  * @example
  * ```tsx
- * const synchronizer = useSearchParamsSynchronizer();
+ * const persistence = useSearchParamsPersistence();
  * const { variables, control } = useCollectionVariables({
  *   params: { pageSize: 20 },
- *   synchronizer,
+ *   persistence,
  * });
  * ```
  */
-export function useSearchParamsSynchronizer(
-  options: UseSearchParamsSynchronizerOptions = {},
-): CollectionStateSynchronizer {
+export function useSearchParamsPersistence(
+  options: UseSearchParamsPersistenceOptions = {},
+): CollectionStatePersistence {
   const { prefix = "", debounceMs } = options;
-  const [searchParams, setSearchParams] = useSearchParams();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onChangeRef = useRef<((snapshot: CollectionSnapshot | undefined) => void) | null>(null);
-  const isInternalWriteRef = useRef(false);
 
   const prefixedKey = useCallback((key: string) => (prefix ? `${prefix}.${key}` : key), [prefix]);
 
-  // Notify subscriber when searchParams change externally (e.g. popstate)
-  useEffect(() => {
-    if (isInternalWriteRef.current) {
-      isInternalWriteRef.current = false;
-      return;
-    }
-    if (onChangeRef.current) {
-      onChangeRef.current(readFromParams(searchParams, prefixedKey));
-    }
-  }, [searchParams, prefixedKey]);
-
-  const subscribe = useCallback(
-    (onChange: (snapshot: CollectionSnapshot | undefined) => void): (() => void) => {
-      onChangeRef.current = onChange;
-      // Immediately emit current state (BehaviorSubject style)
-      onChange(readFromParams(searchParams, prefixedKey));
-      return () => {
-        onChangeRef.current = null;
-      };
-    },
-    [searchParams, prefixedKey],
-  );
+  const read = useCallback((): CollectionSnapshot | undefined => {
+    return readFromParams(new URLSearchParams(window.location.search), prefixedKey);
+  }, [prefixedKey]);
 
   const write = useCallback(
     (state: Required<CollectionSnapshot>): void => {
       const doWrite = () => {
-        isInternalWriteRef.current = true;
+        const params = new URLSearchParams(window.location.search);
         const pageSizeKey = prefixedKey(KEY_PAGE_SIZE);
         const sortKey = prefixedKey(KEY_SORT);
         const filterPrefix = prefixedKey(FILTER_PREFIX);
 
-        setSearchParams(
-          (prev) => {
-            const next = new URLSearchParams(prev);
+        // Page size
+        if (state.pageSize) {
+          params.set(pageSizeKey, String(state.pageSize));
+        } else {
+          params.delete(pageSizeKey);
+        }
 
-            // Page size
-            if (state.pageSize) {
-              next.set(pageSizeKey, String(state.pageSize));
-            } else {
-              next.delete(pageSizeKey);
-            }
+        // Sort
+        if (state.sort && state.sort.length > 0) {
+          const { field, direction } = state.sort[0];
+          params.set(sortKey, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
+        } else {
+          params.delete(sortKey);
+        }
 
-            // Sort
-            if (state.sort && state.sort.length > 0) {
-              const { field, direction } = state.sort[0];
-              next.set(sortKey, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
-            } else {
-              next.delete(sortKey);
-            }
+        // Clear existing filters with this prefix
+        for (const key of Array.from(params.keys())) {
+          if (key.startsWith(filterPrefix)) params.delete(key);
+        }
 
-            // Clear existing filters with this prefix
-            for (const key of Array.from(next.keys())) {
-              if (key.startsWith(filterPrefix)) next.delete(key);
-            }
-
-            // Write filters
-            if (state.filters) {
-              for (const filter of state.filters) {
-                const key = `${filterPrefix}${filter.field}:${filter.operator}`;
-                if (Array.isArray(filter.value)) {
-                  for (const v of filter.value) {
-                    const encoded = stringifyPrimitive(v);
-                    if (encoded !== "") next.append(key, encoded);
-                  }
-                } else if (filter.value != null && filter.value !== "") {
-                  next.set(key, encodeFilterValue(filter.value));
-                }
+        // Write filters
+        if (state.filters) {
+          for (const filter of state.filters) {
+            const key = `${filterPrefix}${filter.field}:${filter.operator}`;
+            if (Array.isArray(filter.value)) {
+              for (const v of filter.value) {
+                const encoded = stringifyPrimitive(v);
+                if (encoded !== "") params.append(key, encoded);
               }
+            } else if (filter.value != null && filter.value !== "") {
+              params.set(key, encodeFilterValue(filter.value));
             }
+          }
+        }
 
-            return next;
-          },
-          { replace: true },
-        );
+        const search = params.toString();
+        const url = search ? `${window.location.pathname}?${search}` : window.location.pathname;
+        window.history.replaceState(null, "", url);
       };
 
       if (debounceMs != null && debounceMs > 0) {
@@ -129,10 +104,10 @@ export function useSearchParamsSynchronizer(
         doWrite();
       }
     },
-    [prefixedKey, setSearchParams, debounceMs],
+    [prefixedKey, debounceMs],
   );
 
-  return { subscribe, write };
+  return useMemo(() => ({ read, write }), [read, write]);
 }
 
 // ---------------------------------------------------------------------------

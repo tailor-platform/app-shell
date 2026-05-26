@@ -157,7 +157,7 @@ export {
   type UseCollectionOptions,
   type UseCollectionReturn,
   type CollectionSnapshot,
-  type CollectionStateSynchronizer,
+  type CollectionStatePersistence,
   type FieldType,
   type FieldMetadata,
   type TableMetadata,
@@ -185,7 +185,7 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
-export { useSearchParamsSynchronizer } from "./hooks/use-search-params-synchronizer";
+export { useSearchParamsPersistence } from "./hooks/use-search-params-persistence";
 export {
   CollectionControlProvider,
   useCollectionControl,

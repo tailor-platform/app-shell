@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type {
   BuildQueryVariables,
   CollectionControl,
@@ -6,6 +6,7 @@ import type {
   Filter,
   FilterOperator,
   PaginationVariables,
+  SortState,
   TableFieldName,
   TableMetadata,
   TableMetadataFilter,
@@ -14,7 +15,80 @@ import type {
   UseCollectionReturn,
 } from "@/types/collection";
 import { useCursorPagination } from "./use-cursor-pagination";
-import { collectionReducer, useSynchronizerBridge } from "./use-collection-state";
+
+// -----------------------------------------------------------------------------
+// Reducer
+// -----------------------------------------------------------------------------
+
+interface CollectionState {
+  filters: Filter[];
+  sortStates: SortState[];
+  pageSize: number;
+}
+
+type CollectionAction =
+  | {
+      type: "ADD_FILTER";
+      field: string;
+      operator: string;
+      value: unknown;
+      caseSensitive?: boolean;
+    }
+  | { type: "SET_FILTERS"; filters: Filter[] }
+  | { type: "REMOVE_FILTER"; field: string }
+  | { type: "CLEAR_FILTERS" }
+  | { type: "SET_SORT"; field: string; direction?: "Asc" | "Desc" }
+  | { type: "CLEAR_SORT" }
+  | { type: "SET_PAGE_SIZE"; pageSize: number };
+
+function collectionReducer(state: CollectionState, action: CollectionAction): CollectionState {
+  switch (action.type) {
+    case "ADD_FILTER": {
+      const { field, operator, value, caseSensitive } = action;
+      const newFilter: Filter = {
+        field,
+        operator: operator as Filter["operator"],
+        value,
+        caseSensitive,
+      };
+      const existing = state.filters.findIndex((f) => f.field === field);
+      const filters =
+        existing >= 0
+          ? state.filters.map((f, i) => (i === existing ? newFilter : f))
+          : [...state.filters, newFilter];
+      return { ...state, filters };
+    }
+    case "SET_FILTERS":
+      return { ...state, filters: action.filters };
+    case "REMOVE_FILTER":
+      return {
+        ...state,
+        filters: state.filters.filter((f) => f.field !== action.field),
+      };
+    case "CLEAR_FILTERS":
+      return { ...state, filters: [] };
+    case "SET_SORT": {
+      const { field, direction } = action;
+      if (direction === undefined) {
+        return {
+          ...state,
+          sortStates: state.sortStates.filter((s) => s.field !== field),
+        };
+      }
+      const filtered = state.sortStates.filter((s) => s.field !== field);
+      return {
+        ...state,
+        sortStates: [...filtered, { field, direction }],
+      };
+    }
+    case "CLEAR_SORT":
+      return { ...state, sortStates: [] };
+    case "SET_PAGE_SIZE":
+      return { ...state, pageSize: action.pageSize };
+    default:
+      return state;
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Case-insensitive regex conversion helpers
@@ -130,25 +204,38 @@ export function useCollectionVariables(
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): unknown {
-  const { params = {}, synchronizer } = options;
+  const { params = {}, persistence } = options;
   const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
 
   // ---------------------------------------------------------------------------
   // State (reducer-based)
   // ---------------------------------------------------------------------------
-  const [state, dispatch] = useReducer(collectionReducer, {
-    filters: initialFilters,
-    sortStates: initialSort,
-    pageSize: initialPageSize,
-    source: "init",
+  const [state, dispatch] = useReducer(collectionReducer, undefined, () => {
+    const snapshot = persistence?.read();
+    return {
+      filters: snapshot?.filters ?? initialFilters,
+      sortStates: snapshot?.sort ?? initialSort,
+      pageSize: snapshot?.pageSize ?? initialPageSize,
+    };
   });
 
   const { filters, sortStates, pageSize } = state;
 
   // ---------------------------------------------------------------------------
-  // Synchronizer bridge (subscribe + write-back)
+  // Persistence write-back (skip initial render)
   // ---------------------------------------------------------------------------
-  useSynchronizerBridge(synchronizer, state, dispatch);
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    persistence?.write({
+      filters: state.filters,
+      sort: state.sortStates,
+      pageSize: state.pageSize,
+    });
+  }, [state.filters, state.sortStates, state.pageSize, persistence]);
 
   // ---------------------------------------------------------------------------
   // Cursor pagination (pageSize owned by reducer, passed in)

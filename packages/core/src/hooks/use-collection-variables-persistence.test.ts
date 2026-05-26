@@ -1,34 +1,19 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import type { CollectionSnapshot, CollectionStateSynchronizer } from "@/types/collection";
+import type { CollectionSnapshot, CollectionStatePersistence } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
 
-describe("useCollectionVariables with synchronizer", () => {
-  function createMockSynchronizer(initial?: CollectionSnapshot) {
-    const subscribers: Array<(snapshot: CollectionSnapshot | undefined) => void> = [];
+describe("useCollectionVariables with persistence", () => {
+  function createMockPersistence(initial?: CollectionSnapshot) {
     return {
-      subscribe: vi.fn((onChange) => {
-        subscribers.push(onChange);
-        // BehaviorSubject: emit immediately
-        onChange(initial);
-        return () => {
-          const idx = subscribers.indexOf(onChange);
-          if (idx >= 0) subscribers.splice(idx, 1);
-        };
-      }),
+      read: vi.fn(() => initial),
       write: vi.fn(),
-      // Test helper to simulate external change
-      emit(snapshot: CollectionSnapshot | undefined) {
-        for (const cb of subscribers) cb(snapshot);
-      },
-    } satisfies CollectionStateSynchronizer & {
-      emit: (s: CollectionSnapshot | undefined) => void;
-    };
+    } satisfies CollectionStatePersistence;
   }
 
-  describe("subscribe (initial hydration)", () => {
-    it("uses synchronizer initial state over params defaults", () => {
-      const synchronizer = createMockSynchronizer({
+  describe("read (initial hydration)", () => {
+    it("uses persistence initial state over params defaults", () => {
+      const persistence = createMockPersistence({
         filters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
         sort: [{ field: "name", direction: "Asc" }],
         pageSize: 50,
@@ -37,11 +22,11 @@ describe("useCollectionVariables with synchronizer", () => {
       const { result } = renderHook(() =>
         useCollectionVariables({
           params: { pageSize: 20 },
-          synchronizer,
+          persistence,
         }),
       );
 
-      expect(synchronizer.subscribe).toHaveBeenCalledOnce();
+      expect(persistence.read).toHaveBeenCalledOnce();
       expect(result.current.control.filters).toEqual([
         { field: "status", operator: "eq", value: "ACTIVE" },
       ]);
@@ -49,8 +34,8 @@ describe("useCollectionVariables with synchronizer", () => {
       expect(result.current.control.pageSize).toBe(50);
     });
 
-    it("falls back to params when synchronizer emits undefined", () => {
-      const synchronizer = createMockSynchronizer(undefined);
+    it("falls back to params when persistence returns undefined", () => {
+      const persistence = createMockPersistence(undefined);
 
       const { result } = renderHook(() =>
         useCollectionVariables({
@@ -58,7 +43,7 @@ describe("useCollectionVariables with synchronizer", () => {
             pageSize: 30,
             initialSort: [{ field: "createdAt", direction: "Desc" }],
           },
-          synchronizer,
+          persistence,
         }),
       );
 
@@ -69,8 +54,8 @@ describe("useCollectionVariables with synchronizer", () => {
       expect(result.current.control.filters).toEqual([]);
     });
 
-    it("partially overrides params (only pageSize from synchronizer)", () => {
-      const synchronizer = createMockSynchronizer({
+    it("partially overrides params (only pageSize from persistence)", () => {
+      const persistence = createMockPersistence({
         pageSize: 100,
       });
 
@@ -80,44 +65,19 @@ describe("useCollectionVariables with synchronizer", () => {
             pageSize: 20,
             initialSort: [{ field: "name", direction: "Asc" }],
           },
-          synchronizer,
+          persistence,
         }),
       );
 
       expect(result.current.control.pageSize).toBe(100);
-      // Sort remains from params since synchronizer didn't provide it
+      // Sort remains from params since persistence didn't provide it
       expect(result.current.control.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
-    });
-  });
-
-  describe("subscribe (external changes)", () => {
-    it("updates state when synchronizer emits external change", () => {
-      const synchronizer = createMockSynchronizer(undefined);
-
-      const { result } = renderHook(() =>
-        useCollectionVariables({
-          params: { pageSize: 20 },
-          synchronizer,
-        }),
-      );
-
-      act(() => {
-        synchronizer.emit({
-          filters: [{ field: "name", operator: "contains", value: "test" }],
-          pageSize: 50,
-        });
-      });
-
-      expect(result.current.control.filters).toEqual([
-        { field: "name", operator: "contains", value: "test" },
-      ]);
-      expect(result.current.control.pageSize).toBe(50);
     });
   });
 
   describe("write (state persistence)", () => {
     it("does not call write on initial mount (skip first write)", () => {
-      const synchronizer = createMockSynchronizer({
+      const persistence = createMockPersistence({
         filters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
         pageSize: 50,
       });
@@ -125,20 +85,20 @@ describe("useCollectionVariables with synchronizer", () => {
       renderHook(() =>
         useCollectionVariables({
           params: { pageSize: 20 },
-          synchronizer,
+          persistence,
         }),
       );
 
-      expect(synchronizer.write).not.toHaveBeenCalled();
+      expect(persistence.write).not.toHaveBeenCalled();
     });
 
     it("calls write on filter change", () => {
-      const synchronizer = createMockSynchronizer(undefined);
+      const persistence = createMockPersistence(undefined);
 
       const { result } = renderHook(() =>
         useCollectionVariables({
           params: { pageSize: 20 },
-          synchronizer,
+          persistence,
         }),
       );
 
@@ -146,7 +106,7 @@ describe("useCollectionVariables with synchronizer", () => {
         result.current.control.addFilter("status", "eq", "ACTIVE");
       });
 
-      expect(synchronizer.write).toHaveBeenCalledWith(
+      expect(persistence.write).toHaveBeenCalledWith(
         expect.objectContaining({
           filters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
           pageSize: 20,
@@ -155,12 +115,12 @@ describe("useCollectionVariables with synchronizer", () => {
     });
 
     it("calls write on sort change", () => {
-      const synchronizer = createMockSynchronizer(undefined);
+      const persistence = createMockPersistence(undefined);
 
       const { result } = renderHook(() =>
         useCollectionVariables({
           params: { pageSize: 20 },
-          synchronizer,
+          persistence,
         }),
       );
 
@@ -168,7 +128,7 @@ describe("useCollectionVariables with synchronizer", () => {
         result.current.control.setSort("name", "Desc");
       });
 
-      expect(synchronizer.write).toHaveBeenCalledWith(
+      expect(persistence.write).toHaveBeenCalledWith(
         expect.objectContaining({
           sort: [{ field: "name", direction: "Desc" }],
           pageSize: 20,
@@ -177,12 +137,12 @@ describe("useCollectionVariables with synchronizer", () => {
     });
 
     it("calls write on pageSize change", () => {
-      const synchronizer = createMockSynchronizer(undefined);
+      const persistence = createMockPersistence(undefined);
 
       const { result } = renderHook(() =>
         useCollectionVariables({
           params: { pageSize: 20 },
-          synchronizer,
+          persistence,
         }),
       );
 
@@ -190,14 +150,14 @@ describe("useCollectionVariables with synchronizer", () => {
         result.current.control.setPageSize(50);
       });
 
-      expect(synchronizer.write).toHaveBeenCalledWith(
+      expect(persistence.write).toHaveBeenCalledWith(
         expect.objectContaining({
           pageSize: 50,
         }),
       );
     });
 
-    it("does not crash when no synchronizer is provided", () => {
+    it("does not crash when no persistence is provided", () => {
       const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 20 } }));
 
       act(() => {

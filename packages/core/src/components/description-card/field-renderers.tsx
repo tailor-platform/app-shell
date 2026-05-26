@@ -336,11 +336,12 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
  * Render a badge field
  */
 function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
-  const values = Array.isArray(field.value)
-    ? (field.value as unknown[])
-    : field.value != null
-      ? [field.value]
-      : [];
+  let values: unknown[] = [];
+  if (Array.isArray(field.value)) {
+    values = field.value as unknown[];
+  } else if (field.value != null) {
+    values = [field.value];
+  }
 
   if (values.every((v) => isEmpty(v))) {
     return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;

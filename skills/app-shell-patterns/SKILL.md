@@ -13,8 +13,8 @@ Select and implement the correct UI pattern using @tailor-platform/app-shell com
 
 ### pattern/list
 
-| Slug | Name | Description |
-| ---- | ---- | ----------- |
+| Slug                      | Name            | Description                                                |
+| ------------------------- | --------------- | ---------------------------------------------------------- |
 | `pattern/list/dense-scan` | Dense Scan List | High-density scannable list for browsing large record sets |
 
 ## How to Use

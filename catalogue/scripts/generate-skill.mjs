@@ -97,11 +97,7 @@ async function main() {
 
     for (const filePath of patternFiles) {
       const content = await readFile(filePath, "utf-8");
-      const {
-        data: meta,
-        content: body,
-        matter: rawFrontmatter,
-      } = matter(content);
+      const { data: meta, content: body, matter: rawFrontmatter } = matter(content);
       if (!meta.slug) {
         console.warn(`Warning: No slug in frontmatter of ${filePath}`);
         continue;
@@ -135,18 +131,14 @@ async function main() {
   await writeFile(join(skillsDir, "SKILL.md"), skillMd);
   console.log(`  Generated SKILL.md`);
 
-  console.log(
-    `\nDone: ${patterns.length} pattern(s) → skills/app-shell-patterns/`,
-  );
+  console.log(`\nDone: ${patterns.length} pattern(s) → skills/app-shell-patterns/`);
 }
 
 function generatePatternsTable(patterns) {
   // Group patterns by category/subcategory
   const grouped = {};
   for (const { meta } of patterns) {
-    const key = meta.subcategory
-      ? `${meta.category}/${meta.subcategory}`
-      : meta.category;
+    const key = meta.subcategory ? `${meta.category}/${meta.subcategory}` : meta.category;
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(meta);
   }
@@ -168,10 +160,7 @@ function generatePatternsTable(patterns) {
 async function generateSkillIndex(patterns) {
   const templatePath = join(__dirname, "SKILL.template.md");
   const template = await readFile(templatePath, "utf-8");
-  return template.replace(
-    "{{PATTERNS_TABLE}}",
-    generatePatternsTable(patterns),
-  );
+  return template.replace("{{PATTERNS_TABLE}}", generatePatternsTable(patterns));
 }
 
 main().catch((err) => {

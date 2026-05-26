@@ -1,5 +1,4 @@
 ---
-
 slug: pattern/list/dense-scan
 name: Dense Scan List
 category: pattern
@@ -55,9 +54,7 @@ export const columns: Column<Order>[] = [
   { label: "Customer", accessor: (row) => row.customer },
   {
     label: "Status",
-    render: (row) => (
-      <Badge variant={statusVariant[row.status]}>{row.status}</Badge>
-    ),
+    render: (row) => <Badge variant={statusVariant[row.status]}>{row.status}</Badge>,
   },
   {
     label: "Amount",
@@ -71,12 +68,7 @@ export const columns: Column<Order>[] = [
 
 ```tsx
 /* pattern: list/dense-scan */
-import {
-  DataTable,
-  useDataTable,
-  Button,
-  Input,
-} from "@tailor-platform/app-shell";
+import { DataTable, useDataTable, Button, Input } from "@tailor-platform/app-shell";
 import type { Order } from "./columns";
 import { columns } from "./columns";
 import type { DataTableData } from "@tailor-platform/app-shell";

@@ -22,9 +22,7 @@ export const columns: Column<Order>[] = [
   { label: "Customer", accessor: (row) => row.customer },
   {
     label: "Status",
-    render: (row) => (
-      <Badge variant={statusVariant[row.status]}>{row.status}</Badge>
-    ),
+    render: (row) => <Badge variant={statusVariant[row.status]}>{row.status}</Badge>,
   },
   {
     label: "Amount",

@@ -1,10 +1,5 @@
 /* pattern: list/dense-scan */
-import {
-  DataTable,
-  useDataTable,
-  Button,
-  Input,
-} from "@tailor-platform/app-shell";
+import { DataTable, useDataTable, Button, Input } from "@tailor-platform/app-shell";
 import type { Order } from "./columns";
 import { columns } from "./columns";
 import type { DataTableData } from "@tailor-platform/app-shell";

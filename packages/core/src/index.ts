@@ -156,6 +156,8 @@ export {
   type PaginationVariables,
   type UseCollectionOptions,
   type UseCollectionReturn,
+  type CollectionSnapshot,
+  type CollectionStateSynchronizer,
   type FieldType,
   type FieldMetadata,
   type TableMetadata,
@@ -183,6 +185,7 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
+export { useSearchParamsSynchronizer } from "./hooks/use-search-params-synchronizer";
 export {
   CollectionControlProvider,
   useCollectionControl,

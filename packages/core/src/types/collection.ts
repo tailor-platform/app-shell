@@ -347,6 +347,34 @@ export type TableOrderableFieldName<TTable extends TableMetadata> =
     : never;
 
 // =============================================================================
+// Collection State Synchronizer
+// =============================================================================
+
+/**
+ * Snapshot of collection state for persistence.
+ */
+export interface CollectionSnapshot<TFieldName extends string = string> {
+  filters?: Filter<TFieldName>[];
+  sort?: SortState[];
+  pageSize?: number;
+}
+
+/**
+ * Pluggable synchronizer that persists collection state to an external store
+ * (URL search params, localStorage, server, etc.).
+ *
+ * - `read()` is called synchronously on mount to hydrate initial state.
+ * - `write()` is called on every state change. Implementations may internally
+ *   debounce, batch, or perform async operations (fire-and-forget).
+ */
+export interface CollectionStateSynchronizer<TFieldName extends string = string> {
+  /** Read persisted state synchronously. Returns undefined if nothing is persisted. */
+  read(): CollectionSnapshot<TFieldName> | undefined;
+  /** Write current state. May be async internally — the hook does not await. */
+  write(state: Required<CollectionSnapshot<TFieldName>>): void;
+}
+
+// =============================================================================
 // Collection Control & Options
 // =============================================================================
 
@@ -362,6 +390,8 @@ export interface UseCollectionOptions<
     initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
     pageSize?: number;
   };
+  /** Optional synchronizer to persist collection state to an external store. */
+  synchronizer?: CollectionStateSynchronizer<TFieldName>;
 }
 
 /**

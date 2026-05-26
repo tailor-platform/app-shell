@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   BuildQueryVariables,
   CollectionControl,
@@ -130,14 +130,22 @@ export function useCollectionVariables(
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): unknown {
-  const { params = {} } = options;
+  const { params = {}, synchronizer } = options;
   const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
+
+  // ---------------------------------------------------------------------------
+  // Hydrate initial state from synchronizer (read once on mount)
+  // ---------------------------------------------------------------------------
+  const syncInitial = useRef(() => synchronizer?.read()).current();
+  const resolvedInitialFilters = syncInitial?.filters ?? initialFilters;
+  const resolvedInitialSort = syncInitial?.sort ?? initialSort;
+  const resolvedInitialPageSize = syncInitial?.pageSize ?? initialPageSize;
 
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  const [filters, setFiltersState] = useState<Filter[]>(initialFilters);
-  const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
+  const [filters, setFiltersState] = useState<Filter[]>(resolvedInitialFilters);
+  const [sortStates, setSortStates] = useState<SortState[]>(resolvedInitialSort);
 
   const {
     pageSize,
@@ -151,7 +159,21 @@ export function useCollectionVariables(
     getHasPrevPage,
     getHasNextPage,
     resetCount,
-  } = useCursorPagination(initialPageSize);
+  } = useCursorPagination(resolvedInitialPageSize);
+
+  // ---------------------------------------------------------------------------
+  // Synchronizer write-back
+  // ---------------------------------------------------------------------------
+  const synchronizerRef = useRef(synchronizer);
+  synchronizerRef.current = synchronizer;
+
+  useEffect(() => {
+    synchronizerRef.current?.write({
+      filters,
+      sort: sortStates,
+      pageSize,
+    });
+  }, [filters, sortStates, pageSize]);
 
   // ---------------------------------------------------------------------------
   // Filter operations

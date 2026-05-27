@@ -1,4 +1,5 @@
 packages:
+  - catalogue
   - e2e
   - examples/**
   - packages/**

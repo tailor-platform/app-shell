@@ -7,7 +7,7 @@ import {
   Layout,
   type RowAction,
   type TableFieldName,
-  useCollectionURLPersistence,
+  useCollectionURLState,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
 import { type Product, useProductsQuery } from "./mock-data";
@@ -142,13 +142,14 @@ const productRowActions: RowAction<Product>[] = [
 // ---------------------------------------------------------------------------
 
 const DataTableDemoPage = () => {
-  const persistence = useCollectionURLPersistence<TableFieldName<typeof productMetadata>>({
+  const urlState = useCollectionURLState<TableFieldName<typeof productMetadata>>({
     prefix: "dt1",
   });
+  const urlParams = urlState.read();
   const { variables, control } = useCollectionVariables({
-    params: { pageSize: 5 },
+    params: { ...urlParams, pageSize: urlParams.pageSize ?? 5 },
     tableMetadata: productMetadata,
-    persistence,
+    onChange: urlState.write,
   });
   const { data, loading } = useProductsQuery(variables);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

@@ -80,7 +80,7 @@ function toCaseInsensitiveRegex(operator: FilterOperator, value: string): string
  * ```
  */
 export function useCollectionVariables<const TTable extends TableMetadata>(
-  options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+  options: UseCollectionOptions<TableFieldName<TTable>> & {
     tableMetadata: TTable;
   },
 ): UseCollectionReturn<
@@ -127,22 +127,18 @@ export function useCollectionVariables(
 // incompatible via CollectionControl's contravariant TFieldName) are assignable
 // to it — every type is assignable to `unknown`. Callers always see the narrower
 // type from the overload signatures above, never `unknown`.
-export function useCollectionVariables(
-  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
-): unknown {
-  const { params = {}, persistence } = options;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCollectionVariables(options: any): unknown {
+  const { params = {}, onChange } = options as UseCollectionOptions & {
+    tableMetadata?: TableMetadata;
+  };
   const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
-
-  // ---------------------------------------------------------------------------
-  // Persistence read (once on mount)
-  // ---------------------------------------------------------------------------
-  const [snapshot] = useState(() => persistence?.read());
 
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  const [filters, setFiltersState] = useState<Filter[]>(snapshot?.filters ?? initialFilters);
-  const [sortStates, setSortStates] = useState<SortState[]>(snapshot?.sort ?? initialSort);
+  const [filters, setFiltersState] = useState<Filter[]>(initialFilters);
+  const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
 
   const {
     pageSize,
@@ -156,23 +152,26 @@ export function useCollectionVariables(
     getHasPrevPage,
     getHasNextPage,
     resetCount,
-  } = useCursorPagination(snapshot?.pageSize ?? initialPageSize);
+  } = useCursorPagination(initialPageSize);
 
   // ---------------------------------------------------------------------------
-  // Persistence write-back (skip initial render)
+  // onChange notification (skip initial render)
   // ---------------------------------------------------------------------------
   const isFirstRenderRef = useRef(true);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       return;
     }
-    persistence?.write({
+    onChangeRef.current?.({
       filters,
       sort: sortStates,
       pageSize,
     });
-  }, [filters, sortStates, pageSize, persistence]);
+  }, [filters, sortStates, pageSize]);
 
   // ---------------------------------------------------------------------------
   // Filter operations

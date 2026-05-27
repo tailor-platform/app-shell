@@ -347,30 +347,16 @@ export type TableOrderableFieldName<TTable extends TableMetadata> =
     : never;
 
 // =============================================================================
-// Collection State Persistence
+// Collection State Snapshot
 // =============================================================================
 
 /**
- * Snapshot of collection state for persistence.
+ * Snapshot of collection state passed to `onChange`.
  */
 export interface CollectionSnapshot<TFieldName extends string = string> {
-  filters?: Filter<TFieldName>[];
-  sort?: SortState[];
-  pageSize?: number;
-}
-
-/**
- * Pluggable persistence layer that stores collection state to an external store
- * (URL search params, localStorage, server, etc.).
- *
- * - `read()` is called once on mount to hydrate initial state.
- * - `write()` is called on every user-initiated state change.
- */
-export interface CollectionStatePersistence<TFieldName extends string = string> {
-  /** Read persisted state. Called once on mount to hydrate initial state. */
-  read(): CollectionSnapshot<TFieldName> | undefined;
-  /** Write current state. May be async internally — the hook does not await. */
-  write(state: Required<CollectionSnapshot<TFieldName>>): void;
+  filters: Filter<TFieldName>[];
+  sort: SortState[];
+  pageSize: number;
 }
 
 // =============================================================================
@@ -380,17 +366,14 @@ export interface CollectionStatePersistence<TFieldName extends string = string> 
 /**
  * Options for `useCollectionVariables` hook.
  */
-export interface UseCollectionOptions<
-  TFieldName extends string = string,
-  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
-> {
+export interface UseCollectionOptions<TFieldName extends string = string> {
   params?: {
-    initialFilters?: TFilter[];
-    initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
+    initialFilters?: Filter<TFieldName>[];
+    initialSort?: SortState[];
     pageSize?: number;
   };
-  /** Optional persistence layer to store collection state to an external store. */
-  persistence?: CollectionStatePersistence<TFieldName>;
+  /** Called on every user-initiated state change (filter, sort, pageSize). */
+  onChange?: (state: CollectionSnapshot<TFieldName>) => void;
 }
 
 /**

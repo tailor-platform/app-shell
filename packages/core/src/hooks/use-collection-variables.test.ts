@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { TableMetadataMap } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
 
@@ -624,6 +624,122 @@ describe("useCollectionVariables", () => {
       );
 
       expect(result.current.control.sortStates).toEqual([{ field: "dueDate", direction: "Desc" }]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // onChange
+  // ---------------------------------------------------------------------------
+  describe("onChange", () => {
+    it("does not call onChange on initial mount", () => {
+      const onChange = vi.fn();
+
+      renderHook(() =>
+        useCollectionVariables({
+          params: { pageSize: 20 },
+          onChange,
+        }),
+      );
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("calls onChange on filter change", () => {
+      const onChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: { pageSize: 20 },
+          onChange,
+        }),
+      );
+
+      act(() => {
+        result.current.control.addFilter("status", "eq", "ACTIVE");
+      });
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
+          pageSize: 20,
+        }),
+      );
+    });
+
+    it("calls onChange on sort change", () => {
+      const onChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: { pageSize: 20 },
+          onChange,
+        }),
+      );
+
+      act(() => {
+        result.current.control.setSort("name", "Desc");
+      });
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sort: [{ field: "name", direction: "Desc" }],
+          pageSize: 20,
+        }),
+      );
+    });
+
+    it("calls onChange on pageSize change", () => {
+      const onChange = vi.fn();
+
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: { pageSize: 20 },
+          onChange,
+        }),
+      );
+
+      act(() => {
+        result.current.control.setPageSize(50);
+      });
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pageSize: 50,
+        }),
+      );
+    });
+
+    it("does not crash when onChange is not provided", () => {
+      const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 20 } }));
+
+      act(() => {
+        result.current.control.addFilter("status", "eq", "ACTIVE");
+      });
+
+      expect(result.current.control.filters).toHaveLength(1);
+    });
+
+    it("uses latest onChange reference (no stale closure)", () => {
+      const onChange1 = vi.fn();
+      const onChange2 = vi.fn();
+
+      const { result, rerender } = renderHook(
+        ({ onChange }) =>
+          useCollectionVariables({
+            params: { pageSize: 20 },
+            onChange,
+          }),
+        { initialProps: { onChange: onChange1 } },
+      );
+
+      rerender({ onChange: onChange2 });
+
+      act(() => {
+        result.current.control.addFilter("status", "eq", "ACTIVE");
+      });
+
+      expect(onChange1).not.toHaveBeenCalled();
+      expect(onChange2).toHaveBeenCalled();
     });
   });
 });

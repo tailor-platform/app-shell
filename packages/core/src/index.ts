@@ -157,7 +157,6 @@ export {
   type UseCollectionOptions,
   type UseCollectionReturn,
   type CollectionSnapshot,
-  type CollectionStatePersistence,
   type FieldType,
   type FieldMetadata,
   type TableMetadata,
@@ -185,7 +184,11 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
-export { useCollectionURLPersistence } from "./hooks/use-collection-url-persistence";
+export {
+  useCollectionURLState,
+  type CollectionURLStateAccessor,
+  type UseCollectionURLStateOptions,
+} from "./hooks/use-collection-url-persistence";
 export {
   CollectionControlProvider,
   useCollectionControl,

@@ -1,17 +1,12 @@
 import { useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router";
-import type {
-  CollectionSnapshot,
-  CollectionStatePersistence,
-  Filter,
-  SortState,
-} from "@/types/collection";
+import type { CollectionSnapshot, Filter, SortState } from "@/types/collection";
 
 const KEY_PAGE_SIZE = "p";
 const KEY_SORT = "s";
 const FILTER_PREFIX = "f.";
 
-export interface UseCollectionURLPersistenceOptions {
+export interface UseCollectionURLStateOptions {
   /** Key prefix to avoid collisions when multiple tables share a page. */
   prefix?: string;
   /** Debounce interval in ms for URL writes. Default: no debounce. */
@@ -19,10 +14,33 @@ export interface UseCollectionURLPersistenceOptions {
 }
 
 /**
- * Persistence hook that stores collection state in URL search params.
+ * Accessor object returned by `useCollectionURLState`.
  *
- * - `read()` parses current route search params.
- * - `write()` updates search params via React Router `useSearchParams`.
+ * - `read()` returns params-compatible initial state parsed from the URL.
+ * - `write()` encodes collection state into URL search params.
+ *
+ * Designed to be wired directly into `useCollectionVariables`:
+ * ```tsx
+ * const urlState = useCollectionURLState();
+ * const { variables, control } = useCollectionVariables({
+ *   params: urlState.read(),
+ *   onChange: urlState.write,
+ * });
+ * ```
+ */
+export interface CollectionURLStateAccessor<TFieldName extends string = string> {
+  /** Parse current URL search params into initial state for `params`. */
+  read(): {
+    initialFilters?: Filter<TFieldName>[];
+    initialSort?: SortState[];
+    pageSize?: number;
+  };
+  /** Encode collection state into URL search params. Suitable for `onChange`. */
+  write: (state: CollectionSnapshot<TFieldName>) => void;
+}
+
+/**
+ * Hook that provides read/write access to collection state stored in URL search params.
  *
  * URL format:
  * - Page size: `p=20`
@@ -31,26 +49,37 @@ export interface UseCollectionURLPersistenceOptions {
  *
  * @example
  * ```tsx
- * const persistence = useCollectionURLPersistence();
+ * const urlState = useCollectionURLState();
  * const { variables, control } = useCollectionVariables({
- *   params: { pageSize: 20 },
- *   persistence,
+ *   params: urlState.read(),
+ *   onChange: urlState.write,
  * });
  * ```
  */
-export function useCollectionURLPersistence<TFieldName extends string = string>(
-  options: UseCollectionURLPersistenceOptions = {},
-): CollectionStatePersistence<TFieldName> {
+export function useCollectionURLState<TFieldName extends string = string>(
+  options: UseCollectionURLStateOptions = {},
+): CollectionURLStateAccessor<TFieldName> {
   const { prefix = "", debounceMs } = options;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const prefixedKey = useCallback((key: string) => (prefix ? `${prefix}.${key}` : key), [prefix]);
-  const read = useCallback((): CollectionSnapshot<TFieldName> | undefined => {
-    return readFromParams<TFieldName>(searchParams, prefixedKey);
+
+  const read = useCallback((): {
+    initialFilters?: Filter<TFieldName>[];
+    initialSort?: SortState[];
+    pageSize?: number;
+  } => {
+    const snapshot = readFromParams<TFieldName>(searchParams, prefixedKey);
+    if (!snapshot) return {};
+    return {
+      initialFilters: snapshot.filters,
+      initialSort: snapshot.sort,
+      pageSize: snapshot.pageSize,
+    };
   }, [searchParams, prefixedKey]);
 
   const write = useCallback(
-    (state: Required<CollectionSnapshot<TFieldName>>): void => {
+    (state: CollectionSnapshot<TFieldName>): void => {
       const doWrite = () => {
         setSearchParams(
           (currentParams) => {
@@ -117,16 +146,23 @@ export function useCollectionURLPersistence<TFieldName extends string = string>(
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Partial snapshot used internally for URL parsing (fields may be absent). */
+interface ParsedSnapshot<TFieldName extends string = string> {
+  filters?: Filter<TFieldName>[];
+  sort?: SortState[];
+  pageSize?: number;
+}
+
 function readFromParams<TFieldName extends string = string>(
   searchParams: URLSearchParams,
   prefixedKey: (key: string) => string,
-): CollectionSnapshot<TFieldName> | undefined {
+): ParsedSnapshot<TFieldName> | undefined {
   const pageSizeKey = prefixedKey(KEY_PAGE_SIZE);
   const sortKey = prefixedKey(KEY_SORT);
   const filterPrefix = prefixedKey(FILTER_PREFIX);
 
   let hasAny = false;
-  const snapshot: CollectionSnapshot<TFieldName> = {};
+  const snapshot: ParsedSnapshot<TFieldName> = {};
 
   // Page size
   const pageSize = searchParams.get(pageSizeKey);

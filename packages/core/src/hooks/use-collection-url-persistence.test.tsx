@@ -2,7 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router";
-import { useCollectionURLPersistence } from "./use-collection-url-persistence";
+import { useCollectionURLState } from "./use-collection-url-persistence";
 
 beforeEach(() => {
   vi.useRealTimers();
@@ -14,100 +14,97 @@ function createWrapper(initialEntry: string = "/") {
   };
 }
 
-function renderPersistence(
-  options?: Parameters<typeof useCollectionURLPersistence>[0],
+function renderURLState(
+  options?: Parameters<typeof useCollectionURLState>[0],
   initialEntry: string = "/",
 ) {
-  return renderHook(() => useCollectionURLPersistence(options), {
+  return renderHook(() => useCollectionURLState(options), {
     wrapper: createWrapper(initialEntry),
   });
 }
 
-/** Helper: read current snapshot */
-function readSnapshot(result: { current: ReturnType<typeof useCollectionURLPersistence> }) {
-  return result.current.read();
-}
-
-describe("useCollectionURLPersistence", () => {
+describe("useCollectionURLState", () => {
   // ---------------------------------------------------------------------------
-  // read (initial)
+  // read()
   // ---------------------------------------------------------------------------
-  describe("read (initial)", () => {
-    it("returns undefined when no search params exist", () => {
-      const { result } = renderPersistence();
+  describe("read", () => {
+    it("returns empty object when no search params exist", () => {
+      const { result } = renderURLState();
 
-      expect(readSnapshot(result)).toBeUndefined();
+      expect(result.current.read()).toEqual({});
     });
 
     it("returns pageSize from URL", () => {
-      const { result } = renderPersistence(undefined, "/?p=50");
+      const { result } = renderURLState(undefined, "/?p=50");
 
-      expect(readSnapshot(result)?.pageSize).toBe(50);
+      expect(result.current.read().pageSize).toBe(50);
     });
 
-    it("returns sort from URL", () => {
-      const { result } = renderPersistence(undefined, "/?s=name:asc");
+    it("returns sort from URL (initialSort format)", () => {
+      const { result } = renderURLState(undefined, "/?s=name:asc");
 
-      expect(readSnapshot(result)?.sort).toEqual([{ field: "name", direction: "Asc" }]);
+      expect(result.current.read().initialSort).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
     it("returns sort desc from URL", () => {
-      const { result } = renderPersistence(undefined, "/?s=createdAt:desc");
+      const { result } = renderURLState(undefined, "/?s=createdAt:desc");
 
-      expect(readSnapshot(result)?.sort).toEqual([{ field: "createdAt", direction: "Desc" }]);
+      expect(result.current.read().initialSort).toEqual([
+        { field: "createdAt", direction: "Desc" },
+      ]);
     });
 
-    it("returns single-value filter from URL", () => {
-      const { result } = renderPersistence(undefined, "/?f.status:eq=ACTIVE");
+    it("returns single-value filter from URL (initialFilters format)", () => {
+      const { result } = renderURLState(undefined, "/?f.status:eq=ACTIVE");
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "status", operator: "eq", value: "ACTIVE" },
       ]);
     });
 
     it("returns multi-value filter from URL (repeated params)", () => {
-      const { result } = renderPersistence(undefined, "/?f.status:in=ACTIVE&f.status:in=PENDING");
+      const { result } = renderURLState(undefined, "/?f.status:in=ACTIVE&f.status:in=PENDING");
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "status", operator: "in", value: ["ACTIVE", "PENDING"] },
       ]);
     });
 
     it("returns JSON object filter value (e.g. between)", () => {
       const url = `/?f.amount:between=${encodeURIComponent(JSON.stringify({ min: 10, max: 100 }))}`;
-      const { result } = renderPersistence(undefined, url);
+      const { result } = renderURLState(undefined, url);
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "amount", operator: "between", value: { min: 10, max: 100 } },
       ]);
     });
 
     it("returns all state together", () => {
-      const { result } = renderPersistence(undefined, "/?p=25&s=name:desc&f.status:eq=ACTIVE");
+      const { result } = renderURLState(undefined, "/?p=25&s=name:desc&f.status:eq=ACTIVE");
 
-      expect(readSnapshot(result)).toEqual({
+      expect(result.current.read()).toEqual({
         pageSize: 25,
-        sort: [{ field: "name", direction: "Desc" }],
-        filters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
+        initialSort: [{ field: "name", direction: "Desc" }],
+        initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
       });
     });
 
     it("respects prefix option", () => {
-      const { result } = renderPersistence({ prefix: "t1" }, "/?t1.p=30&p=10");
+      const { result } = renderURLState({ prefix: "t1" }, "/?t1.p=30&p=10");
 
-      expect(readSnapshot(result)?.pageSize).toBe(30);
+      expect(result.current.read().pageSize).toBe(30);
     });
 
     it("ignores invalid pageSize values", () => {
-      const { result } = renderPersistence(undefined, "/?p=abc");
+      const { result } = renderURLState(undefined, "/?p=abc");
 
-      expect(readSnapshot(result)).toBeUndefined();
+      expect(result.current.read()).toEqual({});
     });
 
     it("ignores filter keys without operator", () => {
-      const { result } = renderPersistence(undefined, "/?f.status=ACTIVE");
+      const { result } = renderURLState(undefined, "/?f.status=ACTIVE");
 
-      expect(readSnapshot(result)).toBeUndefined();
+      expect(result.current.read()).toEqual({});
     });
   });
 
@@ -116,17 +113,17 @@ describe("useCollectionURLPersistence", () => {
   // ---------------------------------------------------------------------------
   describe("write", () => {
     it("writes pageSize to URL", () => {
-      const { result } = renderPersistence();
+      const { result } = renderURLState();
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 50 });
       });
 
-      expect(readSnapshot(result)?.pageSize).toBe(50);
+      expect(result.current.read().pageSize).toBe(50);
     });
 
     it("writes sort to URL", () => {
-      const { result } = renderPersistence();
+      const { result } = renderURLState();
 
       act(() => {
         result.current.write({
@@ -136,11 +133,11 @@ describe("useCollectionURLPersistence", () => {
         });
       });
 
-      expect(readSnapshot(result)?.sort).toEqual([{ field: "name", direction: "Desc" }]);
+      expect(result.current.read().initialSort).toEqual([{ field: "name", direction: "Desc" }]);
     });
 
     it("writes single-value filter to URL", () => {
-      const { result } = renderPersistence();
+      const { result } = renderURLState();
 
       act(() => {
         result.current.write({
@@ -150,13 +147,13 @@ describe("useCollectionURLPersistence", () => {
         });
       });
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "status", operator: "eq", value: "ACTIVE" },
       ]);
     });
 
     it("writes multi-value filter as repeated params", () => {
-      const { result } = renderPersistence();
+      const { result } = renderURLState();
 
       act(() => {
         result.current.write({
@@ -166,13 +163,13 @@ describe("useCollectionURLPersistence", () => {
         });
       });
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "status", operator: "in", value: ["A", "B", "C"] },
       ]);
     });
 
     it("writes object filter value as JSON", () => {
-      const { result } = renderPersistence();
+      const { result } = renderURLState();
 
       act(() => {
         result.current.write({
@@ -188,13 +185,13 @@ describe("useCollectionURLPersistence", () => {
         });
       });
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "amount", operator: "between", value: { min: 1, max: 99 } },
       ]);
     });
 
     it("clears old filters when writing new state", () => {
-      const { result } = renderPersistence(undefined, "/?f.status:eq=OLD");
+      const { result } = renderURLState(undefined, "/?f.status:eq=OLD");
 
       act(() => {
         result.current.write({
@@ -204,19 +201,19 @@ describe("useCollectionURLPersistence", () => {
         });
       });
 
-      expect(readSnapshot(result)?.filters).toEqual([
+      expect(result.current.read().initialFilters).toEqual([
         { field: "name", operator: "contains", value: "test" },
       ]);
     });
 
     it("uses prefix when writing", () => {
-      const { result } = renderPersistence({ prefix: "t1" });
+      const { result } = renderURLState({ prefix: "t1" });
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 40 });
       });
 
-      expect(readSnapshot(result)?.pageSize).toBe(40);
+      expect(result.current.read().pageSize).toBe(40);
     });
   });
 
@@ -227,21 +224,21 @@ describe("useCollectionURLPersistence", () => {
     it("debounces write when debounceMs is set", () => {
       vi.useFakeTimers();
 
-      const { result } = renderPersistence({ debounceMs: 100 });
+      const { result } = renderURLState({ debounceMs: 100 });
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 50 });
       });
 
       // Not yet written
-      expect(readSnapshot(result)).toBeUndefined();
+      expect(result.current.read()).toEqual({});
 
       act(() => {
         vi.advanceTimersByTime(100);
       });
 
       // Now written
-      expect(readSnapshot(result)?.pageSize).toBe(50);
+      expect(result.current.read().pageSize).toBe(50);
 
       vi.useRealTimers();
     });
@@ -249,7 +246,7 @@ describe("useCollectionURLPersistence", () => {
     it("only applies the last write within debounce window", () => {
       vi.useFakeTimers();
 
-      const { result } = renderPersistence({ debounceMs: 100 });
+      const { result } = renderURLState({ debounceMs: 100 });
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 10 });
@@ -261,7 +258,7 @@ describe("useCollectionURLPersistence", () => {
         vi.advanceTimersByTime(100);
       });
 
-      expect(readSnapshot(result)?.pageSize).toBe(50);
+      expect(result.current.read().pageSize).toBe(50);
 
       vi.useRealTimers();
     });

@@ -12,6 +12,7 @@ describe("useCursorPagination", () => {
       expect(result.current.cursor).toBeNull();
       expect(result.current.cursorStack).toEqual([]);
       expect(result.current.paginationDirection).toBe("forward");
+      expect(result.current.pageSize).toBe(20);
     });
 
     it("returns correct initial paginationVariables", () => {
@@ -184,6 +185,24 @@ describe("useCursorPagination", () => {
   });
 
   // ---------------------------------------------------------------------------
+  // setPageSize
+  // ---------------------------------------------------------------------------
+  describe("setPageSize", () => {
+    it("changes page size and resets to first page", () => {
+      const { result } = renderHook(() => useCursorPagination(20));
+
+      act(() => result.current.goToNextPage({ endCursor: "c1" }));
+      act(() => result.current.setPageSize(50));
+
+      expect(result.current.pageSize).toBe(50);
+      expect(result.current.cursor).toBeNull();
+      expect(result.current.cursorStack).toEqual([]);
+      expect(result.current.paginationDirection).toBe("forward");
+      expect(result.current.paginationVariables).toEqual({ first: 50 });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // paginationVariables shape
   // ---------------------------------------------------------------------------
   describe("paginationVariables", () => {
@@ -278,6 +297,12 @@ describe("useCursorPagination", () => {
     it("does not increment on goToLastPage", () => {
       const { result } = renderHook(() => useCursorPagination(20));
       act(() => result.current.goToLastPage());
+      expect(result.current.resetCount).toBe(0);
+    });
+
+    it("does not increment on setPageSize", () => {
+      const { result } = renderHook(() => useCursorPagination(20));
+      act(() => result.current.setPageSize(50));
       expect(result.current.resetCount).toBe(0);
     });
   });

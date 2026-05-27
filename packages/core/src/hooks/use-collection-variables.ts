@@ -152,7 +152,7 @@ export function useCollectionVariables(
     resetPage,
     goToFirstPage,
     goToLastPage,
-    setPageSize: setCursorPageSize,
+    setPageSize,
     getHasPrevPage,
     getHasNextPage,
     resetCount,
@@ -247,13 +247,6 @@ export function useCollectionVariables(
     setSortStates([]);
     resetPage();
   }, [resetPage]);
-
-  const setPageSize = useCallback(
-    (size: number) => {
-      setCursorPageSize(size);
-    },
-    [setCursorPageSize],
-  );
 
   // ---------------------------------------------------------------------------
   // Build collection variables (Tailor Platform format)

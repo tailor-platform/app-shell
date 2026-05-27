@@ -185,7 +185,7 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
-export { useSearchParamsPersistence } from "./hooks/use-search-params-persistence";
+export { useCollectionURLPersistence } from "./hooks/use-collection-url-persistence";
 export {
   CollectionControlProvider,
   useCollectionControl,

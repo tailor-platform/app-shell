@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router";
 import type {
   CollectionSnapshot,
   CollectionStatePersistence,
@@ -10,7 +11,7 @@ const KEY_PAGE_SIZE = "p";
 const KEY_SORT = "s";
 const FILTER_PREFIX = "f.";
 
-export interface UseSearchParamsPersistenceOptions {
+export interface UseCollectionURLPersistenceOptions {
   /** Key prefix to avoid collisions when multiple tables share a page. */
   prefix?: string;
   /** Debounce interval in ms for URL writes. Default: no debounce. */
@@ -20,8 +21,8 @@ export interface UseSearchParamsPersistenceOptions {
 /**
  * Persistence hook that stores collection state in URL search params.
  *
- * - `read()` parses current `window.location.search` on mount.
- * - `write()` updates URL via `window.history.replaceState`.
+ * - `read()` parses current route search params.
+ * - `write()` updates search params via React Router `useSearchParams`.
  *
  * URL format:
  * - Page size: `p=20`
@@ -30,71 +31,73 @@ export interface UseSearchParamsPersistenceOptions {
  *
  * @example
  * ```tsx
- * const persistence = useSearchParamsPersistence();
+ * const persistence = useCollectionURLPersistence();
  * const { variables, control } = useCollectionVariables({
  *   params: { pageSize: 20 },
  *   persistence,
  * });
  * ```
  */
-export function useSearchParamsPersistence(
-  options: UseSearchParamsPersistenceOptions = {},
-): CollectionStatePersistence {
+export function useCollectionURLPersistence<TFieldName extends string = string>(
+  options: UseCollectionURLPersistenceOptions = {},
+): CollectionStatePersistence<TFieldName> {
   const { prefix = "", debounceMs } = options;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const [searchParams, setSearchParams] = useSearchParams();
   const prefixedKey = useCallback((key: string) => (prefix ? `${prefix}.${key}` : key), [prefix]);
-
-  const read = useCallback((): CollectionSnapshot | undefined => {
-    return readFromParams(new URLSearchParams(window.location.search), prefixedKey);
-  }, [prefixedKey]);
+  const read = useCallback((): CollectionSnapshot<TFieldName> | undefined => {
+    return readFromParams<TFieldName>(searchParams, prefixedKey);
+  }, [searchParams, prefixedKey]);
 
   const write = useCallback(
-    (state: Required<CollectionSnapshot>): void => {
+    (state: Required<CollectionSnapshot<TFieldName>>): void => {
       const doWrite = () => {
-        const params = new URLSearchParams(window.location.search);
-        const pageSizeKey = prefixedKey(KEY_PAGE_SIZE);
-        const sortKey = prefixedKey(KEY_SORT);
-        const filterPrefix = prefixedKey(FILTER_PREFIX);
+        setSearchParams(
+          (currentParams) => {
+            const params = new URLSearchParams(currentParams);
+            const pageSizeKey = prefixedKey(KEY_PAGE_SIZE);
+            const sortKey = prefixedKey(KEY_SORT);
+            const filterPrefix = prefixedKey(FILTER_PREFIX);
 
-        // Page size
-        if (state.pageSize) {
-          params.set(pageSizeKey, String(state.pageSize));
-        } else {
-          params.delete(pageSizeKey);
-        }
-
-        // Sort
-        if (state.sort && state.sort.length > 0) {
-          const { field, direction } = state.sort[0];
-          params.set(sortKey, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
-        } else {
-          params.delete(sortKey);
-        }
-
-        // Clear existing filters with this prefix
-        for (const key of Array.from(params.keys())) {
-          if (key.startsWith(filterPrefix)) params.delete(key);
-        }
-
-        // Write filters
-        if (state.filters) {
-          for (const filter of state.filters) {
-            const key = `${filterPrefix}${filter.field}:${filter.operator}`;
-            if (Array.isArray(filter.value)) {
-              for (const v of filter.value) {
-                const encoded = stringifyPrimitive(v);
-                if (encoded !== "") params.append(key, encoded);
-              }
-            } else if (filter.value != null && filter.value !== "") {
-              params.set(key, encodeFilterValue(filter.value));
+            // Page size
+            if (state.pageSize) {
+              params.set(pageSizeKey, String(state.pageSize));
+            } else {
+              params.delete(pageSizeKey);
             }
-          }
-        }
 
-        const search = params.toString();
-        const url = search ? `${window.location.pathname}?${search}` : window.location.pathname;
-        window.history.replaceState(null, "", url);
+            // Sort
+            if (state.sort && state.sort.length > 0) {
+              const { field, direction } = state.sort[0];
+              params.set(sortKey, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
+            } else {
+              params.delete(sortKey);
+            }
+
+            // Clear existing filters with this prefix
+            for (const key of Array.from(params.keys())) {
+              if (key.startsWith(filterPrefix)) params.delete(key);
+            }
+
+            // Write filters
+            if (state.filters) {
+              for (const filter of state.filters) {
+                const key = `${filterPrefix}${filter.field}:${filter.operator}`;
+                if (Array.isArray(filter.value)) {
+                  for (const v of filter.value) {
+                    const encoded = stringifyPrimitive(v);
+                    if (encoded !== "") params.append(key, encoded);
+                  }
+                } else if (filter.value != null && filter.value !== "") {
+                  params.set(key, encodeFilterValue(filter.value));
+                }
+              }
+            }
+
+            return params;
+          },
+          { replace: true },
+        );
       };
 
       if (debounceMs != null && debounceMs > 0) {
@@ -104,7 +107,7 @@ export function useSearchParamsPersistence(
         doWrite();
       }
     },
-    [prefixedKey, debounceMs],
+    [prefixedKey, debounceMs, setSearchParams],
   );
 
   return useMemo(() => ({ read, write }), [read, write]);
@@ -114,16 +117,16 @@ export function useSearchParamsPersistence(
 // Helpers
 // ---------------------------------------------------------------------------
 
-function readFromParams(
+function readFromParams<TFieldName extends string = string>(
   searchParams: URLSearchParams,
   prefixedKey: (key: string) => string,
-): CollectionSnapshot | undefined {
+): CollectionSnapshot<TFieldName> | undefined {
   const pageSizeKey = prefixedKey(KEY_PAGE_SIZE);
   const sortKey = prefixedKey(KEY_SORT);
   const filterPrefix = prefixedKey(FILTER_PREFIX);
 
   let hasAny = false;
-  const snapshot: CollectionSnapshot = {};
+  const snapshot: CollectionSnapshot<TFieldName> = {};
 
   // Page size
   const pageSize = searchParams.get(pageSizeKey);
@@ -152,7 +155,7 @@ function readFromParams(
     if (key.startsWith(filterPrefix)) filterKeys.add(key);
   }
   if (filterKeys.size > 0) {
-    const filters: Filter[] = [];
+    const filters: Filter<TFieldName>[] = [];
     for (const key of filterKeys) {
       const values = searchParams.getAll(key).filter((v) => v !== "");
       if (values.length === 0) continue;
@@ -160,7 +163,7 @@ function readFromParams(
       const [field, operator] = remainder.split(":");
       if (!field || !operator) continue;
       filters.push({
-        field,
+        field: field as TFieldName,
         operator: operator as Filter["operator"],
         value: values.length === 1 ? parseFilterValue(values[0]) : values.map(parseFilterValue),
       });

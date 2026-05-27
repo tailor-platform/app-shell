@@ -1,52 +1,64 @@
 import { renderHook, act } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useSearchParamsPersistence } from "./use-search-params-persistence";
+import { MemoryRouter } from "react-router";
+import { useCollectionURLPersistence } from "./use-collection-url-persistence";
 
 beforeEach(() => {
-  // Reset URL to root before each test
-  window.history.replaceState(null, "", "/");
+  vi.useRealTimers();
 });
 
+function createWrapper(initialEntry: string = "/") {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>;
+  };
+}
+
+function renderPersistence(
+  options?: Parameters<typeof useCollectionURLPersistence>[0],
+  initialEntry: string = "/",
+) {
+  return renderHook(() => useCollectionURLPersistence(options), {
+    wrapper: createWrapper(initialEntry),
+  });
+}
+
 /** Helper: read current snapshot */
-function readSnapshot(result: { current: ReturnType<typeof useSearchParamsPersistence> }) {
+function readSnapshot(result: { current: ReturnType<typeof useCollectionURLPersistence> }) {
   return result.current.read();
 }
 
-describe("useSearchParamsPersistence", () => {
+describe("useCollectionURLPersistence", () => {
   // ---------------------------------------------------------------------------
   // read (initial)
   // ---------------------------------------------------------------------------
   describe("read (initial)", () => {
     it("returns undefined when no search params exist", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence();
 
       expect(readSnapshot(result)).toBeUndefined();
     });
 
     it("returns pageSize from URL", () => {
-      window.history.replaceState(null, "", "/?p=50");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?p=50");
 
       expect(readSnapshot(result)?.pageSize).toBe(50);
     });
 
     it("returns sort from URL", () => {
-      window.history.replaceState(null, "", "/?s=name:asc");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?s=name:asc");
 
       expect(readSnapshot(result)?.sort).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
     it("returns sort desc from URL", () => {
-      window.history.replaceState(null, "", "/?s=createdAt:desc");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?s=createdAt:desc");
 
       expect(readSnapshot(result)?.sort).toEqual([{ field: "createdAt", direction: "Desc" }]);
     });
 
     it("returns single-value filter from URL", () => {
-      window.history.replaceState(null, "", "/?f.status:eq=ACTIVE");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?f.status:eq=ACTIVE");
 
       expect(readSnapshot(result)?.filters).toEqual([
         { field: "status", operator: "eq", value: "ACTIVE" },
@@ -54,8 +66,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("returns multi-value filter from URL (repeated params)", () => {
-      window.history.replaceState(null, "", "/?f.status:in=ACTIVE&f.status:in=PENDING");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?f.status:in=ACTIVE&f.status:in=PENDING");
 
       expect(readSnapshot(result)?.filters).toEqual([
         { field: "status", operator: "in", value: ["ACTIVE", "PENDING"] },
@@ -64,8 +75,7 @@ describe("useSearchParamsPersistence", () => {
 
     it("returns JSON object filter value (e.g. between)", () => {
       const url = `/?f.amount:between=${encodeURIComponent(JSON.stringify({ min: 10, max: 100 }))}`;
-      window.history.replaceState(null, "", url);
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, url);
 
       expect(readSnapshot(result)?.filters).toEqual([
         { field: "amount", operator: "between", value: { min: 10, max: 100 } },
@@ -73,8 +83,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("returns all state together", () => {
-      window.history.replaceState(null, "", "/?p=25&s=name:desc&f.status:eq=ACTIVE");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?p=25&s=name:desc&f.status:eq=ACTIVE");
 
       expect(readSnapshot(result)).toEqual({
         pageSize: 25,
@@ -84,22 +93,19 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("respects prefix option", () => {
-      window.history.replaceState(null, "", "/?t1.p=30&p=10");
-      const { result } = renderHook(() => useSearchParamsPersistence({ prefix: "t1" }));
+      const { result } = renderPersistence({ prefix: "t1" }, "/?t1.p=30&p=10");
 
       expect(readSnapshot(result)?.pageSize).toBe(30);
     });
 
     it("ignores invalid pageSize values", () => {
-      window.history.replaceState(null, "", "/?p=abc");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?p=abc");
 
       expect(readSnapshot(result)).toBeUndefined();
     });
 
     it("ignores filter keys without operator", () => {
-      window.history.replaceState(null, "", "/?f.status=ACTIVE");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?f.status=ACTIVE");
 
       expect(readSnapshot(result)).toBeUndefined();
     });
@@ -110,7 +116,7 @@ describe("useSearchParamsPersistence", () => {
   // ---------------------------------------------------------------------------
   describe("write", () => {
     it("writes pageSize to URL", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence();
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 50 });
@@ -120,7 +126,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("writes sort to URL", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence();
 
       act(() => {
         result.current.write({
@@ -134,7 +140,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("writes single-value filter to URL", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence();
 
       act(() => {
         result.current.write({
@@ -150,7 +156,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("writes multi-value filter as repeated params", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence();
 
       act(() => {
         result.current.write({
@@ -166,7 +172,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("writes object filter value as JSON", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence();
 
       act(() => {
         result.current.write({
@@ -188,8 +194,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("clears old filters when writing new state", () => {
-      window.history.replaceState(null, "", "/?f.status:eq=OLD");
-      const { result } = renderHook(() => useSearchParamsPersistence());
+      const { result } = renderPersistence(undefined, "/?f.status:eq=OLD");
 
       act(() => {
         result.current.write({
@@ -205,7 +210,7 @@ describe("useSearchParamsPersistence", () => {
     });
 
     it("uses prefix when writing", () => {
-      const { result } = renderHook(() => useSearchParamsPersistence({ prefix: "t1" }));
+      const { result } = renderPersistence({ prefix: "t1" });
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 40 });
@@ -222,7 +227,7 @@ describe("useSearchParamsPersistence", () => {
     it("debounces write when debounceMs is set", () => {
       vi.useFakeTimers();
 
-      const { result } = renderHook(() => useSearchParamsPersistence({ debounceMs: 100 }));
+      const { result } = renderPersistence({ debounceMs: 100 });
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 50 });
@@ -244,7 +249,7 @@ describe("useSearchParamsPersistence", () => {
     it("only applies the last write within debounce window", () => {
       vi.useFakeTimers();
 
-      const { result } = renderHook(() => useSearchParamsPersistence({ debounceMs: 100 }));
+      const { result } = renderPersistence({ debounceMs: 100 });
 
       act(() => {
         result.current.write({ filters: [], sort: [], pageSize: 10 });

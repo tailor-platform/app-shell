@@ -101,11 +101,16 @@ export const primitiveComponentsDemoResource = defineResource({
                 <Badge variant="warning">Warning</Badge>
                 <Badge variant="error">Error</Badge>
                 <Badge variant="neutral">Neutral</Badge>
+                <Badge variant="info">Info</Badge>
                 <Badge variant="subtle-success">Subtle Success</Badge>
                 <Badge variant="subtle-warning">Subtle Warning</Badge>
                 <Badge variant="subtle-error">Subtle Error</Badge>
                 <Badge variant="subtle-info">Subtle Info</Badge>
-                <Badge variant="outline-success">Outline</Badge>
+                <Badge variant="outline-success">Outline Success</Badge>
+                <Badge variant="outline-warning">Outline Warning</Badge>
+                <Badge variant="outline-error">Outline Error</Badge>
+                <Badge variant="outline-info">Outline Info</Badge>
+                <Badge variant="outline-neutral">Outline Neutral</Badge>
               </div>
             </Card.Content>
           </Card.Root>

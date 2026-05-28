@@ -17,6 +17,7 @@ const badgeVariants = cva(
           "astw:border-transparent astw:bg-destructive astw:text-destructive-foreground astw:hover:bg-destructive/80",
         neutral:
           "astw:border-transparent astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
+        info: "astw:border-transparent astw:bg-blue-500 astw:text-white astw:hover:bg-blue-600",
         "subtle-success":
           "astw:border-transparent astw:bg-green-500/10 astw:text-green-700 astw:hover:bg-green-500/20 astw:dark:text-green-500",
         "subtle-warning":

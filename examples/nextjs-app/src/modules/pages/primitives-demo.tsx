@@ -95,22 +95,37 @@ export const primitiveComponentsDemoResource = defineResource({
           <Card.Root>
             <Card.Header title="Badge" />
             <Card.Content>
-              <div style={rowStyle}>
-                <Badge>Default</Badge>
-                <Badge variant="success">Success</Badge>
-                <Badge variant="warning">Warning</Badge>
-                <Badge variant="error">Error</Badge>
-                <Badge variant="neutral">Neutral</Badge>
-                <Badge variant="info">Info</Badge>
-                <Badge variant="subtle-success">Subtle Success</Badge>
-                <Badge variant="subtle-warning">Subtle Warning</Badge>
-                <Badge variant="subtle-error">Subtle Error</Badge>
-                <Badge variant="subtle-info">Subtle Info</Badge>
-                <Badge variant="outline-success">Outline Success</Badge>
-                <Badge variant="outline-warning">Outline Warning</Badge>
-                <Badge variant="outline-error">Outline Error</Badge>
-                <Badge variant="outline-info">Outline Info</Badge>
-                <Badge variant="outline-neutral">Outline Neutral</Badge>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div>
+                  <div style={labelStyle}>Solid</div>
+                  <div style={rowStyle}>
+                    <Badge>Default</Badge>
+                    <Badge variant="success">Success</Badge>
+                    <Badge variant="warning">Warning</Badge>
+                    <Badge variant="error">Error</Badge>
+                    <Badge variant="neutral">Neutral</Badge>
+                    <Badge variant="info">Info</Badge>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Subtle</div>
+                  <div style={rowStyle}>
+                    <Badge variant="subtle-success">Subtle Success</Badge>
+                    <Badge variant="subtle-warning">Subtle Warning</Badge>
+                    <Badge variant="subtle-error">Subtle Error</Badge>
+                    <Badge variant="subtle-info">Subtle Info</Badge>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Outline</div>
+                  <div style={rowStyle}>
+                    <Badge variant="outline-success">Outline Success</Badge>
+                    <Badge variant="outline-warning">Outline Warning</Badge>
+                    <Badge variant="outline-error">Outline Error</Badge>
+                    <Badge variant="outline-info">Outline Info</Badge>
+                    <Badge variant="outline-neutral">Outline Neutral</Badge>
+                  </div>
+                </div>
               </div>
             </Card.Content>
           </Card.Root>

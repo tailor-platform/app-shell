@@ -1,5 +1,70 @@
 # @tailor-platform/app-shell
 
+## 1.3.0
+
+### Minor Changes
+
+- 902fad2: Add `Tabs` compound component for tab-based navigation, backed by Base UI's Tabs primitive.
+
+  ```tsx
+  import { Tabs } from "@tailor-platform/app-shell";
+
+  <Tabs.Root defaultValue="overview">
+    <Tabs.List>
+      <Tabs.Tab value="overview">Overview</Tabs.Tab>
+      <Tabs.Tab value="projects">Projects</Tabs.Tab>
+    </Tabs.List>
+    <Tabs.Panel value="overview">Overview content</Tabs.Panel>
+    <Tabs.Panel value="projects">Projects content</Tabs.Panel>
+  </Tabs.Root>;
+  ```
+
+- 2197c3f: Add array badge support to DataTable and DescriptionCard with shared `BadgeList` rendering and overflow popover.
+
+  ```tsx
+  // DataTable — badge column with array accessor
+  column({
+    ...infer("tags"),
+    type: "badge",
+    typeOptions: {
+      badgeVariantMap: { Premium: "warning", Office: "outline-info" },
+      maxVisible: 2,
+    },
+  })
+
+  // DescriptionCard — array badges with maxVisible
+  <DescriptionCard
+    data={{ tags: ["urgent", "fragile", "international"] }}
+    fields={[{
+      key: "tags",
+      label: "Tags",
+      type: "badge",
+      meta: {
+        badgeVariantMap: { urgent: "error", fragile: "warning", international: "outline-info" },
+        maxVisible: 2,
+      },
+    }]}
+  />
+  ```
+
+  Additional changes:
+
+  - Unify badge variant resolution into shared `resolveBadgeVariant()` utility with `"outline-neutral"` as the default variant (previously `"neutral"` in DataTable)
+  - Export `BadgeVariant` and `BadgeOptions` types from the public API
+  - `inferColumns()` no longer sets a default `render` function — columns without an explicit `type` or `render` now display `—` for null/empty values (aligns with typed-column behavior)
+  - Deprecate `BadgeVariantType` in favor of `BadgeVariant`
+
+### Patch Changes
+
+- 4998df4: Fix and improve `DescriptionCard` component:
+
+  - Fix relative date formatting producing incorrect output for future dates (negative time diff)
+  - Add i18n label support for relative date strings
+  - Use react-router `<Link>` for internal navigation in link and reference fields instead of plain `<a>` tags
+
+- b70e3d5: Updated [@base-ui/react](https://www.npmjs.com/package/@base-ui/react) (1.4.1 -> 1.5.0)
+- 99f6b6d: Updated [graphql](https://www.npmjs.com/package/graphql) (^16.13.2 -> ^16.14.0)
+
 ## 1.2.0
 
 ### Minor Changes

@@ -23,6 +23,7 @@ import { Badge, type BadgeVariant, type BadgeOptions } from "@tailor-platform/ap
 <Badge variant="subtle-success">Subtle Success</Badge>
 <Badge variant="subtle-warning">Subtle Warning</Badge>
 <Badge variant="subtle-error">Subtle Error</Badge>
+<Badge variant="subtle-info">Subtle Info</Badge>
 ```
 
 ## Variants
@@ -40,6 +41,7 @@ Filled variants for high emphasis, plus subtle variants for lower-emphasis statu
 <Badge variant="subtle-success">Matched</Badge>
 <Badge variant="subtle-warning">Needs Attention</Badge>
 <Badge variant="subtle-error">Needs Review</Badge>
+<Badge variant="subtle-info">In Progress</Badge>
 ```
 
 ### Outline Variants with Status Dots
@@ -75,6 +77,7 @@ type BadgeVariant =
   | "subtle-success" // Low-emphasis green
   | "subtle-warning" // Low-emphasis yellow
   | "subtle-error" // Low-emphasis red/destructive
+  | "subtle-info" // Low-emphasis blue
   // Outline variants with status dots
   | "outline-success"
   | "outline-warning"
@@ -199,6 +202,7 @@ function ProductBadge({ product }: { product: Product }) {
 | `subtle-success` | ![Subtle green badge]  | Low-emphasis completed or matched statuses |
 | `subtle-warning` | ![Subtle yellow badge] | Low-emphasis pending or attention states   |
 | `subtle-error`   | ![Subtle red badge]    | Low-emphasis failures or exceptions        |
+| `subtle-info`    | ![Subtle blue badge]   | Low-emphasis informational or in-progress  |
 
 ### Outline Variants
 

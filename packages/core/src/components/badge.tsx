@@ -23,6 +23,8 @@ const badgeVariants = cva(
           "astw:border-transparent astw:bg-yellow-500/10 astw:text-yellow-700 astw:hover:bg-yellow-500/20 astw:dark:text-yellow-500",
         "subtle-error":
           "astw:border-transparent astw:bg-destructive/10 astw:text-destructive astw:hover:bg-destructive/20",
+        "subtle-info":
+          "astw:border-transparent astw:bg-blue-500/10 astw:text-blue-700 astw:hover:bg-blue-500/20 astw:dark:text-blue-500",
         // Outline variants with status dots - matches Figma design
         "outline-success":
           "astw:gap-0.5 astw:pl-1.5 astw:pr-2 astw:border-border astw:bg-card astw:text-foreground",

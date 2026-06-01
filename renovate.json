@@ -1,6 +1,23 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["before 9am on monday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "minimumReleaseAge": "3 days",
+  "packageRules": [
+    {
+      "groupName": "react",
+      "matchPackageNames": ["react", "react-dom"]
+    },
+    {
+      "matchPackageNames": ["@vitejs/plugin-react"],
+      "allowedVersions": "< 6.0.0"
+    },
+    {
+      "matchPackageNames": ["vite"],
+      "allowedVersions": "< 8.0.0"
+    }
   ]
 }

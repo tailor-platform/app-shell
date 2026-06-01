@@ -28,6 +28,11 @@ catalog:
 #   - minimumReleaseAge: 1440 (1 day)
 #   - verifyDepsBeforeRun: install
 
+# Trust the lockfile so that already-resolved entries skip the minimumReleaseAge /
+# trustPolicy verification pass. This prevents unrelated packages from failing
+# trust checks when updating a specific dependency.
+trustLockfile: true
+
 # Require packages to be published for at least 3 days before allowing install (default: 1 day)
 minimumReleaseAge: 4320
 

@@ -61,6 +61,10 @@ trustPolicyExclude:
   # while 5.1.0 was published via GitHub Actions with provenance. Fixed in v5.2.0.
   # See: https://github.com/reduxjs/reselect/issues/752
   - "reselect@5.1.1"
+  # tinyexec@1.2.2 switched from trusted publisher to provenance attestation,
+  # triggering a false trust downgrade. Fixed in v1.2.3+.
+  # See: https://github.com/tinylibs/tinyexec/issues/136
+  - "tinyexec@1.2.2"
 
 # Save exact versions when adding dependencies
 saveExact: true

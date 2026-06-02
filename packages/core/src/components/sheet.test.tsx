@@ -276,4 +276,120 @@ describe("Sheet", () => {
       expect(screen.queryByText("Sheet Title")).toBeNull();
     });
   });
+
+  describe("size prop", () => {
+    it("applies sm max-width by default", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Sheet.Root>
+          <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+          <Sheet.Content data-testid="content">
+            <Sheet.Header>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        const content = screen.getByTestId("content");
+        expect(content.className).toContain("max-w-[24rem]");
+      });
+    });
+
+    it("applies lg max-width when size is lg", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Sheet.Root>
+          <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+          <Sheet.Content data-testid="content" size="lg">
+            <Sheet.Header>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        const content = screen.getByTestId("content");
+        expect(content.className).toContain("max-w-[45rem]");
+      });
+    });
+
+    it("applies xl max-width when size is xl", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Sheet.Root>
+          <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+          <Sheet.Content data-testid="content" size="xl">
+            <Sheet.Header>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        const content = screen.getByTestId("content");
+        expect(content.className).toContain("max-w-[60rem]");
+      });
+    });
+  });
+
+  describe("Header actions prop", () => {
+    it("renders actions in the header", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Sheet.Root>
+          <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header actions={<button data-testid="save-btn">Save</button>}>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("save-btn")).toBeDefined();
+        expect(screen.getByText("Save")).toBeDefined();
+      });
+    });
+
+    it("does not render actions container when actions is not provided", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Sheet.Root>
+          <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        expect(screen.getByText("Sheet Title")).toBeDefined();
+      });
+
+      const actionsSlot = document.querySelector('[data-slot="sheet-header-actions"]');
+      expect(actionsSlot).toBeNull();
+    });
+  });
 });

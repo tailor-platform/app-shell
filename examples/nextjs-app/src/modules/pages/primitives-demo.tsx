@@ -96,7 +96,13 @@ export const primitiveComponentsDemoResource = defineResource({
           <Card.Root>
             <Card.Header title="Badge" />
             <Card.Content>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
                 <div>
                   <div style={labelStyle}>Solid</div>
                   <div style={rowStyle}>
@@ -127,6 +133,37 @@ export const primitiveComponentsDemoResource = defineResource({
                     <Badge variant="outline-neutral">Outline Neutral</Badge>
                   </div>
                 </div>
+              </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Alert */}
+          <Card.Root>
+            <Card.Header title="Alert" />
+            <Card.Content>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
+                <Alert.Root>
+                  <Alert.Title>Default Alert</Alert.Title>
+                  <Alert.Description>This is a default alert message.</Alert.Description>
+                </Alert.Root>
+                <Alert.Root variant="success">
+                  <Alert.Title>Success</Alert.Title>
+                  <Alert.Description>Operation completed successfully.</Alert.Description>
+                </Alert.Root>
+                <Alert.Root variant="error">
+                  <Alert.Title>Error</Alert.Title>
+                  <Alert.Description>Something went wrong. Please try again.</Alert.Description>
+                </Alert.Root>
+                <Alert.Root variant="neutral">
+                  <Alert.Title>Information</Alert.Title>
+                  <Alert.Description>This is a neutral informational message.</Alert.Description>
+                </Alert.Root>
               </div>
             </Card.Content>
           </Card.Root>
@@ -504,31 +541,6 @@ export const primitiveComponentsDemoResource = defineResource({
                   </Table.Row>
                 </Table.Footer>
               </Table.Root>
-            </Card.Content>
-          </Card.Root>
-
-          {/* Alert */}
-          <Card.Root>
-            <Card.Header title="Alert" />
-            <Card.Content>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <Alert.Root>
-                  <Alert.Title>Default Alert</Alert.Title>
-                  <Alert.Description>This is a default alert message.</Alert.Description>
-                </Alert.Root>
-                <Alert.Root variant="success">
-                  <Alert.Title>Success</Alert.Title>
-                  <Alert.Description>Operation completed successfully.</Alert.Description>
-                </Alert.Root>
-                <Alert.Root variant="error">
-                  <Alert.Title>Error</Alert.Title>
-                  <Alert.Description>Something went wrong. Please try again.</Alert.Description>
-                </Alert.Root>
-                <Alert.Root variant="neutral">
-                  <Alert.Title>Information</Alert.Title>
-                  <Alert.Description>This is a neutral informational message.</Alert.Description>
-                </Alert.Root>
-              </div>
             </Card.Content>
           </Card.Root>
         </Layout.Column>

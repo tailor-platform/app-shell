@@ -3,6 +3,7 @@ import {
   Receipt as ReceiptIcon,
   FileText as FileTextIcon,
   ExternalLink as ExternalLinkIcon,
+  Trash2 as Trash2Icon,
 } from "lucide-react";
 
 const ActionPanelDemoPage = () => {
@@ -48,6 +49,15 @@ const ActionPanelDemoPage = () => {
             label: "View Purchase Order Demo",
             icon: <ExternalLinkIcon size={16} />,
             onClick: () => navigate("/custom-page/purchase-order-demo"),
+          },
+          {
+            key: "delete-result",
+            label: "Delete Result",
+            icon: <Trash2Icon size={16} />,
+            variant: "destructive",
+            onClick: () => {
+              toast("Delete result clicked");
+            },
           },
         ]}
       />

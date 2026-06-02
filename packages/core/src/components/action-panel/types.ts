@@ -21,6 +21,8 @@ export interface ActionItem {
   disabled?: boolean;
   /** When true, show loading indicator in the row and make it non-interactive */
   loading?: boolean;
+  /** Visual variant. Use "destructive" for dangerous actions like delete. */
+  variant?: "default" | "destructive";
 }
 
 // ============================================================================

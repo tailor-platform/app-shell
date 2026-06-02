@@ -43,10 +43,13 @@ const actionRowBaseClasses = cn(
 const actionRowInteractiveClasses =
   "astw:hover:bg-accent astw:hover:text-accent-foreground astw:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring astw:focus-visible:ring-offset-2";
 
+const actionRowDestructiveClasses =
+  "astw:text-destructive astw:hover:bg-destructive/10 astw:hover:text-destructive";
+
 const actionRowDisabledClasses = "astw:pointer-events-none astw:opacity-50";
 
 function ActionRow({ action }: { action: ActionItem }) {
-  const { key, label, icon, onClick, disabled, loading } = action;
+  const { key, label, icon, onClick, disabled, loading, variant } = action;
   const isDisabled = Boolean(disabled) || Boolean(loading);
 
   const content = (
@@ -61,6 +64,7 @@ function ActionRow({ action }: { action: ActionItem }) {
   const rowClasses = cn(
     actionRowBaseClasses,
     isDisabled ? actionRowDisabledClasses : actionRowInteractiveClasses,
+    variant === "destructive" && !isDisabled && actionRowDestructiveClasses,
   );
 
   return (

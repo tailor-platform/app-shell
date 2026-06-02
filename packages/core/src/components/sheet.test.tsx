@@ -388,8 +388,10 @@ describe("Sheet", () => {
         expect(screen.getByText("Sheet Title")).toBeDefined();
       });
 
-      const actionsSlot = document.querySelector('[data-slot="sheet-header-actions"]');
-      expect(actionsSlot).toBeNull();
+      // When no actions prop is provided, only the close button should be in the header's right section
+      const header = document.querySelector('[data-slot="sheet-header"]');
+      expect(header).toBeDefined();
+      expect(screen.queryByTestId("save-btn")).toBeNull();
     });
   });
 });

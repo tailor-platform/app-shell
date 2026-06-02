@@ -166,21 +166,16 @@ function Header({ className, actions, children, ...props }: SheetHeaderProps) {
       <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-1.5">
         {children}
       </div>
-      {actions && (
-        <div
-          data-slot="sheet-header-actions"
-          className="astw:flex astw:shrink-0 astw:items-center astw:gap-2"
+      <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">
+        {actions}
+        <Drawer.Close
+          data-slot="sheet-close"
+          className="astw:ring-offset-bg astw:focus:ring-ring astw:shrink-0 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
         >
-          {actions}
-        </div>
-      )}
-      <Drawer.Close
-        data-slot="sheet-close"
-        className="astw:ring-offset-bg astw:focus:ring-ring astw:shrink-0 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
-      >
-        <XIcon className="astw:size-4" />
-        <span className="astw:sr-only">Close</span>
-      </Drawer.Close>
+          <XIcon className="astw:size-4" />
+          <span className="astw:sr-only">Close</span>
+        </Drawer.Close>
+      </div>
     </div>
   );
 }

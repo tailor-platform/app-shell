@@ -200,7 +200,7 @@ export const primitiveComponentsDemoResource = defineResource({
                             This sheet slides in from the right.
                           </Sheet.Description>
                         </Sheet.Header>
-                        <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                        <div style={{ padding: "0 1rem" }}>Sheet content goes here.</div>
                         <Sheet.Footer>
                           <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
                         </Sheet.Footer>
@@ -246,7 +246,7 @@ export const primitiveComponentsDemoResource = defineResource({
                           <Sheet.Title>Small Sheet</Sheet.Title>
                           <Sheet.Description>384px (24rem)</Sheet.Description>
                         </Sheet.Header>
-                        <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                        <div style={{ padding: "0 1rem" }}>Sheet content goes here.</div>
                         <Sheet.Footer>
                           <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
                         </Sheet.Footer>
@@ -259,7 +259,7 @@ export const primitiveComponentsDemoResource = defineResource({
                           <Sheet.Title>Medium Sheet</Sheet.Title>
                           <Sheet.Description>512px (32rem)</Sheet.Description>
                         </Sheet.Header>
-                        <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                        <div style={{ padding: "0 1rem" }}>Sheet content goes here.</div>
                         <Sheet.Footer>
                           <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
                         </Sheet.Footer>
@@ -272,7 +272,7 @@ export const primitiveComponentsDemoResource = defineResource({
                           <Sheet.Title>Large Sheet</Sheet.Title>
                           <Sheet.Description>720px (45rem)</Sheet.Description>
                         </Sheet.Header>
-                        <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                        <div style={{ padding: "0 1rem" }}>Sheet content goes here.</div>
                         <Sheet.Footer>
                           <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
                         </Sheet.Footer>
@@ -285,7 +285,7 @@ export const primitiveComponentsDemoResource = defineResource({
                           <Sheet.Title>Extra Large Sheet</Sheet.Title>
                           <Sheet.Description>960px (60rem)</Sheet.Description>
                         </Sheet.Header>
-                        <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                        <div style={{ padding: "0 1rem" }}>Sheet content goes here.</div>
                         <Sheet.Footer>
                           <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
                         </Sheet.Footer>
@@ -298,10 +298,36 @@ export const primitiveComponentsDemoResource = defineResource({
                           <Sheet.Title>Full Screen Sheet</Sheet.Title>
                           <Sheet.Description>Full-width overlay</Sheet.Description>
                         </Sheet.Header>
-                        <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
+                        <div style={{ padding: "0 1rem" }}>Sheet content goes here.</div>
                         <Sheet.Footer>
                           <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
                         </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Actions</div>
+                  <div style={rowStyle}>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>
+                        Multiple actions
+                      </Sheet.Trigger>
+                      <Sheet.Content size="md">
+                        <Sheet.Header
+                          actions={
+                            <>
+                              <Button size="sm" variant="outline">
+                                Reset
+                              </Button>
+                              <Button size="sm">Save</Button>
+                            </>
+                          }
+                        >
+                          <Sheet.Title>Edit Record</Sheet.Title>
+                          <Sheet.Description>Multiple action buttons in header.</Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "0 1rem" }}>Form content goes here.</div>
                       </Sheet.Content>
                     </Sheet.Root>
                   </div>

@@ -38,10 +38,30 @@ describe("Alert", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
+    it("warning variant", () => {
+      const { container } = render(
+        <Alert.Root variant="warning">
+          <Alert.Title>Warning</Alert.Title>
+          <Alert.Description>Be careful</Alert.Description>
+        </Alert.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("info variant", () => {
+      const { container } = render(
+        <Alert.Root variant="info">
+          <Alert.Title>Info</Alert.Title>
+          <Alert.Description>FYI</Alert.Description>
+        </Alert.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
     it("neutral variant", () => {
       const { container } = render(
         <Alert.Root variant="neutral">
-          <Alert.Title>Info</Alert.Title>
+          <Alert.Title>Neutral</Alert.Title>
           <Alert.Description>Note this</Alert.Description>
         </Alert.Root>,
       );

@@ -156,12 +156,20 @@ export const primitiveComponentsDemoResource = defineResource({
                   <Alert.Title>Success</Alert.Title>
                   <Alert.Description>Operation completed successfully.</Alert.Description>
                 </Alert.Root>
+                <Alert.Root variant="warning">
+                  <Alert.Title>Warning</Alert.Title>
+                  <Alert.Description>Please review before proceeding.</Alert.Description>
+                </Alert.Root>
                 <Alert.Root variant="error">
                   <Alert.Title>Error</Alert.Title>
                   <Alert.Description>Something went wrong. Please try again.</Alert.Description>
                 </Alert.Root>
+                <Alert.Root variant="info">
+                  <Alert.Title>Info</Alert.Title>
+                  <Alert.Description>Here is some useful information.</Alert.Description>
+                </Alert.Root>
                 <Alert.Root variant="neutral">
-                  <Alert.Title>Information</Alert.Title>
+                  <Alert.Title>Neutral</Alert.Title>
                   <Alert.Description>This is a neutral informational message.</Alert.Description>
                 </Alert.Root>
               </div>

@@ -1,6 +1,13 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { AlertCircleIcon, CheckCircleIcon, InfoIcon, XCircleIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  InfoIcon,
+  MessageCircleIcon,
+  XCircleIcon,
+} from "lucide-react";
 import { cn } from "../lib/utils";
 
 const alertVariants = cva(
@@ -12,8 +19,11 @@ const alertVariants = cva(
           "astw:bg-primary/10 astw:text-primary astw:border-primary/20 *:data-[slot=alert-description]:astw:text-primary/80",
         success:
           "astw:bg-green-500/10 astw:text-green-700 astw:border-green-500/20 dark:astw:text-green-400 *:data-[slot=alert-description]:astw:text-green-700/80 dark:*:data-[slot=alert-description]:astw:text-green-400/80",
+        warning:
+          "astw:bg-yellow-500/10 astw:text-yellow-700 astw:border-yellow-500/20 dark:astw:text-yellow-500 *:data-[slot=alert-description]:astw:text-yellow-700/80 dark:*:data-[slot=alert-description]:astw:text-yellow-500/80",
         error:
           "astw:bg-destructive/10 astw:text-destructive astw:border-destructive/20 *:data-[slot=alert-description]:astw:text-destructive/80",
+        info: "astw:bg-blue-500/10 astw:text-blue-700 astw:border-blue-500/20 dark:astw:text-blue-400 *:data-[slot=alert-description]:astw:text-blue-700/80 dark:*:data-[slot=alert-description]:astw:text-blue-400/80",
         neutral:
           "astw:bg-secondary astw:text-secondary-foreground astw:border-border *:data-[slot=alert-description]:astw:text-muted-foreground",
       },
@@ -30,8 +40,10 @@ const variantIcons: Record<
 > = {
   default: AlertCircleIcon,
   success: CheckCircleIcon,
+  warning: AlertTriangleIcon,
   error: XCircleIcon,
-  neutral: InfoIcon,
+  info: InfoIcon,
+  neutral: MessageCircleIcon,
 };
 
 type RootProps = React.ComponentProps<"div"> & VariantProps<typeof alertVariants>;

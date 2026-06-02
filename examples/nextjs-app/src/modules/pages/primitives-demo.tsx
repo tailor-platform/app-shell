@@ -95,7 +95,13 @@ export const primitiveComponentsDemoResource = defineResource({
           <Card.Root>
             <Card.Header title="Badge" />
             <Card.Content>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
                 <div>
                   <div style={labelStyle}>Solid</div>
                   <div style={rowStyle}>

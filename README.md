@@ -6,6 +6,8 @@ AppShell is an opinionated React application framework for creating applications
 
 ## Packages
 
+[![pkg.pr.new](https://pkg.pr.new/badge/tailor-platform/app-shell)](https://pkg.pr.new/~/tailor-platform/app-shell)
+
 | Package                                                            | Version                                                                                                                                             | Description                                                   |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [`@tailor-platform/app-shell`](./packages/core)                    | [![npm](https://img.shields.io/npm/v/@tailor-platform/app-shell)](https://www.npmjs.com/package/@tailor-platform/app-shell)                         | Core library — components, hooks, layouts, and authentication |

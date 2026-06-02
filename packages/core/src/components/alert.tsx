@@ -34,9 +34,9 @@ const variantIcons: Record<
   neutral: InfoIcon,
 };
 
-type AlertProps = React.ComponentProps<"div"> & VariantProps<typeof alertVariants>;
+type RootProps = React.ComponentProps<"div"> & VariantProps<typeof alertVariants>;
 
-function Alert({ className, variant = "default", children, ...props }: AlertProps) {
+function Root({ className, variant = "default", children, ...props }: RootProps) {
   const Icon = variantIcons[variant ?? "default"];
   return (
     <div
@@ -50,8 +50,9 @@ function Alert({ className, variant = "default", children, ...props }: AlertProp
     </div>
   );
 }
+Root.displayName = "Alert.Root";
 
-function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
+function Title({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-title"
@@ -63,8 +64,9 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+Title.displayName = "Alert.Title";
 
-function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {
+function Description({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-description"
@@ -76,5 +78,8 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
     />
   );
 }
+Description.displayName = "Alert.Description";
 
-export { Alert, AlertTitle, AlertDescription, alertVariants, type AlertProps };
+export type AlertProps = RootProps;
+export const Alert = { Root, Title, Description };
+export { alertVariants };

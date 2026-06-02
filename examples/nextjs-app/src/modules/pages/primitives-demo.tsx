@@ -12,8 +12,6 @@ import {
   Table,
   Tabs,
   Alert,
-  AlertTitle,
-  AlertDescription,
 } from "@tailor-platform/app-shell";
 import {
   LayoutDashboard as LayoutDashboardIcon,
@@ -514,22 +512,22 @@ export const primitiveComponentsDemoResource = defineResource({
             <Card.Header title="Alert" />
             <Card.Content>
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <Alert>
-                  <AlertTitle>Default Alert</AlertTitle>
-                  <AlertDescription>This is a default alert message.</AlertDescription>
-                </Alert>
-                <Alert variant="success">
-                  <AlertTitle>Success</AlertTitle>
-                  <AlertDescription>Operation completed successfully.</AlertDescription>
-                </Alert>
-                <Alert variant="error">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>Something went wrong. Please try again.</AlertDescription>
-                </Alert>
-                <Alert variant="neutral">
-                  <AlertTitle>Information</AlertTitle>
-                  <AlertDescription>This is a neutral informational message.</AlertDescription>
-                </Alert>
+                <Alert.Root>
+                  <Alert.Title>Default Alert</Alert.Title>
+                  <Alert.Description>This is a default alert message.</Alert.Description>
+                </Alert.Root>
+                <Alert.Root variant="success">
+                  <Alert.Title>Success</Alert.Title>
+                  <Alert.Description>Operation completed successfully.</Alert.Description>
+                </Alert.Root>
+                <Alert.Root variant="error">
+                  <Alert.Title>Error</Alert.Title>
+                  <Alert.Description>Something went wrong. Please try again.</Alert.Description>
+                </Alert.Root>
+                <Alert.Root variant="neutral">
+                  <Alert.Title>Information</Alert.Title>
+                  <Alert.Description>This is a neutral informational message.</Alert.Description>
+                </Alert.Root>
               </div>
             </Card.Content>
           </Card.Root>

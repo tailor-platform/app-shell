@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { Alert, AlertTitle, AlertDescription } from "./alert";
+import { Alert } from "./alert";
 
 afterEach(() => {
   cleanup();
@@ -10,63 +10,63 @@ describe("Alert", () => {
   describe("snapshots", () => {
     it("default variant", () => {
       const { container } = render(
-        <Alert>
-          <AlertTitle>Title</AlertTitle>
-          <AlertDescription>Description</AlertDescription>
-        </Alert>,
+        <Alert.Root>
+          <Alert.Title>Title</Alert.Title>
+          <Alert.Description>Description</Alert.Description>
+        </Alert.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("success variant", () => {
       const { container } = render(
-        <Alert variant="success">
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>Operation completed</AlertDescription>
-        </Alert>,
+        <Alert.Root variant="success">
+          <Alert.Title>Success</Alert.Title>
+          <Alert.Description>Operation completed</Alert.Description>
+        </Alert.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("error variant", () => {
       const { container } = render(
-        <Alert variant="error">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>Something went wrong</AlertDescription>
-        </Alert>,
+        <Alert.Root variant="error">
+          <Alert.Title>Error</Alert.Title>
+          <Alert.Description>Something went wrong</Alert.Description>
+        </Alert.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("neutral variant", () => {
       const { container } = render(
-        <Alert variant="neutral">
-          <AlertTitle>Info</AlertTitle>
-          <AlertDescription>Note this</AlertDescription>
-        </Alert>,
+        <Alert.Root variant="neutral">
+          <Alert.Title>Info</Alert.Title>
+          <Alert.Description>Note this</Alert.Description>
+        </Alert.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
   });
 
   it("renders with role=alert", () => {
-    render(<Alert>Content</Alert>);
+    render(<Alert.Root>Content</Alert.Root>);
     expect(screen.getByRole("alert")).toBeDefined();
   });
 
   it("renders title and description", () => {
     render(
-      <Alert>
-        <AlertTitle>Test Title</AlertTitle>
-        <AlertDescription>Test Description</AlertDescription>
-      </Alert>,
+      <Alert.Root>
+        <Alert.Title>Test Title</Alert.Title>
+        <Alert.Description>Test Description</Alert.Description>
+      </Alert.Root>,
     );
     expect(screen.getByText("Test Title")).toBeDefined();
     expect(screen.getByText("Test Description")).toBeDefined();
   });
 
   it("accepts custom className", () => {
-    render(<Alert className="astw:mt-4">Content</Alert>);
+    render(<Alert.Root className="astw:mt-4">Content</Alert.Root>);
     const alert = screen.getByRole("alert");
     expect(alert.className).toContain("astw:mt-4");
   });

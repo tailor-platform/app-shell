@@ -2,13 +2,13 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `Alert` component with `default`, `success`, `error`, and `neutral` variants. Each variant renders a contextual icon automatically.
+Add `Alert` compound component with `default`, `success`, `error`, and `neutral` variants. Each variant renders a contextual icon automatically.
 
 ```tsx
-import { Alert, AlertTitle, AlertDescription } from "@tailor-platform/app-shell";
+import { Alert } from "@tailor-platform/app-shell";
 
-<Alert variant="success">
-  <AlertTitle>Saved</AlertTitle>
-  <AlertDescription>Your changes have been saved.</AlertDescription>
-</Alert>;
+<Alert.Root variant="success">
+  <Alert.Title>Saved</Alert.Title>
+  <Alert.Description>Your changes have been saved.</Alert.Description>
+</Alert.Root>;
 ```

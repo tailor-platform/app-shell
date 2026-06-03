@@ -142,6 +142,10 @@ function Dismiss({ className, onDismiss, ...props }: DismissProps) {
 }
 Dismiss.displayName = "Alert.Dismiss";
 
+/**
+ * Returns the dismiss function for the nearest `Alert.Root`.
+ * @throws {Error} if called outside an `Alert.Root` tree.
+ */
 export function useAlertDismiss() {
   const dismiss = React.useContext(AlertDismissContext);
   if (!dismiss) {

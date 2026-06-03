@@ -157,25 +157,38 @@ type SheetHeaderProps = Omit<React.ComponentProps<"div">, "children"> & {
 
 /** A layout wrapper for the sheet title, close button, and optional action buttons. */
 function Header({ className, action, children, ...props }: SheetHeaderProps) {
+  const childArray = React.Children.toArray(children);
+  const titleChild = childArray.find(
+    (child): child is React.ReactElement => React.isValidElement(child) && child.type === Title,
+  );
+  const primaryChildren = titleChild ? [titleChild] : childArray;
+  const secondaryChildren = titleChild ? childArray.filter((child) => child !== titleChild) : [];
+
   return (
     <div
       data-slot="sheet-header"
-      className={cn(
-        "astw:flex astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-3",
-        className,
-      )}
+      className={cn("astw:border-b astw:px-4 astw:py-3", className)}
       {...props}
     >
-      <Drawer.Close
-        data-slot="sheet-close"
-        className="astw:ring-offset-bg astw:focus:ring-ring astw:shrink-0 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
-      >
-        <XIcon className="astw:size-4" />
-        <span className="astw:sr-only">Close</span>
-      </Drawer.Close>
-      <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center">{children}</div>
-      {action && (
-        <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">{action}</div>
+      <div className="astw:flex astw:items-center astw:gap-3">
+        <Drawer.Close
+          data-slot="sheet-close"
+          className="astw:ring-offset-bg astw:focus:ring-ring astw:flex astw:size-8 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
+        >
+          <XIcon className="astw:size-4" />
+          <span className="astw:sr-only">Close</span>
+        </Drawer.Close>
+        <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2">
+          <div className="astw:min-w-0 astw:flex-1">{primaryChildren}</div>
+          {action && (
+            <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">{action}</div>
+          )}
+        </div>
+      </div>
+      {secondaryChildren.length > 0 && (
+        <div className="astw:flex astw:min-w-0 astw:flex-col astw:gap-1 astw:pl-11">
+          {secondaryChildren}
+        </div>
       )}
     </div>
   );

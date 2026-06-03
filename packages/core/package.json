@@ -57,11 +57,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "encoding-japanese": "^2.2.0",
-    "es-toolkit": "^1.45.1",
-    "graphql": "^16.14.0",
     "lucide-react": "catalog:",
     "papaparse": "^5.5.3",
-    "react-hook-form": "^7.71.2",
     "react-router": "^7.14.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0"

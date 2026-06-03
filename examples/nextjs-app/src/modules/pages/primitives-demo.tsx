@@ -331,6 +331,9 @@ export const primitiveComponentsDemoResource = defineResource({
                           }
                         >
                           <Sheet.Title>Edit Record</Sheet.Title>
+                          <Sheet.Description>
+                            Modify the details of the selected record.
+                          </Sheet.Description>
                         </Sheet.Header>
                         <div style={{ padding: "1rem" }}>Form content goes here.</div>
                       </Sheet.Content>

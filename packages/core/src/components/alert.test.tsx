@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Alert } from "./alert";
 
 afterEach(() => {
@@ -8,7 +9,7 @@ afterEach(() => {
 
 describe("Alert", () => {
   describe("snapshots", () => {
-    it("default variant", () => {
+    it("neutral variant (default)", () => {
       const { container } = render(
         <Alert.Root>
           <Alert.Title>Title</Alert.Title>
@@ -58,11 +59,11 @@ describe("Alert", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
-    it("neutral variant", () => {
+    it("with action", () => {
       const { container } = render(
-        <Alert.Root variant="neutral">
-          <Alert.Title>Neutral</Alert.Title>
-          <Alert.Description>Note this</Alert.Description>
+        <Alert.Root action={<Alert.Dismiss />}>
+          <Alert.Title>Dismissible</Alert.Title>
+          <Alert.Description>This can be dismissed</Alert.Description>
         </Alert.Root>,
       );
       expect(container.innerHTML).toMatchSnapshot();
@@ -89,5 +90,28 @@ describe("Alert", () => {
     render(<Alert.Root className="astw:mt-4">Content</Alert.Root>);
     const alert = screen.getByRole("alert");
     expect(alert.className).toContain("astw:mt-4");
+  });
+
+  it("dismisses when Alert.Dismiss is clicked", async () => {
+    const user = userEvent.setup();
+    const onDismiss = vi.fn();
+    render(
+      <Alert.Root action={<Alert.Dismiss onDismiss={onDismiss} />}>
+        <Alert.Title>Dismissible</Alert.Title>
+      </Alert.Root>,
+    );
+    expect(screen.getByRole("alert")).toBeDefined();
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it("renders custom action", () => {
+    render(
+      <Alert.Root action={<button type="button">Undo</button>}>
+        <Alert.Title>Action</Alert.Title>
+      </Alert.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDefined();
   });
 });

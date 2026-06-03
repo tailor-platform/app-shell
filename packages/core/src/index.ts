@@ -83,7 +83,7 @@ export { useToast } from "./hooks/use-toast";
 export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 
 // Components
-export { Alert, alertVariants, type AlertProps } from "./components/alert";
+export { Alert, alertVariants, useAlertDismiss, type AlertProps } from "./components/alert";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";

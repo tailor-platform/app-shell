@@ -18,7 +18,7 @@ import {
 import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 type ProfileFormData = {
   username: string;
@@ -479,10 +479,13 @@ const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name must be 50 characters or less"),
   email: z.string().email("Please enter a valid email address"),
   age: z
-    .number({ error: "Age is required" })
+    .number({
+      required_error: "Age is required",
+      invalid_type_error: "Age is required",
+    })
     .min(18, "Must be at least 18")
     .max(120, "Must be 120 or less"),
-  website: z.union([z.url("Please enter a valid URL"), z.literal("")]).optional(),
+  website: z.union([z.string().url("Please enter a valid URL"), z.literal("")]).optional(),
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 

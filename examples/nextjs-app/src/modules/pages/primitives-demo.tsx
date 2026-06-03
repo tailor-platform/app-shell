@@ -321,7 +321,7 @@ export const primitiveComponentsDemoResource = defineResource({
                       </Sheet.Trigger>
                       <Sheet.Content size="md">
                         <Sheet.Header
-                          actions={
+                          action={
                             <>
                               <Button size="sm" variant="outline">
                                 Reset
@@ -331,7 +331,6 @@ export const primitiveComponentsDemoResource = defineResource({
                           }
                         >
                           <Sheet.Title>Edit Record</Sheet.Title>
-                          <Sheet.Description>Multiple action buttons in header.</Sheet.Description>
                         </Sheet.Header>
                         <div style={{ padding: "0 1rem" }}>Form content goes here.</div>
                       </Sheet.Content>

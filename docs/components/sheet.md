@@ -68,11 +68,11 @@ Also accepts all standard HTML `<div>` props.
 
 ### Sheet.Header Props
 
-| Prop      | Type              | Default | Description                                             |
-| --------- | ----------------- | ------- | ------------------------------------------------------- |
-| `actions` | `React.ReactNode` | -       | Action buttons displayed to the right of the title area |
+| Prop     | Type              | Default | Description                                             |
+| -------- | ----------------- | ------- | ------------------------------------------------------- |
+| `action` | `React.ReactNode` | -       | Action buttons displayed to the right of the title area |
 
-The header automatically includes a close button in the normal document flow (no absolute positioning).
+The header renders a close button on the left, title in the center, and action buttons on the right.
 
 ### Sheet.Trigger / Sheet.Close Props
 
@@ -142,15 +142,14 @@ const [open, setOpen] = useState(false);
 
 ### Header with Actions
 
-Place action buttons (e.g., save, edit) to the right of the title using the `actions` prop on `Sheet.Header`.
+Place action buttons (e.g., save, edit) to the right of the title using the `action` prop on `Sheet.Header`.
 
 ```tsx
 <Sheet.Root side="right">
   <Sheet.Trigger render={<Button />}>Edit Record</Sheet.Trigger>
   <Sheet.Content size="lg">
-    <Sheet.Header actions={<Button size="sm">Save</Button>}>
+    <Sheet.Header action={<Button size="sm">Save</Button>}>
       <Sheet.Title>Edit Customer</Sheet.Title>
-      <Sheet.Description>Update customer information.</Sheet.Description>
     </Sheet.Header>
     <div className="astw:p-4">
       <Input placeholder="Customer name" />

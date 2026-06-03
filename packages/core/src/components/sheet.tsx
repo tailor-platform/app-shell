@@ -124,7 +124,7 @@ function Content({ className, children, size = "sm", ...props }: SheetContentPro
         <Drawer.Popup
           data-slot="sheet-content"
           className={cn(
-            "astw:bg-background astw:flex astw:flex-col astw:gap-4 astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms]",
+            "astw:bg-background astw:flex astw:flex-col astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms]",
             side === "right" &&
               "astw:h-full astw:w-3/4 astw:border-l astw:[transform:translateX(var(--drawer-swipe-movement-x))] astw:data-ending-style:[transform:translateX(100%)] astw:data-starting-style:[transform:translateX(100%)]",
             side === "left" &&
@@ -150,32 +150,33 @@ function Content({ className, children, size = "sm", ...props }: SheetContentPro
 Content.displayName = "Sheet.Content";
 
 type SheetHeaderProps = Omit<React.ComponentProps<"div">, "children"> & {
-  /** Action buttons displayed to the right of the title area. */
-  actions?: React.ReactNode;
+  /** Action buttons displayed to the right of the title. */
+  action?: React.ReactNode;
   children?: React.ReactNode;
 };
 
-/** A layout wrapper for the sheet title, description, close button, and optional action buttons. */
-function Header({ className, actions, children, ...props }: SheetHeaderProps) {
+/** A layout wrapper for the sheet title, close button, and optional action buttons. */
+function Header({ className, action, children, ...props }: SheetHeaderProps) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("astw:flex astw:items-start astw:gap-4 astw:p-4", className)}
+      className={cn(
+        "astw:flex astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-3",
+        className,
+      )}
       {...props}
     >
-      <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-1.5">
-        {children}
-      </div>
-      <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">
-        {actions}
-        <Drawer.Close
-          data-slot="sheet-close"
-          className="astw:ring-offset-bg astw:focus:ring-ring astw:shrink-0 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
-        >
-          <XIcon className="astw:size-4" />
-          <span className="astw:sr-only">Close</span>
-        </Drawer.Close>
-      </div>
+      <Drawer.Close
+        data-slot="sheet-close"
+        className="astw:ring-offset-bg astw:focus:ring-ring astw:shrink-0 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
+      >
+        <XIcon className="astw:size-4" />
+        <span className="astw:sr-only">Close</span>
+      </Drawer.Close>
+      <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center">{children}</div>
+      {action && (
+        <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">{action}</div>
+      )}
     </div>
   );
 }
@@ -186,7 +187,10 @@ function Footer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn("astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:p-4", className)}
+      className={cn(
+        "astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:border-t astw:p-4",
+        className,
+      )}
       {...props}
     />
   );

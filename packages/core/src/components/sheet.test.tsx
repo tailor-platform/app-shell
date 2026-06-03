@@ -345,15 +345,15 @@ describe("Sheet", () => {
     });
   });
 
-  describe("Header actions prop", () => {
-    it("renders actions in the header", async () => {
+  describe("action prop on Header", () => {
+    it("renders action in the header", async () => {
       const user = userEvent.setup();
 
       render(
         <Sheet.Root>
           <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
           <Sheet.Content>
-            <Sheet.Header actions={<button data-testid="save-btn">Save</button>}>
+            <Sheet.Header action={<button data-testid="save-btn">Save</button>}>
               <Sheet.Title>Sheet Title</Sheet.Title>
             </Sheet.Header>
           </Sheet.Content>
@@ -368,7 +368,7 @@ describe("Sheet", () => {
       });
     });
 
-    it("does not render actions container when actions is not provided", async () => {
+    it("does not render action container when action is not provided", async () => {
       const user = userEvent.setup();
 
       render(
@@ -388,7 +388,7 @@ describe("Sheet", () => {
         expect(screen.getByText("Sheet Title")).toBeDefined();
       });
 
-      // When no actions prop is provided, only the close button should be in the header's right section
+      // When no action prop is provided, only the close button should be in the header's right section
       const header = document.querySelector('[data-slot="sheet-header"]');
       expect(header).toBeDefined();
       expect(screen.queryByTestId("save-btn")).toBeNull();

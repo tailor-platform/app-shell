@@ -4,7 +4,7 @@
 
 Improve Sheet component customizability:
 
-- Add `size` prop to `Sheet.Content` for width variations (`sm`, `md`, `lg`, `xl`)
+- Add `size` prop to `Sheet.Content` for width variations (`sm`, `md`, `lg`, `xl`, `full`)
 - Add `action` prop to `Sheet.Header` for placing action buttons to the right of the title
 - Increase `Sheet.Title` font size to `text-lg` for better visibility
 - Move close button to the left side of the header, with title inline next to it

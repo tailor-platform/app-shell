@@ -98,7 +98,7 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof Drawer.Bac
 Overlay.displayName = "Sheet.Overlay";
 
 type SheetContentProps = React.ComponentProps<typeof Drawer.Popup> & {
-  /** Controls the max-width of the sheet panel (applies to left/right sides). @default "sm" */
+  /** Controls the max-width of the sheet panel (`sm` | `md` | `lg` | `xl` | `full`). Applies to left/right sides. @default "sm" */
   size?: Size;
 };
 

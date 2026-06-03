@@ -343,6 +343,29 @@ describe("Sheet", () => {
         expect(content.className).toContain("max-w-[60rem]");
       });
     });
+
+    it("applies full width when size is full", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <Sheet.Root>
+          <Sheet.Trigger data-testid="trigger">Open</Sheet.Trigger>
+          <Sheet.Content data-testid="content" size="full">
+            <Sheet.Header>
+              <Sheet.Title>Sheet Title</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await user.click(screen.getByTestId("trigger"));
+
+      await waitFor(() => {
+        const content = screen.getByTestId("content");
+        expect(content.className).toContain("w-full");
+        expect(content.className).toContain("max-w-full");
+      });
+    });
   });
 
   describe("action prop on Header", () => {

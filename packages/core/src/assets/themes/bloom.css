@@ -1,0 +1,131 @@
+/**
+ * Bloom — light lavender app shell; cream secondary/accent surfaces (inverse of Tailor light).
+ */
+html[data-theme="bloom"] {
+  color-scheme: light;
+  --background: rgba(239, 232, 255, 1);
+  /* Shell gradient stops (globals.css): light lavender tint at top → white at bottom. */
+  --shell-gradient-start: color-mix(in srgb, var(--background) 55%, rgb(255, 255, 255));
+  --shell-gradient-end: rgb(255, 255, 255);
+  --foreground: rgba(16, 18, 43, 1);
+  --card: rgba(255, 255, 255, 1);
+  --card-foreground: rgba(16, 18, 43, 1);
+  --popover: rgba(255, 255, 255, 1);
+  --popover-foreground: rgba(16, 18, 43, 1);
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  /* Match light theme — neutral pale grey reads as a soft pill on the lavender shell. */
+  --secondary: rgba(245, 245, 245, 1);
+  --secondary-foreground: rgba(23, 23, 23, 1);
+  /* Row hovers / `bg-muted`: subtle neutral lift (same alpha family as `--border`). */
+  --muted: rgba(0, 0, 0, 0.08);
+  --muted-foreground: rgba(16, 18, 43, 0.72);
+  --accent: rgba(248, 243, 228, 1);
+  --accent-foreground: rgba(16, 18, 43, 1);
+  /* Destructive matches default light theme so the brand red stays consistent across light/cream/bloom. */
+  --destructive: rgba(220, 38, 38, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: rgba(83, 90, 232, 0.45);
+  --chart-1: rgba(83, 90, 232, 1);
+  --chart-2: rgba(0, 151, 156, 1);
+  --chart-3: rgba(1, 55, 66, 1);
+  --chart-4: rgba(110, 95, 195, 1);
+  --chart-5: rgba(217, 119, 6, 1);
+  --radius: 1rem;
+  --sidebar: rgba(239, 232, 255, 1);
+  --sidebar-foreground: rgba(16, 18, 43, 1);
+  --sidebar-primary: rgba(83, 90, 232, 1);
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
+  /* White elevated row on lavender shell (readable vs lavender-on-lavender) */
+  --sidebar-accent: rgba(255, 255, 255, 1);
+  --sidebar-accent-foreground: rgba(16, 18, 43, 1);
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: rgba(83, 90, 232, 0.45);
+  --status-default: rgba(16, 18, 43, 0.55);
+  /* Bloom: teal + violet-tint foregrounds; amber + dusty rose harmonize with shell */
+  --status-neutral: #0b8c9a;
+  --status-completed: #0d7668;
+  --status-attention: #ae6f12;
+  --status-danger: #ae2438;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(16 18 43 / 0.07);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(16 18 43 / 0.12), 0 4px 6px -4px rgb(83 90 232 / 0.1);
+}
+
+/*
+ * Structural overrides — shell gradient, transparent chrome, squircle corners,
+ * tighter heading rhythm. These rules give Bloom its distinctive branded look.
+ */
+
+@layer base {
+  /* Vertical shell gradient: light lavender tint at top -> white at bottom. */
+  html[data-theme="bloom"] {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--background);
+    background-image: linear-gradient(
+      to bottom,
+      var(--shell-gradient-start) 0%,
+      color-mix(in srgb, var(--background) 45%, white) 20%,
+      color-mix(in srgb, var(--background) 30%, white) 40%,
+      color-mix(in srgb, var(--background) 15%, white) 55%,
+      color-mix(in srgb, var(--background) 6%, white) 65%,
+      var(--shell-gradient-end) 70%,
+      var(--shell-gradient-end) 100%
+    );
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  /* Tighter heading rhythm for branded feel. */
+  html[data-theme="bloom"] :where(h1, h2, h3, h4, h5, h6) {
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+
+  /* Apple-style squircle corners where engine supports corner-shape (Chromium). */
+  @supports (corner-shape: squircle) {
+    html[data-theme="bloom"] * {
+      corner-shape: squircle;
+    }
+    html[data-theme="bloom"] [class*="rounded-full"] {
+      corner-shape: round;
+    }
+  }
+}
+
+@layer utilities {
+  /* Body and sidebar chrome stay transparent so the shell gradient shows through. */
+  html[data-theme="bloom"] body {
+    background-color: transparent;
+    background-image: none;
+  }
+
+  html[data-theme="bloom"] [data-slot="sidebar-wrapper"],
+  html[data-theme="bloom"] [data-slot="sidebar-inner"],
+  html[data-theme="bloom"] main[data-slot="sidebar-inset"],
+  html[data-theme="bloom"]
+    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
+      [data-icon-mode="true"]
+    ) {
+    background-color: transparent;
+  }
+
+  /* Outline button: transparent fill so the shell gradient shows through. */
+  html[data-theme="bloom"] [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
+    background-color: transparent;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+
+  html[data-theme="bloom"]
+    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+}

@@ -36,29 +36,6 @@
   }
 
   /*
-   * Cream / Bloom — vertical shell gradient (top = light tint via --shell-gradient-start → bottom = white via --shell-gradient-end).
-   * Paint on `html` (fixed); shell chrome uses transparent bg so `bg-background` on buttons/cards stays solid.
-   */
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) {
-    min-height: 100vh;
-    min-height: 100dvh;
-    background-color: var(--background);
-    background-image: linear-gradient(
-      to bottom,
-      var(--shell-gradient-start) 0%,
-      color-mix(in srgb, var(--background) 45%, white) 20%,
-      color-mix(in srgb, var(--background) 30%, white) 40%,
-      color-mix(in srgb, var(--background) 15%, white) 55%,
-      color-mix(in srgb, var(--background) 6%, white) 65%,
-      var(--shell-gradient-end) 70%,
-      var(--shell-gradient-end) 100%
-    );
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-  }
-
-  /*
    * Font axis — applied independently of color theme via `data-font` on `<html>`.
    *
    * Family-name chain prefers the variable build (loaded by
@@ -77,22 +54,6 @@
     font-family: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Tighter heading rhythm on cream/bloom — matches the showcase palettes' display feel. */
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) :where(h1, h2, h3, h4, h5, h6) {
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-  }
-
-  /* Apple-style squircle corners on cream/bloom where engine supports corner-shape (Chromium). */
-  @supports (corner-shape: squircle) {
-    :is(html[data-theme="cream"], html[data-theme="bloom"]) * {
-      corner-shape: squircle;
-    }
-    /* Round radii (.rounded-full) stay circular squircles, not elongated “capsules” */
-    :is(html[data-theme="cream"], html[data-theme="bloom"]) [class*="rounded-full"] {
-      corner-shape: round;
-    }
-  }
   ::-webkit-scrollbar {
     @apply astw:w-2 astw:h-2 astw:bg-muted;
   }
@@ -117,49 +78,7 @@
   }
 }
 
-/*
- * Theme-specific overrides that must beat Tailwind utility classes (which sit in `@layer utilities`).
- * Keep this block in `@layer utilities` so it loses to no Tailwind utility in earlier layers and wins
- * on selector specificity (no `!important` needed).
- */
 @layer utilities {
-  /*
-   * Cream / Bloom: body and sidebar chrome stay transparent so the html-level shell gradient shows
-   * through. Wins over `body { bg-background }` (base) and the Tailwind `bg-sidebar*` utilities on
-   * sidebar slots via the `:is(html[data-theme=...])` prefix raising specificity.
-   */
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) body {
-    background-color: transparent;
-    background-image: none;
-  }
-
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-wrapper"],
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) [data-slot="sidebar-inner"],
-  :is(html[data-theme="cream"], html[data-theme="bloom"]) main[data-slot="sidebar-inset"],
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
-      [data-icon-mode="true"]
-    ) {
-    background-color: transparent;
-  }
-
-  /* Outline button on cream/bloom: transparent fill so the shell gradient shows through; keep border. */
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
-    background-color: transparent;
-    transition:
-      background-color 0.12s ease,
-      color 0.12s ease;
-  }
-
-  /* Hover state — restore the accent fill that the Tailwind `hover:bg-accent` utility would have provided
-   * if our transparent rule above weren't winning on specificity. */
-  :is(html[data-theme="cream"], html[data-theme="bloom"])
-    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
-    background-color: var(--accent);
-    color: var(--accent-foreground);
-  }
-
   /*
    * Sidebar active item — hairline border (~0.5px @ 30% black). Wrapper components in
    * `components/sidebar/*` apply the active state via direct `bg-sidebar-accent` classes

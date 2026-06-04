@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
 import { AppShellOutlet } from "@/components/content";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -6,14 +5,6 @@ import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 
 export type SidebarLayoutProps = {
-  /**
-   * Header theme control.
-   *
-   * @default Built-in **`ThemeSwitcher`** menu (all themes + **System**).
-   * Pass **`null`** to hide. Pass a custom **`ReactNode`** to replace.
-   */
-  themeSwitcher?: ReactNode;
-
   /**
    * Custom content renderer.
    *
@@ -75,7 +66,6 @@ const HidableSidebarTrigger = () => {
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
   const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
-  const themeSwitcher = props.themeSwitcher !== undefined ? props.themeSwitcher : <ThemeSwitcher />;
 
   return (
     <SidebarProvider
@@ -92,9 +82,9 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
                 <HidableSidebarTrigger />
                 <DynamicBreadcrumb />
               </div>
-              {themeSwitcher !== null ? (
-                <div className="astw:flex astw:items-center astw:gap-2">{themeSwitcher}</div>
-              ) : null}
+              <div className="astw:flex astw:items-center astw:gap-2">
+                <ThemeSwitcher />
+              </div>
             </div>
           </header>
           <div className="astw:flex astw:flex-col astw:gap-4 astw:flex-1 astw:min-h-0">

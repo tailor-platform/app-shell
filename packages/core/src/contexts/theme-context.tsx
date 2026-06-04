@@ -130,5 +130,15 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
   if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
-  return context;
+
+  const { theme, resolvedTheme, setTheme } = context;
+  return useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
+};
+
+export const useFont = () => {
+  const context = useContext(ThemeProviderContext);
+  if (context === undefined) throw new Error("useFont must be used within a ThemeProvider");
+
+  const { font, setFont } = context;
+  return useMemo(() => ({ font, setFont }), [font, setFont]);
 };

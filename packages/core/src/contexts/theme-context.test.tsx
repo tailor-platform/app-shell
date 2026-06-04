@@ -1,7 +1,7 @@
 import { cleanup, render, act, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeProvider, useTheme } from "./theme-context";
+import { ThemeProvider, useTheme, useFont } from "./theme-context";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -81,7 +81,7 @@ function ThemeProbe() {
 }
 
 function FontProbe() {
-  const { font } = useTheme();
+  const { font } = useFont();
   return <span data-testid="font">{font}</span>;
 }
 

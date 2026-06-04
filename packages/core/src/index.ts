@@ -28,6 +28,7 @@ export { WithGuard, type WithGuardProps } from "./components/with-guard";
 export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/appshell-context";
 export {
   useTheme,
+  useFont,
   THEME_OPTIONS,
   FONT_OPTIONS,
   type ResolvedTheme,
@@ -36,6 +37,7 @@ export {
   type Font,
   type FontOption,
 } from "./contexts/theme-context";
+export { ThemeSwitcher } from "./components/theme-switcher";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
 export {
   AuthProvider,

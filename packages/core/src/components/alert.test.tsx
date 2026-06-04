@@ -106,10 +106,13 @@ describe("Alert", () => {
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 
-  it("renders custom action", () => {
+  it("renders actions area", () => {
     render(
-      <Alert.Root action={<button type="button">Undo</button>}>
+      <Alert.Root>
         <Alert.Title>Action</Alert.Title>
+        <Alert.Actions>
+          <button type="button">Undo</button>
+        </Alert.Actions>
       </Alert.Root>,
     );
     expect(screen.getByRole("button", { name: "Undo" })).toBeDefined();

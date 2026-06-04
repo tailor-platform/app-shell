@@ -45,7 +45,6 @@ const variantIcons: Record<
 
 type RootProps = React.ComponentProps<"div"> &
   VariantProps<typeof alertVariants> & {
-    action?: React.ReactNode;
     dismissible?: boolean;
     onDismiss?: () => void;
   };
@@ -53,7 +52,6 @@ type RootProps = React.ComponentProps<"div"> &
 function Root({
   className,
   variant = "neutral",
-  action,
   dismissible,
   onDismiss,
   children,
@@ -78,14 +76,6 @@ function Root({
     >
       <Icon />
       {children}
-      {action && (
-        <div
-          data-slot="alert-action"
-          className="astw:col-start-2 astw:flex astw:items-center astw:gap-2 astw:mt-2"
-        >
-          {action}
-        </div>
-      )}
       {dismissible && (
         <button
           data-slot="alert-dismiss"
@@ -130,6 +120,17 @@ function Description({ className, ...props }: React.ComponentProps<"div">) {
 }
 Description.displayName = "Alert.Description";
 
+function Actions({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-actions"
+      className={cn("astw:col-start-2 astw:flex astw:items-center astw:gap-2 astw:mt-2", className)}
+      {...props}
+    />
+  );
+}
+Actions.displayName = "Alert.Actions";
+
 export type AlertProps = RootProps;
-export const Alert = { Root, Title, Description };
+export const Alert = { Root, Title, Description, Actions };
 export { alertVariants };

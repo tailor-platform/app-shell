@@ -200,19 +200,15 @@ export const primitiveComponentsDemoResource = defineResource({
                       <Alert.Title>With callback</Alert.Title>
                       <Alert.Description>Dismiss fires a callback.</Alert.Description>
                     </Alert.Root>
-                    <Alert.Root
-                      variant="warning"
-                      action={
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                          <Button size="sm" variant="outline">
-                            Dismiss
-                          </Button>
-                          <Button size="sm">Action</Button>
-                        </div>
-                      }
-                    >
+                    <Alert.Root variant="warning" dismissible>
                       <Alert.Title>Multiple actions</Alert.Title>
                       <Alert.Description>This alert has multiple action buttons.</Alert.Description>
+                      <Alert.Actions>
+                        <Button size="sm" variant="outline">
+                          Dismiss
+                        </Button>
+                        <Button size="sm">Action</Button>
+                      </Alert.Actions>
                     </Alert.Root>
                   </div>
                 </div>

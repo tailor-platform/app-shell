@@ -25,7 +25,7 @@ const searchSources: SearchSource[] = [
 
 const App = () => {
   return (
-    <AppShell title="File-Based Routing Demo" searchSources={searchSources}>
+    <AppShell title="File-Based Routing Demo" searchSources={searchSources} defaultTheme="bloom">
       <SidebarLayout
         sidebar={
           <DefaultSidebar>

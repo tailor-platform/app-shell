@@ -188,13 +188,14 @@ export const primitiveComponentsDemoResource = defineResource({
                       gap: "0.5rem",
                     }}
                   >
-                    <Alert.Root variant="info" action={<Alert.Dismiss />}>
+                    <Alert.Root variant="info" dismissible>
                       <Alert.Title>Dismissible</Alert.Title>
                       <Alert.Description>This alert can be dismissed.</Alert.Description>
                     </Alert.Root>
                     <Alert.Root
                       variant="success"
-                      action={<Alert.Dismiss onDismiss={() => console.log("dismissed")} />}
+                      dismissible
+                      onDismiss={() => console.log("dismissed")}
                     >
                       <Alert.Title>With callback</Alert.Title>
                       <Alert.Description>Dismiss fires a callback.</Alert.Description>

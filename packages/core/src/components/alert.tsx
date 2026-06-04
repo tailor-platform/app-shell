@@ -43,43 +43,61 @@ const variantIcons: Record<
   info: InfoIcon,
 };
 
-const AlertDismissContext = React.createContext<(() => void) | null>(null);
-
 type RootProps = React.ComponentProps<"div"> &
   VariantProps<typeof alertVariants> & {
     action?: React.ReactNode;
+    dismissible?: boolean;
+    onDismiss?: () => void;
   };
 
-function Root({ className, variant = "neutral", action, children, ...props }: RootProps) {
+function Root({
+  className,
+  variant = "neutral",
+  action,
+  dismissible,
+  onDismiss,
+  children,
+  ...props
+}: RootProps) {
   const [visible, setVisible] = React.useState(true);
   const Icon = variantIcons[variant ?? "neutral"];
 
-  const dismiss = React.useCallback(() => {
+  const handleDismiss = React.useCallback(() => {
     setVisible(false);
-  }, []);
+    onDismiss?.();
+  }, [onDismiss]);
 
   if (!visible) return null;
 
   return (
-    <AlertDismissContext.Provider value={dismiss}>
-      <div
-        data-slot="alert"
-        role="alert"
-        className={cn(alertVariants({ variant }), className)}
-        {...props}
-      >
-        <Icon />
-        {children}
-        {action && (
-          <div
-            data-slot="alert-action"
-            className="astw:col-start-3 astw:row-span-full astw:flex astw:items-center astw:self-center"
-          >
-            {action}
-          </div>
-        )}
-      </div>
-    </AlertDismissContext.Provider>
+    <div
+      data-slot="alert"
+      role="alert"
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    >
+      <Icon />
+      {children}
+      {action && (
+        <div
+          data-slot="alert-action"
+          className="astw:col-start-2 astw:flex astw:items-center astw:gap-2 astw:mt-2"
+        >
+          {action}
+        </div>
+      )}
+      {dismissible && (
+        <button
+          data-slot="alert-dismiss"
+          type="button"
+          onClick={handleDismiss}
+          className="astw:col-start-3 astw:row-span-full astw:self-center astw:inline-flex astw:items-center astw:justify-center astw:rounded-md astw:p-1 astw:opacity-70 astw:transition-opacity hover:astw:opacity-100 focus-visible:astw:outline-none focus-visible:astw:ring-2 focus-visible:astw:ring-ring"
+          aria-label="Dismiss"
+        >
+          <XIcon className="astw:size-4" />
+        </button>
+      )}
+    </div>
   );
 }
 Root.displayName = "Alert.Root";
@@ -112,48 +130,6 @@ function Description({ className, ...props }: React.ComponentProps<"div">) {
 }
 Description.displayName = "Alert.Description";
 
-type DismissProps = Omit<React.ComponentProps<"button">, "onClick"> & {
-  onDismiss?: () => void;
-};
-
-function Dismiss({ className, onDismiss, ...props }: DismissProps) {
-  const dismiss = React.useContext(AlertDismissContext);
-
-  const handleClick = React.useCallback(() => {
-    dismiss?.();
-    onDismiss?.();
-  }, [dismiss, onDismiss]);
-
-  return (
-    <button
-      data-slot="alert-dismiss"
-      type="button"
-      onClick={handleClick}
-      className={cn(
-        "astw:inline-flex astw:items-center astw:justify-center astw:rounded-md astw:p-1 astw:opacity-70 astw:transition-opacity hover:astw:opacity-100 focus-visible:astw:outline-none focus-visible:astw:ring-2 focus-visible:astw:ring-ring",
-        className,
-      )}
-      aria-label="Dismiss"
-      {...props}
-    >
-      <XIcon className="astw:size-4" />
-    </button>
-  );
-}
-Dismiss.displayName = "Alert.Dismiss";
-
-/**
- * Returns the dismiss function for the nearest `Alert.Root`.
- * @throws {Error} if called outside an `Alert.Root` tree.
- */
-export function useAlertDismiss() {
-  const dismiss = React.useContext(AlertDismissContext);
-  if (!dismiss) {
-    throw new Error("useAlertDismiss must be used within an Alert.Root");
-  }
-  return dismiss;
-}
-
 export type AlertProps = RootProps;
-export const Alert = { Root, Title, Description, Dismiss };
+export const Alert = { Root, Title, Description };
 export { alertVariants };

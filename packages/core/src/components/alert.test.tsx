@@ -59,9 +59,9 @@ describe("Alert", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
-    it("with action", () => {
+    it("with dismissible", () => {
       const { container } = render(
-        <Alert.Root action={<Alert.Dismiss />}>
+        <Alert.Root dismissible>
           <Alert.Title>Dismissible</Alert.Title>
           <Alert.Description>This can be dismissed</Alert.Description>
         </Alert.Root>,
@@ -92,11 +92,11 @@ describe("Alert", () => {
     expect(alert.className).toContain("astw:mt-4");
   });
 
-  it("dismisses when Alert.Dismiss is clicked", async () => {
+  it("dismisses when dismissible button is clicked", async () => {
     const user = userEvent.setup();
     const onDismiss = vi.fn();
     render(
-      <Alert.Root action={<Alert.Dismiss onDismiss={onDismiss} />}>
+      <Alert.Root dismissible onDismiss={onDismiss}>
         <Alert.Title>Dismissible</Alert.Title>
       </Alert.Root>,
     );

@@ -339,12 +339,7 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider
-              defaultTheme={props.defaultTheme}
-              defaultFont={props.defaultFont}
-              storageKey="appshell-ui-theme"
-              fontStorageKey="appshell-ui-font"
-            >
+            <ThemeProvider defaultTheme={props.defaultTheme} defaultFont={props.defaultFont}>
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

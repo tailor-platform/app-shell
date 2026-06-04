@@ -1,10 +1,7 @@
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, act, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeProvider, useTheme, useFont } from "./theme-context";
-
-const storageKey = "theme-context-test-theme";
-const fontStorageKey = "theme-context-test-font";
+import { ThemeProvider, useTheme } from "./theme-context";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -27,8 +24,12 @@ function installLocalStorageStub() {
   return map;
 }
 
+type MatchMediaListener = (e: MediaQueryListEvent) => void;
+let matchMediaListeners: MatchMediaListener[] = [];
+
 /** `matchMedia` is not implemented in some test runtimes — stub to a controllable shape. */
 function installMatchMediaStub(matches: boolean) {
+  matchMediaListeners = [];
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: vi.fn().mockImplementation((query: string) => ({
@@ -37,8 +38,12 @@ function installMatchMediaStub(matches: boolean) {
       onchange: null,
       addListener: vi.fn(),
       removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
+      addEventListener: (_: string, fn: MatchMediaListener) => {
+        matchMediaListeners.push(fn);
+      },
+      removeEventListener: (_: string, fn: MatchMediaListener) => {
+        matchMediaListeners = matchMediaListeners.filter((l) => l !== fn);
+      },
       dispatchEvent: vi.fn(),
     })),
   });
@@ -52,6 +57,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   storageMap.clear();
+  matchMediaListeners = [];
   document.documentElement.removeAttribute("data-theme");
   document.documentElement.removeAttribute("data-font");
   document.documentElement.classList.remove("light", "dark");
@@ -72,35 +78,16 @@ function ThemeProbe() {
 }
 
 function FontProbe() {
-  const { font } = useFont();
+  const { font } = useTheme();
   return <span data-testid="font">{font}</span>;
 }
 
-describe("ThemeProvider — legacy id migration", () => {
-  it.each([
-    ["tailor-light", "cream"],
-    ["tailor-bloom", "bloom"],
-    ["tailor-dark", "dark"],
-  ])("maps stored %s → %s on first render", async (stored, expected) => {
-    storageMap.set(storageKey, stored);
-
-    const { getByTestId } = render(
-      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="bloom">
-        <ThemeProbe />
-      </ThemeProvider>,
-    );
-
-    expect(getByTestId("theme").textContent).toBe(expected);
-    await waitFor(() => {
-      expect(document.documentElement.dataset.theme).toBe(expected);
-    });
-  });
-
+describe("ThemeProvider — storage validation", () => {
   it("falls back to defaultTheme for an unrecognized stored value", () => {
-    storageMap.set(storageKey, "totally-not-a-theme");
+    storageMap.set("appshell-ui-theme", "totally-not-a-theme");
 
     const { getByTestId } = render(
-      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultTheme="light">
+      <ThemeProvider defaultTheme="light">
         <ThemeProbe />
       </ThemeProvider>,
     );
@@ -109,25 +96,40 @@ describe("ThemeProvider — legacy id migration", () => {
   });
 
   it("falls back to defaultFont for an unrecognized stored font", () => {
-    storageMap.set(fontStorageKey, "wingdings");
+    storageMap.set("appshell-ui-font", "wingdings");
 
     const { getByTestId } = render(
-      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey} defaultFont="inter">
+      <ThemeProvider defaultFont="inter">
         <FontProbe />
       </ThemeProvider>,
     );
 
     expect(getByTestId("font").textContent).toBe("inter");
   });
+
+  it("reads a valid stored theme", async () => {
+    storageMap.set("appshell-ui-theme", "cream");
+
+    const { getByTestId } = render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(getByTestId("theme").textContent).toBe("cream");
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe("cream");
+    });
+  });
 });
 
 describe("ThemeProvider — system resolution", () => {
   it("resolves system → dark when prefers-color-scheme: dark matches", async () => {
     installMatchMediaStub(true);
-    storageMap.set(storageKey, "system");
+    storageMap.set("appshell-ui-theme", "system");
 
     const { getByTestId } = render(
-      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey}>
+      <ThemeProvider>
         <ThemeProbe />
       </ThemeProvider>,
     );
@@ -142,10 +144,10 @@ describe("ThemeProvider — system resolution", () => {
 
   it("resolves system → light when prefers-color-scheme: dark does not match", async () => {
     installMatchMediaStub(false);
-    storageMap.set(storageKey, "system");
+    storageMap.set("appshell-ui-theme", "system");
 
     const { getByTestId } = render(
-      <ThemeProvider storageKey={storageKey} fontStorageKey={fontStorageKey}>
+      <ThemeProvider>
         <ThemeProbe />
       </ThemeProvider>,
     );
@@ -156,19 +158,37 @@ describe("ThemeProvider — system resolution", () => {
       expect(document.documentElement.classList.contains("light")).toBe(true);
     });
   });
+
+  it("reacts to OS color-scheme change while theme is system", async () => {
+    installMatchMediaStub(false);
+    storageMap.set("appshell-ui-theme", "system");
+
+    const { getByTestId } = render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(getByTestId("resolved").textContent).toBe("light");
+
+    // Simulate OS dark mode toggle
+    act(() => {
+      for (const listener of matchMediaListeners) {
+        listener({ matches: true } as MediaQueryListEvent);
+      }
+    });
+
+    expect(getByTestId("resolved").textContent).toBe("dark");
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe("dark");
+    });
+  });
 });
 
-describe("useTheme / useFont — provider guard", () => {
+describe("useTheme — provider guard", () => {
   it("throws when useTheme is called outside ThemeProvider", () => {
-    // Silence React's expected error log for this assertion.
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(() => render(<ThemeProbe />)).toThrow(/useTheme must be used within a ThemeProvider/);
-    spy.mockRestore();
-  });
-
-  it("throws when useFont is called outside ThemeProvider", () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(() => render(<FontProbe />)).toThrow(/useFont must be used within a ThemeProvider/);
     spy.mockRestore();
   });
 });

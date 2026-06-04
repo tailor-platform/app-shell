@@ -1,0 +1,49 @@
+/**
+ * Light theme (default) — neutral grayscale palette.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: rgba(250, 250, 250, 1);
+  --foreground: rgba(10, 10, 10, 1);
+  --card: rgba(255, 255, 255, 1);
+  --card-foreground: rgba(10, 10, 10, 1);
+  --popover: rgba(255, 255, 255, 1);
+  --popover-foreground: rgba(10, 10, 10, 1);
+  --primary: rgba(23, 23, 23, 1);
+  --primary-foreground: rgba(250, 250, 250, 1);
+  --secondary: rgba(245, 245, 245, 1);
+  --secondary-foreground: rgba(23, 23, 23, 1);
+  --muted: rgba(245, 245, 245, 1);
+  --muted-foreground: rgba(115, 115, 115, 1);
+  --accent: rgba(245, 245, 245, 1);
+  --accent-foreground: rgba(23, 23, 23, 1);
+  --destructive: rgba(220, 38, 38, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --border: rgba(229, 229, 229, 1);
+  --input: rgba(229, 229, 229, 1);
+  --ring: rgba(163, 163, 163, 1);
+  --chart-1: rgba(234, 88, 12, 1);
+  --chart-2: rgba(13, 148, 136, 1);
+  --chart-3: rgba(22, 78, 99, 1);
+  --chart-4: rgba(251, 191, 36, 1);
+  --chart-5: rgba(245, 158, 11, 1);
+  --radius: 0.625rem;
+  --sidebar: rgba(250, 250, 250, 1);
+  --sidebar-foreground: rgba(10, 10, 10, 1);
+  --sidebar-primary: rgba(23, 23, 23, 1);
+  --sidebar-primary-foreground: rgba(250, 250, 250, 1);
+  --sidebar-accent: rgba(245, 245, 245, 1);
+  --sidebar-accent-foreground: rgba(23, 23, 23, 1);
+  --sidebar-border: rgba(229, 229, 229, 1);
+  --sidebar-ring: rgba(163, 163, 163, 1);
+  --status-default: #737373;
+  --status-neutral: #0ea5e9;
+  --status-completed: #22c55e;
+  --status-attention: #f59e0b;
+  --status-danger: #ef4444;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.06);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.09);
+}

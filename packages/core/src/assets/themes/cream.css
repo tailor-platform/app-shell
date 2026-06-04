@@ -1,0 +1,133 @@
+/**
+ * Cream — Tailor brand light palette.
+ * Primary: #535AE8 · Text: #10122B · White: #FFFFFF
+ * Secondary: Deep Cyan #00979C · Dark Green #013742 · Off-White #F8F3E4 · Neutral #EEEEEE · Light Violet #E2D4FE
+ */
+html[data-theme="cream"] {
+  color-scheme: light;
+  /* Off-white app shell; white cards for elevation */
+  --background: rgba(248, 243, 228, 1);
+  /* Shell gradient stops (globals.css): light cream tint at top → white at bottom. */
+  --shell-gradient-start: color-mix(in srgb, var(--background) 55%, rgb(255, 255, 255));
+  --shell-gradient-end: rgb(255, 255, 255);
+  --foreground: rgba(16, 18, 43, 1);
+  --card: rgba(255, 255, 255, 1);
+  --card-foreground: rgba(16, 18, 43, 1);
+  --popover: rgba(255, 255, 255, 1);
+  --popover-foreground: rgba(16, 18, 43, 1);
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  /* Light violet surfaces; near-black text (match bloom; drop the brand dark-green pairing). */
+  --secondary: rgba(226, 212, 254, 1);
+  --secondary-foreground: rgba(16, 18, 43, 1);
+  /* Row hovers / `bg-muted`: subtle neutral lift (same alpha family as `--border`), not a second brand tint. */
+  --muted: rgba(0, 0, 0, 0.08);
+  --muted-foreground: rgba(16, 18, 43, 0.72);
+  --accent: rgba(226, 212, 254, 1);
+  --accent-foreground: rgba(16, 18, 43, 1);
+  /* Destructive matches default light theme so the brand red stays consistent across light/cream/bloom. */
+  --destructive: rgba(220, 38, 38, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: rgba(83, 90, 232, 0.45);
+  --chart-1: rgba(83, 90, 232, 1);
+  --chart-2: rgba(0, 151, 156, 1);
+  --chart-3: rgba(1, 55, 66, 1);
+  --chart-4: rgba(110, 95, 195, 1);
+  --chart-5: rgba(217, 119, 6, 1);
+  /* Larger corner scale; squircle overlays via globals.css where supported */
+  --radius: 1rem;
+  --sidebar: rgba(248, 243, 228, 1);
+  --sidebar-foreground: rgba(16, 18, 43, 1);
+  --sidebar-primary: rgba(83, 90, 232, 1);
+  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
+  --sidebar-accent: rgba(226, 212, 254, 1);
+  --sidebar-accent-foreground: rgba(16, 18, 43, 1);
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: rgba(83, 90, 232, 0.45);
+  --status-default: rgba(16, 18, 43, 0.55);
+  --status-neutral: #00979c;
+  --status-completed: #00979c;
+  --status-attention: #d97706;
+  --status-danger: #dc2626;
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(16 18 43 / 0.07);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(16 18 43 / 0.12), 0 4px 6px -4px rgb(83 90 232 / 0.1);
+}
+
+/*
+ * Structural overrides — shell gradient, transparent chrome, squircle corners,
+ * tighter heading rhythm. These rules give Cream its distinctive branded look.
+ */
+
+@layer base {
+  /* Vertical shell gradient: light cream tint at top -> white at bottom. */
+  html[data-theme="cream"] {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--background);
+    background-image: linear-gradient(
+      to bottom,
+      var(--shell-gradient-start) 0%,
+      color-mix(in srgb, var(--background) 45%, white) 20%,
+      color-mix(in srgb, var(--background) 30%, white) 40%,
+      color-mix(in srgb, var(--background) 15%, white) 55%,
+      color-mix(in srgb, var(--background) 6%, white) 65%,
+      var(--shell-gradient-end) 70%,
+      var(--shell-gradient-end) 100%
+    );
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+
+  /* Tighter heading rhythm for branded feel. */
+  html[data-theme="cream"] :where(h1, h2, h3, h4, h5, h6) {
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+
+  /* Apple-style squircle corners where engine supports corner-shape (Chromium). */
+  @supports (corner-shape: squircle) {
+    html[data-theme="cream"] * {
+      corner-shape: squircle;
+    }
+    html[data-theme="cream"] [class*="rounded-full"] {
+      corner-shape: round;
+    }
+  }
+}
+
+@layer utilities {
+  /* Body and sidebar chrome stay transparent so the shell gradient shows through. */
+  html[data-theme="cream"] body {
+    background-color: transparent;
+    background-image: none;
+  }
+
+  html[data-theme="cream"] [data-slot="sidebar-wrapper"],
+  html[data-theme="cream"] [data-slot="sidebar-inner"],
+  html[data-theme="cream"] main[data-slot="sidebar-inset"],
+  html[data-theme="cream"]
+    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
+      [data-icon-mode="true"]
+    ) {
+    background-color: transparent;
+  }
+
+  /* Outline button: transparent fill so the shell gradient shows through. */
+  html[data-theme="cream"] [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
+    background-color: transparent;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+
+  html[data-theme="cream"]
+    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+}

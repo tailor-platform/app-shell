@@ -10,6 +10,7 @@ const ALL_THEMES: readonly Theme[] = ["light", "dark", "cream", "bloom", "system
 
 /** Dropdown / switcher entries: order matches selectable themes; labels are user-facing. */
 export type ThemeOption = { readonly value: Theme; readonly label: string };
+export type FontOption = { readonly value: Font; readonly label: string };
 
 export const THEME_OPTIONS: readonly ThemeOption[] = [
   { value: "bloom", label: "Bloom" },
@@ -24,58 +25,21 @@ export type Font = "geist" | "inter";
 
 const ALL_FONTS: readonly Font[] = ["geist", "inter"] as const;
 
-export type FontOption = { readonly value: Font; readonly label: string };
-
 export const FONT_OPTIONS: readonly FontOption[] = [
   { value: "geist", label: "Geist" },
   { value: "inter", label: "Inter" },
 ] as const;
 
-/** Migrate stored values from legacy `tailor-*` ids before the public rename. */
-const LEGACY_THEME_IDS: Partial<Record<string, Theme>> = {
-  "tailor-light": "cream",
-  "tailor-bloom": "bloom",
-  "tailor-dark": "dark",
-};
+const THEME_STORAGE_KEY = "appshell-ui-theme";
+const FONT_STORAGE_KEY = "appshell-ui-font";
 
-function parseStoredTheme(value: string | null, fallback: Theme): Theme {
-  if (!value) return fallback;
-  const legacy = LEGACY_THEME_IDS[value];
-  if (legacy) return legacy;
-  if ((ALL_THEMES as readonly string[]).includes(value)) return value as Theme;
-  return fallback;
-}
-
-function parseStoredFont(value: string | null, fallback: Font): Font {
-  if (!value) return fallback;
-  if ((ALL_FONTS as readonly string[]).includes(value)) return value as Font;
-  return fallback;
-}
-
-function readStored<T extends string>(
-  storageKey: string,
-  fallback: T,
-  parse: (value: string | null, fallback: T) => T,
-): T {
+function readStored<T extends string>(key: string, allowList: readonly T[], fallback: T): T {
   if (typeof window === "undefined") return fallback;
-  const ls = window.localStorage;
-  const getItem = ls && typeof ls.getItem === "function" ? ls.getItem.bind(ls) : null;
-  if (!getItem) return fallback;
   try {
-    return parse(getItem(storageKey), fallback);
+    const v = localStorage.getItem(key);
+    return v && (allowList as readonly string[]).includes(v) ? (v as T) : fallback;
   } catch {
     return fallback;
-  }
-}
-
-function writeStored<T extends string>(storageKey: string, value: T) {
-  if (typeof window === "undefined") return;
-  const ls = window.localStorage;
-  if (!ls || typeof ls.setItem !== "function") return;
-  try {
-    ls.setItem(storageKey, value);
-  } catch {
-    /* storage full or forbidden */
   }
 }
 
@@ -83,8 +47,6 @@ type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
   defaultFont?: Font;
-  storageKey: string;
-  fontStorageKey: string;
 };
 
 type ThemeProviderState = {
@@ -97,27 +59,36 @@ type ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
-function resolveTheme(theme: Theme): ResolvedTheme {
-  if (theme !== "system") return theme;
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export function ThemeProvider({
   children,
-  storageKey,
-  fontStorageKey,
   defaultTheme = "bloom",
   defaultFont = "geist",
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() =>
-    readStored(storageKey, defaultTheme, parseStoredTheme),
+    readStored(THEME_STORAGE_KEY, ALL_THEMES, defaultTheme),
   );
   const [font, setFontState] = useState<Font>(() =>
-    readStored(fontStorageKey, defaultFont, parseStoredFont),
+    readStored(FONT_STORAGE_KEY, ALL_FONTS, defaultFont),
   );
 
-  const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
+  // Track OS color-scheme for live "system" theme resolution
+  const [systemDark, setSystemDark] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      : false,
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const resolvedTheme: ResolvedTheme = (() => {
+    if (theme !== "system") return theme;
+    return systemDark ? "dark" : "light";
+  })();
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -130,21 +101,23 @@ export function ThemeProvider({
     window.document.documentElement.dataset.font = font;
   }, [font]);
 
-  const setTheme = useCallback(
-    (newTheme: Theme) => {
-      writeStored(storageKey, newTheme);
-      setThemeState(newTheme);
-    },
-    [storageKey],
-  );
+  const setTheme = useCallback((newTheme: Theme) => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch {
+      /* storage full or forbidden */
+    }
+    setThemeState(newTheme);
+  }, []);
 
-  const setFont = useCallback(
-    (newFont: Font) => {
-      writeStored(fontStorageKey, newFont);
-      setFontState(newFont);
-    },
-    [fontStorageKey],
-  );
+  const setFont = useCallback((newFont: Font) => {
+    try {
+      localStorage.setItem(FONT_STORAGE_KEY, newFont);
+    } catch {
+      /* storage full or forbidden */
+    }
+    setFontState(newFont);
+  }, []);
 
   const value = useMemo<ThemeProviderState>(
     () => ({ theme, resolvedTheme, setTheme, font, setFont }),
@@ -157,15 +130,5 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
   if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
-
-  const { theme, resolvedTheme, setTheme } = context;
-  return useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
-};
-
-export const useFont = () => {
-  const context = useContext(ThemeProviderContext);
-  if (context === undefined) throw new Error("useFont must be used within a ThemeProvider");
-
-  const { font, setFont } = context;
-  return useMemo(() => ({ font, setFont }), [font, setFont]);
+  return context;
 };

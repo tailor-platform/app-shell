@@ -20,7 +20,10 @@ function installLocalStorageStub() {
       return map.size;
     },
   };
-  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: ls });
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: ls,
+  });
   return map;
 }
 

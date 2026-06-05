@@ -95,7 +95,13 @@ export const primitiveComponentsDemoResource = defineResource({
           <Card.Root>
             <Card.Header title="Badge" />
             <Card.Content>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
                 <div>
                   <div style={labelStyle}>Solid</div>
                   <div style={rowStyle}>
@@ -187,50 +193,153 @@ export const primitiveComponentsDemoResource = defineResource({
           <Card.Root>
             <Card.Header title="Sheet" />
             <Card.Content>
-              <div style={rowStyle}>
-                <Sheet.Root side="right">
-                  <Sheet.Trigger render={<Button variant="outline" />}>
-                    Open Sheet (Right)
-                  </Sheet.Trigger>
-                  <Sheet.Content>
-                    <Sheet.Header>
-                      <Sheet.Title>Sheet Title</Sheet.Title>
-                      <Sheet.Description>This sheet slides in from the right.</Sheet.Description>
-                    </Sheet.Header>
-                    <div style={{ padding: "1rem 0" }}>Sheet content goes here.</div>
-                    <Sheet.Footer>
-                      <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
-                    </Sheet.Footer>
-                  </Sheet.Content>
-                </Sheet.Root>
-                <Sheet.Root side="left">
-                  <Sheet.Trigger render={<Button variant="outline" />}>
-                    Open Sheet (Left)
-                  </Sheet.Trigger>
-                  <Sheet.Content>
-                    <Sheet.Header>
-                      <Sheet.Title>Left Sheet</Sheet.Title>
-                      <Sheet.Description>This sheet slides in from the left.</Sheet.Description>
-                    </Sheet.Header>
-                    <Sheet.Footer>
-                      <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
-                    </Sheet.Footer>
-                  </Sheet.Content>
-                </Sheet.Root>
-                <Sheet.Root side="bottom">
-                  <Sheet.Trigger render={<Button variant="outline" />}>
-                    Open Sheet (Bottom)
-                  </Sheet.Trigger>
-                  <Sheet.Content>
-                    <Sheet.Header>
-                      <Sheet.Title>Bottom Sheet</Sheet.Title>
-                      <Sheet.Description>This sheet slides in from the bottom.</Sheet.Description>
-                    </Sheet.Header>
-                    <Sheet.Footer>
-                      <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
-                    </Sheet.Footer>
-                  </Sheet.Content>
-                </Sheet.Root>
+              <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                <div>
+                  <div style={labelStyle}>Side</div>
+                  <div style={rowStyle}>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>Right</Sheet.Trigger>
+                      <Sheet.Content>
+                        <Sheet.Header>
+                          <Sheet.Title>Sheet Title</Sheet.Title>
+                          <Sheet.Description>
+                            This sheet slides in from the right.
+                          </Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Sheet content goes here.</div>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                    <Sheet.Root side="left">
+                      <Sheet.Trigger render={<Button variant="outline" />}>Left</Sheet.Trigger>
+                      <Sheet.Content>
+                        <Sheet.Header>
+                          <Sheet.Title>Left Sheet</Sheet.Title>
+                          <Sheet.Description>This sheet slides in from the left.</Sheet.Description>
+                        </Sheet.Header>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                    <Sheet.Root side="bottom">
+                      <Sheet.Trigger render={<Button variant="outline" />}>Bottom</Sheet.Trigger>
+                      <Sheet.Content>
+                        <Sheet.Header>
+                          <Sheet.Title>Bottom Sheet</Sheet.Title>
+                          <Sheet.Description>
+                            This sheet slides in from the bottom.
+                          </Sheet.Description>
+                        </Sheet.Header>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Size</div>
+                  <div style={rowStyle}>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>
+                        sm (default)
+                      </Sheet.Trigger>
+                      <Sheet.Content size="sm">
+                        <Sheet.Header>
+                          <Sheet.Title>Small Sheet</Sheet.Title>
+                          <Sheet.Description>384px (24rem)</Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Sheet content goes here.</div>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>md</Sheet.Trigger>
+                      <Sheet.Content size="md">
+                        <Sheet.Header>
+                          <Sheet.Title>Medium Sheet</Sheet.Title>
+                          <Sheet.Description>512px (32rem)</Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Sheet content goes here.</div>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>lg</Sheet.Trigger>
+                      <Sheet.Content size="lg">
+                        <Sheet.Header>
+                          <Sheet.Title>Large Sheet</Sheet.Title>
+                          <Sheet.Description>720px (45rem)</Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Sheet content goes here.</div>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>xl</Sheet.Trigger>
+                      <Sheet.Content size="xl">
+                        <Sheet.Header>
+                          <Sheet.Title>Extra Large Sheet</Sheet.Title>
+                          <Sheet.Description>960px (60rem)</Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Sheet content goes here.</div>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>full</Sheet.Trigger>
+                      <Sheet.Content size="full">
+                        <Sheet.Header>
+                          <Sheet.Title>Full Screen Sheet</Sheet.Title>
+                          <Sheet.Description>Full-width overlay</Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Sheet content goes here.</div>
+                        <Sheet.Footer>
+                          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+                        </Sheet.Footer>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>Actions</div>
+                  <div style={rowStyle}>
+                    <Sheet.Root side="right">
+                      <Sheet.Trigger render={<Button variant="outline" />}>
+                        Multiple actions
+                      </Sheet.Trigger>
+                      <Sheet.Content size="md">
+                        <Sheet.Header
+                          action={
+                            <>
+                              <Button size="sm" variant="outline">
+                                Reset
+                              </Button>
+                              <Button size="sm">Save</Button>
+                            </>
+                          }
+                        >
+                          <Sheet.Title>Edit Record</Sheet.Title>
+                          <Sheet.Description>
+                            Modify the details of the selected record.
+                          </Sheet.Description>
+                        </Sheet.Header>
+                        <div style={{ padding: "1rem" }}>Form content goes here.</div>
+                      </Sheet.Content>
+                    </Sheet.Root>
+                  </div>
+                </div>
               </div>
             </Card.Content>
           </Card.Root>

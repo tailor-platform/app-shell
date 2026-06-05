@@ -11,6 +11,7 @@ import {
   Menu,
   Table,
   Tabs,
+  Alert,
 } from "@tailor-platform/app-shell";
 import {
   LayoutDashboard as LayoutDashboardIcon,
@@ -130,6 +131,90 @@ export const primitiveComponentsDemoResource = defineResource({
                     <Badge variant="outline-error">Outline Error</Badge>
                     <Badge variant="outline-info">Outline Info</Badge>
                     <Badge variant="outline-neutral">Outline Neutral</Badge>
+                  </div>
+                </div>
+              </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Alert */}
+          <Card.Root>
+            <Card.Header title="Alert" />
+            <Card.Content>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
+                <div>
+                  <div style={labelStyle}>Variants</div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <Alert.Root>
+                      <Alert.Title>Neutral (default)</Alert.Title>
+                      <Alert.Description>This is a neutral alert message.</Alert.Description>
+                    </Alert.Root>
+                    <Alert.Root variant="success">
+                      <Alert.Title>Success</Alert.Title>
+                      <Alert.Description>Operation completed successfully.</Alert.Description>
+                    </Alert.Root>
+                    <Alert.Root variant="warning">
+                      <Alert.Title>Warning</Alert.Title>
+                      <Alert.Description>Please review before proceeding.</Alert.Description>
+                    </Alert.Root>
+                    <Alert.Root variant="error">
+                      <Alert.Title>Error</Alert.Title>
+                      <Alert.Description>Something went wrong. Please try again.</Alert.Description>
+                    </Alert.Root>
+                    <Alert.Root variant="info">
+                      <Alert.Title>Info</Alert.Title>
+                      <Alert.Description>Here is some useful information.</Alert.Description>
+                    </Alert.Root>
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>With Action</div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <Alert.Root variant="info" dismissible>
+                      <Alert.Title>Dismissible</Alert.Title>
+                      <Alert.Description>This alert can be dismissed.</Alert.Description>
+                    </Alert.Root>
+                    <Alert.Root
+                      variant="success"
+                      dismissible
+                      onDismiss={() => console.log("dismissed")}
+                    >
+                      <Alert.Title>With callback</Alert.Title>
+                      <Alert.Description>Dismiss fires a callback.</Alert.Description>
+                    </Alert.Root>
+                    <Alert.Root
+                      variant="warning"
+                      dismissible
+                      action={
+                        <>
+                          <Button size="sm" variant="outline">
+                            Dismiss
+                          </Button>
+                          <Button size="sm">Action</Button>
+                        </>
+                      }
+                    >
+                      <Alert.Title>Multiple actions</Alert.Title>
+                      <Alert.Description>This alert has multiple action buttons.</Alert.Description>
+                    </Alert.Root>
                   </div>
                 </div>
               </div>

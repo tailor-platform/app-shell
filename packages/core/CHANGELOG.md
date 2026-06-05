@@ -1,5 +1,50 @@
 # @tailor-platform/app-shell
 
+## 1.4.0
+
+### Minor Changes
+
+- 5a251fd: Add `Alert` compound component with `neutral`, `success`, `warning`, `error`, and `info` variants. Each variant renders a contextual icon automatically.
+
+  ```tsx
+  import { Alert } from "@tailor-platform/app-shell";
+
+  <Alert.Root variant="success">
+    <Alert.Title>Saved</Alert.Title>
+    <Alert.Description>Your changes have been saved.</Alert.Description>
+  </Alert.Root>;
+  ```
+
+- 49f10e3: Improve Sheet component customizability:
+
+  - Add `size` prop to `Sheet.Content` for width variations (`sm`, `md`, `lg`, `xl`, `full`)
+  - Add `action` prop to `Sheet.Header` for placing action buttons to the right of the title
+  - Increase `Sheet.Title` font size to `text-lg` for better visibility
+  - Move close button to the left side of the header, with title inline next to it
+  - Header now has a bottom border, Footer has a top border for visual separation
+
+  ```tsx
+  <Sheet.Root side="right">
+    <Sheet.Trigger render={<Button />}>Open</Sheet.Trigger>
+    <Sheet.Content size="lg">
+      <Sheet.Header action={<Button size="sm">Save</Button>}>
+        <Sheet.Title>Edit Record</Sheet.Title>
+      </Sheet.Header>
+    </Sheet.Content>
+  </Sheet.Root>
+  ```
+
+### Patch Changes
+
+- 58b76ce: Add `info` and `subtle-info` badge variants for informational or in-progress status labels (blue palette, matching the existing `outline-info` dot color). Also extend the primitives demo to show all five outline variants (previously only `outline-success` was rendered).
+
+  ```tsx
+  <Badge variant="info">New</Badge>
+  <Badge variant="subtle-info">In Progress</Badge>
+  ```
+
+- 98270c5: Add optional `variant` prop to `ActionItem` for the `ActionPanel` component. Use `variant: "destructive"` to style dangerous actions (e.g., delete) with red text and hover background.
+
 ## 1.3.0
 
 ### Minor Changes

@@ -1,9 +1,0 @@
-/*
- * Self-hosted variable fonts used by AppShell's appearance axis.
- *
- * Family names: `"Geist Variable"`, `"Inter Variable"`. AppShell's
- * `globals.css` falls back to `"Geist Sans"` / `"Inter"` after these so
- * consumers who self-host with the conventional family names also work.
- */
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/inter";

@@ -1,9 +1,5 @@
 /*
- * Self-hosted variable fonts used by AppShell's appearance axis. Shipped as a
- * separate, opt-in stylesheet via the `@tailor-platform/app-shell/styles/fonts`
- * subpath so the default `@import "@tailor-platform/app-shell/styles"` stays
- * font-free and consumers can choose their own loading strategy (e.g.
- * `next/font/local`, `next/font/google`, or a CDN).
+ * Self-hosted variable fonts used by AppShell's appearance axis.
  *
  * Family names: `"Geist Variable"`, `"Inter Variable"`. AppShell's
  * `globals.css` falls back to `"Geist Sans"` / `"Inter"` after these so

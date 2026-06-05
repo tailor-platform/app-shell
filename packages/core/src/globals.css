@@ -1,6 +1,7 @@
 @import "tailwindcss" prefix(astw);
 @import "tw-animate-css";
 @import "./assets/theme.css";
+@import "./assets/fonts.css";
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -38,11 +39,11 @@
   /*
    * Font axis — applied independently of color theme via `data-font` on `<html>`.
    *
-   * Family-name chain prefers the variable build (loaded by
-   * `@tailor-platform/app-shell/styles/fonts`), then the conventional static family
-   * name (`Geist Sans` / `Inter` — what `next/font/google` and most CDNs
-   * register), then the system stack. Consumers who load their own font under
-   * either name automatically participate; no font loads when nothing matches.
+   * Family-name chain prefers the variable build (bundled from fontsource),
+   * then the conventional static family name (`Geist Sans` / `Inter` — what
+   * `next/font/google` and most CDNs register), then the system stack.
+   * Consumers who load their own font under either name automatically
+   * participate.
    */
   html[data-font="geist"] body,
   html[data-font="geist"] :where(h1, h2, h3, h4, h5, h6) {

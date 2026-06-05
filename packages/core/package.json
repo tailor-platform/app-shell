@@ -28,7 +28,6 @@
   "type": "module",
   "exports": {
     "./styles": "./dist/app-shell.css",
-    "./styles/fonts": "./dist/fonts.css",
     "./theme.css": "./dist/theme.css",
     ".": {
       "types": "./dist/app-shell.d.ts",

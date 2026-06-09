@@ -223,7 +223,7 @@ function ProductBadge({ product }: { product: Product }) {
 - Use semantic color meanings consistently (green = success, red = error, etc.)
 - Don't rely solely on color to convey information
 - Consider adding icons or text labels for clarity
-- Badges receive focus when interactive (clickable)
+- Badges are non-interactive: they render with the default cursor (not a pointer) and won't suggest clickability, even when placed inside a clickable container such as a `DataTable` row with `onClickRow`
 
 ## Usage in DescriptionCard
 

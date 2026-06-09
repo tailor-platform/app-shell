@@ -92,7 +92,13 @@ If the changeset introduces an **entirely new concept** that does not fit natura
 After updating documentation files, run the following command at the repository root to format them:
 
 ```bash
-pnpm format
+pnpm fmt
+```
+
+Then verify the formatting is clean before opening the PR — CI runs `oxfmt --check` across the whole repo and will fail the PR (and `main`) if any file is unformatted:
+
+```bash
+pnpm fmt:check
 ```
 
 ### Step 6: Create a pull request

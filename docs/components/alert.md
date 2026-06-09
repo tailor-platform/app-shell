@@ -24,24 +24,24 @@ import { Alert } from "@tailor-platform/app-shell";
 
 ## Sub-components
 
-| Sub-component       | Description                                              |
-| ------------------- | -------------------------------------------------------- |
-| `Alert.Root`        | Container with variant styling and automatic icon        |
-| `Alert.Title`       | Bold title line of the alert                             |
-| `Alert.Description` | Additional descriptive text below the title              |
+| Sub-component       | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `Alert.Root`        | Container with variant styling and automatic icon |
+| `Alert.Title`       | Bold title line of the alert                      |
+| `Alert.Description` | Additional descriptive text below the title       |
 
 ## Props
 
 ### Alert.Root Props
 
-| Prop          | Type                                                       | Default      | Description                                                     |
-| ------------- | ---------------------------------------------------------- | ------------ | --------------------------------------------------------------- |
-| `variant`     | `"neutral" \| "success" \| "warning" \| "error" \| "info"` | `"neutral"`  | Visual style and automatic icon                                 |
-| `action`      | `React.ReactNode`                                          | -            | Action element rendered below the description                   |
-| `dismissible` | `boolean`                                                  | `false`      | Shows a dismiss button; hides the alert when clicked            |
-| `onDismiss`   | `() => void`                                               | -            | Callback invoked when the dismiss button is clicked             |
-| `className`   | `string`                                                   | -            | Additional CSS classes                                          |
-| `children`    | `React.ReactNode`                                          | -            | `Alert.Title` and/or `Alert.Description`                        |
+| Prop          | Type                                                       | Default     | Description                                          |
+| ------------- | ---------------------------------------------------------- | ----------- | ---------------------------------------------------- |
+| `variant`     | `"neutral" \| "success" \| "warning" \| "error" \| "info"` | `"neutral"` | Visual style and automatic icon                      |
+| `action`      | `React.ReactNode`                                          | -           | Action element rendered below the description        |
+| `dismissible` | `boolean`                                                  | `false`     | Shows a dismiss button; hides the alert when clicked |
+| `onDismiss`   | `() => void`                                               | -           | Callback invoked when the dismiss button is clicked  |
+| `className`   | `string`                                                   | -           | Additional CSS classes                               |
+| `children`    | `React.ReactNode`                                          | -           | `Alert.Title` and/or `Alert.Description`             |
 
 All standard HTML `<div>` props are also accepted.
 
@@ -76,20 +76,27 @@ Each variant automatically renders a contextual icon:
 </Alert.Root>
 ```
 
-| Variant    | Automatic Icon      | Color palette         |
-| ---------- | ------------------- | --------------------- |
-| `neutral`  | Message circle icon | Secondary/muted       |
-| `success`  | Check circle icon   | Green                 |
-| `warning`  | Alert triangle icon | Yellow                |
-| `error`    | X circle icon       | Red/destructive       |
-| `info`     | Info icon           | Blue                  |
+| Variant   | Automatic Icon      | Color palette   |
+| --------- | ------------------- | --------------- |
+| `neutral` | Message circle icon | Secondary/muted |
+| `success` | Check circle icon   | Green           |
+| `warning` | Alert triangle icon | Yellow          |
+| `error`   | X circle icon       | Red/destructive |
+| `info`    | Info icon           | Blue            |
 
 ## With Action Button
 
 Use the `action` prop to render an action element below the description:
 
 ```tsx
-<Alert.Root variant="warning" action={<Button size="sm" variant="outline">Review</Button>}>
+<Alert.Root
+  variant="warning"
+  action={
+    <Button size="sm" variant="outline">
+      Review
+    </Button>
+  }
+>
   <Alert.Title>Review Required</Alert.Title>
   <Alert.Description>This record has pending changes that need review.</Alert.Description>
 </Alert.Root>
@@ -100,11 +107,7 @@ Use the `action` prop to render an action element below the description:
 Set `dismissible` to show a close button. Use `onDismiss` to react when the alert is dismissed:
 
 ```tsx
-<Alert.Root
-  variant="info"
-  dismissible
-  onDismiss={() => markAlertRead(alertId)}
->
+<Alert.Root variant="info" dismissible onDismiss={() => markAlertRead(alertId)}>
   <Alert.Title>New Feature Available</Alert.Title>
   <Alert.Description>Check out the new dashboard layout in Settings.</Alert.Description>
 </Alert.Root>
@@ -176,9 +179,7 @@ Alerts use Tailwind CSS classes prefixed with `astw:`. Customize appearance usin
 import { alertVariants } from "@tailor-platform/app-shell";
 import { cn } from "@/lib/utils";
 
-<div className={cn(alertVariants({ variant: "info" }), "astw:my-4")}>
-  Custom alert container
-</div>;
+<div className={cn(alertVariants({ variant: "info" }), "astw:my-4")}>Custom alert container</div>;
 ```
 
 ## Related Components

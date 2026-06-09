@@ -116,6 +116,11 @@ import { buttonVariants } from "@tailor-platform/app-shell";
 </a>;
 ```
 
+## Accessibility
+
+- Buttons render with `cursor: pointer` to signal interactivity consistently across all variants and sizes.
+- Disabled buttons suppress the pointer cursor via `pointer-events-none`, so they do not signal clickability.
+
 ## Related Components
 
 - [Dialog](./dialog.md) - Use buttons as dialog triggers and actions

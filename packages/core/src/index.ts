@@ -25,11 +25,15 @@ export { WithGuard, type WithGuardProps } from "./components/with-guard";
 
 export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/appshell-context";
 export {
+  useMode,
   useTheme,
   useFont,
+  MODE_OPTIONS,
   THEME_OPTIONS,
   FONT_OPTIONS,
-  type ResolvedTheme,
+  type Mode,
+  type ResolvedMode,
+  type ModeOption,
   type Theme,
   type ThemeOption,
   type Font,

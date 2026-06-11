@@ -109,7 +109,7 @@ function Content({ className, children, ...props }: React.ComponentProps<typeof 
         <Drawer.Popup
           data-slot="sheet-content"
           className={cn(
-            "astw:bg-background astw:flex astw:flex-col astw:gap-4 astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms]",
+            "astw:bg-card astw:flex astw:flex-col astw:gap-4 astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms]",
             side === "right" &&
               "astw:h-full astw:w-3/4 astw:border-l astw:sm:max-w-sm astw:[transform:translateX(var(--drawer-swipe-movement-x))] astw:data-ending-style:[transform:translateX(100%)] astw:data-starting-style:[transform:translateX(100%)]",
             side === "left" &&

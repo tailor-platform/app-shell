@@ -4,34 +4,29 @@ import { Menu } from "@/components/menu";
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 import {
-  useTheme,
+  useMode,
   useFont,
-  type ResolvedTheme,
-  type Theme,
+  type ResolvedMode,
+  type Mode,
   type Font,
-  THEME_OPTIONS,
+  MODE_OPTIONS,
   FONT_OPTIONS,
 } from "@/contexts/theme-context";
 
-const RESOLVED_THEME_SHORT: Record<ResolvedTheme, string> = {
+const RESOLVED_MODE_SHORT: Record<ResolvedMode, string> = {
   light: "Light",
   dark: "Dark",
-  cream: "Cream",
-  bloom: "Bloom",
 };
 
 /**
- * Decorative dual swatches — approximates each palette pair (accent + neutral)
- * for the picker grid.
- * Kept as static hex previews so the swatches render even before a theme stylesheet has loaded;
- * keep these in sync with the palette tokens in `assets/theme.css`.
+ * Decorative dual swatches for the mode picker. Light/dark show their surface
+ * tones; system splits the two to signal "follows the OS".
+ * Kept as static hex previews so they render before any stylesheet loads.
  */
-const THEME_PREVIEW: Record<Theme, { readonly a: `#${string}`; readonly b: `#${string}` }> = {
+const MODE_PREVIEW: Record<Mode, { readonly a: `#${string}`; readonly b: `#${string}` }> = {
   light: { a: "#ffffff", b: "#d4d4d8" },
-  dark: { a: "#3f3f46", b: "#d4d4d8" },
-  cream: { a: "#f8f3e4", b: "#e2d4fe" },
-  bloom: { a: "#535ae8", b: "#f8f3e4" },
-  system: { a: "#52525b", b: "#7c73e6" },
+  dark: { a: "#3f3f46", b: "#71717a" },
+  system: { a: "#ffffff", b: "#3f3f46" },
 };
 
 /** Font preview — `font-family` for the "Aa" sample so users see the face before selecting.
@@ -41,15 +36,15 @@ const FONT_PREVIEW: Record<Font, string> = {
   inter: '"Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif',
 };
 
-function isTheme(value: string): value is Theme {
-  return THEME_OPTIONS.some((o) => o.value === value);
+function isMode(value: string): value is Mode {
+  return MODE_OPTIONS.some((o) => o.value === value);
 }
 
 function isFont(value: string): value is Font {
   return FONT_OPTIONS.some((o) => o.value === value);
 }
 
-/** Shared radio-item chrome — used by both the color and font grids. */
+/** Shared radio-item chrome — used by both the mode and font grids. */
 function radioItemClasses(active: boolean) {
   return cn(
     "astw:relative astw:flex astw:h-auto astw:w-full astw:cursor-default astw:select-none astw:flex-col astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-xl astw:border-0 astw:bg-transparent astw:px-2 astw:py-2 astw:text-center astw:text-xs astw:font-medium astw:leading-tight astw:outline-hidden",
@@ -61,8 +56,8 @@ function radioItemClasses(active: boolean) {
   );
 }
 
-function ThemePreviewSwatches({ themeId }: { themeId: Theme }) {
-  const { a, b } = THEME_PREVIEW[themeId];
+function ModePreviewSwatches({ modeId }: { modeId: Mode }) {
+  const { a, b } = MODE_PREVIEW[modeId];
   return (
     <div
       className="astw:flex astw:h-10 astw:w-full astw:max-w-[5.5rem] astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-md astw:border astw:border-border/80 astw:bg-card astw:px-2"
@@ -97,18 +92,19 @@ function FontPreview({ fontId }: { fontId: Font }) {
 }
 
 /**
- * Appearance menu: two independent axes — color palette (top) and font (bottom).
- * Bound to stored `theme` and `font`; **System** stays explicit on the color axis.
+ * Appearance menu. The end-user controls **mode** (light / dark / system) and
+ * **font**; the color palette/brand is a developer configuration, so it is not
+ * shown here. **System** stays explicit on the mode axis.
  */
 function ThemeSwitcher() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { mode, resolvedMode, setMode } = useMode();
   const { font, setFont } = useFont();
 
   const fontLabel = FONT_OPTIONS.find((o) => o.value === font)?.label ?? font;
   const triggerTitle =
-    theme === "system"
-      ? `Following system — currently ${RESOLVED_THEME_SHORT[resolvedTheme]} · ${fontLabel}`
-      : "Choose appearance — color + font";
+    mode === "system"
+      ? `Following system — currently ${RESOLVED_MODE_SHORT[resolvedMode]} · ${fontLabel}`
+      : "Choose appearance — mode + font";
 
   return (
     <Menu.Root modal={false}>
@@ -131,24 +127,24 @@ function ThemeSwitcher() {
         className="astw:min-w-[16.5rem] astw:rounded-xl astw:p-3"
       >
         <Menu.Group>
-          <Menu.GroupLabel className="astw:px-0 astw:pb-2 astw:pt-0">Colors</Menu.GroupLabel>
+          <Menu.GroupLabel className="astw:px-0 astw:pb-2 astw:pt-0">Appearance</Menu.GroupLabel>
           <Menu.RadioGroup
             className="astw:grid astw:grid-cols-3 astw:gap-2"
-            value={theme}
+            value={mode}
             onValueChange={(value) => {
-              if (typeof value === "string" && isTheme(value)) setTheme(value);
+              if (typeof value === "string" && isMode(value)) setMode(value);
             }}
           >
-            {THEME_OPTIONS.map((opt) => (
+            {MODE_OPTIONS.map((opt) => (
               <Menu.RadioItem
                 key={opt.value}
                 value={opt.value}
-                className={radioItemClasses(theme === opt.value)}
+                className={radioItemClasses(mode === opt.value)}
               >
                 <Menu.RadioItemIndicator className="astw:sr-only">
                   {opt.label}
                 </Menu.RadioItemIndicator>
-                <ThemePreviewSwatches themeId={opt.value} />
+                <ModePreviewSwatches modeId={opt.value} />
                 <span className="astw:block astw:w-full astw:truncate astw:px-0.5">
                   {opt.label}
                 </span>

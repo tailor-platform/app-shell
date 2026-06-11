@@ -38,7 +38,7 @@ function ComboboxInput({ className, ...props }: React.ComponentProps<typeof Base
     <BaseCombobox.Input
       data-slot="combobox-input"
       className={cn(
-        "astw:border-input astw:bg-background astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-sm astw:shadow-xs astw:outline-none astw:transition-colors",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-sm astw:shadow-xs astw:outline-none astw:transition-colors",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         className,
@@ -225,7 +225,7 @@ function ComboboxChips({ className, ...props }: React.ComponentProps<typeof Base
     <BaseCombobox.Chips
       data-slot="combobox-chips"
       className={cn(
-        "astw:border-input astw:bg-background astw:flex astw:min-h-9 astw:w-full astw:flex-wrap astw:items-center astw:gap-1 astw:rounded-md astw:border astw:px-1.5 astw:py-1 astw:text-sm astw:shadow-xs",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:flex astw:min-h-9 astw:w-full astw:flex-wrap astw:items-center astw:gap-1 astw:rounded-md astw:border astw:px-1.5 astw:py-1 astw:text-sm astw:shadow-xs",
         "astw:focus-within:border-ring astw:focus-within:ring-ring/50 astw:focus-within:ring-[3px]",
         // Strip standalone styles from nested Input
         "astw:[&_[data-slot=combobox-input]]:border-0 astw:[&_[data-slot=combobox-input]]:bg-transparent astw:[&_[data-slot=combobox-input]]:shadow-none astw:[&_[data-slot=combobox-input]]:ring-0",

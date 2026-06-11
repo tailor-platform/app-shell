@@ -7,16 +7,17 @@ type TabsVariant = "default" | "line" | "capsule";
 
 const LIST_VARIANT_CLASSES: Record<TabsVariant, string> = {
   line: "astw:h-9 astw:gap-2",
-  capsule: "astw:h-10 astw:gap-0.5 astw:rounded-md astw:bg-muted astw:p-1",
+  capsule:
+    "astw:h-10 astw:gap-0.5 astw:rounded-md astw:bg-background astw:dark:bg-input/30 astw:p-1",
   default: "astw:text-muted-foreground astw:h-9 astw:gap-1",
 };
 
 const TAB_VARIANT_CLASSES: Record<TabsVariant, string> = {
   line: "astw:px-3 astw:py-1.5 astw:-mb-px astw:border-b-2 astw:border-transparent astw:data-active:border-primary astw:data-active:text-foreground",
   capsule:
-    "astw:rounded-md astw:px-3 astw:py-1.5 astw:data-active:bg-background astw:data-active:text-foreground astw:data-active:shadow-sm",
+    "astw:rounded-md astw:px-3 astw:py-1.5 astw:data-active:bg-primary/10 astw:data-active:text-primary astw:data-active:shadow-sm",
   default:
-    "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-muted astw:data-active:text-foreground",
+    "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-primary/10 astw:data-active:text-primary",
 };
 
 const TabsVariantContext = React.createContext<TabsVariant>("default");

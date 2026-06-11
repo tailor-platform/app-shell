@@ -362,9 +362,11 @@ function ReviewStep({
       <div className="astw:flex astw:gap-4 astw:text-sm">
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
-        {warningCount > 0 && <span className="astw:text-yellow-600">Warnings: {warningCount}</span>}
+        {warningCount > 0 && (
+          <span className="astw:text-status-attention">Warnings: {warningCount}</span>
+        )}
         {validated && errorCount === 0 && !validating && (
-          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-emerald-600">
+          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-status-completed">
             <CheckCircle2Icon className="astw:size-3" />
             {t("reviewNoErrors")}
           </span>
@@ -414,7 +416,7 @@ function ReviewStep({
                       className={cn(
                         "astw:px-1 astw:py-1",
                         issue?.level === "error" && "astw:bg-destructive/10",
-                        issue?.level === "warning" && "astw:bg-yellow-50",
+                        issue?.level === "warning" && "astw:bg-status-attention/10",
                       )}
                     >
                       <div className="astw:flex astw:flex-col astw:gap-0.5">
@@ -423,7 +425,7 @@ function ReviewStep({
                           className={cn(
                             "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
                             issue?.level === "error" && "astw:border-destructive",
-                            issue?.level === "warning" && "astw:border-yellow-500",
+                            issue?.level === "warning" && "astw:border-status-attention",
                             !issue && "astw:border-transparent",
                           )}
                           value={displayValue}
@@ -435,7 +437,7 @@ function ReviewStep({
                               "astw:text-xs astw:px-2",
                               issue.level === "error"
                                 ? "astw:text-destructive"
-                                : "astw:text-yellow-600",
+                                : "astw:text-status-attention",
                             )}
                           >
                             {issue.message}

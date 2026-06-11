@@ -28,7 +28,7 @@ function appendFonts(props: { appendCSSFile: string }): Plugin {
       }
       const fontCss = readFileSync(fontsPath, "utf8");
       const cssAsset = Object.values(bundle).find(
-        (asset) => asset.type === "asset" && asset.fileName.endsWith(".css"),
+        (asset) => asset.type === "asset" && asset.fileName === props.appendCSSFile,
       );
       if (cssAsset && cssAsset.type === "asset") {
         cssAsset.source += "\n" + fontCss;

@@ -3,17 +3,29 @@ import { Palette } from "lucide-react";
 import { Menu } from "@/components/menu";
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
-import {
-  useTheme,
-  type ResolvedColorTheme,
-  type ColorTheme,
-  COLOR_THEME_OPTIONS,
-} from "@/contexts/theme-context";
+import { defineI18nLabels } from "@/hooks/i18n";
+import { useTheme, type ColorTheme, COLOR_THEME_OPTIONS } from "@/contexts/theme-context";
 
-const RESOLVED_COLOR_THEME_SHORT: Record<ResolvedColorTheme, string> = {
-  light: "Light",
-  dark: "Dark",
-};
+const appearanceSwitcherLabels = defineI18nLabels({
+  en: {
+    appearance: "Appearance",
+    chooseAppearance: "Choose appearance",
+    followingSystem: (props: { resolved: string }) =>
+      `Following system — currently ${props.resolved}`,
+    light: "Light",
+    dark: "Dark",
+    system: "System",
+  },
+  ja: {
+    appearance: "外観",
+    chooseAppearance: "外観を選択",
+    followingSystem: (props: { resolved: string }) => `システムに従う — 現在${props.resolved}`,
+    light: "ライト",
+    dark: "ダーク",
+    system: "システム",
+  },
+});
+const useT = appearanceSwitcherLabels.useT;
 
 /**
  * Decorative dual swatches for the color theme picker. Light/dark show their surface
@@ -70,11 +82,12 @@ function ColorThemePreviewSwatches({ colorTheme }: { colorTheme: ColorTheme }) {
  */
 function AppearanceSwitcher() {
   const { theme, resolvedTheme, setTheme } = useTheme();
+  const t = useT();
 
   const triggerTitle =
     theme === "system"
-      ? `Following system — currently ${RESOLVED_COLOR_THEME_SHORT[resolvedTheme]}`
-      : "Choose appearance";
+      ? t("followingSystem", { resolved: t(resolvedTheme) })
+      : t("chooseAppearance");
 
   return (
     <Menu.Root modal={false}>
@@ -85,7 +98,7 @@ function AppearanceSwitcher() {
             variant="outline"
             size="icon"
             className="astw:shrink-0"
-            aria-label="Appearance"
+            aria-label={t("appearance")}
             title={triggerTitle}
           />
         }
@@ -97,7 +110,9 @@ function AppearanceSwitcher() {
         className="astw:min-w-[16.5rem] astw:rounded-xl astw:p-3"
       >
         <Menu.Group>
-          <Menu.GroupLabel className="astw:px-0 astw:pb-2 astw:pt-0">Appearance</Menu.GroupLabel>
+          <Menu.GroupLabel className="astw:px-0 astw:pb-2 astw:pt-0">
+            {t("appearance")}
+          </Menu.GroupLabel>
           <Menu.RadioGroup
             className="astw:grid astw:grid-cols-3 astw:gap-2"
             value={theme}
@@ -112,11 +127,11 @@ function AppearanceSwitcher() {
                 className={radioItemClasses(theme === opt.value)}
               >
                 <Menu.RadioItemIndicator className="astw:sr-only">
-                  {opt.label}
+                  {t(opt.value)}
                 </Menu.RadioItemIndicator>
                 <ColorThemePreviewSwatches colorTheme={opt.value} />
                 <span className="astw:block astw:w-full astw:truncate astw:px-0.5">
-                  {opt.label}
+                  {t(opt.value)}
                 </span>
               </Menu.RadioItem>
             ))}

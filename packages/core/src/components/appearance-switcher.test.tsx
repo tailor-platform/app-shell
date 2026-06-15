@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { COLOR_THEME_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
+import { createAppShellWrapper } from "../../tests/test-utils";
 import { AppearanceSwitcher } from "./appearance-switcher";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
@@ -62,14 +63,18 @@ afterEach(() => {
   cleanup();
 });
 
+const AppShellWrapper = createAppShellWrapper("en");
+
 describe("AppearanceSwitcher", () => {
   it("opens a menu listing every mode option", async () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultColorTheme="light">
-        <AppearanceSwitcher />
-      </ThemeProvider>,
+      <AppShellWrapper>
+        <ThemeProvider defaultColorTheme="light">
+          <AppearanceSwitcher />
+        </ThemeProvider>
+      </AppShellWrapper>,
     );
 
     await user.click(screen.getByRole("button", { name: "Appearance" }));
@@ -87,9 +92,11 @@ describe("AppearanceSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider>
-        <AppearanceSwitcher />
-      </ThemeProvider>,
+      <AppShellWrapper>
+        <ThemeProvider>
+          <AppearanceSwitcher />
+        </ThemeProvider>
+      </AppShellWrapper>,
     );
 
     await user.click(screen.getByRole("button", { name: "Appearance" }));
@@ -104,9 +111,11 @@ describe("AppearanceSwitcher", () => {
 
   it("exposes the resolved mode on the trigger when system mode is selected", () => {
     render(
-      <ThemeProvider defaultColorTheme="system">
-        <AppearanceSwitcher />
-      </ThemeProvider>,
+      <AppShellWrapper>
+        <ThemeProvider defaultColorTheme="system">
+          <AppearanceSwitcher />
+        </ThemeProvider>
+      </AppShellWrapper>,
     );
 
     const btn = screen.getByRole("button", { name: "Appearance" });
@@ -118,9 +127,11 @@ describe("AppearanceSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultColorTheme="light">
-        <AppearanceSwitcher />
-      </ThemeProvider>,
+      <AppShellWrapper>
+        <ThemeProvider defaultColorTheme="light">
+          <AppearanceSwitcher />
+        </ThemeProvider>
+      </AppShellWrapper>,
     );
 
     await user.click(screen.getByRole("button", { name: "Appearance" }));

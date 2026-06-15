@@ -4,16 +4,16 @@ import { Menu } from "@/components/menu";
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 import {
-  useMode,
+  useColorMode,
   useFont,
-  type ResolvedMode,
-  type Mode,
+  type ResolvedColorMode,
+  type ColorMode,
   type Font,
-  MODE_OPTIONS,
+  COLOR_MODE_OPTIONS,
   FONT_OPTIONS,
 } from "@/contexts/theme-context";
 
-const RESOLVED_MODE_SHORT: Record<ResolvedMode, string> = {
+const RESOLVED_MODE_SHORT: Record<ResolvedColorMode, string> = {
   light: "Light",
   dark: "Dark",
 };
@@ -23,7 +23,7 @@ const RESOLVED_MODE_SHORT: Record<ResolvedMode, string> = {
  * tones; system splits the two to signal "follows the OS".
  * Kept as static hex previews so they render before any stylesheet loads.
  */
-const MODE_PREVIEW: Record<Mode, { readonly a: `#${string}`; readonly b: `#${string}` }> = {
+const MODE_PREVIEW: Record<ColorMode, { readonly a: `#${string}`; readonly b: `#${string}` }> = {
   light: { a: "#ffffff", b: "#d4d4d8" },
   dark: { a: "#3f3f46", b: "#71717a" },
   system: { a: "#ffffff", b: "#3f3f46" },
@@ -36,8 +36,8 @@ const FONT_PREVIEW: Record<Font, string> = {
   inter: '"Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif',
 };
 
-function isMode(value: string): value is Mode {
-  return MODE_OPTIONS.some((o) => o.value === value);
+function isMode(value: string): value is ColorMode {
+  return COLOR_MODE_OPTIONS.some((o) => o.value === value);
 }
 
 function isFont(value: string): value is Font {
@@ -56,7 +56,7 @@ function radioItemClasses(active: boolean) {
   );
 }
 
-function ModePreviewSwatches({ modeId }: { modeId: Mode }) {
+function ModePreviewSwatches({ modeId }: { modeId: ColorMode }) {
   const { a, b } = MODE_PREVIEW[modeId];
   return (
     <div
@@ -97,7 +97,7 @@ function FontPreview({ fontId }: { fontId: Font }) {
  * shown here. **System** stays explicit on the mode axis.
  */
 function ThemeSwitcher() {
-  const { mode, resolvedMode, setMode } = useMode();
+  const { mode, resolvedMode, setMode } = useColorMode();
   const { font, setFont } = useFont();
 
   const fontLabel = FONT_OPTIONS.find((o) => o.value === font)?.label ?? font;
@@ -135,7 +135,7 @@ function ThemeSwitcher() {
               if (typeof value === "string" && isMode(value)) setMode(value);
             }}
           >
-            {MODE_OPTIONS.map((opt) => (
+            {COLOR_MODE_OPTIONS.map((opt) => (
               <Menu.RadioItem
                 key={opt.value}
                 value={opt.value}

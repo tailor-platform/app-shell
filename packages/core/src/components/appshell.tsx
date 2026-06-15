@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider, type Mode, type Theme, type Font } from "@/contexts/theme-context";
+import { ThemeProvider, type ColorMode, type Theme, type Font } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -186,12 +186,12 @@ type SharedAppShellProps = React.PropsWithChildren<{
    *
    * @default "system"
    */
-  defaultMode?: Mode;
+  defaultColorMode?: ColorMode;
 
   /**
    * Color palette / brand (developer configuration), applied as `data-theme`.
    * One of **`default`**, **`cream`**, or **`bloom`** — each ships both light and dark
-   * variants, so the active variant follows {@link AppShellProps.defaultMode}.
+   * variants, so the active variant follows {@link AppShellProps.defaultColorMode}.
    * This is set by the product (not a user-facing picker), so it is driven by this
    * prop and not persisted to localStorage.
    *
@@ -350,7 +350,7 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider
-              defaultMode={props.defaultMode}
+              defaultColorMode={props.defaultColorMode}
               defaultTheme={props.defaultTheme}
               defaultFont={props.defaultFont}
             >

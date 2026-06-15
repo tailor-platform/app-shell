@@ -4,17 +4,17 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
  * Color mode — the end-user accessibility preference. `system` follows the OS
  * light/dark setting. Applied to `<html>` as the `.light` / `.dark` class.
  */
-export type Mode = "light" | "dark" | "system";
+export type ColorMode = "light" | "dark" | "system";
 
 /** Mode after resolving `system` to a concrete value. */
-export type ResolvedMode = "light" | "dark";
+export type ResolvedColorMode = "light" | "dark";
 
-const ALL_MODES: readonly Mode[] = ["light", "dark", "system"] as const;
+const ALL_COLOR_MODES: readonly ColorMode[] = ["light", "dark", "system"] as const;
 
 /** Switcher entries for the appearance (mode) control. */
-export type ModeOption = { readonly value: Mode; readonly label: string };
+export type ColorModeOption = { readonly value: ColorMode; readonly label: string };
 
-export const MODE_OPTIONS: readonly ModeOption[] = [
+export const COLOR_MODE_OPTIONS: readonly ColorModeOption[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
   { value: "system", label: "System" },
@@ -23,7 +23,7 @@ export const MODE_OPTIONS: readonly ModeOption[] = [
 /**
  * Color palette / brand — a developer/product configuration (not a user-facing
  * picker). Each palette ships both a light and a dark variant; the active
- * variant is chosen by the {@link Mode} axis. Applied to `<html>` as `data-theme`.
+ * variant is chosen by the {@link ColorMode} axis. Applied to `<html>` as `data-theme`.
  */
 export type Theme = "default" | "cream" | "bloom";
 
@@ -64,7 +64,7 @@ function readStored<T extends string>(key: string, allowList: readonly T[], fall
 type ThemeProviderProps = {
   children: React.ReactNode;
   /** Initial color mode (user preference). @default "system" */
-  defaultMode?: Mode;
+  defaultColorMode?: ColorMode;
   /** Color palette / brand (developer config). @default "default" */
   defaultTheme?: Theme;
   /** Initial font. @default "geist" */
@@ -72,9 +72,9 @@ type ThemeProviderProps = {
 };
 
 type ThemeProviderState = {
-  mode: Mode;
-  resolvedMode: ResolvedMode;
-  setMode: (mode: Mode) => void;
+  mode: ColorMode;
+  resolvedMode: ResolvedColorMode;
+  setMode: (mode: ColorMode) => void;
   theme: Theme;
   setTheme: (theme: Theme) => void;
   font: Font;
@@ -85,12 +85,12 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undef
 
 export function ThemeProvider({
   children,
-  defaultMode = "system",
+  defaultColorMode = "system",
   defaultTheme = "default",
   defaultFont = "geist",
 }: ThemeProviderProps) {
-  const [mode, setModeState] = useState<Mode>(() =>
-    readStored(MODE_STORAGE_KEY, ALL_MODES, defaultMode),
+  const [mode, setModeState] = useState<ColorMode>(() =>
+    readStored(MODE_STORAGE_KEY, ALL_COLOR_MODES, defaultColorMode),
   );
   // Palette is a developer configuration, not a user preference — it comes from
   // `defaultTheme` (the brand the product chose) and is NOT read from / persisted
@@ -115,7 +115,7 @@ export function ThemeProvider({
     return () => mql.removeEventListener("change", handler);
   }, []);
 
-  const resolvedMode: ResolvedMode = (() => {
+  const resolvedMode: ResolvedColorMode = (() => {
     if (mode !== "system") return mode;
     return systemDark ? "dark" : "light";
   })();
@@ -133,7 +133,7 @@ export function ThemeProvider({
     window.document.documentElement.dataset.font = font;
   }, [font]);
 
-  const setMode = useCallback((newMode: Mode) => {
+  const setMode = useCallback((newMode: ColorMode) => {
     try {
       localStorage.setItem(MODE_STORAGE_KEY, newMode);
     } catch {
@@ -164,9 +164,9 @@ export function ThemeProvider({
 }
 
 /** Color mode (light / dark / system) — the end-user accessibility preference. */
-export const useMode = () => {
+export const useColorMode = () => {
   const context = useContext(ThemeProviderContext);
-  if (context === undefined) throw new Error("useMode must be used within a ThemeProvider");
+  if (context === undefined) throw new Error("useColorMode must be used within a ThemeProvider");
 
   const { mode, resolvedMode, setMode } = context;
   return useMemo(() => ({ mode, resolvedMode, setMode }), [mode, resolvedMode, setMode]);

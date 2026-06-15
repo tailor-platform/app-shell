@@ -1,7 +1,7 @@
 import { cleanup, render, act, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeProvider, useMode, useTheme, useFont } from "./theme-context";
+import { ThemeProvider, useColorMode, useTheme, useFont } from "./theme-context";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -72,7 +72,7 @@ afterEach(() => {
 });
 
 function Probe() {
-  const { mode, resolvedMode } = useMode();
+  const { mode, resolvedMode } = useColorMode();
   const { theme } = useTheme();
   return (
     <div>
@@ -89,11 +89,11 @@ function FontProbe() {
 }
 
 describe("ThemeProvider — storage validation", () => {
-  it("falls back to defaultMode for an unrecognized stored mode", () => {
+  it("falls back to defaultColorMode for an unrecognized stored mode", () => {
     storageMap.set("appshell-ui-mode", "totally-not-a-mode");
 
     const { getByTestId } = render(
-      <ThemeProvider defaultMode="dark">
+      <ThemeProvider defaultColorMode="dark">
         <Probe />
       </ThemeProvider>,
     );
@@ -235,13 +235,13 @@ describe("ThemeProvider — system mode resolution", () => {
 });
 
 describe("provider guards", () => {
-  it("throws when useMode is called outside ThemeProvider", () => {
+  it("throws when useColorMode is called outside ThemeProvider", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const ModeProbe = () => {
-      useMode();
+      useColorMode();
       return null;
     };
-    expect(() => render(<ModeProbe />)).toThrow(/useMode must be used within a ThemeProvider/);
+    expect(() => render(<ModeProbe />)).toThrow(/useColorMode must be used within a ThemeProvider/);
     spy.mockRestore();
   });
 

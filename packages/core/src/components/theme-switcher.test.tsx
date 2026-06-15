@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FONT_OPTIONS, MODE_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
+import { FONT_OPTIONS, COLOR_MODE_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
 
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -69,7 +69,7 @@ describe("ThemeSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultMode="light">
+      <ThemeProvider defaultColorMode="light">
         <ThemeSwitcher />
       </ThemeProvider>,
     );
@@ -78,11 +78,11 @@ describe("ThemeSwitcher", () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole("menuitemradio").length).toBe(
-        MODE_OPTIONS.length + FONT_OPTIONS.length,
+        COLOR_MODE_OPTIONS.length + FONT_OPTIONS.length,
       );
     });
 
-    for (const opt of MODE_OPTIONS) {
+    for (const opt of COLOR_MODE_OPTIONS) {
       expect(screen.getByRole("menuitemradio", { name: opt.label })).toBeDefined();
     }
     for (const opt of FONT_OPTIONS) {
@@ -111,7 +111,7 @@ describe("ThemeSwitcher", () => {
 
   it("exposes the resolved mode on the trigger when system mode is selected", () => {
     render(
-      <ThemeProvider defaultMode="system">
+      <ThemeProvider defaultColorMode="system">
         <ThemeSwitcher />
       </ThemeProvider>,
     );
@@ -125,7 +125,7 @@ describe("ThemeSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultMode="light">
+      <ThemeProvider defaultColorMode="light">
         <ThemeSwitcher />
       </ThemeProvider>,
     );
@@ -148,7 +148,7 @@ describe("ThemeSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultMode="light" defaultFont="geist">
+      <ThemeProvider defaultColorMode="light" defaultFont="geist">
         <ThemeSwitcher />
       </ThemeProvider>,
     );

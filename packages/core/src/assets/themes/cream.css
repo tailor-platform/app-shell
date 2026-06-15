@@ -1,56 +1,64 @@
 /**
- * Cream — Tailor brand light palette.
- * Primary: #535AE8 · Text: #10122B · White: #FFFFFF
- * Secondary: Deep Cyan #00979C · Dark Green #013742 · Off-White #F8F3E4 · Neutral #EEEEEE · Light Violet #E2D4FE
+ * Cream — Tailor brand palette (light + dark).
+ *
+ * Token tiers (see default.css for the full explanation):
+ *   BRAND   — re-skin knobs: primary/secondary (+foregrounds) + shell gradient.
+ *   DERIVED — computed from BRAND; declared once and re-resolves in dark.
+ *   SYSTEM  — neutral surfaces/text; accessibility-locked.
+ *   STATUS  — semantic status, charts, radius, shadows; fixed.
+ *
+ * Mode = `.dark` class; palette = `data-theme="cream"`.
  */
-html[data-theme="cream"] {
+[data-theme="cream"] {
   color-scheme: light;
-  /* Off-white app shell; white cards for elevation */
-  --background: rgba(248, 243, 228, 1);
-  /* Shell gradient stops (globals.css): light cream tint at top → white at bottom. */
-  --shell-gradient-start: color-mix(in srgb, var(--background) 55%, rgb(255, 255, 255));
-  --shell-gradient-end: rgb(255, 255, 255);
+  /* ───── BRAND — override to re-skin ───── */
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  --secondary: rgba(226, 212, 254, 1);
+  --secondary-foreground: rgba(16, 18, 43, 1);
+  --shell-gradient-base: #fef6e3;
+  --shell-gradient-tint: #fffdfa;
+  /* ───── DERIVED from brand (do not edit; re-resolves in dark) ───── */
+  --accent: color-mix(in srgb, var(--primary) 25%, var(--card));
+  --accent-foreground: var(--foreground);
+  --ring: color-mix(in srgb, var(--primary) 45%, transparent);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--ring);
+  --shell-gradient-start: color-mix(
+    in srgb,
+    var(--shell-gradient-base) 55%,
+    var(--shell-gradient-tint)
+  );
+  --shell-gradient-end: var(--shell-gradient-tint);
+  /* ───── SYSTEM — neutral surfaces/text (accessibility-locked) ───── */
+  --background: rgba(250, 250, 250, 1);
   --foreground: rgba(16, 18, 43, 1);
   --card: rgba(255, 255, 255, 1);
   --card-foreground: rgba(16, 18, 43, 1);
   --popover: rgba(255, 255, 255, 1);
   --popover-foreground: rgba(16, 18, 43, 1);
-  --primary: rgba(83, 90, 232, 1);
-  --primary-foreground: rgba(255, 255, 255, 1);
-  /* Light violet surfaces; near-black text (match bloom; drop the brand dark-green pairing). */
-  --secondary: rgba(226, 212, 254, 1);
-  --secondary-foreground: rgba(16, 18, 43, 1);
-  /* Row hovers / `bg-muted`: subtle neutral lift (same alpha family as `--border`), not a second brand tint. */
-  --muted: rgba(0, 0, 0, 0.08);
+  /* Lighter cream (gradient top) so muted surfaces read on-theme on white cards. */
+  --muted: rgba(251, 248, 240, 1);
   --muted-foreground: rgba(16, 18, 43, 0.72);
-  --accent: rgba(226, 212, 254, 1);
-  --accent-foreground: rgba(16, 18, 43, 1);
-  /* Destructive matches default light theme so the brand red stays consistent across light/cream/bloom. */
-  --destructive: rgba(220, 38, 38, 1);
-  --destructive-foreground: rgba(254, 242, 242, 1);
   --border: rgba(0, 0, 0, 0.08);
   --input: rgba(0, 0, 0, 0.08);
-  --ring: rgba(83, 90, 232, 0.45);
+  --sidebar: rgba(250, 250, 250, 1);
+  --sidebar-foreground: rgba(16, 18, 43, 1);
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+
+  /* ───── STATUS / STRUCTURAL — semantic, fixed ───── */
+  --destructive: rgba(220, 38, 38, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --radius: 1rem;
   --chart-1: rgba(83, 90, 232, 1);
   --chart-2: rgba(0, 151, 156, 1);
   --chart-3: rgba(1, 55, 66, 1);
   --chart-4: rgba(110, 95, 195, 1);
   --chart-5: rgba(217, 119, 6, 1);
-  /* Larger corner scale; squircle overlays via globals.css where supported */
-  --radius: 1rem;
-  --sidebar: rgba(248, 243, 228, 1);
-  --sidebar-foreground: rgba(16, 18, 43, 1);
-  --sidebar-primary: rgba(83, 90, 232, 1);
-  --sidebar-primary-foreground: rgba(255, 255, 255, 1);
-  --sidebar-accent: rgba(226, 212, 254, 1);
-  --sidebar-accent-foreground: rgba(16, 18, 43, 1);
-  --sidebar-border: rgba(0, 0, 0, 0.08);
-  --sidebar-ring: rgba(83, 90, 232, 0.45);
-  --status-default: rgba(16, 18, 43, 0.55);
-  --status-neutral: #00979c;
-  --status-completed: #00979c;
-  --status-attention: #d97706;
-  --status-danger: #dc2626;
+  /* --status-* inherited from the default palette (semantic, theme-independent). */
   --semantic-shadow-xs: 0 1px 2px 0 rgb(16 18 43 / 0.07);
   --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
   --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
@@ -58,23 +66,66 @@ html[data-theme="cream"] {
 }
 
 /*
+ * Dark variant — overrides BRAND+SYSTEM (+ differing STATUS);
+ the DERIVED tier * re-resolves against the dark `--primary` / `--card` / `--shell-gradient-base`. * Surfaces reuse the default-dark neutrals so cards sit clearly above the canvas.
+ */
+[data-theme="cream"].dark {
+  color-scheme: dark;
+  /* ───── BRAND ───── */
+  --primary: rgba(131, 138, 247, 1);
+  --primary-foreground: rgba(16, 18, 43, 1);
+  --secondary: rgba(48, 42, 36, 1);
+  --secondary-foreground: rgba(247, 244, 238, 1);
+  --shell-gradient-base: rgb(8, 6, 5);
+  --shell-gradient-tint: rgb(17, 14, 10);
+  /* ───── SYSTEM ───── */
+  --background: rgba(10, 10, 10, 1);
+  --foreground: rgba(247, 244, 238, 1);
+  --card: rgb(22, 19, 17);
+  --card-foreground: rgba(247, 244, 238, 1);
+  --popover: rgb(37, 33, 28);
+  --popover-foreground: rgba(247, 244, 238, 1);
+  --muted: rgba(42, 37, 31, 1);
+  --muted-foreground: rgba(186, 180, 170, 1);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --sidebar: rgba(10, 10, 10, 1);
+  --sidebar-foreground: rgba(247, 244, 238, 1);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+
+  /* ───── STATUS / STRUCTURAL (dark) ───── */
+  --destructive: rgba(248, 113, 113, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --chart-1: rgba(131, 138, 247, 1);
+  --chart-2: rgba(45, 191, 196, 1);
+  --chart-3: rgba(94, 234, 212, 1);
+  --chart-4: rgba(167, 139, 250, 1);
+  --chart-5: rgba(251, 191, 36, 1);
+  /* --status-* inherited from the default palette (semantic, theme-independent). */
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+}
+
+/*
  * Structural overrides — shell gradient, transparent chrome, squircle corners,
- * tighter heading rhythm. These rules give Cream its distinctive branded look.
+ * tighter heading rhythm. Apply in both modes (gradient reads `--shell-gradient-base` * + the per-mode `--shell-gradient-tint`).
  */
 
 @layer base {
-  /* Vertical shell gradient: light cream tint at top -> white at bottom. */
+  /* Vertical shell gradient: tinted lift at top -> base surface at bottom. */
   html[data-theme="cream"] {
     min-height: 100vh;
     min-height: 100dvh;
-    background-color: var(--background);
+    background-color: var(--shell-gradient-base);
     background-image: linear-gradient(
       to bottom,
       var(--shell-gradient-start) 0%,
-      color-mix(in srgb, var(--background) 45%, white) 20%,
-      color-mix(in srgb, var(--background) 30%, white) 40%,
-      color-mix(in srgb, var(--background) 15%, white) 55%,
-      color-mix(in srgb, var(--background) 6%, white) 65%,
+      color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
+      color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
+      color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
+      color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
       var(--shell-gradient-end) 70%,
       var(--shell-gradient-end) 100%
     );

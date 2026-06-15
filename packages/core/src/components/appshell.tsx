@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider, type Theme, type Font } from "@/contexts/theme-context";
+import { ThemeProvider, type ColorMode, type Theme, type Font } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -179,19 +179,29 @@ type SharedAppShellProps = React.PropsWithChildren<{
   searchSources?: readonly SearchSource[];
 
   /**
-   * Initial theme before any value is loaded from localStorage (`appshell-ui-theme`).
-   * Does not replace a stored preference.
+   * Initial color mode before any value is loaded from localStorage (`appshell-ui-mode`).
+   * This is the end-user accessibility preference; does not replace a stored preference.
    *
-   * Named palettes **`cream`**, **`bloom`**, plus default **`light`** / **`dark`**, in addition to
-   * `system` (OS preference maps to **default** light or dark only — not cream or bloom).
+   * One of **`light`**, **`dark`**, or **`system`** (follows the OS). Works with any palette.
    *
-   * @default "bloom"
+   * @default "system"
+   */
+  defaultColorMode?: ColorMode;
+
+  /**
+   * Color palette / brand (developer configuration), applied as `data-theme`.
+   * One of **`default`**, **`cream`**, or **`bloom`** — each ships both light and dark
+   * variants, so the active variant follows {@link AppShellProps.defaultColorMode}.
+   * This is set by the product (not a user-facing picker), so it is driven by this
+   * prop and not persisted to localStorage.
+   *
+   * @default "default"
    */
   defaultTheme?: Theme;
 
   /**
    * Initial font axis before any value is loaded from localStorage (`appshell-ui-font`).
-   * Independent of `defaultTheme`; any color theme works with either font.
+   * Independent of `defaultTheme`; any palette works with either font.
    *
    * @default "geist"
    */
@@ -339,7 +349,11 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider defaultTheme={props.defaultTheme} defaultFont={props.defaultFont}>
+            <ThemeProvider
+              defaultColorMode={props.defaultColorMode}
+              defaultTheme={props.defaultTheme}
+              defaultFont={props.defaultFont}
+            >
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

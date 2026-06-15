@@ -1,7 +1,7 @@
 import { cleanup, render, act, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeProvider, useColorMode, useTheme, useFont } from "./theme-context";
+import { ThemeProvider, useColorMode, useTheme } from "./theme-context";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -63,7 +63,6 @@ beforeEach(() => {
   matchMediaListeners = [];
   installMatchMediaStub(false);
   document.documentElement.removeAttribute("data-theme");
-  document.documentElement.removeAttribute("data-font");
   document.documentElement.classList.remove("light", "dark");
 });
 
@@ -81,11 +80,6 @@ function Probe() {
       <span data-testid="theme">{theme}</span>
     </div>
   );
-}
-
-function FontProbe() {
-  const { font } = useFont();
-  return <span data-testid="font">{font}</span>;
 }
 
 describe("ThemeProvider — storage validation", () => {
@@ -112,18 +106,6 @@ describe("ThemeProvider — storage validation", () => {
     );
 
     expect(getByTestId("theme").textContent).toBe("cream");
-  });
-
-  it("falls back to defaultFont for an unrecognized stored font", () => {
-    storageMap.set("appshell-ui-font", "wingdings");
-
-    const { getByTestId } = render(
-      <ThemeProvider defaultFont="inter">
-        <FontProbe />
-      </ThemeProvider>,
-    );
-
-    expect(getByTestId("font").textContent).toBe("inter");
   });
 
   it("applies the configured palette as data-theme", async () => {

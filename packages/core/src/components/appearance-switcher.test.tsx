@@ -2,9 +2,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FONT_OPTIONS, COLOR_MODE_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
-
-import { ThemeSwitcher } from "./theme-switcher";
+import { COLOR_MODE_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
+import { AppearanceSwitcher } from "./appearance-switcher";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -56,7 +55,6 @@ beforeEach(() => {
   storageMap.clear();
   installMatchMediaStub(false);
   document.documentElement.removeAttribute("data-theme");
-  document.documentElement.removeAttribute("data-font");
   document.documentElement.classList.remove("light", "dark");
 });
 
@@ -64,28 +62,23 @@ afterEach(() => {
   cleanup();
 });
 
-describe("ThemeSwitcher", () => {
-  it("opens a menu listing every mode and font option", async () => {
+describe("AppearanceSwitcher", () => {
+  it("opens a menu listing every mode option", async () => {
     const user = userEvent.setup();
 
     render(
       <ThemeProvider defaultColorMode="light">
-        <ThemeSwitcher />
+        <AppearanceSwitcher />
       </ThemeProvider>,
     );
 
     await user.click(screen.getByRole("button", { name: "Appearance" }));
 
     await waitFor(() => {
-      expect(screen.getAllByRole("menuitemradio").length).toBe(
-        COLOR_MODE_OPTIONS.length + FONT_OPTIONS.length,
-      );
+      expect(screen.getAllByRole("menuitemradio").length).toBe(COLOR_MODE_OPTIONS.length);
     });
 
     for (const opt of COLOR_MODE_OPTIONS) {
-      expect(screen.getByRole("menuitemradio", { name: opt.label })).toBeDefined();
-    }
-    for (const opt of FONT_OPTIONS) {
       expect(screen.getByRole("menuitemradio", { name: opt.label })).toBeDefined();
     }
   });
@@ -95,7 +88,7 @@ describe("ThemeSwitcher", () => {
 
     render(
       <ThemeProvider>
-        <ThemeSwitcher />
+        <AppearanceSwitcher />
       </ThemeProvider>,
     );
 
@@ -112,7 +105,7 @@ describe("ThemeSwitcher", () => {
   it("exposes the resolved mode on the trigger when system mode is selected", () => {
     render(
       <ThemeProvider defaultColorMode="system">
-        <ThemeSwitcher />
+        <AppearanceSwitcher />
       </ThemeProvider>,
     );
 
@@ -126,7 +119,7 @@ describe("ThemeSwitcher", () => {
 
     render(
       <ThemeProvider defaultColorMode="light">
-        <ThemeSwitcher />
+        <AppearanceSwitcher />
       </ThemeProvider>,
     );
 
@@ -142,28 +135,5 @@ describe("ThemeSwitcher", () => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
     });
     expect(localStorage.getItem("appshell-ui-mode")).toBe("dark");
-  });
-
-  it("applies selected font when a font radio item is activated", async () => {
-    const user = userEvent.setup();
-
-    render(
-      <ThemeProvider defaultColorMode="light" defaultFont="geist">
-        <ThemeSwitcher />
-      </ThemeProvider>,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Appearance" }));
-
-    await waitFor(() => {
-      expect(screen.getByRole("menu")).toBeDefined();
-    });
-
-    await user.click(screen.getByRole("menuitemradio", { name: "Inter" }));
-
-    await waitFor(() => {
-      expect(document.documentElement.dataset.font).toBe("inter");
-    });
-    expect(localStorage.getItem("appshell-ui-font")).toBe("inter");
   });
 });

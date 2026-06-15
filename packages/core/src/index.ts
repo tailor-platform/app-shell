@@ -29,19 +29,15 @@ export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/apps
 export {
   useColorMode,
   useTheme,
-  useFont,
   COLOR_MODE_OPTIONS,
   THEME_OPTIONS,
-  FONT_OPTIONS,
   type ColorMode,
   type ResolvedColorMode,
   type ColorModeOption,
   type Theme,
   type ThemeOption,
-  type Font,
-  type FontOption,
 } from "./contexts/theme-context";
-export { ThemeSwitcher } from "./components/theme-switcher";
+export { AppearanceSwitcher } from "./components/appearance-switcher";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
 export {
   AuthProvider,

@@ -35,25 +35,6 @@
     @apply astw:font-sans astw:antialiased astw:bg-background astw:text-foreground;
   }
 
-  /*
-   * Font axis — applied independently of color theme via `data-font` on `<html>`.
-   *
-   * Family-name chain prefers the variable build (loaded by
-   * `@tailor-platform/app-shell/fonts`), then the conventional static family
-   * name (`Geist Sans` / `Inter` — what `next/font/google` and most CDNs
-   * register), then the system stack. Consumers who load their own font under
-   * either name automatically participate; no font loads when nothing matches.
-   */
-  html[data-font="geist"] body,
-  html[data-font="geist"] :where(h1, h2, h3, h4, h5, h6) {
-    font-family: "Geist Variable", "Geist Sans", ui-sans-serif, system-ui, sans-serif;
-  }
-
-  html[data-font="inter"] body,
-  html[data-font="inter"] :where(h1, h2, h3, h4, h5, h6) {
-    font-family: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
-  }
-
   ::-webkit-scrollbar {
     @apply astw:w-2 astw:h-2 astw:bg-muted;
   }

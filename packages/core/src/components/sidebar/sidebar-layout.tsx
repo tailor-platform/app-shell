@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
 import { AppShellOutlet } from "@/components/content";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 
@@ -83,7 +83,7 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
                 <DynamicBreadcrumb />
               </div>
               <div className="astw:flex astw:items-center astw:gap-2">
-                <ThemeSwitcher />
+                <AppearanceSwitcher />
               </div>
             </div>
           </header>

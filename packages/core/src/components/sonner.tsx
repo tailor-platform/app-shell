@@ -1,12 +1,12 @@
-import { useTheme } from "@/contexts/theme-context";
+import { useColorMode } from "@/contexts/theme-context";
 import { Toaster as Sonner, ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme } = useTheme();
+  const { resolvedMode } = useColorMode();
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={resolvedMode as ToasterProps["theme"]}
       className="astw:toaster astw:group"
       style={
         {

@@ -12,7 +12,10 @@ export type ResolvedColorMode = "light" | "dark";
 const ALL_COLOR_MODES: readonly ColorMode[] = ["light", "dark", "system"] as const;
 
 /** Switcher entries for the appearance (mode) control. */
-export type ColorModeOption = { readonly value: ColorMode; readonly label: string };
+export type ColorModeOption = {
+  readonly value: ColorMode;
+  readonly label: string;
+};
 
 export const COLOR_MODE_OPTIONS: readonly ColorModeOption[] = [
   { value: "light", label: "Light" },
@@ -36,20 +39,7 @@ export const THEME_OPTIONS: readonly ThemeOption[] = [
   { value: "bloom", label: "Bloom" },
 ] as const;
 
-/** Font axis — independent of color. Applied to `<html>` as `data-font`. */
-export type Font = "geist" | "inter";
-
-const ALL_FONTS: readonly Font[] = ["geist", "inter"] as const;
-
-export type FontOption = { readonly value: Font; readonly label: string };
-
-export const FONT_OPTIONS: readonly FontOption[] = [
-  { value: "geist", label: "Geist" },
-  { value: "inter", label: "Inter" },
-] as const;
-
 const MODE_STORAGE_KEY = "appshell-ui-mode";
-const FONT_STORAGE_KEY = "appshell-ui-font";
 
 function readStored<T extends string>(key: string, allowList: readonly T[], fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -67,8 +57,6 @@ type ThemeProviderProps = {
   defaultColorMode?: ColorMode;
   /** Color palette / brand (developer config). @default "default" */
   defaultTheme?: Theme;
-  /** Initial font. @default "geist" */
-  defaultFont?: Font;
 };
 
 type ThemeProviderState = {
@@ -76,10 +64,16 @@ type ThemeProviderState = {
   resolvedMode: ResolvedColorMode;
   setMode: (mode: ColorMode) => void;
   theme: Theme;
-  setTheme: (theme: Theme) => void;
-  font: Font;
-  setFont: (font: Font) => void;
 };
+
+function resolveMode(m: ColorMode, dark: boolean): ResolvedColorMode {
+  if (m !== "system") return m;
+  return dark ? "dark" : "light";
+}
+
+function getSystemDark(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
@@ -87,77 +81,59 @@ export function ThemeProvider({
   children,
   defaultColorMode = "system",
   defaultTheme = "default",
-  defaultFont = "geist",
 }: ThemeProviderProps) {
   const [mode, setModeState] = useState<ColorMode>(() =>
     readStored(MODE_STORAGE_KEY, ALL_COLOR_MODES, defaultColorMode),
   );
-  // Palette is a developer configuration, not a user preference — it comes from
-  // `defaultTheme` (the brand the product chose) and is NOT read from / persisted
-  // to localStorage, so a stale stored value can never shadow the configured brand.
-  // `setTheme` updates it in-session (e.g. for a product's own brand switcher).
-  const [theme, setThemeState] = useState<Theme>(defaultTheme);
-  const [font, setFontState] = useState<Font>(() =>
-    readStored(FONT_STORAGE_KEY, ALL_FONTS, defaultFont),
+
+  const [resolvedMode, setResolvedMode] = useState<ResolvedColorMode>(() =>
+    resolveMode(readStored(MODE_STORAGE_KEY, ALL_COLOR_MODES, defaultColorMode), getSystemDark()),
   );
 
-  // Track OS color-scheme for live "system" mode resolution.
-  const [systemDark, setSystemDark] = useState(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches
-      : false,
+  const applyMode = useCallback(
+    (resolved: ResolvedColorMode) => {
+      const root = window.document.documentElement;
+      root.classList.remove("light", "dark");
+      root.classList.add(resolved);
+      root.dataset.theme = defaultTheme;
+    },
+    [defaultTheme],
   );
 
+  // Listen for OS color-scheme changes.
   useEffect(() => {
+    applyMode(resolvedMode);
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    const handler = (e: MediaQueryListEvent) => {
+      setResolvedMode((prev) => {
+        // Only react if current mode is "system"
+        const next = resolveMode(mode, e.matches);
+        if (next !== prev) applyMode(next);
+        return next;
+      });
+    };
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
-  }, []);
+  }, [mode, applyMode, resolvedMode]);
 
-  const resolvedMode: ResolvedColorMode = (() => {
-    if (mode !== "system") return mode;
-    return systemDark ? "dark" : "light";
-  })();
-
-  // Apply the two axes to <html>: mode → class, palette → data-theme.
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(resolvedMode);
-    root.dataset.theme = theme;
-  }, [resolvedMode, theme]);
-
-  // Font axis — applied independently of color.
-  useEffect(() => {
-    window.document.documentElement.dataset.font = font;
-  }, [font]);
-
-  const setMode = useCallback((newMode: ColorMode) => {
-    try {
-      localStorage.setItem(MODE_STORAGE_KEY, newMode);
-    } catch {
-      /* storage full or forbidden */
-    }
-    setModeState(newMode);
-  }, []);
-
-  const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
-  }, []);
-
-  const setFont = useCallback((newFont: Font) => {
-    try {
-      localStorage.setItem(FONT_STORAGE_KEY, newFont);
-    } catch {
-      /* storage full or forbidden */
-    }
-    setFontState(newFont);
-  }, []);
+  const setMode = useCallback(
+    (newMode: ColorMode) => {
+      try {
+        localStorage.setItem(MODE_STORAGE_KEY, newMode);
+      } catch {
+        /* storage full or forbidden */
+      }
+      setModeState(newMode);
+      const next = resolveMode(newMode, getSystemDark());
+      setResolvedMode(next);
+      applyMode(next);
+    },
+    [applyMode],
+  );
 
   const value = useMemo<ThemeProviderState>(
-    () => ({ mode, resolvedMode, setMode, theme, setTheme, font, setFont }),
-    [mode, resolvedMode, setMode, theme, setTheme, font, setFont],
+    () => ({ mode, resolvedMode, setMode, theme: defaultTheme }),
+    [mode, resolvedMode, setMode, defaultTheme],
   );
 
   return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;
@@ -166,25 +142,19 @@ export function ThemeProvider({
 /** Color mode (light / dark / system) — the end-user accessibility preference. */
 export const useColorMode = () => {
   const context = useContext(ThemeProviderContext);
-  if (context === undefined) throw new Error("useColorMode must be used within a ThemeProvider");
+  if (context === undefined) {
+    throw new Error("useColorMode must be used within a ThemeProvider");
+  }
 
   const { mode, resolvedMode, setMode } = context;
   return useMemo(() => ({ mode, resolvedMode, setMode }), [mode, resolvedMode, setMode]);
 };
 
-/** Color palette / brand (default / cream / bloom) — developer configuration. */
+/** Color palette / brand (default / cream / bloom) — developer configuration (read-only). */
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
-  if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
-
-  const { theme, setTheme } = context;
-  return useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
-};
-
-export const useFont = () => {
-  const context = useContext(ThemeProviderContext);
-  if (context === undefined) throw new Error("useFont must be used within a ThemeProvider");
-
-  const { font, setFont } = context;
-  return useMemo(() => ({ font, setFont }), [font, setFont]);
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
 };

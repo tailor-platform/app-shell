@@ -5,12 +5,9 @@ import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 import {
   useColorMode,
-  useFont,
   type ResolvedColorMode,
   type ColorMode,
-  type Font,
   COLOR_MODE_OPTIONS,
-  FONT_OPTIONS,
 } from "@/contexts/theme-context";
 
 const RESOLVED_MODE_SHORT: Record<ResolvedColorMode, string> = {
@@ -29,19 +26,8 @@ const MODE_PREVIEW: Record<ColorMode, { readonly a: `#${string}`; readonly b: `#
   system: { a: "#ffffff", b: "#3f3f46" },
 };
 
-/** Font preview — `font-family` for the "Aa" sample so users see the face before selecting.
- *  Mirrors the chain in `globals.css` (variable build first, then static family fallback). */
-const FONT_PREVIEW: Record<Font, string> = {
-  geist: '"Geist Variable", "Geist Sans", ui-sans-serif, system-ui, sans-serif',
-  inter: '"Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif',
-};
-
 function isMode(value: string): value is ColorMode {
   return COLOR_MODE_OPTIONS.some((o) => o.value === value);
-}
-
-function isFont(value: string): value is Font {
-  return FONT_OPTIONS.some((o) => o.value === value);
 }
 
 /** Shared radio-item chrome — used by both the mode and font grids. */
@@ -75,36 +61,17 @@ function ModePreviewSwatches({ modeId }: { modeId: ColorMode }) {
   );
 }
 
-function FontPreview({ fontId }: { fontId: Font }) {
-  return (
-    <div
-      className="astw:flex astw:h-10 astw:w-full astw:items-center astw:justify-center astw:rounded-md astw:border astw:border-border/80 astw:bg-card astw:px-2"
-      aria-hidden
-    >
-      <span
-        className="astw:text-lg astw:font-medium astw:leading-none astw:text-foreground"
-        style={{ fontFamily: FONT_PREVIEW[fontId] }}
-      >
-        Aa
-      </span>
-    </div>
-  );
-}
-
 /**
- * Appearance menu. The end-user controls **mode** (light / dark / system) and
- * **font**; the color palette/brand is a developer configuration, so it is not
- * shown here. **System** stays explicit on the mode axis.
+ * Appearance menu. The end-user controls **mode** (light / dark / system);
+ * the color palette/brand is a developer configuration, so it is not shown here.
  */
-function ThemeSwitcher() {
+function AppearanceSwitcher() {
   const { mode, resolvedMode, setMode } = useColorMode();
-  const { font, setFont } = useFont();
 
-  const fontLabel = FONT_OPTIONS.find((o) => o.value === font)?.label ?? font;
   const triggerTitle =
     mode === "system"
-      ? `Following system — currently ${RESOLVED_MODE_SHORT[resolvedMode]} · ${fontLabel}`
-      : "Choose appearance — mode + font";
+      ? `Following system — currently ${RESOLVED_MODE_SHORT[resolvedMode]}`
+      : "Choose appearance";
 
   return (
     <Menu.Root modal={false}>
@@ -152,36 +119,9 @@ function ThemeSwitcher() {
             ))}
           </Menu.RadioGroup>
         </Menu.Group>
-
-        <Menu.Group className="astw:mt-5">
-          <Menu.GroupLabel className="astw:px-0 astw:pb-2 astw:pt-0">Font</Menu.GroupLabel>
-          <Menu.RadioGroup
-            className="astw:grid astw:grid-cols-2 astw:gap-2"
-            value={font}
-            onValueChange={(value) => {
-              if (typeof value === "string" && isFont(value)) setFont(value);
-            }}
-          >
-            {FONT_OPTIONS.map((opt) => (
-              <Menu.RadioItem
-                key={opt.value}
-                value={opt.value}
-                className={radioItemClasses(font === opt.value)}
-              >
-                <Menu.RadioItemIndicator className="astw:sr-only">
-                  {opt.label}
-                </Menu.RadioItemIndicator>
-                <FontPreview fontId={opt.value} />
-                <span className="astw:block astw:w-full astw:truncate astw:px-0.5">
-                  {opt.label}
-                </span>
-              </Menu.RadioItem>
-            ))}
-          </Menu.RadioGroup>
-        </Menu.Group>
       </Menu.Content>
     </Menu.Root>
   );
 }
 
-export { ThemeSwitcher };
+export { AppearanceSwitcher };

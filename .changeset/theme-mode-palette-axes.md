@@ -2,10 +2,14 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Split theming into two independent axes — **mode** (`light` / `dark` / `system`) and **theme/palette** (`default` / `cream` / `bloom`) — so every palette works in both light and dark.
+Introduce a **theme** (palette) system with built-in `default`, `cream`, and `bloom` themes. Themes are independent of **color mode** (`light` / `dark` / `system`), so every theme works in both light and dark. CSS variables and design tokens have been reorganized to make it easier to create new custom themes.
 
-- New `useColorMode()` hook + `COLOR_MODE_OPTIONS` for the end-user appearance control (light/dark/system). `useTheme()` now returns the color palette: `{ theme, setTheme }`. `ResolvedTheme` is replaced by `ResolvedColorMode`.
-- `<AppShell>` gains `defaultColorMode` (default `"system"`, persisted as the user preference); `defaultTheme` now selects the palette (default `"default"`). The palette is a developer config driven by the prop — it is **not** persisted to localStorage, so a stale stored value can't shadow the configured brand. Only mode (and font) persist.
-- DOM: `<html>` carries the mode as the `.light` / `.dark` class and the palette as `data-theme`.
-- CSS: `light.css` + `dark.css` are merged into `default.css`; **Cream** and **Bloom** gain dark variants. The shell gradient is parameterized per mode.
-- The appearance switcher now offers Light / Dark / System only — the palette is a developer configuration. The font axis is unchanged.
+#### Color mode (end-user preference, persisted)
+
+- `useColorMode()` hook returns `{ mode, resolvedMode, setMode }`.
+- `<AppShell defaultColorMode="system">` sets the initial preference; user choice is persisted to localStorage.
+
+#### Theme (developer configuration, not persisted)
+
+- `useTheme()` hook returns `{ theme }` (read-only).
+- `<AppShell defaultTheme="default">` selects the brand palette; not stored in localStorage so a stale value never shadows the configured brand.

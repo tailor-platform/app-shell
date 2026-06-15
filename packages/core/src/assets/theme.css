@@ -2,6 +2,8 @@
 @import "./themes/cream.css";
 @import "./themes/bloom.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /**
  * Tailwind v4 theme bridge — maps raw CSS custom properties to Tailwind's
  * design token namespace so utilities like `bg-background`, `text-primary`,

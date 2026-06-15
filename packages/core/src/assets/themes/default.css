@@ -12,8 +12,6 @@
  *
  * Mode is the `.light`/`.dark` class on <html>; palette is `data-theme`.
  */
-@custom-variant dark (&:where(.dark, .dark *));
-
 :root,
 [data-theme="default"] {
   /* ───── BRAND — override to re-skin ───── */

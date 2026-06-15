@@ -2,18 +2,22 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Introduce a **theme** (palette) system with built-in `default`, `cream`, and `bloom` themes. Themes are independent of **color mode** (`light` / `dark` / `system`), so every theme works in both light and dark. CSS variables and design tokens have been reorganized to make it easier to create new custom themes.
+Introduce two independent theming axes — **ColorTheme** and **ThemePalette** — plus a new `AppearanceSwitcher` component and bundled Inter variable fonts.
 
-#### Color mode (end-user preference, persisted)
+#### ColorTheme (end-user preference, persisted)
 
-- `useTheme()` hook continues to return `{ theme, resolvedTheme, setTheme }` (backward compatible).
-- `<AppShell defaultColorMode="system">` sets the initial preference; user choice is persisted to localStorage.
+`ColorTheme` (`"light" | "dark" | "system"`) is the end-user color mode preference. Applied to `<html>` as `.light` / `.dark` class.
 
-#### Theme / Palette (developer configuration, not persisted)
+- `<AppShell defaultColorTheme="system">` sets the initial preference; user choice is persisted to localStorage.
+- `useTheme()` hook returns `{ theme, resolvedTheme, setTheme }` (backward compatible).
 
-- `<AppShell defaultTheme="default">` selects the brand palette; not stored in localStorage so a stale value never shadows the configured brand.
-- Palette is applied via `data-theme` attribute on `<html>`.
+#### ThemePalette (developer configuration, not persisted)
+
+`ThemePalette` (`"default" | "cream" | "bloom"`) is the brand palette. Each palette ships both light and dark variants.
+
+- `<AppShell defaultThemePalette="default">` selects the palette; not stored in localStorage so a stale value never shadows the configured brand.
+- Applied via `data-theme` attribute on `<html>`.
 
 #### AppearanceSwitcher
 
-- New `<AppearanceSwitcher />` component for toggling color mode.
+- New `<AppearanceSwitcher />` component for toggling color theme (light / dark / system).

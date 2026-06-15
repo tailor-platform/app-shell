@@ -28,9 +28,9 @@ export { WithGuard, type WithGuardProps } from "./components/with-guard";
 export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/appshell-context";
 export {
   useTheme,
-  type ColorTheme as ColorMode,
-  type ResolvedColorTheme as ResolvedColorMode,
-  type ThemePalette as Theme,
+  type ColorTheme,
+  type ResolvedColorTheme,
+  type ThemePalette,
 } from "./contexts/theme-context";
 export { AppearanceSwitcher } from "./components/appearance-switcher";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";

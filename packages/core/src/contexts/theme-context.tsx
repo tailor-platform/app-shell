@@ -1,23 +1,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 /**
- * Color mode — the end-user accessibility preference. `system` follows the OS
+ * Color theme — the end-user accessibility preference. `system` follows the OS
  * light/dark setting. Applied to `<html>` as the `.light` / `.dark` class.
  */
-export type ColorMode = "light" | "dark" | "system";
+export type ColorTheme = "light" | "dark" | "system";
 
-/** Mode after resolving `system` to a concrete value. */
-export type ResolvedColorMode = "light" | "dark";
+/** Color theme after resolving `system` to a concrete value. */
+export type ResolvedColorTheme = "light" | "dark";
 
-const ALL_COLOR_MODES: readonly ColorMode[] = ["light", "dark", "system"] as const;
+const ALL_COLOR_THEMES: readonly ColorTheme[] = ["light", "dark", "system"] as const;
 
-/** Switcher entries for the appearance (mode) control. */
-export type ColorModeOption = {
-  readonly value: ColorMode;
+/** Switcher entries for the appearance (color theme) control. */
+export type ColorThemeOption = {
+  readonly value: ColorTheme;
   readonly label: string;
 };
 
-export const COLOR_MODE_OPTIONS: readonly ColorModeOption[] = [
+export const COLOR_THEME_OPTIONS: readonly ColorThemeOption[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
   { value: "system", label: "System" },
@@ -26,20 +26,25 @@ export const COLOR_MODE_OPTIONS: readonly ColorModeOption[] = [
 /**
  * Color palette / brand — a developer/product configuration (not a user-facing
  * picker). Each palette ships both a light and a dark variant; the active
- * variant is chosen by the {@link ColorMode} axis. Applied to `<html>` as `data-theme`.
+ * variant is chosen by the {@link ColorTheme} axis. Applied to `<html>` as `data-theme`.
  */
-export type Theme = "default" | "cream" | "bloom";
+export type ThemePalette = "default" | "cream" | "bloom";
 
 /** Developer-facing palette list (e.g. for a custom brand switcher). */
-export type ThemeOption = { readonly value: Theme; readonly label: string };
+export type ThemePaletteOption = {
+  readonly value: ThemePalette;
+  readonly label: string;
+};
 
-export const THEME_OPTIONS: readonly ThemeOption[] = [
+export const THEME_PALETTE_OPTIONS: readonly ThemePaletteOption[] = [
   { value: "default", label: "Default" },
   { value: "cream", label: "Cream" },
   { value: "bloom", label: "Bloom" },
 ] as const;
 
-const MODE_STORAGE_KEY = "appshell-ui-mode";
+// This key was chosen in the first release and persisted to users' localStorage.
+// Changing it would silently discard every existing user's preference — do not rename.
+const COLOR_THEME_STORAGE_KEY = "appshell-ui-theme";
 
 function readStored<T extends string>(key: string, allowList: readonly T[], fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -53,20 +58,20 @@ function readStored<T extends string>(key: string, allowList: readonly T[], fall
 
 type ThemeProviderProps = {
   children: React.ReactNode;
-  /** Initial color mode (user preference). @default "system" */
-  defaultColorMode?: ColorMode;
+  /** Initial color theme (user preference). @default "system" */
+  defaultColorTheme?: ColorTheme;
   /** Color palette / brand (developer config). @default "default" */
-  defaultTheme?: Theme;
+  defaultThemePalette?: ThemePalette;
 };
 
 type ThemeProviderState = {
-  mode: ColorMode;
-  resolvedMode: ResolvedColorMode;
-  setMode: (mode: ColorMode) => void;
-  theme: Theme;
+  colorTheme: ColorTheme;
+  resolvedColorTheme: ResolvedColorTheme;
+  setColorTheme: (colorTheme: ColorTheme) => void;
+  palette: ThemePalette;
 };
 
-function resolveMode(m: ColorMode, dark: boolean): ResolvedColorMode {
+function resolveColorTheme(m: ColorTheme, dark: boolean): ResolvedColorTheme {
   if (m !== "system") return m;
   return dark ? "dark" : "light";
 }
@@ -79,82 +84,86 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undef
 
 export function ThemeProvider({
   children,
-  defaultColorMode = "system",
-  defaultTheme = "default",
+  defaultColorTheme = "system",
+  defaultThemePalette = "default",
 }: ThemeProviderProps) {
-  const [mode, setModeState] = useState<ColorMode>(() =>
-    readStored(MODE_STORAGE_KEY, ALL_COLOR_MODES, defaultColorMode),
+  const [colorTheme, setColorThemeState] = useState<ColorTheme>(() =>
+    readStored(COLOR_THEME_STORAGE_KEY, ALL_COLOR_THEMES, defaultColorTheme),
   );
 
-  const [resolvedMode, setResolvedMode] = useState<ResolvedColorMode>(() =>
-    resolveMode(readStored(MODE_STORAGE_KEY, ALL_COLOR_MODES, defaultColorMode), getSystemDark()),
+  const [resolvedColorTheme, setResolvedColorTheme] = useState<ResolvedColorTheme>(() =>
+    resolveColorTheme(
+      readStored(COLOR_THEME_STORAGE_KEY, ALL_COLOR_THEMES, defaultColorTheme),
+      getSystemDark(),
+    ),
   );
 
-  const applyMode = useCallback(
-    (resolved: ResolvedColorMode) => {
+  const applyColorTheme = useCallback(
+    (resolved: ResolvedColorTheme) => {
       const root = window.document.documentElement;
       root.classList.remove("light", "dark");
       root.classList.add(resolved);
-      root.dataset.theme = defaultTheme;
+      root.dataset.theme = defaultThemePalette;
     },
-    [defaultTheme],
+    [defaultThemePalette],
   );
 
-  // Listen for OS color-scheme changes.
+  // Apply the resolved color theme to DOM and subscribe to OS color-scheme changes.
+  // Kept as a single effect for simplicity — the listener re-registration cost
+  // on OS theme change is negligible (microseconds) given it's a rare user action.
   useEffect(() => {
-    applyMode(resolvedMode);
+    applyColorTheme(resolvedColorTheme);
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      setResolvedMode((prev) => {
-        // Only react if current mode is "system"
-        const next = resolveMode(mode, e.matches);
-        if (next !== prev) applyMode(next);
-        return next;
-      });
+      const next = resolveColorTheme(colorTheme, e.matches);
+      setResolvedColorTheme(next);
     };
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
-  }, [mode, applyMode, resolvedMode]);
+  }, [colorTheme, resolvedColorTheme, applyColorTheme]);
 
-  const setMode = useCallback(
-    (newMode: ColorMode) => {
+  const setColorTheme = useCallback(
+    (next: ColorTheme) => {
       try {
-        localStorage.setItem(MODE_STORAGE_KEY, newMode);
+        localStorage.setItem(COLOR_THEME_STORAGE_KEY, next);
       } catch {
         /* storage full or forbidden */
       }
-      setModeState(newMode);
-      const next = resolveMode(newMode, getSystemDark());
-      setResolvedMode(next);
-      applyMode(next);
+      setColorThemeState(next);
+      const resolved = resolveColorTheme(next, getSystemDark());
+      setResolvedColorTheme(resolved);
+      applyColorTheme(resolved);
     },
-    [applyMode],
+    [applyColorTheme],
   );
 
   const value = useMemo<ThemeProviderState>(
-    () => ({ mode, resolvedMode, setMode, theme: defaultTheme }),
-    [mode, resolvedMode, setMode, defaultTheme],
+    () => ({
+      colorTheme,
+      resolvedColorTheme,
+      setColorTheme,
+      palette: defaultThemePalette,
+    }),
+    [colorTheme, resolvedColorTheme, setColorTheme, defaultThemePalette],
   );
 
   return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;
 }
 
-/** Color mode (light / dark / system) — the end-user accessibility preference. */
-export const useColorMode = () => {
-  const context = useContext(ThemeProviderContext);
-  if (context === undefined) {
-    throw new Error("useColorMode must be used within a ThemeProvider");
-  }
-
-  const { mode, resolvedMode, setMode } = context;
-  return useMemo(() => ({ mode, resolvedMode, setMode }), [mode, resolvedMode, setMode]);
-};
-
-/** Color palette / brand (default / cream / bloom) — developer configuration (read-only). */
+/** Color theme hook — returns the current color theme and a setter. */
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
-  return context;
+
+  const { colorTheme, resolvedColorTheme, setColorTheme } = context;
+  return useMemo(
+    () => ({
+      theme: colorTheme,
+      resolvedTheme: resolvedColorTheme,
+      setTheme: setColorTheme,
+    }),
+    [colorTheme, resolvedColorTheme, setColorTheme],
+  );
 };

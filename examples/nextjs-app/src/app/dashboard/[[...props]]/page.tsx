@@ -13,7 +13,7 @@ const App = () => {
   const appShellConfig: AppShellProps = {
     title: "AppShell",
     basePath: "dashboard",
-    defaultTheme: "cream",
+    defaultThemePalette: "cream",
     modules: [customPageModule],
     rootComponent: () => <div>Dashboard Home (accessible at /dashboard)</div>,
     settingsResources: [profileResource],

@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { COLOR_MODE_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
+import { COLOR_THEME_OPTIONS, ThemeProvider } from "@/contexts/theme-context";
 import { AppearanceSwitcher } from "./appearance-switcher";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
@@ -67,7 +67,7 @@ describe("AppearanceSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultColorMode="light">
+      <ThemeProvider defaultColorTheme="light">
         <AppearanceSwitcher />
       </ThemeProvider>,
     );
@@ -75,10 +75,10 @@ describe("AppearanceSwitcher", () => {
     await user.click(screen.getByRole("button", { name: "Appearance" }));
 
     await waitFor(() => {
-      expect(screen.getAllByRole("menuitemradio").length).toBe(COLOR_MODE_OPTIONS.length);
+      expect(screen.getAllByRole("menuitemradio").length).toBe(COLOR_THEME_OPTIONS.length);
     });
 
-    for (const opt of COLOR_MODE_OPTIONS) {
+    for (const opt of COLOR_THEME_OPTIONS) {
       expect(screen.getByRole("menuitemradio", { name: opt.label })).toBeDefined();
     }
   });
@@ -104,7 +104,7 @@ describe("AppearanceSwitcher", () => {
 
   it("exposes the resolved mode on the trigger when system mode is selected", () => {
     render(
-      <ThemeProvider defaultColorMode="system">
+      <ThemeProvider defaultColorTheme="system">
         <AppearanceSwitcher />
       </ThemeProvider>,
     );
@@ -118,7 +118,7 @@ describe("AppearanceSwitcher", () => {
     const user = userEvent.setup();
 
     render(
-      <ThemeProvider defaultColorMode="light">
+      <ThemeProvider defaultColorTheme="light">
         <AppearanceSwitcher />
       </ThemeProvider>,
     );
@@ -134,6 +134,6 @@ describe("AppearanceSwitcher", () => {
     await waitFor(() => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
     });
-    expect(localStorage.getItem("appshell-ui-mode")).toBe("dark");
+    expect(localStorage.getItem("appshell-ui-theme")).toBe("dark");
   });
 });

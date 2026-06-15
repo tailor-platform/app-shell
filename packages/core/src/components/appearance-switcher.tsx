@@ -4,30 +4,33 @@ import { Menu } from "@/components/menu";
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 import {
-  useColorMode,
-  type ResolvedColorMode,
-  type ColorMode,
-  COLOR_MODE_OPTIONS,
+  useTheme,
+  type ResolvedColorTheme,
+  type ColorTheme,
+  COLOR_THEME_OPTIONS,
 } from "@/contexts/theme-context";
 
-const RESOLVED_MODE_SHORT: Record<ResolvedColorMode, string> = {
+const RESOLVED_COLOR_THEME_SHORT: Record<ResolvedColorTheme, string> = {
   light: "Light",
   dark: "Dark",
 };
 
 /**
- * Decorative dual swatches for the mode picker. Light/dark show their surface
+ * Decorative dual swatches for the color theme picker. Light/dark show their surface
  * tones; system splits the two to signal "follows the OS".
  * Kept as static hex previews so they render before any stylesheet loads.
  */
-const MODE_PREVIEW: Record<ColorMode, { readonly a: `#${string}`; readonly b: `#${string}` }> = {
+const COLOR_THEME_PREVIEW: Record<
+  ColorTheme,
+  { readonly a: `#${string}`; readonly b: `#${string}` }
+> = {
   light: { a: "#ffffff", b: "#d4d4d8" },
   dark: { a: "#3f3f46", b: "#71717a" },
   system: { a: "#ffffff", b: "#3f3f46" },
 };
 
-function isMode(value: string): value is ColorMode {
-  return COLOR_MODE_OPTIONS.some((o) => o.value === value);
+function isColorTheme(value: string): value is ColorTheme {
+  return COLOR_THEME_OPTIONS.some((o) => o.value === value);
 }
 
 /** Shared radio-item chrome — used by both the mode and font grids. */
@@ -42,8 +45,8 @@ function radioItemClasses(active: boolean) {
   );
 }
 
-function ModePreviewSwatches({ modeId }: { modeId: ColorMode }) {
-  const { a, b } = MODE_PREVIEW[modeId];
+function ColorThemePreviewSwatches({ colorTheme }: { colorTheme: ColorTheme }) {
+  const { a, b } = COLOR_THEME_PREVIEW[colorTheme];
   return (
     <div
       className="astw:flex astw:h-10 astw:w-full astw:max-w-[5.5rem] astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-md astw:border astw:border-border/80 astw:bg-card astw:px-2"
@@ -62,15 +65,15 @@ function ModePreviewSwatches({ modeId }: { modeId: ColorMode }) {
 }
 
 /**
- * Appearance menu. The end-user controls **mode** (light / dark / system);
+ * Appearance menu. The end-user controls **color theme** (light / dark / system);
  * the color palette/brand is a developer configuration, so it is not shown here.
  */
 function AppearanceSwitcher() {
-  const { mode, resolvedMode, setMode } = useColorMode();
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
   const triggerTitle =
-    mode === "system"
-      ? `Following system — currently ${RESOLVED_MODE_SHORT[resolvedMode]}`
+    theme === "system"
+      ? `Following system — currently ${RESOLVED_COLOR_THEME_SHORT[resolvedTheme]}`
       : "Choose appearance";
 
   return (
@@ -97,21 +100,21 @@ function AppearanceSwitcher() {
           <Menu.GroupLabel className="astw:px-0 astw:pb-2 astw:pt-0">Appearance</Menu.GroupLabel>
           <Menu.RadioGroup
             className="astw:grid astw:grid-cols-3 astw:gap-2"
-            value={mode}
+            value={theme}
             onValueChange={(value) => {
-              if (typeof value === "string" && isMode(value)) setMode(value);
+              if (typeof value === "string" && isColorTheme(value)) setTheme(value);
             }}
           >
-            {COLOR_MODE_OPTIONS.map((opt) => (
+            {COLOR_THEME_OPTIONS.map((opt) => (
               <Menu.RadioItem
                 key={opt.value}
                 value={opt.value}
-                className={radioItemClasses(mode === opt.value)}
+                className={radioItemClasses(theme === opt.value)}
               >
                 <Menu.RadioItemIndicator className="astw:sr-only">
                   {opt.label}
                 </Menu.RadioItemIndicator>
-                <ModePreviewSwatches modeId={opt.value} />
+                <ColorThemePreviewSwatches colorTheme={opt.value} />
                 <span className="astw:block astw:w-full astw:truncate astw:px-0.5">
                   {opt.label}
                 </span>

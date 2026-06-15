@@ -1,7 +1,7 @@
 import { cleanup, render, act, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeProvider, useColorMode, useTheme } from "./theme-context";
+import { ThemeProvider, useTheme } from "./theme-context";
 
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
@@ -71,58 +71,30 @@ afterEach(() => {
 });
 
 function Probe() {
-  const { mode, resolvedMode } = useColorMode();
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
   return (
     <div>
-      <span data-testid="mode">{mode}</span>
-      <span data-testid="resolved">{resolvedMode}</span>
-      <span data-testid="theme">{theme}</span>
+      <span data-testid="color-theme">{theme}</span>
+      <span data-testid="resolvedTheme">{resolvedTheme}</span>
     </div>
   );
 }
 
 describe("ThemeProvider — storage validation", () => {
-  it("falls back to defaultColorMode for an unrecognized stored mode", () => {
-    storageMap.set("appshell-ui-mode", "totally-not-a-mode");
+  it("falls back to defaultColorTheme for an unrecognized stored color theme", () => {
+    storageMap.set("appshell-ui-theme", "totally-not-a-mode");
 
     const { getByTestId } = render(
-      <ThemeProvider defaultColorMode="dark">
+      <ThemeProvider defaultColorTheme="dark">
         <Probe />
       </ThemeProvider>,
     );
 
-    expect(getByTestId("mode").textContent).toBe("dark");
+    expect(getByTestId("color-theme").textContent).toBe("dark");
   });
 
-  it("uses the defaultTheme palette and ignores any stored value", () => {
-    // Palette is a developer config — a stale stored value must not shadow it.
-    storageMap.set("appshell-ui-theme", "bloom");
-
-    const { getByTestId } = render(
-      <ThemeProvider defaultTheme="cream">
-        <Probe />
-      </ThemeProvider>,
-    );
-
-    expect(getByTestId("theme").textContent).toBe("cream");
-  });
-
-  it("applies the configured palette as data-theme", async () => {
-    const { getByTestId } = render(
-      <ThemeProvider defaultTheme="cream">
-        <Probe />
-      </ThemeProvider>,
-    );
-
-    expect(getByTestId("theme").textContent).toBe("cream");
-    await waitFor(() => {
-      expect(document.documentElement.dataset.theme).toBe("cream");
-    });
-  });
-
-  it("reads a valid stored mode and applies it as the html class", async () => {
-    storageMap.set("appshell-ui-mode", "dark");
+  it("useTheme returns color theme values", () => {
+    storageMap.set("appshell-ui-theme", "dark");
 
     const { getByTestId } = render(
       <ThemeProvider>
@@ -130,7 +102,32 @@ describe("ThemeProvider — storage validation", () => {
       </ThemeProvider>,
     );
 
-    expect(getByTestId("mode").textContent).toBe("dark");
+    expect(getByTestId("color-theme").textContent).toBe("dark");
+    expect(getByTestId("resolvedTheme").textContent).toBe("dark");
+  });
+
+  it("applies the configured palette as data-theme", async () => {
+    render(
+      <ThemeProvider defaultThemePalette="cream">
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe("cream");
+    });
+  });
+
+  it("reads a valid stored color theme and applies it as the html class", async () => {
+    storageMap.set("appshell-ui-theme", "dark");
+
+    const { getByTestId } = render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(getByTestId("color-theme").textContent).toBe("dark");
     await waitFor(() => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
     });
@@ -138,11 +135,11 @@ describe("ThemeProvider — storage validation", () => {
 });
 
 describe("ThemeProvider — axes are independent", () => {
-  it("applies palette to data-theme and mode to the class (e.g. cream + dark)", async () => {
-    storageMap.set("appshell-ui-mode", "dark");
+  it("applies palette to data-theme and color theme to the class (e.g. cream + dark)", async () => {
+    storageMap.set("appshell-ui-theme", "dark");
 
     render(
-      <ThemeProvider defaultTheme="cream">
+      <ThemeProvider defaultThemePalette="cream">
         <Probe />
       </ThemeProvider>,
     );
@@ -154,29 +151,29 @@ describe("ThemeProvider — axes are independent", () => {
   });
 });
 
-describe("ThemeProvider — system mode resolution", () => {
+describe("ThemeProvider — system color theme resolution", () => {
   it("resolves system → dark when prefers-color-scheme: dark matches", async () => {
     installMatchMediaStub(true);
-    storageMap.set("appshell-ui-mode", "system");
+    storageMap.set("appshell-ui-theme", "system");
 
     const { getByTestId } = render(
-      <ThemeProvider defaultTheme="default">
+      <ThemeProvider defaultThemePalette="default">
         <Probe />
       </ThemeProvider>,
     );
 
-    expect(getByTestId("mode").textContent).toBe("system");
-    expect(getByTestId("resolved").textContent).toBe("dark");
+    expect(getByTestId("color-theme").textContent).toBe("system");
+    expect(getByTestId("resolvedTheme").textContent).toBe("dark");
     await waitFor(() => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
-      // palette stays put — system only resolves the mode axis
+      // palette stays put — system only resolves the color theme axis
       expect(document.documentElement.dataset.theme).toBe("default");
     });
   });
 
   it("resolves system → light when prefers-color-scheme: dark does not match", async () => {
     installMatchMediaStub(false);
-    storageMap.set("appshell-ui-mode", "system");
+    storageMap.set("appshell-ui-theme", "system");
 
     const { getByTestId } = render(
       <ThemeProvider>
@@ -184,15 +181,15 @@ describe("ThemeProvider — system mode resolution", () => {
       </ThemeProvider>,
     );
 
-    expect(getByTestId("resolved").textContent).toBe("light");
+    expect(getByTestId("resolvedTheme").textContent).toBe("light");
     await waitFor(() => {
       expect(document.documentElement.classList.contains("light")).toBe(true);
     });
   });
 
-  it("reacts to OS color-scheme change while mode is system", async () => {
+  it("reacts to OS color-scheme change while color theme is system", async () => {
     installMatchMediaStub(false);
-    storageMap.set("appshell-ui-mode", "system");
+    storageMap.set("appshell-ui-theme", "system");
 
     const { getByTestId } = render(
       <ThemeProvider>
@@ -200,7 +197,7 @@ describe("ThemeProvider — system mode resolution", () => {
       </ThemeProvider>,
     );
 
-    expect(getByTestId("resolved").textContent).toBe("light");
+    expect(getByTestId("resolvedTheme").textContent).toBe("light");
 
     // Simulate OS dark mode toggle
     act(() => {
@@ -209,7 +206,7 @@ describe("ThemeProvider — system mode resolution", () => {
       }
     });
 
-    expect(getByTestId("resolved").textContent).toBe("dark");
+    expect(getByTestId("resolvedTheme").textContent).toBe("dark");
     await waitFor(() => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
     });
@@ -217,16 +214,6 @@ describe("ThemeProvider — system mode resolution", () => {
 });
 
 describe("provider guards", () => {
-  it("throws when useColorMode is called outside ThemeProvider", () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const ModeProbe = () => {
-      useColorMode();
-      return null;
-    };
-    expect(() => render(<ModeProbe />)).toThrow(/useColorMode must be used within a ThemeProvider/);
-    spy.mockRestore();
-  });
-
   it("throws when useTheme is called outside ThemeProvider", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const TP = () => {

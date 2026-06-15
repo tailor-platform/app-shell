@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider, type ColorMode, type Theme } from "@/contexts/theme-context";
+import { ThemeProvider, type ColorTheme, type ThemePalette } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -179,25 +179,25 @@ type SharedAppShellProps = React.PropsWithChildren<{
   searchSources?: readonly SearchSource[];
 
   /**
-   * Initial color mode before any value is loaded from localStorage (`appshell-ui-mode`).
+   * Initial color mode before any value is loaded from localStorage (`appshell-ui-theme`).
    * This is the end-user accessibility preference; does not replace a stored preference.
    *
    * One of **`light`**, **`dark`**, or **`system`** (follows the OS). Works with any palette.
    *
    * @default "system"
    */
-  defaultColorMode?: ColorMode;
+  defaultColorTheme?: ColorTheme;
 
   /**
    * Color palette / brand (developer configuration), applied as `data-theme`.
    * One of **`default`**, **`cream`**, or **`bloom`** — each ships both light and dark
-   * variants, so the active variant follows {@link AppShellProps.defaultColorMode}.
+   * variants, so the active variant follows {@link AppShellProps.defaultColorTheme}.
    * This is set by the product (not a user-facing picker), so it is driven by this
    * prop and not persisted to localStorage.
    *
    * @default "default"
    */
-  defaultTheme?: Theme;
+  defaultThemePalette?: ThemePalette;
 }>;
 
 /**
@@ -342,8 +342,8 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider
-              defaultColorMode={props.defaultColorMode}
-              defaultTheme={props.defaultTheme}
+              defaultColorTheme={props.defaultColorTheme}
+              defaultThemePalette={props.defaultThemePalette}
             >
               <RouterContainer>
                 {props.children}

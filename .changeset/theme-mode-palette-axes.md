@@ -6,10 +6,14 @@ Introduce a **theme** (palette) system with built-in `default`, `cream`, and `bl
 
 #### Color mode (end-user preference, persisted)
 
-- `useColorMode()` hook returns `{ mode, resolvedMode, setMode }`.
+- `useTheme()` hook continues to return `{ theme, resolvedTheme, setTheme }` (backward compatible).
 - `<AppShell defaultColorMode="system">` sets the initial preference; user choice is persisted to localStorage.
 
-#### Theme (developer configuration, not persisted)
+#### Theme / Palette (developer configuration, not persisted)
 
-- `useTheme()` hook returns `{ theme }` (read-only).
 - `<AppShell defaultTheme="default">` selects the brand palette; not stored in localStorage so a stale value never shadows the configured brand.
+- Palette is applied via `data-theme` attribute on `<html>`.
+
+#### AppearanceSwitcher
+
+- New `<AppearanceSwitcher />` component for toggling color mode.

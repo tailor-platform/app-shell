@@ -124,6 +124,21 @@ describe("useUrlCollectionState", () => {
       ]);
     });
 
+    it("hydrates object filter values (between {min,max} JSON format)", () => {
+      mockParams = new URLSearchParams(
+        'f.createdAt:between={"min":"2026-01-01","max":"2026-12-31"}',
+      );
+      const control = makeControl();
+      renderHook(() => useUrlCollectionState(control));
+      expect(control.setFilters).toHaveBeenCalledWith([
+        {
+          field: "createdAt",
+          operator: "between",
+          value: { min: "2026-01-01", max: "2026-12-31" },
+        },
+      ]);
+    });
+
     it("skips filters with missing value", () => {
       mockParams = new URLSearchParams("f.status:eq=");
       const control = makeControl();
@@ -204,6 +219,30 @@ describe("useUrlCollectionState", () => {
       }
     });
 
+    it("treats reordered params as unchanged (order-insensitive compare)", () => {
+      // prev URL holds filters in b,a order; control emits the same multiset in
+      // a,b order. The delete-then-set rebuild flips key order, but the param
+      // multiset is identical, so the write must bail out and return prev.
+      // A plain `.toString()` compare would see a difference here and navigate.
+      mockParams = new URLSearchParams("f.b:eq=2&f.a:eq=1&p=20");
+      const filters = [
+        { field: "a", operator: "eq" as never, value: "1" },
+        { field: "b", operator: "eq" as never, value: "2" },
+      ];
+      const { rerender } = renderHook(({ control }) => useUrlCollectionState(control), {
+        initialProps: { control: makeControl({ pageSize: 20, filters }) },
+      });
+      // Re-render with a fresh control (new array refs) to fire the write effect.
+      rerender({ control: makeControl({ pageSize: 20, filters: [...filters] }) });
+      const lastCallIndex = mockSetParams.mock.calls.length - 1;
+      const [updater] = mockSetParams.mock.calls[lastCallIndex];
+      expect(typeof updater).toBe("function");
+      if (typeof updater === "function") {
+        const result = updater(mockParams);
+        expect(result).toBe(mockParams);
+      }
+    });
+
     it("uses replace: true for setParams", () => {
       const { rerender } = renderHook(({ control }) => useUrlCollectionState(control), {
         initialProps: { control: makeControl({ pageSize: 20 }) },
@@ -260,6 +299,22 @@ describe("decodeFilterValue", () => {
 
   it("decodes JSON arrays with values containing commas", () => {
     expect(decodeFilterValue('["Smith, John","Doe, Jane"]')).toEqual(["Smith, John", "Doe, Jane"]);
+  });
+
+  it("decodes JSON objects (between {min,max} shape)", () => {
+    expect(decodeFilterValue('{"min":1,"max":10}')).toEqual({ min: 1, max: 10 });
+  });
+
+  it("round-trips an object value through encode → decode", () => {
+    const value = { min: "2026-01-01", max: "2026-12-31" };
+    expect(decodeFilterValue(encodeFilterValue(value))).toEqual(value);
+  });
+
+  it("does not coerce numeric- or boolean-looking strings to primitives", () => {
+    // These parse as JSON (number/boolean) but must stay strings so operator
+    // implementations keep their string-vs-numeric semantics.
+    expect(decodeFilterValue("5")).toBe("5");
+    expect(decodeFilterValue("true")).toBe("true");
   });
 
   it("returns plain string for non-array values", () => {

@@ -118,8 +118,12 @@ export function useUrlCollectionState<
         }
 
         // Bail out if nothing changed — avoids a no-op navigation that could
-        // still trigger re-renders in some react-router versions.
-        if (next.toString() === prev.toString()) return prev;
+        // still trigger re-renders in some react-router versions. Compare on a
+        // sorted snapshot rather than `.toString()`: the filter rebuild above is
+        // delete-then-set, so key order can shift between renders even when the
+        // param multiset is identical (and `.toString()` is additionally
+        // sensitive to `&`/`=` characters inside values).
+        if (stableQueryString(next) === stableQueryString(prev)) return prev;
         return next;
       },
       { replace: true },
@@ -154,14 +158,37 @@ function stringifyPrimitive(value: unknown): string {
 /**
  * Decodes a filter value from URL storage.
  * - JSON arrays are parsed back into arrays.
- * - All other values are returned as plain strings.
+ * - JSON objects are parsed back into objects (e.g. the `between` operator's
+ *   `{ min, max }` shape).
+ * - All other values — including numeric/boolean-looking strings such as `"5"`
+ *   or `"true"` — are returned as plain strings, preserving the string-vs-
+ *   numeric distinction that operator implementations rely on.
  */
 export function decodeFilterValue(raw: string): unknown {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed;
+    // Objects (e.g. a `between` filter's `{ min, max }`) are JSON-encoded by
+    // encodeFilterValue and must be decoded back here; without this, object-
+    // valued filters round-trip to a raw string on reload and silently break.
+    if (parsed && typeof parsed === "object") return parsed;
   } catch {
     // Not valid JSON — fall through to plain string
   }
   return raw;
+}
+
+/**
+ * Order-insensitive, unambiguous snapshot of a URLSearchParams for equality
+ * checks. Entries are sorted by key then value so a reordered-but-equivalent
+ * param set compares equal, and the pairs are JSON-encoded so a key or value
+ * containing `&`/`=` can't collide with the entry boundary the way a re-joined
+ * query string would (e.g. `[["a","x"],["b","y"]]` vs `[["a","x&b=y"]]`).
+ */
+function stableQueryString(sp: URLSearchParams): string {
+  return JSON.stringify(
+    Array.from(sp.entries()).toSorted(
+      ([ak, av], [bk, bv]) => ak.localeCompare(bk) || av.localeCompare(bv),
+    ),
+  );
 }

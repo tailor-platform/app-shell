@@ -1,3 +1,17 @@
+/**
+ * Theme system
+ *
+ * Each theme file under ./themes/ declares CSS custom properties in four tiers:
+ *   BRAND   — the only knobs to re-skin: `--primary` / `--secondary` and their
+ *             foregrounds. Set the foreground WITH the color so contrast is owned.
+ *   DERIVED — computed from BRAND via `var()` + `color-mix`; declared once and
+ *             re-resolves automatically in dark (which only overrides BRAND +
+ *             SYSTEM). Don't edit.
+ *   SYSTEM  — neutral surfaces/text; accessibility-locked, brand-independent.
+ *   STATUS  — semantic status, charts, radius, shadows; fixed.
+ *
+ * Mode is the `.dark` class on <html>; palette is `data-theme`.
+ */
 @import "./themes/default.css";
 @import "./themes/cream.css";
 @import "./themes/bloom.css";

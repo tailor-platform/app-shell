@@ -1,14 +1,4 @@
-/**
- * Bloom — lavender shell + indigo brand (light + dark).
- *
- * Token tiers (see default.css for the full explanation):
- *   BRAND   — re-skin knobs: primary/secondary (+foregrounds) + shell gradient.
- *   DERIVED — computed from BRAND; declared once and re-resolves in dark.
- *   SYSTEM  — neutral surfaces/text; accessibility-locked.
- *   STATUS  — semantic status, charts, radius, shadows; fixed.
- *
- * Mode = `.dark` class; palette = `data-theme="bloom"`.
- */
+/** Bloom — lavender shell + indigo brand (light + dark). */
 html[data-theme="bloom"] {
   color-scheme: light;
 

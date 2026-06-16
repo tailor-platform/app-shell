@@ -260,7 +260,7 @@ function AddFilterPopover({
       const selectedValues = Array.isArray(value) ? (value as string[]) : [];
 
       return (
-        <div className="astw:max-h-44 astw:overflow-auto astw:rounded-md astw:border astw:py-1">
+        <div className="astw:max-h-44 astw:overflow-auto astw:rounded-md astw:border astw:border-border astw:py-1">
           {config.options.map((option) => {
             const isChecked = selectedValues.includes(option.value);
             return (
@@ -403,7 +403,7 @@ function AddFilterPopover({
           <Popover.Popup
             data-slot="data-table-filter-add-popup"
             className={cn(
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-80 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-80 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
@@ -522,7 +522,7 @@ function FilterChip({
             <Popover.Popup
               data-slot="data-table-filter-popup"
               className={cn(
-                "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-45 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:shadow-md",
+                "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-45 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
                 "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
               )}
             >

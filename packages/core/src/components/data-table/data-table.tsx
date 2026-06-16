@@ -181,7 +181,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
       <DataTableContext.Provider value={dataTableValue}>
         <div
           data-slot="data-table"
-          className={cn("astw:border astw:rounded-md astw:bg-card", className)}
+          className={cn("astw:border astw:border-border astw:rounded-md astw:bg-card", className)}
         >
           {children}
         </div>

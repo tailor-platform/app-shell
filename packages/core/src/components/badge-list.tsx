@@ -149,7 +149,7 @@ export function BadgeList({
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Positioner sideOffset={4} side="bottom" align="start">
-              <Popover.Popup className="astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:p-2 astw:shadow-md astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95">
+              <Popover.Popup className="astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:p-2 astw:shadow-md astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95">
                 <div className="astw:flex astw:flex-wrap astw:gap-1">
                   {overflow.map((raw, i) => renderSingleBadge(raw, i))}
                 </div>

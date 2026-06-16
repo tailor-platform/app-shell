@@ -96,7 +96,7 @@ function Root<T extends ActivityCardBaseItem>({
       <div
         data-slot="activity-card"
         className={cn(
-          "astw:min-w-[278px] astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border",
+          "astw:min-w-[278px] astw:w-full astw:bg-card astw:text-card-foreground astw:rounded-xl astw:border astw:border-border",
           className,
         )}
       >

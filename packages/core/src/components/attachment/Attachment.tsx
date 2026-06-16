@@ -204,7 +204,7 @@ export function Attachment({
                   <div className="astw:absolute astw:top-2 astw:right-2 astw:opacity-0 astw:transition-opacity astw:group-hover:opacity-100 astw:group-focus-within:opacity-100">
                     <Menu.Root>
                       <Menu.Trigger
-                        className="astw:inline-flex astw:size-7 astw:items-center astw:justify-center astw:rounded-md astw:border astw:bg-background/90 astw:text-foreground astw:shadow-xs astw:hover:bg-accent"
+                        className="astw:inline-flex astw:size-7 astw:items-center astw:justify-center astw:rounded-md astw:border astw:border-border astw:bg-background/90 astw:text-foreground astw:shadow-xs astw:hover:bg-accent"
                         aria-label={`Attachment options for ${item.fileName}`}
                       >
                         <Ellipsis className="astw:size-4" aria-hidden />

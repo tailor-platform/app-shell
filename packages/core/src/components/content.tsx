@@ -33,7 +33,7 @@ export const SettingsWrapper = () => {
   return (
     <div className="astw:mx-auto astw:flex-col astw:flex astw:md:flex-row astw:max-w-5xl astw:gap-[10px] astw:w-full">
       <div>
-        <nav className="astw:bg-card astw:md:w-xs astw:rounded-md astw:border astw:p-3 astw:shadow-xs">
+        <nav className="astw:bg-card astw:md:w-xs astw:rounded-md astw:border astw:border-border astw:p-3 astw:shadow-xs">
           <h2 className="astw:text-sm astw:leading-[36px] astw:mb-2 astw:font-bold ">
             {t("settings")}
           </h2>
@@ -56,7 +56,7 @@ export const SettingsWrapper = () => {
           </ul>
         </nav>
       </div>
-      <section className="astw:bg-card astw:flex-1 astw:rounded-md astw:border astw:shadow-xs">
+      <section className="astw:bg-card astw:flex-1 astw:rounded-md astw:border astw:border-border astw:shadow-xs">
         <Outlet />
       </section>
     </div>

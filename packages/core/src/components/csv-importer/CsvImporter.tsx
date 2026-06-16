@@ -206,7 +206,7 @@ function MappingStep({
   return (
     <div data-slot="csv-importer-mapping" className="astw:flex astw:flex-col astw:gap-4">
       {/* Schema-centric table */}
-      <div className="astw:overflow-y-auto astw:rounded-md astw:border">
+      <div className="astw:overflow-y-auto astw:rounded-md astw:border astw:border-border">
         <table className="astw:w-full astw:text-sm">
           <thead>
             <tr className="astw:border-b astw:bg-muted/50">
@@ -377,7 +377,7 @@ function ReviewStep({
         )}
       </div>
 
-      <div className="astw:flex-1 astw:min-h-0 astw:overflow-auto astw:rounded-md astw:border">
+      <div className="astw:flex-1 astw:min-h-0 astw:overflow-auto astw:rounded-md astw:border astw:border-border">
         <table className="astw:w-full astw:text-sm">
           <thead className="astw:bg-muted astw:sticky astw:top-0">
             <tr>
@@ -811,7 +811,7 @@ export function CsvImporter<T extends CsvSchema>({
                     {step === "mapping" && (
                       <button
                         type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-muted"
+                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-muted"
                         onClick={() => {
                           reset();
                           setStep("upload");
@@ -824,7 +824,7 @@ export function CsvImporter<T extends CsvSchema>({
                     {step === "review" && (
                       <button
                         type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-muted"
+                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-muted"
                         onClick={() => setStep("mapping")}
                       >
                         <ArrowLeftIcon className="astw:size-4" />

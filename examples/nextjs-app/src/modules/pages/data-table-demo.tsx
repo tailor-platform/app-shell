@@ -172,7 +172,7 @@ const DataTableDemoPage = () => {
     <Layout>
       <Layout.Header title="DataTable Demo" />
       <Layout.Column>
-        <p className="mb-4 text-muted-foreground">
+        <p className="mb-4 text-gray-500">
           DataTable demo with sortable columns, row actions, pagination, multi-select, and temporal
           filters for datetime, date, and time fields.
         </p>

@@ -62,7 +62,6 @@ beforeEach(() => {
   storageMap.clear();
   matchMediaListeners = [];
   installMatchMediaStub(false);
-  document.documentElement.removeAttribute("data-theme");
   document.documentElement.classList.remove("light", "dark");
 });
 
@@ -106,18 +105,6 @@ describe("ThemeProvider — storage validation", () => {
     expect(getByTestId("resolvedTheme").textContent).toBe("dark");
   });
 
-  it("applies the configured palette as data-theme", async () => {
-    render(
-      <ThemeProvider defaultThemePalette="cream">
-        <Probe />
-      </ThemeProvider>,
-    );
-
-    await waitFor(() => {
-      expect(document.documentElement.dataset.theme).toBe("cream");
-    });
-  });
-
   it("reads a valid stored color theme and applies it as the html class", async () => {
     storageMap.set("appshell-ui-theme", "dark");
 
@@ -134,30 +121,13 @@ describe("ThemeProvider — storage validation", () => {
   });
 });
 
-describe("ThemeProvider — axes are independent", () => {
-  it("applies palette to data-theme and color theme to the class (e.g. cream + dark)", async () => {
-    storageMap.set("appshell-ui-theme", "dark");
-
-    render(
-      <ThemeProvider defaultThemePalette="cream">
-        <Probe />
-      </ThemeProvider>,
-    );
-
-    await waitFor(() => {
-      expect(document.documentElement.dataset.theme).toBe("cream");
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-    });
-  });
-});
-
 describe("ThemeProvider — system color theme resolution", () => {
   it("resolves system → dark when prefers-color-scheme: dark matches", async () => {
     installMatchMediaStub(true);
     storageMap.set("appshell-ui-theme", "system");
 
     const { getByTestId } = render(
-      <ThemeProvider defaultThemePalette="default">
+      <ThemeProvider>
         <Probe />
       </ThemeProvider>,
     );
@@ -166,8 +136,6 @@ describe("ThemeProvider — system color theme resolution", () => {
     expect(getByTestId("resolvedTheme").textContent).toBe("dark");
     await waitFor(() => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
-      // palette stays put — system only resolves the color theme axis
-      expect(document.documentElement.dataset.theme).toBe("default");
     });
   });
 

@@ -1,5 +1,5 @@
 /** Bloom — lavender shell + indigo brand (light + dark). */
-html[data-theme="bloom"] {
+:root {
   color-scheme: light;
 
   /* ───── BRAND — override to re-skin ───── */
@@ -63,7 +63,7 @@ html[data-theme="bloom"] {
  * re-resolves against the dark `--primary` / `--card` / `--shell-gradient-base`.
  * Surfaces reuse the default-dark neutrals so cards sit clearly above the canvas.
  */
-html[data-theme="bloom"].dark {
+:root.dark {
   color-scheme: dark;
 
   /* ───── BRAND ───── */
@@ -108,74 +108,71 @@ html[data-theme="bloom"].dark {
  * Structural overrides — shell gradient, transparent chrome, squircle corners,
  * tighter heading rhythm. Apply in both modes (gradient reads `--shell-gradient-base`
  * + the per-mode `--shell-gradient-tint`).
+ *
+ * These must NOT be in a @layer so they override Tailwind utilities (which are layered).
  */
 
-@layer base {
-  /* Vertical shell gradient: tinted lift at top -> base surface at bottom. */
-  html[data-theme="bloom"] {
-    min-height: 100vh;
-    min-height: 100dvh;
-    background-color: var(--shell-gradient-base);
-    background-image: linear-gradient(
-      to bottom,
-      var(--shell-gradient-start) 0%,
-      color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
-      color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
-      color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
-      color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
-      var(--shell-gradient-end) 70%,
-      var(--shell-gradient-end) 100%
-    );
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-  }
+/* Vertical shell gradient: tinted lift at top -> base surface at bottom. */
+html {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--shell-gradient-base);
+  background-image: linear-gradient(
+    to bottom,
+    var(--shell-gradient-start) 0%,
+    color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
+    color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
+    color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
+    color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
+    var(--shell-gradient-end) 70%,
+    var(--shell-gradient-end) 100%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
 
-  /* Tighter heading rhythm for branded feel. */
-  html[data-theme="bloom"] :where(h1, h2, h3, h4, h5, h6) {
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-  }
+/* Tighter heading rhythm for branded feel. */
+html :where(h1, h2, h3, h4, h5, h6) {
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
 
-  /* Apple-style squircle corners where engine supports corner-shape (Chromium). */
-  @supports (corner-shape: squircle) {
-    html[data-theme="bloom"] * {
-      corner-shape: squircle;
-    }
-    html[data-theme="bloom"] [class*="rounded-full"] {
-      corner-shape: round;
-    }
+/* Apple-style squircle corners where engine supports corner-shape (Chromium). */
+@supports (corner-shape: squircle) {
+  html * {
+    corner-shape: squircle;
+  }
+  html [class*="rounded-full"] {
+    corner-shape: round;
   }
 }
 
-@layer utilities {
-  /* Body and sidebar chrome stay transparent so the shell gradient shows through. */
-  html[data-theme="bloom"] body {
-    background-color: transparent;
-    background-image: none;
-  }
+/* Body and sidebar chrome stay transparent so the shell gradient shows through. */
+html body {
+  background-color: transparent;
+  background-image: none;
+}
 
-  html[data-theme="bloom"] [data-slot="sidebar-wrapper"],
-  html[data-theme="bloom"] [data-slot="sidebar-inner"],
-  html[data-theme="bloom"] main[data-slot="sidebar-inset"],
-  html[data-theme="bloom"]
-    [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
-      [data-icon-mode="true"]
-    ) {
-    background-color: transparent;
-  }
+html [data-slot="sidebar-wrapper"],
+html [data-slot="sidebar-inner"],
+html main[data-slot="sidebar-inset"],
+html
+  [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
+    [data-icon-mode="true"]
+  ) {
+  background-color: transparent;
+}
 
-  /* Outline button: transparent fill so the shell gradient shows through. */
-  html[data-theme="bloom"] [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
-    background-color: transparent;
-    transition:
-      background-color 0.12s ease,
-      color 0.12s ease;
-  }
+/* Outline button: transparent fill so the shell gradient shows through. */
+html [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
+  background-color: transparent;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
 
-  html[data-theme="bloom"]
-    [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
-    background-color: var(--accent);
-    color: var(--accent-foreground);
-  }
+html [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
 }

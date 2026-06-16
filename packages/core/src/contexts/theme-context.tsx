@@ -23,25 +23,6 @@ export const COLOR_THEME_OPTIONS: readonly ColorThemeOption[] = [
   { value: "system", label: "System" },
 ] as const;
 
-/**
- * Color palette / brand — a developer/product configuration (not a user-facing
- * picker). Each palette ships both a light and a dark variant; the active
- * variant is chosen by the {@link ColorTheme} axis. Applied to `<html>` as `data-theme`.
- */
-export type ThemePalette = "default" | "cream" | "bloom";
-
-/** Developer-facing palette list (e.g. for a custom brand switcher). */
-export type ThemePaletteOption = {
-  readonly value: ThemePalette;
-  readonly label: string;
-};
-
-export const THEME_PALETTE_OPTIONS: readonly ThemePaletteOption[] = [
-  { value: "default", label: "Default" },
-  { value: "cream", label: "Cream" },
-  { value: "bloom", label: "Bloom" },
-] as const;
-
 // This key was chosen in the first release and persisted to users' localStorage.
 // Changing it would silently discard every existing user's preference — do not rename.
 const COLOR_THEME_STORAGE_KEY = "appshell-ui-theme";
@@ -60,15 +41,12 @@ type ThemeProviderProps = {
   children: React.ReactNode;
   /** Initial color theme (user preference). @default "system" */
   defaultColorTheme?: ColorTheme;
-  /** Color palette / brand (developer config). @default "default" */
-  defaultThemePalette?: ThemePalette;
 };
 
 type ThemeProviderState = {
   colorTheme: ColorTheme;
   resolvedColorTheme: ResolvedColorTheme;
   setColorTheme: (colorTheme: ColorTheme) => void;
-  palette: ThemePalette;
 };
 
 function resolveColorTheme(m: ColorTheme, dark: boolean): ResolvedColorTheme {
@@ -82,11 +60,7 @@ function getSystemDark(): boolean {
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
-export function ThemeProvider({
-  children,
-  defaultColorTheme = "system",
-  defaultThemePalette = "default",
-}: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultColorTheme = "system" }: ThemeProviderProps) {
   const [colorTheme, setColorThemeState] = useState<ColorTheme>(() =>
     readStored(COLOR_THEME_STORAGE_KEY, ALL_COLOR_THEMES, defaultColorTheme),
   );
@@ -98,15 +72,11 @@ export function ThemeProvider({
     ),
   );
 
-  const applyColorTheme = useCallback(
-    (resolved: ResolvedColorTheme) => {
-      const root = window.document.documentElement;
-      root.classList.remove("light", "dark");
-      root.classList.add(resolved);
-      root.dataset.theme = defaultThemePalette;
-    },
-    [defaultThemePalette],
-  );
+  const applyColorTheme = useCallback((resolved: ResolvedColorTheme) => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(resolved);
+  }, []);
 
   // Apply the resolved color theme to DOM and subscribe to OS color-scheme changes.
   // Kept as a single effect for simplicity — the listener re-registration cost
@@ -142,9 +112,8 @@ export function ThemeProvider({
       colorTheme,
       resolvedColorTheme,
       setColorTheme,
-      palette: defaultThemePalette,
     }),
-    [colorTheme, resolvedColorTheme, setColorTheme, defaultThemePalette],
+    [colorTheme, resolvedColorTheme, setColorTheme],
   );
 
   return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;

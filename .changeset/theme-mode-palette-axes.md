@@ -2,21 +2,25 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Introduce two independent theming axes — **ColorTheme** and **ThemePalette** — plus a new `AppearanceSwitcher` component and bundled Inter variable fonts.
+Introduce theming support — **ColorTheme** axis, static **theme palettes** via CSS imports, a new `AppearanceSwitcher` component, and bundled Inter variable fonts.
 
 #### ColorTheme (end-user preference, persisted)
 
 `ColorTheme` (`"light" | "dark" | "system"`) is the end-user color mode preference. Applied to `<html>` as `.light` / `.dark` class.
 
 - `<AppShell defaultColorTheme="system">` sets the initial preference; user choice is persisted to localStorage.
-- `useTheme()` hook returns `{ theme, resolvedTheme, setTheme }` (backward compatible).
+- `useTheme()` hook returns `{ theme, resolvedTheme, setTheme }`.
 
-#### ThemePalette (developer configuration, not persisted)
+#### Theme Palettes (static CSS imports)
 
-`ThemePalette` (`"default" | "cream" | "bloom"`) is the brand palette. Each palette ships both light and dark variants.
+Each palette (`default`, `cream`, `bloom`) ships both light and dark variants.
+Select a palette by importing its CSS file — no prop needed:
 
-- `<AppShell defaultThemePalette="default">` selects the palette; not stored in localStorage so a stale value never shadows the configured brand.
-- Applied via `data-theme` attribute on `<html>`.
+```ts
+import "@tailor-platform/app-shell/themes/cream";
+```
+
+The default palette is included automatically via `@tailor-platform/app-shell/styles`.
 
 #### AppearanceSwitcher
 

@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider, type ColorTheme, type ThemePalette } from "@/contexts/theme-context";
+import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -182,22 +182,11 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * Initial color mode before any value is loaded from localStorage (`appshell-ui-theme`).
    * This is the end-user accessibility preference; does not replace a stored preference.
    *
-   * One of **`light`**, **`dark`**, or **`system`** (follows the OS). Works with any palette.
+   * One of **`light`**, **`dark`**, or **`system`** (follows the OS).
    *
    * @default "system"
    */
   defaultColorTheme?: ColorTheme;
-
-  /**
-   * Color palette / brand (developer configuration), applied as `data-theme`.
-   * One of **`default`**, **`cream`**, or **`bloom`** — each ships both light and dark
-   * variants, so the active variant follows {@link AppShellProps.defaultColorTheme}.
-   * This is set by the product (not a user-facing picker), so it is driven by this
-   * prop and not persisted to localStorage.
-   *
-   * @default "default"
-   */
-  defaultThemePalette?: ThemePalette;
 }>;
 
 /**
@@ -341,10 +330,7 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider
-              defaultColorTheme={props.defaultColorTheme}
-              defaultThemePalette={props.defaultThemePalette}
-            >
+            <ThemeProvider defaultColorTheme={props.defaultColorTheme}>
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

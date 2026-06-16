@@ -10,11 +10,10 @@
  *   SYSTEM  — neutral surfaces/text; accessibility-locked, brand-independent.
  *   STATUS  — semantic status, charts, radius, shadows; fixed.
  *
- * Mode is the `.dark` class on <html>; palette is `data-theme`.
+ * Mode is the `.dark` class on <html>; palette is selected by importing one
+ * of the theme CSS files (e.g. `@tailor-platform/app-shell/themes/cream`).
  */
-@import "./themes/default.css";
-@import "./themes/cream.css";
-@import "./themes/bloom.css";
+@import "./themes/default.css" layer(theme.defaults);
 
 @custom-variant dark (&:where(.dark, .dark *));
 

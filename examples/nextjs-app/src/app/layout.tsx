@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "@tailor-platform/app-shell/styles";
 import "./globals.css";
 
 export const metadata: Metadata = {

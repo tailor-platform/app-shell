@@ -11,7 +11,6 @@ This choice is low-regret: the public API (§3) and the value layer are foundati
 
 Verified facts behind this decision:
 
-- **No Radix.** `react-aria-components` pulls in **zero** `@radix-ui/*` packages, and the repo is Radix-free today. This is a _different_ vendor stack from the one we removed, not a reintroduction. (The `aria-hidden` utility in the tree is a standalone dep that both ecosystems happen to share — it is not Radix.)
 - **Single bundled stack.** Modern `react-aria-components` v1 ships as 3 pre-bundled artifacts (`react-aria-components`, `react-aria`, `react-stately`), not the 30+ split `@react-aria/*` packages of the v0 era. Net-new footprint ≈ 10 packages, 3 substantive.
 - **Base UI has no date primitives** and none on the near roadmap, so "wait for Base UI" is not an option. Base UI remains our primitive provider for everything else; react-aria is scoped strictly to the date family.
 
@@ -44,7 +43,7 @@ What the data changes:
 The interface-slimming is the _least_ of it. Ranked by value:
 
 1. **Styling ownership (the main reason).** react-aria ships **zero CSS**. Without a wrapper, "use the DatePicker" means assembling ~12 headless sub-components and re-authoring all the `astw:` / theme-token / dark-mode / animation classes at every call site. The wrapper is where the visual identity lives — **once**. This is the same reason `Select` is wrapped today.
-2. **Abstraction seam / vendor insulation (the strategic one).** Wrapping makes react-aria an _implementation detail_ behind our own stable API. If react-aria reshapes its composition, or we later move the popover to Base UI, or migrate off react-aria entirely, it's a one-package change — not a consumer-wide migration. This is precisely what makes "we took on a second stack" reversible, which is the direct answer to the Radix-lock-in anxiety.
+2. **Abstraction seam / vendor insulation (the strategic one).** Wrapping makes react-aria an _implementation detail_ behind our own stable API. If react-aria reshapes its composition, or we later move the popover to Base UI, or migrate off react-aria entirely, it's a one-package change — not a consumer-wide migration. This is precisely what makes "we took on a second stack" reversible rather than a long-term lock-in.
 3. **Library consistency.** Consumers get `<DatePicker value onChange … />`, shaped like every other app-shell component, instead of a foreign 12-part Adobe composition. The second stack never enters the consumer's mental model.
 4. **Footgun masking (correctness).** Bake in safe defaults: site timezone instead of `getLocalTimeZone()`, full BCP-47 locale, no `Date` round-trip, `granularity` → value-type discrimination. Hide the knobs that let people do the wrong thing.
 5. **Interface slimming itself.** ~40 props + 12 sub-components → ~12 flat props. Real, but a _consequence_ of 1–4, not the goal.
@@ -323,7 +322,6 @@ First-cut design, matching the "global context param" instinct:
 ### Dependency delta (verified)
 
 - **~10 net-new packages**, of which **3 are substantive** (`react-aria-components`, `react-aria`, `react-stately`); the rest are small utilities (`@internationalized/*`, `@react-types/shared`, `aria-hidden`, `client-only`, `use-sync-external-store`).
-- **Zero Radix.** Confirmed against the lockfile.
 
 ### Measured size (esbuild, minified + gzipped, `react`/`react-dom` externalised, tree-shaken to the date slice)
 

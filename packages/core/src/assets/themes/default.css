@@ -60,6 +60,10 @@
   --status-completed: #22c55e;
   --status-attention: #f59e0b;
   --status-danger: #ef4444;
+  --alert-neutral-background: var(--muted);
+  --alert-neutral-foreground: var(--foreground);
+  --alert-neutral-foreground-muted: var(--muted-foreground);
+  --alert-neutral-border: var(--border);
   --alert-success-foreground: #15803d;
   --alert-success-foreground-muted: color-mix(
     in srgb,

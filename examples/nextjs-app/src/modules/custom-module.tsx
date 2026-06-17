@@ -21,6 +21,7 @@ import { dropdownComponentsDemoResource } from "./pages/dropdown-demo";
 import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form-demo";
 import { csvImporterDemoResource } from "./pages/csv-importer-demo";
 import { dataTableDemoResource } from "./pages/data-table-demo";
+import { colorDemoResource } from "./pages/color-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -39,6 +40,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link to="/custom-page/sub1/sub1-1/123">{t("goToDynamicPage")}</Link>
+          </p>
+          <p>
+            <Link
+              to="/custom-page/color"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Color tokens (swatches & layers)
+            </Link>
           </p>
           <p>
             <Link
@@ -217,6 +229,7 @@ export const customPageModule = defineModule({
     subPageResource,
     hiddenResource,
     adminOnlyResource,
+    colorDemoResource,
     purchaseOrderDemoResource,
     actionPanelDemoResource,
     metricCardDemoResource,

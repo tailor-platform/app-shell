@@ -1,4 +1,6 @@
 import "./globals.css";
+import "@fontsource-variable/inter/wght.css";
+
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";

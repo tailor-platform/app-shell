@@ -226,33 +226,31 @@ function DataTableHeaders({ className }: { className?: string }) {
       <Table.Row>
         {hasSelection && (
           <Table.Head style={{ width: 52 }} className="astw:pl-3!">
-            <div className="astw:flex astw:items-center">
-              <Checkbox.Root
-                checked={isAllSelected}
-                indeterminate={isIndeterminate}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    selectAllRows?.();
-                  } else {
-                    clearSelection?.();
-                  }
-                }}
-                aria-label={t("selectAll")}
-                className={cn(
-                  "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                  "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                  "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
+            <Checkbox.Root
+              checked={isAllSelected}
+              indeterminate={isIndeterminate}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  selectAllRows?.();
+                } else {
+                  clearSelection?.();
+                }
+              }}
+              aria-label={t("selectAll")}
+              className={cn(
+                "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
+                "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
+                "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
+              )}
+            >
+              <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+                {isIndeterminate ? (
+                  <Minus className="astw:size-3" />
+                ) : (
+                  <Check className="astw:size-3" />
                 )}
-              >
-                <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                  {isIndeterminate ? (
-                    <Minus className="astw:size-3" />
-                  ) : (
-                    <Check className="astw:size-3" />
-                  )}
-                </Checkbox.Indicator>
-              </Checkbox.Root>
-            </div>
+              </Checkbox.Indicator>
+            </Checkbox.Root>
           </Table.Head>
         )}
         {columns?.map((col, colIndex) => {
@@ -401,21 +399,19 @@ function DataTableBody({ className }: { className?: string }) {
                 className="astw:pl-3!"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="astw:flex astw:items-center">
-                  <Checkbox.Root
-                    checked={selected}
-                    onCheckedChange={() => toggleRowSelection(row)}
-                    aria-label={t("selectRow")}
-                    className={cn(
-                      "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                      "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                    )}
-                  >
-                    <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                      <Check className="astw:size-3" />
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
-                </div>
+                <Checkbox.Root
+                  checked={selected}
+                  onCheckedChange={() => toggleRowSelection(row)}
+                  aria-label={t("selectRow")}
+                  className={cn(
+                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
+                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
+                  )}
+                >
+                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+                    <Check className="astw:size-3" />
+                  </Checkbox.Indicator>
+                </Checkbox.Root>
               </Table.Cell>
             )}
             {columns?.map((col, colIndex) => {

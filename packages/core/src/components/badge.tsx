@@ -10,22 +10,22 @@ const badgeVariants = cva(
         default:
           "astw:border-transparent astw:bg-primary astw:text-primary-foreground astw:hover:bg-primary/80",
         success:
-          "astw:border-transparent astw:bg-green-500 astw:text-white astw:hover:bg-green-600",
+          "astw:border-transparent astw:bg-status-completed astw:text-white astw:hover:bg-status-completed/90",
         warning:
-          "astw:border-transparent astw:bg-yellow-500 astw:text-white astw:hover:bg-yellow-600",
+          "astw:border-transparent astw:bg-status-attention astw:text-white astw:hover:bg-status-attention/90",
         error:
           "astw:border-transparent astw:bg-destructive astw:text-destructive-foreground astw:hover:bg-destructive/80",
         neutral:
           "astw:border-transparent astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
-        info: "astw:border-transparent astw:bg-blue-500 astw:text-white astw:hover:bg-blue-600",
+        info: "astw:border-transparent astw:bg-status-neutral astw:text-white astw:hover:bg-status-neutral/90",
         "subtle-success":
-          "astw:border-transparent astw:bg-green-500/10 astw:text-green-700 astw:hover:bg-green-500/20 astw:dark:text-green-500",
+          "astw:border-transparent astw:bg-status-completed/10 astw:text-status-completed astw:hover:bg-status-completed/20",
         "subtle-warning":
-          "astw:border-transparent astw:bg-yellow-500/10 astw:text-yellow-700 astw:hover:bg-yellow-500/20 astw:dark:text-yellow-500",
+          "astw:border-transparent astw:bg-status-attention/10 astw:text-status-attention astw:hover:bg-status-attention/20",
         "subtle-error":
           "astw:border-transparent astw:bg-destructive/10 astw:text-destructive astw:hover:bg-destructive/20",
         "subtle-info":
-          "astw:border-transparent astw:bg-blue-500/10 astw:text-blue-700 astw:hover:bg-blue-500/20 astw:dark:text-blue-500",
+          "astw:border-transparent astw:bg-status-neutral/10 astw:text-status-neutral astw:hover:bg-status-neutral/20",
         // Outline variants with status dots - matches Figma design
         "outline-success":
           "astw:gap-0.5 astw:pl-1.5 astw:pr-2 astw:border-border astw:bg-card astw:text-foreground",
@@ -47,11 +47,11 @@ const badgeVariants = cva(
 
 // Status dot colors for outline variants
 const statusDotColors: Record<string, string> = {
-  "outline-success": "astw:bg-green-500",
-  "outline-warning": "astw:bg-orange-500",
-  "outline-error": "astw:bg-red-500",
-  "outline-info": "astw:bg-blue-500",
-  "outline-neutral": "astw:bg-neutral-400",
+  "outline-success": "astw:bg-status-completed",
+  "outline-warning": "astw:bg-status-attention",
+  "outline-error": "astw:bg-status-danger",
+  "outline-info": "astw:bg-status-neutral",
+  "outline-neutral": "astw:bg-status-default",
 };
 
 function StatusDot({ variant }: { variant: string }) {

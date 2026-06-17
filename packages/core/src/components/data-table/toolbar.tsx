@@ -21,7 +21,10 @@ function DataTableToolbar({ children, className }: { children: ReactNode; classN
   return (
     <div
       data-slot="data-table-toolbar"
-      className={cn("astw:flex astw:flex-col astw:gap-2 astw:border-b astw:p-2", className)}
+      className={cn(
+        "astw:flex astw:flex-col astw:gap-2 astw:border-b astw:border-border astw:p-2",
+        className,
+      )}
     >
       {children}
     </div>

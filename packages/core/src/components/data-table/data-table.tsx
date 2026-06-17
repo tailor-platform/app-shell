@@ -553,7 +553,10 @@ function DataTableFooter({ children, className }: { children: ReactNode; classNa
   return (
     <div
       data-slot="data-table-footer"
-      className={cn("astw:flex astw:items-center astw:border-t astw:px-4 astw:py-2", className)}
+      className={cn(
+        "astw:flex astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
+        className,
+      )}
     >
       {children}
     </div>

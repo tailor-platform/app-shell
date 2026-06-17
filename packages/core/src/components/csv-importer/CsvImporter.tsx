@@ -209,7 +209,7 @@ function MappingStep({
       <div className="astw:overflow-y-auto astw:rounded-md astw:border astw:border-border">
         <table className="astw:w-full astw:text-sm">
           <thead>
-            <tr className="astw:border-b astw:bg-muted/50">
+            <tr className="astw:border-b astw:border-border astw:bg-muted/50">
               <th className="astw:w-10 astw:px-3 astw:py-2" />
               <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
                 {t("mappingExpectedField")}
@@ -233,7 +233,7 @@ function MappingStep({
                 <tr
                   key={col.key}
                   className={cn(
-                    "astw:border-b last:astw:border-b-0 astw:transition-colors",
+                    "astw:border-b astw:border-border last:astw:border-b-0 astw:transition-colors",
                     !isMapped && col.required && "astw:bg-destructive/5",
                   )}
                 >
@@ -401,7 +401,7 @@ function ReviewStep({
           </thead>
           <tbody>
             {rawRows.map((row, rowIdx) => (
-              <tr key={rowIdx} className="astw:border-t">
+              <tr key={rowIdx} className="astw:border-t astw:border-border">
                 <td className="astw:px-3 astw:py-1 astw:text-muted-foreground">{rowIdx + 1}</td>
                 {activeMappings.map((m) => {
                   const colIdx = headerIndexMap.get(m.csvHeader);
@@ -718,12 +718,12 @@ export function CsvImporter<T extends CsvSchema>({
           <Drawer.Popup
             ref={drawerPopupRef}
             data-slot="csv-importer"
-            className="astw:bg-background astw:flex astw:flex-col astw:w-full astw:h-[70vh] astw:rounded-t-lg astw:border-t astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms] astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(100%)] astw:data-starting-style:[transform:translateY(100%)]"
+            className="astw:bg-background astw:flex astw:flex-col astw:w-full astw:h-[70vh] astw:rounded-t-lg astw:border-t astw:border-border astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms] astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(100%)] astw:data-starting-style:[transform:translateY(100%)]"
           >
             <PortalContainerContext.Provider value={drawerPopupRef}>
               <Drawer.Content data-slot="csv-importer-inner" className="astw:contents">
                 {/* Header: step indicators + title + close */}
-                <div className="astw:flex astw:items-center astw:justify-between astw:border-b astw:px-6 astw:py-4">
+                <div className="astw:flex astw:items-center astw:justify-between astw:border-b astw:border-border astw:px-6 astw:py-4">
                   <div className="astw:flex astw:items-center astw:gap-4">
                     <div className="astw:flex astw:items-center astw:gap-2">
                       {(["upload", "mapping", "review", "complete"] as const).map((s, idx) => (
@@ -808,7 +808,7 @@ export function CsvImporter<T extends CsvSchema>({
                 </div>
 
                 {/* Footer with navigation buttons */}
-                <div className="astw:flex astw:justify-between astw:border-t astw:px-6 astw:py-4">
+                <div className="astw:flex astw:justify-between astw:border-t astw:border-border astw:px-6 astw:py-4">
                   <div>
                     {step === "mapping" && (
                       <button

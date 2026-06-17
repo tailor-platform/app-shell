@@ -49,7 +49,11 @@ Root.displayName = "Table.Root";
 /** The table header section (`<thead>`). */
 function Header({ className, ...props }: React.ComponentProps<"thead">) {
   return (
-    <thead data-slot="table-header" className={cn("astw:[&_tr]:border-b", className)} {...props} />
+    <thead
+      data-slot="table-header"
+      className={cn("astw:[&_tr]:border-b astw:[&_tr]:border-border", className)}
+      {...props}
+    />
   );
 }
 Header.displayName = "Table.Header";
@@ -71,7 +75,10 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn("astw:border-t astw:font-medium astw:[&>tr]:last:border-b-0", className)}
+      className={cn(
+        "astw:border-t astw:border-border astw:font-medium astw:[&>tr]:last:border-b-0",
+        className,
+      )}
       {...props}
     />
   );
@@ -84,7 +91,7 @@ function Row({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "astw:hover:bg-muted/50 astw:data-[state=selected]:bg-muted astw:border-b astw:transition-colors",
+        "astw:hover:bg-muted/50 astw:data-[state=selected]:bg-muted astw:border-b astw:border-border astw:transition-colors",
         className,
       )}
       {...props}

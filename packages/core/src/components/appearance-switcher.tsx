@@ -1,4 +1,4 @@
-import { Palette } from "lucide-react";
+import { Monitor, Moon, Palette, Sun } from "lucide-react";
 
 import { Menu } from "@/components/menu";
 import { Button } from "@/components/button";
@@ -27,18 +27,10 @@ const appearanceSwitcherLabels = defineI18nLabels({
 });
 const useT = appearanceSwitcherLabels.useT;
 
-/**
- * Decorative dual swatches for the color theme picker. Light/dark show their surface
- * tones; system splits the two to signal "follows the OS".
- * Kept as static hex previews so they render before any stylesheet loads.
- */
-const COLOR_THEME_PREVIEW: Record<
-  ColorTheme,
-  { readonly a: `#${string}`; readonly b: `#${string}` }
-> = {
-  light: { a: "#ffffff", b: "#d4d4d8" },
-  dark: { a: "#3f3f46", b: "#71717a" },
-  system: { a: "#ffffff", b: "#3f3f46" },
+const COLOR_THEME_ICON: Record<ColorTheme, typeof Sun | typeof Moon | typeof Monitor> = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
 };
 
 function isColorTheme(value: string): value is ColorTheme {
@@ -57,21 +49,14 @@ function radioItemClasses(active: boolean) {
   );
 }
 
-function ColorThemePreviewSwatches({ colorTheme }: { colorTheme: ColorTheme }) {
-  const { a, b } = COLOR_THEME_PREVIEW[colorTheme];
+function ColorThemeIcon({ colorTheme }: { colorTheme: ColorTheme }) {
+  const Icon = COLOR_THEME_ICON[colorTheme];
   return (
     <div
-      className="astw:flex astw:h-10 astw:w-full astw:max-w-[5.5rem] astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-md astw:border astw:border-border/80 astw:bg-card astw:px-2"
+      className="astw:flex astw:h-10 astw:w-full astw:max-w-[5.5rem] astw:items-center astw:justify-center astw:rounded-md astw:border astw:border-border/80 astw:bg-card astw:px-2"
       aria-hidden
     >
-      <span
-        className="astw:size-4 astw:shrink-0 astw:rounded-full astw:border astw:border-black/10 astw:shadow-sm"
-        style={{ backgroundColor: a }}
-      />
-      <span
-        className="astw:size-4 astw:shrink-0 astw:rounded-full astw:border astw:border-black/10 astw:shadow-sm"
-        style={{ backgroundColor: b }}
-      />
+      <Icon className="astw:size-5 astw:shrink-0 astw:text-foreground" />
     </div>
   );
 }
@@ -129,7 +114,7 @@ function AppearanceSwitcher() {
                 <Menu.RadioItemIndicator className="astw:sr-only">
                   {t(opt.value)}
                 </Menu.RadioItemIndicator>
-                <ColorThemePreviewSwatches colorTheme={opt.value} />
+                <ColorThemeIcon colorTheme={opt.value} />
                 <span className="astw:block astw:w-full astw:truncate astw:px-0.5">
                   {t(opt.value)}
                 </span>

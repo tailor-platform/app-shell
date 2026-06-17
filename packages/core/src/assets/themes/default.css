@@ -1,14 +1,23 @@
-/** Default palette — neutral grayscale, light + dark. */
+/**
+ * Default palette — base `:root` tokens.
+ *
+ * All palettes inherit unset custom properties from here (status, alerts, etc.).
+ * Branded palettes override via a separate theme import; see ./_template.css.
+ */
 :root {
-  /* ───── BRAND — override to re-skin ───── */
+  color-scheme: light;
+
+  /* ── 1. BRAND ─────────────────────────────────────────────────────────── */
   --primary: rgba(23, 23, 23, 1);
   --primary-foreground: rgba(250, 250, 250, 1);
   --secondary: rgba(245, 245, 245, 1);
   --secondary-foreground: rgba(23, 23, 23, 1);
+  --accent: rgb(237, 237, 237);
+  --accent-foreground: rgba(10, 10, 10, 1);
 
-  /* ───── DERIVED from brand (do not edit; re-resolves in dark) ───── */
-  --accent: color-mix(in srgb, var(--primary) 15%, var(--card));
-  --accent-foreground: var(--foreground);
+  /* ── 2. SHELL GRADIENT — not used (flat palette) ──────────────────────── */
+
+  /* ── 3. DERIVED — copy verbatim to new palettes ───────────────────────── */
   --ring: color-mix(in srgb, var(--primary) 45%, transparent);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -16,7 +25,7 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-ring: var(--ring);
 
-  /* ───── SYSTEM — neutral surfaces/text (accessibility-locked) ───── */
+  /* ── 4. SYSTEM ────────────────────────────────────────────────────────── */
   --background: rgba(250, 250, 250, 1);
   --foreground: rgba(10, 10, 10, 1);
   --card: rgba(255, 255, 255, 1);
@@ -31,7 +40,7 @@
   --sidebar-foreground: rgba(10, 10, 10, 1);
   --sidebar-border: rgba(229, 229, 229, 1);
 
-  /* ───── STATUS / STRUCTURAL — semantic, fixed ───── */
+  /* ── 5. PALETTE ───────────────────────────────────────────────────────── */
   --destructive: rgba(220, 38, 38, 1);
   --destructive-foreground: rgba(254, 242, 242, 1);
   --radius: 0.625rem;
@@ -40,32 +49,68 @@
   --chart-3: rgba(22, 78, 99, 1);
   --chart-4: rgba(251, 191, 36, 1);
   --chart-5: rgba(245, 158, 11, 1);
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.06);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.09);
+
+  /* ── 6. SEMANTIC — product-wide; inherited by all palettes, do not override */
   --status-default: #737373;
   --status-neutral: #0ea5e9;
   --status-completed: #22c55e;
   --status-attention: #f59e0b;
   --status-danger: #ef4444;
-  --semantic-shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.06);
-  --semantic-shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
-  --semantic-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
-  --semantic-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.09);
+  --alert-neutral-background: var(--muted);
+  --alert-neutral-foreground: var(--foreground);
+  --alert-neutral-foreground-muted: var(--muted-foreground);
+  --alert-neutral-border: var(--border);
+  --alert-success-foreground: #15803d;
+  --alert-success-foreground-muted: color-mix(
+    in srgb,
+    var(--alert-success-foreground) 80%,
+    transparent
+  );
+  --alert-success-background: color-mix(in srgb, #22c55e 10%, transparent);
+  --alert-success-border: color-mix(in srgb, #22c55e 20%, transparent);
+  --alert-warning-foreground: #a16207;
+  --alert-warning-foreground-muted: color-mix(
+    in srgb,
+    var(--alert-warning-foreground) 80%,
+    transparent
+  );
+  --alert-warning-background: color-mix(in srgb, #eab308 10%, transparent);
+  --alert-warning-border: color-mix(in srgb, #eab308 20%, transparent);
+  --alert-error-foreground: var(--destructive);
+  --alert-error-foreground-muted: color-mix(
+    in srgb,
+    var(--alert-error-foreground) 80%,
+    transparent
+  );
+  --alert-error-background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  --alert-error-border: color-mix(in srgb, var(--destructive) 20%, transparent);
+  --alert-info-foreground: #1d4ed8;
+  --alert-info-foreground-muted: color-mix(in srgb, var(--alert-info-foreground) 80%, transparent);
+  --alert-info-background: color-mix(in srgb, #3b82f6 10%, transparent);
+  --alert-info-border: color-mix(in srgb, #3b82f6 20%, transparent);
 }
 
 /*
- * Dark variant. Overrides only BRAND + SYSTEM (+ the STATUS values that differ);
- * the DERIVED tier above re-resolves automatically against the dark `--primary`
- * and `--card`. `--radius` and `--status-*` are inherited from the light block.
+ * Dark variant. Overrides BRAND + SYSTEM (+ semantic foregrounds that differ).
+ * DERIVED tier re-resolves when BRAND changes; `--radius` and `--status-*`
+ * inherit from the light block.
  */
 .dark {
   color-scheme: dark;
 
-  /* ───── BRAND ───── */
+  /* ── 1. BRAND (dark) ──────────────────────────────────────────────────── */
   --primary: rgba(229, 229, 229, 1);
   --primary-foreground: rgba(23, 23, 23, 1);
   --secondary: rgba(38, 38, 38, 1);
   --secondary-foreground: rgba(250, 250, 250, 1);
+  --accent: rgb(48, 48, 48);
+  --accent-foreground: rgba(250, 250, 250, 1);
 
-  /* ───── SYSTEM ───── */
+  /* ── 4. SYSTEM (dark) ─────────────────────────────────────────────────── */
   --background: rgba(10, 10, 10, 1);
   --foreground: rgba(250, 250, 250, 1);
   --card: rgba(23, 23, 23, 1);
@@ -80,7 +125,7 @@
   --sidebar-foreground: rgba(250, 250, 250, 1);
   --sidebar-border: rgba(255, 255, 255, 0.10000000149011612);
 
-  /* ───── STATUS / STRUCTURAL (dark values that differ) ───── */
+  /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
   --destructive: rgba(248, 113, 113, 1);
   --destructive-foreground: rgba(254, 242, 242, 1);
   --chart-1: rgba(29, 78, 216, 1);
@@ -92,4 +137,26 @@
   --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
   --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
   --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+
+  /* ── 6. SEMANTIC (dark foreground adjustments) ──────────────────────── */
+  --alert-success-foreground: #86efac;
+  --alert-success-foreground-muted: color-mix(
+    in srgb,
+    var(--alert-success-foreground) 85%,
+    transparent
+  );
+  --alert-warning-foreground: #fde047;
+  --alert-warning-foreground-muted: color-mix(
+    in srgb,
+    var(--alert-warning-foreground) 85%,
+    transparent
+  );
+  --alert-error-foreground: #fca5a5;
+  --alert-error-foreground-muted: color-mix(
+    in srgb,
+    var(--alert-error-foreground) 85%,
+    transparent
+  );
+  --alert-info-foreground: #93c5fd;
+  --alert-info-foreground-muted: color-mix(in srgb, var(--alert-info-foreground) 85%, transparent);
 }

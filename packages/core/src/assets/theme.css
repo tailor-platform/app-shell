@@ -1,17 +1,24 @@
 /**
  * Theme system
  *
- * Each theme file under ./themes/ declares CSS custom properties in four tiers:
- *   BRAND   — the only knobs to re-skin: `--primary` / `--secondary` and their
- *             foregrounds. Set the foreground WITH the color so contrast is owned.
- *   DERIVED — computed from BRAND via `var()` + `color-mix`; declared once and
- *             re-resolves automatically in dark (which only overrides BRAND +
- *             SYSTEM). Don't edit.
- *   SYSTEM  — neutral surfaces/text; accessibility-locked, brand-independent.
- *   STATUS  — semantic status, charts, radius, shadows; fixed.
+ * Palettes live in ./themes/*.css. Copy ./_template.css to add a new one.
  *
- * Mode is the `.dark` class on <html>; palette is selected by importing one
- * of the theme CSS files (e.g. `@tailor-platform/app-shell/themes/cream`).
+ * Token tiers (each palette file uses the same section order):
+ *
+ *   1. BRAND          — required per mode (light + dark):
+ *                       primary, secondary, accent (+ foregrounds each).
+ *                       Tune accent by eye for menu/sidebar selection.
+ *   2. SHELL GRADIENT — optional; branded palettes only (bloom, cream).
+ *   3. DERIVED        — copy verbatim; ring, sidebar aliases, gradient stops.
+ *   4. SYSTEM         — surfaces & chrome; copy default or tune for brand tint
+ *                       (foreground, muted, popover, card, borders).
+ *   5. PALETTE        — optional: radius, charts, shadows, destructive.
+ *
+ * Inherited from :root (default.css) — do not duplicate in new palettes:
+ *   --status-*, --alert-* (product semantics, mode-aware in default.css).
+ *
+ * Mode: `.dark` on <html>. Palette: import one theme file after styles
+ * (e.g. `@tailor-platform/app-shell/themes/cream`).
  */
 @import "./themes/default.css" layer(theme.defaults);
 

@@ -509,7 +509,7 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
         aria-describedby={undefined}
       >
         <Dialog.Title className="astw:sr-only">{t("commandPaletteSearch")}</Dialog.Title>
-        <div className="astw:flex astw:items-center astw:border-b astw:px-3 astw:py-1">
+        <div className="astw:flex astw:items-center astw:border-b astw:border-border astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
           {activeSearchSource && (
             <span className="astw:inline-flex astw:items-center astw:shrink-0 astw:rounded astw:bg-muted astw:px-1.5 astw:py-0.5 astw:mr-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">

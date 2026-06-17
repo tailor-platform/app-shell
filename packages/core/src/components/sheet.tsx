@@ -133,13 +133,13 @@ function Content({ className, children, size = "sm", ...props }: SheetContentPro
           className={cn(
             "astw:bg-card astw:flex astw:flex-col astw:shadow-lg astw:transition-transform astw:ease-[cubic-bezier(0.32,0.72,0,1)] astw:duration-[450ms]",
             side === "right" &&
-              "astw:h-full astw:w-3/4 astw:border-l astw:[transform:translateX(var(--drawer-swipe-movement-x))] astw:data-ending-style:[transform:translateX(100%)] astw:data-starting-style:[transform:translateX(100%)]",
+              "astw:h-full astw:w-3/4 astw:border-l astw:border-border astw:[transform:translateX(var(--drawer-swipe-movement-x))] astw:data-ending-style:[transform:translateX(100%)] astw:data-starting-style:[transform:translateX(100%)]",
             side === "left" &&
-              "astw:h-full astw:w-3/4 astw:border-r astw:[transform:translateX(var(--drawer-swipe-movement-x))] astw:data-ending-style:[transform:translateX(-100%)] astw:data-starting-style:[transform:translateX(-100%)]",
+              "astw:h-full astw:w-3/4 astw:border-r astw:border-border astw:[transform:translateX(var(--drawer-swipe-movement-x))] astw:data-ending-style:[transform:translateX(-100%)] astw:data-starting-style:[transform:translateX(-100%)]",
             side === "top" &&
-              "astw:w-full astw:h-auto astw:border-b astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(-100%)] astw:data-starting-style:[transform:translateY(-100%)]",
+              "astw:w-full astw:h-auto astw:border-b astw:border-border astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(-100%)] astw:data-starting-style:[transform:translateY(-100%)]",
             side === "bottom" &&
-              "astw:w-full astw:h-auto astw:border-t astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(100%)] astw:data-starting-style:[transform:translateY(100%)]",
+              "astw:w-full astw:h-auto astw:border-t astw:border-border astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(100%)] astw:data-starting-style:[transform:translateY(100%)]",
             isHorizontal && sizeClasses[size],
             "astw:data-swiping:select-none",
             className,
@@ -189,7 +189,7 @@ function Header({ className, action, children, ...props }: SheetHeaderProps) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("astw:border-b astw:px-4 astw:py-3", className)}
+      className={cn("astw:border-b astw:border-border astw:px-4 astw:py-3", className)}
       {...props}
     >
       <div className="astw:flex astw:items-center astw:gap-3">
@@ -217,7 +217,7 @@ function Footer({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:border-t astw:p-4",
+        "astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:border-t astw:border-border astw:p-4",
         className,
       )}
       {...props}

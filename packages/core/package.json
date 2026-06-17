@@ -44,7 +44,6 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
-    "generate:fonts": "node scripts/generate-fonts.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
     "type-check": "tsc --incremental"

@@ -362,6 +362,14 @@ The **+32 KB (Ark)** or **+62 KB (react-aria)** on top buys the _interaction / a
 
 So the real question is not "is 75 KB worth i18n + calendars" — that's the 11 KB value layer we keep regardless. It's **"is the a11y/interaction layer worth building and owning ourselves (~11 KB, highest effort), or worth renting for +32 KB (Ark) / +62 KB (react-aria)?"** That is the Decision fork.
 
+### `@internationalized/date` vs `Intl.DateTimeFormat` — different layers, not alternatives
+
+What this doc calls the "value layer" is the date **representation**: the immutable objects our `value` / `onChange` hold (`CalendarDate` / `CalendarDateTime` / `ZonedDateTime`) plus their arithmetic and parsing. `Intl.DateTimeFormat` is a **formatter** (value → localized string) — the zero-bundle native engine we use directly for display / number / currency, and which `@internationalized/date` itself calls under the hood. They compose; they don't compete.
+
+"Use `Intl` instead of the lib" really means making JS `Date` the value type again — which reintroduces `Date`'s footguns, most notably the **date-only midnight-UTC shift**: a plain calendar date forced through a `Date` becomes an instant at midnight, so any timezone conversion (on parse, display, or save) can roll it a day forward/back. `CalendarDate` has no time and no zone, so there is nothing to shift.
+
+Net: the ~11 KB buys **representation + parsing + timezone/calendar correctness**, _not_ formatting — formatting is free and native in every option.
+
 ## 8. Open questions (follow-ups, not blockers)
 
 - **Form integration.** `CalendarDate` doesn't `JSON.stringify` cleanly. Decide whether to coerce to ISO at the form boundary or teach the schema/validator the `@internationalized/date` types. Drives whether `validate` / `validationBehavior` get exposed.

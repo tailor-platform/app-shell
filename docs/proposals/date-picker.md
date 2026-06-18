@@ -124,8 +124,15 @@ Single-date and range are **separate components, not a `mode` prop** — they ha
 ### 4.1 Consumer usage
 
 ```tsx
-import { DatePicker, DateField, Calendar } from "@tailor-platform/app-shell";
-import { today, getLocalTimeZone, type CalendarDate } from "@internationalized/date";
+// Date helpers + types are re-exported from app-shell — no extra install (see §7.2):
+import {
+  DatePicker,
+  DateField,
+  Calendar,
+  today,
+  getLocalTimeZone,
+  type CalendarDate,
+} from "@tailor-platform/app-shell";
 
 // Basic — date only (value is CalendarDate)
 function ShipDate() {
@@ -369,6 +376,17 @@ What this doc calls the "value layer" is the date **representation**: the immuta
 "Use `Intl` instead of the lib" really means making JS `Date` the value type again — which reintroduces `Date`'s footguns, most notably the **date-only midnight-UTC shift**: a plain calendar date forced through a `Date` becomes an instant at midnight, so any timezone conversion (on parse, display, or save) can roll it a day forward/back. `CalendarDate` has no time and no zone, so there is nothing to shift.
 
 Net: the ~11 KB buys **representation + parsing + timezone/calendar correctness**, _not_ formatting — formatting is free and native in every option.
+
+## 7.2 Packaging / dependency surface
+
+`@internationalized/date` is **public API**, not an internal detail — its types _are_ the `value` / `onChange` / `minValue` types. Decision: ship it as a **regular `dependency`** of `@tailor-platform/app-shell` and **re-export its common surface**, so consumers import everything from one place and install nothing extra.
+
+- **Re-exported from `@tailor-platform/app-shell`** (the 90% surface): helpers `today`, `now`, `getLocalTimeZone`, `parseDate`, `parseDateTime`, `parseAbsolute`, `parseZonedDateTime`; types `CalendarDate`, `CalendarDateTime`, `ZonedDateTime`, `Time`, `DateValue`.
+- **Long tail**: a consumer needing a helper we don't re-export adds `@internationalized/date` to their own deps and imports it directly; it dedupes with app-shell's copy (and react-aria's internal copy) to a **single instance** as long as version ranges overlap — keep app-shell's range compatible with react-aria's.
+
+**Why a regular dep, not a peer:** lowest friction for a multi-feature library where dates are one feature. Consumers install only `@tailor-platform/app-shell`; there's no phantom-dependency hazard under pnpm because app-shell owns and resolves the copy. The contract is: **import date helpers/types from `@tailor-platform/app-shell`; only add `@internationalized/date` yourself for a long-tail helper.**
+
+A later move to a peer dep, or to a lighter foundation (§9), stays an internal change — the re-export surface is the consumer contract, not the underlying package.
 
 ## 8. Open questions (follow-ups, not blockers)
 

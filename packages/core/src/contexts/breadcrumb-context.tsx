@@ -42,3 +42,11 @@ export const useBreadcrumbOverride = () => {
   }
   return context;
 };
+
+/**
+ * Like {@link useBreadcrumbOverride} but returns `null` instead of throwing when
+ * no `BreadcrumbOverrideProvider` is mounted. For consumers that should degrade
+ * gracefully without overrides (e.g. components rendered in the router without
+ * the full AppShell provider stack).
+ */
+export const useBreadcrumbOverrideOptional = () => useContext(BreadcrumbOverrideContext);

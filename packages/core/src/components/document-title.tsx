@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAppShellConfig } from "@/contexts/appshell-context";
-import { useBreadcrumbOverride } from "@/contexts/breadcrumb-context";
+import { useBreadcrumbOverrideOptional } from "@/contexts/breadcrumb-context";
 import { usePathSegments } from "@/components/dynamic-breadcrumb";
 
 const SEPARATOR = " · ";
@@ -25,13 +25,13 @@ const SEPARATOR = " · ";
 export const DocumentTitle = () => {
   const { title: appTitle } = useAppShellConfig();
   const { basePath, segments } = usePathSegments();
-  const { overrides } = useBreadcrumbOverride();
+  const overrides = useBreadcrumbOverrideOptional()?.overrides;
 
   const leaf = segments.at(-1);
   let pageTitle: string | undefined;
   if (leaf) {
     const leafFullPath = basePath ? `/${basePath}/${leaf.path}` : `/${leaf.path}`;
-    pageTitle = overrides.get(leafFullPath) ?? leaf.title;
+    pageTitle = overrides?.get(leafFullPath) ?? leaf.title;
   }
 
   const nextTitle = [pageTitle, appTitle].filter(Boolean).join(SEPARATOR);

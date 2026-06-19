@@ -1,8 +1,8 @@
 /**
  * Default palette — base `:root` tokens.
  *
- * All palettes inherit unset custom properties from here (status, alerts, etc.).
- * Branded palettes override via a separate theme import; see ./_template.css.
+ * All palettes inherit shared aliases + semantic tokens from here.
+ * Branded palettes override only palette-specific tokens; see ./_template.css.
  */
 :root {
   color-scheme: light;
@@ -17,7 +17,7 @@
 
   /* ── 2. SHELL GRADIENT — not used (flat palette) ──────────────────────── */
 
-  /* ── 3. DERIVED — copy verbatim to new palettes ───────────────────────── */
+  /* ── 3. SHARED ALIASES — inherited by palettes; usually leave as-is ───── */
   --ring: color-mix(in srgb, var(--primary) 45%, transparent);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
@@ -96,7 +96,7 @@
 
 /*
  * Dark variant. Overrides BRAND + SYSTEM (+ semantic foregrounds that differ).
- * DERIVED tier re-resolves when BRAND changes; `--radius` and `--status-*`
+ * Shared aliases/ring re-resolve when BRAND changes; `--radius` and `--status-*`
  * inherit from the light block.
  */
 .dark {
@@ -119,11 +119,11 @@
   --popover-foreground: rgba(250, 250, 250, 1);
   --muted: rgba(38, 38, 38, 1);
   --muted-foreground: rgba(163, 163, 163, 1);
-  --border: rgba(255, 255, 255, 0.10000000149011612);
-  --input: rgba(255, 255, 255, 0.15000000596046448);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
   --sidebar: rgba(10, 10, 10, 1);
   --sidebar-foreground: rgba(250, 250, 250, 1);
-  --sidebar-border: rgba(255, 255, 255, 0.10000000149011612);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
 
   /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
   --destructive: rgba(248, 113, 113, 1);

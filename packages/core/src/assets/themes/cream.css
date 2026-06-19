@@ -1,6 +1,7 @@
 /**
  * Cream — warm Tailor brand shell + indigo actions.
- * Branded palette: sets sections 1–5; section 6 inherited from default.css.
+ * Branded palette: overrides brand/system/palette tokens; shared aliases +
+ * semantic tokens inherit from default.css.
  */
 :root {
   color-scheme: light;
@@ -17,21 +18,7 @@
   --shell-gradient-base: #fef6e3;
   --shell-gradient-tint: #fffdfa;
 
-  /* ── 3. DERIVED — copy verbatim ───────────────────────────────────────── */
-  --ring: color-mix(in srgb, var(--primary) 45%, transparent);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--accent-foreground);
-  --sidebar-ring: var(--ring);
-  --shell-gradient-start: color-mix(
-    in srgb,
-    var(--shell-gradient-base) 55%,
-    var(--shell-gradient-tint)
-  );
-  --shell-gradient-end: var(--shell-gradient-tint);
-
-  /* ── 4. SYSTEM — brand-tinted surfaces ────────────────────────────────── */
+  /* ── 3. SYSTEM — brand-tinted surfaces ────────────────────────────────── */
   --background: rgba(250, 250, 250, 1);
   --foreground: rgba(16, 18, 43, 1);
   --card: rgba(255, 255, 255, 1);
@@ -46,7 +33,7 @@
   --sidebar-foreground: rgba(16, 18, 43, 1);
   --sidebar-border: rgba(0, 0, 0, 0.08);
 
-  /* ── 5. PALETTE ───────────────────────────────────────────────────────── */
+  /* ── 4. PALETTE ───────────────────────────────────────────────────────── */
   --destructive: rgba(220, 38, 38, 1);
   --radius: 1rem;
   --chart-1: rgba(83, 90, 232, 1);
@@ -75,7 +62,7 @@
   --shell-gradient-base: rgb(8, 6, 5);
   --shell-gradient-tint: rgb(17, 14, 10);
 
-  /* ── 4. SYSTEM (dark) ─────────────────────────────────────────────────── */
+  /* ── 3. SYSTEM (dark) ─────────────────────────────────────────────────── */
   --background: rgba(10, 10, 10, 1);
   --foreground: rgba(247, 244, 238, 1);
   --card: rgb(22, 19, 17);
@@ -90,7 +77,7 @@
   --sidebar-foreground: rgba(247, 244, 238, 1);
   --sidebar-border: rgba(255, 255, 255, 0.08);
 
-  /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
+  /* ── 4. PALETTE (dark) ────────────────────────────────────────────────── */
   --destructive: rgba(248, 113, 113, 1);
   --chart-1: rgba(131, 138, 247, 1);
   --chart-2: rgba(45, 191, 196, 1);
@@ -117,13 +104,13 @@ html {
   background-color: var(--shell-gradient-base);
   background-image: linear-gradient(
     to bottom,
-    var(--shell-gradient-start) 0%,
+    color-mix(in srgb, var(--shell-gradient-base) 55%, var(--shell-gradient-tint)) 0%,
     color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
     color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
     color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
     color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
-    var(--shell-gradient-end) 70%,
-    var(--shell-gradient-end) 100%
+    var(--shell-gradient-tint) 70%,
+    var(--shell-gradient-tint) 100%
   );
   background-attachment: fixed;
   background-repeat: no-repeat;

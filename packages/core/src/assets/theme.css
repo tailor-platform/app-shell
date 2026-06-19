@@ -3,19 +3,18 @@
  *
  * Palettes live in ./themes/*.css. Copy ./_template.css to add a new one.
  *
- * Token tiers (each palette file uses the same section order):
+ * Palette tiers:
  *
  *   1. BRAND          — required per mode (light + dark):
  *                       primary, secondary, accent (+ foregrounds each).
  *                       Tune accent by eye for menu/sidebar selection.
  *   2. SHELL GRADIENT — optional; branded palettes only (bloom, cream).
- *   3. DERIVED        — copy verbatim; ring, sidebar aliases, gradient stops.
- *   4. SYSTEM         — surfaces & chrome; copy default or tune for brand tint
+ *   3. SYSTEM         — surfaces & chrome; copy default or tune for brand tint
  *                       (foreground, muted, popover, card, borders).
- *   5. PALETTE        — optional: radius, charts, shadows, destructive.
+ *   4. PALETTE        — optional: radius, charts, shadows, destructive.
  *
- * Inherited from :root (default.css) — do not duplicate in new palettes:
- *   --status-*, --alert-* (product semantics, mode-aware in default.css).
+ * Inherited from default.css — do not duplicate in new palettes:
+ *   --ring, --sidebar-*, --status-*, --alert-*.
  *
  * Mode: `.dark` on <html>. Palette: import one theme file after styles
  * (e.g. `@tailor-platform/app-shell/themes/cream`).

@@ -1,10 +1,7 @@
-import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router";
 import {
   OPERATORS_BY_FILTER_TYPE,
   fieldTypeToFilterConfig,
   fieldTypeToSortConfig,
-  type CollectionControl,
   type CollectionInitialState,
   type CollectionPersistedState,
   type Filter,
@@ -28,19 +25,6 @@ export type SearchParamsBinding = readonly [
     options?: { replace?: boolean },
   ) => void,
 ];
-
-/**
- * Lifecycle phase of `useUrlCollectionState`.
- */
-type SyncPhase =
-  /** Initial state. Hydration has not run yet. */
-  | "pending"
-  /** Hydration complete. The first write effect should be skipped because
-   *  control state set during hydration (via setState) won't be reflected
-   *  until the next render. */
-  | "hydrated"
-  /** Normal operation. The write effect actively syncs control state to the URL. */
-  | "ready";
 
 function isValidSortField(tableMetadata: TableMetadata | undefined, field: string): boolean {
   if (!tableMetadata) return true;
@@ -192,69 +176,6 @@ export function withURLState(
       },
     },
   };
-}
-
-/**
- * Persists CollectionControl state (filters, sort, page size) to the URL query
- * string so pages are bookmarkable and the browser back button works.
- *
- * Cursor/direction state is intentionally NOT persisted — `CollectionControl`
- * manages cursor state internally and no longer exposes it publicly. We accept
- * the regression that a refresh resets to page 1.
- */
-export function useUrlCollectionState<
-  TFieldName extends string,
-  TFilter extends Filter<TFieldName>,
->(control: CollectionControl<TFieldName, TFilter>): void {
-  const [params, setParams] = useSearchParams();
-  const phaseRef = useRef<SyncPhase>("pending");
-
-  // Hydrate control from URL on first render.
-  useEffect(() => {
-    if (phaseRef.current !== "pending") return;
-    phaseRef.current = "hydrated";
-
-    const initialState = parseCollectionSearchParams(params);
-    if (initialState.pageSize !== undefined) {
-      control.setPageSize(initialState.pageSize);
-    }
-    if (initialState.sortStates?.[0]) {
-      const { field, direction } = initialState.sortStates[0];
-      control.setSort(field as TFieldName, direction);
-    }
-    if (initialState.filters?.length) {
-      control.setFilters(initialState.filters as Filter<TFieldName>[]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Write control state back to URL whenever it changes.
-  // Uses the setParams function updater to avoid depending on `params` in the
-  // dependency array, which would cause a feedback loop:
-  //   setParams → params change → effect re-runs → setParams (no-op but wasteful)
-  useEffect(() => {
-    if (phaseRef.current === "pending") return;
-    // Skip the first write cycle that fires immediately after hydration.
-    // Control state set during hydration (setPageSize, setSort, etc.) is async
-    // and won't be reflected until the next render.
-    if (phaseRef.current === "hydrated") {
-      phaseRef.current = "ready";
-      return;
-    }
-
-    setParams(
-      (prev) =>
-        writeCollectionSearchParams(prev, {
-          filters: control.filters,
-          sortStates: control.sortStates as CollectionPersistedState<
-            TFieldName,
-            TFilter
-          >["sortStates"],
-          pageSize: control.pageSize,
-        }),
-      { replace: true },
-    );
-  }, [control.pageSize, control.sortStates, control.filters, setParams]);
 }
 
 /**

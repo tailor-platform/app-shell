@@ -21,7 +21,6 @@ import { ThemeProvider } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
-import { Favicon } from "@/components/favicon";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
@@ -51,9 +50,13 @@ type SharedAppShellProps = React.PropsWithChildren<{
 
   /**
    * Browser-tab favicon href. Accepts anything valid on `<link rel="icon">` —
-   * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell applies it
-   * to the document, updating the `<link rel="icon">` from `index.html` in
-   * place (or creating one). When omitted, the bundled Tailor favicon is used.
+   * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the
+   * `<link rel="icon">` for you (React hoists it into `<head>`); when omitted,
+   * the bundled Tailor favicon is used.
+   *
+   * Let AppShell own this tag — don't also declare a static
+   * `<link rel="icon">` in `index.html`, or the two will coexist (React only
+   * de-duplicates stylesheets, not tags it didn't render).
    */
   favicon?: string;
 
@@ -296,8 +299,11 @@ export const AppShell = (props: AppShellProps) => {
 
   // Memoize context values to prevent unnecessary re-renders
   const configValue = useMemo(
-    () => (configurations ? { title: props.title, icon: props.icon, configurations } : null),
-    [props.title, props.icon, configurations],
+    () =>
+      configurations
+        ? { title: props.title, icon: props.icon, favicon: props.favicon, configurations }
+        : null,
+    [props.title, props.icon, props.favicon, configurations],
   );
 
   const dataValue = useMemo(
@@ -336,7 +342,6 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
-              <Favicon href={props.favicon} />
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

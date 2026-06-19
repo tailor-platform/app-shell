@@ -4,7 +4,7 @@ import type { RouteObject } from "react-router";
 import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
-import { DocumentTitle } from "@/components/document-title";
+import { DocumentHead } from "@/components/document-head";
 
 // ============================================================================
 // Root Route
@@ -44,7 +44,7 @@ const createRootRoute = (params: {
     loader,
     element: (
       <>
-        <DocumentTitle />
+        <DocumentHead />
         {children}
       </>
     ),

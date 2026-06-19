@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
-  BuildQueryVariables,
   CollectionControl,
   CollectionPersistedState,
   CollectionVariables,
   Filter,
   FilterOperator,
-  PaginationVariables,
   SortState,
   TableFieldName,
   TableMetadata,
   TableMetadataFilter,
-  TableOrderableFieldName,
+  TypedCollectionVariables,
   UseCollectionOptions,
   UseCollectionReturn,
 } from "@/types/collection";
@@ -86,16 +84,7 @@ export function useCollectionVariables<const TTable extends TableMetadata>(
   },
 ): UseCollectionReturn<
   TableFieldName<TTable>,
-  {
-    query: BuildQueryVariables<TTable> | undefined;
-    order:
-      | {
-          field: TableOrderableFieldName<TTable>;
-          direction: "Asc" | "Desc";
-        }[]
-      | undefined;
-    pagination: PaginationVariables;
-  },
+  TypedCollectionVariables<TTable>,
   TableMetadataFilter<TTable>
 >;
 

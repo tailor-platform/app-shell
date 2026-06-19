@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
 import {
+  withURLCollectionState,
   withURLState,
   encodeFilterValue,
   decodeFilterValue,
@@ -101,10 +102,10 @@ describe("writeCollectionSearchParams", () => {
   });
 });
 
-describe("withURLState", () => {
+describe("withURLCollectionState", () => {
   it("parses URL state and keeps params defaults intact", () => {
     const setSearchParams = vi.fn();
-    const options = withURLState(
+    const options = withURLCollectionState(
       {
         tableMetadata: tableMetadata.task,
         params: {
@@ -128,7 +129,7 @@ describe("withURLState", () => {
   it("merges existing initialState and composes saver", () => {
     const setSearchParams = vi.fn();
     const baseSaver = { save: vi.fn() };
-    const options = withURLState(
+    const options = withURLCollectionState(
       {
         tableMetadata: tableMetadata.task,
         initialState: {
@@ -160,6 +161,10 @@ describe("withURLState", () => {
     expect(resolveSearchParamsBindingCall(setSearchParams).toString()).toBe(
       "p=30&s=createdAt%3Adesc&f.status%3Aeq=pending",
     );
+  });
+
+  it("keeps withURLState as a deprecated alias", () => {
+    expect(withURLState).toBe(withURLCollectionState);
   });
 });
 

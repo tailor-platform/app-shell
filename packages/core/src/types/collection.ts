@@ -298,6 +298,20 @@ export interface CollectionVariables {
   pagination: PaginationVariables;
 }
 
+/**
+ * Metadata-aware collection variables that remain assignable to the broad
+ * `CollectionVariables` shape expected by GraphQL clients.
+ */
+export type TypedCollectionVariables<TTable extends TableMetadata> = CollectionVariables & {
+  query: BuildQueryVariables<TTable> | undefined;
+  order:
+    | {
+        field: TableOrderableFieldName<TTable>;
+        direction: "Asc" | "Desc";
+      }[]
+    | undefined;
+};
+
 // =============================================================================
 // Collection Result (Tailor Platform standard)
 // =============================================================================

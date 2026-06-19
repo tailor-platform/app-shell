@@ -139,9 +139,9 @@ export function writeCollectionSearchParams<
 }
 
 /**
- * Decorate `useCollectionVariables` options with URL-backed initial state and saving.
+ * Decorate `useCollectionVariables` options with URL-backed collection state.
  */
-export function withURLState<const TTable extends TableMetadata>(
+export function withURLCollectionState<const TTable extends TableMetadata>(
   options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
     tableMetadata: TTable;
   },
@@ -149,13 +149,13 @@ export function withURLState<const TTable extends TableMetadata>(
 ): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
   tableMetadata: TTable;
 };
-export function withURLState(
+export function withURLCollectionState(
   options: UseCollectionOptions & {
     tableMetadata?: never;
   },
   [searchParams, setSearchParams]: SearchParamsBinding,
 ): UseCollectionOptions;
-export function withURLState(
+export function withURLCollectionState(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
   [searchParams, setSearchParams]: SearchParamsBinding,
 ): UseCollectionOptions & { tableMetadata?: TableMetadata } {
@@ -177,6 +177,9 @@ export function withURLState(
     },
   };
 }
+
+/** @deprecated use withURLCollectionState */
+export const withURLState = withURLCollectionState;
 
 /**
  * Encodes a filter value for URL storage.

@@ -3,11 +3,10 @@ import {
   DataTable,
   useDataTable,
   useCollectionVariables,
-  withURLState,
+  withURLCollectionState,
   useSearchParams,
   createColumnHelper,
   Layout,
-  type CollectionVariables,
   type RowAction,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
@@ -145,7 +144,7 @@ const productRowActions: RowAction<Product>[] = [
 const DataTableDemoPage = () => {
   const searchParams = useSearchParams();
   const { variables, control } = useCollectionVariables(
-    withURLState(
+    withURLCollectionState(
       {
         params: { pageSize: 5 },
         tableMetadata: productMetadata,
@@ -153,7 +152,7 @@ const DataTableDemoPage = () => {
       searchParams,
     ),
   );
-  const { data, loading } = useProductsQuery(variables as CollectionVariables);
+  const { data, loading } = useProductsQuery(variables);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const table = useDataTable({

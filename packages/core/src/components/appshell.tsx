@@ -21,6 +21,7 @@ import { ThemeProvider } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
+import { Favicon } from "@/components/favicon";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
@@ -47,6 +48,14 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * App shell icon
    */
   icon?: React.ReactNode;
+
+  /**
+   * Browser-tab favicon href. Accepts anything valid on `<link rel="icon">` —
+   * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell applies it
+   * to the document, updating the `<link rel="icon">` from `index.html` in
+   * place (or creating one). When omitted, the bundled Tailor favicon is used.
+   */
+  favicon?: string;
 
   /**
    * Base path for the app shell
@@ -327,6 +336,7 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
+              <Favicon href={props.favicon} />
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

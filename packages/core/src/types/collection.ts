@@ -351,6 +351,36 @@ export type TableOrderableFieldName<TTable extends TableMetadata> =
 // =============================================================================
 
 /**
+ * Serializable subset of collection state used for initialization and persistence.
+ */
+export interface CollectionPersistedState<
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> {
+  filters: TFilter[];
+  sortStates: { field: TFieldName; direction: "Asc" | "Desc" }[];
+  pageSize: number;
+}
+
+/**
+ * Partial initial state used to seed `useCollectionVariables`.
+ */
+export type CollectionInitialState<
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> = Partial<CollectionPersistedState<TFieldName, TFilter>>;
+
+/**
+ * Persists collection state to an external store (e.g. the URL).
+ */
+export interface CollectionSaver<
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> {
+  save(state: CollectionPersistedState<TFieldName, TFilter>): void;
+}
+
+/**
  * Options for `useCollectionVariables` hook.
  */
 export interface UseCollectionOptions<
@@ -362,6 +392,8 @@ export interface UseCollectionOptions<
     initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
     pageSize?: number;
   };
+  initialState?: CollectionInitialState<TFieldName, TFilter>;
+  saver?: CollectionSaver<TFieldName, TFilter>;
 }
 
 /**

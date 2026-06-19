@@ -154,7 +154,10 @@ export {
   type PageInfo,
   type CollectionVariables,
   type CollectionControl,
+  type CollectionInitialState,
+  type CollectionPersistedState,
   type CollectionResult,
+  type CollectionSaver,
   type NodeType,
   type PaginationVariables,
   type UseCollectionOptions,
@@ -186,7 +189,7 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
-export { useUrlCollectionState } from "./hooks/use-url-collection-state";
+export { useUrlCollectionState, withURLState } from "./hooks/use-url-collection-state";
 export {
   CollectionControlProvider,
   useCollectionControl,

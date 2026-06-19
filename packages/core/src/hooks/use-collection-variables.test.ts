@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { TableMetadataMap } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
 
@@ -53,6 +53,71 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.filters).toHaveLength(1);
       expect(result.current.variables.query).toEqual({
         status: { eq: "ACTIVE" },
+      });
+    });
+
+    it("prefers initialState over params", () => {
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: {
+            initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
+            initialSort: [{ field: "createdAt", direction: "Desc" }],
+            pageSize: 20,
+          },
+          initialState: {
+            filters: [{ field: "status", operator: "eq", value: "INACTIVE" }],
+            sortStates: [{ field: "name", direction: "Asc" }],
+            pageSize: 50,
+          },
+        }),
+      );
+
+      expect(result.current.control.filters).toEqual([
+        { field: "status", operator: "eq", value: "INACTIVE" },
+      ]);
+      expect(result.current.control.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
+      expect(result.current.variables.pagination).toEqual({ first: 50 });
+    });
+
+    it("falls back to params for keys missing from initialState", () => {
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: {
+            initialSort: [{ field: "createdAt", direction: "Desc" }],
+            pageSize: 20,
+          },
+          initialState: {
+            pageSize: 50,
+          },
+        }),
+      );
+
+      expect(result.current.control.sortStates).toEqual([
+        { field: "createdAt", direction: "Desc" },
+      ]);
+      expect(result.current.variables.pagination).toEqual({ first: 50 });
+    });
+  });
+
+  describe("saver", () => {
+    it("does not save on initial render", () => {
+      const saver = { save: vi.fn() };
+      renderHook(() => useCollectionVariables({ saver }));
+      expect(saver.save).not.toHaveBeenCalled();
+    });
+
+    it("saves persisted state after changes", () => {
+      const saver = { save: vi.fn() };
+      const { result } = renderHook(() => useCollectionVariables({ saver }));
+
+      act(() => {
+        result.current.control.addFilter("status", "eq", "ACTIVE");
+      });
+
+      expect(saver.save).toHaveBeenLastCalledWith({
+        filters: [{ field: "status", operator: "eq", value: "ACTIVE", caseSensitive: undefined }],
+        sortStates: [],
+        pageSize: 20,
       });
     });
   });

@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   BuildQueryVariables,
   CollectionControl,
+  CollectionPersistedState,
   CollectionVariables,
   Filter,
   FilterOperator,
@@ -130,8 +131,10 @@ export function useCollectionVariables(
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): unknown {
-  const { params = {} } = options;
-  const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
+  const { params = {}, initialState, saver } = options;
+  const initialFilters = initialState?.filters ?? params.initialFilters ?? [];
+  const initialSort = initialState?.sortStates ?? params.initialSort ?? [];
+  const initialPageSize = initialState?.pageSize ?? params.pageSize ?? 20;
 
   // ---------------------------------------------------------------------------
   // State
@@ -152,6 +155,8 @@ export function useCollectionVariables(
     getHasNextPage,
     resetCount,
   } = useCursorPagination(initialPageSize);
+  const saverRef = useRef(saver);
+  const didMountRef = useRef(false);
 
   // ---------------------------------------------------------------------------
   // Filter operations
@@ -261,6 +266,23 @@ export function useCollectionVariables(
     }),
     [queryVars, orderVars, paginationVariables],
   );
+
+  useEffect(() => {
+    saverRef.current = saver;
+  }, [saver]);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    saverRef.current?.save({
+      filters,
+      sortStates: sortStates as CollectionPersistedState["sortStates"],
+      pageSize,
+    });
+  }, [filters, sortStates, pageSize]);
 
   // ---------------------------------------------------------------------------
   // Return

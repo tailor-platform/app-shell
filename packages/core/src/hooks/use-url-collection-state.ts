@@ -1,10 +1,33 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
-import type { CollectionControl, Filter } from "@/types/collection";
+import {
+  OPERATORS_BY_FILTER_TYPE,
+  fieldTypeToFilterConfig,
+  fieldTypeToSortConfig,
+  type CollectionControl,
+  type CollectionInitialState,
+  type CollectionPersistedState,
+  type Filter,
+  type TableFieldName,
+  type TableMetadata,
+  type TableMetadataFilter,
+  type UseCollectionOptions,
+} from "@/types/collection";
 
 const KEY_PAGE_SIZE = "p";
 const KEY_SORT = "s";
 const FILTER_PREFIX = "f.";
+
+/**
+ * Setter shape compatible with `useSearchParams()`.
+ */
+export type SearchParamsBinding = readonly [
+  URLSearchParams,
+  (
+    next: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams),
+    options?: { replace?: boolean },
+  ) => void,
+];
 
 /**
  * Lifecycle phase of `useUrlCollectionState`.
@@ -19,12 +42,161 @@ type SyncPhase =
   /** Normal operation. The write effect actively syncs control state to the URL. */
   | "ready";
 
+function isValidSortField(tableMetadata: TableMetadata | undefined, field: string): boolean {
+  if (!tableMetadata) return true;
+  const metadataField = tableMetadata.fields.find((candidate) => candidate.name === field);
+  return !!metadataField && !!fieldTypeToSortConfig(metadataField.name, metadataField.type);
+}
+
+function isValidFilter(
+  tableMetadata: TableMetadata | undefined,
+  field: string,
+  operator: string,
+): boolean {
+  if (!tableMetadata) return true;
+  const metadataField = tableMetadata.fields.find((candidate) => candidate.name === field);
+  if (!metadataField) return false;
+
+  const filterConfig = fieldTypeToFilterConfig(
+    metadataField.name,
+    metadataField.type,
+    metadataField.enumValues,
+  );
+  if (!filterConfig) return false;
+
+  return OPERATORS_BY_FILTER_TYPE[filterConfig.type].includes(operator as never);
+}
+
+/**
+ * Parse URL search params into collection state.
+ */
+export function parseCollectionSearchParams<const TTable extends TableMetadata>(
+  tableMetadata: TTable,
+  params: URLSearchParams,
+): CollectionInitialState<TableFieldName<TTable>, TableMetadataFilter<TTable>>;
+export function parseCollectionSearchParams(params: URLSearchParams): CollectionInitialState;
+export function parseCollectionSearchParams(
+  tableMetadataOrParams: TableMetadata | URLSearchParams,
+  maybeParams?: URLSearchParams,
+): CollectionInitialState {
+  const tableMetadata = maybeParams ? (tableMetadataOrParams as TableMetadata) : undefined;
+  const params = maybeParams ?? (tableMetadataOrParams as URLSearchParams);
+  const nextState: CollectionInitialState = {};
+
+  const pageSize = params.get(KEY_PAGE_SIZE);
+  if (pageSize) {
+    const n = Number(pageSize);
+    if (Number.isFinite(n) && n > 0) nextState.pageSize = n;
+  }
+
+  const sort = params.get(KEY_SORT);
+  if (sort) {
+    const [field, rawDir] = sort.split(":");
+    if (field && isValidSortField(tableMetadata, field)) {
+      nextState.sortStates = [{ field, direction: rawDir === "desc" ? "Desc" : "Asc" }];
+    }
+  }
+
+  const nextFilters: Filter[] = [];
+  for (const [key, value] of params.entries()) {
+    if (!key.startsWith(FILTER_PREFIX) || !value) continue;
+    const [field, operator] = key.slice(FILTER_PREFIX.length).split(":");
+    if (!field || !operator || !isValidFilter(tableMetadata, field, operator)) continue;
+    nextFilters.push({
+      field,
+      operator: operator as Filter["operator"],
+      value: decodeFilterValue(value),
+    });
+  }
+  if (nextFilters.length > 0) nextState.filters = nextFilters;
+
+  return nextState;
+}
+
+/**
+ * Apply collection state to a URLSearchParams.
+ */
+export function writeCollectionSearchParams<
+  TFieldName extends string,
+  TFilter extends Filter<TFieldName>,
+>(prev: URLSearchParams, state: CollectionPersistedState<TFieldName, TFilter>): URLSearchParams {
+  const next = new URLSearchParams(prev);
+
+  if (state.pageSize) {
+    next.set(KEY_PAGE_SIZE, String(state.pageSize));
+  } else {
+    next.delete(KEY_PAGE_SIZE);
+  }
+
+  if (state.sortStates.length > 0) {
+    const { field, direction } = state.sortStates[0];
+    next.set(KEY_SORT, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
+  } else {
+    next.delete(KEY_SORT);
+  }
+
+  // Snapshot keys before iterating — we delete entries during the loop.
+  // eslint-disable-next-line unicorn/no-useless-spread
+  for (const key of [...next.keys()]) {
+    if (key.startsWith(FILTER_PREFIX)) next.delete(key);
+  }
+  for (const filter of state.filters) {
+    next.set(`${FILTER_PREFIX}${filter.field}:${filter.operator}`, encodeFilterValue(filter.value));
+  }
+
+  // Bail out if nothing changed — avoids a no-op navigation that could still
+  // trigger re-renders in some react-router versions. Compare on a sorted
+  // snapshot rather than `.toString()`: the filter rebuild above is delete-
+  // then-set, so key order can shift between renders even when the param
+  // multiset is identical (and `.toString()` is additionally sensitive to
+  // `&`/`=` characters inside values).
+  if (stableQueryString(next) === stableQueryString(prev)) return prev;
+  return next;
+}
+
+/**
+ * Decorate `useCollectionVariables` options with URL-backed initial state and saving.
+ */
+export function withURLState<const TTable extends TableMetadata>(
+  options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+    tableMetadata: TTable;
+  },
+  [searchParams, setSearchParams]: SearchParamsBinding,
+): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+  tableMetadata: TTable;
+};
+export function withURLState(
+  options: UseCollectionOptions & {
+    tableMetadata?: never;
+  },
+  [searchParams, setSearchParams]: SearchParamsBinding,
+): UseCollectionOptions;
+export function withURLState(
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+  [searchParams, setSearchParams]: SearchParamsBinding,
+): UseCollectionOptions & { tableMetadata?: TableMetadata } {
+  const initialState = options.tableMetadata
+    ? parseCollectionSearchParams(options.tableMetadata, searchParams)
+    : parseCollectionSearchParams(searchParams);
+
+  return {
+    ...options,
+    initialState: {
+      ...options.initialState,
+      ...initialState,
+    },
+    saver: {
+      save(state) {
+        options.saver?.save(state);
+        setSearchParams((prev) => writeCollectionSearchParams(prev, state), { replace: true });
+      },
+    },
+  };
+}
+
 /**
  * Persists CollectionControl state (filters, sort, page size) to the URL query
  * string so pages are bookmarkable and the browser back button works.
- *
- * Designed to be entity-agnostic: keys are short and the operator/value
- * encoding is derived from the current Filter shape, not hard-coded per field.
  *
  * Cursor/direction state is intentionally NOT persisted — `CollectionControl`
  * manages cursor state internally and no longer exposes it publicly. We accept
@@ -42,34 +214,16 @@ export function useUrlCollectionState<
     if (phaseRef.current !== "pending") return;
     phaseRef.current = "hydrated";
 
-    const pageSize = params.get(KEY_PAGE_SIZE);
-    if (pageSize) {
-      const n = Number(pageSize);
-      if (Number.isFinite(n) && n > 0) control.setPageSize(n);
+    const initialState = parseCollectionSearchParams(params);
+    if (initialState.pageSize !== undefined) {
+      control.setPageSize(initialState.pageSize);
     }
-
-    const sort = params.get(KEY_SORT);
-    if (sort) {
-      const [field, rawDir] = sort.split(":");
-      if (field) {
-        const direction = rawDir === "desc" ? "Desc" : "Asc";
-        control.setSort(field as TFieldName, direction);
-      }
+    if (initialState.sortStates?.[0]) {
+      const { field, direction } = initialState.sortStates[0];
+      control.setSort(field as TFieldName, direction);
     }
-
-    const nextFilters: Filter<TFieldName>[] = [];
-    for (const [key, value] of params.entries()) {
-      if (!key.startsWith(FILTER_PREFIX) || !value) continue;
-      const [field, operator] = key.slice(FILTER_PREFIX.length).split(":");
-      if (!field || !operator) continue;
-      nextFilters.push({
-        field: field as TFieldName,
-        operator,
-        value: decodeFilterValue(value),
-      } as Filter<TFieldName>);
-    }
-    if (nextFilters.length > 0) {
-      control.setFilters(nextFilters);
+    if (initialState.filters?.length) {
+      control.setFilters(initialState.filters as Filter<TFieldName>[]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -89,43 +243,15 @@ export function useUrlCollectionState<
     }
 
     setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-
-        if (control.pageSize) {
-          next.set(KEY_PAGE_SIZE, String(control.pageSize));
-        } else {
-          next.delete(KEY_PAGE_SIZE);
-        }
-
-        if (control.sortStates.length > 0) {
-          const { field, direction } = control.sortStates[0];
-          next.set(KEY_SORT, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
-        } else {
-          next.delete(KEY_SORT);
-        }
-
-        // Snapshot keys before iterating — we delete entries during the loop.
-        // eslint-disable-next-line unicorn/no-useless-spread
-        for (const key of [...next.keys()]) {
-          if (key.startsWith(FILTER_PREFIX)) next.delete(key);
-        }
-        for (const filter of control.filters) {
-          next.set(
-            `${FILTER_PREFIX}${filter.field}:${filter.operator}`,
-            encodeFilterValue(filter.value),
-          );
-        }
-
-        // Bail out if nothing changed — avoids a no-op navigation that could
-        // still trigger re-renders in some react-router versions. Compare on a
-        // sorted snapshot rather than `.toString()`: the filter rebuild above is
-        // delete-then-set, so key order can shift between renders even when the
-        // param multiset is identical (and `.toString()` is additionally
-        // sensitive to `&`/`=` characters inside values).
-        if (stableQueryString(next) === stableQueryString(prev)) return prev;
-        return next;
-      },
+      (prev) =>
+        writeCollectionSearchParams(prev, {
+          filters: control.filters,
+          sortStates: control.sortStates as CollectionPersistedState<
+            TFieldName,
+            TFilter
+          >["sortStates"],
+          pageSize: control.pageSize,
+        }),
       { replace: true },
     );
   }, [control.pageSize, control.sortStates, control.filters, setParams]);

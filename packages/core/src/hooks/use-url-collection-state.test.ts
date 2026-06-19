@@ -1,8 +1,9 @@
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { CollectionControl } from "@/types/collection";
+import type { CollectionControl, TableMetadataMap } from "@/types/collection";
 import {
   useUrlCollectionState,
+  withURLState,
   encodeFilterValue,
   decodeFilterValue,
 } from "./use-url-collection-state";
@@ -25,6 +26,32 @@ function resolveSetParamsCall(callIndex: number): URLSearchParams {
   const [updaterOrValue] = mockSetParams.mock.calls[callIndex];
   if (typeof updaterOrValue === "function") {
     const result = updaterOrValue(mockParams);
+    return result instanceof URLSearchParams ? result : new URLSearchParams(result);
+  }
+  return updaterOrValue instanceof URLSearchParams
+    ? updaterOrValue
+    : new URLSearchParams(updaterOrValue);
+}
+
+const tableMetadata = {
+  task: {
+    name: "task",
+    pluralForm: "tasks",
+    fields: [
+      { name: "status", type: "enum", required: true, enumValues: ["active", "pending", "closed"] },
+      { name: "createdAt", type: "datetime", required: true },
+      { name: "title", type: "string", required: true },
+    ],
+  },
+} as const satisfies TableMetadataMap;
+
+function resolveSearchParamsBindingCall(
+  setSearchParams: ReturnType<typeof vi.fn>,
+  prev = new URLSearchParams(),
+): URLSearchParams {
+  const [updaterOrValue] = setSearchParams.mock.calls[0];
+  if (typeof updaterOrValue === "function") {
+    const result = updaterOrValue(prev);
     return result instanceof URLSearchParams ? result : new URLSearchParams(result);
   }
   return updaterOrValue instanceof URLSearchParams
@@ -252,6 +279,81 @@ describe("useUrlCollectionState", () => {
       const [, options] = mockSetParams.mock.calls[lastCallIndex];
       expect(options).toEqual({ replace: true });
     });
+  });
+});
+
+describe("withURLState", () => {
+  it("parses URL state and keeps params defaults intact", () => {
+    const setSearchParams = vi.fn();
+    const options = withURLState(
+      {
+        tableMetadata: tableMetadata.task,
+        params: {
+          initialSort: [{ field: "createdAt", direction: "Desc" }],
+          pageSize: 20,
+        },
+      },
+      [new URLSearchParams("p=50&f.status:eq=active"), setSearchParams],
+    );
+
+    expect(options.initialState).toEqual({
+      pageSize: 50,
+      filters: [{ field: "status", operator: "eq", value: "active" }],
+    });
+    expect(options.params).toEqual({
+      initialSort: [{ field: "createdAt", direction: "Desc" }],
+      pageSize: 20,
+    });
+  });
+
+  it("filters out URL fields/operators not allowed by tableMetadata", () => {
+    const options = withURLState({ tableMetadata: tableMetadata.task }, [
+      new URLSearchParams(
+        "s=amount:asc&f.amount:eq=10&f.createdAt:contains=2026&f.status:eq=active",
+      ),
+      vi.fn(),
+    ]);
+
+    expect(options.initialState).toEqual({
+      filters: [{ field: "status", operator: "eq", value: "active" }],
+    });
+  });
+
+  it("merges existing initialState and composes saver", () => {
+    const setSearchParams = vi.fn();
+    const baseSaver = { save: vi.fn() };
+    const options = withURLState(
+      {
+        tableMetadata: tableMetadata.task,
+        initialState: {
+          sortStates: [{ field: "createdAt", direction: "Desc" }],
+        },
+        saver: baseSaver,
+      },
+      [new URLSearchParams("p=25"), setSearchParams],
+    );
+
+    expect(options.initialState).toEqual({
+      sortStates: [{ field: "createdAt", direction: "Desc" }],
+      pageSize: 25,
+    });
+
+    options.saver?.save({
+      filters: [{ field: "status", operator: "eq", value: "pending" }],
+      sortStates: [{ field: "createdAt", direction: "Desc" }],
+      pageSize: 30,
+    });
+
+    expect(baseSaver.save).toHaveBeenCalledWith({
+      filters: [{ field: "status", operator: "eq", value: "pending" }],
+      sortStates: [{ field: "createdAt", direction: "Desc" }],
+      pageSize: 30,
+    });
+    expect(setSearchParams).toHaveBeenCalledTimes(1);
+    expect(setSearchParams.mock.calls[0][1]).toEqual({ replace: true });
+    expect(resolveSearchParamsBindingCall(setSearchParams).toString()).toBe(
+      "p=30&s=createdAt%3Adesc&f.status%3Aeq=pending",
+    );
   });
 });
 

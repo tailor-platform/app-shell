@@ -33,7 +33,13 @@ import type { PageEntry } from "@/fs-routes/types";
  */
 type SharedAppShellProps = React.PropsWithChildren<{
   /**
-   * App shell title
+   * App shell title.
+   *
+   * Also used as the suffix of the browser tab title: AppShell keeps
+   * `document.title` in sync with the active page as `"<page> · <title>"`
+   * (the page part is the current breadcrumb leaf, including any
+   * {@link useOverrideBreadcrumb} override). When omitted, the tab shows just
+   * the page title.
    */
   title?: string;
 

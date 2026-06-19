@@ -1,5 +1,5 @@
-import { render, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
+import { render, waitFor, cleanup } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
@@ -35,6 +35,10 @@ const renderAt = (path: string, title: string | undefined, override?: string) =>
 describe("DocumentTitle", () => {
   beforeEach(() => {
     document.title = "initial";
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("sets '<page> · <app>' from the leaf segment and app title", async () => {

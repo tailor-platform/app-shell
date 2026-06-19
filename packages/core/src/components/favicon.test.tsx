@@ -1,5 +1,5 @@
-import { render, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
+import { render, waitFor, cleanup } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { DEFAULT_FAVICON_HREF } from "@/lib/default-favicon";
 import { Favicon } from "./favicon";
 
@@ -7,6 +7,11 @@ const getIconLink = () => document.querySelector<HTMLLinkElement>('link[rel="ico
 
 describe("Favicon", () => {
   beforeEach(() => {
+    document.head.querySelectorAll('link[rel="icon"]').forEach((el) => el.remove());
+  });
+
+  afterEach(() => {
+    cleanup();
     document.head.querySelectorAll('link[rel="icon"]').forEach((el) => el.remove());
   });
 

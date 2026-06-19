@@ -2,9 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `withURLCollectionState` as the preferred name for wiring collection state to the URL in `useCollectionVariables`.
-
-`withURLState` remains available as a deprecated alias.
+Add `withURLCollectionState` for wiring collection state to the URL in `useCollectionVariables`.
 
 ```tsx
 const searchParams = useSearchParams();

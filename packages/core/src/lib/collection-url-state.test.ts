@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
 import {
   withURLCollectionState,
-  withURLState,
   encodeFilterValue,
   decodeFilterValue,
   parseCollectionSearchParams,
@@ -161,10 +160,6 @@ describe("withURLCollectionState", () => {
     expect(resolveSearchParamsBindingCall(setSearchParams).toString()).toBe(
       "p=30&s=createdAt%3Adesc&f.status%3Aeq=pending",
     );
-  });
-
-  it("keeps withURLState as a deprecated alias", () => {
-    expect(withURLState).toBe(withURLCollectionState);
   });
 });
 

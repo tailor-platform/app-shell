@@ -178,9 +178,6 @@ export function withURLCollectionState(
   };
 }
 
-/** @deprecated use withURLCollectionState */
-export const withURLState = withURLCollectionState;
-
 /**
  * Encodes a filter value for URL storage.
  * - Arrays are JSON-encoded to avoid ambiguity with values that contain commas.

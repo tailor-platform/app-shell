@@ -1,10 +1,7 @@
 import { render, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router";
-import {
-  AppShellConfigContext,
-  type RootConfiguration,
-} from "@/contexts/appshell-context";
+import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { useOverrideBreadcrumb } from "@/hooks/use-override-breadcrumb";
 import { DEFAULT_LOCALE } from "@/lib/i18n";

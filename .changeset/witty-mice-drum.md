@@ -4,6 +4,8 @@
 
 Add `withURLCollectionState` and `useURLCollectionState` for wiring collection state to the URL in `useCollectionVariables`.
 
+`useCollectionVariables` now reports state updates through `onParamsChange` using the same `params` shape it accepts.
+
 ```tsx
 const withURLCollectionState = useURLCollectionState();
 const { variables, control } = useCollectionVariables(

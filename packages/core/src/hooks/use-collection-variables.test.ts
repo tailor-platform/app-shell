@@ -56,42 +56,20 @@ describe("useCollectionVariables", () => {
       });
     });
 
-    it("prefers initialState over params", () => {
+    it("applies params together", () => {
       const { result } = renderHook(() =>
         useCollectionVariables({
           params: {
             initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
             initialSort: [{ field: "createdAt", direction: "Desc" }],
-            pageSize: 20,
-          },
-          initialState: {
-            filters: [{ field: "status", operator: "eq", value: "INACTIVE" }],
-            sortStates: [{ field: "name", direction: "Asc" }],
             pageSize: 50,
           },
         }),
       );
 
       expect(result.current.control.filters).toEqual([
-        { field: "status", operator: "eq", value: "INACTIVE" },
+        { field: "status", operator: "eq", value: "ACTIVE" },
       ]);
-      expect(result.current.control.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
-      expect(result.current.variables.pagination).toEqual({ first: 50 });
-    });
-
-    it("falls back to params for keys missing from initialState", () => {
-      const { result } = renderHook(() =>
-        useCollectionVariables({
-          params: {
-            initialSort: [{ field: "createdAt", direction: "Desc" }],
-            pageSize: 20,
-          },
-          initialState: {
-            pageSize: 50,
-          },
-        }),
-      );
-
       expect(result.current.control.sortStates).toEqual([
         { field: "createdAt", direction: "Desc" },
       ]);
@@ -99,24 +77,26 @@ describe("useCollectionVariables", () => {
     });
   });
 
-  describe("saver", () => {
-    it("does not save on initial render", () => {
-      const saver = { save: vi.fn() };
-      renderHook(() => useCollectionVariables({ saver }));
-      expect(saver.save).not.toHaveBeenCalled();
+  describe("onParamsChange", () => {
+    it("does not notify on initial render", () => {
+      const onParamsChange = vi.fn();
+      renderHook(() => useCollectionVariables({ onParamsChange }));
+      expect(onParamsChange).not.toHaveBeenCalled();
     });
 
-    it("saves persisted state after changes", () => {
-      const saver = { save: vi.fn() };
-      const { result } = renderHook(() => useCollectionVariables({ saver }));
+    it("notifies with params after changes", () => {
+      const onParamsChange = vi.fn();
+      const { result } = renderHook(() => useCollectionVariables({ onParamsChange }));
 
       act(() => {
         result.current.control.addFilter("status", "eq", "ACTIVE");
       });
 
-      expect(saver.save).toHaveBeenLastCalledWith({
-        filters: [{ field: "status", operator: "eq", value: "ACTIVE", caseSensitive: undefined }],
-        sortStates: [],
+      expect(onParamsChange).toHaveBeenLastCalledWith({
+        initialFilters: [
+          { field: "status", operator: "eq", value: "ACTIVE", caseSensitive: undefined },
+        ],
+        initialSort: [],
         pageSize: 20,
       });
     });

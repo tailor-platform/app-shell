@@ -111,7 +111,7 @@ function SearchParamsWrapper({ children }: PropsWithChildren) {
 }
 
 describe("withURLCollectionState", () => {
-  it("parses URL state and keeps params defaults intact", () => {
+  it("parses URL state and merges it into params", () => {
     const setSearchParams = vi.fn();
     const options = withURLCollectionState(
       {
@@ -124,44 +124,41 @@ describe("withURLCollectionState", () => {
       [new URLSearchParams("p=50&f.status:eq=active"), setSearchParams],
     );
 
-    expect(options.initialState).toEqual({
-      pageSize: 50,
-      filters: [{ field: "status", operator: "eq", value: "active" }],
-    });
     expect(options.params).toEqual({
+      initialFilters: [{ field: "status", operator: "eq", value: "active" }],
       initialSort: [{ field: "createdAt", direction: "Desc" }],
-      pageSize: 20,
+      pageSize: 50,
     });
   });
 
-  it("merges existing initialState and composes saver", () => {
+  it("merges URL state into params and composes onParamsChange", () => {
     const setSearchParams = vi.fn();
-    const baseSaver = { save: vi.fn() };
+    const onParamsChange = vi.fn();
     const options = withURLCollectionState(
       {
         tableMetadata: tableMetadata.task,
-        initialState: {
-          sortStates: [{ field: "createdAt", direction: "Desc" }],
+        params: {
+          initialSort: [{ field: "createdAt", direction: "Desc" }],
         },
-        saver: baseSaver,
+        onParamsChange,
       },
       [new URLSearchParams("p=25"), setSearchParams],
     );
 
-    expect(options.initialState).toEqual({
-      sortStates: [{ field: "createdAt", direction: "Desc" }],
+    expect(options.params).toEqual({
+      initialSort: [{ field: "createdAt", direction: "Desc" }],
       pageSize: 25,
     });
 
-    options.saver?.save({
-      filters: [{ field: "status", operator: "eq", value: "pending" }],
-      sortStates: [{ field: "createdAt", direction: "Desc" }],
+    options.onParamsChange?.({
+      initialFilters: [{ field: "status", operator: "eq", value: "pending" }],
+      initialSort: [{ field: "createdAt", direction: "Desc" }],
       pageSize: 30,
     });
 
-    expect(baseSaver.save).toHaveBeenCalledWith({
-      filters: [{ field: "status", operator: "eq", value: "pending" }],
-      sortStates: [{ field: "createdAt", direction: "Desc" }],
+    expect(onParamsChange).toHaveBeenCalledWith({
+      initialFilters: [{ field: "status", operator: "eq", value: "pending" }],
+      initialSort: [{ field: "createdAt", direction: "Desc" }],
       pageSize: 30,
     });
     expect(setSearchParams).toHaveBeenCalledTimes(1);
@@ -186,13 +183,10 @@ describe("useURLCollectionState", () => {
       },
     });
 
-    expect(options.initialState).toEqual({
-      pageSize: 50,
-      filters: [{ field: "status", operator: "eq", value: "active" }],
-    });
     expect(options.params).toEqual({
+      initialFilters: [{ field: "status", operator: "eq", value: "active" }],
       initialSort: [{ field: "createdAt", direction: "Desc" }],
-      pageSize: 20,
+      pageSize: 50,
     });
   });
 });

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   CollectionControl,
-  CollectionPersistedState,
   CollectionVariables,
   Filter,
   FilterOperator,
@@ -120,10 +119,10 @@ export function useCollectionVariables(
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): unknown {
-  const { params = {}, initialState, saver } = options;
-  const initialFilters = initialState?.filters ?? params.initialFilters ?? [];
-  const initialSort = initialState?.sortStates ?? params.initialSort ?? [];
-  const initialPageSize = initialState?.pageSize ?? params.pageSize ?? 20;
+  const { params = {}, onParamsChange } = options;
+  const initialFilters = params.initialFilters ?? [];
+  const initialSort = params.initialSort ?? [];
+  const initialPageSize = params.pageSize ?? 20;
 
   // ---------------------------------------------------------------------------
   // State
@@ -144,7 +143,7 @@ export function useCollectionVariables(
     getHasNextPage,
     resetCount,
   } = useCursorPagination(initialPageSize);
-  const saverRef = useRef(saver);
+  const onParamsChangeRef = useRef(onParamsChange);
   const didMountRef = useRef(false);
 
   // ---------------------------------------------------------------------------
@@ -257,8 +256,8 @@ export function useCollectionVariables(
   );
 
   useEffect(() => {
-    saverRef.current = saver;
-  }, [saver]);
+    onParamsChangeRef.current = onParamsChange;
+  }, [onParamsChange]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -266,9 +265,9 @@ export function useCollectionVariables(
       return;
     }
 
-    saverRef.current?.save({
-      filters,
-      sortStates: sortStates as CollectionPersistedState["sortStates"],
+    onParamsChangeRef.current?.({
+      initialFilters: filters,
+      initialSort: sortStates,
       pageSize,
     });
   }, [filters, sortStates, pageSize]);

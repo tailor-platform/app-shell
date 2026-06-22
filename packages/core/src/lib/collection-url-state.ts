@@ -184,16 +184,38 @@ function applyURLCollectionState(
 
   return {
     ...options,
-    initialState: {
-      ...options.initialState,
-      ...initialState,
+    params: mergeCollectionStateIntoParams(options.params, initialState),
+    onParamsChange(params) {
+      options.onParamsChange?.(params);
+      setSearchParams(
+        (prev) => writeCollectionSearchParams(prev, collectionParamsToPersistedState(params)),
+        { replace: true },
+      );
     },
-    saver: {
-      save(state) {
-        options.saver?.save(state);
-        setSearchParams((prev) => writeCollectionSearchParams(prev, state), { replace: true });
-      },
-    },
+  };
+}
+
+function collectionParamsToPersistedState(
+  params: UseCollectionOptions["params"],
+): CollectionPersistedState {
+  return {
+    filters: params?.initialFilters ?? [],
+    sortStates: params?.initialSort ?? [],
+    pageSize: params?.pageSize ?? 20,
+  };
+}
+
+function mergeCollectionStateIntoParams(
+  params: UseCollectionOptions["params"],
+  initialState: CollectionInitialState,
+): UseCollectionOptions["params"] {
+  if (!initialState.filters && !initialState.sortStates && !initialState.pageSize) return params;
+
+  return {
+    ...params,
+    ...(initialState.filters ? { initialFilters: initialState.filters } : {}),
+    ...(initialState.sortStates ? { initialSort: initialState.sortStates } : {}),
+    ...(initialState.pageSize ? { pageSize: initialState.pageSize } : {}),
   };
 }
 

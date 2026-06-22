@@ -385,13 +385,15 @@ export type CollectionInitialState<
 > = Partial<CollectionPersistedState<TFieldName, TFilter>>;
 
 /**
- * Persists collection state to an external store (e.g. the URL).
+ * Initial and change payload shape for `useCollectionVariables`.
  */
-export interface CollectionSaver<
+export interface CollectionParams<
   TFieldName extends string = string,
   TFilter extends Filter<TFieldName> = Filter<TFieldName>,
 > {
-  save(state: CollectionPersistedState<TFieldName, TFilter>): void;
+  initialFilters?: TFilter[];
+  initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
+  pageSize?: number;
 }
 
 /**
@@ -401,13 +403,8 @@ export interface UseCollectionOptions<
   TFieldName extends string = string,
   TFilter extends Filter<TFieldName> = Filter<TFieldName>,
 > {
-  params?: {
-    initialFilters?: TFilter[];
-    initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
-    pageSize?: number;
-  };
-  initialState?: CollectionInitialState<TFieldName, TFilter>;
-  saver?: CollectionSaver<TFieldName, TFilter>;
+  params?: CollectionParams<TFieldName, TFilter>;
+  onParamsChange?(params: CollectionParams<TFieldName, TFilter>): void;
 }
 
 /**

@@ -6,6 +6,25 @@ import { DEFAULT_FAVICON_HREF } from "@/lib/default-favicon";
 const SEPARATOR = " · ";
 
 /**
+ * Infers the MIME type of a favicon from its href so browsers can prioritise
+ * the correct format when multiple icon `<link>` tags are present.
+ *
+ * Handles data URIs (e.g. `data:image/png;base64,...`) and common file
+ * extensions (`.ico`, `.png`, `.svg`). Returns `undefined` for URLs where the
+ * type cannot be determined — the browser falls back to its default detection.
+ */
+const inferFaviconType = (href: string): string | undefined => {
+  if (href.startsWith("data:")) {
+    const match = href.match(/^data:([^;,]+)/);
+    return match?.[1];
+  }
+  if (href.endsWith(".svg")) return "image/svg+xml";
+  if (href.endsWith(".png")) return "image/png";
+  if (href.endsWith(".ico")) return "image/x-icon";
+  return undefined;
+};
+
+/**
  * Declaratively manages the browser tab's title and favicon for the whole app.
  *
  * - **Title** — `"<page> · <app>"`, where `<page>` is the current breadcrumb
@@ -41,11 +60,12 @@ export const DocumentHead = () => {
 
   const title = [pageTitle, appTitle].filter(Boolean).join(SEPARATOR);
   const resolvedFavicon = favicon ?? DEFAULT_FAVICON_HREF;
+  const faviconType = inferFaviconType(resolvedFavicon);
 
   return (
     <>
       {title ? <title>{title}</title> : null}
-      <link rel="icon" href={resolvedFavicon} />
+      <link rel="icon" href={resolvedFavicon} {...(faviconType ? { type: faviconType } : {})} />
     </>
   );
 };

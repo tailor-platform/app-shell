@@ -40,6 +40,9 @@ const renderAt = (
 const iconHref = () =>
   document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.getAttribute("href");
 
+const iconType = () =>
+  document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.getAttribute("type");
+
 describe("DocumentHead", () => {
   beforeEach(() => {
     document.title = "initial";
@@ -82,5 +85,26 @@ describe("DocumentHead", () => {
   it("renders a consumer-provided favicon", async () => {
     renderAt("/orders/123", { title: "My App", favicon: "/custom.ico" });
     await waitFor(() => expect(iconHref()).toBe("/custom.ico"));
+  });
+
+  it("infers type=image/png for the default data URI favicon", async () => {
+    renderAt("/orders/123", { title: "My App" });
+    await waitFor(() => expect(iconType()).toBe("image/png"));
+  });
+
+  it("infers type=image/x-icon for .ico favicons", async () => {
+    renderAt("/orders/123", { title: "My App", favicon: "/favicon.ico" });
+    await waitFor(() => expect(iconType()).toBe("image/x-icon"));
+  });
+
+  it("infers type=image/svg+xml for .svg favicons", async () => {
+    renderAt("/orders/123", { title: "My App", favicon: "/favicon.svg" });
+    await waitFor(() => expect(iconType()).toBe("image/svg+xml"));
+  });
+
+  it("omits type for URLs with no recognized extension", async () => {
+    renderAt("/orders/123", { title: "My App", favicon: "/favicon" });
+    await waitFor(() => expect(iconHref()).toBe("/favicon"));
+    expect(iconType()).toBeNull();
   });
 });

@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router";
 import {
   OPERATORS_BY_FILTER_TYPE,
   fieldTypeToFilterConfig,
@@ -157,6 +158,13 @@ export function withURLCollectionState(
 ): UseCollectionOptions;
 export function withURLCollectionState(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+  searchParamsBinding: SearchParamsBinding,
+): UseCollectionOptions & { tableMetadata?: TableMetadata } {
+  return applyURLCollectionState(options, searchParamsBinding);
+}
+
+function applyURLCollectionState(
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
   [searchParams, setSearchParams]: SearchParamsBinding,
 ): UseCollectionOptions & { tableMetadata?: TableMetadata } {
   const initialState = options.tableMetadata
@@ -176,6 +184,28 @@ export function withURLCollectionState(
       },
     },
   };
+}
+
+/**
+ * Hook version of `withURLCollectionState()` that binds the current router
+ * search params.
+ */
+export function useURLCollectionState<const TTable extends TableMetadata>(
+  options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+    tableMetadata: TTable;
+  },
+): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+  tableMetadata: TTable;
+};
+export function useURLCollectionState(
+  options: UseCollectionOptions & {
+    tableMetadata?: never;
+  },
+): UseCollectionOptions;
+export function useURLCollectionState(
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+): UseCollectionOptions & { tableMetadata?: TableMetadata } {
+  return applyURLCollectionState(options, useSearchParams());
 }
 
 /**

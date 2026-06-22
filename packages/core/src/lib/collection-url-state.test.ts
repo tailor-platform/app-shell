@@ -1,6 +1,11 @@
+import { renderHook } from "@testing-library/react";
+import type { PropsWithChildren } from "react";
+import { createElement } from "react";
+import { MemoryRouter } from "react-router";
 import { describe, it, expect, vi } from "vitest";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
 import {
+  useURLCollectionState,
   withURLCollectionState,
   encodeFilterValue,
   decodeFilterValue,
@@ -101,6 +106,10 @@ describe("writeCollectionSearchParams", () => {
   });
 });
 
+function SearchParamsWrapper({ children }: PropsWithChildren) {
+  return createElement(MemoryRouter, { initialEntries: ["/?p=50&f.status:eq=active"] }, children);
+}
+
 describe("withURLCollectionState", () => {
   it("parses URL state and keeps params defaults intact", () => {
     const setSearchParams = vi.fn();
@@ -160,6 +169,33 @@ describe("withURLCollectionState", () => {
     expect(resolveSearchParamsBindingCall(setSearchParams).toString()).toBe(
       "p=30&s=createdAt%3Adesc&f.status%3Aeq=pending",
     );
+  });
+});
+
+describe("useURLCollectionState", () => {
+  it("binds useSearchParams and returns collection options", () => {
+    const { result } = renderHook(
+      () =>
+        useURLCollectionState({
+          tableMetadata: tableMetadata.task,
+          params: {
+            initialSort: [{ field: "createdAt", direction: "Desc" }],
+            pageSize: 20,
+          },
+        }),
+      {
+        wrapper: SearchParamsWrapper,
+      },
+    );
+
+    expect(result.current.initialState).toEqual({
+      pageSize: 50,
+      filters: [{ field: "status", operator: "eq", value: "active" }],
+    });
+    expect(result.current.params).toEqual({
+      initialSort: [{ field: "createdAt", direction: "Desc" }],
+      pageSize: 20,
+    });
   });
 });
 

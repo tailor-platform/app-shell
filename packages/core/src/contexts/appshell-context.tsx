@@ -82,6 +82,7 @@ export const buildConfigurations = (options: ConfigurationOptions): RootConfigur
 type AppShellConfigContextType = {
   title?: string;
   icon?: ReactNode;
+  favicon?: string;
   configurations: RootConfiguration;
 };
 

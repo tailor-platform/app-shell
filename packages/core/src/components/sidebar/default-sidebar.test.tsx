@@ -225,7 +225,10 @@ describe("DefaultSidebar auto-generation", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+      const sidebar = document.querySelector('[data-slot="sidebar"]');
+      assert(sidebar);
+      const texts = Array.from(sidebar.querySelectorAll("a")).map((link) => link.textContent);
+      expect(texts).toContain("Dashboard");
     });
 
     const sidebar = document.querySelector('[data-slot="sidebar"]')!;
@@ -265,7 +268,10 @@ describe("DefaultSidebar auto-generation", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+      const sidebar = document.querySelector('[data-slot="sidebar"]');
+      assert(sidebar);
+      const texts = Array.from(sidebar.querySelectorAll("a")).map((link) => link.textContent);
+      expect(texts).toContain("Home");
     });
 
     const sidebar = document.querySelector('[data-slot="sidebar"]')!;
@@ -294,7 +300,10 @@ describe("DefaultSidebar auto-generation", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
+      const sidebar = document.querySelector('[data-slot="sidebar"]');
+      assert(sidebar);
+      const texts = Array.from(sidebar.querySelectorAll("a")).map((link) => link.textContent);
+      expect(texts).toContain("Home");
     });
 
     const sidebar = document.querySelector('[data-slot="sidebar"]')!;
@@ -334,7 +343,10 @@ describe("DefaultSidebar auto-generation", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText("Products").length).toBeGreaterThan(0);
+      const sidebar = document.querySelector('[data-slot="sidebar"]');
+      assert(sidebar);
+      const texts = Array.from(sidebar.querySelectorAll("a")).map((link) => link.textContent);
+      expect(texts).toContain("My Dashboard");
     });
 
     const sidebar = document.querySelector('[data-slot="sidebar"]')!;

@@ -27,6 +27,17 @@ export type SearchParamsBinding = readonly [
   ) => void,
 ];
 
+export interface URLCollectionStateDecorator {
+  <const TTable extends TableMetadata>(
+    options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+      tableMetadata: TTable;
+    },
+  ): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+    tableMetadata: TTable;
+  };
+  (options: UseCollectionOptions & { tableMetadata?: never }): UseCollectionOptions;
+}
+
 function isValidSortField(tableMetadata: TableMetadata | undefined, field: string): boolean {
   if (!tableMetadata) return true;
   const metadataField = tableMetadata.fields.find((candidate) => candidate.name === field);
@@ -187,25 +198,14 @@ function applyURLCollectionState(
 }
 
 /**
- * Hook version of `withURLCollectionState()` that binds the current router
- * search params.
+ * Hook that binds the current router search params and returns a
+ * `withURLCollectionState()`-compatible decorator.
  */
-export function useURLCollectionState<const TTable extends TableMetadata>(
-  options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
-    tableMetadata: TTable;
-  },
-): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
-  tableMetadata: TTable;
-};
-export function useURLCollectionState(
-  options: UseCollectionOptions & {
-    tableMetadata?: never;
-  },
-): UseCollectionOptions;
-export function useURLCollectionState(
-  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
-): UseCollectionOptions & { tableMetadata?: TableMetadata } {
-  return applyURLCollectionState(options, useSearchParams());
+export function useURLCollectionState(): URLCollectionStateDecorator {
+  const searchParamsBinding = useSearchParams();
+
+  return ((options: UseCollectionOptions & { tableMetadata?: TableMetadata }) =>
+    applyURLCollectionState(options, searchParamsBinding)) as URLCollectionStateDecorator;
 }
 
 /**

@@ -173,26 +173,24 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionState", () => {
-  it("binds useSearchParams and returns collection options", () => {
-    const { result } = renderHook(
-      () =>
-        useURLCollectionState({
-          tableMetadata: tableMetadata.task,
-          params: {
-            initialSort: [{ field: "createdAt", direction: "Desc" }],
-            pageSize: 20,
-          },
-        }),
-      {
-        wrapper: SearchParamsWrapper,
-      },
-    );
+  it("binds useSearchParams and returns a decorator", () => {
+    const { result } = renderHook(() => useURLCollectionState(), {
+      wrapper: SearchParamsWrapper,
+    });
 
-    expect(result.current.initialState).toEqual({
+    const options = result.current({
+      tableMetadata: tableMetadata.task,
+      params: {
+        initialSort: [{ field: "createdAt", direction: "Desc" }],
+        pageSize: 20,
+      },
+    });
+
+    expect(options.initialState).toEqual({
       pageSize: 50,
       filters: [{ field: "status", operator: "eq", value: "active" }],
     });
-    expect(result.current.params).toEqual({
+    expect(options.params).toEqual({
       initialSort: [{ field: "createdAt", direction: "Desc" }],
       pageSize: 20,
     });

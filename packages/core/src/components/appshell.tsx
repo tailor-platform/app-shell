@@ -56,8 +56,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * only falls back to the bundled Tailor favicon when none exists.
    *
    * If you pass this prop, prefer not to also declare a static
-   * `<link rel="icon">` in `index.html` unless you intentionally want multiple
-   * icon candidates.
+   * `<link rel="icon">` in `index.html`.
    */
   favicon?: string;
 

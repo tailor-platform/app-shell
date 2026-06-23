@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router";
 import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
+import { DocumentHead } from "@/components/document-head";
 
 // ============================================================================
 // Root Route
@@ -41,7 +42,12 @@ const createRootRoute = (params: {
   return {
     id: loaderID,
     loader,
-    element: children,
+    element: (
+      <>
+        <DocumentHead />
+        {children}
+      </>
+    ),
     children: routeChildren,
     // Hydration fallback is unused in CSR-only usage of AppShell.
     // Return null to silence hydration warnings.

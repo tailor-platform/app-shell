@@ -33,7 +33,13 @@ import type { PageEntry } from "@/fs-routes/types";
  */
 type SharedAppShellProps = React.PropsWithChildren<{
   /**
-   * App shell title
+   * App shell title.
+   *
+   * Also used as the suffix of the browser tab title: AppShell keeps
+   * `document.title` in sync with the active page as `"<page> · <title>"`
+   * (the page part is the current breadcrumb leaf, including any
+   * {@link useOverrideBreadcrumb} override). When omitted, the tab shows just
+   * the page title.
    */
   title?: string;
 
@@ -41,6 +47,18 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * App shell icon
    */
   icon?: React.ReactNode;
+
+  /**
+   * Browser-tab favicon href. Accepts anything valid on `<link rel="icon">` —
+   * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the
+   * `<link rel="icon">` for you (React hoists it into `<head>`); when omitted,
+   * the bundled Tailor favicon is used.
+   *
+   * Let AppShell own this tag — don't also declare a static
+   * `<link rel="icon">` in `index.html`, or the two will coexist (React only
+   * de-duplicates stylesheets, not tags it didn't render).
+   */
+  favicon?: string;
 
   /**
    * Base path for the app shell
@@ -291,8 +309,11 @@ export const AppShell = (props: AppShellProps) => {
 
   // Memoize context values to prevent unnecessary re-renders
   const configValue = useMemo(
-    () => (configurations ? { title: props.title, icon: props.icon, configurations } : null),
-    [props.title, props.icon, configurations],
+    () =>
+      configurations
+        ? { title: props.title, icon: props.icon, favicon: props.favicon, configurations }
+        : null,
+    [props.title, props.icon, props.favicon, configurations],
   );
 
   const dataValue = useMemo(

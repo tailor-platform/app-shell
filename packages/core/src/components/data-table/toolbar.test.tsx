@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
@@ -126,6 +126,37 @@ const booleanColumn: Column<TestRow> = {
   render: (r) => String(r.enabled ?? ""),
   filter: { type: "boolean", field: "enabled" },
 };
+
+// ---------------------------------------------------------------------------
+// Date filter (DatePicker) helpers
+// ---------------------------------------------------------------------------
+// `date` filters render the app-shell DatePicker — a labelled group of
+// `spinbutton` segments — instead of a native date input. These helpers drive
+// it via the segments, re-querying by index so they survive controlled
+// re-renders.
+
+const datePickerGroup = (index: number) => screen.getAllByRole("group")[index];
+
+async function typeDateInto(
+  user: ReturnType<typeof userEvent.setup>,
+  groupIndex: number,
+  iso: string,
+) {
+  const [year, month, day] = iso.split("-");
+  const seg = (name: string) =>
+    within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name });
+  await user.click(seg("month"));
+  await user.keyboard(month);
+  await user.click(seg("day"));
+  await user.keyboard(day);
+  await user.click(seg("year"));
+  await user.keyboard(year);
+}
+
+async function clearDateIn(user: ReturnType<typeof userEvent.setup>, groupIndex: number) {
+  await user.click(within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name: "year" }));
+  await user.keyboard("{Delete}");
+}
 
 // ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
@@ -476,41 +507,48 @@ describe("DateFilterEditor", () => {
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
 
+  it("renders a DatePicker (spinbutton segments) for the date filter", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "createdAt", operator: "eq", value: "2025-01-01" }],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+
+    // The editor uses the app-shell DatePicker: a labelled group of spinbuttons.
+    expect(
+      await within(datePickerGroup(0)).findByRole("spinbutton", { name: "day" }),
+    ).toBeDefined();
+  });
+
   it("Apply button calls addFilter with the selected date", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "createdAt", operator: "eq", value: "2025-01-01" }],
     });
-    const { container } = render(<TestFilters control={control} columns={[dateColumn]} />, {
-      wrapper,
-    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
     await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+    await screen.findByRole("button", { name: "Apply" });
 
-    // Use the data-slot selector since date inputs have no simple ARIA role
-    const dateInput = await screen.findByDisplayValue("2025-01-01");
-    await user.clear(dateInput);
-    await user.type(dateInput, "2026-06-15");
+    await typeDateInto(user, 0, "2026-06-15");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("createdAt", "eq", "2026-06-15");
-    // Verify empty value triggers removeFilter instead
-    void container; // suppress unused-var
   });
 
-  it("Apply button calls removeFilter when date is cleared", async () => {
+  it("Apply button calls removeFilter when the date is cleared", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "createdAt", operator: "eq", value: "2025-01-01" }],
     });
-    render(<TestFilters control={control} columns={[dateColumn]} />, {
-      wrapper,
-    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
     await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+    await screen.findByRole("button", { name: "Apply" });
 
-    const dateInput = await screen.findByDisplayValue("2025-01-01");
-    await user.clear(dateInput);
+    await clearDateIn(user, 0);
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("createdAt");
@@ -807,7 +845,7 @@ describe("NumericFilterEditor (between)", () => {
 // ---------------------------------------------------------------------------
 
 describe("TemporalFilterEditor (between)", () => {
-  it("shows two date inputs when filter operator is between", async () => {
+  it("shows two date pickers when filter operator is between", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [
@@ -818,9 +856,7 @@ describe("TemporalFilterEditor (between)", () => {
         },
       ],
     });
-    render(<TestFilters control={control} columns={[dateColumn]} />, {
-      wrapper,
-    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
     await user.click(
       screen.getByRole("button", {
@@ -828,8 +864,8 @@ describe("TemporalFilterEditor (between)", () => {
       }),
     );
 
-    const inputs = await screen.findAllByDisplayValue(/2025/);
-    expect(inputs.length).toBe(2);
+    await screen.findByRole("button", { name: "Apply" });
+    expect(screen.getAllByRole("group")).toHaveLength(2);
   });
 
   it("Apply button calls addFilter with min/max range for date between", async () => {
@@ -843,21 +879,17 @@ describe("TemporalFilterEditor (between)", () => {
         },
       ],
     });
-    render(<TestFilters control={control} columns={[dateColumn]} />, {
-      wrapper,
-    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
     await user.click(
       screen.getByRole("button", {
         name: /Created At between 2025-01-01 - 2025-12-31/,
       }),
     );
+    await screen.findByRole("button", { name: "Apply" });
 
-    const inputs = await screen.findAllByDisplayValue(/2025/);
-    await user.clear(inputs[0]);
-    await user.type(inputs[0], "2026-03-01");
-    await user.clear(inputs[1]);
-    await user.type(inputs[1], "2026-06-30");
+    await typeDateInto(user, 0, "2026-03-01");
+    await typeDateInto(user, 1, "2026-06-30");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("createdAt", "between", {
@@ -866,7 +898,7 @@ describe("TemporalFilterEditor (between)", () => {
     });
   });
 
-  it("Apply button calls removeFilter when both temporal inputs are empty", async () => {
+  it("Apply button calls removeFilter when both date pickers are cleared", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [
@@ -877,19 +909,17 @@ describe("TemporalFilterEditor (between)", () => {
         },
       ],
     });
-    render(<TestFilters control={control} columns={[dateColumn]} />, {
-      wrapper,
-    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
     await user.click(
       screen.getByRole("button", {
         name: /Created At between 2025-01-01 - 2025-12-31/,
       }),
     );
+    await screen.findByRole("button", { name: "Apply" });
 
-    const inputs = await screen.findAllByDisplayValue(/2025/);
-    await user.clear(inputs[0]);
-    await user.clear(inputs[1]);
+    await clearDateIn(user, 0);
+    await clearDateIn(user, 1);
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("createdAt");

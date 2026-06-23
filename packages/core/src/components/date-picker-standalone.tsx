@@ -66,6 +66,8 @@ interface DateBehaviorProps<T extends DateValue> {
   hideTimeZone?: boolean;
   placeholderValue?: DateValue;
   name?: string;
+  /** Accessible name when no visible `label` is provided (e.g. a compact filter input). */
+  "aria-label"?: string;
   /** BCP-47 locale override; defaults to the AppShell formatting locale. */
   locale?: string;
 }
@@ -129,6 +131,7 @@ function DateField<T extends DateValue = DateValue>({
   isInvalid,
   autoFocus,
   name,
+  "aria-label": ariaLabel,
 }: DateFieldProps<T>) {
   const { locale: shellLocale, language } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
@@ -170,6 +173,7 @@ function DateField<T extends DateValue = DateValue>({
         isInvalid={derivedInvalid}
         autoFocus={autoFocus}
         labelId={labelText ? labelId : undefined}
+        ariaLabel={ariaLabel}
         describedById={describedBy}
       />
       {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
@@ -218,6 +222,7 @@ function DatePicker<T extends DateValue = DateValue>({
   autoFocus,
   firstDayOfWeek,
   name,
+  "aria-label": ariaLabel,
 }: DatePickerProps<T>) {
   const { locale: shellLocale, language } = useResolvedLocale();
   const shellTz = useTimeZone();
@@ -269,6 +274,8 @@ function DatePicker<T extends DateValue = DateValue>({
   });
 
   const describedBy = cn(descText && descId, derivedInvalid && errorText && errId) || undefined;
+  const accessibleName = labelText ?? ariaLabel;
+  const popoverAriaLabel = accessibleName ? `${accessibleName}, choose date` : "Choose date";
 
   return (
     <div data-slot="date-picker" className={cn("astw:flex astw:flex-col astw:gap-1", className)}>
@@ -276,7 +283,7 @@ function DatePicker<T extends DateValue = DateValue>({
       <DatePopover
         open={open}
         onOpenChange={setOpen}
-        ariaLabel={labelText ? `${labelText}, choose date` : "Choose date"}
+        ariaLabel={popoverAriaLabel}
         field={
           <DateInputGroup
             segments={fieldState.segments}
@@ -289,12 +296,13 @@ function DatePicker<T extends DateValue = DateValue>({
             isInvalid={derivedInvalid}
             autoFocus={autoFocus}
             labelId={labelText ? labelId : undefined}
+            ariaLabel={ariaLabel}
             describedById={describedBy}
             trigger={<DatePickerPopoverTrigger disabled={isDisabled} />}
           />
         }
       >
-        <CalendarView state={calState} ariaLabel={labelText ?? "Calendar"} inPopover />
+        <CalendarView state={calState} ariaLabel={labelText ?? ariaLabel ?? "Calendar"} inPopover />
       </DatePopover>
       {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
       {derivedInvalid && errorText && <DatePickerError id={errId}>{errorText}</DatePickerError>}

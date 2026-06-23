@@ -64,21 +64,24 @@ describe("DateField", () => {
     expect(screen.getByText("Date")).toBeDefined();
   });
 
-  it("fires onChange when a segment value changes", async () => {
+  it("fires onChange once a complete date is typed across the segments", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<DateField label="Date" onChange={onChange} />);
 
-    const yearSegment = screen.getByRole("spinbutton", { name: /year/i });
-    await user.click(yearSegment);
+    // Fill every segment by aria-label (order-independent across locales).
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06");
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("15");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
     await user.keyboard("2025");
 
-    await waitFor(
-      () => {
-        expect(onChange).toHaveBeenCalled();
-      },
-      { timeout: 500 },
-    );
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+      const last = onChange.mock.calls.at(-1)?.[0];
+      expect(last?.toString()).toBe("2025-06-15");
+    });
   });
 });
 

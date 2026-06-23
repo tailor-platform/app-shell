@@ -7,6 +7,8 @@ import { useCollectionControlOptional } from "@/contexts/collection-control-cont
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
+import { DatePicker } from "@/components/date-picker-standalone";
+import { parseDate } from "@internationalized/date";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import type { CollectionControl, Filter, FilterConfig, FilterOperator } from "@/types/collection";
@@ -166,6 +168,30 @@ function BetweenInputGroup({
   );
 }
 
+/**
+ * Date filter input backed by the app-shell `DatePicker`. Bridges the filter's
+ * string value (`"YYYY-MM-DD"`) and the `CalendarDate` the picker works with.
+ */
+function DateFilterPicker({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDate(value) : null;
+  return (
+    <DatePicker
+      aria-label={ariaLabel}
+      value={calValue}
+      onChange={(v) => onChange(v ? v.toString() : "")}
+      className="astw:w-full"
+    />
+  );
+}
+
 function AddFilterPopover({
   availableColumns,
   control,
@@ -320,8 +346,26 @@ function AddFilterPopover({
     }
 
     if (isTemporalFilterType(config.type)) {
+      const isDate = config.type === "date";
+      const fieldLabel = selectedColumn.label ?? config.field;
       if (operator === "between") {
         const [min, max] = Array.isArray(value) ? value : ["", ""];
+        if (isDate) {
+          return (
+            <div className="astw:flex astw:flex-col astw:gap-1.5">
+              <DateFilterPicker
+                ariaLabel={`${fieldLabel} — ${t("filterBetweenFrom")}`}
+                value={min}
+                onChange={(v) => setValue([v, max])}
+              />
+              <DateFilterPicker
+                ariaLabel={`${fieldLabel} — ${t("filterBetweenTo")}`}
+                value={max}
+                onChange={(v) => setValue([min, v])}
+              />
+            </div>
+          );
+        }
         return (
           <BetweenInputGroup
             labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
@@ -330,6 +374,15 @@ function AddFilterPopover({
             onChangeMax={(v) => setValue([min, v])}
             onSubmit={handleSubmit}
             inputProps={getTemporalInputProps(config.type)}
+          />
+        );
+      }
+      if (isDate) {
+        return (
+          <DateFilterPicker
+            ariaLabel={fieldLabel}
+            value={typeof value === "string" ? value : ""}
+            onChange={(v) => setValue(v)}
           />
         );
       }
@@ -1046,6 +1099,52 @@ function TemporalFilterEditor({
     onClose();
   }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
+  const isDate = config.type === "date";
+  let valueInput: ReactNode;
+  if (localOp === "between") {
+    valueInput = isDate ? (
+      <div className="astw:flex astw:flex-col astw:gap-1.5">
+        <DateFilterPicker
+          ariaLabel={t("filterBetweenFrom")}
+          value={localValue}
+          onChange={setLocalValue}
+        />
+        <DateFilterPicker
+          ariaLabel={t("filterBetweenTo")}
+          value={localValueMax}
+          onChange={setLocalValueMax}
+        />
+      </div>
+    ) : (
+      <BetweenInputGroup
+        labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+        values={[localValue, localValueMax]}
+        onChangeMin={setLocalValue}
+        onChangeMax={setLocalValueMax}
+        onSubmit={handleCommit}
+        inputProps={getTemporalInputProps(config.type)}
+      />
+    );
+  } else {
+    valueInput = isDate ? (
+      <DateFilterPicker ariaLabel={config.field} value={localValue} onChange={setLocalValue} />
+    ) : (
+      <Input
+        {...getTemporalInputProps(config.type)}
+        value={localValue}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleCommit();
+          }
+        }}
+        className="astw:h-8 astw:text-sm"
+      />
+    );
+  }
+
   return (
     <div
       data-slot={`data-table-filter-${config.type}`}
@@ -1060,30 +1159,7 @@ function TemporalFilterEditor({
         mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
         className="astw:h-8 astw:text-sm"
       />
-      {localOp === "between" ? (
-        <BetweenInputGroup
-          labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
-          values={[localValue, localValueMax]}
-          onChangeMin={setLocalValue}
-          onChangeMax={setLocalValueMax}
-          onSubmit={handleCommit}
-          inputProps={getTemporalInputProps(config.type)}
-        />
-      ) : (
-        <Input
-          {...getTemporalInputProps(config.type)}
-          value={localValue}
-          onChange={(e) => {
-            setLocalValue(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleCommit();
-            }
-          }}
-          className="astw:h-8 astw:text-sm"
-        />
-      )}
+      {valueInput}
       <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>

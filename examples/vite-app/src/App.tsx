@@ -35,6 +35,7 @@ const App = () => {
               <SidebarItem to="/dashboard/orders" />
             </SidebarGroup>
             <SidebarItem to="/date-picker" />
+            <SidebarItem to="/data-table" />
             <SidebarItem to="/settings" />
           </DefaultSidebar>
         }

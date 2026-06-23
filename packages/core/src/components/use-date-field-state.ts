@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDate,
   CalendarDateTime,
@@ -144,13 +144,16 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     return types;
   }, [granularity, hasTime, is12]);
 
-  // Working fields (uncontrolled) — initialised from value/defaultValue.
+  // Per-segment working state. This is the source of truth while editing — even
+  // when controlled — so a half-typed value (and intermediate out-of-range
+  // segments) survive the round-trip through `onChange`. A `controlled` value
+  // that changes *externally* is synced back in via the effect below.
   const [internalFields, setInternalFields] = useState<Fields>(() =>
     fieldsFromValue(controlledValue ?? defaultValue),
   );
+  const fields = internalFields;
 
-  // For controlled usage, the source of truth is the prop value.
-  const fields = isControlled ? fieldsFromValue(controlledValue) : internalFields;
+  const lastEmitted = useRef<DateValue | null>(controlledValue ?? defaultValue ?? null);
 
   // Anchor for placeholder formatting + sensible increment starting points.
   const anchor = useMemo<CalendarDate | CalendarDateTime | ZonedDateTime>(() => {
@@ -165,8 +168,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   // unfilled segments for display formatting.
   const anchorFields = useMemo<Fields>(() => fieldsFromValue(anchor), [anchor]);
 
-  const lastEmitted = useRef<DateValue | null | undefined>(undefined);
-
   // ── Limits ──────────────────────────────────────────────────────────────────
   const getLimits = useCallback(
     (type: EditableSegmentType): { min: number; max: number } => {
@@ -177,7 +178,10 @@ export function useDateFieldState(options: DateFieldStateOptions) {
           return { min: 1, max: 12 };
         case "day": {
           const y = fields.year ?? anchor.year;
-          const m = fields.month ?? anchor.month;
+          const rawM = fields.month ?? anchor.month;
+          // Mid-typing the month can be out of range (e.g. 0); fall back to the
+          // anchor month so the day limit stays computable.
+          const m = rawM >= 1 && rawM <= 12 ? rawM : anchor.month;
           const max = endOfMonth(new CalendarDate(y, m, 1)).day;
           return { min: 1, max };
         }
@@ -197,6 +201,10 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   const composeValue = useCallback(
     (f: Fields): DateValue | null => {
       if (f.year == null || f.month == null || f.day == null) return null;
+      // Reject out-of-range segments (possible mid-typing) so we never build an
+      // invalid CalendarDate — the value is simply "incomplete" until valid.
+      if (f.month < 1 || f.month > 12 || f.day < 1) return null;
+      if (f.day > endOfMonth(new CalendarDate(f.year, f.month, 1)).day) return null;
       if (!hasTime) return new CalendarDate(f.year, f.month, f.day);
 
       let hour = f.hour ?? 0;
@@ -220,21 +228,44 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   const commit = useCallback(
-    (next: Fields) => {
-      if (!isControlled) setInternalFields(next);
+    (next: Fields, intent: "edit" | "clear" = "edit") => {
+      setInternalFields(next);
       const composed = composeValue(next);
+      // While editing, only emit a *complete & valid* value — never `null` for a
+      // half-typed/out-of-range intermediate (that would thrash a controlled
+      // value and lose the in-progress entry). Clearing explicitly emits `null`.
+      let emit: DateValue | null | undefined;
+      if (composed != null) emit = composed;
+      else if (intent === "clear") emit = null;
+      else emit = undefined;
+      if (emit === undefined) return;
+
       const prev = lastEmitted.current;
       const changed =
-        prev === undefined ||
-        (composed == null) !== (prev == null) ||
-        (composed != null && prev != null && composed.compare(prev as never) !== 0);
+        (emit == null) !== (prev == null) ||
+        (emit != null && prev != null && emit.compare(prev as never) !== 0);
       if (changed) {
-        lastEmitted.current = composed;
-        onChange?.(composed);
+        lastEmitted.current = emit;
+        onChange?.(emit);
       }
     },
-    [isControlled, composeValue, onChange],
+    [composeValue, onChange],
   );
+
+  // Sync internal segments when a *controlled* value changes externally (i.e.
+  // to something other than what we last emitted), without clobbering an
+  // in-progress edit or looping on our own onChange.
+  useEffect(() => {
+    if (!isControlled) return;
+    const cv = controlledValue ?? null;
+    const le = lastEmitted.current;
+    const same =
+      (cv == null && le == null) || (cv != null && le != null && cv.compare(le as never) === 0);
+    if (!same) {
+      lastEmitted.current = cv;
+      setInternalFields(fieldsFromValue(cv));
+    }
+  }, [controlledValue, isControlled]);
 
   // ── Mutations ───────────────────────────────────────────────────────────────
   const cycle = useCallback(
@@ -260,10 +291,12 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   const setDigit = useCallback(
-    (type: EditableSegmentType, digit: number): { advance: boolean } => {
+    (type: EditableSegmentType, digit: number, replace = false): { advance: boolean } => {
       if (isReadOnly || type === "dayPeriod") return { advance: false };
       const { min, max } = getLimits(type);
-      const current = fields[type];
+      // `replace` (first digit after the segment gains focus) starts fresh
+      // rather than accumulating onto the existing value.
+      const current = replace ? undefined : fields[type];
       let next = current != null && current * 10 + digit <= max ? current * 10 + digit : digit;
       if (next < min) next = digit;
       // Auto-advance once the segment can't accept another digit.
@@ -287,7 +320,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       if (isReadOnly) return;
       const next = { ...fields };
       delete next[type];
-      commit(next);
+      commit(next, "clear");
     },
     [fields, commit, isReadOnly],
   );
@@ -309,59 +342,40 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       ...(timeZone ? { timeZone } : {}),
     });
 
-    // Build a fully-populated date so the formatter yields every part; unfilled
-    // editable parts get overridden with placeholders below.
-    const display: Fields = { ...fields };
-    for (const t of editableTypes) {
-      if (display[t] == null) display[t] = anchorFields[t] ?? getLimits(t).min;
-    }
-    let displayDate: CalendarDate | CalendarDateTime;
-    if (hasTime) {
-      let h = display.hour ?? 0;
-      if (is12) h = (h % 12) + ((display.dayPeriod ?? 0) === 1 ? 12 : 0);
-      displayDate = new CalendarDateTime(
-        display.year!,
-        display.month!,
-        display.day!,
-        h,
-        display.minute ?? 0,
-        display.second ?? 0,
-      );
-    } else {
-      displayDate = new CalendarDate(display.year!, display.month!, display.day!);
-    }
+    // Format the (always-valid) anchor to get the locale's segment ORDER and the
+    // literal separators. Each editable segment's *text* is then formatted from
+    // its own value, so an in-progress out-of-range value can never build an
+    // invalid date.
+    const pad2 = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
+    const yearFmt = new Intl.NumberFormat(locale, { useGrouping: false });
+    const formatSegment = (type: EditableSegmentType, value: number): string => {
+      if (type === "dayPeriod") return value === 1 ? "PM" : "AM";
+      if (type === "year") return yearFmt.format(value);
+      return pad2.format(value);
+    };
 
-    const parts = formatter.formatToParts(displayDate.toDate(timeZone ?? "UTC"));
+    const parts = formatter.formatToParts(anchor.toDate(timeZone ?? "UTC"));
     return parts.map<Segment>((part) => {
       const rawType = part.type;
       if (!editableTypes.includes(rawType as EditableSegmentType)) {
         return { type: "literal", text: part.value, isEditable: false, isPlaceholder: false };
       }
       const editable = rawType as EditableSegmentType;
-      const filled = fields[editable] != null;
+      const current = fields[editable];
+      const filled = current != null;
       const { min, max } = getLimits(editable);
       return {
         type: editable,
-        text: filled ? part.value : PLACEHOLDERS[editable],
+        text: filled ? formatSegment(editable, current) : PLACEHOLDERS[editable],
         isEditable: true,
         isPlaceholder: !filled,
-        value: fields[editable],
+        value: current,
         minValue: min,
         maxValue: max,
         label: SEGMENT_LABELS[editable],
       };
     });
-  }, [
-    locale,
-    hasTime,
-    granularity,
-    is12,
-    timeZone,
-    fields,
-    editableTypes,
-    anchorFields,
-    getLimits,
-  ]);
+  }, [locale, hasTime, granularity, is12, timeZone, fields, editableTypes, anchor, getLimits]);
 
   const fieldValue = composeValue(fields);
 

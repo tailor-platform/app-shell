@@ -137,7 +137,11 @@ const groupClasses = cn(
 interface DateInputGroupProps {
   segments: Segment[];
   cycle: (type: Exclude<Segment["type"], "literal">, delta: number) => void;
-  setDigit: (type: Exclude<Segment["type"], "literal">, digit: number) => { advance: boolean };
+  setDigit: (
+    type: Exclude<Segment["type"], "literal">,
+    digit: number,
+    replace?: boolean,
+  ) => { advance: boolean };
   setDayPeriod: (pm: boolean) => void;
   clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
   isDisabled?: boolean;
@@ -145,6 +149,8 @@ interface DateInputGroupProps {
   isInvalid?: boolean;
   autoFocus?: boolean;
   labelId?: string;
+  /** Accessible name when there is no visible label (e.g. a compact filter input). */
+  ariaLabel?: string;
   describedById?: string;
   className?: string;
   trigger?: React.ReactNode;
@@ -161,11 +167,15 @@ export function DateInputGroup({
   isInvalid,
   autoFocus,
   labelId,
+  ariaLabel,
   describedById,
   className,
   trigger,
 }: DateInputGroupProps) {
   const editableRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  // The segment that just gained focus and hasn't received a digit yet. Its
+  // first digit replaces the current value rather than accumulating onto it.
+  const freshSegmentRef = React.useRef<Segment["type"] | null>(null);
 
   React.useEffect(() => {
     if (autoFocus && !isDisabled) editableRefs.current[0]?.focus();
@@ -239,7 +249,9 @@ export function DateInputGroup({
 
     if (/^\d$/.test(e.key)) {
       e.preventDefault();
-      const { advance } = setDigit(type, Number(e.key));
+      const replace = freshSegmentRef.current === type;
+      freshSegmentRef.current = null;
+      const { advance } = setDigit(type, Number(e.key), replace);
       if (advance) focusEditable(editableIndex + 1);
     }
   };
@@ -250,6 +262,7 @@ export function DateInputGroup({
       role="group"
       data-slot="date-picker-group"
       aria-labelledby={labelId}
+      aria-label={labelId ? undefined : ariaLabel}
       aria-describedby={describedById}
       aria-disabled={isDisabled || undefined}
       data-disabled={isDisabled || undefined}
@@ -295,6 +308,9 @@ export function DateInputGroup({
               aria-valuemax={segment.maxValue}
               aria-valuenow={segment.value}
               aria-valuetext={segment.isPlaceholder ? "Empty" : segment.text}
+              onFocus={() => {
+                freshSegmentRef.current = segment.type;
+              }}
               onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
               className={cn(
                 "astw:rounded astw:px-0.5 astw:tabular-nums astw:caret-transparent astw:outline-none",

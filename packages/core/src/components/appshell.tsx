@@ -90,6 +90,14 @@ type SharedAppShellProps = React.PropsWithChildren<{
   locale?: string;
 
   /**
+   * IANA timezone (e.g. "America/Los_Angeles") used by date/time components
+   * as the default for resolving "today" and for `ZonedDateTime` values.
+   *
+   * If not provided, date/time components fall back to the user's local timezone.
+   */
+  timeZone?: string;
+
+  /**
    * Global error boundary component applied to all routes.
    *
    * When an error occurs in any route component, this component will render.
@@ -274,9 +282,17 @@ export const AppShell = (props: AppShellProps) => {
             basePath: props.basePath,
             errorBoundary: props.errorBoundary,
             locale: props.locale,
+            timeZone: props.timeZone,
           })
         : null,
-    [modules, props.settingsResources, props.basePath, props.errorBoundary, props.locale],
+    [
+      modules,
+      props.settingsResources,
+      props.basePath,
+      props.errorBoundary,
+      props.locale,
+      props.timeZone,
+    ],
   );
 
   // Memoize context values to prevent unnecessary re-renders

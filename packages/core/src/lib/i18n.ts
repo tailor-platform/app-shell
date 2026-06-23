@@ -32,6 +32,25 @@ export const detectBrowserLocale = (): string => {
   }
 };
 
+/**
+ * Detects the browser's preferred locale, returning the full BCP-47 tag
+ * (e.g. "en-GB", "ja-JP"). Unlike detectBrowserLocale(), the region subtag
+ * is preserved — required by Intl / @internationalized/date formatting APIs
+ * to drive segment order, first-day-of-week, and 12/24h.
+ *
+ * @returns The full BCP-47 locale tag, or DEFAULT_LOCALE for SSR
+ */
+export const detectBrowserFullLocale = (): string => {
+  try {
+    if (typeof navigator === "undefined") {
+      return DEFAULT_LOCALE;
+    }
+    return navigator.languages?.[0] ?? navigator.language ?? DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+};
+
 export const buildLocaleResolver =
   (locale: string) => (value: LocalizedString | undefined, fallback: string) => {
     if (!value) return fallback;

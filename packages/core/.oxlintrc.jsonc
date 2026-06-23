@@ -10,5 +10,19 @@
     "react/react-in-jsx-scope": "off",
     "no-nested-ternary": "error",
   },
+  "overrides": [
+    {
+      // The date components hand-author the ARIA Authoring Practices widget
+      // patterns (a labelled spinbutton group, a calendar grid, a date-picker
+      // dialog) that react-aria emits internally. The roles and the opt-in
+      // `autoFocus` prop are intentional and spec-compliant here.
+      "files": ["src/components/date-picker.tsx", "src/components/date-picker-standalone.tsx"],
+      "rules": {
+        "jsx-a11y/prefer-tag-over-role": "off",
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+        "jsx-a11y/no-autofocus": "off",
+      },
+    },
+  ],
   "ignorePatterns": ["dist", "node_modules"],
 }

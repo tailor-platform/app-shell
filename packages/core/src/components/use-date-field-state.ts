@@ -1,0 +1,376 @@
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  CalendarDate,
+  CalendarDateTime,
+  ZonedDateTime,
+  DateFormatter,
+  endOfMonth,
+  now,
+  toCalendarDateTime,
+  toZoned,
+  today,
+  type DateValue,
+} from "@internationalized/date";
+
+/**
+ * Hand-rolled segmented-date-field state.
+ *
+ * This is the logic react-aria's `useDateFieldState` would otherwise provide.
+ * We own it here: locale-driven segment ordering (via `DateFormatter`), per-
+ * segment spinbutton semantics (increment/decrement with context-aware limits),
+ * numeric type-to-fill with auto-advance, and value-type discrimination by
+ * `granularity`. No `Date` ever escapes — `onChange` emits `@internationalized/date`
+ * values (or `null`).
+ */
+
+export type Granularity = "day" | "hour" | "minute" | "second";
+export type HourCycle = 12 | 24;
+
+export type EditableSegmentType =
+  | "year"
+  | "month"
+  | "day"
+  | "hour"
+  | "minute"
+  | "second"
+  | "dayPeriod";
+
+const DATE_SEGMENTS: EditableSegmentType[] = ["year", "month", "day"];
+const TIME_BY_GRANULARITY: Record<Granularity, EditableSegmentType[]> = {
+  day: [],
+  hour: ["hour"],
+  minute: ["hour", "minute"],
+  second: ["hour", "minute", "second"],
+};
+
+type Fields = Partial<Record<EditableSegmentType, number>>;
+
+export interface Segment {
+  type: EditableSegmentType | "literal";
+  /** Display text (locale-formatted value, or placeholder when empty). */
+  text: string;
+  isEditable: boolean;
+  isPlaceholder: boolean;
+  value?: number;
+  minValue?: number;
+  maxValue?: number;
+  /** Accessible label, e.g. "month", "year". */
+  label?: string;
+}
+
+export interface DateFieldStateOptions {
+  value?: DateValue | null;
+  defaultValue?: DateValue | null;
+  onChange?: (value: DateValue | null) => void;
+  granularity?: Granularity;
+  locale: string;
+  /** Used only to construct `ZonedDateTime` values for time granularities. */
+  timeZone?: string;
+  hourCycle?: HourCycle;
+  placeholderValue?: DateValue;
+  isDisabled?: boolean;
+  isReadOnly?: boolean;
+}
+
+const SEGMENT_LABELS: Record<EditableSegmentType, string> = {
+  year: "year",
+  month: "month",
+  day: "day",
+  hour: "hour",
+  minute: "minute",
+  second: "second",
+  dayPeriod: "AM/PM",
+};
+
+const PLACEHOLDERS: Record<EditableSegmentType, string> = {
+  year: "yyyy",
+  month: "mm",
+  day: "dd",
+  hour: "––",
+  minute: "––",
+  second: "––",
+  dayPeriod: "AM",
+};
+
+function fieldsFromValue(v: DateValue | null | undefined): Fields {
+  if (!v) return {};
+  const f: Fields = {};
+  if ("year" in v) {
+    f.year = v.year;
+    f.month = v.month;
+    f.day = v.day;
+  }
+  if ("hour" in v) {
+    f.hour = v.hour;
+    f.minute = v.minute;
+    f.second = v.second;
+  }
+  return f;
+}
+
+function use12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
+  if (hourCycle === 12) return true;
+  if (hourCycle === 24) return false;
+  // Derive from the locale's resolved hour cycle.
+  try {
+    const opts = new DateFormatter(locale, { hour: "numeric" }).resolvedOptions();
+    return opts.hour12 ?? false;
+  } catch {
+    return false;
+  }
+}
+
+export function useDateFieldState(options: DateFieldStateOptions) {
+  const {
+    value: controlledValue,
+    defaultValue,
+    onChange,
+    granularity = "day",
+    locale,
+    timeZone,
+    hourCycle,
+    placeholderValue,
+    isReadOnly,
+  } = options;
+
+  const isControlled = controlledValue !== undefined;
+  const hasTime = granularity !== "day";
+  const is12 = use12HourCycle(locale, hourCycle);
+
+  // The editable segment order, before locale reordering.
+  const editableTypes = useMemo<EditableSegmentType[]>(() => {
+    const types = [...DATE_SEGMENTS, ...TIME_BY_GRANULARITY[granularity]];
+    if (hasTime && is12) types.push("dayPeriod");
+    return types;
+  }, [granularity, hasTime, is12]);
+
+  // Working fields (uncontrolled) — initialised from value/defaultValue.
+  const [internalFields, setInternalFields] = useState<Fields>(() =>
+    fieldsFromValue(controlledValue ?? defaultValue),
+  );
+
+  // For controlled usage, the source of truth is the prop value.
+  const fields = isControlled ? fieldsFromValue(controlledValue) : internalFields;
+
+  // Anchor for placeholder formatting + sensible increment starting points.
+  const anchor = useMemo<CalendarDate | CalendarDateTime | ZonedDateTime>(() => {
+    if (placeholderValue) {
+      return hasTime ? toCalendarDateTime(placeholderValue as never) : (placeholderValue as never);
+    }
+    const tz = timeZone ?? "UTC";
+    return hasTime ? now(tz) : today(tz);
+  }, [placeholderValue, hasTime, timeZone]);
+
+  // Anchor as a plain field record — used to seed increments and to populate
+  // unfilled segments for display formatting.
+  const anchorFields = useMemo<Fields>(() => fieldsFromValue(anchor), [anchor]);
+
+  const lastEmitted = useRef<DateValue | null | undefined>(undefined);
+
+  // ── Limits ──────────────────────────────────────────────────────────────────
+  const getLimits = useCallback(
+    (type: EditableSegmentType): { min: number; max: number } => {
+      switch (type) {
+        case "year":
+          return { min: 1, max: 9999 };
+        case "month":
+          return { min: 1, max: 12 };
+        case "day": {
+          const y = fields.year ?? anchor.year;
+          const m = fields.month ?? anchor.month;
+          const max = endOfMonth(new CalendarDate(y, m, 1)).day;
+          return { min: 1, max };
+        }
+        case "hour":
+          return is12 ? { min: 1, max: 12 } : { min: 0, max: 23 };
+        case "minute":
+        case "second":
+          return { min: 0, max: 59 };
+        case "dayPeriod":
+          return { min: 0, max: 1 };
+      }
+    },
+    [fields.year, fields.month, anchor, is12],
+  );
+
+  // ── Value composition ─────────────────────────────────────────────────────
+  const composeValue = useCallback(
+    (f: Fields): DateValue | null => {
+      if (f.year == null || f.month == null || f.day == null) return null;
+      if (!hasTime) return new CalendarDate(f.year, f.month, f.day);
+
+      let hour = f.hour ?? 0;
+      if (is12) {
+        // f.hour is 1..12, dayPeriod 0=AM 1=PM → convert to 24h.
+        const pm = (f.dayPeriod ?? 0) === 1;
+        hour = (hour % 12) + (pm ? 12 : 0);
+      }
+      const cdt = new CalendarDateTime(f.year, f.month, f.day, hour, f.minute ?? 0, f.second ?? 0);
+      // ZonedDateTime when the field is timezone-anchored (controlled value or
+      // placeholder is zoned, or an explicit timeZone is provided).
+      const wantsZoned =
+        controlledValue instanceof ZonedDateTime ||
+        defaultValue instanceof ZonedDateTime ||
+        placeholderValue instanceof ZonedDateTime ||
+        timeZone != null;
+      if (wantsZoned && timeZone) return toZoned(cdt, timeZone);
+      return cdt;
+    },
+    [hasTime, is12, controlledValue, defaultValue, placeholderValue, timeZone],
+  );
+
+  const commit = useCallback(
+    (next: Fields) => {
+      if (!isControlled) setInternalFields(next);
+      const composed = composeValue(next);
+      const prev = lastEmitted.current;
+      const changed =
+        prev === undefined ||
+        (composed == null) !== (prev == null) ||
+        (composed != null && prev != null && composed.compare(prev as never) !== 0);
+      if (changed) {
+        lastEmitted.current = composed;
+        onChange?.(composed);
+      }
+    },
+    [isControlled, composeValue, onChange],
+  );
+
+  // ── Mutations ───────────────────────────────────────────────────────────────
+  const cycle = useCallback(
+    (type: EditableSegmentType, delta: number) => {
+      if (isReadOnly) return;
+      const { min, max } = getLimits(type);
+      const current = fields[type];
+      let next: number;
+      if (current == null) {
+        // Start from the anchor's value for that field, or the min.
+        if (type === "dayPeriod") {
+          next = (anchorFields.hour ?? 0) >= 12 ? 1 : 0;
+        } else {
+          next = anchorFields[type] ?? min;
+        }
+      } else {
+        const span = max - min + 1;
+        next = ((current - min + delta + span * 1000) % span) + min;
+      }
+      commit({ ...fields, [type]: next });
+    },
+    [fields, getLimits, anchorFields, commit, isReadOnly],
+  );
+
+  const setDigit = useCallback(
+    (type: EditableSegmentType, digit: number): { advance: boolean } => {
+      if (isReadOnly || type === "dayPeriod") return { advance: false };
+      const { min, max } = getLimits(type);
+      const current = fields[type];
+      let next = current != null && current * 10 + digit <= max ? current * 10 + digit : digit;
+      if (next < min) next = digit;
+      // Auto-advance once the segment can't accept another digit.
+      const advance = next * 10 > max;
+      commit({ ...fields, [type]: next });
+      return { advance };
+    },
+    [fields, getLimits, commit, isReadOnly],
+  );
+
+  const setDayPeriod = useCallback(
+    (pm: boolean) => {
+      if (isReadOnly) return;
+      commit({ ...fields, dayPeriod: pm ? 1 : 0 });
+    },
+    [fields, commit, isReadOnly],
+  );
+
+  const clearSegment = useCallback(
+    (type: EditableSegmentType) => {
+      if (isReadOnly) return;
+      const next = { ...fields };
+      delete next[type];
+      commit(next);
+    },
+    [fields, commit, isReadOnly],
+  );
+
+  // ── Display segments (locale-ordered) ────────────────────────────────────────
+  const segments = useMemo<Segment[]>(() => {
+    const formatter = new DateFormatter(locale, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      ...(hasTime
+        ? {
+            hour: "2-digit",
+            ...(granularity !== "hour" ? { minute: "2-digit" } : {}),
+            ...(granularity === "second" ? { second: "2-digit" } : {}),
+            hour12: is12,
+          }
+        : {}),
+      ...(timeZone ? { timeZone } : {}),
+    });
+
+    // Build a fully-populated date so the formatter yields every part; unfilled
+    // editable parts get overridden with placeholders below.
+    const display: Fields = { ...fields };
+    for (const t of editableTypes) {
+      if (display[t] == null) display[t] = anchorFields[t] ?? getLimits(t).min;
+    }
+    let displayDate: CalendarDate | CalendarDateTime;
+    if (hasTime) {
+      let h = display.hour ?? 0;
+      if (is12) h = (h % 12) + ((display.dayPeriod ?? 0) === 1 ? 12 : 0);
+      displayDate = new CalendarDateTime(
+        display.year!,
+        display.month!,
+        display.day!,
+        h,
+        display.minute ?? 0,
+        display.second ?? 0,
+      );
+    } else {
+      displayDate = new CalendarDate(display.year!, display.month!, display.day!);
+    }
+
+    const parts = formatter.formatToParts(displayDate.toDate(timeZone ?? "UTC"));
+    return parts.map<Segment>((part) => {
+      const rawType = part.type;
+      if (!editableTypes.includes(rawType as EditableSegmentType)) {
+        return { type: "literal", text: part.value, isEditable: false, isPlaceholder: false };
+      }
+      const editable = rawType as EditableSegmentType;
+      const filled = fields[editable] != null;
+      const { min, max } = getLimits(editable);
+      return {
+        type: editable,
+        text: filled ? part.value : PLACEHOLDERS[editable],
+        isEditable: true,
+        isPlaceholder: !filled,
+        value: fields[editable],
+        minValue: min,
+        maxValue: max,
+        label: SEGMENT_LABELS[editable],
+      };
+    });
+  }, [
+    locale,
+    hasTime,
+    granularity,
+    is12,
+    timeZone,
+    fields,
+    editableTypes,
+    anchorFields,
+    getLimits,
+  ]);
+
+  const fieldValue = composeValue(fields);
+
+  return {
+    segments,
+    fieldValue,
+    cycle,
+    setDigit,
+    setDayPeriod,
+    clearSegment,
+  };
+}

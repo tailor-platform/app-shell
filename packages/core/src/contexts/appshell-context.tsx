@@ -1,7 +1,8 @@
 import { ErrorBoundaryComponent, Modules, Resource } from "@/resource";
 import { createContext, useContext, type ReactNode } from "react";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
-import { DEFAULT_LOCALE, detectBrowserLocale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, detectBrowserLocale, detectBrowserFullLocale } from "@/lib/i18n";
+import { getLocalTimeZone } from "@internationalized/date";
 
 /**
  * Empty interface for module augmentation.
@@ -53,6 +54,10 @@ export type RootConfiguration = {
   basePath?: string;
   errorBoundary: ErrorBoundaryComponent;
   locale: string;
+  /** Full BCP-47 tag (e.g. "en-GB") for Intl / date formatting. Falls back to `locale`. */
+  resolvedLocale?: string;
+  /** IANA timezone (e.g. "America/Los_Angeles"). Used by date/time components. */
+  timeZone?: string;
 };
 
 export type ConfigurationOptions = {
@@ -61,6 +66,7 @@ export type ConfigurationOptions = {
   basePath?: string;
   errorBoundary?: ErrorBoundaryComponent;
   locale?: string;
+  timeZone?: string;
 };
 
 /**
@@ -73,6 +79,8 @@ export const buildConfigurations = (options: ConfigurationOptions): RootConfigur
   errorBoundary: options.errorBoundary ?? <DefaultErrorBoundary />,
   basePath: options.basePath,
   locale: options.locale ?? detectBrowserLocale(),
+  resolvedLocale: options.locale ?? detectBrowserFullLocale(),
+  timeZone: options.timeZone,
 });
 
 /**
@@ -141,4 +149,29 @@ export const useAppShell = () => {
     ...config,
     ...data,
   };
+};
+
+/**
+ * Returns the full BCP-47 locale (e.g. "en-GB") for Intl / date formatting.
+ * Also returns the language code (e.g. "en") used for label resolution.
+ *
+ * Falls back to browser detection when used outside an AppShell.
+ */
+export const useResolvedLocale = (): { locale: string; language: string } => {
+  const { configurations } = useContext(AppShellConfigContext);
+  return {
+    locale: configurations.resolvedLocale ?? configurations.locale,
+    language: configurations.locale,
+  };
+};
+
+/**
+ * Returns the configured IANA timezone (e.g. "America/Los_Angeles").
+ * Falls back to the user's local timezone when not configured.
+ *
+ * Used by date/time components to resolve "today" and for ZonedDateTime values.
+ */
+export const useTimeZone = (): string => {
+  const { configurations } = useContext(AppShellConfigContext);
+  return configurations.timeZone ?? getLocalTimeZone();
 };

@@ -2,16 +2,6 @@ name: CI (packages)
 
 on:
   pull_request:
-    paths:
-      - "packages/**"
-      - "examples/**"
-      - "docs/**"
-      - "catalogue/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-      - ".github/workflows/ci-packages.yaml"
-      - ".github/actions/ci/action.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

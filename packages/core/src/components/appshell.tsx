@@ -51,12 +51,13 @@ type SharedAppShellProps = React.PropsWithChildren<{
   /**
    * Browser-tab favicon href. Accepts anything valid on `<link rel="icon">` —
    * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the
-   * `<link rel="icon">` for you (React hoists it into `<head>`); when omitted,
-   * the bundled Tailor favicon is used.
+   * `<link rel="icon">` for you (React hoists it into `<head>`). When omitted,
+   * AppShell preserves any favicon link already declared by the host page and
+   * only falls back to the bundled Tailor favicon when none exists.
    *
-   * Let AppShell own this tag — don't also declare a static
-   * `<link rel="icon">` in `index.html`, or the two will coexist (React only
-   * de-duplicates stylesheets, not tags it didn't render).
+   * If you pass this prop, prefer not to also declare a static
+   * `<link rel="icon">` in `index.html` unless you intentionally want multiple
+   * icon candidates.
    */
   favicon?: string;
 

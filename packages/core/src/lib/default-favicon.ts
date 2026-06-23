@@ -1,7 +1,9 @@
 /**
  * Default favicon used when a consumer does not pass a `favicon` prop to
- * `<AppShell>`. It is the Tailor mark, embedded as a 32×32 PNG data URI so it
- * ships in the bundle and needs no asset-copy step in the consuming app.
+ * `<AppShell>` and the host page does not already declare its own
+ * `<link rel="icon">`. It is the Tailor mark, embedded as a 32×32 PNG data
+ * URI so it ships in the bundle and needs no asset-copy step in the consuming
+ * app.
  *
  * Consumers override it by passing `favicon` (any href: a public-path URL such
  * as `/favicon.ico`, or a data URI).

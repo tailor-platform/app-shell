@@ -492,13 +492,26 @@ The `filter` property on a column accepts a `FilterConfig` object. When set, the
 | `string`   | Text           | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
 | `number`   | Number         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `datetime` | Datetime-local | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | Date           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
 | `time`     | Time           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `enum`     | Dropdown       | `eq`, `ne`, `in`, `nin`                                                                                      |
 | `boolean`  | Toggle         | `eq`, `ne`                                                                                                   |
 | `uuid`     | Text           | `eq`, `ne`, `in`, `nin`                                                                                      |
 
 When the user selects the `between` operator on a `number`, `datetime`, `date`, or `time` column, the filter chip renders a range input with **min** and **max** bounds.
+
+### Date Filters
+
+`date` columns use the app-shell [`DatePicker`](./date-picker.md) as the filter input (single value and `between` ranges) and present a friendlier, slimmer operator set:
+
+| Operator  | Label        | Meaning                    |
+| --------- | ------------ | -------------------------- |
+| `eq`      | _exact date_ | matches that calendar date |
+| `gte`     | _after_      | on or after (inclusive)    |
+| `lte`     | _before_     | on or before (inclusive)   |
+| `between` | _between_    | inclusive min–max range    |
+
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set and native inputs.)
 
 ### String Filter Case Sensitivity
 

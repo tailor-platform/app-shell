@@ -112,23 +112,24 @@ Segment order, first-day-of-week, month/weekday names, and 12/24-hour display al
 
 ### DateFieldProps
 
-| Prop                                                     | Type                                      | Description                             |
-| -------------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
-| `label`                                                  | `LocalizedString`                         | Field label                             |
-| `description`                                            | `LocalizedString`                         | Helper text                             |
-| `errorMessage`                                           | `LocalizedString`                         | Error text; also sets the invalid state |
-| `value` / `defaultValue`                                 | `DateValue \| null`                       | Controlled / uncontrolled value         |
-| `onChange`                                               | `(v: DateValue \| null) => void`          | Called on change; `null` when cleared   |
-| `granularity`                                            | `"day" \| "hour" \| "minute" \| "second"` | Drives the value type                   |
-| `minValue` / `maxValue`                                  | `DateValue`                               | Bounds                                  |
-| `isDateUnavailable`                                      | `(date: DateValue) => boolean`            | Mark dates unavailable                  |
-| `isDisabled` / `isReadOnly` / `isRequired` / `isInvalid` | `boolean`                                 | State flags                             |
-| `hourCycle`                                              | `12 \| 24`                                | Override AM/PM vs 24-hour               |
-| `placeholderValue`                                       | `DateValue`                               | Seeds unset segments                    |
-| `autoFocus`                                              | `boolean`                                 | Focus first segment on mount            |
-| `locale`                                                 | `string`                                  | BCP-47 locale override                  |
-| `name`                                                   | `string`                                  | Hidden input for form submission        |
-| `className`                                              | `string`                                  | Root element class                      |
+| Prop                                                     | Type                                      | Description                                                          |
+| -------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------- |
+| `label`                                                  | `LocalizedString`                         | Field label                                                          |
+| `description`                                            | `LocalizedString`                         | Helper text                                                          |
+| `errorMessage`                                           | `LocalizedString`                         | Error text; also sets the invalid state                              |
+| `value` / `defaultValue`                                 | `DateValue \| null`                       | Controlled / uncontrolled value                                      |
+| `onChange`                                               | `(v: DateValue \| null) => void`          | Called on change; `null` when cleared                                |
+| `granularity`                                            | `"day" \| "hour" \| "minute" \| "second"` | Drives the value type                                                |
+| `minValue` / `maxValue`                                  | `DateValue`                               | Bounds                                                               |
+| `isDateUnavailable`                                      | `(date: DateValue) => boolean`            | Mark dates unavailable                                               |
+| `isDisabled` / `isReadOnly` / `isRequired` / `isInvalid` | `boolean`                                 | State flags                                                          |
+| `hourCycle`                                              | `12 \| 24`                                | Override AM/PM vs 24-hour                                            |
+| `placeholderValue`                                       | `DateValue`                               | Seeds unset segments                                                 |
+| `autoFocus`                                              | `boolean`                                 | Focus first segment on mount                                         |
+| `locale`                                                 | `string`                                  | BCP-47 locale override                                               |
+| `name`                                                   | `string`                                  | Hidden input for form submission                                     |
+| `aria-label`                                             | `string`                                  | Accessible name when no visible `label` (e.g. compact filter inputs) |
+| `className`                                              | `string`                                  | Root element class                                                   |
 
 ### DatePickerProps
 

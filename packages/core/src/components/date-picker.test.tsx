@@ -26,6 +26,36 @@ function getEnabledCalendarCells() {
   );
 }
 
+// ─── Snapshots ──────────────────────────────────────────────────────────────
+// Visual-structure snapshots per the add-component convention. Inputs are
+// pinned (fixed `defaultValue`, no live "today" in view) so output is stable.
+
+describe("snapshots", () => {
+  it("DateField", () => {
+    const { container } = render(<DateField label="Invoice date" />);
+    expect(container.innerHTML).toMatchSnapshot();
+  });
+
+  it("DateField — invalid with error", () => {
+    const { container } = render(
+      <DateField label="Date" errorMessage="Required" description="Pick a date" />,
+    );
+    expect(container.innerHTML).toMatchSnapshot();
+  });
+
+  it("DatePicker — closed", () => {
+    const { container } = render(<DatePicker label="Ship date" />);
+    expect(container.innerHTML).toMatchSnapshot();
+  });
+
+  it("Calendar — pre-selected", () => {
+    const { container } = render(
+      <Calendar aria-label="Select date" defaultValue={parseDate("2025-06-15") as CalendarDate} />,
+    );
+    expect(container.innerHTML).toMatchSnapshot();
+  });
+});
+
 // ─── DateField ─────────────────────────────────────────────────────────────────
 
 describe("DateField", () => {
@@ -254,15 +284,13 @@ describe("Calendar", () => {
     expect(tabbable[0].textContent).toBe("15");
   });
 
-  it("shows a focus ring (inline outline) when a day cell is focused", () => {
+  it("carries a focus-ring utility class on day cells", () => {
     render(
       <Calendar aria-label="Select date" defaultValue={parseDate("2025-06-15") as CalendarDate} />,
     );
     const cell = getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
-    cell.focus();
-    expect(cell.style.outline).toContain("var(--ring)");
-    cell.blur();
-    expect(cell.style.outline).toBe("");
+    // Focus styling is the same `ring` utility used by Button/inputs.
+    expect(cell.className).toMatch(/focus:ring/);
   });
 
   it("keeps focus on the month nav button when changing months", async () => {

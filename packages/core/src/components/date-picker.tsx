@@ -30,9 +30,10 @@ const calendarCellVariants = cva(
           // Interaction states use native pseudo-classes (the cell is a real
           // <button>); the boolean data-* attributes below are the ones we set.
           "astw:hover:bg-accent astw:hover:text-accent-foreground",
-          // Focus ring is defined unlayered in globals.css (see the date-component
-          // focus block) so it reliably beats the global `* { outline-color }`
-          // base rule. Roving focus moves programmatically during keyboard nav.
+          // Roving focus moves programmatically during keyboard nav, so key the
+          // ring off :focus (not :focus-visible) so it shows on popover open too.
+          // relative+z-10 lifts the ring above adjacent cells (no gap between).
+          "astw:outline-none astw:focus:relative astw:focus:z-10 astw:focus:ring-ring/50 astw:focus:ring-[3px]",
           "astw:active:scale-95",
           "astw:data-[selected]:bg-primary astw:data-[selected]:text-primary-foreground",
           "astw:data-[selected]:hover:bg-primary/90",
@@ -49,44 +50,14 @@ const calendarCellVariants = cva(
   },
 );
 
+// Keyboard focus ring — the same `ring` treatment used by Button / inputs.
 const navButtonClasses = cn(
   "astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-sm astw:outline-none",
   "astw:text-muted-foreground",
   "astw:hover:bg-accent astw:hover:text-accent-foreground",
+  "astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
   "astw:disabled:pointer-events-none astw:disabled:opacity-50",
 );
-
-// Focus ring applied via focus/blur events rather than a CSS `:focus` rule.
-// Rationale: the global `* { outline-color }` base style + Tailwind's @layer
-// ordering make a plain `:focus` outline unreliable to override, and roving
-// focus moves programmatically. Setting the outline inline on the focus event
-// is bulletproof across the cascade.
-const RING_OUTLINE = "2px solid var(--ring)";
-
-function showFocusRing(el: HTMLElement, offset: string) {
-  el.style.outline = RING_OUTLINE;
-  el.style.outlineOffset = offset;
-}
-function hideFocusRing(el: HTMLElement) {
-  el.style.outline = "";
-  el.style.outlineOffset = "";
-}
-/** Chrome buttons (nav, trigger): only show on keyboard focus, not mouse. */
-function chromeFocusProps(offset = "2px") {
-  return {
-    onFocus: (e: React.FocusEvent<HTMLElement>) => {
-      // Skip the focus-visible heuristic when unsupported (older engines).
-      let visible = true;
-      try {
-        visible = e.currentTarget.matches(":focus-visible");
-      } catch {
-        visible = true;
-      }
-      if (visible) showFocusRing(e.currentTarget, offset);
-    },
-    onBlur: (e: React.FocusEvent<HTMLElement>) => hideFocusRing(e.currentTarget),
-  };
-}
 
 // ─── Field labels / description / error ───────────────────────────────────────
 
@@ -338,6 +309,7 @@ const triggerClasses = cn(
   "astw:ml-1 astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-sm astw:outline-none",
   "astw:text-muted-foreground",
   "astw:hover:text-foreground",
+  "astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
   "astw:disabled:pointer-events-none astw:disabled:opacity-50",
 );
 
@@ -354,7 +326,6 @@ export function DatePickerPopoverTrigger({
       data-slot="date-picker-button"
       aria-label="Open calendar"
       className={cn(triggerClasses, className)}
-      {...chromeFocusProps()}
       {...props}
     >
       <CalendarIcon className="astw:size-4" />
@@ -445,7 +416,6 @@ export function CalendarView({
           disabled={state.prevDisabled}
           onClick={state.previousMonth}
           className={navButtonClasses}
-          {...chromeFocusProps()}
         >
           <ChevronLeftIcon className="astw:size-4" />
         </button>
@@ -464,7 +434,6 @@ export function CalendarView({
           disabled={state.nextDisabled}
           onClick={state.nextMonth}
           className={navButtonClasses}
-          {...chromeFocusProps()}
         >
           <ChevronRightIcon className="astw:size-4" />
         </button>
@@ -549,15 +518,7 @@ function CalendarCell({
         data-today={day.isToday || undefined}
         onClick={interactive ? onSelect : undefined}
         onKeyDown={interactive ? onKeyDown : undefined}
-        onFocus={(e) => {
-          onFocus();
-          e.currentTarget.style.zIndex = "10";
-          showFocusRing(e.currentTarget, "-2px");
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.zIndex = "";
-          hideFocusRing(e.currentTarget);
-        }}
+        onFocus={onFocus}
         className={calendarCellVariants()}
       >
         {day.date.day}

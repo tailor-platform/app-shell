@@ -502,7 +502,7 @@ describe("DateFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -514,7 +514,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
 
     // The editor uses the app-shell DatePicker: a labelled group of spinbuttons.
     expect(
@@ -529,7 +529,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
     await screen.findByRole("button", { name: "Apply" });
 
     await typeDateInto(user, 0, "2026-06-15");
@@ -545,7 +545,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
     await screen.findByRole("button", { name: "Apply" });
 
     await clearDateIn(user, 0);
@@ -571,7 +571,9 @@ describe("DateFilterEditor", () => {
       />,
       { wrapper },
     );
-    expect(screen.getByText(/Created At exact date 2025-01-01/)).toBeDefined();
+    // Operator label is friendly, and the value is locale-formatted (not raw ISO).
+    expect(screen.getByText(/Created At exact date Jan 1, 2025/)).toBeDefined();
+    expect(screen.queryByText(/2025-01-01/)).toBeNull();
 
     rerender(
       <TestFilters
@@ -579,7 +581,7 @@ describe("DateFilterEditor", () => {
         columns={[dateColumn]}
       />,
     );
-    expect(screen.getByText(/Created At after 2025-02-01/)).toBeDefined();
+    expect(screen.getByText(/Created At after Feb 1, 2025/)).toBeDefined();
     expect(screen.queryByText(/greater than/)).toBeNull();
 
     rerender(
@@ -588,7 +590,7 @@ describe("DateFilterEditor", () => {
         columns={[dateColumn]}
       />,
     );
-    expect(screen.getByText(/Created At before 2025-03-01/)).toBeDefined();
+    expect(screen.getByText(/Created At before Mar 1, 2025/)).toBeDefined();
   });
 });
 
@@ -897,7 +899,7 @@ describe("TemporalFilterEditor (between)", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Created At between 2025-01-01 - 2025-12-31/,
+        name: /Created At between/,
       }),
     );
 
@@ -920,7 +922,7 @@ describe("TemporalFilterEditor (between)", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Created At between 2025-01-01 - 2025-12-31/,
+        name: /Created At between/,
       }),
     );
     await screen.findByRole("button", { name: "Apply" });
@@ -950,7 +952,7 @@ describe("TemporalFilterEditor (between)", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Created At between 2025-01-01 - 2025-12-31/,
+        name: /Created At between/,
       }),
     );
     await screen.findByRole("button", { name: "Apply" });

@@ -8,7 +8,8 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
 import { DatePicker } from "@/components/date-picker-standalone";
-import { parseDate } from "@internationalized/date";
+import { parseDate, DateFormatter } from "@internationalized/date";
+import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import type { CollectionControl, Filter, FilterConfig, FilterOperator } from "@/types/collection";
@@ -548,6 +549,7 @@ function FilterChip({
   control: CollectionControl;
 }) {
   const t = useDataTableT();
+  const { locale } = useResolvedLocale();
   const config = column.filter;
   const label = column.label ?? config.field;
 
@@ -565,7 +567,7 @@ function FilterChip({
     control.removeFilter(config.field);
   }, [control, config.field]);
 
-  const chipLabel = getChipDisplayLabel(label, filter, config, t);
+  const chipLabel = getChipDisplayLabel(label, filter, config, t, locale);
 
   return (
     <div data-slot="data-table-filter-chip" className="astw:flex astw:items-center astw:gap-0">
@@ -1370,10 +1372,28 @@ function getOperatorLabel(
   }
 }
 
+/** Format an ISO "YYYY-MM-DD" value as a locale-appropriate medium date. */
+function formatDateValue(iso: string, locale: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  try {
+    // Format in UTC against a UTC-anchored instant so the calendar date never
+    // shifts across timezones.
+    return new DateFormatter(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(parseDate(iso).toDate("UTC"));
+  } catch {
+    return iso;
+  }
+}
+
 function formatFilterValue(
   filter: Filter,
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
+  locale: string,
 ): string {
   if (config.type === "enum" && Array.isArray(filter.value)) {
     const labels = filter.value
@@ -1392,6 +1412,18 @@ function formatFilterValue(
     const min = range.min != null ? String(range.min) : "";
     const max = range.max != null ? String(range.max) : "";
     return [min, max].filter(Boolean).join(" - ");
+  }
+
+  if (config.type === "date") {
+    if (filter.operator === "between") {
+      const range = filter.value as { min?: unknown; max?: unknown } | null;
+      if (!range || typeof range !== "object") return "";
+      const min = range.min != null ? formatDateValue(String(range.min), locale) : "";
+      const max = range.max != null ? formatDateValue(String(range.max), locale) : "";
+      return [min, max].filter(Boolean).join(" - ");
+    }
+    if (filter.value == null || filter.value === "") return "";
+    return formatDateValue(String(filter.value), locale);
   }
 
   if (isTemporalFilterType(config.type) && filter.operator === "between") {
@@ -1415,8 +1447,9 @@ function getChipDisplayLabel(
   filter: Filter,
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
+  locale: string,
 ): string {
-  const valueLabel = formatFilterValue(filter, config, t);
+  const valueLabel = formatFilterValue(filter, config, t, locale);
   if (!valueLabel) return columnLabel;
 
   const operatorLabel = getOperatorLabel(filter.operator, t, config.type);

@@ -1,8 +1,6 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
-import { SunIcon } from "lucide-react";
 import { AppShellOutlet } from "@/components/content";
-import { Button } from "@/components/button";
-import { useTheme } from "@/contexts/theme-context";
+import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { DefaultSidebar } from "./default-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 
@@ -68,10 +66,6 @@ const HidableSidebarTrigger = () => {
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
   const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
-  const themeContext = useTheme();
-  const toggleTheme = () => {
-    themeContext.setTheme(themeContext.theme === "dark" ? "light" : "dark");
-  };
 
   return (
     <SidebarProvider
@@ -89,9 +83,7 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
                 <DynamicBreadcrumb />
               </div>
               <div className="astw:flex astw:items-center astw:gap-2">
-                <Button variant="outline" size="icon" onClick={toggleTheme}>
-                  <SunIcon />
-                </Button>
+                <AppearanceSwitcher />
               </div>
             </div>
           </header>

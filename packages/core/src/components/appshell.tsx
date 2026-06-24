@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider } from "@/contexts/theme-context";
+import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -51,12 +51,12 @@ type SharedAppShellProps = React.PropsWithChildren<{
   /**
    * Browser-tab favicon href. Accepts anything valid on `<link rel="icon">` —
    * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the
-   * `<link rel="icon">` for you (React hoists it into `<head>`); when omitted,
-   * the bundled Tailor favicon is used.
+   * `<link rel="icon">` for you (React hoists it into `<head>`). When omitted,
+   * AppShell preserves any favicon link already declared by the host page and
+   * only falls back to the bundled Tailor favicon when none exists.
    *
-   * Let AppShell own this tag — don't also declare a static
-   * `<link rel="icon">` in `index.html`, or the two will coexist (React only
-   * de-duplicates stylesheets, not tags it didn't render).
+   * If you pass this prop, prefer not to also declare a static
+   * `<link rel="icon">` in `index.html`.
    */
   favicon?: string;
 
@@ -195,6 +195,16 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * ```
    */
   searchSources?: readonly SearchSource[];
+
+  /**
+   * Initial color mode before any value is loaded from localStorage (`appshell-ui-theme`).
+   * This is the end-user accessibility preference; does not replace a stored preference.
+   *
+   * One of **`light`**, **`dark`**, or **`system`** (follows the OS).
+   *
+   * @default "system"
+   */
+  defaultColorTheme?: ColorTheme;
 }>;
 
 /**
@@ -341,7 +351,7 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
+            <ThemeProvider defaultColorTheme={props.defaultColorTheme}>
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

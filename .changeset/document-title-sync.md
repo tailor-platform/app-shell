@@ -9,4 +9,4 @@ Manage the browser tab from AppShell — title and favicon.
 
 Both are rendered declaratively (React 19 hoists `<title>`/`<link rel="icon">` into `<head>`), so it works in client-only apps, streaming SSR, and Server Components.
 
-**Migration for consumers**: AppShell now owns these tags. Pass `title` (and optionally `favicon`) to `<AppShell>`, and **remove the static `<title>` and `<link rel="icon">` from your `index.html`** — React does not de-duplicate against tags it did not render, so leaving them produces a duplicate `<title>`/favicon. Delete any custom `document.title` effect you had.
+If your app already updates `document.title` manually, you can drop that wiring and let AppShell own the tab title. A host-page `<link rel="icon">` can remain in place unless you explicitly pass the new `favicon` prop.

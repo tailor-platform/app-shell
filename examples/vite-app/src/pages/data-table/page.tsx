@@ -17,14 +17,17 @@ import { Table2 } from "lucide-react";
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue";
 
-interface Invoice {
+// A `type` (not `interface`) so it satisfies `Record<string, unknown>` —
+// `createColumnHelper`/`useDataTable`'s row constraint. Interfaces lack the
+// implicit index signature that type aliases of object literals have.
+type Invoice = {
   id: string;
   customer: string;
   amount: number;
   status: InvoiceStatus;
   /** ISO date, "YYYY-MM-DD" — matches what the date filter / DatePicker emit. */
   dueDate: string;
-}
+};
 
 const CUSTOMERS = [
   "Acme Corp",

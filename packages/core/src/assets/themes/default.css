@@ -24,12 +24,6 @@
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-ring: var(--ring);
-  --shell-gradient-start: color-mix(
-    in srgb,
-    var(--shell-gradient-base) 55%,
-    var(--shell-gradient-tint)
-  );
-  --shell-gradient-end: var(--shell-gradient-tint);
 
   /* ── 4. SYSTEM ────────────────────────────────────────────────────────── */
   --background: rgba(250, 250, 250, 1);

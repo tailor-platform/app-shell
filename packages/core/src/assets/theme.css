@@ -16,7 +16,7 @@
  *   4. PALETTE        — optional: radius, charts, shadows, destructive.
  *
  * Inherited from default.css — do not duplicate in new palettes:
- *   --ring, --sidebar-*, --shell-gradient-start/end, --status-*, --alert-*.
+ *   --ring, --sidebar-*, --status-*, --alert-*.
  *
  * Light/dark mode is controlled separately via `.dark` on <html>.
  * Palette selection is by CSS import; there is no runtime palette prop.

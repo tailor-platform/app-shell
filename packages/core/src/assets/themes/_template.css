@@ -17,7 +17,7 @@
  *    `@tailor-platform/app-shell/styles` in the consuming app.
  *
  * DO NOT SET (inherited from `:root` in default.css):
- *   --ring, --sidebar-*, --shell-gradient-start/end, --status-*, --alert-*
+ *   --ring, --sidebar-*, --status-*, --alert-*
  *
  * PREVIEW: `/custom-page/color` in the Next.js example app.
  * ═══════════════════════════════════════════════════════════════════════════

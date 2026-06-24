@@ -36,6 +36,61 @@ To avoid this situation, and to ensure correct style resolution, AppShell compon
 
 This is important to note for developing in AppShell.
 
+## Color Themes (Light / Dark / System)
+
+AppShell supports three color modes: `light`, `dark`, and `system` (follows the OS setting).
+
+Set the initial mode via the `defaultColorTheme` prop on `<AppShell>`. The user's selection is persisted to `localStorage` and restored on subsequent visits:
+
+```tsx
+<AppShell defaultColorTheme="system" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+Use the [`useTheme`](../api/use-theme.md) hook to read or change the theme at runtime:
+
+```tsx
+import { useTheme } from "@tailor-platform/app-shell";
+
+function ThemeToggle() {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  return (
+    <button onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
+      Switch to {resolvedTheme === "dark" ? "light" : "dark"} mode
+    </button>
+  );
+}
+```
+
+Drop the pre-built [`AppearanceSwitcher`](../components/appearance-switcher.md) component anywhere in your layout for a ready-made light/dark/system toggle:
+
+```tsx
+import { AppearanceSwitcher } from "@tailor-platform/app-shell";
+
+<AppearanceSwitcher />;
+```
+
+## Theme Palettes
+
+AppShell ships three palettes, each with light and dark variants:
+
+| Palette   | CSS import                                                     |
+| --------- | -------------------------------------------------------------- |
+| `default` | Included automatically via `@tailor-platform/app-shell/styles` |
+| `cream`   | `@tailor-platform/app-shell/themes/cream`                      |
+| `bloom`   | `@tailor-platform/app-shell/themes/bloom`                      |
+
+Select a palette by importing its CSS file — no prop needed. Import it in your global CSS **after** `@tailor-platform/app-shell/styles`:
+
+```css
+@import "@tailor-platform/app-shell/styles";
+@import "@tailor-platform/app-shell/themes/cream"; /* overrides default palette */
+@import "tailwindcss";
+```
+
+Only import one palette at a time.
+
 ## Z-Index Layering
 
 AppShell defines CSS custom properties for z-index values so you can adjust the stacking order to integrate with other libraries or overlays in your application.

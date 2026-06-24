@@ -176,6 +176,8 @@ const ColorDemoPage = () => {
               <ColorSwatch name="chart-5" bgVar="--chart-5" fgVar="--foreground" />
             </SwatchSection>
 
+            {/* Show author-facing gradient inputs (`base` + `tint`) here.
+                `start` / `end` are derived from them in the theme CSS. */}
             <SwatchSection title="Shell gradient">
               <ColorSwatch
                 name="shell-gradient-base"
@@ -290,6 +292,8 @@ const ColorDemoPage = () => {
                     padding: "0.75rem",
                     borderRadius: "var(--radius-md)",
                     backgroundColor: "var(--shell-gradient-base)",
+                    // Keep the preview formula inline so this demo reads the
+                    // same author-facing tokens palette files set: `base` + `tint`.
                     backgroundImage: `linear-gradient(
                       to bottom,
                       color-mix(in srgb, var(--shell-gradient-base) 55%, var(--shell-gradient-tint)) 0%,

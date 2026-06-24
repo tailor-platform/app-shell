@@ -83,6 +83,38 @@ describe("DateField", () => {
       expect(last?.toString()).toBe("2025-06-15");
     });
   });
+
+  it("auto-advances across segments as a full date is typed (no explicit tabbing)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    // Locale here is "en" → MM/DD/YYYY. Typing carries across segments:
+    // "02" fills+advances month, "15" fills+advances day, "2025" fills year.
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02152025");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-02-15");
+    });
+  });
+
+  it("accumulates a non-leading-zero entry (2 then 9 → 29, not 9)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("12");
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2025");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-29");
+    });
+  });
 });
 
 // ─── DatePicker ───────────────────────────────────────────────────────────────

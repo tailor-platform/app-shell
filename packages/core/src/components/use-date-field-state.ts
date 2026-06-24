@@ -43,6 +43,19 @@ const TIME_BY_GRANULARITY: Record<Granularity, EditableSegmentType[]> = {
   second: ["hour", "minute", "second"],
 };
 
+// Max digits a segment accepts before it's "full" and auto-advances. A leading
+// zero counts, so typing "02" (2 digits) completes the day and advances —
+// while typing "2" then "9" still builds 29.
+const SEGMENT_MAX_DIGITS: Record<EditableSegmentType, number> = {
+  year: 4,
+  month: 2,
+  day: 2,
+  hour: 2,
+  minute: 2,
+  second: 2,
+  dayPeriod: 0,
+};
+
 type Fields = Partial<Record<EditableSegmentType, number>>;
 
 export interface Segment {
@@ -291,7 +304,12 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   const setDigit = useCallback(
-    (type: EditableSegmentType, digit: number, replace = false): { advance: boolean } => {
+    (
+      type: EditableSegmentType,
+      digit: number,
+      replace = false,
+      digitCount = 1,
+    ): { advance: boolean } => {
       if (isReadOnly || type === "dayPeriod") return { advance: false };
       const { min, max } = getLimits(type);
       // `replace` (first digit after the segment gains focus) starts fresh
@@ -299,8 +317,10 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const current = replace ? undefined : fields[type];
       let next = current != null && current * 10 + digit <= max ? current * 10 + digit : digit;
       if (next < min) next = digit;
-      // Auto-advance once the segment can't accept another digit.
-      const advance = next * 10 > max;
+      // Auto-advance when the segment can't accept another digit (value too
+      // large) OR the field is digit-width-full (so a leading-zero entry like
+      // "02" advances, while "2" still waits for a possible second digit).
+      const advance = next * 10 > max || digitCount >= SEGMENT_MAX_DIGITS[type];
       commit({ ...fields, [type]: next });
       return { advance };
     },

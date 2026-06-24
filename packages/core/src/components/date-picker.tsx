@@ -141,6 +141,7 @@ interface DateInputGroupProps {
     type: Exclude<Segment["type"], "literal">,
     digit: number,
     replace?: boolean,
+    digitCount?: number,
   ) => { advance: boolean };
   setDayPeriod: (pm: boolean) => void;
   clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
@@ -154,6 +155,8 @@ interface DateInputGroupProps {
   describedById?: string;
   className?: string;
   trigger?: React.ReactNode;
+  /** Ref to the group element — used to anchor the popover to the whole field. */
+  groupRef?: React.Ref<HTMLDivElement>;
 }
 
 export function DateInputGroup({
@@ -171,11 +174,13 @@ export function DateInputGroup({
   describedById,
   className,
   trigger,
+  groupRef,
 }: DateInputGroupProps) {
   const editableRefs = React.useRef<(HTMLDivElement | null)[]>([]);
-  // The segment that just gained focus and hasn't received a digit yet. Its
-  // first digit replaces the current value rather than accumulating onto it.
-  const freshSegmentRef = React.useRef<Segment["type"] | null>(null);
+  // Digits typed into the currently-focused segment this session. Reset on
+  // focus; the first digit (count 0) replaces, and the count decides when the
+  // segment is "full" and should auto-advance.
+  const typedCountRef = React.useRef(0);
 
   React.useEffect(() => {
     if (autoFocus && !isDisabled) editableRefs.current[0]?.focus();
@@ -249,9 +254,9 @@ export function DateInputGroup({
 
     if (/^\d$/.test(e.key)) {
       e.preventDefault();
-      const replace = freshSegmentRef.current === type;
-      freshSegmentRef.current = null;
-      const { advance } = setDigit(type, Number(e.key), replace);
+      const count = typedCountRef.current;
+      typedCountRef.current = count + 1;
+      const { advance } = setDigit(type, Number(e.key), count === 0, count + 1);
       if (advance) focusEditable(editableIndex + 1);
     }
   };
@@ -259,6 +264,7 @@ export function DateInputGroup({
   return (
     // Deliberate APG date-field pattern: a labelled group wrapping spinbutton segments.
     <div
+      ref={groupRef}
       role="group"
       data-slot="date-picker-group"
       aria-labelledby={labelId}
@@ -309,7 +315,7 @@ export function DateInputGroup({
               aria-valuenow={segment.value}
               aria-valuetext={segment.isPlaceholder ? "Empty" : segment.text}
               onFocus={() => {
-                freshSegmentRef.current = segment.type;
+                typedCountRef.current = 0;
               }}
               onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
               className={cn(
@@ -571,14 +577,27 @@ interface DatePopoverProps {
   field: React.ReactNode;
   children: React.ReactNode;
   ariaLabel?: string;
+  /**
+   * Element to position the calendar against. Defaults to the trigger; pass the
+   * field group so the calendar aligns to the field's edge (not the icon),
+   * overlapping it horizontally and shifting inward near the viewport edge.
+   */
+  anchor?: React.RefObject<HTMLElement | null>;
 }
 
-export function DatePopover({ open, onOpenChange, field, children, ariaLabel }: DatePopoverProps) {
+export function DatePopover({
+  open,
+  onOpenChange,
+  field,
+  children,
+  ariaLabel,
+  anchor,
+}: DatePopoverProps) {
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
       {field}
       <Popover.Portal>
-        <Popover.Positioner sideOffset={4} side="bottom" align="start">
+        <Popover.Positioner anchor={anchor} sideOffset={4} side="bottom" align="start">
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup
             role="dialog"

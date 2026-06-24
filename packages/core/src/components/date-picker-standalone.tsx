@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import type { CalendarDate, DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
@@ -240,6 +240,7 @@ function DatePicker<T extends DateValue = DateValue>({
   const derivedInvalid = !!errorText || !!isInvalid;
 
   const [open, setOpen] = useState(false);
+  const fieldRef = useRef<HTMLDivElement>(null);
   const [val, setVal] = useControlledState<DateValue | null>(
     value ?? undefined,
     defaultValue ?? null,
@@ -284,6 +285,7 @@ function DatePicker<T extends DateValue = DateValue>({
         open={open}
         onOpenChange={setOpen}
         ariaLabel={popoverAriaLabel}
+        anchor={fieldRef}
         field={
           <DateInputGroup
             segments={fieldState.segments}
@@ -298,6 +300,7 @@ function DatePicker<T extends DateValue = DateValue>({
             labelId={labelText ? labelId : undefined}
             ariaLabel={ariaLabel}
             describedById={describedBy}
+            groupRef={fieldRef}
             trigger={<DatePickerPopoverTrigger disabled={isDisabled} />}
           />
         }

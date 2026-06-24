@@ -89,9 +89,7 @@ const createRoute = (
 };
 
 const routesFromModules = (modules: Modules) =>
-  modules.map((module) =>
-    createRoute(module, module.resources, module.errorBoundary),
-  );
+  modules.map((module) => createRoute(module, module.resources, module.errorBoundary));
 
 type CreateContentRoutesParams = {
   modules: Modules;
@@ -119,13 +117,7 @@ export const createContentRoutes = ({
           {
             path: "settings",
             index: true,
-            Component: () => (
-              <Navigate
-                to={settingsResources[0].path}
-                relative="path"
-                replace
-              />
-            ),
+            Component: () => <Navigate to={settingsResources[0].path} relative="path" replace />,
           },
           {
             path: "settings",

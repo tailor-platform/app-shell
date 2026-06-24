@@ -40,7 +40,7 @@ function App() {
 ### title
 
 - **Type:** `string` (optional)
-- **Description:** Application title displayed in the sidebar header
+- **Description:** Application title displayed in the sidebar header. Also used as the browser tab title suffix — AppShell keeps `document.title` in sync with the active route as `"<page> · <title>"`, where `<page>` is the current breadcrumb leaf (including any [`useOverrideBreadcrumb`](../api/use-override-breadcrumb.md) override). When omitted, the tab shows just the page name.
 
 ```tsx
 <AppShell title="My ERP App" modules={modules}>
@@ -60,6 +60,20 @@ import { Building } from "lucide-react";
   {/* ... */}
 </AppShell>;
 ```
+
+### favicon
+
+- **Type:** `string` (optional)
+- **Default:** Bundled Tailor favicon
+- **Description:** Browser-tab favicon href. Accepts any value valid for `<link rel="icon">` — a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the `<link rel="icon">` tag for you; when omitted, the bundled Tailor favicon is used.
+
+```tsx
+<AppShell favicon="/favicon.ico" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+> **Note:** Let AppShell own the favicon tag. Do not also declare a static `<link rel="icon">` in `index.html` — React only de-duplicates stylesheets, not tags it did not render, so both will coexist and produce a duplicate favicon.
 
 ### basePath
 
@@ -159,6 +173,20 @@ const settingsResources = [
 ```
 
 Settings appear in a dropdown menu in the sidebar header, accessible via the settings icon.
+
+### defaultColorTheme
+
+- **Type:** `"light" | "dark" | "system"` (optional)
+- **Default:** `"system"`
+- **Description:** Initial color mode applied before any value is loaded from `localStorage`. Does not override a stored user preference. `"system"` follows the OS light/dark setting.
+
+```tsx
+<AppShell defaultColorTheme="light" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+The end user's selection (via [`AppearanceSwitcher`](./appearance-switcher.md) or a custom toggle using [`useTheme`](../api/use-theme.md)) is persisted automatically and takes precedence over this prop on subsequent visits.
 
 ### locale
 
@@ -410,10 +438,12 @@ function App() {
     <AppShell
       title="My ERP App"
       icon={<Building />}
+      favicon="/favicon.ico"
       basePath="/app"
       modules={modules}
       settingsResources={settingsResources}
       locale="en"
+      defaultColorTheme="system"
       errorBoundary={ErrorBoundary}
       contextData={{ currentUser }}
     >

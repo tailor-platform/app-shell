@@ -28,7 +28,7 @@
   "type": "module",
   "exports": {
     "./styles": "./dist/app-shell.css",
-    "./theme.css": "./dist/theme.css",
+    "./themes/*": "./dist/themes/*.css",
     ".": {
       "types": "./dist/app-shell.d.ts",
       "default": "./dist/app-shell.js"

@@ -17,7 +17,7 @@ import {
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
-import { ThemeProvider } from "@/contexts/theme-context";
+import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -33,7 +33,13 @@ import type { PageEntry } from "@/fs-routes/types";
  */
 type SharedAppShellProps = React.PropsWithChildren<{
   /**
-   * App shell title
+   * App shell title.
+   *
+   * Also used as the suffix of the browser tab title: AppShell keeps
+   * `document.title` in sync with the active page as `"<page> · <title>"`
+   * (the page part is the current breadcrumb leaf, including any
+   * {@link useOverrideBreadcrumb} override). When omitted, the tab shows just
+   * the page title.
    */
   title?: string;
 
@@ -41,6 +47,18 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * App shell icon
    */
   icon?: React.ReactNode;
+
+  /**
+   * Browser-tab favicon href. Accepts anything valid on `<link rel="icon">` —
+   * a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the
+   * `<link rel="icon">` for you (React hoists it into `<head>`). When omitted,
+   * AppShell preserves any favicon link already declared by the host page and
+   * only falls back to the bundled Tailor favicon when none exists.
+   *
+   * If you pass this prop, prefer not to also declare a static
+   * `<link rel="icon">` in `index.html`.
+   */
+  favicon?: string;
 
   /**
    * Base path for the app shell
@@ -185,6 +203,16 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * ```
    */
   searchSources?: readonly SearchSource[];
+
+  /**
+   * Initial color mode before any value is loaded from localStorage (`appshell-ui-theme`).
+   * This is the end-user accessibility preference; does not replace a stored preference.
+   *
+   * One of **`light`**, **`dark`**, or **`system`** (follows the OS).
+   *
+   * @default "system"
+   */
+  defaultColorTheme?: ColorTheme;
 }>;
 
 /**
@@ -297,8 +325,11 @@ export const AppShell = (props: AppShellProps) => {
 
   // Memoize context values to prevent unnecessary re-renders
   const configValue = useMemo(
-    () => (configurations ? { title: props.title, icon: props.icon, configurations } : null),
-    [props.title, props.icon, configurations],
+    () =>
+      configurations
+        ? { title: props.title, icon: props.icon, favicon: props.favicon, configurations }
+        : null,
+    [props.title, props.icon, props.favicon, configurations],
   );
 
   const dataValue = useMemo(
@@ -336,7 +367,7 @@ export const AppShell = (props: AppShellProps) => {
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider defaultTheme="system" storageKey="appshell-ui-theme">
+            <ThemeProvider defaultColorTheme={props.defaultColorTheme}>
               <RouterContainer>
                 {props.children}
                 <BuiltInCommandPalette />

@@ -34,6 +34,7 @@
   body {
     @apply astw:font-sans astw:antialiased astw:bg-background astw:text-foreground;
   }
+
   ::-webkit-scrollbar {
     @apply astw:w-2 astw:h-2 astw:bg-muted;
   }
@@ -42,5 +43,36 @@
   }
   ::-webkit-scrollbar-corner {
     @apply astw:bg-muted-foreground;
+  }
+
+  /*
+   * WebKit / Firefox autofill: override system yellow so fills follow design tokens
+   * (typically white card surfaces in cream / bloom; --card resolves per theme).
+   */
+  input:is(:-webkit-autofill, :autofill),
+  textarea:is(:-webkit-autofill, :autofill),
+  select:is(:-webkit-autofill, :autofill) {
+    -webkit-box-shadow: 0 0 0 1000px var(--card) inset !important;
+    box-shadow: 0 0 0 1000px var(--card) inset !important;
+    caret-color: var(--foreground);
+    transition: background-color 9999s ease-out 0s;
+  }
+}
+
+@layer utilities {
+  /*
+   * Sidebar active item — hairline border (~0.5px @ 30% black). Wrapper components in
+   * `components/sidebar/*` apply the active state via direct `bg-sidebar-accent` classes
+   * (not the `data-active` attribute), so target the class signature. Inset box-shadow
+   * (not outline) because Tailwind's `outline-hidden` utility sets a transparent 2px
+   * outline that would override us. Lives in `@layer utilities` to win the cascade.
+   */
+  :is(
+    [data-slot="sidebar-menu-button"],
+    [data-slot="sidebar-menu-sub-button"]
+  )[class~="astw:bg-sidebar-accent"] {
+    outline: 0.5px solid var(--border);
+    outline-offset: -0.5px;
+    box-shadow: var(--semantic-shadow-xs);
   }
 }

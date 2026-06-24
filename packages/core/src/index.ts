@@ -32,7 +32,8 @@ export {
   useResolvedLocale,
   useTimeZone,
 } from "./contexts/appshell-context";
-export { useTheme } from "./contexts/theme-context";
+export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";
+export { AppearanceSwitcher } from "./components/appearance-switcher";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
 export {
   AuthProvider,

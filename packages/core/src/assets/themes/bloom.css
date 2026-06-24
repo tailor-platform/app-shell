@@ -1,0 +1,159 @@
+/**
+ * Bloom — lavender shell + indigo brand.
+ * Branded palette: overrides brand/system/palette tokens; shared aliases +
+ * semantic tokens inherit from default.css.
+ */
+:root {
+  color-scheme: light;
+
+  /* ── 1. BRAND ─────────────────────────────────────────────────────────── */
+  --primary: rgba(83, 90, 232, 1);
+  --primary-foreground: rgba(255, 255, 255, 1);
+  --secondary: rgb(216, 217, 244);
+  --secondary-foreground: rgba(23, 23, 23, 1);
+  --accent: rgb(233, 234, 248);
+  --accent-foreground: rgba(16, 18, 43, 1);
+
+  /* ── 2. SHELL GRADIENT ────────────────────────────────────────────────── */
+  --shell-gradient-base: rgba(239, 232, 255, 1);
+  --shell-gradient-tint: rgb(255, 255, 255);
+
+  /* ── 3. SYSTEM — brand-tinted surfaces ────────────────────────────────── */
+  --background: rgba(250, 250, 250, 1);
+  --foreground: rgba(16, 18, 43, 1);
+  --card: rgba(255, 255, 255, 1);
+  --card-foreground: rgba(16, 18, 43, 1);
+  --popover: rgba(255, 255, 255, 1);
+  --popover-foreground: rgba(16, 18, 43, 1);
+  --muted: rgba(246, 242, 255, 1);
+  --muted-foreground: rgba(16, 18, 43, 0.72);
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --sidebar: rgba(250, 250, 250, 1);
+  --sidebar-foreground: rgba(16, 18, 43, 1);
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+
+  /* ── 4. PALETTE ───────────────────────────────────────────────────────── */
+  --destructive: rgba(220, 38, 38, 1);
+  --radius: 1rem;
+  --chart-1: rgba(83, 90, 232, 1);
+  --chart-2: rgba(0, 151, 156, 1);
+  --chart-3: rgba(1, 55, 66, 1);
+  --chart-4: rgba(110, 95, 195, 1);
+  --chart-5: rgba(217, 119, 6, 1);
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(16 18 43 / 0.07);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(16 18 43 / 0.08), 0 1px 2px -1px rgb(16 18 43 / 0.06);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(16 18 43 / 0.1), 0 2px 4px -2px rgb(16 18 43 / 0.08);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(16 18 43 / 0.12), 0 4px 6px -4px rgb(83 90 232 / 0.1);
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  /* ── 1. BRAND (dark) ─────────────────────────────────────────────────── */
+  --primary: rgba(131, 138, 247, 1);
+  --primary-foreground: rgba(16, 18, 43, 1);
+  --secondary: rgb(45, 48, 72);
+  --secondary-foreground: rgba(248, 249, 252, 1);
+  --accent: rgb(50, 53, 72);
+  --accent-foreground: rgba(248, 249, 252, 1);
+
+  /* ── 2. SHELL GRADIENT (dark) ─────────────────────────────────────────── */
+  --shell-gradient-base: rgba(9, 10, 17, 1);
+  --shell-gradient-tint: rgb(16, 17, 26);
+
+  /* ── 3. SYSTEM (dark) ─────────────────────────────────────────────────── */
+  --background: rgba(10, 10, 10, 1);
+  --foreground: rgba(248, 249, 252, 1);
+  --card: rgba(26, 28, 42, 1);
+  --card-foreground: rgba(248, 249, 252, 1);
+  --popover: rgba(34, 37, 54, 1);
+  --popover-foreground: rgba(248, 249, 252, 1);
+  --muted: rgba(36, 39, 58, 1);
+  --muted-foreground: rgba(180, 183, 200, 1);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --sidebar: rgba(10, 10, 10, 1);
+  --sidebar-foreground: rgba(248, 249, 252, 1);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+
+  /* ── 4. PALETTE (dark) ────────────────────────────────────────────────── */
+  --destructive: rgba(248, 113, 113, 1);
+  --chart-1: rgba(131, 138, 247, 1);
+  --chart-2: rgba(45, 191, 196, 1);
+  --chart-3: rgba(94, 234, 212, 1);
+  --chart-4: rgba(167, 139, 250, 1);
+  --chart-5: rgba(251, 191, 36, 1);
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * Structural overrides — shell gradient, transparent chrome, squircle corners,
+ * tighter heading rhythm. Apply in both modes (gradient reads `--shell-gradient-base`
+ * + the per-mode `--shell-gradient-tint`).
+ *
+ * These must NOT be in a @layer so they override Tailwind utilities (which are layered).
+ */
+
+html {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--shell-gradient-base);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--shell-gradient-base) 55%, var(--shell-gradient-tint)) 0%,
+    color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
+    color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
+    color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
+    color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
+    var(--shell-gradient-tint) 70%,
+    var(--shell-gradient-tint) 100%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+html :where(h1, h2, h3, h4, h5, h6) {
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+@supports (corner-shape: squircle) {
+  html * {
+    corner-shape: squircle;
+  }
+  html [class*="rounded-full"] {
+    corner-shape: round;
+  }
+}
+
+html body {
+  background-color: transparent;
+  background-image: none;
+}
+
+html [data-slot="sidebar-wrapper"],
+html [data-slot="sidebar-inner"],
+html main[data-slot="sidebar-inset"],
+html
+  [data-slot="sidebar"][class*="bg-sidebar"]:not([data-mobile="true"]):not(
+    [data-icon-mode="true"]
+  ) {
+  background-color: transparent;
+}
+
+html [data-slot="button"][class*="astw:bg-background"][class*="astw:border"] {
+  background-color: transparent;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+html [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}

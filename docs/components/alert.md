@@ -78,7 +78,7 @@ Each variant automatically renders a contextual icon:
 
 | Variant   | Automatic Icon      | Color palette   |
 | --------- | ------------------- | --------------- |
-| `neutral` | Message circle icon | Secondary/muted |
+| `neutral` | Message circle icon | Muted surface   |
 | `success` | Check circle icon   | Green           |
 | `warning` | Alert triangle icon | Yellow          |
 | `error`   | X circle icon       | Red/destructive |

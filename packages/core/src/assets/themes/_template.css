@@ -13,12 +13,11 @@
  *    from `default.css` for neutral palettes, or from `bloom.css` / `cream.css`
  *    as a starting point for branded shells. Set both modes.
  * 5. Optional: section 4 (PALETTE) — radius, chart hues, shadow tint.
- * 6. `@import "./themes/{name}.css"` in `theme.css`.
- * 7. Set `defaultThemePalette="{name}"` on `<AppShell />` (or let users switch).
+ * 6. Import `@tailor-platform/app-shell/themes/{name}` after
+ *    `@tailor-platform/app-shell/styles` in the consuming app.
  *
  * DO NOT SET (inherited from `:root` in default.css):
- *   --ring, --sidebar-*, --status-*, --alert-*,
- *   --destructive-foreground formulas in light mode
+ *   --ring, --sidebar-*, --shell-gradient-start/end, --status-*, --alert-*
  *
  * PREVIEW: `/custom-page/color` in the Next.js example app.
  * ═══════════════════════════════════════════════════════════════════════════
@@ -32,7 +31,7 @@
   --primary-foreground: /* contrast text on primary */;
   --secondary: /* filled secondary actions, badges */;
   --secondary-foreground: /* contrast text on secondary */;
-  --accent: /* menu/sidebar hover & selection — tune by eye, not derived */;
+  --accent: /* menu/sidebar hover & selection — tune by eye */;
   --accent-foreground: /* contrast text on accent */;
 
   /* ── 2. SHELL GRADIENT — optional; omit for flat palettes like default ── */
@@ -112,6 +111,6 @@
 }
 
 /*
- * Optional: copy the structural overrides block from bloom.css or cream.css
+ * Optional: copy the structural override block from bloom.css or cream.css
  * when using a shell gradient (transparent sidebar, squircle, etc.).
  */

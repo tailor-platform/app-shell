@@ -183,13 +183,8 @@ const ColorDemoPage = () => {
                 fgVar="--foreground"
               />
               <ColorSwatch
-                name="shell-gradient-start"
-                bgVar="--shell-gradient-start"
-                fgVar="--foreground"
-              />
-              <ColorSwatch
-                name="shell-gradient-end"
-                bgVar="--shell-gradient-end"
+                name="shell-gradient-tint"
+                bgVar="--shell-gradient-tint"
                 fgVar="--foreground"
               />
             </SwatchSection>
@@ -295,7 +290,16 @@ const ColorDemoPage = () => {
                     padding: "0.75rem",
                     borderRadius: "var(--radius-md)",
                     backgroundColor: "var(--shell-gradient-base)",
-                    backgroundImage: `linear-gradient(to bottom, var(--shell-gradient-start), var(--shell-gradient-end))`,
+                    backgroundImage: `linear-gradient(
+                      to bottom,
+                      color-mix(in srgb, var(--shell-gradient-base) 55%, var(--shell-gradient-tint)) 0%,
+                      color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
+                      color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
+                      color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
+                      color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
+                      var(--shell-gradient-tint) 70%,
+                      var(--shell-gradient-tint) 100%
+                    )`,
                     border: "1px solid var(--border)",
                     maxWidth: "14rem",
                   }}

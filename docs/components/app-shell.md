@@ -174,6 +174,20 @@ const settingsResources = [
 
 Settings appear in a dropdown menu in the sidebar header, accessible via the settings icon.
 
+### defaultColorTheme
+
+- **Type:** `"light" | "dark" | "system"` (optional)
+- **Default:** `"system"`
+- **Description:** Initial color mode applied before any value is loaded from `localStorage`. Does not override a stored user preference. `"system"` follows the OS light/dark setting.
+
+```tsx
+<AppShell defaultColorTheme="light" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+The end user's selection (via [`AppearanceSwitcher`](./appearance-switcher.md) or a custom toggle using [`useTheme`](../api/use-theme.md)) is persisted automatically and takes precedence over this prop on subsequent visits.
+
 ### locale
 
 - **Type:** `string` (optional)
@@ -429,6 +443,7 @@ function App() {
       modules={modules}
       settingsResources={settingsResources}
       locale="en"
+      defaultColorTheme="system"
       errorBoundary={ErrorBoundary}
       contextData={{ currentUser }}
     >

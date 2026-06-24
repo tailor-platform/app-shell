@@ -10,10 +10,12 @@ React hook to access and control the current theme (light/dark mode).
 ## Signature
 
 ```typescript
+import { type ColorTheme, type ResolvedColorTheme } from "@tailor-platform/app-shell";
+
 const useTheme: () => {
-  theme: "light" | "dark" | "system";
-  setTheme: (theme: "light" | "dark" | "system") => void;
-  systemTheme: "light" | "dark";
+  theme: ColorTheme;
+  resolvedTheme: ResolvedColorTheme;
+  setTheme: (theme: ColorTheme) => void;
 };
 ```
 
@@ -21,18 +23,18 @@ const useTheme: () => {
 
 ### `theme`
 
-- **Type:** `"light" | "dark" | "system"`
-- **Description:** Current theme setting
+- **Type:** `ColorTheme` (`"light" | "dark" | "system"`)
+- **Description:** Current user preference. `"system"` means the OS setting is followed.
+
+### `resolvedTheme`
+
+- **Type:** `ResolvedColorTheme` (`"light" | "dark"`)
+- **Description:** Concrete color mode after resolving `"system"`. Always `"light"` or `"dark"`.
 
 ### `setTheme()`
 
-- **Type:** `(theme: "light" | "dark" | "system") => void`
-- **Description:** Set the theme. Persisted to localStorage.
-
-### `systemTheme`
-
-- **Type:** `"light" | "dark"`
-- **Description:** System preference (from OS settings)
+- **Type:** `(theme: ColorTheme) => void`
+- **Description:** Set the color theme. Persisted to `localStorage` under the key `appshell-ui-theme`.
 
 ## Usage
 
@@ -80,14 +82,15 @@ function ThemeSelector() {
 
 ### Conditional Rendering
 
+Use `resolvedTheme` when you need a concrete `"light"` or `"dark"` value — it already accounts for `"system"`:
+
 ```typescript
 function Logo() {
-  const { theme, systemTheme } = useTheme();
-  const effectiveTheme = theme === "system" ? systemTheme : theme;
+  const { resolvedTheme } = useTheme();
 
   return (
     <img
-      src={effectiveTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+      src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
       alt="Logo"
     />
   );

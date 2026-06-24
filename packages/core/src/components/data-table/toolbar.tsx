@@ -54,6 +54,15 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
 const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte", "between"] as const;
 type NumericTemporalOperator = (typeof NUMERIC_TEMPORAL_OPERATORS)[number];
 
+// Date filters use a slimmer, friendlier operator set: an exact date, inclusive
+// "after"/"before" (gte/lte), and a between range. No gt/lt/ne.
+const DATE_OPERATORS = ["eq", "gte", "lte", "between"] as const;
+
+/** Operators offered for a temporal editor, narrowed for `date` columns. */
+function temporalOperatorsFor(type: FilterConfig["type"]): readonly NumericTemporalOperator[] {
+  return type === "date" ? DATE_OPERATORS : NUMERIC_TEMPORAL_OPERATORS;
+}
+
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
 type StringOperator = (typeof STRING_OPERATORS)[number];
@@ -489,7 +498,7 @@ function AddFilterPopover({
                   }}
                   mapItem={(op) => ({
                     value: op,
-                    label: getOperatorLabel(op, t),
+                    label: getOperatorLabel(op, t, selectedColumn?.filter.type),
                   })}
                   className="astw:h-8 astw:text-sm"
                 />
@@ -920,8 +929,9 @@ function NumericFilterEditor({
   onClose: () => void;
 }) {
   const t = useDataTableT();
+  const operatorItems = temporalOperatorsFor(config.type);
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
-    NUMERIC_TEMPORAL_OPERATORS.includes(filter.operator as NumericTemporalOperator)
+    operatorItems.includes(filter.operator as NumericTemporalOperator)
       ? (filter.operator as NumericTemporalOperator)
       : "eq",
   );
@@ -985,12 +995,12 @@ function NumericFilterEditor({
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       <Select
-        items={[...NUMERIC_TEMPORAL_OPERATORS]}
+        items={[...operatorItems]}
         value={localOp}
         onValueChange={(v) => {
           if (v) setLocalOp(v);
         }}
-        mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
+        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
         className="astw:h-8 astw:text-sm"
       />
       {localOp === "between" ? (
@@ -1036,8 +1046,9 @@ function TemporalFilterEditor({
   onClose: () => void;
 }) {
   const t = useDataTableT();
+  const operatorItems = temporalOperatorsFor(config.type);
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
-    NUMERIC_TEMPORAL_OPERATORS.includes(filter.operator as NumericTemporalOperator)
+    operatorItems.includes(filter.operator as NumericTemporalOperator)
       ? (filter.operator as NumericTemporalOperator)
       : "eq",
   );
@@ -1151,12 +1162,12 @@ function TemporalFilterEditor({
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       <Select
-        items={[...NUMERIC_TEMPORAL_OPERATORS]}
+        items={[...operatorItems]}
         value={localOp}
         onValueChange={(v) => {
           if (v) setLocalOp(v);
         }}
-        mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
+        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
         className="astw:h-8 astw:text-sm"
       />
       {valueInput}
@@ -1175,9 +1186,10 @@ function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
   switch (type) {
     case "string":
       return [...STRING_OPERATORS];
+    case "date":
+      return [...DATE_OPERATORS];
     case "number":
     case "datetime":
-    case "date":
     case "time":
       return [...NUMERIC_TEMPORAL_OPERATORS];
     case "enum":
@@ -1311,7 +1323,17 @@ function getTemporalInputProps(type: "datetime" | "date" | "time") {
   }
 }
 
-function getOperatorLabel(operator: FilterOperator, t: ReturnType<typeof useDataTableT>): string {
+function getOperatorLabel(
+  operator: FilterOperator,
+  t: ReturnType<typeof useDataTableT>,
+  type?: FilterConfig["type"],
+): string {
+  // Date columns relabel the comparison operators (exact date / after / before).
+  if (type === "date") {
+    if (operator === "eq") return t("filterDateOperator_eq");
+    if (operator === "gte") return t("filterDateOperator_gte");
+    if (operator === "lte") return t("filterDateOperator_lte");
+  }
   switch (operator) {
     case "eq":
       return t("filterOperator_eq");
@@ -1397,7 +1419,7 @@ function getChipDisplayLabel(
   const valueLabel = formatFilterValue(filter, config, t);
   if (!valueLabel) return columnLabel;
 
-  const operatorLabel = getOperatorLabel(filter.operator, t);
+  const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
   const ciSuffix = filter.caseSensitive ? " (Aa)" : "";
 
   if (config.type === "enum") {

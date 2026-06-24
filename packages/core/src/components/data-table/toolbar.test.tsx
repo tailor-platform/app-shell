@@ -502,7 +502,7 @@ describe("DateFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -514,7 +514,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
 
     // The editor uses the app-shell DatePicker: a labelled group of spinbuttons.
     expect(
@@ -529,7 +529,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
     await screen.findByRole("button", { name: "Apply" });
 
     await typeDateInto(user, 0, "2026-06-15");
@@ -545,13 +545,50 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At equals 2025-01-01/ }));
+    await user.click(screen.getByRole("button", { name: /Created At exact date 2025-01-01/ }));
     await screen.findByRole("button", { name: "Apply" });
 
     await clearDateIn(user, 0);
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("createdAt");
+  });
+
+  it("labels date operators as exact date / after / before", () => {
+    const control = makeControl({
+      filters: [
+        { field: "createdAt", operator: "eq", value: "2025-01-01" },
+        { field: "createdAt", operator: "gte", value: "2025-02-01" },
+        { field: "createdAt", operator: "lte", value: "2025-03-01" },
+      ],
+    });
+    // Render each via its own chip; assert the friendly date labels appear and
+    // the numeric labels do not.
+    const { rerender } = render(
+      <TestFilters
+        control={makeControl({ filters: [control.filters[0]] })}
+        columns={[dateColumn]}
+      />,
+      { wrapper },
+    );
+    expect(screen.getByText(/Created At exact date 2025-01-01/)).toBeDefined();
+
+    rerender(
+      <TestFilters
+        control={makeControl({ filters: [control.filters[1]] })}
+        columns={[dateColumn]}
+      />,
+    );
+    expect(screen.getByText(/Created At after 2025-02-01/)).toBeDefined();
+    expect(screen.queryByText(/greater than/)).toBeNull();
+
+    rerender(
+      <TestFilters
+        control={makeControl({ filters: [control.filters[2]] })}
+        columns={[dateColumn]}
+      />,
+    );
+    expect(screen.getByText(/Created At before 2025-03-01/)).toBeDefined();
   });
 });
 

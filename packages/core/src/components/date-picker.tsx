@@ -116,6 +116,8 @@ interface DateInputGroupProps {
   ) => { advance: boolean };
   setDayPeriod: (pm: boolean) => void;
   clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
+  /** Correct an impossible day (e.g. 30 Feb) — called when focus leaves the group. */
+  clampDate: () => void;
   isDisabled?: boolean;
   isReadOnly?: boolean;
   isInvalid?: boolean;
@@ -136,6 +138,7 @@ export function DateInputGroup({
   setDigit,
   setDayPeriod,
   clearSegment,
+  clampDate,
   isDisabled,
   isReadOnly,
   isInvalid,
@@ -245,6 +248,11 @@ export function DateInputGroup({
       data-disabled={isDisabled || undefined}
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, className)}
+      onBlur={(e) => {
+        // Focus left the whole group (not just moved between segments) → correct
+        // an impossible day for the entered month/year.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) clampDate();
+      }}
     >
       <div data-slot="date-input" className="astw:flex astw:flex-1 astw:items-center astw:gap-px">
         {segments.map((segment, idx) => {

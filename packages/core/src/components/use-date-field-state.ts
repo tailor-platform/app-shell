@@ -190,12 +190,15 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         case "month":
           return { min: 1, max: 12 };
         case "day": {
+          // Until a valid month is entered, allow any day up to 31 — don't
+          // constrain to the anchor month, or typing "31" while the current
+          // month has 30 (or 28/29) days would be wrongly rejected. Once the
+          // month is known, cap at that month's real day count.
+          if (fields.month == null || fields.month < 1 || fields.month > 12) {
+            return { min: 1, max: 31 };
+          }
           const y = fields.year ?? anchor.year;
-          const rawM = fields.month ?? anchor.month;
-          // Mid-typing the month can be out of range (e.g. 0); fall back to the
-          // anchor month so the day limit stays computable.
-          const m = rawM >= 1 && rawM <= 12 ? rawM : anchor.month;
-          const max = endOfMonth(new CalendarDate(y, m, 1)).day;
+          const max = endOfMonth(new CalendarDate(y, fields.month, 1)).day;
           return { min: 1, max };
         }
         case "hour":
@@ -345,6 +348,22 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     [fields, commit, isReadOnly],
   );
 
+  /**
+   * Correct an impossible day for the entered month/year (e.g. typing the day
+   * before the month leaves "30/02"). Called on blur — by then the year is
+   * usually complete, so leap years resolve correctly (29 Feb is kept in 2024,
+   * clamped to 28 in 2026). When the year is still empty we use a leap year so a
+   * valid 29 survives until the year is typed.
+   */
+  const clampDate = useCallback(() => {
+    if (isReadOnly) return;
+    const { day, month } = fields;
+    if (day == null || month == null || month < 1 || month > 12) return;
+    const yearForMax = fields.year ?? 2000; // 2000 is a leap year
+    const maxDay = endOfMonth(new CalendarDate(yearForMax, month, 1)).day;
+    if (day > maxDay) commit({ ...fields, day: maxDay });
+  }, [fields, isReadOnly, commit]);
+
   // ── Display segments (locale-ordered) ────────────────────────────────────────
   const segments = useMemo<Segment[]>(() => {
     const formatter = new DateFormatter(locale, {
@@ -406,5 +425,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     setDigit,
     setDayPeriod,
     clearSegment,
+    clampDate,
   };
 }

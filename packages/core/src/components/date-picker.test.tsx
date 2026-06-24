@@ -145,6 +145,73 @@ describe("DateField", () => {
       expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-29");
     });
   });
+
+  it("accepts day 31 typed before a month (day max isn't tied to the current month)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    // Type the day first — "31" must not collapse to "1" just because the
+    // current (anchor) month happens to have 30/28 days.
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("31");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("12");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2025");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-31");
+    });
+  });
+
+  it("clamps an impossible day to the month's length on blur", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    // Enter 30 / 02 / 2026 (Feb 2026 has 28 days) — invalid until blur.
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("30");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026");
+    // Blur the field.
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
+    });
+  });
+
+  it("keeps 29 Feb in a leap year (no over-clamp)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2024"); // leap year
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2024-02-29");
+    });
+  });
 });
 
 // ─── DatePicker ───────────────────────────────────────────────────────────────

@@ -52,7 +52,6 @@ function createBuilder<T extends Schema>(schema: T): SchemaBuilder<T> {
  *     icon: s.any(),
  *   }).optional(),
  *   guards: s.array(s.any()).optional(),
- *   loader: s.any().optional(),
  * });
  * ```
  */

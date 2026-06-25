@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -216,6 +217,112 @@ describe("DateField", () => {
 
     await waitFor(() => {
       expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2024-02-29");
+    });
+  });
+
+  // A controlled field round-trips every emit through the parent's `value`, so
+  // these guard the clamp against external-sync interference (the uncontrolled
+  // cases above don't exercise that path).
+  function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+    const [v, setV] = useState<CalendarDate | null>(null);
+    return (
+      <>
+        <DateField
+          label="Date"
+          value={v}
+          onChange={(nv) => {
+            setV(nv as CalendarDate | null);
+            onChange(nv);
+          }}
+        />
+        <button type="button">elsewhere</button>
+      </>
+    );
+  }
+
+  it("clamps an impossible day on blur even when controlled (29/02/2026)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<ControlledField onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026"); // not a leap year → Feb has 28 days
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
+    });
+  });
+
+  it("re-clamps when editing the year turns a valid leap day invalid (29 Feb 2024 → 2026)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<ControlledField onChange={onChange} />);
+
+    // First enter a genuinely valid leap-year date.
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2024");
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2024-02-29");
+    });
+
+    // Now change the year to a non-leap year — 29 Feb no longer exists.
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
+    });
+  });
+
+  it("auto-corrects an impossible day as soon as the year is complete (no blur)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    // 29 typed before the month (allowed), then Feb 2026 (28 days). The moment
+    // the 4-digit year lands, the day self-corrects — without leaving the field.
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
+    });
+  });
+
+  it("re-corrects on year completion when a leap day turns invalid (no blur)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2024");
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2024-02-29");
+    });
+
+    // Retype the year to a non-leap year — corrects on completion, no blur.
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026");
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
     });
   });
 });

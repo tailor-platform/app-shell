@@ -105,6 +105,22 @@ const PLACEHOLDERS: Record<EditableSegmentType, string> = {
   dayPeriod: "AM",
 };
 
+/**
+ * Snap an impossible day down to the entered month's real length — but only once
+ * the date is fully specified (a 4-digit year). Mid-typing is left untouched so
+ * the day isn't prematurely shrunk: while a partial year is being typed (e.g. the
+ * `2` → `20` → `202` → `2026` keystrokes for 29 Feb), the leap-ness of the final
+ * year isn't known yet, so we wait until the year is complete. The on-blur
+ * `clampDate` is the backstop for the year-still-empty case.
+ */
+function clampCompleteDay(f: Fields): Fields {
+  const { day, month, year } = f;
+  if (day == null || month == null || month < 1 || month > 12) return f;
+  if (year == null || year < 1000) return f; // year not yet fully typed
+  const maxDay = endOfMonth(new CalendarDate(year, month, 1)).day;
+  return day > maxDay ? { ...f, day: maxDay } : f;
+}
+
 function fieldsFromValue(v: DateValue | null | undefined): Fields {
   if (!v) return {};
   const f: Fields = {};
@@ -245,8 +261,12 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   const commit = useCallback(
     (next: Fields, intent: "edit" | "clear" = "edit") => {
-      setInternalFields(next);
-      const composed = composeValue(next);
+      // Self-correct an impossible day as soon as the date is complete, so an
+      // unreachable date (e.g. 29 Feb in a non-leap year) never persists — no
+      // matter how the field is left. Skipped while clearing a segment.
+      const f = intent === "edit" ? clampCompleteDay(next) : next;
+      setInternalFields(f);
+      const composed = composeValue(f);
       // While editing, only emit a *complete & valid* value — never `null` for a
       // half-typed/out-of-range intermediate (that would thrash a controlled
       // value and lose the in-progress entry). Clearing explicitly emits `null`.
@@ -349,11 +369,11 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   /**
-   * Correct an impossible day for the entered month/year (e.g. typing the day
-   * before the month leaves "30/02"). Called on blur — by then the year is
-   * usually complete, so leap years resolve correctly (29 Feb is kept in 2024,
-   * clamped to 28 in 2026). When the year is still empty we use a leap year so a
-   * valid 29 survives until the year is typed.
+   * On-blur backstop for an impossible day. A *complete* date already self-
+   * corrects in `commit` (see {@link clampCompleteDay}), so this only matters
+   * when the field is left with the year still empty (e.g. "30/02" typed day-
+   * first): we clamp against a leap year so a valid 29 Feb survives until the
+   * year is typed, while an impossible 30/31 is still corrected.
    */
   const clampDate = useCallback(() => {
     if (isReadOnly) return;

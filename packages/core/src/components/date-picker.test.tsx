@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
+import {
+  CalendarDate,
+  parseDate,
+  today,
+  getLocalTimeZone,
+  isSameDay,
+} from "@internationalized/date";
 import { DateField, DatePicker, Calendar } from "./date-picker-standalone";
 
 // This suite is the parity contract shared with the react-aria implementation:
@@ -390,6 +396,36 @@ describe("Calendar", () => {
     expect(getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")?.textContent).toBe(
       "23",
     );
+  });
+
+  it("lets arrow keys traverse through unavailable dates without getting stuck", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    // Mark the 16th unavailable — the day we'll land on mid-navigation.
+    const unavailable = parseDate("2025-06-16") as CalendarDate;
+    render(
+      <Calendar
+        aria-label="Select date"
+        defaultValue={parseDate("2025-06-15") as CalendarDate}
+        isDateUnavailable={(d) => isSameDay(d, unavailable)}
+        onChange={onChange}
+      />,
+    );
+    const tabbable = () => getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
+
+    tabbable().focus();
+    await user.keyboard("{ArrowRight}"); // → 16 (unavailable, but focusable)
+    const onSixteenth = tabbable();
+    expect(onSixteenth.textContent).toBe("16");
+    expect(onSixteenth.hasAttribute("data-unavailable")).toBe(true);
+
+    // Selection is blocked on the unavailable day...
+    await user.keyboard("{Enter}");
+    expect(onChange).not.toHaveBeenCalled();
+
+    // ...but navigation continues right off it (this is the bug being fixed).
+    await user.keyboard("{ArrowRight}");
+    expect(tabbable().textContent).toBe("17");
   });
 });
 

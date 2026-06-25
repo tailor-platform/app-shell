@@ -509,7 +509,13 @@ function CalendarCell({
   registerRef,
   onFocus,
 }: CalendarCellProps) {
+  // Selectable: a real, in-range, available day. Gates click + Enter/Space.
   const interactive = !day.isOutsideMonth && !day.isDisabled && !day.isUnavailable;
+  // Reachable by roving keyboard focus: any in-month day, including disabled and
+  // unavailable ones. Per APG, arrow keys traverse *through* disabled dates — they
+  // just can't be selected — so the keydown handler must be attached to them too,
+  // otherwise focus lands on a disabled day with no way to navigate away.
+  const focusable = !day.isOutsideMonth;
   // `<td>` inside `role="grid"` is implicitly a gridcell — no explicit role needed.
   return (
     <td aria-selected={day.isSelected || undefined} className="astw:p-0">
@@ -525,7 +531,7 @@ function CalendarCell({
         data-outside-month={day.isOutsideMonth || undefined}
         data-today={day.isToday || undefined}
         onClick={interactive ? onSelect : undefined}
-        onKeyDown={interactive ? onKeyDown : undefined}
+        onKeyDown={focusable ? onKeyDown : undefined}
         onFocus={onFocus}
         className={calendarCellVariants()}
       >

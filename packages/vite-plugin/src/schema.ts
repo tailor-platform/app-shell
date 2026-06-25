@@ -12,7 +12,6 @@ import { s } from "./validator";
  * DashboardPage.appShellPageProps = {
  *   meta: { title: "Dashboard", icon: <DashboardIcon /> },
  *   guards: [authGuard],
- *   loader: async () => ({ data: "..." }),
  * } satisfies AppShellPageProps;
  * ```
  */
@@ -43,9 +42,4 @@ export const appShellPagePropsSchema = s.object({
    * Guards are executed in order. Each page evaluates only its own guards (no inheritance from parent pages).
    */
   guards: s.array(s.any()).optional(),
-
-  /**
-   * Loader function to fetch data before rendering the page.
-   */
-  loader: s.any().optional(),
 });

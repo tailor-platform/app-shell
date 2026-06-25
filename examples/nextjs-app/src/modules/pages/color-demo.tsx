@@ -176,6 +176,8 @@ const ColorDemoPage = () => {
               <ColorSwatch name="chart-5" bgVar="--chart-5" fgVar="--foreground" />
             </SwatchSection>
 
+            {/* Show author-facing gradient inputs (`base` + `tint`) here.
+                `start` / `end` are derived from them in the theme CSS. */}
             <SwatchSection title="Shell gradient">
               <ColorSwatch
                 name="shell-gradient-base"
@@ -183,13 +185,8 @@ const ColorDemoPage = () => {
                 fgVar="--foreground"
               />
               <ColorSwatch
-                name="shell-gradient-start"
-                bgVar="--shell-gradient-start"
-                fgVar="--foreground"
-              />
-              <ColorSwatch
-                name="shell-gradient-end"
-                bgVar="--shell-gradient-end"
+                name="shell-gradient-tint"
+                bgVar="--shell-gradient-tint"
                 fgVar="--foreground"
               />
             </SwatchSection>
@@ -295,7 +292,18 @@ const ColorDemoPage = () => {
                     padding: "0.75rem",
                     borderRadius: "var(--radius-md)",
                     backgroundColor: "var(--shell-gradient-base)",
-                    backgroundImage: `linear-gradient(to bottom, var(--shell-gradient-start), var(--shell-gradient-end))`,
+                    // Keep the preview formula inline so this demo reads the
+                    // same author-facing tokens palette files set: `base` + `tint`.
+                    backgroundImage: `linear-gradient(
+                      to bottom,
+                      color-mix(in srgb, var(--shell-gradient-base) 55%, var(--shell-gradient-tint)) 0%,
+                      color-mix(in srgb, var(--shell-gradient-base) 45%, var(--shell-gradient-tint)) 20%,
+                      color-mix(in srgb, var(--shell-gradient-base) 30%, var(--shell-gradient-tint)) 40%,
+                      color-mix(in srgb, var(--shell-gradient-base) 15%, var(--shell-gradient-tint)) 55%,
+                      color-mix(in srgb, var(--shell-gradient-base) 6%, var(--shell-gradient-tint)) 65%,
+                      var(--shell-gradient-tint) 70%,
+                      var(--shell-gradient-tint) 100%
+                    )`,
                     border: "1px solid var(--border)",
                     maxWidth: "14rem",
                   }}

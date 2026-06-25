@@ -1,7 +1,9 @@
 /**
  * Theme system
  *
- * Palettes live in ./themes/*.css. Copy ./_template.css to add a new one.
+ * `@tailor-platform/app-shell/styles` includes the default palette.
+ * Import exactly one optional override from `./themes/*.css` after styles
+ * (for example `@tailor-platform/app-shell/themes/cream`).
  *
  * Palette tiers:
  *
@@ -16,8 +18,8 @@
  * Inherited from default.css — do not duplicate in new palettes:
  *   --ring, --sidebar-*, --status-*, --alert-*.
  *
- * Mode: `.dark` on <html>. Palette: import one theme file after styles
- * (e.g. `@tailor-platform/app-shell/themes/cream`).
+ * Light/dark mode is controlled separately via `.dark` on <html>.
+ * Palette selection is by CSS import; there is no runtime palette prop.
  */
 @import "./themes/default.css" layer(theme.defaults);
 

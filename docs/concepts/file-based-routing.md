@@ -133,7 +133,6 @@ type AppShellPageProps = {
     breadcrumbTitle?: string | ((segment: string) => string);
   };
   guards?: Guard[];
-  loader?: LoaderHandler;
 };
 ```
 

@@ -18,6 +18,7 @@ const redirectGuard = async () => ({
   type: "redirect" as const,
   to: "/dashboard",
 });
+const explicitLoader = async () => ({ ok: true });
 
 const createMockPage = (
   path: string,
@@ -269,6 +270,32 @@ describe("convertPagesToModules", () => {
 
     expect(modules[0].guards).toHaveLength(0);
     expect(modules[0].loader).toBeUndefined();
+  });
+
+  it("ignores appShellPageProps.loader on modules", () => {
+    const pages = [
+      createMockPage("/dashboard", {
+        meta: { title: "Dashboard" },
+        // @ts-expect-error breaking change: page loaders are no longer supported
+        loader: explicitLoader,
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules[0].loader).toBeUndefined();
+  });
+
+  it("ignores appShellPageProps.loader on resources", () => {
+    const pages = [
+      createMockPage("/dashboard"),
+      createMockPage("/dashboard/orders", {
+        // @ts-expect-error breaking change: page loaders are no longer supported
+        loader: explicitLoader,
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(modules[0].resources[0].loader).toBeUndefined();
   });
 });
 

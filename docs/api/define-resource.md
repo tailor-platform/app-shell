@@ -86,12 +86,6 @@ See [Guards Overview](./guards/overview.md) for details.
 - **Required:** No
 - **Description:** Error boundary component for this resource
 
-### `loader`
-
-- **Type:** `(args: LoaderFunctionArgs) => Promise<unknown> | unknown`
-- **Required:** No
-- **Description:** React Router loader function
-
 ## Return Type
 
 ```typescript
@@ -181,19 +175,6 @@ const adminSettingsResource = defineResource({
       return context.currentUser?.role === "admin" ? pass() : hidden();
     },
   ],
-});
-```
-
-### Resource with Loader
-
-```typescript
-const productResource = defineResource({
-  path: ":id",
-  component: ProductPage,
-  loader: async ({ params }) => {
-    const product = await fetch(`/api/products/${params.id}`);
-    return product.json();
-  },
 });
 ```
 

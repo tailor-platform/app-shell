@@ -140,7 +140,6 @@ describe("validateAppShellPageProps", () => {
       })
       .optional(),
     guards: s.array(s.any()).optional(),
-    loader: s.any().optional(),
   });
 
   it("validates valid appShellPageProps", () => {
@@ -148,8 +147,7 @@ describe("validateAppShellPageProps", () => {
       const Page = () => <div>Hello</div>;
       Page.appShellPageProps = {
         meta: { title: "Test", icon: null },
-        guards: [],
-        loader: async () => ({})
+        guards: []
       };
       export default Page;
     `);
@@ -175,7 +173,25 @@ describe("validateAppShellPageProps", () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0].key).toBe("unknownKey");
     expect(warnings[0].message).toContain("Unknown key");
-    expect(warnings[0].validKeys).toEqual(["meta", "guards", "loader"]);
+    expect(warnings[0].validKeys).toEqual(["meta", "guards"]);
+  });
+
+  it("reports loader as an unknown top-level key", () => {
+    const sourceFile = createSourceFile(`
+      const Page = () => <div>Hello</div>;
+      Page.appShellPageProps = {
+        meta: { title: "Test" },
+        loader: async () => ({})
+      };
+      export default Page;
+    `);
+    const node = findAppShellPagePropsNode(sourceFile);
+    const warnings = validateAppShellPageProps(node!, testSchema, "test.tsx");
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].key).toBe("loader");
+    expect(warnings[0].message).toContain("Unknown key");
+    expect(warnings[0].validKeys).toEqual(["meta", "guards"]);
   });
 
   it("reports unknown nested keys in meta", () => {

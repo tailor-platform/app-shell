@@ -605,7 +605,7 @@ Types for authoring guard functions used by `WithGuard` and `appShellPageProps.g
 
 ### `RouteParams`, `PageComponent`, `PageMeta`, `AppShellPageProps`, `AppShellRegister`, `ContextData` (types)
 
-Types for declaring page props (`appShellPageProps = { meta, guards, loader }`), reading typed route params, and registering route types globally. See `project-setup.md` for usage.
+Types for declaring page props (`appShellPageProps = { meta, guards }`), reading typed route params, and registering route types globally. See `project-setup.md` for usage.
 
 ---
 

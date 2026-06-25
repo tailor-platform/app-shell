@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from "react";
-import type { Guard, LoaderHandler } from "@/resource";
+import type { Guard } from "@/resource";
 import type { LocalizedString } from "@/lib/i18n";
 
 // ============================================
@@ -52,18 +52,13 @@ export type AppShellPageProps = {
    * ```
    */
   guards?: Guard[];
-
-  /**
-   * Loader function to fetch data before rendering the page.
-   */
-  loader?: LoaderHandler;
 };
 
 /**
  * A React component that can be used as a page in file-based routing.
  *
  * The component can optionally have an `appShellPageProps` static field
- * for configuring navigation metadata, guards, and loaders.
+ * for configuring navigation metadata and guards.
  */
 export type PageComponent = FC & {
   appShellPageProps?: AppShellPageProps;

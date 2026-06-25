@@ -81,8 +81,7 @@ function nodeToResource(node: PageNode): Resource {
   const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
   const explicitLoader = Component?.appShellPageProps?.loader;
   const loader =
-    explicitLoader ??
-    (node.guards && node.guards.length > 0 ? withGuardsLoader(node.guards) : undefined);
+    node.guards.length > 0 ? withGuardsLoader(node.guards, explicitLoader) : explicitLoader;
 
   // Recursively convert children to subResources
   const subResources: Resource[] = [];
@@ -118,8 +117,7 @@ function nodeToModule(node: PageNode): Module {
   const breadcrumbTitle = Component?.appShellPageProps?.meta?.breadcrumbTitle;
   const explicitLoader = Component?.appShellPageProps?.loader;
   const loader =
-    explicitLoader ??
-    (node.guards && node.guards.length > 0 ? withGuardsLoader(node.guards) : undefined);
+    node.guards.length > 0 ? withGuardsLoader(node.guards, explicitLoader) : explicitLoader;
 
   // Convert children to resources
   const resources: Resource[] = [];

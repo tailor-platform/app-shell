@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { convertPagesToModules, validateExclusiveRouteConfig } from "./converter";
 import { createContentRoutes } from "@/routing/routes";
 import type { PageEntry, PageComponent } from "./types";
@@ -100,6 +100,40 @@ describe("convertPagesToModules", () => {
     expect(modules[0].resources[0].guards).toHaveLength(1);
     expect(modules[0].resources[0].guards).toContain(childGuard);
     expect(modules[0].resources[0].guards).not.toContain(parentGuard);
+  });
+
+  it("runs guards before module loaders when both are defined", async () => {
+    const loader = vi.fn().mockResolvedValue({ data: "test" });
+
+    const pages = [
+      createMockPage("/dashboard", {
+        guards: [async () => ({ type: "redirect" as const, to: "/login" })],
+        loader,
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    const result = await modules[0].loader!({} as never);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(302);
+    expect((result as Response).headers.get("Location")).toBe("/login");
+    expect(loader).not.toHaveBeenCalled();
+  });
+
+  it("runs guards before resource loaders when both are defined", async () => {
+    const guard = vi.fn().mockResolvedValue({ type: "pass" as const });
+    const loader = vi.fn().mockResolvedValue({ items: [1, 2, 3] });
+
+    const pages = [
+      createMockPage("/dashboard"),
+      createMockPage("/dashboard/orders", { guards: [guard], loader }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    const result = await modules[0].resources[0].loader!({} as never);
+    expect(guard).toHaveBeenCalled();
+    expect(loader).toHaveBeenCalled();
+    expect(result).toEqual({ items: [1, 2, 3] });
   });
 
   it("handles multiple top-level modules", () => {

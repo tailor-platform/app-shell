@@ -592,6 +592,26 @@ describe("DateFilterEditor", () => {
     );
     expect(screen.getByText(/Created At before Mar 1, 2025/)).toBeDefined();
   });
+
+  it("preserves a legacy operator (e.g. gt) on Apply instead of coercing to eq", async () => {
+    const user = userEvent.setup();
+    // A saved view / useCollectionVariables config can hold a date filter on the
+    // now-dropped `gt` operator. Opening + re-applying it must NOT silently flip
+    // it to `eq` (which would turn "after X" into "on X").
+    const control = makeControl({
+      filters: [{ field: "createdAt", operator: "gt", value: "2025-01-01" }],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
+
+    // The chip still renders the legacy operator's (generic) label.
+    await user.click(screen.getByRole("button", { name: /Created At greater than/ }));
+    await screen.findByRole("button", { name: "Apply" });
+
+    // Apply without touching the operator → the operator is preserved.
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    expect(control.addFilter).toHaveBeenCalledWith("createdAt", "gt", "2025-01-01");
+    expect(control.addFilter).not.toHaveBeenCalledWith("createdAt", "eq", expect.anything());
+  });
 });
 
 // ---------------------------------------------------------------------------

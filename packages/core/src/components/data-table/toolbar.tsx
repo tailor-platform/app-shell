@@ -64,6 +64,33 @@ function temporalOperatorsFor(type: FilterConfig["type"]): readonly NumericTempo
   return type === "date" ? DATE_OPERATORS : NUMERIC_TEMPORAL_OPERATORS;
 }
 
+/**
+ * Operator options + initial selection for a numeric/temporal editor.
+ *
+ * A saved view or `useCollectionVariables` config can hold a filter whose
+ * operator is no longer in the standard set — most importantly a `date` filter
+ * on the now-dropped `gt`/`lt`/`ne` (the pre-narrowing operator set). In that
+ * case we keep the incoming operator as a selectable, preselected option rather
+ * than resetting to `eq`, so opening the editor and hitting Apply never silently
+ * rewrites the filter's operator (e.g. "after X" → "on X"). A truly unknown
+ * operator falls back to `eq`.
+ */
+function resolveTemporalOperator(
+  standard: readonly NumericTemporalOperator[],
+  current: FilterOperator,
+): { items: readonly NumericTemporalOperator[]; initial: NumericTemporalOperator } {
+  if (standard.includes(current as NumericTemporalOperator)) {
+    return { items: standard, initial: current as NumericTemporalOperator };
+  }
+  if ((NUMERIC_TEMPORAL_OPERATORS as readonly string[]).includes(current)) {
+    return {
+      items: [...standard, current as NumericTemporalOperator],
+      initial: current as NumericTemporalOperator,
+    };
+  }
+  return { items: standard, initial: "eq" };
+}
+
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
 type StringOperator = (typeof STRING_OPERATORS)[number];
@@ -931,12 +958,11 @@ function NumericFilterEditor({
   onClose: () => void;
 }) {
   const t = useDataTableT();
-  const operatorItems = temporalOperatorsFor(config.type);
-  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
-    operatorItems.includes(filter.operator as NumericTemporalOperator)
-      ? (filter.operator as NumericTemporalOperator)
-      : "eq",
+  const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
+    temporalOperatorsFor(config.type),
+    filter.operator,
   );
+  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
   const [localValue, setLocalValue] = useState(() => {
     if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
       const range = filter.value as { min?: unknown; max?: unknown };
@@ -1048,12 +1074,11 @@ function TemporalFilterEditor({
   onClose: () => void;
 }) {
   const t = useDataTableT();
-  const operatorItems = temporalOperatorsFor(config.type);
-  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
-    operatorItems.includes(filter.operator as NumericTemporalOperator)
-      ? (filter.operator as NumericTemporalOperator)
-      : "eq",
+  const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
+    temporalOperatorsFor(config.type),
+    filter.operator,
   );
+  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
   const [localValue, setLocalValue] = useState(() => {
     if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
       const range = filter.value as { min?: unknown; max?: unknown };

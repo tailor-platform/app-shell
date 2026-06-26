@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import {
   Layout,
   DateField,
   DatePicker,
   Calendar,
+  Form,
+  Button,
   today,
   getLocalTimeZone,
   parseDate,
@@ -21,8 +23,31 @@ const DatePickerPage = () => {
   const [calendarValue, setCalendarValue] = useState<DateValue | null>(null);
   const [weekendValue, setWeekendValue] = useState<CalendarDate | null>(null);
 
+  // Form-validation demo state.
+  const [deliveryDate, setDeliveryDate] = useState<CalendarDate | null>(null);
+  const [deliveryError, setDeliveryError] = useState<string | undefined>(undefined);
+  const [confirmedDate, setConfirmedDate] = useState<string | null>(null);
+
   const tomorrow = today(tz).add({ days: 1 });
   const threeMonths = today(tz).add({ months: 3 });
+
+  // Validation runs on submit; the DatePicker surfaces the message through its
+  // own `errorMessage` / `isInvalid` props (it isn't a Base UI Field control).
+  const handleDeliverySubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!deliveryDate) {
+      setConfirmedDate(null);
+      setDeliveryError("Please select a delivery date.");
+      return;
+    }
+    if (deliveryDate.compare(today(tz)) < 0) {
+      setConfirmedDate(null);
+      setDeliveryError("Delivery date can't be in the past.");
+      return;
+    }
+    setDeliveryError(undefined);
+    setConfirmedDate(deliveryDate.toString());
+  };
 
   return (
     <Layout>
@@ -105,6 +130,42 @@ const DatePickerPage = () => {
             {pickerValue && (
               <p className="text-sm text-muted-foreground">
                 Selected: <strong>{pickerValue.toString()}</strong>
+              </p>
+            )}
+          </section>
+
+          {/* ── In a form (submit validation) ───────────────────────── */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold border-b pb-2">In a form (submit validation)</h2>
+            <p className="text-sm text-muted-foreground">
+              Standard <code className="bg-muted px-1 py-0.5 rounded">Form</code> +{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">Button</code>. Submitting empty (or
+              with a past date) triggers validation — the error surfaces through the DatePicker's
+              own <code className="bg-muted px-1 py-0.5 rounded">errorMessage</code> /{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">isInvalid</code> props, and clears as
+              soon as a valid date is picked.
+            </p>
+            <Form
+              onSubmit={handleDeliverySubmit}
+              className="flex flex-col items-start gap-4 max-w-sm"
+            >
+              <DatePicker
+                label="Delivery date"
+                description="When should we ship your order?"
+                isRequired
+                value={deliveryDate}
+                onChange={(v) => {
+                  setDeliveryDate(v as CalendarDate | null);
+                  if (v) setDeliveryError(undefined);
+                }}
+                errorMessage={deliveryError}
+                isInvalid={!!deliveryError}
+              />
+              <Button type="submit">Schedule delivery</Button>
+            </Form>
+            {confirmedDate && (
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                ✓ Delivery scheduled for <strong>{confirmedDate}</strong>
               </p>
             )}
           </section>

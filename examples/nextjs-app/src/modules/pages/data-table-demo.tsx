@@ -2,8 +2,7 @@ import {
   defineResource,
   DataTable,
   useDataTable,
-  useCollectionVariables,
-  useURLCollectionState,
+  useURLCollectionVariables,
   createColumnHelper,
   Layout,
   type RowAction,
@@ -141,13 +140,10 @@ const productRowActions: RowAction<Product>[] = [
 // ---------------------------------------------------------------------------
 
 const DataTableDemoPage = () => {
-  const withURLCollectionState = useURLCollectionState();
-  const { variables, control } = useCollectionVariables(
-    withURLCollectionState({
-      params: { pageSize: 5 },
-      tableMetadata: productMetadata,
-    }),
-  );
+  const { variables, control } = useURLCollectionVariables({
+    params: { pageSize: 5 },
+    tableMetadata: productMetadata,
+  });
   const { data, loading } = useProductsQuery(variables);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 

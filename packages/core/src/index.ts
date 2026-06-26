@@ -190,7 +190,7 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
-export { useURLCollectionState, withURLCollectionState } from "./lib/collection-url-state";
+export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";
 export {
   CollectionControlProvider,
   useCollectionControl,

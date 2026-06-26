@@ -51,7 +51,7 @@ The decisive point: **Base UI is already in the app-shell bundle** (Dialog, Sele
 
 ## Known gaps vs react-aria (the price of owning it)
 
-- **Mobile/touch text entry:** react-aria mounts a hidden `<input inputmode="numeric">` per field so mobile virtual keyboards work; our segments are `<div role="spinbutton">`, so on-screen-keyboard typing on touch devices is limited (desktop keyboard + the calendar work fully). The biggest remaining gap.
+- **Mobile/touch text entry:** react-aria's segments are `contentEditable` spans with `inputmode="numeric"`, so a touch device surfaces the on-screen keyboard and types into them. Ours are **non-editable** (`contentEditable={false}`) `role="spinbutton"` divs driven by `keydown` — which soft keyboards don't emit — so touch typing doesn't work (desktop keyboard + the calendar both work fully; the calendar is the touch path). The biggest remaining gap, but **addressable** by matching react-aria: make the segments `contentEditable` with `inputmode="numeric"` and route `beforeinput` (a focused, contained fast-follow — needs real-device QA).
 - **RTL arrow direction:** `←`/`→` are LTR-fixed; in RTL locales react-aria flips them. Needs a direction check in the grid key handler.
 - **Calendar systems:** robust for Gregorian; the 13 non-Gregorian calendars react-aria supports automatically are not wired up (the value layer can represent them; the field/grid interaction would need extension).
 - **Localized chrome strings:** segment placeholders (`yyyy`/`mm`/`dd`) and the prev/next-month button labels are English; react-aria localizes these from its bundled CLDR strings.

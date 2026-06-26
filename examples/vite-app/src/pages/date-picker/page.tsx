@@ -173,9 +173,15 @@ const DatePickerPage = () => {
           {/* ── DatePicker week start ───────────────────────────────── */}
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">DatePicker — week start</h2>
+            <p className="text-sm text-muted-foreground">
+              Omitting <code className="bg-muted px-1 py-0.5 rounded">firstDayOfWeek</code> follows
+              the active locale's convention (e.g. Sunday for en-US, Monday for en-GB). Pass it
+              explicitly to force a specific start day regardless of locale.
+            </p>
             <div className="flex flex-wrap gap-6 items-start">
-              <DatePicker label="Week starts Sunday (default)" />
-              <DatePicker label="Week starts Monday" firstDayOfWeek="mon" />
+              <DatePicker label="Forced Sunday" firstDayOfWeek="sun" />
+              <DatePicker label="Forced Monday" firstDayOfWeek="mon" />
+              <DatePicker label="Locale default" />
             </div>
           </section>
 

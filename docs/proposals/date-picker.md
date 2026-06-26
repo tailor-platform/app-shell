@@ -10,7 +10,36 @@ The original v1 foundation decision (`react-aria-components`, 2026-06-17, §1 be
 - **Decision (v1):** ship the `@internationalized/date` + Base UI variant. Public API and value layer are unchanged, so this is invisible to consumers.
 - **Trade-off accepted:** we own ~670 LOC of APG behaviour instead of Adobe-audited primitives. Known gaps tracked for follow-up: **mobile/touch typing** (segments are `role="spinbutton"` with no hidden numeric `<input>`, so on-screen-keyboard entry is limited — the calendar is the touch path), **RTL arrow-key flipping**, and the pattern is unit-tested but **not yet screen-reader-audited**.
 
-Everything below is the **original 2026-06-17 decision and analysis**, kept verbatim for the record (now superseded by this note).
+## Post-v1 fast-follows (Base UI variant)
+
+Owning the segmented input + grid means a handful of behaviours react-aria gave us for free are now our own follow-up work. The full inventory is in [`date-picker-impl-comparison.md`](date-picker-impl-comparison.md) ("Known gaps vs react-aria"); the highest-value item is written up here so the approach isn't lost.
+
+### Mobile / touch text entry (biggest gap)
+
+**Problem.** Our segments are `role="spinbutton"` `<div>`s with `contentEditable={false}`, and input is read only from `keydown`. On-screen keyboards don't emit usable `keydown`, and with no editable element focused the keyboard doesn't surface at all — so on touch devices you can't _type_ a date (the calendar popover is the only touch path). Desktop keyboard + calendar work fully.
+
+**Approach — mirror react-aria.** react-aria makes each segment a `contentEditable` span with `inputmode="numeric"`; that's exactly what surfaces the numeric soft keyboard and lets it type into the element (verified: react-aria's month segment is `<span role="spinbutton" contenteditable="true" inputmode="numeric" enterkeyhint="next" autocorrect="off" style="caret-color: transparent">`). To match it in `DateInputGroup`:
+
+1. Render each editable segment with `contentEditable` (when not disabled/readonly), `inputMode="numeric"` (omit for the AM/PM segment), plus `enterKeyHint="next"`, `autoCorrect="off"`, `autoCapitalize="off"`, `spellCheck={false}`. Keep the transparent caret so the field still renders our locale-formatted text, not an editing caret.
+2. Add a **native** `beforeinput` listener that **always `preventDefault`s** — the segment text stays React-controlled, so the browser must never mutate the `contentEditable` DOM — then translates the event into the existing engine:
+   - `insertText` → per character: digit → `setDigit(...)` (same typed-count / auto-advance path as `keydown`); `a`/`p` on the day-period segment → `setDayPeriod`.
+   - `deleteContentBackward` / `deleteContentForward` → `clearSegment`.
+   - anything else → ignored (already prevented), which also swallows stray characters so the segment can't accumulate junk.
+3. Keep the current `keydown` path for physical keyboards. The two are mutually exclusive: a handled `keydown` calls `preventDefault`, which suppresses the follow-on `beforeinput`; soft keyboards emit no actionable `keydown`, so `beforeinput` is the only path that fires there.
+
+**Why native `beforeinput`, not React's `onBeforeInput`:** React's synthetic `onBeforeInput` is unreliable for cancelling the native default on `contentEditable`; a native listener (attached via ref/effect) makes `preventDefault` reliably stop DOM mutation across browsers.
+
+**Scope:** touches only `DateInputGroup` (segment attributes + the input handler). No public-API or value-layer change. Segment DOM snapshots update (the new `contentEditable`/`inputmode` attributes).
+
+**Verification:** the desktop `keydown` path stays covered by the existing unit tests; the `beforeinput` path can be exercised by dispatching a synthetic `InputEvent("beforeinput", { inputType, data })`. The soft keyboard _appearing on focus_ is platform behaviour driven purely by the `contentEditable` + `inputmode` attributes, so it can't be unit-tested — it needs **real-device QA** (physical phone or BrowserStack) before sign-off.
+
+### Other gaps
+
+RTL arrow-key flipping, non-Gregorian calendar systems, localized placeholder/nav-button strings, a dedicated navigation live-region, and a full screen-reader audit — all inventoried in the comparison doc's "Known gaps vs react-aria" section.
+
+---
+
+Everything below is the **original 2026-06-17 decision and analysis**, kept verbatim for the record (now superseded by the notes above).
 
 ## 1. Summary & decision
 

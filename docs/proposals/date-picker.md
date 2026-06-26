@@ -1,16 +1,16 @@
 # Proposal: DatePicker / DateField (and future DateRangePicker)
 
-> Status: **v1 implemented on the lighter §9 foundation (`@internationalized/date` + Base UI). This reverses the original `react-aria-components` decision below and is _pending sign-off_ — see the Revision note.**
+> Status: **Decided — v1 builds on the §9 lighter foundation (`@internationalized/date` + Base UI), approved 2026-06-26 (superseding the original `react-aria-components` decision). See the Revision note.**
 > Scope: v1 ships `DateField`, `DatePicker`, and a standalone `Calendar`. `DateRangePicker` / `RangeCalendar` are designed-for but deferred.
 
-## Revision — 2026-06-26 (foundation reconsidered)
+## Revision — 2026-06-26 (foundation swap approved)
 
-The v1 foundation decision recorded below (`react-aria-components`, 2026-06-17) has been **revisited**, and the shipped implementation builds on the **§9 lighter foundation** — `@internationalized/date` + Base UI — measured at **~11 KB gz vs ~74 KB** for react-aria, with the same public API and value layer (see [`date-picker-impl-comparison.md`](date-picker-impl-comparison.md)).
+The original v1 foundation decision (`react-aria-components`, 2026-06-17, §1 below) has been **superseded**: v1 now builds on the **§9 lighter foundation** — `@internationalized/date` + Base UI — measured at **~11 KB gz vs ~74 KB** for react-aria, with the same public API and value layer (see [`date-picker-impl-comparison.md`](date-picker-impl-comparison.md)). The swap was **approved on 2026-06-26**.
 
-- **Proposed for v1 — pending sign-off.** Adopting this in place of `react-aria-components` reverses the recorded decision; that swap needs explicit approval before merge. This note records the change of direction, not a finalised re-decision.
-- **Trade-off (accepted only if signed off):** we own ~670 LOC of APG behaviour instead of Adobe-audited primitives. Documented gaps: **mobile/touch typing** (segments are `role="spinbutton"` with no hidden numeric `<input>`, so on-screen-keyboard entry is limited — the calendar is the touch path), **RTL arrow-key flipping**, and the pattern is unit-tested but **not yet screen-reader-audited**.
+- **Decision (v1):** ship the `@internationalized/date` + Base UI variant. Public API and value layer are unchanged, so this is invisible to consumers.
+- **Trade-off accepted:** we own ~670 LOC of APG behaviour instead of Adobe-audited primitives. Known gaps tracked for follow-up: **mobile/touch typing** (segments are `role="spinbutton"` with no hidden numeric `<input>`, so on-screen-keyboard entry is limited — the calendar is the touch path), **RTL arrow-key flipping**, and the pattern is unit-tested but **not yet screen-reader-audited**.
 
-Everything below is the **original 2026-06-17 decision and analysis**, kept verbatim for the record.
+Everything below is the **original 2026-06-17 decision and analysis**, kept verbatim for the record (now superseded by this note).
 
 ## 1. Summary & decision
 

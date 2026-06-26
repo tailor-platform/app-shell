@@ -377,7 +377,10 @@ export function CalendarView({
   React.useEffect(() => {
     if (!state.moveFocusRef.current) return;
     state.moveFocusRef.current = false;
-    cellRefs.current.get(state.focusedDate.toString())?.focus();
+    // preventScroll: focus is moved programmatically (popover open / roving
+    // nav); letting the browser scroll the cell into view would jump the page
+    // even when the field is already visible.
+    cellRefs.current.get(state.focusedDate.toString())?.focus({ preventScroll: true });
   }, [state.focusedDate, state.moveFocusRef]);
 
   // When opened in a popover, move focus into the grid so arrow keys work
@@ -385,7 +388,8 @@ export function CalendarView({
   React.useEffect(() => {
     if (!inPopover) return;
     state.isFocusedRef.current = true;
-    cellRefs.current.get(state.focusedDate.toString())?.focus();
+    // preventScroll — see the roving-focus effect above.
+    cellRefs.current.get(state.focusedDate.toString())?.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -406,7 +410,7 @@ export function CalendarView({
     const next = stops[(idx + dir + stops.length) % stops.length];
     // Entering the grid stop should re-arm the roving-focus effect.
     if (next === gridCell) state.isFocusedRef.current = true;
-    next.focus();
+    next.focus({ preventScroll: true });
   };
 
   return (

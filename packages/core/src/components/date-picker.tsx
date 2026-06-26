@@ -99,7 +99,10 @@ export function DatePickerError({ className, ...props }: React.ComponentProps<"p
 
 const groupClasses = cn(
   inputBaseClasses,
-  "astw:flex astw:h-9 astw:items-center astw:gap-0 astw:py-0",
+  // Floor the width to comfortably fit "dd / mm / yyyy" + the trigger icon plus
+  // padding (142px) so the field doesn't collapse in a narrow/flex container.
+  // Overrides inputBaseClasses' `min-w-0`; wider locales (e.g. ja-JP) still grow.
+  "astw:flex astw:h-9 astw:min-w-[142px] astw:items-center astw:gap-0 astw:py-0",
   "astw:focus-within:border-ring astw:focus-within:ring-[3px] astw:focus-within:ring-ring/50",
   "astw:data-[invalid]:border-destructive astw:data-[invalid]:ring-destructive/20",
   "astw:data-[disabled]:cursor-not-allowed astw:data-[disabled]:opacity-50",

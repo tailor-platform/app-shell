@@ -110,6 +110,7 @@ export {
 } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
+export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";

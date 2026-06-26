@@ -1,5 +1,50 @@
 # @tailor-platform/app-shell
 
+## 1.5.0
+
+### Minor Changes
+
+- 00f9aa7: Manage the browser tab from AppShell — title and favicon.
+
+  - **Title**: AppShell now keeps `document.title` in sync with the active route as `"<page> · <title>"`, where `<page>` is the current breadcrumb leaf (including any `useOverrideBreadcrumb` override, so detail pages show their record name automatically) and `<title>` is the `title` prop passed to `<AppShell>`. Works for every page with no per-page wiring; when no `title` is set the tab shows just the page name.
+  - **Favicon**: new `favicon` prop on `<AppShell>` sets the document favicon (any `<link rel="icon">` href — a public-path URL or a data URI). When omitted it defaults to the bundled Tailor favicon, so apps get correct branding out of the box.
+
+  Both are rendered declaratively (React 19 hoists `<title>`/`<link rel="icon">` into `<head>`), so it works in client-only apps, streaming SSR, and Server Components.
+
+  If your app already updates `document.title` manually, you can drop that wiring and let AppShell own the tab title. A host-page `<link rel="icon">` can remain in place unless you explicitly pass the new `favicon` prop.
+
+- 5353303: Introduce theming support — **ColorTheme** axis, static **theme palettes** via CSS imports, a new `AppearanceSwitcher` component, and bundled Inter variable fonts.
+
+  #### ColorTheme (end-user preference, persisted)
+
+  `ColorTheme` (`"light" | "dark" | "system"`) is the end-user color mode preference. Applied to `<html>` as `.light` / `.dark` class.
+
+  - `<AppShell defaultColorTheme="system">` sets the initial preference; user choice is persisted to localStorage.
+  - `useTheme()` hook returns `{ theme, resolvedTheme, setTheme }`.
+
+  #### Theme Palettes (static CSS imports)
+
+  Each palette (`default`, `cream`, `bloom`) ships both light and dark variants.
+  Select a palette by importing its CSS file — no prop needed:
+
+  ```ts
+  import "@tailor-platform/app-shell/themes/cream";
+  ```
+
+  The default palette is included automatically via `@tailor-platform/app-shell/styles`.
+
+  #### AppearanceSwitcher
+
+  - New `<AppearanceSwitcher />` component for toggling color theme (light / dark / system).
+
+### Patch Changes
+
+- 3d48b24: Remove `loader` from file-based page definitions (`Page.appShellPageProps`). This removes an accidentally exposed incomplete API and makes `guards` the single source of page-level route behavior in file-based routing.
+- 3138c6a: Fix DataTable checkbox vertical alignment. Remove unnecessary wrapper div and `translate-y-[2px]` hack so checkboxes align correctly with row content via `align-middle`.
+- 5353303: Set explicit `--accent` values per palette and mode, reorganise palette CSS into numbered tiers with a `_template.css` authoring guide, add `--alert-*` semantic tokens to the default palette, and wire `Alert` variants to those tokens (including lighter dark-mode foregrounds).
+- Updated dependencies [3d48b24]
+  - @tailor-platform/app-shell-vite-plugin@0.2.3
+
 ## 1.4.1
 
 ### Patch Changes

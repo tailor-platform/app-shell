@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router";
 import { describe, it, expect, vi } from "vitest";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
 import {
-  useURLCollectionState,
+  useURLCollectionVariables,
   withURLCollectionState,
   encodeFilterValue,
   decodeFilterValue,
@@ -21,6 +21,8 @@ const tableMetadata = {
       { name: "status", type: "enum", required: true, enumValues: ["active", "pending", "closed"] },
       { name: "createdAt", type: "datetime", required: true },
       { name: "title", type: "string", required: true },
+      { name: "price", type: "number", required: true },
+      { name: "archived", type: "boolean", required: false },
     ],
   },
 } as const satisfies TableMetadataMap;
@@ -76,6 +78,37 @@ describe("parseCollectionSearchParams", () => {
       sortStates: [{ field: "name", direction: "Asc" }],
       filters: [{ field: "tags", operator: "in", value: ["a", "b"] }],
     });
+  });
+
+  it("coerces number and boolean filter values using metadata", () => {
+    const result = parseCollectionSearchParams(
+      tableMetadata.task,
+      new URLSearchParams('f.price:gt=130&f.archived:eq=true&f.price:in=["10","20"]'),
+    );
+
+    expect(result.filters).toEqual([
+      { field: "price", operator: "gt", value: 130 },
+      { field: "archived", operator: "eq", value: true },
+      { field: "price", operator: "in", value: [10, 20] },
+    ]);
+  });
+
+  it("round-trips a numeric filter through write → parse as a number", () => {
+    const written = writeCollectionSearchParams(new URLSearchParams(), {
+      filters: [{ field: "price", operator: "gt", value: 130 }],
+      sortStates: [],
+      pageSize: 20,
+    });
+
+    expect(parseCollectionSearchParams(tableMetadata.task, written).filters).toEqual([
+      { field: "price", operator: "gt", value: 130 },
+    ]);
+  });
+
+  it("leaves numeric-looking values as strings when no metadata is provided", () => {
+    const result = parseCollectionSearchParams(new URLSearchParams("f.price:gt=130"));
+
+    expect(result.filters).toEqual([{ field: "price", operator: "gt", value: "130" }]);
   });
 });
 
@@ -169,25 +202,27 @@ describe("withURLCollectionState", () => {
   });
 });
 
-describe("useURLCollectionState", () => {
-  it("binds useSearchParams and returns a decorator", () => {
-    const { result } = renderHook(() => useURLCollectionState(), {
-      wrapper: SearchParamsWrapper,
-    });
+describe("useURLCollectionVariables", () => {
+  it("seeds collection control state from the URL search params", () => {
+    const { result } = renderHook(
+      () =>
+        useURLCollectionVariables({
+          tableMetadata: tableMetadata.task,
+          params: {
+            initialSort: [{ field: "createdAt", direction: "Desc" }],
+            pageSize: 20,
+          },
+        }),
+      { wrapper: SearchParamsWrapper },
+    );
 
-    const options = result.current({
-      tableMetadata: tableMetadata.task,
-      params: {
-        initialSort: [{ field: "createdAt", direction: "Desc" }],
-        pageSize: 20,
-      },
-    });
-
-    expect(options.params).toEqual({
-      initialFilters: [{ field: "status", operator: "eq", value: "active" }],
-      initialSort: [{ field: "createdAt", direction: "Desc" }],
-      pageSize: 50,
-    });
+    // URL (`?p=50&f.status:eq=active`) wins over the `pageSize: 20` default and
+    // contributes the filter; `initialSort` is kept since the URL has no sort.
+    expect(result.current.control.filters).toEqual([
+      { field: "status", operator: "eq", value: "active" },
+    ]);
+    expect(result.current.control.sortStates).toEqual([{ field: "createdAt", direction: "Desc" }]);
+    expect(result.current.control.pageSize).toBe(50);
   });
 });
 

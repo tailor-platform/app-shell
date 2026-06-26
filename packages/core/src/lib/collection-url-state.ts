@@ -1,15 +1,20 @@
 import { useSearchParams } from "react-router";
+import { useCollectionVariables } from "@/hooks/use-collection-variables";
 import {
   OPERATORS_BY_FILTER_TYPE,
   fieldTypeToFilterConfig,
   fieldTypeToSortConfig,
   type CollectionInitialState,
   type CollectionPersistedState,
+  type CollectionVariables,
+  type FieldType,
   type Filter,
   type TableFieldName,
   type TableMetadata,
   type TableMetadataFilter,
+  type TypedCollectionVariables,
   type UseCollectionOptions,
+  type UseCollectionReturn,
 } from "@/types/collection";
 
 const KEY_PAGE_SIZE = "p";
@@ -26,17 +31,6 @@ export type SearchParamsBinding = readonly [
     options?: { replace?: boolean },
   ) => void,
 ];
-
-export interface URLCollectionStateDecorator {
-  <const TTable extends TableMetadata>(
-    options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
-      tableMetadata: TTable;
-    },
-  ): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
-    tableMetadata: TTable;
-  };
-  (options: UseCollectionOptions & { tableMetadata?: never }): UseCollectionOptions;
-}
 
 function isValidSortField(tableMetadata: TableMetadata | undefined, field: string): boolean {
   if (!tableMetadata) return true;
@@ -61,6 +55,55 @@ function isValidFilter(
   if (!filterConfig) return false;
 
   return OPERATORS_BY_FILTER_TYPE[filterConfig.type].includes(operator as never);
+}
+
+/** Look up a field's metadata-declared type, if metadata is available. */
+function fieldTypeOf(
+  tableMetadata: TableMetadata | undefined,
+  field: string,
+): FieldType | undefined {
+  return tableMetadata?.fields.find((candidate) => candidate.name === field)?.type;
+}
+
+/**
+ * Coerce a single decoded scalar to the field's declared metadata type.
+ *
+ * `decodeFilterValue` intentionally returns numeric-/boolean-looking values as
+ * strings (it can't know the intended type on its own). When table metadata is
+ * available we *do* know the type, so we restore it here — otherwise a number
+ * field's `gt`/`eq`/… value round-trips from the URL as a string and silently
+ * fails any type-aware comparison (and contradicts `TypedCollectionVariables`,
+ * which declares these as `number`/`boolean`).
+ */
+function coerceScalarToFieldType(type: FieldType, value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  switch (type) {
+    case "number": {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : value;
+    }
+    case "boolean": {
+      if (value === "true") return true;
+      if (value === "false") return false;
+      return value;
+    }
+    default:
+      return value;
+  }
+}
+
+/**
+ * Coerce a decoded filter value to the field's declared type, descending into
+ * `in`/`nin` arrays and `between` `{ min, max }` objects.
+ */
+function coerceFilterValueToFieldType(type: FieldType, value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => coerceScalarToFieldType(type, item));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, coerceScalarToFieldType(type, item)]),
+    );
+  }
+  return coerceScalarToFieldType(type, value);
 }
 
 /**
@@ -98,10 +141,15 @@ export function parseCollectionSearchParams(
     if (!key.startsWith(FILTER_PREFIX) || !value) continue;
     const [field, operator] = key.slice(FILTER_PREFIX.length).split(":");
     if (!field || !operator || !isValidFilter(tableMetadata, field, operator)) continue;
+    const decoded = decodeFilterValue(value);
+    const fieldType = fieldTypeOf(tableMetadata, field);
     nextFilters.push({
       field,
       operator: operator as Filter["operator"],
-      value: decodeFilterValue(value),
+      // With metadata we know the field type, so restore number/boolean values
+      // that `decodeFilterValue` returned as strings. Without metadata (untyped
+      // overload) we can't, so the value stays a string.
+      value: fieldType ? coerceFilterValueToFieldType(fieldType, decoded) : decoded,
     });
   }
   if (nextFilters.length > 0) nextState.filters = nextFilters;
@@ -220,14 +268,54 @@ function mergeCollectionStateIntoParams(
 }
 
 /**
- * Hook that binds the current router search params and returns a
- * `withURLCollectionState()`-compatible decorator.
+ * Hook for managing collection query parameters (filters, sort, pagination)
+ * with state persisted to the URL query string.
+ *
+ * This is the one-call convenience over {@link useCollectionVariables}: it seeds
+ * the initial filter/sort/page-size state from the current router search params
+ * and writes changes back as the user filters, sorts, or pages (using `replace`
+ * so each change doesn't push a new history entry).
+ *
+ * Reach for the bare {@link useCollectionVariables} when you don't want URL
+ * persistence, or the pure {@link withURLCollectionState} decorator when you
+ * need to supply a non-react-router search-params binding.
+ *
+ * @example
+ * ```tsx
+ * import { tableMetadata } from "./generated/data-viewer-metadata.generated";
+ *
+ * const { variables, control } = useURLCollectionVariables({
+ *   tableMetadata: tableMetadata.task,
+ *   params: { pageSize: 20 },
+ * });
+ * ```
  */
-export function useURLCollectionState(): URLCollectionStateDecorator {
+export function useURLCollectionVariables<const TTable extends TableMetadata>(
+  options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
+    tableMetadata: TTable;
+  },
+): UseCollectionReturn<
+  TableFieldName<TTable>,
+  TypedCollectionVariables<TTable>,
+  TableMetadataFilter<TTable>
+>;
+export function useURLCollectionVariables(
+  options: UseCollectionOptions & { tableMetadata?: never },
+): UseCollectionReturn<string, CollectionVariables>;
+export function useURLCollectionVariables(
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+): unknown {
   const searchParamsBinding = useSearchParams();
-
-  return ((options: UseCollectionOptions & { tableMetadata?: TableMetadata }) =>
-    applyURLCollectionState(options, searchParamsBinding)) as URLCollectionStateDecorator;
+  // `useCollectionVariables` is overloaded on whether `tableMetadata` is present;
+  // the decorated options carry an optional `tableMetadata` that matches neither
+  // overload, so narrow to the no-metadata one for the call. `tableMetadata` is
+  // type-only (the implementation never reads it), so this is safe at runtime,
+  // and callers see the precise return type from this hook's overloads above.
+  return useCollectionVariables(
+    applyURLCollectionState(options, searchParamsBinding) as UseCollectionOptions & {
+      tableMetadata?: never;
+    },
+  );
 }
 
 /**

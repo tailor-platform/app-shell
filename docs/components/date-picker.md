@@ -108,6 +108,8 @@ Segment order, first-day-of-week, month/weekday names, and 12/24-hour display al
 - The calendar is a `role="grid"`; each day is a button with a full-date `aria-label`; disabled/unavailable days are announced via `aria-disabled`.
 - The popover is a labelled `role="dialog"`.
 
+> **Known limitations (this variant).** The segments are `<div role="spinbutton">` with **no hidden numeric `<input>`**, so on-screen-keyboard typing on touch devices is limited — on mobile, use the calendar popover to pick a date (desktop keyboard entry and the calendar both work fully). The APG patterns are implemented and unit-tested but **not yet screen-reader-audited**, and RTL arrow-key flipping isn't handled. See [the implementation comparison](../proposals/date-picker-impl-comparison.md) ("Known gaps vs react-aria") for the full list.
+
 ## Props
 
 ### DateFieldProps

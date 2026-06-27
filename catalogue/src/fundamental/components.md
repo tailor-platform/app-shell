@@ -424,6 +424,23 @@ const table = useDataTable({
 
 **Used in patterns:** KPI tiles, dashboards, **`detail/*`** metric strips where specs call for them.
 
+### `DocumentProgressCard`
+
+**Import:** `import { DocumentProgressCard } from '@tailor-platform/app-shell'`
+**Purpose:** Fulfilment / lifecycle state of a transactional document — derived completion %, stacked progress bar, status legend.
+**API:** `DocumentProgressCardProps` — `received`, `returned`, `yetToReceive` (each `{ value, label?, color? }`), `title`, `returnedCountsAsComplete`. Percent is derived (`received / (received + yetToReceive)`); set `returnedCountsAsComplete={false}` to subtract returns.
+**Example:**
+
+```tsx
+<DocumentProgressCard
+  received={{ value: 12 }}
+  returned={{ value: 2 }}
+  yetToReceive={{ value: 28 }}
+/>
+```
+
+**Used in patterns:** **`detail/*`** right-rail cards communicating PO / shipment fulfilment state.
+
 ### `Avatar`
 
 **Import:** `import { Avatar } from '@tailor-platform/app-shell'`

@@ -109,6 +109,10 @@ export {
   type UseAttachmentOptions,
 } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
+export {
+  DocumentProgressCard,
+  type DocumentProgressCardProps,
+} from "./components/document-progress-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";

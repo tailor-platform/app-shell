@@ -79,11 +79,12 @@ export function DocumentProgressCard({
     : receivedValue - effectiveReturned;
   const percent = Math.round(100 * calculateRate(completeCount, total));
 
-  // The colored fill always sums to `percent`: the net-received segment (indigo) is
-  // always complete; the returned segment (pink) is part of the fill only when it
-  // counts as complete. The unfilled remainder represents the yet-to-receive amount.
+  // The bar is a composition: a net-received segment (indigo, received − returned)
+  // followed by a returned segment (pink). The unfilled remainder is yet-to-receive.
+  // The header percentage maps onto the net-received segment, plus the returned
+  // segment when `returnedCountsAsComplete` is true.
   const fractionNetReceived = calculateRate(receivedValue - effectiveReturned, total);
-  const fractionReturned = returnedCountsAsComplete ? calculateRate(effectiveReturned, total) : 0;
+  const fractionReturned = calculateRate(effectiveReturned, total);
 
   const legend: Array<{
     key: string;

@@ -216,7 +216,7 @@ describe("DocumentProgressCard", () => {
     expect(getRoot(container).className).toContain("custom-progress-card");
   });
 
-  it("keeps the colored bar in sync with the header when returns are excluded", () => {
+  it("always shows the returned segment; the net-received segment maps to the header", () => {
     const { container } = render(
       <DocumentProgressCard
         received={{ value: 12 }}
@@ -225,12 +225,13 @@ describe("DocumentProgressCard", () => {
         returnedCountsAsComplete={false}
       />,
     );
-    // header = (12 − 2)/40 = 25%; the bar must fill 25% too — received segment only,
-    // no returned segment contributing to the fill
+    // header = (12 − 2)/40 = 25%, which equals the net-received (indigo) segment;
+    // the returned segment is still shown as a distinct 5% (2/40) category
     expect(getPercentText()).toBe("25%");
     const received = container.querySelector('[data-segment="received"]') as HTMLElement;
+    const returned = container.querySelector('[data-segment="returned"]') as HTMLElement;
     expect(received.style.width).toBe("25%");
-    expect(container.querySelector('[data-segment="returned"]')).toBeNull();
+    expect(returned.style.width).toBe("5%");
   });
 
   it("clamps returned to received so the bar never contradicts the header", () => {

@@ -2,11 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
-import type {
-  DocumentProgressCardProps,
-  DocumentProgressColor,
-  DocumentProgressItem,
-} from "./types";
+import type { DocumentProgressCardProps, DocumentProgressColor } from "./types";
 
 // ============================================================================
 // CONSTANTS
@@ -35,6 +31,9 @@ const YET_TO_RECEIVE_DEFAULTS = { label: "Yet to receive", color: "neutral" as c
 const calculateRate = (numerator: number, denominator: number) =>
   denominator > 0 ? Math.min(1, Math.max(0, numerator / denominator)) : 0;
 
+/** Coerce an input amount to a non-negative, finite number (NaN/Infinity/negative → 0). */
+const sanitizeValue = (value: number) => (Number.isFinite(value) ? Math.max(0, value) : 0);
+
 // ============================================================================
 // DOCUMENT PROGRESS CARD
 // ============================================================================
@@ -45,7 +44,9 @@ const calculateRate = (numerator: number, denominator: number) =>
  *
  * Presentational only — pass in the raw `received` / `returned` / `yetToReceive`
  * amounts and the component derives the percentage and bar widths. `total` is
- * `received + yetToReceive` (returned is a subset of received).
+ * `received + yetToReceive` (returned is a subset of received). Amounts are
+ * expected to be non-negative numbers; non-finite or negative inputs are
+ * coerced to 0, and `returned` is clamped to `received`.
  *
  * @example
  * ```tsx
@@ -64,28 +65,50 @@ export function DocumentProgressCard({
   returnedCountsAsComplete = true,
   className,
 }: DocumentProgressCardProps) {
-  const receivedValue = received.value;
-  const returnedValue = returned.value;
-  const yetToReceiveValue = yetToReceive.value;
+  const receivedValue = sanitizeValue(received.value);
+  const returnedValue = sanitizeValue(returned.value);
+  const yetToReceiveValue = sanitizeValue(yetToReceive.value);
 
   const total = receivedValue + yetToReceiveValue;
 
-  const completeCount = returnedCountsAsComplete ? receivedValue : receivedValue - returnedValue;
+  // Returned is a subset of received; clamp so the breakdown can never exceed it.
+  const effectiveReturned = Math.min(returnedValue, receivedValue);
+
+  const completeCount = returnedCountsAsComplete
+    ? receivedValue
+    : receivedValue - effectiveReturned;
   const percent = Math.round(100 * calculateRate(completeCount, total));
 
-  // Bar splits the received portion into "net received" (received − returned) and
-  // "returned"; the unfilled remainder represents the yet-to-receive amount.
-  const fractionReceived = calculateRate(receivedValue - returnedValue, total);
-  const fractionReturned = calculateRate(returnedValue, total);
+  // The colored fill always sums to `percent`: the net-received segment (indigo) is
+  // always complete; the returned segment (pink) is part of the fill only when it
+  // counts as complete. The unfilled remainder represents the yet-to-receive amount.
+  const fractionNetReceived = calculateRate(receivedValue - effectiveReturned, total);
+  const fractionReturned = returnedCountsAsComplete ? calculateRate(effectiveReturned, total) : 0;
 
   const legend: Array<{
     key: string;
-    item: DocumentProgressItem;
-    defaults: { label: string; color: DocumentProgressColor };
+    label: string;
+    color: DocumentProgressColor;
+    value: number;
   }> = [
-    { key: "received", item: received, defaults: RECEIVED_DEFAULTS },
-    { key: "returned", item: returned, defaults: RETURNED_DEFAULTS },
-    { key: "yetToReceive", item: yetToReceive, defaults: YET_TO_RECEIVE_DEFAULTS },
+    {
+      key: "received",
+      label: received.label ?? RECEIVED_DEFAULTS.label,
+      color: received.color ?? RECEIVED_DEFAULTS.color,
+      value: receivedValue,
+    },
+    {
+      key: "returned",
+      label: returned.label ?? RETURNED_DEFAULTS.label,
+      color: returned.color ?? RETURNED_DEFAULTS.color,
+      value: returnedValue,
+    },
+    {
+      key: "yetToReceive",
+      label: yetToReceive.label ?? YET_TO_RECEIVE_DEFAULTS.label,
+      color: yetToReceive.color ?? YET_TO_RECEIVE_DEFAULTS.color,
+      value: yetToReceiveValue,
+    },
   ];
 
   return (
@@ -110,12 +133,12 @@ export function DocumentProgressCard({
           data-slot="document-progress-bar"
           aria-hidden
         >
-          {fractionReceived > 0 && (
+          {fractionNetReceived > 0 && (
             <div
               data-slot="document-progress-segment"
               data-segment="received"
               className={cn("astw:h-full", colorFill[received.color ?? RECEIVED_DEFAULTS.color])}
-              style={{ width: `${fractionReceived * 100}%` }}
+              style={{ width: `${fractionNetReceived * 100}%` }}
             />
           )}
           {fractionReturned > 0 && (
@@ -129,13 +152,8 @@ export function DocumentProgressCard({
         </div>
 
         <div className="astw:flex astw:flex-col astw:gap-2">
-          {legend.map(({ key, item, defaults }) => (
-            <LegendRow
-              key={key}
-              label={item.label ?? defaults.label}
-              color={item.color ?? defaults.color}
-              value={item.value}
-            />
+          {legend.map(({ key, label, color, value }) => (
+            <LegendRow key={key} label={label} color={color} value={value} />
           ))}
         </div>
       </div>

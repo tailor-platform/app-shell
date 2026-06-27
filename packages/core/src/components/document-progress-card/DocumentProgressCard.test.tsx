@@ -216,6 +216,52 @@ describe("DocumentProgressCard", () => {
     expect(getRoot(container).className).toContain("custom-progress-card");
   });
 
+  it("keeps the colored bar in sync with the header when returns are excluded", () => {
+    const { container } = render(
+      <DocumentProgressCard
+        received={{ value: 12 }}
+        returned={{ value: 2 }}
+        yetToReceive={{ value: 28 }}
+        returnedCountsAsComplete={false}
+      />,
+    );
+    // header = (12 − 2)/40 = 25%; the bar must fill 25% too — received segment only,
+    // no returned segment contributing to the fill
+    expect(getPercentText()).toBe("25%");
+    const received = container.querySelector('[data-segment="received"]') as HTMLElement;
+    expect(received.style.width).toBe("25%");
+    expect(container.querySelector('[data-segment="returned"]')).toBeNull();
+  });
+
+  it("clamps returned to received so the bar never contradicts the header", () => {
+    const { container } = render(
+      <DocumentProgressCard
+        received={{ value: 2 }}
+        returned={{ value: 5 }}
+        yetToReceive={{ value: 8 }}
+      />,
+    );
+    // total = 10; default-mode header = 2/10 = 20%
+    expect(getPercentText()).toBe("20%");
+    // net received = (2 − min(5,2))/10 = 0 → no received segment; returned clamped to 2 → 20%
+    expect(container.querySelector('[data-segment="received"]')).toBeNull();
+    const returned = container.querySelector('[data-segment="returned"]') as HTMLElement;
+    expect(returned.style.width).toBe("20%");
+  });
+
+  it("sanitizes non-finite and negative values to zero", () => {
+    render(
+      <DocumentProgressCard
+        received={{ value: Number.NaN }}
+        returned={{ value: -5 }}
+        yetToReceive={{ value: Number.POSITIVE_INFINITY }}
+      />,
+    );
+    // all coerced to 0 → zero total → 0%, and each legend figure shows 0
+    expect(getPercentText()).toBe("0%");
+    expect(screen.getAllByText("0")).toHaveLength(3);
+  });
+
   it("renders the bar as a decorative element", () => {
     const { container } = render(
       <DocumentProgressCard

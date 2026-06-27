@@ -68,7 +68,11 @@ The result is rounded and clamped to `[0, 100]`. A zero total renders `0%`.
 
 ## Progress Bar
 
-The bar fills left-to-right with a **net received** segment (`received − returned`) followed by a **returned** segment. The unfilled remainder represents the yet-to-receive amount, so an untouched document shows an empty track.
+The bar's colored fill always equals the header percentage. It fills left-to-right with a **net received** segment (`received − returned`); when `returnedCountsAsComplete` is `true` (the default) a **returned** segment is appended, since those items still count as complete. With `returnedCountsAsComplete={false}` the returned items are not part of the fill (the bar reflects only net received). The unfilled remainder represents the yet-to-receive amount, so an untouched document shows an empty track.
+
+## Input handling
+
+Amounts are expected to be non-negative numbers. Non-finite or negative values are coerced to `0`, and `returned` is clamped to `received` (it represents a subset of received items), so the bar, percentage, and legend can never contradict one another.
 
 ## Relabelling for other documents
 

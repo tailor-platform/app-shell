@@ -24,7 +24,7 @@ safe-outputs:
 
 # API Design Review
 
-{{#import ../agents/api-design-reviewer.md}}
+{{#runtime-import .github/agents/api-design-reviewer.md}}
 
 ## Review Round Awareness
 

@@ -1,8 +1,6 @@
 ---
 name: API Design Reviewer
 description: "Reviews code changes for API design consistency, potential footguns, and TypeScript/React best practices in the AppShell core package. Use when: reviewing packages/ changes, checking public API surface, validating export patterns."
-imports:
-  - /.agents/skills/api-design-review/instruction.md
 ---
 
 # API Design Review

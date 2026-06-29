@@ -38,6 +38,13 @@ export {
   type EnhancedAuthClient,
   type AuthClientConfig,
 } from "./contexts/auth-context";
+export {
+  createAIGatewayClient,
+  type AIGatewayClient,
+  type AIGatewayChatMessage,
+  type AIGatewayChatRequest,
+} from "./ai/client";
+export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";

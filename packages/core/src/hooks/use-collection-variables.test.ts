@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { TableMetadataMap } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
 
@@ -53,6 +53,51 @@ describe("useCollectionVariables", () => {
       expect(result.current.control.filters).toHaveLength(1);
       expect(result.current.variables.query).toEqual({
         status: { eq: "ACTIVE" },
+      });
+    });
+
+    it("applies params together", () => {
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: {
+            initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }],
+            initialSort: [{ field: "createdAt", direction: "Desc" }],
+            pageSize: 50,
+          },
+        }),
+      );
+
+      expect(result.current.control.filters).toEqual([
+        { field: "status", operator: "eq", value: "ACTIVE" },
+      ]);
+      expect(result.current.control.sortStates).toEqual([
+        { field: "createdAt", direction: "Desc" },
+      ]);
+      expect(result.current.variables.pagination).toEqual({ first: 50 });
+    });
+  });
+
+  describe("onParamsChange", () => {
+    it("does not notify on initial render", () => {
+      const onParamsChange = vi.fn();
+      renderHook(() => useCollectionVariables({ onParamsChange }));
+      expect(onParamsChange).not.toHaveBeenCalled();
+    });
+
+    it("notifies with params after changes", () => {
+      const onParamsChange = vi.fn();
+      const { result } = renderHook(() => useCollectionVariables({ onParamsChange }));
+
+      act(() => {
+        result.current.control.addFilter("status", "eq", "ACTIVE");
+      });
+
+      expect(onParamsChange).toHaveBeenLastCalledWith({
+        initialFilters: [
+          { field: "status", operator: "eq", value: "ACTIVE", caseSensitive: undefined },
+        ],
+        initialSort: [],
+        pageSize: 20,
       });
     });
   });

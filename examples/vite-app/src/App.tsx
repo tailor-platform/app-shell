@@ -33,6 +33,7 @@ const App = () => {
             <SidebarGroup title={labels.t("navMain")}>
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
+              <SidebarItem to="/dashboard/products" />
             </SidebarGroup>
             <SidebarItem to="/settings" />
           </DefaultSidebar>

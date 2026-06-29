@@ -1,16 +1,14 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
-  BuildQueryVariables,
   CollectionControl,
   CollectionVariables,
   Filter,
   FilterOperator,
-  PaginationVariables,
   SortState,
   TableFieldName,
   TableMetadata,
   TableMetadataFilter,
-  TableOrderableFieldName,
+  TypedCollectionVariables,
   UseCollectionOptions,
   UseCollectionReturn,
 } from "@/types/collection";
@@ -85,16 +83,7 @@ export function useCollectionVariables<const TTable extends TableMetadata>(
   },
 ): UseCollectionReturn<
   TableFieldName<TTable>,
-  {
-    query: BuildQueryVariables<TTable> | undefined;
-    order:
-      | {
-          field: TableOrderableFieldName<TTable>;
-          direction: "Asc" | "Desc";
-        }[]
-      | undefined;
-    pagination: PaginationVariables;
-  },
+  TypedCollectionVariables<TTable>,
   TableMetadataFilter<TTable>
 >;
 
@@ -130,8 +119,10 @@ export function useCollectionVariables(
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): unknown {
-  const { params = {} } = options;
-  const { initialFilters = [], initialSort = [], pageSize: initialPageSize = 20 } = params;
+  const { params = {}, onParamsChange } = options;
+  const initialFilters = params.initialFilters ?? [];
+  const initialSort = params.initialSort ?? [];
+  const initialPageSize = params.pageSize ?? 20;
 
   // ---------------------------------------------------------------------------
   // State
@@ -152,6 +143,8 @@ export function useCollectionVariables(
     getHasNextPage,
     resetCount,
   } = useCursorPagination(initialPageSize);
+  const onParamsChangeRef = useRef(onParamsChange);
+  const didMountRef = useRef(false);
 
   // ---------------------------------------------------------------------------
   // Filter operations
@@ -261,6 +254,23 @@ export function useCollectionVariables(
     }),
     [queryVars, orderVars, paginationVariables],
   );
+
+  useEffect(() => {
+    onParamsChangeRef.current = onParamsChange;
+  }, [onParamsChange]);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    onParamsChangeRef.current?.({
+      initialFilters: filters,
+      initialSort: sortStates,
+      pageSize,
+    });
+  }, [filters, sortStates, pageSize]);
 
   // ---------------------------------------------------------------------------
   // Return

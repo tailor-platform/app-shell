@@ -10,9 +10,11 @@
 import { describe, it, expectTypeOf } from "vitest";
 import type {
   BuildQueryVariables,
+  CollectionVariables,
   TableFieldName,
   TableMetadata,
   TableOrderableFieldName,
+  TypedCollectionVariables,
 } from "@/types/collection";
 
 type TestTable = {
@@ -56,6 +58,7 @@ type TestTable = {
 };
 
 type TestQuery = BuildQueryVariables<TestTable>;
+type TestTypedCollectionVariables = TypedCollectionVariables<TestTable>;
 
 describe("BuildQueryVariables", () => {
   it("TestTable is assignable to TableMetadata", () => {
@@ -118,6 +121,16 @@ describe("BuildQueryVariables", () => {
     it("nested fields are excluded (not filterable)", () => {
       expectTypeOf<"config" & keyof TestQuery>().toBeNever();
     });
+  });
+});
+
+describe("TypedCollectionVariables", () => {
+  it("extends CollectionVariables while keeping typed query fields", () => {
+    expectTypeOf<TestTypedCollectionVariables>().toExtend<CollectionVariables>();
+    expectTypeOf<NonNullable<TestTypedCollectionVariables["query"]>>().toExtend<{
+      title?: { eq?: string; contains?: string };
+      status?: { eq?: "active" | "inactive" };
+    }>();
   });
 });
 

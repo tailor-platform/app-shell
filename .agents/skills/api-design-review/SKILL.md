@@ -1,6 +1,6 @@
 ---
 name: api-design-review
-description: Review local packages/ changes for API design consistency, public surface risks, and TypeScript/React footguns in the AppShell core package. Use when: reviewing local packages/ changes before push or validating public API changes.
+description: "Review local packages/ changes for API design consistency, public surface risks, and TypeScript/React footguns in the AppShell core package. Use when: reviewing local packages/ changes before push or validating public API changes."
 ---
 
 # API Design Review

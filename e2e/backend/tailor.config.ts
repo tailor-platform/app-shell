@@ -33,7 +33,7 @@ const auth = defineAuth("e2e-auth", {
 });
 
 const aiGateway = defineAIGateway("e2e-ai-gateway", {
-  authNamespace: "default",
+  authNamespace: auth.name,
   cors: [oauth2Config.redirectURIs[0]],
 });
 

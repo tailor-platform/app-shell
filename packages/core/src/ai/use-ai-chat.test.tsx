@@ -50,7 +50,7 @@ describe("useAIChat", () => {
 
     const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
 
-    let sendPromise: Promise<void> | undefined;
+    let sendPromise: Promise<boolean> | undefined;
     await act(async () => {
       sendPromise = result.current.sendMessage("Hi");
     });
@@ -71,7 +71,7 @@ describe("useAIChat", () => {
 
     releaseSecondChunk();
     await act(async () => {
-      await sendPromise;
+      await expect(sendPromise).resolves.toBe(true);
     });
 
     await waitFor(() => {
@@ -102,7 +102,7 @@ describe("useAIChat", () => {
 
     const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
 
-    let sendPromise: Promise<void> | undefined;
+    let sendPromise: Promise<boolean> | undefined;
     await act(async () => {
       sendPromise = result.current.sendMessage("Hi");
     });
@@ -118,7 +118,7 @@ describe("useAIChat", () => {
     releaseSecondChunk();
 
     await act(async () => {
-      await sendPromise;
+      await expect(sendPromise).resolves.toBe(false);
     });
 
     await waitFor(() => {
@@ -145,7 +145,7 @@ describe("useAIChat", () => {
     const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
 
     await act(async () => {
-      await result.current.sendMessage("Hi");
+      await expect(result.current.sendMessage("Hi")).resolves.toBe(false);
     });
 
     await waitFor(() => {
@@ -157,7 +157,7 @@ describe("useAIChat", () => {
     shouldFail = false;
 
     await act(async () => {
-      await result.current.sendMessage("Retry");
+      await expect(result.current.sendMessage("Retry")).resolves.toBe(true);
     });
 
     await waitFor(() => {
@@ -187,7 +187,7 @@ describe("useAIChat", () => {
     const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
 
     await act(async () => {
-      await result.current.sendMessage("   ");
+      await expect(result.current.sendMessage("   ")).resolves.toBe(false);
     });
 
     expect(client.chatCompletionStream).not.toHaveBeenCalled();
@@ -197,7 +197,7 @@ describe("useAIChat", () => {
     });
 
     await act(async () => {
-      await result.current.sendMessage("Second");
+      await expect(result.current.sendMessage("Second")).resolves.toBe(false);
     });
 
     expect(client.chatCompletionStream).toHaveBeenCalledTimes(1);

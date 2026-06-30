@@ -13,7 +13,11 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
   messages: AIChatMessage[];
   status: AIChatStatus;
   error?: Error;
-  sendMessage: (message: { text: string } | string) => Promise<void>;
+  /**
+   * Returns true when the message is sent and the stream finishes successfully.
+   * Returns false when the call is ignored, aborted, or the request fails.
+   */
+  sendMessage: (message: string) => Promise<boolean>;
   stop: () => void;
 } {
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
@@ -41,14 +45,14 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
   }, []);
 
   const sendMessage = useCallback(
-    async (message: { text: string } | string) => {
+    async (message: string) => {
       if (abortControllerRef.current) {
-        return;
+        return false;
       }
 
-      const text = (typeof message === "string" ? message : message.text).trim();
+      const text = message.trim();
       if (!text) {
-        return;
+        return false;
       }
 
       const userMessage: AIChatMessage = {
@@ -102,14 +106,16 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
         }
 
         setStatus("ready");
+        return true;
       } catch (caughtError) {
         if (isAbortError(caughtError)) {
           setStatus("ready");
-          return;
+          return false;
         }
 
         setError(toError(caughtError));
         setStatus("error");
+        return false;
       } finally {
         abortControllerRef.current = null;
       }

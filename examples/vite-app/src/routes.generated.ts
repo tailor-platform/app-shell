@@ -20,6 +20,7 @@ export type GeneratedRouteParams = {
   "/dashboard/document-progress": {};
   "/dashboard/orders": {};
   "/dashboard/orders/:id": { id: string };
+  "/dashboard/products": {};
   "/settings": {};
 };
 

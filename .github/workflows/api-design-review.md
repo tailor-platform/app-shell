@@ -8,6 +8,7 @@ on:
     events: [pull_request_comment]
 imports:
   - ../agents/api-design-reviewer.md
+  - /.agents/skills/api-design-review/instruction.md
 permissions:
   contents: read
   pull-requests: read
@@ -23,8 +24,6 @@ safe-outputs:
 ---
 
 # API Design Review
-
-{{#import ../agents/api-design-reviewer.md}}
 
 ## Review Round Awareness
 

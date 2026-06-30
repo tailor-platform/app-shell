@@ -2,7 +2,7 @@ import {
   defineResource,
   DataTable,
   useDataTable,
-  useCollectionVariables,
+  useURLCollectionVariables,
   createColumnHelper,
   Layout,
   type RowAction,
@@ -140,7 +140,7 @@ const productRowActions: RowAction<Product>[] = [
 // ---------------------------------------------------------------------------
 
 const DataTableDemoPage = () => {
-  const { variables, control } = useCollectionVariables({
+  const { variables, control } = useURLCollectionVariables({
     params: { pageSize: 5 },
     tableMetadata: productMetadata,
   });

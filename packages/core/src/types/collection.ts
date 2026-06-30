@@ -298,6 +298,20 @@ export interface CollectionVariables {
   pagination: PaginationVariables;
 }
 
+/**
+ * Metadata-aware collection variables that remain assignable to the broad
+ * `CollectionVariables` shape expected by GraphQL clients.
+ */
+export type TypedCollectionVariables<TTable extends TableMetadata> = CollectionVariables & {
+  query: BuildQueryVariables<TTable> | undefined;
+  order:
+    | {
+        field: TableOrderableFieldName<TTable>;
+        direction: "Asc" | "Desc";
+      }[]
+    | undefined;
+};
+
 // =============================================================================
 // Collection Result (Tailor Platform standard)
 // =============================================================================
@@ -351,17 +365,46 @@ export type TableOrderableFieldName<TTable extends TableMetadata> =
 // =============================================================================
 
 /**
+ * Serializable subset of collection state used for initialization and persistence.
+ */
+export interface CollectionPersistedState<
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> {
+  filters: TFilter[];
+  sortStates: { field: TFieldName; direction: "Asc" | "Desc" }[];
+  pageSize: number;
+}
+
+/**
+ * Partial initial state used to seed `useCollectionVariables`.
+ */
+export type CollectionInitialState<
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> = Partial<CollectionPersistedState<TFieldName, TFilter>>;
+
+/**
+ * Initial and change payload shape for `useCollectionVariables`.
+ */
+export interface CollectionParams<
+  TFieldName extends string = string,
+  TFilter extends Filter<TFieldName> = Filter<TFieldName>,
+> {
+  initialFilters?: TFilter[];
+  initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
+  pageSize?: number;
+}
+
+/**
  * Options for `useCollectionVariables` hook.
  */
 export interface UseCollectionOptions<
   TFieldName extends string = string,
   TFilter extends Filter<TFieldName> = Filter<TFieldName>,
 > {
-  params?: {
-    initialFilters?: TFilter[];
-    initialSort?: { field: TFieldName; direction: "Asc" | "Desc" }[];
-    pageSize?: number;
-  };
+  params?: CollectionParams<TFieldName, TFilter>;
+  onParamsChange?(params: CollectionParams<TFieldName, TFilter>): void;
 }
 
 /**

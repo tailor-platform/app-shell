@@ -494,6 +494,7 @@ Add custom classes to individual columns:
 
 ## Related Components
 
+- [Grid](./grid.md) - Content-level grid for arranging items into columns
 - [DescriptionCard](./description-card.md) - Display data in columns
 - [Badge](./badge.md) - Status indicators
 - [SidebarLayout](./sidebar-layout.md) - App-level layout

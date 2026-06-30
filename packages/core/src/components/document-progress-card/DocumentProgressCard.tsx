@@ -23,16 +23,6 @@ const colorFill: Record<DocumentProgressColor, string> = {
   neutral: "astw:bg-muted-foreground/40",
 };
 
-/** Colors assigned by position when a segment omits `color`. */
-const DEFAULT_COLOR_SEQUENCE: DocumentProgressColor[] = [
-  "indigo",
-  "pink",
-  "green",
-  "amber",
-  "blue",
-  "red",
-];
-
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -44,12 +34,12 @@ const calculateRate = (numerator: number, denominator: number) =>
 /** Coerce an input amount to a non-negative, finite number (NaN/Infinity/negative → 0). */
 const sanitizeValue = (value: number) => (Number.isFinite(value) ? Math.max(0, value) : 0);
 
-/** Resolve each segment's color (by position) and sanitize its value. */
+/** Sanitize each segment's value. */
 const resolveSegments = (segments: DocumentProgressSegment[]) =>
-  segments.map((segment, index) => ({
+  segments.map((segment) => ({
     label: segment.label,
     value: sanitizeValue(segment.value),
-    color: segment.color ?? DEFAULT_COLOR_SEQUENCE[index % DEFAULT_COLOR_SEQUENCE.length],
+    color: segment.color,
   }));
 
 // ============================================================================

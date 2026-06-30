@@ -20,7 +20,7 @@ import { DocumentProgressCard } from "@tailor-platform/app-shell";
 />;
 ```
 
-`ProcurementFulfilmentProgressCard` is an opinionated wrapper over it for the goods-receipt model — received / returned / yet-to-receive — that owns the receiving business logic (derived percentage, `returned` clamped to `received`, net-received/returned bar decomposition) while keeping labels and colors overridable.
+`ProcurementFulfilmentProgressCard` is an opinionated wrapper over it for purchase-order fulfilment — received / returned / yet-to-receive — that owns the receiving business logic (derived percentage, `returned` clamped to `received`, net-received/returned bar decomposition) while keeping labels and colors overridable.
 
 ```tsx
 import { ProcurementFulfilmentProgressCard } from "@tailor-platform/app-shell";

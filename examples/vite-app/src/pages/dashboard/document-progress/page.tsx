@@ -80,7 +80,8 @@ const DocumentProgressPage = () => {
           ProcurementFulfilmentProgressCard (opinionated)
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
-          Goods-receipt model — received / returned / yet-to-receive with a derived percentage.
+          Purchase-order fulfilment — received / returned / yet-to-receive with a derived
+          percentage.
         </p>
         <Grid minChildWidth={320} gap={4}>
           {/* Matches the Figma baseline — nothing received yet */}

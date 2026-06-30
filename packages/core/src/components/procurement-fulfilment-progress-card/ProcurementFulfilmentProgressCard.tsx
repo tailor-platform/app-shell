@@ -26,8 +26,8 @@ const sanitizeValue = (value: number) => (Number.isFinite(value) ? Math.max(0, v
 
 /**
  * ProcurementFulfilmentProgressCard — opinionated wrapper over
- * `DocumentProgressCard` for the goods-receipt model: items received,
- * returned, and yet to receive against a purchase order.
+ * `DocumentProgressCard` for tracking purchase-order fulfilment: items
+ * received, returned, and yet to receive against a purchase order.
  *
  * Owns the receiving business logic — derives the completion percentage,
  * clamps `returned` to `received`, and splits the bar into a net-received

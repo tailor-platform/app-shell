@@ -61,13 +61,13 @@ describe("ProcurementFulfilmentProgressCard", () => {
   it("supports custom title and labels", () => {
     render(
       <ProcurementFulfilmentProgressCard
-        title="Goods receipt"
+        title="Purchase order"
         received={{ value: 1, label: "Received" }}
         returned={{ value: 0, label: "Sent back" }}
         yetToReceive={{ value: 1, label: "Outstanding" }}
       />,
     );
-    expect(screen.getByText("Goods receipt")).toBeDefined();
+    expect(screen.getByText("Purchase order")).toBeDefined();
     expect(screen.getByText("Received")).toBeDefined();
     expect(screen.getByText("Sent back")).toBeDefined();
     expect(screen.getByText("Outstanding")).toBeDefined();

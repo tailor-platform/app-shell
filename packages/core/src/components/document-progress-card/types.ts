@@ -22,16 +22,15 @@ export type DocumentProgressColor =
 // ============================================================================
 
 /**
- * A single status segment: its amount, a legend label, and an optional color.
- * When no color is given, one is assigned from a default palette by position.
+ * A single status segment: its amount, a legend label, and a color.
  */
 export interface DocumentProgressSegment {
   /** Legend label (e.g. "Shipped"). */
   label: string;
   /** Amount — shown in the legend and used to size the bar. */
   value: number;
-  /** Bar / legend-marker color. Defaults to a palette color by position. */
-  color?: DocumentProgressColor;
+  /** Bar / legend-marker color. */
+  color: DocumentProgressColor;
 }
 
 // ============================================================================

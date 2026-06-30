@@ -448,7 +448,7 @@ const table = useDataTable({
 ### `ProcurementFulfilmentProgressCard`
 
 **Import:** `import { ProcurementFulfilmentProgressCard } from '@tailor-platform/app-shell'`
-**Purpose:** Opinionated goods-receipt wrapper over `DocumentProgressCard` — received / returned / yet-to-receive with a derived fulfilment %.
+**Purpose:** Opinionated purchase-order fulfilment wrapper over `DocumentProgressCard` — received / returned / yet-to-receive with a derived fulfilment %.
 **API:** `ProcurementFulfilmentProgressCardProps` — `received`, `returned`, `yetToReceive` (each `{ value, label?, color? }`), `title?` (default "Fulfilment rate"), `returnedCountsAsComplete?` (default `true`; set `false` to subtract returns), `className?`. Percent is derived from `received / (received + yetToReceive)`.
 **Example:**
 
@@ -460,7 +460,7 @@ const table = useDataTable({
 />
 ```
 
-**Used in patterns:** **`detail/*`** right-rail cards communicating PO goods-receipt fulfilment state.
+**Used in patterns:** **`detail/*`** right-rail cards communicating purchase-order fulfilment state.
 
 ### `Avatar`
 

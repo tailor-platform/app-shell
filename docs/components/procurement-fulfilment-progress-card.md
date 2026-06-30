@@ -1,11 +1,11 @@
 ---
 title: ProcurementFulfilmentProgressCard
-description: Opinionated received / returned / yet-to-receive card with a derived fulfilment percentage
+description: Opinionated received / returned / yet-to-receive card with a derived purchase-order fulfilment percentage
 ---
 
 # ProcurementFulfilmentProgressCard
 
-`ProcurementFulfilmentProgressCard` is an opinionated wrapper over [DocumentProgressCard](./document-progress-card.md) for the goods-receipt model: items **received**, **returned**, and **yet to receive** against a purchase order. It owns the receiving business logic — deriving the completion percentage and the bar decomposition — while remaining flexible on labels and colors.
+`ProcurementFulfilmentProgressCard` is an opinionated wrapper over [DocumentProgressCard](./document-progress-card.md) for purchase-order fulfilment: items **received**, **returned**, and **yet to receive** against a purchase order. It owns the receiving business logic — deriving the completion percentage and the bar decomposition — while remaining flexible on labels and colors.
 
 Use it in a record detail right rail to communicate fulfilment state. For other document workflows (e.g. shipped / cancelled / pending), use the generic `DocumentProgressCard` directly.
 

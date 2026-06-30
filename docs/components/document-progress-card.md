@@ -42,11 +42,11 @@ import { DocumentProgressCard } from "@tailor-platform/app-shell";
 
 ### `DocumentProgressSegment`
 
-| Field   | Type                    | Description                                                           |
-| ------- | ----------------------- | --------------------------------------------------------------------- |
-| `label` | `string`                | Legend label.                                                         |
-| `value` | `number`                | Amount — shown in the legend and used to size the bar.                |
-| `color` | `DocumentProgressColor` | Bar / marker color. Defaults to a palette color assigned by position. |
+| Field   | Type                    | Description                                            |
+| ------- | ----------------------- | ------------------------------------------------------ |
+| `label` | `string`                | Legend label.                                          |
+| `value` | `number`                | Amount — shown in the legend and used to size the bar. |
+| `color` | `DocumentProgressColor` | Bar / marker color (required).                         |
 
 `DocumentProgressColor` is one of: `"indigo"`, `"pink"`, `"green"`, `"amber"`, `"red"`, `"blue"`, `"neutral"`.
 

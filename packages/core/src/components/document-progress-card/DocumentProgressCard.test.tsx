@@ -70,8 +70,8 @@ describe("DocumentProgressCard", () => {
     render(
       <DocumentProgressCard
         segments={[
-          { label: "Shipped", value: 30 },
-          { label: "Pending", value: 10 },
+          { label: "Shipped", value: 30, color: "green" },
+          { label: "Pending", value: 10, color: "neutral" },
         ]}
       />,
     );
@@ -82,19 +82,28 @@ describe("DocumentProgressCard", () => {
   });
 
   it("renders the headline percentage when provided", () => {
-    render(<DocumentProgressCard percent={42} segments={[{ label: "A", value: 1 }]} />);
+    render(
+      <DocumentProgressCard percent={42} segments={[{ label: "A", value: 1, color: "indigo" }]} />,
+    );
     expect(getPercentText()).toBe("42%");
   });
 
   it("omits the header when neither title nor percent is provided", () => {
-    const { container } = render(<DocumentProgressCard segments={[{ label: "A", value: 1 }]} />);
+    const { container } = render(
+      <DocumentProgressCard segments={[{ label: "A", value: 1, color: "indigo" }]} />,
+    );
     expect(container.querySelector('[data-slot="document-progress-percent"]')).toBeNull();
     // only the bar+legend wrapper is a child of the root (no header row)
     expect(getRoot(container).children.length).toBe(1);
   });
 
   it("clamps the percentage to [0, 100] and rounds it", () => {
-    render(<DocumentProgressCard percent={142.6} segments={[{ label: "A", value: 1 }]} />);
+    render(
+      <DocumentProgressCard
+        percent={142.6}
+        segments={[{ label: "A", value: 1, color: "indigo" }]}
+      />,
+    );
     expect(getPercentText()).toBe("100%");
   });
 
@@ -131,9 +140,9 @@ describe("DocumentProgressCard", () => {
           { label: "Returned", value: 2, color: "pink" },
         ]}
         legend={[
-          { label: "Received items", value: 12 },
-          { label: "Returned items", value: 2 },
-          { label: "Yet to receive", value: 28 },
+          { label: "Received items", value: 12, color: "indigo" },
+          { label: "Returned items", value: 2, color: "pink" },
+          { label: "Yet to receive", value: 28, color: "neutral" },
         ]}
       />,
     );
@@ -146,27 +155,27 @@ describe("DocumentProgressCard", () => {
     expect(screen.getByText("12")).toBeDefined();
   });
 
-  it("assigns default colors by position when omitted", () => {
+  it("applies the segment color to the bar", () => {
     const { container } = render(
       <DocumentProgressCard
         segments={[
-          { label: "A", value: 1 },
-          { label: "B", value: 1 },
+          { label: "A", value: 1, color: "green" },
+          { label: "B", value: 1, color: "amber" },
         ]}
       />,
     );
     const [a, b] = segments(container);
-    expect(a.getAttribute("data-color")).toBe("indigo");
-    expect(b.getAttribute("data-color")).toBe("pink");
+    expect(a.getAttribute("data-color")).toBe("green");
+    expect(b.getAttribute("data-color")).toBe("amber");
   });
 
   it("sanitizes non-finite and negative values to zero", () => {
     render(
       <DocumentProgressCard
         segments={[
-          { label: "A", value: Number.NaN },
-          { label: "B", value: -5 },
-          { label: "C", value: Number.POSITIVE_INFINITY },
+          { label: "A", value: Number.NaN, color: "indigo" },
+          { label: "B", value: -5, color: "pink" },
+          { label: "C", value: Number.POSITIVE_INFINITY, color: "neutral" },
         ]}
       />,
     );
@@ -175,7 +184,7 @@ describe("DocumentProgressCard", () => {
 
   it("renders the bar as a decorative element", () => {
     const { container } = render(
-      <DocumentProgressCard percent={50} segments={[{ label: "A", value: 1 }]} />,
+      <DocumentProgressCard percent={50} segments={[{ label: "A", value: 1, color: "indigo" }]} />,
     );
     const bar = container.querySelector('[data-slot="document-progress-bar"]') as HTMLElement;
     expect(bar.getAttribute("aria-hidden")).toBe("true");
@@ -183,7 +192,10 @@ describe("DocumentProgressCard", () => {
 
   it("accepts a custom className on the root", () => {
     const { container } = render(
-      <DocumentProgressCard className="custom-card" segments={[{ label: "A", value: 1 }]} />,
+      <DocumentProgressCard
+        className="custom-card"
+        segments={[{ label: "A", value: 1, color: "indigo" }]}
+      />,
     );
     expect(getRoot(container).className).toContain("custom-card");
   });

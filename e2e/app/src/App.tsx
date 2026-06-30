@@ -50,7 +50,7 @@ const AuthenticatedContent = () => {
   const { logout, isAuthenticated } = useAuth();
   const { messages, status, error, sendMessage } = useAIChat({
     client: aiClient ?? unavailableAIClient,
-    model: "gpt-5-mini",
+    model: "gpt-4o-mini",
   });
   const aiResponse =
     [...messages].reverse().find((message) => message.role === "assistant")?.content ?? "";

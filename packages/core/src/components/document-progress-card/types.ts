@@ -6,8 +6,7 @@ import type { ReactNode } from "react";
 
 /**
  * Curated palette for progress segments. Each value maps to a fixed fill used
- * for both the stacked bar and the legend marker. Defaults follow the AppShell
- * design (received → indigo, returned → pink, yet-to-receive → neutral).
+ * for both the stacked bar and the legend marker.
  */
 export type DocumentProgressColor =
   | "indigo"
@@ -19,19 +18,19 @@ export type DocumentProgressColor =
   | "neutral";
 
 // ============================================================================
-// ITEM
+// SEGMENT
 // ============================================================================
 
 /**
- * A single status bucket: its amount, an optional legend label, and an optional
- * color override. Labels and colors fall back to sensible defaults per bucket.
+ * A single status segment: its amount, a legend label, and an optional color.
+ * When no color is given, one is assigned from a default palette by position.
  */
-export interface DocumentProgressItem {
-  /** Numeric amount — shown in the legend and used to size the bar. */
+export interface DocumentProgressSegment {
+  /** Legend label (e.g. "Shipped"). */
+  label: string;
+  /** Amount — shown in the legend and used to size the bar. */
   value: number;
-  /** Legend label. Defaults per bucket (e.g. "Received items"). */
-  label?: string;
-  /** Marker / bar color. Defaults per bucket (received → indigo, etc.). */
+  /** Bar / legend-marker color. Defaults to a palette color by position. */
   color?: DocumentProgressColor;
 }
 
@@ -40,28 +39,28 @@ export interface DocumentProgressItem {
 // ============================================================================
 
 /**
- * Props for the DocumentProgressCard component.
+ * Props for the generic DocumentProgressCard.
  */
 export interface DocumentProgressCardProps {
-  /** Items received so far (default label "Received items", color "indigo"). */
-  received: DocumentProgressItem;
-  /** Items received then returned (default label "Returned items", color "pink"). */
-  returned: DocumentProgressItem;
-  /** Items not yet received (default label "Yet to receive", color "neutral"). */
-  yetToReceive: DocumentProgressItem;
-  /** Card title shown top-left. Defaults to "Fulfilment rate". */
+  /** Optional card title shown top-left. */
   title?: ReactNode;
   /**
-   * Whether returned items count toward the completion percentage.
-   * - `true` (default): `percent = received / total` — returned items still count
-   *   as received/complete.
-   * - `false`: `percent = (received − returned) / total` — returned items are
-   *   subtracted from progress.
-   *
-   * `total` is `received + yetToReceive` (returned is a subset of received and
-   * does not affect the denominator).
+   * Headline percentage shown top-right (0–100). Optional and explicit — the
+   * generic card has no notion of "complete", so the consumer supplies it.
    */
-  returnedCountsAsComplete?: boolean;
+  percent?: number;
+  /** Status segments rendered as a single stacked bar (and, by default, the legend). */
+  segments: DocumentProgressSegment[];
+  /**
+   * Legend rows. Defaults to `segments`. Provide this only when the legend
+   * should differ from the bar (e.g. overlapping buckets shown distinctly).
+   */
+  legend?: DocumentProgressSegment[];
+  /**
+   * Denominator used to size the bar. Defaults to the sum of segment values
+   * (the bar is fully tiled). A larger value leaves an unfilled track remainder.
+   */
+  total?: number;
   /** Additional CSS classes for the card root. */
   className?: string;
 }

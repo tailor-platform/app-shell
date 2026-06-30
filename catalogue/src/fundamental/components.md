@@ -427,19 +427,40 @@ const table = useDataTable({
 ### `DocumentProgressCard`
 
 **Import:** `import { DocumentProgressCard } from '@tailor-platform/app-shell'`
-**Purpose:** Fulfilment / lifecycle state of a transactional document — derived completion %, stacked progress bar, status legend.
-**API:** `DocumentProgressCardProps` — `received`, `returned`, `yetToReceive` (each `{ value, label?, color? }`), `title`, `returnedCountsAsComplete`. Percent is derived (`received / (received + yetToReceive)`); set `returnedCountsAsComplete={false}` to subtract returns.
+**Purpose:** Generic document lifecycle/fulfilment state — optional percentage, stacked progress bar, status legend; arbitrary `segments`.
+**API:** `DocumentProgressCardProps` — `segments` (`{ label, value, color? }[]`), `title?`, `percent?`, `legend?` (defaults to `segments`), `total?` (bar denominator; larger than the sum leaves an empty track), `className?`. View-only — `percent` is explicit.
 **Example:**
 
 ```tsx
 <DocumentProgressCard
+  title="Shipment status"
+  percent={60}
+  segments={[
+    { label: "Shipped", value: 30, color: "green" },
+    { label: "Returned", value: 3, color: "red" },
+    { label: "Pending", value: 17, color: "neutral" },
+  ]}
+/>
+```
+
+**Used in patterns:** **`detail/*`** right-rail cards for arbitrary status breakdowns (shipped/cancelled/pending, etc.).
+
+### `ProcurementFulfilmentProgressCard`
+
+**Import:** `import { ProcurementFulfilmentProgressCard } from '@tailor-platform/app-shell'`
+**Purpose:** Opinionated goods-receipt wrapper over `DocumentProgressCard` — received / returned / yet-to-receive with a derived fulfilment %.
+**API:** `ProcurementFulfilmentProgressCardProps` — `received`, `returned`, `yetToReceive` (each `{ value, label?, color? }`), `title?` (default "Fulfilment rate"), `returnedCountsAsComplete?` (default `true`; set `false` to subtract returns), `className?`. Percent is derived from `received / (received + yetToReceive)`.
+**Example:**
+
+```tsx
+<ProcurementFulfilmentProgressCard
   received={{ value: 12 }}
   returned={{ value: 2 }}
   yetToReceive={{ value: 28 }}
 />
 ```
 
-**Used in patterns:** **`detail/*`** right-rail cards communicating PO / shipment fulfilment state.
+**Used in patterns:** **`detail/*`** right-rail cards communicating PO goods-receipt fulfilment state.
 
 ### `Avatar`
 

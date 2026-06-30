@@ -1,13 +1,13 @@
 ---
 title: DocumentProgressCard
-description: Card visualising a document's fulfilment state — completion percentage, stacked progress bar, and status legend
+description: Generic card visualising a document's lifecycle state — optional percentage, stacked progress bar, and status legend
 ---
 
 # DocumentProgressCard
 
-`DocumentProgressCard` is a presentational card for communicating the fulfilment / lifecycle state of a transactional document (purchase order, shipment, etc.) in a record detail right rail. It shows a derived completion percentage, a stacked progress bar, and a legend for the three status buckets: **received**, **returned**, and **yet to receive**.
+`DocumentProgressCard` is a generic, presentational card for communicating the lifecycle/fulfilment state of a document in a record detail right rail. It shows an optional completion percentage, a stacked progress bar, and a legend — driven by an arbitrary set of status `segments`.
 
-The component is view-only: pass in the raw amounts and it derives the percentage and bar widths. It carries no data-fetching or domain logic.
+It is view-only and domain-agnostic: pass the segments and an explicit `percent`. For the receiving model (received / returned / yet-to-receive) with a derived percentage, use [ProcurementFulfilmentProgressCard](./procurement-fulfilment-progress-card.md), which composes this card.
 
 ## Import
 
@@ -19,78 +19,67 @@ import { DocumentProgressCard } from "@tailor-platform/app-shell";
 
 ```tsx
 <DocumentProgressCard
-  received={{ value: 12 }}
-  returned={{ value: 2 }}
-  yetToReceive={{ value: 28 }}
+  title="Shipment status"
+  percent={60}
+  segments={[
+    { label: "Shipped", value: 30, color: "green" },
+    { label: "Returned", value: 3, color: "red" },
+    { label: "Pending", value: 17, color: "neutral" },
+  ]}
 />
 ```
 
 ## Props
 
-| Prop                       | Type                   | Default             | Description                                                                                    |
-| -------------------------- | ---------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
-| `received`                 | `DocumentProgressItem` | **Required**        | Items received so far. Default label `"Received items"`, color `"indigo"`.                     |
-| `returned`                 | `DocumentProgressItem` | **Required**        | Items received then returned. Default label `"Returned items"`, color `"pink"`.                |
-| `yetToReceive`             | `DocumentProgressItem` | **Required**        | Items not yet received. Default label `"Yet to receive"`, color `"neutral"`.                   |
-| `title`                    | `React.ReactNode`      | `"Fulfilment rate"` | Card title shown top-left.                                                                     |
-| `returnedCountsAsComplete` | `boolean`              | `true`              | Whether returned items count toward the completion percentage (see [Percentage](#percentage)). |
-| `className`                | `string`               | -                   | Additional CSS classes for the card root.                                                      |
+| Prop        | Type                        | Default       | Description                                                                                               |
+| ----------- | --------------------------- | ------------- | --------------------------------------------------------------------------------------------------------- |
+| `segments`  | `DocumentProgressSegment[]` | **Required**  | Status segments rendered as a stacked bar (and, by default, the legend).                                  |
+| `title`     | `React.ReactNode`           | -             | Optional card title shown top-left.                                                                       |
+| `percent`   | `number`                    | -             | Optional headline percentage (0–100), shown top-right. Explicit — the generic card derives no progress.   |
+| `legend`    | `DocumentProgressSegment[]` | `segments`    | Optional legend rows; override only when the legend should differ from the bar (see [Legend](#legend)).   |
+| `total`     | `number`                    | sum of values | Denominator used to size the bar. A value larger than the segment sum leaves an unfilled track remainder. |
+| `className` | `string`                    | -             | Additional CSS classes for the card root.                                                                 |
 
-### `DocumentProgressItem`
+### `DocumentProgressSegment`
 
 | Field   | Type                    | Description                                                           |
 | ------- | ----------------------- | --------------------------------------------------------------------- |
-| `value` | `number`                | Amount for the bucket — shown in the legend and used to size the bar. |
-| `label` | `string`                | Legend label. Falls back to the bucket default.                       |
-| `color` | `DocumentProgressColor` | Marker / bar color. Falls back to the bucket default.                 |
+| `label` | `string`                | Legend label.                                                         |
+| `value` | `number`                | Amount — shown in the legend and used to size the bar.                |
+| `color` | `DocumentProgressColor` | Bar / marker color. Defaults to a palette color assigned by position. |
 
 `DocumentProgressColor` is one of: `"indigo"`, `"pink"`, `"green"`, `"amber"`, `"red"`, `"blue"`, `"neutral"`.
 
-## Percentage
-
-The completion percentage is **derived**, not passed in:
-
-- `total = received + yetToReceive` — returned is a subset of received, so it does not change the denominator.
-- By default (`returnedCountsAsComplete: true`): `percent = received / total`. Returned items still count as received/complete.
-- With `returnedCountsAsComplete={false}`: `percent = (received − returned) / total`. Returned items are subtracted from progress.
-
-The result is rounded and clamped to `[0, 100]`. A zero total renders `0%`.
-
-```tsx
-// Returned items subtracted from progress
-<DocumentProgressCard
-  received={{ value: 12 }}
-  returned={{ value: 2 }}
-  yetToReceive={{ value: 28 }}
-  returnedCountsAsComplete={false}
-/>
-```
-
 ## Progress Bar
 
-The bar is a composition of the document's state: a **net received** segment (`received − returned`, indigo) followed by a **returned** segment (pink), with the unfilled remainder representing yet-to-receive. An untouched document shows an empty track.
+The bar tiles `segments` left-to-right, each sized as `value / (total ?? sum of values)`. When `total` exceeds the segment sum, the shortfall renders as an empty `bg-muted` track — useful for a "remaining" portion you don't want as a colored segment. A `"neutral"` segment reads as a muted/track-like fill.
 
-The header percentage maps onto the bar: it always equals the **net received** segment, plus the **returned** segment when `returnedCountsAsComplete` is `true` (the default). With `returnedCountsAsComplete={false}`, the header equals just the net-received segment, and the returned segment is shown as a distinct category beyond it.
+## Legend
+
+By default the legend mirrors `segments`. Pass `legend` to render different rows — for example when buckets overlap and the bar shows a decomposition while the legend shows the raw figures:
+
+```tsx
+<DocumentProgressCard
+  percent={30}
+  total={40}
+  segments={[
+    { label: "Net received", value: 10, color: "indigo" },
+    { label: "Returned", value: 2, color: "pink" },
+  ]}
+  legend={[
+    { label: "Received items", value: 12, color: "indigo" },
+    { label: "Returned items", value: 2, color: "pink" },
+    { label: "Yet to receive", value: 28, color: "neutral" },
+  ]}
+/>
+```
 
 ## Input handling
 
-Amounts are expected to be non-negative numbers. Non-finite or negative values are coerced to `0`, and `returned` is clamped to `received` (it represents a subset of received items), so the bar, percentage, and legend can never contradict one another.
-
-## Relabelling for other documents
-
-Although the buckets are named for receiving, the labels and colors are overridable, so the card works for any three-state lifecycle:
-
-```tsx
-<DocumentProgressCard
-  title="Shipment status"
-  received={{ value: 30, label: "Shipped", color: "green" }}
-  returned={{ value: 3, label: "Returned", color: "red" }}
-  yetToReceive={{ value: 17, label: "Pending", color: "neutral" }}
-/>
-```
+Segment values are expected to be non-negative numbers. Non-finite or negative values are coerced to `0`, and `percent` is rounded and clamped to `[0, 100]`.
 
 ## Related
 
+- [ProcurementFulfilmentProgressCard](./procurement-fulfilment-progress-card.md) — Opinionated received/returned/yet-to-receive wrapper with a derived percentage.
 - [MetricCard](./metric-card.md) — Compact KPI summary card.
 - [Card](./card.md) — The underlying card primitive.
-- [Badge](./badge.md) — Status badges that can complement progress displays.

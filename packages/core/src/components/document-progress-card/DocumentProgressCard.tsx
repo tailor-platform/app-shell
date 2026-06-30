@@ -2,7 +2,11 @@ import type { ReactNode } from "react";
 
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
-import type { DocumentProgressCardProps, DocumentProgressColor } from "./types";
+import type {
+  DocumentProgressCardProps,
+  DocumentProgressColor,
+  DocumentProgressSegment,
+} from "./types";
 
 // ============================================================================
 // CONSTANTS
@@ -19,9 +23,15 @@ const colorFill: Record<DocumentProgressColor, string> = {
   neutral: "astw:bg-muted-foreground/40",
 };
 
-const RECEIVED_DEFAULTS = { label: "Received items", color: "indigo" as const };
-const RETURNED_DEFAULTS = { label: "Returned items", color: "pink" as const };
-const YET_TO_RECEIVE_DEFAULTS = { label: "Yet to receive", color: "neutral" as const };
+/** Colors assigned by position when a segment omits `color`. */
+const DEFAULT_COLOR_SEQUENCE: DocumentProgressColor[] = [
+  "indigo",
+  "pink",
+  "green",
+  "amber",
+  "blue",
+  "red",
+];
 
 // ============================================================================
 // HELPERS
@@ -34,97 +44,77 @@ const calculateRate = (numerator: number, denominator: number) =>
 /** Coerce an input amount to a non-negative, finite number (NaN/Infinity/negative → 0). */
 const sanitizeValue = (value: number) => (Number.isFinite(value) ? Math.max(0, value) : 0);
 
+/** Resolve each segment's color (by position) and sanitize its value. */
+const resolveSegments = (segments: DocumentProgressSegment[]) =>
+  segments.map((segment, index) => ({
+    label: segment.label,
+    value: sanitizeValue(segment.value),
+    color: segment.color ?? DEFAULT_COLOR_SEQUENCE[index % DEFAULT_COLOR_SEQUENCE.length],
+  }));
+
 // ============================================================================
 // DOCUMENT PROGRESS CARD
 // ============================================================================
 
 /**
- * DocumentProgressCard — visualises a transactional document's fulfilment state:
- * a completion percentage, a stacked progress bar, and a status legend.
+ * DocumentProgressCard — a generic, presentational card for a document's
+ * lifecycle/fulfilment state: an optional headline percentage, a stacked
+ * progress bar, and a status legend.
  *
- * Presentational only — pass in the raw `received` / `returned` / `yetToReceive`
- * amounts and the component derives the percentage and bar widths. `total` is
- * `received + yetToReceive` (returned is a subset of received). Amounts are
- * expected to be non-negative numbers; non-finite or negative inputs are
- * coerced to 0, and `returned` is clamped to `received`.
+ * View-only and domain-agnostic — pass an arbitrary set of `segments` (e.g.
+ * shipped / returned / pending, or cancelled / blocked / …) plus an explicit
+ * `percent`. For the receiving model with derived progress, prefer
+ * `ProcurementFulfilmentProgressCard`, which composes this card.
  *
  * @example
  * ```tsx
  * <DocumentProgressCard
- *   received={{ value: 12 }}
- *   returned={{ value: 2 }}
- *   yetToReceive={{ value: 28 }}
+ *   title="Shipment status"
+ *   percent={60}
+ *   segments={[
+ *     { label: "Shipped", value: 30, color: "green" },
+ *     { label: "Returned", value: 3, color: "red" },
+ *     { label: "Pending", value: 17, color: "neutral" },
+ *   ]}
  * />
  * ```
  */
 export function DocumentProgressCard({
-  received,
-  returned,
-  yetToReceive,
-  title = "Fulfilment rate",
-  returnedCountsAsComplete = true,
+  title,
+  percent,
+  segments,
+  legend,
+  total,
   className,
 }: DocumentProgressCardProps) {
-  const receivedValue = sanitizeValue(received.value);
-  const returnedValue = sanitizeValue(returned.value);
-  const yetToReceiveValue = sanitizeValue(yetToReceive.value);
+  const barSegments = resolveSegments(segments);
+  const legendItems = resolveSegments(legend ?? segments);
 
-  const total = receivedValue + yetToReceiveValue;
+  const segmentSum = barSegments.reduce((sum, segment) => sum + segment.value, 0);
+  const requestedTotal = total != null && Number.isFinite(total) ? total : 0;
+  // Never let the denominator fall below the segment sum (would overflow the bar).
+  const denominator = Math.max(segmentSum, requestedTotal);
 
-  // Returned is a subset of received; clamp so the breakdown can never exceed it.
-  const effectiveReturned = Math.min(returnedValue, receivedValue);
-
-  const completeCount = returnedCountsAsComplete
-    ? receivedValue
-    : receivedValue - effectiveReturned;
-  const percent = Math.round(100 * calculateRate(completeCount, total));
-
-  // The bar is a composition: a net-received segment (indigo, received − returned)
-  // followed by a returned segment (pink). The unfilled remainder is yet-to-receive.
-  // The header percentage maps onto the net-received segment, plus the returned
-  // segment when `returnedCountsAsComplete` is true.
-  const fractionNetReceived = calculateRate(receivedValue - effectiveReturned, total);
-  const fractionReturned = calculateRate(effectiveReturned, total);
-
-  const legend: Array<{
-    key: string;
-    label: string;
-    color: DocumentProgressColor;
-    value: number;
-  }> = [
-    {
-      key: "received",
-      label: received.label ?? RECEIVED_DEFAULTS.label,
-      color: received.color ?? RECEIVED_DEFAULTS.color,
-      value: receivedValue,
-    },
-    {
-      key: "returned",
-      label: returned.label ?? RETURNED_DEFAULTS.label,
-      color: returned.color ?? RETURNED_DEFAULTS.color,
-      value: returnedValue,
-    },
-    {
-      key: "yetToReceive",
-      label: yetToReceive.label ?? YET_TO_RECEIVE_DEFAULTS.label,
-      color: yetToReceive.color ?? YET_TO_RECEIVE_DEFAULTS.color,
-      value: yetToReceiveValue,
-    },
-  ];
+  const hasPercent = percent != null && Number.isFinite(percent);
+  const clampedPercent = hasPercent ? Math.round(Math.min(100, Math.max(0, percent))) : null;
 
   return (
     <Card.Root
       data-slot="document-progress-card"
-      data-percent={percent}
+      data-percent={clampedPercent ?? undefined}
       className={cn("astw:gap-5 astw:px-6 astw:py-5", className)}
     >
-      {/* Header: title + completion percentage */}
-      <div className="astw:flex astw:items-start astw:justify-between astw:gap-4 astw:text-lg astw:font-semibold astw:leading-none astw:text-card-foreground">
-        <span className="astw:min-w-0">{title}</span>
-        <span className="astw:shrink-0 astw:text-right" data-slot="document-progress-percent">
-          {percent}%
-        </span>
-      </div>
+      {/* Header: optional title + optional completion percentage */}
+      {(title != null || hasPercent) && (
+        <div className="astw:flex astw:items-start astw:justify-between astw:gap-4 astw:text-lg astw:font-semibold astw:leading-none astw:text-card-foreground">
+          <span className="astw:min-w-0">{title}</span>
+          {hasPercent && (
+            <span className="astw:shrink-0 astw:text-right" data-slot="document-progress-percent">
+              {clampedPercent}%
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Bar + legend */}
       <div className="astw:flex astw:flex-col astw:gap-4">
@@ -134,29 +124,33 @@ export function DocumentProgressCard({
           data-slot="document-progress-bar"
           aria-hidden
         >
-          {fractionNetReceived > 0 && (
-            <div
-              data-slot="document-progress-segment"
-              data-segment="received"
-              className={cn("astw:h-full", colorFill[received.color ?? RECEIVED_DEFAULTS.color])}
-              style={{ width: `${fractionNetReceived * 100}%` }}
-            />
-          )}
-          {fractionReturned > 0 && (
-            <div
-              data-slot="document-progress-segment"
-              data-segment="returned"
-              className={cn("astw:h-full", colorFill[returned.color ?? RETURNED_DEFAULTS.color])}
-              style={{ width: `${fractionReturned * 100}%` }}
-            />
-          )}
+          {barSegments.map((segment, index) => {
+            const fraction = calculateRate(segment.value, denominator);
+            if (fraction <= 0) return null;
+            return (
+              <div
+                key={index}
+                data-slot="document-progress-segment"
+                data-color={segment.color}
+                className={cn("astw:h-full", colorFill[segment.color])}
+                style={{ width: `${fraction * 100}%` }}
+              />
+            );
+          })}
         </div>
 
-        <div className="astw:flex astw:flex-col astw:gap-2">
-          {legend.map(({ key, label, color, value }) => (
-            <LegendRow key={key} label={label} color={color} value={value} />
-          ))}
-        </div>
+        {legendItems.length > 0 && (
+          <div className="astw:flex astw:flex-col astw:gap-2">
+            {legendItems.map((segment, index) => (
+              <LegendRow
+                key={index}
+                label={segment.label}
+                color={segment.color}
+                value={segment.value}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </Card.Root>
   );

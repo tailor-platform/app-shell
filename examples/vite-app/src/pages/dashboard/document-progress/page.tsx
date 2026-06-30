@@ -2,6 +2,7 @@ import {
   Layout,
   Grid,
   DocumentProgressCard,
+  ProcurementFulfilmentProgressCard,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 
@@ -26,29 +27,78 @@ const DocumentProgressPage = () => {
   return (
     <Layout>
       <Layout.Header title="Document Progress Card" />
+
       <Layout.Column>
-        <p className="mb-4">
-          A presentational card for a transactional document's fulfilment state — a derived
-          completion percentage, a stacked progress bar, and a received / returned / yet-to-receive
-          legend.
+        <h2 className="mb-1 text-lg font-semibold">DocumentProgressCard (generic)</h2>
+        <p className="mb-4 text-muted-foreground text-sm">
+          Domain-agnostic — arbitrary status segments plus an explicit percentage.
+        </p>
+        <Grid minChildWidth={320} gap={4}>
+          {/* Arbitrary lifecycle: shipped / returned / pending */}
+          <DocumentProgressCard
+            title="Shipment status"
+            percent={60}
+            segments={[
+              { label: "Shipped", value: 30, color: "green" },
+              { label: "Returned", value: 3, color: "red" },
+              { label: "Pending", value: 17, color: "neutral" },
+            ]}
+          />
+
+          {/* More than three statuses — stretches to any workflow */}
+          <DocumentProgressCard
+            title="Order lifecycle"
+            percent={45}
+            segments={[
+              { label: "Fulfilled", value: 45, color: "green" },
+              { label: "Backordered", value: 20, color: "amber" },
+              { label: "Cancelled", value: 10, color: "red" },
+              { label: "Open", value: 25, color: "neutral" },
+            ]}
+          />
+
+          {/* No percentage — just a composition bar + legend */}
+          <DocumentProgressCard
+            title="Invoice batch"
+            segments={[
+              { label: "Paid", value: 18, color: "green" },
+              { label: "Overdue", value: 4, color: "red" },
+              { label: "Draft", value: 8, color: "neutral" },
+            ]}
+          />
+
+          {/* Unfilled remainder via total */}
+          <DocumentProgressCard
+            title="Approvals"
+            percent={40}
+            total={20}
+            segments={[{ label: "Approved", value: 8, color: "indigo" }]}
+          />
+        </Grid>
+
+        <h2 className="mt-8 mb-1 text-lg font-semibold">
+          ProcurementFulfilmentProgressCard (opinionated)
+        </h2>
+        <p className="mb-4 text-muted-foreground text-sm">
+          Goods-receipt model — received / returned / yet-to-receive with a derived percentage.
         </p>
         <Grid minChildWidth={320} gap={4}>
           {/* Matches the Figma baseline — nothing received yet */}
-          <DocumentProgressCard
+          <ProcurementFulfilmentProgressCard
             received={{ value: 0 }}
             returned={{ value: 0 }}
             yetToReceive={{ value: 40 }}
           />
 
           {/* Partially received with some returns */}
-          <DocumentProgressCard
+          <ProcurementFulfilmentProgressCard
             received={{ value: 12 }}
             returned={{ value: 2 }}
             yetToReceive={{ value: 28 }}
           />
 
           {/* Same data, but returns subtracted from progress */}
-          <DocumentProgressCard
+          <ProcurementFulfilmentProgressCard
             title="Fulfilment rate (net of returns)"
             received={{ value: 12 }}
             returned={{ value: 2 }}
@@ -57,26 +107,10 @@ const DocumentProgressPage = () => {
           />
 
           {/* Fully received */}
-          <DocumentProgressCard
+          <ProcurementFulfilmentProgressCard
             received={{ value: 40 }}
             returned={{ value: 0 }}
             yetToReceive={{ value: 0 }}
-          />
-
-          {/* Relabelled + custom colors for a different document lifecycle */}
-          <DocumentProgressCard
-            title="Shipment status"
-            received={{ value: 30, label: "Shipped", color: "green" }}
-            returned={{ value: 3, label: "Returned", color: "red" }}
-            yetToReceive={{ value: 17, label: "Pending", color: "neutral" }}
-          />
-
-          {/* Heavily returned order */}
-          <DocumentProgressCard
-            title="Returns-heavy order"
-            received={{ value: 50 }}
-            returned={{ value: 20 }}
-            yetToReceive={{ value: 10 }}
           />
         </Grid>
       </Layout.Column>

@@ -1,3 +1,4 @@
+import { Children as ReactChildren } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/sidebar";
 import { AppShellOutlet } from "@/components/content";
 import { AppearanceSwitcher } from "@/components/appearance-switcher";
@@ -49,6 +50,28 @@ export type SidebarLayoutProps = {
    * @default true
    */
   collapsible?: boolean;
+
+  /**
+   * Custom action(s) rendered on the right side of the top bar, immediately
+   * before the appearance switcher. Use this to add app-specific actions such
+   * as a notification bell, user menu, or global search.
+   *
+   * Accepts a single node or an array of nodes; they are laid out in a
+   * horizontal, vertically-centered row with consistent spacing.
+   *
+   * @example
+   * ```tsx
+   * <SidebarLayout headerActions={<NotificationBell />} />
+   * ```
+   *
+   * @example
+   * ```tsx
+   * <SidebarLayout
+   *   headerActions={[<NotificationBell key="bell" />, <UserMenu key="user" />]}
+   * />
+   * ```
+   */
+  headerActions?: React.ReactNode | React.ReactNode[];
 };
 
 const HidableSidebarTrigger = () => {
@@ -66,6 +89,9 @@ const HidableSidebarTrigger = () => {
 
 export const SidebarLayout = (props: SidebarLayoutProps) => {
   const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
+  // Children.toArray flattens, drops nullish nodes, and preserves any keys the
+  // consumer set on array items (so dynamic/reordered actions keep their identity).
+  const headerActions = ReactChildren.toArray(props.headerActions);
 
   return (
     <SidebarProvider
@@ -83,6 +109,11 @@ export const SidebarLayout = (props: SidebarLayoutProps) => {
                 <DynamicBreadcrumb />
               </div>
               <div className="astw:flex astw:items-center astw:gap-2">
+                {headerActions.length > 0 && (
+                  <div className="astw:flex astw:flex-row astw:items-center astw:gap-2">
+                    {headerActions}
+                  </div>
+                )}
                 <AppearanceSwitcher />
               </div>
             </div>

@@ -95,6 +95,28 @@ import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app
 <SidebarLayout collapsible={false} />
 ```
 
+### headerActions
+
+- **Type:** `React.ReactNode | React.ReactNode[]` (optional)
+- **Description:** Custom action(s) rendered on the right side of the top bar, immediately before the appearance switcher. Use this to add app-specific actions such as a notification bell, user menu, or global search.
+
+Actions are laid out in a horizontal, vertically-centered row with consistent spacing, so you don't need to wrap them yourself. Pass a single node or an array of nodes (give array items a `key`).
+
+```tsx
+import { SidebarLayout } from "@tailor-platform/app-shell";
+import { NotificationBell, UserMenu } from "./my-components";
+
+// Single action
+<SidebarLayout headerActions={<NotificationBell />} />
+
+// Multiple actions
+<SidebarLayout
+  headerActions={[<NotificationBell key="bell" />, <UserMenu key="user" />]}
+/>;
+```
+
+This is the supported extension point for the top bar — it replaces fragile workarounds that queried the header DOM and injected a React portal to place app-specific controls next to the appearance switcher.
+
 ## Features
 
 ### Responsive Sidebar
@@ -121,7 +143,7 @@ Breadcrumbs update automatically as users navigate through your application.
 
 ### Theme Toggle
 
-A sun/moon icon button in the header allows users to switch between light and dark themes. The theme preference is persisted to localStorage.
+A sun/moon icon button in the header allows users to switch between light and dark themes. The theme preference is persisted to localStorage. To add your own controls (notifications, user menu, etc.) next to it, use the [`headerActions`](#headeractions) prop.
 
 ## Customization Examples
 

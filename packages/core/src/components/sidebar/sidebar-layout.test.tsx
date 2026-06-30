@@ -98,4 +98,65 @@ describe("SidebarLayout", () => {
       });
     });
   });
+
+  describe("headerActions", () => {
+    it("does not render any custom actions when headerActions is omitted", async () => {
+      renderSidebarLayout();
+
+      await waitFor(() => {
+        expect(document.querySelector("header")).not.toBeNull();
+      });
+
+      expect(document.querySelector('[data-testid="bell"]')).toBeNull();
+    });
+
+    it("renders a single headerActions node", async () => {
+      renderSidebarLayout({ headerActions: <button data-testid="bell">Bell</button> });
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-testid="bell"]')).not.toBeNull();
+      });
+    });
+
+    it("renders an array of headerActions nodes", async () => {
+      renderSidebarLayout({
+        headerActions: [
+          <button key="bell" data-testid="bell">
+            Bell
+          </button>,
+          <button key="user" data-testid="user">
+            User
+          </button>,
+        ],
+      });
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-testid="bell"]')).not.toBeNull();
+      });
+      expect(document.querySelector('[data-testid="user"]')).not.toBeNull();
+    });
+
+    it("renders headerActions before the appearance switcher", async () => {
+      renderSidebarLayout({ headerActions: <button data-testid="bell">Bell</button> });
+
+      const bell = await waitFor(() => {
+        const el = document.querySelector('[data-testid="bell"]');
+        expect(el).not.toBeNull();
+        return el!;
+      });
+
+      // Right-side container = last child div of the header's inner flex row.
+      // It holds the headerActions wrapper followed by the appearance switcher.
+      const rightContainer = bell.closest("header")!.querySelector(":scope > div")!
+        .lastElementChild as HTMLElement;
+      // The headerActions wrapper is the first child and contains the bell.
+      expect(rightContainer.firstElementChild!.contains(bell)).toBe(true);
+      // The appearance switcher renders after it (last child, a separate node).
+      const appearanceSwitcher = rightContainer.lastElementChild!;
+      expect(appearanceSwitcher).not.toBe(rightContainer.firstElementChild);
+      expect(
+        bell.compareDocumentPosition(appearanceSwitcher) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+  });
 });

@@ -8,11 +8,15 @@ export interface AIGatewayChatMessage {
 export interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
+  stream?: boolean;
   signal?: AbortSignal;
 }
 
 export interface AIGatewayClient {
-  chatCompletionStream(request: AIGatewayChatRequest): AsyncGenerator<string, void, unknown>;
+  /**
+   * Honor request.signal when possible so callers can stop work early.
+   */
+  chatCompletionStream(request: AIGatewayChatRequest): AsyncIterable<string>;
 }
 
 interface OpenAIStreamChunk {
@@ -39,8 +43,8 @@ export function createAIGatewayClient(config: {
 
   return {
     async *chatCompletionStream(request) {
-      if (isGeminiModel(request.model)) {
-        yield* streamGeminiResponse({
+      if (request.stream === false) {
+        yield* streamJSONResponse({
           endpoint,
           authClient: config.authClient,
           request,
@@ -96,7 +100,7 @@ async function* streamOpenAICompatibleResponse(input: {
   }
 }
 
-async function* streamGeminiResponse(input: {
+async function* streamJSONResponse(input: {
   endpoint: string;
   authClient: AuthClient;
   request: AIGatewayChatRequest;
@@ -110,17 +114,18 @@ async function* streamGeminiResponse(input: {
     body: JSON.stringify({
       model: input.request.model,
       messages: input.request.messages,
+      stream: false,
     }),
     signal: input.request.signal,
   });
 
-  await assertOK(response, "AI Gateway Gemini request");
+  await assertOK(response, "AI Gateway JSON request");
 
   const payload = parseJSON<OpenAIFinalResponse>(await response.text(), "AI Gateway JSON response");
   const text = extractText(payload.choices?.[0]?.message?.content);
 
   if (!text) {
-    throw new Error("AI Gateway Gemini response did not include assistant text.");
+    throw new Error("AI Gateway JSON response did not include assistant text.");
   }
 
   yield text;
@@ -227,10 +232,6 @@ async function* iterateSSEDataEvents(
   } finally {
     reader.releaseLock();
   }
-}
-
-function isGeminiModel(model: string): boolean {
-  return model.startsWith("gemini-");
 }
 
 function withTrailingSlash(value: string): string {

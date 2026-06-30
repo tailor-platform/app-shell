@@ -82,7 +82,7 @@ describe("createAIGatewayClient", () => {
     });
   });
 
-  it("yields a single text chunk for gemini models", async () => {
+  it("yields a single text chunk for json responses", async () => {
     const authClient = createMockAuthClient(
       new Response(
         JSON.stringify({
@@ -105,7 +105,10 @@ describe("createAIGatewayClient", () => {
       authClient,
     });
 
-    const deltas = await collectStream(client, createRequest({ model: "gemini-2.5-flash" }));
+    const deltas = await collectStream(
+      client,
+      createRequest({ model: "gemini-2.5-flash", stream: false }),
+    );
 
     expect(deltas).toEqual(["Grounded answer"]);
     expect(authClient.fetch).toHaveBeenCalledWith(
@@ -120,6 +123,7 @@ describe("createAIGatewayClient", () => {
     ).toEqual({
       model: "gemini-2.5-flash",
       messages: [{ role: "user", content: "Hello" }],
+      stream: false,
     });
   });
 
@@ -149,7 +153,7 @@ describe("createAIGatewayClient", () => {
     );
   });
 
-  it("throws when gemini responses do not include assistant text", async () => {
+  it("throws when json responses do not include assistant text", async () => {
     const authClient = createMockAuthClient(
       new Response(JSON.stringify({ choices: [{ message: { content: [] } }] }), { status: 200 }),
     );
@@ -159,7 +163,7 @@ describe("createAIGatewayClient", () => {
     });
 
     await expect(
-      collectStream(client, createRequest({ model: "gemini-2.5-flash" })),
-    ).rejects.toThrow("AI Gateway Gemini response did not include assistant text.");
+      collectStream(client, createRequest({ model: "gemini-2.5-flash", stream: false })),
+    ).rejects.toThrow("AI Gateway JSON response did not include assistant text.");
   });
 });

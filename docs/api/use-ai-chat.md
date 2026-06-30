@@ -10,11 +10,11 @@ React hook for simple text-only chat on top of `createAIGatewayClient`.
 ## Signature
 
 ```typescript
-const useAIChat: (config: { client: AIGatewayClient; model: string }) => {
+const useAIChat: (config: { client: AIGatewayClient; model: string; stream?: boolean }) => {
   messages: AIChatMessage[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
-  sendMessage: (message: { text: string } | string) => Promise<void>;
+  sendMessage: (message: string) => Promise<boolean>;
   stop: () => void;
 };
 ```
@@ -43,8 +43,9 @@ interface AIChatMessage {
 
 ### `sendMessage()`
 
-- **Type:** `(message: { text: string } | string) => Promise<void>`
+- **Type:** `(message: string) => Promise<boolean>`
 - **Description:** Appends a user message and streams the assistant response
+- **Returns:** `true` when the request completes successfully, `false` when the call is ignored, stopped, or fails
 
 ### `stop()`
 
@@ -81,7 +82,7 @@ export function ChatScreen() {
       ))}
 
       <button
-        onClick={() => sendMessage("Hello")}
+        onClick={() => void sendMessage("Hello")}
         disabled={status === "submitted" || status === "streaming"}
       >
         Send
@@ -97,9 +98,11 @@ export function ChatScreen() {
 
 ## Notes
 
+- `stream` defaults to `true`
+- Pass `stream: false` when the endpoint returns a single JSON response instead of SSE
 - The hook is intentionally text-only
 - System prompts and custom history shaping should use the low-level client directly
-- `stop()` keeps any already-streamed assistant text
+- `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request
 
 ## Related
 

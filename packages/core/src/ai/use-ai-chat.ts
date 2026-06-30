@@ -9,7 +9,7 @@ export interface AIChatMessage {
 
 export type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
 
-export function useAIChat(config: { client: AIGatewayClient; model: string }): {
+export function useAIChat(config: { client: AIGatewayClient; model: string; stream?: boolean }): {
   messages: AIChatMessage[];
   status: AIChatStatus;
   error?: Error;
@@ -24,6 +24,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
   const [status, setStatus] = useState<AIChatStatus>("ready");
   const [error, setError] = useState<Error | undefined>(undefined);
   const messagesRef = useRef<AIChatMessage[]>([]);
+  const activeRequestRef = useRef<symbol | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const updateMessages = useCallback((updater: (previous: AIChatMessage[]) => AIChatMessage[]) => {
@@ -35,18 +36,29 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
   }, []);
 
   const stop = useCallback(() => {
-    abortControllerRef.current?.abort();
+    const controller = abortControllerRef.current;
+
+    if (!controller) {
+      return;
+    }
+
+    activeRequestRef.current = null;
+    abortControllerRef.current = null;
+    controller.abort();
+    setStatus("ready");
   }, []);
 
   useEffect(() => {
     return () => {
+      activeRequestRef.current = null;
       abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
     };
   }, []);
 
   const sendMessage = useCallback(
     async (message: string) => {
-      if (abortControllerRef.current) {
+      if (activeRequestRef.current) {
         return false;
       }
 
@@ -68,15 +80,24 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
       setStatus("submitted");
 
       const controller = new AbortController();
+      const requestId = Symbol();
+      const stream = config.stream ?? true;
+      activeRequestRef.current = requestId;
       abortControllerRef.current = controller;
       let assistantMessageId: string | null = null;
+      const isActive = () => activeRequestRef.current === requestId;
 
       try {
         for await (const delta of config.client.chatCompletionStream({
           model: config.model,
           messages: nextMessages.map(toGatewayMessage),
+          stream,
           signal: controller.signal,
         })) {
+          if (!isActive()) {
+            return false;
+          }
+
           if (!delta) {
             continue;
           }
@@ -105,9 +126,17 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
           );
         }
 
+        if (!isActive()) {
+          return false;
+        }
+
         setStatus("ready");
         return true;
       } catch (caughtError) {
+        if (!isActive()) {
+          return false;
+        }
+
         if (isAbortError(caughtError)) {
           setStatus("ready");
           return false;
@@ -117,10 +146,16 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
         setStatus("error");
         return false;
       } finally {
-        abortControllerRef.current = null;
+        if (activeRequestRef.current === requestId) {
+          activeRequestRef.current = null;
+        }
+
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
     },
-    [config.client, config.model, updateMessages],
+    [config.client, config.model, config.stream, updateMessages],
   );
 
   return {

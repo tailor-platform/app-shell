@@ -66,6 +66,7 @@ describe("useAIChat", () => {
     expect(client.chatCompletionStream).toHaveBeenCalledWith({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: "Hi" }],
+      stream: true,
       signal: expect.any(AbortSignal),
     });
 
@@ -127,6 +128,78 @@ describe("useAIChat", () => {
       expect(result.current.messages).toEqual([
         { id: "id-1", role: "user", content: "Hi" },
         { id: "id-2", role: "assistant", content: "Partial" },
+      ]);
+    });
+  });
+
+  it("ignores stale chunks after stop and allows the next send", async () => {
+    let releaseStoppedRequest!: () => void;
+    const stoppedRequestGate = new Promise<void>((resolve) => {
+      releaseStoppedRequest = resolve;
+    });
+
+    const client = {
+      chatCompletionStream: vi.fn(async function* ({ messages }) {
+        const text = messages.at(-1)?.content;
+
+        if (text === "First") {
+          yield "Partial";
+          await stoppedRequestGate;
+          yield " stale";
+          return;
+        }
+
+        yield "Fresh";
+      }),
+    } satisfies AIGatewayClient;
+
+    const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
+
+    let firstSendPromise: Promise<boolean> | undefined;
+    await act(async () => {
+      firstSendPromise = result.current.sendMessage("First");
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("streaming");
+      expect(result.current.messages).toEqual([
+        { id: "id-1", role: "user", content: "First" },
+        { id: "id-2", role: "assistant", content: "Partial" },
+      ]);
+    });
+
+    act(() => {
+      result.current.stop();
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("ready");
+    });
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Second")).resolves.toBe(true);
+    });
+
+    await waitFor(() => {
+      expect(result.current.messages).toEqual([
+        { id: "id-1", role: "user", content: "First" },
+        { id: "id-2", role: "assistant", content: "Partial" },
+        { id: "id-3", role: "user", content: "Second" },
+        { id: "id-4", role: "assistant", content: "Fresh" },
+      ]);
+    });
+
+    releaseStoppedRequest();
+    await act(async () => {
+      await expect(firstSendPromise).resolves.toBe(false);
+    });
+
+    await waitFor(() => {
+      expect(result.current.messages).toEqual([
+        { id: "id-1", role: "user", content: "First" },
+        { id: "id-2", role: "assistant", content: "Partial" },
+        { id: "id-3", role: "user", content: "Second" },
+        { id: "id-4", role: "assistant", content: "Fresh" },
       ]);
     });
   });

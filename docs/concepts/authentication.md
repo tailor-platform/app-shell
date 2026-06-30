@@ -185,7 +185,7 @@ function ChatScreen() {
         </div>
       ))}
 
-      <button onClick={() => sendMessage("Hello")}>Send</button>
+      <button onClick={() => void sendMessage("Hello")}>Send</button>
       <button onClick={stop} disabled={status !== "submitted" && status !== "streaming"}>
         Stop
       </button>

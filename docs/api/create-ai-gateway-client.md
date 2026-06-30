@@ -34,11 +34,11 @@ function createAIGatewayClient(config: {
 
 ```typescript
 interface AIGatewayClient {
-  chatCompletionStream(request: AIGatewayChatRequest): AsyncGenerator<string, void, unknown>;
+  chatCompletionStream(request: AIGatewayChatRequest): AsyncIterable<string>;
 }
 ```
 
-The generator yields text deltas. Concatenate them to build the assistant response.
+The iterable yields text deltas. Concatenate them to build the assistant response.
 
 ## Related Types
 
@@ -51,6 +51,7 @@ interface AIGatewayChatMessage {
 interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
+  stream?: boolean;
   signal?: AbortSignal;
 }
 ```
@@ -83,8 +84,9 @@ console.log(deltas.join(""));
 
 ## Notes
 
-- Non-Gemini models are consumed as streaming SSE responses
-- `gemini-*` models are consumed as JSON responses and yielded once
+- `stream` defaults to `true`
+- Pass `stream: false` when the endpoint returns a single JSON response instead of SSE
+- Gemini-backed routes often need `stream: false`
 - The public API is intentionally text-only
 
 ## Related

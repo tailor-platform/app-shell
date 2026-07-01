@@ -1,19 +1,19 @@
 import { useCallback, useId, useRef, useState } from "react";
-import type { CalendarDate, DateValue } from "@internationalized/date";
+import type { DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import { useDateFieldState, type Granularity, type HourCycle } from "./use-date-field-state";
-import { useCalendarState, type FirstDayOfWeek } from "./use-calendar-state";
+import { useCalendarState, type FirstDayOfWeek } from "../calendar/use-calendar-state";
+import { CalendarView } from "../calendar/calendar-view";
 import {
   DateInputGroup,
-  CalendarView,
   DatePopover,
   DatePickerPopoverTrigger,
   DatePickerLabel,
   DatePickerDescription,
   DatePickerError,
-} from "./date-picker";
+} from "./date-input-group";
 
 /**
  * Public, closed-API date components — the @internationalized/date + Base UI
@@ -80,26 +80,6 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateFieldProps<T>
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
 };
-
-export interface CalendarProps<T extends DateValue = DateValue> {
-  value?: T | null;
-  defaultValue?: T | null;
-  onChange?: (value: T) => void;
-  minValue?: DateValue;
-  maxValue?: DateValue;
-  isDateUnavailable?: (date: DateValue) => boolean;
-  isDisabled?: boolean;
-  isReadOnly?: boolean;
-  focusedValue?: DateValue;
-  defaultFocusedValue?: DateValue;
-  onFocusChange?: (date: CalendarDate) => void;
-  firstDayOfWeek?: FirstDayOfWeek;
-  "aria-label"?: string;
-  "aria-labelledby"?: string;
-  timeZone?: string;
-  className?: string;
-  locale?: string;
-}
 
 // ─── DateField ────────────────────────────────────────────────────────────────
 
@@ -316,68 +296,4 @@ function DatePicker<T extends DateValue = DateValue>({
   );
 }
 
-// ─── Calendar ─────────────────────────────────────────────────────────────────
-
-/**
- * A standalone inline calendar — no popover, suitable for reporting filters
- * or date selection within a larger layout.
- *
- * @example
- * ```tsx
- * import { Calendar } from "@tailor-platform/app-shell";
- *
- * <Calendar aria-label="Select date" value={value} onChange={setValue} />
- * ```
- */
-function Calendar<T extends DateValue = DateValue>({
-  value,
-  defaultValue,
-  onChange,
-  minValue,
-  maxValue,
-  isDateUnavailable,
-  isDisabled,
-  isReadOnly,
-  focusedValue,
-  defaultFocusedValue,
-  onFocusChange,
-  firstDayOfWeek,
-  timeZone: timeZoneProp,
-  locale: localeProp,
-  className,
-  "aria-label": ariaLabel,
-  "aria-labelledby": ariaLabelledBy,
-}: CalendarProps<T>) {
-  const { locale: shellLocale } = useResolvedLocale();
-  const shellTz = useTimeZone();
-  const resolvedLocale = localeProp ?? shellLocale;
-  const resolvedTz = timeZoneProp ?? shellTz;
-
-  const state = useCalendarState({
-    value: value ?? undefined,
-    defaultValue,
-    onChange: onChange as (v: DateValue) => void,
-    minValue,
-    maxValue,
-    isDateUnavailable,
-    isDisabled,
-    isReadOnly,
-    focusedValue,
-    defaultFocusedValue,
-    onFocusChange,
-    firstDayOfWeek,
-    locale: resolvedLocale,
-    timeZone: resolvedTz,
-  });
-
-  return (
-    <CalendarView
-      state={state}
-      ariaLabel={ariaLabel}
-      ariaLabelledBy={ariaLabelledBy}
-      className={className}
-    />
-  );
-}
-
-export { DateField, DatePicker, Calendar };
+export { DateField, DatePicker };

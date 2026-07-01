@@ -2,14 +2,8 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  CalendarDate,
-  parseDate,
-  today,
-  getLocalTimeZone,
-  isSameDay,
-} from "@internationalized/date";
-import { DateField, DatePicker, Calendar } from "./date-field";
+import { CalendarDate, today, getLocalTimeZone } from "@internationalized/date";
+import { DateField, DatePicker } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
 // it asserts public behaviour + the DOM accessibility contract (spinbutton
@@ -52,13 +46,6 @@ describe("snapshots", () => {
 
   it("DatePicker — closed", () => {
     const { container } = render(<DatePicker label="Ship date" />);
-    expect(container.innerHTML).toMatchSnapshot();
-  });
-
-  it("Calendar — pre-selected", () => {
-    const { container } = render(
-      <Calendar aria-label="Select date" defaultValue={parseDate("2025-06-15") as CalendarDate} />,
-    );
     expect(container.innerHTML).toMatchSnapshot();
   });
 });
@@ -408,131 +395,6 @@ describe("DatePicker", () => {
   it("renders error message when errorMessage is set", () => {
     render(<DatePicker label="Date" errorMessage="Date is required" />);
     expect(screen.getByText("Date is required")).toBeDefined();
-  });
-});
-
-// ─── Calendar ─────────────────────────────────────────────────────────────────
-
-describe("Calendar", () => {
-  it("renders a calendar grid", () => {
-    render(<Calendar aria-label="Select date" />);
-    expect(screen.getByRole("grid")).toBeDefined();
-  });
-
-  it("renders navigation buttons", () => {
-    render(<Calendar aria-label="Select date" />);
-    const navButtons = screen.getAllByRole("button").filter((b) => !b.closest('[role="grid"]'));
-    expect(navButtons.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("fires onChange when a date cell is clicked", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(<Calendar aria-label="Select date" onChange={onChange} />);
-
-    const enabled = getEnabledCalendarCells();
-    if (enabled.length > 0) {
-      await user.click(enabled[0]);
-      await waitFor(() => {
-        expect(onChange).toHaveBeenCalled();
-      });
-    }
-  });
-
-  it("renders selected cell with data-selected attribute", () => {
-    const defaultValue = parseDate("2025-06-15") as CalendarDate;
-    render(<Calendar aria-label="Select date" defaultValue={defaultValue} />);
-
-    const selected = getCalendarCells().find((c) => c.hasAttribute("data-selected"));
-    expect(selected).toBeDefined();
-  });
-
-  it("renders no disabled cells when minValue is not set", () => {
-    render(<Calendar aria-label="Select date" />);
-    const currentMonthCells = getCalendarCells().filter(
-      (c) => !c.hasAttribute("data-outside-month"),
-    );
-    expect(currentMonthCells.length).toBeGreaterThan(0);
-  });
-
-  it("uses a roving tabindex anchored on the focused date", () => {
-    render(
-      <Calendar aria-label="Select date" defaultValue={parseDate("2025-06-15") as CalendarDate} />,
-    );
-    const tabbable = getCalendarCells().filter((c) => c.getAttribute("tabindex") === "0");
-    expect(tabbable).toHaveLength(1);
-    expect(tabbable[0].textContent).toBe("15");
-  });
-
-  it("carries a focus-ring utility class on day cells", () => {
-    render(
-      <Calendar aria-label="Select date" defaultValue={parseDate("2025-06-15") as CalendarDate} />,
-    );
-    const cell = getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
-    // Focus styling is the same `ring` utility used by Button/inputs.
-    expect(cell.className).toMatch(/focus:ring/);
-  });
-
-  it("keeps focus on the month nav button when changing months", async () => {
-    const user = userEvent.setup();
-    render(<Calendar aria-label="Select date" />);
-    const nextBtn = screen
-      .getAllByRole("button")
-      .find((b) => b.getAttribute("aria-label") === "Next month")!;
-    // Simulate the grid having been focused first (e.g. via keyboard nav).
-    const cell = getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
-    cell.focus();
-    await user.click(nextBtn);
-    // Focus must remain on the nav button, not jump back into the grid.
-    expect(document.activeElement).toBe(nextBtn);
-    expect(document.activeElement?.closest('[role="grid"]')).toBeNull();
-  });
-
-  it("moves the roving focus with arrow keys (→ next day, ↓ next week)", async () => {
-    const user = userEvent.setup();
-    render(
-      <Calendar aria-label="Select date" defaultValue={parseDate("2025-06-15") as CalendarDate} />,
-    );
-    const start = getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
-    start.focus();
-    await user.keyboard("{ArrowRight}");
-    expect(getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")?.textContent).toBe(
-      "16",
-    );
-    await user.keyboard("{ArrowDown}");
-    expect(getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")?.textContent).toBe(
-      "23",
-    );
-  });
-
-  it("lets arrow keys traverse through unavailable dates without getting stuck", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    // Mark the 16th unavailable — the day we'll land on mid-navigation.
-    const unavailable = parseDate("2025-06-16") as CalendarDate;
-    render(
-      <Calendar
-        aria-label="Select date"
-        defaultValue={parseDate("2025-06-15") as CalendarDate}
-        isDateUnavailable={(d) => isSameDay(d, unavailable)}
-        onChange={onChange}
-      />,
-    );
-    const tabbable = () => getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
-
-    tabbable().focus();
-    await user.keyboard("{ArrowRight}"); // → 16 (unavailable, but focusable)
-    const onSixteenth = tabbable();
-    expect(onSixteenth.textContent).toBe("16");
-    expect(onSixteenth.hasAttribute("data-unavailable")).toBe(true);
-
-    // Selection is blocked on the unavailable day...
-    await user.keyboard("{Enter}");
-    expect(onChange).not.toHaveBeenCalled();
-
-    // ...but navigation continues right off it (this is the bug being fixed).
-    await user.keyboard("{ArrowRight}");
-    expect(tabbable().textContent).toBe("17");
   });
 });
 

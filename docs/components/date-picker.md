@@ -95,7 +95,7 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 <DatePicker label="Date" locale="ja-JP" />
 ```
 
-Segment order, first-day-of-week, month/weekday names, and 12/24-hour display all follow the resolved locale.
+Segment order, first-day-of-week, and month/weekday names all follow the resolved locale.
 
 ## Keyboard
 
@@ -112,34 +112,69 @@ Segment order, first-day-of-week, month/weekday names, and 12/24-hour display al
 
 ## Props
 
+The tables below list props this variant **actually implements** for v1 (date granularity). A few props are part of the type surface — kept identical to the react-aria variant so a later swap is source-compatible — but aren't acted on yet; those are called out under [Proposed / not yet implemented](#proposed--not-yet-implemented).
+
 ### DateFieldProps
 
-| Prop                                                     | Type                                      | Description                                                          |
-| -------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------- |
-| `label`                                                  | `LocalizedString`                         | Field label                                                          |
-| `description`                                            | `LocalizedString`                         | Helper text                                                          |
-| `errorMessage`                                           | `LocalizedString`                         | Error text; also sets the invalid state                              |
-| `value` / `defaultValue`                                 | `DateValue \| null`                       | Controlled / uncontrolled value                                      |
-| `onChange`                                               | `(v: DateValue \| null) => void`          | Called on change; `null` when cleared                                |
-| `granularity`                                            | `"day" \| "hour" \| "minute" \| "second"` | Drives the value type                                                |
-| `minValue` / `maxValue`                                  | `DateValue`                               | Bounds                                                               |
-| `isDateUnavailable`                                      | `(date: DateValue) => boolean`            | Mark dates unavailable                                               |
-| `isDisabled` / `isReadOnly` / `isRequired` / `isInvalid` | `boolean`                                 | State flags                                                          |
-| `hourCycle`                                              | `12 \| 24`                                | Override AM/PM vs 24-hour                                            |
-| `placeholderValue`                                       | `DateValue`                               | Seeds unset segments                                                 |
-| `autoFocus`                                              | `boolean`                                 | Focus first segment on mount                                         |
-| `locale`                                                 | `string`                                  | BCP-47 locale override                                               |
-| `name`                                                   | `string`                                  | Hidden input for form submission                                     |
-| `aria-label`                                             | `string`                                  | Accessible name when no visible `label` (e.g. compact filter inputs) |
-| `className`                                              | `string`                                  | Root element class                                                   |
+| Prop                                      | Type                             | Description                                                            |
+| ----------------------------------------- | -------------------------------- | ---------------------------------------------------------------------- |
+| `label`                                   | `LocalizedString`                | Field label                                                            |
+| `description`                             | `LocalizedString`                | Helper text below the field                                            |
+| `errorMessage`                            | `LocalizedString`                | Error text; also sets the invalid state                                |
+| `value` / `defaultValue`                  | `DateValue \| null`              | Controlled / uncontrolled value (`CalendarDate` at date granularity)   |
+| `onChange`                                | `(v: DateValue \| null) => void` | Fires on a complete, valid value; `null` when cleared                  |
+| `isDisabled` / `isReadOnly` / `isInvalid` | `boolean`                        | State flags                                                            |
+| `placeholderValue`                        | `DateValue`                      | Seeds unset segments (increment start + segment order)                 |
+| `autoFocus`                               | `boolean`                        | Focus the first segment on mount                                       |
+| `locale`                                  | `string`                         | BCP-47 locale override (defaults to the AppShell formatting locale)    |
+| `name`                                    | `string`                         | Emits a hidden `<input>` with the ISO value for form submission        |
+| `aria-label`                              | `string`                         | Accessible name when there's no visible `label` (e.g. compact filters) |
+| `className`                               | `string`                         | Root element class                                                     |
+
+> `DateField` has no calendar, so `minValue` / `maxValue` / `isDateUnavailable` don't apply to it — they're honoured by `DatePicker` and `Calendar` below.
 
 ### DatePickerProps
 
-All `DateFieldProps` plus `firstDayOfWeek` (`"sun" | "mon" | …`) and `timeZone` (IANA; defaults to AppShell `timeZone`).
+All `DateFieldProps`, plus:
+
+| Prop                    | Type                                                          | Description                                                          |
+| ----------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `minValue` / `maxValue` | `DateValue`                                                   | Earliest / latest selectable date in the calendar                    |
+| `isDateUnavailable`     | `(date: DateValue) => boolean`                                | Mark individual dates unselectable (still keyboard-navigable)        |
+| `firstDayOfWeek`        | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Force the calendar's first column; omit to follow the locale         |
+| `timeZone`              | `string`                                                      | IANA timezone for resolving "today"; defaults to AppShell `timeZone` |
 
 ### CalendarProps
 
-`value` / `defaultValue` / `onChange` / `minValue` / `maxValue` / `isDateUnavailable` / `isDisabled` / `isReadOnly` / `focusedValue` / `defaultFocusedValue` / `onFocusChange` / `firstDayOfWeek` / `aria-label` / `aria-labelledby` / `timeZone` / `locale` / `className`.
+The standalone calendar grid. It has no segmented input, so its surface is listed in full:
+
+| Prop                                   | Type                           | Description                                                   |
+| -------------------------------------- | ------------------------------ | ------------------------------------------------------------- |
+| `value` / `defaultValue`               | `DateValue \| null`            | Controlled / uncontrolled selected date                       |
+| `onChange`                             | `(v: DateValue) => void`       | Fires when a date is selected                                 |
+| `minValue` / `maxValue`                | `DateValue`                    | Earliest / latest selectable date                             |
+| `isDateUnavailable`                    | `(date: DateValue) => boolean` | Mark individual dates unselectable (still keyboard-navigable) |
+| `focusedValue` / `defaultFocusedValue` | `DateValue`                    | Controlled / initial focused (visible) date                   |
+| `onFocusChange`                        | `(date: CalendarDate) => void` | Fires when the focused date changes (arrows, month paging)    |
+| `firstDayOfWeek`                       | `"sun" \| "mon" \| …`          | Force the first column; omit to follow the locale             |
+| `isDisabled` / `isReadOnly`            | `boolean`                      | Disable the grid / prevent selection changes                  |
+| `timeZone`                             | `string`                       | IANA timezone for "today"; defaults to AppShell `timeZone`    |
+| `locale`                               | `string`                       | BCP-47 locale override                                        |
+| `aria-label` / `aria-labelledby`       | `string`                       | Accessible name for the grid                                  |
+| `className`                            | `string`                       | Root element class                                            |
+
+### Proposed / not yet implemented
+
+Accepted by the prop types (for parity with the react-aria variant) but **not acted on** in this variant yet:
+
+| Prop           | Type                                      | Status                                                                                                                                                                                                             |
+| -------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `granularity`  | `"day" \| "hour" \| "minute" \| "second"` | Only `"day"` is supported (the default). Time granularities — and the `CalendarDateTime` / `ZonedDateTime` values they produce — are the tracked **DateTime fast-follow**; the calendar has no time selection yet. |
+| `hourCycle`    | `12 \| 24`                                | No effect until time granularity lands (12h/24h only matters with an hour segment).                                                                                                                                |
+| `hideTimeZone` | `boolean`                                 | Unused; only relevant to `ZonedDateTime` display (time granularity).                                                                                                                                               |
+| `isRequired`   | `boolean`                                 | Unused — no required affordance is rendered and it isn't wired to validation. Surface required-field errors via `errorMessage` / `isInvalid` (see the [Form example](./form.md)).                                  |
+
+See the proposal's [Post-v1 fast-follows](../proposals/date-picker.md) for the DateTime plan.
 
 ## Related
 

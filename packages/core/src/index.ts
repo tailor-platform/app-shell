@@ -113,10 +113,6 @@ export {
   DocumentProgressCard,
   type DocumentProgressCardProps,
 } from "./components/document-progress-card";
-export {
-  ProcurementFulfilmentProgressCard,
-  type ProcurementFulfilmentProgressCardProps,
-} from "./components/procurement-fulfilment-progress-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";

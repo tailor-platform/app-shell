@@ -443,24 +443,7 @@ const table = useDataTable({
 />
 ```
 
-**Used in patterns:** **`detail/*`** right-rail cards for arbitrary status breakdowns (shipped/cancelled/pending, etc.).
-
-### `ProcurementFulfilmentProgressCard`
-
-**Import:** `import { ProcurementFulfilmentProgressCard } from '@tailor-platform/app-shell'`
-**Purpose:** Opinionated purchase-order fulfilment wrapper over `DocumentProgressCard` — received / returned / yet-to-receive with a derived fulfilment %.
-**API:** `ProcurementFulfilmentProgressCardProps` — `received`, `returned`, `yetToReceive` (each `{ value, label?, color? }`), `title?` (default "Fulfilment rate"), `returnedCountsAsComplete?` (default `true`; set `false` to subtract returns), `className?`. Percent is derived from `received / (received + yetToReceive)`.
-**Example:**
-
-```tsx
-<ProcurementFulfilmentProgressCard
-  received={{ value: 12 }}
-  returned={{ value: 2 }}
-  yetToReceive={{ value: 28 }}
-/>
-```
-
-**Used in patterns:** **`detail/*`** right-rail cards communicating purchase-order fulfilment state.
+**Used in patterns:** **`detail/*`** right-rail cards for arbitrary status breakdowns (shipped/cancelled/pending, PO received/returned/yet-to-receive, etc.). For the purchase-order fulfilment recipe (derived %, net-received/returned bar split, legend override), see `docs/components/document-progress-card.md`.
 
 ### `Avatar`
 

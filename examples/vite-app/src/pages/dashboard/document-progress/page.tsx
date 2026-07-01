@@ -2,7 +2,6 @@ import {
   Layout,
   Grid,
   DocumentProgressCard,
-  ProcurementFulfilmentProgressCard,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 
@@ -23,15 +22,56 @@ const GaugeIcon = () => (
   </svg>
 );
 
+/**
+ * Purchase-order fulfilment, built on the generic DocumentProgressCard — the
+ * recommended recipe from the docs. Derives the percentage and decomposes
+ * received into "kept" + "returned" in the consumer, keeping the card generic.
+ */
+const PurchaseOrderFulfilment = ({
+  title = "Fulfilment rate",
+  received,
+  returned,
+  yetToReceive,
+  returnedCountsAsComplete = true,
+}: {
+  title?: string;
+  received: number;
+  returned: number;
+  yetToReceive: number;
+  returnedCountsAsComplete?: boolean;
+}) => {
+  const effectiveReturned = Math.min(Math.max(returned, 0), Math.max(received, 0));
+  const total = Math.max(received, 0) + Math.max(yetToReceive, 0);
+  const complete = returnedCountsAsComplete ? received : received - effectiveReturned;
+  const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
+
+  return (
+    <DocumentProgressCard
+      title={title}
+      percent={percent}
+      total={total}
+      segments={[
+        { label: "Received items", value: received - effectiveReturned, color: "indigo" },
+        { label: "Returned items", value: effectiveReturned, color: "pink" },
+      ]}
+      legend={[
+        { label: "Received items", value: received, color: "indigo" },
+        { label: "Returned items", value: returned, color: "pink" },
+        { label: "Yet to receive", value: yetToReceive, color: "neutral" },
+      ]}
+    />
+  );
+};
+
 const DocumentProgressPage = () => {
   return (
     <Layout>
       <Layout.Header title="Document Progress Card" />
 
       <Layout.Column>
-        <h2 className="mb-1 text-lg font-semibold">DocumentProgressCard (generic)</h2>
+        <h2 className="mb-1 text-lg font-semibold">Arbitrary status segments</h2>
         <p className="mb-4 text-muted-foreground text-sm">
-          Domain-agnostic — arbitrary status segments plus an explicit percentage.
+          Domain-agnostic — any set of status segments plus an explicit percentage.
         </p>
         <Grid minChildWidth={320} gap={4}>
           {/* Arbitrary lifecycle: shipped / returned / pending */}
@@ -76,43 +116,29 @@ const DocumentProgressPage = () => {
           />
         </Grid>
 
-        <h2 className="mt-8 mb-1 text-lg font-semibold">
-          ProcurementFulfilmentProgressCard (opinionated)
-        </h2>
+        <h2 className="mt-8 mb-1 text-lg font-semibold">Recipe: purchase-order fulfilment</h2>
         <p className="mb-4 text-muted-foreground text-sm">
-          Purchase-order fulfilment — received / returned / yet-to-receive with a derived
-          percentage.
+          Received / returned / yet-to-receive, derived in the consumer (see{" "}
+          <code>PurchaseOrderFulfilment</code> in this file and the component docs).
         </p>
         <Grid minChildWidth={320} gap={4}>
           {/* Matches the Figma baseline — nothing received yet */}
-          <ProcurementFulfilmentProgressCard
-            received={{ value: 0 }}
-            returned={{ value: 0 }}
-            yetToReceive={{ value: 40 }}
-          />
+          <PurchaseOrderFulfilment received={0} returned={0} yetToReceive={40} />
 
           {/* Partially received with some returns */}
-          <ProcurementFulfilmentProgressCard
-            received={{ value: 12 }}
-            returned={{ value: 2 }}
-            yetToReceive={{ value: 28 }}
-          />
+          <PurchaseOrderFulfilment received={12} returned={2} yetToReceive={28} />
 
           {/* Same data, but returns subtracted from progress */}
-          <ProcurementFulfilmentProgressCard
+          <PurchaseOrderFulfilment
             title="Fulfilment rate (net of returns)"
-            received={{ value: 12 }}
-            returned={{ value: 2 }}
-            yetToReceive={{ value: 28 }}
+            received={12}
+            returned={2}
+            yetToReceive={28}
             returnedCountsAsComplete={false}
           />
 
           {/* Fully received */}
-          <ProcurementFulfilmentProgressCard
-            received={{ value: 40 }}
-            returned={{ value: 0 }}
-            yetToReceive={{ value: 0 }}
-          />
+          <PurchaseOrderFulfilment received={40} returned={0} yetToReceive={0} />
         </Grid>
       </Layout.Column>
     </Layout>

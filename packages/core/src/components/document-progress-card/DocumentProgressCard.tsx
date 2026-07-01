@@ -53,8 +53,8 @@ const resolveSegments = (segments: DocumentProgressSegment[]) =>
  *
  * View-only and domain-agnostic — pass an arbitrary set of `segments` (e.g.
  * shipped / returned / pending, or cancelled / blocked / …) plus an explicit
- * `percent`. For the receiving model with derived progress, prefer
- * `ProcurementFulfilmentProgressCard`, which composes this card.
+ * `percent`. Derive the percentage and, where buckets overlap, the bar
+ * breakdown in the consumer (see the docs for a purchase-order example).
  *
  * @example
  * ```tsx

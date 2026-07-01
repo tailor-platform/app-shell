@@ -139,7 +139,7 @@ export {
   type DateFieldProps,
   type DatePickerProps,
   type CalendarProps,
-} from "./components/date-picker-standalone";
+} from "./components/date-field";
 
 // @internationalized/date re-exports — consumers import date helpers/types from
 // app-shell and install no extra packages. The long tail is available via direct

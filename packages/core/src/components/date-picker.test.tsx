@@ -9,7 +9,7 @@ import {
   getLocalTimeZone,
   isSameDay,
 } from "@internationalized/date";
-import { DateField, DatePicker, Calendar } from "./date-picker-standalone";
+import { DateField, DatePicker, Calendar } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
 // it asserts public behaviour + the DOM accessibility contract (spinbutton

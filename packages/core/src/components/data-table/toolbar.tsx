@@ -7,7 +7,7 @@ import { useCollectionControlOptional } from "@/contexts/collection-control-cont
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
-import { DatePicker } from "@/components/date-picker-standalone";
+import { DatePicker } from "@/components/date-field";
 import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";

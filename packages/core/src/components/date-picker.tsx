@@ -11,7 +11,7 @@ import type { CalendarDay, useCalendarState } from "./use-calendar-state";
  * Internal presentation layer for the date components — built on Base UI
  * primitives (`Popover`) + plain accessible markup, driven by our own
  * `useDateFieldState` / `useCalendarState` engines. Not exported from the
- * package; the public API lives in `date-picker-standalone.tsx`.
+ * package; the public API lives in `date-field.tsx`.
  *
  * Styling mirrors the rest of the library (`astw:` tokens, dark mode, the same
  * popover token set as our other Base UI popovers).

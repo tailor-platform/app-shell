@@ -110,8 +110,8 @@ function Head({ className, align = "left", ...props }: HeadProps) {
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
-        align === "right" && "astw:text-right",
+        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        align === "right" ? "astw:text-right" : "astw:text-left",
         className,
       )}
       {...props}
@@ -127,7 +127,7 @@ function Cell({ className, align = "left", ...props }: CellProps) {
       data-slot="table-cell"
       className={cn(
         "astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
-        align === "right" && "astw:text-right",
+        align === "right" ? "astw:text-right" : "astw:text-left",
         className,
       )}
       {...props}

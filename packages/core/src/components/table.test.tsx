@@ -35,6 +35,22 @@ describe("Table", () => {
       );
       const cell = container.querySelector('[data-slot="table-cell"]');
       expect(cell?.className).toContain("astw:text-right");
+      expect(cell?.className).not.toContain("astw:text-left");
+    });
+
+    it("left-aligns data cells by default", () => {
+      const { container } = render(
+        <Table.Root>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>123</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>,
+      );
+      const cell = container.querySelector('[data-slot="table-cell"]');
+      expect(cell?.className).toContain("astw:text-left");
+      expect(cell?.className).not.toContain("astw:text-right");
     });
   });
 

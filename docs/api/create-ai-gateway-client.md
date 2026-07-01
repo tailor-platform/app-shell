@@ -34,19 +34,27 @@ function createAIGatewayClient(config: {
 
 ```typescript
 interface AIGatewayClient {
-  chatCompletionStream(request: AIGatewayChatRequest): AsyncIterable<string>;
+  streamChatCompletion(request: AIGatewayChatRequest): AsyncIterable<AIChatCompletionEvent>;
 }
 ```
 
-The iterable yields text deltas. Concatenate them to build the assistant response.
+The iterable yields completion events:
+
+- `text-delta` — append `event.text` to build the assistant response
+- `done` — terminal event with an optional `finishReason`
 
 ## Related Types
 
 ```typescript
-interface AIGatewayChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+type AIGatewayChatMessage =
+  | {
+      role: "system" | "user";
+      content: string;
+    }
+  | {
+      role: "assistant";
+      content?: string;
+    };
 
 interface AIGatewayChatRequest {
   model: string;
@@ -54,6 +62,16 @@ interface AIGatewayChatRequest {
   stream?: boolean;
   signal?: AbortSignal;
 }
+
+type AIChatCompletionEvent =
+  | {
+      type: "text-delta";
+      text: string;
+    }
+  | {
+      type: "done";
+      finishReason?: string;
+    };
 ```
 
 ## Usage
@@ -71,23 +89,26 @@ const aiClient = createAIGatewayClient({
   authClient,
 });
 
-const deltas: string[] = [];
-for await (const delta of aiClient.chatCompletionStream({
+let text = "";
+for await (const event of aiClient.streamChatCompletion({
   model: "gpt-5-mini",
   messages: [{ role: "user", content: "Hello" }],
 })) {
-  deltas.push(delta);
+  if (event.type === "text-delta") {
+    text += event.text;
+  }
 }
 
-console.log(deltas.join(""));
+console.log(text);
 ```
 
 ## Notes
 
 - `stream` defaults to `true`
 - Pass `stream: false` when the endpoint returns a single JSON response instead of SSE
-- Gemini-backed routes often need `stream: false`
-- The public API is intentionally text-only
+- `stream: false` still yields the same event shape: zero or one `text-delta`, then `done`
+- The low-level API is intentionally narrow: text deltas plus completion metadata
+- `request.signal` is passed through so callers can abort in-flight work
 
 ## Related
 

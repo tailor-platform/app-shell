@@ -21,6 +21,7 @@ export type GeneratedRouteParams = {
   "/dashboard/orders/:id": { id: string };
   "/data-table": {};
   "/date-picker": {};
+  "/dashboard/products": {};
   "/settings": {};
 };
 

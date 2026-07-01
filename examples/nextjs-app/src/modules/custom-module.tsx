@@ -22,6 +22,7 @@ import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form
 import { csvImporterDemoResource } from "./pages/csv-importer-demo";
 import { dataTableDemoResource } from "./pages/data-table-demo";
 import { colorDemoResource } from "./pages/color-demo";
+import { gridDemoResource } from "./pages/grid-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -217,6 +218,17 @@ export const customPageModule = defineModule({
               DataTable Demo (sortable columns, row actions, pagination)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/grid-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Grid Demo (responsive columns, auto-fit, custom widths, spanning)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -244,5 +256,6 @@ export const customPageModule = defineModule({
     zodRHFFormDemoResource,
     csvImporterDemoResource,
     dataTableDemoResource,
+    gridDemoResource,
   ],
 });

@@ -1,5 +1,11 @@
 # @tailor-platform/app-shell-vite-plugin
 
+## 0.2.3
+
+### Patch Changes
+
+- 3d48b24: Remove `loader` from file-based page definitions (`Page.appShellPageProps`). This removes an accidentally exposed incomplete API and makes `guards` the single source of page-level route behavior in file-based routing.
+
 ## 0.2.2
 
 ### Patch Changes

@@ -116,6 +116,7 @@ export {
 } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
+export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
@@ -186,6 +187,9 @@ export {
   type PageInfo,
   type CollectionVariables,
   type CollectionControl,
+  type CollectionInitialState,
+  type CollectionParams,
+  type CollectionPersistedState,
   type CollectionResult,
   type NodeType,
   type PaginationVariables,
@@ -218,6 +222,7 @@ export {
   type DataTableContextValue,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
+export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";
 export {
   CollectionControlProvider,
   useCollectionControl,

@@ -43,6 +43,7 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
 

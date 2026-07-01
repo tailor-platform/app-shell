@@ -1,9 +1,14 @@
 import type { AuthClient } from "@tailor-platform/auth-public-client";
 
-export interface AIGatewayChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+export type AIGatewayChatMessage =
+  | {
+      role: "system" | "user";
+      content: string;
+    }
+  | {
+      role: "assistant";
+      content?: string;
+    };
 
 export interface AIGatewayChatRequest {
   model: string;
@@ -12,11 +17,21 @@ export interface AIGatewayChatRequest {
   signal?: AbortSignal;
 }
 
+export type AIChatCompletionEvent =
+  | {
+      type: "text-delta";
+      text: string;
+    }
+  | {
+      type: "done";
+      finishReason?: string;
+    };
+
 export interface AIGatewayClient {
   /**
    * Honor request.signal when possible so callers can stop work early.
    */
-  chatCompletionStream(request: AIGatewayChatRequest): AsyncIterable<string>;
+  streamChatCompletion(request: AIGatewayChatRequest): AsyncIterable<AIChatCompletionEvent>;
 }
 
 interface OpenAIStreamChunk {
@@ -24,6 +39,7 @@ interface OpenAIStreamChunk {
     delta?: {
       content?: unknown;
     };
+    finish_reason?: unknown;
   }>;
 }
 
@@ -32,6 +48,7 @@ interface OpenAIFinalResponse {
     message?: {
       content?: unknown;
     };
+    finish_reason?: unknown;
   }>;
 }
 
@@ -42,7 +59,7 @@ export function createAIGatewayClient(config: {
   const endpoint = new URL("v1/chat/completions", withTrailingSlash(config.gatewayUri)).toString();
 
   return {
-    async *chatCompletionStream(request) {
+    async *streamChatCompletion(request) {
       if (request.stream === false) {
         yield* streamJSONResponse({
           endpoint,
@@ -65,7 +82,7 @@ async function* streamOpenAICompatibleResponse(input: {
   endpoint: string;
   authClient: AuthClient;
   request: AIGatewayChatRequest;
-}): AsyncGenerator<string, void, unknown> {
+}): AsyncGenerator<AIChatCompletionEvent, void, unknown> {
   const response = await input.authClient.fetch(input.endpoint, {
     method: "POST",
     headers: {
@@ -86,25 +103,32 @@ async function* streamOpenAICompatibleResponse(input: {
     throw new Error("AI Gateway streaming response did not include a body.");
   }
 
+  let finishReason: string | undefined;
+
   for await (const event of iterateSSEDataEvents(response.body, input.request.signal)) {
     if (event === "[DONE]") {
+      yield createDoneEvent(finishReason);
       return;
     }
 
     const payload = parseJSON<OpenAIStreamChunk>(event, "AI Gateway SSE event");
-    const delta = extractText(payload.choices?.[0]?.delta?.content);
+    const choice = payload.choices?.[0];
+    const delta = extractText(choice?.delta?.content);
+    finishReason = extractFinishReason(choice?.finish_reason) ?? finishReason;
 
     if (delta) {
-      yield delta;
+      yield { type: "text-delta", text: delta };
     }
   }
+
+  yield createDoneEvent(finishReason);
 }
 
 async function* streamJSONResponse(input: {
   endpoint: string;
   authClient: AuthClient;
   request: AIGatewayChatRequest;
-}): AsyncGenerator<string, void, unknown> {
+}): AsyncGenerator<AIChatCompletionEvent, void, unknown> {
   const response = await input.authClient.fetch(input.endpoint, {
     method: "POST",
     headers: {
@@ -122,13 +146,14 @@ async function* streamJSONResponse(input: {
   await assertOK(response, "AI Gateway JSON request");
 
   const payload = parseJSON<OpenAIFinalResponse>(await response.text(), "AI Gateway JSON response");
-  const text = extractText(payload.choices?.[0]?.message?.content);
+  const choice = payload.choices?.[0];
+  const text = extractText(choice?.message?.content);
 
-  if (!text) {
-    throw new Error("AI Gateway JSON response did not include assistant text.");
+  if (text) {
+    yield { type: "text-delta", text };
   }
 
-  yield text;
+  yield createDoneEvent(extractFinishReason(choice?.finish_reason));
 }
 
 async function assertOK(response: Response, context: string): Promise<void> {
@@ -261,6 +286,14 @@ function extractText(content: unknown): string {
       return "";
     })
     .join("");
+}
+
+function extractFinishReason(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function createDoneEvent(finishReason?: string): AIChatCompletionEvent {
+  return finishReason ? { type: "done", finishReason } : { type: "done" };
 }
 
 function parseJSON<T>(value: string, context: string): T {

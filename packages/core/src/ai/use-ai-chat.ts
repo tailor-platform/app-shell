@@ -88,7 +88,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
       const isActive = () => activeRequestRef.current === requestId;
 
       try {
-        for await (const delta of config.client.chatCompletionStream({
+        for await (const event of config.client.streamChatCompletion({
           model: config.model,
           messages: nextMessages.map(toGatewayMessage),
           stream,
@@ -98,7 +98,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
             return false;
           }
 
-          if (!delta) {
+          if (event.type !== "text-delta" || !event.text) {
             continue;
           }
 
@@ -111,7 +111,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
               {
                 id: assistantMessageId!,
                 role: "assistant",
-                content: delta,
+                content: event.text,
               },
             ]);
             continue;
@@ -120,7 +120,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
           updateMessages((previous) =>
             previous.map((entry) =>
               entry.id === assistantMessageId
-                ? { ...entry, content: `${entry.content}${delta}` }
+                ? { ...entry, content: `${entry.content}${event.text}` }
                 : entry,
             ),
           );

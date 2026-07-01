@@ -23,7 +23,9 @@ beforeEach(() => {
 describe("useAIChat", () => {
   it("returns the initial ready state", () => {
     const client = {
-      chatCompletionStream: vi.fn(async function* () {}),
+      streamChatCompletion: vi.fn(async function* () {
+        yield { type: "done" } as const;
+      }),
     } satisfies AIGatewayClient;
 
     const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
@@ -40,11 +42,12 @@ describe("useAIChat", () => {
     });
 
     const client = {
-      chatCompletionStream: vi.fn(async function* ({ signal }) {
+      streamChatCompletion: vi.fn(async function* ({ signal }) {
         expect(signal).toBeInstanceOf(AbortSignal);
-        yield "Hello";
+        yield { type: "text-delta", text: "Hello" } as const;
         await secondChunkGate;
-        yield " world";
+        yield { type: "text-delta", text: " world" } as const;
+        yield { type: "done" } as const;
       }),
     } satisfies AIGatewayClient;
 
@@ -63,7 +66,7 @@ describe("useAIChat", () => {
       ]);
     });
 
-    expect(client.chatCompletionStream).toHaveBeenCalledWith({
+    expect(client.streamChatCompletion).toHaveBeenCalledWith({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: "Hi" }],
       stream: true,
@@ -91,13 +94,14 @@ describe("useAIChat", () => {
     });
 
     const client = {
-      chatCompletionStream: vi.fn(async function* ({ signal }) {
-        yield "Partial";
+      streamChatCompletion: vi.fn(async function* ({ signal }) {
+        yield { type: "text-delta", text: "Partial" } as const;
         await secondChunkGate;
         if (signal?.aborted) {
           throw createAbortError();
         }
-        yield " later";
+        yield { type: "text-delta", text: " later" } as const;
+        yield { type: "done" } as const;
       }),
     } satisfies AIGatewayClient;
 
@@ -139,17 +143,19 @@ describe("useAIChat", () => {
     });
 
     const client = {
-      chatCompletionStream: vi.fn(async function* ({ messages }) {
+      streamChatCompletion: vi.fn(async function* ({ messages }) {
         const text = messages.at(-1)?.content;
 
         if (text === "First") {
-          yield "Partial";
+          yield { type: "text-delta", text: "Partial" } as const;
           await stoppedRequestGate;
-          yield " stale";
+          yield { type: "text-delta", text: " stale" } as const;
+          yield { type: "done" } as const;
           return;
         }
 
-        yield "Fresh";
+        yield { type: "text-delta", text: "Fresh" } as const;
+        yield { type: "done" } as const;
       }),
     } satisfies AIGatewayClient;
 
@@ -207,11 +213,12 @@ describe("useAIChat", () => {
   it("sets error state and recovers on the next successful send", async () => {
     let shouldFail = true;
     const client = {
-      chatCompletionStream: vi.fn(async function* () {
+      streamChatCompletion: vi.fn(async function* () {
         if (shouldFail) {
           throw new Error("boom");
         }
-        yield "Recovered";
+        yield { type: "text-delta", text: "Recovered" } as const;
+        yield { type: "done" } as const;
       }),
     } satisfies AIGatewayClient;
 
@@ -251,9 +258,10 @@ describe("useAIChat", () => {
     });
 
     const client = {
-      chatCompletionStream: vi.fn(async function* () {
+      streamChatCompletion: vi.fn(async function* () {
         await requestGate;
-        yield "Done";
+        yield { type: "text-delta", text: "Done" } as const;
+        yield { type: "done" } as const;
       }),
     } satisfies AIGatewayClient;
 
@@ -263,7 +271,7 @@ describe("useAIChat", () => {
       await expect(result.current.sendMessage("   ")).resolves.toBe(false);
     });
 
-    expect(client.chatCompletionStream).not.toHaveBeenCalled();
+    expect(client.streamChatCompletion).not.toHaveBeenCalled();
 
     await act(async () => {
       void result.current.sendMessage("First");
@@ -273,7 +281,7 @@ describe("useAIChat", () => {
       await expect(result.current.sendMessage("Second")).resolves.toBe(false);
     });
 
-    expect(client.chatCompletionStream).toHaveBeenCalledTimes(1);
+    expect(client.streamChatCompletion).toHaveBeenCalledTimes(1);
 
     releaseRequest();
     await waitFor(() => {

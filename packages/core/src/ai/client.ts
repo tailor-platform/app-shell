@@ -60,7 +60,7 @@ export function createAIGatewayClient(config: {
 
   return {
     async *streamChatCompletion(request) {
-      if (request.stream === false) {
+      if (shouldUseJSONRoute(request)) {
         yield* streamJSONResponse({
           endpoint,
           authClient: config.authClient,
@@ -76,6 +76,14 @@ export function createAIGatewayClient(config: {
       });
     },
   };
+}
+
+function shouldUseJSONRoute(request: AIGatewayChatRequest): boolean {
+  if (request.stream != null) {
+    return request.stream === false;
+  }
+
+  return request.model.startsWith("gemini-");
 }
 
 async function* streamOpenAICompatibleResponse(input: {

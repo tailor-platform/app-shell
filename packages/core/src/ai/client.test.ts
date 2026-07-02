@@ -92,7 +92,7 @@ describe("createAIGatewayClient", () => {
     });
   });
 
-  it("yields text and done events for json responses", async () => {
+  it("routes gemini models to json responses by default", async () => {
     const authClient = createMockAuthClient(
       new Response(
         JSON.stringify({
@@ -116,10 +116,7 @@ describe("createAIGatewayClient", () => {
       authClient,
     });
 
-    const events = await collectEvents(
-      client,
-      createRequest({ model: "gemini-2.5-flash", stream: false }),
-    );
+    const events = await collectEvents(client, createRequest({ model: "gemini-2.5-flash" }));
 
     expect(events).toEqual([
       { type: "text-delta", text: "Grounded answer" },
@@ -138,6 +135,50 @@ describe("createAIGatewayClient", () => {
       model: "gemini-2.5-flash",
       messages: [{ role: "user", content: "Hello" }],
       stream: false,
+    });
+  });
+
+  it("respects explicit stream overrides for gemini models", async () => {
+    const authClient = createMockAuthClient(
+      new Response(
+        createSSEStream([
+          'data: {"choices":[{"delta":{"content":"Streamed"}}]}\n\n',
+          'data: {"choices":[{"finish_reason":"stop"}]}\n\n',
+          "data: [DONE]\n\n",
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "text/event-stream" },
+        },
+      ),
+    );
+    const client = createAIGatewayClient({
+      gatewayUri: "https://gateway.example.com",
+      authClient,
+    });
+
+    const events = await collectEvents(
+      client,
+      createRequest({ model: "gemini-2.5-flash", stream: true }),
+    );
+
+    expect(events).toEqual([
+      { type: "text-delta", text: "Streamed" },
+      { type: "done", finishReason: "stop" },
+    ]);
+    expect(authClient.fetch).toHaveBeenCalledWith(
+      "https://gateway.example.com/v1/chat/completions",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "text/event-stream" }),
+      }),
+    );
+
+    expect(
+      JSON.parse((authClient.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body),
+    ).toEqual({
+      model: "gemini-2.5-flash",
+      messages: [{ role: "user", content: "Hello" }],
+      stream: true,
     });
   });
 

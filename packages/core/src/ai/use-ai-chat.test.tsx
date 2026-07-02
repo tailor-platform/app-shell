@@ -69,7 +69,6 @@ describe("useAIChat", () => {
     expect(client.streamChatCompletion).toHaveBeenCalledWith({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: "Hi" }],
-      stream: true,
       signal: expect.any(AbortSignal),
     });
 

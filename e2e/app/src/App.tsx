@@ -21,7 +21,7 @@ const aiClient = aiGatewayUrl
   : null;
 
 const unavailableAIClient = {
-  async *chatCompletionStream() {
+  streamChatCompletion(): AsyncIterable<never> {
     throw new Error("AI Gateway not configured");
   },
 } satisfies AIGatewayClient;

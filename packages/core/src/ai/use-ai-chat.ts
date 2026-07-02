@@ -81,7 +81,6 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
 
       const controller = new AbortController();
       const requestId = Symbol();
-      const stream = config.stream ?? true;
       activeRequestRef.current = requestId;
       abortControllerRef.current = controller;
       let assistantMessageId: string | null = null;
@@ -91,7 +90,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
         for await (const event of config.client.streamChatCompletion({
           model: config.model,
           messages: nextMessages.map(toGatewayMessage),
-          stream,
+          ...(config.stream !== undefined ? { stream: config.stream } : {}),
           signal: controller.signal,
         })) {
           if (!isActive()) {

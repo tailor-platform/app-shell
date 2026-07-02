@@ -17,6 +17,7 @@ import { createTypedPaths } from "@tailor-platform/app-shell";
 export type GeneratedRouteParams = {
   "/": {};
   "/dashboard": {};
+  "/dashboard/document-progress": {};
   "/dashboard/orders": {};
   "/dashboard/orders/:id": { id: string };
   "/dashboard/products": {};

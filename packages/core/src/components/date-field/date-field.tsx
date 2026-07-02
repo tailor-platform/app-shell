@@ -233,7 +233,10 @@ function DatePicker<T extends DateValue = DateValue>({
     onChange: setVal,
     granularity,
     locale: resolvedLocale,
-    timeZone: timeZoneProp,
+    // Use the resolved timezone (prop → AppShell → local), matching the calendar
+    // below — otherwise the field falls back to UTC for its "today"/anchor while
+    // the calendar uses the AppShell zone, and they disagree on defaults.
+    timeZone: resolvedTz,
     hourCycle,
     placeholderValue,
     isReadOnly,

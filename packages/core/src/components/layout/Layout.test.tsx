@@ -183,6 +183,42 @@ describe("Layout", () => {
     expect(grid.style.getPropertyValue("--layout-cols")).toBe("320px 1fr 280px");
   });
 
+  it("fill mode stretches the layout and bounds the column row below the header", () => {
+    const { container } = render(
+      <Layout fill>
+        <Layout.Header title="Page" />
+        <Layout.Column>Content</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.className).toContain("astw:flex-1");
+    expect(grid.className).toContain("astw:min-h-0");
+    expect(grid.className).toContain("astw:grid-rows-[auto_minmax(0,1fr)]");
+    expect(grid.className).toContain("astw:[&>[data-layout-column]]:min-h-0");
+  });
+
+  it("fill mode without a header uses a single bounded row", () => {
+    const { container } = render(
+      <Layout fill>
+        <Layout.Column>Content</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.className).toContain("astw:grid-rows-[minmax(0,1fr)]");
+    expect(grid.className).not.toContain("astw:grid-rows-[auto_minmax(0,1fr)]");
+  });
+
+  it("does not apply fill classes by default", () => {
+    const { container } = render(
+      <Layout>
+        <Layout.Column>Content</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.className).not.toContain("astw:flex-1");
+    expect(grid.className).not.toContain("astw:grid-rows-");
+  });
+
   it("warns when deprecated columns prop doesn't match child count", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(

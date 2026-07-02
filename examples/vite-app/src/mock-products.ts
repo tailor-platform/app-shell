@@ -12,7 +12,10 @@ export type Product = {
   tags: string[];
 };
 
-export const allProducts: Product[] = [
+// Hand-authored products with rich, varied copy. These lead the list so the
+// first page always shows realistic, curated data. The remainder is generated
+// below to give the table ~200 rows for pagination/sorting/scroll testing.
+const curatedProducts: Product[] = [
   {
     id: "p-001",
     name: "Ergonomic Chair",
@@ -288,6 +291,183 @@ export const allProducts: Product[] = [
     status: "Active",
     tags: ["Thunderbolt", "USB-C", "4K", "Ethernet", "Premium"],
   },
+];
+
+// ---------------------------------------------------------------------------
+// Generated products
+//
+// The 20 curated rows above are joined with generated rows to give the table
+// ~200 products. Generation is fully deterministic (index-derived, no
+// randomness) so the data is stable across reloads — deep-linked pages and
+// sort/filter state stay reproducible.
+// ---------------------------------------------------------------------------
+
+const CATEGORIES = ["Furniture", "Electronics", "Accessories"] as const;
+
+const NOUNS_BY_CATEGORY: Record<(typeof CATEGORIES)[number], string[]> = {
+  Furniture: [
+    "Chair",
+    "Desk",
+    "Bookshelf",
+    "Cabinet",
+    "Table",
+    "Stool",
+    "Shelf",
+    "Locker",
+    "Workbench",
+    "Credenza",
+    "Ottoman",
+    "Partition",
+  ],
+  Electronics: [
+    "Keyboard",
+    "Mouse",
+    "Monitor",
+    "Webcam",
+    "Microphone",
+    "Headset",
+    "Speaker",
+    "Router",
+    "Hub",
+    "Adapter",
+    "Charger",
+    "Projector",
+  ],
+  Accessories: [
+    "Lamp",
+    "Mat",
+    "Cable",
+    "Tray",
+    "Stand",
+    "Organizer",
+    "Holder",
+    "Sleeve",
+    "Riser",
+    "Bin",
+    "Clip",
+    "Pad",
+  ],
+};
+
+const DESCRIPTORS = [
+  "Ergonomic",
+  "Compact",
+  "Deluxe",
+  "Pro",
+  "Premium",
+  "Wireless",
+  "Portable",
+  "Modular",
+  "Heavy-Duty",
+  "Smart",
+  "Eco",
+  "Ultra",
+  "Slim",
+  "Executive",
+  "Studio",
+  "Classic",
+];
+
+const TAG_POOL = [
+  "Ergonomic",
+  "Office",
+  "Wireless",
+  "Premium",
+  "Portable",
+  "Adjustable",
+  "Eco-friendly",
+  "Best Seller",
+  "Heavy-duty",
+  "RGB",
+  "4K",
+  "USB-C",
+  "Rechargeable",
+  "Magnetic",
+  "Foldable",
+];
+
+// Weighted toward "Active" so the default view is mostly live products, with a
+// steady sprinkling of Draft/Archived for filter testing.
+const STATUS_CYCLE: Product["status"][] = [
+  "Active",
+  "Active",
+  "Active",
+  "Draft",
+  "Active",
+  "Archived",
+  "Active",
+  "Draft",
+  "Active",
+  "Archived",
+];
+
+const DESCRIPTION_TEMPLATES: ((name: string, category: string) => string)[] = [
+  (name) => `Compact, reliable ${name.toLowerCase()} with a clean finish and a hassle-free setup.`,
+  (name, category) =>
+    `${name} designed for ${category.toLowerCase()} setups, balancing durability and comfort for everyday professional use.`,
+  (name, category) =>
+    `Premium ${category.toLowerCase()}-grade ${name.toLowerCase()} featuring reinforced construction, thoughtful cable routing, and a warranty-backed build engineered to hold up across years of daily use.`,
+];
+
+const pad3 = (n: number) => String(n).padStart(3, "0");
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+// Fixed base so all generated dates are deterministic (2026-01-01T00:00:00Z).
+const BASE_PUBLISH_MS = Date.parse("2026-01-01T00:00:00Z");
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function generateProducts(count: number, startSeq: number): Product[] {
+  const products: Product[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const seq = startSeq + i;
+    const category = CATEGORIES[i % CATEGORIES.length];
+    const nouns = NOUNS_BY_CATEGORY[category];
+    const noun = nouns[i % nouns.length];
+    const descriptor = DESCRIPTORS[(i * 3) % DESCRIPTORS.length];
+    const series = 1 + ((i * 7) % 5);
+    const name = `${descriptor} ${noun}${series > 1 ? ` S${series}` : ""}`;
+
+    const status = STATUS_CYCLE[i % STATUS_CYCLE.length];
+    const price = Number((19.99 + ((i * 53) % 1250)).toFixed(2));
+    // Occasionally out of stock, biased toward Draft items.
+    const stock = status === "Draft" && i % 3 === 0 ? 0 : (i * 37) % 620;
+
+    const publishedMs = BASE_PUBLISH_MS + seq * Math.floor(DAY_MS * 1.5);
+    const publishedAt = new Date(publishedMs).toISOString();
+    const availableOn = new Date(publishedMs + 20 * DAY_MS).toISOString().slice(0, 10);
+    const restockAt = `${pad2(6 + (i % 12))}:${pad2((i * 5) % 60)}`;
+
+    const tagCount = 1 + (i % 4);
+    const tags = [
+      ...new Set(
+        Array.from({ length: tagCount }, (_, t) => TAG_POOL[(i * (t + 3)) % TAG_POOL.length]),
+      ),
+    ];
+
+    const describe = DESCRIPTION_TEMPLATES[i % DESCRIPTION_TEMPLATES.length];
+
+    products.push({
+      id: `p-${pad3(seq)}`,
+      name,
+      description: describe(name, category),
+      category,
+      publishedAt,
+      availableOn,
+      restockAt,
+      price,
+      stock,
+      status,
+      tags,
+    });
+  }
+
+  return products;
+}
+
+export const allProducts: Product[] = [
+  ...curatedProducts,
+  ...generateProducts(180, curatedProducts.length + 1),
 ];
 
 // ---------------------------------------------------------------------------

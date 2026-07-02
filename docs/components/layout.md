@@ -34,15 +34,16 @@ The column count is auto-detected from the number of `Layout.Column` children:
 
 ### Layout Props
 
-| Prop        | Type                | Default      | Description                                                                     |
-| ----------- | ------------------- | ------------ | ------------------------------------------------------------------------------- |
-| `className` | `string`            | -            | Additional CSS classes for container                                            |
-| `style`     | `CSSProperties`     | -            | Inline styles for the layout container                                          |
-| `children`  | `Layout.Column[]`   | **Required** | `Layout.Header` and/or `Layout.Column` components                               |
-| `columns`   | `1 \| 2 \| 3`       | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted |
-| `title`     | `string`            | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                      |
-| `actions`   | `React.ReactNode[]` | -            | **(Deprecated)** Use `<Layout.Header actions={[...]}>` instead                  |
-| `gap`       | `number`            | `4`          | **(Deprecated)** Use `className` (e.g. `className="gap-6"`) instead             |
+| Prop        | Type                | Default      | Description                                                                             |
+| ----------- | ------------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `className` | `string`            | -            | Additional CSS classes for container                                                    |
+| `style`     | `CSSProperties`     | -            | Inline styles for the layout container                                                  |
+| `children`  | `Layout.Column[]`   | **Required** | `Layout.Header` and/or `Layout.Column` components                                       |
+| `fill`      | `boolean`           | `false`      | Fill the available height instead of growing with content (see [Fill Mode](#fill-mode)) |
+| `columns`   | `1 \| 2 \| 3`       | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted         |
+| `title`     | `string`            | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                              |
+| `actions`   | `React.ReactNode[]` | -            | **(Deprecated)** Use `<Layout.Header actions={[...]}>` instead                          |
+| `gap`       | `number`            | `4`          | **(Deprecated)** Use `className` (e.g. `className="gap-6"`) instead                     |
 
 ### Layout.Header Props
 
@@ -227,6 +228,31 @@ If any `Layout.Column` has an `area` prop, all columns switch to area-based widt
 ```
 
 Columns are rendered in source order — place them in the visual order you want.
+
+## Fill Mode
+
+By default, `<Layout>` grows with its content and the AppShell content area scrolls. Set `fill` to instead stretch the layout to the available height and bound its column row, so a child component can scroll **internally** while the page chrome stays pinned:
+
+```tsx
+<Layout fill>
+  <Layout.Header title="Products" />
+  <Layout.Column>
+    <DataTable.Root value={table}>
+      <DataTable.Toolbar>
+        <DataTable.Filters />
+      </DataTable.Toolbar>
+      <DataTable.Table />
+      <DataTable.Footer>
+        <DataTable.Pagination />
+      </DataTable.Footer>
+    </DataTable.Root>
+  </Layout.Column>
+</Layout>
+```
+
+With `fill`, the `Layout.Header` (title/actions), the `DataTable` toolbar, its column header row, and its footer all remain visible regardless of row count — only the table's rows region scrolls vertically. When the content is short enough to fit, nothing stretches and no scrollbar appears.
+
+Use `fill` for pages whose main content manages its own scrolling (typically a `DataTable`). Leave it off for pages that should flow and scroll naturally (forms, articles, dashboards). It is intended for single-row layouts; when multiple columns stack vertically on mobile, the content area scrolls as usual.
 
 ## Gap Spacing
 

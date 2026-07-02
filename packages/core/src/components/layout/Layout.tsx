@@ -182,7 +182,16 @@ const POSITION_TEMPLATES: Record<number, string> = {
  * </Layout>
  * ```
  */
-export function Layout({ columns, className, style, gap, title, actions, children }: LayoutProps) {
+export function Layout({
+  columns,
+  className,
+  style,
+  gap,
+  title,
+  actions,
+  fill,
+  children,
+}: LayoutProps) {
   const areas: (ColumnArea | undefined)[] = [];
   let hasHeaderChild = false;
 
@@ -225,15 +234,28 @@ export function Layout({ columns, className, style, gap, title, actions, childre
 
   const hasLegacyHeader = !hasHeaderChild && (title || (actions != null && actions.length > 0));
 
+  const hasAnyHeader = hasHeaderChild || hasLegacyHeader;
+
   return (
     <div
       className={cn(
         "astw:grid astw:grid-cols-1 astw:w-full",
-        hasHeaderChild || hasLegacyHeader ? "astw:pb-4" : "astw:py-4",
+        hasAnyHeader ? "astw:pb-4" : "astw:py-4",
         gapClass,
         "astw:[&>[data-layout-header]]:col-span-full",
         effectiveColumnCount === 2 && gridTemplate && "astw:lg:grid-cols-[var(--layout-cols)]",
         effectiveColumnCount >= 3 && gridTemplate && "astw:xl:grid-cols-[var(--layout-cols)]",
+        // fill: stretch to the container's height (flex-1 min-h-0 as a flex
+        // child of the content area) and bound the column row with
+        // minmax(0, 1fr) — the grid equivalent of min-h-0 — so children like
+        // DataTable can shrink and scroll internally instead of growing the
+        // page. Columns also get min-h-0 so the constraint reaches their
+        // flex-col children.
+        fill && [
+          "astw:flex-1 astw:min-h-0",
+          hasAnyHeader ? "astw:grid-rows-[auto_minmax(0,1fr)]" : "astw:grid-rows-[minmax(0,1fr)]",
+          "astw:[&>[data-layout-column]]:min-h-0",
+        ],
         className,
       )}
       style={

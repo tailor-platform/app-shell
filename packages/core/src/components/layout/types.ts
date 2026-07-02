@@ -46,6 +46,20 @@ export interface LayoutProps {
    * @deprecated Use `<Layout.Header actions={...}>` instead.
    */
   actions?: ReactNode[];
+  /**
+   * Fill the available height instead of growing with content.
+   *
+   * When set, the layout stretches to the height of its container
+   * (`flex-1 min-h-0`) and bounds its column row (`minmax(0, 1fr)`), so
+   * children such as `DataTable` can scroll internally while the
+   * `Layout.Header` stays pinned. Without it, the layout grows naturally
+   * and the surrounding content area scrolls.
+   *
+   * Intended for single-row (one `Layout.Column` per breakpoint row) pages;
+   * on stacked mobile layouts with multiple columns the content area
+   * scrolls as usual.
+   */
+  fill?: boolean;
   /** Child elements - Layout.Header and/or Layout.Column components */
   children: ReactNode;
 }

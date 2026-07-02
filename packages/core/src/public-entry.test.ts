@@ -6,12 +6,12 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf
 describe("public entrypoints", () => {
   it("keeps CSS out of the JS entry and routes styles through vendored font assets", () => {
     const index = read("./index.ts");
-    const styles = read("./styles.ts");
+    const styleEntry = read("./style-entry.ts");
     const globals = read("./globals.css");
     const inter = read("./assets/fonts/inter.css");
 
     expect(index).not.toMatch(/\.css["']/);
-    expect(styles).toContain('import "./globals.css";');
+    expect(styleEntry).toContain('import "./globals.css";');
     expect(globals).toContain('@import "./assets/fonts/inter.css";');
     expect(globals).not.toContain("@fontsource-variable/inter");
     expect(inter).toContain("./fonts/files/inter-latin-wght-normal.woff2");

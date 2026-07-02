@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: {
         "app-shell": "src/index.ts",
-        styles: "src/styles.ts",
+        "style-entry": "src/style-entry.ts",
         "vite-plugin": "src/vite-plugin.ts",
       },
       cssFileName: "app-shell",

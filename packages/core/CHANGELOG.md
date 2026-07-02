@@ -1,5 +1,89 @@
 # @tailor-platform/app-shell
 
+## 1.6.0
+
+### Minor Changes
+
+- 820b75b: Add `DocumentProgressCard` — a generic, presentational card for a document's lifecycle/fulfilment state: an optional headline percentage, a stacked progress bar, and a status legend driven by arbitrary `segments`. It's domain-agnostic, so it stretches to any status breakdown (shipped / cancelled / pending, PO received / returned / yet-to-receive, etc.).
+
+  ```tsx
+  import { DocumentProgressCard } from "@tailor-platform/app-shell";
+
+  <DocumentProgressCard
+    title="Shipment status"
+    percent={60}
+    segments={[
+      { label: "Shipped", value: 30, color: "green" },
+      { label: "Returned", value: 3, color: "red" },
+      { label: "Pending", value: 17, color: "neutral" },
+    ]}
+  />;
+  ```
+
+  Each segment is `{ label, value, color }`. Pass an explicit `percent`, an optional `total` (leave a value larger than the segment sum to render an unfilled track remainder), and an optional `legend` override for when the legend should differ from the bar (e.g. overlapping buckets). Percentage and any domain-specific breakdown are derived in the consumer — see the docs for a purchase-order fulfilment recipe.
+
+- d1cac39: Add `Grid` — a generic, presentational CSS-Grid layout primitive for arranging arbitrary children into equal or custom-width columns, with responsive reflow, gap control, auto-fit, and optional `Grid.Item` spanning. Complements `Layout` (page scaffold) by handling content-level grids.
+
+  ```tsx
+  import { Grid } from "@tailor-platform/app-shell";
+
+  // Responsive KPI grid: 1 → 2 → 4 columns
+  <Grid columns={{ initial: 1, sm: 2, lg: 4 }} gap={4}>
+    <Card.Root>…</Card.Root>
+  </Grid>
+
+  // Auto-fitting gallery — no breakpoints needed
+  <Grid minChildWidth={240} gap={6}>{items}</Grid>
+
+  // Custom column widths + spanning
+  <Grid columns="280px 1fr" gap={6}>
+    <Grid.Item colSpan={2}>Wide</Grid.Item>
+  </Grid>
+  ```
+
+  Props: `columns`, `rows`, `gap`/`gapX`/`gapY` (defaults to `3` / 12px), `minChildWidth`, `flow`, `align`, `justify`. `Grid.Item` supports `colSpan`, `rowSpan`, `colStart`, `colEnd` — all responsive.
+
+- 2beb757: Add `align?: "left" | "center" | "right"` to `Table.Head` and `Table.Cell` so raw table primitives can align numeric and status columns without relying on consumer Tailwind utility overrides.
+
+  ```tsx
+  <Table.Head align="right">Amount</Table.Head>
+  <Table.Cell align="right">123</Table.Cell>
+
+  <Table.Head align="center">Status</Table.Head>
+  <Table.Cell align="center">Active</Table.Cell>
+  ```
+
+- 116d2cc: Add a low-level AI Gateway client and a simple text-only chat hook for AppShell.
+
+  ```tsx
+  import { createAIGatewayClient, useAIChat } from "@tailor-platform/app-shell";
+
+  const aiClient = createAIGatewayClient({ gatewayUri, authClient });
+  const { messages, sendMessage, stop } = useAIChat({
+    client: aiClient,
+    model: "gpt-5-mini",
+  });
+  ```
+
+- ae2396b: Add `useURLCollectionVariables` for wiring collection state (filters, sort, page size) to the URL query string in a single call. It seeds initial state from the current router search params and writes changes back as the user filters, sorts, or pages.
+
+  ```tsx
+  const { variables, control } = useURLCollectionVariables({
+    tableMetadata,
+    params: { pageSize: 20 },
+  });
+  ```
+
+  For cases that need URL persistence without react-router's `useSearchParams` (e.g. a custom binding), the pure `withURLCollectionState(options, [searchParams, setSearchParams])` decorator is also exported and can be composed with `useCollectionVariables` directly.
+
+  `useCollectionVariables` now reports state updates through `onParamsChange` using the same `params` shape it accepts.
+
+### Patch Changes
+
+- 40e0f1c: Restore the `@tailor-platform/app-shell/theme.css` export as a no-op compatibility shim.
+
+  Apps that still import `@tailor-platform/app-shell/theme.css` alongside `@tailor-platform/app-shell/styles` now keep building while the real theme tokens continue to come from `styles`.
+
 ## 1.5.0
 
 ### Minor Changes

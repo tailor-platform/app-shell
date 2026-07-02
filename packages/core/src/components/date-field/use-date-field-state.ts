@@ -111,7 +111,7 @@ const PLACEHOLDERS: Record<EditableSegmentType, string> = {
  * the day isn't prematurely shrunk: while a partial year is being typed (e.g. the
  * `2` → `20` → `202` → `2026` keystrokes for 29 Feb), the leap-ness of the final
  * year isn't known yet, so we wait until the year is complete. The on-blur
- * `clampDate` is the backstop for the year-still-empty case.
+ * `commitOnBlur` is the backstop for the year-still-empty case.
  */
 function clampCompleteDay(f: Fields): Fields {
   const { day, month, year } = f;
@@ -369,20 +369,41 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   /**
-   * On-blur backstop for an impossible day. A *complete* date already self-
-   * corrects in `commit` (see {@link clampCompleteDay}), so this only matters
-   * when the field is left with the year still empty (e.g. "30/02" typed day-
-   * first): we clamp against a leap year so a valid 29 Feb survives until the
-   * year is typed, while an impossible 30/31 is still corrected.
+   * On-blur normalization — two corrections applied in a single commit when
+   * focus leaves the whole group:
+   *
+   * 1. **Backfill coarser fields from the anchor (today).** If the day is filled
+   *    but the month/year are missing, assume the current month/year — typing
+   *    just "2" ⇒ the 2nd of this month, this year; "2 Aug" ⇒ 2 Aug this year.
+   *    This only ever fills a *coarser* field (month, year) from a provided
+   *    *finer* one, gated on the day being present. The day itself is never
+   *    guessed, so a lone year (or month) is deliberately left untouched.
+   * 2. **Clamp an impossible day** to the resolved month's length (e.g. the
+   *    30/02 → 28 case), leap-year-aware. A complete date already self-corrects
+   *    in `commit` (see {@link clampCompleteDay}); this is the backstop for the
+   *    partial cases handled above.
    */
-  const clampDate = useCallback(() => {
+  const commitOnBlur = useCallback(() => {
     if (isReadOnly) return;
-    const { day, month } = fields;
-    if (day == null || month == null || month < 1 || month > 12) return;
-    const yearForMax = fields.year ?? 2000; // 2000 is a leap year
-    const maxDay = endOfMonth(new CalendarDate(yearForMax, month, 1)).day;
-    if (day > maxDay) commit({ ...fields, day: maxDay });
-  }, [fields, isReadOnly, commit]);
+    const next: Fields = { ...fields };
+
+    // (1) Backfill — the day (finest, un-guessable unit) is the trigger.
+    if (next.day != null) {
+      if (next.month == null) next.month = anchor.month;
+      if (next.year == null) next.year = anchor.year;
+    }
+
+    // (2) Clamp the day to the now-resolved month/year.
+    if (next.day != null && next.month != null && next.month >= 1 && next.month <= 12) {
+      const yearForMax = next.year ?? 2000; // 2000 is a leap year
+      const maxDay = endOfMonth(new CalendarDate(yearForMax, next.month, 1)).day;
+      if (next.day > maxDay) next.day = maxDay;
+    }
+
+    if (next.day !== fields.day || next.month !== fields.month || next.year !== fields.year) {
+      commit(next);
+    }
+  }, [fields, anchor, isReadOnly, commit]);
 
   // ── Display segments (locale-ordered) ────────────────────────────────────────
   const segments = useMemo<Segment[]>(() => {
@@ -445,6 +466,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     setDigit,
     setDayPeriod,
     clearSegment,
-    clampDate,
+    commitOnBlur,
   };
 }

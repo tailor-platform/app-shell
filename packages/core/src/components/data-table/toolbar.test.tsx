@@ -154,8 +154,13 @@ async function typeDateInto(
 }
 
 async function clearDateIn(user: ReturnType<typeof userEvent.setup>, groupIndex: number) {
-  await user.click(within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name: "year" }));
-  await user.keyboard("{Delete}");
+  // Clear every segment. Leaving the day set would trigger the field's on-blur
+  // backfill (assume current month/year), so a genuine "cleared" state must
+  // remove the day too — the day is the trigger for that backfill.
+  for (const name of ["day", "month", "year"]) {
+    await user.click(within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name }));
+    await user.keyboard("{Delete}");
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -312,6 +312,69 @@ describe("DateField", () => {
       expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
     });
   });
+
+  // On-blur backfill: a provided day (finest unit) lets the coarser fields
+  // default to the current month/year. The anchor for a bare DateField is
+  // today("UTC"), so expectations are derived from that same basis.
+  it("backfills the current month + year when only the day is entered, on blur", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    const expected = today("UTC").set({ day: 2 });
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected.toString());
+    });
+  });
+
+  it("backfills the current year when day + month are entered, on blur", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("08");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    const expected = today("UTC").set({ month: 8, day: 2 });
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected.toString());
+    });
+  });
+
+  it("never backfills the day — a lone year entry emits nothing on blur", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2025");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    // The day is the trigger for backfill; without it we never guess a value.
+    expect(onChange.mock.calls.some(([v]) => v != null)).toBe(false);
+  });
 });
 
 // ─── DatePicker ───────────────────────────────────────────────────────────────

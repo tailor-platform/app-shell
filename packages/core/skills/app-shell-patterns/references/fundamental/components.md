@@ -424,6 +424,27 @@ const table = useDataTable({
 
 **Used in patterns:** KPI tiles, dashboards, **`detail/*`** metric strips where specs call for them.
 
+### `DocumentProgressCard`
+
+**Import:** `import { DocumentProgressCard } from '@tailor-platform/app-shell'`
+**Purpose:** Generic document lifecycle/fulfilment state — optional percentage, stacked progress bar, status legend; arbitrary `segments`.
+**API:** `DocumentProgressCardProps` — `segments` (`{ label, value, color? }[]`), `title?`, `percent?`, `legend?` (defaults to `segments`), `total?` (bar denominator; larger than the sum leaves an empty track), `className?`. View-only — `percent` is explicit.
+**Example:**
+
+```tsx
+<DocumentProgressCard
+  title="Shipment status"
+  percent={60}
+  segments={[
+    { label: "Shipped", value: 30, color: "green" },
+    { label: "Returned", value: 3, color: "red" },
+    { label: "Pending", value: 17, color: "neutral" },
+  ]}
+/>
+```
+
+**Used in patterns:** **`detail/*`** right-rail cards for arbitrary status breakdowns (shipped/cancelled/pending, PO received/returned/yet-to-receive, etc.). For the purchase-order fulfilment recipe (derived %, net-received/returned bar split, legend override), see `docs/components/document-progress-card.md`.
+
 ### `Avatar`
 
 **Import:** `import { Avatar } from '@tailor-platform/app-shell'`
@@ -605,7 +626,7 @@ Types for authoring guard functions used by `WithGuard` and `appShellPageProps.g
 
 ### `RouteParams`, `PageComponent`, `PageMeta`, `AppShellPageProps`, `AppShellRegister`, `ContextData` (types)
 
-Types for declaring page props (`appShellPageProps = { meta, guards }`), reading typed route params, and registering route types globally. See `project-setup.md` for usage.
+Types for declaring page props (`appShellPageProps = { meta, guards, loader }`), reading typed route params, and registering route types globally. See `project-setup.md` for usage.
 
 ---
 

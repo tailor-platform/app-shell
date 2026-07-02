@@ -14,6 +14,7 @@ import {
   DatePickerDescription,
   DatePickerError,
 } from "./date-input-group";
+import { useDateFieldT } from "./i18n";
 
 /**
  * Public, closed-API date components — the @internationalized/date + Base UI
@@ -109,6 +110,7 @@ function DateField<T extends DateValue = DateValue>({
   isDisabled,
   isReadOnly,
   isInvalid,
+  isRequired,
   autoFocus,
   name,
   "aria-label": ariaLabel,
@@ -127,7 +129,10 @@ function DateField<T extends DateValue = DateValue>({
   const derivedInvalid = !!errorText || !!isInvalid;
 
   const state = useDateFieldState({
-    value: value ?? undefined,
+    // Pass `value` through as-is: `null` is a controlled-empty value and must
+    // stay distinct from `undefined` (uncontrolled), or a parent clearing the
+    // field with `value={null}` would be treated as uncontrolled and ignored.
+    value,
     defaultValue,
     onChange: onChange as (v: DateValue | null) => void,
     granularity,
@@ -152,6 +157,7 @@ function DateField<T extends DateValue = DateValue>({
         isDisabled={isDisabled}
         isReadOnly={isReadOnly}
         isInvalid={derivedInvalid}
+        isRequired={isRequired}
         autoFocus={autoFocus}
         labelId={labelText ? labelId : undefined}
         ariaLabel={ariaLabel}
@@ -200,6 +206,7 @@ function DatePicker<T extends DateValue = DateValue>({
   isDisabled,
   isReadOnly,
   isInvalid,
+  isRequired,
   autoFocus,
   firstDayOfWeek,
   name,
@@ -210,6 +217,7 @@ function DatePicker<T extends DateValue = DateValue>({
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz;
   const resolve = buildLocaleResolver(language);
+  const t = useDateFieldT();
 
   const labelId = useId();
   const descId = useId();
@@ -223,7 +231,8 @@ function DatePicker<T extends DateValue = DateValue>({
   const [open, setOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
   const [val, setVal] = useControlledState<DateValue | null>(
-    value ?? undefined,
+    // `null` is controlled-empty; only `undefined` means uncontrolled (see above).
+    value,
     defaultValue ?? null,
     onChange as (v: DateValue | null) => void,
   );
@@ -260,7 +269,9 @@ function DatePicker<T extends DateValue = DateValue>({
 
   const describedBy = cn(descText && descId, derivedInvalid && errorText && errId) || undefined;
   const accessibleName = labelText ?? ariaLabel;
-  const popoverAriaLabel = accessibleName ? `${accessibleName}, choose date` : "Choose date";
+  const popoverAriaLabel = accessibleName
+    ? t("chooseDateFor", { name: accessibleName })
+    : t("chooseDate");
 
   return (
     <div data-slot="date-picker" className={cn("astw:flex astw:flex-col astw:gap-1", className)}>
@@ -281,6 +292,7 @@ function DatePicker<T extends DateValue = DateValue>({
             isDisabled={isDisabled}
             isReadOnly={isReadOnly}
             isInvalid={derivedInvalid}
+            isRequired={isRequired}
             autoFocus={autoFocus}
             labelId={labelText ? labelId : undefined}
             ariaLabel={ariaLabel}
@@ -290,7 +302,11 @@ function DatePicker<T extends DateValue = DateValue>({
           />
         }
       >
-        <CalendarView state={calState} ariaLabel={labelText ?? ariaLabel ?? "Calendar"} inPopover />
+        <CalendarView
+          state={calState}
+          ariaLabel={labelText ?? ariaLabel ?? t("calendar")}
+          inPopover
+        />
       </DatePopover>
       {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
       {derivedInvalid && errorText && <DatePickerError id={errId}>{errorText}</DatePickerError>}

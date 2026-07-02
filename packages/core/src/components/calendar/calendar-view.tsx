@@ -2,6 +2,7 @@ import * as React from "react";
 import { cva } from "class-variance-authority";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCalendarT } from "./i18n";
 import type { CalendarDay, useCalendarState } from "./use-calendar-state";
 
 /**
@@ -77,6 +78,7 @@ export function CalendarView({
   className,
   inPopover,
 }: CalendarViewProps) {
+  const t = useCalendarT();
   const headingId = React.useId();
   const cellRefs = React.useRef<Map<string, HTMLButtonElement | null>>(new Map());
   const prevBtnRef = React.useRef<HTMLButtonElement>(null);
@@ -135,7 +137,7 @@ export function CalendarView({
           ref={prevBtnRef}
           type="button"
           data-slot="calendar-nav"
-          aria-label="Previous month"
+          aria-label={t("previousMonth")}
           disabled={state.prevDisabled}
           onClick={state.previousMonth}
           className={navButtonClasses}
@@ -153,7 +155,7 @@ export function CalendarView({
           ref={nextBtnRef}
           type="button"
           data-slot="calendar-nav"
-          aria-label="Next month"
+          aria-label={t("nextMonth")}
           disabled={state.nextDisabled}
           onClick={state.nextMonth}
           className={navButtonClasses}

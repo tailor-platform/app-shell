@@ -3,6 +3,7 @@ import { Popover } from "@base-ui/react/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
+import { useDateFieldT } from "./i18n";
 import type { Segment } from "./use-date-field-state";
 
 /**
@@ -83,6 +84,7 @@ interface DateInputGroupProps {
   isDisabled?: boolean;
   isReadOnly?: boolean;
   isInvalid?: boolean;
+  isRequired?: boolean;
   autoFocus?: boolean;
   labelId?: string;
   /** Accessible name when there is no visible label (e.g. a compact filter input). */
@@ -104,6 +106,7 @@ export function DateInputGroup({
   isDisabled,
   isReadOnly,
   isInvalid,
+  isRequired,
   autoFocus,
   labelId,
   ariaLabel,
@@ -252,6 +255,9 @@ export function DateInputGroup({
               aria-disabled={isDisabled || undefined}
               aria-readonly={isReadOnly || undefined}
               aria-invalid={isInvalid || undefined}
+              // aria-required lives on the spinbutton segments, not the role="group"
+              // wrapper — ARIA only supports it on widget roles (spinbutton), not group.
+              aria-required={isRequired || undefined}
               aria-valuemin={segment.minValue}
               aria-valuemax={segment.maxValue}
               aria-valuenow={segment.value}
@@ -292,10 +298,11 @@ export function DatePickerPopoverTrigger({
   className,
   ...props
 }: React.ComponentProps<typeof Popover.Trigger>) {
+  const t = useDateFieldT();
   return (
     <Popover.Trigger
       data-slot="date-picker-button"
-      aria-label="Open calendar"
+      aria-label={t("openCalendar")}
       className={cn(triggerClasses, className)}
       {...props}
     >

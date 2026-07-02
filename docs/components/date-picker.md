@@ -116,20 +116,21 @@ The tables below list props this variant **actually implements** for v1 (date gr
 
 ### DateFieldProps
 
-| Prop                                      | Type                             | Description                                                            |
-| ----------------------------------------- | -------------------------------- | ---------------------------------------------------------------------- |
-| `label`                                   | `LocalizedString`                | Field label                                                            |
-| `description`                             | `LocalizedString`                | Helper text below the field                                            |
-| `errorMessage`                            | `LocalizedString`                | Error text; also sets the invalid state                                |
-| `value` / `defaultValue`                  | `DateValue \| null`              | Controlled / uncontrolled value (`CalendarDate` at date granularity)   |
-| `onChange`                                | `(v: DateValue \| null) => void` | Fires on a complete, valid value; `null` when cleared                  |
-| `isDisabled` / `isReadOnly` / `isInvalid` | `boolean`                        | State flags                                                            |
-| `placeholderValue`                        | `DateValue`                      | Seeds unset segments (increment start + segment order)                 |
-| `autoFocus`                               | `boolean`                        | Focus the first segment on mount                                       |
-| `locale`                                  | `string`                         | BCP-47 locale override (defaults to the AppShell formatting locale)    |
-| `name`                                    | `string`                         | Emits a hidden `<input>` with the ISO value for form submission        |
-| `aria-label`                              | `string`                         | Accessible name when there's no visible `label` (e.g. compact filters) |
-| `className`                               | `string`                         | Root element class                                                     |
+| Prop                                      | Type                             | Description                                                             |
+| ----------------------------------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| `label`                                   | `LocalizedString`                | Field label                                                             |
+| `description`                             | `LocalizedString`                | Helper text below the field                                             |
+| `errorMessage`                            | `LocalizedString`                | Error text; also sets the invalid state                                 |
+| `value` / `defaultValue`                  | `DateValue \| null`              | Controlled / uncontrolled value (`CalendarDate` at date granularity)    |
+| `onChange`                                | `(v: DateValue \| null) => void` | Fires on a complete, valid value; `null` when cleared                   |
+| `isDisabled` / `isReadOnly` / `isInvalid` | `boolean`                        | State flags                                                             |
+| `isRequired`                              | `boolean`                        | Sets `aria-required` on the segments (no visual required indicator yet) |
+| `placeholderValue`                        | `DateValue`                      | Seeds unset segments (increment start + segment order)                  |
+| `autoFocus`                               | `boolean`                        | Focus the first segment on mount                                        |
+| `locale`                                  | `string`                         | BCP-47 locale override (defaults to the AppShell formatting locale)     |
+| `name`                                    | `string`                         | Emits a hidden `<input>` with the ISO value for form submission         |
+| `aria-label`                              | `string`                         | Accessible name when there's no visible `label` (e.g. compact filters)  |
+| `className`                               | `string`                         | Root element class                                                      |
 
 > `DateField` has no calendar, so `minValue` / `maxValue` / `isDateUnavailable` don't apply to it — they're honoured by `DatePicker` and `Calendar` below.
 
@@ -172,7 +173,6 @@ Accepted by the prop types (for parity with the react-aria variant) but **not ac
 | `granularity`  | `"day" \| "hour" \| "minute" \| "second"` | Only `"day"` is supported (the default). Time granularities — and the `CalendarDateTime` / `ZonedDateTime` values they produce — are the tracked **DateTime fast-follow**; the calendar has no time selection yet. |
 | `hourCycle`    | `12 \| 24`                                | No effect until time granularity lands (12h/24h only matters with an hour segment).                                                                                                                                |
 | `hideTimeZone` | `boolean`                                 | Unused; only relevant to `ZonedDateTime` display (time granularity).                                                                                                                                               |
-| `isRequired`   | `boolean`                                 | Unused — no required affordance is rendered and it isn't wired to validation. Surface required-field errors via `errorMessage` / `isInvalid` (see the [Form example](./form.md)).                                  |
 
 See the proposal's [Post-v1 fast-follows](../proposals/date-picker.md) for the DateTime plan.
 

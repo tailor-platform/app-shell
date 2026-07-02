@@ -2,7 +2,7 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarDate, today, getLocalTimeZone } from "@internationalized/date";
+import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import { DateField, DatePicker } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
@@ -375,6 +375,29 @@ describe("DateField", () => {
     // The day is the trigger for backfill; without it we never guess a value.
     expect(onChange.mock.calls.some(([v]) => v != null)).toBe(false);
   });
+
+  it("clears a controlled DateField when the value is reset to null", () => {
+    const { rerender } = render(
+      <DateField
+        label="Date"
+        value={parseDate("2025-06-15") as CalendarDate}
+        onChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("spinbutton", { name: "day" }).textContent).toBe("15");
+
+    // Parent clears the field: value={null} is controlled-empty, not uncontrolled.
+    rerender(<DateField label="Date" value={null} onChange={() => {}} />);
+    expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
+      "Empty",
+    );
+  });
+
+  it("sets aria-required on the segments when isRequired", () => {
+    render(<DateField label="Date" isRequired />);
+    const day = screen.getByRole("spinbutton", { name: "day" });
+    expect(day.getAttribute("aria-required")).toBe("true");
+  });
 });
 
 // ─── DatePicker ───────────────────────────────────────────────────────────────
@@ -458,6 +481,22 @@ describe("DatePicker", () => {
   it("renders error message when errorMessage is set", () => {
     render(<DatePicker label="Date" errorMessage="Date is required" />);
     expect(screen.getByText("Date is required")).toBeDefined();
+  });
+
+  it("clears a controlled DatePicker when the value is reset to null", () => {
+    const { rerender } = render(
+      <DatePicker
+        label="Date"
+        value={parseDate("2025-06-15") as CalendarDate}
+        onChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("spinbutton", { name: "day" }).textContent).toBe("15");
+
+    rerender(<DatePicker label="Date" value={null} onChange={() => {}} />);
+    expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
+      "Empty",
+    );
   });
 });
 

@@ -51,6 +51,23 @@ export const detectBrowserFullLocale = (): string => {
   }
 };
 
+/**
+ * Extracts the language subtag from a BCP-47 tag ("ja-JP" → "ja"), used for
+ * built-in UI-string resolution (label tables are keyed by language). Returns
+ * the input unchanged if it can't be parsed.
+ *
+ * @example
+ * toLanguageSubtag("en-GB") // "en"
+ * toLanguageSubtag("ja")    // "ja"
+ */
+export const toLanguageSubtag = (tag: string): string => {
+  try {
+    return new Intl.Locale(tag).language;
+  } catch {
+    return tag;
+  }
+};
+
 export const buildLocaleResolver =
   (locale: string) => (value: LocalizedString | undefined, fallback: string) => {
     if (!value) return fallback;

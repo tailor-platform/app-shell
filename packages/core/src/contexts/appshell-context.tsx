@@ -1,7 +1,12 @@
 import { ErrorBoundaryComponent, Modules, Resource } from "@/resource";
 import { createContext, useContext, type ReactNode } from "react";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
-import { DEFAULT_LOCALE, detectBrowserLocale, detectBrowserFullLocale } from "@/lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  detectBrowserLocale,
+  detectBrowserFullLocale,
+  toLanguageSubtag,
+} from "@/lib/i18n";
 import { getLocalTimeZone } from "@internationalized/date";
 
 /**
@@ -78,7 +83,10 @@ export const buildConfigurations = (options: ConfigurationOptions): RootConfigur
   settingsResources: options.settingsResources ?? [],
   errorBoundary: options.errorBoundary ?? <DefaultErrorBoundary />,
   basePath: options.basePath,
-  locale: options.locale ?? detectBrowserLocale(),
+  // `locale` is the language subtag used for built-in UI strings (label tables
+  // are keyed by language), so normalize a full tag like "ja-JP" → "ja".
+  // `resolvedLocale` keeps the full tag for Intl / date formatting.
+  locale: options.locale ? toLanguageSubtag(options.locale) : detectBrowserLocale(),
   resolvedLocale: options.locale ?? detectBrowserFullLocale(),
   timeZone: options.timeZone,
 });

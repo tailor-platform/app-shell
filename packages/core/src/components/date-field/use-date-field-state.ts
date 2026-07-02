@@ -67,8 +67,6 @@ export interface Segment {
   value?: number;
   minValue?: number;
   maxValue?: number;
-  /** Accessible label, e.g. "month", "year". */
-  label?: string;
 }
 
 export interface DateFieldStateOptions {
@@ -84,16 +82,6 @@ export interface DateFieldStateOptions {
   isDisabled?: boolean;
   isReadOnly?: boolean;
 }
-
-const SEGMENT_LABELS: Record<EditableSegmentType, string> = {
-  year: "year",
-  month: "month",
-  day: "day",
-  hour: "hour",
-  minute: "minute",
-  second: "second",
-  dayPeriod: "AM/PM",
-};
 
 const PLACEHOLDERS: Record<EditableSegmentType, string> = {
   year: "yyyy",
@@ -458,7 +446,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         value: current,
         minValue: min,
         maxValue: max,
-        label: SEGMENT_LABELS[editable],
       };
     });
   }, [segmentFormat, fields, editableTypes, getLimits]);

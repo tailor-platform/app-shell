@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
+import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DateField, DatePicker } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
@@ -496,6 +497,18 @@ describe("DatePicker", () => {
     rerender(<DatePicker label="Date" value={null} onChange={() => {}} />);
     expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
       "Empty",
+    );
+  });
+
+  it("localizes segment names and chrome from the AppShell locale (ja)", () => {
+    render(<DatePicker label="日付" />, { wrapper: createAppShellWrapper("ja") });
+    // Segment accessible name: month → 月.
+    expect(screen.getByRole("spinbutton", { name: "月" })).toBeDefined();
+    // Popover trigger aria-label is localized too.
+    expect(screen.getByRole("button", { name: "カレンダーを開く" })).toBeDefined();
+    // Empty segments announce the localized placeholder.
+    expect(screen.getByRole("spinbutton", { name: "月" }).getAttribute("aria-valuetext")).toBe(
+      "未入力",
     );
   });
 });

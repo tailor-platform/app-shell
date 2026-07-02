@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalendarDate, parseDate, isSameDay } from "@internationalized/date";
+import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Calendar } from "./calendar";
 
 // Behaviour + DOM a11y contract for the standalone Calendar grid (roving focus,
@@ -49,6 +50,12 @@ describe("Calendar", () => {
     render(<Calendar aria-label="Select date" />);
     const navButtons = screen.getAllByRole("button").filter((b) => !b.closest('[role="grid"]'));
     expect(navButtons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("localizes the month-nav aria-labels from the AppShell locale (ja)", () => {
+    render(<Calendar aria-label="日付を選択" />, { wrapper: createAppShellWrapper("ja") });
+    expect(screen.getByRole("button", { name: "前の月" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "次の月" })).toBeDefined();
   });
 
   it("fires onChange when a date cell is clicked", async () => {

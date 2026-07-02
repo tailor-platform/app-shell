@@ -115,6 +115,7 @@ export function DateInputGroup({
   trigger,
   groupRef,
 }: DateInputGroupProps) {
+  const t = useDateFieldT();
   const editableRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   // Digits typed into the currently-focused segment this session. Reset on
   // focus; the first digit (count 0) replaces, and the count decides when the
@@ -251,7 +252,7 @@ export function DateInputGroup({
               contentEditable={false}
               suppressContentEditableWarning
               tabIndex={isDisabled ? -1 : 0}
-              aria-label={segment.label}
+              aria-label={t(segment.type)}
               aria-disabled={isDisabled || undefined}
               aria-readonly={isReadOnly || undefined}
               aria-invalid={isInvalid || undefined}
@@ -261,7 +262,7 @@ export function DateInputGroup({
               aria-valuemin={segment.minValue}
               aria-valuemax={segment.maxValue}
               aria-valuenow={segment.value}
-              aria-valuetext={segment.isPlaceholder ? "Empty" : segment.text}
+              aria-valuetext={segment.isPlaceholder ? t("empty") : segment.text}
               onFocus={() => {
                 typedCountRef.current = 0;
               }}
@@ -338,6 +339,7 @@ export function DatePopover({
   ariaLabel,
   anchor,
 }: DatePopoverProps) {
+  const t = useDateFieldT();
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
       {field}
@@ -346,7 +348,7 @@ export function DatePopover({
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup
             role="dialog"
-            aria-label={ariaLabel ?? "Choose date"}
+            aria-label={ariaLabel ?? t("chooseDate")}
             data-slot="date-picker-popover"
             className={cn(
               "astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",

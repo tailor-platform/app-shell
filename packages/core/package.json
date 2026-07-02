@@ -28,6 +28,7 @@
   "type": "module",
   "exports": {
     "./styles": "./dist/app-shell.css",
+    "./theme.css": "./dist/theme.shims.css",
     "./themes/*": "./dist/themes/*.css",
     ".": {
       "types": "./dist/app-shell.d.ts",

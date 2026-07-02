@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'pnpm-lock.yaml'
+      - "pnpm-lock.yaml"
   pull_request:
     paths:
-      - 'pnpm-lock.yaml'
+      - "pnpm-lock.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,7 +34,7 @@ jobs:
         with:
           cache: pnpm
           cache-dependency-path: ./pnpm-lock.yaml
-          node-version-file: './package.json'
+          node-version-file: "./package.json"
 
       - name: Install dependencies
         run: pnpm install
@@ -45,3 +45,13 @@ jobs:
           license-groups: ${{ vars.LICENSE_GROUPS }}
           additional-licenses: ${{ vars.ALLOWED_LICENSES }}
           denied-licenses: ${{ vars.DENIED_LICENSES }}
+          # examples/nextjs-app pulls in @img/sharp-libvips-* (LGPL-3.0-or-later)
+          # transitively via next's built-in image optimization, used
+          # unmodified as a prebuilt binary — the standard case LGPL's
+          # dynamic-linking allowance covers. One entry per platform variant
+          # (exact match only, no globs); add more if a new one shows up.
+          package-exceptions: |
+            @img/sharp-libvips-linux-x64@LGPL-3.0-or-later
+            @img/sharp-libvips-linux-arm64@LGPL-3.0-or-later
+            @img/sharp-libvips-darwin-x64@LGPL-3.0-or-later
+            @img/sharp-libvips-darwin-arm64@LGPL-3.0-or-later

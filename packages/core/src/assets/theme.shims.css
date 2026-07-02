@@ -1,0 +1,7 @@
+/*
+ * Deprecated compatibility shim.
+ *
+ * `@tailor-platform/app-shell/styles` now includes the default theme tokens,
+ * so this file intentionally does nothing. Keep exporting it so older apps
+ * that still import `@tailor-platform/app-shell/theme.css` keep building.
+ */

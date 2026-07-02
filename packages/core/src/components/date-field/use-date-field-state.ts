@@ -406,7 +406,11 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   }, [fields, anchor, isReadOnly, commit]);
 
   // ── Display segments (locale-ordered) ────────────────────────────────────────
-  const segments = useMemo<Segment[]>(() => {
+  // The Intl objects + the locale's part order/separators only depend on
+  // locale / granularity / hour-cycle / timezone (via the anchor) — never on
+  // `fields`. Build them once here so a keystroke (which only changes `fields`)
+  // doesn't spin up a fresh DateFormatter + two NumberFormats + formatToParts.
+  const segmentFormat = useMemo(() => {
     const formatter = new DateFormatter(locale, {
       year: "numeric",
       month: "2-digit",
@@ -421,11 +425,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         : {}),
       ...(timeZone ? { timeZone } : {}),
     });
-
-    // Format the (always-valid) anchor to get the locale's segment ORDER and the
-    // literal separators. Each editable segment's *text* is then formatted from
-    // its own value, so an in-progress out-of-range value can never build an
-    // invalid date.
     const pad2 = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
     const yearFmt = new Intl.NumberFormat(locale, { useGrouping: false });
     const formatSegment = (type: EditableSegmentType, value: number): string => {
@@ -433,9 +432,16 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       if (type === "year") return yearFmt.format(value);
       return pad2.format(value);
     };
-
+    // Format the (always-valid) anchor to get the locale's segment ORDER and the
+    // literal separators. Each editable segment's *text* is then formatted from
+    // its own value, so an in-progress out-of-range value can never build an
+    // invalid date.
     const parts = formatter.formatToParts(anchor.toDate(timeZone ?? "UTC"));
-    return parts.map<Segment>((part) => {
+    return { parts, formatSegment };
+  }, [locale, hasTime, granularity, is12, timeZone, anchor]);
+
+  const segments = useMemo<Segment[]>(() => {
+    return segmentFormat.parts.map<Segment>((part) => {
       const rawType = part.type;
       if (!editableTypes.includes(rawType as EditableSegmentType)) {
         return { type: "literal", text: part.value, isEditable: false, isPlaceholder: false };
@@ -446,7 +452,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const { min, max } = getLimits(editable);
       return {
         type: editable,
-        text: filled ? formatSegment(editable, current) : PLACEHOLDERS[editable],
+        text: filled ? segmentFormat.formatSegment(editable, current) : PLACEHOLDERS[editable],
         isEditable: true,
         isPlaceholder: !filled,
         value: current,
@@ -455,7 +461,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         label: SEGMENT_LABELS[editable],
       };
     });
-  }, [locale, hasTime, granularity, is12, timeZone, fields, editableTypes, anchor, getLimits]);
+  }, [segmentFormat, fields, editableTypes, getLimits]);
 
   const fieldValue = composeValue(fields);
 

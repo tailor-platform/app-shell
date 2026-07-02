@@ -193,16 +193,23 @@ export function useCalendarState(options: CalendarStateOptions) {
     [locale, timeZone, visibleMonth],
   );
 
-  const cellLabel = useCallback(
-    (date: CalendarDate) =>
+  // One formatter per locale/timezone, reused for every cell — the grid renders
+  // ~42 cells and re-renders on each arrow keypress, so building a fresh
+  // DateFormatter per cell (per frame while a key is held) was needless churn.
+  const cellLabelFmt = useMemo(
+    () =>
       new DateFormatter(locale, {
         weekday: "long",
         year: "numeric",
         month: "long",
         day: "numeric",
         timeZone,
-      }).format(date.toDate(timeZone)),
+      }),
     [locale, timeZone],
+  );
+  const cellLabel = useCallback(
+    (date: CalendarDate) => cellLabelFmt.format(date.toDate(timeZone)),
+    [cellLabelFmt, timeZone],
   );
 
   // ── Month paging ────────────────────────────────────────────────────────────

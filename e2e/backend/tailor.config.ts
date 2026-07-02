@@ -1,4 +1,4 @@
-import { defineAuth, defineConfig, defineIdp } from "@tailor-platform/sdk";
+import { defineAIGateway, defineAuth, defineConfig, defineIdp } from "@tailor-platform/sdk";
 import { user } from "./src/tailordb/user";
 
 const oauth2Config = {
@@ -32,7 +32,14 @@ const auth = defineAuth("e2e-auth", {
   idProvider: idp.provider(idp.name, idp.clients[0]),
 });
 
+const aiGateway = defineAIGateway("e2e-ai-gateway", {
+  authNamespace: auth.name,
+  cors: [oauth2Config.redirectURIs[0]],
+});
+
 export default defineConfig({
+  // SDK-managed app id — do not edit, except when copying this config to a separate app.
+  id: "c1f3a27c-3771-4ca9-99ae-fb38b435bbbc",
   name: "app-shell-e2e",
   cors: [oauth2Config.redirectURIs[0]],
 
@@ -42,4 +49,5 @@ export default defineConfig({
 
   auth,
   idp: [idp],
+  aiGateways: [aiGateway],
 });

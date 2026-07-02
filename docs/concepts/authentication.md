@@ -154,6 +154,46 @@ function App() {
 }
 ```
 
+### Using `createAIGatewayClient` with AI Gateway
+
+`createAIGatewayClient` reuses the same authenticated fetch path as the rest of AppShell. Requests go through `authClient.fetch`, so DPoP proof generation and token refresh stay in the auth layer.
+
+```tsx
+import { createAuthClient, createAIGatewayClient, useAIChat } from "@tailor-platform/app-shell";
+
+const authClient = createAuthClient({
+  clientId: "your-client-id",
+  appUri: "https://xyz.erp.dev",
+});
+
+const aiClient = createAIGatewayClient({
+  gatewayUri: "https://your-ai-gateway.example.com",
+  authClient,
+});
+
+function ChatScreen() {
+  const { messages, sendMessage, status, stop } = useAIChat({
+    client: aiClient,
+    model: "gpt-5-mini",
+  });
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>
+          {message.role}: {message.content}
+        </div>
+      ))}
+
+      <button onClick={() => void sendMessage("Hello")}>Send</button>
+      <button onClick={stop} disabled={status !== "submitted" && status !== "streaming"}>
+        Stop
+      </button>
+    </div>
+  );
+}
+```
+
 ### `AuthClientConfig`
 
 | Property      | Type     | Required | Description                                                |

@@ -48,10 +48,9 @@ jobs:
           # examples/nextjs-app pulls in @img/sharp-libvips-* (LGPL-3.0-or-later)
           # transitively via next's built-in image optimization, used
           # unmodified as a prebuilt binary — the standard case LGPL's
-          # dynamic-linking allowance covers. One entry per platform variant
-          # (exact match only, no globs); add more if a new one shows up.
+          # dynamic-linking allowance covers. Approves the route (nextjs-app
+          # -> next -> ... -> @img/sharp-libvips-*), not the license or
+          # package name alone, so it doesn't cover an unrelated future LGPL
+          # dependency and doesn't need one entry per OS/arch binary variant.
           package-exceptions: |
-            @img/sharp-libvips-linux-x64@LGPL-3.0-or-later
-            @img/sharp-libvips-linux-arm64@LGPL-3.0-or-later
-            @img/sharp-libvips-darwin-x64@LGPL-3.0-or-later
-            @img/sharp-libvips-darwin-arm64@LGPL-3.0-or-later
+            {"LGPL-3.0-or-later": [["nextjs-app", "next"]]}

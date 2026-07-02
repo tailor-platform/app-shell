@@ -1,0 +1,47 @@
+name: Check Licenses
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pnpm-lock.yaml'
+  pull_request:
+    paths:
+      - 'pnpm-lock.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  check-licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+          node-version-file: './package.json'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check licenses
+        uses: tailor-platform/actions/check-licenses@v1
+        with:
+          license-groups: ${{ vars.LICENSE_GROUPS }}
+          additional-licenses: ${{ vars.ALLOWED_LICENSES }}
+          denied-licenses: ${{ vars.DENIED_LICENSES }}

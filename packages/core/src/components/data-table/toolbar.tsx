@@ -659,6 +659,7 @@ function FilterPopoverContent({
   onClose: () => void;
 }) {
   const config = column.filter;
+  const label = column.label ?? config.field;
 
   switch (config.type) {
     case "enum":
@@ -683,7 +684,13 @@ function FilterPopoverContent({
     case "date":
     case "time":
       return (
-        <TemporalFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+        <TemporalFilterEditor
+          config={config}
+          label={label}
+          filter={filter}
+          control={control}
+          onClose={onClose}
+        />
       );
   }
 }
@@ -1064,11 +1071,14 @@ function NumericFilterEditor({
 
 function TemporalFilterEditor({
   config,
+  label,
   filter,
   control,
   onClose,
 }: {
   config: Extract<FilterConfig, { type: "datetime" | "date" | "time" }>;
+  /** The column's visible label — used for the date picker's accessible name. */
+  label: string;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1143,12 +1153,12 @@ function TemporalFilterEditor({
     valueInput = isDate ? (
       <div className="astw:flex astw:flex-col astw:gap-1.5">
         <DateFilterPicker
-          ariaLabel={t("filterBetweenFrom")}
+          ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
           value={localValue}
           onChange={setLocalValue}
         />
         <DateFilterPicker
-          ariaLabel={t("filterBetweenTo")}
+          ariaLabel={`${label} — ${t("filterBetweenTo")}`}
           value={localValueMax}
           onChange={setLocalValueMax}
         />
@@ -1165,7 +1175,7 @@ function TemporalFilterEditor({
     );
   } else {
     valueInput = isDate ? (
-      <DateFilterPicker ariaLabel={config.field} value={localValue} onChange={setLocalValue} />
+      <DateFilterPicker ariaLabel={label} value={localValue} onChange={setLocalValue} />
     ) : (
       <Input
         {...getTemporalInputProps(config.type)}

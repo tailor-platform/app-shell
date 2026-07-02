@@ -1,4 +1,5 @@
 @import "tailwindcss" prefix(astw);
+@import "./assets/fonts/inter.css";
 @import "tw-animate-css";
 @import "./assets/theme.css";
 

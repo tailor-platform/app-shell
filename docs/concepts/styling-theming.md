@@ -122,6 +122,18 @@ These properties are defined in `:root` and can be overridden in your own CSS:
 }
 ```
 
+## Testing
+
+The main JavaScript entry (`@tailor-platform/app-shell`) is free of CSS imports. This makes it safe to import the package in Vitest and other Node-evaluated test environments — no CSS-mocking setup (such as `server.deps.inline`) is required.
+
+Styles are published under a separate `@tailor-platform/app-shell/styles` export. Always import them from your application's global CSS file, not from test files or JS modules:
+
+```css
+/* index.css */
+@import "tailwindcss";
+@import "@tailor-platform/app-shell/styles";
+```
+
 ## Adding a palette
 
 Theme tokens live in `packages/core/src/assets/themes/`. Copy `_template.css` to start a new palette — it lists exactly which sections to fill in for light and dark mode.

@@ -6,18 +6,21 @@ import type {
 } from "openai/resources/chat/completions";
 import type { AuthClient } from "@tailor-platform/auth-public-client";
 
+/** Source/citation metadata attached to assistant messages when available. */
 export interface AIChatSource {
   type: "url";
   url: string;
   title?: string;
 }
 
+/** Normalized local function tool call emitted by the AI Gateway transport. */
 export interface AIGatewayToolCall {
   id: string;
   name: string;
   argumentsText: string;
 }
 
+/** Internal transcript message shape sent to the AI Gateway transport layer. */
 export type AIGatewayChatMessage =
   | {
       role: "system" | "user";
@@ -34,6 +37,7 @@ export type AIGatewayChatMessage =
       content: string;
     };
 
+/** Normalized local function tool definition understood by the AI Gateway. */
 export interface AIGatewayFunctionTool {
   type: "function";
   function: {
@@ -43,6 +47,7 @@ export interface AIGatewayFunctionTool {
   };
 }
 
+/** Normalized provider tool definition passed through to the AI Gateway. */
 export interface AIGatewayProviderTool {
   type: "provider";
   provider: "openai";
@@ -59,6 +64,7 @@ export interface AIGatewayChatRequest {
   signal?: AbortSignal;
 }
 
+/** Low-level event stream consumed by `useAIChat()`. */
 export type AIChatCompletionEvent =
   | {
       type: "text-delta";
@@ -219,6 +225,10 @@ async function* streamJSONResponse(input: {
   }
 }
 
+/**
+ * Builds the narrow OpenAI-compatible request body that Envoy AI Gateway
+ * expects, while preserving AppShell's normalized tool contract internally.
+ */
 function buildChatRequestBody(
   request: AIGatewayChatRequest,
   stream: boolean,
@@ -269,6 +279,12 @@ function toOpenAIMessage(message: AIGatewayChatMessage): ChatCompletionMessagePa
   };
 }
 
+/**
+ * Accumulates streamed tool-call deltas into complete normalized tool calls.
+ *
+ * OpenAI-compatible streams may split ids, names, and JSON arguments across
+ * many chunks, so this keeps a per-index assembly buffer until the stream ends.
+ */
 function collectStreamingToolCalls(
   toolCalls: Map<number, Partial<AIGatewayToolCall>>,
   choice: ChatCompletionChunk["choices"][number] | undefined,
@@ -292,6 +308,7 @@ function collectStreamingToolCalls(
   }
 }
 
+/** Finalizes buffered streamed tool calls into stable ordered results. */
 function finalizeStreamingToolCalls(
   toolCalls: Map<number, Partial<AIGatewayToolCall>>,
 ): AIGatewayToolCall[] {
@@ -305,6 +322,7 @@ function finalizeStreamingToolCalls(
     .filter((toolCall) => toolCall.name.length > 0);
 }
 
+/** Extracts complete function tool calls from a non-streaming completion. */
 function extractToolCalls(
   choice: ChatCompletion["choices"][number] | undefined,
 ): AIGatewayToolCall[] {
@@ -351,6 +369,12 @@ function extractText(content: unknown): string {
     .join("");
 }
 
+/**
+ * Best-effort parser for normalized provider sources/citations.
+ *
+ * This intentionally tolerates response-shape differences so AppShell can
+ * surface sources without depending on one provider-specific payload format.
+ */
 function extractSources(value: unknown): AIChatSource[] | undefined {
   if (!value || typeof value !== "object") {
     return undefined;

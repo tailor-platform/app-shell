@@ -72,8 +72,21 @@ function createOpenAICompatibleClient(config: {
     apiKey: "tailor-platform-ai-gateway",
     dangerouslyAllowBrowser: true,
     maxRetries: 0,
-    fetch: (input, init) => config.authClient.fetch(input as RequestInfo | URL, init),
+    fetch: (input, init) => config.authClient.fetch(stripStainlessHeaders(input, init)),
   });
+}
+
+function stripStainlessHeaders(input: RequestInfo | URL, init?: RequestInit): Request {
+  const request = input instanceof Request ? new Request(input, init) : new Request(input, init);
+  const headers = new Headers(request.headers);
+
+  headers.forEach((_, headerName) => {
+    if (headerName.toLowerCase().startsWith("x-stainless-")) {
+      headers.delete(headerName);
+    }
+  });
+
+  return new Request(request, { headers });
 }
 
 function shouldUseJSONRoute(request: AIGatewayChatRequest): boolean {

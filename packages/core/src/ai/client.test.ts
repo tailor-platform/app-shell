@@ -78,6 +78,18 @@ async function readRequestBody(
   return undefined;
 }
 
+function getRequestHeaders(input: RequestInfo | URL, init: RequestInit | undefined): Headers {
+  if (init?.headers) {
+    return new Headers(init.headers);
+  }
+
+  if (input instanceof Request) {
+    return input.headers;
+  }
+
+  return new Headers();
+}
+
 describe("createAIGatewayClient", () => {
   it("streams OpenAI-compatible events through authClient.fetch", async () => {
     const authClient = createMockAuthClient(
@@ -115,6 +127,9 @@ describe("createAIGatewayClient", () => {
     expect(init?.signal ?? (input instanceof Request ? input.signal : undefined)).toBeInstanceOf(
       AbortSignal,
     );
+    const headers = getRequestHeaders(input, init);
+    expect(headers.has("x-stainless-os")).toBe(false);
+    expect(headers.has("x-stainless-runtime")).toBe(false);
     expect(JSON.parse(String(await readRequestBody(input, init)))).toEqual({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: "Hello" }],

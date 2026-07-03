@@ -10,7 +10,7 @@ React hook for simple text-only chat on top of `createAIGatewayClient`.
 ## Signature
 
 ```typescript
-const useAIChat: (config: { client: AIGatewayClient; model: string; stream?: boolean }) => {
+const useAIChat: (config: { client: AIGatewayClient; model: string }) => {
   messages: AIChatMessage[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
@@ -98,8 +98,7 @@ export function ChatScreen() {
 
 ## Notes
 
-- `stream` defaults to `true`
-- Pass `stream: false` when the endpoint returns a single JSON response instead of SSE
+- AppShell chooses the appropriate AI Gateway transport automatically
 - The hook is intentionally text-only
 - System prompts and custom history shaping should use the low-level client directly
 - `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request

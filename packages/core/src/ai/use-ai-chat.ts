@@ -9,7 +9,7 @@ export interface AIChatMessage {
 
 export type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
 
-export function useAIChat(config: { client: AIGatewayClient; model: string; stream?: boolean }): {
+export function useAIChat(config: { client: AIGatewayClient; model: string }): {
   messages: AIChatMessage[];
   status: AIChatStatus;
   error?: Error;
@@ -90,7 +90,6 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
         for await (const event of config.client.streamChatCompletion({
           model: config.model,
           messages: nextMessages.map(toGatewayMessage),
-          ...(config.stream !== undefined ? { stream: config.stream } : {}),
           signal: controller.signal,
         })) {
           if (!isActive()) {
@@ -154,7 +153,7 @@ export function useAIChat(config: { client: AIGatewayClient; model: string; stre
         }
       }
     },
-    [config.client, config.model, config.stream, updateMessages],
+    [config.client, config.model, updateMessages],
   );
 
   return {

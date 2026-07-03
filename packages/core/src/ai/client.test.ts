@@ -162,43 +162,6 @@ describe("createAIGatewayClient", () => {
     });
   });
 
-  it("respects explicit stream overrides for gemini models", async () => {
-    const authClient = createMockAuthClient(
-      new Response(
-        createSSEStream([
-          'data: {"choices":[{"delta":{"content":"Streamed"}}]}\n\n',
-          'data: {"choices":[{"finish_reason":"stop"}]}\n\n',
-          "data: [DONE]\n\n",
-        ]),
-        {
-          status: 200,
-          headers: { "Content-Type": "text/event-stream" },
-        },
-      ),
-    );
-    const client = createAIGatewayClient({
-      gatewayUri: "https://gateway.example.com",
-      authClient,
-    });
-
-    const events = await collectEvents(
-      client,
-      createRequest({ model: "gemini-2.5-flash", stream: true }),
-    );
-
-    expect(events).toEqual([
-      { type: "text-delta", text: "Streamed" },
-      { type: "done", finishReason: "stop" },
-    ]);
-
-    const [input, init] = getRequestCall(authClient);
-    expect(JSON.parse(String(await readRequestBody(input, init)))).toEqual({
-      model: "gemini-2.5-flash",
-      messages: [{ role: "user", content: "Hello" }],
-      stream: true,
-    });
-  });
-
   it("emits done even when json responses do not include assistant text", async () => {
     const authClient = createMockAuthClient(
       new Response(
@@ -212,7 +175,7 @@ describe("createAIGatewayClient", () => {
     });
 
     await expect(
-      collectEvents(client, createRequest({ model: "gemini-2.5-flash", stream: false })),
+      collectEvents(client, createRequest({ model: "gemini-2.5-flash" })),
     ).resolves.toEqual([{ type: "done", finishReason: "tool_calls" }]);
   });
 

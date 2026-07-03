@@ -59,7 +59,6 @@ type AIGatewayChatMessage =
 interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
-  stream?: boolean;
   signal?: AbortSignal;
 }
 
@@ -104,9 +103,7 @@ console.log(text);
 
 ## Notes
 
-- `stream` defaults to `true`
-- Pass `stream: false` when the endpoint returns a single JSON response instead of SSE
-- `stream: false` still yields the same event shape: zero or one `text-delta`, then `done`
+- AppShell chooses the appropriate AI Gateway transport automatically
 - The low-level API is intentionally narrow: text deltas plus completion metadata
 - `request.signal` is passed through so callers can abort in-flight work
 

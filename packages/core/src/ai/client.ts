@@ -19,7 +19,6 @@ export type AIGatewayChatMessage =
 export interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
-  stream?: boolean;
   signal?: AbortSignal;
 }
 
@@ -78,10 +77,6 @@ function createOpenAICompatibleClient(config: {
 }
 
 function shouldUseJSONRoute(request: AIGatewayChatRequest): boolean {
-  if (request.stream != null) {
-    return request.stream === false;
-  }
-
   return request.model.startsWith("gemini-");
 }
 

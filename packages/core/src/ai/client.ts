@@ -69,9 +69,17 @@ function createOpenAICompatibleClient(config: {
 }): OpenAI {
   return new OpenAI({
     baseURL: new URL("v1/", withTrailingSlash(config.gatewayUri)).toString(),
+    // The SDK requires an apiKey option, but AppShell authenticates AI Gateway requests
+    // through authClient.fetch(...), which injects the real Authorization / DPoP headers.
+    // This placeholder value is never used for actual Tailor Platform authentication.
     apiKey: "tailor-platform-ai-gateway",
+    // Browser usage is acceptable here because requests do not rely on a long-lived OpenAI API key.
+    // The real auth path stays inside authClient.fetch(...), which obtains fresh auth headers per request
+    // for Tailor Platform's AI Gateway instead of exposing provider credentials to the browser.
     dangerouslyAllowBrowser: true,
     maxRetries: 0,
+    // Tailor Platform's AI Gateway does not allow the OpenAI SDK's X-Stainless-* headers
+    // in browser CORS preflight checks, so unset them here.
     defaultHeaders: {
       "X-Stainless-Lang": null,
       "X-Stainless-Package-Version": null,

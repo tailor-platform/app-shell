@@ -11,8 +11,10 @@ import type {
 } from "./client";
 import type { AIChatConfiguredTool, AIChatToolContext, AILocalTool } from "./tools";
 
+// Simple loop guard so a bad model/tool interaction cannot recurse forever.
 const MAX_TOOL_ROUNDS = 8;
 
+/** Public chat message shape exposed by `useAIChat()`. */
 export interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -22,6 +24,12 @@ export interface AIChatMessage {
 
 export type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
 
+/**
+ * React hook for AI Gateway chat with optional local and provider tools.
+ *
+ * Public state stays user/assistant text-first while tool-call and tool-result
+ * protocol messages remain internal to the hook.
+ */
 export function useAIChat(config: {
   client: AIGatewayClient;
   model: string;
@@ -41,6 +49,9 @@ export function useAIChat(config: {
   const [status, setStatus] = useState<AIChatStatus>("ready");
   const [error, setError] = useState<Error | undefined>(undefined);
   const messagesRef = useRef<AIChatMessage[]>([]);
+  // Internal transcript used for the next AI Gateway request. This can contain
+  // assistant tool calls and tool result messages that are intentionally hidden
+  // from the public `messages` array.
   const gatewayMessagesRef = useRef<AIGatewayChatMessage[]>([]);
   const activeRequestRef = useRef<symbol | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -195,6 +206,13 @@ export function useAIChat(config: {
   };
 }
 
+/**
+ * Runs a single assistant turn against the AI Gateway.
+ *
+ * Visible assistant text is streamed into the public `messages` state, while
+ * requested tool calls are collected into the returned internal transcript
+ * payload for the next loop step.
+ */
 async function runAssistantTurn(input: {
   client: AIGatewayClient;
   model: string;
@@ -291,6 +309,11 @@ async function runAssistantTurn(input: {
   };
 }
 
+/**
+ * Splits the public tools object into:
+ * - normalized AI Gateway tool definitions sent over the wire
+ * - local tool executors kept for in-process validation and execution
+ */
 function normalizeTools(tools: Record<string, AIChatConfiguredTool> | undefined): {
   gatewayTools: AIGatewayTool[];
   localTools: Map<string, AILocalTool>;
@@ -330,6 +353,10 @@ function normalizeTools(tools: Record<string, AIChatConfiguredTool> | undefined)
   };
 }
 
+/**
+ * Executes requested local tools in call order and converts their outputs into
+ * internal `role: "tool"` transcript messages for the next model round.
+ */
 async function executeToolCalls(input: {
   toolCalls: AIGatewayToolCall[];
   localTools: Map<string, AILocalTool>;
@@ -358,6 +385,12 @@ async function executeToolCalls(input: {
   return messages;
 }
 
+/**
+ * Validates, executes, and stringifies one local tool call.
+ *
+ * Tool failures are converted into tool result payloads so the model can
+ * recover in-band instead of failing the entire chat request.
+ */
 async function executeToolCall(input: {
   toolCall: AIGatewayToolCall;
   localTools: Map<string, AILocalTool>;
@@ -400,11 +433,13 @@ async function executeToolCall(input: {
   }
 }
 
+/** Parses the model-produced JSON argument payload for one tool call. */
 function parseToolArguments(argumentsText: string): unknown {
   const text = argumentsText.trim();
   return text ? JSON.parse(text) : {};
 }
 
+/** Normalizes local tool results to the string payload expected by tool messages. */
 function stringifyToolResult(value: unknown): string {
   if (typeof value === "string") {
     return value;

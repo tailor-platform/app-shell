@@ -1,6 +1,22 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from "@standard-schema/spec";
 import type { AIChatMessage } from "./use-ai-chat";
 
+/**
+ * Public schema contract for local AI chat tools.
+ *
+ * A schema must both validate runtime inputs and generate JSON Schema for the
+ * AI Gateway request payload.
+ *
+ * @example
+ * ```ts
+ * import { aiToolSchema } from "@tailor-platform/app-shell";
+ *
+ * const schema = aiToolSchema.object({
+ *   customerId: aiToolSchema.string(),
+ *   includeInactive: aiToolSchema.optional(aiToolSchema.boolean()),
+ * });
+ * ```
+ */
 export type AIChatToolSchema<Input = unknown, Output = Input> = StandardSchemaV1<Input, Output> &
   StandardJSONSchemaV1<Input, Output>;
 
@@ -68,6 +84,12 @@ function prefixIssues(
   };
 }
 
+/**
+ * Creates a Standard Schema + Standard JSON Schema compatible tool schema.
+ *
+ * This keeps local tool validation and AI Gateway JSON Schema generation bound
+ * to the same declaration.
+ */
 function createToolSchema<Input, Output>(config: {
   validate: (
     value: unknown,
@@ -88,12 +110,14 @@ function createToolSchema<Input, Output>(config: {
   } as AIChatToolSchema<Input, Output>;
 }
 
+/** Marks wrapper schemas created by `aiToolSchema.optional(...)`. */
 function isOptionalSchema(
   schema: AnyAIChatToolSchema | AIOptionalToolSchema,
 ): schema is AIOptionalToolSchema {
   return OPTIONAL_TOOL_SCHEMA in schema;
 }
 
+/** Returns the underlying schema for optional and non-optional schema entries. */
 function unwrapOptionalSchema<TSchema extends AnyAIChatToolSchema | AIOptionalToolSchema>(
   schema: TSchema,
 ): UnwrapOptionalSchema<TSchema> {
@@ -102,6 +126,24 @@ function unwrapOptionalSchema<TSchema extends AnyAIChatToolSchema | AIOptionalTo
   ) as UnwrapOptionalSchema<TSchema>;
 }
 
+/**
+ * Minimal Standard Schema helpers for common local tool inputs.
+ *
+ * These helpers intentionally cover the narrow set of JSON-schema-friendly
+ * shapes AppShell needs for tool calling today.
+ *
+ * @example
+ * ```ts
+ * import { aiToolSchema } from "@tailor-platform/app-shell";
+ *
+ * const lookupCustomerSchema = aiToolSchema.object({
+ *   customerId: aiToolSchema.string({ description: "Workspace customer id" }),
+ *   fields: aiToolSchema.optional(
+ *     aiToolSchema.array(aiToolSchema.enum(["name", "email", "status"])),
+ *   ),
+ * });
+ * ```
+ */
 export const aiToolSchema = {
   string(options?: {
     description?: string;
@@ -305,11 +347,21 @@ export const aiToolSchema = {
   },
 };
 
+/** Context passed to local tool executors. */
 export interface AIChatToolContext {
+  /** Abort signal for the in-flight chat request. */
   signal: AbortSignal;
+  /** Public user/assistant transcript visible to the current chat turn. */
   messages: AIChatMessage[];
 }
 
+/**
+ * A tool executed locally inside AppShell.
+ *
+ * Local tools are validated with Standard Schema, executed in-process, and then
+ * written back into the internal AI Gateway transcript as `role: "tool"`
+ * messages for the next model round.
+ */
 export interface AILocalTool<
   TSchema extends AIChatToolSchema<any, any> = AIChatToolSchema<any, any>,
 > {
@@ -322,6 +374,32 @@ export interface AILocalTool<
   ) => unknown | Promise<unknown>;
 }
 
+/**
+ * Small typed helper for defining local AI chat tools.
+ *
+ * This is mostly an identity function, but it keeps `execute(args)` inferred
+ * from the provided schema when tools are declared inline.
+ *
+ * @example
+ * ```ts
+ * import { defineAIChatTool, aiToolSchema } from "@tailor-platform/app-shell";
+ *
+ * const lookupCustomer = defineAIChatTool({
+ *   description: "Look up a customer in the current workspace",
+ *   schema: aiToolSchema.object({
+ *     customerId: aiToolSchema.string(),
+ *   }),
+ *   async execute({ customerId }, { signal }) {
+ *     const customer = await fetchCustomer(customerId, { signal });
+ *     return {
+ *       id: customer.id,
+ *       name: customer.name,
+ *       status: customer.status,
+ *     };
+ *   },
+ * });
+ * ```
+ */
 export function defineAIChatTool<const TSchema extends AIChatToolSchema<any, any>>(tool: {
   description?: string;
   schema: TSchema;
@@ -336,6 +414,7 @@ export function defineAIChatTool<const TSchema extends AIChatToolSchema<any, any
   };
 }
 
+/** Options for the normalized OpenAI web search provider tool. */
 export interface OpenAIWebSearchToolOptions {
   externalWebAccess?: boolean;
   searchContextSize?: "low" | "medium" | "high";
@@ -351,6 +430,12 @@ export interface OpenAIWebSearchToolOptions {
   };
 }
 
+/**
+ * Provider-backed tool definition passed through to the AI Gateway.
+ *
+ * Unlike local tools, provider tools are not executed inside AppShell. They are
+ * serialized into the normalized AI Gateway request and handled upstream.
+ */
 export interface AIOpenAIWebSearchTool {
   kind: "provider";
   provider: "openai";
@@ -358,8 +443,60 @@ export interface AIOpenAIWebSearchTool {
   options?: OpenAIWebSearchToolOptions;
 }
 
+/**
+ * Union of all tool definitions accepted by `useAIChat({ tools })`.
+ *
+ * @example
+ * ```ts
+ * import {
+ *   aiProviderTool,
+ *   aiToolSchema,
+ *   defineAIChatTool,
+ *   useAIChat,
+ * } from "@tailor-platform/app-shell";
+ *
+ * const lookupCustomer = defineAIChatTool({
+ *   schema: aiToolSchema.object({
+ *     customerId: aiToolSchema.string(),
+ *   }),
+ *   async execute({ customerId }) {
+ *     return { customerId, name: "Acme Corp" };
+ *   },
+ * });
+ *
+ * useAIChat({
+ *   client: aiClient,
+ *   model: "gpt-5-mini",
+ *   tools: {
+ *     lookupCustomer,
+ *     web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
+ *   },
+ * });
+ * ```
+ */
 export type AIChatConfiguredTool = AILocalTool | AIOpenAIWebSearchTool;
 
+/**
+ * Factory helpers for provider-backed tools that are not executed locally.
+ *
+ * @example
+ * ```ts
+ * import { aiProviderTool } from "@tailor-platform/app-shell";
+ *
+ * const webSearch = aiProviderTool.openai.webSearch({
+ *   searchContextSize: "high",
+ *   userLocation: {
+ *     type: "approximate",
+ *     country: "JP",
+ *     city: "Tokyo",
+ *     timezone: "Asia/Tokyo",
+ *   },
+ *   filters: {
+ *     allowedDomains: ["nikkei.com", "reuters.com"],
+ *   },
+ * });
+ * ```
+ */
 export const aiProviderTool = {
   openai: {
     webSearch(options?: OpenAIWebSearchToolOptions): AIOpenAIWebSearchTool {

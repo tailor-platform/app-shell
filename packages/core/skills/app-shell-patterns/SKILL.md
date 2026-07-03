@@ -1,6 +1,6 @@
 ---
 name: app-shell-patterns
-description: UI pattern catalog for building pages with @tailor-platform/app-shell components
+description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — or when choosing the right AppShell component, layout, or design token for a UI."
 ---
 
 # App-Shell Patterns

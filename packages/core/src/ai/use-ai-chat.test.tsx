@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAIChat } from "./use-ai-chat";
-import type { AIGatewayClient } from "./client";
+import type { AIGatewayClient, AIChatCompletionEvent } from "./client";
+import { aiProviderTool, aiToolSchema, defineAIChatTool } from "./tools";
 
 function createAbortError(): Error {
   if (typeof DOMException !== "undefined") {
@@ -246,6 +247,147 @@ describe("useAIChat", () => {
         { id: "id-1", role: "user", content: "Hi" },
         { id: "id-2", role: "user", content: "Retry" },
         { id: "id-3", role: "assistant", content: "Recovered" },
+      ]);
+    });
+  });
+
+  it("executes local tools and continues the conversation", async () => {
+    const lookupCustomer = defineAIChatTool({
+      description: "Look up a customer",
+      schema: aiToolSchema.object({
+        customerId: aiToolSchema.string(),
+      }),
+      async execute({ customerId }) {
+        return { customerId, name: "Acme Corp" };
+      },
+    });
+
+    const client = {
+      streamChatCompletion: vi.fn(async function* ({ messages, tools }) {
+        const lastMessage = messages.at(-1);
+
+        if (lastMessage?.role === "user") {
+          expect(tools).toEqual([
+            {
+              type: "function",
+              function: {
+                name: "lookupCustomer",
+                description: "Look up a customer",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    customerId: { type: "string" },
+                  },
+                  required: ["customerId"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ]);
+
+          yield {
+            type: "tool-call",
+            toolCallId: "call-1",
+            toolName: "lookupCustomer",
+            argumentsText: '{"customerId":"cust-1"}',
+          } as const;
+          yield { type: "done", finishReason: "tool_calls" } as const;
+          return;
+        }
+
+        expect(messages).toEqual([
+          { role: "user", content: "Find customer" },
+          {
+            role: "assistant",
+            toolCalls: [
+              {
+                id: "call-1",
+                name: "lookupCustomer",
+                argumentsText: '{"customerId":"cust-1"}',
+              },
+            ],
+          },
+          {
+            role: "tool",
+            toolCallId: "call-1",
+            content: '{"customerId":"cust-1","name":"Acme Corp"}',
+          },
+        ]);
+
+        yield { type: "text-delta", text: "Customer: Acme Corp" } as const;
+        yield { type: "done", finishReason: "stop" } as const;
+      }),
+    } satisfies AIGatewayClient;
+
+    const { result } = renderHook(() =>
+      useAIChat({
+        client,
+        model: "gpt-5-mini",
+        tools: {
+          lookupCustomer,
+        },
+      }),
+    );
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Find customer")).resolves.toBe(true);
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("ready");
+      expect(result.current.messages).toEqual([
+        { id: "id-1", role: "user", content: "Find customer" },
+        { id: "id-2", role: "assistant", content: "Customer: Acme Corp" },
+      ]);
+    });
+
+    expect(client.streamChatCompletion).toHaveBeenCalledTimes(2);
+  });
+
+  it("passes provider tools through and exposes sources", async () => {
+    const client = {
+      streamChatCompletion: vi.fn(async function* ({ tools }) {
+        expect(tools).toEqual([
+          {
+            type: "provider",
+            provider: "openai",
+            name: "web_search",
+            options: { searchContextSize: "high" },
+          },
+        ]);
+        yield { type: "text-delta", text: "Latest market news" } as const;
+        const doneEvent: AIChatCompletionEvent = {
+          type: "done",
+          finishReason: "stop",
+          sources: [{ type: "url", url: "https://example.com", title: "Example" }],
+        };
+        yield doneEvent;
+      }),
+    } satisfies AIGatewayClient;
+
+    const { result } = renderHook(() =>
+      useAIChat({
+        client,
+        model: "gpt-5-mini",
+        tools: {
+          web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
+        },
+      }),
+    );
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Search the web")).resolves.toBe(true);
+    });
+
+    await waitFor(() => {
+      expect(result.current.messages).toEqual([
+        { id: "id-1", role: "user", content: "Search the web" },
+        {
+          id: "id-2",
+          role: "assistant",
+          content: "Latest market news",
+          sources: [{ type: "url", url: "https://example.com", title: "Example" }],
+        },
       ]);
     });
   });

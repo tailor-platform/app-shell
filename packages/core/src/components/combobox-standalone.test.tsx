@@ -441,4 +441,53 @@ describe("Combobox (standalone, grouped)", () => {
       expect(screen.getByText("Carrot")).toBeDefined();
     });
   });
+
+  // ==========================================================================
+  // Accessibility — the input can be given an accessible name outside a form
+  // ==========================================================================
+
+  describe("accessible name", () => {
+    it("forwards aria-label to the input", () => {
+      render(<Combobox items={fruits} aria-label="Fruit filter" />);
+      expect(screen.getByRole("combobox", { name: "Fruit filter" })).toBeDefined();
+    });
+
+    it("forwards aria-labelledby to the input", () => {
+      render(
+        <>
+          <span id="fruit-label">Fruit</span>
+          <Combobox items={fruits} aria-labelledby="fruit-label" />
+        </>,
+      );
+      expect(screen.getByRole("combobox", { name: "Fruit" })).toBeDefined();
+    });
+
+    it("forwards id to the input", () => {
+      render(<Combobox items={fruits} id="fruit-combobox" aria-label="Fruit" />);
+      expect(screen.getByRole("combobox").getAttribute("id")).toBe("fruit-combobox");
+    });
+
+    it("forwards aria-label to the input in multiple mode", () => {
+      render(<Combobox items={fruits} multiple aria-label="Fruit filter" />);
+      expect(screen.getByRole("combobox", { name: "Fruit filter" })).toBeDefined();
+    });
+
+    it("forwards aria-label to the input when creatable", () => {
+      render(
+        <Combobox
+          items={creatableItems}
+          mapItem={mapCreatableItem}
+          onCreateItem={(value) => ({ label: value })}
+          aria-label="Tag input"
+        />,
+      );
+      expect(screen.getByRole("combobox", { name: "Tag input" })).toBeDefined();
+    });
+
+    it("forwards aria-label to the Async input", () => {
+      const fetcher = vi.fn().mockResolvedValue(fruits);
+      render(<Combobox.Async fetcher={fetcher} aria-label="Async filter" />);
+      expect(screen.getByRole("combobox", { name: "Async filter" })).toBeDefined();
+    });
+  });
 });

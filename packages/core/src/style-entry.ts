@@ -7,12 +7,14 @@
  * consumers end up needing test-runner-specific workarounds like
  * `server.deps.inline` just to load the package.
  *
- * The package still needs to publish `dist/app-shell.css` for the public
- * `@tailor-platform/app-shell/styles` export, so Vite gets a separate internal
- * entry whose only job is to pull `globals.css` into the library build.
+ * The package still needs to publish precompiled component CSS, so Vite gets a
+ * separate internal entry whose only job is to pull `globals.css` into the
+ * library build. The public `@tailor-platform/app-shell/styles` export is a raw
+ * CSS wrapper (`src/assets/app-shell.css`) that imports this generated file plus
+ * the consumer-facing theme bridge.
  *
  * In short:
  * - `index.ts` stays CSS-free for JS consumers and test runners
- * - this file exists so the stylesheet continues to be emitted for `/styles`
+ * - this file exists so the internal component stylesheet continues to be emitted
  */
 import "./globals.css";

@@ -50,6 +50,19 @@ interface SelectPropsBase<T> {
   disabled?: boolean;
   /** A parent element to render the portal into (e.g. a modal/drawer ref). */
   container?: React.ComponentProps<typeof SelectContent>["container"];
+  /**
+   * Accessible name for the trigger. Use when there is no visible label
+   * (e.g. a table toolbar or list filter). Forwarded to the combobox trigger
+   * so screen readers announce something other than the selected value.
+   */
+  "aria-label"?: string;
+  /**
+   * ID of the element(s) that label the trigger. Forwarded to the combobox
+   * trigger — use this to point at a visible `<label>`/heading.
+   */
+  "aria-labelledby"?: string;
+  /** ID applied to the combobox trigger element. */
+  id?: string;
 }
 
 interface SelectPropsSingle<T> extends SelectPropsBase<T> {
@@ -113,8 +126,17 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     className,
     disabled,
     container,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
     ...rest
   } = props;
+
+  const triggerProps = {
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
+  };
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
@@ -143,7 +165,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
           itemToStringLabel={getLabel}
           disabled={disabled}
         >
-          <SelectTrigger>
+          <SelectTrigger {...triggerProps}>
             {renderValue ? (
               <SelectValue placeholder={placeholder}>
                 {(selected: T[]) => (renderValue as (v: T[]) => React.ReactNode)(selected)}
@@ -173,7 +195,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
         itemToStringLabel={getLabel}
         disabled={disabled}
       >
-        <SelectTrigger>
+        <SelectTrigger {...triggerProps}>
           {renderValue ? (
             <SelectValue placeholder={placeholder}>
               {(selected: T) => (renderValue as (v: T) => React.ReactNode)(selected)}
@@ -334,8 +356,17 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     className,
     disabled,
     container,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
     ...rest
   } = props;
+
+  const triggerProps = {
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
+  };
 
   const { items, loading, onOpenChange: handleOpenChange } = useAsync({ fetcher });
 
@@ -365,7 +396,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
           itemToStringLabel={getLabel}
           disabled={disabled}
         >
-          <SelectTrigger>
+          <SelectTrigger {...triggerProps}>
             {renderValue ? (
               <SelectValue placeholder={placeholder}>
                 {(selected: T[]) => (renderValue as (v: T[]) => React.ReactNode)(selected)}
@@ -397,7 +428,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
         itemToStringLabel={getLabel}
         disabled={disabled}
       >
-        <SelectTrigger>
+        <SelectTrigger {...triggerProps}>
           {renderValue ? (
             <SelectValue placeholder={placeholder}>
               {(selected: T) => (renderValue as (v: T) => React.ReactNode)(selected)}

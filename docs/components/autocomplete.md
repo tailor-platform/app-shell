@@ -27,17 +27,20 @@ import { Autocomplete } from "@tailor-platform/app-shell";
 
 ### Autocomplete Props
 
-| Prop            | Type                      | Default         | Description                                                         |
-| --------------- | ------------------------- | --------------- | ------------------------------------------------------------------- |
-| `items`         | `I[]`                     | -               | Suggestion items. May be a flat array or an array of `ItemGroup<T>` |
-| `placeholder`   | `string`                  | -               | Placeholder text for the input                                      |
-| `emptyText`     | `string`                  | `"No results."` | Text shown when no items match                                      |
-| `value`         | `string`                  | -               | Controlled value (raw input string)                                 |
-| `defaultValue`  | `string`                  | -               | Initial value (uncontrolled)                                        |
-| `onValueChange` | `(value: string) => void` | -               | Called when the value changes                                       |
-| `mapItem`       | `(item: T) => MappedItem` | -               | Map each item to its label, key, and optional custom render         |
-| `className`     | `string`                  | -               | Additional CSS classes for the root container                       |
-| `disabled`      | `boolean`                 | `false`         | Disables the autocomplete                                           |
+| Prop              | Type                      | Default         | Description                                                         |
+| ----------------- | ------------------------- | --------------- | ------------------------------------------------------------------- |
+| `items`           | `I[]`                     | -               | Suggestion items. May be a flat array or an array of `ItemGroup<T>` |
+| `placeholder`     | `string`                  | -               | Placeholder text for the input                                      |
+| `emptyText`       | `string`                  | `"No results."` | Text shown when no items match                                      |
+| `value`           | `string`                  | -               | Controlled value (raw input string)                                 |
+| `defaultValue`    | `string`                  | -               | Initial value (uncontrolled)                                        |
+| `onValueChange`   | `(value: string) => void` | -               | Called when the value changes                                       |
+| `mapItem`         | `(item: T) => MappedItem` | -               | Map each item to its label, key, and optional custom render         |
+| `className`       | `string`                  | -               | Additional CSS classes for the root container                       |
+| `disabled`        | `boolean`                 | `false`         | Disables the autocomplete                                           |
+| `aria-label`      | `string`                  | -               | Accessible name for the input. Use when there is no visible label   |
+| `aria-labelledby` | `string`                  | -               | ID of the element(s) that label the input                           |
+| `id`              | `string`                  | -               | ID applied to the combobox input element                            |
 
 ### MappedItem
 
@@ -216,6 +219,11 @@ const suggestions = Autocomplete.useAsync({
 - Input is keyboard accessible with arrow key navigation
 - Pressing `Escape` closes the suggestion list
 - Selecting a suggestion fills the input with the item's label
+- When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
+
+```tsx
+<Autocomplete items={items} aria-label="City search" />
+```
 
 ## Related Components
 

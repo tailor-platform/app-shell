@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => ({
         "style-entry": "src/style-entry.ts",
         "vite-plugin": "src/vite-plugin.ts",
       },
-      cssFileName: "app-shell",
+      cssFileName: "app-shell-core",
       formats: ["es"],
     },
     target: "es2020",

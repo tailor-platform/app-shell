@@ -5,7 +5,21 @@ category: pattern
 subcategory: detail
 description: Single-record detail view with workflow actions and activity timeline
 requiredImports:
-  [Layout, Badge, Button, Menu, DescriptionCard, Card, Table, ActionPanel, ActivityCard, Grid, MetricCard, DocumentProgressCard, Alert]
+  [
+    Layout,
+    Badge,
+    Button,
+    Menu,
+    DescriptionCard,
+    Card,
+    Table,
+    ActionPanel,
+    ActivityCard,
+    Grid,
+    MetricCard,
+    DocumentProgressCard,
+    Alert,
+  ]
 tags: [detail, actions, timeline, workflow, two-column]
 do:
   - Single-record detail view (Order #1234, Supplier ABC, Product SKU-42)

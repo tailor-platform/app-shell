@@ -365,7 +365,7 @@ These are visual-composition rules every screen must follow, regardless of patte
   - A record's **primary / lifecycle status** (PO status, SO status) → a **filled semantic** variant (`success` / `warning` / `error` / `info` / `neutral`) — one per row in a list, one in a detail header.
   - **Secondary statuses** (delivery, billing, fulfilment) and dense supporting columns → **`outline-*`** (with status dot).
   - **Tags / labels** ("New", "Returned") → **`subtle-*`**.
-  - Reserve **`default`** (brand fill) for non-status emphasis — never the brand color as a routine status. The defect to avoid: making *every* chip a loud fill, or giving secondary statuses the same weight as the primary one. (Variants: **`components.md`** → `Badge`.)
+  - Reserve **`default`** (brand fill) for non-status emphasis — never the brand color as a routine status. The defect to avoid: making _every_ chip a loud fill, or giving secondary statuses the same weight as the primary one. (Variants: **`components.md`** → `Badge`.)
 - **Color:** status colors (`success`/`warning`/`error`/`info`) signal meaning, not decoration — don't tint neutral content.
 
 **Hierarchy.** One `h1` per page (the `Layout.Header` title). Section headings step down (`h2` → `h3`); never skip levels for size — pick the role token (`design-system.md` §4 Typography), not the pixel size.

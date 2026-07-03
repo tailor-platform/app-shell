@@ -268,4 +268,36 @@ describe("Autocomplete (standalone, grouped)", () => {
       expect(screen.getByText("Banana")).toBeDefined();
     });
   });
+
+  // ==========================================================================
+  // Accessibility — the input can be given an accessible name outside a form
+  // ==========================================================================
+
+  describe("accessible name", () => {
+    it("forwards aria-label to the input", () => {
+      render(<Autocomplete items={suggestions} aria-label="City search" />);
+      expect(screen.getByRole("combobox", { name: "City search" })).toBeDefined();
+    });
+
+    it("forwards aria-labelledby to the input", () => {
+      render(
+        <>
+          <span id="city-label">City</span>
+          <Autocomplete items={suggestions} aria-labelledby="city-label" />
+        </>,
+      );
+      expect(screen.getByRole("combobox", { name: "City" })).toBeDefined();
+    });
+
+    it("forwards id to the input", () => {
+      render(<Autocomplete items={suggestions} id="city-input" aria-label="City" />);
+      expect(screen.getByRole("combobox").getAttribute("id")).toBe("city-input");
+    });
+
+    it("forwards aria-label to the Async input", () => {
+      const fetcher = vi.fn().mockResolvedValue(suggestions);
+      render(<Autocomplete.Async fetcher={fetcher} aria-label="Async search" />);
+      expect(screen.getByRole("combobox", { name: "Async search" })).toBeDefined();
+    });
+  });
 });

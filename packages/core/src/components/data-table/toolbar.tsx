@@ -7,6 +7,9 @@ import { useCollectionControlOptional } from "@/contexts/collection-control-cont
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
+import { DatePicker } from "@/components/date-field";
+import { parseDate, DateFormatter } from "@internationalized/date";
+import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import type { CollectionControl, Filter, FilterConfig, FilterOperator } from "@/types/collection";
@@ -51,6 +54,42 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
 /** Number/temporal operators available in the operator selector. */
 const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte", "between"] as const;
 type NumericTemporalOperator = (typeof NUMERIC_TEMPORAL_OPERATORS)[number];
+
+// Date filters use a slimmer, friendlier operator set: an exact date, inclusive
+// "after"/"before" (gte/lte), and a between range. No gt/lt/ne.
+const DATE_OPERATORS = ["eq", "gte", "lte", "between"] as const;
+
+/** Operators offered for a temporal editor, narrowed for `date` columns. */
+function temporalOperatorsFor(type: FilterConfig["type"]): readonly NumericTemporalOperator[] {
+  return type === "date" ? DATE_OPERATORS : NUMERIC_TEMPORAL_OPERATORS;
+}
+
+/**
+ * Operator options + initial selection for a numeric/temporal editor.
+ *
+ * A saved view or `useCollectionVariables` config can hold a filter whose
+ * operator is no longer in the standard set — most importantly a `date` filter
+ * on the now-dropped `gt`/`lt`/`ne` (the pre-narrowing operator set). In that
+ * case we keep the incoming operator as a selectable, preselected option rather
+ * than resetting to `eq`, so opening the editor and hitting Apply never silently
+ * rewrites the filter's operator (e.g. "after X" → "on X"). A truly unknown
+ * operator falls back to `eq`.
+ */
+function resolveTemporalOperator(
+  standard: readonly NumericTemporalOperator[],
+  current: FilterOperator,
+): { items: readonly NumericTemporalOperator[]; initial: NumericTemporalOperator } {
+  if (standard.includes(current as NumericTemporalOperator)) {
+    return { items: standard, initial: current as NumericTemporalOperator };
+  }
+  if ((NUMERIC_TEMPORAL_OPERATORS as readonly string[]).includes(current)) {
+    return {
+      items: [...standard, current as NumericTemporalOperator],
+      initial: current as NumericTemporalOperator,
+    };
+  }
+  return { items: standard, initial: "eq" };
+}
 
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
@@ -163,6 +202,30 @@ function BetweenInputGroup({
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Date filter input backed by the app-shell `DatePicker`. Bridges the filter's
+ * string value (`"YYYY-MM-DD"`) and the `CalendarDate` the picker works with.
+ */
+function DateFilterPicker({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDate(value) : null;
+  return (
+    <DatePicker
+      aria-label={ariaLabel}
+      value={calValue}
+      onChange={(v) => onChange(v ? v.toString() : "")}
+      className="astw:w-full"
+    />
   );
 }
 
@@ -320,8 +383,26 @@ function AddFilterPopover({
     }
 
     if (isTemporalFilterType(config.type)) {
+      const isDate = config.type === "date";
+      const fieldLabel = selectedColumn.label ?? config.field;
       if (operator === "between") {
         const [min, max] = Array.isArray(value) ? value : ["", ""];
+        if (isDate) {
+          return (
+            <div className="astw:flex astw:flex-col astw:gap-1.5">
+              <DateFilterPicker
+                ariaLabel={`${fieldLabel} — ${t("filterBetweenFrom")}`}
+                value={min}
+                onChange={(v) => setValue([v, max])}
+              />
+              <DateFilterPicker
+                ariaLabel={`${fieldLabel} — ${t("filterBetweenTo")}`}
+                value={max}
+                onChange={(v) => setValue([min, v])}
+              />
+            </div>
+          );
+        }
         return (
           <BetweenInputGroup
             labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
@@ -330,6 +411,15 @@ function AddFilterPopover({
             onChangeMax={(v) => setValue([min, v])}
             onSubmit={handleSubmit}
             inputProps={getTemporalInputProps(config.type)}
+          />
+        );
+      }
+      if (isDate) {
+        return (
+          <DateFilterPicker
+            ariaLabel={fieldLabel}
+            value={typeof value === "string" ? value : ""}
+            onChange={(v) => setValue(v)}
           />
         );
       }
@@ -436,7 +526,7 @@ function AddFilterPopover({
                   }}
                   mapItem={(op) => ({
                     value: op,
-                    label: getOperatorLabel(op, t),
+                    label: getOperatorLabel(op, t, selectedColumn?.filter.type),
                   })}
                   className="astw:h-8 astw:text-sm"
                 />
@@ -486,6 +576,7 @@ function FilterChip({
   control: CollectionControl;
 }) {
   const t = useDataTableT();
+  const { locale } = useResolvedLocale();
   const config = column.filter;
   const label = column.label ?? config.field;
 
@@ -503,7 +594,7 @@ function FilterChip({
     control.removeFilter(config.field);
   }, [control, config.field]);
 
-  const chipLabel = getChipDisplayLabel(label, filter, config, t);
+  const chipLabel = getChipDisplayLabel(label, filter, config, t, locale);
 
   return (
     <div data-slot="data-table-filter-chip" className="astw:flex astw:items-center astw:gap-0">
@@ -568,6 +659,7 @@ function FilterPopoverContent({
   onClose: () => void;
 }) {
   const config = column.filter;
+  const label = column.label ?? config.field;
 
   switch (config.type) {
     case "enum":
@@ -592,7 +684,13 @@ function FilterPopoverContent({
     case "date":
     case "time":
       return (
-        <TemporalFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+        <TemporalFilterEditor
+          config={config}
+          label={label}
+          filter={filter}
+          control={control}
+          onClose={onClose}
+        />
       );
   }
 }
@@ -867,11 +965,11 @@ function NumericFilterEditor({
   onClose: () => void;
 }) {
   const t = useDataTableT();
-  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
-    NUMERIC_TEMPORAL_OPERATORS.includes(filter.operator as NumericTemporalOperator)
-      ? (filter.operator as NumericTemporalOperator)
-      : "eq",
+  const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
+    temporalOperatorsFor(config.type),
+    filter.operator,
   );
+  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
   const [localValue, setLocalValue] = useState(() => {
     if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
       const range = filter.value as { min?: unknown; max?: unknown };
@@ -932,12 +1030,12 @@ function NumericFilterEditor({
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       <Select
-        items={[...NUMERIC_TEMPORAL_OPERATORS]}
+        items={[...operatorItems]}
         value={localOp}
         onValueChange={(v) => {
           if (v) setLocalOp(v);
         }}
-        mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
+        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
         className="astw:h-8 astw:text-sm"
       />
       {localOp === "between" ? (
@@ -973,21 +1071,24 @@ function NumericFilterEditor({
 
 function TemporalFilterEditor({
   config,
+  label,
   filter,
   control,
   onClose,
 }: {
   config: Extract<FilterConfig, { type: "datetime" | "date" | "time" }>;
+  /** The column's visible label — used for the date picker's accessible name. */
+  label: string;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
 }) {
   const t = useDataTableT();
-  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(
-    NUMERIC_TEMPORAL_OPERATORS.includes(filter.operator as NumericTemporalOperator)
-      ? (filter.operator as NumericTemporalOperator)
-      : "eq",
+  const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
+    temporalOperatorsFor(config.type),
+    filter.operator,
   );
+  const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
   const [localValue, setLocalValue] = useState(() => {
     if (filter.operator === "between" && typeof filter.value === "object" && filter.value != null) {
       const range = filter.value as { min?: unknown; max?: unknown };
@@ -1046,44 +1147,67 @@ function TemporalFilterEditor({
     onClose();
   }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
+  const isDate = config.type === "date";
+  let valueInput: ReactNode;
+  if (localOp === "between") {
+    valueInput = isDate ? (
+      <div className="astw:flex astw:flex-col astw:gap-1.5">
+        <DateFilterPicker
+          ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
+          value={localValue}
+          onChange={setLocalValue}
+        />
+        <DateFilterPicker
+          ariaLabel={`${label} — ${t("filterBetweenTo")}`}
+          value={localValueMax}
+          onChange={setLocalValueMax}
+        />
+      </div>
+    ) : (
+      <BetweenInputGroup
+        labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+        values={[localValue, localValueMax]}
+        onChangeMin={setLocalValue}
+        onChangeMax={setLocalValueMax}
+        onSubmit={handleCommit}
+        inputProps={getTemporalInputProps(config.type)}
+      />
+    );
+  } else {
+    valueInput = isDate ? (
+      <DateFilterPicker ariaLabel={label} value={localValue} onChange={setLocalValue} />
+    ) : (
+      <Input
+        {...getTemporalInputProps(config.type)}
+        value={localValue}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleCommit();
+          }
+        }}
+        className="astw:h-8 astw:text-sm"
+      />
+    );
+  }
+
   return (
     <div
       data-slot={`data-table-filter-${config.type}`}
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       <Select
-        items={[...NUMERIC_TEMPORAL_OPERATORS]}
+        items={[...operatorItems]}
         value={localOp}
         onValueChange={(v) => {
           if (v) setLocalOp(v);
         }}
-        mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
+        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
         className="astw:h-8 astw:text-sm"
       />
-      {localOp === "between" ? (
-        <BetweenInputGroup
-          labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
-          values={[localValue, localValueMax]}
-          onChangeMin={setLocalValue}
-          onChangeMax={setLocalValueMax}
-          onSubmit={handleCommit}
-          inputProps={getTemporalInputProps(config.type)}
-        />
-      ) : (
-        <Input
-          {...getTemporalInputProps(config.type)}
-          value={localValue}
-          onChange={(e) => {
-            setLocalValue(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleCommit();
-            }
-          }}
-          className="astw:h-8 astw:text-sm"
-        />
-      )}
+      {valueInput}
       <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
@@ -1099,9 +1223,10 @@ function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
   switch (type) {
     case "string":
       return [...STRING_OPERATORS];
+    case "date":
+      return [...DATE_OPERATORS];
     case "number":
     case "datetime":
-    case "date":
     case "time":
       return [...NUMERIC_TEMPORAL_OPERATORS];
     case "enum":
@@ -1235,7 +1360,17 @@ function getTemporalInputProps(type: "datetime" | "date" | "time") {
   }
 }
 
-function getOperatorLabel(operator: FilterOperator, t: ReturnType<typeof useDataTableT>): string {
+function getOperatorLabel(
+  operator: FilterOperator,
+  t: ReturnType<typeof useDataTableT>,
+  type?: FilterConfig["type"],
+): string {
+  // Date columns relabel the comparison operators (exact date / after / before).
+  if (type === "date") {
+    if (operator === "eq") return t("filterDateOperator_eq");
+    if (operator === "gte") return t("filterDateOperator_gte");
+    if (operator === "lte") return t("filterDateOperator_lte");
+  }
   switch (operator) {
     case "eq":
       return t("filterOperator_eq");
@@ -1272,10 +1407,28 @@ function getOperatorLabel(operator: FilterOperator, t: ReturnType<typeof useData
   }
 }
 
+/** Format an ISO "YYYY-MM-DD" value as a locale-appropriate medium date. */
+function formatDateValue(iso: string, locale: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  try {
+    // Format in UTC against a UTC-anchored instant so the calendar date never
+    // shifts across timezones.
+    return new DateFormatter(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(parseDate(iso).toDate("UTC"));
+  } catch {
+    return iso;
+  }
+}
+
 function formatFilterValue(
   filter: Filter,
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
+  locale: string,
 ): string {
   if (config.type === "enum" && Array.isArray(filter.value)) {
     const labels = filter.value
@@ -1294,6 +1447,18 @@ function formatFilterValue(
     const min = range.min != null ? String(range.min) : "";
     const max = range.max != null ? String(range.max) : "";
     return [min, max].filter(Boolean).join(" - ");
+  }
+
+  if (config.type === "date") {
+    if (filter.operator === "between") {
+      const range = filter.value as { min?: unknown; max?: unknown } | null;
+      if (!range || typeof range !== "object") return "";
+      const min = range.min != null ? formatDateValue(String(range.min), locale) : "";
+      const max = range.max != null ? formatDateValue(String(range.max), locale) : "";
+      return [min, max].filter(Boolean).join(" - ");
+    }
+    if (filter.value == null || filter.value === "") return "";
+    return formatDateValue(String(filter.value), locale);
   }
 
   if (isTemporalFilterType(config.type) && filter.operator === "between") {
@@ -1317,11 +1482,12 @@ function getChipDisplayLabel(
   filter: Filter,
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
+  locale: string,
 ): string {
-  const valueLabel = formatFilterValue(filter, config, t);
+  const valueLabel = formatFilterValue(filter, config, t, locale);
   if (!valueLabel) return columnLabel;
 
-  const operatorLabel = getOperatorLabel(filter.operator, t);
+  const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
   const ciSuffix = filter.caseSensitive ? " (Aa)" : "";
 
   if (config.type === "enum") {

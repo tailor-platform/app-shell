@@ -44,6 +44,19 @@ interface ComboboxPropsBase<T> {
   disabled?: boolean;
   /** A parent element to render the portal into (e.g. a modal/drawer ref). */
   container?: React.ComponentProps<typeof ComboboxContent>["container"];
+  /**
+   * Accessible name for the combobox input. Use when there is no visible label
+   * (e.g. a table toolbar or list filter) so screen readers announce something
+   * other than the current value.
+   */
+  "aria-label"?: string;
+  /**
+   * ID of the element(s) that label the combobox input. Forwarded to the input
+   * — use this to point at a visible `<label>`/heading.
+   */
+  "aria-labelledby"?: string;
+  /** ID applied to the combobox input element. */
+  id?: string;
 }
 
 interface ComboboxPropsSingle<T> extends ComboboxPropsBase<T> {
@@ -108,6 +121,15 @@ interface CreatableInternalProps<T extends object> {
   formatCreateLabel?: (value: string) => string;
 }
 
+/** Pull the accessibility props that should be forwarded to the input. */
+function pickInputProps(props: { "aria-label"?: string; "aria-labelledby"?: string; id?: string }) {
+  return {
+    "aria-label": props["aria-label"],
+    "aria-labelledby": props["aria-labelledby"],
+    id: props.id,
+  };
+}
+
 // ============================================================================
 // Combobox (static items)
 // ============================================================================
@@ -144,6 +166,7 @@ function ComboboxShell({
   multiple,
   container,
   rootProps,
+  inputProps,
 }: {
   className?: string;
   placeholder?: string;
@@ -154,6 +177,7 @@ function ComboboxShell({
   multiple?: boolean;
   container?: React.ComponentProps<typeof ComboboxContent>["container"];
   rootProps: Record<string, any>;
+  inputProps?: Record<string, any>;
 }) {
   if (multiple) {
     return (
@@ -173,7 +197,10 @@ function ComboboxShell({
                         </ComboboxChip>
                       );
                     })}
-                    <ComboboxInput placeholder={selected.length > 0 ? "" : placeholder} />
+                    <ComboboxInput
+                      placeholder={selected.length > 0 ? "" : placeholder}
+                      {...inputProps}
+                    />
                   </>
                 )}
               </ComboboxValue>
@@ -192,7 +219,7 @@ function ComboboxShell({
     <div className={className}>
       <ComboboxRoot {...rootProps} disabled={disabled}>
         <ComboboxInputGroup>
-          <ComboboxInput placeholder={placeholder} />
+          <ComboboxInput placeholder={placeholder} {...inputProps} />
           <ComboboxClear />
           <ComboboxTrigger />
         </ComboboxInputGroup>
@@ -261,6 +288,9 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
     disabled,
     multiple,
     container,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
     ...valueProps
   } = props;
 
@@ -289,6 +319,7 @@ function ComboboxStaticBase<I>(props: ComboboxStaticPlainProps<I>) {
       listChildren={listChildren}
       multiple={multiple}
       container={container}
+      inputProps={{ "aria-label": ariaLabel, "aria-labelledby": ariaLabelledby, id }}
       rootProps={{
         items,
         ...valueProps,
@@ -355,6 +386,7 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
       listChildren={creatableItemRenderer(mapItem, creatable)}
       multiple={multiple}
       container={container}
+      inputProps={pickInputProps(props)}
       rootProps={{
         items: creatable.items,
         value: value ?? creatable.value,
@@ -419,6 +451,9 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
     disabled,
     multiple,
     container,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
     ...valueProps
   } = props;
 
@@ -436,6 +471,7 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
       listChildren={flatItemRenderer(mapItem)}
       multiple={multiple}
       container={container}
+      inputProps={{ "aria-label": ariaLabel, "aria-labelledby": ariaLabelledby, id }}
       rootProps={{
         items: async.items,
         filter: null,
@@ -507,6 +543,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
       listChildren={creatableItemRenderer(mapItem, creatable)}
       multiple={multiple}
       container={container}
+      inputProps={pickInputProps(props)}
       rootProps={{
         items: creatable.items,
         filter: null,

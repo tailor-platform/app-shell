@@ -114,4 +114,40 @@ test.describe("AuthProvider", () => {
     });
     await expect(page.getByTestId("auth-status")).toHaveText("Logged in");
   });
+
+  test("authenticated user can reach AI Gateway with an OpenAI smoke prompt", async ({ page }) => {
+    const email = process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_USER_PASSWORD;
+    const aiGatewayUrl = process.env.VITE_TAILOR_AI_GATEWAY_URL;
+
+    if (!email || !password) {
+      test.skip(true, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
+      return;
+    }
+
+    if (!aiGatewayUrl) {
+      test.skip(true, "VITE_TAILOR_AI_GATEWAY_URL must be set");
+      return;
+    }
+
+    await page.goto("/");
+    await page.getByTestId("login-button").click();
+
+    await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
+    await page.getByLabel(/email/i).fill(email);
+    await page.locator("#password").fill(password);
+    await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
+
+    await page.waitForURL("http://localhost:3100/**");
+    await expect(page.getByTestId("authenticated-content")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByTestId("ai-smoke-button").click();
+
+    await expect(page.getByTestId("ai-smoke-response")).toContainText(/pong/i, {
+      timeout: 30000,
+    });
+    await expect(page.getByTestId("ai-smoke-status")).toHaveText("ready");
+  });
 });

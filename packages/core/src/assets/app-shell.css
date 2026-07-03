@@ -1,0 +1,9 @@
+/*
+ * Public styles entrypoint.
+ *
+ * - `theme.css` restores the consumer-facing Tailwind token bridge while
+ *   remaining compatible with apps that stopped importing the legacy export.
+ * - `app-shell-core.css` is the library's precompiled, prefixed component CSS.
+ */
+@import "./theme.css";
+@import "./app-shell-core.css";

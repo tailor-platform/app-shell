@@ -39,6 +39,9 @@ import { Combobox } from "@tailor-platform/app-shell";
 | `mapItem`           | `(item: T) => MappedItem`                                                  | -                            | Map each item to its label, key, and optional custom render                |
 | `className`         | `string`                                                                   | -                            | Additional CSS classes for the root container                              |
 | `disabled`          | `boolean`                                                                  | `false`                      | Disables the combobox                                                      |
+| `aria-label`        | `string`                                                                   | -                            | Accessible name for the input. Use when there is no visible label          |
+| `aria-labelledby`   | `string`                                                                   | -                            | ID of the element(s) that label the input                                  |
+| `id`                | `string`                                                                   | -                            | ID applied to the combobox input element                                   |
 | `onCreateItem`      | `(value: string) => T \| false \| Promise<T \| false>`                     | -                            | Enable user-created items (requires `mapItem`; `T` must be an object type) |
 | `formatCreateLabel` | `(value: string) => string`                                                | `` (v) => `Create "${v}"` `` | Format the label for the "create" option                                   |
 
@@ -242,6 +245,11 @@ const countries = Combobox.useAsync({
 - Input is keyboard accessible with arrow key navigation
 - Pressing `Escape` closes the dropdown
 - Multi-select chips have `aria-label` set from the item label
+- When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
+
+```tsx
+<Combobox items={items} aria-label="Fruit filter" />
+```
 
 ## Related Components
 

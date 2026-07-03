@@ -50,6 +50,19 @@ interface AutocompletePropsBase<T> {
   defaultValue?: string;
   /** Called when the value changes */
   onValueChange?: (value: string) => void;
+  /**
+   * Accessible name for the input. Use when there is no visible label
+   * (e.g. a table toolbar or list filter) so screen readers announce something
+   * other than the current value.
+   */
+  "aria-label"?: string;
+  /**
+   * ID of the element(s) that label the input. Forwarded to the input — use
+   * this to point at a visible `<label>`/heading.
+   */
+  "aria-labelledby"?: string;
+  /** ID applied to the combobox input element. */
+  id?: string;
 }
 
 // --- Autocomplete (static) ---
@@ -78,6 +91,9 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
     value,
     defaultValue,
     onValueChange,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
   } = props;
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
@@ -119,7 +135,12 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
         disabled={disabled}
       >
         <AutocompleteInputGroup>
-          <AutocompleteInput placeholder={placeholder} />
+          <AutocompleteInput
+            placeholder={placeholder}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledby}
+            id={id}
+          />
           <AutocompleteClear />
           <AutocompleteTrigger />
         </AutocompleteInputGroup>
@@ -155,6 +176,9 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     value: controlledValue,
     defaultValue,
     onValueChange: onValueChangeProp,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+    id,
   } = props;
 
   const async = useAsync({ fetcher });
@@ -180,7 +204,12 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
         disabled={disabled}
       >
         <AutocompleteInputGroup>
-          <AutocompleteInput placeholder={placeholder} />
+          <AutocompleteInput
+            placeholder={placeholder}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledby}
+            id={id}
+          />
           <AutocompleteClear />
           <AutocompleteTrigger />
         </AutocompleteInputGroup>

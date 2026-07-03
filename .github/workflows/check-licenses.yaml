@@ -5,9 +5,11 @@ on:
     branches: [main]
     paths:
       - "pnpm-lock.yaml"
+      - ".github/license-package-exceptions.json"
   pull_request:
     paths:
       - "pnpm-lock.yaml"
+      - ".github/license-package-exceptions.json"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,18 +41,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # Chains must start with an example app (nextjs-app, vite-app), never
+      # @tailor-platform/app-shell itself — package-exceptions may excuse a
+      # license issue in a non-published example, never in the published
+      # package.
+      - name: Load and validate package exceptions
+        id: package-exceptions
+        run: |
+          node <<'EOF'
+          const fs = require("node:fs");
+          const ALLOWED_ROOTS = ["nextjs-app", "vite-app"];
+          const configPath = ".github/license-package-exceptions.json";
+          const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+          const violations = [];
+          for (const [license, chains] of Object.entries(config)) {
+            for (const chain of chains) {
+              if (!ALLOWED_ROOTS.includes(chain[0])) {
+                violations.push(
+                  `"${license}": chain ${JSON.stringify(chain)} must start with one of ${ALLOWED_ROOTS.join(", ")}`,
+                );
+              }
+            }
+          }
+          if (violations.length > 0) {
+            console.error(`::error::Invalid ${configPath}:\n${violations.join("\n")}`);
+            process.exit(1);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `exceptions=${JSON.stringify(config)}\n`);
+          EOF
+
       - name: Check licenses
         uses: tailor-platform/actions/check-licenses@v1
         with:
           license-groups: ${{ vars.LICENSE_GROUPS }}
           additional-licenses: ${{ vars.ALLOWED_LICENSES }}
           denied-licenses: ${{ vars.DENIED_LICENSES }}
-          # examples/nextjs-app pulls in @img/sharp-libvips-* (LGPL-3.0-or-later)
-          # transitively via next's built-in image optimization, used
-          # unmodified as a prebuilt binary — the standard case LGPL's
-          # dynamic-linking allowance covers. Approves the route (nextjs-app
-          # -> next -> ... -> @img/sharp-libvips-*), not the license or
-          # package name alone, so it doesn't cover an unrelated future LGPL
-          # dependency and doesn't need one entry per OS/arch binary variant.
-          package-exceptions: |
-            {"LGPL-3.0-or-later": [["nextjs-app", "next"]]}
+          package-exceptions: ${{ steps.package-exceptions.outputs.exceptions }}

@@ -236,6 +236,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.5.0
         version: 1.5.0(@types/react@19.2.13)(date-fns@4.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@internationalized/date':
+        specifier: 3.12.2
+        version: 3.12.2
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
@@ -1577,6 +1580,9 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
+
+  '@internationalized/date@3.12.2':
+    resolution: {integrity: sha512-FY1Y+H64NDs+HAF6omlnWxm3mEpfgaCSWtL5l551ZZfImA+kGjPFgrnJrGjH6lfmLL0g8Z/mBu1R3kufeCp6Jw==}
 
   '@isaacs/balanced-match@4.0.1':
     resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
@@ -5696,6 +5702,7 @@ packages:
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
+    deprecated: unmaintained
     hasBin: true
     peerDependencies:
       typescript: ^5.0.0
@@ -7106,6 +7113,10 @@ snapshots:
   '@inquirer/type@4.0.7(@types/node@25.9.1)':
     optionalDependencies:
       '@types/node': 25.9.1
+
+  '@internationalized/date@3.12.2':
+    dependencies:
+      '@swc/helpers': 0.5.15
 
   '@isaacs/balanced-match@4.0.1': {}
 

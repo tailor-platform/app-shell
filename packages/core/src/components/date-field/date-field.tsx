@@ -107,6 +107,8 @@ function DateField<T extends DateValue = DateValue>({
   granularity,
   hourCycle,
   placeholderValue,
+  minValue,
+  maxValue,
   isDisabled,
   isReadOnly,
   isInvalid,
@@ -139,6 +141,10 @@ function DateField<T extends DateValue = DateValue>({
     locale: resolvedLocale,
     hourCycle,
     placeholderValue,
+    // Let the keyboard shortcuts clamp into range (the field has no calendar to
+    // enforce it otherwise).
+    minValue,
+    maxValue,
     isReadOnly,
   });
 
@@ -153,6 +159,7 @@ function DateField<T extends DateValue = DateValue>({
         setDigit={state.setDigit}
         setDayPeriod={state.setDayPeriod}
         clearSegment={state.clearSegment}
+        applyShortcut={state.applyShortcut}
         commitOnBlur={state.commitOnBlur}
         isDisabled={isDisabled}
         isReadOnly={isReadOnly}
@@ -248,6 +255,9 @@ function DatePicker<T extends DateValue = DateValue>({
     timeZone: resolvedTz,
     hourCycle,
     placeholderValue,
+    // Let the keyboard shortcuts clamp into the same range the calendar enforces.
+    minValue,
+    maxValue,
     isReadOnly,
   });
 
@@ -288,7 +298,9 @@ function DatePicker<T extends DateValue = DateValue>({
             setDigit={fieldState.setDigit}
             setDayPeriod={fieldState.setDayPeriod}
             clearSegment={fieldState.clearSegment}
+            applyShortcut={fieldState.applyShortcut}
             commitOnBlur={fieldState.commitOnBlur}
+            onOpenCalendar={() => setOpen(true)}
             isDisabled={isDisabled}
             isReadOnly={isReadOnly}
             isInvalid={derivedInvalid}

@@ -99,8 +99,9 @@ Segment order, first-day-of-week, and month/weekday names all follow the resolve
 
 ## Keyboard
 
-- **Segments:** `↑`/`↓` increment/decrement, digits type-to-fill (auto-advance), `←`/`→` move between segments, `Backspace` clears.
-- **Calendar grid:** arrows move by day/week, `Home`/`End` to week start/end, `PageUp`/`PageDown` by month, `Shift`+`PageUp`/`PageDown` by year, `Enter`/`Space` selects.
+- **Segments:** `↑`/`↓` increment/decrement, digits type-to-fill (auto-advance), `←`/`→` move between segments, `Backspace` clears, `/` commits the current segment and advances (so a single `1` means January, not the start of `1x`).
+- **Whole-date shortcuts** (QuickBooks Online-style, case-insensitive): `t` today · `m`/`h` start/end of the entered month (current month when empty) · `y`/`r` start/end of the year · `w`/`k` start/end of the week (locale-aware) · `-` previous day · `=`/`+` next day (both step across month **and** year boundaries; `+` needs no Shift). A 1–2 digit year expands to the 2000s on blur (`26` → `2026`). These work **from a focused date segment** (they set the field value, clamped to `minValue`/`maxValue`) **and while the calendar popover is open** (they move the highlighted day like the arrow keys — press `Enter` to confirm; `minValue`/`maxValue` clamp and unavailable days can't be confirmed).
+- **Calendar grid:** arrows move by day/week, `Home`/`End` to week start/end, `PageUp`/`PageDown` by month, `Shift`+`PageUp`/`PageDown` by year, `Enter`/`Space` selects. `Alt`+`↓` opens the calendar from the field (`DatePicker`).
 
 ## Accessibility
 

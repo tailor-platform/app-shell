@@ -4,6 +4,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
 import { useDateFieldT } from "./i18n";
+import { DATE_SHORTCUT_KEYS, type DateShortcut } from "@/lib/date-shortcuts";
 import type { Segment } from "./use-date-field-state";
 
 /**
@@ -76,11 +77,15 @@ interface DateInputGroupProps {
   ) => { advance: boolean };
   setDayPeriod: (pm: boolean) => void;
   clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
+  /** Apply a whole-date keyboard shortcut (today, month/year/week jumps, ±day). */
+  applyShortcut: (cmd: DateShortcut) => void;
   /**
    * Normalize the value when focus leaves the group: backfill the current
    * month/year when only finer fields are set, and clamp an impossible day.
    */
   commitOnBlur: () => void;
+  /** Open the calendar popover (Alt+↓). Omitted for the popover-less `DateField`. */
+  onOpenCalendar?: () => void;
   isDisabled?: boolean;
   isReadOnly?: boolean;
   isInvalid?: boolean;
@@ -102,7 +107,9 @@ export function DateInputGroup({
   setDigit,
   setDayPeriod,
   clearSegment,
+  applyShortcut,
   commitOnBlur,
+  onOpenCalendar,
   isDisabled,
   isReadOnly,
   isInvalid,
@@ -149,6 +156,17 @@ export function DateInputGroup({
   ) => {
     if (segment.type === "literal") return;
     const type = segment.type;
+
+    // Alt+↓ opens the calendar popover (APG date-picker pattern + QBO). No-op on
+    // the popover-less DateField. Checked before the plain ArrowDown case below.
+    if (e.altKey && e.key === "ArrowDown") {
+      if (onOpenCalendar) {
+        e.preventDefault();
+        onOpenCalendar();
+      }
+      return;
+    }
+
     switch (e.key) {
       case "ArrowUp":
         e.preventDefault();
@@ -179,6 +197,26 @@ export function DateInputGroup({
         e.preventDefault();
         clearSegment(type);
         return;
+    }
+
+    // Whole-date shortcuts (QBO-style). Only from a date segment — time segments
+    // keep their own semantics (e.g. "a"/"p" for AM/PM). Bare keypress only; a
+    // modifier (Ctrl/Cmd) is left for the browser/OS.
+    const isDateSegment = type === "year" || type === "month" || type === "day";
+    if (isDateSegment && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // "/" commits the current partial as-is and advances — a way to say
+      // "I meant '1' as the whole day, not the start of '1x'".
+      if (e.key === "/") {
+        e.preventDefault();
+        focusEditable(editableIndex + 1);
+        return;
+      }
+      const cmd = DATE_SHORTCUT_KEYS[e.key.toLowerCase()];
+      if (cmd) {
+        e.preventDefault();
+        applyShortcut(cmd);
+        return;
+      }
     }
 
     if (type === "dayPeriod") {

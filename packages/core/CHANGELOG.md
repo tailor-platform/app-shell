@@ -1,5 +1,31 @@
 # @tailor-platform/app-shell
 
+## 1.7.0
+
+### Minor Changes
+
+- 7f33506: Allow the standalone `Select`, `Combobox`, and `Autocomplete` (including their `.Async` variants) to receive an accessible name via `aria-label`, `aria-labelledby`, and `id`. Previously these props were silently dropped, leaving the combobox with only its current value as an accessible name — a WCAG 4.1.2 issue for filters and toolbars used outside a `Form`. The props are now forwarded to the underlying trigger/input.
+
+  ```tsx
+  // Announced as "Direction filter, combobox" instead of just its value
+  <Select
+    items={items}
+    value={value}
+    onValueChange={setValue}
+    aria-label="Direction filter"
+  />
+
+  // Or point at a visible label
+  <span id="dir-label">From</span>
+  <Combobox items={items} aria-labelledby="dir-label" />
+  ```
+
+### Patch Changes
+
+- ff30974: Fix `@tailor-platform/app-shell/styles` so consumer Tailwind utilities like `bg-card`, `border-border`, and `text-muted-foreground` resolve again without requiring `theme.css`.
+
+  `theme.css` remains a no-op compatibility shim, while `styles` now restores the Tailwind theme bridge and keeps the precompiled AppShell component CSS importable from a single entrypoint.
+
 ## 1.6.1
 
 ### Patch Changes

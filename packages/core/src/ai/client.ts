@@ -1,3 +1,9 @@
+import OpenAI from "openai";
+import type {
+  ChatCompletion,
+  ChatCompletionChunk,
+  ChatCompletionMessageParam,
+} from "openai/resources/chat/completions";
 import type { AuthClient } from "@tailor-platform/auth-public-client";
 
 export type AIGatewayChatMessage =
@@ -34,48 +40,41 @@ export interface AIGatewayClient {
   streamChatCompletion(request: AIGatewayChatRequest): AsyncIterable<AIChatCompletionEvent>;
 }
 
-interface OpenAIStreamChunk {
-  choices?: Array<{
-    delta?: {
-      content?: unknown;
-    };
-    finish_reason?: unknown;
-  }>;
-}
-
-interface OpenAIFinalResponse {
-  choices?: Array<{
-    message?: {
-      content?: unknown;
-    };
-    finish_reason?: unknown;
-  }>;
-}
-
 export function createAIGatewayClient(config: {
   gatewayUri: string;
   authClient: AuthClient;
 }): AIGatewayClient {
-  const endpoint = new URL("v1/chat/completions", withTrailingSlash(config.gatewayUri)).toString();
+  const client = createOpenAICompatibleClient(config);
 
   return {
     async *streamChatCompletion(request) {
       if (shouldUseJSONRoute(request)) {
         yield* streamJSONResponse({
-          endpoint,
-          authClient: config.authClient,
+          client,
           request,
         });
         return;
       }
 
       yield* streamOpenAICompatibleResponse({
-        endpoint,
-        authClient: config.authClient,
+        client,
         request,
       });
     },
   };
+}
+
+function createOpenAICompatibleClient(config: {
+  gatewayUri: string;
+  authClient: AuthClient;
+}): OpenAI {
+  return new OpenAI({
+    baseURL: new URL("v1/", withTrailingSlash(config.gatewayUri)).toString(),
+    apiKey: "tailor-platform-ai-gateway",
+    dangerouslyAllowBrowser: true,
+    maxRetries: 0,
+    fetch: (input, init) => config.authClient.fetch(input as RequestInfo | URL, init),
+  });
 }
 
 function shouldUseJSONRoute(request: AIGatewayChatRequest): boolean {
@@ -87,188 +86,91 @@ function shouldUseJSONRoute(request: AIGatewayChatRequest): boolean {
 }
 
 async function* streamOpenAICompatibleResponse(input: {
-  endpoint: string;
-  authClient: AuthClient;
+  client: OpenAI;
   request: AIGatewayChatRequest;
 }): AsyncGenerator<AIChatCompletionEvent, void, unknown> {
-  const response = await input.authClient.fetch(input.endpoint, {
-    method: "POST",
-    headers: {
-      Accept: "text/event-stream",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: input.request.model,
-      messages: input.request.messages,
-      stream: true,
-    }),
-    signal: input.request.signal,
-  });
+  try {
+    const stream = await input.client.chat.completions.create(
+      {
+        model: input.request.model,
+        messages: input.request.messages.map(toOpenAIMessage),
+        stream: true,
+      },
+      {
+        signal: input.request.signal,
+      },
+    );
 
-  await assertOK(response, "AI Gateway streaming request");
+    let finishReason: string | undefined;
 
-  if (!response.body) {
-    throw new Error("AI Gateway streaming response did not include a body.");
-  }
+    for await (const chunk of stream) {
+      const choice = chunk.choices[0];
+      const delta = extractStreamingText(choice);
+      finishReason = extractFinishReason(choice?.finish_reason) ?? finishReason;
 
-  let finishReason: string | undefined;
-
-  for await (const event of iterateSSEDataEvents(response.body, input.request.signal)) {
-    if (event === "[DONE]") {
-      yield createDoneEvent(finishReason);
-      return;
+      if (delta) {
+        yield { type: "text-delta", text: delta };
+      }
     }
 
-    const payload = parseJSON<OpenAIStreamChunk>(event, "AI Gateway SSE event");
-    const choice = payload.choices?.[0];
-    const delta = extractText(choice?.delta?.content);
-    finishReason = extractFinishReason(choice?.finish_reason) ?? finishReason;
-
-    if (delta) {
-      yield { type: "text-delta", text: delta };
-    }
+    yield createDoneEvent(finishReason);
+  } catch (error) {
+    throw normalizeGatewayError(error, input.request.signal);
   }
-
-  yield createDoneEvent(finishReason);
 }
 
 async function* streamJSONResponse(input: {
-  endpoint: string;
-  authClient: AuthClient;
+  client: OpenAI;
   request: AIGatewayChatRequest;
 }): AsyncGenerator<AIChatCompletionEvent, void, unknown> {
-  const response = await input.authClient.fetch(input.endpoint, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: input.request.model,
-      messages: input.request.messages,
-      stream: false,
-    }),
-    signal: input.request.signal,
-  });
-
-  await assertOK(response, "AI Gateway JSON request");
-
-  const payload = parseJSON<OpenAIFinalResponse>(await response.text(), "AI Gateway JSON response");
-  const choice = payload.choices?.[0];
-  const text = extractText(choice?.message?.content);
-
-  if (text) {
-    yield { type: "text-delta", text };
-  }
-
-  yield createDoneEvent(extractFinishReason(choice?.finish_reason));
-}
-
-async function assertOK(response: Response, context: string): Promise<void> {
-  if (response.ok) {
-    return;
-  }
-
-  let body = "";
-
   try {
-    body = (await response.text()).trim();
-  } catch {
-    // Ignore body read failures and fall back to status-only message.
-  }
+    const completion = await input.client.chat.completions.create(
+      {
+        model: input.request.model,
+        messages: input.request.messages.map(toOpenAIMessage),
+        stream: false,
+      },
+      {
+        signal: input.request.signal,
+      },
+    );
 
-  if (body.length > 300) {
-    body = `${body.slice(0, 300)}…`;
-  }
+    const choice = completion.choices[0];
+    const text = extractFinalText(choice);
 
-  const status = `${response.status}${response.statusText ? ` ${response.statusText}` : ""}`;
-  throw new Error(
-    body ? `${context} failed (${status}): ${body}` : `${context} failed (${status}).`,
-  );
-}
-
-async function* iterateSSEDataEvents(
-  stream: ReadableStream<Uint8Array>,
-  signal?: AbortSignal,
-): AsyncGenerator<string, void, unknown> {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let dataLines: string[] = [];
-
-  const flushLine = (line: string): string | null => {
-    if (line === "") {
-      if (dataLines.length === 0) {
-        return null;
-      }
-
-      const event = dataLines.join("\n");
-      dataLines = [];
-      return event;
+    if (text) {
+      yield { type: "text-delta", text };
     }
 
-    if (line.startsWith(":")) {
-      return null;
-    }
-
-    if (!line.startsWith("data:")) {
-      return null;
-    }
-
-    dataLines.push(line.slice(5).replace(/^ /, ""));
-    return null;
-  };
-
-  try {
-    while (true) {
-      if (signal?.aborted) {
-        throw createAbortError();
-      }
-
-      const { value, done } = await reader.read();
-      if (done) {
-        break;
-      }
-
-      buffer += decoder.decode(value, { stream: true });
-
-      let newlineIndex = buffer.indexOf("\n");
-      while (newlineIndex !== -1) {
-        let line = buffer.slice(0, newlineIndex);
-        buffer = buffer.slice(newlineIndex + 1);
-
-        if (line.endsWith("\r")) {
-          line = line.slice(0, -1);
-        }
-
-        const event = flushLine(line);
-        if (event !== null) {
-          yield event;
-        }
-
-        newlineIndex = buffer.indexOf("\n");
-      }
-    }
-
-    buffer += decoder.decode();
-
-    if (buffer.length > 0) {
-      const event = flushLine(buffer.endsWith("\r") ? buffer.slice(0, -1) : buffer);
-      if (event !== null) {
-        yield event;
-      }
-    }
-
-    if (dataLines.length > 0) {
-      yield dataLines.join("\n");
-    }
-  } finally {
-    reader.releaseLock();
+    yield createDoneEvent(extractFinishReason(choice?.finish_reason));
+  } catch (error) {
+    throw normalizeGatewayError(error, input.request.signal);
   }
 }
 
 function withTrailingSlash(value: string): string {
   return value.endsWith("/") ? value : `${value}/`;
+}
+
+function toOpenAIMessage(message: AIGatewayChatMessage): ChatCompletionMessageParam {
+  if (message.role === "assistant") {
+    return message.content === undefined
+      ? { role: "assistant" }
+      : { role: "assistant", content: message.content };
+  }
+
+  return {
+    role: message.role,
+    content: message.content,
+  };
+}
+
+function extractStreamingText(choice: ChatCompletionChunk["choices"][number] | undefined): string {
+  return extractText(choice?.delta?.content);
+}
+
+function extractFinalText(choice: ChatCompletion["choices"][number] | undefined): string {
+  return extractText(choice?.message?.content);
 }
 
 function extractText(content: unknown): string {
@@ -304,15 +206,18 @@ function createDoneEvent(finishReason?: string): AIChatCompletionEvent {
   return finishReason ? { type: "done", finishReason } : { type: "done" };
 }
 
-function parseJSON<T>(value: string, context: string): T {
-  try {
-    return JSON.parse(value) as T;
-  } catch (error) {
-    throw new Error(
-      `${context} was not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
-    );
+function normalizeGatewayError(error: unknown, signal?: AbortSignal): Error {
+  if (signal?.aborted || isAbortError(error)) {
+    return createAbortError();
   }
+
+  return error instanceof Error ? error : new Error(String(error));
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error
+    ? error.name === "AbortError" || error.name === "APIUserAbortError"
+    : false;
 }
 
 function createAbortError(): Error {

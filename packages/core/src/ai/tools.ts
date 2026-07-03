@@ -145,6 +145,16 @@ function unwrapOptionalSchema<TSchema extends AnyAIChatToolSchema | AIOptionalTo
  * ```
  */
 export const aiToolSchema = {
+  /**
+   * Declares a string input.
+   *
+   * Use this for ids, names, prompts, or any free-form text argument.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.string({ description: "Customer id" })
+   * ```
+   */
   string(options?: {
     description?: string;
     minLength?: number;
@@ -172,6 +182,16 @@ export const aiToolSchema = {
     });
   },
 
+  /**
+   * Declares a numeric input.
+   *
+   * Set `integer: true` for counts, indexes, and pagination-like arguments.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.number({ minimum: 1, integer: true })
+   * ```
+   */
   number(options?: {
     description?: string;
     minimum?: number;
@@ -203,6 +223,16 @@ export const aiToolSchema = {
     });
   },
 
+  /**
+   * Declares a boolean input.
+   *
+   * Useful for enable/disable or include/exclude style arguments.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.boolean({ description: "Include archived records" })
+   * ```
+   */
   boolean(options?: { description?: string }): AIChatToolSchema<boolean> {
     return createToolSchema({
       validate: (value) =>
@@ -214,6 +244,16 @@ export const aiToolSchema = {
     });
   },
 
+  /**
+   * Declares a string enum input.
+   *
+   * Use this when the model should choose from a fixed set of string literals.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.enum(["draft", "published", "archived"])
+   * ```
+   */
   enum<const TValues extends readonly string[]>(
     values: TValues,
     options?: { description?: string },
@@ -231,6 +271,16 @@ export const aiToolSchema = {
     });
   },
 
+  /**
+   * Declares an array input whose items must match another tool schema.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.array(aiToolSchema.string(), {
+   *   description: "Fields to include in the response",
+   * })
+   * ```
+   */
   array<TSchema extends AnyAIChatToolSchema>(
     schema: TSchema,
     options?: { description?: string },
@@ -268,6 +318,21 @@ export const aiToolSchema = {
     });
   },
 
+  /**
+   * Declares an object input composed from named child schemas.
+   *
+   * All properties are required unless wrapped in `aiToolSchema.optional(...)`.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.object({
+   *   customerId: aiToolSchema.string(),
+   *   fields: aiToolSchema.optional(
+   *     aiToolSchema.array(aiToolSchema.enum(["name", "email", "status"])),
+   *   ),
+   * })
+   * ```
+   */
   object<const TShape extends AISchemaShape>(
     shape: TShape,
     options?: { description?: string },
@@ -332,6 +397,17 @@ export const aiToolSchema = {
     });
   },
 
+  /**
+   * Marks a child schema as optional inside `aiToolSchema.object(...)`.
+   *
+   * @example
+   * ```ts
+   * aiToolSchema.object({
+   *   customerId: aiToolSchema.string(),
+   *   fields: aiToolSchema.optional(aiToolSchema.array(aiToolSchema.string())),
+   * })
+   * ```
+   */
   optional<TSchema extends AnyAIChatToolSchema>(schema: TSchema): AIOptionalToolSchema<TSchema> {
     return {
       ...createToolSchema({
@@ -499,6 +575,25 @@ export type AIChatConfiguredTool = AILocalTool | AIOpenAIWebSearchTool;
  */
 export const aiProviderTool = {
   openai: {
+    /**
+     * Registers the OpenAI web search provider tool.
+     *
+     * AppShell passes this through to the AI Gateway and does not execute it
+     * locally.
+     *
+     * @example
+     * ```ts
+     * aiProviderTool.openai.webSearch({
+     *   searchContextSize: "high",
+     *   userLocation: {
+     *     type: "approximate",
+     *     country: "JP",
+     *     city: "Tokyo",
+     *     timezone: "Asia/Tokyo",
+     *   },
+     * })
+     * ```
+     */
     webSearch(options?: OpenAIWebSearchToolOptions): AIOpenAIWebSearchTool {
       return {
         kind: "provider",

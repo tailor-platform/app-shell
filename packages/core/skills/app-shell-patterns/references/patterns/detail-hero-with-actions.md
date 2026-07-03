@@ -5,7 +5,7 @@ category: pattern
 subcategory: detail
 description: Single-record detail view with workflow actions and activity timeline
 requiredImports:
-  [Layout, Badge, Button, Menu, DescriptionCard, Card, Table, ActionPanel, ActivityCard]
+  [Layout, Badge, Button, Menu, DescriptionCard, Card, Table, ActionPanel, ActivityCard, Grid, MetricCard, DocumentProgressCard, Alert]
 tags: [detail, actions, timeline, workflow, two-column]
 do:
   - Single-record detail view (Order #1234, Supplier ABC, Product SKU-42)
@@ -59,6 +59,24 @@ Choose the column structure from the **record** — the pattern is "hero + workf
 - **Single main column** — the record is mostly descriptive with few/no workflow actions and no meaningful history → one `Layout.Column`. Don't invent a rail just to fill space.
 - **Main + left rail** (`area="left"`, wider 320px) — when a persistent section index / summary should lead the reading order.
 - Either column holds **N cards** as the record requires.
+
+## Optional cards
+
+Add these only when the record calls for them — none is mandatory. Each is a card like any other in the columns above.
+
+- **Metric strip** — when the record has headline KPIs (totals, counts), lead the main column with `MetricCard`s wrapped in a `Grid` (never one per row). See the `Grid` and `MetricCard` entries in `components.md`.
+
+  ```tsx
+  <Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
+    <MetricCard title="Net total" value="$12,480" trend={{ direction: "up", value: "+4%" }} />
+    <MetricCard title="Lines" value="18" />
+    <MetricCard title="Received" value="11" />
+    <MetricCard title="Outstanding" value="7" />
+  </Grid>
+  ```
+
+- **`DocumentProgressCard`** — when the record has a fulfilment / lifecycle breakdown (received vs returned vs pending, shipment status). Sits in the main column or the right rail; derive `percent` and `segments` in the consumer.
+- **`Alert`** — a record-level inline banner (blocking error, on-hold warning) above the columns; use the **error** variant for the pattern's required error state. Transient feedback uses `useToast`, not `Alert`.
 
 ## Page Implementation
 
@@ -118,16 +136,16 @@ export default function HeroWithActionsDetail({ order, onApprove, onCancel }: Pr
               <Table.Header>
                 <Table.Row>
                   <Table.Head>SKU</Table.Head>
-                  <Table.Head>Qty</Table.Head>
-                  <Table.Head>Total</Table.Head>
+                  <Table.Head align="right">Qty</Table.Head>
+                  <Table.Head align="right">Total</Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
                 {order.lineItems.map((item) => (
                   <Table.Row key={item.id}>
                     <Table.Cell>{item.sku}</Table.Cell>
-                    <Table.Cell>{item.qty}</Table.Cell>
-                    <Table.Cell>${item.total.toLocaleString()}</Table.Cell>
+                    <Table.Cell align="right">{item.qty}</Table.Cell>
+                    <Table.Cell align="right">${item.total.toLocaleString()}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

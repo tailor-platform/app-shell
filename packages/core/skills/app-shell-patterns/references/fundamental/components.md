@@ -79,8 +79,8 @@ import { Button, Layout, Tabs } from "@tailor-platform/app-shell";
   <Layout.Header title="Purchase orders" actions={[<Button key="create">Create</Button>]}>
     <Tabs.Root value={bucket} onValueChange={setBucket}>
       <Tabs.List>
-        <Tabs.Trigger value="all">All</Tabs.Trigger>
-        <Tabs.Trigger value="open">Open</Tabs.Trigger>
+        <Tabs.Tab value="all">All</Tabs.Tab>
+        <Tabs.Tab value="open">Open</Tabs.Tab>
       </Tabs.List>
     </Tabs.Root>
   </Layout.Header>
@@ -271,6 +271,28 @@ import { Button, Link } from '@tailor-platform/app-shell';
 **Purpose:** Contextual hint on hover/focus. Use sparingly — for icon-only buttons or constrained labels.
 **API:** Compound — `Tooltip.Root`, `Tooltip.Trigger`, `Tooltip.Content`.
 **Used in patterns:** any pattern with icon-only buttons (must have `aria-label` AND a tooltip).
+
+### `Tabs`
+
+**Import:** `import { Tabs } from '@tailor-platform/app-shell'`
+**Purpose:** In-page tab navigation — split one record's sections (Overview / Line items / Activity) or bucket a list (All / Open / …) into switchable panels. Presentational; owns only the active-tab state.
+**API:** Compound — `Tabs.Root` (`variant`: `default | line | capsule`; controlled `value` + `onValueChange`, or uncontrolled `defaultValue`), `Tabs.List`, `Tabs.Tab` (`value`), `Tabs.Panel` (`value`). Note: the sub-component is **`Tabs.Tab`**, not `Tabs.Trigger`.
+**Example:**
+
+```tsx
+<Tabs.Root defaultValue="overview" variant="line">
+  <Tabs.List>
+    <Tabs.Tab value="overview">Overview</Tabs.Tab>
+    <Tabs.Tab value="items">Line items</Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panel value="overview">{/* … */}</Tabs.Panel>
+  <Tabs.Panel value="items">{/* … */}</Tabs.Panel>
+</Tabs.Root>
+```
+
+**Used in patterns:** `list-dense-scan` (bucket tabs composed **above** `DataTable.Root`, synced to `useCollectionVariables` — see the `DataTable` "Bucket tabs" note), `detail/*` (sectioned record content).
+
+**Notes:** For lists, AppShell's own filtering surface is **toolbar chips** (`DataTable.Filters`), not tabs — reach for `Tabs` only when the business genuinely thinks in a small set of named buckets. Don't render a `Tab` per enum value where a filter chip belongs.
 
 ---
 
@@ -546,6 +568,24 @@ const table = useDataTable({
 **Purpose:** Timeline of events on a record (audit log, status changes, comments).
 **API:** Compound — `ActivityCard.Root`, `ActivityCard.Items` (generic over item type), plus `ActivityCardProps`, `ActivityCardItem`, `ActivityCardItemProps`. Items render with timestamp + actor + description.
 **Used in patterns:** `detail/hero-with-actions` (right column or bottom section).
+
+### `Alert`
+
+**Import:** `import { Alert } from '@tailor-platform/app-shell'`
+**Purpose:** Inline, in-page banner for a persistent status message — a form/record error, a warning, or a success/info notice attached to a section. (Transient notifications use `useToast`; blocking confirmations use `Dialog` — see `interaction/confirm`.)
+**API:** Compound — `Alert.Root` (`variant`: `neutral | success | warning | error | info`, default `neutral`; a matching icon is rendered automatically; optional `action?: ReactNode`, `dismissible?: boolean`, `onDismiss?: () => void`), `Alert.Title`, `Alert.Description`.
+**Example:**
+
+```tsx
+<Alert.Root variant="error">
+  <Alert.Title>Couldn't load line items</Alert.Title>
+  <Alert.Description>Check your connection and try again.</Alert.Description>
+</Alert.Root>
+```
+
+**Used in patterns:** any data-backed screen's **error** state (inline error + retry) and record-level warnings — the error affordance the composition rules require (**`design-system.md`** → Composition & emphasis rules → States).
+
+**Notes:** Encode severity by `variant` (semantic color), same discipline as `Badge` — don't use `error` for a routine notice. Pair a retry/next-step control via `action` rather than a separate stray button.
 
 ---
 

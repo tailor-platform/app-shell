@@ -69,7 +69,10 @@ export const columns: Column<Order>[] = [
     render: (row) => <Badge variant={statusVariant[row.status]}>{row.status}</Badge>,
   },
   {
+    // Numeric columns right-align so digits line up. `type: "money" | "number"`
+    // auto-right; with a custom `render` set `align` explicitly.
     label: "Amount",
+    align: "right",
     render: (row) => `${row.amount.toLocaleString()}`,
   },
   { label: "Created", accessor: (row) => row.createdAt },

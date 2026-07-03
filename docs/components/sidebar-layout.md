@@ -58,20 +58,25 @@ The `Outlet` component renders your current route's component.
 ### sidebar
 
 - **Type:** `React.ReactNode` (optional)
-- **Default:** `<DefaultSidebar />`
-- **Description:** Custom sidebar content
+- **Default:** `<SidebarLayout.DefaultSidebar />`
+- **Description:** Replaces the whole sidebar region. Omit it for the built-in sidebar.
 
 ```tsx
-import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
+import { SidebarLayout, SidebarItem } from "@tailor-platform/app-shell";
 
 <SidebarLayout
   sidebar={
-    <DefaultSidebar>
+    <SidebarLayout.DefaultSidebar>
       <SidebarItem label="Custom Link" href="/custom" />
-    </DefaultSidebar>
+    </SidebarLayout.DefaultSidebar>
   }
 />;
 ```
+
+> `SidebarLayout.DefaultSidebar` is the same component as the top-level
+> `DefaultSidebar` export (kept for backwards compatibility). The namespaced form
+> is preferred for discoverability — it pairs with
+> [`SidebarLayout.DefaultHeader`](#header).
 
 ### defaultOpen
 
@@ -95,27 +100,67 @@ import { SidebarLayout, DefaultSidebar, SidebarItem } from "@tailor-platform/app
 <SidebarLayout collapsible={false} />
 ```
 
-### headerActions
+### header
 
-- **Type:** `React.ReactNode | React.ReactNode[]` (optional)
-- **Description:** Custom action(s) rendered on the right side of the top bar, immediately before the appearance switcher. Use this to add app-specific actions such as a notification bell, user menu, or global search.
+- **Type:** `React.ReactNode` (optional)
+- **Default:** `<SidebarLayout.DefaultHeader />`
+- **Description:** Replaces the whole top-bar region. Omit it for the built-in header.
 
-Actions are laid out in a horizontal, vertically-centered row with consistent spacing, so you don't need to wrap them yourself. Pass a single node or an array of nodes (give array items a `key`).
+Like `sidebar`, `header` is a full-region slot. There are three levels of customization:
+
+**1. Default** — omit `header` entirely:
 
 ```tsx
-import { SidebarLayout } from "@tailor-platform/app-shell";
-import { NotificationBell, UserMenu } from "./my-components";
+<SidebarLayout />
+```
 
-// Single action
-<SidebarLayout headerActions={<NotificationBell />} />
+**2. Extend the built-in header** — pass `SidebarLayout.DefaultHeader` and use its
+`actions` slot. This is the common case (e.g. adding a notification bell) and
+keeps the trigger + breadcrumb without reconstructing them:
 
-// Multiple actions
+```tsx
+import { SidebarLayout, AppearanceSwitcher, Button } from "@tailor-platform/app-shell";
+import { BellIcon } from "lucide-react";
+
 <SidebarLayout
-  headerActions={[<NotificationBell key="bell" />, <UserMenu key="user" />]}
+  header={
+    <SidebarLayout.DefaultHeader
+      actions={[
+        <Button key="bell" variant="outline" size="icon" aria-label="Notifications">
+          <BellIcon />
+        </Button>,
+        // `actions` REPLACES the default right-hand cluster, so include the
+        // appearance switcher explicitly to keep it.
+        <AppearanceSwitcher key="appearance" />,
+      ]}
+    />
+  }
 />;
 ```
 
-This is the supported extension point for the top bar — it replaces fragile workarounds that queried the header DOM and injected a React portal to place app-specific controls next to the appearance switcher.
+**3. Replace it entirely** — supply your own node:
+
+```tsx
+<SidebarLayout header={<MyCustomHeader />} />
+```
+
+#### `SidebarLayout.DefaultHeader`
+
+The built-in header: sidebar trigger + breadcrumb on the left, and the `actions`
+cluster on the right.
+
+- **`actions`** — `React.ReactNode | React.ReactNode[]` (optional). The entire
+  right-hand cluster, laid out in a horizontal, vertically-centered row with
+  consistent spacing.
+  - **Default:** `[<AppearanceSwitcher />]` — so out-of-the-box behavior is
+    unchanged.
+  - ⚠️ **`actions` replaces the whole right-hand cluster, including the
+    appearance switcher.** If you pass your own actions and still want the
+    switcher, include `<AppearanceSwitcher />` in the array (it is a public
+    export). `actions={[]}` renders an empty right side.
+
+This is the supported extension point for the top bar — it replaces fragile
+workarounds that queried the header DOM and injected a React portal.
 
 ## Features
 
@@ -143,7 +188,7 @@ Breadcrumbs update automatically as users navigate through your application.
 
 ### Theme Toggle
 
-A sun/moon icon button in the header allows users to switch between light and dark themes. The theme preference is persisted to localStorage. To add your own controls (notifications, user menu, etc.) next to it, use the [`headerActions`](#headeractions) prop.
+The built-in header renders an [`AppearanceSwitcher`](./appearance-switcher.md) — a palette-icon button whose dropdown switches the color theme (persisted to localStorage). To add your own controls (notifications, user menu, etc.) alongside it, pass [`SidebarLayout.DefaultHeader`](#header) with an `actions` array that includes `<AppearanceSwitcher />`.
 
 ## Customization Examples
 
@@ -313,7 +358,9 @@ SidebarLayout includes built-in accessibility features:
 ## Related Components
 
 - [AppShell](./app-shell.md) - Root component
-- [DefaultSidebar](./sidebar-item.md) - Default sidebar component
+- [DefaultHeader](./default-header.md) - Built-in header (`SidebarLayout.DefaultHeader`)
+- [DefaultSidebar](./default-sidebar.md) - Built-in sidebar (`SidebarLayout.DefaultSidebar`)
+- [AppearanceSwitcher](./appearance-switcher.md) - Color-theme dropdown, composable into header `actions`
 - [SidebarItem](./sidebar-item.md) - Individual sidebar navigation items
 - [SidebarGroup](./sidebar-group.md) - Group sidebar items
 

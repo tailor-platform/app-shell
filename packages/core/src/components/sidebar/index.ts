@@ -2,4 +2,5 @@ export { SidebarItem, type SidebarItemProps, type SidebarItemRenderProps } from 
 export { SidebarGroup, type SidebarGroupProps } from "./sidebar-group";
 export { SidebarSeparator } from "./sidebar-separator";
 export { DefaultSidebar, type DefaultSidebarProps } from "./default-sidebar";
+export { DefaultHeader, type DefaultHeaderProps } from "./default-header";
 export { SidebarLayout, type SidebarLayoutProps } from "./sidebar-layout";

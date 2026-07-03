@@ -1,9 +1,22 @@
 import { render, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { SidebarLayout } from "./sidebar-layout";
+import { DefaultHeader } from "./default-header";
+import { DefaultSidebar } from "./default-sidebar";
+import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { AppShell } from "@/components/appshell";
 import { defineModule } from "@/resource";
 import { Home } from "lucide-react";
+
+/**
+ * The header's right-hand cluster: the last child div of the header's inner
+ * flex row (holds the `actions`, defaulting to the appearance switcher).
+ */
+const getHeaderRightCluster = () => {
+  const header = document.querySelector("header");
+  const inner = header?.querySelector(":scope > div");
+  return inner?.lastElementChild as HTMLElement | null;
+};
 
 afterEach(() => {
   cleanup();
@@ -99,64 +112,114 @@ describe("SidebarLayout", () => {
     });
   });
 
-  describe("headerActions", () => {
-    it("does not render any custom actions when headerActions is omitted", async () => {
+  describe("header slot", () => {
+    it("renders the built-in DefaultHeader by default", async () => {
       renderSidebarLayout();
 
       await waitFor(() => {
         expect(document.querySelector("header")).not.toBeNull();
       });
 
-      expect(document.querySelector('[data-testid="bell"]')).toBeNull();
+      // Default right-hand cluster contains exactly the appearance switcher.
+      const cluster = getHeaderRightCluster();
+      expect(cluster).not.toBeNull();
+      expect(cluster!.children.length).toBe(1);
+      expect(cluster!.querySelector('[data-testid="bell"]')).toBeNull();
     });
 
-    it("renders a single headerActions node", async () => {
-      renderSidebarLayout({ headerActions: <button data-testid="bell">Bell</button> });
+    it("replaces the whole header when `header` is provided", async () => {
+      renderSidebarLayout({ header: <div data-testid="custom-header">Custom</div> });
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-testid="custom-header"]')).not.toBeNull();
+      });
+
+      // The built-in <header> element is not rendered when replaced.
+      expect(document.querySelector("header")).toBeNull();
+    });
+  });
+
+  describe("DefaultHeader actions", () => {
+    const renderWithActions = (actions: React.ReactNode | React.ReactNode[]) =>
+      renderSidebarLayout({ header: <DefaultHeader actions={actions} /> });
+
+    it("defaults to the appearance switcher when actions is omitted", async () => {
+      renderSidebarLayout({ header: <DefaultHeader /> });
+
+      await waitFor(() => {
+        expect(document.querySelector("header")).not.toBeNull();
+      });
+
+      const cluster = getHeaderRightCluster();
+      expect(cluster!.children.length).toBe(1);
+      expect(cluster!.querySelector('[data-testid="bell"]')).toBeNull();
+    });
+
+    it("replaces the right cluster with a single action node (no switcher)", async () => {
+      renderWithActions(<button data-testid="bell">Bell</button>);
 
       await waitFor(() => {
         expect(document.querySelector('[data-testid="bell"]')).not.toBeNull();
       });
+
+      const cluster = getHeaderRightCluster();
+      // Only the bell — the default appearance switcher is replaced.
+      expect(cluster!.children.length).toBe(1);
+      expect(cluster!.firstElementChild).toBe(document.querySelector('[data-testid="bell"]'));
     });
 
-    it("renders an array of headerActions nodes", async () => {
-      renderSidebarLayout({
-        headerActions: [
-          <button key="bell" data-testid="bell">
-            Bell
-          </button>,
-          <button key="user" data-testid="user">
-            User
-          </button>,
-        ],
-      });
+    it("replaces the right cluster with an array of action nodes", async () => {
+      renderWithActions([
+        <button key="bell" data-testid="bell">
+          Bell
+        </button>,
+        <button key="user" data-testid="user">
+          User
+        </button>,
+      ]);
 
       await waitFor(() => {
         expect(document.querySelector('[data-testid="bell"]')).not.toBeNull();
       });
+
+      const cluster = getHeaderRightCluster();
+      expect(cluster!.children.length).toBe(2);
       expect(document.querySelector('[data-testid="user"]')).not.toBeNull();
     });
 
-    it("renders headerActions before the appearance switcher", async () => {
-      renderSidebarLayout({ headerActions: <button data-testid="bell">Bell</button> });
+    it("keeps the appearance switcher when included in actions", async () => {
+      renderWithActions([
+        <button key="bell" data-testid="bell">
+          Bell
+        </button>,
+        <AppearanceSwitcher key="appearance" />,
+      ]);
 
-      const bell = await waitFor(() => {
-        const el = document.querySelector('[data-testid="bell"]');
-        expect(el).not.toBeNull();
-        return el!;
+      await waitFor(() => {
+        expect(document.querySelector('[data-testid="bell"]')).not.toBeNull();
       });
 
-      // Right-side container = last child div of the header's inner flex row.
-      // It holds the headerActions wrapper followed by the appearance switcher.
-      const rightContainer = bell.closest("header")!.querySelector(":scope > div")!
-        .lastElementChild as HTMLElement;
-      // The headerActions wrapper is the first child and contains the bell.
-      expect(rightContainer.firstElementChild!.contains(bell)).toBe(true);
-      // The appearance switcher renders after it (last child, a separate node).
-      const appearanceSwitcher = rightContainer.lastElementChild!;
-      expect(appearanceSwitcher).not.toBe(rightContainer.firstElementChild);
-      expect(
-        bell.compareDocumentPosition(appearanceSwitcher) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
+      // Bell + switcher = two nodes in the cluster.
+      const cluster = getHeaderRightCluster();
+      expect(cluster!.children.length).toBe(2);
+    });
+
+    it("renders an empty right cluster when actions is []", async () => {
+      renderWithActions([]);
+
+      await waitFor(() => {
+        expect(document.querySelector("header")).not.toBeNull();
+      });
+
+      const cluster = getHeaderRightCluster();
+      expect(cluster!.children.length).toBe(0);
+    });
+  });
+
+  describe("namespace", () => {
+    it("exposes DefaultSidebar and DefaultHeader on SidebarLayout", () => {
+      expect(SidebarLayout.DefaultSidebar).toBe(DefaultSidebar);
+      expect(SidebarLayout.DefaultHeader).toBe(DefaultHeader);
     });
   });
 });

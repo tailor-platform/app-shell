@@ -51,6 +51,15 @@ Composition rules:
 
 Responsive: <1024 collapses to single column with right column rendered below main; 1024–1280 two columns with narrow side; >1280 two columns at full width.
 
+## Layout variants
+
+Choose the column structure from the **record** — the pattern is "hero + workflow + (optional) history," and the layout flexes. The skill never mandates a fixed column count.
+
+- **Main + right rail** (most common) — the record has workflow actions and/or activity/related summaries → right `Layout.Column area="right"` holds `ActionPanel`, `ActivityCard`, integration cards.
+- **Single main column** — the record is mostly descriptive with few/no workflow actions and no meaningful history → one `Layout.Column`. Don't invent a rail just to fill space.
+- **Main + left rail** (`area="left"`, wider 320px) — when a persistent section index / summary should lead the reading order.
+- Either column holds **N cards** as the record requires.
+
 ## Page Implementation
 
 ```tsx
@@ -143,9 +152,10 @@ export default function HeroWithActionsDetail({ order, onApprove, onCancel }: Pr
 
 ## Constraints
 
-- More than 2 primary actions in the header → move overflow into a `Menu`.
+- **Header carries the single primary CTA + the status `Badge`** — not workflow actions. Workflow actions (Approve, Reject, Archive, …) live in the `ActionPanel`. If the header needs more than ~2 actions, move the overflow into a `Menu`.
+- **Never duplicate an action** across `Layout.Header` and `ActionPanel` — each action has exactly one home.
 - Every content section MUST sit inside `Card.Root` (or `DescriptionCard`, which already self-contains). Raw divs are not allowed.
-- `ActionPanel` is workflow-only — never back-navigation.
+- `ActionPanel` is workflow-only — never back-navigation (that lives in the breadcrumb).
 - `Table.Root` inside a Card requires `containerClassName="astw:px-6"`.
 
 ## Anti-patterns
@@ -155,3 +165,5 @@ export default function HeroWithActionsDetail({ order, onApprove, onCancel }: Pr
 - Bare `<div>` sections in the main column — every content section MUST sit inside `Card.Root`.
 - `ActionPanel` containing back-navigation (e.g. "Back to Product List") — back navigation lives in `Layout.Header`'s breadcrumb.
 - A `Table.Root` inside a Card without `containerClassName="astw:px-6"` — the first column lands flush against the card edge.
+- The same action in both `Layout.Header` and the `ActionPanel` — duplicating it makes neither read as canonical. Pick one home.
+- Giving every status the same loud weight — the record's primary/lifecycle status is a **filled** semantic badge; secondary statuses (fulfilment, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules).

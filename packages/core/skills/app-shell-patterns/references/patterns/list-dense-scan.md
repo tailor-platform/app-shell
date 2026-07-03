@@ -52,11 +52,13 @@ export type Order = {
   createdAt: string;
 };
 
+// Primary status column — filled semantic variants (one per row).
+// Secondary status columns (e.g. delivery, billing) use outline-* instead.
 const statusVariant = {
   draft: "neutral",
-  confirmed: "outline-info",
-  shipped: "outline-warning",
-  delivered: "outline-success",
+  confirmed: "info",
+  shipped: "warning",
+  delivered: "success",
 } as const;
 
 export const columns: Column<Order>[] = [
@@ -117,7 +119,8 @@ export default function DenseScanList({ data, onCreateClick }: Props) {
 
 - Column count: 4-8 recommended
 - Must include pagination — never render unbounded lists
-- Status Badge colors must use design system tokens (variant prop)
+- Handle every state: `DataTable` renders the loading skeleton and error row; always provide a **labelled empty state** (what the list is + how to add the first record) rather than a bare empty table
+- Status Badge colors must use design system tokens (variant prop): the **primary** status column uses **filled** semantic variants; **secondary** status columns (delivery, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules)
 - Bulk actions toolbar appears only when ≥1 row is selected
 - Whole row is clickable via `onClickRow`; no per-row "View" / "Open" buttons
 - Per-row `Menu` (overflow `…`) is reserved for non-navigation actions (Archive, Duplicate, Delete)

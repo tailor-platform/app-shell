@@ -53,6 +53,8 @@ const App = () => {
               <SidebarItem to="/dashboard/products" />
               <SidebarItem to="/dashboard/document-progress" />
             </SidebarGroup>
+            <SidebarItem to="/date-picker" />
+            <SidebarItem to="/data-table" />
             <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>
         }

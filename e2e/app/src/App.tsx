@@ -1,9 +1,30 @@
-import { AuthProvider, createAuthClient, useAuth } from "@tailor-platform/app-shell";
+import {
+  type AIGatewayClient,
+  AuthProvider,
+  createAIGatewayClient,
+  createAuthClient,
+  useAIChat,
+  useAuth,
+} from "@tailor-platform/app-shell";
 
 const authClient = createAuthClient({
   appUri: import.meta.env.VITE_TAILOR_APP_URL,
   clientId: import.meta.env.VITE_TAILOR_CLIENT_ID,
 });
+
+const aiGatewayUrl = import.meta.env.VITE_TAILOR_AI_GATEWAY_URL;
+const aiClient = aiGatewayUrl
+  ? createAIGatewayClient({
+      gatewayUri: aiGatewayUrl,
+      authClient,
+    })
+  : null;
+
+const unavailableAIClient = {
+  streamChatCompletion(): AsyncIterable<never> {
+    throw new Error("AI Gateway not configured");
+  },
+} satisfies AIGatewayClient;
 
 const AuthGuard = () => {
   const { login } = useAuth();
@@ -27,6 +48,20 @@ const AuthGuard = () => {
 
 const AuthenticatedContent = () => {
   const { logout, isAuthenticated } = useAuth();
+  const { messages, status, error, sendMessage } = useAIChat({
+    client: aiClient ?? unavailableAIClient,
+    model: "gpt-4o-mini",
+  });
+  const aiResponse =
+    [...messages].reverse().find((message) => message.role === "assistant")?.content ?? "";
+
+  const runAISmoke = async () => {
+    if (!aiClient) {
+      return;
+    }
+
+    await sendMessage("Reply with exactly PONG. Do not add any other text. PING");
+  };
 
   return (
     <main data-testid="authenticated-content">
@@ -41,6 +76,19 @@ const AuthenticatedContent = () => {
       >
         Log out
       </button>
+      <button
+        type="button"
+        data-testid="ai-smoke-button"
+        disabled={!aiClient || status === "submitted" || status === "streaming"}
+        onClick={() => {
+          void runAISmoke();
+        }}
+      >
+        Check AI Gateway
+      </button>
+      <p data-testid="ai-smoke-status">{status}</p>
+      <pre data-testid="ai-smoke-response">{aiResponse}</pre>
+      {error ? <pre data-testid="ai-smoke-error">{error.message}</pre> : null}
     </main>
   );
 };

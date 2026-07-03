@@ -497,4 +497,43 @@ describe("Select.Async (standalone)", () => {
       expect(onValueChange).toHaveBeenCalledWith(["Apple"]);
     });
   });
+
+  // ==========================================================================
+  // Accessibility — the trigger can be given an accessible name outside a form
+  // ==========================================================================
+
+  describe("accessible name", () => {
+    const items = ["Apple", "Banana"];
+
+    it("forwards aria-label to the trigger", () => {
+      render(<Select items={items} aria-label="Direction filter" />);
+      expect(screen.getByRole("combobox", { name: "Direction filter" })).toBeDefined();
+    });
+
+    it("forwards aria-labelledby to the trigger", () => {
+      render(
+        <>
+          <span id="dir-label">From</span>
+          <Select items={items} aria-labelledby="dir-label" />
+        </>,
+      );
+      expect(screen.getByRole("combobox", { name: "From" })).toBeDefined();
+    });
+
+    it("forwards id to the trigger", () => {
+      render(<Select items={items} id="direction-select" aria-label="Direction" />);
+      expect(screen.getByRole("combobox").getAttribute("id")).toBe("direction-select");
+    });
+
+    it("forwards aria-label to the trigger in multiple mode", () => {
+      render(<Select items={items} multiple aria-label="Tag filter" />);
+      expect(screen.getByRole("combobox", { name: "Tag filter" })).toBeDefined();
+    });
+
+    it("forwards aria-label to the Async trigger", () => {
+      const fetcher = vi.fn().mockResolvedValue(items);
+      render(<Select.Async fetcher={fetcher} aria-label="Async filter" />);
+      expect(screen.getByRole("combobox", { name: "Async filter" })).toBeDefined();
+    });
+  });
 });

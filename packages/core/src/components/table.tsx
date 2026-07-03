@@ -7,6 +7,16 @@ type RootProps = React.ComponentProps<"table"> & {
   containerClassName?: string;
 };
 
+type CellAlign = "left" | "center" | "right";
+type HeadProps = React.ComponentProps<"th"> & { align?: CellAlign };
+type CellProps = React.ComponentProps<"td"> & { align?: CellAlign };
+
+const cellAlignClassName = {
+  left: "astw:text-left",
+  center: "astw:text-center",
+  right: "astw:text-right",
+} satisfies Record<CellAlign, string>;
+
 /**
  * The root table element with a horizontally scrollable container.
  *
@@ -101,12 +111,13 @@ function Row({ className, ...props }: React.ComponentProps<"tr">) {
 Row.displayName = "Table.Row";
 
 /** A table header cell (`<th>`). */
-function Head({ className, ...props }: React.ComponentProps<"th">) {
+function Head({ className, align = "left", ...props }: HeadProps) {
   return (
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:text-left astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        cellAlignClassName[align],
         className,
       )}
       {...props}
@@ -116,12 +127,13 @@ function Head({ className, ...props }: React.ComponentProps<"th">) {
 Head.displayName = "Table.Head";
 
 /** A table data cell (`<td>`). */
-function Cell({ className, ...props }: React.ComponentProps<"td">) {
+function Cell({ className, align = "left", ...props }: CellProps) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
         "astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        cellAlignClassName[align],
         className,
       )}
       {...props}

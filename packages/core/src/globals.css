@@ -1,6 +1,7 @@
 @import "tailwindcss" prefix(astw);
 @import "tw-animate-css";
-@import "./assets/theme.css";
+@import "./assets/fonts/inter.css";
+@import "./assets/theme.bridge.css";
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,

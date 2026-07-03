@@ -31,6 +31,16 @@ For users building applications with AppShell, see the detailed guides in `docs/
 
 This project is a monorepo managed with pnpm.
 
+### Prerequisites
+
+This project requires **Node.js 24** (see `engines` in `package.json`; CI runs on Node 24). Some build tooling (`tsdown`) relies on Node 24's native TypeScript config loading — on older versions it falls back to a loader that isn't installed, and the build fails. `engine-strict` is enabled, so `pnpm install` will refuse to run on an unsupported version.
+
+If you use [nvm](https://github.com/nvm-sh/nvm), a `.nvmrc` is provided:
+
+```bash
+nvm use      # or: nvm install
+```
+
 ### Setup
 
 ```bash

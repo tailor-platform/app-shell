@@ -589,12 +589,13 @@ const { variables, control } = useCollectionVariables({
 
 ### Options
 
-| Option                  | Type            | Description                                                                                                           |
-| ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `params.pageSize`       | `number`        | Initial page size. Default: `20`.                                                                                     |
-| `params.initialFilters` | `Filter[]`      | Filters applied on first render.                                                                                      |
-| `params.initialSort`    | `SortState[]`   | Sort applied on first render.                                                                                         |
-| `tableMetadata`         | `TableMetadata` | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
+| Option                  | Type                                 | Description                                                                                                           |
+| ----------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                     |
+| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                      |
+| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                         |
+| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
+| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                          |
 
 ### Return Value
 
@@ -628,6 +629,54 @@ const [result] = useQuery({
   },
 });
 ```
+
+## `useURLCollectionVariables`
+
+Wraps `useCollectionVariables` with automatic URL persistence. It seeds filter, sort, and page-size state from the current URL search params on mount and writes changes back to the URL as the user interacts with the table — using `replace` navigation so individual interactions don't push new history entries.
+
+Use this instead of `useCollectionVariables` when you want filters, sort, and pagination to survive page refreshes and be shareable via URL.
+
+```tsx
+import { useURLCollectionVariables } from "@tailor-platform/app-shell";
+
+const { variables, control } = useURLCollectionVariables({
+  tableMetadata,
+  params: { pageSize: 20 },
+});
+```
+
+The return value is identical to `useCollectionVariables` — `variables` and `control`.
+
+### Options
+
+All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly).
+
+### URL format
+
+| State      | URL key                | Example               |
+| ---------- | ---------------------- | --------------------- |
+| `pageSize` | `p`                    | `?p=20`               |
+| Sort       | `s`                    | `?s=createdAt:desc`   |
+| Filter     | `f.<field>:<operator>` | `?f.status:eq=ACTIVE` |
+
+### Custom search-params binding: `withURLCollectionState`
+
+If you need URL persistence but cannot use react-router's `useSearchParams` (e.g. a different router or test environment), use the pure `withURLCollectionState` decorator to compose URL state with `useCollectionVariables` directly:
+
+```tsx
+import { withURLCollectionState, useCollectionVariables } from "@tailor-platform/app-shell";
+
+const [searchParams, setSearchParams] = useSearchParams();
+
+const { variables, control } = useCollectionVariables(
+  withURLCollectionState({ tableMetadata, params: { pageSize: 20 } }, [
+    searchParams,
+    setSearchParams,
+  ]),
+);
+```
+
+`withURLCollectionState` returns augmented `useCollectionVariables` options — it does not call the hook itself. The `[searchParams, setSearchParams]` tuple must match the `URLSearchParams` + setter shape that `useSearchParams()` returns.
 
 ## `useDataTableContext`
 

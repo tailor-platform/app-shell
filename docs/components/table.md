@@ -60,6 +60,8 @@ All other standard HTML `<table>` props are accepted.
 
 All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`) accept `className` and their corresponding standard HTML element props.
 
+`Table.Head` and `Table.Cell` also accept `align?: "left" | "center" | "right"` for semantic text alignment without relying on utility-class overrides.
+
 ## Examples
 
 ### With Footer
@@ -109,6 +111,44 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
     <Table.Row>
       <Table.Cell>Item 1</Table.Cell>
       <Table.Cell>Shipped</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table.Root>
+```
+
+### Right-aligned numeric columns
+
+```tsx
+<Table.Root>
+  <Table.Header>
+    <Table.Row>
+      <Table.Head>Item</Table.Head>
+      <Table.Head align="right">Amount</Table.Head>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell>Widget A</Table.Cell>
+      <Table.Cell align="right">123</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table.Root>
+```
+
+### Center-aligned status column
+
+```tsx
+<Table.Root>
+  <Table.Header>
+    <Table.Row>
+      <Table.Head>Item</Table.Head>
+      <Table.Head align="center">Status</Table.Head>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell>Widget A</Table.Cell>
+      <Table.Cell align="center">Active</Table.Cell>
     </Table.Row>
   </Table.Body>
 </Table.Root>

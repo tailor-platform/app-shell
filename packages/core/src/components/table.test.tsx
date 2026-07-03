@@ -7,6 +7,88 @@ afterEach(() => {
 });
 
 describe("Table", () => {
+  describe("alignment", () => {
+    it("right-aligns header cells via align prop", () => {
+      const { container } = render(
+        <Table.Root>
+          <Table.Header>
+            <Table.Row>
+              <Table.Head align="right">Amount</Table.Head>
+            </Table.Row>
+          </Table.Header>
+        </Table.Root>,
+      );
+      const head = container.querySelector('[data-slot="table-head"]');
+      expect(head?.className).toContain("astw:text-right");
+      expect(head?.className).not.toContain("astw:text-left");
+      expect(head?.className).not.toContain("astw:text-center");
+    });
+
+    it("center-aligns header cells via align prop", () => {
+      const { container } = render(
+        <Table.Root>
+          <Table.Header>
+            <Table.Row>
+              <Table.Head align="center">Status</Table.Head>
+            </Table.Row>
+          </Table.Header>
+        </Table.Root>,
+      );
+      const head = container.querySelector('[data-slot="table-head"]');
+      expect(head?.className).toContain("astw:text-center");
+      expect(head?.className).not.toContain("astw:text-left");
+      expect(head?.className).not.toContain("astw:text-right");
+    });
+
+    it("right-aligns data cells via align prop", () => {
+      const { container } = render(
+        <Table.Root>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell align="right">123</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>,
+      );
+      const cell = container.querySelector('[data-slot="table-cell"]');
+      expect(cell?.className).toContain("astw:text-right");
+      expect(cell?.className).not.toContain("astw:text-left");
+      expect(cell?.className).not.toContain("astw:text-center");
+    });
+
+    it("center-aligns data cells via align prop", () => {
+      const { container } = render(
+        <Table.Root>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell align="center">Active</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>,
+      );
+      const cell = container.querySelector('[data-slot="table-cell"]');
+      expect(cell?.className).toContain("astw:text-center");
+      expect(cell?.className).not.toContain("astw:text-left");
+      expect(cell?.className).not.toContain("astw:text-right");
+    });
+
+    it("left-aligns data cells by default", () => {
+      const { container } = render(
+        <Table.Root>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>123</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>,
+      );
+      const cell = container.querySelector('[data-slot="table-cell"]');
+      expect(cell?.className).toContain("astw:text-left");
+      expect(cell?.className).not.toContain("astw:text-right");
+      expect(cell?.className).not.toContain("astw:text-center");
+    });
+  });
+
   describe("snapshots", () => {
     it("basic table with header and body", () => {
       const { container } = render(

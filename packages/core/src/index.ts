@@ -1,6 +1,3 @@
-import "./globals.css";
-import "@fontsource-variable/inter/wght.css";
-
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
@@ -39,6 +36,14 @@ export {
   type EnhancedAuthClient,
   type AuthClientConfig,
 } from "./contexts/auth-context";
+export {
+  createAIGatewayClient,
+  type AIGatewayClient,
+  type AIGatewayChatMessage,
+  type AIGatewayChatRequest,
+  type AIChatCompletionEvent,
+} from "./ai/client";
+export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";
@@ -110,6 +115,10 @@ export {
   type UseAttachmentOptions,
 } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
+export {
+  DocumentProgressCard,
+  type DocumentProgressCardProps,
+} from "./components/document-progress-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";

@@ -6,10 +6,12 @@ on:
     paths:
       - "pnpm-lock.yaml"
       - ".github/license-package-exceptions.json"
+      - ".github/workflows/check-licenses.yaml"
   pull_request:
     paths:
       - "pnpm-lock.yaml"
       - ".github/license-package-exceptions.json"
+      - ".github/workflows/check-licenses.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

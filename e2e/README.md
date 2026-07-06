@@ -1,6 +1,6 @@
-# E2E Tests for AuthProvider
+# E2E Tests for AuthProvider and AI Gateway
 
-Playwright-based E2E tests that verify the AuthProvider OAuth authentication flow against a real Tailor Platform workspace.
+Playwright-based E2E tests that verify the AuthProvider OAuth authentication flow and a minimal AI Gateway smoke check against a real Tailor Platform workspace.
 
 ## Setup
 
@@ -11,7 +11,7 @@ cd e2e/backend
 TAILOR_PLATFORM_WORKSPACE_ID=<your-workspace-id> pnpm deploy
 ```
 
-After deploy, retrieve the app URL and client ID using `tailor-sdk`:
+After deploy, retrieve the app URL, client ID, and AI Gateway URL using `tailor-sdk`:
 
 ```bash
 # Get the app URL
@@ -21,6 +21,10 @@ npx tailor-sdk show --workspace-id <your-workspace-id> --json
 # Get the OAuth2 client ID
 npx tailor-sdk oauth2client list --workspace-id <your-workspace-id> --json
 # → [{"clientId": "tpoc_...", ...}]
+
+# Get the AI Gateway domain
+npx tailor-sdk workspace app list --workspace-id <your-workspace-id> --json
+# → find the entry named "e2e-ai-gateway" and use https://<domain>
 ```
 
 ### 2. Create a test user
@@ -50,7 +54,7 @@ mutation CreateUserProfile {
 cp e2e/.env.example e2e/.env
 ```
 
-Fill in `VITE_TAILOR_APP_URL` and `VITE_TAILOR_CLIENT_ID` (retrieved above). The test user credentials are pre-filled.
+Fill in `VITE_TAILOR_APP_URL`, `VITE_TAILOR_CLIENT_ID`, and `VITE_TAILOR_AI_GATEWAY_URL` (retrieved above). The test user credentials are pre-filled.
 
 ### 4. Install dependencies & browsers
 
@@ -74,12 +78,13 @@ cd e2e && pnpm dev
 
 ## Test Scenarios
 
-| Test                | Description                                                      |
-| ------------------- | ---------------------------------------------------------------- |
-| Auth guard display  | Verifies unauthenticated users see the login UI                  |
-| Login flow          | Full OAuth redirect → IDP login → callback → authenticated state |
-| Logout              | Verifies logout returns to auth guard                            |
-| Session persistence | Confirms page reload maintains authentication                    |
+| Test                | Description                                                         |
+| ------------------- | ------------------------------------------------------------------- |
+| Auth guard display  | Verifies unauthenticated users see the login UI                     |
+| Login flow          | Full OAuth redirect → IDP login → callback → authenticated state    |
+| Logout              | Verifies logout returns to auth guard                               |
+| Session persistence | Confirms page reload maintains authentication                       |
+| AI Gateway smoke    | Sends `PING` and checks the OpenAI-compatible reply contains `PONG` |
 
 ## Architecture
 

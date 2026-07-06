@@ -44,5 +44,6 @@ jobs:
         env:
           VITE_TAILOR_APP_URL: ${{ secrets.E2E_TAILOR_APP_URL }}
           VITE_TAILOR_CLIENT_ID: ${{ secrets.E2E_TAILOR_CLIENT_ID }}
+          VITE_TAILOR_AI_GATEWAY_URL: ${{ secrets.E2E_TAILOR_AI_GATEWAY_URL }}
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}

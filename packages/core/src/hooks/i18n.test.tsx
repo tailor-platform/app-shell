@@ -15,6 +15,22 @@ afterEach(() => {
   cleanup();
 });
 
+describe("buildConfigurations locale normalization", () => {
+  it("keeps a language subtag unchanged (existing usage)", () => {
+    const c = buildConfigurations({ modules: [], locale: "ja" });
+    expect(c.locale).toBe("ja");
+    expect(c.resolvedLocale).toBe("ja");
+  });
+
+  it("splits a full BCP-47 tag: language subtag for UI strings, full tag for formatting", () => {
+    const c = buildConfigurations({ modules: [], locale: "ja-JP" });
+    // Label tables are keyed by language, so `locale` must be the subtag...
+    expect(c.locale).toBe("ja");
+    // ...while `resolvedLocale` keeps the region for Intl/date formatting.
+    expect(c.resolvedLocale).toBe("ja-JP");
+  });
+});
+
 const labels = defineI18nLabels({
   en: {
     hello: "Hello",

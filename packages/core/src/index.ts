@@ -1,6 +1,3 @@
-import "./globals.css";
-import "@fontsource-variable/inter/wght.css";
-
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
@@ -25,7 +22,13 @@ export {
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
 
-export { useAppShell, useAppShellConfig, useAppShellData } from "./contexts/appshell-context";
+export {
+  useAppShell,
+  useAppShellConfig,
+  useAppShellData,
+  useResolvedLocale,
+  useTimeZone,
+} from "./contexts/appshell-context";
 export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";
 export { AppearanceSwitcher } from "./components/appearance-switcher";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";
@@ -38,6 +41,14 @@ export {
   type EnhancedAuthClient,
   type AuthClientConfig,
 } from "./contexts/auth-context";
+export {
+  createAIGatewayClient,
+  type AIGatewayClient,
+  type AIGatewayChatMessage,
+  type AIGatewayChatRequest,
+  type AIChatCompletionEvent,
+} from "./ai/client";
+export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";
@@ -109,6 +120,10 @@ export {
   type UseAttachmentOptions,
 } from "./components/attachment";
 export { MetricCard, type MetricCardProps } from "./components/metric-card";
+export {
+  DocumentProgressCard,
+  type DocumentProgressCardProps,
+} from "./components/document-progress-card";
 export { Layout, type LayoutProps } from "./components/layout/Layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
@@ -127,6 +142,31 @@ export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
 export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
+export {
+  DateField,
+  DatePicker,
+  type DateFieldProps,
+  type DatePickerProps,
+} from "./components/date-field";
+export { Calendar, type CalendarProps } from "./components/calendar";
+
+// @internationalized/date re-exports — consumers import date helpers/types from
+// app-shell and install no extra packages. The long tail is available via direct
+// import of @internationalized/date (dedupes to the same instance).
+export {
+  today,
+  now,
+  getLocalTimeZone,
+  parseDate,
+  parseDateTime,
+  parseAbsolute,
+  parseZonedDateTime,
+  type CalendarDate,
+  type CalendarDateTime,
+  type ZonedDateTime,
+  type Time,
+  type DateValue,
+} from "@internationalized/date";
 export { type MappedItem, type ItemGroup } from "./components/dropdown-items";
 export {
   CsvImporter,

@@ -492,13 +492,26 @@ The `filter` property on a column accepts a `FilterConfig` object. When set, the
 | `string`   | Text           | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
 | `number`   | Number         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `datetime` | Datetime-local | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | Date           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
 | `time`     | Time           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `enum`     | Dropdown       | `eq`, `ne`, `in`, `nin`                                                                                      |
 | `boolean`  | Toggle         | `eq`, `ne`                                                                                                   |
 | `uuid`     | Text           | `eq`, `ne`, `in`, `nin`                                                                                      |
 
 When the user selects the `between` operator on a `number`, `datetime`, `date`, or `time` column, the filter chip renders a range input with **min** and **max** bounds.
+
+### Date Filters
+
+`date` columns use the app-shell [`DatePicker`](./date-picker.md) as the filter input (single value and `between` ranges) and present a friendlier, slimmer operator set:
+
+| Operator  | Label        | Meaning                    |
+| --------- | ------------ | -------------------------- |
+| `eq`      | _exact date_ | matches that calendar date |
+| `gte`     | _after_      | on or after (inclusive)    |
+| `lte`     | _before_     | on or before (inclusive)   |
+| `between` | _between_    | inclusive min–max range    |
+
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set and native inputs.)
 
 ### String Filter Case Sensitivity
 
@@ -589,12 +602,13 @@ const { variables, control } = useCollectionVariables({
 
 ### Options
 
-| Option                  | Type            | Description                                                                                                           |
-| ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `params.pageSize`       | `number`        | Initial page size. Default: `20`.                                                                                     |
-| `params.initialFilters` | `Filter[]`      | Filters applied on first render.                                                                                      |
-| `params.initialSort`    | `SortState[]`   | Sort applied on first render.                                                                                         |
-| `tableMetadata`         | `TableMetadata` | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
+| Option                  | Type                                 | Description                                                                                                           |
+| ----------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                     |
+| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                      |
+| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                         |
+| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
+| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                          |
 
 ### Return Value
 
@@ -628,6 +642,54 @@ const [result] = useQuery({
   },
 });
 ```
+
+## `useURLCollectionVariables`
+
+Wraps `useCollectionVariables` with automatic URL persistence. It seeds filter, sort, and page-size state from the current URL search params on mount and writes changes back to the URL as the user interacts with the table — using `replace` navigation so individual interactions don't push new history entries.
+
+Use this instead of `useCollectionVariables` when you want filters, sort, and pagination to survive page refreshes and be shareable via URL.
+
+```tsx
+import { useURLCollectionVariables } from "@tailor-platform/app-shell";
+
+const { variables, control } = useURLCollectionVariables({
+  tableMetadata,
+  params: { pageSize: 20 },
+});
+```
+
+The return value is identical to `useCollectionVariables` — `variables` and `control`.
+
+### Options
+
+All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly).
+
+### URL format
+
+| State      | URL key                | Example               |
+| ---------- | ---------------------- | --------------------- |
+| `pageSize` | `p`                    | `?p=20`               |
+| Sort       | `s`                    | `?s=createdAt:desc`   |
+| Filter     | `f.<field>:<operator>` | `?f.status:eq=ACTIVE` |
+
+### Custom search-params binding: `withURLCollectionState`
+
+If you need URL persistence but cannot use react-router's `useSearchParams` (e.g. a different router or test environment), use the pure `withURLCollectionState` decorator to compose URL state with `useCollectionVariables` directly:
+
+```tsx
+import { withURLCollectionState, useCollectionVariables } from "@tailor-platform/app-shell";
+
+const [searchParams, setSearchParams] = useSearchParams();
+
+const { variables, control } = useCollectionVariables(
+  withURLCollectionState({ tableMetadata, params: { pageSize: 20 } }, [
+    searchParams,
+    setSearchParams,
+  ]),
+);
+```
+
+`withURLCollectionState` returns augmented `useCollectionVariables` options — it does not call the hook itself. The `[searchParams, setSearchParams]` tuple must match the `URLSearchParams` + setter shape that `useSearchParams()` returns.
 
 ## `useDataTableContext`
 

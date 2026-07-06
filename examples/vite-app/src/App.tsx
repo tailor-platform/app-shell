@@ -34,7 +34,10 @@ const App = () => {
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
+              <SidebarItem to="/dashboard/document-progress" />
             </SidebarGroup>
+            <SidebarItem to="/date-picker" />
+            <SidebarItem to="/data-table" />
             <SidebarItem to="/settings" />
           </DefaultSidebar>
         }

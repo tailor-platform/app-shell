@@ -27,18 +27,21 @@ import { Select } from "@tailor-platform/app-shell";
 
 ### Select Props
 
-| Prop            | Type                                                                       | Default | Description                                                         |
-| --------------- | -------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------- |
-| `items`         | `I[]`                                                                      | -       | Items to display. May be a flat array or an array of `ItemGroup<T>` |
-| `placeholder`   | `string`                                                                   | -       | Placeholder text shown when no value is selected                    |
-| `multiple`      | `true \| false \| undefined`                                               | `false` | Enables multi-select mode                                           |
-| `value`         | `T \| null` (single) or `T[]` (multiple)                                   | -       | Controlled value                                                    |
-| `defaultValue`  | `T \| null` (single) or `T[]` (multiple)                                   | -       | Initial value (uncontrolled)                                        |
-| `onValueChange` | `(value: T \| null) => void` (single) or `(value: T[]) => void` (multiple) | -       | Called when the selected value changes                              |
-| `renderValue`   | `(value: T \| null \| T[]) => React.ReactNode`                             | -       | Custom render function for the selected value display               |
-| `mapItem`       | `(item: T) => MappedItem`                                                  | -       | Map each item to its label, key, and optional custom render         |
-| `className`     | `string`                                                                   | -       | Additional CSS classes for the root container                       |
-| `disabled`      | `boolean`                                                                  | `false` | Disables the select                                                 |
+| Prop              | Type                                                                       | Default | Description                                                         |
+| ----------------- | -------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------- |
+| `items`           | `I[]`                                                                      | -       | Items to display. May be a flat array or an array of `ItemGroup<T>` |
+| `placeholder`     | `string`                                                                   | -       | Placeholder text shown when no value is selected                    |
+| `multiple`        | `true \| false \| undefined`                                               | `false` | Enables multi-select mode                                           |
+| `value`           | `T \| null` (single) or `T[]` (multiple)                                   | -       | Controlled value                                                    |
+| `defaultValue`    | `T \| null` (single) or `T[]` (multiple)                                   | -       | Initial value (uncontrolled)                                        |
+| `onValueChange`   | `(value: T \| null) => void` (single) or `(value: T[]) => void` (multiple) | -       | Called when the selected value changes                              |
+| `renderValue`     | `(value: T \| null \| T[]) => React.ReactNode`                             | -       | Custom render function for the selected value display               |
+| `mapItem`         | `(item: T) => MappedItem`                                                  | -       | Map each item to its label, key, and optional custom render         |
+| `className`       | `string`                                                                   | -       | Additional CSS classes for the root container                       |
+| `disabled`        | `boolean`                                                                  | `false` | Disables the select                                                 |
+| `aria-label`      | `string`                                                                   | -       | Accessible name for the trigger. Use when there is no visible label |
+| `aria-labelledby` | `string`                                                                   | -       | ID of the element(s) that label the trigger                         |
+| `id`              | `string`                                                                   | -       | ID applied to the combobox trigger element                          |
 
 ### MappedItem
 
@@ -217,6 +220,20 @@ const fruits = Select.useAsync({
     )}
   </Select.Parts.Content>
 </Select.Parts.Root>;
+```
+
+## Accessibility
+
+- The trigger exposes the `combobox` role. When used inside a `Form`/`FormControl` it is labeled automatically.
+- When used standalone (e.g. a table toolbar or list filter) there is no visible `<label>`, so give the trigger an accessible name with `aria-label` or `aria-labelledby`. Otherwise screen readers announce only the current value.
+
+```tsx
+// Announced as "Direction filter, combobox" instead of just the value
+<Select items={items} value={value} onValueChange={setValue} aria-label="Direction filter" />
+
+// Or point at a visible label
+<span id="dir-label">From</span>
+<Select items={items} aria-labelledby="dir-label" />
 ```
 
 ## Related Components

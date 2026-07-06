@@ -422,6 +422,22 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   /**
+   * Expand a 1–2 digit year to the 2000s (e.g. "26" ⇒ 2026) as soon as the year
+   * segment is left — moving to a sibling segment, tabbing to the calendar icon,
+   * or leaving the field entirely. The calendar icon sits inside the group, so
+   * relying on `commitOnBlur` (whole-group blur) would leave "26" showing until
+   * focus escaped the icon too; firing on the year segment's own blur closes that
+   * gap. Idempotent — a full-width year (≥ 100) is left untouched — so the
+   * `commitOnBlur` backstop can safely run over it as well.
+   */
+  const expandShortYear = useCallback(() => {
+    if (isReadOnly) return;
+    const y = fields.year;
+    if (y == null || y >= 100) return;
+    commit({ ...fields, year: 2000 + y });
+  }, [fields, isReadOnly, commit]);
+
+  /**
    * On-blur normalization — two corrections applied in a single commit when
    * focus leaves the whole group:
    *
@@ -530,6 +546,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     setDayPeriod,
     clearSegment,
     applyShortcut,
+    expandShortYear,
     commitOnBlur,
   };
 }

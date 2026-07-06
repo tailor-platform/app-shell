@@ -161,6 +161,7 @@ function DateField<T extends DateValue = DateValue>({
         clearSegment={state.clearSegment}
         applyShortcut={state.applyShortcut}
         commitOnBlur={state.commitOnBlur}
+        expandShortYear={state.expandShortYear}
         isDisabled={isDisabled}
         isReadOnly={isReadOnly}
         isInvalid={derivedInvalid}
@@ -300,6 +301,7 @@ function DatePicker<T extends DateValue = DateValue>({
             clearSegment={fieldState.clearSegment}
             applyShortcut={fieldState.applyShortcut}
             commitOnBlur={fieldState.commitOnBlur}
+            expandShortYear={fieldState.expandShortYear}
             onOpenCalendar={() => setOpen(true)}
             isDisabled={isDisabled}
             isReadOnly={isReadOnly}

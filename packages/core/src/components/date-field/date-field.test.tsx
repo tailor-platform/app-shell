@@ -584,6 +584,24 @@ describe("DateField keyboard shortcuts", () => {
     await lastEmit(onChange, "2026-06-15");
   });
 
+  it("expands a 2-digit year as soon as the year segment is left (still inside the field)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06");
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("15");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("26");
+    // Move focus back to a sibling segment — never leaving the field/group. The
+    // year should still expand (mirrors tabbing to the calendar icon).
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+
+    await lastEmit(onChange, "2026-06-15");
+  });
+
   it("clamps a shortcut target to minValue / maxValue", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

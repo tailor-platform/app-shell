@@ -84,6 +84,8 @@ interface DateInputGroupProps {
    * month/year when only finer fields are set, and clamp an impossible day.
    */
   commitOnBlur: () => void;
+  /** Expand a 1–2 digit year to the 2000s when the year segment loses focus. */
+  expandShortYear: () => void;
   /** Open the calendar popover (Alt+↓). Omitted for the popover-less `DateField`. */
   onOpenCalendar?: () => void;
   isDisabled?: boolean;
@@ -109,6 +111,7 @@ export function DateInputGroup({
   clearSegment,
   applyShortcut,
   commitOnBlur,
+  expandShortYear,
   onOpenCalendar,
   isDisabled,
   isReadOnly,
@@ -253,6 +256,11 @@ export function DateInputGroup({
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, className)}
       onBlur={(e) => {
+        // Leaving the year segment (to a sibling, the calendar icon, or out of
+        // the field) expands a 1–2 digit year to the 2000s right away — the icon
+        // is inside the group, so waiting for whole-group blur would leave "26"
+        // showing after a Tab. `focusout` bubbles, so `e.target` is the segment.
+        if ((e.target as HTMLElement).dataset?.type === "year") expandShortYear();
         // Focus left the whole group (not just moved between segments) →
         // backfill the current month/year for a partial entry and clamp an
         // impossible day.

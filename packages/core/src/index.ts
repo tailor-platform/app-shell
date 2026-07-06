@@ -1,5 +1,5 @@
 export { AppShell, type AppShellProps } from "./components/appshell";
-export { SidebarLayout, DefaultSidebar } from "./components/sidebar/index";
+export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 export {
   useRegisterCommandPaletteActions,
@@ -17,6 +17,7 @@ export {
   type SidebarGroupProps,
   type SidebarLayoutProps,
   type DefaultSidebarProps,
+  type DefaultHeaderProps,
 } from "./components/sidebar/index";
 
 // Guard component for conditional rendering

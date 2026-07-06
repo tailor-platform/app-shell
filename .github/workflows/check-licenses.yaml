@@ -1,0 +1,81 @@
+name: Check Licenses
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pnpm-lock.yaml"
+      - ".github/license-package-exceptions.json"
+      - ".github/workflows/check-licenses.yaml"
+  pull_request:
+    paths:
+      - "pnpm-lock.yaml"
+      - ".github/license-package-exceptions.json"
+      - ".github/workflows/check-licenses.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  check-licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+          node-version-file: "./package.json"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # Chains must start with an example app (nextjs-app, vite-app), never
+      # @tailor-platform/app-shell itself — package-exceptions may excuse a
+      # license issue in a non-published example, never in the published
+      # package.
+      - name: Load and validate package exceptions
+        id: package-exceptions
+        run: |
+          node <<'EOF'
+          const fs = require("node:fs");
+          const ALLOWED_ROOTS = ["nextjs-app", "vite-app"];
+          const configPath = ".github/license-package-exceptions.json";
+          const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+          const violations = [];
+          for (const [license, chains] of Object.entries(config)) {
+            for (const chain of chains) {
+              if (!ALLOWED_ROOTS.includes(chain[0])) {
+                violations.push(
+                  `"${license}": chain ${JSON.stringify(chain)} must start with one of ${ALLOWED_ROOTS.join(", ")}`,
+                );
+              }
+            }
+          }
+          if (violations.length > 0) {
+            console.error(`::error::Invalid ${configPath}:\n${violations.join("\n")}`);
+            process.exit(1);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `exceptions=${JSON.stringify(config)}\n`);
+          EOF
+
+      - name: Check licenses
+        uses: tailor-platform/actions/check-licenses@d3040e3b5da92f72696d89db24bc9da62e0993d8 # v1.6.0
+        with:
+          license-groups: ${{ vars.CHECK_LICENSES_ALLOWED_LICENSE_GROUPS }}
+          additional-licenses: ${{ vars.CHECK_LICENSES_ALLOWED_LICENSES }}
+          denied-licenses: ${{ vars.CHECK_LICENSES_DENIED_LICENSES }}
+          package-exceptions: ${{ steps.package-exceptions.outputs.exceptions }}

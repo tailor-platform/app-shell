@@ -7,6 +7,8 @@ description: Pre-built sidebar component that renders navigation from AppShell m
 
 The default sidebar component that automatically renders navigation items from the AppShell context. This is a convenience component that provides a ready-to-use sidebar without manual configuration.
 
+> Also available as **`SidebarLayout.DefaultSidebar`**. The namespaced form is preferred for discoverability (it pairs with [`SidebarLayout.DefaultHeader`](./default-header.md)); the top-level `DefaultSidebar` export is kept for backwards compatibility. Both refer to the same component.
+
 ## Props
 
 | Prop     | Type              | Required | Description           |

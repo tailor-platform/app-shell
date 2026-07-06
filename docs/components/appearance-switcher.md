@@ -21,6 +21,18 @@ import { AppearanceSwitcher } from "@tailor-platform/app-shell";
 
 Drop it anywhere inside an `<AppShell>` tree — for example in a sidebar footer or a settings toolbar.
 
+It is also the default action in [`SidebarLayout.DefaultHeader`](./default-header.md). Because `DefaultHeader`'s `actions` prop **replaces** the entire right-hand cluster, you must include `<AppearanceSwitcher />` in your `actions` array if you customize the header and still want the switcher:
+
+```tsx
+<SidebarLayout
+  header={
+    <SidebarLayout.DefaultHeader
+      actions={[<NotificationBell key="bell" />, <AppearanceSwitcher key="appearance" />]}
+    />
+  }
+/>
+```
+
 ## Props
 
 `AppearanceSwitcher` accepts no props. Color theme state is managed internally via `useTheme`.

@@ -111,14 +111,28 @@ import { Button, Layout, Tabs } from "@tailor-platform/app-shell";
 
 **Import:** `import { SidebarLayout } from '@tailor-platform/app-shell'`
 **Purpose:** Top-level layout that mounts the sidebar and renders the page outlet.
-**API:** `SidebarLayoutProps` — sidebar config, header config, content slot. Used in `App.tsx`.
+**API:** `SidebarLayoutProps` — `sidebar`, `header`, and `children` are full-region slots (each defaults to a built-in). `sidebar` defaults to `SidebarLayout.DefaultSidebar`; `header` defaults to `SidebarLayout.DefaultHeader`. Used in `App.tsx`.
 **Used in patterns:** consumed by AppShell init, not directly by page patterns. See `project-setup.md`.
 
-### `DefaultSidebar`, `SidebarGroup`, `SidebarItem`, `SidebarSeparator`
+### `SidebarLayout.DefaultHeader` (`DefaultHeader`)
 
-**Import:** `import { DefaultSidebar, SidebarGroup, SidebarItem, SidebarSeparator } from '@tailor-platform/app-shell'`
+**Import:** `import { SidebarLayout } from '@tailor-platform/app-shell'` → `SidebarLayout.DefaultHeader` (also top-level `DefaultHeader`)
+**Purpose:** The built-in top bar (trigger + breadcrumb, plus an `actions` cluster). Drop into `SidebarLayout`'s `header` slot to extend the header without rebuilding it.
+**API:** `actions?: ReactNode | ReactNode[]` — the right-hand cluster (opinionated flex row). **Defaults to `[<AppearanceSwitcher />]`, and passing `actions` REPLACES the switcher** — include `<AppearanceSwitcher />` in the array to keep it. `actions={[]}` = empty right side.
+**Used in patterns:** project-level header customization (notification bell, user menu). See `project-setup.md`.
+
+### `SidebarLayout.DefaultSidebar` (`DefaultSidebar`), `SidebarGroup`, `SidebarItem`, `SidebarSeparator`
+
+**Import:** `import { SidebarLayout, SidebarGroup, SidebarItem, SidebarSeparator } from '@tailor-platform/app-shell'` → `SidebarLayout.DefaultSidebar` (also top-level `DefaultSidebar`)
 **Purpose:** Sidebar composition. `DefaultSidebar` auto-resolves nav items from `appShellPageProps.meta` on each page; the others let you customize manually.
 **Used in patterns:** sidebar is a project-level concern. See `project-setup.md`.
+
+### `AppearanceSwitcher`
+
+**Import:** `import { AppearanceSwitcher } from '@tailor-platform/app-shell'`
+**Purpose:** Palette-icon dropdown for Light/Dark/System color mode. The default `SidebarLayout.DefaultHeader` action; also usable standalone (e.g. a sidebar footer). Include it in `DefaultHeader`'s `actions` array when customizing the header to keep it visible.
+**API:** No props — reads/writes theme via `useTheme`.
+**Used in patterns:** project-level. See `project-setup.md`.
 
 ### `CommandPalette`
 

@@ -602,6 +602,31 @@ describe("DateField keyboard shortcuts", () => {
     await lastEmit(onChange, "2026-06-15");
   });
 
+  // Regression: the field path must honour DatePicker's firstDayOfWeek for w/k,
+  // not silently fall back to the locale default (which would disagree with the
+  // calendar path). en-US defaults to Sunday; firstDayOfWeek="mon" forces Monday.
+  it("honours firstDayOfWeek for 'w' in the field path (popover closed)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        label="Date"
+        locale="en-US"
+        firstDayOfWeek="mon"
+        defaultValue={new CalendarDate(2025, 6, 18)} // a Wednesday
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("w"); // Monday-start week → 16 Jun (not 15 Jun, the Sunday)
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-16");
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("clamps a shortcut target to minValue / maxValue", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

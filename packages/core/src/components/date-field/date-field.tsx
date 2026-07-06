@@ -259,6 +259,8 @@ function DatePicker<T extends DateValue = DateValue>({
     // Let the keyboard shortcuts clamp into the same range the calendar enforces.
     minValue,
     maxValue,
+    // Match the calendar's week-start so field + calendar `w`/`k` agree.
+    firstDayOfWeek,
     isReadOnly,
   });
 

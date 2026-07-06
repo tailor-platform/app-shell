@@ -12,7 +12,7 @@ import {
   today,
   type DateValue,
 } from "@internationalized/date";
-import { resolveDateShortcut, type DateShortcut } from "@/lib/date-shortcuts";
+import { resolveDateShortcut, type DateShortcut, type FirstDayOfWeek } from "@/lib/date-shortcuts";
 
 /**
  * Hand-rolled segmented-date-field state.
@@ -84,6 +84,8 @@ export interface DateFieldStateOptions {
   /** Lower/upper bound the keyboard shortcuts clamp their target date into. */
   minValue?: DateValue;
   maxValue?: DateValue;
+  /** Week-start for the `w`/`k` shortcuts; defaults to the locale convention. */
+  firstDayOfWeek?: FirstDayOfWeek;
   isDisabled?: boolean;
   isReadOnly?: boolean;
 }
@@ -166,6 +168,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     placeholderValue,
     minValue,
     maxValue,
+    firstDayOfWeek,
     isReadOnly,
   } = options;
 
@@ -407,7 +410,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       } else {
         base = completeCalendarDate(fields) ?? ref;
       }
-      let next = resolveDateShortcut(cmd, base, ref, locale);
+      let next = resolveDateShortcut(cmd, base, ref, locale, firstDayOfWeek);
       // Clamp into [minValue, maxValue] so a shortcut can't land outside the
       // allowed range — mirrors the calendar grid, which clamps roving focus the
       // same way. (`isDateUnavailable` isn't enforced here; the field is a
@@ -418,7 +421,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       if (hi && next.compare(hi) > 0) next = hi;
       commit({ ...fields, year: next.year, month: next.month, day: next.day });
     },
-    [fields, timeZone, locale, isReadOnly, commit, minValue, maxValue],
+    [fields, timeZone, locale, isReadOnly, commit, minValue, maxValue, firstDayOfWeek],
   );
 
   /**

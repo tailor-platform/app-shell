@@ -14,7 +14,7 @@ import {
   today,
   type DateValue,
 } from "@internationalized/date";
-import { DATE_SHORTCUT_KEYS, resolveDateShortcut } from "@/lib/date-shortcuts";
+import { DATE_SHORTCUT_KEYS, resolveDateShortcut, type FirstDayOfWeek } from "@/lib/date-shortcuts";
 
 /**
  * Hand-rolled calendar-grid state — the logic react-aria's `useCalendarState`
@@ -23,7 +23,9 @@ import { DATE_SHORTCUT_KEYS, resolveDateShortcut } from "@/lib/date-shortcuts";
  * (arrows, Home/End, PageUp/Down, Shift+PageUp/Down).
  */
 
-export type FirstDayOfWeek = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+// Re-exported from the shared shortcut module so existing import sites
+// (`calendar.tsx`, `date-field.tsx`) keep resolving it here.
+export type { FirstDayOfWeek };
 
 export interface CalendarStateOptions {
   value?: DateValue | null;

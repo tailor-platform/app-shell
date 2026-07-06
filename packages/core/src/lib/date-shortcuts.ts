@@ -33,6 +33,13 @@ export type DateShortcut =
   | "dayNext";
 
 /**
+ * Week-start override for the `weekStart`/`weekEnd` shortcuts (and the calendar
+ * grid). Defined here — with the resolver that consumes it — so the field and
+ * calendar engines share one source of truth.
+ */
+export type FirstDayOfWeek = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+
+/**
  * Key → command, keyed by the lower-cased `KeyboardEvent.key`. `+` and `=` both
  * mean "next day" (so plus works with or without Shift); `-` is previous day.
  * Letters mirror QuickBooks Online's date-box keys. Consumers additionally
@@ -64,7 +71,7 @@ export function resolveDateShortcut(
   base: CalendarDate,
   todayDate: CalendarDate,
   locale: string,
-  firstDayOfWeek?: "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat",
+  firstDayOfWeek?: FirstDayOfWeek,
 ): CalendarDate {
   switch (cmd) {
     case "today":

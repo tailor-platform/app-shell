@@ -344,6 +344,51 @@ describe("useAIChat", () => {
     expect(client.streamChatCompletion).toHaveBeenCalledTimes(2);
   });
 
+  it("fails after too many tool rounds", async () => {
+    const loop = defineAIChatTool({
+      description: "Loop forever",
+      schema: aiToolSchema.object({
+        value: aiToolSchema.string(),
+      }),
+      async execute({ value }) {
+        return { value };
+      },
+    });
+
+    let callCount = 0;
+    const client = {
+      streamChatCompletion: vi.fn(async function* () {
+        callCount += 1;
+        yield {
+          type: "tool-call",
+          toolCallId: `call-${callCount}`,
+          toolName: "loop",
+          argumentsText: '{"value":"again"}',
+        } as const;
+        yield { type: "done", finishReason: "tool_calls" } as const;
+      }),
+    } satisfies AIGatewayClient;
+
+    const { result } = renderHook(() =>
+      useAIChat({
+        client,
+        model: "gpt-5-mini",
+        tools: {
+          loop,
+        },
+      }),
+    );
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Start looping")).resolves.toBe(false);
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("error");
+      expect(result.current.error?.message).toContain("maximum number of tool rounds");
+    });
+  });
+
   it("passes provider tools through and exposes sources", async () => {
     const client = {
       streamChatCompletion: vi.fn(async function* ({ tools }) {

@@ -2,6 +2,6 @@
 "@tailor-platform/app-shell": patch
 ---
 
-Migrate `createAIGatewayClient()` to the OpenAI SDK and remove the public `stream` override from `useAIChat()` and `AIGatewayChatRequest`.
+Remove the `stream` option from `useAIChat()` and `AIGatewayChatRequest`.
 
-This replaces the manual SSE/JSON response handling with the SDK's OpenAI-compatible transport, while continuing to send requests through `authClient.fetch(...)`. AppShell now chooses the appropriate AI Gateway transport automatically, including the existing Gemini JSON fallback behavior.
+AppShell now selects the appropriate transport (streaming vs JSON) automatically based on the model. Passing `stream` is no longer needed.

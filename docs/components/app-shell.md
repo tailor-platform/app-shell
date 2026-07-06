@@ -204,6 +204,20 @@ Supported locales: `en`, `ja`
 
 [Learn more about Internationalization →](../api/define-i18n-labels.md)
 
+### timeZone
+
+- **Type:** `string` (optional)
+- **Default:** User's local timezone
+- **Description:** IANA timezone (e.g. `"America/Los_Angeles"`) used by date/time components as the default for resolving "today" and for `ZonedDateTime` values. When omitted, date/time components fall back to the user's local timezone.
+
+```tsx
+<AppShell timeZone="America/Los_Angeles" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+Access the configured timezone in components using [`useTimeZone`](../api/use-time-zone.md).
+
 ### errorBoundary
 
 - **Type:** `ErrorBoundaryComponent` (optional)
@@ -471,3 +485,5 @@ export default App;
 - [defineModule](../api/define-module.md) - Define a top-level module
 - [defineResource](../api/define-resource.md) - Define a nested resource
 - [useAppShell](../api/use-app-shell.md) - Access AppShell context
+- [useResolvedLocale](../api/use-resolved-locale.md) - Access the full BCP-47 locale and language code
+- [useTimeZone](../api/use-time-zone.md) - Access the configured IANA timezone

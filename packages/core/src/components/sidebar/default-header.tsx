@@ -1,4 +1,3 @@
-import { Children as ReactChildren } from "react";
 import { SidebarTrigger, useSidebar } from "@/components/sidebar";
 import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
@@ -61,12 +60,10 @@ export type DefaultHeaderProps = {
  * ```
  */
 export const DefaultHeader = ({ actions }: DefaultHeaderProps) => {
-  // Children.toArray flattens, drops nullish nodes, and preserves any keys the
-  // consumer set on array items (so dynamic/reordered actions keep identity).
-  const resolvedActions =
-    actions === undefined
-      ? [<AppearanceSwitcher key="appearance" />]
-      : ReactChildren.toArray(actions);
+  // Render `actions` as-is — a single node, or an array whose items the consumer
+  // keys themselves. React ignores `null`/`false` at render time, so no
+  // normalization is needed. Falls back to the appearance switcher when omitted.
+  const resolvedActions = actions === undefined ? <AppearanceSwitcher /> : actions;
 
   return (
     <header className="astw:flex astw:h-14 astw:shrink-0 astw:items-center astw:gap-2 astw:transition-[width,height] astw:ease-linear astw:group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

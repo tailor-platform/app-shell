@@ -112,18 +112,22 @@ const [activeTab, setActiveTab] = useState("overview");
 In the `capsule` variant, a tab whose only child is an icon renders **square** —
 its `min-width` matches its `min-height` — making it a natural fit for icon-only
 view toggles (e.g. table/kanban). Use `size` to align the track with a sibling
-`Button`: `size="default"` (36px) matches `Button`'s default height.
+`Button`: `size="default"` (36px) matches `Button`'s default height. Unsized
+icons default to `16px`, so the square is consistent regardless of the icon.
+
+> **Accessibility:** an icon-only tab has no visible text, so give each one an
+> `aria-label`. Without it, screen readers announce an unnamed tab.
 
 ```tsx
 <Tabs.Root defaultValue="overview" variant="capsule" size="default">
   <Tabs.List>
-    <Tabs.Tab value="overview">
+    <Tabs.Tab value="overview" aria-label="Overview">
       <LayoutDashboardIcon />
     </Tabs.Tab>
-    <Tabs.Tab value="projects">
+    <Tabs.Tab value="projects" aria-label="Projects">
       <FolderKanbanIcon />
     </Tabs.Tab>
-    <Tabs.Tab value="settings">
+    <Tabs.Tab value="settings" aria-label="Settings">
       <SettingsIcon />
     </Tabs.Tab>
   </Tabs.List>

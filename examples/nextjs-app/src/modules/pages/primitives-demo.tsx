@@ -631,13 +631,13 @@ export const primitiveComponentsDemoResource = defineResource({
                     <div style={labelStyle}>Icons</div>
                     <Tabs.Root defaultValue="overview" variant="capsule">
                       <Tabs.List>
-                        <Tabs.Tab value="overview">
+                        <Tabs.Tab value="overview" aria-label="Overview">
                           <LayoutDashboardIcon size={16} />
                         </Tabs.Tab>
-                        <Tabs.Tab value="projects">
+                        <Tabs.Tab value="projects" aria-label="Projects">
                           <FolderKanbanIcon size={16} />
                         </Tabs.Tab>
-                        <Tabs.Tab value="settings">
+                        <Tabs.Tab value="settings" aria-label="Settings">
                           <SettingsIcon size={16} />
                         </Tabs.Tab>
                       </Tabs.List>
@@ -664,14 +664,14 @@ export const primitiveComponentsDemoResource = defineResource({
                       </Tabs.Root>
                       <Tabs.Root defaultValue="table" variant="capsule" size={size}>
                         <Tabs.List>
-                          <Tabs.Tab value="table">
-                            <LayoutDashboardIcon size={16} />
+                          <Tabs.Tab value="table" aria-label="Table view">
+                            <LayoutDashboardIcon />
                           </Tabs.Tab>
-                          <Tabs.Tab value="board">
-                            <FolderKanbanIcon size={16} />
+                          <Tabs.Tab value="board" aria-label="Board view">
+                            <FolderKanbanIcon />
                           </Tabs.Tab>
-                          <Tabs.Tab value="settings">
-                            <SettingsIcon size={16} />
+                          <Tabs.Tab value="settings" aria-label="Settings">
+                            <SettingsIcon />
                           </Tabs.Tab>
                         </Tabs.List>
                       </Tabs.Root>

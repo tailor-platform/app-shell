@@ -89,41 +89,31 @@ export function SidebarLayout(props: SidebarLayoutProps) {
         {props.sidebar ?? <DefaultSidebar />}
         <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">
           {props.header ?? <DefaultHeader />}
-          {/* overflow-y-auto: with the shell viewport-bounded (h-svh on the
-              sidebar wrapper), this is where regular page content scrolls.
-              Pages that pin their own chrome (e.g. <Layout fill> with a
-              DataTable) size themselves to fit so this never scrolls.
-
-              Full-bleed: break out of SidebarInset's right padding with a
-              negative margin so the scrollbar sits at the window edge instead
-              of floating ~32px in, then restore the same padding inside so
-              content stays aligned with the breadcrumb header. The negative
-              margin / padding pair mirrors SidebarInset's own responsive
-              padding (px-4, → px-8 at md when the sidebar is the inset
-              variant). */}
-          {/* SPIKE (demo): scroll-fade with NO JS listener. A mask fades the top
-              edge of the content so it dissolves into the pinned breadcrumb; the
-              fade is driven by a scroll-driven animation (`scroll(self block)`
-              timeline over the first 2rem of scroll) instead of an onScroll +
-              useState toggle. Masking (alpha, not a matching colour) reveals the
-              real theme-gradient backdrop, so it's seamless on every theme.
-              Keyframes: `appshell-content-fade` in globals.css. */}
+          {/* Content scroll region. The shell is viewport-bounded (h-svh on the
+              sidebar wrapper), so regular pages scroll here; pages that pin
+              their own chrome (e.g. <Layout fill> with a DataTable) size to fit
+              and don't scroll this area. */}
           <div
             className={cn(
               "astw:flex astw:flex-col astw:gap-4 astw:flex-1 astw:min-h-0 astw:overflow-y-auto",
+              // Full-bleed: break out of SidebarInset's right padding so the
+              // scrollbar sits at the window edge, then restore the padding
+              // inside so content stays aligned with the header. Mirrors
+              // SidebarInset's responsive padding (px-4 → px-8 at md for the
+              // inset variant).
               "astw:-mr-4 astw:pr-4",
               "astw:md:group-has-data-[variant=inset]/sidebar-wrapper:-mr-8 astw:md:group-has-data-[variant=inset]/sidebar-wrapper:pr-8",
+              // Scroll-fade: a scroll-driven animation masks the top edge as
+              // content scrolls under the pinned header, ramping over the first
+              // 2rem then holding. The alpha mask reveals the real themed
+              // backdrop; keyframes live in globals.css. No JS scroll listener.
               "astw:[animation:appshell-content-fade_auto_linear_both] astw:[animation-timeline:scroll(self_block)] astw:[animation-range:0_2rem]",
-              // A `<Layout fill>` page bounds everything internally (its DataTable
-              // scrolls on its own), so this area never needs to scroll. Clip
-              // instead of scroll when it contains a fill layout — makes that an
-              // explicit guarantee and removes any sub-pixel-overflow scrollbar.
-              // (Also makes the scroll timeline inert on fill pages: no scroll
-              // range ⇒ no fade.)
+              // A <Layout fill> page bounds everything internally, so this area
+              // never needs to scroll: clip instead. This also makes the fade
+              // inert (no scroll range) and avoids any sub-pixel-overflow bar.
               "astw:has-data-[layout-fill]:overflow-hidden",
-              // Reserve the scrollbar gutter so content doesn't shift sideways
-              // when the bar appears/disappears across navigations (no-op with
-              // overlay scrollbars; moot on fill pages where overflow is hidden).
+              // Reserve the scrollbar gutter so content doesn't shift when the
+              // bar toggles across navigations (no-op with overlay scrollbars).
               "astw:[scrollbar-gutter:stable]",
             )}
           >

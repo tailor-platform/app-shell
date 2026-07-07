@@ -61,12 +61,12 @@
 }
 
 /*
- * SPIKE (demo): scroll-driven content fade — no JS listener.
- * The AppShell content-area scroller attaches this to a `scroll(self block)`
- * timeline over `animation-range: 0 2rem`, so the top-edge mask ramps from
- * fully opaque (no fade) to faded over the first 2rem of scroll, then holds.
+ * Content scroll-fade (see SidebarLayout). Attached to a `scroll(self block)`
+ * timeline over `animation-range: 0 2rem`, so the content area's top-edge mask
+ * ramps from fully opaque to faded across the first 2rem of scroll, then holds.
  * Both stops share the same 3-stop structure so only the top stop's alpha
- * interpolates. Inert on `fill` pages (overflow:hidden ⇒ no scroll range).
+ * interpolates. Inert on `fill` pages, where overflow is hidden (no scroll
+ * range). Where scroll-driven animations are unsupported it degrades to no fade.
  */
 @keyframes appshell-content-fade {
   from {

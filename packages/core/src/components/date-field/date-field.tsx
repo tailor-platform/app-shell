@@ -215,7 +215,7 @@ function DatePicker<T extends DateValue = DateValue>({
   const { locale: shellLocale, language } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
-  const resolvedTz = timeZoneProp ?? shellTz;
+  const resolvedTz = timeZoneProp ?? shellTz.value;
   const resolve = buildLocaleResolver(language);
   const t = useDateFieldT();
 

@@ -6,8 +6,7 @@ import {
   Calendar,
   Form,
   Button,
-  today,
-  getLocalTimeZone,
+  useTimeZone,
   parseDate,
   type CalendarDate,
   type DateValue,
@@ -15,9 +14,8 @@ import {
 } from "@tailor-platform/app-shell";
 import { CalendarDays } from "lucide-react";
 
-const tz = getLocalTimeZone();
-
 const DatePickerPage = () => {
+  const tz = useTimeZone();
   const [fieldValue, setFieldValue] = useState<CalendarDate | null>(null);
   const [pickerValue, setPickerValue] = useState<CalendarDate | null>(null);
   const [calendarValue, setCalendarValue] = useState<DateValue | null>(null);
@@ -28,8 +26,8 @@ const DatePickerPage = () => {
   const [deliveryError, setDeliveryError] = useState<string | undefined>(undefined);
   const [confirmedDate, setConfirmedDate] = useState<string | null>(null);
 
-  const tomorrow = today(tz).add({ days: 1 });
-  const threeMonths = today(tz).add({ months: 3 });
+  const tomorrow = tz.today().add({ days: 1 });
+  const threeMonths = tz.today().add({ months: 3 });
 
   // Validation runs on submit; the DatePicker surfaces the message through its
   // own `errorMessage` / `isInvalid` props (it isn't a Base UI Field control).
@@ -40,7 +38,7 @@ const DatePickerPage = () => {
       setDeliveryError("Please select a delivery date.");
       return;
     }
-    if (deliveryDate.compare(today(tz)) < 0) {
+    if (deliveryDate.compare(tz.today()) < 0) {
       setConfirmedDate(null);
       setDeliveryError("Delivery date can't be in the past.");
       return;
@@ -115,13 +113,13 @@ const DatePickerPage = () => {
                 label="No weekends"
                 description="Weekday dates only"
                 isDateUnavailable={(d) => {
-                  const day = d.toDate(tz).getDay();
+                  const day = d.toDate(tz.value).getDay();
                   return day === 0 || day === 6;
                 }}
               />
               <DatePicker
                 label="With range"
-                minValue={today(tz)}
+                minValue={tz.today()}
                 maxValue={threeMonths}
                 description={`Today → ${threeMonths.toString()}`}
               />
@@ -231,7 +229,7 @@ const DatePickerPage = () => {
                 <Calendar
                   aria-label="Weekdays only"
                   isDateUnavailable={(d) => {
-                    const day = d.toDate(tz).getDay();
+                    const day = d.toDate(tz.value).getDay();
                     return day === 0 || day === 6;
                   }}
                   value={weekendValue}

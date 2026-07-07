@@ -10,12 +10,12 @@ Introduces three accessible date-input components, implemented on `@internationa
 - `DatePicker` — date field with a popover calendar
 - `Calendar` — standalone calendar grid
 
-All three accept `LocalizedString` labels/descriptions and resolve locale + timezone from the AppShell context. The `@internationalized/date` value types (`CalendarDate`, `CalendarDateTime`, `ZonedDateTime`, …) and helpers (`today`, `parseDate`, `getLocalTimeZone`, …) are re-exported from `@tailor-platform/app-shell`.
+All three accept `LocalizedString` labels/descriptions and resolve locale + timezone from the AppShell context. The `@internationalized/date` value types (`CalendarDate`, `CalendarDateTime`, `ZonedDateTime`, …) and helpers (`parseDate`, `getLocalTimeZone`, …) are re-exported from `@tailor-platform/app-shell`.
 
 New AppShell context hooks:
 
 - `useResolvedLocale()` — full BCP-47 locale (e.g. `"en-GB"`) plus the language code
-- `useTimeZone()` — the configured IANA timezone, falling back to the user's local timezone
+- `useTimeZone()` — returns a `TimeZone` object with `.value` (IANA string), `.today()`, and `.now()` bound to the configured timezone
 
 AppShell now accepts an optional `timeZone` prop.
 

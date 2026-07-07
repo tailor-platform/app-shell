@@ -91,10 +91,10 @@ describe("Tabs", () => {
       const { container } = render(
         <Tabs.Root defaultValue="table" variant="capsule" size="default">
           <Tabs.List>
-            <Tabs.Tab value="table">
+            <Tabs.Tab value="table" aria-label="Table view">
               <svg viewBox="0 0 16 16" />
             </Tabs.Tab>
-            <Tabs.Tab value="kanban">
+            <Tabs.Tab value="kanban" aria-label="Board view">
               <svg viewBox="0 0 16 16" />
             </Tabs.Tab>
           </Tabs.List>
@@ -105,9 +105,9 @@ describe("Tabs", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
-    it("capsule variant with sm size", () => {
+    it.each(["xs", "sm", "lg"] as const)("capsule variant with %s size", (size) => {
       const { container } = render(
-        <Tabs.Root defaultValue="tab1" variant="capsule" size="sm">
+        <Tabs.Root defaultValue="tab1" variant="capsule" size={size}>
           <Tabs.List>
             <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
             <Tabs.Tab value="tab2">Tab 2</Tabs.Tab>

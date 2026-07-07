@@ -7,7 +7,7 @@ import {
   detectBrowserFullLocale,
   toLanguageSubtag,
 } from "@/lib/i18n";
-import { getLocalTimeZone } from "@internationalized/date";
+import { getLocalTimeZone, today, now } from "@internationalized/date";
 
 /**
  * Empty interface for module augmentation.
@@ -175,12 +175,23 @@ export const useResolvedLocale = (): { locale: string; language: string } => {
 };
 
 /**
- * Returns the configured IANA timezone (e.g. "America/Los_Angeles").
- * Falls back to the user's local timezone when not configured.
- *
- * Used by date/time components to resolve "today" and for ZonedDateTime values.
+ * Resolved timezone object with helpers bound to the configured timezone.
  */
-export const useTimeZone = (): string => {
+export interface TimeZone {
+  /** Raw IANA timezone string (e.g. "America/Los_Angeles"). */
+  value: string;
+  /** Today's date in this timezone. */
+  today: () => import("@internationalized/date").CalendarDate;
+  /** Current instant in this timezone. */
+  now: () => import("@internationalized/date").ZonedDateTime;
+}
+
+/**
+ * Returns the configured timezone with bound `today()` and `now()` helpers.
+ * Falls back to the user's local timezone when not configured.
+ */
+export const useTimeZone = (): TimeZone => {
   const { configurations } = useContext(AppShellConfigContext);
-  return configurations.timeZone ?? getLocalTimeZone();
+  const timeZone = configurations.timeZone ?? getLocalTimeZone();
+  return { value: timeZone, today: () => today(timeZone), now: () => now(timeZone) };
 };

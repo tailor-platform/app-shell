@@ -647,6 +647,40 @@ export const primitiveComponentsDemoResource = defineResource({
                     </Tabs.Root>
                   </div>
                 </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div style={labelStyle}>Capsule sizes (aligned with Button)</div>
+                  {(["xs", "sm", "default", "lg"] as const).map((size) => (
+                    <div
+                      key={size}
+                      style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+                    >
+                      <code style={{ width: "3.5rem", fontSize: "0.75rem" }}>{size}</code>
+                      <Tabs.Root defaultValue="all" variant="capsule" size={size}>
+                        <Tabs.List>
+                          <Tabs.Tab value="all">All</Tabs.Tab>
+                          <Tabs.Tab value="open">Open</Tabs.Tab>
+                          <Tabs.Tab value="closed">Closed</Tabs.Tab>
+                        </Tabs.List>
+                      </Tabs.Root>
+                      <Tabs.Root defaultValue="table" variant="capsule" size={size}>
+                        <Tabs.List>
+                          <Tabs.Tab value="table">
+                            <LayoutDashboardIcon size={16} />
+                          </Tabs.Tab>
+                          <Tabs.Tab value="board">
+                            <FolderKanbanIcon size={16} />
+                          </Tabs.Tab>
+                          <Tabs.Tab value="settings">
+                            <SettingsIcon size={16} />
+                          </Tabs.Tab>
+                        </Tabs.List>
+                      </Tabs.Root>
+                      <Button variant="outline" size={size}>
+                        Button
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </Card.Content>
           </Card.Root>

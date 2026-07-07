@@ -41,14 +41,15 @@ import { Tabs } from "@tailor-platform/app-shell";
 
 ### Tabs.Root Props
 
-| Prop            | Type                               | Default     | Description                             |
-| --------------- | ---------------------------------- | ----------- | --------------------------------------- |
-| `defaultValue`  | `Tabs.Tab.Value`                   | `0`         | Initial active tab value (uncontrolled) |
-| `value`         | `Tabs.Tab.Value`                   | -           | Controlled active tab value             |
-| `onValueChange` | `(value: any) => void`             | -           | Callback when the active tab changes    |
-| `variant`       | `'default' \| 'line' \| 'capsule'` | `'default'` | Visual style of the tabs                |
-| `className`     | `string`                           | -           | Additional CSS classes for root         |
-| `children`      | `React.ReactNode`                  | -           | Tabs sub-components                     |
+| Prop            | Type                                | Default     | Description                                                   |
+| --------------- | ----------------------------------- | ----------- | ------------------------------------------------------------- |
+| `defaultValue`  | `Tabs.Tab.Value`                    | `0`         | Initial active tab value (uncontrolled)                       |
+| `value`         | `Tabs.Tab.Value`                    | -           | Controlled active tab value                                   |
+| `onValueChange` | `(value: any) => void`              | -           | Callback when the active tab changes                          |
+| `variant`       | `'default' \| 'line' \| 'capsule'`  | `'default'` | Visual style of the tabs                                      |
+| `size`          | `'xs' \| 'sm' \| 'default' \| 'lg'` | `'default'` | Minimum size (`capsule` only) — mirrors Button's height tiers |
+| `className`     | `string`                            | -           | Additional CSS classes for root                               |
+| `children`      | `React.ReactNode`                   | -           | Tabs sub-components                                           |
 
 ### Tabs.List Props
 
@@ -108,8 +109,13 @@ const [activeTab, setActiveTab] = useState("overview");
 
 ### Use Icons in Tab
 
+In the `capsule` variant, a tab whose only child is an icon renders **square** —
+its `min-width` matches its `min-height` — making it a natural fit for icon-only
+view toggles (e.g. table/kanban). Use `size` to align the track with a sibling
+`Button`: `size="default"` (36px) matches `Button`'s default height.
+
 ```tsx
-<Tabs.Root defaultValue="overview" variant="capsule">
+<Tabs.Root defaultValue="overview" variant="capsule" size="default">
   <Tabs.List>
     <Tabs.Tab value="overview">
       <LayoutDashboardIcon />
@@ -126,3 +132,15 @@ const [activeTab, setActiveTab] = useState("overview");
   <Tabs.Panel value="settings">Settings content</Tabs.Panel>
 </Tabs.Root>
 ```
+
+### Sizing the capsule variant
+
+`size` mirrors `Button`'s height tiers, so a capsule can sit flush next to a
+button. The value sets a **minimum** height — taller content still grows.
+
+| `size`    | Track height | Matches Button |
+| --------- | ------------ | -------------- |
+| `xs`      | 28px         | `size="xs"`    |
+| `sm`      | 32px         | `size="sm"`    |
+| `default` | 36px         | default        |
+| `lg`      | 40px         | `size="lg"`    |

@@ -128,8 +128,9 @@ describe("createAIGatewayClient", () => {
       AbortSignal,
     );
     const headers = getRequestHeaders(input, init);
-    expect(headers.has("x-stainless-os")).toBe(false);
-    expect(headers.has("x-stainless-runtime")).toBe(false);
+    headers.forEach((_value, key) => {
+      expect(key.startsWith("x-stainless-")).toBe(false);
+    });
     expect(JSON.parse(String(await readRequestBody(input, init)))).toEqual({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: "Hello" }],

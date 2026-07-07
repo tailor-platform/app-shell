@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isAbortError } from "./client";
 import type { AIGatewayChatMessage, AIGatewayClient } from "./client";
 
 export interface AIChatMessage {
@@ -170,12 +171,6 @@ function toGatewayMessage(message: AIChatMessage): AIGatewayChatMessage {
     role: message.role,
     content: message.content,
   };
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException
-    ? error.name === "AbortError"
-    : error instanceof Error && error.name === "AbortError";
 }
 
 function toError(error: unknown): Error {

@@ -227,7 +227,7 @@ function normalizeGatewayError(error: unknown, signal?: AbortSignal): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
 
-function isAbortError(error: unknown): boolean {
+export function isAbortError(error: unknown): boolean {
   return error instanceof Error
     ? error.name === "AbortError" || error.name === "APIUserAbortError"
     : false;

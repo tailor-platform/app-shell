@@ -129,6 +129,15 @@ export function SidebarLayout(props: SidebarLayoutProps) {
               "astw:-mr-4 astw:pr-4",
               "astw:md:group-has-data-[variant=inset]/sidebar-wrapper:-mr-8 astw:md:group-has-data-[variant=inset]/sidebar-wrapper:pr-8",
               "astw:data-[scrolled]:[mask-image:linear-gradient(to_bottom,transparent,black_2rem)]",
+              // A `<Layout fill>` page bounds everything internally (its DataTable
+              // scrolls on its own), so this area never needs to scroll. Clip
+              // instead of scroll when it contains a fill layout — makes that an
+              // explicit guarantee and removes any sub-pixel-overflow scrollbar.
+              "astw:has-data-[layout-fill]:overflow-hidden",
+              // Reserve the scrollbar gutter so content doesn't shift sideways
+              // when the bar appears/disappears across navigations (no-op with
+              // overlay scrollbars; moot on fill pages where overflow is hidden).
+              "astw:[scrollbar-gutter:stable]",
             )}
           >
             {Children ?? <AppShellOutlet />}

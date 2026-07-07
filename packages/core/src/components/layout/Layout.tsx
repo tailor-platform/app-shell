@@ -238,6 +238,10 @@ export function Layout({
 
   return (
     <div
+      // Stable marker so an ancestor scroll container (e.g. the AppShell
+      // content area) can detect a fill page via CSS `:has([data-layout-fill])`
+      // and disable its own scrolling — no parent→child prop coupling needed.
+      {...(fill ? { "data-layout-fill": "" } : {})}
       className={cn(
         "astw:grid astw:grid-cols-1 astw:w-full",
         hasAnyHeader ? "astw:pb-4" : "astw:py-4",

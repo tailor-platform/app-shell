@@ -195,6 +195,8 @@ describe("Layout", () => {
     expect(grid.className).toContain("astw:min-h-0");
     expect(grid.className).toContain("astw:grid-rows-[auto_minmax(0,1fr)]");
     expect(grid.className).toContain("astw:[&>[data-layout-column]]:min-h-0");
+    // marker an ancestor scroll container can target via :has([data-layout-fill])
+    expect(grid.hasAttribute("data-layout-fill")).toBe(true);
   });
 
   it("fill mode without a header uses a single bounded row", () => {
@@ -217,6 +219,7 @@ describe("Layout", () => {
     const grid = container.firstElementChild as HTMLElement;
     expect(grid.className).not.toContain("astw:flex-1");
     expect(grid.className).not.toContain("astw:grid-rows-");
+    expect(grid.hasAttribute("data-layout-fill")).toBe(false);
   });
 
   it("warns when deprecated columns prop doesn't match child count", () => {

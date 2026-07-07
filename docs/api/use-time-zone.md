@@ -5,43 +5,69 @@ description: Hook to access the configured IANA timezone from AppShell context
 
 # useTimeZone
 
-React hook that returns the IANA timezone string configured on `AppShell` (e.g. `"America/Los_Angeles"`). Falls back to the user's local timezone when no timezone is configured.
+React hook that returns a `TimeZone` object for the timezone configured on `AppShell`. Falls back to the user's local timezone when no timezone is configured.
 
 Date/time components (`DateField`, `DatePicker`, `Calendar`) consume this hook automatically — use it when you need the same timezone in custom components.
 
 ## Signature
 
 ```typescript
-const useTimeZone: () => string;
+const useTimeZone: () => TimeZone;
 ```
 
 ## Return Value
 
+A `TimeZone` object with the following properties:
+
+### `value`
+
 - **Type:** `string`
-- **Description:** IANA timezone identifier. Returns the value of AppShell's `timeZone` prop when configured, or the result of `getLocalTimeZone()` (the user's local timezone) when not.
+- **Description:** Raw IANA timezone identifier (e.g. `"America/Los_Angeles"`). Returns the value of AppShell's `timeZone` prop when configured, or the result of `getLocalTimeZone()` (the user's local timezone) when not.
+
+### `today()`
+
+- **Type:** `() => CalendarDate`
+- **Description:** Returns today's date in this timezone.
+
+### `now()`
+
+- **Type:** `() => ZonedDateTime`
+- **Description:** Returns the current instant in this timezone.
 
 ## Usage
 
 ```typescript
-import { useTimeZone, today } from "@tailor-platform/app-shell";
+import { useTimeZone } from "@tailor-platform/app-shell";
 
 function TodayDisplay() {
   const timeZone = useTimeZone();
-  const todayDate = today(timeZone);
+  const todayDate = timeZone.today();
 
   return <span>Today: {todayDate.toString()}</span>;
 }
 ```
 
-### Passing timezone to date helpers
+### Current timestamp
 
 ```typescript
-import { useTimeZone, now, getLocalTimeZone } from "@tailor-platform/app-shell";
+import { useTimeZone } from "@tailor-platform/app-shell";
 
 function CurrentTimestamp() {
   const timeZone = useTimeZone();
 
-  return <span>{now(timeZone).toString()}</span>;
+  return <span>{timeZone.now().toString()}</span>;
+}
+```
+
+### Accessing the raw IANA string
+
+```typescript
+import { useTimeZone } from "@tailor-platform/app-shell";
+
+function TimeZoneLabel() {
+  const { value } = useTimeZone();
+
+  return <span>Timezone: {value}</span>;
 }
 ```
 

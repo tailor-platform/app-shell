@@ -17,7 +17,6 @@ import {
   DatePicker,
   Calendar,
   // Date value helpers (re-exported from @internationalized/date)
-  today,
   parseDate,
   getLocalTimeZone,
   type CalendarDate,

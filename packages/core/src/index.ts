@@ -236,3 +236,17 @@ export {
   CollectionControlProvider,
   useCollectionControl,
 } from "./contexts/collection-control-context";
+
+export {
+  Timeline,
+  type TimelineAxis,
+  type TimelineAxisLevel,
+  type TimelineAxisSpan,
+  type TimelineAxisTick,
+  type TimelineBand,
+  type TimelineDecorations,
+  type TimelineGuide,
+  type TimelineLinkDefaults,
+  type TimelineMarker,
+  type TimelineRowBackground,
+} from "./components/timeline";

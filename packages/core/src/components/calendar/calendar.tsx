@@ -63,7 +63,7 @@ function Calendar<T extends DateValue = DateValue>({
   const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
-  const resolvedTz = timeZoneProp ?? shellTz;
+  const resolvedTz = timeZoneProp ?? shellTz.value;
 
   const state = useCalendarState({
     value: value ?? undefined,

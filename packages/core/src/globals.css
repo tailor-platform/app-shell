@@ -60,6 +60,23 @@
   }
 }
 
+/*
+ * Content scroll-fade (see SidebarLayout). Attached to a `scroll(self block)`
+ * timeline over `animation-range: 0 2rem`, so the content area's top-edge mask
+ * ramps from fully opaque to faded across the first 2rem of scroll, then holds.
+ * Both stops share the same 3-stop structure so only the top stop's alpha
+ * interpolates. Inert on `fill` pages, where overflow is hidden (no scroll
+ * range). Where scroll-driven animations are unsupported it degrades to no fade.
+ */
+@keyframes appshell-content-fade {
+  from {
+    mask-image: linear-gradient(to bottom, #000 0, #000 2rem, #000 100%);
+  }
+  to {
+    mask-image: linear-gradient(to bottom, #0000 0, #000 2rem, #000 100%);
+  }
+}
+
 @layer utilities {
   /*
    * Sidebar active item — hairline border (~0.5px @ 30% black). Wrapper components in

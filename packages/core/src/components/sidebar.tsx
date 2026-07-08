@@ -153,7 +153,10 @@ function SidebarProvider({
             } as React.CSSProperties
           }
           className={cn(
-            "astw:group/sidebar-wrapper astw:has-data-[variant=inset]:bg-sidebar astw:flex astw:min-h-svh astw:w-full astw:overflow-hidden",
+            // h-svh (not min-h-svh): the shell is viewport-bounded so scrolling
+            // happens in the content area (or inside components like DataTable),
+            // never on the document itself.
+            "astw:group/sidebar-wrapper astw:has-data-[variant=inset]:bg-sidebar astw:flex astw:h-svh astw:w-full astw:overflow-hidden",
             className,
           )}
           {...props}

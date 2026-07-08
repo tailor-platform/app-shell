@@ -25,7 +25,7 @@ function DataTableToolbar({ children, className }: { children: ReactNode; classN
     <div
       data-slot="data-table-toolbar"
       className={cn(
-        "astw:flex astw:flex-col astw:gap-2 astw:border-b astw:border-border astw:p-2",
+        "astw:flex astw:shrink-0 astw:flex-col astw:gap-2 astw:border-b astw:border-border astw:p-2",
         className,
       )}
     >
@@ -491,7 +491,11 @@ function AddFilterPopover({
           </Button>
         }
       />
-      <Popover.Portal>
+      {/* Stacking context on the portal container so the popup renders above
+          positioned elements like DataTable's sticky header row (z-index: 10) —
+          the Popup's own z-index is inert (it's position: static; the
+          Positioner is the positioned element). Same pattern as Menu/Tooltip. */}
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
         <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup
             data-slot="data-table-filter-add-popup"
@@ -611,7 +615,9 @@ function FilterChip({
             </Button>
           }
         />
-        <Popover.Portal>
+        {/* See AddFilterPopover — stacking context so the popup clears the
+            sticky table header. */}
+        <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
           <Popover.Positioner sideOffset={4} side="bottom" align="start">
             <Popover.Popup
               data-slot="data-table-filter-popup"

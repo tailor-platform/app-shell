@@ -47,7 +47,9 @@ For the full upstream API of any component, follow the link to the published ref
 
 **Import:** `import { Layout } from '@tailor-platform/app-shell'`
 **Purpose:** Standard page container with header + 1–N column body. The most-used component — every page wraps content in `<Layout>`.
-**API:** `Layout` (root) + `Layout.Column` + `Layout.Header`. `LayoutProps`: `columns` (number, default auto-detected from children), `gap`, `title`, `actions`, `className`, `style`.
+**API:** `Layout` (root) + `Layout.Column` + `Layout.Header`. `LayoutProps`: `fill` (boolean), `columns` (number, default auto-detected from children), `gap`, `title`, `actions`, `className`, `style`.
+
+**`fill`** — stretches the layout to the available height and bounds the column row so children can scroll internally instead of growing the page. Use on table-first pages (`<Layout fill>` + `DataTable`): the title, table toolbar, sticky column headers, and pagination footer stay pinned while only the rows scroll — see **`patterns/list-dense-scan.md`**. Omit on pages that should flow and scroll naturally (forms, dashboards).
 
 **Column-count → width rules** (column count is auto-detected from `Layout.Column` children):
 

@@ -20,6 +20,13 @@ export type { DataTablePaginationProps } from "./pagination";
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
 const DEFAULT_ROWS = 5;
 
+// Empty/error states reserve a fixed 3 rows' worth of height — enough to
+// read as an intentional region, independent of pageSize (so large page
+// sizes don't create a huge blank or, when height-constrained, scrollable
+// area, and tiny page sizes don't collapse to a thin strip).
+const STATUS_ROWS = 3;
+const ROW_HEIGHT_PX = 53;
+
 // Resolve the effective horizontal alignment for a column. Numeric `type`
 // values default to `"right"` so digits line up along their decimal place;
 // everything else defaults to `"left"`. Explicit `col.align` always wins.
@@ -56,27 +63,32 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   hasSelection,
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
+  // No fixed row height: each cell's placeholder matches the height of the
+  // real content it stands in for (text line, badge, icon button), so the
+  // skeleton rows resolve to exactly the same row height as loaded rows and
+  // the table doesn't shift when data arrives.
   return (
     <>
       {Array.from({ length: rowCount }).map((_, rowIndex) => (
         <Table.Row key={rowIndex} data-datatable-state="loading">
           {hasSelection && (
-            <Table.Cell style={{ width: 52 }} className="astw:pl-3! astw:h-13.25">
+            <Table.Cell style={{ width: 52 }} className="astw:pl-3!">
               <div className="astw:size-4 astw:rounded-xs astw:bg-muted astw:animate-pulse" />
             </Table.Cell>
           )}
           {columns?.map((col, colIndex) => {
             const key = col.id ?? col.label ?? String(colIndex);
             const skeletonWidth = SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length];
+            const isBadge = col.type === "badge";
             return (
-              <Table.Cell
-                key={key}
-                style={col.width ? { width: col.width } : undefined}
-                className="astw:h-13.25"
-              >
+              <Table.Cell key={key} style={col.width ? { width: col.width } : undefined}>
                 <div
                   className={cn(
-                    "astw:h-4 astw:rounded astw:bg-muted astw:animate-pulse",
+                    "astw:bg-muted astw:animate-pulse",
+                    // badge cells render 22px pills; text cells occupy one
+                    // 20px line box (bar inset by my-0.5 to keep the lighter
+                    // 16px placeholder look)
+                    isBadge ? "astw:h-5.5 astw:rounded-full" : "astw:h-4 astw:my-0.5 astw:rounded",
                     resolveAlign(col) === "right" && "astw:ml-auto",
                   )}
                   style={{ width: `${skeletonWidth}%` }}
@@ -85,8 +97,12 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
             );
           })}
           {hasRowActions && (
-            <Table.Cell style={{ width: 50 }} className="astw:h-13.25">
-              <div className="astw:size-6 astw:rounded astw:bg-muted astw:animate-pulse astw:mx-auto" />
+            <Table.Cell style={{ width: 50 }}>
+              {/* size-9 box = the real icon Button's footprint; the visible
+                  pulse stays 24px to read as an ellipsis placeholder */}
+              <div className="astw:mx-auto astw:flex astw:size-9 astw:items-center astw:justify-center">
+                <div className="astw:size-6 astw:rounded astw:bg-muted astw:animate-pulse" />
+              </div>
             </Table.Cell>
           )}
         </Table.Row>
@@ -100,22 +116,26 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
 // =============================================================================
 
 interface DataTableStatusRowProps {
-  rowCount: number;
   totalColSpan: number;
   state: string;
   children: ReactNode;
 }
 
 /** @internal */
-function DataTableStatusRow({ rowCount, totalColSpan, state, children }: DataTableStatusRowProps) {
+function DataTableStatusRow({ totalColSpan, state, children }: DataTableStatusRowProps) {
   return (
     <Table.Row data-datatable-state={state} className="astw:border-0 astw:hover:bg-transparent">
+      {/* Fixed 3-row height, independent of pageSize — never pageSize-worth,
+          which at large page sizes creates a huge blank (or scrollable)
+          region. The message is sticky (offsets resolve against the
+          scrollport) so it stays in view even when a height-constrained
+          container (e.g. inside <Layout fill>) is shorter than this height. */}
       <Table.Cell
         colSpan={totalColSpan}
-        style={{ height: `${rowCount * 53}px` }}
-        className="astw:text-center astw:align-middle"
+        style={{ height: `${STATUS_ROWS * ROW_HEIGHT_PX}px` }}
+        className="astw:text-center astw:align-top"
       >
-        {children}
+        <div className="astw:sticky astw:top-[45%]">{children}</div>
       </Table.Cell>
     </Table.Row>
   );
@@ -179,9 +199,16 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
   const inner = (
     <Tooltip.Provider delay={300}>
       <DataTableContext.Provider value={dataTableValue}>
+        {/* flex-col + min-h-0 (no flex-1): natural height when content fits,
+            but able to shrink when the parent chain constrains height (e.g.
+            <Layout fill>). When shrunk, the Table region scrolls internally
+            while the Toolbar and Footer (shrink-0) stay visible. */}
         <div
           data-slot="data-table"
-          className={cn("astw:border astw:border-border astw:rounded-md astw:bg-card", className)}
+          className={cn(
+            "astw:flex astw:flex-col astw:min-h-0 astw:border astw:border-border astw:rounded-md astw:bg-card",
+            className,
+          )}
         >
           {children}
         </div>
@@ -222,7 +249,18 @@ function DataTableHeaders({ className }: { className?: string }) {
   const hasSelection = !!toggleRowSelection;
 
   return (
-    <Table.Header data-slot="data-table-header" className={className}>
+    // Sticky within the DataTable.Table scroll container so column headers
+    // stay visible while rows scroll beneath. bg-card keeps rows from showing
+    // through; the inset shadow re-draws the bottom border, which Chrome drops
+    // from sticky rows under `border-collapse: collapse`.
+    <Table.Header
+      data-slot="data-table-header"
+      className={cn(
+        "astw:sticky astw:top-0 astw:z-10 astw:bg-card",
+        "astw:shadow-[inset_0_-1px_0_0_var(--border)] astw:[&_tr]:border-b-0",
+        className,
+      )}
+    >
       <Table.Row>
         {hasSelection && (
           <Table.Head style={{ width: 52 }} className="astw:pl-3!">
@@ -361,7 +399,7 @@ function DataTableBody({ className }: { className?: string }) {
   if (error) {
     return (
       <Table.Body {...tableBodyProps}>
-        <DataTableStatusRow rowCount={rowCount} totalColSpan={totalColSpan} state="error">
+        <DataTableStatusRow totalColSpan={totalColSpan} state="error">
           <span className="astw:text-destructive">
             {t("errorPrefix")} {error.message}
           </span>
@@ -373,7 +411,7 @@ function DataTableBody({ className }: { className?: string }) {
   if (!rows || rows.length === 0) {
     return (
       <Table.Body {...tableBodyProps}>
-        <DataTableStatusRow rowCount={rowCount} totalColSpan={totalColSpan} state="empty">
+        <DataTableStatusRow totalColSpan={totalColSpan} state="empty">
           <span className="astw:text-muted-foreground">{t("noData")}</span>
         </DataTableStatusRow>
       </Table.Body>
@@ -536,7 +574,15 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 /** Use `DataTable.Table` instead of calling this directly. */
 function DataTableTable({ className }: { className?: string }) {
   return (
-    <Table.Root data-slot="data-table-table" className={className}>
+    // min-h-0 lets the scroll container shrink within DataTable.Root's flex
+    // column; combined with the container's overflow-auto this is the region
+    // that scrolls vertically when height is constrained. The sticky header
+    // (DataTableHeaders) stays pinned to the top of this scrollport.
+    <Table.Root
+      data-slot="data-table-table"
+      containerClassName="astw:min-h-0 astw:overflow-auto"
+      className={className}
+    >
       <DataTableHeaders />
       <DataTableBody />
     </Table.Root>
@@ -554,7 +600,7 @@ function DataTableFooter({ children, className }: { children: ReactNode; classNa
     <div
       data-slot="data-table-footer"
       className={cn(
-        "astw:flex astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
+        "astw:flex astw:shrink-0 astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
         className,
       )}
     >

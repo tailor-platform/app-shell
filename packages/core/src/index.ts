@@ -29,6 +29,7 @@ export {
   useAppShellData,
   useResolvedLocale,
   useTimeZone,
+  type TimeZone,
 } from "./contexts/appshell-context";
 export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";
 export { AppearanceSwitcher } from "./components/appearance-switcher";
@@ -155,8 +156,6 @@ export { Calendar, type CalendarProps } from "./components/calendar";
 // app-shell and install no extra packages. The long tail is available via direct
 // import of @internationalized/date (dedupes to the same instance).
 export {
-  today,
-  now,
   getLocalTimeZone,
   parseDate,
   parseDateTime,

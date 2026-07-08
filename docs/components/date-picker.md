@@ -17,7 +17,6 @@ import {
   DatePicker,
   Calendar,
   // Date value helpers (re-exported from @internationalized/date)
-  today,
   parseDate,
   getLocalTimeZone,
   type CalendarDate,
@@ -181,3 +180,5 @@ See the proposal's [Post-v1 fast-follows](../proposals/date-picker.md) for the D
 
 - [Form](./form.md) — wrap date fields with validation
 - [Input](./input.md) — plain text input
+- [useTimeZone](../api/use-time-zone.md) — access the configured timezone consumed automatically by these components
+- [useResolvedLocale](../api/use-resolved-locale.md) — access the locale used for segment order and month names

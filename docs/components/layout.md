@@ -254,6 +254,8 @@ With `fill`, the `Layout.Header` (title/actions), the `DataTable` toolbar, its c
 
 Use `fill` for pages whose main content manages its own scrolling (typically a `DataTable`). Leave it off for pages that should flow and scroll naturally (forms, articles, dashboards). It is intended for single-row layouts; when multiple columns stack vertically on mobile, the content area scrolls as usual.
 
+> Because the shell is viewport-bounded, page content scrolls inside the content area rather than on the document. If you have code that read `window`/document scroll, reach for the content scroll container instead — see [Accessing the content scroll container](./sidebar-layout.md#accessing-the-content-scroll-container).
+
 ## Gap Spacing
 
 Use `className` to control the space between columns:

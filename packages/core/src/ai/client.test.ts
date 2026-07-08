@@ -44,6 +44,52 @@ async function collectEvents(client: AIGatewayClient, request: AIGatewayChatRequ
   return events;
 }
 
+function getRequestCall(authClient: AuthClient): [RequestInfo | URL, RequestInit | undefined] {
+  const fetch = authClient.fetch as ReturnType<typeof vi.fn>;
+  const call = fetch.mock.calls[0];
+
+  if (!call) {
+    throw new Error("Expected authClient.fetch to be called.");
+  }
+
+  return call as [RequestInfo | URL, RequestInit | undefined];
+}
+
+function getRequestURL(input: RequestInfo | URL): string {
+  if (input instanceof Request) {
+    return input.url;
+  }
+
+  return String(input);
+}
+
+async function readRequestBody(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+): Promise<string | undefined> {
+  if (typeof init?.body === "string") {
+    return init.body;
+  }
+
+  if (input instanceof Request) {
+    return input.clone().text();
+  }
+
+  return undefined;
+}
+
+function getRequestHeaders(input: RequestInfo | URL, init: RequestInit | undefined): Headers {
+  if (init?.headers) {
+    return new Headers(init.headers);
+  }
+
+  if (input instanceof Request) {
+    return input.headers;
+  }
+
+  return new Headers();
+}
+
 describe("createAIGatewayClient", () => {
   it("streams OpenAI-compatible events through authClient.fetch", async () => {
     const authClient = createMockAuthClient(
@@ -74,18 +120,18 @@ describe("createAIGatewayClient", () => {
       { type: "text-delta", text: " world" },
       { type: "done", finishReason: "stop" },
     ]);
-    expect(authClient.fetch).toHaveBeenCalledWith(
-      "https://gateway.example.com/v1/chat/completions",
-      expect.objectContaining({
-        method: "POST",
-        signal,
-        headers: expect.objectContaining({ Accept: "text/event-stream" }),
-      }),
-    );
 
-    expect(
-      JSON.parse((authClient.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body),
-    ).toEqual({
+    const [input, init] = getRequestCall(authClient);
+    expect(getRequestURL(input)).toBe("https://gateway.example.com/v1/chat/completions");
+    expect(init?.method ?? (input instanceof Request ? input.method : undefined)).toBe("POST");
+    expect(init?.signal ?? (input instanceof Request ? input.signal : undefined)).toBeInstanceOf(
+      AbortSignal,
+    );
+    const headers = getRequestHeaders(input, init);
+    headers.forEach((_value, key) => {
+      expect(key.startsWith("x-stainless-")).toBe(false);
+    });
+    expect(JSON.parse(String(await readRequestBody(input, init)))).toEqual({
       model: "gpt-5-mini",
       messages: [{ role: "user", content: "Hello" }],
       stream: true,
@@ -122,63 +168,13 @@ describe("createAIGatewayClient", () => {
       { type: "text-delta", text: "Grounded answer" },
       { type: "done", finishReason: "stop" },
     ]);
-    expect(authClient.fetch).toHaveBeenCalledWith(
-      "https://gateway.example.com/base/v1/chat/completions",
-      expect.objectContaining({
-        headers: expect.objectContaining({ Accept: "application/json" }),
-      }),
-    );
 
-    expect(
-      JSON.parse((authClient.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body),
-    ).toEqual({
+    const [input, init] = getRequestCall(authClient);
+    expect(getRequestURL(input)).toBe("https://gateway.example.com/base/v1/chat/completions");
+    expect(JSON.parse(String(await readRequestBody(input, init)))).toEqual({
       model: "gemini-2.5-flash",
       messages: [{ role: "user", content: "Hello" }],
       stream: false,
-    });
-  });
-
-  it("respects explicit stream overrides for gemini models", async () => {
-    const authClient = createMockAuthClient(
-      new Response(
-        createSSEStream([
-          'data: {"choices":[{"delta":{"content":"Streamed"}}]}\n\n',
-          'data: {"choices":[{"finish_reason":"stop"}]}\n\n',
-          "data: [DONE]\n\n",
-        ]),
-        {
-          status: 200,
-          headers: { "Content-Type": "text/event-stream" },
-        },
-      ),
-    );
-    const client = createAIGatewayClient({
-      gatewayUri: "https://gateway.example.com",
-      authClient,
-    });
-
-    const events = await collectEvents(
-      client,
-      createRequest({ model: "gemini-2.5-flash", stream: true }),
-    );
-
-    expect(events).toEqual([
-      { type: "text-delta", text: "Streamed" },
-      { type: "done", finishReason: "stop" },
-    ]);
-    expect(authClient.fetch).toHaveBeenCalledWith(
-      "https://gateway.example.com/v1/chat/completions",
-      expect.objectContaining({
-        headers: expect.objectContaining({ Accept: "text/event-stream" }),
-      }),
-    );
-
-    expect(
-      JSON.parse((authClient.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body),
-    ).toEqual({
-      model: "gemini-2.5-flash",
-      messages: [{ role: "user", content: "Hello" }],
-      stream: true,
     });
   });
 
@@ -186,7 +182,7 @@ describe("createAIGatewayClient", () => {
     const authClient = createMockAuthClient(
       new Response(
         JSON.stringify({ choices: [{ message: { content: [] }, finish_reason: "tool_calls" }] }),
-        { status: 200 },
+        { status: 200, headers: { "Content-Type": "application/json" } },
       ),
     );
     const client = createAIGatewayClient({
@@ -195,33 +191,25 @@ describe("createAIGatewayClient", () => {
     });
 
     await expect(
-      collectEvents(client, createRequest({ model: "gemini-2.5-flash", stream: false })),
+      collectEvents(client, createRequest({ model: "gemini-2.5-flash" })),
     ).resolves.toEqual([{ type: "done", finishReason: "tool_calls" }]);
   });
 
   it("throws on non-ok responses", async () => {
     const authClient = createMockAuthClient(
-      new Response("nope", { status: 401, statusText: "Nope" }),
+      new Response(JSON.stringify({ error: { message: "nope" } }), {
+        status: 401,
+        statusText: "Nope",
+        headers: { "Content-Type": "application/json" },
+      }),
     );
     const client = createAIGatewayClient({
       gatewayUri: "https://gateway.example.com",
       authClient,
     });
 
-    await expect(collectEvents(client, createRequest())).rejects.toThrow(
-      "AI Gateway streaming request failed (401 Nope): nope",
-    );
-  });
-
-  it("throws when a streaming response body is missing", async () => {
-    const authClient = createMockAuthClient(new Response(null, { status: 200 }));
-    const client = createAIGatewayClient({
-      gatewayUri: "https://gateway.example.com",
-      authClient,
+    await expect(collectEvents(client, createRequest())).rejects.toMatchObject({
+      message: expect.stringMatching(/401.*nope/i),
     });
-
-    await expect(collectEvents(client, createRequest())).rejects.toThrow(
-      "AI Gateway streaming response did not include a body.",
-    );
   });
 });

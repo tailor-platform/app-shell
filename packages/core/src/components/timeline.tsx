@@ -728,12 +728,10 @@ function Viewport({
     });
   }, []);
 
-  // Timeline.Link routes are computed in pixels, not only percentages: the path mixes
-  // time-based x positions with a px gap and must size the overlay SVG to the rendered
-  // body box. That means we need the committed DOM size here and must keep it in sync as
-  // the viewport resizes. `useEffect` is enough because links may appear one tick later
-  // without affecting layout, while `ResizeObserver` keeps the measured size current.
-  React.useEffect(() => {
+  // Timeline.Link paths need the committed body box before the first painted frame. Using
+  // `useLayoutEffect` here lets the initial measurement land before paint so links do not
+  // pop in one tick late, and the same effect also wires `ResizeObserver` for later resizes.
+  React.useLayoutEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
 
@@ -1022,10 +1020,16 @@ function Row({ children, className, style, height = 32, background }: RowProps) 
     );
   }, [height]);
 
+  // Row position depends on the final DOM order and sibling heights, so we measure after
+  // each commit but before paint. That keeps intervals and links aligned with wrapped rows
+  // without a one-frame jump when row content or surrounding rows change.
   React.useLayoutEffect(() => {
     updateRowLayout();
   });
 
+  // The observer is also attached in `useLayoutEffect` so the row is fully enrolled in
+  // layout tracking during the same commit that produced it. That keeps subsequent size
+  // changes in sync with the pre-paint measurement path above.
   React.useLayoutEffect(() => {
     const element = ref.current;
     if (!element || typeof ResizeObserver === "undefined") return;
@@ -1035,6 +1039,9 @@ function Row({ children, className, style, height = 32, background }: RowProps) 
     return () => observer.disconnect();
   }, [updateRowLayout]);
 
+  // Row backgrounds live in a separate layer owned by the viewport. Registering them in
+  // `useLayoutEffect` keeps that layer synchronized with the measured row box before paint,
+  // so the background does not visibly lag behind the row that owns it.
   React.useLayoutEffect(() => {
     if (!background) {
       unregisterRowBackground(rowId);
@@ -1106,9 +1113,10 @@ function Interval({ start, end, children, id, insetY = 0, className, style }: In
   // Link discovery is runtime-based on purpose. `Timeline.Viewport` can walk direct
   // `Timeline.Interval` children, but it cannot see through wrapper components such as
   // `<TaskBar />` that render an interval internally, and future Gantt-style screens may
-  // add/remove intervals dynamically. Registering on mount/update/unmount keeps link
-  // metadata correct for composed and dynamic usage without forcing a flatter API.
-  React.useEffect(() => {
+  // add/remove intervals dynamically. We use `useLayoutEffect` so the registration lands
+  // before paint; otherwise links would need to wait for a passive effect and could appear
+  // one frame late relative to the interval bars they connect.
+  React.useLayoutEffect(() => {
     if (!id) return;
 
     registerItem(id, {

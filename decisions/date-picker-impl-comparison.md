@@ -1,6 +1,6 @@
 # DatePicker — implementation comparison (measured)
 
-Two complete, API-identical implementations of `DateField` / `DatePicker` / `Calendar` were built to validate the design proposal's library-choice analysis (`docs/proposals/date-picker.md`, §1.1 and §9) against real code:
+Two complete, API-identical implementations of `DateField` / `DatePicker` / `Calendar` were built to validate the design proposal's library-choice analysis (`decisions/date-picker.md`, §1.1 and §9) against real code:
 
 | Branch                            | Behaviour/a11y foundation                             |
 | --------------------------------- | ----------------------------------------------------- |

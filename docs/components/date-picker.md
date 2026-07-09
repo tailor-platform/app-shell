@@ -7,7 +7,7 @@ description: Accessible date input components (@internationalized/date + Base UI
 
 Three related components for date input — a segmented field, a field with a calendar popover, and a standalone calendar grid. Built on [`@internationalized/date`](https://react-spectrum.adobe.com/internationalized/date/) (the value layer) and Base UI (`Popover`), with the segmented input and calendar grid implemented to the [ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/patterns/) date-picker/grid patterns. They integrate automatically with AppShell's locale and timezone context.
 
-> **Implementation note.** This is the `@internationalized/date` + Base UI variant. The public API and accessibility contract are identical to the react-aria variant; only the internals differ. See `docs/proposals/date-picker-impl-comparison.md`.
+> **Implementation note.** This is the `@internationalized/date` + Base UI variant. The public API and accessibility contract are identical to the react-aria variant; only the internals differ. See `decisions/date-picker-impl-comparison.md`.
 
 ## Import
 
@@ -107,7 +107,7 @@ Segment order, first-day-of-week, and month/weekday names all follow the resolve
 - The calendar is a `role="grid"`; each day is a button with a full-date `aria-label`; disabled/unavailable days are announced via `aria-disabled`.
 - The popover is a labelled `role="dialog"`.
 
-> **Known limitations (this variant).** The segments are `<div role="spinbutton">` that aren't `contentEditable`, so a touch device's on-screen keyboard doesn't open for typing — on mobile, use the calendar popover to pick a date (desktop keyboard entry and the calendar both work fully). The APG patterns are implemented and unit-tested but **not yet screen-reader-audited**, and RTL arrow-key flipping isn't handled. See [the implementation comparison](../proposals/date-picker-impl-comparison.md) ("Known gaps vs react-aria") for the full list.
+> **Known limitations (this variant).** The segments are `<div role="spinbutton">` that aren't `contentEditable`, so a touch device's on-screen keyboard doesn't open for typing — on mobile, use the calendar popover to pick a date (desktop keyboard entry and the calendar both work fully). The APG patterns are implemented and unit-tested but **not yet screen-reader-audited**, and RTL arrow-key flipping isn't handled. See [the implementation comparison](../../decisions/date-picker-impl-comparison.md) ("Known gaps vs react-aria") for the full list.
 
 ## Props
 
@@ -173,7 +173,7 @@ Accepted by the prop types (for parity with the react-aria variant) but **not ac
 | `hourCycle`    | `12 \| 24`                                | No effect until time granularity lands (12h/24h only matters with an hour segment).                                                                                                                                |
 | `hideTimeZone` | `boolean`                                 | Unused; only relevant to `ZonedDateTime` display (time granularity).                                                                                                                                               |
 
-See the proposal's [Post-v1 fast-follows](../proposals/date-picker.md) for the DateTime plan.
+See the proposal's [Post-v1 fast-follows](../../decisions/date-picker.md) for the DateTime plan.
 
 ## Related
 

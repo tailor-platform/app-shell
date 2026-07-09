@@ -8,7 +8,7 @@
  *   - skills/app-shell-patterns/references/<category>/<slug>.md (per-entry docs)
  */
 
-import { readdir, readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
+import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
@@ -24,7 +24,7 @@ const referencesDir = join(skillsDir, "references");
  * and add a corresponding {{<templateKey>}} placeholder to SKILL.template.md.
  *
  * - entryFile: marker filename to search recursively (e.g. "PATTERN.md").
- *   If null, all .md files in the category directory are copied as-is.
+ *   If null, all top-level .md files in the category directory are processed directly.
  */
 const CATEGORIES = [
   {
@@ -43,7 +43,7 @@ const CATEGORIES = [
 
 /**
  * Resolve <!-- source: file.tsx --> markers in markdown body.
- * Reads the referenced file relative to the PATTERN.md directory
+ * Reads the referenced file relative to the current markdown file directory
  * and replaces the marker with a fenced code block.
  */
 async function resolveSourceMarkers(body, patternDir) {
@@ -118,7 +118,8 @@ function slugToFilename(slug) {
  *
  * When sourceFile is set, entries are discovered by recursive search
  * for that filename, parsed for frontmatter, and source markers are resolved.
- * When sourceFile is null, all .md files in the category dir are copied as-is.
+ * When sourceFile is null, all .md files in the category dir are read directly and
+ * source markers are resolved in place.
  */
 async function processCategory(category) {
   const categoryDir = join(catalogueRoot, "src", category.name);
@@ -136,7 +137,9 @@ async function processCopiedCategory(category, categoryDir, outputDir) {
   for (const filePath of files) {
     const filename = filePath.split("/").pop();
     const outputPath = join(outputDir, filename);
-    await copyFile(filePath, outputPath);
+    const content = await readFile(filePath, "utf-8");
+    const resolvedContent = await resolveSourceMarkers(content, dirname(filePath));
+    await writeFile(outputPath, resolvedContent);
     console.log(`  Generated references/${category.outputDir}/${filename}`);
   }
   return { category, files };

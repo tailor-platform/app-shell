@@ -54,7 +54,7 @@ AppShell's UI components support data-attribute-based styling, following the [Ba
 
 ```css
 /* Style a component based on its state */
-.SwitchThumb[data-checked] {
+.ToggleThumb[data-checked] {
   background-color: green;
 }
 
@@ -66,9 +66,7 @@ AppShell's UI components support data-attribute-based styling, following the [Ba
 
 This works with Tailwind as well — **use theme tokens**, not raw Tailwind grays:
 
-```tsx
-<Switch.Thumb className="bg-surface-3 data-[checked]:bg-primary" />
-```
+<!-- source: examples/design-system/data-attribute-state.example.tsx -->
 
 Check each component's API reference (`components.md`) for the data attributes it exposes. Custom components must follow the same convention (see Section 6).
 
@@ -96,14 +94,7 @@ Four families. Pick by **intent**, not by visual taste.
 | Status     | `--color-success`        | confirmations, completed states     | `bg-success` / `text-success` |
 | Status     | `--color-info`           | neutral callouts                    | `bg-info` / `text-info`       |
 
-```tsx
-// Good — Button exposes a destructive variant; prefer variants over bolting tokens on className when available
-<div className="bg-surface-1 text-fg-default">…</div>
-<Button variant="destructive">Delete</Button>
-
-// Bad — raw colors bypass the theme
-<div style={{ background: "#fff", color: "#111" }}>…</div>
-```
+<!-- source: examples/design-system/color-tokens.example.tsx -->
 
 Never reach for raw color names. If a status doesn't fit, that's a content problem, not a token problem.
 
@@ -123,13 +114,7 @@ Linear scale on a 4px base. Padding, margin, and gap all come from this scale. T
 | `--space-12` | 48px  | page section break        |
 | `--space-16` | 64px  | hero spacing              |
 
-```tsx
-// Good — scale step
-<div className="flex gap-3 p-4">…</div>
-
-// Bad — magic value
-<div className="p-[13px]">…</div>
-```
+<!-- source: examples/design-system/spacing-scale.example.tsx -->
 
 Hand-typing `padding: 13px` is a smell. Round to the nearest scale step; if nothing fits, the layout is wrong, not the scale.
 
@@ -150,11 +135,7 @@ Named roles. Each token bundles font-size + line-height + weight. Pick by **role
 | `caption` | `text-caption` | timestamps, labels, metadata |
 | `mono`    | `text-mono`    | IDs, code, numbers in tables |
 
-```tsx
-<h2 className="text-h2">Section</h2>
-<p className="text-body text-fg-muted">Description copy</p>
-<span className="text-caption text-fg-subtle">Updated 2h ago</span>
-```
+<!-- source: examples/design-system/typography-tokens.example.tsx -->
 
 ### Radius
 
@@ -220,7 +201,7 @@ Never invent a z value. If you need a new layer, add a token; never `z-index: 99
 
 ### Icon sizes
 
-Pair icon size with the surrounding text scale. Pass via the `size` prop, not raw width/height.
+Pair icon size with the surrounding text scale. Use token-backed width/height (or a component-specific `size` prop), not raw dimensions.
 
 | Token       | Pairs with text       |
 | ----------- | --------------------- |
@@ -229,9 +210,7 @@ Pair icon size with the surrounding text scale. Pass via the `size` prop, not ra
 | `--icon-lg` | `h3`, `h4`            |
 | `--icon-xl` | `h1`, `h2`, `display` |
 
-```tsx
-<Icon name="check" size="md" />
-```
+<!-- source: examples/design-system/icon-size-token.example.tsx -->
 
 ### Breakpoints
 
@@ -249,16 +228,13 @@ Two-column **behavior** (right rail stacks under `**lg`**): respect AppShell def
 
 ## 5. The `astw:` prefix
 
-AppShell exposes **layout / sizing / overflow** escapes on some components via props like `containerClassName`, `contentClassName`, `className` on roots. Prefix those utilities with `**astw:`\*\* so they apply to the wrapper AppShell controls.
+AppShell exposes **layout / sizing / overflow** escapes on some components via props like `containerClassName` and `className` on exposed parts. Prefix those utilities with `**astw:`\*\* so they apply to the wrapper AppShell controls.
 
 **Do not duplicate full component trees here.** Typical patterns (full `**DataTable`** composition, `**Sheet`+ footer**,`**Table.Root` + card insets**) live in `**components.md`\*\* with JSX you can copy.
 
 Minimal illustrations — same rules apply to other `*ClassName` hooks:
 
-```tsx
-<Table.Root containerClassName="astw:px-6 astw:max-h-96 astw:overflow-y-auto" />
-<Sheet contentClassName="astw:w-[480px] astw:flex astw:flex-col astw:gap-4" />
-```
+<!-- source: examples/design-system/astw-prefix.example.tsx -->
 
 Rules:
 
@@ -272,7 +248,7 @@ Most ERP screens compose entirely from AppShell primitives. When you hit a gap, 
 
 ### Decision tree
 
-1. **Can you compose existing AppShell primitives?** A "card with metric and trend arrow" is `Card` + `Stat` + `Icon`, not a new component. Compose first.
+1. **Can you compose existing AppShell primitives?** A summary surface is usually just `Card` + `Badge` + `Button`, not a new component. Compose first.
 2. **If composition won't work, is the behavior one-off?** Build it locally under `src/components/<name>/` and flag it for the `build-component` skill, which promotes useful customs into AppShell upstream.
 3. **If it's already proven reusable across 2+ apps**, skip local entirely — use the `build-component` skill to add it to AppShell directly.
 
@@ -280,43 +256,15 @@ Most ERP screens compose entirely from AppShell primitives. When you hit a gap, 
 
 - **Tokens only.** No hex literals, no magic px values, no hand-rolled shadows. Every visual property maps to a token from Section 4.
 - **Base UI data-attribute pattern for state.** Expose `data-*` attributes that reflect internal state; never style off React props alone. A custom toggle exposes `data-checked`; a custom step indicator exposes `data-active`, `data-completed`, etc.
-- **Compose AppShell primitives inside.** If the custom needs a button, use `Button` — not raw `<button>`. Same for `Input`, `Badge`, `Icon`. The custom's job is composition, not reinvention.
+- **Compose AppShell primitives inside.** If the custom needs a button, use `Button` — not raw `<button>`. Same for `Input`, `Badge`, `Card`, and `Table`. The custom's job is composition, not reinvention.
 - **Document with a `README.md`** in the component folder listing: purpose, props, tokens used, and a brief justification for why this can't be composed from existing AppShell primitives.
 - **Match accessibility behavior** of the closest AppShell equivalent — focus management, ARIA roles/attributes, keyboard interactions. Reach for Base UI primitives if the behavior is non-trivial.
 
 Example skeleton for a local custom component:
 
-```tsx
-// src/components/StepIndicator/index.tsx
-import { Icon } from "@tailor-platform/app-shell";
+<!-- source: examples/design-system/custom-step-indicator.example.tsx -->
 
-type Props = { steps: string[]; current: number };
-
-export function StepIndicator({ steps, current }: Props) {
-  return (
-    <ol className="flex gap-2">
-      {steps.map((label, i) => (
-        <li
-          key={label}
-          data-active={i === current ? "" : undefined}
-          data-completed={i < current ? "" : undefined}
-          className="
-            flex items-center gap-2 px-3 py-2 rounded-md
-            bg-surface-2 text-fg-muted text-body-sm
-            data-[active]:bg-primary data-[active]:text-fg-default
-            data-[completed]:text-success
-          "
-        >
-          {i < current && <Icon name="check" size="sm" />}
-          {label}
-        </li>
-      ))}
-    </ol>
-  );
-}
-```
-
-Notice: tokens for every value, `data-*` attributes for state, no hex literals, AppShell `Icon` composed inside.
+Notice: tokens for every value, `data-*` attributes for state, no hex literals, and a plain SVG sized by the same token system.
 
 ### Promotion path
 

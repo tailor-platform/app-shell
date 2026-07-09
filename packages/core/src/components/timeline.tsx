@@ -73,6 +73,13 @@ export interface TimelineGuide {
   bodyStyle?: React.CSSProperties;
 }
 
+type TimelineAxisLevelBase = {
+  /** Height of this axis level in pixels. Defaults to `28`. */
+  height?: number;
+  /** Optional class applied to the level container. */
+  className?: string;
+};
+
 /**
  * One stacked axis level.
  *
@@ -80,32 +87,24 @@ export interface TimelineGuide {
  * single timebox row such as half-hour slots.
  */
 export type TimelineAxisLevel =
-  | {
+  | (TimelineAxisLevelBase & {
       /** Interval labels rendered across a time range. */
       kind: "spans";
-      /** Height of this axis level in pixels. Defaults to `28`. */
-      height?: number;
       /** Span items to render in this level. */
       items: TimelineAxisSpan[];
-      /** Optional class applied to the level container. */
-      className?: string;
       /** Optional class applied to every span in the level. */
       itemClassName?: string;
       /** Optional style applied to every span in the level. */
       itemStyle?: React.CSSProperties;
-    }
-  | {
+    })
+  | (TimelineAxisLevelBase & {
       /** Point labels rendered at specific times. */
       kind: "ticks";
-      /** Height of this axis level in pixels. Defaults to `28`. */
-      height?: number;
       /** Tick items to render in this level. */
       items: TimelineAxisTick[];
-      /** Optional class applied to the level container. */
-      className?: string;
       /** Horizontal anchor used when placing each tick label. */
       labelAlign?: Anchor;
-    };
+    });
 
 /**
  * Axis configuration owned by `Timeline.Viewport`.
@@ -392,6 +391,20 @@ function sameItemLayout(a: TimelineItemLayout | undefined, b: TimelineItemLayout
   );
 }
 
+// Builds one orthogonal SVG path between two interval boxes.
+//
+// Coordinate space:
+// - x is measured in body pixels, not percentages, because the route mixes time-based
+//   positions with a fixed px `gap` used to leave/enter each interval cleanly.
+// - y is measured from the top of the timeline body.
+// - each interval contributes an inner box (`top/bottom`) after applying `insetY`, and
+//   links connect to the vertical center of that inner box.
+//
+// Route shape:
+// 1. pick the actual anchor point on each interval (`start`/`center`/`end`)
+// 2. move horizontally by `gap` so the line exits and enters outside the interval box
+// 3. if those exit/entry columns do not overlap, use a simple 3-segment elbow
+// 4. otherwise, route through a shared horizontal lane halfway through the row gap
 function buildLinkPath(
   fromItem: TimelineItemLayout,
   toItem: TimelineItemLayout,
@@ -401,6 +414,7 @@ function buildLinkPath(
   gap: number,
   timeToPercent: (time: number) => number,
 ) {
+  // Convert each interval from time-space into the pixel box used by routing.
   const fromLeft = (timeToPercent(fromItem.start) * bodyWidth) / 100;
   const fromRight = (timeToPercent(fromItem.end) * bodyWidth) / 100;
   const fromTop = fromItem.rowTop + fromItem.insetY;
@@ -410,21 +424,30 @@ function buildLinkPath(
   const toTop = toItem.rowTop + toItem.insetY;
   const toBottom = toItem.rowTop + toItem.rowHeight - toItem.insetY;
 
+  // Anchor x comes from the chosen side of the interval. y always uses the visual center
+  // of the interval's inner box so links stay vertically balanced.
   const x1 = anchorX(fromAnchor, fromLeft, fromRight);
   const y1 = fromTop + (fromBottom - fromTop) / 2;
   const x2 = anchorX(toAnchor, toLeft, toRight);
   const y2 = toTop + (toBottom - toTop) / 2;
 
+  // Decide which horizontal direction each side should leave/enter from. Explicit
+  // start/end anchors force left/right; center anchors choose based on the other side.
   const exitDirection = resolveDirection(fromAnchor, x1, x2, 1);
   const entryDirection = resolveDirection(toAnchor, x2, x1, -1);
   const xExit = x1 + gap * exitDirection;
   const xEntry = x2 + gap * entryDirection;
-  const noOverlap = exitDirection === 1 && entryDirection === -1 && xExit < xEntry;
 
+  // Best case: after stepping out by `gap`, the source column is still left of the target
+  // column. Then a simple elbow works: out, down/up, back in.
+  const noOverlap = exitDirection === 1 && entryDirection === -1 && xExit < xEntry;
   if (noOverlap) {
     return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${y2} L ${x2} ${y2}`;
   }
 
+  // Otherwise the exit/entry columns would cross, so use a shared horizontal lane placed
+  // halfway through the vertical gap between the two interval boxes. That avoids running
+  // the middle segment through either interval.
   const yRoute =
     y2 >= y1 ? fromBottom + (toTop - fromBottom) / 2 : toBottom + (fromTop - toBottom) / 2;
   return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${yRoute} L ${xEntry} ${yRoute} L ${xEntry} ${y2} L ${x2} ${y2}`;

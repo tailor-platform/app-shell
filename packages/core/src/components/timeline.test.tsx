@@ -115,7 +115,7 @@ describe("Timeline", () => {
 
       await waitFor(() => {
         const link = container.querySelector('[data-slot="timeline-link"] path[stroke]');
-        expect(link?.getAttribute("d")).toBe("M 60 20 L 76 20 L 76 60 L 120 60");
+        expect(link?.getAttribute("d")).toBe("M 60 20 L 76 20 L 76 60 L 112 60");
       });
     } finally {
       if (clientWidth) {

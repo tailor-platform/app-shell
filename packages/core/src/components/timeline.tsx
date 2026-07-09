@@ -405,6 +405,8 @@ function sameItemLayout(a: TimelineItemLayout | undefined, b: TimelineItemLayout
 // 2. move horizontally by `gap` so the line exits and enters outside the interval box
 // 3. if those exit/entry columns do not overlap, use a simple 3-segment elbow
 // 4. otherwise, route through a shared horizontal lane halfway through the row gap
+// 5. stop the path at the arrow base, not the target anchor itself, so the marker head
+//    stays outside the interval instead of visually biting into it
 function buildLinkPath(
   fromItem: TimelineItemLayout,
   toItem: TimelineItemLayout,
@@ -412,6 +414,7 @@ function buildLinkPath(
   fromAnchor: Anchor,
   toAnchor: Anchor,
   gap: number,
+  targetInset: number,
   timeToPercent: (time: number) => number,
 ) {
   // Convert each interval from time-space into the pixel box used by routing.
@@ -437,20 +440,24 @@ function buildLinkPath(
   const entryDirection = resolveDirection(toAnchor, x2, x1, -1);
   const xExit = x1 + gap * exitDirection;
   const xEntry = x2 + gap * entryDirection;
+  const xEnd = x2 + targetInset * entryDirection;
 
   // Best case: after stepping out by `gap`, the source column is still left of the target
-  // column. Then a simple elbow works: out, down/up, back in.
+  // column. Then a simple elbow works: out, down/up, back in. The last horizontal segment
+  // stops at `xEnd`, leaving room for the arrow head (when enabled) to occupy the target
+  // side without overlapping the interval itself.
   const noOverlap = exitDirection === 1 && entryDirection === -1 && xExit < xEntry;
   if (noOverlap) {
-    return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${y2} L ${x2} ${y2}`;
+    return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${y2} L ${xEnd} ${y2}`;
   }
 
   // Otherwise the exit/entry columns would cross, so use a shared horizontal lane placed
   // halfway through the vertical gap between the two interval boxes. That avoids running
-  // the middle segment through either interval.
+  // the middle segment through either interval, and the final segment still stops at the
+  // arrow base rather than at the interval edge.
   const yRoute =
     y2 >= y1 ? fromBottom + (toTop - fromBottom) / 2 : toBottom + (fromTop - toBottom) / 2;
-  return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${yRoute} L ${xEntry} ${yRoute} L ${xEntry} ${y2} L ${x2} ${y2}`;
+  return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${yRoute} L ${xEntry} ${yRoute} L ${xEntry} ${y2} L ${xEnd} ${y2}`;
 }
 
 function renderAxisLevel(
@@ -1002,6 +1009,9 @@ function Link({
   const resolvedClassName = className ?? linkDefaults.className;
   const resolvedStyle = style ?? linkDefaults.style;
   const resolvedStrokeWidth = strokeWidth ?? linkDefaults.strokeWidth;
+  // Keep this in sync with the marker geometry below: the arrow head is 6px long and we
+  // leave an extra 2px of breathing room before the target interval.
+  const arrowInset = resolvedArrow ? 8 : 0;
   const path = React.useMemo(() => {
     const fromItem = itemLayouts.get(from);
     const toItem = itemLayouts.get(to);
@@ -1013,9 +1023,11 @@ function Link({
       fromAnchor,
       toAnchor,
       resolvedGap,
+      arrowInset,
       timeToPercent,
     );
   }, [
+    arrowInset,
     bodySize.height,
     bodySize.width,
     from,

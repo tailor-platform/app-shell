@@ -328,6 +328,45 @@ Mobile view (sidebar collapsed):
 └─────────────────────────────────┘
 ```
 
+## Accessing the content scroll container
+
+The AppShell is viewport-bounded (`h-svh`), so the **document itself does not scroll** — the content area does. Code that previously relied on `window`/document scroll (reading `window.scrollY`, listening to `window`'s `scroll` event, `window.scrollTo(...)`, or an `IntersectionObserver` with the default viewport root) should target the content scroll container instead.
+
+Use the `useAppShellScrollContainer()` hook to get a ref to that element from any page:
+
+```tsx
+import { useAppShellScrollContainer } from "@tailor-platform/app-shell";
+import { useEffect, useState } from "react";
+
+function ReadingProgress() {
+  const scrollRef = useAppShellScrollContainer();
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const max = el.scrollHeight - el.clientHeight;
+      setProgress(max > 0 ? el.scrollTop / max : 0);
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
+
+  return <progress value={progress} />;
+}
+```
+
+The same element handles imperative scrolling (`scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })`) and works as an `IntersectionObserver` root (`new IntersectionObserver(cb, { root: scrollRef.current })`).
+
+Notes:
+
+- The element mounts with the layout, above your page, so read `ref.current` inside an effect — it is populated by the time effects run, not during render.
+- On a [`<Layout fill>`](./layout.md#fill-mode) page this element does **not** scroll; its children (e.g. a `DataTable`) manage their own scrolling.
+- Outside a `SidebarLayout` (a fully custom layout) the returned ref's `current` is always `null` — such layouts own their own scroll region.
+- For non-React access (CSS, tests, plain DOM) the container also carries a `data-appshell-scroll-container` attribute: `document.querySelector("[data-appshell-scroll-container]")`.
+
 ## Styling
 
 The sidebar and layout use Tailwind CSS classes prefixed with `astw:` to avoid conflicts with your application styles.

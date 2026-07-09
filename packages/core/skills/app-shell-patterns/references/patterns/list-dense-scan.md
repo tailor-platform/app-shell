@@ -83,7 +83,7 @@ export const columns: Column<Order>[] = [
 
 ```tsx
 /* pattern: list/dense-scan */
-import { DataTable, useDataTable, Button, Input } from "@tailor-platform/app-shell";
+import { DataTable, Layout, useDataTable, Button, Input } from "@tailor-platform/app-shell";
 import type { Order } from "./columns";
 import { columns } from "./columns";
 import type { DataTableData } from "@tailor-platform/app-shell";
@@ -97,18 +97,45 @@ export default function DenseScanList({ data, onCreateClick }: Props) {
   const table = useDataTable({ data, columns });
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Input placeholder="Search orders..." className="max-w-sm" />
-        <Button onClick={onCreateClick}>Create Order</Button>
-      </div>
-      <DataTable.Root value={table}>
-        <DataTable.Table />
-      </DataTable.Root>
-    </div>
+    // `fill` pins the page chrome for table-first pages: the title, toolbar,
+    // column header row, and pagination footer stay visible at every viewport
+    // height — only the table's rows region scrolls. Omit `fill` on pages
+    // that should flow and scroll naturally (forms, dashboards, articles).
+    <Layout fill>
+      <Layout.Header
+        title="Orders"
+        actions={[
+          <Button key="create" onClick={onCreateClick}>
+            Create Order
+          </Button>,
+        ]}
+      />
+      <Layout.Column>
+        <DataTable.Root value={table}>
+          <DataTable.Toolbar>
+            <Input placeholder="Search orders..." className="max-w-sm" />
+          </DataTable.Toolbar>
+          <DataTable.Table />
+          <DataTable.Footer>
+            <DataTable.Pagination />
+          </DataTable.Footer>
+        </DataTable.Root>
+      </Layout.Column>
+    </Layout>
   );
 }
 ```
+
+## Page Layout & Internal Scrolling
+
+Table-first pages should pin their chrome and scroll only the rows region. Wrap the page in `<Layout fill>`:
+
+- `fill` stretches the layout to the available height and bounds the column row, so the `DataTable` shrinks to fit instead of growing past the viewport
+- The `Layout.Header` (title/actions), `DataTable.Toolbar`, the column header row (sticky), and `DataTable.Footer` (pagination) stay visible at every viewport height — only the rows scroll vertically
+- When the current page of rows fits, nothing stretches and no scrollbar appears — short tables render identically with or without `fill`
+- Requires no extra styling on the page: the height chain (`AppShell` content area → `Layout fill` → `Layout.Column` → `DataTable.Root`) is wired by the components
+
+Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, articles) — the AppShell content area scrolls those.
 
 ## Variants
 
@@ -122,6 +149,7 @@ export default function DenseScanList({ data, onCreateClick }: Props) {
 
 - Column count: 4-8 recommended
 - Must include pagination — never render unbounded lists
+- Table-first pages use `<Layout fill>` so title/toolbar/header/footer stay pinned and only rows scroll
 - Handle every state: `DataTable` renders the loading skeleton and error row; always provide a **labelled empty state** (what the list is + how to add the first record) rather than a bare empty table
 - Status Badge colors must use design system tokens (variant prop): the **primary** status column uses **filled** semantic variants; **secondary** status columns (delivery, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules)
 - Bulk actions toolbar appears only when ≥1 row is selected
@@ -131,6 +159,7 @@ export default function DenseScanList({ data, onCreateClick }: Props) {
 ## Anti-patterns
 
 - Building a bespoke table + custom pagination instead of `DataTable` + `useCollectionVariables`
+- Hand-rolled `max-height`/`overflow` wrappers around `DataTable` to contain scrolling — use `<Layout fill>` instead
 - Tabs that mutate only local UI state while pagination/filters assume the full server set
 - Using `<table>` directly instead of `<DataTable>` for live collections
 - Client-side filtering on 1000+ records without server-side support

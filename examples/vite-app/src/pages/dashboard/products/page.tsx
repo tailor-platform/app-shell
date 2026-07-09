@@ -92,7 +92,7 @@ const ProductsPage = () => {
   // synchronously, so the first fetch already reflects the URL. Check the
   // address bar as you interact.
   const { variables, control } = useURLCollectionVariables({
-    params: { pageSize: 5 },
+    params: { pageSize: 25 },
     tableMetadata: productMetadata,
   });
 
@@ -116,7 +116,9 @@ const ProductsPage = () => {
   });
 
   return (
-    <Layout>
+    // `fill` pins the page chrome: the title, table header, and footer stay
+    // visible while the rows region scrolls internally.
+    <Layout fill>
       <Layout.Header title="Products" />
       <Layout.Column>
         <p className="mb-4 text-sm text-muted-foreground">
@@ -132,7 +134,7 @@ const ProductsPage = () => {
           </DataTable.Toolbar>
           <DataTable.Table />
           <DataTable.Footer>
-            <DataTable.Pagination pageSizeOptions={[5, 10, 20]} />
+            <DataTable.Pagination pageSizeOptions={[10, 25, 50, 100]} />
           </DataTable.Footer>
         </DataTable.Root>
         {selectedIds.length > 0 && (

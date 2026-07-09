@@ -1,4 +1,4 @@
-# Proposal: DatePicker / DateField (and future DateRangePicker)
+# Decision: DatePicker / DateField (and future DateRangePicker)
 
 > Status: **Decided — v1 builds on the §9 lighter foundation (`@internationalized/date` + Base UI), approved 2026-06-26 (superseding the original `react-aria-components` decision). See the Revision note.**
 > Scope: v1 ships `DateField`, `DatePicker`, and a standalone `Calendar`. `DateRangePicker` / `RangeCalendar` are designed-for but deferred.

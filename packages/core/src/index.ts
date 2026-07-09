@@ -31,6 +31,7 @@ export {
   useTimeZone,
   type TimeZone,
 } from "./contexts/appshell-context";
+export { useAppShellScrollContainer } from "./contexts/scroll-container-context";
 export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";
 export { AppearanceSwitcher } from "./components/appearance-switcher";
 export { type I18nLabels, defineI18nLabels } from "./hooks/i18n";

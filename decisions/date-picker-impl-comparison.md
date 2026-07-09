@@ -1,13 +1,13 @@
 # DatePicker — implementation comparison (measured)
 
-Two complete, API-identical implementations of `DateField` / `DatePicker` / `Calendar` were built to validate the design proposal's library-choice analysis (`docs/proposals/date-picker.md`, §1.1 and §9) against real code:
+Two complete, API-identical implementations of `DateField` / `DatePicker` / `Calendar` were built to validate the decision record's library-choice analysis (`date-picker.md`, §1.1 and §9) against real code:
 
 | Branch                            | Behaviour/a11y foundation                             |
 | --------------------------------- | ----------------------------------------------------- |
 | `feat/date-picker-pp-1093`        | **react-aria-components** (Adobe)                     |
 | `feat/date-picker-baseui-pp-1093` | **`@internationalized/date` + Base UI** (this branch) |
 
-Both expose the **same public API** (`DateFieldProps` / `DatePickerProps` / `CalendarProps`), the same `LocalizedString` label/description/error props, the same AppShell `useResolvedLocale()` / `useTimeZone()` wiring, and the same `@internationalized/date` re-exports. A consumer cannot tell them apart from the import surface — exactly the "foundation-agnostic API" the proposal relies on for a low-regret swap.
+Both expose the **same public API** (`DateFieldProps` / `DatePickerProps` / `CalendarProps`), the same `LocalizedString` label/description/error props, the same AppShell `useResolvedLocale()` / `useTimeZone()` wiring, and the same `@internationalized/date` re-exports. A consumer cannot tell them apart from the import surface — exactly the "foundation-agnostic API" the decision relies on for a low-regret swap.
 
 ## What "Base UI + raw @internationalized/date" actually means
 
@@ -26,7 +26,7 @@ Base UI provides only the **`Popover`** (positioning, dismiss, portal) and the f
 | Base UI `Popover` + `@internationalized/date`     |     46.3 KB | Base UI already in bundle → marginal ≈ **11 KB** |
 | react-aria date slice + `@internationalized/date` |     73.7 KB | whole second foundation → **+73.7 KB**           |
 
-The decisive point: **Base UI is already in the app-shell bundle** (Dialog, Select, Combobox, Popover all use it), so the marginal dependency cost of the date components on this branch is essentially just `@internationalized/date` (~11 KB gz). The react-aria branch adds an entire second headless foundation (~74 KB gz) that overlaps Base UI. This confirms the proposal's projected ~11 KB vs ~73 KB (§1.1).
+The decisive point: **Base UI is already in the app-shell bundle** (Dialog, Select, Combobox, Popover all use it), so the marginal dependency cost of the date components on this branch is essentially just `@internationalized/date` (~11 KB gz). The react-aria branch adds an entire second headless foundation (~74 KB gz) that overlaps Base UI. This confirms the decision record's projected ~11 KB vs ~73 KB (§1.1).
 
 ## Cost we take on: code we now own
 
@@ -35,7 +35,7 @@ The decisive point: **Base UI is already in the app-shell bundle** (Dialog, Sele
 | react-aria variant                  |       ~565 | 0 (rented from Adobe)        |
 | `@internationalized/date` + Base UI |     ~1,526 | ~670 (the two state engines) |
 
-~2.7× the source, ~670 LOC of date-interaction behaviour to maintain ourselves — the "highest build effort" the proposal flagged, now quantified.
+~2.7× the source, ~670 LOC of date-interaction behaviour to maintain ourselves — the "highest build effort" the decision record flagged, now quantified.
 
 ## Parity verified
 
@@ -60,4 +60,4 @@ The decisive point: **Base UI is already in the app-shell bundle** (Dialog, Sele
 
 ## Takeaway
 
-The Base-UI-native build is real and shippable: identical API, identical a11y/DOM contract, full localization for the common case, at ~1/7th the dependency weight — at the cost of ~670 LOC of behaviour we maintain and a few advanced-i18n gaps. This is precisely the trade the proposal framed as the §9 "future possibility," now de-risked with working code on both sides.
+The Base-UI-native build is real and shippable: identical API, identical a11y/DOM contract, full localization for the common case, at ~1/7th the dependency weight — at the cost of ~670 LOC of behaviour we maintain and a few advanced-i18n gaps. This is precisely the trade the decision record framed as the §9 "future possibility," now de-risked with working code on both sides.

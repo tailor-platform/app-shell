@@ -173,7 +173,7 @@ Accepted by the prop types (for parity with the react-aria variant) but **not ac
 | `hourCycle`    | `12 \| 24`                                | No effect until time granularity lands (12h/24h only matters with an hour segment).                                                                                                                                |
 | `hideTimeZone` | `boolean`                                 | Unused; only relevant to `ZonedDateTime` display (time granularity).                                                                                                                                               |
 
-DateTime support remains a post-v1 fast-follow.
+Only date granularity is supported in v1; DateTime support is planned for a later release.
 
 ## Related
 

@@ -227,6 +227,10 @@ export interface TimelineRowBackground {
   style?: React.CSSProperties;
 }
 
+// Timeline-wide time-domain state shared by every primitive under <Timeline.Root>.
+// This context stays intentionally small: only the absolute range and the helper that
+// projects a timestamp into percentage space. Anything tied to one rendered viewport
+// (scroll body size, link metadata, row positions) lives in ViewportContext instead.
 interface TimelineContextValue {
   start: number;
   end: number;
@@ -241,6 +245,11 @@ type TimelineItemLayout = {
   rowHeight: number;
 };
 
+// Viewport-local render state shared by nodes inside one <Timeline.Viewport>.
+// This owns runtime facts that depend on one concrete rendered body: interval metadata
+// used by links, measured body size for pixel-based routing, and viewport-level link
+// defaults. It is kept separate from TimelineContext so the public primitives can share
+// one time range across multiple viewports without also sharing layout/measurement state.
 interface ViewportContextValue {
   registerItem: (id: string, layout: TimelineItemLayout) => void;
   unregisterItem: (id: string) => void;

@@ -34,6 +34,8 @@ For the full upstream API of any component, follow the link to the published ref
 
 ### `AppShell`
 
+**Import:** `import { AppShell } from '@tailor-platform/app-shell'`
+
 **Purpose:** Application root — wraps `<App />` with AppShell context, theme, and routing.
 **API:** Compound — `AppShell.Root`, plus subcomponents wired through `AppShellProps`. Configured once in `App.tsx`.
 **Example:** see `project-setup.md`.
@@ -95,11 +97,15 @@ Desktop breakpoints and desktop-first rationale: **`design-system.md`** §4 Brea
 
 ### `SidebarLayout`
 
+**Import:** `import { SidebarLayout } from '@tailor-platform/app-shell'`
+
 **Purpose:** Top-level layout that mounts the sidebar and renders the page outlet.
 **API:** `SidebarLayoutProps` — `sidebar`, `header`, and `children` are full-region slots (each defaults to a built-in). `sidebar` defaults to `SidebarLayout.DefaultSidebar`; `header` defaults to `SidebarLayout.DefaultHeader`. Used in `App.tsx`.
 **Used in patterns:** consumed by AppShell init, not directly by page patterns. See `project-setup.md`.
 
 ### `SidebarLayout.DefaultHeader` (`DefaultHeader`)
+
+**Import:** `import { SidebarLayout } from '@tailor-platform/app-shell'` → `SidebarLayout.DefaultHeader` (also top-level `DefaultHeader`)
 
 **Purpose:** The built-in top bar (trigger + breadcrumb, plus an `actions` cluster). Drop into `SidebarLayout`'s `header` slot to extend the header without rebuilding it.
 **API:** `actions?: ReactNode | ReactNode[]` — the right-hand cluster (opinionated flex row). **Defaults to `[<AppearanceSwitcher />]`, and passing `actions` REPLACES the switcher** — include `<AppearanceSwitcher />` in the array to keep it. `actions={[]}` = empty right side.
@@ -107,16 +113,22 @@ Desktop breakpoints and desktop-first rationale: **`design-system.md`** §4 Brea
 
 ### `SidebarLayout.DefaultSidebar` (`DefaultSidebar`), `SidebarGroup`, `SidebarItem`, `SidebarSeparator`
 
+**Import:** `import { SidebarLayout, SidebarGroup, SidebarItem, SidebarSeparator } from '@tailor-platform/app-shell'` → `SidebarLayout.DefaultSidebar` (also top-level `DefaultSidebar`)
+
 **Purpose:** Sidebar composition. `DefaultSidebar` auto-resolves nav items from `appShellPageProps.meta` on each page; the others let you customize manually.
 **Used in patterns:** sidebar is a project-level concern. See `project-setup.md`.
 
 ### `AppearanceSwitcher`
+
+**Import:** `import { AppearanceSwitcher } from '@tailor-platform/app-shell'`
 
 **Purpose:** Palette-icon dropdown for Light/Dark/System color mode. The default `SidebarLayout.DefaultHeader` action; also usable standalone (e.g. a sidebar footer). Include it in `DefaultHeader`'s `actions` array when customizing the header to keep it visible.
 **API:** No props — reads/writes theme via `useTheme`.
 **Used in patterns:** project-level. See `project-setup.md`.
 
 ### `CommandPalette`
+
+**Import:** `import { CommandPalette } from '@tailor-platform/app-shell'`
 
 **Purpose:** Cmd/Ctrl-K command palette. Auto-discovers searchable resources via `defineResource`.
 **API:** Renderless — drop into the layout once.
@@ -139,6 +151,8 @@ Desktop breakpoints and desktop-first rationale: **`design-system.md`** §4 Brea
 **Used in patterns:** every pattern.
 
 ### `Link`
+
+**Import:** `import { Link } from '@tailor-platform/app-shell'`
 
 **Purpose:** Router-aware anchor. Re-exported from `react-router` so the rest of the app stays on the AppShell barrel.
 **API:** `to`, `replace`, `state`, etc. — same as `react-router`.
@@ -185,6 +199,8 @@ Desktop breakpoints and desktop-first rationale: **`design-system.md`** §4 Brea
 **Notes:** **`list-dense-scan`** uses whole-row / primary-column navigation — keep row `Menu` items **non-navigation** (Assign, Duplicate, Delete). Avoid redundant **View**/**Open**. Detail overflows may include navigation only when not duplicating hero content.
 
 ### `Tooltip`
+
+**Import:** `import { Tooltip } from '@tailor-platform/app-shell'`
 
 **Purpose:** Contextual hint on hover/focus. Use sparingly — for icon-only buttons or constrained labels.
 **API:** Compound — `Tooltip.Root`, `Tooltip.Trigger`, `Tooltip.Content`.
@@ -313,6 +329,8 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `Avatar`
 
+**Import:** `import { Avatar } from '@tailor-platform/app-shell'`
+
 **Purpose:** User/entity avatar with fallback initials.
 **API:** Compound — `Avatar.Root`, `Avatar.Image`, `Avatar.Fallback`. Plus `avatarVariants` CVA.
 **Used in patterns:** `detail/*` (assignee/owner, comments threads).
@@ -343,6 +361,8 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `ActivityCard`
 
+**Import:** `import { ActivityCard } from '@tailor-platform/app-shell'`
+
 **Purpose:** Timeline of events on a record (audit log, status changes, comments).
 **API:** Compound — `ActivityCard.Root`, `ActivityCard.Items` (generic over item type), plus `ActivityCardProps`, `ActivityCardItem`, `ActivityCardItemProps`. Items render with timestamp + actor + description.
 **Used in patterns:** `detail/hero-with-actions` (right column or bottom section).
@@ -365,6 +385,8 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `Form`
 
+**Import:** `import { Form } from '@tailor-platform/app-shell'`
+
 > Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/form.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/form.md)
 
 **Purpose:** Form root wired to react-hook-form. Use with `Field`, `Fieldset`, and Zod for validation.
@@ -374,11 +396,15 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `Field`
 
+**Import:** `import { Field } from '@tailor-platform/app-shell'`
+
 **Purpose:** Single form field with label + control + error message wiring.
 **API:** Compound. Wraps any input control (`Input`, `Select`, `Combobox`, etc.) and binds it to react-hook-form via `name`.
 **Used in patterns:** all `form/*`.
 
 ### `Fieldset`
+
+**Import:** `import { Fieldset } from '@tailor-platform/app-shell'`
 
 **Purpose:** Group related fields under a legend (subtle section header).
 **API:** Compound — `Fieldset.Root`, `Fieldset.Legend`.
@@ -386,11 +412,15 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `Input`
 
+**Import:** `import { Input } from '@tailor-platform/app-shell'`
+
 **Purpose:** Text input. Maps to spec field types: `string`, `email`, `number`, `password`, `tel`, `url`.
 **API:** `InputProps` — extends native `<input>` props.
 **Used in patterns:** all `form/*`.
 
 ### `Select`
+
+**Import:** `import { Select } from '@tailor-platform/app-shell'`
 
 **Purpose:** Dropdown for fixed enumerations.
 **API:** Compound. Sync version (small option lists). For async/typeahead, see `Combobox` and `Autocomplete`. Type: `SelectAsyncFetcher<T>` for the async variant.
@@ -399,11 +429,15 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `Combobox`
 
+**Import:** `import { Combobox } from '@tailor-platform/app-shell'`
+
 **Purpose:** Single-select with search, supports async data fetching.
 **API:** Compound. `ComboboxAsyncFetcher<T>` for paginated/queried option sources (e.g. lookups).
 **Used in patterns:** `form/*` (foreign-key lookups).
 
 ### `Autocomplete`
+
+**Import:** `import { Autocomplete } from '@tailor-platform/app-shell'`
 
 **Purpose:** Free-text input with completion suggestions (multi-select capable).
 **API:** Compound. `AutocompleteAsyncFetcher<T>` for async suggestion sources. `ItemGroup<T>` for grouped suggestions.
@@ -415,11 +449,15 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `AuthProvider`
 
+**Import:** `import { AuthProvider } from '@tailor-platform/app-shell'`
+
 **Purpose:** Wraps the app to expose auth state via `useAuth`. Mount in `App.tsx`.
 **API:** `AuthProviderProps` — `client` (from `createAuthClient`), `autoLogin`, `guardComponent`.
 **Used in patterns:** project-level. See `project-setup.md`.
 
 ### `createAuthClient`
+
+**Import:** `import { createAuthClient, type EnhancedAuthClient } from '@tailor-platform/app-shell'`
 
 **Purpose:** Factory for the auth client, configured with platform URL + client ID.
 **API:** `createAuthClient(config: AuthClientConfig): EnhancedAuthClient`.
@@ -427,21 +465,29 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 ### `useAuth`, `useAuthSuspense`
 
+**Import:** `import { useAuth, useAuthSuspense } from '@tailor-platform/app-shell'`
+
 **Purpose:** Read auth state in components. `useAuth` returns nullable state; `useAuthSuspense` suspends until ready (use inside route loaders / suspense boundaries).
 **API:** Returns `AuthState` (user, status, login/logout actions).
 **Used in patterns:** any pattern needing user identity.
 
 ### `AuthClient` (type)
 
+**Import:** `import { type AuthClient } from '@tailor-platform/app-shell'`
+
 **Purpose:** Public auth client interface (re-exported from `@tailor-platform/auth-public-client`).
 
 ### `WithGuard`
+
+**Import:** `import { WithGuard } from '@tailor-platform/app-shell'`
 
 **Purpose:** Permission gate around a UI subtree. Hides, denies, or shows a loading state based on the guard result.
 **API:** `WithGuardProps` — `guard: Guard`, `fallback`, `mode: 'hidden' | 'deny'`.
 **Used in patterns:** `detail/*` (action gating), `list/*` (row-level action visibility).
 
 ### Guard helpers — `pass`, `hidden`, `redirectTo`
+
+**Import:** `import { pass, hidden, redirectTo } from '@tailor-platform/app-shell'`
 
 **Purpose:** Return values for guard functions. `pass()` allows, `hidden()` hides, `redirectTo(path)` navigates.
 **Used in patterns:** any `Guard` definition.
@@ -456,10 +502,14 @@ Types for authoring guard functions used by `WithGuard` and `appShellPageProps.g
 
 ### `useNavigate`, `useParams`, `useSearchParams`, `useLocation`, `useRouteError`
 
+**Import:** `import { useNavigate, useParams, useSearchParams, useLocation, useRouteError } from '@tailor-platform/app-shell'`
+
 **Purpose:** Re-exported from `react-router`. Use the AppShell barrel — never import from `react-router` directly.
 **Used in patterns:** all (navigation, route params, query state).
 
 ### `createTypedPaths`
+
+**Import:** `import { createTypedPaths } from '@tailor-platform/app-shell'`
 
 **Purpose:** Type-safe path builder generated from the route tree.
 **API:** `createTypedPaths<TRoutes>()` returns a `paths.for(...)` helper.
@@ -475,11 +525,15 @@ Types for declaring page props (`appShellPageProps = { meta, guards }`), reading
 
 ### `useToast`
 
+**Import:** `import { useToast } from '@tailor-platform/app-shell'`
+
 **Purpose:** Imperative toast feedback after mutations.
 **API:** Returns the `sonner` `toast` function — `toast.success(message)`, `toast.error(message)`, `toast.loading(message)`, plus options for duration, action button, etc.
 **Used in patterns:** `interaction/toast`. Called from any mutation handler.
 
 ### `useTheme`
+
+**Import:** `import { useTheme } from '@tailor-platform/app-shell'`
 
 **Purpose:** Read/write the active theme (light/dark/system).
 **API:** Returns `ThemeProviderState`.
@@ -487,10 +541,14 @@ Types for declaring page props (`appShellPageProps = { meta, guards }`), reading
 
 ### `useAppShell`, `useAppShellConfig`, `useAppShellData`
 
+**Import:** `import { useAppShell, useAppShellConfig, useAppShellData } from '@tailor-platform/app-shell'`
+
 **Purpose:** Access AppShell context — the resolved `AppShellRegister` data, config, and runtime state.
 **Used in patterns:** advanced — when a component needs to read app-wide config or registered resources.
 
 ### `usePageMeta`, `useOverrideBreadcrumb`
+
+**Import:** `import { usePageMeta, useOverrideBreadcrumb } from '@tailor-platform/app-shell'`
 
 **Purpose:** Read the current page's `meta` (resolved from `appShellPageProps.meta`) or override the breadcrumb title at runtime (e.g. show the order number once data loads).
 **Used in patterns:** `detail/*` (dynamic breadcrumbs from loaded entity).
@@ -501,10 +559,14 @@ Types for declaring page props (`appShellPageProps = { meta, guards }`), reading
 
 ### `defineI18nLabels`
 
+**Import:** `import { defineI18nLabels } from '@tailor-platform/app-shell'`
+
 **Purpose:** Declare i18n labels in a typed way. Returns `I18nLabels<Def, L>`.
 **Used in patterns:** project-level for multi-locale apps.
 
 ### `defineModule`, `defineResource`
+
+**Import:** `import { defineModule, defineResource } from '@tailor-platform/app-shell'`
 
 **Purpose:** Register an app module / a resource (entity with CRUD pages). Wires routes, sidebar, and command palette automatically.
 **API:** `defineModule(props: DefineModuleProps): Module`, `defineResource(props: DefineResourceProps): Resource`.
@@ -520,10 +582,14 @@ Types returned/consumed by the define-\* helpers above.
 
 ### `avatarVariants`, `badgeVariants`, `buttonVariants`
 
+**Import:** `import { avatarVariants, badgeVariants, buttonVariants } from '@tailor-platform/app-shell'`
+
 **Purpose:** CVA (`class-variance-authority`) variant functions backing `Avatar`, `Badge`, `Button`. Use when authoring a custom component that should match an AppShell variant inline.
 **Used in patterns:** custom-component fallbacks (see `design-system.md` § "When AppShell doesn't have a component you need").
 
 ### `ErrorBoundaryComponent` (type)
+
+**Import:** `import { type ErrorBoundaryComponent } from '@tailor-platform/app-shell'`
 
 **Purpose:** Type for an error boundary component slot in routing.
 

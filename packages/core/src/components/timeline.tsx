@@ -316,12 +316,6 @@ function Root({ start, end, children, className, style }: RootProps) {
 }
 Root.displayName = "Timeline.Root";
 
-function anchorTransform(anchor: Anchor) {
-  if (anchor === "center") return "translateX(-50%)";
-  if (anchor === "end") return "translateX(-100%)";
-  return undefined;
-}
-
 function anchorX(anchor: Anchor, left: number, right: number) {
   if (anchor === "start") return left;
   if (anchor === "center") return left + (right - left) / 2;
@@ -681,7 +675,7 @@ function Viewport({
 Viewport.displayName = "Timeline.Viewport";
 
 type RowProps = {
-  /** Row contents, typically intervals or points. */
+  /** Row contents, typically intervals. */
   children: React.ReactNode;
   /** Optional class applied to the row content container. */
   className?: string;
@@ -792,74 +786,10 @@ function Interval({ start, end, children, id, insetY = 0, className, style }: In
 }
 Interval.displayName = "Timeline.Interval";
 
-type PointProps = {
-  /** Time position for the point. */
-  at: TimeValue;
-  /** Rendered content for the point. */
-  children: React.ReactNode;
-  /** Optional stable id used by `Timeline.Link`. */
-  id?: string;
-  /** Top and bottom inset in pixels within the row. Defaults to `0`. */
-  insetY?: number;
-  /** Horizontal anchor relative to the point position. Defaults to `"center"`. */
-  anchor?: Anchor;
-  /** Optional class applied to the positioned point container. */
-  className?: string;
-  /** Optional inline style applied to the positioned point container. */
-  style?: React.CSSProperties;
-};
-
-/**
- * Positions content at a single point in time inside a row.
- */
-function Point({ at, children, id, insetY = 0, anchor = "center", className, style }: PointProps) {
-  const { timeToPercent } = useTimelineContext();
-  const { itemRegistry } = useViewportContext();
-  const ref = React.useRef<HTMLDivElement>(null);
-  const atMs = toMs(at);
-  const left = timeToPercent(atMs);
-
-  React.useEffect(() => {
-    const registry = itemRegistry.current;
-    const element = ref.current;
-
-    if (id && element) {
-      registry.set(id, {
-        element,
-        start: atMs,
-        end: atMs,
-      });
-    }
-
-    return () => {
-      if (id) registry.delete(id);
-    };
-  }, [atMs, id, itemRegistry]);
-
-  return (
-    <div
-      ref={ref}
-      data-slot="timeline-point"
-      data-timeline-item-id={id}
-      className={cn("astw:absolute astw:flex astw:items-center", className)}
-      style={{
-        ...style,
-        left: `${left}%`,
-        top: insetY,
-        bottom: insetY,
-        transform: anchorTransform(anchor),
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-Point.displayName = "Timeline.Point";
-
 type LinkProps = {
-  /** Source `Timeline.Interval` or `Timeline.Point` id. */
+  /** Source `Timeline.Interval` id. */
   from: string;
-  /** Target `Timeline.Interval` or `Timeline.Point` id. */
+  /** Target `Timeline.Interval` id. */
   to: string;
   /** Source anchor used for routing. Defaults to `"end"`. */
   fromAnchor?: Anchor;
@@ -1063,6 +993,5 @@ export const Timeline = {
   Viewport,
   Row,
   Interval,
-  Point,
   Link,
 };

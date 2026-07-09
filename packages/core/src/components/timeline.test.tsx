@@ -53,7 +53,7 @@ describe("Timeline", () => {
     expect(container.querySelectorAll('[data-slot="timeline-body-line"]')).toHaveLength(1);
   });
 
-  it("positions interval and point nodes by timeline range", () => {
+  it("positions interval nodes by timeline range", () => {
     const { container } = render(
       <Timeline.Root start={0} end={100}>
         <Timeline.Viewport>
@@ -61,24 +61,18 @@ describe("Timeline", () => {
             <Timeline.Interval start={10} end={30} insetY={8}>
               <div>Interval</div>
             </Timeline.Interval>
-            <Timeline.Point at={75} anchor="start" insetY={10}>
-              <div>Point</div>
-            </Timeline.Point>
           </Timeline.Row>
         </Timeline.Viewport>
       </Timeline.Root>,
     );
 
     const interval = container.querySelector('[data-slot="timeline-interval"]') as HTMLDivElement;
-    const point = container.querySelector('[data-slot="timeline-point"]') as HTMLDivElement;
     const row = container.querySelector('[data-slot="timeline-row"]') as HTMLDivElement;
 
     expect(interval.style.left).toBe("10%");
     expect(interval.style.width).toBe("20%");
     expect(interval.style.top).toBe("8px");
     expect(interval.style.bottom).toBe("8px");
-    expect(point.style.left).toBe("75%");
-    expect(point.style.top).toBe("10px");
     expect(row.style.height).toBe("40px");
   });
 

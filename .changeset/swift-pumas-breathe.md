@@ -2,7 +2,13 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add composable `Timeline` primitives for building time-based layouts, including axis guides/levels, row backgrounds, intervals, points, and dependency links.
+Add composable `Timeline` primitives for building time-based layouts, including axis guides/levels, row backgrounds, intervals, and dependency links.
+
+- `Timeline.Root` defines the shared start/end range.
+- `Timeline.Viewport` renders the axis, decorations, scrolling area, and link layer.
+- `Timeline.Row` defines one timeline lane and owns row height/background.
+- `Timeline.Interval` positions content across a time range.
+- `Timeline.Link` draws dependency lines between timeline items.
 
 ```tsx
 import { Timeline } from "@tailor-platform/app-shell";

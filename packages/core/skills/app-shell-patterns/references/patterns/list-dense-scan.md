@@ -52,13 +52,11 @@ export type Order = {
   createdAt: string;
 };
 
-// Primary status column — filled semantic variants (one per row).
-// Secondary status columns (e.g. delivery, billing) use outline-* instead.
 const statusVariant = {
   draft: "neutral",
-  confirmed: "info",
-  shipped: "warning",
-  delivered: "success",
+  confirmed: "outline-info",
+  shipped: "outline-warning",
+  delivered: "outline-success",
 } as const;
 
 export const columns: Column<Order>[] = [
@@ -69,10 +67,7 @@ export const columns: Column<Order>[] = [
     render: (row) => <Badge variant={statusVariant[row.status]}>{row.status}</Badge>,
   },
   {
-    // Numeric columns right-align so digits line up. `type: "money" | "number"`
-    // auto-right; with a custom `render` set `align` explicitly.
     label: "Amount",
-    align: "right",
     render: (row) => `${row.amount.toLocaleString()}`,
   },
   { label: "Created", accessor: (row) => row.createdAt },
@@ -150,8 +145,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - Column count: 4-8 recommended
 - Must include pagination — never render unbounded lists
 - Table-first pages use `<Layout fill>` so title/toolbar/header/footer stay pinned and only rows scroll
-- Handle every state: `DataTable` renders the loading skeleton and error row; always provide a **labelled empty state** (what the list is + how to add the first record) rather than a bare empty table
-- Status Badge colors must use design system tokens (variant prop): the **primary** status column uses **filled** semantic variants; **secondary** status columns (delivery, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules)
+- Status Badge colors must use design system tokens (variant prop)
 - Bulk actions toolbar appears only when ≥1 row is selected
 - Whole row is clickable via `onClickRow`; no per-row "View" / "Open" buttons
 - Per-row `Menu` (overflow `…`) is reserved for non-navigation actions (Archive, Duplicate, Delete)

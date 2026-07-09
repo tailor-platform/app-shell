@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 type TimeValue = Date | number;
@@ -206,7 +207,12 @@ export interface TimelineLinkDefaults {
   gap?: number;
   /** Optional class applied to each link SVG when the link does not override it. */
   className?: string;
-  /** Optional inline style applied to each link SVG when the link does not override it. */
+  /**
+   * Optional inline style applied to each link SVG when the link does not override it.
+   *
+   * Prefer an opaque `color` here over alpha-based text colors when overlapping links
+   * should not appear darker.
+   */
   style?: React.CSSProperties;
   /** Optional stroke width used by each link when the link does not override it. */
   strokeWidth?: number;
@@ -244,17 +250,32 @@ type TimelineItemLayout = {
   rowHeight: number;
 };
 
+type TimelineRowBackgroundLayout = {
+  top: number;
+  height: number;
+  background: TimelineRowBackground;
+};
+
+type TimelineItemRect = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
+
 // Viewport-local render state shared by nodes inside one <Timeline.Viewport>.
 // This owns runtime facts that depend on one concrete rendered body: interval metadata
-// used by links, measured body size for pixel-based routing, and viewport-level link
-// defaults. It is kept separate from TimelineContext so the public primitives can share
-// one time range across multiple viewports without also sharing layout/measurement state.
+// used by links, measured body size for pixel-based routing, viewport-level link
+// defaults, and the overlay/background hosts used by composed rows and links.
 interface ViewportContextValue {
   registerItem: (id: string, layout: TimelineItemLayout) => void;
   unregisterItem: (id: string) => void;
   itemLayouts: ReadonlyMap<string, TimelineItemLayout>;
   bodySize: { width: number; height: number };
   linkDefaults: TimelineLinkDefaults;
+  overlayElement: HTMLDivElement | null;
+  registerRowBackground: (id: string, layout: TimelineRowBackgroundLayout) => void;
+  unregisterRowBackground: (id: string) => void;
 }
 
 interface RowContextValue {
@@ -391,6 +412,58 @@ function sameItemLayout(a: TimelineItemLayout | undefined, b: TimelineItemLayout
   );
 }
 
+function sameRowBackgroundLayout(
+  a: TimelineRowBackgroundLayout | undefined,
+  b: TimelineRowBackgroundLayout,
+) {
+  return a?.top === b.top && a.height === b.height && a.background === b.background;
+}
+
+function parseInlinePixels(value: string | null | undefined) {
+  if (!value) return 0;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function measureElementHeight(element: HTMLElement, fallback: number) {
+  return (
+    element.offsetHeight ||
+    element.clientHeight ||
+    parseInlinePixels(element.style.height) ||
+    fallback
+  );
+}
+
+function measureElementTop(element: HTMLElement) {
+  if (element.offsetTop) return element.offsetTop;
+
+  let top = 0;
+  let sibling = element.previousElementSibling as HTMLElement | null;
+  while (sibling) {
+    top += measureElementHeight(sibling, 0);
+    sibling = sibling.previousElementSibling as HTMLElement | null;
+  }
+
+  return top;
+}
+
+function rangesOverlap(startA: number, endA: number, startB: number, endB: number) {
+  return Math.max(startA, startB) < Math.min(endA, endB);
+}
+
+function toItemRect(
+  item: TimelineItemLayout,
+  bodyWidth: number,
+  timeToPercent: (time: number) => number,
+): TimelineItemRect {
+  return {
+    left: (timeToPercent(item.start) * bodyWidth) / 100,
+    right: (timeToPercent(item.end) * bodyWidth) / 100,
+    top: item.rowTop + item.insetY,
+    bottom: item.rowTop + item.rowHeight - item.insetY,
+  };
+}
+
 // Builds one orthogonal SVG path between two interval boxes.
 //
 // Coordinate space:
@@ -410,6 +483,7 @@ function sameItemLayout(a: TimelineItemLayout | undefined, b: TimelineItemLayout
 function buildLinkPath(
   fromItem: TimelineItemLayout,
   toItem: TimelineItemLayout,
+  allItems: readonly TimelineItemLayout[],
   bodyWidth: number,
   fromAnchor: Anchor,
   toAnchor: Anchor,
@@ -418,14 +492,16 @@ function buildLinkPath(
   timeToPercent: (time: number) => number,
 ) {
   // Convert each interval from time-space into the pixel box used by routing.
-  const fromLeft = (timeToPercent(fromItem.start) * bodyWidth) / 100;
-  const fromRight = (timeToPercent(fromItem.end) * bodyWidth) / 100;
-  const fromTop = fromItem.rowTop + fromItem.insetY;
-  const fromBottom = fromItem.rowTop + fromItem.rowHeight - fromItem.insetY;
-  const toLeft = (timeToPercent(toItem.start) * bodyWidth) / 100;
-  const toRight = (timeToPercent(toItem.end) * bodyWidth) / 100;
-  const toTop = toItem.rowTop + toItem.insetY;
-  const toBottom = toItem.rowTop + toItem.rowHeight - toItem.insetY;
+  const fromRect = toItemRect(fromItem, bodyWidth, timeToPercent);
+  const toRect = toItemRect(toItem, bodyWidth, timeToPercent);
+  const fromLeft = fromRect.left;
+  const fromRight = fromRect.right;
+  const fromTop = fromRect.top;
+  const fromBottom = fromRect.bottom;
+  const toLeft = toRect.left;
+  const toRight = toRect.right;
+  const toTop = toRect.top;
+  const toBottom = toRect.bottom;
 
   // Anchor x comes from the chosen side of the interval. y always uses the visual center
   // of the interval's inner box so links stay vertically balanced.
@@ -439,6 +515,10 @@ function buildLinkPath(
   const exitDirection = resolveDirection(fromAnchor, x1, x2, 1);
   const entryDirection = resolveDirection(toAnchor, x2, x1, -1);
   const xExit = x1 + gap * exitDirection;
+  const intermediateRects = allItems
+    .filter((item) => item !== fromItem && item !== toItem)
+    .map((item) => toItemRect(item, bodyWidth, timeToPercent))
+    .filter((itemRect) => itemRect.top < Math.max(y1, y2) && itemRect.bottom > Math.min(y1, y2));
   const xEntry = x2 + gap * entryDirection;
   const xEnd = x2 + targetInset * entryDirection;
 
@@ -451,12 +531,27 @@ function buildLinkPath(
     return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${y2} L ${xEnd} ${y2}`;
   }
 
-  // Otherwise the exit/entry columns would cross, so use a shared horizontal lane placed
-  // halfway through the vertical gap between the two interval boxes. That avoids running
-  // the middle segment through either interval, and the final segment still stops at the
-  // arrow base rather than at the interval edge.
-  const yRoute =
-    y2 >= y1 ? fromBottom + (toTop - fromBottom) / 2 : toBottom + (fromTop - toBottom) / 2;
+  // Otherwise the exit/entry columns would cross, so use a shared horizontal lane. For
+  // downward links, bias that lane toward the gap immediately above the target row so the
+  // second bend does not cut through intermediate rows. For upward links, do the mirrored
+  // thing below the target row. Same-row overlaps still route outside both items.
+  const verticalGap = y2 >= y1 ? toTop - fromBottom : fromTop - toBottom;
+  let yRoute = Math.min(fromTop, toTop) - gap;
+  if (verticalGap > 0) {
+    const routeLeft = Math.min(xExit, xEntry);
+    const routeRight = Math.max(xExit, xEntry);
+    const blockedRects = intermediateRects.filter((itemRect) =>
+      rangesOverlap(itemRect.left, itemRect.right, routeLeft, routeRight),
+    );
+
+    if (y2 >= y1) {
+      const lowerBound = Math.max(fromBottom, ...blockedRects.map((itemRect) => itemRect.bottom));
+      yRoute = lowerBound + (toTop - lowerBound) / 2;
+    } else {
+      const upperBound = Math.min(fromTop, ...blockedRects.map((itemRect) => itemRect.top));
+      yRoute = toBottom + (upperBound - toBottom) / 2;
+    }
+  }
   return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${yRoute} L ${xEntry} ${yRoute} L ${xEntry} ${y2} L ${xEnd} ${y2}`;
 }
 
@@ -562,7 +657,7 @@ type ViewportProps = {
  *   canvasWidth={1200}
  *   axis={{ guides, levels }}
  *   decorations={{ bands }}
- *   linkDefaults={{ className: "astw:text-foreground/60", strokeWidth: 1.5 }}
+ *   linkDefaults={{ style: { color: "var(--muted-foreground)" }, strokeWidth: 1.5 }}
  * >
  *   {rows}
  *   {links}
@@ -582,28 +677,17 @@ function Viewport({
   const { timeToPercent } = useTimelineContext();
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const [bodySize, setBodySize] = React.useState({ width: 0, height: 0 });
+  const [overlayElement, setOverlayElement] = React.useState<HTMLDivElement | null>(null);
   const [itemLayouts, setItemLayouts] = React.useState<Map<string, TimelineItemLayout>>(
     () => new Map(),
   );
+  const [rowBackgrounds, setRowBackgrounds] = React.useState<
+    Map<string, TimelineRowBackgroundLayout>
+  >(() => new Map());
   const resolvedLinkDefaults = React.useMemo<TimelineLinkDefaults>(
     () => ({ routing: "orthogonal", arrow: true, gap: 16, ...linkDefaults }),
     [linkDefaults],
   );
-
-  const { rows, links, extraNodes } = React.useMemo(
-    () => splitTimelineChildren(children),
-    [children],
-  );
-
-  const rowLayouts = React.useMemo(() => {
-    let top = 0;
-    return rows.map((row, index) => {
-      const height = row.props.height ?? 32;
-      const layout = { key: row.key ?? index, row, top, height };
-      top += height;
-      return layout;
-    });
-  }, [rows]);
 
   const registerItem = React.useCallback((id: string, layout: TimelineItemLayout) => {
     setItemLayouts((current) => {
@@ -616,6 +700,27 @@ function Viewport({
 
   const unregisterItem = React.useCallback((id: string) => {
     setItemLayouts((current) => {
+      if (!current.has(id)) return current;
+      const next = new Map(current);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const registerRowBackground = React.useCallback(
+    (id: string, layout: TimelineRowBackgroundLayout) => {
+      setRowBackgrounds((current) => {
+        if (sameRowBackgroundLayout(current.get(id), layout)) return current;
+        const next = new Map(current);
+        next.set(id, layout);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const unregisterRowBackground = React.useCallback((id: string) => {
+    setRowBackgrounds((current) => {
       if (!current.has(id)) return current;
       const next = new Map(current);
       next.delete(id);
@@ -652,6 +757,10 @@ function Viewport({
     (marker) => marker.placement === "axis" || marker.placement === "both",
   );
   const bodyMarkers = (decorations?.markers ?? []).filter((marker) => marker.placement !== "axis");
+  const backgroundLayouts = React.useMemo(
+    () => Array.from(rowBackgrounds.entries()).sort((a, b) => a[1].top - b[1].top),
+    [rowBackgrounds],
+  );
   const guides = axis?.guides ?? [];
   const viewportValue = React.useMemo<ViewportContextValue>(
     () => ({
@@ -660,8 +769,20 @@ function Viewport({
       itemLayouts,
       bodySize,
       linkDefaults: resolvedLinkDefaults,
+      overlayElement,
+      registerRowBackground,
+      unregisterRowBackground,
     }),
-    [bodySize, itemLayouts, registerItem, resolvedLinkDefaults, unregisterItem],
+    [
+      bodySize,
+      itemLayouts,
+      overlayElement,
+      registerItem,
+      registerRowBackground,
+      resolvedLinkDefaults,
+      unregisterItem,
+      unregisterRowBackground,
+    ],
   );
 
   return (
@@ -768,21 +889,21 @@ function Viewport({
               data-slot="timeline-row-backgrounds"
               className="astw:absolute astw:inset-0 astw:z-10 astw:pointer-events-none"
             >
-              {rowLayouts.map(({ key, row, height }) => {
-                const background = row.props.background;
-                if (!background) {
-                  return <div key={key} style={{ height }} />;
-                }
-
-                return (
-                  <div
-                    key={key}
-                    data-slot="timeline-row-background"
-                    className={cn("astw:w-full", background.className)}
-                    style={{ ...background.style, height }}
-                  />
-                );
-              })}
+              {backgroundLayouts.map(([key, layout]) => (
+                <div
+                  key={key}
+                  data-slot="timeline-row-background"
+                  className={cn(
+                    "astw:absolute astw:left-0 astw:right-0",
+                    layout.background.className,
+                  )}
+                  style={{
+                    ...layout.background.style,
+                    top: layout.top,
+                    height: layout.height,
+                  }}
+                />
+              ))}
             </div>
 
             <div
@@ -804,6 +925,7 @@ function Viewport({
 
               {bodyMarkers.map((marker, index) => {
                 const left = timeToPercent(toMs(marker.at));
+                const showBodyLabel = marker.placement !== "both";
                 return (
                   <div
                     key={markerKey(marker, index)}
@@ -816,26 +938,31 @@ function Viewport({
                       className={cn("astw:absolute astw:inset-y-0 astw:w-px", marker.lineClassName)}
                       style={{ ...marker.lineStyle, background: marker.color }}
                     />
+                    {showBodyLabel && marker.label ? (
+                      <div
+                        className={cn(
+                          "astw:absolute astw:top-0 astw:left-0 astw:whitespace-nowrap",
+                          marker.labelClassName,
+                        )}
+                        style={marker.labelStyle}
+                      >
+                        {marker.label}
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
             </div>
 
             <div data-slot="timeline-content" className="astw:relative astw:z-30">
-              {rowLayouts.map(({ key, row, top, height }) => (
-                <RowContext.Provider key={key} value={{ top, height }}>
-                  {row}
-                </RowContext.Provider>
-              ))}
-              {extraNodes}
+              {children}
             </div>
 
             <div
+              ref={setOverlayElement}
               data-slot="timeline-overlay"
-              className="astw:absolute astw:inset-0 astw:z-40 astw:pointer-events-none"
-            >
-              {links}
-            </div>
+              className="astw:absolute astw:inset-0 astw:z-[25] astw:pointer-events-none"
+            />
           </div>
         </div>
       </div>
@@ -875,15 +1002,72 @@ type RowProps = {
  * </Timeline.Row>
  * ```
  */
-function Row({ children, className, style, height = 32 }: RowProps) {
+function Row({ children, className, style, height = 32, background }: RowProps) {
+  const { registerRowBackground, unregisterRowBackground } = useViewportContext();
+  const rowId = React.useId();
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [rowLayout, setRowLayout] = React.useState<RowContextValue>({ top: 0, height });
+
+  const updateRowLayout = React.useCallback(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const next = {
+      top: measureElementTop(element),
+      height: measureElementHeight(element, height),
+    };
+
+    setRowLayout((current) =>
+      current.top === next.top && current.height === next.height ? current : next,
+    );
+  }, [height]);
+
+  React.useLayoutEffect(() => {
+    updateRowLayout();
+  });
+
+  React.useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(updateRowLayout);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [updateRowLayout]);
+
+  React.useLayoutEffect(() => {
+    if (!background) {
+      unregisterRowBackground(rowId);
+      return;
+    }
+
+    registerRowBackground(rowId, {
+      top: rowLayout.top,
+      height: rowLayout.height,
+      background,
+    });
+
+    return () => unregisterRowBackground(rowId);
+  }, [
+    background,
+    registerRowBackground,
+    rowId,
+    rowLayout.height,
+    rowLayout.top,
+    unregisterRowBackground,
+  ]);
+
   return (
-    <div
-      data-slot="timeline-row"
-      className={cn("astw:relative astw:w-full astw:overflow-visible", className)}
-      style={{ ...style, height }}
-    >
-      {children}
-    </div>
+    <RowContext.Provider value={rowLayout}>
+      <div
+        ref={ref}
+        data-slot="timeline-row"
+        className={cn("astw:relative astw:w-full astw:overflow-visible", className)}
+        style={{ ...style, height }}
+      >
+        {children}
+      </div>
+    </RowContext.Provider>
   );
 }
 Row.displayName = "Timeline.Row";
@@ -1002,7 +1186,7 @@ function Link({
   strokeWidth,
 }: LinkProps) {
   const { timeToPercent } = useTimelineContext();
-  const { bodySize, itemLayouts, linkDefaults } = useViewportContext();
+  const { bodySize, itemLayouts, linkDefaults, overlayElement } = useViewportContext();
   const markerId = React.useId().replace(/:/g, "");
   const resolvedArrow = arrow ?? linkDefaults.arrow ?? true;
   const resolvedGap = gap ?? linkDefaults.gap ?? 16;
@@ -1019,6 +1203,7 @@ function Link({
     return buildLinkPath(
       fromItem,
       toItem,
+      Array.from(itemLayouts.values()),
       bodySize.width,
       fromAnchor,
       toAnchor,
@@ -1039,9 +1224,9 @@ function Link({
     toAnchor,
   ]);
 
-  if (!path) return null;
+  if (!path || !overlayElement) return null;
 
-  return (
+  return createPortal(
     <svg
       data-slot="timeline-link"
       className={cn(
@@ -1073,48 +1258,11 @@ function Link({
         strokeWidth={resolvedStrokeWidth}
         markerEnd={resolvedArrow ? `url(#timeline-link-arrow-${markerId})` : undefined}
       />
-    </svg>
+    </svg>,
+    overlayElement,
   );
 }
 Link.displayName = "Timeline.Link";
-
-function splitTimelineChildren(children: React.ReactNode) {
-  const rows: React.ReactElement<RowProps>[] = [];
-  const links: React.ReactElement<LinkProps>[] = [];
-  const extraNodes: React.ReactNode[] = [];
-
-  const visit = (node: React.ReactNode) => {
-    React.Children.forEach(node, (child) => {
-      if (child == null || typeof child === "boolean") return;
-
-      if (!React.isValidElement(child)) {
-        extraNodes.push(child);
-        return;
-      }
-
-      if (child.type === React.Fragment) {
-        visit((child.props as { children?: React.ReactNode }).children);
-        return;
-      }
-
-      if (child.type === Row) {
-        rows.push(child as React.ReactElement<RowProps>);
-        return;
-      }
-
-      if (child.type === Link) {
-        links.push(child as React.ReactElement<LinkProps>);
-        return;
-      }
-
-      extraNodes.push(child);
-    });
-  };
-
-  visit(children);
-
-  return { rows, links, extraNodes };
-}
 
 /**
  * Timeline primitives for building app-specific schedule, trace, and dependency UIs.

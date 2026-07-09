@@ -2,6 +2,28 @@ import * as React from "react";
 import { Card, Layout, Timeline, defineResource } from "@tailor-platform/app-shell";
 
 type TimeLike = Date | number | string;
+type LinkAnchor = "start" | "center" | "end";
+
+type TaskSegment = {
+  id: string;
+  label: string;
+  start: TimeLike;
+  end: TimeLike;
+  color: string;
+};
+
+type TaskRowData = {
+  id: string;
+  label: string;
+  segments: TaskSegment[];
+};
+
+type TaskDependency = {
+  from: string;
+  to: string;
+  fromAnchor?: LinkAnchor;
+  toAnchor?: LinkAnchor;
+};
 
 const toMs = (value: TimeLike) => {
   if (typeof value === "number") return value;
@@ -49,6 +71,28 @@ function SolidBar({ label, color }: { label?: React.ReactNode; color: string }) 
   );
 }
 
+function TaskRow({ row, index }: { row: TaskRowData; index: number }) {
+  return (
+    <Timeline.Row
+      key={row.id}
+      height={40}
+      background={index % 2 === 1 ? { style: { background: "var(--muted)" } } : null}
+    >
+      {row.segments.map((segment) => (
+        <Timeline.Interval
+          key={segment.id}
+          id={segment.id}
+          start={toMs(segment.start)}
+          end={toMs(segment.end)}
+          insetY={8}
+        >
+          <SolidBar label={segment.label} color={segment.color} />
+        </Timeline.Interval>
+      ))}
+    </Timeline.Row>
+  );
+}
+
 const projectStart = toMs("2025-01-01");
 const projectEnd = toMs("2025-03-31");
 const projectBoundaries = buildEvenBoundaries(projectStart, projectEnd, 6);
@@ -57,18 +101,93 @@ const projectTimeboxes = buildTimeboxes(projectBoundaries, (time) => (
     {time.toLocaleDateString("en", { month: "short", day: "numeric" })}
   </span>
 ));
-const taskDependencies = [
-  { from: "design", to: "backend" },
-  { from: "backend", to: "frontend" },
-  { from: "frontend", to: "testing" },
-  { from: "testing", to: "deploy" },
+const taskRows: TaskRowData[] = [
+  {
+    id: "design",
+    label: "Design",
+    segments: [
+      {
+        id: "design",
+        label: "Design",
+        start: "2025-01-01",
+        end: "2025-01-20",
+        color: "#3b82f6",
+      },
+    ],
+  },
+  {
+    id: "backend",
+    label: "Backend",
+    segments: [
+      {
+        id: "backend",
+        label: "API Build",
+        start: "2025-01-15",
+        end: "2025-02-15",
+        color: "#10b981",
+      },
+    ],
+  },
+  {
+    id: "frontend",
+    label: "Frontend",
+    segments: [
+      {
+        id: "frontend-foundation",
+        label: "Foundation",
+        start: "2025-02-01",
+        end: "2025-02-20",
+        color: "#f59e0b",
+      },
+    ],
+  },
+  {
+    id: "documentation",
+    label: "Documentation",
+    segments: [
+      {
+        id: "documentation",
+        label: "Docs",
+        start: "2025-02-20",
+        end: "2025-03-06",
+        color: "#f97316",
+      },
+    ],
+  },
+  {
+    id: "testing",
+    label: "Testing",
+    segments: [
+      {
+        id: "testing",
+        label: "QA",
+        start: "2025-02-20",
+        end: "2025-03-15",
+        color: "#ef4444",
+      },
+    ],
+  },
+  {
+    id: "deploy",
+    label: "Deploy",
+    segments: [
+      {
+        id: "deploy",
+        label: "Rollout",
+        start: "2025-03-15",
+        end: "2025-03-25",
+        color: "#8b5cf6",
+      },
+    ],
+  },
 ];
-const tasks = [
-  { id: "design", label: "Design", start: "2025-01-01", end: "2025-01-20", color: "#3b82f6" },
-  { id: "backend", label: "Backend", start: "2025-01-15", end: "2025-02-15", color: "#10b981" },
-  { id: "frontend", label: "Frontend", start: "2025-02-01", end: "2025-03-01", color: "#f59e0b" },
-  { id: "testing", label: "Testing", start: "2025-02-20", end: "2025-03-15", color: "#ef4444" },
-  { id: "deploy", label: "Deploy", start: "2025-03-15", end: "2025-03-25", color: "#8b5cf6" },
+const taskDependencies: TaskDependency[] = [
+  { from: "design", to: "backend" },
+  { from: "backend", to: "frontend-foundation" },
+  { from: "frontend-foundation", to: "documentation" },
+  { from: "frontend-foundation", to: "testing" },
+  { from: "documentation", to: "deploy" },
+  { from: "testing", to: "deploy" },
 ];
 
 const jobStart = toMs("2025-06-01T00:00:00");
@@ -123,14 +242,14 @@ export const timelineDemoResource = defineResource({
           <Card.Root>
             <Card.Header
               title="Task Dependencies"
-              description="Basic timeline rows with dependency links and a viewport-owned axis."
+              description="Wrapped rows plus branching dependencies where Foundation fans out into Documentation and QA before rollout."
             />
             <Card.Content>
               <div style={{ display: "flex", width: "100%" }}>
                 <div style={{ width: 120, flexShrink: 0, paddingTop: 28 }}>
-                  {tasks.map((task) => (
+                  {taskRows.map((row) => (
                     <div
-                      key={task.id}
+                      key={row.id}
                       style={{
                         height: 40,
                         display: "flex",
@@ -138,7 +257,7 @@ export const timelineDemoResource = defineResource({
                         fontSize: 14,
                       }}
                     >
-                      {task.label}
+                      {row.label}
                     </div>
                   ))}
                 </div>
@@ -158,25 +277,13 @@ export const timelineDemoResource = defineResource({
                           },
                         ],
                       }}
-                      linkDefaults={{ className: "astw:text-foreground/60", strokeWidth: 1.5 }}
+                      linkDefaults={{
+                        style: { color: "var(--muted-foreground)" },
+                        strokeWidth: 1.5,
+                      }}
                     >
-                      {tasks.map((task, index) => (
-                        <Timeline.Row
-                          key={task.id}
-                          height={40}
-                          background={
-                            index % 2 === 1 ? { style: { background: "var(--muted)" } } : null
-                          }
-                        >
-                          <Timeline.Interval
-                            id={task.id}
-                            start={toMs(task.start)}
-                            end={toMs(task.end)}
-                            insetY={8}
-                          >
-                            <SolidBar color={task.color} />
-                          </Timeline.Interval>
-                        </Timeline.Row>
+                      {taskRows.map((row, index) => (
+                        <TaskRow key={row.id} row={row} index={index} />
                       ))}
 
                       {taskDependencies.map((dependency) => (
@@ -184,6 +291,8 @@ export const timelineDemoResource = defineResource({
                           key={`${dependency.from}-${dependency.to}`}
                           from={dependency.from}
                           to={dependency.to}
+                          fromAnchor={dependency.fromAnchor}
+                          toAnchor={dependency.toAnchor}
                         />
                       ))}
                     </Timeline.Viewport>

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { Timeline } from "./timeline";
 
 afterEach(() => {
@@ -74,6 +74,62 @@ describe("Timeline", () => {
     expect(interval.style.top).toBe("8px");
     expect(interval.style.bottom).toBe("8px");
     expect(row.style.height).toBe("40px");
+  });
+
+  it("draws links from interval metadata instead of measured item DOM", async () => {
+    const clientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+    const clientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientHeight");
+
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get() {
+        return 200;
+      },
+    });
+
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", {
+      configurable: true,
+      get() {
+        return 80;
+      },
+    });
+
+    try {
+      const { container } = render(
+        <Timeline.Root start={0} end={100}>
+          <Timeline.Viewport>
+            <Timeline.Row height={40}>
+              <Timeline.Interval id="a" start={10} end={30} insetY={8}>
+                <div>A</div>
+              </Timeline.Interval>
+            </Timeline.Row>
+            <Timeline.Row height={40}>
+              <Timeline.Interval id="b" start={60} end={80} insetY={8}>
+                <div>B</div>
+              </Timeline.Interval>
+            </Timeline.Row>
+            <Timeline.Link from="a" to="b" />
+          </Timeline.Viewport>
+        </Timeline.Root>,
+      );
+
+      await waitFor(() => {
+        const link = container.querySelector('[data-slot="timeline-link"] path[stroke]');
+        expect(link?.getAttribute("d")).toBe("M 60 20 L 76 20 L 76 60 L 120 60");
+      });
+    } finally {
+      if (clientWidth) {
+        Object.defineProperty(HTMLElement.prototype, "clientWidth", clientWidth);
+      } else {
+        delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+      }
+
+      if (clientHeight) {
+        Object.defineProperty(HTMLElement.prototype, "clientHeight", clientHeight);
+      } else {
+        delete (HTMLElement.prototype as { clientHeight?: number }).clientHeight;
+      }
+    }
   });
 
   it("renders row backgrounds in a separate layer", () => {

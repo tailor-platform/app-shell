@@ -2,9 +2,6 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 type TimeValue = Date | number;
-type ItemEntry = { element: HTMLDivElement; start: number; end: number };
-type ItemRegistry = Map<string, ItemEntry>;
-
 type Anchor = "start" | "center" | "end";
 
 /**
@@ -236,14 +233,30 @@ interface TimelineContextValue {
   timeToPercent: (time: number) => number;
 }
 
+type TimelineItemLayout = {
+  start: number;
+  end: number;
+  insetY: number;
+  rowTop: number;
+  rowHeight: number;
+};
+
 interface ViewportContextValue {
-  bodyRef: React.RefObject<HTMLDivElement | null>;
-  itemRegistry: React.RefObject<ItemRegistry>;
+  registerItem: (id: string, layout: TimelineItemLayout) => void;
+  unregisterItem: (id: string) => void;
+  itemLayouts: ReadonlyMap<string, TimelineItemLayout>;
+  bodySize: { width: number; height: number };
   linkDefaults: TimelineLinkDefaults;
+}
+
+interface RowContextValue {
+  top: number;
+  height: number;
 }
 
 const TimelineContext = React.createContext<TimelineContextValue | null>(null);
 const ViewportContext = React.createContext<ViewportContextValue | null>(null);
+const RowContext = React.createContext<RowContextValue | null>(null);
 
 function toMs(value: TimeValue) {
   return typeof value === "number" ? value : value.getTime();
@@ -258,6 +271,12 @@ function useTimelineContext() {
 function useViewportContext() {
   const ctx = React.useContext(ViewportContext);
   if (!ctx) throw new Error("Timeline row items must be used within <Timeline.Viewport>");
+  return ctx;
+}
+
+function useRowContext() {
+  const ctx = React.useContext(RowContext);
+  if (!ctx) throw new Error("Timeline row items must be used within <Timeline.Row>");
   return ctx;
 }
 
@@ -352,6 +371,54 @@ function guideKey(guide: TimelineGuide, index: number) {
 
 function spanKey(span: TimelineAxisSpan, index: number) {
   return span.key ?? `${toMs(span.start)}-${toMs(span.end)}-${index}`;
+}
+
+function sameItemLayout(a: TimelineItemLayout | undefined, b: TimelineItemLayout) {
+  return (
+    a?.start === b.start &&
+    a.end === b.end &&
+    a.insetY === b.insetY &&
+    a.rowTop === b.rowTop &&
+    a.rowHeight === b.rowHeight
+  );
+}
+
+function buildLinkPath(
+  fromItem: TimelineItemLayout,
+  toItem: TimelineItemLayout,
+  bodyWidth: number,
+  fromAnchor: Anchor,
+  toAnchor: Anchor,
+  gap: number,
+  timeToPercent: (time: number) => number,
+) {
+  const fromLeft = (timeToPercent(fromItem.start) * bodyWidth) / 100;
+  const fromRight = (timeToPercent(fromItem.end) * bodyWidth) / 100;
+  const fromTop = fromItem.rowTop + fromItem.insetY;
+  const fromBottom = fromItem.rowTop + fromItem.rowHeight - fromItem.insetY;
+  const toLeft = (timeToPercent(toItem.start) * bodyWidth) / 100;
+  const toRight = (timeToPercent(toItem.end) * bodyWidth) / 100;
+  const toTop = toItem.rowTop + toItem.insetY;
+  const toBottom = toItem.rowTop + toItem.rowHeight - toItem.insetY;
+
+  const x1 = anchorX(fromAnchor, fromLeft, fromRight);
+  const y1 = fromTop + (fromBottom - fromTop) / 2;
+  const x2 = anchorX(toAnchor, toLeft, toRight);
+  const y2 = toTop + (toBottom - toTop) / 2;
+
+  const exitDirection = resolveDirection(fromAnchor, x1, x2, 1);
+  const entryDirection = resolveDirection(toAnchor, x2, x1, -1);
+  const xExit = x1 + gap * exitDirection;
+  const xEntry = x2 + gap * entryDirection;
+  const noOverlap = exitDirection === 1 && entryDirection === -1 && xExit < xEntry;
+
+  if (noOverlap) {
+    return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${y2} L ${x2} ${y2}`;
+  }
+
+  const yRoute =
+    y2 >= y1 ? fromBottom + (toTop - fromBottom) / 2 : toBottom + (fromTop - toBottom) / 2;
+  return `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${yRoute} L ${xEntry} ${yRoute} L ${xEntry} ${y2} L ${x2} ${y2}`;
 }
 
 function renderAxisLevel(
@@ -475,7 +542,10 @@ function Viewport({
 }: ViewportProps) {
   const { timeToPercent } = useTimelineContext();
   const bodyRef = React.useRef<HTMLDivElement>(null);
-  const itemRegistry = React.useRef<ItemRegistry>(new Map());
+  const [bodySize, setBodySize] = React.useState({ width: 0, height: 0 });
+  const [itemLayouts, setItemLayouts] = React.useState<Map<string, TimelineItemLayout>>(
+    () => new Map(),
+  );
   const resolvedLinkDefaults = React.useMemo<TimelineLinkDefaults>(
     () => ({ routing: "orthogonal", arrow: true, gap: 16, ...linkDefaults }),
     [linkDefaults],
@@ -486,20 +556,77 @@ function Viewport({
     [children],
   );
 
+  const rowLayouts = React.useMemo(() => {
+    let top = 0;
+    return rows.map((row, index) => {
+      const height = row.props.height ?? 32;
+      const layout = { key: row.key ?? index, row, top, height };
+      top += height;
+      return layout;
+    });
+  }, [rows]);
+
+  const registerItem = React.useCallback((id: string, layout: TimelineItemLayout) => {
+    setItemLayouts((current) => {
+      if (sameItemLayout(current.get(id), layout)) return current;
+      const next = new Map(current);
+      next.set(id, layout);
+      return next;
+    });
+  }, []);
+
+  const unregisterItem = React.useCallback((id: string) => {
+    setItemLayouts((current) => {
+      if (!current.has(id)) return current;
+      const next = new Map(current);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
+  // Timeline.Link routes are computed in pixels, not only percentages: the path mixes
+  // time-based x positions with a px gap and must size the overlay SVG to the rendered
+  // body box. That means we need the committed DOM size here and must keep it in sync as
+  // the viewport resizes. `useEffect` is enough because links may appear one tick later
+  // without affecting layout, while `ResizeObserver` keeps the measured size current.
+  React.useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+
+    const update = () => {
+      const next = { width: body.clientWidth, height: body.clientHeight };
+      setBodySize((current) =>
+        current.width === next.width && current.height === next.height ? current : next,
+      );
+    };
+
+    update();
+
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(update);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, []);
+
   const axisMarkers = (decorations?.markers ?? []).filter(
     (marker) => marker.placement === "axis" || marker.placement === "both",
   );
   const bodyMarkers = (decorations?.markers ?? []).filter((marker) => marker.placement !== "axis");
   const guides = axis?.guides ?? [];
+  const viewportValue = React.useMemo<ViewportContextValue>(
+    () => ({
+      registerItem,
+      unregisterItem,
+      itemLayouts,
+      bodySize,
+      linkDefaults: resolvedLinkDefaults,
+    }),
+    [bodySize, itemLayouts, registerItem, resolvedLinkDefaults, unregisterItem],
+  );
 
   return (
-    <ViewportContext.Provider
-      value={{
-        bodyRef,
-        itemRegistry,
-        linkDefaults: resolvedLinkDefaults,
-      }}
-    >
+    <ViewportContext.Provider value={viewportValue}>
       <div
         data-slot="timeline-viewport"
         className={cn("astw:w-full astw:overflow-x-auto astw:overflow-y-hidden", className)}
@@ -602,18 +729,18 @@ function Viewport({
               data-slot="timeline-row-backgrounds"
               className="astw:absolute astw:inset-0 astw:z-10 astw:pointer-events-none"
             >
-              {rows.map((row, index) => {
+              {rowLayouts.map(({ key, row, height }) => {
                 const background = row.props.background;
                 if (!background) {
-                  return <div key={row.key ?? index} style={{ height: row.props.height ?? 32 }} />;
+                  return <div key={key} style={{ height }} />;
                 }
 
                 return (
                   <div
-                    key={row.key ?? index}
+                    key={key}
                     data-slot="timeline-row-background"
                     className={cn("astw:w-full", background.className)}
-                    style={{ ...background.style, height: row.props.height ?? 32 }}
+                    style={{ ...background.style, height }}
                   />
                 );
               })}
@@ -656,7 +783,11 @@ function Viewport({
             </div>
 
             <div data-slot="timeline-content" className="astw:relative astw:z-30">
-              {rows}
+              {rowLayouts.map(({ key, row, top, height }) => (
+                <RowContext.Provider key={key} value={{ top, height }}>
+                  {row}
+                </RowContext.Provider>
+              ))}
               {extraNodes}
             </div>
 
@@ -740,8 +871,8 @@ type IntervalProps = {
  */
 function Interval({ start, end, children, id, insetY = 0, className, style }: IntervalProps) {
   const { timeToPercent } = useTimelineContext();
-  const { itemRegistry } = useViewportContext();
-  const ref = React.useRef<HTMLDivElement>(null);
+  const { registerItem, unregisterItem } = useViewportContext();
+  const row = useRowContext();
   const startMs = toMs(start);
   const endMs = toMs(end);
   const normalizedStart = Math.min(startMs, endMs);
@@ -749,26 +880,36 @@ function Interval({ start, end, children, id, insetY = 0, className, style }: In
   const left = timeToPercent(normalizedStart);
   const width = Math.max(0, timeToPercent(normalizedEnd) - left);
 
+  // Link discovery is runtime-based on purpose. `Timeline.Viewport` can walk direct
+  // `Timeline.Interval` children, but it cannot see through wrapper components such as
+  // `<TaskBar />` that render an interval internally, and future Gantt-style screens may
+  // add/remove intervals dynamically. Registering on mount/update/unmount keeps link
+  // metadata correct for composed and dynamic usage without forcing a flatter API.
   React.useEffect(() => {
-    const registry = itemRegistry.current;
-    const element = ref.current;
+    if (!id) return;
 
-    if (id && element) {
-      registry.set(id, {
-        element,
-        start: normalizedStart,
-        end: normalizedEnd,
-      });
-    }
+    registerItem(id, {
+      start: normalizedStart,
+      end: normalizedEnd,
+      insetY,
+      rowTop: row.top,
+      rowHeight: row.height,
+    });
 
-    return () => {
-      if (id) registry.delete(id);
-    };
-  }, [id, itemRegistry, normalizedStart, normalizedEnd]);
+    return () => unregisterItem(id);
+  }, [
+    id,
+    insetY,
+    normalizedEnd,
+    normalizedStart,
+    registerItem,
+    row.height,
+    row.top,
+    unregisterItem,
+  ]);
 
   return (
     <div
-      ref={ref}
       data-slot="timeline-interval"
       data-timeline-item-id={id}
       className={cn("astw:absolute astw:min-w-0", className)}
@@ -821,80 +962,38 @@ function Link({
   style,
   strokeWidth,
 }: LinkProps) {
-  const { bodyRef, itemRegistry, linkDefaults } = useViewportContext();
-  const [path, setPath] = React.useState("");
-  const [box, setBox] = React.useState({ width: 0, height: 0 });
+  const { timeToPercent } = useTimelineContext();
+  const { bodySize, itemLayouts, linkDefaults } = useViewportContext();
   const markerId = React.useId().replace(/:/g, "");
   const resolvedArrow = arrow ?? linkDefaults.arrow ?? true;
   const resolvedGap = gap ?? linkDefaults.gap ?? 16;
   const resolvedClassName = className ?? linkDefaults.className;
   const resolvedStyle = style ?? linkDefaults.style;
   const resolvedStrokeWidth = strokeWidth ?? linkDefaults.strokeWidth;
-
-  React.useEffect(() => {
-    const body = bodyRef.current;
-    if (!body) return;
-
-    const compute = () => {
-      const fromEntry = itemRegistry.current.get(from);
-      const toEntry = itemRegistry.current.get(to);
-      if (!fromEntry || !toEntry) {
-        setPath("");
-        return;
-      }
-
-      const bodyRect = body.getBoundingClientRect();
-      const fromRect = fromEntry.element.getBoundingClientRect();
-      const toRect = toEntry.element.getBoundingClientRect();
-
-      const fromLeft = fromRect.left - bodyRect.left;
-      const fromRight = fromRect.right - bodyRect.left;
-      const fromTop = fromRect.top - bodyRect.top;
-      const fromBottom = fromRect.bottom - bodyRect.top;
-      const toLeft = toRect.left - bodyRect.left;
-      const toRight = toRect.right - bodyRect.left;
-      const toTop = toRect.top - bodyRect.top;
-      const toBottom = toRect.bottom - bodyRect.top;
-
-      const x1 = anchorX(fromAnchor, fromLeft, fromRight);
-      const y1 = fromTop + fromRect.height / 2;
-      const x2 = anchorX(toAnchor, toLeft, toRight);
-      const y2 = toTop + toRect.height / 2;
-
-      const exitDirection = resolveDirection(fromAnchor, x1, x2, 1);
-      const entryDirection = resolveDirection(toAnchor, x2, x1, -1);
-      const xExit = x1 + resolvedGap * exitDirection;
-      const xEntry = x2 + resolvedGap * entryDirection;
-      const noOverlap = exitDirection === 1 && entryDirection === -1 && xExit < xEntry;
-
-      setBox({ width: bodyRect.width, height: bodyRect.height });
-
-      if (noOverlap) {
-        setPath(`M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${y2} L ${x2} ${y2}`);
-        return;
-      }
-
-      const yRoute =
-        y2 >= y1 ? fromBottom + (toTop - fromBottom) / 2 : toBottom + (fromTop - toBottom) / 2;
-      setPath(
-        `M ${x1} ${y1} L ${xExit} ${y1} L ${xExit} ${yRoute} L ${xEntry} ${yRoute} L ${xEntry} ${y2} L ${x2} ${y2}`,
-      );
-    };
-
-    compute();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(compute);
-    observer.observe(body);
-
-    const fromEntry = itemRegistry.current.get(from);
-    const toEntry = itemRegistry.current.get(to);
-    if (fromEntry) observer.observe(fromEntry.element);
-    if (toEntry) observer.observe(toEntry.element);
-
-    return () => observer.disconnect();
-  }, [bodyRef, from, fromAnchor, itemRegistry, resolvedGap, to, toAnchor]);
+  const path = React.useMemo(() => {
+    const fromItem = itemLayouts.get(from);
+    const toItem = itemLayouts.get(to);
+    if (!fromItem || !toItem || bodySize.width <= 0 || bodySize.height <= 0) return "";
+    return buildLinkPath(
+      fromItem,
+      toItem,
+      bodySize.width,
+      fromAnchor,
+      toAnchor,
+      resolvedGap,
+      timeToPercent,
+    );
+  }, [
+    bodySize.height,
+    bodySize.width,
+    from,
+    fromAnchor,
+    itemLayouts,
+    resolvedGap,
+    timeToPercent,
+    to,
+    toAnchor,
+  ]);
 
   if (!path) return null;
 
@@ -905,8 +1004,8 @@ function Link({
         "astw:absolute astw:inset-0 astw:h-full astw:w-full astw:overflow-visible",
         resolvedClassName,
       )}
-      width={box.width}
-      height={box.height}
+      width={bodySize.width}
+      height={bodySize.height}
       style={resolvedStyle}
     >
       {resolvedArrow ? (

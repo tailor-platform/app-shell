@@ -130,8 +130,8 @@ export type TimelineAxisLevel =
 export interface TimelineAxis {
   /** Boundary lines rendered in the axis and/or body. */
   guides?: TimelineGuide[];
-  /** Stacked header levels rendered above the body. */
-  levels: TimelineAxisLevel[];
+  /** Stacked header levels rendered above the body. Defaults to `[]` when omitted. */
+  levels?: TimelineAxisLevel[];
   /** Optional class applied to the axis container. */
   className?: string;
 }
@@ -309,7 +309,7 @@ function useRowContext() {
   return ctx;
 }
 
-type RootProps = {
+export type TimelineRootProps = {
   /** Inclusive start of the overall timeline range. */
   start: TimeValue;
   /** Inclusive end of the overall timeline range. */
@@ -336,7 +336,7 @@ type RootProps = {
  * </Timeline.Root>
  * ```
  */
-function Root({ start, end, children, className, style }: RootProps) {
+function Root({ start, end, children, className, style }: TimelineRootProps) {
   const startMs = toMs(start);
   const endMs = toMs(end);
   const range = Math.max(1, endMs - startMs);
@@ -629,7 +629,7 @@ function renderAxisLevel(
   );
 }
 
-type ViewportProps = {
+export type TimelineViewportProps = {
   /** Timeline content. Rows and links can be passed in any order. */
   children: React.ReactNode;
   /** Optional fixed canvas width in pixels for horizontally scrollable timelines. */
@@ -673,7 +673,7 @@ function Viewport({
   linkDefaults,
   className,
   style,
-}: ViewportProps) {
+}: TimelineViewportProps) {
   const { timeToPercent } = useTimelineContext();
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const [bodySize, setBodySize] = React.useState({ width: 0, height: 0 });
@@ -849,7 +849,7 @@ function Viewport({
                   );
                 })}
               </div>
-              {axis.levels.map((axisLevel, levelIndex) =>
+              {(axis.levels ?? []).map((axisLevel, levelIndex) =>
                 renderAxisLevel(axisLevel, levelIndex, timeToPercent),
               )}
             </div>
@@ -969,7 +969,7 @@ function Viewport({
 }
 Viewport.displayName = "Timeline.Viewport";
 
-type RowProps = {
+export type TimelineRowProps = {
   /** Row contents, typically intervals. */
   children: React.ReactNode;
   /** Optional class applied to the row content container. */
@@ -1000,7 +1000,7 @@ type RowProps = {
  * </Timeline.Row>
  * ```
  */
-function Row({ children, className, style, height = 32, background }: RowProps) {
+function Row({ children, className, style, height = 32, background }: TimelineRowProps) {
   const { registerRowBackground, unregisterRowBackground } = useViewportContext();
   const rowId = React.useId();
   const ref = React.useRef<HTMLDivElement>(null);
@@ -1079,7 +1079,7 @@ function Row({ children, className, style, height = 32, background }: RowProps) 
 }
 Row.displayName = "Timeline.Row";
 
-type IntervalProps = {
+export type TimelineIntervalProps = {
   /** Start of the interval. */
   start: TimeValue;
   /** End of the interval. */
@@ -1099,7 +1099,15 @@ type IntervalProps = {
 /**
  * Positions content across a time range inside a row.
  */
-function Interval({ start, end, children, id, insetY = 0, className, style }: IntervalProps) {
+function Interval({
+  start,
+  end,
+  children,
+  id,
+  insetY = 0,
+  className,
+  style,
+}: TimelineIntervalProps) {
   const { timeToPercent } = useTimelineContext();
   const { registerItem, unregisterItem } = useViewportContext();
   const row = useRowContext();
@@ -1158,7 +1166,7 @@ function Interval({ start, end, children, id, insetY = 0, className, style }: In
 }
 Interval.displayName = "Timeline.Interval";
 
-type LinkProps = {
+export type TimelineLinkProps = {
   /** Source `Timeline.Interval` id. */
   from: string;
   /** Target `Timeline.Interval` id. */
@@ -1181,6 +1189,8 @@ type LinkProps = {
 
 /**
  * Draws an orthogonal connector between two row items.
+ *
+ * If either referenced `Timeline.Interval` id is unresolved, nothing is rendered.
  */
 function Link({
   from,
@@ -1192,7 +1202,7 @@ function Link({
   className,
   style,
   strokeWidth,
-}: LinkProps) {
+}: TimelineLinkProps) {
   const { timeToPercent } = useTimelineContext();
   const { bodySize, itemLayouts, linkDefaults, overlayElement } = useViewportContext();
   const markerId = React.useId().replace(/:/g, "");

@@ -247,7 +247,12 @@ export {
   type TimelineBand,
   type TimelineDecorations,
   type TimelineGuide,
+  type TimelineIntervalProps,
   type TimelineLinkDefaults,
+  type TimelineLinkProps,
   type TimelineMarker,
+  type TimelineRootProps,
   type TimelineRowBackground,
+  type TimelineRowProps,
+  type TimelineViewportProps,
 } from "./components/timeline";

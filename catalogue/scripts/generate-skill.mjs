@@ -87,7 +87,8 @@ async function findEntryFiles(dir, filename) {
     return results;
   }
 
-  for (const entry of entries) {
+  const sortedEntries = [...entries].sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of sortedEntries) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       results.push(...(await findEntryFiles(fullPath, filename)));
@@ -192,31 +193,49 @@ async function main() {
 /**
  * Generate an index table for entry-based categories (with frontmatter).
  */
+function formatMarkdownTable(rows) {
+  const widths = rows[0].map((_, columnIndex) =>
+    Math.max(...rows.map((row) => String(row[columnIndex]).length)),
+  );
+
+  const renderRow = (row) =>
+    `| ${row.map((cell, columnIndex) => String(cell).padEnd(widths[columnIndex])).join(" | ")} |`;
+
+  return [
+    renderRow(rows[0]),
+    `| ${widths.map((width) => "-".repeat(width)).join(" | ")} |`,
+    ...rows.slice(1).map(renderRow),
+  ].join("\n");
+}
+
 function generateEntryTable(entries, outputDir) {
   if (entries.length === 0) return "";
 
-  // Group entries by subcategory
-  const grouped = {};
-  for (const { meta } of entries) {
+  const grouped = new Map();
+  for (const { meta } of [...entries].sort((a, b) => a.meta.slug.localeCompare(b.meta.slug))) {
     const key = meta.subcategory || meta.category;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(meta);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(meta);
   }
 
-  let table = "";
-  for (const [group, items] of Object.entries(grouped)) {
-    table += `### ${group}\n\n`;
-    table += `| Slug | Name | Description |\n`;
-    table += `| ---- | ---- | ----------- |\n`;
-    for (const item of items) {
-      const filename = slugToFilename(item.slug) + ".md";
-      const displaySlug = item.slug.replace(/^[^/]+\//, "");
-      table += `| [\`${displaySlug}\`](references/${outputDir}/${filename}) | ${item.name} | ${item.description} |\n`;
-    }
-    table += `\n`;
-  }
+  return [...grouped.entries()]
+    .map(([group, items]) => {
+      const rows = [
+        ["Slug", "Name", "Description"],
+        ...items.map((item) => {
+          const filename = slugToFilename(item.slug) + ".md";
+          const displaySlug = item.slug.replace(/^[^/]+\//, "");
+          return [
+            `[\`${displaySlug}\`](references/${outputDir}/${filename})`,
+            item.name,
+            item.description,
+          ];
+        }),
+      ];
 
-  return table.trim();
+      return `### ${group}\n\n${formatMarkdownTable(rows)}`;
+    })
+    .join("\n\n");
 }
 
 /**
@@ -225,14 +244,16 @@ function generateEntryTable(entries, outputDir) {
 function generateCopiedTable(files, outputDir) {
   if (files.length === 0) return "";
 
-  let table = "| File | Description |\n";
-  table += "| ---- | ----------- |\n";
-  for (const filePath of files) {
-    const filename = filePath.split("/").pop();
-    const name = filename.replace(".md", "");
-    table += `| [${filename}](references/${outputDir}/${filename}) | ${name} reference |\n`;
-  }
-  return table.trim();
+  const rows = [
+    ["File", "Description"],
+    ...[...files].sort().map((filePath) => {
+      const filename = filePath.split("/").pop();
+      const name = filename.replace(".md", "");
+      return [`[${filename}](references/${outputDir}/${filename})`, `${name} reference`];
+    }),
+  ];
+
+  return formatMarkdownTable(rows);
 }
 
 async function findMarkdownFiles(dir) {
@@ -243,7 +264,7 @@ async function findMarkdownFiles(dir) {
   } catch {
     return results;
   }
-  for (const entry of entries) {
+  for (const entry of [...entries].sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory() && entry.name.endsWith(".md")) {
       results.push(join(dir, entry.name));
     }

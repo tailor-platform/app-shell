@@ -1,3 +1,10 @@
+/**
+ * Verifies that the generated skills tree under packages/core/skills matches
+ * the expected file manifest from catalogue/expected-skills-files.txt.
+ *
+ * Purpose: keep generated skills out of git while still catching drift between
+ * catalogue inputs and the generated output during test runs.
+ */
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -53,16 +53,16 @@ export default function HeroWithActionsDetail({ order, onApprove, onCancel }: Pr
               <Table.Header>
                 <Table.Row>
                   <Table.Head>SKU</Table.Head>
-                  <Table.Head>Qty</Table.Head>
-                  <Table.Head>Total</Table.Head>
+                  <Table.Head align="right">Qty</Table.Head>
+                  <Table.Head align="right">Total</Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
                 {order.lineItems.map((item) => (
                   <Table.Row key={item.id}>
                     <Table.Cell>{item.sku}</Table.Cell>
-                    <Table.Cell>{item.qty}</Table.Cell>
-                    <Table.Cell>${item.total.toLocaleString()}</Table.Cell>
+                    <Table.Cell align="right">{item.qty}</Table.Cell>
+                    <Table.Cell align="right">${item.total.toLocaleString()}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

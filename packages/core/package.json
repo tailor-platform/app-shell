@@ -45,7 +45,6 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
-    "prepack": "node ../../catalogue/scripts/generate-skill.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
     "type-check": "tsc --incremental"

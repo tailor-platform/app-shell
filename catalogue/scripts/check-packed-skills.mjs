@@ -1,15 +1,13 @@
-import { execFile } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { promisify } from "node:util";
+import { readFile, readdir } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const execFileAsync = promisify(execFile);
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const catalogueRoot = join(__dirname, "..");
 const repoRoot = join(catalogueRoot, "..");
 const expectedManifestPath = join(catalogueRoot, "expected-skills-files.txt");
+const corePackageRoot = join(repoRoot, "packages", "core");
+const skillsRoot = join(corePackageRoot, "skills");
 
 function parseManifest(text) {
   return text
@@ -29,55 +27,50 @@ function diffLists(expected, actual) {
   };
 }
 
-async function main() {
-  const tempDir = await mkdtemp(join(tmpdir(), "app-shell-pack-"));
+async function listFiles(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
 
-  try {
-    await execFileAsync(
-      "pnpm",
-      ["--filter", "@tailor-platform/app-shell", "pack", "--pack-destination", tempDir],
-      { cwd: repoRoot },
-    );
-
-    const tarballs = (await readdir(tempDir)).filter((file) => file.endsWith(".tgz"));
-    if (tarballs.length !== 1) {
-      throw new Error(`Expected exactly one tarball, found ${tarballs.length}`);
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await listFiles(fullPath)));
+      continue;
     }
-
-    const tarballPath = join(tempDir, tarballs[0]);
-    const [{ stdout: tarList }, expectedManifest] = await Promise.all([
-      execFileAsync("tar", ["-tf", tarballPath], { cwd: repoRoot }),
-      readFile(expectedManifestPath, "utf8"),
-    ]);
-
-    const actualSkillsFiles = tarList
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith("package/skills/") && !line.endsWith("/"))
-      .map((line) => line.replace(/^package\//, ""))
-      .sort();
-    const expectedSkillsFiles = parseManifest(expectedManifest);
-
-    const { missing, extra } = diffLists(expectedSkillsFiles, actualSkillsFiles);
-    if (missing.length === 0 && extra.length === 0) {
-      console.log(`Packed skills manifest matches expected (${actualSkillsFiles.length} files).`);
-      return;
-    }
-
-    console.error("Packed skills manifest does not match catalogue/expected-skills-files.txt");
-    if (missing.length > 0) {
-      console.error("\nMissing:");
-      for (const file of missing) console.error(`  - ${file}`);
-    }
-    if (extra.length > 0) {
-      console.error("\nExtra:");
-      for (const file of extra) console.error(`  - ${file}`);
-    }
-
-    process.exitCode = 1;
-  } finally {
-    await rm(tempDir, { recursive: true, force: true });
+    files.push(fullPath);
   }
+
+  return files;
+}
+
+async function main() {
+  const [expectedManifest, actualFiles] = await Promise.all([
+    readFile(expectedManifestPath, "utf8"),
+    listFiles(skillsRoot),
+  ]);
+
+  const actualSkillsFiles = actualFiles
+    .map((filePath) => relative(corePackageRoot, filePath))
+    .sort();
+  const expectedSkillsFiles = parseManifest(expectedManifest);
+
+  const { missing, extra } = diffLists(expectedSkillsFiles, actualSkillsFiles);
+  if (missing.length === 0 && extra.length === 0) {
+    console.log(`Skills manifest matches expected (${actualSkillsFiles.length} files).`);
+    return;
+  }
+
+  console.error("Skills manifest does not match catalogue/expected-skills-files.txt");
+  if (missing.length > 0) {
+    console.error("\nMissing:");
+    for (const file of missing) console.error(`  - ${file}`);
+  }
+  if (extra.length > 0) {
+    console.error("\nExtra:");
+    for (const file of extra) console.error(`  - ${file}`);
+  }
+
+  process.exitCode = 1;
 }
 
 main().catch((error) => {

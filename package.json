@@ -4,13 +4,14 @@
   "scripts": {
     "dev": "turbo watch dev --filter='./examples/*'",
     "build": "turbo build",
+    "generate:skills": "node catalogue/scripts/generate-skill.mjs",
     "type-check": "turbo type-check",
     "lint": "turbo lint",
     "test": "turbo test",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
-    "changeset:publish": "pnpm build && changeset publish",
+    "changeset:publish": "pnpm build && pnpm generate:skills && changeset publish",
     "prepare": "lefthook install"
   },
   "devDependencies": {

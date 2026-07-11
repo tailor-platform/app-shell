@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { useOverrideBreadcrumb } from "@/hooks/use-override-breadcrumb";
-import { DEFAULT_FAVICON_HREF } from "@/lib/default-favicon";
+import { DEFAULT_FAVICONS } from "@/lib/default-favicon";
 import { DocumentHead } from "./document-head";
 
 const configurations: RootConfiguration = {
@@ -50,6 +50,16 @@ const iconType = () =>
 const appShellIconHref = () =>
   document.querySelector<HTMLLinkElement>("link[data-app-shell-favicon]")?.getAttribute("href");
 
+const appShellIcons = () =>
+  Array.from(document.querySelectorAll<HTMLLinkElement>("link[data-app-shell-favicon]")).map(
+    (el) => ({
+      rel: el.getAttribute("rel"),
+      href: el.getAttribute("href"),
+      type: el.getAttribute("type"),
+      sizes: el.getAttribute("sizes"),
+    }),
+  );
+
 const appendStaticIcon = (href: string, rel = "icon") => {
   const link = document.createElement("link");
   link.setAttribute("rel", rel);
@@ -61,12 +71,16 @@ const appendStaticIcon = (href: string, rel = "icon") => {
 describe("DocumentHead", () => {
   beforeEach(() => {
     document.title = "initial";
-    document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => el.remove());
+    document.head
+      .querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]')
+      .forEach((el) => el.remove());
   });
 
   afterEach(() => {
     cleanup();
-    document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => el.remove());
+    document.head
+      .querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]')
+      .forEach((el) => el.remove());
   });
 
   it("sets '<page> · <app>' from the leaf segment and app title", async () => {
@@ -88,13 +102,25 @@ describe("DocumentHead", () => {
   it("leaves the document title untouched when nothing resolves", async () => {
     renderAt("/");
     // Give React a chance to (not) render a <title>.
-    await waitFor(() => expect(appShellIconHref()).toBe(DEFAULT_FAVICON_HREF));
+    await waitFor(() => expect(appShellIconHref()).toBe(DEFAULT_FAVICONS[0].href));
     expect(document.title).toBe("initial");
   });
 
-  it("renders the bundled Tailor favicon by default", async () => {
+  it("renders the full bundled default favicon set by default", async () => {
     renderAt("/orders/123", { title: "My App" });
-    await waitFor(() => expect(appShellIconHref()).toBe(DEFAULT_FAVICON_HREF));
+    await waitFor(() => expect(appShellIcons()).toHaveLength(DEFAULT_FAVICONS.length));
+    expect(appShellIcons().map((i) => i.href)).toEqual(DEFAULT_FAVICONS.map((f) => f.href));
+  });
+
+  it("renders each default favicon with its declared rel, type, and sizes", async () => {
+    renderAt("/orders/123", { title: "My App" });
+    await waitFor(() => expect(appShellIcons()).toHaveLength(DEFAULT_FAVICONS.length));
+    for (const fav of DEFAULT_FAVICONS) {
+      const match = appShellIcons().find((i) => i.href === fav.href);
+      expect(match?.rel).toBe(fav.rel);
+      expect(match?.type).toBe(fav.type ?? null);
+      expect(match?.sizes).toBe(fav.sizes ?? null);
+    }
   });
 
   it("respects a host-page favicon when the prop is omitted", async () => {
@@ -110,17 +136,13 @@ describe("DocumentHead", () => {
 
     view.rerender(headTree("/orders/123", { title: "My App" }));
 
-    await waitFor(() => expect(appShellIconHref()).toBe(DEFAULT_FAVICON_HREF));
+    await waitFor(() => expect(appShellIcons()).toHaveLength(DEFAULT_FAVICONS.length));
+    expect(appShellIconHref()).toBe(DEFAULT_FAVICONS[0].href);
   });
 
   it("renders a consumer-provided favicon", async () => {
     renderAt("/orders/123", { title: "My App", favicon: "/custom.ico" });
     await waitFor(() => expect(appShellIconHref()).toBe("/custom.ico"));
-  });
-
-  it("infers type=image/png for the default data URI favicon", async () => {
-    renderAt("/orders/123", { title: "My App" });
-    await waitFor(() => expect(iconType()).toBe("image/png"));
   });
 
   it("infers type=image/x-icon for .ico favicons", async () => {

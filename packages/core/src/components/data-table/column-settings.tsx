@@ -161,6 +161,13 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         >
           <GripVertical className="astw:size-4" />
         </span>
+        <button
+          type="button"
+          onClick={() => toggleColumn(key)}
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
+        >
+          {meta.label.get(key)}
+        </button>
         <Tooltip.Root>
           <Tooltip.Trigger
             render={
@@ -178,13 +185,6 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           </Tooltip.Trigger>
           <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
         </Tooltip.Root>
-        <button
-          type="button"
-          onClick={() => toggleColumn(key)}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
-        >
-          {meta.label.get(key)}
-        </button>
       </div>
     );
   };

@@ -55,13 +55,14 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ### Tooltip.Content Props
 
-| Prop         | Type                                     | Default    | Description                        |
-| ------------ | ---------------------------------------- | ---------- | ---------------------------------- |
-| `side`       | `"top" \| "right" \| "bottom" \| "left"` | `"top"`    | Preferred placement of the tooltip |
-| `align`      | `"start" \| "center" \| "end"`           | `"center"` | Alignment along the placement axis |
-| `sideOffset` | `number`                                 | `5`        | Distance in px from the trigger    |
-| `className`  | `string`                                 | -          | Additional CSS classes             |
-| `children`   | `React.ReactNode`                        | -          | Tooltip text or content            |
+| Prop         | Type                                     | Default    | Description                                              |
+| ------------ | ---------------------------------------- | ---------- | -------------------------------------------------------- |
+| `side`       | `"top" \| "right" \| "bottom" \| "left"` | `"top"`    | Preferred placement of the tooltip                       |
+| `align`      | `"start" \| "center" \| "end"`           | `"center"` | Alignment along the placement axis                       |
+| `sideOffset` | `number`                                 | `5`        | Distance in px from the trigger                          |
+| `noArrow`    | `boolean`                                | `false`    | When `true`, suppresses the arrow indicator on the popup |
+| `className`  | `string`                                 | -          | Additional CSS classes                                   |
+| `children`   | `React.ReactNode`                        | -          | Tooltip text or content                                  |
 
 ## Placement
 

@@ -23,6 +23,8 @@ export const dataTableLabels = defineI18nLabels({
     sectionScrollable: "Scrollable",
     sectionPinnedRight: "Fixed right",
     dropColumnsHere: "Drag columns here",
+    showColumn: "Show column",
+    hideColumn: "Hide column",
 
     // Row selection
     selectAll: "Select all rows",
@@ -95,6 +97,8 @@ export const dataTableLabels = defineI18nLabels({
     sectionScrollable: "スクロール",
     sectionPinnedRight: "右に固定",
     dropColumnsHere: "ここに列をドラッグ",
+    showColumn: "列を表示",
+    hideColumn: "列を非表示",
 
     selectAll: "全行を選択",
     selectRow: "行を選択",

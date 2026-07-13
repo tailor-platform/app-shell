@@ -4,6 +4,7 @@ import { Checkbox } from "@base-ui/react/checkbox";
 import { Check, GripVertical, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
+import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 
@@ -160,16 +161,23 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         >
           <GripVertical className="astw:size-4" />
         </span>
-        <Checkbox.Root
-          checked={isColumnVisible(key)}
-          onCheckedChange={() => toggleColumn(key)}
-          aria-label={meta.label.get(key)}
-          className={CHECKBOX_CLASS}
-        >
-          <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-            <Check className="astw:size-3" />
-          </Checkbox.Indicator>
-        </Checkbox.Root>
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            render={
+              <Checkbox.Root
+                checked={isColumnVisible(key)}
+                onCheckedChange={() => toggleColumn(key)}
+                aria-label={meta.label.get(key)}
+                className={CHECKBOX_CLASS}
+              />
+            }
+          >
+            <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+              <Check className="astw:size-3" />
+            </Checkbox.Indicator>
+          </Tooltip.Trigger>
+          <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
+        </Tooltip.Root>
         <button
           type="button"
           onClick={() => toggleColumn(key)}

@@ -23,6 +23,7 @@ import { csvImporterDemoResource } from "./pages/csv-importer-demo";
 import { dataTableDemoResource } from "./pages/data-table-demo";
 import { colorDemoResource } from "./pages/color-demo";
 import { gridDemoResource } from "./pages/grid-demo";
+import { timelineDemoResource } from "./pages/timeline-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -229,6 +230,17 @@ export const customPageModule = defineModule({
               Grid Demo (responsive columns, auto-fit, custom widths, spanning)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/timeline-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              Timeline Demo (task dependencies, job execution)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -257,5 +269,6 @@ export const customPageModule = defineModule({
     csvImporterDemoResource,
     dataTableDemoResource,
     gridDemoResource,
+    timelineDemoResource,
   ],
 });

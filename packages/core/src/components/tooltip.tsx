@@ -69,10 +69,12 @@ function Content({
   side: _side,
   align: _align,
   sideOffset: _sideOffset,
+  noArrow = false,
   children,
   ...restProps
 }: React.ComponentProps<typeof BaseTooltip.Popup> & {
   position?: PositionProps;
+  noArrow?: boolean;
   /** @deprecated Use `position={{ side }}` instead. */
   side?: PositionProps["side"];
   /** @deprecated Use `position={{ align }}` instead. */
@@ -100,7 +102,9 @@ function Content({
           {...restProps}
         >
           {children}
-          <BaseTooltip.Arrow className="astw:size-2.5 astw:rotate-45 astw:bg-primary astw:data-[side=top]:-bottom-1 astw:data-[side=bottom]:-top-1 astw:data-[side=left]:-right-1 astw:data-[side=right]:-left-1" />
+          {noArrow ? null : (
+            <BaseTooltip.Arrow className="astw:size-2.5 astw:rotate-45 astw:bg-primary astw:data-[side=top]:-bottom-1 astw:data-[side=bottom]:-top-1 astw:data-[side=left]:-right-1 astw:data-[side=right]:-left-1" />
+          )}
         </BaseTooltip.Popup>
       </BaseTooltip.Positioner>
     </BaseTooltip.Portal>

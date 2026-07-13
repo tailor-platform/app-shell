@@ -64,16 +64,22 @@ import { Building } from "lucide-react";
 ### favicon
 
 - **Type:** `string` (optional)
-- **Default:** Bundled Tailor favicon
-- **Description:** Browser-tab favicon href. Accepts any value valid for `<link rel="icon">` — a public-path URL (e.g. `/favicon.ico`) or a data URI. AppShell renders the `<link rel="icon">` tag for you; when omitted, the bundled Tailor favicon is used.
+- **Default:** Bundled default favicon set
+- **Description:** Browser-tab favicon href. Accepts any value valid for `<link rel="icon">` — a public-path URL (e.g. `/favicon.ico`) or a data URI. When provided, AppShell renders a single `<link rel="icon">` with this href, replacing the default favicon set.
+
+When `favicon` is omitted and the host page declares no `<link rel="icon">`, AppShell automatically injects a small default favicon set as embedded data URIs (no asset-copy step required):
+
+- 16×16 PNG tab icon
+- 32×32 PNG tab icon
+- 180×180 Apple touch icon (covers "Add to Home Screen" on iOS and Android)
+
+If the host page already declares a `<link rel="icon">`, AppShell leaves it untouched.
 
 ```tsx
 <AppShell favicon="/favicon.ico" modules={modules}>
   {/* ... */}
 </AppShell>
 ```
-
-> **Note:** Let AppShell own the favicon tag. Do not also declare a static `<link rel="icon">` in `index.html` — React only de-duplicates stylesheets, not tags it did not render, so both will coexist and produce a duplicate favicon.
 
 ### basePath
 

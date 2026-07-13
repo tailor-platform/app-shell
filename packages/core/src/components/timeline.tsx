@@ -1008,7 +1008,11 @@ function Row({ children, className, style, height = 32, background }: TimelineRo
   );
 
   // Row height is fixed by the owner-provided prop, so we only need to refresh the row's
-  // vertical offset after each commit.
+  // vertical offset after each commit. The row can still move when siblings above it
+  // change, and that layout shift is external to this component, so there is no complete
+  // dependency list we can put here. Avoiding this suppression would require a structural
+  // change: compute row offsets in Viewport or add observer-driven layout invalidation.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;

@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**📋 For the end-to-end contribution workflow (issue → branch → develop → PR → release), see:** [CONTRIBUTING.md](./CONTRIBUTING.md)
+
 ## Project Overview
 
 Tailor Platform AppShell - A React-based framework for building ERP applications with opinionated layouts and authentication.

@@ -22,7 +22,7 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 ### Monorepo Structure
 
-- **packages/core**: Main library (@tailor-platform/app-shell) - React components with shadcn/ui, built with tsup
+- **packages/core**: Main library (@tailor-platform/app-shell) - React components with shadcn/ui, built with Vite
 - **examples/**: Next.js and Vite example implementations
 
 ### Essential Concepts for Code Navigation
@@ -50,16 +50,6 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 ## Testing & Quality
 
 **📋 For formatting, type-check, and lint procedures, see:** [Quality Check Skill](./.agents/skills/quality-check/SKILL.md)
-
-## Local Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start dev server (opens localhost:3000 with example app)
-pnpm dev
-```
 
 ## Versioning & Publishing
 

@@ -1,13 +1,12 @@
 # Contributing to Tailor Platform AppShell
 
 Thanks for contributing! AppShell is an opinionated React framework for building ERP
-applications on Tailor Platform. This guide describes the **end-to-end development
-workflow** — from picking up an issue to a published release — and how it relates to
-`CLAUDE.md`.
+applications on Tailor Platform. This guide is the **end-to-end development workflow** — from
+picking up an issue to a published release.
 
-**`CLAUDE.md` vs. this file:** `CLAUDE.md` is the terse orientation doc auto-loaded by coding
-agents (architecture map, where things live). This file is the human-facing walkthrough of
-_how a contribution flows through the repo_ — `CLAUDE.md` links here for that.
+It's the human-facing walkthrough of _how a contribution flows through the repo_. Its
+companion, [`CLAUDE.md`](./CLAUDE.md), is the terse orientation doc auto-loaded by coding
+agents (the architecture map — where things live in the code); it links here for the workflow.
 
 ## The core idea: one source of truth, many executors
 
@@ -44,14 +43,9 @@ points at them. That keeps this file from drifting out of sync with what actuall
 
 ## 1. Prerequisites & setup
 
-- Node and pnpm versions are pinned in `package.json` (`engines` / `packageManager`) — use
-  `corepack enable` to pick them up automatically.
-- This is a **pnpm + turbo monorepo**.
-
-```bash
-pnpm install     # also installs git hooks via the `prepare` → lefthook script
-pnpm dev         # turbo watch on examples/* → example app at http://localhost:3000
-```
+This is a **pnpm + turbo monorepo**. For Node/pnpm version requirements and the
+`pnpm install` / `pnpm dev` commands, see [README.md — Development](./README.md#development).
+Note that `pnpm install` also wires up the git hooks (via the `prepare` → lefthook script).
 
 ### Repository layout
 

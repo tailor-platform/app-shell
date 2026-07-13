@@ -1,0 +1,13 @@
+skills/app-shell-patterns/SKILL.md
+skills/app-shell-patterns/references/fundamental/components.md
+skills/app-shell-patterns/references/fundamental/design-system.md
+skills/app-shell-patterns/references/fundamental/graphql.md
+skills/app-shell-patterns/references/patterns/detail-hero-with-actions.md
+skills/app-shell-patterns/references/patterns/form-modal.md
+skills/app-shell-patterns/references/patterns/form-sectioned.md
+skills/app-shell-patterns/references/patterns/form-single-page.md
+skills/app-shell-patterns/references/patterns/form-wizard.md
+skills/app-shell-patterns/references/patterns/interaction-confirm.md
+skills/app-shell-patterns/references/patterns/interaction-multi-select.md
+skills/app-shell-patterns/references/patterns/interaction-toast.md
+skills/app-shell-patterns/references/patterns/list-dense-scan.md

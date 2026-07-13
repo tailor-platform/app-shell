@@ -425,13 +425,8 @@ function parseInlinePixels(value: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function measureElementHeight(element: HTMLElement, fallback: number) {
-  return (
-    element.offsetHeight ||
-    element.clientHeight ||
-    parseInlinePixels(element.style.height) ||
-    fallback
-  );
+function measureElementHeight(element: HTMLElement) {
+  return element.offsetHeight || element.clientHeight || parseInlinePixels(element.style.height);
 }
 
 function measureElementTop(element: HTMLElement) {
@@ -439,8 +434,10 @@ function measureElementTop(element: HTMLElement) {
 
   let top = 0;
   let sibling = element.previousElementSibling as HTMLElement | null;
+  // JSDOM does not lay out offsetTop, so fall back to the fixed heights that Timeline.Row
+  // writes inline.
   while (sibling) {
-    top += measureElementHeight(sibling, 0);
+    top += measureElementHeight(sibling);
     sibling = sibling.previousElementSibling as HTMLElement | null;
   }
 
@@ -1004,43 +1001,24 @@ function Row({ children, className, style, height = 32, background }: TimelineRo
   const { registerRowBackground, unregisterRowBackground } = useViewportContext();
   const rowId = React.useId();
   const ref = React.useRef<HTMLDivElement>(null);
-  const [rowLayout, setRowLayout] = React.useState<RowContextValue>({ top: 0, height });
+  const [rowTop, setRowTop] = React.useState(0);
+  const rowLayout = React.useMemo<RowContextValue>(
+    () => ({ top: rowTop, height }),
+    [rowTop, height],
+  );
 
-  const updateRowLayout = React.useCallback(() => {
+  // Row height is fixed by the owner-provided prop, so we only need to refresh the row's
+  // vertical offset after each commit.
+  React.useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
 
-    const next = {
-      top: measureElementTop(element),
-      height: measureElementHeight(element, height),
-    };
-
-    setRowLayout((current) =>
-      current.top === next.top && current.height === next.height ? current : next,
-    );
-  }, [height]);
-
-  // Row position depends on the final DOM order and sibling heights, so we measure after
-  // each commit but before paint. That keeps intervals and links aligned with wrapped rows
-  // without a one-frame jump when row content or surrounding rows change.
-  React.useLayoutEffect(() => {
-    updateRowLayout();
+    const nextTop = measureElementTop(element);
+    setRowTop((current) => (current === nextTop ? current : nextTop));
   });
 
-  // The observer is also attached in `useLayoutEffect` so the row is fully enrolled in
-  // layout tracking during the same commit that produced it. That keeps subsequent size
-  // changes in sync with the pre-paint measurement path above.
-  React.useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateRowLayout);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [updateRowLayout]);
-
   // Row backgrounds live in a separate layer owned by the viewport. Registering them in
-  // `useLayoutEffect` keeps that layer synchronized with the measured row box before paint,
+  // `useLayoutEffect` keeps that layer synchronized with the row position before paint,
   // so the background does not visibly lag behind the row that owns it.
   React.useLayoutEffect(() => {
     if (!background) {

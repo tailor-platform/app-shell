@@ -191,7 +191,7 @@ Every page component:
    };
    ```
 
-3. Uses `appShellPageProps.guards` for permission gates and `appShellPageProps.loader` for route loaders. See [project-setup.md](project-setup.md).
+3. Uses `appShellPageProps.guards` for permission gates. See [project-setup.md](project-setup.md).
 
 ## Quick reference
 

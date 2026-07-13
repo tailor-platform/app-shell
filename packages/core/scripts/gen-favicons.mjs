@@ -21,12 +21,13 @@ const toDataUri = (file, mime) => {
 };
 
 // Each entry maps a file in ./favicons to the data-URI const it becomes.
+// We deliberately bundle only what a browser tab needs on a non-PWA web app:
+// the 16/32 PNG tab icons plus the Apple touch icon for iOS home-screen
+// bookmarks. The legacy `.ico` and the PWA `android-chrome-*` icons are
+// intentionally excluded to keep the bundle small.
 const assets = [
-  { const: "FAVICON_ICO", file: "favicon.ico", mime: "image/x-icon" },
   { const: "FAVICON_16", file: "favicon-16x16.png", mime: "image/png" },
   { const: "FAVICON_32", file: "favicon-32x32.png", mime: "image/png" },
-  { const: "FAVICON_192", file: "android-chrome-192x192.png", mime: "image/png" },
-  { const: "FAVICON_512", file: "android-chrome-512x512.png", mime: "image/png" },
   { const: "APPLE_TOUCH_ICON", file: "apple-touch-icon.png", mime: "image/png" },
 ];
 
@@ -36,12 +37,14 @@ const header = `/**
  * Bundled default favicons for AppShell.
  *
  * Historically AppShell shipped a single 32×32 Tailor mark. It now bundles the
- * full favicon set (the \`favicon_io\` output: a multi-resolution \`.ico\`, 16/32
- * PNGs, the 192/512 PWA icons, and the 180×180 Apple touch icon). Each asset is
- * embedded as a base64 data URI so the whole set ships in the JS bundle and
- * needs no asset-copy step in the consuming app. \`<DocumentHead>\` injects the
- * entire {@link DEFAULT_FAVICONS} list as \`<link>\` tags when a consumer passes
- * no \`favicon\` prop and the host page declares no \`<link rel="icon">\`.
+ * small set a browser tab actually needs on a (non-PWA) web app: the 16×16 and
+ * 32×32 PNG tab icons plus the 180×180 Apple touch icon for iOS home-screen
+ * bookmarks. The legacy \`.ico\` and PWA \`android-chrome-*\` icons are omitted to
+ * keep the bundle small. Each asset is embedded as a base64 data URI so the set
+ * ships in the JS bundle and needs no asset-copy step in the consuming app.
+ * \`<DocumentHead>\` injects the entire {@link DEFAULT_FAVICONS} list as \`<link>\`
+ * tags when a consumer passes no \`favicon\` prop and the host page declares no
+ * \`<link rel="icon">\`.
  *
  * Consumers still override the whole set by passing \`favicon\` (any href: a
  * public-path URL such as \`/favicon.ico\`, or a data URI).
@@ -66,15 +69,11 @@ export type FaviconLink = {
 const constLines = assets.map((a) => `const ${a.const} =\n  "${uris[a.const]}";`).join("\n\n");
 
 const listBody = `/**
- * The full default favicon set, ordered from the classic \`.ico\` fallback up
- * through the high-resolution PWA icons and the Apple touch icon.
+ * The default favicon set: the 16/32 PNG tab icons plus the Apple touch icon.
  */
 export const DEFAULT_FAVICONS: FaviconLink[] = [
-  { rel: "icon", type: "image/x-icon", href: FAVICON_ICO },
   { rel: "icon", type: "image/png", sizes: "16x16", href: FAVICON_16 },
   { rel: "icon", type: "image/png", sizes: "32x32", href: FAVICON_32 },
-  { rel: "icon", type: "image/png", sizes: "192x192", href: FAVICON_192 },
-  { rel: "icon", type: "image/png", sizes: "512x512", href: FAVICON_512 },
   { rel: "apple-touch-icon", sizes: "180x180", href: APPLE_TOUCH_ICON },
 ];
 `;

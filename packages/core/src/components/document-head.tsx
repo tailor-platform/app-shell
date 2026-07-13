@@ -36,9 +36,9 @@ const inferFaviconType = (href: string): string | undefined => {
  * - **Favicon** — the `favicon` prop passed to `<AppShell>`. When that prop is
  *   omitted, AppShell preserves any existing host-page `<link rel="icon">`
  *   and only falls back to the bundled default set
- *   ({@link DEFAULT_FAVICONS} — a multi-resolution `.ico`, 16/32/192/512 PNGs,
- *   and an Apple touch icon) when no favicon exists yet. A `favicon` prop
- *   replaces the whole set with that single href.
+ *   ({@link DEFAULT_FAVICONS} — the 16/32 PNG tab icons plus a 180×180 Apple
+ *   touch icon) when no favicon exists yet. A `favicon` prop replaces the whole
+ *   set with that single href.
  *
  * Rendered once inside the router (see `createRootRoute`). React 19 hoists the
  * `<title>`/`<link>` into `<head>` and updates them on every navigation — no

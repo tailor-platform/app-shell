@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
 import { usePageCounter } from "./use-page-counter";
+import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -45,11 +46,20 @@ export function useDataTable<
     loading = false,
     error = null,
     control,
+    tableId,
     onClickRow,
+    rowHref,
+    primaryColumnId,
     rowActions,
     onSelectionChange,
     sort: sortOption,
   } = options;
+
+  if (rowHref && onClickRow) {
+    console.warn(
+      "[DataTable] Both `rowHref` and `onClickRow` were provided; `rowHref` wins. Use `rowHref` for navigation and `onClickRow` only for non-navigation side effects.",
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Data extraction
@@ -80,42 +90,127 @@ export function useDataTable<
   const hasNextPage = control?.getHasNextPage(pageInfo) ?? pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
-  // Column visibility management
+  // Column visibility / order / pinning (persisted per-user when tableId is set)
   // ---------------------------------------------------------------------------
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
-
   const getColumnKey = useCallback((col: Column<TRow>, colIndex: number): string => {
     return col.id ?? col.label ?? String(colIndex);
   }, []);
 
-  const visibleColumns = useMemo<Column<TRow>[]>(() => {
-    return allColumns.filter((col, i) => !hiddenColumns.has(getColumnKey(col, i)));
-  }, [allColumns, hiddenColumns, getColumnKey]);
+  // Stable key list + key→column map derived from the current column defs.
+  const columnKeys = useMemo(
+    () => allColumns.map((col, i) => getColumnKey(col, i)),
+    [allColumns, getColumnKey],
+  );
+  const columnByKey = useMemo(() => {
+    const map = new Map<string, Column<TRow>>();
+    allColumns.forEach((col, i) => map.set(getColumnKey(col, i), col));
+    return map;
+  }, [allColumns, getColumnKey]);
 
-  const toggleColumn = useCallback((fieldOrId: string) => {
-    setHiddenColumns((prev) => {
-      const next = new Set(prev);
-      if (next.has(fieldOrId)) {
-        next.delete(fieldOrId);
-      } else {
-        next.add(fieldOrId);
+  const defaultColumnState = useMemo<PersistedColumnState>(
+    () => ({ order: columnKeys, hidden: [], pinned: {} }),
+    [columnKeys],
+  );
+
+  const [persisted, setPersisted] = usePersistentColumnState(tableId, defaultColumnState);
+
+  // Reconcile the persisted order against the current column defs: keep persisted
+  // keys that still exist (in their saved order), then append any new columns in
+  // definition order. Self-healing across columns added/removed between sessions.
+  const columnOrder = useMemo<string[]>(() => {
+    const present = new Set(columnKeys);
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const key of persisted.order) {
+      if (present.has(key) && !seen.has(key)) {
+        result.push(key);
+        seen.add(key);
       }
-      return next;
-    });
-  }, []);
+    }
+    for (const key of columnKeys) {
+      if (!seen.has(key)) {
+        result.push(key);
+        seen.add(key);
+      }
+    }
+    return result;
+  }, [persisted.order, columnKeys]);
+
+  const hiddenColumns = useMemo(() => new Set(persisted.hidden), [persisted.hidden]);
+  const pinnedColumns = persisted.pinned;
+
+  const visibleColumns = useMemo<Column<TRow>[]>(() => {
+    return columnOrder
+      .filter((key) => !hiddenColumns.has(key))
+      .map((key) => columnByKey.get(key))
+      .filter((col): col is Column<TRow> => col != null);
+  }, [columnOrder, hiddenColumns, columnByKey]);
+
+  const toggleColumn = useCallback(
+    (fieldOrId: string) => {
+      setPersisted((prev) => {
+        const hidden = new Set(prev.hidden);
+        if (hidden.has(fieldOrId)) {
+          hidden.delete(fieldOrId);
+        } else {
+          hidden.add(fieldOrId);
+        }
+        return { ...prev, hidden: [...hidden] };
+      });
+    },
+    [setPersisted],
+  );
 
   const showAllColumns = useCallback(() => {
-    setHiddenColumns(new Set());
-  }, []);
+    setPersisted((prev) => ({ ...prev, hidden: [] }));
+  }, [setPersisted]);
 
   const hideAllColumns = useCallback(() => {
-    const allKeys = new Set(allColumns.map((col, i) => getColumnKey(col, i)));
-    setHiddenColumns(allKeys);
-  }, [allColumns, getColumnKey]);
+    setPersisted((prev) => ({ ...prev, hidden: [...columnKeys] }));
+  }, [setPersisted, columnKeys]);
 
   const isColumnVisible = useCallback(
     (fieldOrId: string) => !hiddenColumns.has(fieldOrId),
     [hiddenColumns],
+  );
+
+  const moveColumn = useCallback(
+    (key: string, toIndex: number) => {
+      setPersisted((prev) => {
+        const order = [...columnOrder];
+        const from = order.indexOf(key);
+        if (from === -1) return prev;
+        const clamped = Math.max(0, Math.min(toIndex, order.length - 1));
+        order.splice(from, 1);
+        order.splice(clamped, 0, key);
+        return { ...prev, order };
+      });
+    },
+    [setPersisted, columnOrder],
+  );
+
+  const setColumnOrder = useCallback(
+    (keys: string[]) => {
+      setPersisted((prev) => ({ ...prev, order: keys }));
+    },
+    [setPersisted],
+  );
+
+  const setPin = useCallback(
+    (key: string, side: "left" | "right" | "none" | null) => {
+      setPersisted((prev) => {
+        const pinned = { ...prev.pinned };
+        // `null` clears the override (reverts to the column's default `pin`);
+        // `"none"` explicitly unpins a column even if its default is pinned.
+        if (side === null) {
+          delete pinned[key];
+        } else {
+          pinned[key] = side;
+        }
+        return { ...prev, pinned };
+      });
+    },
+    [setPersisted],
   );
 
   // ---------------------------------------------------------------------------
@@ -268,8 +363,15 @@ export function useDataTable<
     showAllColumns,
     hideAllColumns,
     isColumnVisible,
+    columnOrder,
+    moveColumn,
+    setColumnOrder,
+    pinnedColumns,
+    setPin,
     control: control as CollectionControl | undefined,
     onClickRow,
+    rowHref,
+    primaryColumnId,
     rowActions,
     selectedIds,
     isRowSelected,

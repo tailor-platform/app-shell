@@ -110,6 +110,17 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
   /**
+   * Freeze this column to the left or right edge so it stays visible while the
+   * table scrolls horizontally. This is the **default** pin; the user can
+   * override it at runtime via `DataTable.ColumnSettings` (persisted when
+   * `tableId` is set).
+   *
+   * **Pinned columns must set `width`** — the sticky offset of each pinned
+   * column is computed from the widths of the columns pinned beside it. A `pin`
+   * without a `width` is ignored (with a dev warning).
+   */
+  pin?: "left" | "right";
+  /**
    * Horizontal alignment for the header and body cell. When omitted, numeric
    * `type` values (`"number"` and `"money"`) default to `"right"` so digits
    * align along their decimal place; everything else defaults to `"left"`.
@@ -241,8 +252,36 @@ export type UseDataTableOptions<
    * using `DataTable.Pagination` or `DataTable.Filters`.
    */
   control?: CollectionControl<TFieldName, TFilter>;
-  /** Called when the user clicks a row. Adds a pointer cursor to rows. */
+  /**
+   * Stable id used to persist per-user column layout (visibility, order, and
+   * pinning) to `localStorage`, keyed by this id. When omitted, column layout is
+   * in-memory only and resets on reload.
+   */
+  tableId?: string;
+  /**
+   * Called when the user clicks a row. Adds a pointer cursor to rows.
+   *
+   * Prefer `rowHref` for **navigation** (it's keyboard/screen-reader reachable
+   * and supports cmd/middle-click). Use `onClickRow` for non-navigation side
+   * effects such as opening a drawer. Mutually exclusive with `rowHref` — if
+   * both are set, `rowHref` wins.
+   */
   onClickRow?: (row: TRow) => void;
+  /**
+   * Makes the whole row navigate to the returned URL. The row's primary cell is
+   * rendered as a real `<Link>`, so the row is reachable by keyboard and screen
+   * readers and can be opened in a new tab (cmd/ctrl/middle click). Clicking
+   * anywhere else in the row navigates too.
+   *
+   * Requires a react-router context (it uses `useNavigate`/`<Link>`); only set
+   * it inside a routed app.
+   */
+  rowHref?: (row: TRow) => string;
+  /**
+   * Id (or label) of the column whose cell should carry the `rowHref` `<Link>`.
+   * Defaults to the first visible column. Ignored when `rowHref` is not set.
+   */
+  primaryColumnId?: string;
   /**
    * Per-row action items rendered in a kebab-menu column on the right.
    * The column is omitted when this array is empty or not provided.
@@ -323,6 +362,20 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   showAllColumns: () => void;
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
+  /** Column keys in display order (visible and hidden). */
+  columnOrder: string[];
+  /** Move the column with `key` to `toIndex` within the ordered column list. */
+  moveColumn: (key: string, toIndex: number) => void;
+  /** Replace the full column order with `keys`. */
+  setColumnOrder: (keys: string[]) => void;
+  /** Per-user pin overrides, keyed by column key (`"none"` = explicitly unpinned). */
+  pinnedColumns: Record<string, "left" | "right" | "none">;
+  /**
+   * Set the pin for the column with `key`: `"left"`/`"right"` to pin, `"none"` to
+   * explicitly unpin (overriding a default `pin`), or `null` to clear the override
+   * and fall back to the column's default.
+   */
+  setPin: (key: string, side: "left" | "right" | "none" | null) => void;
 
   /**
    * The resolved page size derived from the collection control.
@@ -346,6 +399,8 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
+  rowHref?: (row: TRow) => string;
+  primaryColumnId?: string;
   rowActions?: RowAction<TRow>[];
 
   // Row selection

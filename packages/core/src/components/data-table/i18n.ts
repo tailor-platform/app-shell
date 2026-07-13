@@ -13,6 +13,17 @@ export const dataTableLabels = defineI18nLabels({
     // RowActionsMenu aria-label
     rowActions: "Row actions",
 
+    // Column settings (DataTable.ColumnSettings / DataTable.ColumnToggle)
+    columns: "Columns",
+    columnSettings: "Column settings",
+    showAllColumns: "Show all",
+    hideAllColumns: "Hide all",
+    dragToReorder: "Drag to reorder",
+    sectionPinnedLeft: "Fixed left",
+    sectionScrollable: "Scrollable",
+    sectionPinnedRight: "Fixed right",
+    dropColumnsHere: "Drag columns here",
+
     // Row selection
     selectAll: "Select all rows",
     selectRow: "Select row",
@@ -73,6 +84,18 @@ export const dataTableLabels = defineI18nLabels({
     errorPrefix: "エラー:",
     actionsHeader: "操作",
     rowActions: "行の操作",
+
+    // Column settings
+    columns: "列",
+    columnSettings: "列の設定",
+    showAllColumns: "すべて表示",
+    hideAllColumns: "すべて非表示",
+    dragToReorder: "ドラッグして並び替え",
+    sectionPinnedLeft: "左に固定",
+    sectionScrollable: "スクロール",
+    sectionPinnedRight: "右に固定",
+    dropColumnsHere: "ここに列をドラッグ",
+
     selectAll: "全行を選択",
     selectRow: "行を選択",
     paginationFirst: "最初のページ",

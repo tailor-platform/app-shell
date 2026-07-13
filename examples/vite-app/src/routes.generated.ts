@@ -23,6 +23,7 @@ export type GeneratedRouteParams = {
   "/dashboard/orders/:id": { id: string };
   "/dashboard/products": {};
   "/data-table": {};
+  "/data-table-lab": {};
   "/date-picker": {};
   "/settings": {};
 };

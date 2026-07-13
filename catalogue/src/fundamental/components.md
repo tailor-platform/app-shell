@@ -387,7 +387,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Import:** compound namespace + helpers from `'@tailor-platform/app-shell'`, e.g. `DataTable`, `useDataTable`, `useCollectionVariables`, `createColumnHelper`, and types such as `Column`, `UseDataTableReturn`.
 
-**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column).
+**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`rowHref`** (accessible whole-row navigation — preferred) / **`onClickRow`** (non-navigation side effects), **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **column pinning** (`pin: "left" | "right"`) and **`DataTable.ColumnSettings`** (user show/hide + reorder + pin, persisted per-user via **`tableId`**).
 
 **Primitives:** Builds on low-level **`Table`**; do not reinvent pagination/filters manually unless the dataset is trivial.
 
@@ -404,13 +404,15 @@ const table = useDataTable({
   data: fetching ? undefined : mappedFromQuery,
   loading: fetching,
   control,
-  onClickRow: (row) => navigate(detailHref(row)),
+  tableId: "purchase-orders", // persist user column layout to localStorage
+  rowHref: (row) => detailHref(row), // whole-row nav; primary cell becomes a <Link>
   // onSelectionChange, rowActions, sort: …
 });
 
 <DataTable.Root value={table}>
   <DataTable.Toolbar>
     <DataTable.Filters />
+    <DataTable.ColumnSettings />
   </DataTable.Toolbar>
   <DataTable.Table />
   <DataTable.Footer>
@@ -418,6 +420,10 @@ const table = useDataTable({
   </DataTable.Footer>
 </DataTable.Root>;
 ```
+
+**Row navigation:** prefer **`rowHref`** over `onClickRow` for going to a detail page — it renders the primary cell as a real `<Link>` (keyboard/SR reachable, cmd/middle-click opens a new tab) while keeping the whole row clickable. Use `onClickRow` only for non-navigation side effects. Never add a per-row "View" / "Open" / "→" button.
+
+**Column pinning & settings:** set `pin: "left" | "right"` on a `Column` (it must have a `width`) to freeze it during horizontal scroll — selection auto-pins left, row-actions auto-pins right. Drop **`DataTable.ColumnSettings`** in the toolbar to let users show/hide, reorder, and re-pin columns; pass a stable **`tableId`** to persist their layout to `localStorage` (a per-user preference — intentionally not in the URL like filters/sort).
 
 **Column alignment:** each `Column` accepts **`align`** (`"left" | "right"`) applied to both header and body cell. Numeric `type` columns (`"number"`, `"money"`) default to `"right"` automatically so digits align on the decimal place — pass `align="left"` to opt out; everything else defaults to `"left"`.
 

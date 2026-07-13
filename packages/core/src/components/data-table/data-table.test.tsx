@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
@@ -54,6 +54,11 @@ function TestDataTable(props: {
 }
 
 const wrapper = createAppShellWrapper("en");
+
+const headByText = (container: HTMLElement, text: string) =>
+  Array.from(container.querySelectorAll<HTMLElement>('[data-slot="data-table-header"] th')).find(
+    (th) => th.textContent?.trim() === text,
+  );
 
 // When a cell is wrapped in `Tooltip.Trigger`, Base UI tags the trigger
 // element with a generated `base-ui-…` id (used for the popup's
@@ -420,7 +425,7 @@ describe("DataTable", () => {
   // Column truncate
   // -------------------------------------------------------------------------
   describe("column truncate", () => {
-    it("adds truncate + max-w-0 to body cells when truncate=true", () => {
+    it("constrains the cell width and truncates in an inner span when truncate=true", () => {
       const cols: Column<TestRow>[] = [
         {
           label: "Name",
@@ -435,9 +440,13 @@ describe("DataTable", () => {
       });
       const firstRow = container.querySelector('[data-slot="data-table-row"]');
       const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
-      expect(cells[0]?.className).toContain("truncate");
+      // The cell keeps the width constraint but NOT `overflow: hidden` (which would
+      // clip a pinned column's freeze shadow); truncation moves to an inner span.
       expect(cells[0]?.className).toContain("max-w-0");
-      expect(cells[1]?.className).not.toContain("truncate");
+      expect(cells[0]?.className).not.toContain("astw:truncate");
+      expect(cells[0]?.querySelector('span[class*="truncate"]')).toBeTruthy();
+      expect(cells[1]?.className).not.toContain("max-w-0");
+      expect(cells[1]?.querySelector('span[class*="truncate"]')).toBeFalsy();
     });
 
     it("wires a Tooltip when accessor returns a string", () => {
@@ -508,8 +517,8 @@ describe("DataTable", () => {
       }
       const { container } = render(<Harness />, { wrapper });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
-      // Truncate classes still apply, but no Tooltip wraps the cell.
-      expect(cell?.className).toContain("truncate");
+      // Truncation still applies (inner span), but no Tooltip wraps the cell.
+      expect(cell?.querySelector('span[class*="truncate"]')).toBeTruthy();
       expect(isTooltipWired(cell)).toBe(false);
     });
 
@@ -525,7 +534,7 @@ describe("DataTable", () => {
         wrapper,
       });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
-      expect(cell?.className).toContain("truncate");
+      expect(cell?.querySelector('span[class*="truncate"]')).toBeTruthy();
       expect(isTooltipWired(cell)).toBe(false);
     });
 
@@ -1092,6 +1101,153 @@ describe("DataTable", () => {
       fireEvent.click(checkboxes[0]);
 
       expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Sticky / pinned columns
+  // -------------------------------------------------------------------------
+  describe("pinned columns", () => {
+    type Row = { id: string; a: string; b: string; c: string };
+    const rows: Row[] = [{ id: "1", a: "A1", b: "B1", c: "C1" }];
+    const pinnedCols: Column<Row>[] = [
+      { id: "a", label: "A", width: 100, pin: "left", render: (r) => r.a },
+      { id: "b", label: "B", width: 100, render: (r) => r.b },
+      { id: "c", label: "C", width: 100, pin: "right", render: (r) => r.c },
+    ];
+
+    function PinHarness(props: { onSelectionChange?: (ids: string[]) => void }) {
+      const table = useDataTable<Row>({
+        columns: pinnedCols,
+        data: { rows },
+        onSelectionChange: props.onSelectionChange,
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+
+    it("applies sticky positioning + edge offsets to pinned columns", () => {
+      const { container } = render(<PinHarness />, { wrapper });
+      const a = headByText(container, "A");
+      const c = headByText(container, "C");
+      expect(a?.style.position).toBe("sticky");
+      expect(a?.style.left).toBe("0px");
+      expect(c?.style.position).toBe("sticky");
+      expect(c?.style.right).toBe("0px");
+      // Non-pinned column is not sticky.
+      expect(headByText(container, "B")?.style.position).toBe("");
+    });
+
+    it("offsets a left-pinned column past the auto-pinned selection column", () => {
+      const { container } = render(<PinHarness onSelectionChange={() => {}} />, { wrapper });
+      // Selection column auto-pins to the left edge; column A stacks after it.
+      const a = headByText(container, "A");
+      expect(a?.style.left).toBe("52px");
+    });
+
+    it("marks the boundary pinned cell with a scroll-aware freeze shadow", () => {
+      const { container } = render(<PinHarness />, { wrapper });
+      // The shadow pseudo-element is revealed only when the container is scrolled
+      // under that edge (data-pin-shadow-left / -right toggled by DataTable.Table).
+      expect(headByText(container, "A")?.className).toContain("data-pin-shadow-left");
+      expect(headByText(container, "C")?.className).toContain("data-pin-shadow-right");
+    });
+
+    it("ignores a pin without a width and warns", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const cols: Column<Row>[] = [
+        { id: "a", label: "A", pin: "left", render: (r) => r.a },
+        { id: "b", label: "B", width: 100, render: (r) => r.b },
+      ];
+      function Harness() {
+        const table = useDataTable<Row>({ columns: cols, data: { rows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      expect(headByText(container, "A")?.style.position).toBe("");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("no width"));
+      warn.mockRestore();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Row-click navigation (rowHref)
+  // -------------------------------------------------------------------------
+  describe("rowHref navigation", () => {
+    type Row = { id: string; name: string; status: string };
+    const rows: Row[] = [
+      { id: "1", name: "Alice", status: "Active" },
+      { id: "2", name: "Bob", status: "Inactive" },
+    ];
+    const cols: Column<Row>[] = [
+      { id: "name", label: "Name", render: (r) => r.name },
+      { id: "status", label: "Status", render: (r) => r.status },
+    ];
+
+    function LocationProbe() {
+      const loc = useLocation();
+      return <div data-testid="loc">{loc.pathname}</div>;
+    }
+
+    function NavHarness(props: { onClickRow?: (row: Row) => void; primaryColumnId?: string }) {
+      const table = useDataTable<Row>({
+        columns: cols,
+        data: { rows },
+        rowHref: (row) => `/orders/${row.id}`,
+        onClickRow: props.onClickRow,
+        primaryColumnId: props.primaryColumnId,
+      });
+      return (
+        <MemoryRouter initialEntries={["/"]}>
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+          <LocationProbe />
+        </MemoryRouter>
+      );
+    }
+
+    it("renders the primary cell as a single link per row", () => {
+      const { container } = render(<NavHarness />, { wrapper });
+      const bodyRows = container.querySelectorAll('[data-slot="data-table-row"]');
+      const firstRowAnchors = bodyRows[0].querySelectorAll("a");
+      expect(firstRowAnchors).toHaveLength(1);
+      expect(firstRowAnchors[0].getAttribute("href")).toBe("/orders/1");
+      expect(firstRowAnchors[0].textContent).toBe("Alice");
+    });
+
+    it("navigates when the row is clicked", () => {
+      const { container } = render(<NavHarness />, { wrapper });
+      const cell = container.querySelectorAll('[data-slot="data-table-cell"]')[1]; // Status cell
+      fireEvent.click(cell);
+      expect(screen.getByTestId("loc").textContent).toBe("/orders/1");
+    });
+
+    it("honours primaryColumnId for the link cell", () => {
+      const { container } = render(<NavHarness primaryColumnId="status" />, { wrapper });
+      const firstRowAnchor = container
+        .querySelector('[data-slot="data-table-row"]')
+        ?.querySelector("a");
+      expect(firstRowAnchor?.textContent).toBe("Active");
+    });
+
+    it("warns and lets rowHref win when onClickRow is also provided", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const onClickRow = vi.fn();
+      const { container } = render(<NavHarness onClickRow={onClickRow} />, { wrapper });
+      const cell = container.querySelectorAll('[data-slot="data-table-cell"]')[1];
+      fireEvent.click(cell);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("rowHref` wins"));
+      expect(onClickRow).not.toHaveBeenCalled();
+      expect(screen.getByTestId("loc").textContent).toBe("/orders/1");
+      warn.mockRestore();
     });
   });
 });

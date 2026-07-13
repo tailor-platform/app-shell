@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useDataTable } from "./use-data-table";
 import type { CollectionControl } from "@/types/collection";
 import type { Column, DataTableData } from "./types";
@@ -244,6 +244,110 @@ describe("useDataTable", () => {
         result.current.showAllColumns();
       });
       expect(result.current.visibleColumns).toHaveLength(2);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Column order & pinning
+  // -------------------------------------------------------------------------
+  describe("column order & pinning", () => {
+    it("columnOrder defaults to definition order", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+      expect(result.current.columnOrder).toEqual(["name", "value"]);
+    });
+
+    it("moveColumn reorders columnOrder and visibleColumns", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+
+      act(() => {
+        result.current.moveColumn("value", 0);
+      });
+      expect(result.current.columnOrder).toEqual(["value", "name"]);
+      expect(result.current.visibleColumns.map((c) => c.id)).toEqual(["value", "name"]);
+    });
+
+    it("keeps hidden columns hidden after a reorder", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+
+      act(() => {
+        result.current.toggleColumn("name");
+      });
+      act(() => {
+        result.current.moveColumn("value", 0);
+      });
+      expect(result.current.isColumnVisible("name")).toBe(false);
+      expect(result.current.visibleColumns.map((c) => c.id)).toEqual(["value"]);
+    });
+
+    it("setPin sets and clears a pin override", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+
+      act(() => {
+        result.current.setPin("name", "left");
+      });
+      expect(result.current.pinnedColumns).toEqual({ name: "left" });
+
+      act(() => {
+        result.current.setPin("name", null);
+      });
+      expect(result.current.pinnedColumns).toEqual({});
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Column state persistence (localStorage, keyed by tableId)
+  // -------------------------------------------------------------------------
+  describe("column state persistence", () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it("persists visibility to localStorage keyed by tableId", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+
+      act(() => {
+        result.current.toggleColumn("name");
+      });
+
+      const stored = JSON.parse(localStorage.getItem("astw:data-table:v1:t1") as string);
+      expect(stored.hidden).toContain("name");
+    });
+
+    it("restores persisted state on remount with the same tableId", () => {
+      const first = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+      act(() => {
+        first.result.current.toggleColumn("name");
+        first.result.current.setPin("value", "right");
+      });
+      first.unmount();
+
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+      expect(result.current.isColumnVisible("name")).toBe(false);
+      expect(result.current.pinnedColumns).toEqual({ value: "right" });
+    });
+
+    it("does not persist when tableId is absent", () => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
+      act(() => {
+        result.current.toggleColumn("name");
+      });
+      expect(localStorage.length).toBe(0);
+    });
+
+    it("falls back to defaults on corrupt stored state", () => {
+      localStorage.setItem("astw:data-table:v1:t1", "{ not valid json");
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+      expect(result.current.visibleColumns).toHaveLength(2);
+    });
+
+    it("drops persisted keys no longer present and appends new columns", () => {
+      localStorage.setItem(
+        "astw:data-table:v1:t1",
+        JSON.stringify({ order: ["value", "gone"], hidden: [], pinned: {} }),
+      );
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+      // "gone" dropped (not in current columns); "name" appended after "value".
+      expect(result.current.columnOrder).toEqual(["value", "name"]);
     });
   });
 

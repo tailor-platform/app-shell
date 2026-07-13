@@ -36,11 +36,6 @@ const SECTION_PIN: Record<Section, "left" | "right" | "none"> = {
   right: "right",
 };
 
-/** Insertion indicator shown at the active drop position. */
-function InsertLine() {
-  return <div className="astw:mx-1 astw:my-0.5 astw:h-0.5 astw:rounded-full astw:bg-primary" />;
-}
-
 /** Resolve a column's effective pin (override wins; "none" is explicit unpin). */
 function effectiveSection(
   stored: "left" | "right" | "none" | undefined,
@@ -128,49 +123,63 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     resetDrag();
   };
 
-  const dropLineAt = (section: Section, index: number) =>
-    dragKey != null && dropTarget?.section === section && dropTarget.index === index;
-
-  const renderRow = (key: string, section: Section, index: number) => (
-    <div
-      key={key}
-      draggable
-      onDragStart={() => setDragKey(key)}
-      onDragEnd={resetDrag}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const rect = e.currentTarget.getBoundingClientRect();
-        const after = e.clientY > rect.top + rect.height / 2;
-        setDropTarget({ section, index: after ? index + 1 : index });
-      }}
-      className={cn(
-        "astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
-        dragKey === key && "astw:opacity-40",
-      )}
-    >
-      <span aria-label={t("dragToReorder")} className="astw:cursor-grab astw:text-muted-foreground">
-        <GripVertical className="astw:size-4" />
-      </span>
-      <Checkbox.Root
-        checked={isColumnVisible(key)}
-        onCheckedChange={() => toggleColumn(key)}
-        aria-label={meta.label.get(key)}
-        className={CHECKBOX_CLASS}
+  const renderRow = (key: string, section: Section, index: number, isLast: boolean) => {
+    // The insertion indicator is a box-shadow (not a flow element) so it never
+    // shifts the rows under the cursor — inserting a real element there caused
+    // the drop target to recompute on every reflow and the line to "jump".
+    const showBefore =
+      dragKey != null && dropTarget?.section === section && dropTarget.index === index;
+    const showAfter =
+      dragKey != null &&
+      dropTarget?.section === section &&
+      isLast &&
+      dropTarget.index === index + 1;
+    return (
+      <div
+        key={key}
+        draggable
+        onDragStart={() => setDragKey(key)}
+        onDragEnd={resetDrag}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const rect = e.currentTarget.getBoundingClientRect();
+          const after = e.clientY > rect.top + rect.height / 2;
+          setDropTarget({ section, index: after ? index + 1 : index });
+        }}
+        className={cn(
+          "astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
+          dragKey === key && "astw:opacity-40",
+          showBefore && "astw:shadow-[inset_0_2px_0_0_var(--primary)]",
+          showAfter && "astw:shadow-[inset_0_-2px_0_0_var(--primary)]",
+        )}
       >
-        <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-          <Check className="astw:size-3" />
-        </Checkbox.Indicator>
-      </Checkbox.Root>
-      <button
-        type="button"
-        onClick={() => toggleColumn(key)}
-        className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
-      >
-        {meta.label.get(key)}
-      </button>
-    </div>
-  );
+        <span
+          aria-label={t("dragToReorder")}
+          className="astw:cursor-grab astw:text-muted-foreground"
+        >
+          <GripVertical className="astw:size-4" />
+        </span>
+        <Checkbox.Root
+          checked={isColumnVisible(key)}
+          onCheckedChange={() => toggleColumn(key)}
+          aria-label={meta.label.get(key)}
+          className={CHECKBOX_CLASS}
+        >
+          <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+            <Check className="astw:size-3" />
+          </Checkbox.Indicator>
+        </Checkbox.Root>
+        <button
+          type="button"
+          onClick={() => toggleColumn(key)}
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
+        >
+          {meta.label.get(key)}
+        </button>
+      </div>
+    );
+  };
 
   const renderSection = (section: Section, title: string) => {
     const keys = buckets[section];
@@ -180,7 +189,8 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         data-section={section}
         onDragOver={(e) => {
           e.preventDefault();
-          // Bare section area (header / padding / empty) → drop at the end.
+          // Only fires for the header / padding / empty area (rows stop
+          // propagation) → drop at the end of the section.
           setDropTarget({ section, index: keys.length });
         }}
         onDrop={(e) => {
@@ -188,7 +198,9 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           handleDrop();
         }}
         className={cn(
-          "astw:flex astw:flex-col astw:gap-0.5 astw:rounded-md astw:py-1.5",
+          // No gap between rows: a gap would be "section area" that re-triggers
+          // the end-of-section handler as the cursor passes between rows.
+          "astw:flex astw:flex-col astw:rounded-md astw:py-1.5",
           active && "astw:bg-accent/40",
         )}
       >
@@ -196,18 +208,17 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           {title}
         </div>
         {keys.length === 0 ? (
-          <div className="astw:px-1.5 astw:py-2 astw:text-xs astw:text-muted-foreground astw:italic">
+          <div
+            className={cn(
+              "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-xs astw:text-muted-foreground astw:italic",
+              active && "astw:border-primary astw:text-primary",
+            )}
+          >
             {t("dropColumnsHere")}
           </div>
         ) : (
-          keys.map((key, i) => (
-            <div key={key}>
-              {dropLineAt(section, i) && <InsertLine />}
-              {renderRow(key, section, i)}
-            </div>
-          ))
+          keys.map((key, i) => renderRow(key, section, i, i === keys.length - 1))
         )}
-        {keys.length > 0 && dropLineAt(section, keys.length) && <InsertLine />}
       </div>
     );
   };

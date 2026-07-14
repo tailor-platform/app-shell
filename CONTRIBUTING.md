@@ -26,7 +26,7 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 2. Branch from main
   │
-  ├─ 3. Develop ................... .agents/skills/add-component, packages/core/skills/app-shell-patterns
+  ├─ 3. Develop ................... .agents/skills/add-component, catalogue/ (app-shell-patterns source)
   │
   ├─ 4. Quality-check locally ..... .agents/skills/quality-check
   │
@@ -70,7 +70,7 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 | `packages/sdk-plugin`  | Tailor SDK plugin                                                                 |
 | `examples/`            | `vite-app` and `nextjs-app` reference integrations (what `pnpm dev` runs)         |
 | `e2e/`                 | Playwright suite + a real Tailor backend definition                               |
-| `catalogue/`           | Component catalogue                                                               |
+| `catalogue/`           | Pattern catalogue — source for the generated `app-shell-patterns` skill           |
 | `docs/`                | User-facing documentation (kept in sync by the docs-update bot)                   |
 | `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work           |
 | `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                |
@@ -109,11 +109,13 @@ this guide won't restate their rules (they'd only go stale here).
 
 - **Adding or changing a UI component** → `.agents/skills/add-component/SKILL.md` (component
   patterns, styling conventions, public API rules, test expectations).
-- **Building pages / picking UI patterns** → `packages/core/skills/app-shell-patterns/`. This
-  skill is **shipped inside the npm package** (`files: ["dist/**", "skills/**"]`), so
-  downstream consumers' agents rely on it directly. If you change a component's API, design
-  tokens, or add/alter a pattern, update this skill too — otherwise consumer guidance drifts
-  out of sync.
+- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
+  **generated** from the `catalogue/` package (`catalogue/src/**` is the source) into
+  `packages/core/skills/app-shell-patterns/`, which is gitignored and shipped to consumers via
+  the npm package. **Edit the source in `catalogue/` and regenerate with `pnpm build`** (see
+  [`catalogue/README.md`](./catalogue/README.md)) — never hand-edit the generated skill. CI's
+  `check-generated-skills` test fails if the two drift, so if you change a component's API,
+  design tokens, or a pattern, update the catalogue source too.
 
 ---
 
@@ -181,7 +183,8 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
 
 - **`.agents/skills/`** — contributor procedures (add-component, quality-check,
   create-changeset, api-design-review).
-- **`packages/core/skills/`** — patterns shipped to consumers (app-shell-patterns).
+- **`catalogue/`** — source for the `app-shell-patterns` skill shipped to consumers; generated
+  into `packages/core/skills/` (gitignored) via `pnpm build`.
 - **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.
 - **`.github/workflows/`** — CI and gh-aw agentic workflows (source `.md` files are compiled to
   `*.lock.yml` via `gh aw compile`; never hand-edit `*.lock.yml`).

@@ -353,3 +353,27 @@ When a custom component proves reusable across 2+ apps, promote it upstream into
 | Two-column detail at <1024         | right column collapses below main — do not override                                                                   |
 | Inline ID, code, table number      | `text-mono`                                                                                                           |
 | Timestamp, label, subtle metadata  | `text-caption text-fg-subtle`                                                                                         |
+
+### Composition & emphasis rules
+
+These are visual-composition rules every screen must follow, regardless of pattern. They exist because emphasis only works when it is scarce.
+
+**Emphasis budget.** Attention is a budget you spend once per scan region.
+
+- **One primary action per view.** A screen (or a card/section) has at most one filled/primary `Button`; everything else is `outline`, `secondary`, or `ghost`. If two things look equally important, neither reads as important.
+- **Badges** encode status by semantic color, with a clear primary/secondary split:
+  - A record's **primary / lifecycle status** (PO status, SO status) → a **filled semantic** variant (`success` / `warning` / `error` / `info` / `neutral`) — one per row in a list, one in a detail header.
+  - **Secondary statuses** (delivery, billing, fulfilment) and dense supporting columns → **`outline-*`** (with status dot).
+  - **Tags / labels** ("New", "Returned") → **`subtle-*`**.
+  - Reserve **`default`** (brand fill) for non-status emphasis — never the brand color as a routine status. The defect to avoid: making _every_ chip a loud fill, or giving secondary statuses the same weight as the primary one. (Variants: **`components.md`** → `Badge`.)
+- **Color:** status colors (`success`/`warning`/`error`/`info`) signal meaning, not decoration — don't tint neutral content.
+
+**Hierarchy.** One `h1` per page (the `Layout.Header` title). Section headings step down (`h2` → `h3`); never skip levels for size — pick the role token (`design-system.md` §4 Typography), not the pixel size.
+
+**States — never ship only the happy path.** Every data-backed screen handles:
+
+- **Loading** — skeleton/placeholder, not a blank flash.
+- **Empty** — a labelled empty state (what it is, how to add the first record), not a bare empty table.
+- **Error** — an inline error with a retry affordance, not a silent failure.
+
+**Spacing rhythm.** Use the spacing scale (§4) consistently — equal gaps between sibling sections, consistent card padding. A one-off `gap` or `padding` that doesn't match its siblings reads as a mistake.

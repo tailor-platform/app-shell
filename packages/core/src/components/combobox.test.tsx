@@ -51,6 +51,9 @@ describe("Combobox.Parts", () => {
       await waitFor(() => {
         expect(screen.getByText("Apple")).toBeDefined();
       });
+      await waitFor(() => {
+        expect(screen.getByRole("status").textContent).toBe("No results found");
+      });
       expect(baseElement.innerHTML).toMatchSnapshot();
     });
 

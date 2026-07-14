@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-skill.mjs",
+    "test": "node scripts/check-generated-skills.mjs",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

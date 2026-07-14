@@ -55,6 +55,9 @@ describe("Autocomplete.Parts", () => {
       await waitFor(() => {
         expect(screen.getByText("Apple")).toBeDefined();
       });
+      await waitFor(() => {
+        expect(screen.getByRole("status").textContent).toBe("No suggestions");
+      });
       expect(baseElement.innerHTML).toMatchSnapshot();
     });
 

@@ -12,7 +12,7 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 ## Commands
 
-**📋 For development commands, see:** [README.md - Development](./README.md#development)
+**📋 For development commands and setup, see:** [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Documentation
 

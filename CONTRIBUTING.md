@@ -43,9 +43,23 @@ points at them. That keeps this file from drifting out of sync with what actuall
 
 ## 1. Prerequisites & setup
 
-This is a **pnpm + turbo monorepo**. For Node/pnpm version requirements and the
-`pnpm install` / `pnpm dev` commands, see [README.md — Development](./README.md#development).
-Note that `pnpm install` also wires up the git hooks (via the `prepare` → lefthook script).
+This is a **pnpm + turbo monorepo**.
+
+- **Node.js 24** is required (see `engines` in `package.json`). `engine-strict` is enabled, so
+  `pnpm install` refuses to run on an unsupported version — the plugin packages build with
+  `tsdown`, whose config loader relies on Node 24's native TypeScript stripping and otherwise
+  fails cryptically. If you use [nvm](https://github.com/nvm-sh/nvm), run `nvm use` (a `.nvmrc`
+  is provided).
+- **pnpm** is pinned via `packageManager` in `package.json` — run `corepack enable` to pick up
+  the right version automatically.
+
+```bash
+pnpm install     # also wires up git hooks via the `prepare` → lefthook script
+pnpm dev         # turbo watch on examples/* → example app at http://localhost:3000
+```
+
+Other common commands: `pnpm build` (production build), plus the quality checks in §5. This
+repo publishes via changesets (§6) — you won't run `changeset:publish` by hand; CI does.
 
 ### Repository layout
 

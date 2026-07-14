@@ -258,30 +258,8 @@ export type UseDataTableOptions<
    * in-memory only and resets on reload.
    */
   tableId?: string;
-  /**
-   * Called when the user clicks a row. Adds a pointer cursor to rows.
-   *
-   * Prefer `rowHref` for **navigation** (it's keyboard/screen-reader reachable
-   * and supports cmd/middle-click). Use `onClickRow` for non-navigation side
-   * effects such as opening a drawer. Mutually exclusive with `rowHref` — if
-   * both are set, `rowHref` wins.
-   */
+  /** Called when the user clicks a row. Adds a pointer cursor to rows. */
   onClickRow?: (row: TRow) => void;
-  /**
-   * Makes the whole row navigate to the returned URL. The row's primary cell is
-   * rendered as a real `<Link>`, so the row is reachable by keyboard and screen
-   * readers and can be opened in a new tab (cmd/ctrl/middle click). Clicking
-   * anywhere else in the row navigates too.
-   *
-   * Requires a react-router context (it uses `useNavigate`/`<Link>`); only set
-   * it inside a routed app.
-   */
-  rowHref?: (row: TRow) => string;
-  /**
-   * Id (or label) of the column whose cell should carry the `rowHref` `<Link>`.
-   * Defaults to the first visible column. Ignored when `rowHref` is not set.
-   */
-  primaryColumnId?: string;
   /**
    * Per-row action items rendered in a kebab-menu column on the right.
    * The column is omitted when this array is empty or not provided.
@@ -399,8 +377,6 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
-  rowHref?: (row: TRow) => string;
-  primaryColumnId?: string;
   rowActions?: RowAction<TRow>[];
 
   // Row selection

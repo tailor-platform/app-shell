@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
@@ -1173,80 +1173,6 @@ describe("DataTable", () => {
       const { container } = render(<Harness />, { wrapper });
       expect(headByText(container, "A")?.style.position).toBe("");
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("no width"));
-      warn.mockRestore();
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Row-click navigation (rowHref)
-  // -------------------------------------------------------------------------
-  describe("rowHref navigation", () => {
-    type Row = { id: string; name: string; status: string };
-    const rows: Row[] = [
-      { id: "1", name: "Alice", status: "Active" },
-      { id: "2", name: "Bob", status: "Inactive" },
-    ];
-    const cols: Column<Row>[] = [
-      { id: "name", label: "Name", render: (r) => r.name },
-      { id: "status", label: "Status", render: (r) => r.status },
-    ];
-
-    function LocationProbe() {
-      const loc = useLocation();
-      return <div data-testid="loc">{loc.pathname}</div>;
-    }
-
-    function NavHarness(props: { onClickRow?: (row: Row) => void; primaryColumnId?: string }) {
-      const table = useDataTable<Row>({
-        columns: cols,
-        data: { rows },
-        rowHref: (row) => `/orders/${row.id}`,
-        onClickRow: props.onClickRow,
-        primaryColumnId: props.primaryColumnId,
-      });
-      return (
-        <MemoryRouter initialEntries={["/"]}>
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-          <LocationProbe />
-        </MemoryRouter>
-      );
-    }
-
-    it("renders the primary cell as a single link per row", () => {
-      const { container } = render(<NavHarness />, { wrapper });
-      const bodyRows = container.querySelectorAll('[data-slot="data-table-row"]');
-      const firstRowAnchors = bodyRows[0].querySelectorAll("a");
-      expect(firstRowAnchors).toHaveLength(1);
-      expect(firstRowAnchors[0].getAttribute("href")).toBe("/orders/1");
-      expect(firstRowAnchors[0].textContent).toBe("Alice");
-    });
-
-    it("navigates when the row is clicked", () => {
-      const { container } = render(<NavHarness />, { wrapper });
-      const cell = container.querySelectorAll('[data-slot="data-table-cell"]')[1]; // Status cell
-      fireEvent.click(cell);
-      expect(screen.getByTestId("loc").textContent).toBe("/orders/1");
-    });
-
-    it("honours primaryColumnId for the link cell", () => {
-      const { container } = render(<NavHarness primaryColumnId="status" />, { wrapper });
-      const firstRowAnchor = container
-        .querySelector('[data-slot="data-table-row"]')
-        ?.querySelector("a");
-      expect(firstRowAnchor?.textContent).toBe("Active");
-    });
-
-    it("warns and lets rowHref win when onClickRow is also provided", () => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const onClickRow = vi.fn();
-      const { container } = render(<NavHarness onClickRow={onClickRow} />, { wrapper });
-      const cell = container.querySelectorAll('[data-slot="data-table-cell"]')[1];
-      fireEvent.click(cell);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("rowHref` wins"));
-      expect(onClickRow).not.toHaveBeenCalled();
-      expect(screen.getByTestId("loc").textContent).toBe("/orders/1");
       warn.mockRestore();
     });
   });

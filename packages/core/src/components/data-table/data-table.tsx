@@ -1,13 +1,4 @@
-import {
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  type CSSProperties,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
-import { Link, useNavigate } from "react-router";
+import { useContext, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import { Ellipsis } from "lucide-react";
 import { Checkbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
@@ -387,8 +378,6 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasPrevPage: value.hasPrevPage,
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
-    rowHref: value.rowHref,
-    primaryColumnId: value.primaryColumnId,
     rowActions: value.rowActions,
     selectedIds: value.selectedIds,
     isRowSelected: value.isRowSelected,
@@ -606,8 +595,6 @@ function DataTableBody({ className }: { className?: string }) {
     loading,
     error,
     onClickRow,
-    rowHref,
-    primaryColumnId,
     rowActions,
     isRowSelected,
     toggleRowSelection,
@@ -662,35 +649,28 @@ function DataTableBody({ className }: { className?: string }) {
     );
   }
 
-  const listProps: DataTableRowListProps<Record<string, unknown>> = {
-    rows,
-    pinLayout,
-    hasSelection,
-    hasRowActions,
-    isRowSelected,
-    toggleRowSelection,
-    rowActions,
-    rowHref,
-    primaryColumnId,
-    onClickRow,
-  };
-
   return (
     <Table.Body {...tableBodyProps}>
-      {/* When rowHref is set the rows navigate via react-router — split into a
-          child that calls useNavigate so the hook never runs in a non-routed
-          (static) table. */}
-      {rowHref ? <NavigableRows {...listProps} /> : <DataTableRowList {...listProps} />}
+      <DataTableRows
+        rows={rows}
+        pinLayout={pinLayout}
+        hasSelection={hasSelection}
+        hasRowActions={hasRowActions}
+        isRowSelected={isRowSelected}
+        toggleRowSelection={toggleRowSelection}
+        rowActions={rowActions}
+        onClickRow={onClickRow}
+      />
     </Table.Body>
   );
 }
 DataTableBody.displayName = "DataTable.Body";
 
 // =============================================================================
-// Row rendering (shared by static and navigable variants)
+// Row rendering
 // =============================================================================
 
-interface DataTableRowListProps<TRow extends Record<string, unknown>> {
+interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   rows: TRow[];
   pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
@@ -698,19 +678,11 @@ interface DataTableRowListProps<TRow extends Record<string, unknown>> {
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  rowHref?: (row: TRow) => string;
-  primaryColumnId?: string;
   onClickRow?: (row: TRow) => void;
 }
 
-/** Renders rows with `rowHref` navigation wired through `useNavigate`. */
-function NavigableRows<TRow extends Record<string, unknown>>(props: DataTableRowListProps<TRow>) {
-  const navigate = useNavigate();
-  return <DataTableRowList {...props} navigate={navigate} />;
-}
-
 /** @internal */
-function DataTableRowList<TRow extends Record<string, unknown>>({
+function DataTableRows<TRow extends Record<string, unknown>>({
   rows,
   pinLayout,
   hasSelection,
@@ -718,33 +690,10 @@ function DataTableRowList<TRow extends Record<string, unknown>>({
   isRowSelected,
   toggleRowSelection,
   rowActions,
-  rowHref,
-  primaryColumnId,
   onClickRow,
-  navigate,
-}: DataTableRowListProps<TRow> & { navigate?: (to: string) => void }) {
+}: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const { ordered, placements, selection, actions } = pinLayout;
-  const clickable = !!rowHref || !!onClickRow;
-
-  // The primary cell carries the rowHref <Link>. Default to the first visible
-  // column; `primaryColumnId` overrides.
-  const primaryKey = rowHref
-    ? (primaryColumnId ?? (ordered.length > 0 ? columnKeyAt(ordered[0], 0) : undefined))
-    : undefined;
-
-  const handleRowClick = (e: MouseEvent<HTMLTableRowElement>, row: TRow) => {
-    if (rowHref && navigate) {
-      // Let the browser handle modifier/middle clicks (open in new tab) and
-      // clicks that landed on a link (the primary <Link> or a link cell).
-      if (e.defaultPrevented) return;
-      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      if ((e.target as HTMLElement).closest("a")) return;
-      navigate(rowHref(row));
-      return;
-    }
-    onClickRow?.(row);
-  };
 
   return (
     <>
@@ -756,8 +705,8 @@ function DataTableRowList<TRow extends Record<string, unknown>>({
             key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
             aria-selected={hasSelection ? selected : undefined}
-            className={cn("astw:group", clickable && "astw:cursor-pointer")}
-            onClick={clickable ? (e) => handleRowClick(e, row) : undefined}
+            className={cn("astw:group", onClickRow && "astw:cursor-pointer")}
+            onClick={onClickRow ? () => onClickRow(row) : undefined}
           >
             {hasSelection &&
               toggleRowSelection &&
@@ -791,22 +740,7 @@ function DataTableRowList<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col, colIndex) => {
               const key = columnKeyAt(col, colIndex);
-              const rendered = col.render ? col.render(row) : renderTypedCell(row, col);
-              const isPrimary = primaryKey !== undefined && key === primaryKey;
-              // Wrap the primary cell in a real <Link> for keyboard/SR access and
-              // new-tab support. The row's closest("a") guard prevents a second
-              // programmatic navigation when this link is clicked.
-              const content =
-                rowHref && isPrimary ? (
-                  <Link
-                    to={rowHref(row)}
-                    className="astw:text-foreground astw:no-underline astw:outline-none astw:hover:underline astw:focus-visible:underline"
-                  >
-                    {rendered}
-                  </Link>
-                ) : (
-                  rendered
-                );
+              const content = col.render ? col.render(row) : renderTypedCell(row, col);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),

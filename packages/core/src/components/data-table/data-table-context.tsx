@@ -59,8 +59,6 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
 
   // Row interaction
   onClickRow?: (row: TRow) => void;
-  rowHref?: (row: TRow) => string;
-  primaryColumnId?: string;
   rowActions?: RowAction<TRow>[];
 
   // Row selection

@@ -7,7 +7,6 @@ import {
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { FlaskConical } from "lucide-react";
-import { paths } from "../../routes.generated";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -171,8 +170,8 @@ const data = { rows: INVOICES, total: INVOICES.length };
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 const DataTableLabPage = () => {
-  // Section 1 — all-in-one column settings + default pins + row actions.
-  // `tableId` persists the user's layout to localStorage across reloads.
+  // Column settings + default pins + row actions. `tableId` persists the user's
+  // layout (visibility, order, pinning) to localStorage across reloads.
   const settingsTable = useDataTable<Invoice>({
     columns: baseColumns.map((c) => (c.id === "id" ? { ...c, pin: "left" as const } : c)),
     data,
@@ -180,95 +179,28 @@ const DataTableLabPage = () => {
     rowActions,
   });
 
-  // Section 2 — whole-row click navigation.
-  const rowClickTable = useDataTable<Invoice>({
-    columns: baseColumns.map((c) => (c.id === "id" ? { ...c, pin: "left" as const } : c)),
-    data,
-    tableId: "lab-invoices-rowclick",
-    rowHref: (row) => paths.for("/dashboard/orders/:id", { id: row.id }),
-  });
-
-  // Section 3 — whole-row click + a clickable cell. The Customer cell is a
-  // `link` column, so clicking it navigates to its own target instead of the
-  // row's; clicking anywhere else opens the row's detail page.
-  const cellLinkColumns = baseColumns.map((c) => {
-    if (c.id === "id") return { ...c, pin: "left" as const };
-    if (c.id === "customer") {
-      return column({
-        id: "customer",
-        label: "Customer",
-        type: "link",
-        accessor: (r: Invoice) => r.customer,
-        width: 180,
-        typeOptions: { href: () => paths.for("/dashboard/products") },
-      });
-    }
-    return c;
-  });
-  const cellLinkTable = useDataTable<Invoice>({
-    columns: cellLinkColumns,
-    data,
-    tableId: "lab-invoices-celllink",
-    rowHref: (row) => paths.for("/dashboard/orders/:id", { id: row.id }),
-  });
-
   return (
     <Layout>
       <Layout.Header title="DataTable Lab" />
       <Layout.Column>
         <div className="mb-8 rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
-          <strong>Prototype playground.</strong> Compares column-settings surfaces and row-click
-          navigation for the DataTable. Scroll each table horizontally to see pinned columns stay
-          put. Column layout (visibility, order, pins) persists per table via <code>tableId</code>.
+          <strong>Prototype playground.</strong> Column visibility, ordering, and pinning for the
+          DataTable. Open <strong>Columns</strong> to show/hide and drag columns between the Fixed
+          left / Scrollable / Fixed right zones; scroll horizontally to see pinned columns stay put.
+          Layout persists per table via <code>tableId</code>.
         </div>
 
         <Section
-          title="1 · Column settings — all-in-one popover"
+          title="Column settings — show/hide, reorder & pin"
           description={
             <>
-              Open <strong>Columns</strong> to show/hide, drag or use the arrows to reorder, and pin
-              columns left/right. The <em>Invoice</em> column is pinned left and the actions column
-              is pinned right by default. Changes persist across reloads.
+              Open <strong>Columns</strong> to show/hide, drag to reorder, and drag between zones to
+              pin left/right. The <em>Invoice</em> column is pinned left and the actions column is
+              pinned right by default. Changes persist across reloads.
             </>
           }
         >
           <DataTable.Root value={settingsTable}>
-            <DataTable.Toolbar>
-              <DataTable.ColumnSettings />
-            </DataTable.Toolbar>
-            <DataTable.Table />
-          </DataTable.Root>
-        </Section>
-
-        <Section
-          title="2 · Row click — whole row navigates"
-          description={
-            <>
-              The entire row is a link to the detail page. The Invoice cell is a real{" "}
-              <code>&lt;Link&gt;</code>: Tab to it and press Enter, or cmd/middle-click any row to
-              open it in a new tab.
-            </>
-          }
-        >
-          <DataTable.Root value={rowClickTable}>
-            <DataTable.Toolbar>
-              <DataTable.ColumnSettings />
-            </DataTable.Toolbar>
-            <DataTable.Table />
-          </DataTable.Root>
-        </Section>
-
-        <Section
-          title="3 · Row click + clickable cell"
-          description={
-            <>
-              Same whole-row navigation, but the <strong>Customer</strong> cell is its own link.
-              Clicking the customer goes to Products; clicking anywhere else opens the invoice
-              detail — no double navigation.
-            </>
-          }
-        >
-          <DataTable.Root value={cellLinkTable}>
             <DataTable.Toolbar>
               <DataTable.ColumnSettings />
             </DataTable.Toolbar>

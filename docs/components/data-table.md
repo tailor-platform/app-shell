@@ -177,20 +177,6 @@ function JournalsPage() {
 
 Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`.
 
-## Row navigation
-
-**Use whole-row navigation, not a per-row "View" button.** Pass `rowHref` to make each row a link to its detail page:
-
-```tsx
-const table = useDataTable<Order>({
-  columns,
-  data,
-  rowHref: (row) => paths.for("/orders/:id", { id: row.id }),
-});
-```
-
-The primary cell (the first visible column, or `primaryColumnId`) renders as a real `<Link>`, so the row is reachable by keyboard and screen readers and can be opened in a new tab (cmd/ctrl/middle-click); clicking anywhere else in the row navigates too. `link`-type cells inside the row keep their own targets (no double navigation). Reserve `onClickRow` for non-navigation side effects (e.g. opening a drawer) and the row-actions kebab for non-navigation actions — don't add a "View" / "Open" / "→" button column.
-
 ## Column pinning, visibility & ordering
 
 - **Pin** a column with `pin: "left" | "right"` (it must have a `width`). Pinned columns stay visible during horizontal scroll; the selection column auto-pins left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it.
@@ -227,20 +213,18 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                                                                                                                                           |
-| ------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                                                                                                                         |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                                                                                                                         |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                                                                                                              |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                                                                                                                 |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                                                                                                                      |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row (non-navigation side effects, e.g. opening a drawer). Adds a pointer cursor. Mutually exclusive with `rowHref` — `rowHref` wins if both are set.                                                                                                                    |
-| `rowHref`           | `(row: TRow) => string`            | Makes the whole row navigate to the returned URL. The primary cell renders as a real `<Link>` (keyboard/screen-reader reachable, cmd/middle-click opens a new tab); clicking anywhere else in the row navigates too. Prefer this over an `onClickRow` "View" button. Requires a react-router context. |
-| `primaryColumnId`   | `string`                           | Id (or label) of the column whose cell carries the `rowHref` `<Link>`. Defaults to the first visible column. Ignored without `rowHref`.                                                                                                                                                               |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                                                                                                                  |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                                                                                                               |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                                                                                                                                                     |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                                                                                                             |
+| Option              | Type                               | Description                                                                                                                                                          |
+| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                        |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                        |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                             |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                     |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                    |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload. |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                              |
+| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                    |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).            |
 
 ### `DataTableData`
 

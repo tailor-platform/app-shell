@@ -48,18 +48,10 @@ export function useDataTable<
     control,
     tableId,
     onClickRow,
-    rowHref,
-    primaryColumnId,
     rowActions,
     onSelectionChange,
     sort: sortOption,
   } = options;
-
-  if (rowHref && onClickRow) {
-    console.warn(
-      "[DataTable] Both `rowHref` and `onClickRow` were provided; `rowHref` wins. Use `rowHref` for navigation and `onClickRow` only for non-navigation side effects.",
-    );
-  }
 
   // ---------------------------------------------------------------------------
   // Data extraction
@@ -370,8 +362,6 @@ export function useDataTable<
     setPin,
     control: control as CollectionControl | undefined,
     onClickRow,
-    rowHref,
-    primaryColumnId,
     rowActions,
     selectedIds,
     isRowSelected,

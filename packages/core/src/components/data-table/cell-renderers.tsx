@@ -148,13 +148,7 @@ function renderLink<TRow extends Record<string, unknown>>(
   const href = options.href(row);
   if (!href) return label;
   return (
-    // Stop propagation so a link cell inside a clickable row (onClickRow /
-    // rowHref) follows the cell's own target instead of the row's.
-    <Link
-      to={href}
-      onClick={(e) => e.stopPropagation()}
-      className="astw:text-primary astw:underline-offset-4 astw:hover:underline"
-    >
+    <Link to={href} className="astw:text-primary astw:underline-offset-4 astw:hover:underline">
       {label}
     </Link>
   );

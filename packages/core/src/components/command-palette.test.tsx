@@ -10,8 +10,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CommandPaletteContent } from "./command-palette";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
-import { CommandPaletteProvider } from "@/contexts/command-palette-context";
+import {
+  CommandPaletteProvider,
+  useOpenCommandPalette,
+  type SearchSource,
+} from "@/contexts/command-palette-context";
 import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
 import type { Resource } from "@/resource";
 import type { NavItem } from "../routing/navigation";
 
@@ -38,7 +43,25 @@ afterEach(() => {
   cleanup();
 });
 
-const renderCommandPaletteContent = (navItems: NavItem[] = mockNavItems) => {
+const ProgrammaticOpenButton = ({ search }: { search?: string }) => {
+  const openCommandPalette = useOpenCommandPalette();
+
+  return (
+    <button type="button" onClick={() => openCommandPalette(search ? { search } : undefined)}>
+      Open palette
+    </button>
+  );
+};
+
+const renderCommandPaletteContent = ({
+  navItems = mockNavItems,
+  searchSources,
+  opener,
+}: {
+  navItems?: NavItem[];
+  searchSources?: readonly SearchSource[];
+  opener?: ReactNode;
+} = {}) => {
   const configurations = {
     modules: [],
     settingsResources: [] as Array<Resource>,
@@ -50,8 +73,9 @@ const renderCommandPaletteContent = (navItems: NavItem[] = mockNavItems) => {
   return render(
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData: {} }}>
-        <CommandPaletteProvider>
+        <CommandPaletteProvider searchSources={searchSources}>
           <MemoryRouter>
+            {opener}
             <CommandPaletteContent navItems={navItems} />
           </MemoryRouter>
         </CommandPaletteProvider>
@@ -142,6 +166,44 @@ describe("CommandPaletteContent Integration", () => {
 
       // Dialog should remain open
       expect(screen.getByPlaceholderText("Search pages...")).toBeDefined();
+    });
+  });
+
+  describe("programmatic open", () => {
+    it("opens with a prefilled search string", async () => {
+      const user = userEvent.setup();
+      renderCommandPaletteContent({ opener: <ProgrammaticOpenButton search="report" /> });
+
+      await user.click(screen.getByRole("button", { name: "Open palette" }));
+
+      const input = (await screen.findByPlaceholderText("Search pages...")) as HTMLInputElement;
+      await vi.waitFor(() => {
+        expect(input.value).toBe("report");
+      });
+    });
+
+    it("opens directly in a search mode from the prefilled search string", async () => {
+      const user = userEvent.setup();
+      const searchSources: SearchSource[] = [
+        {
+          prefix: "PO",
+          title: "Purchase Orders",
+          search: vi.fn().mockResolvedValue([]),
+        },
+      ];
+
+      renderCommandPaletteContent({
+        searchSources,
+        opener: <ProgrammaticOpenButton search="PO: alice" />,
+      });
+
+      await user.click(screen.getByRole("button", { name: "Open palette" }));
+
+      const input = (await screen.findByPlaceholderText("Search pages...")) as HTMLInputElement;
+      await vi.waitFor(() => {
+        expect(input.value).toBe("alice");
+      });
+      expect(screen.getByText("PO")).toBeDefined();
     });
   });
 

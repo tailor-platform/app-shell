@@ -505,7 +505,8 @@ type CommandPaletteContentProps = {
 export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
-  const { searchSources, open, setOpen, openRequest } = useCommandPaletteState();
+  const { searchSources, open, setOpen, openRequest, clearOpenRequest } =
+    useCommandPaletteState();
   const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
   const {
     open: paletteOpen,
@@ -534,7 +535,8 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
   useEffect(() => {
     if (!openRequest) return;
     initializeSearch(openRequest.search ?? "");
-  }, [openRequest, initializeSearch]);
+    clearOpenRequest();
+  }, [openRequest, initializeSearch, clearOpenRequest]);
 
   // Compute index offsets for each section
   const searchModeItems = activeSearchSource

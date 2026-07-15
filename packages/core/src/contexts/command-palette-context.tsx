@@ -88,6 +88,7 @@ type StateContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
   openRequest: OpenCommandPaletteOptions | null;
+  clearOpenRequest: () => void;
   openCommandPalette: (options?: OpenCommandPaletteOptions) => void;
 };
 
@@ -131,6 +132,10 @@ export function CommandPaletteProvider({
     [updateActions],
   );
 
+  const clearOpenRequest = useCallback(() => {
+    setOpenRequest(null);
+  }, []);
+
   const openCommandPalette = useCallback((options: OpenCommandPaletteOptions = {}) => {
     setOpen(true);
     setOpenRequest({ search: options.search });
@@ -150,8 +155,16 @@ export function CommandPaletteProvider({
 
   const dispatchValue = useMemo(() => ({ register }), [register]);
   const stateValue = useMemo(
-    () => ({ actions, searchSources, open, setOpen, openRequest, openCommandPalette }),
-    [actions, searchSources, open, openRequest, openCommandPalette],
+    () => ({
+      actions,
+      searchSources,
+      open,
+      setOpen,
+      openRequest,
+      clearOpenRequest,
+      openCommandPalette,
+    }),
+    [actions, searchSources, open, openRequest, clearOpenRequest, openCommandPalette],
   );
 
   return (

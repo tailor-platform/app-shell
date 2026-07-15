@@ -53,7 +53,7 @@ const ProgrammaticOpenButton = ({ search }: { search?: string }) => {
   );
 };
 
-const renderCommandPaletteContent = ({
+const TestCommandPalette = ({
   navItems = mockNavItems,
   searchSources,
   opener,
@@ -61,7 +61,7 @@ const renderCommandPaletteContent = ({
   navItems?: NavItem[];
   searchSources?: readonly SearchSource[];
   opener?: ReactNode;
-} = {}) => {
+}) => {
   const configurations = {
     modules: [],
     settingsResources: [] as Array<Resource>,
@@ -70,7 +70,7 @@ const renderCommandPaletteContent = ({
     locale: "en",
   };
 
-  return render(
+  return (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData: {} }}>
         <CommandPaletteProvider searchSources={searchSources}>
@@ -80,9 +80,15 @@ const renderCommandPaletteContent = ({
           </MemoryRouter>
         </CommandPaletteProvider>
       </AppShellDataContext.Provider>
-    </AppShellConfigContext.Provider>,
+    </AppShellConfigContext.Provider>
   );
 };
+
+const renderCommandPaletteContent = (props: {
+  navItems?: NavItem[];
+  searchSources?: readonly SearchSource[];
+  opener?: ReactNode;
+} = {}) => render(<TestCommandPalette {...props} />);
 
 describe("CommandPaletteContent Integration", () => {
   describe("keyboard shortcut to open", () => {
@@ -204,6 +210,46 @@ describe("CommandPaletteContent Integration", () => {
         expect(input.value).toBe("alice");
       });
       expect(screen.getByText("PO")).toBeDefined();
+    });
+
+    it("does not replay a stale programmatic search after searchSources rerender", async () => {
+      const user = userEvent.setup();
+      const initialSearchSources: SearchSource[] = [
+        {
+          prefix: "PO",
+          title: "Purchase Orders",
+          search: vi.fn().mockResolvedValue([]),
+        },
+      ];
+
+      const { rerender } = renderCommandPaletteContent({
+        searchSources: initialSearchSources,
+        opener: <ProgrammaticOpenButton search="foo" />,
+      });
+
+      await user.click(screen.getByRole("button", { name: "Open palette" }));
+
+      const input = (await screen.findByPlaceholderText("Search pages...")) as HTMLInputElement;
+      await vi.waitFor(() => {
+        expect(input.value).toBe("foo");
+      });
+
+      await user.clear(input);
+      await user.type(input, "bar");
+      expect(input.value).toBe("bar");
+
+      rerender(
+        <TestCommandPalette
+          searchSources={[...initialSearchSources]}
+          opener={<ProgrammaticOpenButton search="foo" />}
+        />,
+      );
+
+      await vi.waitFor(() => {
+        expect((screen.getByPlaceholderText("Search pages...") as HTMLInputElement).value).toBe(
+          "bar",
+        );
+      });
     });
   });
 

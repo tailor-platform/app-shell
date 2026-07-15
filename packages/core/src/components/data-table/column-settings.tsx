@@ -90,6 +90,14 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     [pinnedColumns, meta],
   );
 
+  // A single toggle drives the footer button: when every column is visible it
+  // offers "Hide all", otherwise "Show all" (so a partially-hidden table gets
+  // everything back in one click).
+  const allVisible = useMemo(
+    () => columnOrder.every((key) => isColumnVisible(key)),
+    [columnOrder, isColumnVisible],
+  );
+
   // Group the ordered columns into their sections (order preserved per section).
   const buckets = useMemo(() => {
     const grouped: Record<Section, string[]> = { left: [], scrollable: [], right: [] };
@@ -269,12 +277,13 @@ function DataTableColumnSettings({ className }: { className?: string }) {
               <div className="astw:mx-1 astw:border-t astw:border-border" />
               {renderSection("right", t("sectionPinnedRight"))}
               <div className="astw:mx-1 astw:mt-1 astw:border-t astw:border-border" />
-              <div className="astw:mt-1.5 astw:flex astw:justify-between">
-                <Button variant="ghost" size="xs" onClick={showAllColumns}>
-                  {t("showAllColumns")}
-                </Button>
-                <Button variant="ghost" size="xs" onClick={hideAllColumns}>
-                  {t("hideAllColumns")}
+              <div className="astw:mt-1.5 astw:flex astw:justify-end">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={allVisible ? hideAllColumns : showAllColumns}
+                >
+                  {t(allVisible ? "hideAllColumns" : "showAllColumns")}
                 </Button>
               </div>
             </fieldset>

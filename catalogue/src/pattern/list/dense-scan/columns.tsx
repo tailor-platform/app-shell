@@ -10,11 +10,13 @@ export type Order = {
   createdAt: string;
 };
 
+// Primary status column — filled semantic variants (one per row).
+// Secondary status columns (e.g. delivery, billing) use outline-* instead.
 const statusVariant = {
   draft: "neutral",
-  confirmed: "outline-info",
-  shipped: "outline-warning",
-  delivered: "outline-success",
+  confirmed: "info",
+  shipped: "warning",
+  delivered: "success",
 } as const;
 
 export const columns: Column<Order>[] = [
@@ -25,7 +27,10 @@ export const columns: Column<Order>[] = [
     render: (row) => <Badge variant={statusVariant[row.status]}>{row.status}</Badge>,
   },
   {
+    // Numeric columns right-align so digits line up. `type: "money" | "number"`
+    // auto-right; with a custom `render` set `align` explicitly.
     label: "Amount",
+    align: "right",
     render: (row) => `$${row.amount.toLocaleString()}`,
   },
   { label: "Created", accessor: (row) => row.createdAt },

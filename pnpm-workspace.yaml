@@ -84,5 +84,5 @@ saveExact: true
 # Without this, pnpm only warns on Node < 24 and the install proceeds,
 # leading to a cryptic build failure: tsdown's config loader needs Node 24's
 # native TypeScript stripping and otherwise falls back to `unrun` (not a
-# tsdown dependency). Fail fast at install time instead. See README "Development".
+# tsdown dependency). Fail fast at install time instead. See CONTRIBUTING.md.
 engineStrict: true

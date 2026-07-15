@@ -84,11 +84,13 @@ const TestCommandPalette = ({
   );
 };
 
-const renderCommandPaletteContent = (props: {
-  navItems?: NavItem[];
-  searchSources?: readonly SearchSource[];
-  opener?: ReactNode;
-} = {}) => render(<TestCommandPalette {...props} />);
+const renderCommandPaletteContent = (
+  props: {
+    navItems?: NavItem[];
+    searchSources?: readonly SearchSource[];
+    opener?: ReactNode;
+  } = {},
+) => render(<TestCommandPalette {...props} />);
 
 describe("CommandPaletteContent Integration", () => {
   describe("keyboard shortcut to open", () => {

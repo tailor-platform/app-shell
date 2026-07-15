@@ -101,11 +101,12 @@ export function usePersistentColumnState(
   }, [tableId]);
 
   // Hydrate from storage on mount / when the table id changes. Falls back to the
-  // current defaults when there's nothing stored (or the id was cleared). This
-  // read does NOT write back, so an existing stored value is never clobbered.
+  // current defaults when there's nothing stored — and when `tableId` is cleared,
+  // reset to defaults (in-memory mode) rather than leaking the previous table's
+  // persisted layout. This read does NOT write back, so a stored value is never
+  // clobbered.
   useEffect(() => {
-    if (!tableId) return;
-    setStateRaw(readState(tableId) ?? defaultsRef.current);
+    setStateRaw(tableId ? (readState(tableId) ?? defaultsRef.current) : defaultsRef.current);
   }, [tableId]);
 
   // Write imperatively on each user-driven update — never from an effect that

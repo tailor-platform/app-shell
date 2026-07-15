@@ -5,6 +5,31 @@ import { usePersistentColumnState, type PersistedColumnState } from "./use-persi
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
+ * Reconcile a persisted column order against the current column keys: keep
+ * persisted keys that still exist (in their saved order), then append any new
+ * columns in definition order. Pure so `moveColumn` can reconcile from `prev`
+ * inside its state updater (not a captured value), keeping batched moves correct.
+ */
+function reconcileColumnOrder(order: string[], columnKeys: string[]): string[] {
+  const present = new Set(columnKeys);
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const key of order) {
+    if (present.has(key) && !seen.has(key)) {
+      result.push(key);
+      seen.add(key);
+    }
+  }
+  for (const key of columnKeys) {
+    if (!seen.has(key)) {
+      result.push(key);
+      seen.add(key);
+    }
+  }
+  return result;
+}
+
+/**
  * Hook that integrates data management, column visibility, row operations, and
  * sort/pagination state for the `DataTable.*` compound component.
  *
@@ -109,24 +134,10 @@ export function useDataTable<
   // Reconcile the persisted order against the current column defs: keep persisted
   // keys that still exist (in their saved order), then append any new columns in
   // definition order. Self-healing across columns added/removed between sessions.
-  const columnOrder = useMemo<string[]>(() => {
-    const present = new Set(columnKeys);
-    const seen = new Set<string>();
-    const result: string[] = [];
-    for (const key of persisted.order) {
-      if (present.has(key) && !seen.has(key)) {
-        result.push(key);
-        seen.add(key);
-      }
-    }
-    for (const key of columnKeys) {
-      if (!seen.has(key)) {
-        result.push(key);
-        seen.add(key);
-      }
-    }
-    return result;
-  }, [persisted.order, columnKeys]);
+  const columnOrder = useMemo<string[]>(
+    () => reconcileColumnOrder(persisted.order, columnKeys),
+    [persisted.order, columnKeys],
+  );
 
   const hiddenColumns = useMemo(() => new Set(persisted.hidden), [persisted.hidden]);
   const pinnedColumns = persisted.pinned;
@@ -168,8 +179,10 @@ export function useDataTable<
 
   const moveColumn = useCallback(
     (key: string, toIndex: number) => {
+      // Reconcile from `prev` (not the captured `columnOrder`) so several moves
+      // batched before a re-render compose correctly instead of clobbering.
       setPersisted((prev) => {
-        const order = [...columnOrder];
+        const order = reconcileColumnOrder(prev.order, columnKeys);
         const from = order.indexOf(key);
         if (from === -1) return prev;
         const clamped = Math.max(0, Math.min(toIndex, order.length - 1));
@@ -178,7 +191,7 @@ export function useDataTable<
         return { ...prev, order };
       });
     },
-    [setPersisted, columnOrder],
+    [setPersisted, columnKeys],
   );
 
   const setColumnOrder = useCallback(

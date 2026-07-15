@@ -266,6 +266,26 @@ describe("useDataTable", () => {
       expect(result.current.visibleColumns.map((c) => c.id)).toEqual(["value", "name"]);
     });
 
+    it("composes multiple moveColumn calls batched before a re-render", () => {
+      type Row3 = { id: string; a: string; b: string; c: string };
+      const cols: Column<Row3>[] = [
+        { id: "a", label: "A", render: (r) => r.a },
+        { id: "b", label: "B", render: (r) => r.b },
+        { id: "c", label: "C", render: (r) => r.c },
+      ];
+      const { result } = renderHook(() =>
+        useDataTable<Row3>({ columns: cols, data: { rows: [] } }),
+      );
+
+      act(() => {
+        result.current.moveColumn("a", 2); // [a,b,c] -> [b,c,a]
+        result.current.moveColumn("b", 2); // must build on [b,c,a] -> [c,a,b]
+      });
+      // Each move reconciles from the previous state, so they compose instead of
+      // the second clobbering the first (which would yield ["a","c","b"]).
+      expect(result.current.columnOrder).toEqual(["c", "a", "b"]);
+    });
+
     it("keeps hidden columns hidden after a reorder", () => {
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
 
@@ -332,6 +352,22 @@ describe("useDataTable", () => {
         result.current.toggleColumn("name");
       });
       expect(localStorage.length).toBe(0);
+    });
+
+    it("resets to defaults when tableId is cleared (no stale layout leak)", () => {
+      const { result, rerender } = renderHook(
+        ({ id }: { id?: string }) => useDataTable({ columns, data: testData, tableId: id }),
+        { initialProps: { id: "t1" as string | undefined } },
+      );
+      act(() => {
+        result.current.toggleColumn("name");
+      });
+      expect(result.current.isColumnVisible("name")).toBe(false);
+
+      // Clearing tableId switches to in-memory mode — the previous table's
+      // persisted layout must not leak in.
+      rerender({ id: undefined });
+      expect(result.current.isColumnVisible("name")).toBe(true);
     });
 
     it("falls back to defaults on corrupt stored state", () => {

@@ -17,6 +17,15 @@ describe("Avatar", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
+    it("size xs", () => {
+      const { container } = render(
+        <Avatar.Root size="xs">
+          <Avatar.Fallback>AB</Avatar.Fallback>
+        </Avatar.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
     it("size sm", () => {
       const { container } = render(
         <Avatar.Root size="sm">

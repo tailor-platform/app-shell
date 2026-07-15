@@ -32,17 +32,22 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Root props
 
-| Prop        | Type                        | Default     | Description                |
-| ----------- | --------------------------- | ----------- | -------------------------- |
-| `size`      | `"sm" \| "default" \| "lg"` | `"default"` | Circle size (28px default) |
-| `className` | `string`                    | —           | Extra classes              |
-| `children`  | `React.ReactNode`           | —           | Image + fallback           |
+| Prop        | Type                                | Default     | Description                |
+| ----------- | ----------------------------------- | ----------- | -------------------------- |
+| `size`      | `"xs" \| "sm" \| "default" \| "lg"` | `"default"` | Circle size (28px default) |
+| `className` | `string`                            | —           | Extra classes              |
+| `children`  | `React.ReactNode`                   | —           | Image + fallback           |
 
 `Avatar.Root` forwards other stable props from Base UI (for example `aria-hidden`, `style`) and standard HTML attributes for the `<span>` root.
 
 ## Sizes
 
+The smallest size, `xs` (16px), is intended for compact/inline contexts and single-glyph or icon content; two-letter initials will be cramped.
+
 ```tsx
+<Avatar.Root size="xs">
+  <Avatar.Fallback>A</Avatar.Fallback>
+</Avatar.Root>
 <Avatar.Root size="sm">
   <Avatar.Fallback>AB</Avatar.Fallback>
 </Avatar.Root>

@@ -627,6 +627,29 @@ describe("DateField keyboard shortcuts", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  // The standalone DateField (no calendar) also exposes firstDayOfWeek so a
+  // consumer in a non-default-week-start locale can steer the w/k shortcuts.
+  it("honours firstDayOfWeek for 'w' in a standalone DateField", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField
+        label="Date"
+        locale="en-US"
+        firstDayOfWeek="mon"
+        defaultValue={new CalendarDate(2025, 6, 18)} // a Wednesday
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("w"); // Monday-start week → 16 Jun (not 15 Jun, the Sunday)
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-16");
+    });
+  });
+
   it("clamps a shortcut target to minValue / maxValue", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

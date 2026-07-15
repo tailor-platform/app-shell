@@ -16,4 +16,6 @@ When any date segment is focused, the field now supports whole-date navigation (
 
 A 1–2 digit year is also expanded to the 2000s on blur (`26` → `2026`).
 
+Both `DateField` and `DatePicker` now accept an optional `firstDayOfWeek` prop to override the locale's week start for the `w`/`k` shortcuts (previously `DatePicker`-only).
+
 The shortcuts also work **while the calendar popover is open** — there they move the highlighted day (like the arrow keys), and `Enter` confirms. Targets are clamped to `minValue`/`maxValue` in both the field and the calendar, so a shortcut can't jump to an out-of-range date; unavailable days can be highlighted but not confirmed.

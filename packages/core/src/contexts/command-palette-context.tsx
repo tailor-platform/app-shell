@@ -78,10 +78,6 @@ export type OpenCommandPaletteOptions = {
   search?: string;
 };
 
-type OpenCommandPaletteRequest = OpenCommandPaletteOptions & {
-  id: number;
-};
-
 type DispatchContextValue = {
   register: (sourceId: string, actions: CommandPaletteAction[]) => () => void;
 };
@@ -91,7 +87,7 @@ type StateContextValue = {
   searchSources: readonly SearchSource[];
   open: boolean;
   setOpen: (open: boolean) => void;
-  openRequest: OpenCommandPaletteRequest | null;
+  openRequest: OpenCommandPaletteOptions | null;
   openCommandPalette: (options?: OpenCommandPaletteOptions) => void;
 };
 
@@ -115,10 +111,9 @@ export function CommandPaletteProvider({
   searchSources?: readonly SearchSource[];
 }) {
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
-  const openRequestIdRef = useRef(0);
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
   const [open, setOpen] = useState(false);
-  const [openRequest, setOpenRequest] = useState<OpenCommandPaletteRequest | null>(null);
+  const [openRequest, setOpenRequest] = useState<OpenCommandPaletteOptions | null>(null);
 
   const updateActions = useCallback(() => {
     setActions(Array.from(registryRef.current.values()).flat());
@@ -138,7 +133,7 @@ export function CommandPaletteProvider({
 
   const openCommandPalette = useCallback((options: OpenCommandPaletteOptions = {}) => {
     setOpen(true);
-    setOpenRequest({ id: ++openRequestIdRef.current, search: options.search });
+    setOpenRequest({ search: options.search });
   }, []);
 
   // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)

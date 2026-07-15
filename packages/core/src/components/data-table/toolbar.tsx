@@ -246,8 +246,11 @@ function AddFilterPanel({
 
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
-  const showConditions = config ? shouldChooseOperator(config) : false;
   const operators = config ? getAddFilterOperators(config.type) : [];
+  // In the panel there's always room, so show the condition column for any field
+  // that has more than one operator (the `chooseOperator` flag only gates the
+  // menu variant).
+  const showConditions = operators.length > 1;
 
   const [operator, setOperator] = useState<FilterOperator>(
     config ? DEFAULT_OPERATOR[config.type] : "eq",
@@ -277,16 +280,19 @@ function AddFilterPanel({
         }
       />
       <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        <Popover.Positioner sideOffset={4} side="bottom" align="start">
+        {/* disableAnchorTracking pins the panel where it opened so adding a chip
+            (which shifts the trigger) doesn't make it jump — same as the menu. */}
+        <Popover.Positioner sideOffset={4} side="bottom" align="start" disableAnchorTracking>
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // Fixed height so switching field/condition never resizes the popup.
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-80 astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
             {/* Column 1 — fields */}
-            <div className="astw:flex astw:w-44 astw:flex-col astw:p-1">
+            <div className="astw:flex astw:w-44 astw:flex-col astw:overflow-y-auto astw:p-1">
               {columns.map((col) => {
                 const isSelected = col.filter.field === fieldName;
                 return (
@@ -310,7 +316,7 @@ function AddFilterPanel({
 
             {/* Column 2 — conditions (only when the field opts into choosing one) */}
             {showConditions && config && (
-              <div className="astw:flex astw:w-48 astw:flex-col astw:border-l astw:border-border astw:p-1">
+              <div className="astw:flex astw:w-48 astw:flex-col astw:overflow-y-auto astw:border-l astw:border-border astw:p-1">
                 {operators.map((op) => (
                   <button
                     key={op}
@@ -350,7 +356,11 @@ function AddFilterPanel({
 }
 AddFilterPanel.displayName = "DataTable.AddFilterPanel";
 
-/** Live-commit value editor for the panel's third column, keyed by field + operator. */
+/**
+ * Draft value editor for the panel's third column, keyed by field + operator.
+ * Holds local draft state and commits via an explicit Apply button (the panel
+ * stays open so several filters can be added in a row).
+ */
 function PanelValueEditor({
   column,
   operator,
@@ -367,151 +377,151 @@ function PanelValueEditor({
   const field = config.field;
   const label = column.label ?? field;
   const type = config.type;
+  const isBetween = operator === "between";
 
-  // Enum — live multi-select.
+  // Draft state, prefilled from an existing filter on the same field/operator.
+  const [enumSel, setEnumSel] = useState<string[]>(
+    type === "enum" && Array.isArray(filter?.value) ? (filter.value as string[]) : [],
+  );
+  const [boolVal, setBoolVal] = useState(typeof filter?.value === "boolean" ? filter.value : true);
+  const [text, setText] = useState(() => {
+    if (isBetween) return "";
+    if (typeof filter?.value === "string") return filter.value;
+    if (typeof filter?.value === "number") return String(filter.value);
+    return "";
+  });
+  const range =
+    isBetween && filter?.value && typeof filter.value === "object"
+      ? (filter.value as { min?: unknown; max?: unknown })
+      : null;
+  const [min, setMin] = useState(range?.min != null ? String(range.min) : "");
+  const [max, setMax] = useState(range?.max != null ? String(range.max) : "");
+
+  const apply = () => {
+    if (type === "enum") {
+      if (enumSel.length === 0) control.removeFilter(field);
+      else control.addFilter(field, "in", enumSel);
+      return;
+    }
+    if (type === "boolean") {
+      control.addFilter(field, operator, boolVal);
+      return;
+    }
+    if (isBetween) {
+      const draft: AddFilterDraftValue = [min, max];
+      if (!isAddFilterDraftValueValid(type, "between", draft)) return;
+      control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
+      return;
+    }
+    if (text.trim() === "") {
+      control.removeFilter(field);
+      return;
+    }
+    if (!isAddFilterDraftValueValid(type, operator, text)) return;
+    control.addFilter(
+      field,
+      operator,
+      toAddFilterSubmittedValue(type, operator, text),
+      type === "string" ? { caseSensitive: false } : undefined,
+    );
+  };
+
+  let editor: ReactNode;
   if (type === "enum") {
-    const selected = Array.isArray(filter?.value) ? (filter.value as string[]) : [];
-    const toggle = (value: string) => {
-      const set = new Set(selected);
-      if (set.has(value)) set.delete(value);
-      else set.add(value);
-      const next = [...set];
-      if (next.length === 0) control.removeFilter(field);
-      else control.addFilter(field, "in", next);
-    };
-    return <EnumOptionList options={config.options} selected={selected} onToggle={toggle} />;
-  }
-
-  // Boolean — True / False (live).
-  if (type === "boolean") {
-    return (
+    editor = (
+      <EnumOptionList
+        options={config.options}
+        selected={enumSel}
+        onToggle={(v) =>
+          setEnumSel((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]))
+        }
+      />
+    );
+  } else if (type === "boolean") {
+    editor = (
       <div className="astw:p-1">
         {[true, false].map((v) => (
           <button
             key={String(v)}
             type="button"
-            onClick={() => control.addFilter(field, operator, v)}
-            className={PANEL_COLUMN_ROW}
+            onClick={() => setBoolVal(v)}
+            className={cn(
+              PANEL_COLUMN_ROW,
+              boolVal === v && "astw:bg-accent astw:text-accent-foreground",
+            )}
           >
-            {v ? t("filterBooleanTrue") : t("filterBooleanFalse")}
+            <span>{v ? t("filterBooleanTrue") : t("filterBooleanFalse")}</span>
+            {boolVal === v && <Check className="astw:ml-auto astw:size-3.5 astw:shrink-0" />}
           </button>
         ))}
       </div>
     );
-  }
-
-  // Between — commit once both bounds are valid.
-  if (operator === "between") {
-    return <PanelBetweenEditor type={type} label={label} field={field} control={control} />;
-  }
-
-  // Date single — commit on pick.
-  if (type === "date") {
-    const current = typeof filter?.value === "string" ? filter.value : "";
-    return (
-      <div className="astw:p-2">
-        <DateFilterPicker
-          ariaLabel={label}
-          value={current}
-          onChange={(v) => {
-            if (v) control.addFilter(field, operator, v);
-          }}
-        />
-      </div>
-    );
-  }
-
-  // String / number / uuid / datetime / time — commit on Enter.
-  const inputType = type === "number" ? "number" : "text";
-  const initial = typeof filter?.value === "string" ? filter.value : "";
-  return (
-    <div className="astw:p-2">
-      <SubmenuFilterInput
-        inputType={inputType}
-        defaultValue={initial}
-        ariaLabel={label}
-        placeholder={t("filterValuePlaceholder", { field: label })}
-        onCommit={(raw) => {
-          if (raw.trim() === "") {
-            control.removeFilter(field);
-            return;
-          }
-          if (!isAddFilterDraftValueValid(type, operator, raw)) return;
-          control.addFilter(
-            field,
-            operator,
-            toAddFilterSubmittedValue(type, operator, raw),
-            type === "string" ? { caseSensitive: false } : undefined,
-          );
-        }}
-      />
-    </div>
-  );
-}
-
-/** Between-range editor for the panel — commits when both bounds are valid. */
-function PanelBetweenEditor({
-  type,
-  label,
-  field,
-  control,
-}: {
-  type: FilterConfig["type"];
-  label: string;
-  field: string;
-  control: CollectionControl;
-}) {
-  const t = useDataTableT();
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
-
-  const tryCommit = (mn: string, mx: string) => {
-    if (mn.trim() === "" || mx.trim() === "") return;
-    const draft: AddFilterDraftValue = [mn, mx];
-    if (!isAddFilterDraftValueValid(type, "between", draft)) return;
-    control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
-  };
-
-  if (type === "date") {
-    return (
+  } else if (isBetween && type === "date") {
+    editor = (
       <div className="astw:flex astw:flex-col astw:gap-1.5 astw:p-2">
         <DateFilterPicker
           ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
           value={min}
-          onChange={(v) => {
-            setMin(v);
-            tryCommit(v, max);
-          }}
+          onChange={setMin}
         />
         <DateFilterPicker
           ariaLabel={`${label} — ${t("filterBetweenTo")}`}
           value={max}
-          onChange={(v) => {
-            setMax(v);
-            tryCommit(min, v);
+          onChange={setMax}
+        />
+      </div>
+    );
+  } else if (isBetween) {
+    const numeric = type === "number";
+    editor = (
+      <div className="astw:p-2">
+        <BetweenInputGroup
+          labels={
+            numeric
+              ? [t("filterBetweenMin"), t("filterBetweenMax")]
+              : [t("filterBetweenFrom"), t("filterBetweenTo")]
+          }
+          values={[min, max]}
+          onChangeMin={setMin}
+          onChangeMax={setMax}
+          onSubmit={apply}
+          inputProps={
+            numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
+          }
+        />
+      </div>
+    );
+  } else if (type === "date") {
+    editor = (
+      <div className="astw:p-2">
+        <DateFilterPicker ariaLabel={label} value={text} onChange={setText} />
+      </div>
+    );
+  } else {
+    editor = (
+      <div className="astw:p-2">
+        <Input
+          type={type === "number" ? "number" : "text"}
+          value={text}
+          placeholder={t("filterValuePlaceholder", { field: label })}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") apply();
           }}
+          className="astw:h-8 astw:text-sm"
         />
       </div>
     );
   }
 
-  const numeric = type === "number";
   return (
-    <div className="astw:p-2">
-      <BetweenInputGroup
-        labels={
-          numeric
-            ? [t("filterBetweenMin"), t("filterBetweenMax")]
-            : [t("filterBetweenFrom"), t("filterBetweenTo")]
-        }
-        values={[min, max]}
-        onChangeMin={setMin}
-        onChangeMax={setMax}
-        onSubmit={() => tryCommit(min, max)}
-        inputProps={
-          numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
-        }
-      />
+    <div className="astw:flex astw:flex-1 astw:flex-col astw:overflow-hidden">
+      <div className="astw:flex-1 astw:overflow-y-auto">{editor}</div>
+      <div className="astw:border-t astw:border-border astw:p-2">
+        <Button size="xs" onClick={apply} className="astw:w-full">
+          {t("applyFilter")}
+        </Button>
+      </div>
     </div>
   );
 }

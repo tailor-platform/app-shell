@@ -8,7 +8,7 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Menu } from "@/components/menu";
 import { Select } from "@/components/select-standalone";
-import { DatePicker } from "@/components/date-field";
+import { DatePicker, DateField } from "@/components/date-field";
 import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";
@@ -357,6 +357,33 @@ function AddFilterPanel({
 AddFilterPanel.displayName = "DataTable.AddFilterPanel";
 
 /**
+ * Segmented date input for the panel, bridging the filter's ISO string value
+ * and the `CalendarDate` the field works with. Uses the typed `DateField` (not
+ * the popover DatePicker or an inline calendar) — both open/re-render inside the
+ * panel popover and cause it to jump or dismiss.
+ */
+function PanelDateInput({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDate(value) : null;
+  return (
+    <DateField
+      aria-label={ariaLabel}
+      value={calValue}
+      granularity="day"
+      onChange={(v) => onChange(v ? v.toString() : "")}
+      className="astw:w-full"
+    />
+  );
+}
+
+/**
  * Draft value editor for the panel's third column, keyed by field + operator.
  * Holds local draft state and commits via an explicit Apply button (the panel
  * stays open so several filters can be added in a row).
@@ -457,14 +484,16 @@ function PanelValueEditor({
       </div>
     );
   } else if (isBetween && type === "date") {
+    // Inline calendars (not the popover DatePicker) — a popover inside the panel
+    // popover conflicts with dismissal and causes a jump.
     editor = (
-      <div className="astw:flex astw:flex-col astw:gap-1.5 astw:p-2">
-        <DateFilterPicker
+      <div className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
+        <PanelDateInput
           ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
           value={min}
           onChange={setMin}
         />
-        <DateFilterPicker
+        <PanelDateInput
           ariaLabel={`${label} — ${t("filterBetweenTo")}`}
           value={max}
           onChange={setMax}
@@ -494,7 +523,7 @@ function PanelValueEditor({
   } else if (type === "date") {
     editor = (
       <div className="astw:p-2">
-        <DateFilterPicker ariaLabel={label} value={text} onChange={setText} />
+        <PanelDateInput ariaLabel={label} value={text} onChange={setText} />
       </div>
     );
   } else {

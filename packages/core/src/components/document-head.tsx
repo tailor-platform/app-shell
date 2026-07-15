@@ -1,7 +1,7 @@
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { useBreadcrumbOverrideOptional } from "@/contexts/breadcrumb-context";
 import { usePathSegments } from "@/components/dynamic-breadcrumb";
-import { DEFAULT_FAVICON_HREF } from "@/lib/default-favicon";
+import { DEFAULT_FAVICONS, type FaviconLink } from "@/lib/default-favicon";
 
 const SEPARATOR = " · ";
 const APP_SHELL_FAVICON_ATTR = "data-app-shell-favicon";
@@ -35,8 +35,10 @@ const inferFaviconType = (href: string): string | undefined => {
  *   document keeps whatever title it already had.
  * - **Favicon** — the `favicon` prop passed to `<AppShell>`. When that prop is
  *   omitted, AppShell preserves any existing host-page `<link rel="icon">`
- *   and only falls back to the bundled Tailor default
- *   ({@link DEFAULT_FAVICON_HREF}) when no favicon exists yet.
+ *   and only falls back to the bundled default set
+ *   ({@link DEFAULT_FAVICONS} — the 16/32 PNG tab icons plus a 180×180 Apple
+ *   touch icon) when no favicon exists yet. A `favicon` prop replaces the whole
+ *   set with that single href.
  *
  * Rendered once inside the router (see `createRootRoute`). React 19 hoists the
  * `<title>`/`<link>` into `<head>` and updates them on every navigation — no
@@ -61,20 +63,32 @@ export const DocumentHead = () => {
   const hasHostPageFavicon =
     typeof document !== "undefined" &&
     document.head.querySelector(`link[rel~="icon"]:not([${APP_SHELL_FAVICON_ATTR}])`);
-  const resolvedFavicon = favicon ?? (hasHostPageFavicon ? undefined : DEFAULT_FAVICON_HREF);
-  const faviconType = resolvedFavicon ? inferFaviconType(resolvedFavicon) : undefined;
+
+  // A `favicon` prop replaces the whole set with that single href; otherwise we
+  // inject the full bundled default set, but only when the host page hasn't
+  // already declared its own icon.
+  let faviconLinks: FaviconLink[];
+  if (favicon) {
+    faviconLinks = [{ rel: "icon", href: favicon, type: inferFaviconType(favicon) }];
+  } else if (hasHostPageFavicon) {
+    faviconLinks = [];
+  } else {
+    faviconLinks = DEFAULT_FAVICONS;
+  }
 
   return (
     <>
       {title ? <title>{title}</title> : null}
-      {resolvedFavicon ? (
+      {faviconLinks.map(({ rel, href, type, sizes }) => (
         <link
-          rel="icon"
-          href={resolvedFavicon}
+          key={`${rel}-${sizes ?? "any"}`}
+          rel={rel}
+          href={href}
           data-app-shell-favicon=""
-          {...(faviconType ? { type: faviconType } : {})}
+          {...(type ? { type } : {})}
+          {...(sizes ? { sizes } : {})}
         />
-      ) : null}
+      ))}
     </>
   );
 };

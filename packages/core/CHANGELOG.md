@@ -1,5 +1,127 @@
 # @tailor-platform/app-shell
 
+## 1.8.0
+
+### Minor Changes
+
+- a4f735c: Add DateField, DatePicker, and Calendar components (@internationalized/date + Base UI implementation)
+
+  Introduces three accessible date-input components, implemented on `@internationalized/date` (value layer) and Base UI (`Popover`) with hand-rolled segmented-input and calendar-grid behaviour:
+
+  - `DateField` — segmented date/time input with label, description, and error message
+  - `DatePicker` — date field with a popover calendar
+  - `Calendar` — standalone calendar grid
+
+  All three accept `LocalizedString` labels/descriptions and resolve locale + timezone from the AppShell context. The `@internationalized/date` value types (`CalendarDate`, `CalendarDateTime`, `ZonedDateTime`, …) and helpers (`parseDate`, `getLocalTimeZone`, …) are re-exported from `@tailor-platform/app-shell`.
+
+  New AppShell context hooks:
+
+  - `useResolvedLocale()` — full BCP-47 locale (e.g. `"en-GB"`) plus the language code
+  - `useTimeZone()` — returns a `TimeZone` object with `.value` (IANA string), `.today()`, and `.now()` bound to the configured timezone
+
+  AppShell now accepts an optional `timeZone` prop.
+
+  > This is the **`@internationalized/date` + Base UI** variant — the lighter foundation tracked in the design proposal (§9). Net-new dependency is just `@internationalized/date` (~11 KB gz); Base UI is already in the bundle. Public API and accessibility contract are identical to the react-aria variant.
+  >
+  > **Known limitation:** the segmented input is built from `role="spinbutton"` elements that aren't `contentEditable`, so on-screen-keyboard typing on touch devices is limited — the calendar popover is the touch-friendly path (desktop keyboard entry works fully). The APG behaviour is unit-tested but not yet screen-reader-audited.
+
+- ef5c788: DataTable now scrolls internally: add `fill` prop to `Layout` to pin page chrome and scroll only the table rows.
+
+  ```tsx
+  <Layout fill>
+    <Layout.Header title="Products" />
+    <Layout.Column>
+      <DataTable.Root value={table}>
+        <DataTable.Toolbar>…</DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Footer>
+          <DataTable.Pagination />
+        </DataTable.Footer>
+      </DataTable.Root>
+    </Layout.Column>
+  </Layout>
+  ```
+
+  With `fill`, the page title, table toolbar, column header row (sticky), and footer stay visible at all heights — only the rows region scrolls vertically. Without `fill`, pages grow and scroll as before. Tables short enough to fit render without a scrollbar or layout shift.
+
+  **Behavior change:** the AppShell layout is now viewport-bounded (`h-svh` instead of `min-h-svh`), so page content scrolls inside the content area rather than on the document. Code relying on `window`/document scroll position should target the content area instead.
+
+  Also fixes the empty/error state reserving `pageSize`-worth of height — it is now capped at 5 rows, so large page sizes no longer produce a huge blank region below "No data".
+
+- ef5c788: Add `useAppShellScrollContainer()` — a supported handle to the content scroll container
+
+  Now that the shell is viewport-bounded (`h-svh`) and page content scrolls inside the content area rather than on the document, consumers that previously relied on `window`/document scroll need a stable way to reach the element that actually scrolls.
+
+  `useAppShellScrollContainer()` returns a ref to that element:
+
+  ```tsx
+  const scrollRef = useAppShellScrollContainer();
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () =>
+      setProgress(el.scrollTop / (el.scrollHeight - el.clientHeight));
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
+  ```
+
+  Use it wherever you would previously have reached for `window.scrollY`, a `window` `scroll` listener, `window.scrollTo(...)`, or an `IntersectionObserver` with the default viewport root.
+
+  - On a `<Layout fill>` page the element does not scroll (its children manage their own scrolling).
+  - Outside a `SidebarLayout` the ref's `current` is always `null`.
+  - The container also carries a `data-appshell-scroll-container` attribute for non-React access (CSS, tests, `document.querySelector`).
+
+- aa9306a: Add a `header` slot to `SidebarLayout` and a `SidebarLayout.DefaultHeader` building block
+
+  `SidebarLayout` now accepts a full-region `header?: ReactNode` prop, mirroring the existing `sidebar` slot. It defaults to the built-in header (`SidebarLayout.DefaultHeader`), so existing usage is unchanged.
+
+  To extend the built-in header (e.g. add a notification bell or user menu) without reconstructing the trigger and breadcrumb, use `SidebarLayout.DefaultHeader` with its `actions` slot:
+
+  ```tsx
+  <SidebarLayout
+    header={
+      <SidebarLayout.DefaultHeader
+        actions={[
+          <NotificationBell key="bell" />,
+          <AppearanceSwitcher key="appearance" />,
+        ]}
+      />
+    }
+  />
+  ```
+
+  - `DefaultHeader`'s `actions` prop (single node or array) controls the entire right-hand cluster, laid out in a horizontal, vertically-centered row.
+  - `actions` **defaults to `[<AppearanceSwitcher />]`**, and **passing `actions` replaces the whole cluster including the switcher** — include `<AppearanceSwitcher />` explicitly to keep it. This keeps the API a single slot instead of accumulating one-off props.
+  - `DefaultHeader` is available as `SidebarLayout.DefaultHeader` and as a top-level `DefaultHeader` export.
+  - `DefaultSidebar` is now also exposed as `SidebarLayout.DefaultSidebar` for symmetry; the top-level `DefaultSidebar` export is retained for backwards compatibility.
+
+  This provides an official, composable extension point for the top bar, replacing fragile consumer workarounds that queried the header DOM and injected a React portal.
+
+- 078130e: Add a `size` prop to `Tabs` and make `capsule` icon-only tabs square
+
+  `Tabs.Root` now accepts `size?: "xs" | "sm" | "default" | "lg"` (default `"default"`), mirroring `Button`'s height tiers. It sets a **minimum** height on the `capsule` variant — taller content still grows — so a capsule track sits flush next to a `Button`:
+
+  | `size`    | capsule track | matches Button |
+  | --------- | ------------- | -------------- |
+  | `xs`      | 28px          | `size="xs"`    |
+  | `sm`      | 32px          | `size="sm"`    |
+  | `default` | 36px          | default        |
+  | `lg`      | 40px          | `size="lg"`    |
+
+  Two `capsule` fixes from the same change:
+
+  - The list no longer hard-locks to `h-10` (40px); its height derives from the tab size floor.
+  - A tab whose only child is an icon now renders **square** (`min-width` follows `min-height`), instead of the previous wider-than-tall, shrunken look — ideal for icon-only view toggles.
+
+  The default `capsule` height moves from 40px to 36px to align with `Button`'s default height. `size` only affects the `capsule` variant; `line` and `default` are unchanged.
+
+### Patch Changes
+
+- eeb10ab: Remove the `stream` option from `useAIChat()` and `AIGatewayChatRequest`.
+
+  AppShell now selects the appropriate transport (streaming vs JSON) automatically based on the model. Passing `stream` is no longer needed.
+
 ## 1.7.0
 
 ### Minor Changes

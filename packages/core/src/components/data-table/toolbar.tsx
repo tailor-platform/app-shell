@@ -129,7 +129,18 @@ type FilterableColumn = Column<Record<string, unknown>> & {
 type AddFilterDraftValue = string | string[];
 
 /** Use `DataTable.Filters` instead of calling this directly. */
-function DataTableFilters({ className }: { className?: string }) {
+function DataTableFilters({
+  className,
+  addFilterVariant = "menu",
+}: {
+  className?: string;
+  /**
+   * EXPERIMENTAL — the add-filter surface style, for A/B testing.
+   * - `"menu"` (default): nested-submenu flyout (`AddFilterMenu`).
+   * - `"panel"`: single 3-column popover (field ▸ condition ▸ value).
+   */
+  addFilterVariant?: "menu" | "panel";
+}) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();
   if (!control) {
@@ -158,9 +169,12 @@ function DataTableFilters({ className }: { className?: string }) {
         return <FilterChip key={col.filter.field} column={col} filter={active} control={control} />;
       })}
 
-      {/* Add / edit filter menu: every filterable field is one hover away, with
-          a type-specific editor in a nested submenu. Active fields are marked. */}
-      <AddFilterMenu columns={filterableColumns} control={control} />
+      {/* Add-filter surface: the nested-submenu menu (default) or the 3-column panel. */}
+      {addFilterVariant === "panel" ? (
+        <AddFilterPanel columns={filterableColumns} control={control} />
+      ) : (
+        <AddFilterMenu columns={filterableColumns} control={control} />
+      )}
     </div>
   );
 }
@@ -205,6 +219,302 @@ function AddFilterMenu({
   );
 }
 AddFilterMenu.displayName = "DataTable.AddFilterMenu";
+
+// =============================================================================
+// AddFilterPanel — EXPERIMENTAL variant B: one popover, three columns
+// (field ▸ condition ▸ value) instead of nested submenus. Live-commit: enum
+// toggles, text/number commit on Enter, date on pick. Reuses the same value
+// editors and helpers as the menu variant.
+// =============================================================================
+
+const PANEL_COLUMN_ROW = cn(
+  "astw:flex astw:w-full astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5",
+  "astw:text-left astw:text-sm astw:outline-hidden astw:cursor-default",
+  "astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus-visible:bg-accent",
+);
+
+function AddFilterPanel({
+  columns,
+  control,
+}: {
+  columns: FilterableColumn[];
+  control: CollectionControl;
+}) {
+  const t = useDataTableT();
+  const [open, setOpen] = useState(false);
+  const [fieldName, setFieldName] = useState<string>(columns[0]?.filter.field ?? "");
+
+  const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
+  const config = selectedColumn?.filter;
+  const showConditions = config ? shouldChooseOperator(config) : false;
+  const operators = config ? getAddFilterOperators(config.type) : [];
+
+  const [operator, setOperator] = useState<FilterOperator>(
+    config ? DEFAULT_OPERATOR[config.type] : "eq",
+  );
+
+  const selectField = (name: string) => {
+    setFieldName(name);
+    const col = columns.find((c) => c.filter.field === name);
+    if (col) setOperator(DEFAULT_OPERATOR[col.filter.type]);
+  };
+
+  const activeFields = new Set(control.filters.map((f) => f.field));
+  const activeFilter = control.filters.find((f) => f.field === fieldName);
+  let effectiveOperator: FilterOperator | undefined;
+  if (config) {
+    effectiveOperator = showConditions ? operator : DEFAULT_OPERATOR[config.type];
+  }
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
+        render={
+          <Button variant="outline" size="xs">
+            <Plus className="astw:size-3" />
+            {t("addFilter")}
+          </Button>
+        }
+      />
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+        <Popover.Positioner sideOffset={4} side="bottom" align="start">
+          <Popover.Popup
+            data-slot="data-table-filter-panel"
+            className={cn(
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
+            )}
+          >
+            {/* Column 1 — fields */}
+            <div className="astw:flex astw:w-44 astw:flex-col astw:p-1">
+              {columns.map((col) => {
+                const isSelected = col.filter.field === fieldName;
+                return (
+                  <button
+                    key={col.filter.field}
+                    type="button"
+                    onClick={() => selectField(col.filter.field)}
+                    className={cn(
+                      PANEL_COLUMN_ROW,
+                      isSelected && "astw:bg-accent astw:text-accent-foreground",
+                    )}
+                  >
+                    <span className="astw:truncate">{col.label ?? col.filter.field}</span>
+                    {activeFields.has(col.filter.field) && (
+                      <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Column 2 — conditions (only when the field opts into choosing one) */}
+            {showConditions && config && (
+              <div className="astw:flex astw:w-48 astw:flex-col astw:border-l astw:border-border astw:p-1">
+                {operators.map((op) => (
+                  <button
+                    key={op}
+                    type="button"
+                    onClick={() => setOperator(op)}
+                    className={cn(
+                      PANEL_COLUMN_ROW,
+                      op === operator && "astw:bg-accent astw:text-accent-foreground",
+                    )}
+                  >
+                    <span className="astw:truncate">{getOperatorLabel(op, t, config.type)}</span>
+                    {op === operator && (
+                      <Check className="astw:ml-auto astw:size-3.5 astw:shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Column 3 — value editor for the chosen field + condition */}
+            <div className="astw:flex astw:min-w-56 astw:flex-col astw:border-l astw:border-border">
+              {selectedColumn && effectiveOperator && (
+                <PanelValueEditor
+                  key={`${fieldName}:${effectiveOperator}`}
+                  column={selectedColumn}
+                  operator={effectiveOperator}
+                  filter={activeFilter}
+                  control={control}
+                />
+              )}
+            </div>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+AddFilterPanel.displayName = "DataTable.AddFilterPanel";
+
+/** Live-commit value editor for the panel's third column, keyed by field + operator. */
+function PanelValueEditor({
+  column,
+  operator,
+  filter,
+  control,
+}: {
+  column: FilterableColumn;
+  operator: FilterOperator;
+  filter: Filter | undefined;
+  control: CollectionControl;
+}) {
+  const t = useDataTableT();
+  const config = column.filter;
+  const field = config.field;
+  const label = column.label ?? field;
+  const type = config.type;
+
+  // Enum — live multi-select.
+  if (type === "enum") {
+    const selected = Array.isArray(filter?.value) ? (filter.value as string[]) : [];
+    const toggle = (value: string) => {
+      const set = new Set(selected);
+      if (set.has(value)) set.delete(value);
+      else set.add(value);
+      const next = [...set];
+      if (next.length === 0) control.removeFilter(field);
+      else control.addFilter(field, "in", next);
+    };
+    return <EnumOptionList options={config.options} selected={selected} onToggle={toggle} />;
+  }
+
+  // Boolean — True / False (live).
+  if (type === "boolean") {
+    return (
+      <div className="astw:p-1">
+        {[true, false].map((v) => (
+          <button
+            key={String(v)}
+            type="button"
+            onClick={() => control.addFilter(field, operator, v)}
+            className={PANEL_COLUMN_ROW}
+          >
+            {v ? t("filterBooleanTrue") : t("filterBooleanFalse")}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  // Between — commit once both bounds are valid.
+  if (operator === "between") {
+    return <PanelBetweenEditor type={type} label={label} field={field} control={control} />;
+  }
+
+  // Date single — commit on pick.
+  if (type === "date") {
+    const current = typeof filter?.value === "string" ? filter.value : "";
+    return (
+      <div className="astw:p-2">
+        <DateFilterPicker
+          ariaLabel={label}
+          value={current}
+          onChange={(v) => {
+            if (v) control.addFilter(field, operator, v);
+          }}
+        />
+      </div>
+    );
+  }
+
+  // String / number / uuid / datetime / time — commit on Enter.
+  const inputType = type === "number" ? "number" : "text";
+  const initial = typeof filter?.value === "string" ? filter.value : "";
+  return (
+    <div className="astw:p-2">
+      <SubmenuFilterInput
+        inputType={inputType}
+        defaultValue={initial}
+        ariaLabel={label}
+        placeholder={t("filterValuePlaceholder", { field: label })}
+        onCommit={(raw) => {
+          if (raw.trim() === "") {
+            control.removeFilter(field);
+            return;
+          }
+          if (!isAddFilterDraftValueValid(type, operator, raw)) return;
+          control.addFilter(
+            field,
+            operator,
+            toAddFilterSubmittedValue(type, operator, raw),
+            type === "string" ? { caseSensitive: false } : undefined,
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+/** Between-range editor for the panel — commits when both bounds are valid. */
+function PanelBetweenEditor({
+  type,
+  label,
+  field,
+  control,
+}: {
+  type: FilterConfig["type"];
+  label: string;
+  field: string;
+  control: CollectionControl;
+}) {
+  const t = useDataTableT();
+  const [min, setMin] = useState("");
+  const [max, setMax] = useState("");
+
+  const tryCommit = (mn: string, mx: string) => {
+    if (mn.trim() === "" || mx.trim() === "") return;
+    const draft: AddFilterDraftValue = [mn, mx];
+    if (!isAddFilterDraftValueValid(type, "between", draft)) return;
+    control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
+  };
+
+  if (type === "date") {
+    return (
+      <div className="astw:flex astw:flex-col astw:gap-1.5 astw:p-2">
+        <DateFilterPicker
+          ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
+          value={min}
+          onChange={(v) => {
+            setMin(v);
+            tryCommit(v, max);
+          }}
+        />
+        <DateFilterPicker
+          ariaLabel={`${label} — ${t("filterBetweenTo")}`}
+          value={max}
+          onChange={(v) => {
+            setMax(v);
+            tryCommit(min, v);
+          }}
+        />
+      </div>
+    );
+  }
+
+  const numeric = type === "number";
+  return (
+    <div className="astw:p-2">
+      <BetweenInputGroup
+        labels={
+          numeric
+            ? [t("filterBetweenMin"), t("filterBetweenMax")]
+            : [t("filterBetweenFrom"), t("filterBetweenTo")]
+        }
+        values={[min, max]}
+        onChangeMin={setMin}
+        onChangeMax={setMax}
+        onSubmit={() => tryCommit(min, max)}
+        inputProps={
+          numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
+        }
+      />
+    </div>
+  );
+}
 
 /**
  * A single field row in the add-filter menu; opens its editor as a submenu.

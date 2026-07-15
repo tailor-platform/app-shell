@@ -222,6 +222,8 @@ const DataTablePage = () => {
 
   const [data, setData] = useState<DataTableData<Invoice>>();
   const [loading, setLoading] = useState(true);
+  // Toggle between the two add-filter UI variants for A/B testing.
+  const [filterVariant, setFilterVariant] = useState<"menu" | "panel">("menu");
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -249,9 +251,27 @@ const DataTablePage = () => {
           pagination) — a stand-in for the GraphQL query that would normally drive the table. Add a{" "}
           <strong>Due date</strong> filter to use the <strong>DatePicker</strong> as the input.
         </div>
+        {/* A/B toggle for the two add-filter variants (demo only). */}
+        <div className="mb-3 flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Add-filter UI:</span>
+          {(["menu", "panel"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setFilterVariant(v)}
+              className={`rounded-md border px-2.5 py-1 ${
+                filterVariant === v
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border hover:bg-muted"
+              }`}
+            >
+              {v === "menu" ? "A · Nested menu" : "B · 3-column panel"}
+            </button>
+          ))}
+        </div>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>
-            <DataTable.Filters />
+            <DataTable.Filters addFilterVariant={filterVariant} />
           </DataTable.Toolbar>
           <DataTable.Table />
           <DataTable.Footer>

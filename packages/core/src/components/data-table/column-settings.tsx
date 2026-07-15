@@ -117,7 +117,13 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         right: buckets.right.filter((k) => k !== dragKey),
       };
       const target = next[section];
-      target.splice(Math.max(0, Math.min(index, target.length)), 0, dragKey);
+      // `index` was measured against the section's rows *including* dragKey. For
+      // a same-zone move, filtering dragKey out above shifts every slot at/after
+      // its original position down by one, so decrement to land where the
+      // indicator promised. Cross-zone drops (fromIdx === -1) are unaffected.
+      const fromIdx = buckets[section].indexOf(dragKey);
+      const insertAt = fromIdx > -1 && fromIdx < index ? index - 1 : index;
+      target.splice(Math.max(0, Math.min(insertAt, target.length)), 0, dragKey);
       setColumnOrder([...next.left, ...next.scrollable, ...next.right]);
       setPin(dragKey, SECTION_PIN[section]);
     }
@@ -125,9 +131,10 @@ function DataTableColumnSettings({ className }: { className?: string }) {
   };
 
   const renderRow = (key: string, section: Section, index: number, isLast: boolean) => {
-    // The insertion indicator is a box-shadow (not a flow element) so it never
-    // shifts the rows under the cursor — inserting a real element there caused
-    // the drop target to recompute on every reflow and the line to "jump".
+    // Insertion indicator: an absolutely-positioned line that sits in the gap
+    // between rows (straddling the shared border). Being absolute, it never
+    // shifts the rows under the cursor — a flow element there made the drop
+    // target recompute on every reflow and the line "jump".
     const showBefore =
       dragKey != null && dropTarget?.section === section && dropTarget.index === index;
     const showAfter =
@@ -149,12 +156,16 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           setDropTarget({ section, index: after ? index + 1 : index });
         }}
         className={cn(
-          "astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
+          "astw:relative astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
           dragKey === key && "astw:opacity-40",
-          showBefore && "astw:shadow-[inset_0_2px_0_0_var(--primary)]",
-          showAfter && "astw:shadow-[inset_0_-2px_0_0_var(--primary)]",
         )}
       >
+        {showBefore && (
+          <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-top-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
+        )}
+        {showAfter && (
+          <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-bottom-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
+        )}
         <span
           aria-label={t("dragToReorder")}
           className="astw:cursor-grab astw:text-muted-foreground"

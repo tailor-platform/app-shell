@@ -58,6 +58,10 @@ function writeState(tableId: string, state: PersistedColumnState): void {
   }
 }
 
+// Tracks currently-mounted `tableId`s (dev aid). Two tables sharing an id map
+// to the same localStorage key and clobber each other's layout, so warn.
+const mountedTableIds = new Map<string, number>();
+
 /**
  * SSR-safe `localStorage`-backed column state.
  *
@@ -76,6 +80,25 @@ export function usePersistentColumnState(
   // dependency — `defaults` is recomputed every render and would thrash it.
   const defaultsRef = useRef(defaults);
   defaultsRef.current = defaults;
+
+  // Warn when two mounted tables share a `tableId` — they persist to the same
+  // storage key and overwrite each other. Counted so React StrictMode's
+  // mount/unmount/remount doesn't trip a false positive.
+  useEffect(() => {
+    if (!tableId) return;
+    const count = (mountedTableIds.get(tableId) ?? 0) + 1;
+    mountedTableIds.set(tableId, count);
+    if (count > 1) {
+      console.warn(
+        `[DataTable] Duplicate tableId "${tableId}": multiple tables share one localStorage key and will clobber each other's column layout. Use a unique id per table (e.g. "<route>:<entity>").`,
+      );
+    }
+    return () => {
+      const remaining = (mountedTableIds.get(tableId) ?? 1) - 1;
+      if (remaining <= 0) mountedTableIds.delete(tableId);
+      else mountedTableIds.set(tableId, remaining);
+    };
+  }, [tableId]);
 
   // Hydrate from storage on mount / when the table id changes. Falls back to the
   // current defaults when there's nothing stored (or the id was cleared). This

@@ -117,7 +117,8 @@ const baseColumns = [
   column({ id: "amount", label: "Amount", type: "money", accessor: (r) => r.amount, width: 130 }),
   column({ id: "tax", label: "Tax", type: "money", accessor: (r) => r.tax, width: 110 }),
   column({ id: "total", label: "Total", type: "money", accessor: (r) => r.total, width: 130 }),
-  column({ id: "issued", label: "Issued", type: "date", accessor: (r) => r.issued, width: 140 }),
+  // Intentionally no `width` — exercises measure-based pinning for an auto-width column.
+  column({ id: "issued", label: "Issued", type: "date", accessor: (r) => r.issued }),
   column({
     id: "dueDate",
     label: "Due date",

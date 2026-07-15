@@ -1,4 +1,14 @@
-import { useContext, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Ellipsis } from "lucide-react";
 import { Checkbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
@@ -47,12 +57,27 @@ function nextSortDirection(current: string | undefined): "Asc" | "Desc" | undefi
 // Column pinning (sticky columns)
 // =============================================================================
 
-// Fixed widths of the built-in selection / row-actions columns, used as the
-// innermost anchors when computing cumulative sticky offsets.
+// Fallback widths of the built-in selection / row-actions columns, used as the
+// innermost anchors before the real widths are measured.
 const SELECTION_WIDTH = 52;
 const ACTIONS_WIDTH = 50;
+// Keys for the built-in selection / row-actions columns in the measured-width map.
+const SELECTION_KEY = "__datatable_selection__";
+const ACTIONS_KEY = "__datatable_actions__";
 
 type PinSide = "left" | "right";
+type ColumnWidths = Record<string, number>;
+
+/**
+ * Rendered column widths (px) keyed by column key, published by `DataTable.Table`
+ * after it measures the header row. Empty until the first measurement; consumers
+ * fall back to each column's declared `width` (or 0) meanwhile.
+ */
+const PinMeasureContext = createContext<ColumnWidths>({});
+
+// `useLayoutEffect` warns during SSR; the measurement it drives is client-only,
+// so fall back to `useEffect` on the server.
+const useIsomorphicLayoutEffect = typeof document !== "undefined" ? useLayoutEffect : useEffect;
 
 interface PinPlacement {
   side: PinSide;
@@ -65,6 +90,8 @@ interface PinPlacement {
 interface PinLayout<TRow extends Record<string, unknown>> {
   /** Visible columns reordered into `[left-pinned, unpinned, right-pinned]`. */
   ordered: Column<TRow>[];
+  /** Render key per column (data-col-key + React key), keyed by column reference. */
+  keys: Map<Column<TRow>, string>;
   /** Sticky placement per pinned column (keyed by column reference). */
   placements: Map<Column<TRow>, PinPlacement>;
   /** Placement for the built-in selection column, when pinned. */
@@ -78,6 +105,21 @@ function columnKeyAt<TRow extends Record<string, unknown>>(
   index: number,
 ): string {
   return col.id ?? col.label ?? String(index);
+}
+
+/** Rendered width for a column key: the measured value wins once > 0, else the
+ *  declared width, else 0. */
+function resolveWidth(key: string, declared: number | undefined, widths: ColumnWidths): number {
+  const measured = widths[key];
+  return measured && measured > 0 ? measured : (declared ?? 0);
+}
+
+/** Shallow equality of two width maps — guards the measure effect against
+ *  setting state (and re-rendering) when nothing actually changed. */
+function sameWidths(a: ColumnWidths, b: ColumnWidths): boolean {
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  return aKeys.every((k) => a[k] === b[k]);
 }
 
 /**
@@ -109,23 +151,19 @@ function effectivePin<TRow extends Record<string, unknown>>(
 function computePinLayout<TRow extends Record<string, unknown>>(
   columns: Column<TRow>[],
   pinnedColumns: Record<string, "left" | "right" | "none">,
-  opts: { hasSelection: boolean; hasRowActions: boolean },
+  opts: { hasSelection: boolean; hasRowActions: boolean; widths: ColumnWidths },
 ): PinLayout<TRow> {
+  const { hasSelection, hasRowActions, widths } = opts;
+
+  const keys = new Map<Column<TRow>, string>();
+  columns.forEach((col, index) => keys.set(col, columnKeyAt(col, index)));
+
   const left: Column<TRow>[] = [];
   const middle: Column<TRow>[] = [];
   const right: Column<TRow>[] = [];
 
   columns.forEach((col, index) => {
     const pin = effectivePin(col, index, pinnedColumns);
-    // Offsets are derived from column widths; a pin without a width can't take
-    // part, so fail soft (unpinned) with a dev warning rather than break layout.
-    if (pin && !col.width) {
-      console.warn(
-        `[DataTable] Column "${columnKeyAt(col, index)}" has pin="${pin}" but no width; ignoring the pin. Pinned columns must set an explicit width.`,
-      );
-      middle.push(col);
-      return;
-    }
     if (pin === "left") left.push(col);
     else if (pin === "right") right.push(col);
     else middle.push(col);
@@ -133,32 +171,33 @@ function computePinLayout<TRow extends Record<string, unknown>>(
 
   const placements = new Map<Column<TRow>, PinPlacement>();
 
-  // Left group, visually [selection?, ...left]; offsets accumulate rightward.
+  // Left group, visually [selection?, ...left]; offsets accumulate rightward
+  // using the measured (or declared) width of each preceding pinned column.
   let leftOffset = 0;
   let selection: PinPlacement | undefined;
-  if (opts.hasSelection) {
+  if (hasSelection) {
     selection = { side: "left", offset: 0, isBoundary: left.length === 0 };
-    leftOffset = SELECTION_WIDTH;
+    leftOffset = resolveWidth(SELECTION_KEY, SELECTION_WIDTH, widths);
   }
   left.forEach((col, i) => {
     placements.set(col, { side: "left", offset: leftOffset, isBoundary: i === left.length - 1 });
-    leftOffset += col.width ?? 0;
+    leftOffset += resolveWidth(keys.get(col) as string, col.width, widths);
   });
 
   // Right group, visually [...right, actions?]; offsets accumulate leftward.
   let rightOffset = 0;
   let actions: PinPlacement | undefined;
-  if (opts.hasRowActions) {
+  if (hasRowActions) {
     actions = { side: "right", offset: 0, isBoundary: right.length === 0 };
-    rightOffset = ACTIONS_WIDTH;
+    rightOffset = resolveWidth(ACTIONS_KEY, ACTIONS_WIDTH, widths);
   }
   for (let i = right.length - 1; i >= 0; i--) {
     const col = right[i];
     placements.set(col, { side: "right", offset: rightOffset, isBoundary: i === 0 });
-    rightOffset += col.width ?? 0;
+    rightOffset += resolveWidth(keys.get(col) as string, col.width, widths);
   }
 
-  return { ordered: [...left, ...middle, ...right], placements, selection, actions };
+  return { ordered: [...left, ...middle, ...right], keys, placements, selection, actions };
 }
 
 /**
@@ -232,7 +271,7 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   hasSelection,
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
-  const { ordered: columns, placements, selection, actions } = pinLayout;
+  const { ordered: columns, keys, placements, selection, actions } = pinLayout;
   // No fixed row height: each cell's placeholder matches the height of the
   // real content it stands in for (text line, badge, icon button), so the
   // skeleton rows resolve to exactly the same row height as loaded rows and
@@ -255,7 +294,7 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
               );
             })()}
           {columns?.map((col, colIndex) => {
-            const key = columnKeyAt(col, colIndex);
+            const key = keys.get(col) as string;
             const skeletonWidth = SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length];
             const isBadge = col.type === "badge";
             const { style, className } = pinCellProps(
@@ -283,7 +322,7 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
             (() => {
               const { style, className } = pinCellProps(
                 actions,
-                { style: { width: ACTIONS_WIDTH } },
+                { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
                 "body",
               );
               return (
@@ -443,11 +482,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     isIndeterminate,
   } = ctx;
   const t = useDataTableT();
+  const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
-  const { ordered, placements, selection, actions } = useMemo(
-    () => computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions }),
-    [columns, pinnedColumns, hasSelection, hasRowActions],
+  const { ordered, keys, placements, selection, actions } = useMemo(
+    () => computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths }),
+    [columns, pinnedColumns, hasSelection, hasRowActions, widths],
   );
 
   return (
@@ -472,7 +512,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               "header",
             );
             return (
-              <Table.Head style={style} className={className}>
+              <Table.Head data-col-key={SELECTION_KEY} style={style} className={className}>
                 <Checkbox.Root
                   checked={isAllSelected}
                   indeterminate={isIndeterminate}
@@ -501,8 +541,8 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               </Table.Head>
             );
           })()}
-        {ordered?.map((col, colIndex) => {
-          const key = columnKeyAt(col, colIndex);
+        {ordered?.map((col) => {
+          const key = keys.get(col) as string;
           const label = col.label;
 
           const isSortable = !!col.sort;
@@ -530,6 +570,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           return (
             <Table.Head
               key={key}
+              data-col-key={key}
               style={style}
               className={className}
               onClick={isSortable ? handleClick : undefined}
@@ -550,11 +591,11 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           (() => {
             const { style, className } = pinCellProps(
               actions,
-              { style: { width: ACTIONS_WIDTH } },
+              { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
               "header",
             );
             return (
-              <Table.Head style={style} className={className}>
+              <Table.Head data-col-key={ACTIONS_KEY} style={style} className={className}>
                 <span className="astw:sr-only">{t("actionsHeader")}</span>
               </Table.Head>
             );
@@ -601,13 +642,14 @@ function DataTableBody({ className }: { className?: string }) {
     pageSize,
   } = ctx;
   const t = useDataTableT();
+  const widths = useContext(PinMeasureContext);
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const hasSelection = !!toggleRowSelection;
   const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
   const pinLayout = useMemo(
-    () => computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions }),
-    [columns, pinnedColumns, hasSelection, hasRowActions],
+    () => computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths }),
+    [columns, pinnedColumns, hasSelection, hasRowActions, widths],
   );
   const tableBodyProps = {
     "data-slot": "data-table-body",
@@ -693,7 +735,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   onClickRow,
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
-  const { ordered, placements, selection, actions } = pinLayout;
+  const { ordered, keys, placements, selection, actions } = pinLayout;
 
   return (
     <>
@@ -738,8 +780,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                   </Table.Cell>
                 );
               })()}
-            {ordered?.map((col, colIndex) => {
-              const key = columnKeyAt(col, colIndex);
+            {ordered?.map((col) => {
+              const key = keys.get(col) as string;
               const content = col.render ? col.render(row) : renderTypedCell(row, col);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
@@ -814,7 +856,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               (() => {
                 const { style, className } = pinCellProps(
                   actions,
-                  { style: { width: ACTIONS_WIDTH } },
+                  { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
                   "body",
                 );
                 return (
@@ -890,24 +932,44 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 function DataTableTable({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   const containerRef = useRef<HTMLDivElement>(null);
-  // When a column is pinned, the sticky offsets are computed from each column's
-  // declared `width`. Auto table layout treats `width` as a hint and can render
-  // columns narrower/wider than declared, which leaves gaps or overlaps between
-  // stacked sticky columns. `table-fixed` makes the declared widths
-  // authoritative so the offsets line up exactly. Scoped to pinned tables so
-  // non-pinned tables keep their natural content-based sizing.
-  const hasColumnPin =
-    !!ctx &&
-    ctx.visibleColumns.some((col, i) => {
-      const key = col.id ?? col.label ?? String(i);
-      return resolvePin(ctx.pinnedColumns[key], col.pin) != null;
-    });
+  const [widths, setWidths] = useState<ColumnWidths>({});
+
+  const visibleColumns = ctx?.visibleColumns;
+  const pinnedColumns = ctx?.pinnedColumns;
+
+  // Measure each column's *rendered* width from the (always-present) header row
+  // and publish it via PinMeasureContext, so sticky offsets reflect real
+  // geometry rather than declared `width`. This keeps the table on its natural
+  // `table-auto` sizing — pinning no longer forces `table-fixed` (which would
+  // require every column to set an explicit width or collapse). Runs before
+  // paint and re-measures on container/column changes.
+  useIsomorphicLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const cells = el.querySelectorAll<HTMLElement>(
+        "[data-slot='data-table-header'] [data-col-key]",
+      );
+      const next: ColumnWidths = {};
+      cells.forEach((cell) => {
+        const key = cell.dataset.colKey;
+        if (key) next[key] = cell.offsetWidth;
+      });
+      setWidths((prev) => (sameWidths(prev, next) ? prev : next));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    const table = el.querySelector("table");
+    if (table) observer.observe(table);
+    return () => observer.disconnect();
+  }, [visibleColumns, pinnedColumns]);
 
   // Reflect horizontal scroll position onto the container as data attributes so
-  // the pinned-column freeze shadows can show only while there is content
-  // scrolled under that edge (left shadow once scrolled from the start; right
-  // shadow while more remains to the right). Re-runs when the column set changes
-  // (which changes scrollWidth) and observes size changes.
+  // the pinned-column freeze shadows show only while there is content scrolled
+  // under that edge (left once scrolled from the start; right while more remains
+  // to the right). Re-runs when the column set changes and observes size changes.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -918,28 +980,33 @@ function DataTableTable({ className }: { className?: string }) {
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
+    if (typeof ResizeObserver === "undefined") {
+      return () => el.removeEventListener("scroll", update);
+    }
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => {
       el.removeEventListener("scroll", update);
       observer.disconnect();
     };
-  }, [ctx?.visibleColumns, ctx?.pinnedColumns]);
+  }, [visibleColumns, pinnedColumns]);
 
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex
     // column; combined with the container's overflow-auto this is the region
     // that scrolls vertically when height is constrained. The sticky header
     // (DataTableHeaders) stays pinned to the top of this scrollport.
-    <Table.Root
-      data-slot="data-table-table"
-      containerRef={containerRef}
-      containerClassName="astw:min-h-0 astw:overflow-auto"
-      className={cn(hasColumnPin && "astw:table-fixed", className)}
-    >
-      <DataTableHeaders />
-      <DataTableBody />
-    </Table.Root>
+    <PinMeasureContext.Provider value={widths}>
+      <Table.Root
+        data-slot="data-table-table"
+        containerRef={containerRef}
+        containerClassName="astw:min-h-0 astw:overflow-auto"
+        className={className}
+      >
+        <DataTableHeaders />
+        <DataTableBody />
+      </Table.Root>
+    </PinMeasureContext.Provider>
   );
 }
 DataTableTable.displayName = "DataTable.Table";

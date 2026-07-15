@@ -1156,7 +1156,7 @@ describe("DataTable", () => {
       expect(headByText(container, "C")?.className).toContain("data-pin-shadow-right");
     });
 
-    it("ignores a pin without a width and warns", () => {
+    it("honours a pin without a width (offsets come from measured widths)", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       const cols: Column<Row>[] = [
         { id: "a", label: "A", pin: "left", render: (r) => r.a },
@@ -1171,8 +1171,11 @@ describe("DataTable", () => {
         );
       }
       const { container } = render(<Harness />, { wrapper });
-      expect(headByText(container, "A")?.style.position).toBe("");
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("no width"));
+      // Width is no longer required to pin — the column is still frozen (offsets
+      // are measured at runtime), and there is no dev warning.
+      expect(headByText(container, "A")?.style.position).toBe("sticky");
+      expect(headByText(container, "A")?.style.left).toBe("0px");
+      expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
     });
   });

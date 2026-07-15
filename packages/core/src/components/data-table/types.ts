@@ -115,9 +115,9 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * override it at runtime via `DataTable.ColumnSettings` (persisted when
    * `tableId` is set).
    *
-   * **Pinned columns must set `width`** — the sticky offset of each pinned
-   * column is computed from the widths of the columns pinned beside it. A `pin`
-   * without a `width` is ignored (with a dev warning).
+   * Sticky offsets for stacked pinned columns are measured from the rendered
+   * layout, so a `width` is not required — but setting `width` on pinned columns
+   * is recommended so their size stays stable as row content changes.
    */
   pin?: "left" | "right";
   /**

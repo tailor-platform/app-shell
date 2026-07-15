@@ -66,6 +66,11 @@ interface DateBehaviorProps<T extends DateValue> {
   hourCycle?: HourCycle;
   hideTimeZone?: boolean;
   placeholderValue?: DateValue;
+  /**
+   * First day of the week (0 = Sunday … 6 = Saturday); defaults to the locale.
+   * Only affects the `w`/`k` (start/end of week) keyboard shortcuts here.
+   */
+  firstDayOfWeek?: FirstDayOfWeek;
   name?: string;
   /** Accessible name when no visible `label` is provided (e.g. a compact filter input). */
   "aria-label"?: string;
@@ -77,7 +82,6 @@ export type DateFieldProps<T extends DateValue = DateValue> = DateFieldMetaProps
   DateBehaviorProps<T>;
 
 export type DatePickerProps<T extends DateValue = DateValue> = DateFieldProps<T> & {
-  firstDayOfWeek?: FirstDayOfWeek;
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
 };
@@ -107,11 +111,14 @@ function DateField<T extends DateValue = DateValue>({
   granularity,
   hourCycle,
   placeholderValue,
+  minValue,
+  maxValue,
   isDisabled,
   isReadOnly,
   isInvalid,
   isRequired,
   autoFocus,
+  firstDayOfWeek,
   name,
   "aria-label": ariaLabel,
 }: DateFieldProps<T>) {
@@ -139,6 +146,13 @@ function DateField<T extends DateValue = DateValue>({
     locale: resolvedLocale,
     hourCycle,
     placeholderValue,
+    // Let the keyboard shortcuts clamp into range (the field has no calendar to
+    // enforce it otherwise).
+    minValue,
+    maxValue,
+    // Drives the `w`/`k` (start/end of week) shortcuts; the standalone field has
+    // no calendar to pair with, so this is the only week-start override.
+    firstDayOfWeek,
     isReadOnly,
   });
 
@@ -153,7 +167,9 @@ function DateField<T extends DateValue = DateValue>({
         setDigit={state.setDigit}
         setDayPeriod={state.setDayPeriod}
         clearSegment={state.clearSegment}
+        applyShortcut={state.applyShortcut}
         commitOnBlur={state.commitOnBlur}
+        expandShortYear={state.expandShortYear}
         isDisabled={isDisabled}
         isReadOnly={isReadOnly}
         isInvalid={derivedInvalid}
@@ -248,6 +264,11 @@ function DatePicker<T extends DateValue = DateValue>({
     timeZone: resolvedTz,
     hourCycle,
     placeholderValue,
+    // Let the keyboard shortcuts clamp into the same range the calendar enforces.
+    minValue,
+    maxValue,
+    // Match the calendar's week-start so field + calendar `w`/`k` agree.
+    firstDayOfWeek,
     isReadOnly,
   });
 
@@ -288,7 +309,10 @@ function DatePicker<T extends DateValue = DateValue>({
             setDigit={fieldState.setDigit}
             setDayPeriod={fieldState.setDayPeriod}
             clearSegment={fieldState.clearSegment}
+            applyShortcut={fieldState.applyShortcut}
             commitOnBlur={fieldState.commitOnBlur}
+            expandShortYear={fieldState.expandShortYear}
+            onOpenCalendar={() => setOpen(true)}
             isDisabled={isDisabled}
             isReadOnly={isReadOnly}
             isInvalid={derivedInvalid}

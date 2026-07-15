@@ -127,10 +127,11 @@ The tables below list props this variant **actually implements** for v1 (date gr
 | `isRequired`                              | `boolean`                        | Sets `aria-required` on the segments (no visual required indicator yet) |
 | `placeholderValue`                        | `DateValue`                      | Seeds unset segments (increment start + segment order)                  |
 | `autoFocus`                               | `boolean`                        | Focus the first segment on mount                                        |
-| `locale`                                  | `string`                         | BCP-47 locale override (defaults to the AppShell formatting locale)     |
-| `name`                                    | `string`                         | Emits a hidden `<input>` with the ISO value for form submission         |
-| `aria-label`                              | `string`                         | Accessible name when there's no visible `label` (e.g. compact filters)  |
-| `className`                               | `string`                         | Root element class                                                      |
+| `locale`                                  | `string`                         | BCP-47 locale override (defaults to the AppShell formatting locale)                                     |
+| `name`                                    | `string`                         | Emits a hidden `<input>` with the ISO value for form submission                                         |
+| `firstDayOfWeek`                          | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale's week start for the `w`/`k` keyboard shortcuts; omit to follow the locale |
+| `aria-label`                              | `string`                         | Accessible name when there's no visible `label` (e.g. compact filters)                                  |
+| `className`                               | `string`                         | Root element class                                                                                      |
 
 > `DateField` has no calendar, so `minValue` / `maxValue` / `isDateUnavailable` don't apply to it — they're honoured by `DatePicker` and `Calendar` below.
 

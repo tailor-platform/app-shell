@@ -14,4 +14,11 @@ export interface PositionProps {
   align?: "start" | "center" | "end";
   /** Distance (in px) between the popup and the anchor edge. */
   sideOffset?: number;
+  /**
+   * Whether the popup follows its anchor if the anchor moves while open.
+   * Defaults to Base UI's behavior (`true`). Set to `false` to pin the popup
+   * where it opened — useful when opening it mutates the layout around the
+   * trigger (e.g. adding a filter chip shifts the trigger).
+   */
+  trackAnchor?: boolean;
 }

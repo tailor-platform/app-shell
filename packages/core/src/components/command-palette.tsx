@@ -137,19 +137,18 @@ type PaletteState =
       isSearching: boolean;
     };
 
+// Parsed search-mode metadata shared by both normal typing and programmatic
+// open. We compute this before dispatch because the reducer only sees state +
+// action and does not have direct access to `searchSources`.
+type ParsedSearchActionPayload = {
+  value: string;
+  detectedSource?: SearchSource;
+  detectedQuery?: string;
+};
+
 type PaletteAction =
-  | {
-      type: "SET_SEARCH";
-      value: string;
-      detectedSource?: SearchSource;
-      detectedQuery?: string;
-    }
-  | {
-      type: "INITIALIZE_SEARCH";
-      value: string;
-      detectedSource?: SearchSource;
-      detectedQuery?: string;
-    }
+  | ({ type: "SET_SEARCH" } & ParsedSearchActionPayload)
+  | ({ type: "INITIALIZE_SEARCH" } & ParsedSearchActionPayload)
   | { type: "ARROW_DOWN"; maxIndex: number }
   | { type: "ARROW_UP" }
   | { type: "ENTER_SEARCH_MODE"; source: SearchSource }

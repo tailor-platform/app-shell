@@ -71,6 +71,18 @@ export type RootConfiguration = {
   timeZone?: string;
 };
 
+export type AppInfoEntry = {
+  /** Display label shown on the built-in "/__appinfo" page. */
+  label: string;
+  /** Primitive value rendered as text. Format complex values before passing them in. */
+  value: string | number | boolean | null | undefined;
+};
+
+export type AppInfo = {
+  /** Additional app-defined rows shown on the built-in "/__appinfo" page. */
+  metadata?: readonly AppInfoEntry[];
+};
+
 export type ConfigurationOptions = {
   modules: Modules;
   settingsResources?: Resource[];
@@ -105,6 +117,7 @@ type AppShellConfigContextType = {
   title?: string;
   icon?: ReactNode;
   favicon?: string;
+  appInfo?: AppInfo;
   configurations: RootConfiguration;
 };
 

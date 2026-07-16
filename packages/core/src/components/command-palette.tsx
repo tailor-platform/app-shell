@@ -1,5 +1,6 @@
 import { useReducer, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
+import { useAppInfoPageRoute } from "@/components/app-info";
 import { SearchIcon, LoaderCircleIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
@@ -500,13 +501,17 @@ export function useCommandPalette({
 
 type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
+  extraRoutes?: Array<NavigatableRoute>;
 };
 
-export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
+export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
   const { searchSources, open, setOpen, openRequest, clearOpenRequest } = useCommandPaletteState();
-  const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
+  const routes = useMemo(
+    () => [...navItemsToRoutes(navItems), ...extraRoutes],
+    [extraRoutes, navItems],
+  );
   const {
     open: paletteOpen,
     handleOpenChange,
@@ -748,11 +753,12 @@ export function CommandPalette(): React.ReactNode {
  */
 export function BuiltInCommandPalette() {
   const navItems = useNavItems();
+  const appInfoRoute = useAppInfoPageRoute();
 
   return (
     <Suspense fallback={null}>
       <Await resolve={navItems}>
-        {(items) => <CommandPaletteContent navItems={items ?? []} />}
+        {(items) => <CommandPaletteContent navItems={items ?? []} extraRoutes={[appInfoRoute]} />}
       </Await>
     </Suspense>
   );

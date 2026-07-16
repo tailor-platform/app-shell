@@ -5,6 +5,7 @@ import {
   DatePicker,
   Calendar,
   Form,
+  Field,
   Button,
   useTimeZone,
   parseDate,
@@ -29,8 +30,8 @@ const DatePickerPage = () => {
   const tomorrow = tz.today().add({ days: 1 });
   const threeMonths = tz.today().add({ months: 3 });
 
-  // Validation runs on submit; the DatePicker surfaces the message through its
-  // own `errorMessage` / `isInvalid` props (it isn't a Base UI Field control).
+  // Validation runs on submit; the DatePicker composes with Field.Root for the
+  // label + error presentation, like the rest of the control set.
   const handleDeliverySubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!deliveryDate) {
@@ -72,19 +73,30 @@ const DatePickerPage = () => {
             <h2 className="text-base font-semibold border-b pb-2">DateField</h2>
 
             <div className="flex flex-wrap gap-6 items-start">
-              <DateField
-                label="Basic"
-                value={fieldValue}
-                onChange={(v) => setFieldValue(v as CalendarDate | null)}
-              />
-              <DateField
-                label="With description"
-                description="Select a date within the next 3 months"
-                minValue={tomorrow}
-                maxValue={threeMonths}
-              />
-              <DateField label="Disabled" isDisabled defaultValue={parseDate("2025-06-15")} />
-              <DateField label="Required" isRequired errorMessage="Date is required" />
+              <Field.Root>
+                <Field.Label>Basic</Field.Label>
+                <DateField
+                  aria-label="Basic"
+                  value={fieldValue}
+                  onChange={(v) => setFieldValue(v as CalendarDate | null)}
+                />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>With description</Field.Label>
+                <DateField
+                  aria-label="With description"
+                  constraints={{ min: tomorrow, max: threeMonths }}
+                />
+                <Field.Description>Select a date within the next 3 months</Field.Description>
+              </Field.Root>
+              <Field.Root disabled>
+                <Field.Label>Disabled</Field.Label>
+                <DateField aria-label="Disabled" defaultValue={parseDate("2025-06-15")} />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>Required</Field.Label>
+                <DateField aria-label="Required" constraints={{ required: true }} />
+              </Field.Root>
             </div>
 
             {fieldValue && (
@@ -99,30 +111,40 @@ const DatePickerPage = () => {
             <h2 className="text-base font-semibold border-b pb-2">DatePicker</h2>
 
             <div className="flex flex-wrap gap-6 items-start">
-              <DatePicker
-                label="Basic"
-                value={pickerValue}
-                onChange={(v) => setPickerValue(v as CalendarDate | null)}
-              />
-              <DatePicker
-                label="Future dates only"
-                description="Minimum: tomorrow"
-                minValue={tomorrow}
-              />
-              <DatePicker
-                label="No weekends"
-                description="Weekday dates only"
-                isDateUnavailable={(d) => {
-                  const day = d.toDate(tz.value).getDay();
-                  return day === 0 || day === 6;
-                }}
-              />
-              <DatePicker
-                label="With range"
-                minValue={tz.today()}
-                maxValue={threeMonths}
-                description={`Today → ${threeMonths.toString()}`}
-              />
+              <Field.Root>
+                <Field.Label>Basic</Field.Label>
+                <DatePicker
+                  aria-label="Basic"
+                  value={pickerValue}
+                  onChange={(v) => setPickerValue(v as CalendarDate | null)}
+                />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>Future dates only</Field.Label>
+                <DatePicker aria-label="Future dates only" constraints={{ min: tomorrow }} />
+                <Field.Description>Minimum: tomorrow</Field.Description>
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>No weekends</Field.Label>
+                <DatePicker
+                  aria-label="No weekends"
+                  constraints={{
+                    unavailable: (d) => {
+                      const day = d.toDate(tz.value).getDay();
+                      return day === 0 || day === 6;
+                    },
+                  }}
+                />
+                <Field.Description>Weekday dates only</Field.Description>
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>With range</Field.Label>
+                <DatePicker
+                  aria-label="With range"
+                  constraints={{ min: tz.today(), max: threeMonths }}
+                />
+                <Field.Description>{`Today → ${threeMonths.toString()}`}</Field.Description>
+              </Field.Root>
             </div>
 
             {pickerValue && (
@@ -137,28 +159,28 @@ const DatePickerPage = () => {
             <h2 className="text-base font-semibold border-b pb-2">In a form (submit validation)</h2>
             <p className="text-sm text-muted-foreground">
               Standard <code className="bg-muted px-1 py-0.5 rounded">Form</code> +{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">Button</code>. Submitting empty (or
-              with a past date) triggers validation — the error surfaces through the DatePicker's
-              own <code className="bg-muted px-1 py-0.5 rounded">errorMessage</code> /{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">isInvalid</code> props, and clears as
-              soon as a valid date is picked.
+              <code className="bg-muted px-1 py-0.5 rounded">Field.Root</code>. Submitting empty (or
+              with a past date) marks the field invalid through the field shell, and the error
+              clears as soon as a valid date is picked.
             </p>
             <Form
               onSubmit={handleDeliverySubmit}
               className="flex flex-col items-start gap-4 max-w-sm"
             >
-              <DatePicker
-                label="Delivery date"
-                description="When should we ship your order?"
-                isRequired
-                value={deliveryDate}
-                onChange={(v) => {
-                  setDeliveryDate(v as CalendarDate | null);
-                  if (v) setDeliveryError(undefined);
-                }}
-                errorMessage={deliveryError}
-                isInvalid={!!deliveryError}
-              />
+              <Field.Root invalid={!!deliveryError}>
+                <Field.Label>Delivery date</Field.Label>
+                <DatePicker
+                  aria-label="Delivery date"
+                  constraints={{ required: true }}
+                  value={deliveryDate}
+                  onChange={(v) => {
+                    setDeliveryDate(v as CalendarDate | null);
+                    if (v) setDeliveryError(undefined);
+                  }}
+                />
+                <Field.Description>When should we ship your order?</Field.Description>
+                <Field.Error match={!!deliveryError}>{deliveryError}</Field.Error>
+              </Field.Root>
               <Button type="submit">Schedule delivery</Button>
             </Form>
             {confirmedDate && (
@@ -177,9 +199,18 @@ const DatePickerPage = () => {
               explicitly to force a specific start day regardless of locale.
             </p>
             <div className="flex flex-wrap gap-6 items-start">
-              <DatePicker label="Forced Sunday" firstDayOfWeek="sun" />
-              <DatePicker label="Forced Monday" firstDayOfWeek="mon" />
-              <DatePicker label="Locale default" />
+              <Field.Root>
+                <Field.Label>Forced Sunday</Field.Label>
+                <DatePicker aria-label="Forced Sunday" firstDayOfWeek="sun" />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>Forced Monday</Field.Label>
+                <DatePicker aria-label="Forced Monday" firstDayOfWeek="mon" />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>Locale default</Field.Label>
+                <DatePicker aria-label="Locale default" />
+              </Field.Root>
             </div>
           </section>
 
@@ -189,9 +220,18 @@ const DatePickerPage = () => {
               Locale (segment order + names)
             </h2>
             <div className="flex flex-wrap gap-6 items-start">
-              <DatePicker label="en-US (MM/DD/YYYY)" locale="en-US" />
-              <DatePicker label="en-GB (DD/MM/YYYY, Mon-first)" locale="en-GB" />
-              <DatePicker label="ja-JP (YYYY/MM/DD)" locale="ja-JP" />
+              <Field.Root>
+                <Field.Label>en-US (MM/DD/YYYY)</Field.Label>
+                <DatePicker aria-label="en-US (MM/DD/YYYY)" locale="en-US" />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>en-GB (DD/MM/YYYY, Mon-first)</Field.Label>
+                <DatePicker aria-label="en-GB (DD/MM/YYYY, Mon-first)" locale="en-GB" />
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>ja-JP (YYYY/MM/DD)</Field.Label>
+                <DatePicker aria-label="ja-JP (YYYY/MM/DD)" locale="ja-JP" />
+              </Field.Root>
             </div>
           </section>
 

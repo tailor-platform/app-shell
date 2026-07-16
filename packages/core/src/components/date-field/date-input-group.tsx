@@ -93,7 +93,8 @@ interface DateInputGroupProps {
   isInvalid?: boolean;
   isRequired?: boolean;
   autoFocus?: boolean;
-  labelId?: string;
+  /** ID of the element(s) that label the group. */
+  ariaLabelledby?: string;
   /** Accessible name when there is no visible label (e.g. a compact filter input). */
   ariaLabel?: string;
   describedById?: string;
@@ -101,6 +102,10 @@ interface DateInputGroupProps {
   trigger?: React.ReactNode;
   /** Ref to the group element — used to anchor the popover to the whole field. */
   groupRef?: React.Ref<HTMLDivElement>;
+  /** Called once when focus enters the group from outside. */
+  onGroupFocus?: () => void;
+  /** Called once when focus leaves the group entirely. */
+  onGroupBlur?: () => void;
 }
 
 export function DateInputGroup({
@@ -118,12 +123,14 @@ export function DateInputGroup({
   isInvalid,
   isRequired,
   autoFocus,
-  labelId,
+  ariaLabelledby,
   ariaLabel,
   describedById,
   className,
   trigger,
   groupRef,
+  onGroupFocus,
+  onGroupBlur,
 }: DateInputGroupProps) {
   const t = useDateFieldT();
   const editableRefs = React.useRef<(HTMLDivElement | null)[]>([]);
@@ -248,13 +255,16 @@ export function DateInputGroup({
       ref={groupRef}
       role="group"
       data-slot="date-picker-group"
-      aria-labelledby={labelId}
-      aria-label={labelId ? undefined : ariaLabel}
+      aria-labelledby={ariaLabelledby}
+      aria-label={ariaLabelledby ? undefined : ariaLabel}
       aria-describedby={describedById}
       aria-disabled={isDisabled || undefined}
       data-disabled={isDisabled || undefined}
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, className)}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onGroupFocus?.();
+      }}
       onBlur={(e) => {
         // Leaving the year segment (to a sibling, the calendar icon, or out of
         // the field) expands a 1–2 digit year to the 2000s right away — the icon
@@ -264,7 +274,10 @@ export function DateInputGroup({
         // Focus left the whole group (not just moved between segments) →
         // backfill the current month/year for a partial entry and clamp an
         // impossible day.
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commitOnBlur();
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          commitOnBlur();
+          onGroupBlur?.();
+        }
       }}
     >
       <div data-slot="date-input" className="astw:flex astw:flex-1 astw:items-center astw:gap-px">

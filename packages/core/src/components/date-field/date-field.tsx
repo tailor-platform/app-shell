@@ -1,53 +1,56 @@
-import { useCallback, useId, useRef, useState } from "react";
+import * as React from "react";
 import type { DateValue } from "@internationalized/date";
+import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
+import { useRegisterFieldControl } from "@base-ui/react/internals/field-register-control";
+import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/labelable-provider";
 import { cn } from "@/lib/utils";
-import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
-import {
-  useDateFieldState,
-  type DateFieldInvalidReason,
-  type Granularity,
-  type HourCycle,
-} from "./use-date-field-state";
+import { useDateFieldState, type Granularity, type HourCycle } from "./use-date-field-state";
 import { useCalendarState, type FirstDayOfWeek } from "../calendar/use-calendar-state";
 import { CalendarView } from "../calendar/calendar-view";
-import {
-  DateInputGroup,
-  DatePopover,
-  DatePickerPopoverTrigger,
-  DatePickerLabel,
-  DatePickerDescription,
-  DatePickerError,
-} from "./date-input-group";
+import { DateInputGroup, DatePopover, DatePickerPopoverTrigger } from "./date-input-group";
 import { useDateFieldT } from "./i18n";
 
 /**
- * Public, closed-API date components — the @internationalized/date + Base UI
- * implementation. Same surface as the react-aria variant; only the internals
- * differ. Consumers never see Base UI or the date engines.
+ * Public, control-first date components.
+ *
+ * Like Select / Combobox / Autocomplete, these own value entry + interaction,
+ * and compose with Field.Root for label / description / error presentation.
  */
 
-// Built-in validation message key for a field's invalid reason (null = none, so
-// the consumer's `errorMessage` — or no message — stands). A lookup rather than
-// a nested ternary keeps the lint happy.
-function invalidMessageKey(
-  reason: DateFieldInvalidReason | null | undefined,
-): "dateUnavailable" | "dateOutOfRange" | null {
-  if (reason === "unavailable") return "dateUnavailable";
-  if (reason === "range") return "dateOutOfRange";
-  return null;
+type DateControlMode = "editable" | "readonly" | "disabled";
+
+interface DateConstraints<T extends DateValue> {
+  required?: true;
+  min?: DateValue;
+  max?: DateValue;
+  unavailable?: (date: T) => boolean;
 }
 
-// ─── Small controlled-state helper ────────────────────────────────────────────
+function joinIds(...ids: Array<string | null | undefined | false>) {
+  const joined = ids.filter(Boolean).join(" ");
+  return joined || undefined;
+}
+
+function assignRef<T>(ref: React.Ref<T> | undefined, value: T) {
+  if (!ref) return;
+  if (typeof ref === "function") {
+    ref(value);
+    return;
+  }
+  ref.current = value;
+}
+
+// Small controlled-state helper.
 function useControlledState<V>(
   controlled: V | undefined,
   defaultValue: V,
   onChange?: (value: V) => void,
 ): [V, (value: V) => void] {
   const isControlled = controlled !== undefined;
-  const [internal, setInternal] = useState<V>(defaultValue);
+  const [internal, setInternal] = React.useState<V>(defaultValue);
   const value = isControlled ? (controlled as V) : internal;
-  const set = useCallback(
+  const set = React.useCallback(
     (next: V) => {
       if (!isControlled) setInternal(next);
       onChange?.(next);
@@ -57,101 +60,169 @@ function useControlledState<V>(
   return [value, set];
 }
 
-// ─── Shared prop types (names unchanged from react-aria) ──────────────────────
-
-interface DateFieldMetaProps {
-  label?: LocalizedString;
-  description?: LocalizedString;
-  errorMessage?: LocalizedString;
-  className?: string;
-}
-
-interface DateBehaviorProps<T extends DateValue> {
+interface DateControlProps<T extends DateValue> {
   value?: T | null;
   defaultValue?: T | null;
   onChange?: (value: T | null) => void;
+  onBlur?: () => void;
   granularity?: Granularity;
-  minValue?: DateValue;
-  maxValue?: DateValue;
-  isDateUnavailable?: (date: DateValue) => boolean;
-  isDisabled?: boolean;
-  isReadOnly?: boolean;
-  isRequired?: boolean;
-  isInvalid?: boolean;
+  constraints?: DateConstraints<T>;
+  mode?: DateControlMode;
   autoFocus?: boolean;
   hourCycle?: HourCycle;
-  hideTimeZone?: boolean;
   placeholderValue?: DateValue;
-  /**
-   * First day of the week (0 = Sunday … 6 = Saturday); defaults to the locale.
-   * Only affects the `w`/`k` (start/end of week) keyboard shortcuts here.
-   */
   firstDayOfWeek?: FirstDayOfWeek;
   name?: string;
-  /** Accessible name when no visible `label` is provided (e.g. a compact filter input). */
+  className?: string;
+  id?: string;
+  /** Accessible name when there is no visible label. */
   "aria-label"?: string;
+  /** ID of the element(s) that label the control. */
+  "aria-labelledby"?: string;
   /** BCP-47 locale override; defaults to the AppShell formatting locale. */
   locale?: string;
 }
 
-export type DateFieldProps<T extends DateValue = DateValue> = DateFieldMetaProps &
-  DateBehaviorProps<T>;
+export type DateFieldProps<T extends DateValue = DateValue> = DateControlProps<T>;
 
-export type DatePickerProps<T extends DateValue = DateValue> = DateFieldProps<T> & {
+export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<T> & {
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
 };
 
-// ─── DateField ────────────────────────────────────────────────────────────────
+interface DateFieldA11yOptions {
+  id?: string;
+  name?: string;
+  mode?: DateControlMode;
+  fieldValue: string;
+  hasInput: boolean;
+  localInvalid: boolean;
+  labelledBy?: string;
+  ariaLabel?: string;
+  onBlur?: () => void;
+  groupRef: React.RefObject<HTMLDivElement | null>;
+  forwardedRef?: React.Ref<HTMLInputElement>;
+}
+
+function useDateFieldA11y({
+  id: idProp,
+  name: nameProp,
+  mode,
+  fieldValue,
+  hasInput,
+  localInvalid,
+  labelledBy: labelledByProp,
+  ariaLabel,
+  onBlur,
+  groupRef,
+  forwardedRef,
+}: DateFieldA11yOptions) {
+  const fieldRoot = useFieldRootContext();
+  const { labelId, messageIds } = useLabelableContext();
+  const proxyRef = React.useRef<HTMLInputElement>(null);
+  const controlId = useLabelableId({ id: idProp, controlRef: proxyRef });
+
+  useRegisterFieldControl(proxyRef, controlId, fieldValue, () => proxyRef.current?.value ?? "");
+
+  const setProxyRef = React.useCallback(
+    (node: HTMLInputElement | null) => {
+      proxyRef.current = node;
+      assignRef(forwardedRef, node);
+    },
+    [forwardedRef],
+  );
+
+  const focusFirstSegment = React.useCallback(() => {
+    const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
+    first?.focus();
+  }, [groupRef]);
+
+  const name = fieldRoot?.name ?? nameProp;
+  const isDisabled = fieldRoot?.disabled || mode === "disabled";
+  const isReadOnly = mode === "readonly";
+  const externalInvalid = fieldRoot?.state.valid === false;
+  const derivedInvalid = !!externalInvalid || localInvalid;
+  const labelledBy = joinIds(labelledByProp, labelId);
+  const describedBy = joinIds(...messageIds);
+  const initialValue =
+    typeof fieldRoot?.validityData.initialValue === "string"
+      ? fieldRoot.validityData.initialValue
+      : "";
+
+  React.useEffect(() => {
+    fieldRoot?.setFilled(hasInput);
+    fieldRoot?.setDirty(fieldValue !== initialValue || (hasInput && fieldValue === ""));
+
+    if (!fieldRoot?.shouldValidateOnChange()) return;
+    queueMicrotask(() => {
+      fieldRoot.validation.commit(proxyRef.current?.value ?? "");
+    });
+  }, [fieldRoot, hasInput, fieldValue, initialValue]);
+
+  const handleGroupFocus = React.useCallback(() => {
+    fieldRoot?.setFocused(true);
+  }, [fieldRoot]);
+
+  const handleGroupBlur = React.useCallback(() => {
+    fieldRoot?.setTouched(true);
+    fieldRoot?.setFocused(false);
+    onBlur?.();
+
+    if (fieldRoot?.validationMode !== "onBlur") return;
+    queueMicrotask(() => {
+      fieldRoot.validation.commit(proxyRef.current?.value ?? "");
+    });
+  }, [fieldRoot, onBlur]);
+
+  return {
+    controlId,
+    name,
+    isDisabled,
+    isReadOnly,
+    isInvalid: derivedInvalid,
+    labelledBy,
+    describedBy,
+    proxyRef: setProxyRef,
+    focusFirstSegment,
+    handleGroupFocus,
+    handleGroupBlur,
+    ariaLabel,
+  };
+}
 
 /**
  * A segmented date/time input field with no popover.
  *
- * @example
- * ```tsx
- * import { DateField } from "@tailor-platform/app-shell";
- *
- * <DateField label="Invoice date" />
- * <DateField label="Created at" granularity="minute" />
- * ```
+ * Compose with `Field.Root` for label / description / error presentation, or
+ * provide `aria-label` / `aria-labelledby` for standalone usage.
  */
-function DateField<T extends DateValue = DateValue>({
-  label,
-  description,
-  errorMessage,
-  className,
-  locale: localeProp,
-  value,
-  defaultValue,
-  onChange,
-  granularity,
-  hourCycle,
-  placeholderValue,
-  minValue,
-  maxValue,
-  isDateUnavailable,
-  isDisabled,
-  isReadOnly,
-  isInvalid,
-  isRequired,
-  autoFocus,
-  firstDayOfWeek,
-  name,
-  "aria-label": ariaLabel,
-}: DateFieldProps<T>) {
-  const { locale: shellLocale, language } = useResolvedLocale();
+const DateField = React.forwardRef(function DateField<T extends DateValue = DateValue>(
+  {
+    id,
+    className,
+    locale: localeProp,
+    value,
+    defaultValue,
+    onChange,
+    onBlur,
+    granularity,
+    constraints,
+    mode,
+    hourCycle,
+    placeholderValue,
+    autoFocus,
+    firstDayOfWeek,
+    name,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+  }: DateFieldProps<T>,
+  ref: React.ForwardedRef<HTMLInputElement>,
+) {
+  const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
-  const resolve = buildLocaleResolver(language);
-  const t = useDateFieldT();
-
-  const labelId = useId();
-  const descId = useId();
-  const errId = useId();
+  const groupRef = React.useRef<HTMLDivElement>(null);
 
   const state = useDateFieldState({
-    // Pass `value` through as-is: `null` is a controlled-empty value and must
-    // stay distinct from `undefined` (uncontrolled), or a parent clearing the
-    // field with `value={null}` would be treated as uncontrolled and ignored.
     value,
     defaultValue,
     onChange: onChange as (v: DateValue | null) => void,
@@ -159,31 +230,44 @@ function DateField<T extends DateValue = DateValue>({
     locale: resolvedLocale,
     hourCycle,
     placeholderValue,
-    // min/max and unavailability flag a typed/shortcut value invalid (not
-    // clamped) — the field is free-entry with no calendar to gate selection.
-    minValue,
-    maxValue,
-    isDateUnavailable,
-    // Drives the `w`/`k` (start/end of week) shortcuts; the standalone field has
-    // no calendar to pair with, so this is the only week-start override.
+    minValue: constraints?.min,
+    maxValue: constraints?.max,
+    isDateUnavailable: constraints?.unavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
-    isReadOnly,
+    isReadOnly: mode === "readonly",
   });
 
-  const labelText = label ? resolve(label, "") : undefined;
-  const descText = description ? resolve(description, "") : undefined;
-  const errorText = errorMessage ? resolve(errorMessage, "") : undefined;
-  // Consumer `errorMessage` wins; otherwise fall back to the built-in message
-  // for an out-of-range / unavailable typed value.
-  const msgKey = invalidMessageKey(state.invalidReason);
-  const shownError = errorText ?? (msgKey ? t(msgKey) : undefined);
-  const derivedInvalid = !!errorText || !!isInvalid || state.isInvalid;
-
-  const describedBy = cn(descText && descId, derivedInvalid && shownError && errId) || undefined;
+  const hasInput = React.useMemo(
+    () => state.segments.some((segment) => segment.isEditable && !segment.isPlaceholder),
+    [state.segments],
+  );
+  const bindings = useDateFieldA11y({
+    id,
+    name,
+    mode,
+    fieldValue: state.fieldValue?.toString() ?? "",
+    hasInput,
+    localInvalid: state.isInvalid,
+    labelledBy: ariaLabelledby,
+    ariaLabel,
+    onBlur,
+    groupRef,
+    forwardedRef: ref,
+  });
 
   return (
-    <div data-slot="date-field" className={cn("astw:flex astw:flex-col astw:gap-1", className)}>
-      {labelText && <DatePickerLabel id={labelId}>{labelText}</DatePickerLabel>}
+    <div data-slot="date-field" className={cn("astw:relative", className)}>
+      <input
+        ref={bindings.proxyRef}
+        id={bindings.controlId}
+        name={bindings.name}
+        tabIndex={-1}
+        readOnly
+        aria-hidden="true"
+        value={state.fieldValue?.toString() ?? ""}
+        onFocus={bindings.focusFirstSegment}
+        className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
+      />
       <DateInputGroup
         segments={state.segments}
         cycle={state.cycle}
@@ -193,83 +277,62 @@ function DateField<T extends DateValue = DateValue>({
         applyShortcut={state.applyShortcut}
         commitOnBlur={state.commitOnBlur}
         expandShortYear={state.expandShortYear}
-        isDisabled={isDisabled}
-        isReadOnly={isReadOnly}
-        isInvalid={derivedInvalid}
-        isRequired={isRequired}
+        isDisabled={bindings.isDisabled}
+        isReadOnly={bindings.isReadOnly}
+        isInvalid={bindings.isInvalid}
+        isRequired={constraints?.required}
         autoFocus={autoFocus}
-        labelId={labelText ? labelId : undefined}
-        ariaLabel={ariaLabel}
-        describedById={describedBy}
+        ariaLabelledby={bindings.labelledBy}
+        ariaLabel={bindings.ariaLabel}
+        describedById={bindings.describedBy}
+        groupRef={groupRef}
+        onGroupFocus={bindings.handleGroupFocus}
+        onGroupBlur={bindings.handleGroupBlur}
       />
-      {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
-      {derivedInvalid && shownError && <DatePickerError id={errId}>{shownError}</DatePickerError>}
-      {name && <input type="hidden" name={name} value={state.fieldValue?.toString() ?? ""} />}
     </div>
   );
-}
-
-// ─── DatePicker ───────────────────────────────────────────────────────────────
+}) as <T extends DateValue = DateValue>(
+  props: DateFieldProps<T> & { ref?: React.Ref<HTMLInputElement> },
+) => React.ReactElement;
 
 /**
  * A date/time input with a popover calendar.
  *
- * Value type is driven by `granularity`:
- * - `"day"` (default) → `CalendarDate`
- * - `"hour" | "minute" | "second"` → `CalendarDateTime` (or `ZonedDateTime` when a `timeZone` is set)
- *
- * @example
- * ```tsx
- * import { DatePicker, today, getLocalTimeZone, type CalendarDate } from "@tailor-platform/app-shell";
- *
- * const [date, setDate] = useState<CalendarDate | null>(null);
- * <DatePicker label="Ship date" value={date} onChange={setDate} />
- * ```
+ * Compose with `Field.Root` for label / description / error presentation, or
+ * provide `aria-label` / `aria-labelledby` for standalone usage.
  */
-function DatePicker<T extends DateValue = DateValue>({
-  label,
-  description,
-  errorMessage,
-  className,
-  locale: localeProp,
-  timeZone: timeZoneProp,
-  value,
-  defaultValue,
-  onChange,
-  granularity,
-  hourCycle,
-  placeholderValue,
-  minValue,
-  maxValue,
-  isDateUnavailable,
-  isDisabled,
-  isReadOnly,
-  isInvalid,
-  isRequired,
-  autoFocus,
-  firstDayOfWeek,
-  name,
-  "aria-label": ariaLabel,
-}: DatePickerProps<T>) {
-  const { locale: shellLocale, language } = useResolvedLocale();
+const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = DateValue>(
+  {
+    id,
+    className,
+    locale: localeProp,
+    timeZone: timeZoneProp,
+    value,
+    defaultValue,
+    onChange,
+    onBlur,
+    granularity,
+    constraints,
+    mode,
+    hourCycle,
+    placeholderValue,
+    autoFocus,
+    firstDayOfWeek,
+    name,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledby,
+  }: DatePickerProps<T>,
+  ref: React.ForwardedRef<HTMLInputElement>,
+) {
+  const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz.value;
-  const resolve = buildLocaleResolver(language);
   const t = useDateFieldT();
 
-  const labelId = useId();
-  const descId = useId();
-  const errId = useId();
-
-  const labelText = label ? resolve(label, "") : undefined;
-  const descText = description ? resolve(description, "") : undefined;
-  const errorText = errorMessage ? resolve(errorMessage, "") : undefined;
-
-  const [open, setOpen] = useState(false);
-  const fieldRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = React.useState(false);
+  const fieldRef = React.useRef<HTMLDivElement>(null);
   const [val, setVal] = useControlledState<DateValue | null>(
-    // `null` is controlled-empty; only `undefined` means uncontrolled (see above).
     value,
     defaultValue ?? null,
     onChange as (v: DateValue | null) => void,
@@ -280,20 +343,14 @@ function DatePicker<T extends DateValue = DateValue>({
     onChange: setVal,
     granularity,
     locale: resolvedLocale,
-    // Use the resolved timezone (prop → AppShell → local), matching the calendar
-    // below — otherwise the field falls back to UTC for its "today"/anchor while
-    // the calendar uses the AppShell zone, and they disagree on defaults.
     timeZone: resolvedTz,
     hourCycle,
     placeholderValue,
-    // Same bounds the calendar enforces, but on the field they flag a typed/
-    // shortcut value invalid (the calendar gates selection; typing can't be).
-    minValue,
-    maxValue,
-    isDateUnavailable,
-    // Match the calendar's week-start so field + calendar `w`/`k` agree.
+    minValue: constraints?.min,
+    maxValue: constraints?.max,
+    isDateUnavailable: constraints?.unavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
-    isReadOnly,
+    isReadOnly: mode === "readonly",
   });
 
   const calState = useCalendarState({
@@ -302,35 +359,51 @@ function DatePicker<T extends DateValue = DateValue>({
       setVal(d);
       setOpen(false);
     },
-    minValue,
-    maxValue,
-    isDateUnavailable,
-    isDisabled,
-    isReadOnly,
+    minValue: constraints?.min,
+    maxValue: constraints?.max,
+    isDateUnavailable: constraints?.unavailable as ((date: DateValue) => boolean) | undefined,
+    isDisabled: mode === "disabled",
+    isReadOnly: mode === "readonly",
     firstDayOfWeek,
     locale: resolvedLocale,
     timeZone: resolvedTz,
   });
 
-  // Consumer `errorMessage` wins; otherwise the built-in out-of-range /
-  // unavailable message for a typed or shortcut-entered value.
-  const msgKey = invalidMessageKey(fieldState.invalidReason);
-  const shownError = errorText ?? (msgKey ? t(msgKey) : undefined);
-  const derivedInvalid = !!errorText || !!isInvalid || fieldState.isInvalid;
-
-  const describedBy = cn(descText && descId, derivedInvalid && shownError && errId) || undefined;
-  const accessibleName = labelText ?? ariaLabel;
-  const popoverAriaLabel = accessibleName
-    ? t("chooseDateFor", { name: accessibleName })
-    : t("chooseDate");
+  const hasInput = React.useMemo(
+    () => fieldState.segments.some((segment) => segment.isEditable && !segment.isPlaceholder),
+    [fieldState.segments],
+  );
+  const bindings = useDateFieldA11y({
+    id,
+    name,
+    mode,
+    fieldValue: fieldState.fieldValue?.toString() ?? "",
+    hasInput,
+    localInvalid: fieldState.isInvalid,
+    labelledBy: ariaLabelledby,
+    ariaLabel,
+    onBlur,
+    groupRef: fieldRef,
+    forwardedRef: ref,
+  });
 
   return (
-    <div data-slot="date-picker" className={cn("astw:flex astw:flex-col astw:gap-1", className)}>
-      {labelText && <DatePickerLabel id={labelId}>{labelText}</DatePickerLabel>}
+    <div data-slot="date-picker" className={cn("astw:relative", className)}>
+      <input
+        ref={bindings.proxyRef}
+        id={bindings.controlId}
+        name={bindings.name}
+        tabIndex={-1}
+        readOnly
+        aria-hidden="true"
+        value={fieldState.fieldValue?.toString() ?? ""}
+        onFocus={bindings.focusFirstSegment}
+        className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
+      />
       <DatePopover
         open={open}
         onOpenChange={setOpen}
-        ariaLabel={popoverAriaLabel}
+        ariaLabel={ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate")}
         anchor={fieldRef}
         field={
           <DateInputGroup
@@ -343,30 +416,27 @@ function DatePicker<T extends DateValue = DateValue>({
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
             onOpenCalendar={() => setOpen(true)}
-            isDisabled={isDisabled}
-            isReadOnly={isReadOnly}
-            isInvalid={derivedInvalid}
-            isRequired={isRequired}
+            isDisabled={bindings.isDisabled}
+            isReadOnly={bindings.isReadOnly}
+            isInvalid={bindings.isInvalid}
+            isRequired={constraints?.required}
             autoFocus={autoFocus}
-            labelId={labelText ? labelId : undefined}
-            ariaLabel={ariaLabel}
-            describedById={describedBy}
+            ariaLabelledby={bindings.labelledBy}
+            ariaLabel={bindings.ariaLabel}
+            describedById={bindings.describedBy}
             groupRef={fieldRef}
-            trigger={<DatePickerPopoverTrigger disabled={isDisabled} />}
+            trigger={<DatePickerPopoverTrigger disabled={bindings.isDisabled} />}
+            onGroupFocus={bindings.handleGroupFocus}
+            onGroupBlur={bindings.handleGroupBlur}
           />
         }
       >
-        <CalendarView
-          state={calState}
-          ariaLabel={labelText ?? ariaLabel ?? t("calendar")}
-          inPopover
-        />
+        <CalendarView state={calState} ariaLabel={ariaLabel ?? t("calendar")} inPopover />
       </DatePopover>
-      {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
-      {derivedInvalid && shownError && <DatePickerError id={errId}>{shownError}</DatePickerError>}
-      {name && <input type="hidden" name={name} value={fieldState.fieldValue?.toString() ?? ""} />}
     </div>
   );
-}
+}) as <T extends DateValue = DateValue>(
+  props: DatePickerProps<T> & { ref?: React.Ref<HTMLInputElement> },
+) => React.ReactElement;
 
 export { DateField, DatePicker };

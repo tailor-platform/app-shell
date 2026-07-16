@@ -9,6 +9,7 @@ import {
   getLocalTimeZone,
   startOfWeek,
   endOfWeek,
+  isSameDay,
 } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DateField, DatePicker } from "./date-field";
@@ -650,7 +651,7 @@ describe("DateField keyboard shortcuts", () => {
     });
   });
 
-  it("clamps a shortcut target to minValue / maxValue", async () => {
+  it("flags a shortcut target invalid when it lands outside minValue / maxValue (no clamp)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
@@ -662,13 +663,64 @@ describe("DateField keyboard shortcuts", () => {
         onChange={onChange}
       />,
     );
+    const group = screen.getByRole("group");
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
-    await user.keyboard("y"); // year start (1 Jan) < min → clamps to 10 Jun
-    await lastEmit(onChange, "2025-06-10");
+    await user.keyboard("y"); // year start = 1 Jan 2025 — before min; emitted, NOT clamped
+    await lastEmit(onChange, "2025-01-01");
+    expect(group.hasAttribute("data-invalid")).toBe(true);
 
-    await user.keyboard("r"); // year end (31 Dec) > max → clamps to 20 Jun
-    await lastEmit(onChange, "2025-06-20");
+    await user.keyboard("r"); // year end = 31 Dec 2025 — after max; emitted, NOT clamped
+    await lastEmit(onChange, "2025-12-31");
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+  });
+
+  it("flags a typed date before minValue invalid, but still emits it", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" minValue={new CalendarDate(2025, 6, 10)} onChange={onChange} />);
+    const group = screen.getByRole("group");
+
+    // en order: month / day / year — type 5 Jun 2025 (before the 10 Jun min).
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06052025");
+    await lastEmit(onChange, "2025-06-05"); // value flows through, not clamped
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+    // Built-in message (no consumer errorMessage provided).
+    expect(screen.getByText("Date is outside the allowed range.")).toBeDefined();
+  });
+
+  it("clears the invalid flag once the typed date is back within range", async () => {
+    const user = userEvent.setup();
+    render(<DateField label="Date" minValue={new CalendarDate(2025, 6, 10)} />);
+    const group = screen.getByRole("group");
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06052025"); // 5 Jun — before min → invalid
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("15"); // 15 Jun — within range → valid again
+    expect(group.hasAttribute("data-invalid")).toBe(false);
+  });
+
+  it("flags a typed date invalid when isDateUnavailable rejects it", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const unavailable = new CalendarDate(2025, 6, 12);
+    render(
+      <DateField
+        label="Date"
+        isDateUnavailable={(d) => isSameDay(d, unavailable)}
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06122025"); // the unavailable 12 Jun 2025
+    await lastEmit(onChange, "2025-06-12");
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+    expect(screen.getByText("This date is unavailable.")).toBeDefined();
   });
 
   it("'/' commits the current segment and advances to the next ('1/' ⇒ month 01)", async () => {
@@ -866,7 +918,7 @@ describe("DatePicker keyboard", () => {
     });
   });
 
-  it("clamps a field shortcut to minValue while the popover is closed", async () => {
+  it("flags a field shortcut invalid when it lands before minValue (no clamp, popover closed)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
@@ -879,13 +931,15 @@ describe("DatePicker keyboard", () => {
     );
 
     // Focus a segment (not the trigger) — the popover stays closed, so this is
-    // the field path. "y" targets 1 Jan, which is clamped up to the min.
+    // the field path. "y" targets 1 Jan: emitted as-is and flagged invalid,
+    // where the open-popover (calendar) path instead clamps the roving focus.
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("y");
 
     await waitFor(() => {
-      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-10");
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-01-01");
     });
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

@@ -73,6 +73,11 @@ export type SearchSource = {
   ) => Promise<CommandPaletteSearchResult[]>;
 };
 
+export type OpenCommandPaletteOptions = {
+  /** Optional initial text to prefill into the palette input. */
+  search?: string;
+};
+
 type DispatchContextValue = {
   register: (sourceId: string, actions: CommandPaletteAction[]) => () => void;
 };
@@ -82,6 +87,9 @@ type StateContextValue = {
   searchSources: readonly SearchSource[];
   open: boolean;
   setOpen: (open: boolean) => void;
+  openRequest: OpenCommandPaletteOptions | null;
+  clearOpenRequest: () => void;
+  openCommandPalette: (options?: OpenCommandPaletteOptions) => void;
 };
 
 const CommandPaletteDispatchContext = createContext<DispatchContextValue | null>(null);
@@ -106,6 +114,7 @@ export function CommandPaletteProvider({
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
   const [open, setOpen] = useState(false);
+  const [openRequest, setOpenRequest] = useState<OpenCommandPaletteOptions | null>(null);
 
   const updateActions = useCallback(() => {
     setActions(Array.from(registryRef.current.values()).flat());
@@ -123,6 +132,15 @@ export function CommandPaletteProvider({
     [updateActions],
   );
 
+  const clearOpenRequest = useCallback(() => {
+    setOpenRequest(null);
+  }, []);
+
+  const openCommandPalette = useCallback((options: OpenCommandPaletteOptions = {}) => {
+    setOpen(true);
+    setOpenRequest({ search: options.search });
+  }, []);
+
   // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -137,8 +155,16 @@ export function CommandPaletteProvider({
 
   const dispatchValue = useMemo(() => ({ register }), [register]);
   const stateValue = useMemo(
-    () => ({ actions, searchSources, open, setOpen }),
-    [actions, searchSources, open],
+    () => ({
+      actions,
+      searchSources,
+      open,
+      setOpen,
+      openRequest,
+      clearOpenRequest,
+      openCommandPalette,
+    }),
+    [actions, searchSources, open, openRequest, clearOpenRequest, openCommandPalette],
   );
 
   return (
@@ -220,6 +246,20 @@ export function useCommandPaletteState(): StateContextValue {
     throw new Error("useCommandPaletteState must be used within CommandPaletteProvider");
   }
   return ctx;
+}
+
+/**
+ * Returns a function that opens the CommandPalette.
+ *
+ * Optionally accepts an initial search string, including prefix-activated
+ * search modes such as `PO: alice`.
+ */
+export function useOpenCommandPalette(): (options?: OpenCommandPaletteOptions) => void {
+  const ctx = useContext(CommandPaletteStateContext);
+  if (!ctx) {
+    throw new Error("useOpenCommandPalette must be used within CommandPaletteProvider");
+  }
+  return ctx.openCommandPalette;
 }
 
 /**

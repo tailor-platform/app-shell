@@ -18,6 +18,7 @@ import {
 } from "./autocomplete";
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
+import { AsyncErrorState, resolveAsyncContent } from "./async-error-state";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 
 /** Fetcher type for `Autocomplete.Async`. */
@@ -161,6 +162,20 @@ interface AutocompleteAsyncStandaloneProps<T> extends AutocompletePropsBase<T> {
   fetcher: AutocompleteAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
+  /**
+   * Message shown in the popover when the fetcher fails, alongside a Retry
+   * affordance. Replaces the misleading empty state.
+   * @default "Couldn't load results."
+   */
+  errorText?: string;
+  /** Label for the retry button in the error state. @default "Retry" */
+  retryText?: string;
+  /**
+   * Called when a fetch fails. Fires once per outage (not per failed keystroke)
+   * and re-arms after the next success. Use for logging or error tracking — the
+   * inline error state is shown regardless.
+   */
+  onFetchError?: (error: unknown) => void;
 }
 
 function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<T>) {
@@ -169,6 +184,9 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     placeholder,
     emptyText = "No results.",
     loadingText = "Loading...",
+    errorText = "Couldn't load results.",
+    retryText = "Retry",
+    onFetchError,
     mapItem: mapItemProp,
     className,
     disabled,
@@ -181,7 +199,7 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     id,
   } = props;
 
-  const async = useAsync({ fetcher });
+  const async = useAsync({ fetcher, onFetchError });
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
 
   const handleValueChange = React.useCallback(
@@ -214,7 +232,22 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
           <AutocompleteTrigger />
         </AutocompleteInputGroup>
         <AutocompleteContent container={container}>
-          <AutocompleteEmpty>{async.loading ? loadingText : emptyText}</AutocompleteEmpty>
+          <AutocompleteEmpty>
+            {resolveAsyncContent<React.ReactNode>({
+              loading: async.loading,
+              error: async.error,
+              loadingContent: loadingText,
+              errorContent: (
+                <AsyncErrorState
+                  slot="autocomplete-error"
+                  message={errorText}
+                  retryText={retryText}
+                  onRetry={async.retry}
+                />
+              ),
+              defaultContent: emptyText,
+            })}
+          </AutocompleteEmpty>
           <AutocompleteList>
             {(item: T) => {
               const mapped = mapItem(item);

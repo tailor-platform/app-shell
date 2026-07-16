@@ -16,4 +16,4 @@ Add a built-in `/__appinfo` page to `AppShell` for exposing app metadata and the
 />
 ```
 
-The page stays out of the sidebar, appears in the Command Palette as a page entry, and includes a copy button for the rendered app information.
+The page stays out of AppShell's built-in auto-generated sidebar navigation, appears in the Command Palette as a page entry, and includes a copy button for the rendered app information.

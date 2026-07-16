@@ -31,6 +31,8 @@ export {
   useAppShellData,
   useResolvedLocale,
   useTimeZone,
+  type AppInfo,
+  type AppInfoEntry,
   type TimeZone,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";

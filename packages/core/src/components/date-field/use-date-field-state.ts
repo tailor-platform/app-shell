@@ -81,9 +81,20 @@ export interface DateFieldStateOptions {
   timeZone?: string;
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
-  /** Lower/upper bound the keyboard shortcuts clamp their target date into. */
+  /**
+   * Bounds used to flag the composed value invalid when it falls outside
+   * `[minValue, maxValue]`. The field is free-entry, so it is NOT clamped —
+   * typed dates and the QBO shortcuts may land outside the range and are
+   * surfaced as invalid (matching react-aria's validation contract).
+   */
   minValue?: DateValue;
   maxValue?: DateValue;
+  /**
+   * Marks the composed value invalid when it returns `true` (e.g. weekends or
+   * specific blackout dates). Mirrors the calendar's `isDateUnavailable`; here
+   * it drives validation rather than blocking entry.
+   */
+  isDateUnavailable?: (date: DateValue) => boolean;
   /** Week-start for the `w`/`k` shortcuts; defaults to the locale convention. */
   firstDayOfWeek?: FirstDayOfWeek;
   isDisabled?: boolean;
@@ -156,6 +167,30 @@ function use12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
   }
 }
 
+/** Why a composed value is invalid — out of `[min,max]`, or `isDateUnavailable`. */
+export type DateFieldInvalidReason = "range" | "unavailable";
+
+/**
+ * Validation for a free-entry field: the value still emits, but a date outside
+ * `[minValue, maxValue]` or rejected by `isDateUnavailable` is flagged invalid.
+ * Range bounds are compared at day granularity (via `toCalendarDate`), matching
+ * how the calendar clamps. Returns `null` when the value is complete and allowed
+ * (or incomplete, i.e. nothing to validate yet).
+ */
+function getInvalidReason(
+  value: DateValue | null,
+  minValue?: DateValue,
+  maxValue?: DateValue,
+  isDateUnavailable?: (date: DateValue) => boolean,
+): DateFieldInvalidReason | null {
+  if (value == null) return null;
+  const cd = toCalendarDate(value as never);
+  if (minValue != null && cd.compare(toCalendarDate(minValue as never)) < 0) return "range";
+  if (maxValue != null && cd.compare(toCalendarDate(maxValue as never)) > 0) return "range";
+  if (isDateUnavailable?.(value)) return "unavailable";
+  return null;
+}
+
 export function useDateFieldState(options: DateFieldStateOptions) {
   const {
     value: controlledValue,
@@ -168,6 +203,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     placeholderValue,
     minValue,
     maxValue,
+    isDateUnavailable,
     firstDayOfWeek,
     isReadOnly,
   } = options;
@@ -410,18 +446,14 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       } else {
         base = completeCalendarDate(fields) ?? ref;
       }
-      let next = resolveDateShortcut(cmd, base, ref, locale, firstDayOfWeek);
-      // Clamp into [minValue, maxValue] so a shortcut can't land outside the
-      // allowed range — mirrors the calendar grid, which clamps roving focus the
-      // same way. (`isDateUnavailable` isn't enforced here; the field is a
-      // free-entry control, so — like typing — it may land on an unavailable date.)
-      const lo = minValue ? toCalendarDate(minValue) : null;
-      const hi = maxValue ? toCalendarDate(maxValue) : null;
-      if (lo && next.compare(lo) < 0) next = lo;
-      if (hi && next.compare(hi) > 0) next = hi;
+      const next = resolveDateShortcut(cmd, base, ref, locale, firstDayOfWeek);
+      // No clamping: like typing, a shortcut may land outside [minValue, maxValue]
+      // (or on an unavailable date). An out-of-range result is surfaced as invalid
+      // (see the validation below) rather than silently coerced to the boundary —
+      // the same free-entry contract as typing.
       commit({ ...fields, year: next.year, month: next.month, day: next.day });
     },
-    [fields, timeZone, locale, isReadOnly, commit, minValue, maxValue, firstDayOfWeek],
+    [fields, timeZone, locale, isReadOnly, commit, firstDayOfWeek],
   );
 
   /**
@@ -540,10 +572,15 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   }, [segmentFormat, fields, editableTypes, getLimits]);
 
   const fieldValue = composeValue(fields);
+  // Free-entry validation: the value still emits (it's what the user typed), but
+  // an out-of-range or unavailable date is surfaced as invalid, not clamped.
+  const invalidReason = getInvalidReason(fieldValue, minValue, maxValue, isDateUnavailable);
 
   return {
     segments,
     fieldValue,
+    isInvalid: invalidReason != null,
+    invalidReason,
     cycle,
     setDigit,
     setDayPeriod,

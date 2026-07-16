@@ -2,9 +2,11 @@ export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 export {
+  useOpenCommandPalette,
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
   type CommandPaletteSearchResult,
+  type OpenCommandPaletteOptions,
   type SearchSource,
 } from "./contexts/command-palette-context";
 

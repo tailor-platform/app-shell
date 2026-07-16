@@ -1,5 +1,99 @@
 # @tailor-platform/app-shell
 
+## 1.9.0
+
+### Minor Changes
+
+- 423ae75: Add an `xs` (16px) size to `Avatar`
+
+  `Avatar.Root` now accepts `size="xs"` for a 16px circle, extending the existing `sm` / `default` / `lg` scale:
+
+  | `size`    | circle |
+  | --------- | ------ |
+  | `xs`      | 16px   |
+  | `sm`      | 24px   |
+  | `default` | 28px   |
+  | `lg`      | 40px   |
+
+  `xs` is intended for compact/inline contexts and single-glyph or icon content; two-letter initials will be cramped at this size. Purely additive — the default size is unchanged.
+
+- 6f767f5: Add QuickBooks-style keyboard shortcuts to `DateField` / `DatePicker`
+
+  When any date segment is focused, the field now supports whole-date navigation (all case-insensitive):
+
+  - `t` — today
+  - `m` / `h` — first / last day of the entered month (or the current month when no date is entered)
+  - `y` / `r` — first / last day of the entered year
+  - `w` / `k` — first / last day of the week (locale-aware week start)
+  - `-` — previous day; `=` / `+` — next day. Both step across month **and** year boundaries (e.g. 1 Jan − 1 day → 31 Dec of the prior year). `+` works whether or not Shift is held.
+  - `/` — commit the current segment as-is and advance to the next (e.g. typing `1` then `/` means "January", not the start of `1x`)
+  - `Alt+↓` — open the calendar popover (`DatePicker` only)
+
+  A 1–2 digit year is also expanded to the 2000s on blur (`26` → `2026`).
+
+  Both `DateField` and `DatePicker` now accept an optional `firstDayOfWeek` prop to override the locale's week start for the `w`/`k` shortcuts (previously `DatePicker`-only).
+
+  The shortcuts also work **while the calendar popover is open** — there they move the highlighted day (like the arrow keys), and `Enter` confirms. Targets are clamped to `minValue`/`maxValue` in both the field and the calendar, so a shortcut can't jump to an out-of-range date; unavailable days can be highlighted but not confirmed.
+
+- 0817cf1: AppShell now bundles and injects a small default favicon set instead of a single 32×32 icon. When no `favicon` prop is passed (and the host page declares no `<link rel="icon">`), AppShell renders 16×16 and 32×32 PNG tab icons plus a 180×180 Apple touch icon — all embedded as data URIs, so no asset-copy step is needed. The Apple touch icon covers "Add to Home Screen" on both iOS and Android; the legacy `.ico` and PWA `android-chrome-*` icons are intentionally omitted to keep the bundle small (this is not a PWA).
+
+  Behavior for consumers is unchanged: passing `favicon` still replaces the whole set with your single href, and an existing host-page favicon is still respected.
+
+- 2497a2d: Add `useOpenCommandPalette()` for opening the built-in command palette from application code.
+
+  ```tsx
+  const openCommandPalette = useOpenCommandPalette();
+
+  openCommandPalette();
+  openCommandPalette({ search: "PO: alice" });
+  ```
+
+- 57a3870: Add composable `Timeline` primitives for building time-based layouts, including axis guides/levels, row backgrounds, intervals, and dependency links.
+
+  - `Timeline.Root` defines the shared start/end range.
+  - `Timeline.Viewport` renders the axis, decorations, scrolling area, and link layer.
+  - `Timeline.Row` defines one timeline lane and owns row height/background.
+  - `Timeline.Interval` positions content across a time range.
+  - `Timeline.Link` draws dependency lines between timeline items.
+
+  ```tsx
+  import { Timeline } from "@tailor-platform/app-shell";
+
+  <Timeline.Root start={0} end={100}>
+    <Timeline.Viewport
+      axis={{
+        guides: [{ at: 0 }, { at: 50 }, { at: 100 }],
+        levels: [
+          {
+            kind: "spans",
+            items: [
+              { start: 0, end: 50, label: "Phase 1" },
+              { start: 50, end: 100, label: "Phase 2" },
+            ],
+          },
+        ],
+      }}
+    >
+      <Timeline.Row height={40}>
+        <Timeline.Interval start={10} end={35}>
+          <div className="h-full rounded-md bg-primary" />
+        </Timeline.Interval>
+      </Timeline.Row>
+    </Timeline.Viewport>
+  </Timeline.Root>;
+  ```
+
+  `Tooltip.Content` also now accepts `noArrow` for popover-like timeline labels and custom overlays.
+
+### Patch Changes
+
+- ca1c8c7: Raise the `@tailor-platform/auth-public-client` dependency floor from `^0.5.0` to `^0.5.1` so fresh installs cannot resolve the broken `0.5.0` release.
+- 6e61cc2: Fix `DateField` / `DatePicker` not validating typed input against `minValue`, `maxValue`, or `isDateUnavailable`. A date entered by typing (or via a keyboard shortcut) that fell outside the allowed range was silently accepted. It's now flagged invalid (`aria-invalid` + a built-in message) while the value still flows through `onChange` — matching how the calendar already behaves and the react-aria validation contract.
+
+  - Keyboard shortcuts (`t`, `m`, `y`, …) no longer clamp their target to the boundary; like typing, an out-of-range result is surfaced as invalid instead of being silently coerced.
+  - `isDateUnavailable` now also drives field validation (e.g. weekends or specific blackout dates typed into the field are flagged), not just calendar selection.
+  - Consumer `errorMessage` still takes precedence over the built-in messages.
+
 ## 1.8.0
 
 ### Minor Changes

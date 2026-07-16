@@ -3,7 +3,12 @@ import type { DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
-import { useDateFieldState, type Granularity, type HourCycle } from "./use-date-field-state";
+import {
+  useDateFieldState,
+  type DateFieldInvalidReason,
+  type Granularity,
+  type HourCycle,
+} from "./use-date-field-state";
 import { useCalendarState, type FirstDayOfWeek } from "../calendar/use-calendar-state";
 import { CalendarView } from "../calendar/calendar-view";
 import {
@@ -21,6 +26,17 @@ import { useDateFieldT } from "./i18n";
  * implementation. Same surface as the react-aria variant; only the internals
  * differ. Consumers never see Base UI or the date engines.
  */
+
+// Built-in validation message key for a field's invalid reason (null = none, so
+// the consumer's `errorMessage` — or no message — stands). A lookup rather than
+// a nested ternary keeps the lint happy.
+function invalidMessageKey(
+  reason: DateFieldInvalidReason | null | undefined,
+): "dateUnavailable" | "dateOutOfRange" | null {
+  if (reason === "unavailable") return "dateUnavailable";
+  if (reason === "range") return "dateOutOfRange";
+  return null;
+}
 
 // ─── Small controlled-state helper ────────────────────────────────────────────
 function useControlledState<V>(
@@ -113,6 +129,7 @@ function DateField<T extends DateValue = DateValue>({
   placeholderValue,
   minValue,
   maxValue,
+  isDateUnavailable,
   isDisabled,
   isReadOnly,
   isInvalid,
@@ -125,15 +142,11 @@ function DateField<T extends DateValue = DateValue>({
   const { locale: shellLocale, language } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
   const resolve = buildLocaleResolver(language);
+  const t = useDateFieldT();
 
   const labelId = useId();
   const descId = useId();
   const errId = useId();
-
-  const labelText = label ? resolve(label, "") : undefined;
-  const descText = description ? resolve(description, "") : undefined;
-  const errorText = errorMessage ? resolve(errorMessage, "") : undefined;
-  const derivedInvalid = !!errorText || !!isInvalid;
 
   const state = useDateFieldState({
     // Pass `value` through as-is: `null` is a controlled-empty value and must
@@ -146,17 +159,27 @@ function DateField<T extends DateValue = DateValue>({
     locale: resolvedLocale,
     hourCycle,
     placeholderValue,
-    // Let the keyboard shortcuts clamp into range (the field has no calendar to
-    // enforce it otherwise).
+    // min/max and unavailability flag a typed/shortcut value invalid (not
+    // clamped) — the field is free-entry with no calendar to gate selection.
     minValue,
     maxValue,
+    isDateUnavailable,
     // Drives the `w`/`k` (start/end of week) shortcuts; the standalone field has
     // no calendar to pair with, so this is the only week-start override.
     firstDayOfWeek,
     isReadOnly,
   });
 
-  const describedBy = cn(descText && descId, derivedInvalid && errorText && errId) || undefined;
+  const labelText = label ? resolve(label, "") : undefined;
+  const descText = description ? resolve(description, "") : undefined;
+  const errorText = errorMessage ? resolve(errorMessage, "") : undefined;
+  // Consumer `errorMessage` wins; otherwise fall back to the built-in message
+  // for an out-of-range / unavailable typed value.
+  const msgKey = invalidMessageKey(state.invalidReason);
+  const shownError = errorText ?? (msgKey ? t(msgKey) : undefined);
+  const derivedInvalid = !!errorText || !!isInvalid || state.isInvalid;
+
+  const describedBy = cn(descText && descId, derivedInvalid && shownError && errId) || undefined;
 
   return (
     <div data-slot="date-field" className={cn("astw:flex astw:flex-col astw:gap-1", className)}>
@@ -180,7 +203,7 @@ function DateField<T extends DateValue = DateValue>({
         describedById={describedBy}
       />
       {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
-      {derivedInvalid && errorText && <DatePickerError id={errId}>{errorText}</DatePickerError>}
+      {derivedInvalid && shownError && <DatePickerError id={errId}>{shownError}</DatePickerError>}
       {name && <input type="hidden" name={name} value={state.fieldValue?.toString() ?? ""} />}
     </div>
   );
@@ -242,7 +265,6 @@ function DatePicker<T extends DateValue = DateValue>({
   const labelText = label ? resolve(label, "") : undefined;
   const descText = description ? resolve(description, "") : undefined;
   const errorText = errorMessage ? resolve(errorMessage, "") : undefined;
-  const derivedInvalid = !!errorText || !!isInvalid;
 
   const [open, setOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -264,9 +286,11 @@ function DatePicker<T extends DateValue = DateValue>({
     timeZone: resolvedTz,
     hourCycle,
     placeholderValue,
-    // Let the keyboard shortcuts clamp into the same range the calendar enforces.
+    // Same bounds the calendar enforces, but on the field they flag a typed/
+    // shortcut value invalid (the calendar gates selection; typing can't be).
     minValue,
     maxValue,
+    isDateUnavailable,
     // Match the calendar's week-start so field + calendar `w`/`k` agree.
     firstDayOfWeek,
     isReadOnly,
@@ -288,7 +312,13 @@ function DatePicker<T extends DateValue = DateValue>({
     timeZone: resolvedTz,
   });
 
-  const describedBy = cn(descText && descId, derivedInvalid && errorText && errId) || undefined;
+  // Consumer `errorMessage` wins; otherwise the built-in out-of-range /
+  // unavailable message for a typed or shortcut-entered value.
+  const msgKey = invalidMessageKey(fieldState.invalidReason);
+  const shownError = errorText ?? (msgKey ? t(msgKey) : undefined);
+  const derivedInvalid = !!errorText || !!isInvalid || fieldState.isInvalid;
+
+  const describedBy = cn(descText && descId, derivedInvalid && shownError && errId) || undefined;
   const accessibleName = labelText ?? ariaLabel;
   const popoverAriaLabel = accessibleName
     ? t("chooseDateFor", { name: accessibleName })
@@ -333,7 +363,7 @@ function DatePicker<T extends DateValue = DateValue>({
         />
       </DatePopover>
       {descText && <DatePickerDescription id={descId}>{descText}</DatePickerDescription>}
-      {derivedInvalid && errorText && <DatePickerError id={errId}>{errorText}</DatePickerError>}
+      {derivedInvalid && shownError && <DatePickerError id={errId}>{shownError}</DatePickerError>}
       {name && <input type="hidden" name={name} value={fieldState.fieldValue?.toString() ?? ""} />}
     </div>
   );

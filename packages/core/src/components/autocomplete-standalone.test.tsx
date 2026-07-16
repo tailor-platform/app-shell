@@ -239,6 +239,27 @@ describe("Autocomplete.Async (standalone)", () => {
       expect(screen.getByText("Recovered")).toBeDefined();
     });
   });
+
+  it("calls onFetchError once per outage", async () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error("API error"));
+    const onFetchError = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <Autocomplete.Async fetcher={fetcher} placeholder="Search..." onFetchError={onFetchError} />,
+    );
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.type(input, "ab");
+
+    await waitFor(() => {
+      expect(onFetchError).toHaveBeenCalledTimes(1);
+    });
+    // Further failing keystrokes during the same outage don't re-announce.
+    await user.type(input, "cd");
+    await new Promise((r) => setTimeout(r, 350));
+    expect(onFetchError).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Autocomplete (standalone, grouped)", () => {

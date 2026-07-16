@@ -296,7 +296,11 @@ export interface AutocompleteUseAsyncReturn<T> {
  * >
  *   ...
  *   <Autocomplete.Empty>
- *     {movies.loading ? "Loading..." : "No results."}
+ *     {movies.loading
+ *       ? "Loading..."
+ *       : movies.error
+ *         ? <button onClick={movies.retry}>Couldn't load results. Retry</button>
+ *         : "No results."}
  *   </Autocomplete.Empty>
  * </Autocomplete.Root>
  * ```

@@ -14,6 +14,7 @@ import {
   today,
   type DateValue,
 } from "@internationalized/date";
+import { DATE_SHORTCUT_KEYS, resolveDateShortcut, type FirstDayOfWeek } from "@/lib/date-shortcuts";
 
 /**
  * Hand-rolled calendar-grid state — the logic react-aria's `useCalendarState`
@@ -22,7 +23,9 @@ import {
  * (arrows, Home/End, PageUp/Down, Shift+PageUp/Down).
  */
 
-export type FirstDayOfWeek = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+// Re-exported from the shared shortcut module so existing import sites
+// (`calendar.tsx`, `date-field.tsx`) keep resolving it here.
+export type { FirstDayOfWeek };
 
 export interface CalendarStateOptions {
   value?: DateValue | null;
@@ -269,15 +272,23 @@ export function useCalendarState(options: CalendarStateOptions) {
           e.preventDefault();
           selectDate(date);
           return;
-        default:
-          return;
+        default: {
+          // QBO-style whole-date shortcuts move the highlight like the arrows do
+          // (Enter/click still confirms). Bare keypress only — a modifier is left
+          // for the browser/OS. `setFocusedDate` clamps the target to min/max.
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          const cmd = DATE_SHORTCUT_KEYS[e.key.toLowerCase()];
+          if (!cmd) return;
+          next = resolveDateShortcut(cmd, date, todayDate, locale, firstDayOfWeek);
+          break;
+        }
       }
       e.preventDefault();
       isFocusedRef.current = true;
       moveFocusRef.current = true;
       setFocusedDate(next);
     },
-    [locale, firstDayOfWeek, selectDate, setFocusedDate],
+    [locale, firstDayOfWeek, selectDate, setFocusedDate, todayDate],
   );
 
   return {

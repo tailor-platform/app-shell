@@ -253,6 +253,8 @@ export interface AutocompleteUseAsyncReturn<T> {
   value: string;
   /** The error thrown by the last fetch, if any */
   error: unknown;
+  /** Re-runs the most recent fetch immediately (no debounce). Use for a Retry affordance. */
+  retry: () => void;
   /** Value change handler — pass to the Root `onValueChange` prop. */
   onValueChange: (value: string) => void;
 }
@@ -300,13 +302,14 @@ export interface AutocompleteUseAsyncReturn<T> {
  * ```
  */
 function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncReturn<T> {
-  const { items, loading, query, error, onInputValueChange } = useAsyncItems(options);
+  const { items, loading, query, error, retry, onInputValueChange } = useAsyncItems(options);
 
   return {
     items,
     loading,
     value: query,
     error,
+    retry,
     onValueChange: onInputValueChange,
   };
 }

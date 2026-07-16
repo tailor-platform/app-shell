@@ -337,6 +337,62 @@ describe("Select.Async (standalone)", () => {
     });
   });
 
+  it("shows the inline error state (with Retry) when the fetcher throws", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn().mockRejectedValue(new Error("API error"));
+
+    render(
+      <Select.Async fetcher={fetcher} placeholder="Pick one" errorText="Couldn't load results." />,
+    );
+    await user.click(screen.getByText("Pick one"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Couldn't load results.")).toBeDefined();
+    });
+    expect(screen.getByRole("button", { name: /retry/i })).toBeDefined();
+  });
+
+  it("re-runs the fetch when Retry is clicked", async () => {
+    const user = userEvent.setup();
+    let shouldFail = true;
+    const fetcher = vi.fn().mockImplementation(async () => {
+      if (shouldFail) throw new Error("API error");
+      return ["Recovered"];
+    });
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" />);
+    await user.click(screen.getByText("Pick one"));
+
+    const retry = await screen.findByRole("button", { name: /retry/i });
+    shouldFail = false;
+    await user.click(retry);
+
+    await waitFor(() => {
+      expect(screen.getByText("Recovered")).toBeDefined();
+    });
+  });
+
+  it("calls onFetchError once per outage across reopens", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn().mockRejectedValue(new Error("API error"));
+    const onFetchError = vi.fn();
+
+    render(<Select.Async fetcher={fetcher} placeholder="Pick one" onFetchError={onFetchError} />);
+
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => {
+      expect(onFetchError).toHaveBeenCalledTimes(1);
+    });
+
+    // Close and reopen while still broken — no re-announce during the same outage.
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+    expect(onFetchError).toHaveBeenCalledTimes(1);
+  });
+
   it("can reopen after closing while the fetch is still in flight", async () => {
     const user = userEvent.setup();
     const pendingRequests: Array<{

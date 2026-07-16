@@ -24,6 +24,7 @@ import {
 
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
+import { AsyncErrorState, resolveAsyncContent } from "./async-error-state";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 
 /** Fetcher type for `Combobox.Async`. */
@@ -422,6 +423,20 @@ interface ComboboxAsyncOwnProps<T> {
   fetcher: ComboboxAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
+  /**
+   * Message shown in the popover when the fetcher fails, alongside a Retry
+   * affordance. Replaces the misleading empty state.
+   * @default "Couldn't load results."
+   */
+  errorText?: string;
+  /** Label for the retry button in the error state. @default "Retry" */
+  retryText?: string;
+  /**
+   * Called when a fetch fails. Fires once per outage (not per failed keystroke)
+   * and re-arms after the next success. Use for logging or error tracking — the
+   * inline error state is shown regardless.
+   */
+  onFetchError?: (error: unknown) => void;
 }
 
 // -- Non-creatable --
@@ -446,6 +461,9 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
     placeholder,
     emptyText = "No results.",
     loadingText = "Loading...",
+    errorText = "Couldn't load results.",
+    retryText = "Retry",
+    onFetchError,
     mapItem: mapItemProp,
     className,
     disabled,
@@ -457,7 +475,7 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
     ...valueProps
   } = props;
 
-  const async = useAsync({ fetcher });
+  const async = useAsync({ fetcher, onFetchError });
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
 
@@ -466,7 +484,20 @@ function ComboboxAsyncBase<T>(props: ComboboxAsyncPlainProps<T>) {
       className={className}
       placeholder={placeholder}
       disabled={disabled}
-      emptyContent={async.loading ? loadingText : emptyText}
+      emptyContent={resolveAsyncContent<React.ReactNode>({
+        loading: async.loading,
+        error: async.error,
+        loadingContent: loadingText,
+        errorContent: (
+          <AsyncErrorState
+            slot="combobox-error"
+            message={errorText}
+            retryText={retryText}
+            onRetry={async.retry}
+          />
+        ),
+        defaultContent: emptyText,
+      })}
       mapItem={mapItem}
       listChildren={flatItemRenderer(mapItem)}
       multiple={multiple}
@@ -494,6 +525,9 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
     placeholder,
     emptyText = "No results.",
     loadingText = "Loading...",
+    errorText = "Couldn't load results.",
+    retryText = "Retry",
+    onFetchError,
     mapItem,
     onCreateItem,
     formatCreateLabel: formatCreateLabelProp,
@@ -506,7 +540,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
     onValueChange,
   } = props as ComboboxAsyncOwnProps<T> & CreatableInternalProps<T>;
 
-  const async = useAsync({ fetcher });
+  const async = useAsync({ fetcher, onFetchError });
   const getLabel = (item: T) => mapItem(item).label;
 
   // Bridge onCreateItem → useCreatable's createItem + onItemCreated
@@ -538,7 +572,20 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
       className={className}
       placeholder={placeholder}
       disabled={disabled || creatable.creating}
-      emptyContent={async.loading ? loadingText : emptyText}
+      emptyContent={resolveAsyncContent<React.ReactNode>({
+        loading: async.loading,
+        error: async.error,
+        loadingContent: loadingText,
+        errorContent: (
+          <AsyncErrorState
+            slot="combobox-error"
+            message={errorText}
+            retryText={retryText}
+            onRetry={async.retry}
+          />
+        ),
+        defaultContent: emptyText,
+      })}
       mapItem={mapItem}
       listChildren={creatableItemRenderer(mapItem, creatable)}
       multiple={multiple}

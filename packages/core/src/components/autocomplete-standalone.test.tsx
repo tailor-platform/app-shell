@@ -196,6 +196,49 @@ describe("Autocomplete.Async (standalone)", () => {
 
     vi.useRealTimers();
   });
+
+  it("shows the inline error state (with Retry) when the fetcher throws", async () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error("API error"));
+    const user = userEvent.setup();
+
+    render(
+      <Autocomplete.Async
+        fetcher={fetcher}
+        placeholder="Search..."
+        errorText="Couldn't load results."
+      />,
+    );
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.type(input, "test");
+
+    await waitFor(() => {
+      expect(screen.getByText("Couldn't load results.")).toBeDefined();
+    });
+    expect(screen.getByRole("button", { name: /retry/i })).toBeDefined();
+  });
+
+  it("re-runs the fetch when Retry is clicked", async () => {
+    let shouldFail = true;
+    const fetcher = vi.fn().mockImplementation(async () => {
+      if (shouldFail) throw new Error("API error");
+      return ["Recovered"];
+    });
+    const user = userEvent.setup();
+
+    render(<Autocomplete.Async fetcher={fetcher} placeholder="Search..." />);
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.type(input, "test");
+
+    const retry = await screen.findByRole("button", { name: /retry/i });
+    shouldFail = false;
+    await user.click(retry);
+
+    await waitFor(() => {
+      expect(screen.getByText("Recovered")).toBeDefined();
+    });
+  });
 });
 
 describe("Autocomplete (standalone, grouped)", () => {

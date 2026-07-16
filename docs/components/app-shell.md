@@ -346,6 +346,39 @@ See [`SearchSource`](./command-palette.md#searchsource) for the full type refere
 
 > **Note:** `DefaultSidebar` always renders a **Search** entry that opens the palette regardless of whether `searchSources` is configured. The `Cmd+K` / `Ctrl+K` shortcut also works globally.
 
+### appInfo
+
+- **Type:** `AppInfo` (optional)
+- **Description:** Configuration for the built-in `/__appinfo` page, which exposes app metadata and the current AppShell version. The page is excluded from sidebar navigation but appears in the Command Palette as a page entry and includes a copy button for the rendered information.
+
+`AppInfo` has the following shape:
+
+| Property   | Type                        | Description                                          |
+| ---------- | --------------------------- | ---------------------------------------------------- |
+| `metadata` | `readonly AppInfoEntry[]`   | Additional rows shown on the `/__appinfo` page |
+
+Each `AppInfoEntry` has:
+
+| Property | Type                                          | Description                                        |
+| -------- | --------------------------------------------- | -------------------------------------------------- |
+| `label`  | `string`                                      | Display label shown on the page                    |
+| `value`  | `string \| number \| boolean \| null \| undefined` | Value rendered as text                        |
+
+```tsx
+<AppShell
+  title="My App"
+  appInfo={{
+    metadata: [
+      { label: "Environment", value: "staging" },
+      { label: "Release", value: "2026.07.16" },
+    ],
+  }}
+  modules={modules}
+>
+  {/* ... */}
+</AppShell>
+```
+
 ### children
 
 - **Type:** `React.ReactNode` (required)

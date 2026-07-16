@@ -22,6 +22,7 @@ const useAppShellConfig: () => AppShellConfig;
 | `basePath`          | `string \| undefined`          | Base path for all routes                    |
 | `modules`           | `Module[]`                     | Registered modules                          |
 | `settingsResources` | `Resource[]`                   | Resources that appear only in Settings menu |
+| `appInfo`           | `AppInfo \| undefined`         | Configuration for the built-in `/__appinfo` page |
 
 ## Usage
 

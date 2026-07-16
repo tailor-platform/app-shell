@@ -40,6 +40,12 @@ trustLockfile: true
 
 # Require packages to be published for at least 3 days before allowing install (default: 1 day)
 minimumReleaseAge: 4320
+# First-party Tailor packages are exempt from the maturity gate: the gate guards
+# against compromised third-party republishes, not packages we publish ourselves.
+# Note: this matches on package name (glob), so it exempts all versions, not a
+# specific one.
+minimumReleaseAgeExclude:
+  - "@tailor-platform/auth-public-client"
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.

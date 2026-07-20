@@ -54,17 +54,12 @@ function Content({
 }: React.ComponentProps<typeof BaseMenu.Popup> & {
   position?: PositionProps;
 }) {
-  const { side = "bottom", align = "start", sideOffset = 4, trackAnchor } = position ?? {};
+  const { side = "bottom", align = "start", sideOffset = 4 } = position ?? {};
   return (
     // Establish a stacking context on the portal container so the menu
     // renders above fixed elements like sidebar-container (z-index: 10).
     <BaseMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-      <BaseMenu.Positioner
-        sideOffset={sideOffset}
-        side={side}
-        align={align}
-        disableAnchorTracking={trackAnchor === false ? true : undefined}
-      >
+      <BaseMenu.Positioner sideOffset={sideOffset} side={side} align={align}>
         <BaseMenu.Popup
           data-slot="menu-content"
           className={cn(

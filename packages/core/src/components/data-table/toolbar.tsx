@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Checkbox } from "@base-ui/react/checkbox";
-import { ChevronDown, ChevronRight, Plus, X, Check, Search } from "lucide-react";
+import { ChevronDown, Plus, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
-import { Menu } from "@/components/menu";
 import { Select } from "@/components/select-standalone";
-import { DatePicker, DateField } from "@/components/date-field";
+import { DatePicker } from "@/components/date-field";
+import { Calendar } from "@/components/calendar";
 import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";
@@ -57,28 +57,6 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
   time: "eq",
   uuid: "eq",
 };
-
-/**
- * Whether the add-filter menu shows a condition (operator) step by default for
- * a given type. `true` where greater-than / between / before are meaningful;
- * `false` where users mostly just pick the value(s). Overridable per field via
- * `FilterConfig.chooseOperator`.
- */
-const CHOOSE_OPERATOR_DEFAULT: Record<FilterConfig["type"], boolean> = {
-  number: true,
-  date: true,
-  datetime: true,
-  time: true,
-  string: false,
-  enum: false,
-  boolean: false,
-  uuid: false,
-};
-
-/** Resolve whether the add-menu should offer a condition step for this field. */
-function shouldChooseOperator(config: FilterConfig): boolean {
-  return config.chooseOperator ?? CHOOSE_OPERATOR_DEFAULT[config.type];
-}
 
 /** Number/temporal operators available in the operator selector. */
 const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte", "between"] as const;
@@ -129,18 +107,7 @@ type FilterableColumn = Column<Record<string, unknown>> & {
 type AddFilterDraftValue = string | string[];
 
 /** Use `DataTable.Filters` instead of calling this directly. */
-function DataTableFilters({
-  className,
-  addFilterVariant = "menu",
-}: {
-  className?: string;
-  /**
-   * EXPERIMENTAL — the add-filter surface style, for A/B testing.
-   * - `"menu"` (default): nested-submenu flyout (`AddFilterMenu`).
-   * - `"panel"`: single 3-column popover (field ▸ condition ▸ value).
-   */
-  addFilterVariant?: "menu" | "panel";
-}) {
+function DataTableFilters({ className }: { className?: string }) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();
   if (!control) {
@@ -169,62 +136,18 @@ function DataTableFilters({
         return <FilterChip key={col.filter.field} column={col} filter={active} control={control} />;
       })}
 
-      {/* Add-filter surface: the nested-submenu menu (default) or the 3-column panel. */}
-      {addFilterVariant === "panel" ? (
-        <AddFilterPanel columns={filterableColumns} control={control} />
-      ) : (
-        <AddFilterMenu columns={filterableColumns} control={control} />
-      )}
+      {/* Add-filter surface: a single popover with three columns (field ▸ condition ▸ value). */}
+      <AddFilterPanel columns={filterableColumns} control={control} />
     </div>
   );
 }
 DataTableFilters.displayName = "DataTable.Filters";
 
 // =============================================================================
-// AddFilterMenu — single Menu flyout: all filterable fields visible, each
-// opening a type-specific quick editor in a nested submenu. Fast path uses a
-// smart-default operator; operator / between / case-sensitivity are refined on
-// the chip (FilterChip). See issue tailor-inc/platform-planning#1509.
-// =============================================================================
-
-function AddFilterMenu({
-  columns,
-  control,
-}: {
-  columns: FilterableColumn[];
-  control: CollectionControl;
-}) {
-  const t = useDataTableT();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Menu.Root open={open} onOpenChange={setOpen}>
-      <Menu.Trigger
-        render={
-          <Button variant="outline" size="xs">
-            <Plus className="astw:size-3" />
-            {t("addFilter")}
-          </Button>
-        }
-      />
-      {/* trackAnchor={false}: adding a filter inserts a chip before the trigger,
-          shifting it — pin the menu where it opened so it doesn't jump while the
-          user adds several filters in a row. It stays open until an outside click. */}
-      <Menu.Content position={{ trackAnchor: false }} className="astw:min-w-56">
-        {columns.map((col) => (
-          <FieldSubmenu key={col.filter.field} column={col} control={control} />
-        ))}
-      </Menu.Content>
-    </Menu.Root>
-  );
-}
-AddFilterMenu.displayName = "DataTable.AddFilterMenu";
-
-// =============================================================================
-// AddFilterPanel — EXPERIMENTAL variant B: one popover, three columns
-// (field ▸ condition ▸ value) instead of nested submenus. Live-commit: enum
-// toggles, text/number commit on Enter, date on pick. Reuses the same value
-// editors and helpers as the menu variant.
+// AddFilterPanel — the add-filter surface: one popover with three columns
+// (field ▸ condition ▸ value). The condition column appears for fields with
+// more than one operator. Values are drafted and committed with an Apply button
+// (the panel stays open so several filters can be added in a row).
 // =============================================================================
 
 const PANEL_COLUMN_ROW = cn(
@@ -247,9 +170,8 @@ function AddFilterPanel({
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
   const operators = config ? getAddFilterOperators(config.type) : [];
-  // In the panel there's always room, so show the condition column for any field
-  // that has more than one operator (the `chooseOperator` flag only gates the
-  // menu variant).
+  // Show the condition column for any field that has more than one operator
+  // (single-operator types like enum/uuid go straight field ▸ value).
   const showConditions = operators.length > 1;
 
   const [operator, setOperator] = useState<FilterOperator>(
@@ -286,8 +208,9 @@ function AddFilterPanel({
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(
-              // Fixed height so switching field/condition never resizes the popup.
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-80 astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // Fixed height (tall enough for the inline single-date calendar)
+              // so switching field/condition never resizes the popup.
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-96 astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
@@ -357,10 +280,10 @@ function AddFilterPanel({
 AddFilterPanel.displayName = "DataTable.AddFilterPanel";
 
 /**
- * Segmented date input for the panel, bridging the filter's ISO string value
- * and the `CalendarDate` the field works with. Uses the typed `DateField` (not
- * the popover DatePicker or an inline calendar) — both open/re-render inside the
- * panel popover and cause it to jump or dismiss.
+ * Inline calendar for the panel's single-date editor — our `Calendar` rendered
+ * directly in the value column (no popover to nest inside the panel). The
+ * pointer-down guard stops the panel's outside-press dismissal from firing when
+ * a day cell re-renders on selection.
  */
 function PanelDateInput({
   ariaLabel,
@@ -373,13 +296,16 @@ function PanelDateInput({
 }) {
   const calValue = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDate(value) : null;
   return (
-    <DateField
-      aria-label={ariaLabel}
-      value={calValue}
-      granularity="day"
-      onChange={(v) => onChange(v ? v.toString() : "")}
-      className="astw:w-full"
-    />
+    <div
+      onPointerDownCapture={(e) => e.stopPropagation()}
+      onMouseDownCapture={(e) => e.stopPropagation()}
+    >
+      <Calendar
+        aria-label={ariaLabel}
+        value={calValue}
+        onChange={(v) => onChange(v ? v.toString() : "")}
+      />
+    </div>
   );
 }
 
@@ -484,23 +410,23 @@ function PanelValueEditor({
       </div>
     );
   } else if (isBetween && type === "date") {
-    // Inline calendars (not the popover DatePicker) — a popover inside the panel
-    // popover conflicts with dismissal and causes a jump.
+    // Range dates: two From/To app-shell DatePickers (segmented input + calendar
+    // icon/popover). A proper range calendar replaces this once the date-picker
+    // range PR lands.
     editor = (
-      <div className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
-        <PanelDateInput
-          ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
-          value={min}
-          onChange={setMin}
-        />
-        <PanelDateInput
-          ariaLabel={`${label} — ${t("filterBetweenTo")}`}
-          value={max}
-          onChange={setMax}
-        />
+      <div className="astw:flex astw:flex-col astw:gap-3 astw:p-2">
+        <div className="astw:flex astw:flex-col astw:gap-1">
+          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenFrom")}</span>
+          <DateFilterPicker ariaLabel={t("filterBetweenFrom")} value={min} onChange={setMin} />
+        </div>
+        <div className="astw:flex astw:flex-col astw:gap-1">
+          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenTo")}</span>
+          <DateFilterPicker ariaLabel={t("filterBetweenTo")} value={max} onChange={setMax} />
+        </div>
       </div>
     );
   } else if (isBetween) {
+    // Non-date range: two simple From/To (or Min/Max) text boxes.
     const numeric = type === "number";
     editor = (
       <div className="astw:p-2">
@@ -551,260 +477,6 @@ function PanelValueEditor({
           {t("applyFilter")}
         </Button>
       </div>
-    </div>
-  );
-}
-
-/**
- * A single field row in the add-filter menu; opens its editor as a submenu.
- *
- * When the field opts into a condition step (`shouldChooseOperator`), the
- * submenu lists the operators — each opening a further submenu with the value
- * editor (field ▸ condition ▸ value). Otherwise the submenu shows the value
- * editor directly with a default operator (field ▸ value).
- */
-function FieldSubmenu({
-  column,
-  control,
-}: {
-  column: FilterableColumn;
-  control: CollectionControl;
-}) {
-  const config = column.filter;
-  const field = config.field;
-  const label = column.label ?? field;
-  const active = control.filters.find((f) => f.field === field);
-
-  // Own the submenu's open state so a single-shot editor (boolean/date/text) can
-  // close just this submenu on commit and return to the field list, while the
-  // parent add-filter menu stays open for adding more filters.
-  const [subOpen, setSubOpen] = useState(false);
-
-  const operators = getAddFilterOperators(config.type);
-  const showConditionLevel = shouldChooseOperator(config) && operators.length > 1;
-
-  return (
-    <Menu.SubmenuRoot open={subOpen} onOpenChange={setSubOpen}>
-      <Menu.SubmenuTrigger>
-        {label}
-        <ChevronRight className="astw:ml-auto astw:size-3.5 astw:text-muted-foreground" />
-      </Menu.SubmenuTrigger>
-      <Menu.Content position={{ side: "right", align: "start" }} className="astw:min-w-52">
-        {showConditionLevel ? (
-          operators.map((operator) => (
-            <OperatorSubmenu
-              key={operator}
-              column={column}
-              operator={operator}
-              activeFilter={active}
-              control={control}
-            />
-          ))
-        ) : (
-          <FieldSubmenuEditor
-            column={column}
-            filter={active}
-            control={control}
-            onCommitted={() => setSubOpen(false)}
-          />
-        )}
-      </Menu.Content>
-    </Menu.SubmenuRoot>
-  );
-}
-
-/**
- * Second level of the add-filter menu (condition ▸ value): one operator that
- * opens a further submenu with the value editor for that operator. Prefills the
- * editor from the active filter when the operator matches.
- */
-function OperatorSubmenu({
-  column,
-  operator,
-  activeFilter,
-  control,
-}: {
-  column: FilterableColumn;
-  operator: FilterOperator;
-  activeFilter: Filter | undefined;
-  control: CollectionControl;
-}) {
-  const t = useDataTableT();
-  const config = column.filter;
-  const [subOpen, setSubOpen] = useState(false);
-
-  // Reuse the chip's value editor with the operator fixed (hidden) — it gives a
-  // value input + Apply button per operator, including the "between" range.
-  const editorFilter: Filter =
-    activeFilter && activeFilter.operator === operator
-      ? activeFilter
-      : { field: config.field, operator, value: undefined };
-
-  return (
-    <Menu.SubmenuRoot open={subOpen} onOpenChange={setSubOpen}>
-      <Menu.SubmenuTrigger>
-        {getOperatorLabel(operator, t, config.type)}
-        <ChevronRight className="astw:ml-auto astw:size-3.5 astw:text-muted-foreground" />
-      </Menu.SubmenuTrigger>
-      <Menu.Content position={{ side: "right", align: "start" }} className="astw:min-w-52">
-        <FilterPopoverContent
-          column={column}
-          filter={editorFilter}
-          control={control}
-          onClose={() => setSubOpen(false)}
-          hideOperator
-        />
-      </Menu.Content>
-    </Menu.SubmenuRoot>
-  );
-}
-
-/** Dispatches to the right quick editor for a field's type. */
-function FieldSubmenuEditor({
-  column,
-  filter,
-  control,
-  onCommitted,
-}: {
-  column: FilterableColumn;
-  filter: Filter | undefined;
-  control: CollectionControl;
-  /** Close this submenu (back to the field list) after a single-shot commit. */
-  onCommitted: () => void;
-}) {
-  const t = useDataTableT();
-  const config = column.filter;
-  const field = config.field;
-  const label = column.label ?? field;
-
-  // Enum: live multi-select checkbox list (commit on every toggle, menu stays open).
-  if (config.type === "enum") {
-    const selected = Array.isArray(filter?.value) ? (filter.value as string[]) : [];
-    const toggle = (value: string) => {
-      const set = new Set(selected);
-      if (set.has(value)) set.delete(value);
-      else set.add(value);
-      const next = [...set];
-      if (next.length === 0) control.removeFilter(field);
-      else control.addFilter(field, "in", next);
-    };
-    return <EnumOptionList options={config.options} selected={selected} onToggle={toggle} />;
-  }
-
-  // Boolean: True / False items. closeOnClick={false} keeps the add-filter menu
-  // open; we close just this submenu via onCommitted.
-  if (config.type === "boolean") {
-    return (
-      <>
-        {[true, false].map((v) => (
-          <Menu.Item
-            key={String(v)}
-            closeOnClick={false}
-            onClick={() => {
-              control.addFilter(field, "eq", v);
-              onCommitted();
-            }}
-          >
-            {v ? t("filterBooleanTrue") : t("filterBooleanFalse")}
-          </Menu.Item>
-        ))}
-      </>
-    );
-  }
-
-  // Date: calendar picker (commit on pick, then close this submenu).
-  if (config.type === "date") {
-    const current = typeof filter?.value === "string" ? filter.value : "";
-    return (
-      <div className="astw:p-1">
-        <DateFilterPicker
-          ariaLabel={label}
-          value={current}
-          onChange={(v) => {
-            if (v) {
-              control.addFilter(field, "eq", v);
-              onCommitted();
-            }
-          }}
-        />
-      </div>
-    );
-  }
-
-  // String / number / uuid (and datetime/time): focused input, commit on Enter.
-  const op = DEFAULT_OPERATOR[config.type];
-  const initial = typeof filter?.value === "string" ? filter.value : "";
-  const inputType = config.type === "number" ? "number" : "text";
-  return (
-    <SubmenuFilterInput
-      inputType={inputType}
-      defaultValue={initial}
-      ariaLabel={label}
-      placeholder={t("filterValuePlaceholder", { field: label })}
-      onCommit={(raw) => {
-        if (raw.trim() === "") {
-          control.removeFilter(field);
-          onCommitted();
-          return;
-        }
-        if (!isAddFilterDraftValueValid(config.type, op, raw)) return;
-        control.addFilter(
-          field,
-          op,
-          toAddFilterSubmittedValue(config.type, op, raw),
-          config.type === "string" ? { caseSensitive: false } : undefined,
-        );
-        onCommitted();
-      }}
-    />
-  );
-}
-
-/**
- * Text/number input rendered inside a Menu submenu. Base UI's menu applies
- * typeahead and roving focus at the popup level, so we stop keydown propagation
- * to keep typing in the input, and focus it once the submenu opens.
- */
-function SubmenuFilterInput({
-  inputType,
-  defaultValue,
-  ariaLabel,
-  placeholder,
-  onCommit,
-}: {
-  inputType: "text" | "number";
-  defaultValue: string;
-  ariaLabel: string;
-  placeholder?: string;
-  onCommit: (value: string) => void;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [value, setValue] = useState(defaultValue);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => ref.current?.focus());
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  return (
-    <div className="astw:p-1">
-      <Input
-        ref={ref}
-        type={inputType}
-        aria-label={ariaLabel}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          // Keep keystrokes in the input rather than the menu's typeahead/nav.
-          e.stopPropagation();
-          if (e.key === "Enter") {
-            e.preventDefault();
-            onCommit(value);
-          }
-        }}
-        className="astw:h-8 astw:text-sm"
-      />
     </div>
   );
 }
@@ -965,7 +637,9 @@ function FilterChip({
   return (
     <div
       data-slot="data-table-filter-chip"
-      // Match the outline Button surface (the "Add filter" trigger) in both themes.
+      // Same surface tokens as the outline "Add filter" Button. The bloom/cream
+      // themes force this slot transparent (see their transparent-chrome rules)
+      // so the chip stays visually identical to the outline button per theme.
       className="astw:inline-flex astw:items-center astw:divide-x astw:divide-border astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-background astw:shadow-xs astw:dark:border-input astw:dark:bg-input/30"
     >
       {/* Field segment (icon arrives in Stage 2) */}
@@ -1020,7 +694,7 @@ function FilterChip({
             </button>
           }
         />
-        {/* See AddFilterMenu — stacking context so the popup clears the sticky header. */}
+        {/* Stacking context on the portal so the popup clears the sticky table header. */}
         <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
           <Popover.Positioner sideOffset={4} side="bottom" align="start">
             <Popover.Popup
@@ -1203,8 +877,8 @@ function FilterPopoverContent({
 
 // =============================================================================
 // Shared filter checkbox controls — one blue (primary) checkbox style reused
-// everywhere in the filter UI (enum lists in both the add menu and the chip
-// value editor, plus the case-sensitive toggle) so they stay consistent.
+// everywhere in the filter UI (enum lists in both the add-filter panel and the
+// chip value editor, plus the case-sensitive toggle) so they stay consistent.
 // =============================================================================
 
 /** The single checkbox visual used across all filter surfaces. */
@@ -1236,7 +910,7 @@ function FilterCheckbox({
 
 /**
  * Multi-select option list for enum filters. Rendered identically in the
- * add-filter submenu and the chip's value editor so the checkbox style is
+ * add-filter panel and the chip's value editor so the checkbox style is
  * consistent in both places.
  */
 function EnumOptionList({

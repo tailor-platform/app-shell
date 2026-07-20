@@ -252,16 +252,14 @@ describe("DataTable.Filters", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AddFilterMenu — the add-filter trigger opens a menu of filterable fields
+// AddFilterPanel — the add-filter trigger opens a 3-column panel
 // ---------------------------------------------------------------------------
 
-describe("AddFilterMenu", () => {
-  it("opens a menu listing the filterable field labels", async () => {
-    // The old AddFilterPopover (field/operator/value Selects) is gone, replaced
-    // by a Base UI Menu whose top level lists every filterable field as a
-    // submenu trigger. Base UI submenu hover-open is unreliable in jsdom, so we
-    // only assert the top-level field list here rather than driving the full
-    // field ▸ condition ▸ value flow.
+describe("AddFilterPanel", () => {
+  it("opens a panel listing every filterable field", async () => {
+    // The add-filter surface is a single popover with three columns
+    // (field ▸ condition ▸ value); the first column lists each filterable field
+    // as a button.
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });
     render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, {
@@ -270,8 +268,22 @@ describe("AddFilterMenu", () => {
 
     await user.click(screen.getByRole("button", { name: /Add filter/ }));
 
-    expect(await screen.findByRole("menuitem", { name: /Name/ })).toBeDefined();
-    expect(screen.getByRole("menuitem", { name: /Count/ })).toBeDefined();
+    expect(await screen.findByRole("button", { name: /^Name$/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
+  });
+
+  it("selecting a field shows the value editor with an Apply button", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Count$/ }));
+
+    // Amount/Count is numeric → condition column + a value input + Apply.
+    expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
   });
 });
 

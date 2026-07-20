@@ -83,31 +83,15 @@ export interface SelectOption {
  * The `type` determines which operators are available.
  * The `field` identifies the backend field name used for filtering.
  */
-/** Fields shared by every `FilterConfig` branch. */
-interface FilterConfigBase {
-  field: string;
-  /**
-   * Whether the user picks the operator (condition) themselves when adding
-   * this filter. When `true`, `DataTable.Filters`' add menu inserts a condition
-   * step (field ▸ condition ▸ value); when `false` it goes straight to the
-   * value using a sensible default operator. Regardless of this flag, the
-   * active filter chip always lets you change the operator afterward.
-   *
-   * Defaults to `true` for `number`/`date`/`datetime`/`time` (where
-   * greater-than / between / before matter) and `false` otherwise.
-   */
-  chooseOperator?: boolean;
-}
-
 export type FilterConfig =
-  | (FilterConfigBase & { type: "string" })
-  | (FilterConfigBase & { type: "number" })
-  | (FilterConfigBase & { type: "datetime" })
-  | (FilterConfigBase & { type: "date" })
-  | (FilterConfigBase & { type: "time" })
-  | (FilterConfigBase & { type: "enum"; options: SelectOption[] })
-  | (FilterConfigBase & { type: "boolean" })
-  | (FilterConfigBase & { type: "uuid" });
+  | { field: string; type: "string" }
+  | { field: string; type: "number" }
+  | { field: string; type: "datetime" }
+  | { field: string; type: "date" }
+  | { field: string; type: "time" }
+  | { field: string; type: "enum"; options: SelectOption[] }
+  | { field: string; type: "boolean" }
+  | { field: string; type: "uuid" };
 
 // =============================================================================
 // Filter Operators (Single Source of Truth)

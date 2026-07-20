@@ -965,7 +965,8 @@ function FilterChip({
   return (
     <div
       data-slot="data-table-filter-chip"
-      className="astw:inline-flex astw:items-center astw:divide-x astw:divide-border astw:overflow-hidden astw:rounded-md astw:border astw:border-input astw:bg-background astw:shadow-xs"
+      // Match the outline Button surface (the "Add filter" trigger) in both themes.
+      className="astw:inline-flex astw:items-center astw:divide-x astw:divide-border astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-background astw:shadow-xs astw:dark:border-input astw:dark:bg-input/30"
     >
       {/* Field segment (icon arrives in Stage 2) */}
       <span className={cn(segment, "astw:font-medium astw:text-foreground")}>{label}</span>

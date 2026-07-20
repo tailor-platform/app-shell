@@ -156,6 +156,24 @@ const PANEL_COLUMN_ROW = cn(
   "astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus-visible:bg-accent",
 );
 
+/**
+ * Seed the add-panel's operator for a field: reuse an active filter's operator
+ * when it's valid for the field type, so re-opening an already-filtered field
+ * shows its current condition (and lets the value editor prefill) instead of
+ * resetting to the default — which on Apply could silently overwrite the filter.
+ * Falls back to the type default when there's no active filter.
+ */
+function seedPanelOperator(
+  control: CollectionControl,
+  col: FilterableColumn | undefined,
+): FilterOperator {
+  if (!col) return "eq";
+  const active = control.filters.find((f) => f.field === col.filter.field);
+  const ops = getAddFilterOperators(col.filter.type);
+  if (active && ops.includes(active.operator)) return active.operator;
+  return DEFAULT_OPERATOR[col.filter.type];
+}
+
 function AddFilterPanel({
   columns,
   control,
@@ -174,14 +192,14 @@ function AddFilterPanel({
   // (single-operator types like enum/uuid go straight field ▸ value).
   const showConditions = operators.length > 1;
 
-  const [operator, setOperator] = useState<FilterOperator>(
-    config ? DEFAULT_OPERATOR[config.type] : "eq",
+  const [operator, setOperator] = useState<FilterOperator>(() =>
+    seedPanelOperator(control, selectedColumn),
   );
 
   const selectField = (name: string) => {
     setFieldName(name);
     const col = columns.find((c) => c.filter.field === name);
-    if (col) setOperator(DEFAULT_OPERATOR[col.filter.type]);
+    if (col) setOperator(seedPanelOperator(control, col));
   };
 
   const activeFields = new Set(control.filters.map((f) => f.field));
@@ -375,7 +393,9 @@ function PanelValueEditor({
       field,
       operator,
       toAddFilterSubmittedValue(type, operator, text),
-      type === "string" ? { caseSensitive: false } : undefined,
+      // Preserve the existing filter's case-sensitivity (the panel has no toggle;
+      // the chip's string editor owns it) instead of silently clearing it.
+      type === "string" ? { caseSensitive: filter?.caseSensitive ?? false } : undefined,
     );
   };
 
@@ -592,6 +612,12 @@ function FilterChip({
   // malformed. Fine-tuning the value happens in the value segment.
   const handleOperatorSelect = useCallback(
     (nextOp: FilterOperator) => {
+      // Coerce to a finite number, falling back to 0 for malformed values (e.g.
+      // a non-numeric value from persisted/URL state) so we never seed NaN.
+      const toNum = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
       const arity = (op: FilterOperator) => (op === "between" ? 2 : 1);
       if (arity(nextOp) === arity(filter.operator)) {
         control.addFilter(
@@ -603,7 +629,7 @@ function FilterChip({
       } else if (nextOp === "between") {
         const v = filter.value;
         if (config.type === "number") {
-          const n = typeof v === "number" ? v : Number(v);
+          const n = toNum(v);
           control.addFilter(config.field, nextOp, { min: n, max: n });
         } else {
           const s = v == null ? "" : String(v);
@@ -615,7 +641,7 @@ function FilterChip({
         control.addFilter(
           config.field,
           nextOp,
-          config.type === "number" ? Number(lower) : String(lower),
+          config.type === "number" ? toNum(lower) : String(lower),
         );
       }
       setOpOpen(false);
@@ -790,7 +816,9 @@ function OperatorList({
           </button>
         ))}
         {items.length === 0 && (
-          <div className="astw:px-2 astw:py-1.5 astw:text-sm astw:text-muted-foreground">—</div>
+          <output className="astw:block astw:px-2 astw:py-1.5 astw:text-sm astw:text-muted-foreground">
+            {t("filterOperatorNoResults")}
+          </output>
         )}
       </div>
     </div>
@@ -1654,14 +1682,6 @@ function formatDateValue(iso: string, locale: string): string {
   }
 }
 
-/** Pluralize a column label for enum count summaries ("Status" → "statuses"). */
-function pluralizeNoun(label: string): string {
-  const w = label.toLowerCase();
-  if (/(s|x|z|ch|sh)$/.test(w)) return `${w}es`;
-  if (/[^aeiou]y$/.test(w)) return `${w.slice(0, -1)}ies`;
-  return `${w}s`;
-}
-
 /**
  * Date range for chip display: "15 Jul 2026 – 17 Jul 2026". Each bound is
  * formatted with the same locale-aware medium date used elsewhere, joined with
@@ -1688,7 +1708,7 @@ function formatFilterValue(
       .filter((v) => v !== "");
     // Summarize multiple selections as "2 statuses" rather than listing them.
     if (labels.length > 1 && label) {
-      return `${labels.length} ${pluralizeNoun(label)}`;
+      return t("filterEnumCount", { count: labels.length, noun: label });
     }
     return labels.join(", ");
   }

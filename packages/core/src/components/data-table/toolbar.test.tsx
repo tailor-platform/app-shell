@@ -285,6 +285,39 @@ describe("AddFilterPanel", () => {
     // Amount/Count is numeric → condition column + a value input + Apply.
     expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
   });
+
+  it("seeds an already-filtered field's operator/value so Apply preserves them", async () => {
+    // Re-opening the panel on a field that already has a non-default filter
+    // (here a number "between") must keep that operator and value rather than
+    // resetting to the type default — otherwise Apply would silently overwrite.
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "count", operator: "between", value: { min: 5, max: 10 } }],
+    });
+    render(<TestFilters control={control} columns={[numberColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 5, max: 10 });
+  });
+
+  it("preserves case-sensitivity when re-applying a string filter from the panel", async () => {
+    // The panel has no case-sensitive toggle; re-applying must carry the active
+    // filter's caseSensitive flag through rather than clearing it.
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice", caseSensitive: true }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseSensitive: true,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,13 @@
 import { defineI18nLabels } from "@/hooks/i18n";
 
+/** English plural of a column label for enum count summaries ("Status" → "statuses"). */
+function pluralizeEn(label: string): string {
+  const w = label.toLowerCase();
+  if (/(s|x|z|ch|sh)$/.test(w)) return `${w}es`;
+  if (/[^aeiou]y$/.test(w)) return `${w.slice(0, -1)}ies`;
+  return `${w}s`;
+}
+
 export const dataTableLabels = defineI18nLabels({
   en: {
     // DataTable.Body
@@ -34,7 +42,11 @@ export const dataTableLabels = defineI18nLabels({
     applyFilter: "Apply",
     removeFilter: "Remove filter",
     filterOperatorSearchPlaceholder: "Search...",
+    filterOperatorNoResults: "No results",
     filterValuePlaceholder: (props: { field: string }) => `Enter ${props.field.toLowerCase()}`,
+    // Multi-select enum chip summary, e.g. "2 statuses".
+    filterEnumCount: (props: { count: number; noun: string }) =>
+      `${props.count} ${pluralizeEn(props.noun)}`,
     filterBooleanTrue: "True",
     filterBooleanFalse: "False",
     filterOperator_eq: "is",
@@ -93,7 +105,10 @@ export const dataTableLabels = defineI18nLabels({
     applyFilter: "適用",
     removeFilter: "フィルタを削除",
     filterOperatorSearchPlaceholder: "検索...",
+    filterOperatorNoResults: "該当なし",
     filterValuePlaceholder: (props: { field: string }) => `${props.field}を入力`,
+    // Multi-select enum chip summary, e.g. "ステータス2件".
+    filterEnumCount: (props: { count: number; noun: string }) => `${props.noun}${props.count}件`,
     filterBooleanTrue: "真",
     filterBooleanFalse: "偽",
     filterOperator_eq: "と等しい",

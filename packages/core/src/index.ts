@@ -2,9 +2,11 @@ export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 export {
+  useOpenCommandPalette,
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
   type CommandPaletteSearchResult,
+  type OpenCommandPaletteOptions,
   type SearchSource,
 } from "./contexts/command-palette-context";
 
@@ -29,6 +31,8 @@ export {
   useAppShellData,
   useResolvedLocale,
   useTimeZone,
+  type AppInfo,
+  type AppInfoEntry,
   type TimeZone,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";

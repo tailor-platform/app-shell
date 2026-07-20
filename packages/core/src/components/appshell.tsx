@@ -14,6 +14,7 @@ import {
   AppShellConfigContext,
   AppShellDataContext,
   buildConfigurations,
+  type AppInfo,
   type ContextData,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
@@ -59,6 +60,14 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * `<link rel="icon">` in `index.html`.
    */
   favicon?: string;
+
+  /**
+   * Additional application metadata shown on the built-in `/__appinfo` page.
+   *
+   * AppShell always includes its own version there; use this prop to append
+   * app-defined rows such as environment, release, or commit.
+   */
+  appInfo?: AppInfo;
 
   /**
    * Base path for the app shell
@@ -327,9 +336,15 @@ export const AppShell = (props: AppShellProps) => {
   const configValue = useMemo(
     () =>
       configurations
-        ? { title: props.title, icon: props.icon, favicon: props.favicon, configurations }
+        ? {
+            title: props.title,
+            icon: props.icon,
+            favicon: props.favicon,
+            appInfo: props.appInfo,
+            configurations,
+          }
         : null,
-    [props.title, props.icon, props.favicon, configurations],
+    [props.title, props.icon, props.favicon, props.appInfo, configurations],
   );
 
   const dataValue = useMemo(

@@ -13,6 +13,10 @@ export const dateFieldLabels = defineI18nLabels({
     chooseDateFor: (p: { name: string }) => `${p.name}, choose date`,
     calendar: "Calendar",
     empty: "Empty",
+    // Default validation messages (shown when the consumer passes no
+    // `errorMessage`): a typed/shortcut date outside min/max, or unavailable.
+    dateOutOfRange: "Date is outside the allowed range.",
+    dateUnavailable: "This date is unavailable.",
     // Per-segment accessible names (keys match the segment `type`).
     year: "year",
     month: "month",
@@ -28,6 +32,8 @@ export const dateFieldLabels = defineI18nLabels({
     chooseDateFor: (p: { name: string }) => `${p.name}、日付を選択`,
     calendar: "カレンダー",
     empty: "未入力",
+    dateOutOfRange: "指定できる範囲外の日付です。",
+    dateUnavailable: "この日付は選択できません。",
     year: "年",
     month: "月",
     day: "日",

@@ -129,12 +129,15 @@ const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
 
 Accepts all the same props as `Select` except `items`, plus:
 
-| Prop                   | Type                    | Default        | Description                                                                                                                        |
-| ---------------------- | ----------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `fetcher`              | `SelectAsyncFetcher<T>` | -              | Fetcher called each time the dropdown is opened                                                                                    |
-| `loadingText`          | `string`                | `"Loading..."` | Text shown while loading                                                                                                           |
-| `modal`                | `boolean`               | `false`        | Whether the select traps focus (modal behavior). Set to `true` when rendering inside a `Dialog` or `Sheet` to preserve focus-trap. |
-| `alignItemWithTrigger` | `boolean`               | `false`        | Whether to align the selected item with the trigger when the dropdown opens.                                                       |
+| Prop                   | Type                       | Default                    | Description                                                                                                                        |
+| ---------------------- | -------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `fetcher`              | `SelectAsyncFetcher<T>`    | -                          | Fetcher called each time the dropdown is opened                                                                                    |
+| `loadingText`          | `string`                   | `"Loading..."`             | Text shown while loading                                                                                                           |
+| `errorText`            | `string`                   | `"Couldn't load results."` | Message shown in the dropdown when the fetcher fails (with Retry)                                                                  |
+| `retryText`            | `string`                   | `"Retry"`                  | Label for the retry button in the error state                                                                                      |
+| `onFetchError`         | `(error: unknown) => void` | -                          | Called once per outage when a fetch fails (logging/error tracking)                                                                 |
+| `modal`                | `boolean`                  | `false`                    | Whether the select traps focus (modal behavior). Set to `true` when rendering inside a `Dialog` or `Sheet` to preserve focus-trap. |
+| `alignItemWithTrigger` | `boolean`                  | `false`                    | Whether to align the selected item with the trigger when the dropdown opens.                                                       |
 
 > **Note:** `Select.Async` does not support `ItemGroup<T>[]` — the fetcher must return a flat array.
 
@@ -146,7 +149,9 @@ Accepts all the same props as `Select` except `items`, plus:
 type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
 ```
 
-Errors thrown by the fetcher are silently caught — handle errors inside the fetcher (e.g. show a toast, return fallback data).
+### Error handling
+
+If the fetcher throws or rejects, `Select.Async` renders a built-in inline error state in the dropdown — the `errorText` message plus a **Retry** button that re-runs the fetch — instead of the misleading empty state. Aborted requests (the dropdown closed before the fetch settled) are ignored, and announcements are de-duped per outage. Pass `onFetchError` to run a side effect (logging, toast) — it fires once per outage and re-arms after the next successful fetch.
 
 ## Low-level Primitives
 

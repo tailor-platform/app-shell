@@ -1,11 +1,11 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData, RowAction } from "./types";
+import type { Column, DataTableData, RowAction, UseDataTableReturn } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -1177,6 +1177,46 @@ describe("DataTable", () => {
       expect(headByText(container, "A")?.style.left).toBe("0px");
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
+    });
+
+    it("keeps stored pin state keyed to definition order for a column with no id/label", () => {
+      // The middle column has neither `id` nor `label`, so its key falls back to
+      // its definition index ("1"). Regression for the two-index-space bug:
+      // resolving the render key from the *visible* array would re-key this
+      // column to "0" once the column ahead of it is hidden, silently detaching
+      // its stored pin (and visibility) state.
+      type R = { id: string; a: string; b: string; c: string };
+      const dataRows: R[] = [{ id: "1", a: "A1", b: "B1", c: "C1" }];
+      const cols: Column<R>[] = [
+        { id: "a", label: "A", width: 100, render: (r) => r.a },
+        { width: 100, render: (r) => r.b }, // no id, no label → definition key "1"
+        { id: "c", label: "C", width: 100, render: (r) => r.c },
+      ];
+      let api!: UseDataTableReturn<R>;
+      function Harness() {
+        const table = useDataTable<R>({ columns: cols, data: { rows: dataRows } });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const keyless = () =>
+        container.querySelector<HTMLElement>(
+          '[data-slot="data-table-header"] th[data-col-key="1"]',
+        );
+
+      // Renders under its definition-order key, then pin it (stored under "1").
+      expect(keyless()).not.toBeNull();
+      act(() => api.setPin("1", "left"));
+      expect(keyless()?.style.position).toBe("sticky");
+
+      // Hiding the column ahead of it must NOT re-key it to its new visible
+      // index and drop the pin.
+      act(() => api.toggleColumn("a"));
+      expect(keyless()?.style.position).toBe("sticky");
     });
   });
 });

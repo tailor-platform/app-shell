@@ -134,12 +134,22 @@ function resolvePin(
   return stored ?? defaultPin;
 }
 
-function effectivePin<TRow extends Record<string, unknown>>(
-  col: Column<TRow>,
-  index: number,
-  pinnedColumns: Record<string, "left" | "right" | "none">,
-): PinSide | undefined {
-  return resolvePin(pinnedColumns[columnKeyAt(col, index)], col.pin);
+/**
+ * Definition-order `col → key` map — the single source of truth for a column's
+ * identity, matching how `useDataTable` / `ColumnSettings` store order,
+ * visibility, and pin state. Built from the **full** column list so a key never
+ * depends on the column's position in the filtered/reordered *visible* array: a
+ * column with neither `id` nor `label` falls back to `String(index)`, and keying
+ * it off its visible index would silently detach its stored pin/visibility once
+ * a sibling is hidden or moved. Keyed by reference — `visibleColumns` reuses
+ * these same column objects.
+ */
+function buildColumnKeys<TRow extends Record<string, unknown>>(
+  columns: Column<TRow>[],
+): Map<Column<TRow>, string> {
+  const keys = new Map<Column<TRow>, string>();
+  columns.forEach((col, index) => keys.set(col, columnKeyAt(col, index)));
+  return keys;
 }
 
 /**
@@ -147,23 +157,34 @@ function effectivePin<TRow extends Record<string, unknown>>(
  * The selection column (if present) auto-pins to the left edge and row-actions
  * (if present) auto-pins to the right edge, with user-pinned columns stacking
  * outward from them.
+ *
+ * `columnKeys` is the definition-order key map (see {@link buildColumnKeys});
+ * `columns` here is the visible/reordered subset, so keys are resolved by
+ * reference from that map rather than from each column's position in it.
  */
 function computePinLayout<TRow extends Record<string, unknown>>(
   columns: Column<TRow>[],
   pinnedColumns: Record<string, "left" | "right" | "none">,
-  opts: { hasSelection: boolean; hasRowActions: boolean; widths: ColumnWidths },
+  opts: {
+    hasSelection: boolean;
+    hasRowActions: boolean;
+    widths: ColumnWidths;
+    columnKeys: Map<Column<TRow>, string>;
+  },
 ): PinLayout<TRow> {
-  const { hasSelection, hasRowActions, widths } = opts;
+  const { hasSelection, hasRowActions, widths, columnKeys } = opts;
+
+  const keyOf = (col: Column<TRow>): string => columnKeys.get(col) as string;
 
   const keys = new Map<Column<TRow>, string>();
-  columns.forEach((col, index) => keys.set(col, columnKeyAt(col, index)));
+  columns.forEach((col) => keys.set(col, keyOf(col)));
 
   const left: Column<TRow>[] = [];
   const middle: Column<TRow>[] = [];
   const right: Column<TRow>[] = [];
 
-  columns.forEach((col, index) => {
-    const pin = effectivePin(col, index, pinnedColumns);
+  columns.forEach((col) => {
+    const pin = resolvePin(pinnedColumns[keyOf(col)], col.pin);
     if (pin === "left") left.push(col);
     else if (pin === "right") right.push(col);
     else middle.push(col);
@@ -470,6 +491,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     throw new Error("<DataTable.Headers> must be used within <DataTable.Root>");
   }
   const {
+    columns: allColumns,
     visibleColumns: columns,
     pinnedColumns,
     sortStates,
@@ -485,9 +507,11 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
+  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const { ordered, keys, placements, selection, actions } = useMemo(
-    () => computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths }),
-    [columns, pinnedColumns, hasSelection, hasRowActions, widths],
+    () =>
+      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
+    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
   );
 
   return (
@@ -630,6 +654,7 @@ function DataTableBody({ className }: { className?: string }) {
     throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
   }
   const {
+    columns: allColumns,
     visibleColumns: columns,
     pinnedColumns,
     rows,
@@ -647,9 +672,11 @@ function DataTableBody({ className }: { className?: string }) {
   const hasSelection = !!toggleRowSelection;
   const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
+  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const pinLayout = useMemo(
-    () => computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths }),
-    [columns, pinnedColumns, hasSelection, hasRowActions, widths],
+    () =>
+      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
+    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
   );
   const tableBodyProps = {
     "data-slot": "data-table-body",

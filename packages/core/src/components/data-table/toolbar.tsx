@@ -410,6 +410,97 @@ function PanelDateTimeInput({
 }
 
 /**
+ * Range editor for date / datetime "between" in the panel: one inline calendar
+ * (reusing the single-value editors) with a From/To tab bar on top. Picking a
+ * bound edits whichever tab is active; each tab shows its current value. Keeps
+ * the range on a single calendar instead of two stacked fields.
+ */
+function PanelDateRangeInput({
+  label,
+  min,
+  max,
+  onChangeMin,
+  onChangeMax,
+  withTime = false,
+}: {
+  label: string;
+  min: string;
+  max: string;
+  onChangeMin: (value: string) => void;
+  onChangeMax: (value: string) => void;
+  /** datetime range — the active bound also gets a time picker. */
+  withTime?: boolean;
+}) {
+  const t = useDataTableT();
+  const { locale } = useResolvedLocale();
+  const [active, setActive] = useState<"from" | "to">("from");
+
+  const fmt = (v: string) => {
+    if (!v) return "—";
+    return withTime ? formatDateTimeValue(v, locale) : formatDateValue(v, locale);
+  };
+  const bounds = [
+    { key: "from" as const, label: t("filterBetweenFrom"), value: min, onChange: onChangeMin },
+    { key: "to" as const, label: t("filterBetweenTo"), value: max, onChange: onChangeMax },
+  ];
+  const activeBound = bounds.find((b) => b.key === active) ?? bounds[0];
+  const error = betweenOrderError(
+    withTime ? "datetime" : "date",
+    min,
+    max,
+    t("filterBetweenFrom"),
+    t("filterBetweenTo"),
+    t,
+  );
+
+  return (
+    <div className="astw:flex astw:flex-col astw:gap-3">
+      {/* From / To tab bar (each tab shows its picked value) */}
+      <div className="astw:grid astw:grid-cols-2 astw:gap-1 astw:rounded-md astw:bg-muted astw:p-1">
+        {bounds.map((b) => (
+          <button
+            key={b.key}
+            type="button"
+            onClick={() => setActive(b.key)}
+            className={cn(
+              "astw:flex astw:flex-col astw:items-start astw:gap-0.5 astw:overflow-hidden astw:rounded-sm astw:px-2 astw:py-1 astw:text-left",
+              active === b.key && "astw:bg-background astw:shadow-sm",
+            )}
+          >
+            <span className="astw:text-xs astw:text-muted-foreground">{b.label}</span>
+            <span
+              className={cn(
+                "astw:w-full astw:truncate astw:text-sm",
+                active === b.key ? "astw:text-foreground" : "astw:text-muted-foreground",
+              )}
+            >
+              {fmt(b.value)}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Inline calendar (+ time) for the active bound */}
+      {withTime ? (
+        <PanelDateTimeInput
+          ariaLabel={`${label} — ${activeBound.label}`}
+          value={activeBound.value}
+          onChange={activeBound.onChange}
+        />
+      ) : (
+        <PanelDateInput
+          ariaLabel={`${label} — ${activeBound.label}`}
+          value={activeBound.value}
+          onChange={activeBound.onChange}
+        />
+      )}
+
+      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
+    </div>
+  );
+}
+
+/**
  * Draft value editor for the panel's third column, keyed by field + operator.
  * Holds local draft state and commits via an explicit Apply button (the panel
  * stays open so several filters can be added in a row).
@@ -541,43 +632,30 @@ function PanelValueEditor({
       </div>
     );
   } else if (isBetween && type === "date") {
-    // Range dates: two From/To app-shell DatePickers (segmented input + calendar
-    // icon/popover). A proper range calendar replaces this once the date-picker
-    // range PR lands.
+    // Range dates: one inline calendar with From/To tabs on top.
     editor = (
-      <div className="astw:flex astw:flex-col astw:gap-3 astw:p-2">
-        <div className="astw:flex astw:flex-col astw:gap-1">
-          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenFrom")}</span>
-          <DateFilterPicker ariaLabel={t("filterBetweenFrom")} value={min} onChange={setMin} />
-        </div>
-        <div className="astw:flex astw:flex-col astw:gap-1">
-          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenTo")}</span>
-          <DateFilterPicker ariaLabel={t("filterBetweenTo")} value={max} onChange={setMax} />
-        </div>
-        {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t) && (
-          <p className="astw:text-destructive astw:text-xs">
-            {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t)}
-          </p>
-        )}
+      <div className="astw:p-2">
+        <PanelDateRangeInput
+          label={label}
+          min={min}
+          max={max}
+          onChangeMin={setMin}
+          onChangeMax={setMax}
+        />
       </div>
     );
   } else if (isBetween && type === "datetime") {
-    // Range datetimes: two From/To date-pickers each paired with a time box.
+    // Range datetimes: one inline calendar + time with From/To tabs on top.
     editor = (
-      <div className="astw:flex astw:flex-col astw:gap-3 astw:p-2">
-        <div className="astw:flex astw:flex-col astw:gap-1">
-          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenFrom")}</span>
-          <DateTimeFilterInput ariaLabel={t("filterBetweenFrom")} value={min} onChange={setMin} />
-        </div>
-        <div className="astw:flex astw:flex-col astw:gap-1">
-          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenTo")}</span>
-          <DateTimeFilterInput ariaLabel={t("filterBetweenTo")} value={max} onChange={setMax} />
-        </div>
-        {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t) && (
-          <p className="astw:text-destructive astw:text-xs">
-            {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t)}
-          </p>
-        )}
+      <div className="astw:p-2">
+        <PanelDateRangeInput
+          label={label}
+          min={min}
+          max={max}
+          onChangeMin={setMin}
+          onChangeMax={setMax}
+          withTime
+        />
       </div>
     );
   } else if (isBetween) {

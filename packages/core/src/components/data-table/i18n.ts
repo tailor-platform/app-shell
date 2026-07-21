@@ -40,7 +40,10 @@ export const dataTableLabels = defineI18nLabels({
     // Filters
     addFilter: "Add filter",
     applyFilter: "Apply",
+    updateFilter: "Update",
     removeFilter: "Remove filter",
+    clearFilter: "Clear this filter",
+    clearAllFilters: "Clear all filters",
     filterOperatorSearchPlaceholder: "Search...",
     filterOperatorNoResults: "No results",
     filterValuePlaceholder: (props: { field: string }) => `Enter ${props.field.toLowerCase()}`,
@@ -73,6 +76,8 @@ export const dataTableLabels = defineI18nLabels({
     filterBetweenTo: "To",
     filterBetweenMin: "Min",
     filterBetweenMax: "Max",
+    filterBetweenOrderError: (props: { min: string; max: string }) =>
+      `${props.max} must be greater than or equal to ${props.min}`,
     filterCaseSensitive: "Case sensitive",
 
     // Filter chip label templates
@@ -103,7 +108,10 @@ export const dataTableLabels = defineI18nLabels({
     // Filters
     addFilter: "フィルタを追加",
     applyFilter: "適用",
+    updateFilter: "更新",
     removeFilter: "フィルタを削除",
+    clearFilter: "このフィルタをクリア",
+    clearAllFilters: "すべてのフィルタをクリア",
     filterOperatorSearchPlaceholder: "検索...",
     filterOperatorNoResults: "該当なし",
     filterValuePlaceholder: (props: { field: string }) => `${props.field}を入力`,
@@ -133,6 +141,8 @@ export const dataTableLabels = defineI18nLabels({
     filterBetweenTo: "終了",
     filterBetweenMin: "最小",
     filterBetweenMax: "最大",
+    filterBetweenOrderError: (props: { min: string; max: string }) =>
+      `${props.max}は${props.min}以上にしてください`,
     filterCaseSensitive: "大文字小文字を区別する",
 
     // Filter chip label templates (Japanese: column: value operator)

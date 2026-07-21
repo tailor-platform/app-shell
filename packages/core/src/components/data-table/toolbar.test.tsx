@@ -286,10 +286,10 @@ describe("AddFilterPanel", () => {
     expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
   });
 
-  it("seeds an already-filtered field's operator/value so Apply preserves them", async () => {
+  it("seeds an already-filtered field's operator/value so the panel preserves them", async () => {
     // Re-opening the panel on a field that already has a non-default filter
     // (here a number "between") must keep that operator and value rather than
-    // resetting to the type default — otherwise Apply would silently overwrite.
+    // resetting to the type default — otherwise applying would silently overwrite.
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "count", operator: "between", value: { min: 5, max: 10 } }],
@@ -297,7 +297,8 @@ describe("AddFilterPanel", () => {
     render(<TestFilters control={control} columns={[numberColumn]} />, { wrapper });
 
     await user.click(screen.getByRole("button", { name: /Add filter/ }));
-    await user.click(await screen.findByRole("button", { name: /^Apply$/ }));
+    // The commit button reads "Update" (not "Add"/"Apply") for an active field.
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
 
     expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 5, max: 10 });
   });
@@ -312,11 +313,40 @@ describe("AddFilterPanel", () => {
     render(<TestFilters control={control} columns={[stringColumn]} />, { wrapper });
 
     await user.click(screen.getByRole("button", { name: /Add filter/ }));
-    await user.click(await screen.findByRole("button", { name: /^Apply$/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
 
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
       caseSensitive: true,
     });
+  });
+
+  it("disables the commit button when the between range is reversed (min > max)", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[numberColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // Choose "is between", then enter a reversed range.
+    await user.click(await screen.findByRole("button", { name: /is between/i }));
+    await user.type(screen.getByRole("spinbutton", { name: "Min" }), "10");
+    await user.type(screen.getByRole("spinbutton", { name: "Max" }), "5");
+
+    const commit = screen.getByRole("button", { name: /^(Apply|Update)$/ });
+    expect((commit as HTMLButtonElement).disabled).toBe(true);
+    // ...and an inline error explains why.
+    expect(screen.getByText(/must be greater than or equal to/i)).toBeDefined();
+  });
+
+  it("renders a native time input for a single-value time filter", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[timeColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // `time` defaults to a single-value operator → native time input (not a
+    // plain text box).
+    const input = await screen.findByLabelText("Opens At");
+    expect(input.getAttribute("type")).toBe("time");
   });
 });
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Checkbox } from "@base-ui/react/checkbox";
-import { ChevronDown, Plus, X, Check, Search } from "lucide-react";
+import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/input";
 import { Select } from "@/components/select-standalone";
 import { DatePicker } from "@/components/date-field";
 import { Calendar } from "@/components/calendar";
+import { Tooltip } from "@/components/tooltip";
 import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";
@@ -127,16 +128,22 @@ function DataTableFilters({ className }: { className?: string }) {
   return (
     <div
       data-slot="data-table-filters"
-      className={cn("astw:flex astw:flex-wrap astw:items-center astw:gap-2", className)}
+      className={cn("astw:flex astw:items-start astw:gap-2", className)}
     >
-      {/* Active filter chips */}
-      {filterableColumns.map((col) => {
-        const active = control.filters.find((f) => f.field === col.filter.field);
-        if (!active) return null;
-        return <FilterChip key={col.filter.field} column={col} filter={active} control={control} />;
-      })}
+      {/* Active filter chips (grow to fill; wrap as needed) */}
+      <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
+        {filterableColumns.map((col) => {
+          const active = control.filters.find((f) => f.field === col.filter.field);
+          if (!active) return null;
+          return (
+            <FilterChip key={col.filter.field} column={col} filter={active} control={control} />
+          );
+        })}
+      </div>
 
-      {/* Add-filter surface: a single popover with three columns (field ▸ condition ▸ value). */}
+      {/* Right-aligned action(s): the add-filter panel trigger stays pinned to the
+          right so it doesn't shift as chips are added (and sits alongside a future
+          column-settings button). */}
       <AddFilterPanel columns={filterableColumns} control={control} />
     </div>
   );
@@ -214,45 +221,67 @@ function AddFilterPanel({
       <Popover.Trigger
         render={
           <Button variant="outline" size="xs">
-            <Plus className="astw:size-3" />
+            <FilterIcon className="astw:size-3" />
             {t("addFilter")}
           </Button>
         }
       />
       <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        {/* disableAnchorTracking pins the panel where it opened so adding a chip
-            (which shifts the trigger) doesn't make it jump — same as the menu. */}
-        <Popover.Positioner sideOffset={4} side="bottom" align="start" disableAnchorTracking>
+        {/* align="end" anchors the panel's right edge to the (right-aligned) trigger
+            so it grows/shrinks toward the right as columns appear/disappear. We keep
+            anchor tracking on (no disableAnchorTracking) so the positioner re-aligns
+            the right edge when the width changes; the trigger itself no longer moves
+            when chips are added (they live in a separate flex-1 container), so there's
+            nothing to jump away from. */}
+        <Popover.Positioner sideOffset={4} side="bottom" align="end">
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(
-              // Fixed height (tall enough for the inline single-date calendar)
-              // so switching field/condition never resizes the popup.
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-96 astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // Fixed height + width so switching field/condition never resizes the
+              // popup: the width stays constant whether the condition column (2 vs 3
+              // columns) is shown — column 3 flexes to absorb the difference — so the
+              // panel and its left column never shift under the cursor. The width is
+              // sized so column 3 fits the inline calendar (~290px) even in 3-column
+              // mode (col1 11rem + col2 12rem + ~19.5rem for the value editor).
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-96 astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
-            {/* Column 1 — fields */}
-            <div className="astw:flex astw:w-44 astw:flex-col astw:overflow-y-auto astw:p-1">
-              {columns.map((col) => {
-                const isSelected = col.filter.field === fieldName;
-                return (
-                  <button
-                    key={col.filter.field}
-                    type="button"
-                    onClick={() => selectField(col.filter.field)}
-                    className={cn(
-                      PANEL_COLUMN_ROW,
-                      isSelected && "astw:bg-accent astw:text-accent-foreground",
-                    )}
+            {/* Column 1 — fields (scrolls), with a sticky "Clear all" footer */}
+            <div className="astw:flex astw:w-44 astw:flex-col">
+              <div className="astw:flex-1 astw:overflow-y-auto astw:p-1">
+                {columns.map((col) => {
+                  const isSelected = col.filter.field === fieldName;
+                  return (
+                    <button
+                      key={col.filter.field}
+                      type="button"
+                      onClick={() => selectField(col.filter.field)}
+                      className={cn(
+                        PANEL_COLUMN_ROW,
+                        isSelected && "astw:bg-accent astw:text-accent-foreground",
+                      )}
+                    >
+                      <span className="astw:truncate">{col.label ?? col.filter.field}</span>
+                      {activeFields.has(col.filter.field) && (
+                        <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {control.filters.length > 0 && (
+                <div className="astw:border-t astw:border-border astw:p-1">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => control.clearFilters()}
+                    className="astw:w-full astw:justify-start astw:text-muted-foreground"
                   >
-                    <span className="astw:truncate">{col.label ?? col.filter.field}</span>
-                    {activeFields.has(col.filter.field) && (
-                      <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
-                    )}
-                  </button>
-                );
-              })}
+                    {t("clearAllFilters")}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Column 2 — conditions (only when the field opts into choosing one) */}
@@ -277,8 +306,9 @@ function AddFilterPanel({
               </div>
             )}
 
-            {/* Column 3 — value editor for the chosen field + condition */}
-            <div className="astw:flex astw:min-w-56 astw:flex-col astw:border-l astw:border-border">
+            {/* Column 3 — value editor; flex-1 so it absorbs the width freed when
+                the condition column is hidden, keeping the popup width constant. */}
+            <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:border-l astw:border-border">
               {selectedColumn && effectiveOperator && (
                 <PanelValueEditor
                   key={`${fieldName}:${effectiveOperator}`}
@@ -314,7 +344,9 @@ function PanelDateInput({
 }) {
   const calValue = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDate(value) : null;
   return (
+    // Center the fixed-width (w-fit) calendar within the wider value column.
     <div
+      className="astw:flex astw:justify-center"
       onPointerDownCapture={(e) => e.stopPropagation()}
       onMouseDownCapture={(e) => e.stopPropagation()}
     >
@@ -381,6 +413,7 @@ function PanelValueEditor({
     if (isBetween) {
       const draft: AddFilterDraftValue = [min, max];
       if (!isAddFilterDraftValueValid(type, "between", draft)) return;
+      if (!isRangeOrdered(type, min, max)) return;
       control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
       return;
     }
@@ -398,6 +431,34 @@ function PanelValueEditor({
       type === "string" ? { caseSensitive: filter?.caseSensitive ?? false } : undefined,
     );
   };
+
+  // Remove this field's active filter and reset the draft. Shown only while a
+  // filter is active (there's nothing to clear on a fresh add).
+  const clearThis = () => {
+    control.removeFilter(field);
+    setEnumSel([]);
+    setBoolVal(true);
+    setText("");
+    setMin("");
+    setMax("");
+  };
+
+  // Gate the Apply button so it's disabled on invalid input (rather than enabled
+  // but inert). An empty draft is allowed only when it clears an existing filter.
+  const canApply = (() => {
+    if (type === "enum") return enumSel.length > 0 || !!filter;
+    if (type === "boolean") return true;
+    if (isBetween) {
+      const minEmpty = min.trim() === "";
+      const maxEmpty = max.trim() === "";
+      if (minEmpty && maxEmpty) return !!filter;
+      if (minEmpty || maxEmpty) return false;
+      if (!isAddFilterDraftValueValid(type, "between", [min, max])) return false;
+      return isRangeOrdered(type, min, max);
+    }
+    if (text.trim() === "") return !!filter;
+    return isAddFilterDraftValueValid(type, operator, text);
+  })();
 
   let editor: ReactNode;
   if (type === "enum") {
@@ -443,19 +504,23 @@ function PanelValueEditor({
           <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenTo")}</span>
           <DateFilterPicker ariaLabel={t("filterBetweenTo")} value={max} onChange={setMax} />
         </div>
+        {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t) && (
+          <p className="astw:text-destructive astw:text-xs">
+            {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t)}
+          </p>
+        )}
       </div>
     );
   } else if (isBetween) {
     // Non-date range: two simple From/To (or Min/Max) text boxes.
     const numeric = type === "number";
+    const labels: [string, string] = numeric
+      ? [t("filterBetweenMin"), t("filterBetweenMax")]
+      : [t("filterBetweenFrom"), t("filterBetweenTo")];
     editor = (
       <div className="astw:p-2">
         <BetweenInputGroup
-          labels={
-            numeric
-              ? [t("filterBetweenMin"), t("filterBetweenMax")]
-              : [t("filterBetweenFrom"), t("filterBetweenTo")]
-          }
+          labels={labels}
           values={[min, max]}
           onChangeMin={setMin}
           onChangeMax={setMax}
@@ -463,6 +528,7 @@ function PanelValueEditor({
           inputProps={
             numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
           }
+          error={betweenOrderError(type, min, max, labels[0], labels[1], t)}
         />
       </div>
     );
@@ -470,6 +536,24 @@ function PanelValueEditor({
     editor = (
       <div className="astw:p-2">
         <PanelDateInput ariaLabel={label} value={text} onChange={setText} />
+      </div>
+    );
+  } else if (isTemporalFilterType(type)) {
+    // Single-value datetime/time use the native temporal input (a time picker for
+    // `time`; an RFC text box for `datetime` until a DateTime picker lands) so the
+    // panel matches the chip editor and the between inputs. (`date` handled above.)
+    editor = (
+      <div className="astw:p-2">
+        <Input
+          {...getTemporalInputProps(type)}
+          aria-label={label}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") apply();
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
       </div>
     );
   } else {
@@ -492,9 +576,31 @@ function PanelValueEditor({
   return (
     <div className="astw:flex astw:flex-1 astw:flex-col astw:overflow-hidden">
       <div className="astw:flex-1 astw:overflow-y-auto">{editor}</div>
-      <div className="astw:border-t astw:border-border astw:p-2">
-        <Button size="xs" onClick={apply} className="astw:w-full">
-          {t("applyFilter")}
+      <div className="astw:flex astw:items-center astw:gap-1 astw:border-t astw:border-border astw:p-1">
+        {/* Icon-only Clear, shown only when there's an active filter to remove. */}
+        {filter && (
+          <Tooltip.Provider delay={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                render={
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    onClick={clearThis}
+                    aria-label={t("clearFilter")}
+                  >
+                    <X className="astw:size-3" />
+                  </Button>
+                }
+              />
+              <Tooltip.Content>{t("clearFilter")}</Tooltip.Content>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        )}
+        {/* "Update" when re-editing an already-active field (the panel is seeded
+            from it), "Apply" when adding a fresh filter. */}
+        <Button size="xs" onClick={apply} disabled={!canApply} className="astw:flex-1">
+          {filter ? t("updateFilter") : t("applyFilter")}
         </Button>
       </div>
     </div>
@@ -512,6 +618,7 @@ function BetweenInputGroup({
   onChangeMax,
   onSubmit,
   inputProps,
+  error,
 }: {
   labels: [string, string];
   values: [string, string];
@@ -519,13 +626,22 @@ function BetweenInputGroup({
   onChangeMax: (value: string) => void;
   onSubmit: () => void;
   inputProps?: React.ComponentProps<typeof Input>;
+  /** Validation message shown below the inputs (e.g. a reversed range). */
+  error?: string;
 }) {
+  const rowBase =
+    "astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:shadow-xs astw:has-focus-visible:ring-[3px]";
+  const rowOk =
+    "astw:border-input astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50";
+  const rowError = "astw:border-destructive astw:has-focus-visible:ring-destructive/30";
+  const labelCell =
+    "astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-muted astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14";
+  const inputCell =
+    "astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0";
   return (
     <div className="astw:flex astw:flex-col astw:gap-1.5">
-      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
-        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
-          {labels[0]}
-        </span>
+      <div className={cn(rowBase, rowOk)}>
+        <span className={labelCell}>{labels[0]}</span>
         <Input
           {...inputProps}
           aria-label={labels[0]}
@@ -535,27 +651,52 @@ function BetweenInputGroup({
             e.stopPropagation();
             if (e.key === "Enter") onSubmit();
           }}
-          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+          className={inputCell}
         />
       </div>
-      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
-        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
-          {labels[1]}
-        </span>
+      <div className={cn(rowBase, error ? rowError : rowOk)}>
+        <span className={labelCell}>{labels[1]}</span>
         <Input
           {...inputProps}
           aria-label={labels[1]}
+          aria-invalid={error ? true : undefined}
           value={values[1]}
           onChange={(e) => onChangeMax(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation();
             if (e.key === "Enter") onSubmit();
           }}
-          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+          className={inputCell}
         />
       </div>
+      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
     </div>
   );
+}
+
+/**
+ * Validation message for a "between" range when the bounds are reversed
+ * (max < min). Returns undefined until both bounds are present and individually
+ * valid, so it only appears once there's a genuine ordering problem.
+ */
+function betweenOrderError(
+  type: FilterConfig["type"],
+  min: string,
+  max: string,
+  minLabel: string,
+  maxLabel: string,
+  t: ReturnType<typeof useDataTableT>,
+): string | undefined {
+  if (min.trim() === "" || max.trim() === "") return undefined;
+  let bothValid = true;
+  if (type === "number") {
+    bothValid = !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
+  } else if (isTemporalFilterType(type)) {
+    bothValid = isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+  }
+  if (!bothValid) return undefined;
+  if (isRangeOrdered(type, min, max)) return undefined;
+  return t("filterBetweenOrderError", { min: minLabel, max: maxLabel });
 }
 
 /**
@@ -1246,7 +1387,11 @@ function NumericFilterEditor({
       const maxEmpty = localValueMax.trim() === "";
       if (minEmpty && maxEmpty) return true; // will removeFilter
       if (minEmpty || maxEmpty) return false; // both required
-      return !Number.isNaN(Number(localValue)) && !Number.isNaN(Number(localValueMax));
+      return (
+        !Number.isNaN(Number(localValue)) &&
+        !Number.isNaN(Number(localValueMax)) &&
+        isRangeOrdered("number", localValue, localValueMax)
+      );
     }
     return localValue.trim() === "" || !Number.isNaN(Number(localValue));
   })();
@@ -1260,7 +1405,7 @@ function NumericFilterEditor({
       } else if (!minEmpty && !maxEmpty) {
         const min = Number(localValue);
         const max = Number(localValueMax);
-        if (!Number.isNaN(min) && !Number.isNaN(max)) {
+        if (!Number.isNaN(min) && !Number.isNaN(max) && min <= max) {
           control.addFilter(config.field, localOp, { min, max });
         } else {
           return;
@@ -1303,6 +1448,14 @@ function NumericFilterEditor({
           onChangeMax={setLocalValueMax}
           onSubmit={handleCommit}
           inputProps={{ type: "number" }}
+          error={betweenOrderError(
+            "number",
+            localValue,
+            localValueMax,
+            t("filterBetweenMin"),
+            t("filterBetweenMax"),
+            t,
+          )}
         />
       ) : (
         <Input
@@ -1373,7 +1526,8 @@ function TemporalFilterEditor({
       if (minEmpty || maxEmpty) return false; // both required
       return (
         isTemporalFilterValueValid(config.type, localValue) &&
-        isTemporalFilterValueValid(config.type, localValueMax)
+        isTemporalFilterValueValid(config.type, localValueMax) &&
+        isRangeOrdered(config.type, localValue, localValueMax)
       );
     }
     return localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
@@ -1389,6 +1543,7 @@ function TemporalFilterEditor({
         const minValid = isTemporalFilterValueValid(config.type, localValue);
         const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
         if (!minValid || !maxValid) return;
+        if (!isRangeOrdered(config.type, localValue, localValueMax)) return;
         control.addFilter(config.field, localOp, {
           min: localValue,
           max: localValueMax,
@@ -1409,6 +1564,17 @@ function TemporalFilterEditor({
   }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
   const isDate = config.type === "date";
+  const betweenError =
+    localOp === "between"
+      ? betweenOrderError(
+          config.type,
+          localValue,
+          localValueMax,
+          t("filterBetweenFrom"),
+          t("filterBetweenTo"),
+          t,
+        )
+      : undefined;
   let valueInput: ReactNode;
   if (localOp === "between") {
     valueInput = isDate ? (
@@ -1423,6 +1589,7 @@ function TemporalFilterEditor({
           value={localValueMax}
           onChange={setLocalValueMax}
         />
+        {betweenError && <p className="astw:text-destructive astw:text-xs">{betweenError}</p>}
       </div>
     ) : (
       <BetweenInputGroup
@@ -1432,6 +1599,7 @@ function TemporalFilterEditor({
         onChangeMax={setLocalValueMax}
         onSubmit={handleCommit}
         inputProps={getTemporalInputProps(config.type)}
+        error={betweenError}
       />
     );
   } else {
@@ -1581,6 +1749,19 @@ function toAddFilterSubmittedValue(
 
 function isTemporalFilterType(type: FilterConfig["type"]): type is "datetime" | "date" | "time" {
   return type === "datetime" || type === "date" || type === "time";
+}
+
+/**
+ * Whether a "between" range's bounds are correctly ordered (min ≤ max). Numbers
+ * compare numerically; temporal ISO strings compare lexicographically (which
+ * matches chronological order for our `YYYY-MM-DD`, `HH:MM`, and RFC datetime
+ * formats). `min === max` is allowed — a valid single-point inclusive range.
+ * Assumes both bounds are already individually valid and non-empty.
+ */
+function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): boolean {
+  if (type === "number") return Number(min) <= Number(max);
+  if (isTemporalFilterType(type)) return min <= max;
+  return true;
 }
 
 function isTemporalFilterValueValid(type: "datetime" | "date" | "time", value: string): boolean {

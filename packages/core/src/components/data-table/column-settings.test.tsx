@@ -29,9 +29,7 @@ function SettingsHarness() {
   const table = useDataTable<Row>({ columns, data });
   return (
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>
-        <DataTable.ColumnSettings />
-      </DataTable.Toolbar>
+      <DataTable.Toolbar columnSettings />
       <DataTable.Table />
     </DataTable.Root>
   );
@@ -42,7 +40,25 @@ const headerLabels = (container: HTMLElement) =>
     .map((th) => th.textContent?.trim())
     .filter(Boolean);
 
-describe("DataTable.ColumnSettings", () => {
+describe("DataTable.Toolbar columnSettings", () => {
+  it("renders the Columns button only when the columnSettings prop is set", () => {
+    function Bare() {
+      const table = useDataTable<Row>({ columns, data });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Toolbar />
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+    render(<Bare />, { wrapper });
+    expect(screen.queryByRole("button", { name: /columns/i })).toBeNull();
+
+    cleanup();
+    render(<SettingsHarness />, { wrapper });
+    expect(screen.getByRole("button", { name: /columns/i })).toBeTruthy();
+  });
+
   it("renders a checkbox per column and toggling hides it from the header", () => {
     const { container } = render(<SettingsHarness />, { wrapper });
     fireEvent.click(screen.getByRole("button", { name: /columns/i }));
@@ -101,9 +117,7 @@ describe("DataTable.ColumnSettings", () => {
       const table = useDataTable<Row>({ columns: pinnedColumns, data });
       return (
         <DataTable.Root value={table}>
-          <DataTable.Toolbar>
-            <DataTable.ColumnSettings />
-          </DataTable.Toolbar>
+          <DataTable.Toolbar columnSettings />
           <DataTable.Table />
         </DataTable.Root>
       );

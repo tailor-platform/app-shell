@@ -329,7 +329,7 @@ describe("useDataTable", () => {
         result.current.toggleColumn("name");
       });
 
-      const stored = JSON.parse(localStorage.getItem("astw:data-table:v1:t1") as string);
+      const stored = JSON.parse(localStorage.getItem("as:data-table:v1:t1") as string);
       expect(stored.hidden).toContain("name");
     });
 
@@ -371,14 +371,14 @@ describe("useDataTable", () => {
     });
 
     it("falls back to defaults on corrupt stored state", () => {
-      localStorage.setItem("astw:data-table:v1:t1", "{ not valid json");
+      localStorage.setItem("as:data-table:v1:t1", "{ not valid json");
       const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
       expect(result.current.visibleColumns).toHaveLength(2);
     });
 
     it("drops persisted keys no longer present and appends new columns", () => {
       localStorage.setItem(
-        "astw:data-table:v1:t1",
+        "as:data-table:v1:t1",
         JSON.stringify({ order: ["value", "gone"], hidden: [], pinned: {} }),
       );
       const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));

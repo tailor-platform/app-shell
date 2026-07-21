@@ -24,7 +24,6 @@ import { DataTableContext, type DataTableContextValue } from "./data-table-conte
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
-import { DataTableColumnSettings } from "./column-settings";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
 
@@ -1069,8 +1068,9 @@ export const DataTable = {
    */
   Root: DataTableRoot,
   /**
-   * Container for toolbar content (column visibility, search, etc.).
-   * Place inside `DataTable.Root`, before `DataTable.Table`.
+   * Container for toolbar content (filters, search, etc.). Place inside
+   * `DataTable.Root`, before `DataTable.Table`. Pass `columnSettings` to render
+   * the built-in "Columns" control (show/hide, reorder, pin) at the top-right.
    */
   Toolbar: DataTableToolbar,
   /**
@@ -1080,13 +1080,6 @@ export const DataTable = {
    * `useCollectionVariables()`, otherwise this component throws at render time.
    */
   Filters: DataTableFilters,
-  /**
-   * Column controls popover — show/hide columns, drag to reorder, and drag
-   * between the Fixed left / Scrollable / Fixed right zones to pin them.
-   * Persists per-user when `useDataTable` has a `tableId`.
-   * Place inside `DataTable.Toolbar`.
-   */
-  ColumnSettings: DataTableColumnSettings,
   /**
    * Renders `<table>` with built-in `Headers` and `Body`.
    * Place inside `DataTable.Root`.

@@ -14,10 +14,11 @@ export interface PersistedColumnState {
   pinned: Record<string, "left" | "right" | "none">;
 }
 
-// Namespace matches the Tailwind class prefix used repo-wide so table state is
-// easy to spot in devtools. The `v1` segment lets a future shape change orphan
-// old data by bumping the version instead of migrating it.
-const STORAGE_PREFIX = "astw:data-table:v1:";
+// `as` = AppShell (the Tailwind class prefix is `astw` — "AppShell TailWind" —
+// but the "tw" has no meaning for a storage key, so it's dropped here). The
+// `v1` segment lets a future shape change orphan old data by bumping the
+// version instead of migrating it.
+const STORAGE_PREFIX = "as:data-table:v1:";
 
 function storageKey(tableId: string): string {
   return `${STORAGE_PREFIX}${tableId}`;

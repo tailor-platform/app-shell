@@ -13,7 +13,7 @@ export const dataTableLabels = defineI18nLabels({
     // RowActionsMenu aria-label
     rowActions: "Row actions",
 
-    // Column settings (DataTable.ColumnSettings / DataTable.ColumnToggle)
+    // Column settings (DataTable.Toolbar columnSettings)
     columns: "Columns",
     columnSettings: "Column settings",
     showAllColumns: "Show all",

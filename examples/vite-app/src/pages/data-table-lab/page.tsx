@@ -3,10 +3,12 @@ import {
   Badge,
   DataTable,
   useDataTable,
+  useCollectionVariables,
   createColumnHelper,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { FlaskConical } from "lucide-react";
+import { useMemo } from "react";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -69,6 +71,55 @@ function makeInvoices(count: number): Invoice[] {
 
 const INVOICES = makeInvoices(40);
 
+// Minimal client-side filter matcher so the demo's DataTable.Filters actually
+// narrows the static rows. A real app filters server-side by passing the
+// collection `query` variables to its GraphQL query instead.
+function applyOperator(value: unknown, op: string, opValue: unknown): boolean {
+  switch (op) {
+    case "eq":
+      return value === opValue;
+    case "ne":
+      return value !== opValue;
+    case "gt":
+      return (value as number) > (opValue as number);
+    case "gte":
+      return (value as number) >= (opValue as number);
+    case "lt":
+      return (value as number) < (opValue as number);
+    case "lte":
+      return (value as number) <= (opValue as number);
+    case "between": {
+      const { min, max } = opValue as { min: number | string; max: number | string };
+      return (value as number) >= (min as number) && (value as number) <= (max as number);
+    }
+    case "in":
+      return Array.isArray(opValue) && opValue.includes(value);
+    case "nin":
+      return Array.isArray(opValue) && !opValue.includes(value);
+    case "contains":
+      return String(value).toLowerCase().includes(String(opValue).toLowerCase());
+    case "regex": {
+      // Tailor's case-insensitive string filters commit a "(?i)"-prefixed
+      // pattern (not valid JS regex), so strip it and set the `i` flag.
+      const pattern = String(opValue);
+      const ci = pattern.startsWith("(?i)");
+      return new RegExp(ci ? pattern.slice(4) : pattern, ci ? "i" : "").test(String(value));
+    }
+    default:
+      return true;
+  }
+}
+
+function matchesQuery(
+  row: Invoice,
+  query: Record<string, Record<string, unknown>> | undefined,
+): boolean {
+  if (!query) return true;
+  return Object.entries(query).every(([field, ops]) =>
+    Object.entries(ops).every(([op, v]) => applyOperator(row[field as keyof Invoice], op, v)),
+  );
+}
+
 const statusVariant = (status: InvoiceStatus) =>
   status === "paid"
     ? ("success" as const)
@@ -92,6 +143,7 @@ const baseColumns = [
     accessor: (r) => r.customer,
     width: 180,
     sort: { field: "customer", type: "string" },
+    filter: { field: "customer", type: "string" },
   }),
   column({
     id: "email",
@@ -100,7 +152,18 @@ const baseColumns = [
     accessor: (r) => r.email,
     width: 240,
   }),
-  column({ id: "region", label: "Region", type: "text", accessor: (r) => r.region, width: 150 }),
+  column({
+    id: "region",
+    label: "Region",
+    type: "text",
+    accessor: (r) => r.region,
+    width: 150,
+    filter: {
+      field: "region",
+      type: "enum",
+      options: REGIONS.map((r) => ({ value: r, label: r })),
+    },
+  }),
   column({
     id: "owner",
     label: "Account owner",
@@ -113,8 +176,20 @@ const baseColumns = [
     label: "Status",
     width: 120,
     render: (r) => <Badge variant={statusVariant(r.status)}>{r.status}</Badge>,
+    filter: {
+      field: "status",
+      type: "enum",
+      options: STATUSES.map((s) => ({ value: s, label: s })),
+    },
   }),
-  column({ id: "amount", label: "Amount", type: "money", accessor: (r) => r.amount, width: 130 }),
+  column({
+    id: "amount",
+    label: "Amount",
+    type: "money",
+    accessor: (r) => r.amount,
+    width: 130,
+    filter: { field: "amount", type: "number" },
+  }),
   column({ id: "tax", label: "Tax", type: "money", accessor: (r) => r.tax, width: 110 }),
   column({ id: "total", label: "Total", type: "money", accessor: (r) => r.total, width: 130 }),
   // Intentionally no `width` — exercises measure-based pinning for an auto-width column.
@@ -166,16 +241,23 @@ function Section({
   );
 }
 
-const data = { rows: INVOICES, total: INVOICES.length };
-
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 const DataTableLabPage = () => {
+  // `control` drives DataTable.Filters. Here we apply its query to the static
+  // rows client-side; a real app passes `variables` to a server query.
+  const { variables, control } = useCollectionVariables({ params: { pageSize: 50 } });
+  const rows = useMemo(
+    () => INVOICES.filter((r) => matchesQuery(r, variables.query)),
+    [variables.query],
+  );
+
   // Column settings + default pins + row actions. `tableId` persists the user's
   // layout (visibility, order, pinning) to localStorage across reloads.
   const settingsTable = useDataTable<Invoice>({
     columns: baseColumns.map((c) => (c.id === "id" ? { ...c, pin: "left" as const } : c)),
-    data,
+    data: { rows, total: rows.length },
+    control,
     tableId: "lab-invoices-settings",
     rowActions,
   });
@@ -192,18 +274,19 @@ const DataTableLabPage = () => {
         </div>
 
         <Section
-          title="Column settings — show/hide, reorder & pin"
+          title="Toolbar — filters + column settings"
           description={
             <>
-              Open <strong>Columns</strong> to show/hide, drag to reorder, and drag between zones to
-              pin left/right. The <em>Invoice</em> column is pinned left and the actions column is
-              pinned right by default. Changes persist across reloads.
+              <strong>Add filter</strong> (left) and the <strong>Columns</strong> control (right)
+              share one toolbar row. Open <strong>Columns</strong> to show/hide, drag to reorder,
+              and drag between zones to pin left/right. The <em>Invoice</em> column is pinned left
+              and the actions column is pinned right by default. Changes persist across reloads.
             </>
           }
         >
           <DataTable.Root value={settingsTable}>
-            <DataTable.Toolbar>
-              <DataTable.ColumnSettings />
+            <DataTable.Toolbar columnSettings>
+              <DataTable.Filters />
             </DataTable.Toolbar>
             <DataTable.Table />
           </DataTable.Root>

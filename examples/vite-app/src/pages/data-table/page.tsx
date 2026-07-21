@@ -20,13 +20,23 @@ type InvoiceStatus = "draft" | "sent" | "paid" | "overdue";
 // A `type` (not `interface`) so it satisfies `Record<string, unknown>` —
 // `createColumnHelper`/`useDataTable`'s row constraint. Interfaces lack the
 // implicit index signature that type aliases of object literals have.
+// One field per supported filter type so every editor/operator path is exercised:
+// string, number, enum, boolean, uuid, date, datetime, time.
 type Invoice = {
   id: string;
+  /** uuid — matches `type: "uuid"` (eq / in). */
+  externalId: string;
   customer: string;
   amount: number;
   status: InvoiceStatus;
-  /** ISO date, "YYYY-MM-DD" — matches what the date filter / DatePicker emit. */
+  /** boolean — matches `type: "boolean"` (is / is not). */
+  recurring: boolean;
+  /** ISO date, "YYYY-MM-DD" — matches what the date filter / Calendar emit. */
   dueDate: string;
+  /** ISO datetime with a `Z` offset, "YYYY-MM-DDTHH:mm:ssZ" — `type: "datetime"`. */
+  createdAt: string;
+  /** 24h time, "HH:mm" — matches the native time input / `type: "time"`. */
+  reminderAt: string;
 };
 
 const CUSTOMERS = [
@@ -48,16 +58,28 @@ function makeInvoices(count: number): Invoice[] {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     return seed / 0x7fffffff;
   };
+  const hex = (n: number) =>
+    Array.from({ length: n }, () => Math.floor(rand() * 16).toString(16)).join("");
   const base = new Date("2026-01-01T00:00:00Z").getTime();
   for (let i = 0; i < count; i++) {
     const dayOffset = Math.floor(rand() * 270); // ~9 months spread
-    const d = new Date(base + dayOffset * 86_400_000);
+    const hour = Math.floor(rand() * 24);
+    const minute = Math.floor(rand() * 60);
+    const dueMs = base + dayOffset * 86_400_000;
+    const createdMs = dueMs + hour * 3_600_000 + minute * 60_000;
+    const pad = (n: number) => String(n).padStart(2, "0");
     rows.push({
       id: `INV-${String(1000 + i)}`,
+      externalId: `${hex(8)}-${hex(4)}-${hex(4)}-${hex(4)}-${hex(12)}`,
       customer: CUSTOMERS[Math.floor(rand() * CUSTOMERS.length)],
       amount: Math.round((rand() * 9000 + 100) * 100) / 100,
       status: STATUSES[Math.floor(rand() * STATUSES.length)],
-      dueDate: d.toISOString().slice(0, 10),
+      recurring: rand() > 0.5,
+      dueDate: new Date(dueMs).toISOString().slice(0, 10),
+      // Local "YYYY-MM-DDTHH:mm:ss" (no zone) — matches what the datetime filter
+      // editor (date picker + time box) emits, so string comparison lines up.
+      createdAt: new Date(createdMs).toISOString().slice(0, 19),
+      reminderAt: `${pad(hour)}:${pad(minute)}`,
     });
   }
   return rows;
@@ -167,6 +189,10 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "numeric",
 });
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 const moneyFormatter = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
 
 const statusVariant = (status: InvoiceStatus) =>
@@ -180,6 +206,12 @@ const statusVariant = (status: InvoiceStatus) =>
 
 const columns = [
   column({ label: "Invoice", render: (row) => row.id }),
+  // uuid → text input, eq only.
+  column({
+    label: "Ref",
+    render: (row) => <span className="font-mono text-xs">{row.externalId.slice(0, 8)}…</span>,
+    filter: { field: "externalId", type: "uuid" },
+  }),
   column({
     label: "Customer",
     render: (row) => row.customer,
@@ -201,6 +233,16 @@ const columns = [
       options: STATUSES.map((s) => ({ value: s, label: s })),
     },
   }),
+  // boolean → is / is not, True/False picker.
+  column({
+    label: "Recurring",
+    render: (row) => (
+      <Badge variant={row.recurring ? "info" : "outline-neutral"}>
+        {row.recurring ? "Yes" : "No"}
+      </Badge>
+    ),
+    filter: { field: "recurring", type: "boolean" },
+  }),
   column({
     label: "Due date",
     render: (row) => dateFormatter.format(new Date(`${row.dueDate}T00:00:00`)),
@@ -208,6 +250,19 @@ const columns = [
     // `type: "date"` → single-date operators render the inline Calendar; the
     // "is between" range renders From/To DatePicker fields.
     filter: { field: "dueDate", type: "date" },
+  }),
+  // datetime → full numeric operator set; value is a strict ISO datetime string.
+  column({
+    label: "Created",
+    render: (row) => dateTimeFormatter.format(new Date(row.createdAt)),
+    sort: { field: "createdAt", type: "date" },
+    filter: { field: "createdAt", type: "datetime" },
+  }),
+  // time → native time input, "HH:mm".
+  column({
+    label: "Reminder",
+    render: (row) => row.reminderAt,
+    filter: { field: "reminderAt", type: "time" },
   }),
 ];
 

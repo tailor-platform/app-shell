@@ -511,6 +511,25 @@ function PanelValueEditor({
         )}
       </div>
     );
+  } else if (isBetween && type === "datetime") {
+    // Range datetimes: two From/To date-pickers each paired with a time box.
+    editor = (
+      <div className="astw:flex astw:flex-col astw:gap-3 astw:p-2">
+        <div className="astw:flex astw:flex-col astw:gap-1">
+          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenFrom")}</span>
+          <DateTimeFilterInput ariaLabel={t("filterBetweenFrom")} value={min} onChange={setMin} />
+        </div>
+        <div className="astw:flex astw:flex-col astw:gap-1">
+          <span className="astw:text-xs astw:text-muted-foreground">{t("filterBetweenTo")}</span>
+          <DateTimeFilterInput ariaLabel={t("filterBetweenTo")} value={max} onChange={setMax} />
+        </div>
+        {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t) && (
+          <p className="astw:text-destructive astw:text-xs">
+            {betweenOrderError(type, min, max, t("filterBetweenFrom"), t("filterBetweenTo"), t)}
+          </p>
+        )}
+      </div>
+    );
   } else if (isBetween) {
     // Non-date range: two simple From/To (or Min/Max) text boxes.
     const numeric = type === "number";
@@ -538,10 +557,15 @@ function PanelValueEditor({
         <PanelDateInput ariaLabel={label} value={text} onChange={setText} />
       </div>
     );
+  } else if (type === "datetime") {
+    // Single datetime: date-picker + time box (combined into an ISO string).
+    editor = (
+      <div className="astw:p-2">
+        <DateTimeFilterInput ariaLabel={label} value={text} onChange={setText} />
+      </div>
+    );
   } else if (isTemporalFilterType(type)) {
-    // Single-value datetime/time use the native temporal input (a time picker for
-    // `time`; an RFC text box for `datetime` until a DateTime picker lands) so the
-    // panel matches the chip editor and the between inputs. (`date` handled above.)
+    // Single-value `time` uses the native time input. (`date`/`datetime` above.)
     editor = (
       <div className="astw:p-2">
         <Input
@@ -723,6 +747,52 @@ function DateFilterPicker({
   );
 }
 
+/**
+ * Datetime filter input: the app-shell date `DatePicker` (calendar) paired with a
+ * native time box, bridging an ISO `"YYYY-MM-DDTHH:mm:ss"` string. Entering a full
+ * datetime by hand is awkward, so the date and time are picked separately and
+ * combined. This is a stopgap — it's replaced 1:1 once a dedicated DateTime picker
+ * component lands.
+ */
+function DateTimeFilterInput({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  // Split "YYYY-MM-DDTHH:mm[:ss][Z]" into its date and "HH:mm" parts.
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
+  const datePart = match?.[1] ?? "";
+  const timePart = match?.[2] ?? "";
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+
+  // Emit a combined value only once a date is chosen; time defaults to midnight.
+  const emit = (nextDate: string, nextTime: string) => {
+    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+  };
+
+  return (
+    <div className="astw:flex astw:items-center astw:gap-2">
+      <DatePicker
+        aria-label={`${ariaLabel} (date)`}
+        value={calValue}
+        onChange={(v) => emit(v ? v.toString() : "", timePart)}
+        className="astw:min-w-0 astw:flex-1"
+      />
+      <Input
+        type="time"
+        aria-label={`${ariaLabel} (time)`}
+        value={timePart}
+        onChange={(e) => emit(datePart, e.target.value)}
+        className="astw:h-8 astw:w-28 astw:shrink-0 astw:text-sm"
+      />
+    </div>
+  );
+}
+
 // =============================================================================
 // FilterChip — per-filter popover-based editor
 // =============================================================================
@@ -856,7 +926,13 @@ function FilterChip({
               type="button"
               className={cn(interactiveSegment, "astw:gap-1 astw:font-medium astw:text-foreground")}
             >
-              {valueLabel || <span className="astw:text-muted-foreground">…</span>}
+              {valueLabel ? (
+                // Cap long values (e.g. a uuid or a long "contains" string) so the
+                // chip stays a reasonable width instead of stretching the toolbar.
+                <span className="astw:max-w-[12rem] astw:truncate">{valueLabel}</span>
+              ) : (
+                <span className="astw:text-muted-foreground">…</span>
+              )}
               <ChevronDown className="astw:size-3 astw:text-muted-foreground" />
             </button>
           }
@@ -1564,6 +1640,9 @@ function TemporalFilterEditor({
   }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
   const isDate = config.type === "date";
+  const isDateTime = config.type === "datetime";
+  // date + datetime pickers share the same { ariaLabel, value, onChange } shape.
+  const Picker = isDateTime ? DateTimeFilterInput : DateFilterPicker;
   const betweenError =
     localOp === "between"
       ? betweenOrderError(
@@ -1577,50 +1656,52 @@ function TemporalFilterEditor({
       : undefined;
   let valueInput: ReactNode;
   if (localOp === "between") {
-    valueInput = isDate ? (
-      <div className="astw:flex astw:flex-col astw:gap-1.5">
-        <DateFilterPicker
-          ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
-          value={localValue}
-          onChange={setLocalValue}
+    valueInput =
+      isDate || isDateTime ? (
+        <div className="astw:flex astw:flex-col astw:gap-1.5">
+          <Picker
+            ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
+            value={localValue}
+            onChange={setLocalValue}
+          />
+          <Picker
+            ariaLabel={`${label} — ${t("filterBetweenTo")}`}
+            value={localValueMax}
+            onChange={setLocalValueMax}
+          />
+          {betweenError && <p className="astw:text-destructive astw:text-xs">{betweenError}</p>}
+        </div>
+      ) : (
+        <BetweenInputGroup
+          labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+          values={[localValue, localValueMax]}
+          onChangeMin={setLocalValue}
+          onChangeMax={setLocalValueMax}
+          onSubmit={handleCommit}
+          inputProps={getTemporalInputProps(config.type)}
+          error={betweenError}
         />
-        <DateFilterPicker
-          ariaLabel={`${label} — ${t("filterBetweenTo")}`}
-          value={localValueMax}
-          onChange={setLocalValueMax}
-        />
-        {betweenError && <p className="astw:text-destructive astw:text-xs">{betweenError}</p>}
-      </div>
-    ) : (
-      <BetweenInputGroup
-        labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
-        values={[localValue, localValueMax]}
-        onChangeMin={setLocalValue}
-        onChangeMax={setLocalValueMax}
-        onSubmit={handleCommit}
-        inputProps={getTemporalInputProps(config.type)}
-        error={betweenError}
-      />
-    );
+      );
   } else {
-    valueInput = isDate ? (
-      <DateFilterPicker ariaLabel={label} value={localValue} onChange={setLocalValue} />
-    ) : (
-      <Input
-        {...getTemporalInputProps(config.type)}
-        value={localValue}
-        onChange={(e) => {
-          setLocalValue(e.target.value);
-        }}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-          if (e.key === "Enter") {
-            handleCommit();
-          }
-        }}
-        className="astw:h-8 astw:text-sm"
-      />
-    );
+    valueInput =
+      isDate || isDateTime ? (
+        <Picker ariaLabel={label} value={localValue} onChange={setLocalValue} />
+      ) : (
+        <Input
+          {...getTemporalInputProps(config.type)}
+          value={localValue}
+          onChange={(e) => {
+            setLocalValue(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") {
+              handleCommit();
+            }
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      );
   }
 
   return (
@@ -1770,7 +1851,9 @@ function isTemporalFilterValueValid(type: "datetime" | "date" | "time", value: s
 
   switch (type) {
     case "datetime":
-      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
+      // The datetime editor emits a local "YYYY-MM-DDTHH:mm:ss" (no zone); a
+      // trailing Z or ±hh:mm offset is still accepted for externally-set values.
+      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
         trimmedValue,
       );
     case "date":
@@ -1875,6 +1958,24 @@ function formatDateRange(minIso: string, maxIso: string, locale: string): string
     .join(" – ");
 }
 
+/** Format a local "YYYY-MM-DDTHH:mm[:ss]" as a locale medium date + short time. */
+function formatDateTimeValue(iso: string, locale: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return iso;
+  const [, y, mo, d, h, min] = m;
+  try {
+    return new DateFormatter(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min)));
+  } catch {
+    return iso;
+  }
+}
+
 function formatFilterValue(
   filter: Filter,
   config: FilterConfig,
@@ -1916,6 +2017,18 @@ function formatFilterValue(
     }
     if (filter.value == null || filter.value === "") return "";
     return formatDateValue(String(filter.value), locale);
+  }
+
+  if (config.type === "datetime") {
+    if (filter.operator === "between") {
+      const range = filter.value as { min?: unknown; max?: unknown } | null;
+      if (!range || typeof range !== "object") return "";
+      const min = range.min != null ? formatDateTimeValue(String(range.min), locale) : "";
+      const max = range.max != null ? formatDateTimeValue(String(range.max), locale) : "";
+      return [min, max].filter(Boolean).join(" – ");
+    }
+    if (filter.value == null || filter.value === "") return "";
+    return formatDateTimeValue(String(filter.value), locale);
   }
 
   if (isTemporalFilterType(config.type) && filter.operator === "between") {

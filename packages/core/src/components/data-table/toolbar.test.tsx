@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
@@ -760,7 +760,7 @@ describe("DateFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("TemporalFilterEditor", () => {
-  it("Apply button calls addFilter with a full RFC3339 datetime", async () => {
+  it("renders a date picker + time box for datetime (seeded, no raw ISO textbox)", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
@@ -771,19 +771,13 @@ describe("TemporalFilterEditor", () => {
 
     await openValueEditor(user);
 
-    const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
-    await user.clear(input);
-    await user.type(input, "2026-06-15T08:45:30+09:00");
-    await user.click(screen.getByRole("button", { name: "Apply" }));
-
-    expect(control.addFilter).toHaveBeenCalledWith(
-      "publishedAt",
-      "eq",
-      "2026-06-15T08:45:30+09:00",
-    );
+    // Date part is a segmented picker (a group), time part a native time box
+    // seeded from the value — no free-text ISO field.
+    expect(await screen.findByRole("group")).toBeDefined();
+    expect(screen.getByDisplayValue("10:30")).toBeDefined();
   });
 
-  it("Apply button stays disabled for an invalid RFC3339 datetime", async () => {
+  it("combines the date + time box into an ISO datetime on Apply", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
@@ -794,13 +788,11 @@ describe("TemporalFilterEditor", () => {
 
     await openValueEditor(user);
 
-    const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
-    await user.clear(input);
-    await user.type(input, "2026-06-15T08:45");
+    fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
+    await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    // Date kept, time replaced, seconds defaulted → local ISO (no zone).
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "eq", "2025-01-01T08:45:00");
   });
 
   it("Apply button calls addFilter with an HH:MM time", async () => {

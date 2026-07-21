@@ -243,7 +243,9 @@ function AddFilterPanel({
               // panel and its left column never shift under the cursor. The width is
               // sized so column 3 fits the inline calendar (~290px) even in 3-column
               // mode (col1 11rem + col2 12rem + ~19.5rem for the value editor).
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-96 astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // Height fits the tallest editor: the datetime range (From/To tabs +
+              // inline calendar + "Choose time" picker) without the time being clipped.
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[32rem] astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >

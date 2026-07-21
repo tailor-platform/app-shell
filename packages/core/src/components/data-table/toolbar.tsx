@@ -360,6 +360,56 @@ function PanelDateInput({
 }
 
 /**
+ * Single-datetime editor for the panel: the inline `Calendar` up front with a
+ * labelled time picker beneath it, bridging a local ISO `"YYYY-MM-DDTHH:mm:ss"`
+ * string. (The chip and the "between" range keep the compact date-picker + time
+ * box to stay short.)
+ */
+function PanelDateTimeInput({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const t = useDataTableT();
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
+  const datePart = match?.[1] ?? "";
+  const timePart = match?.[2] ?? "";
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+  const emit = (nextDate: string, nextTime: string) => {
+    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+  };
+  return (
+    <div className="astw:flex astw:flex-col astw:gap-3">
+      <div
+        className="astw:flex astw:justify-center"
+        onPointerDownCapture={(e) => e.stopPropagation()}
+        onMouseDownCapture={(e) => e.stopPropagation()}
+      >
+        <Calendar
+          aria-label={ariaLabel}
+          value={calValue}
+          onChange={(v) => emit(v ? v.toString() : "", timePart)}
+        />
+      </div>
+      <div className="astw:flex astw:flex-col astw:gap-1">
+        <span className="astw:text-xs astw:text-muted-foreground">{t("chooseTime")}</span>
+        <Input
+          type="time"
+          aria-label={`${ariaLabel} (${t("chooseTime")})`}
+          value={timePart}
+          onChange={(e) => emit(datePart, e.target.value)}
+          className="astw:h-8 astw:text-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
  * Draft value editor for the panel's third column, keyed by field + operator.
  * Holds local draft state and commits via an explicit Apply button (the panel
  * stays open so several filters can be added in a row).
@@ -558,10 +608,10 @@ function PanelValueEditor({
       </div>
     );
   } else if (type === "datetime") {
-    // Single datetime: date-picker + time box (combined into an ISO string).
+    // Single datetime: inline calendar up front + a labelled time picker below.
     editor = (
       <div className="astw:p-2">
-        <DateTimeFilterInput ariaLabel={label} value={text} onChange={setText} />
+        <PanelDateTimeInput ariaLabel={label} value={text} onChange={setText} />
       </div>
     );
   } else if (isTemporalFilterType(type)) {

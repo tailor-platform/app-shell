@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Layout,
   Badge,
@@ -6,6 +6,7 @@ import {
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
+  type CollectionControl,
   type CollectionVariables,
   type PageInfo,
   type DataTableData,
@@ -275,9 +276,39 @@ const STATUS_TABS: { key: InvoiceStatus | "all"; label: string }[] = [
   { key: "overdue", label: "Overdue" },
 ];
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+// 🧪 Preset status tabs, wired to the collection's `status` filter. "All" clears
+// it; each other tab sets `status in [key]`.
+function StatusTabs({ control }: { control: CollectionControl }) {
+  const statusFilter = control.filters.find((f) => f.field === "status");
+  const active =
+    statusFilter && Array.isArray(statusFilter.value) && statusFilter.value.length === 1
+      ? String(statusFilter.value[0])
+      : "all";
+  const select = (key: string) =>
+    key === "all" ? control.removeFilter("status") : control.addFilter("status", "in", [key]);
+  return (
+    <div className="flex items-center gap-1">
+      {STATUS_TABS.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={() => select(tab.key)}
+          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+            active === tab.key
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
-const DataTablePage = () => {
+// Reusable invoice table (own control + data). `toolbar` gets the collection
+// control so each example can arrange the preset tabs + Add filter differently.
+function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => ReactNode }) {
   const { variables, control } = useCollectionVariables({
     params: {
       pageSize: 10,
@@ -303,15 +334,20 @@ const DataTablePage = () => {
 
   const table = useDataTable({ columns, data, loading, control });
 
-  // Which preset tab is active, derived from the current status filter.
-  const statusFilter = control.filters.find((f) => f.field === "status");
-  const activeStatusTab =
-    statusFilter && Array.isArray(statusFilter.value) && statusFilter.value.length === 1
-      ? String(statusFilter.value[0])
-      : "all";
-  const selectStatusTab = (key: string) =>
-    key === "all" ? control.removeFilter("status") : control.addFilter("status", "in", [key]);
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Toolbar>{toolbar(control)}</DataTable.Toolbar>
+      <DataTable.Table />
+      <DataTable.Footer>
+        <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
+      </DataTable.Footer>
+    </DataTable.Root>
+  );
+}
 
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
+const DataTablePage = () => {
   return (
     <Layout>
       <Layout.Header title="DataTable + Filters" />
@@ -320,40 +356,59 @@ const DataTablePage = () => {
           <strong>Filterable invoice list.</strong> Data is supplied by a promise-based stub that
           takes the collection <code className="bg-muted px-1 py-0.5 rounded">variables</code>{" "}
           (filter <code className="bg-muted px-1 py-0.5 rounded">query</code>, order, cursor
-          pagination) — a stand-in for the GraphQL query that would normally drive the table. Add a{" "}
-          <strong>Due date</strong> filter to pick dates with the inline calendar (or a From/To
-          range).
+          pagination) — a stand-in for the GraphQL query that would normally drive the table. The
+          examples below trial different placements of the <strong>Add filter</strong> button
+          alongside the preset tabs (each table is independent). Active chips always land on their
+          own row below.
         </div>
-        <DataTable.Root value={table}>
-          <DataTable.Toolbar>
-            {/* 🧪 Row 1 — preset quick-filter tabs (left, prototype) + Add filter (right) */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-1">
-                {STATUS_TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => selectStatusTab(tab.key)}
-                    className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                      activeStatusTab === tab.key
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              <DataTable.Filters slot="add" />
-            </div>
-            {/* Row 2 — active filter chips (only shown when filters are applied) */}
-            <DataTable.Filters slot="chips" />
-          </DataTable.Toolbar>
-          <DataTable.Table />
-          <DataTable.Footer>
-            <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
-          </DataTable.Footer>
-        </DataTable.Root>
+
+        {/* Example 1 — tabs left, Add filter far right (current) */}
+        <section className="mb-8">
+          <h3 className="mb-2 text-sm font-semibold">1 · Tabs left, Add filter far right</h3>
+          <InvoiceTable
+            toolbar={(control) => (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <StatusTabs control={control} />
+                  <DataTable.Filters slot="add" />
+                </div>
+                <DataTable.Filters slot="chips" />
+              </>
+            )}
+          />
+        </section>
+
+        {/* Example 2 — Add filter far left, then tabs */}
+        <section className="mb-8">
+          <h3 className="mb-2 text-sm font-semibold">2 · Add filter far left</h3>
+          <InvoiceTable
+            toolbar={(control) => (
+              <>
+                <div className="flex items-center gap-3">
+                  <DataTable.Filters slot="add" />
+                  <StatusTabs control={control} />
+                </div>
+                <DataTable.Filters slot="chips" />
+              </>
+            )}
+          />
+        </section>
+
+        {/* Example 3 — tabs, then Add filter immediately after them */}
+        <section className="mb-8">
+          <h3 className="mb-2 text-sm font-semibold">3 · Add filter right after the tabs</h3>
+          <InvoiceTable
+            toolbar={(control) => (
+              <>
+                <div className="flex items-center gap-2">
+                  <StatusTabs control={control} />
+                  <DataTable.Filters slot="add" />
+                </div>
+                <DataTable.Filters slot="chips" />
+              </>
+            )}
+          />
+        </section>
       </Layout.Column>
     </Layout>
   );

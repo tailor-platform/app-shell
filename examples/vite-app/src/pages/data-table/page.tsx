@@ -326,29 +326,26 @@ const DataTablePage = () => {
         </div>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>
-            <div className="flex items-center gap-3">
-              {/* 🧪 Preset quick-filter tabs (left) — prototype */}
-              <div className="flex items-center gap-1">
-                {STATUS_TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => selectStatusTab(tab.key)}
-                    className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                      activeStatusTab === tab.key
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              {/* Chips + Add filter (Add filter stays right-aligned) */}
-              <div className="flex-1">
-                <DataTable.Filters />
-              </div>
+            {/* 🧪 Row 1 — preset quick-filter tabs (prototype). The toolbar stacks
+                its children, so active filter chips land on their own row below. */}
+            <div className="flex items-center gap-1">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => selectStatusTab(tab.key)}
+                  className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                    activeStatusTab === tab.key
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
+            {/* Row 2 — chips (left) + Add filter (right) */}
+            <DataTable.Filters />
           </DataTable.Toolbar>
           <DataTable.Table />
           <DataTable.Footer>

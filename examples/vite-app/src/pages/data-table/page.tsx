@@ -326,26 +326,28 @@ const DataTablePage = () => {
         </div>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>
-            {/* 🧪 Row 1 — preset quick-filter tabs (prototype). The toolbar stacks
-                its children, so active filter chips land on their own row below. */}
-            <div className="flex items-center gap-1">
-              {STATUS_TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => selectStatusTab(tab.key)}
-                  className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                    activeStatusTab === tab.key
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            {/* 🧪 Row 1 — preset quick-filter tabs (left, prototype) + Add filter (right) */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1">
+                {STATUS_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => selectStatusTab(tab.key)}
+                    className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                      activeStatusTab === tab.key
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <DataTable.Filters slot="add" />
             </div>
-            {/* Row 2 — chips (left) + Add filter (right) */}
-            <DataTable.Filters />
+            {/* Row 2 — active filter chips (only shown when filters are applied) */}
+            <DataTable.Filters slot="chips" />
           </DataTable.Toolbar>
           <DataTable.Table />
           <DataTable.Footer>

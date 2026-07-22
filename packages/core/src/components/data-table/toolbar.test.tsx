@@ -44,15 +44,17 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
 function TestFilters({
   control,
   columns,
+  slot,
 }: {
   control: CollectionControl;
   columns: Column<TestRow>[];
+  slot?: "all" | "chips" | "add";
 }) {
   const table = useDataTable<TestRow>({ columns, data: { rows: [] }, control });
   return (
     <DataTable.Root value={table}>
       <DataTable.Toolbar>
-        <DataTable.Filters />
+        <DataTable.Filters slot={slot} />
       </DataTable.Toolbar>
     </DataTable.Root>
   );
@@ -245,6 +247,33 @@ describe("DataTable.Filters", () => {
     };
     const { container } = render(
       <TestFilters control={control} columns={[nonFilterableColumn]} />,
+      { wrapper },
+    );
+    expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();
+  });
+
+  it("slot='add' renders only the Add filter trigger (no chips)", () => {
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} slot="add" />, { wrapper });
+    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(document.querySelector('[data-slot="data-table-filter-chip"]')).toBeNull();
+  });
+
+  it("slot='chips' renders only active chips (no Add filter trigger)", () => {
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} slot="chips" />, { wrapper });
+    expect(document.querySelector('[data-slot="data-table-filter-chip"]')).not.toBeNull();
+    expect(screen.queryByText("Add filter")).toBeNull();
+  });
+
+  it("slot='chips' renders nothing when there are no active filters", () => {
+    const control = makeControl({ filters: [] });
+    const { container } = render(
+      <TestFilters control={control} columns={[stringColumn]} slot="chips" />,
       { wrapper },
     );
     expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();

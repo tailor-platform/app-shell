@@ -108,7 +108,22 @@ type FilterableColumn = Column<Record<string, unknown>> & {
 type AddFilterDraftValue = string | string[];
 
 /** Use `DataTable.Filters` instead of calling this directly. */
-function DataTableFilters({ className }: { className?: string }) {
+function DataTableFilters({
+  className,
+  slot = "all",
+}: {
+  className?: string;
+  /**
+   * Which part to render, for custom toolbar layouts:
+   * - `"all"` (default) — active filter chips plus the **Add filter** trigger.
+   * - `"chips"` — only the active filter chips (renders nothing when there are none).
+   * - `"add"` — only the **Add filter** trigger.
+   *
+   * Render `"add"` and `"chips"` separately to place the trigger and the chips on
+   * different rows (e.g. the trigger in a header row, chips on the row below).
+   */
+  slot?: "all" | "chips" | "add";
+}) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();
   if (!control) {
@@ -125,25 +140,43 @@ function DataTableFilters({ className }: { className?: string }) {
 
   if (filterableColumns.length === 0) return null;
 
+  const chips = filterableColumns
+    .map((col) => {
+      const active = control.filters.find((f) => f.field === col.filter.field);
+      return active ? (
+        <FilterChip key={col.filter.field} column={col} filter={active} control={control} />
+      ) : null;
+    })
+    .filter(Boolean);
+
+  // The Add filter trigger only.
+  if (slot === "add") {
+    return <AddFilterPanel columns={filterableColumns} control={control} />;
+  }
+
+  // Active chips only — nothing when there are no active filters.
+  if (slot === "chips") {
+    if (chips.length === 0) return null;
+    return (
+      <div
+        data-slot="data-table-filters"
+        className={cn("astw:flex astw:flex-wrap astw:items-center astw:gap-2", className)}
+      >
+        {chips}
+      </div>
+    );
+  }
+
+  // Default: chips (grow to fill) + the right-aligned Add filter trigger.
   return (
     <div
       data-slot="data-table-filters"
       className={cn("astw:flex astw:items-start astw:gap-2", className)}
     >
-      {/* Active filter chips (grow to fill; wrap as needed) */}
       <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
-        {filterableColumns.map((col) => {
-          const active = control.filters.find((f) => f.field === col.filter.field);
-          if (!active) return null;
-          return (
-            <FilterChip key={col.filter.field} column={col} filter={active} control={control} />
-          );
-        })}
+        {chips}
       </div>
-
-      {/* Right-aligned action(s): the add-filter panel trigger stays pinned to the
-          right so it doesn't shift as chips are added (and sits alongside a future
-          column-settings button). */}
+      {/* Trigger stays pinned right so it doesn't shift as chips are added. */}
       <AddFilterPanel columns={filterableColumns} control={control} />
     </div>
   );

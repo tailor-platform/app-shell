@@ -159,6 +159,30 @@ function JournalsPage() {
 | `children`  | `ReactNode`                | Sub-components to render inside the root.    |
 | `className` | `string`                   | Additional CSS class for the root container. |
 
+### `DataTable.Filters` Props
+
+| Prop        | Type                        | Default | Description                                     |
+| ----------- | --------------------------- | ------- | ----------------------------------------------- |
+| `slot`      | `"all" \| "chips" \| "add"` | `"all"` | Which part to render (see below).               |
+| `className` | `string`                    | —       | Additional CSS class for the filters container. |
+
+By default `DataTable.Filters` renders the active filter chips plus the **Add filter** trigger together. The `slot` prop lets you split them across a custom toolbar layout:
+
+- `"all"` — chips + the **Add filter** trigger (default).
+- `"chips"` — only the active chips (renders nothing when there are none).
+- `"add"` — only the **Add filter** trigger.
+
+```tsx
+// Add filter in a header row (with tabs, etc.); chips on the row below.
+<DataTable.Toolbar>
+  <div className="flex items-center justify-between">
+    <MyViewTabs />
+    <DataTable.Filters slot="add" />
+  </div>
+  <DataTable.Filters slot="chips" />
+</DataTable.Toolbar>
+```
+
 ### `DataTable.Pagination` Props
 
 | Prop              | Type       | Default | Description                                                                                                                                               |

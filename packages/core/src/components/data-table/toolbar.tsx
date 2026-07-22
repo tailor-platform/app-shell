@@ -209,6 +209,12 @@ function AddFilterPanel({
     if (col) setOperator(seedPanelOperator(control, col));
   };
 
+  // Always reopen on the first field rather than wherever the user last was.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) selectField(columns[0]?.filter.field ?? "");
+  };
+
   const activeFields = new Set(control.filters.map((f) => f.field));
   const activeFilter = control.filters.find((f) => f.field === fieldName);
   let effectiveOperator: FilterOperator | undefined;
@@ -217,7 +223,7 @@ function AddFilterPanel({
   }
 
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
+    <Popover.Root open={open} onOpenChange={handleOpenChange}>
       <Popover.Trigger
         render={
           <Button variant="outline" size="xs">

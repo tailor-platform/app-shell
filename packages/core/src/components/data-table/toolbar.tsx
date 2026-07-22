@@ -152,9 +152,15 @@ function DataTableFilters({
     })
     .filter(Boolean);
 
-  // The Add filter trigger only.
+  // The Add filter trigger only. Wrapped in a shrink-to-content box so the button
+  // keeps its natural width instead of stretching to fill a column-flex toolbar
+  // (DataTable.Toolbar is `flex-col`, which stretches its children by default).
   if (slot === "add") {
-    return <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />;
+    return (
+      <div className={cn("astw:w-fit", className)}>
+        <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
+      </div>
+    );
   }
 
   // Active chips only — nothing when there are no active filters.

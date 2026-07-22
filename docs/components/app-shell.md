@@ -353,16 +353,16 @@ See [`SearchSource`](./command-palette.md#searchsource) for the full type refere
 
 `AppInfo` has the following shape:
 
-| Property   | Type                        | Description                                          |
-| ---------- | --------------------------- | ---------------------------------------------------- |
-| `metadata` | `readonly AppInfoEntry[]`   | Additional rows shown on the `/__appinfo` page |
+| Property   | Type                      | Description                                    |
+| ---------- | ------------------------- | ---------------------------------------------- |
+| `metadata` | `readonly AppInfoEntry[]` | Additional rows shown on the `/__appinfo` page |
 
 Each `AppInfoEntry` has:
 
-| Property | Type                                          | Description                                        |
-| -------- | --------------------------------------------- | -------------------------------------------------- |
-| `label`  | `string`                                      | Display label shown on the page                    |
-| `value`  | `string \| number \| boolean \| null \| undefined` | Value rendered as text                        |
+| Property | Type                                               | Description                     |
+| -------- | -------------------------------------------------- | ------------------------------- |
+| `label`  | `string`                                           | Display label shown on the page |
+| `value`  | `string \| number \| boolean \| null \| undefined` | Value rendered as text          |
 
 ```tsx
 <AppShell

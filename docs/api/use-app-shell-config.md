@@ -15,13 +15,14 @@ const useAppShellConfig: () => AppShellConfig;
 
 ## Return Value
 
-| Property            | Type                           | Description                                 |
-| ------------------- | ------------------------------ | ------------------------------------------- |
-| `title`             | `string \| undefined`          | App title                                   |
-| `icon`              | `React.ReactNode \| undefined` | App icon                                    |
-| `basePath`          | `string \| undefined`          | Base path for all routes                    |
-| `modules`           | `Module[]`                     | Registered modules                          |
-| `settingsResources` | `Resource[]`                   | Resources that appear only in Settings menu |
+| Property            | Type                           | Description                                      |
+| ------------------- | ------------------------------ | ------------------------------------------------ |
+| `title`             | `string \| undefined`          | App title                                        |
+| `icon`              | `React.ReactNode \| undefined` | App icon                                         |
+| `basePath`          | `string \| undefined`          | Base path for all routes                         |
+| `modules`           | `Module[]`                     | Registered modules                               |
+| `settingsResources` | `Resource[]`                   | Resources that appear only in Settings menu      |
+| `appInfo`           | `AppInfo \| undefined`         | Configuration for the built-in `/__appinfo` page |
 
 ## Usage
 

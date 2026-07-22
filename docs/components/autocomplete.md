@@ -115,10 +115,13 @@ const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
 
 Accepts all the same props as `Autocomplete` except `items`, plus:
 
-| Prop          | Type                          | Default        | Description                                             |
-| ------------- | ----------------------------- | -------------- | ------------------------------------------------------- |
-| `fetcher`     | `AutocompleteAsyncFetcher<T>` | -              | Fetcher called on each keystroke (debounced by default) |
-| `loadingText` | `string`                      | `"Loading..."` | Text shown while loading                                |
+| Prop           | Type                          | Default                    | Description                                                        |
+| -------------- | ----------------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `fetcher`      | `AutocompleteAsyncFetcher<T>` | -                          | Fetcher called on each keystroke (debounced by default)            |
+| `loadingText`  | `string`                      | `"Loading..."`             | Text shown while loading                                           |
+| `errorText`    | `string`                      | `"Couldn't load results."` | Message shown in the popover when the fetcher fails (with Retry)   |
+| `retryText`    | `string`                      | `"Retry"`                  | Label for the retry button in the error state                      |
+| `onFetchError` | `(error: unknown) => void`    | -                          | Called once per outage when a fetch fails (logging/error tracking) |
 
 ### AutocompleteAsyncFetcher
 
@@ -131,7 +134,11 @@ type AutocompleteAsyncFetcher<T> =
     };
 ```
 
-`query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.
+`query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay.
+
+### Error handling
+
+If the fetcher throws or rejects, `Autocomplete.Async` renders a built-in inline error state in the popover — the `errorText` message plus a **Retry** button that re-runs the last fetch — instead of the misleading "No results." empty state. Aborted/superseded requests are ignored, and announcements are de-duped per outage. Pass `onFetchError` to run a side effect (logging, toast) — it fires once per outage and re-arms after the next successful fetch.
 
 ## Low-level Primitives
 

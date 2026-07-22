@@ -111,6 +111,7 @@ type AddFilterDraftValue = string | string[];
 function DataTableFilters({
   className,
   slot = "all",
+  addIconOnly = false,
 }: {
   className?: string;
   /**
@@ -123,6 +124,8 @@ function DataTableFilters({
    * different rows (e.g. the trigger in a header row, chips on the row below).
    */
   slot?: "all" | "chips" | "add";
+  /** Render the **Add filter** trigger as an icon-only button (label → `aria-label`). */
+  addIconOnly?: boolean;
 }) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();
@@ -151,7 +154,7 @@ function DataTableFilters({
 
   // The Add filter trigger only.
   if (slot === "add") {
-    return <AddFilterPanel columns={filterableColumns} control={control} />;
+    return <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />;
   }
 
   // Active chips only — nothing when there are no active filters.
@@ -177,7 +180,7 @@ function DataTableFilters({
         {chips}
       </div>
       {/* Trigger stays pinned right so it doesn't shift as chips are added. */}
-      <AddFilterPanel columns={filterableColumns} control={control} />
+      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
     </div>
   );
 }
@@ -221,9 +224,12 @@ function seedPanelOperator(
 function AddFilterPanel({
   columns,
   control,
+  iconOnly = false,
 }: {
   columns: FilterableColumn[];
   control: CollectionControl;
+  /** Render the trigger as an icon-only button (label kept as `aria-label`). */
+  iconOnly?: boolean;
 }) {
   const t = useDataTableT();
   const [open, setOpen] = useState(false);
@@ -263,9 +269,9 @@ function AddFilterPanel({
     <Popover.Root open={open} onOpenChange={handleOpenChange}>
       <Popover.Trigger
         render={
-          <Button variant="outline" size="xs">
+          <Button variant="outline" size="xs" aria-label={iconOnly ? t("addFilter") : undefined}>
             <FilterIcon className="astw:size-3" />
-            {t("addFilter")}
+            {!iconOnly && t("addFilter")}
           </Button>
         }
       />

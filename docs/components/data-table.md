@@ -161,10 +161,11 @@ function JournalsPage() {
 
 ### `DataTable.Filters` Props
 
-| Prop        | Type                        | Default | Description                                     |
-| ----------- | --------------------------- | ------- | ----------------------------------------------- |
-| `slot`      | `"all" \| "chips" \| "add"` | `"all"` | Which part to render (see below).               |
-| `className` | `string`                    | —       | Additional CSS class for the filters container. |
+| Prop          | Type                        | Default | Description                                                                                    |
+| ------------- | --------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `slot`        | `"all" \| "chips" \| "add"` | `"all"` | Which part to render (see below).                                                              |
+| `addIconOnly` | `boolean`                   | `false` | Render the **Add filter** trigger as an icon-only button (the label becomes its `aria-label`). |
+| `className`   | `string`                    | —       | Additional CSS class for the filters container.                                                |
 
 By default `DataTable.Filters` renders the active filter chips plus the **Add filter** trigger together. The `slot` prop lets you split them across a custom toolbar layout:
 

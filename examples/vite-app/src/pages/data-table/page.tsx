@@ -409,6 +409,22 @@ const DataTablePage = () => {
             )}
           />
         </section>
+
+        {/* Example 4 — Add filter far left, icon-only (no label) */}
+        <section className="mb-8">
+          <h3 className="mb-2 text-sm font-semibold">4 · Add filter far left (icon only)</h3>
+          <InvoiceTable
+            toolbar={(control) => (
+              <>
+                <div className="flex items-center gap-3">
+                  <DataTable.Filters slot="add" addIconOnly />
+                  <StatusTabs control={control} />
+                </div>
+                <DataTable.Filters slot="chips" />
+              </>
+            )}
+          />
+        </section>
       </Layout.Column>
     </Layout>
   );

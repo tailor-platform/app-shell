@@ -45,16 +45,18 @@ function TestFilters({
   control,
   columns,
   slot,
+  addIconOnly,
 }: {
   control: CollectionControl;
   columns: Column<TestRow>[];
   slot?: "all" | "chips" | "add";
+  addIconOnly?: boolean;
 }) {
   const table = useDataTable<TestRow>({ columns, data: { rows: [] }, control });
   return (
     <DataTable.Root value={table}>
       <DataTable.Toolbar>
-        <DataTable.Filters slot={slot} />
+        <DataTable.Filters slot={slot} addIconOnly={addIconOnly} />
       </DataTable.Toolbar>
     </DataTable.Root>
   );
@@ -277,6 +279,16 @@ describe("DataTable.Filters", () => {
       { wrapper },
     );
     expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();
+  });
+
+  it("addIconOnly renders an icon-only trigger (label kept as aria-label)", () => {
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn]} slot="add" addIconOnly />, {
+      wrapper,
+    });
+    // Reachable by its accessible name, but the label text is not rendered.
+    const trigger = screen.getByRole("button", { name: "Add filter" });
+    expect(trigger.textContent).toBe("");
   });
 });
 

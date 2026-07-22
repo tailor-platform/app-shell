@@ -357,69 +357,34 @@ const DataTablePage = () => {
           takes the collection <code className="bg-muted px-1 py-0.5 rounded">variables</code>{" "}
           (filter <code className="bg-muted px-1 py-0.5 rounded">query</code>, order, cursor
           pagination) — a stand-in for the GraphQL query that would normally drive the table. The
-          examples below trial different placements of the <strong>Add filter</strong> button
-          alongside the preset tabs (each table is independent). Active chips always land on their
-          own row below.
+          toolbar uses an icon-only <strong>Add filter</strong> button on the far left; active chips
+          land on their own row below.
         </div>
 
-        {/* Example 1 — tabs left, Add filter far right (current) */}
+        {/* With preset tabs */}
         <section className="mb-8">
-          <h3 className="mb-2 text-sm font-semibold">1 · Tabs left, Add filter far right</h3>
+          <h3 className="mb-2 text-sm font-semibold">With preset tabs</h3>
           <InvoiceTable
             toolbar={(control) => (
               <>
-                <div className="flex items-center justify-between gap-3">
-                  <StatusTabs control={control} />
-                  <DataTable.Filters slot="add" />
-                </div>
-                <DataTable.Filters slot="chips" />
-              </>
-            )}
-          />
-        </section>
-
-        {/* Example 2 — Add filter far left, then tabs */}
-        <section className="mb-8">
-          <h3 className="mb-2 text-sm font-semibold">2 · Add filter far left</h3>
-          <InvoiceTable
-            toolbar={(control) => (
-              <>
-                <div className="flex items-center gap-3">
-                  <DataTable.Filters slot="add" />
-                  <StatusTabs control={control} />
-                </div>
-                <DataTable.Filters slot="chips" />
-              </>
-            )}
-          />
-        </section>
-
-        {/* Example 3 — tabs, then Add filter immediately after them */}
-        <section className="mb-8">
-          <h3 className="mb-2 text-sm font-semibold">3 · Add filter right after the tabs</h3>
-          <InvoiceTable
-            toolbar={(control) => (
-              <>
+                {/* gap-2 matches the toolbar's p-2 so the icon sits an even step from the tabs */}
                 <div className="flex items-center gap-2">
-                  <StatusTabs control={control} />
-                  <DataTable.Filters slot="add" />
-                </div>
-                <DataTable.Filters slot="chips" />
-              </>
-            )}
-          />
-        </section>
-
-        {/* Example 4 — Add filter far left, icon-only (no label) */}
-        <section className="mb-8">
-          <h3 className="mb-2 text-sm font-semibold">4 · Add filter far left (icon only)</h3>
-          <InvoiceTable
-            toolbar={(control) => (
-              <>
-                <div className="flex items-center gap-3">
                   <DataTable.Filters slot="add" addIconOnly />
                   <StatusTabs control={control} />
                 </div>
+                <DataTable.Filters slot="chips" />
+              </>
+            )}
+          />
+        </section>
+
+        {/* Without tabs */}
+        <section className="mb-8">
+          <h3 className="mb-2 text-sm font-semibold">Without tabs</h3>
+          <InvoiceTable
+            toolbar={() => (
+              <>
+                <DataTable.Filters slot="add" addIconOnly />
                 <DataTable.Filters slot="chips" />
               </>
             )}

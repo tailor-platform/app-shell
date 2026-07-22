@@ -270,7 +270,9 @@ function AddFilterPanel({
       <Popover.Trigger
         render={
           <Button variant="outline" size="xs" aria-label={iconOnly ? t("addFilter") : undefined}>
-            <FilterIcon className="astw:size-3" />
+            {/* Icon-only reads better a touch larger (matching icon-button convention);
+                inline-with-label stays smaller so it sits neatly beside the text. */}
+            <FilterIcon className={iconOnly ? "astw:size-3.5" : "astw:size-3"} />
             {!iconOnly && t("addFilter")}
           </Button>
         }

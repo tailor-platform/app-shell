@@ -418,6 +418,20 @@ function PanelDateInput({
   );
 }
 
+// -----------------------------------------------------------------------------
+// TODO(app-shell): replace the temporal filter editors below with dedicated
+// pickers once app-shell ships them:
+//   - `time`     → a proper TimePicker (currently a native <input type="time">).
+//   - `datetime` → a DateTimePicker (currently a date `DatePicker` + a native
+//                  time box, combined into an ISO string — see PanelDateTimeInput
+//                  and DateTimeFilterInput).
+//   - `datetime`/`date` "between" → a DateRangePicker / DateTimeRangePicker
+//                  (currently one inline calendar with From/To tabs, see
+//                  PanelDateRangeInput; the chip editor uses two From/To fields).
+// These stopgaps intentionally emit the same ISO value shapes, so each swap is
+// UI-only — no change to the committed filter values.
+// -----------------------------------------------------------------------------
+
 /**
  * Single-datetime editor for the panel: the inline `Calendar` up front with a
  * labelled time picker beneath it, bridging a local ISO `"YYYY-MM-DDTHH:mm:ss"`

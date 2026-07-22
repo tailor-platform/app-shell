@@ -266,6 +266,15 @@ const columns = [
   }),
 ];
 
+// 🧪 Prototype: preset quick-filter tabs. Each maps to a status filter; "All"
+// clears it. A common ERP pattern — shown here to trial the look on the toolbar.
+const STATUS_TABS: { key: InvoiceStatus | "all"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "draft", label: "Draft" },
+  { key: "sent", label: "Sent" },
+  { key: "overdue", label: "Overdue" },
+];
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 const DataTablePage = () => {
@@ -294,6 +303,15 @@ const DataTablePage = () => {
 
   const table = useDataTable({ columns, data, loading, control });
 
+  // Which preset tab is active, derived from the current status filter.
+  const statusFilter = control.filters.find((f) => f.field === "status");
+  const activeStatusTab =
+    statusFilter && Array.isArray(statusFilter.value) && statusFilter.value.length === 1
+      ? String(statusFilter.value[0])
+      : "all";
+  const selectStatusTab = (key: string) =>
+    key === "all" ? control.removeFilter("status") : control.addFilter("status", "in", [key]);
+
   return (
     <Layout>
       <Layout.Header title="DataTable + Filters" />
@@ -308,7 +326,29 @@ const DataTablePage = () => {
         </div>
         <DataTable.Root value={table}>
           <DataTable.Toolbar>
-            <DataTable.Filters />
+            <div className="flex items-center gap-3">
+              {/* 🧪 Preset quick-filter tabs (left) — prototype */}
+              <div className="flex items-center gap-1">
+                {STATUS_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => selectStatusTab(tab.key)}
+                    className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                      activeStatusTab === tab.key
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              {/* Chips + Add filter (Add filter stays right-aligned) */}
+              <div className="flex-1">
+                <DataTable.Filters />
+              </div>
+            </div>
           </DataTable.Toolbar>
           <DataTable.Table />
           <DataTable.Footer>

@@ -159,9 +159,13 @@ DataTableFilters.displayName = "DataTable.Filters";
 
 const PANEL_COLUMN_ROW = cn(
   "astw:flex astw:w-full astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5",
-  "astw:text-left astw:text-sm astw:outline-hidden astw:cursor-default",
-  "astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus-visible:bg-accent",
+  "astw:text-left astw:text-sm astw:outline-hidden astw:cursor-default astw:transition-colors",
 );
+// Distinct row states: hover is a subtle muted tint; selection is the solid accent
+// (+ bold). Applied exclusively — hover is only added when the row isn't selected —
+// so hovering the selected row doesn't repaint it and the two never look alike.
+const PANEL_ROW_HOVER = "astw:hover:bg-muted astw:focus-visible:bg-muted";
+const PANEL_ROW_SELECTED = "astw:bg-accent astw:font-medium astw:text-accent-foreground";
 
 /**
  * Seed the add-panel's operator for a field: reuse an active filter's operator
@@ -267,7 +271,7 @@ function AddFilterPanel({
                       onClick={() => selectField(col.filter.field)}
                       className={cn(
                         PANEL_COLUMN_ROW,
-                        isSelected && "astw:bg-accent astw:text-accent-foreground",
+                        isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
                       )}
                     >
                       <span className="astw:truncate">{col.label ?? col.filter.field}</span>
@@ -302,7 +306,7 @@ function AddFilterPanel({
                     onClick={() => setOperator(op)}
                     className={cn(
                       PANEL_COLUMN_ROW,
-                      op === operator && "astw:bg-accent astw:text-accent-foreground",
+                      op === operator ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
                     )}
                   >
                     <span className="astw:truncate">{getOperatorLabel(op, t, config.type)}</span>
@@ -628,10 +632,7 @@ function PanelValueEditor({
             key={String(v)}
             type="button"
             onClick={() => setBoolVal(v)}
-            className={cn(
-              PANEL_COLUMN_ROW,
-              boolVal === v && "astw:bg-accent astw:text-accent-foreground",
-            )}
+            className={cn(PANEL_COLUMN_ROW, boolVal === v ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER)}
           >
             <span>{v ? t("filterBooleanTrue") : t("filterBooleanFalse")}</span>
             {boolVal === v && <Check className="astw:ml-auto astw:size-3.5 astw:shrink-0" />}

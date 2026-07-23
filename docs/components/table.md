@@ -51,10 +51,11 @@ import { Table } from "@tailor-platform/app-shell";
 
 ### Table.Root Props
 
-| Prop                 | Type     | Default | Description                                                       |
-| -------------------- | -------- | ------- | ----------------------------------------------------------------- |
-| `className`          | `string` | -       | Additional CSS classes for the `<table>` element                  |
-| `containerClassName` | `string` | -       | Additional CSS classes for the outer scrollable `<div>` container |
+| Prop                 | Type                        | Default | Description                                                       |
+| -------------------- | --------------------------- | ------- | ----------------------------------------------------------------- |
+| `className`          | `string`                    | -       | Additional CSS classes for the `<table>` element                  |
+| `containerClassName` | `string`                    | -       | Additional CSS classes for the outer scrollable `<div>` container |
+| `containerRef`       | `React.Ref<HTMLDivElement>` | -       | Ref forwarded to the outer scrollable `<div>` container           |
 
 All other standard HTML `<table>` props are accepted.
 

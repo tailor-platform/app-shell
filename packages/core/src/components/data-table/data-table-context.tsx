@@ -51,6 +51,11 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   showAllColumns: () => void;
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
+  columnOrder: string[];
+  moveColumn: (key: string, toIndex: number) => void;
+  setColumnOrder: (keys: string[]) => void;
+  pinnedColumns: Record<string, "left" | "right" | "none">;
+  setPin: (key: string, side: "left" | "right" | "none" | null) => void;
 
   // Row interaction
   onClickRow?: (row: TRow) => void;

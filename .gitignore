@@ -4,4 +4,5 @@ dist
 *.tsbuildinfo
 .DS_Store
 .cursor/
+.claude/
 .pnpm-store

@@ -2204,7 +2204,7 @@ function formatFilterValue(
     const labels = filter.value
       .map((v) => config.options.find((option) => option.value === v)?.label ?? String(v))
       .filter((v) => v !== "");
-    // Summarize multiple selections as "2 statuses" rather than listing them.
+    // Summarize multiple selections as "2 Status(s)" rather than listing them.
     if (labels.length > 1 && label) {
       return t("filterEnumCount", { count: labels.length, noun: label });
     }

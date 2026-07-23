@@ -869,8 +869,8 @@ describe("EnumFilterEditor", () => {
 
     // enum has a single operator, so it renders as plain text, not a button.
     expect(screen.getByText("is any of")).toBeDefined();
-    // >1 option selected is summarized as "N <pluralized label>".
-    expect(screen.getByText("2 statuses")).toBeDefined();
+    // >1 option selected is summarized as "N <label>(s)".
+    expect(screen.getByText("2 Status(s)")).toBeDefined();
   });
 
   it("toggling a checkbox calls addFilter immediately without an Apply button", async () => {

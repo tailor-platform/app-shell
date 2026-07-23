@@ -1,13 +1,5 @@
 import { defineI18nLabels } from "@/hooks/i18n";
 
-/** English plural of a column label for enum count summaries ("Status" → "statuses"). */
-function pluralizeEn(label: string): string {
-  const w = label.toLowerCase();
-  if (/(s|x|z|ch|sh)$/.test(w)) return `${w}es`;
-  if (/[^aeiou]y$/.test(w)) return `${w.slice(0, -1)}ies`;
-  return `${w}s`;
-}
-
 export const dataTableLabels = defineI18nLabels({
   en: {
     // DataTable.Body
@@ -61,9 +53,9 @@ export const dataTableLabels = defineI18nLabels({
     filterOperatorSearchPlaceholder: "Search...",
     filterOperatorNoResults: "No results",
     filterValuePlaceholder: (props: { field: string }) => `Enter ${props.field.toLowerCase()}`,
-    // Multi-select enum chip summary, e.g. "2 statuses".
-    filterEnumCount: (props: { count: number; noun: string }) =>
-      `${props.count} ${pluralizeEn(props.noun)}`,
+    // Multi-select enum chip summary, e.g. "2 Status(s)". Uses a simple "(s)"
+    // suffix rather than owning English pluralization rules.
+    filterEnumCount: (props: { count: number; noun: string }) => `${props.count} ${props.noun}(s)`,
     filterBooleanTrue: "True",
     filterBooleanFalse: "False",
     filterOperator_eq: "is",

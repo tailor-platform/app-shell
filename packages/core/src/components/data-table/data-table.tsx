@@ -248,9 +248,9 @@ function pinCellProps(
         // border already paints over the cell background.
         "astw:bg-card astw:before:pointer-events-none astw:before:absolute astw:before:inset-x-0 astw:before:bottom-0 astw:before:h-px astw:before:bg-border astw:before:content-['']"
       : cn(
-          "astw:bg-card",
-          // Exact opaque equivalent of the row's `bg-muted/50` hover so pinned
-          // cells match the rest of the row; theme-aware via the tokens.
+          "astw:bg-card astw:transition-colors",
+          // Match the row's hover/selected fade timing; without the cell-level
+          // transition, sticky pinned cells snap while the rest of the row fades.
           "astw:group-hover:[background-color:color-mix(in_srgb,var(--muted)_50%,var(--card))]",
           "astw:group-aria-selected:bg-muted",
         ),

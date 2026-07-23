@@ -110,6 +110,17 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
   /**
+   * Freeze this column to the left or right edge so it stays visible while the
+   * table scrolls horizontally. This is the **default** pin; the user can
+   * override it at runtime via the toolbar's `columnSettings` control (persisted when
+   * `tableId` is set).
+   *
+   * Sticky offsets for stacked pinned columns are measured from the rendered
+   * layout, so a `width` is not required — but setting `width` on pinned columns
+   * is recommended so their size stays stable as row content changes.
+   */
+  pin?: "left" | "right";
+  /**
    * Horizontal alignment for the header and body cell. When omitted, numeric
    * `type` values (`"number"` and `"money"`) default to `"right"` so digits
    * align along their decimal place; everything else defaults to `"left"`.
@@ -241,6 +252,12 @@ export type UseDataTableOptions<
    * using `DataTable.Pagination` or `DataTable.Filters`.
    */
   control?: CollectionControl<TFieldName, TFilter>;
+  /**
+   * Stable id used to persist per-user column layout (visibility, order, and
+   * pinning) to `localStorage`, keyed by this id. When omitted, column layout is
+   * in-memory only and resets on reload.
+   */
+  tableId?: string;
   /** Called when the user clicks a row. Adds a pointer cursor to rows. */
   onClickRow?: (row: TRow) => void;
   /**
@@ -323,6 +340,20 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   showAllColumns: () => void;
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
+  /** Column keys in display order (visible and hidden). */
+  columnOrder: string[];
+  /** Move the column with `key` to `toIndex` within the ordered column list. */
+  moveColumn: (key: string, toIndex: number) => void;
+  /** Replace the full column order with `keys`. */
+  setColumnOrder: (keys: string[]) => void;
+  /** Per-user pin overrides, keyed by column key (`"none"` = explicitly unpinned). */
+  pinnedColumns: Record<string, "left" | "right" | "none">;
+  /**
+   * Set the pin for the column with `key`: `"left"`/`"right"` to pin, `"none"` to
+   * explicitly unpin (overriding a default `pin`), or `null` to clear the override
+   * and fall back to the column's default.
+   */
+  setPin: (key: string, side: "left" | "right" | "none" | null) => void;
 
   /**
    * The resolved page size derived from the collection control.

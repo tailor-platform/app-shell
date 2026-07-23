@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 type RootProps = React.ComponentProps<"table"> & {
   /** Additional CSS classes for the outer scrollable `<div>` container. Use this to control height, overflow, or container-level layout. */
   containerClassName?: string;
+  /** Ref to the outer scrollable `<div>` container (e.g. to attach a scroll listener). */
+  containerRef?: React.Ref<HTMLDivElement>;
 };
 
 type CellAlign = "left" | "center" | "right";
@@ -40,9 +42,10 @@ const cellAlignClassName = {
  * </Table.Root>
  * ```
  */
-function Root({ className, containerClassName, ...props }: RootProps) {
+function Root({ className, containerClassName, containerRef, ...props }: RootProps) {
   return (
     <div
+      ref={containerRef}
       data-slot="table-container"
       className={cn("astw:relative astw:w-full astw:overflow-x-auto", containerClassName)}
     >

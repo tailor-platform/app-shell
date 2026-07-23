@@ -1,11 +1,11 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData, RowAction } from "./types";
+import type { Column, DataTableData, RowAction, UseDataTableReturn } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -54,6 +54,11 @@ function TestDataTable(props: {
 }
 
 const wrapper = createAppShellWrapper("en");
+
+const headByText = (container: HTMLElement, text: string) =>
+  Array.from(container.querySelectorAll<HTMLElement>('[data-slot="data-table-header"] th')).find(
+    (th) => th.textContent?.trim() === text,
+  );
 
 // When a cell is wrapped in `Tooltip.Trigger`, Base UI tags the trigger
 // element with a generated `base-ui-…` id (used for the popup's
@@ -420,7 +425,7 @@ describe("DataTable", () => {
   // Column truncate
   // -------------------------------------------------------------------------
   describe("column truncate", () => {
-    it("adds truncate + max-w-0 to body cells when truncate=true", () => {
+    it("constrains the cell width and truncates in an inner span when truncate=true", () => {
       const cols: Column<TestRow>[] = [
         {
           label: "Name",
@@ -435,9 +440,13 @@ describe("DataTable", () => {
       });
       const firstRow = container.querySelector('[data-slot="data-table-row"]');
       const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
-      expect(cells[0]?.className).toContain("truncate");
+      // The cell keeps the width constraint but NOT `overflow: hidden` (which would
+      // clip a pinned column's freeze shadow); truncation moves to an inner span.
       expect(cells[0]?.className).toContain("max-w-0");
-      expect(cells[1]?.className).not.toContain("truncate");
+      expect(cells[0]?.className).not.toContain("astw:truncate");
+      expect(cells[0]?.querySelector('span[class*="truncate"]')).toBeTruthy();
+      expect(cells[1]?.className).not.toContain("max-w-0");
+      expect(cells[1]?.querySelector('span[class*="truncate"]')).toBeFalsy();
     });
 
     it("wires a Tooltip when accessor returns a string", () => {
@@ -508,8 +517,8 @@ describe("DataTable", () => {
       }
       const { container } = render(<Harness />, { wrapper });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
-      // Truncate classes still apply, but no Tooltip wraps the cell.
-      expect(cell?.className).toContain("truncate");
+      // Truncation still applies (inner span), but no Tooltip wraps the cell.
+      expect(cell?.querySelector('span[class*="truncate"]')).toBeTruthy();
       expect(isTooltipWired(cell)).toBe(false);
     });
 
@@ -525,7 +534,7 @@ describe("DataTable", () => {
         wrapper,
       });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
-      expect(cell?.className).toContain("truncate");
+      expect(cell?.querySelector('span[class*="truncate"]')).toBeTruthy();
       expect(isTooltipWired(cell)).toBe(false);
     });
 
@@ -1092,6 +1101,122 @@ describe("DataTable", () => {
       fireEvent.click(checkboxes[0]);
 
       expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Sticky / pinned columns
+  // -------------------------------------------------------------------------
+  describe("pinned columns", () => {
+    type Row = { id: string; a: string; b: string; c: string };
+    const rows: Row[] = [{ id: "1", a: "A1", b: "B1", c: "C1" }];
+    const pinnedCols: Column<Row>[] = [
+      { id: "a", label: "A", width: 100, pin: "left", render: (r) => r.a },
+      { id: "b", label: "B", width: 100, render: (r) => r.b },
+      { id: "c", label: "C", width: 100, pin: "right", render: (r) => r.c },
+    ];
+
+    function PinHarness(props: { onSelectionChange?: (ids: string[]) => void }) {
+      const table = useDataTable<Row>({
+        columns: pinnedCols,
+        data: { rows },
+        onSelectionChange: props.onSelectionChange,
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+
+    it("applies sticky positioning + edge offsets to pinned columns", () => {
+      const { container } = render(<PinHarness />, { wrapper });
+      const a = headByText(container, "A");
+      const c = headByText(container, "C");
+      expect(a?.style.position).toBe("sticky");
+      expect(a?.style.left).toBe("0px");
+      expect(c?.style.position).toBe("sticky");
+      expect(c?.style.right).toBe("0px");
+      // Non-pinned column is not sticky.
+      expect(headByText(container, "B")?.style.position).toBe("");
+    });
+
+    it("offsets a left-pinned column past the auto-pinned selection column", () => {
+      const { container } = render(<PinHarness onSelectionChange={() => {}} />, { wrapper });
+      // Selection column auto-pins to the left edge; column A stacks after it.
+      const a = headByText(container, "A");
+      expect(a?.style.left).toBe("52px");
+    });
+
+    it("marks the boundary pinned cell with a scroll-aware freeze shadow", () => {
+      const { container } = render(<PinHarness />, { wrapper });
+      // The shadow pseudo-element is revealed only when the container is scrolled
+      // under that edge (data-pin-shadow-left / -right toggled by DataTable.Table).
+      expect(headByText(container, "A")?.className).toContain("data-pin-shadow-left");
+      expect(headByText(container, "C")?.className).toContain("data-pin-shadow-right");
+    });
+
+    it("honours a pin without a width (offsets come from measured widths)", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const cols: Column<Row>[] = [
+        { id: "a", label: "A", pin: "left", render: (r) => r.a },
+        { id: "b", label: "B", width: 100, render: (r) => r.b },
+      ];
+      function Harness() {
+        const table = useDataTable<Row>({ columns: cols, data: { rows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      // Width is no longer required to pin — the column is still frozen (offsets
+      // are measured at runtime), and there is no dev warning.
+      expect(headByText(container, "A")?.style.position).toBe("sticky");
+      expect(headByText(container, "A")?.style.left).toBe("0px");
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it("keeps stored pin state keyed to definition order for a column with no id/label", () => {
+      // The middle column has neither `id` nor `label`, so its key falls back to
+      // its definition index ("1"). Regression for the two-index-space bug:
+      // resolving the render key from the *visible* array would re-key this
+      // column to "0" once the column ahead of it is hidden, silently detaching
+      // its stored pin (and visibility) state.
+      type R = { id: string; a: string; b: string; c: string };
+      const dataRows: R[] = [{ id: "1", a: "A1", b: "B1", c: "C1" }];
+      const cols: Column<R>[] = [
+        { id: "a", label: "A", width: 100, render: (r) => r.a },
+        { width: 100, render: (r) => r.b }, // no id, no label → definition key "1"
+        { id: "c", label: "C", width: 100, render: (r) => r.c },
+      ];
+      let api!: UseDataTableReturn<R>;
+      function Harness() {
+        const table = useDataTable<R>({ columns: cols, data: { rows: dataRows } });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const keyless = () =>
+        container.querySelector<HTMLElement>(
+          '[data-slot="data-table-header"] th[data-col-key="1"]',
+        );
+
+      // Renders under its definition-order key, then pin it (stored under "1").
+      expect(keyless()).not.toBeNull();
+      act(() => api.setPin("1", "left"));
+      expect(keyless()?.style.position).toBe("sticky");
+
+      // Hiding the column ahead of it must NOT re-key it to its new visible
+      // index and drop the pin.
+      act(() => api.toggleColumn("a"));
+      expect(keyless()?.style.position).toBe("sticky");
     });
   });
 });

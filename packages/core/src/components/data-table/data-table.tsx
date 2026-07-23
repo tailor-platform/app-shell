@@ -1,4 +1,14 @@
-import { useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Ellipsis } from "lucide-react";
 import { Checkbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
@@ -43,12 +53,230 @@ function nextSortDirection(current: string | undefined): "Asc" | "Desc" | undefi
 }
 
 // =============================================================================
+// Column pinning (sticky columns)
+// =============================================================================
+
+// Fallback widths of the built-in selection / row-actions columns, used as the
+// innermost anchors before the real widths are measured.
+const SELECTION_WIDTH = 52;
+const ACTIONS_WIDTH = 50;
+// Keys for the built-in selection / row-actions columns in the measured-width map.
+const SELECTION_KEY = "__datatable_selection__";
+const ACTIONS_KEY = "__datatable_actions__";
+
+type PinSide = "left" | "right";
+type ColumnWidths = Record<string, number>;
+
+/**
+ * Rendered column widths (px) keyed by column key, published by `DataTable.Table`
+ * after it measures the header row. Empty until the first measurement; consumers
+ * fall back to each column's declared `width` (or 0) meanwhile.
+ */
+const PinMeasureContext = createContext<ColumnWidths>({});
+
+// `useLayoutEffect` warns during SSR; the measurement it drives is client-only,
+// so fall back to `useEffect` on the server.
+const useIsomorphicLayoutEffect = typeof document !== "undefined" ? useLayoutEffect : useEffect;
+
+interface PinPlacement {
+  side: PinSide;
+  /** Distance from the pinned edge, in px. */
+  offset: number;
+  /** True for the cell at the freeze seam — it draws the divider border. */
+  isBoundary: boolean;
+}
+
+interface PinLayout<TRow extends Record<string, unknown>> {
+  /** Visible columns reordered into `[left-pinned, unpinned, right-pinned]`. */
+  ordered: Column<TRow>[];
+  /** Render key per column (data-col-key + React key), keyed by column reference. */
+  keys: Map<Column<TRow>, string>;
+  /** Sticky placement per pinned column (keyed by column reference). */
+  placements: Map<Column<TRow>, PinPlacement>;
+  /** Placement for the built-in selection column, when pinned. */
+  selection?: PinPlacement;
+  /** Placement for the built-in row-actions column, when pinned. */
+  actions?: PinPlacement;
+}
+
+function columnKeyAt<TRow extends Record<string, unknown>>(
+  col: Column<TRow>,
+  index: number,
+): string {
+  return col.id ?? col.label ?? String(index);
+}
+
+/** Rendered width for a column key: the measured value wins once > 0, else the
+ *  declared width, else 0. */
+function resolveWidth(key: string, declared: number | undefined, widths: ColumnWidths): number {
+  const measured = widths[key];
+  return measured && measured > 0 ? measured : (declared ?? 0);
+}
+
+/** Shallow equality of two width maps — guards the measure effect against
+ *  setting state (and re-rendering) when nothing actually changed. */
+function sameWidths(a: ColumnWidths, b: ColumnWidths): boolean {
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  return aKeys.every((k) => a[k] === b[k]);
+}
+
+/**
+ * Resolve a column's effective pin: the per-user override wins over the static
+ * default. `"none"` is an explicit unpin (overrides a pinned default).
+ */
+function resolvePin(
+  stored: "left" | "right" | "none" | undefined,
+  defaultPin: PinSide | undefined,
+): PinSide | undefined {
+  if (stored === "none") return undefined;
+  return stored ?? defaultPin;
+}
+
+/**
+ * Definition-order `col → key` map — the single source of truth for a column's
+ * identity, matching how `useDataTable` / `ColumnSettings` store order,
+ * visibility, and pin state. Built from the **full** column list so a key never
+ * depends on the column's position in the filtered/reordered *visible* array: a
+ * column with neither `id` nor `label` falls back to `String(index)`, and keying
+ * it off its visible index would silently detach its stored pin/visibility once
+ * a sibling is hidden or moved. Keyed by reference — `visibleColumns` reuses
+ * these same column objects.
+ */
+function buildColumnKeys<TRow extends Record<string, unknown>>(
+  columns: Column<TRow>[],
+): Map<Column<TRow>, string> {
+  const keys = new Map<Column<TRow>, string>();
+  columns.forEach((col, index) => keys.set(col, columnKeyAt(col, index)));
+  return keys;
+}
+
+/**
+ * Group the visible columns by pin side and compute cumulative sticky offsets.
+ * The selection column (if present) auto-pins to the left edge and row-actions
+ * (if present) auto-pins to the right edge, with user-pinned columns stacking
+ * outward from them.
+ *
+ * `columnKeys` is the definition-order key map (see {@link buildColumnKeys});
+ * `columns` here is the visible/reordered subset, so keys are resolved by
+ * reference from that map rather than from each column's position in it.
+ */
+function computePinLayout<TRow extends Record<string, unknown>>(
+  columns: Column<TRow>[],
+  pinnedColumns: Record<string, "left" | "right" | "none">,
+  opts: {
+    hasSelection: boolean;
+    hasRowActions: boolean;
+    widths: ColumnWidths;
+    columnKeys: Map<Column<TRow>, string>;
+  },
+): PinLayout<TRow> {
+  const { hasSelection, hasRowActions, widths, columnKeys } = opts;
+
+  const keyOf = (col: Column<TRow>): string => columnKeys.get(col) as string;
+
+  const keys = new Map<Column<TRow>, string>();
+  columns.forEach((col) => keys.set(col, keyOf(col)));
+
+  const left: Column<TRow>[] = [];
+  const middle: Column<TRow>[] = [];
+  const right: Column<TRow>[] = [];
+
+  columns.forEach((col) => {
+    const pin = resolvePin(pinnedColumns[keyOf(col)], col.pin);
+    if (pin === "left") left.push(col);
+    else if (pin === "right") right.push(col);
+    else middle.push(col);
+  });
+
+  const placements = new Map<Column<TRow>, PinPlacement>();
+
+  // Left group, visually [selection?, ...left]; offsets accumulate rightward
+  // using the measured (or declared) width of each preceding pinned column.
+  let leftOffset = 0;
+  let selection: PinPlacement | undefined;
+  if (hasSelection) {
+    selection = { side: "left", offset: 0, isBoundary: left.length === 0 };
+    leftOffset = resolveWidth(SELECTION_KEY, SELECTION_WIDTH, widths);
+  }
+  left.forEach((col, i) => {
+    placements.set(col, { side: "left", offset: leftOffset, isBoundary: i === left.length - 1 });
+    leftOffset += resolveWidth(keys.get(col) as string, col.width, widths);
+  });
+
+  // Right group, visually [...right, actions?]; offsets accumulate leftward.
+  let rightOffset = 0;
+  let actions: PinPlacement | undefined;
+  if (hasRowActions) {
+    actions = { side: "right", offset: 0, isBoundary: right.length === 0 };
+    rightOffset = resolveWidth(ACTIONS_KEY, ACTIONS_WIDTH, widths);
+  }
+  for (let i = right.length - 1; i >= 0; i--) {
+    const col = right[i];
+    placements.set(col, { side: "right", offset: rightOffset, isBoundary: i === 0 });
+    rightOffset += resolveWidth(keys.get(col) as string, col.width, widths);
+  }
+
+  return { ordered: [...left, ...middle, ...right], keys, placements, selection, actions };
+}
+
+/**
+ * Merge sticky positioning + background + boundary-divider styles onto a cell's
+ * existing style/className. Pinned body cells stay opaque across hover/selected
+ * states so scrolled content never bleeds through them.
+ */
+function pinCellProps(
+  placement: PinPlacement | undefined,
+  base: { style?: CSSProperties; className?: string },
+  variant: "header" | "body",
+): { style?: CSSProperties; className?: string } {
+  if (!placement) return base;
+  const style: CSSProperties = {
+    ...base.style,
+    position: "sticky",
+    [placement.side]: placement.offset,
+  };
+  const className = cn(
+    base.className,
+    // Below the sticky header (z-10) but above non-pinned scrolling cells.
+    "astw:z-[1]",
+    variant === "header"
+      ? // The header's bottom hairline is drawn by the thead inset-shadow, which
+        // the opaque pinned background covers. Redraw it with a `::before` (which
+        // renders under `border-collapse`, where a cell border would be dropped on
+        // the sticky header row). Body cells don't need this — the row's collapsed
+        // border already paints over the cell background.
+        "astw:bg-card astw:before:pointer-events-none astw:before:absolute astw:before:inset-x-0 astw:before:bottom-0 astw:before:h-px astw:before:bg-border astw:before:content-['']"
+      : cn(
+          "astw:bg-card",
+          // Exact opaque equivalent of the row's `bg-muted/50` hover so pinned
+          // cells match the rest of the row; theme-aware via the tokens.
+          "astw:group-hover:[background-color:color-mix(in_srgb,var(--muted)_50%,var(--card))]",
+          "astw:group-aria-selected:bg-muted",
+        ),
+    // Freeze-seam shadow via a pseudo-element gradient. A real `box-shadow` is
+    // dropped by browsers on cells under `border-collapse: collapse` (the table's
+    // model), so we paint a gradient just outside the boundary edge instead — it
+    // sits above the scrolling cells and reads as depth. Hidden at rest; revealed
+    // only while content is scrolled under that edge (data attributes set on the
+    // scroll container by DataTable.Table).
+    placement.isBoundary &&
+      placement.side === "left" &&
+      "astw:after:pointer-events-none astw:after:absolute astw:after:inset-y-0 astw:after:right-0 astw:after:w-1 astw:after:translate-x-full astw:after:bg-gradient-to-r astw:after:from-black/10 astw:dark:after:from-black/20 astw:after:to-transparent astw:after:content-[''] astw:after:opacity-0 astw:after:transition-opacity astw:[[data-pin-shadow-left]_&]:after:opacity-100",
+    placement.isBoundary &&
+      placement.side === "right" &&
+      "astw:after:pointer-events-none astw:after:absolute astw:after:inset-y-0 astw:after:left-0 astw:after:w-1 astw:after:-translate-x-full astw:after:bg-gradient-to-l astw:after:from-black/10 astw:dark:after:from-black/20 astw:after:to-transparent astw:after:content-[''] astw:after:opacity-0 astw:after:transition-opacity astw:[[data-pin-shadow-right]_&]:after:opacity-100",
+  );
+  return { style, className };
+}
+
+// =============================================================================
 // DataTableLoaderRows (internal)
 // =============================================================================
 
 interface DataTableLoaderRowsProps<TRow extends Record<string, unknown>> {
   rowCount: number;
-  columns: Column<TRow>[] | undefined;
+  pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
   hasRowActions: boolean;
 }
@@ -59,10 +287,11 @@ const SKELETON_WIDTHS = [75, 55, 85, 65, 70];
 /** @internal */
 function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   rowCount,
-  columns,
+  pinLayout,
   hasSelection,
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
+  const { ordered: columns, keys, placements, selection, actions } = pinLayout;
   // No fixed row height: each cell's placeholder matches the height of the
   // real content it stands in for (text line, badge, icon button), so the
   // skeleton rows resolve to exactly the same row height as loaded rows and
@@ -70,18 +299,31 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   return (
     <>
       {Array.from({ length: rowCount }).map((_, rowIndex) => (
-        <Table.Row key={rowIndex} data-datatable-state="loading">
-          {hasSelection && (
-            <Table.Cell style={{ width: 52 }} className="astw:pl-3!">
-              <div className="astw:size-4 astw:rounded-xs astw:bg-muted astw:animate-pulse" />
-            </Table.Cell>
-          )}
+        <Table.Row key={rowIndex} data-datatable-state="loading" className="astw:group">
+          {hasSelection &&
+            (() => {
+              const { style, className } = pinCellProps(
+                selection,
+                { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+                "body",
+              );
+              return (
+                <Table.Cell style={style} className={className}>
+                  <div className="astw:size-4 astw:rounded-xs astw:bg-muted astw:animate-pulse" />
+                </Table.Cell>
+              );
+            })()}
           {columns?.map((col, colIndex) => {
-            const key = col.id ?? col.label ?? String(colIndex);
+            const key = keys.get(col) as string;
             const skeletonWidth = SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length];
             const isBadge = col.type === "badge";
+            const { style, className } = pinCellProps(
+              placements.get(col),
+              { style: col.width ? { width: col.width } : undefined },
+              "body",
+            );
             return (
-              <Table.Cell key={key} style={col.width ? { width: col.width } : undefined}>
+              <Table.Cell key={key} style={style} className={className}>
                 <div
                   className={cn(
                     "astw:bg-muted astw:animate-pulse",
@@ -96,15 +338,23 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
               </Table.Cell>
             );
           })}
-          {hasRowActions && (
-            <Table.Cell style={{ width: 50 }}>
-              {/* size-9 box = the real icon Button's footprint; the visible
-                  pulse stays 24px to read as an ellipsis placeholder */}
-              <div className="astw:mx-auto astw:flex astw:size-9 astw:items-center astw:justify-center">
-                <div className="astw:size-6 astw:rounded astw:bg-muted astw:animate-pulse" />
-              </div>
-            </Table.Cell>
-          )}
+          {hasRowActions &&
+            (() => {
+              const { style, className } = pinCellProps(
+                actions,
+                { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
+                "body",
+              );
+              return (
+                <Table.Cell style={style} className={className}>
+                  {/* size-9 box = the real icon Button's footprint; the visible
+                      pulse stays 24px to read as an ellipsis placeholder */}
+                  <div className="astw:mx-auto astw:flex astw:size-9 astw:items-center astw:justify-center">
+                    <div className="astw:size-6 astw:rounded astw:bg-muted astw:animate-pulse" />
+                  </div>
+                </Table.Cell>
+              );
+            })()}
         </Table.Row>
       ))}
     </>
@@ -169,6 +419,11 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     toggleColumn: value.toggleColumn,
     showAllColumns: value.showAllColumns,
     hideAllColumns: value.hideAllColumns,
+    columnOrder: value.columnOrder,
+    moveColumn: value.moveColumn,
+    setColumnOrder: value.setColumnOrder,
+    pinnedColumns: value.pinnedColumns,
+    setPin: value.setPin,
     pageInfo: value.pageInfo,
     total: value.total,
     totalPages: value.totalPages,
@@ -229,13 +484,15 @@ DataTableRoot.displayName = "DataTable.Root";
 // =============================================================================
 
 /** @internal */
-function DataTableHeaders({ className }: { className?: string }) {
+function DataTableHeaders({ className: headerClassName }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
     throw new Error("<DataTable.Headers> must be used within <DataTable.Root>");
   }
   const {
+    columns: allColumns,
     visibleColumns: columns,
+    pinnedColumns,
     sortStates,
     onSort,
     rowActions,
@@ -246,7 +503,15 @@ function DataTableHeaders({ className }: { className?: string }) {
     isIndeterminate,
   } = ctx;
   const t = useDataTableT();
+  const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection;
+  const hasRowActions = !!(rowActions && rowActions.length > 0);
+  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
+  const { ordered, keys, placements, selection, actions } = useMemo(
+    () =>
+      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
+    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
+  );
 
   return (
     // Sticky within the DataTable.Table scroll container so column headers
@@ -258,41 +523,49 @@ function DataTableHeaders({ className }: { className?: string }) {
       className={cn(
         "astw:sticky astw:top-0 astw:z-10 astw:bg-card",
         "astw:shadow-[inset_0_-1px_0_0_var(--border)] astw:[&_tr]:border-b-0",
-        className,
+        headerClassName,
       )}
     >
-      <Table.Row>
-        {hasSelection && (
-          <Table.Head style={{ width: 52 }} className="astw:pl-3!">
-            <Checkbox.Root
-              checked={isAllSelected}
-              indeterminate={isIndeterminate}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  selectAllRows?.();
-                } else {
-                  clearSelection?.();
-                }
-              }}
-              aria-label={t("selectAll")}
-              className={cn(
-                "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
-              )}
-            >
-              <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                {isIndeterminate ? (
-                  <Minus className="astw:size-3" />
-                ) : (
-                  <Check className="astw:size-3" />
-                )}
-              </Checkbox.Indicator>
-            </Checkbox.Root>
-          </Table.Head>
-        )}
-        {columns?.map((col, colIndex) => {
-          const key = col.id ?? col.label ?? String(colIndex);
+      <Table.Row className="astw:group">
+        {hasSelection &&
+          (() => {
+            const { style, className } = pinCellProps(
+              selection,
+              { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+              "header",
+            );
+            return (
+              <Table.Head data-col-key={SELECTION_KEY} style={style} className={className}>
+                <Checkbox.Root
+                  checked={isAllSelected}
+                  indeterminate={isIndeterminate}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      selectAllRows?.();
+                    } else {
+                      clearSelection?.();
+                    }
+                  }}
+                  aria-label={t("selectAll")}
+                  className={cn(
+                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
+                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
+                    "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
+                  )}
+                >
+                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+                    {isIndeterminate ? (
+                      <Minus className="astw:size-3" />
+                    ) : (
+                      <Check className="astw:size-3" />
+                    )}
+                  </Checkbox.Indicator>
+                </Checkbox.Root>
+              </Table.Head>
+            );
+          })()}
+        {ordered?.map((col) => {
+          const key = keys.get(col) as string;
           const label = col.label;
 
           const isSortable = !!col.sort;
@@ -306,14 +579,23 @@ function DataTableHeaders({ className }: { className?: string }) {
           };
 
           const align = resolveAlign(col);
+          const { style, className } = pinCellProps(
+            placements.get(col),
+            {
+              style: col.width ? { width: col.width } : undefined,
+              className: cn(
+                isSortable && "astw:cursor-pointer astw:select-none",
+                align === "right" && "astw:text-right",
+              ),
+            },
+            "header",
+          );
           return (
             <Table.Head
               key={key}
-              style={col.width ? { width: col.width } : undefined}
-              className={cn(
-                isSortable && "astw:cursor-pointer astw:select-none",
-                align === "right" && "astw:text-right",
-              )}
+              data-col-key={key}
+              style={style}
+              className={className}
               onClick={isSortable ? handleClick : undefined}
             >
               <span
@@ -328,11 +610,19 @@ function DataTableHeaders({ className }: { className?: string }) {
             </Table.Head>
           );
         })}
-        {rowActions && rowActions.length > 0 && (
-          <Table.Head style={{ width: 50 }}>
-            <span className="astw:sr-only">{t("actionsHeader")}</span>
-          </Table.Head>
-        )}
+        {hasRowActions &&
+          (() => {
+            const { style, className } = pinCellProps(
+              actions,
+              { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
+              "header",
+            );
+            return (
+              <Table.Head data-col-key={ACTIONS_KEY} style={style} className={className}>
+                <span className="astw:sr-only">{t("actionsHeader")}</span>
+              </Table.Head>
+            );
+          })()}
       </Table.Row>
     </Table.Header>
   );
@@ -363,7 +653,9 @@ function DataTableBody({ className }: { className?: string }) {
     throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
   }
   const {
+    columns: allColumns,
     visibleColumns: columns,
+    pinnedColumns,
     rows,
     loading,
     error,
@@ -374,10 +666,17 @@ function DataTableBody({ className }: { className?: string }) {
     pageSize,
   } = ctx;
   const t = useDataTableT();
+  const widths = useContext(PinMeasureContext);
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const hasSelection = !!toggleRowSelection;
   const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
+  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
+  const pinLayout = useMemo(
+    () =>
+      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
+    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
+  );
   const tableBodyProps = {
     "data-slot": "data-table-body",
     className,
@@ -388,7 +687,7 @@ function DataTableBody({ className }: { className?: string }) {
       <Table.Body {...tableBodyProps}>
         <DataTableLoaderRows
           rowCount={rowCount}
-          columns={columns}
+          pinLayout={pinLayout}
           hasSelection={hasSelection}
           hasRowActions={hasRowActions}
         />
@@ -420,6 +719,52 @@ function DataTableBody({ className }: { className?: string }) {
 
   return (
     <Table.Body {...tableBodyProps}>
+      <DataTableRows
+        rows={rows}
+        pinLayout={pinLayout}
+        hasSelection={hasSelection}
+        hasRowActions={hasRowActions}
+        isRowSelected={isRowSelected}
+        toggleRowSelection={toggleRowSelection}
+        rowActions={rowActions}
+        onClickRow={onClickRow}
+      />
+    </Table.Body>
+  );
+}
+DataTableBody.displayName = "DataTable.Body";
+
+// =============================================================================
+// Row rendering
+// =============================================================================
+
+interface DataTableRowsProps<TRow extends Record<string, unknown>> {
+  rows: TRow[];
+  pinLayout: PinLayout<TRow>;
+  hasSelection: boolean;
+  hasRowActions: boolean;
+  isRowSelected: (row: TRow) => boolean;
+  toggleRowSelection?: (row: TRow) => void;
+  rowActions?: RowAction<TRow>[];
+  onClickRow?: (row: TRow) => void;
+}
+
+/** @internal */
+function DataTableRows<TRow extends Record<string, unknown>>({
+  rows,
+  pinLayout,
+  hasSelection,
+  hasRowActions,
+  isRowSelected,
+  toggleRowSelection,
+  rowActions,
+  onClickRow,
+}: DataTableRowsProps<TRow>) {
+  const t = useDataTableT();
+  const { ordered, keys, placements, selection, actions } = pinLayout;
+
+  return (
+    <>
       {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
@@ -428,38 +773,64 @@ function DataTableBody({ className }: { className?: string }) {
             key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
             aria-selected={hasSelection ? selected : undefined}
-            className={cn(onClickRow && "astw:cursor-pointer")}
+            className={cn("astw:group", onClickRow && "astw:cursor-pointer")}
             onClick={onClickRow ? () => onClickRow(row) : undefined}
           >
-            {hasSelection && (
-              <Table.Cell
-                style={{ width: 52 }}
-                className="astw:pl-3!"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Checkbox.Root
-                  checked={selected}
-                  onCheckedChange={() => toggleRowSelection(row)}
-                  aria-label={t("selectRow")}
-                  className={cn(
-                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                  )}
-                >
-                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                    <Check className="astw:size-3" />
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
-              </Table.Cell>
-            )}
-            {columns?.map((col, colIndex) => {
-              const key = col.id ?? col.label ?? String(colIndex);
+            {hasSelection &&
+              toggleRowSelection &&
+              (() => {
+                const { style, className } = pinCellProps(
+                  selection,
+                  { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+                  "body",
+                );
+                return (
+                  <Table.Cell
+                    style={style}
+                    className={className}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox.Root
+                      checked={selected}
+                      onCheckedChange={() => toggleRowSelection(row)}
+                      aria-label={t("selectRow")}
+                      className={cn(
+                        "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
+                        "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
+                      )}
+                    >
+                      <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
+                        <Check className="astw:size-3" />
+                      </Checkbox.Indicator>
+                    </Checkbox.Root>
+                  </Table.Cell>
+                );
+              })()}
+            {ordered?.map((col) => {
+              const key = keys.get(col) as string;
               const content = col.render ? col.render(row) : renderTypedCell(row, col);
-              const cellClassName = cn(
-                resolveAlign(col) === "right" && "astw:text-right",
-                col.truncate && "astw:truncate astw:max-w-0",
+
+              const { style: cellStyle, className: cellClassName } = pinCellProps(
+                placements.get(col),
+                {
+                  style: col.width ? { width: col.width } : undefined,
+                  className: cn(
+                    resolveAlign(col) === "right" && "astw:text-right",
+                    // Keep the width constraint on the cell, but move the
+                    // `overflow: hidden` truncation to an inner span (below) — a
+                    // truncating cell would otherwise clip the freeze-shadow
+                    // `::after`, which is drawn just outside the cell edge.
+                    col.truncate && "astw:max-w-0",
+                  ),
+                },
+                "body",
               );
-              const cellStyle = col.width ? { width: col.width } : undefined;
+              // Truncate via an inner element so the cell's overflow stays visible.
+              const cellBody = col.truncate ? (
+                <span className="astw:block astw:truncate">{content}</span>
+              ) : (
+                content
+              );
 
               // Surface the full value on hover when the cell is truncated
               // and the resolved cell value is a stringifiable primitive.
@@ -488,7 +859,7 @@ function DataTableBody({ className }: { className?: string }) {
                         />
                       }
                     >
-                      {content}
+                      {cellBody}
                     </Tooltip.Trigger>
                     <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
                   </Tooltip.Root>
@@ -502,22 +873,34 @@ function DataTableBody({ className }: { className?: string }) {
                   style={cellStyle}
                   className={cellClassName}
                 >
-                  {content}
+                  {cellBody}
                 </Table.Cell>
               );
             })}
-            {hasRowActions && (
-              <Table.Cell style={{ width: 50 }} onClick={(e) => e.stopPropagation()}>
-                <RowActionsMenu actions={rowActions} row={row} />
-              </Table.Cell>
-            )}
+            {hasRowActions &&
+              rowActions &&
+              (() => {
+                const { style, className } = pinCellProps(
+                  actions,
+                  { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
+                  "body",
+                );
+                return (
+                  <Table.Cell
+                    style={style}
+                    className={className}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <RowActionsMenu actions={rowActions} row={row} />
+                  </Table.Cell>
+                );
+              })()}
           </Table.Row>
         );
       })}
-    </Table.Body>
+    </>
   );
 }
-DataTableBody.displayName = "DataTable.Body";
 
 // =============================================================================
 // RowActionsMenu (internal — uses app-shell Menu)
@@ -573,19 +956,83 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 
 /** Use `DataTable.Table` instead of calling this directly. */
 function DataTableTable({ className }: { className?: string }) {
+  const ctx = useContext(DataTableContext);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [widths, setWidths] = useState<ColumnWidths>({});
+
+  const visibleColumns = ctx?.visibleColumns;
+  const pinnedColumns = ctx?.pinnedColumns;
+
+  // Measure each column's *rendered* width from the (always-present) header row
+  // and publish it via PinMeasureContext, so sticky offsets reflect real
+  // geometry rather than declared `width`. This keeps the table on its natural
+  // `table-auto` sizing — pinning no longer forces `table-fixed` (which would
+  // require every column to set an explicit width or collapse). Runs before
+  // paint and re-measures on container/column changes.
+  useIsomorphicLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const cells = el.querySelectorAll<HTMLElement>(
+        "[data-slot='data-table-header'] [data-col-key]",
+      );
+      const next: ColumnWidths = {};
+      cells.forEach((cell) => {
+        const key = cell.dataset.colKey;
+        if (key) next[key] = cell.offsetWidth;
+      });
+      setWidths((prev) => (sameWidths(prev, next) ? prev : next));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    const table = el.querySelector("table");
+    if (table) observer.observe(table);
+    return () => observer.disconnect();
+  }, [visibleColumns, pinnedColumns]);
+
+  // Reflect horizontal scroll position onto the container as data attributes so
+  // the pinned-column freeze shadows show only while there is content scrolled
+  // under that edge (left once scrolled from the start; right while more remains
+  // to the right). Re-runs when the column set changes and observes size changes.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      el.toggleAttribute("data-pin-shadow-left", el.scrollLeft > 0);
+      el.toggleAttribute("data-pin-shadow-right", el.scrollLeft < maxScroll - 1);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    if (typeof ResizeObserver === "undefined") {
+      return () => el.removeEventListener("scroll", update);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [visibleColumns, pinnedColumns]);
+
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex
     // column; combined with the container's overflow-auto this is the region
     // that scrolls vertically when height is constrained. The sticky header
     // (DataTableHeaders) stays pinned to the top of this scrollport.
-    <Table.Root
-      data-slot="data-table-table"
-      containerClassName="astw:min-h-0 astw:overflow-auto"
-      className={className}
-    >
-      <DataTableHeaders />
-      <DataTableBody />
-    </Table.Root>
+    <PinMeasureContext.Provider value={widths}>
+      <Table.Root
+        data-slot="data-table-table"
+        containerRef={containerRef}
+        containerClassName="astw:min-h-0 astw:overflow-auto"
+        className={className}
+      >
+        <DataTableHeaders />
+        <DataTableBody />
+      </Table.Root>
+    </PinMeasureContext.Provider>
   );
 }
 DataTableTable.displayName = "DataTable.Table";
@@ -621,8 +1068,9 @@ export const DataTable = {
    */
   Root: DataTableRoot,
   /**
-   * Container for toolbar content (column visibility, search, etc.).
-   * Place inside `DataTable.Root`, before `DataTable.Table`.
+   * Container for toolbar content (filters, search, etc.). Place inside
+   * `DataTable.Root`, before `DataTable.Table`. Pass `columnSettings` to render
+   * the built-in "Columns" control (show/hide, reorder, pin) at the top-right.
    */
   Toolbar: DataTableToolbar,
   /**

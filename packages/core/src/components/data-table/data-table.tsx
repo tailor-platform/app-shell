@@ -18,8 +18,7 @@ import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
-import type { SortConfig } from "@/types/collection";
-import type { Column, RowAction, UseDataTableReturn } from "./types";
+import type { Column, HeaderRenderContext, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
@@ -567,16 +566,27 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
         {ordered?.map((col) => {
           const key = keys.get(col) as string;
           const label = col.label;
-
-          const isSortable = !!col.sort;
-          const currentSort = col.sort
-            ? sortStates?.find((s) => s.field === (col.sort as SortConfig).field)
+          const sortField = col.sort?.field;
+          const currentSort = sortField
+            ? sortStates?.find((s) => s.field === sortField)
             : undefined;
+          const isSortable = !!sortField && !!onSort;
 
-          const handleClick = () => {
-            if (!isSortable || !onSort || !col.sort) return;
-            onSort(col.sort.field, nextSortDirection(currentSort?.direction));
+          const activateSort = () => {
+            if (!sortField || !onSort) return;
+            onSort(sortField, nextSortDirection(currentSort?.direction));
           };
+
+          const headerContext: HeaderRenderContext = isSortable
+            ? {
+                label,
+                sortable: true,
+                sortDirection: currentSort?.direction,
+                activateSort,
+              }
+            : { label, sortable: false };
+          const content =
+            typeof col.header === "function" ? col.header(headerContext) : (col.header ?? label);
 
           const align = resolveAlign(col);
           const { style, className } = pinCellProps(
@@ -596,7 +606,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               data-col-key={key}
               style={style}
               className={className}
-              onClick={isSortable ? handleClick : undefined}
+              onClick={isSortable ? activateSort : undefined}
             >
               <span
                 className={cn(
@@ -604,7 +614,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                   align === "right" && "astw:justify-end",
                 )}
               >
-                {label}
+                {content}
                 {currentSort && <SortIndicator direction={currentSort.direction} />}
               </span>
             </Table.Head>

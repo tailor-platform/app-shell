@@ -58,9 +58,9 @@ function effectiveSection(
  * that edge (or unpin it), and drag within a zone to reorder. Each row has a
  * visibility checkbox. State persists when `useDataTable` has a `tableId`.
  *
- * @internal Rendered by `DataTable.Toolbar` when its `columnSettings` prop is
- * set — not exported on the `DataTable` namespace, since the control always
- * lives in the same place and needs no per-consumer composition.
+ * Place inside `DataTable.Toolbar`. It right-aligns itself (`ml-auto`), so
+ * composing it after `DataTable.Filters` puts filters left and this control
+ * right, on the same row.
  */
 function DataTableColumnSettings({ className }: { className?: string }) {
   const t = useDataTableT();
@@ -256,7 +256,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     <Popover.Root>
       <Popover.Trigger
         render={
-          <Button variant="outline" size="xs" className={className}>
+          <Button variant="outline" size="xs" className={cn("astw:ml-auto", className)}>
             <SlidersHorizontal className="astw:size-3" />
             {t("columns")}
           </Button>

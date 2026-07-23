@@ -74,7 +74,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - Bulk actions toolbar appears only when ≥1 row is selected
 - Whole row is clickable via `onClickRow`; wrap the primary identifier cell in `<Link>` for keyboard/SR access. No per-row "View" / "Open" buttons
 - Per-row `Menu` (overflow `…`) is reserved for non-navigation actions (Archive, Duplicate, Delete)
-- Wide lists (many columns / horizontal scroll): pin the column users scan by to the **left** — the record's identifier (invoice / order **reference**) or its **name** (customer, product) — so it stays anchored while the rest scrolls; optionally pin a single high-signal **status** or **total** to the **right**. Keep the pinned set small (≈1 left, at most 1 right) — over-pinning eats the scroll area. Let users override via `<DataTable.Toolbar columnSettings>` (show/hide + reorder + re-pin) with a stable `tableId` so each user's layout persists
+- Wide lists (many columns / horizontal scroll): pin the column users scan by to the **left** — the record's identifier (invoice / order **reference**) or its **name** (customer, product) — so it stays anchored while the rest scrolls; optionally pin a single high-signal **status** or **total** to the **right**. Keep the pinned set small (≈1 left, at most 1 right) — over-pinning eats the scroll area. Let users override via `DataTable.ColumnSettings` (show/hide + reorder + re-pin) with a stable `tableId` so each user's layout persists
 
 ## Anti-patterns
 

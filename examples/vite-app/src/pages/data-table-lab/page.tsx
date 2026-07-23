@@ -285,8 +285,9 @@ const DataTableLabPage = () => {
           }
         >
           <DataTable.Root value={settingsTable}>
-            <DataTable.Toolbar columnSettings>
+            <DataTable.Toolbar>
               <DataTable.Filters />
+              <DataTable.ColumnSettings />
             </DataTable.Toolbar>
             <DataTable.Table />
           </DataTable.Root>

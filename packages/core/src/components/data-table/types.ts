@@ -112,7 +112,7 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /**
    * Freeze this column to the left or right edge so it stays visible while the
    * table scrolls horizontally. This is the **default** pin; the user can
-   * override it at runtime via the toolbar's `columnSettings` control (persisted when
+   * override it at runtime via `DataTable.ColumnSettings` (persisted when
    * `tableId` is set).
    *
    * Sticky offsets for stacked pinned columns are measured from the rendered

@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { Checkbox } from "@base-ui/react/checkbox";
-import { Check, GripVertical, SlidersHorizontal } from "lucide-react";
+import { GripVertical, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
+import { Checkbox } from "@/components/checkbox";
 import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
@@ -12,11 +12,6 @@ import { useDataTableT } from "./i18n";
 const POPUP_CLASS = cn(
   "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
-);
-
-const CHECKBOX_CLASS = cn(
-  "astw:flex astw:size-4 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input",
-  "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
 );
 
 // The DataTable column key formula (mirrors useDataTable's getColumnKey);
@@ -190,19 +185,12 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           {meta.label.get(key)}
         </button>
         <Tooltip.Root>
-          <Tooltip.Trigger
-            render={
-              <Checkbox.Root
-                checked={isColumnVisible(key)}
-                onCheckedChange={() => toggleColumn(key)}
-                aria-label={meta.label.get(key)}
-                className={CHECKBOX_CLASS}
-              />
-            }
-          >
-            <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-              <Check className="astw:size-3" />
-            </Checkbox.Indicator>
+          <Tooltip.Trigger render={<span className="astw:inline-flex astw:shrink-0" />}>
+            <Checkbox
+              checked={isColumnVisible(key)}
+              onCheckedChange={() => toggleColumn(key)}
+              aria-label={meta.label.get(key)}
+            />
           </Tooltip.Trigger>
           <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
         </Tooltip.Root>

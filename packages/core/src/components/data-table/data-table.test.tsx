@@ -194,13 +194,7 @@ describe("DataTable", () => {
               sort: { field: "name", type: "string" },
               header: (ctx) =>
                 ctx.sortable ? (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      ctx.activateSort();
-                    }}
-                  >
+                  <button type="button" onClick={ctx.activateSort}>
                     {ctx.label} {ctx.sortDirection}
                   </button>
                 ) : null,
@@ -222,7 +216,8 @@ describe("DataTable", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
 
-      expect(control.clearSort).toHaveBeenCalled();
+      expect(control.clearSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledTimes(1);
       expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
     });
 

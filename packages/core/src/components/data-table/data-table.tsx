@@ -571,8 +571,9 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 activateSort,
               }
             : { label, sortable: false };
-          const content =
-            typeof col.header === "function" ? col.header(headerContext) : (col.header ?? label);
+          const isCustomHeader = typeof col.header === "function";
+          const content = isCustomHeader ? col.header(headerContext) : (col.header ?? label);
+          const enableDefaultHeaderClick = isSortable && !isCustomHeader;
 
           const align = resolveAlign(col);
           const { style, className } = pinCellProps(
@@ -580,7 +581,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             {
               style: col.width ? { width: col.width } : undefined,
               className: cn(
-                isSortable && "astw:cursor-pointer astw:select-none",
+                enableDefaultHeaderClick && "astw:cursor-pointer astw:select-none",
                 align === "right" && "astw:text-right",
               ),
             },
@@ -592,7 +593,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               data-col-key={key}
               style={style}
               className={className}
-              onClick={isSortable ? activateSort : undefined}
+              onClick={enableDefaultHeaderClick ? activateSort : undefined}
             >
               <span
                 className={cn(

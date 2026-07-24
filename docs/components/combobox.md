@@ -226,6 +226,15 @@ const [selected, setSelected] = useState<User | null>(null);
 
 Combine `Combobox.useAsync` with `Combobox.Parts` for full control over layout and rendering:
 
+`Combobox.useAsync` accepts the same options as `Combobox.Async` (including `onFetchError`) and returns:
+
+| Property  | Type         | Description                                             |
+| --------- | ------------ | ------------------------------------------------------- |
+| `items`   | `T[]`        | Currently loaded items                                  |
+| `loading` | `boolean`    | Whether a fetch is in progress                          |
+| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
+| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+
 ```tsx
 type Country = { code: string; name: string };
 
@@ -235,6 +244,7 @@ const countries = Combobox.useAsync({
     if (!res.ok) return [];
     return res.json() as Promise<Country[]>;
   },
+  onFetchError: (error) => reportError(error),
 });
 
 <Combobox.Parts.Root {...countries} filter={null} itemToStringLabel={(c) => c.name}>
@@ -251,7 +261,13 @@ const countries = Combobox.useAsync({
         </Combobox.Parts.Item>
       ))}
       <Combobox.Parts.Empty>
-        {countries.loading ? "Loading..." : "No results."}
+        {countries.error ? (
+          <button onClick={countries.retry}>Couldn't load. Retry</button>
+        ) : countries.loading ? (
+          "Loading..."
+        ) : (
+          "No results."
+        )}
       </Combobox.Parts.Empty>
     </Combobox.Parts.List>
   </Combobox.Parts.Content>

@@ -199,6 +199,15 @@ const [selected, setSelected] = useState<string | null>(null);
 
 Combine `Select.useAsync` with `Select.Parts` for full control over layout and rendering:
 
+`Select.useAsync` accepts the same options as `Select.Async` (including `onFetchError`) and returns:
+
+| Property  | Type         | Description                                             |
+| --------- | ------------ | ------------------------------------------------------- |
+| `items`   | `T[]`        | Currently loaded items                                  |
+| `loading` | `boolean`    | Whether a fetch is in progress                          |
+| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
+| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+
 ```tsx
 type Fruit = { id: number; name: string };
 
@@ -207,6 +216,7 @@ const fruits = Select.useAsync({
     const res = await fetch("/api/fruits", { signal });
     return res.json() as Promise<Fruit[]>;
   },
+  onFetchError: (error) => reportError(error),
 });
 
 <Select.Parts.Root {...fruits} itemToStringLabel={(f) => f.name}>
@@ -214,7 +224,11 @@ const fruits = Select.useAsync({
     <Select.Parts.Value placeholder="Pick a fruit" />
   </Select.Parts.Trigger>
   <Select.Parts.Content>
-    {fruits.loading ? (
+    {fruits.error ? (
+      <div className="px-4 py-2 text-center text-sm">
+        Couldn't load. <button onClick={fruits.retry}>Retry</button>
+      </div>
+    ) : fruits.loading ? (
       <div className="px-4 py-2 text-center text-sm text-muted-foreground">Loading...</div>
     ) : (
       fruits.items.map((f) => (

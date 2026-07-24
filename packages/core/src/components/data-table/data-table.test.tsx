@@ -1102,6 +1102,24 @@ describe("DataTable", () => {
 
       expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
     });
+
+    it("marks the selected row with data-state='selected' so the whole row highlights", () => {
+      const { container } = render(<TestDataTable onSelectionChange={vi.fn()} />, { wrapper });
+
+      // Nothing selected initially.
+      expect(
+        container.querySelector('[data-slot="data-table-row"][data-state="selected"]'),
+      ).toBeNull();
+
+      // checkboxes[0] = header, checkboxes[1] = first data row.
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+
+      // The row (not just the pinned cells) must carry data-state="selected",
+      // which is what `Table.Row` keys its selected background off of.
+      expect(
+        container.querySelectorAll('[data-slot="data-table-row"][data-state="selected"]'),
+      ).toHaveLength(1);
+    });
   });
 
   // -------------------------------------------------------------------------

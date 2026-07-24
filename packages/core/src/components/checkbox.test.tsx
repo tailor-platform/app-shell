@@ -122,6 +122,13 @@ describe("Checkbox", () => {
     expect(screen.getByRole("checkbox").className).toContain("astw:custom-box");
   });
 
+  it("styles the invalid state from aria-invalid (e.g. shadcn FormControl)", () => {
+    render(<Checkbox aria-label="Accept" aria-invalid />);
+    // shadcn's FormControl signals invalid via aria-invalid (no Base UI Field
+    // in play), so the box must key its destructive styling off it too.
+    expect(screen.getByRole("checkbox").className).toContain("aria-invalid:border-destructive");
+  });
+
   describe("Field integration", () => {
     it("inherits the invalid state from a surrounding Field.Root", () => {
       render(

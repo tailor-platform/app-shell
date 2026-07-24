@@ -21,14 +21,17 @@ type CheckboxProps = Omit<React.ComponentProps<typeof BaseCheckbox.Root>, "child
 };
 
 // The box itself. `data-checked` / `data-indeterminate` fill it with the
-// primary colour; `data-invalid` (inherited from a surrounding `Field.Root`)
-// switches it to the destructive colour, matching `Field.Control` / `Input`.
+// primary colour. The invalid state is styled off BOTH `data-invalid` and
+// `aria-invalid` so the box turns destructive whether it's inside a Base UI
+// `Field.Root` (which sets `data-invalid`, like `Field.Control`) or a
+// shadcn-style `FormControl` (which sets `aria-invalid`, like `Input`).
 const checkboxBoxClasses = cn(
   "astw:peer astw:flex astw:size-4 astw:shrink-0 astw:cursor-pointer astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input astw:shadow-xs astw:outline-none astw:transition-[color,box-shadow]",
   "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
   "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
   "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
   "astw:data-invalid:border-destructive astw:data-invalid:ring-destructive/20 astw:dark:data-invalid:ring-destructive/40",
+  "astw:aria-invalid:border-destructive astw:aria-invalid:ring-destructive/20 astw:dark:aria-invalid:ring-destructive/40",
   "astw:data-disabled:cursor-not-allowed",
 );
 

@@ -77,7 +77,7 @@ Placed inside a `Field.Root`, `Checkbox` picks up the field's invalid and disabl
 ```tsx
 <Field.Root name="acceptTerms" error={{ message: "You must accept the terms." }}>
   <Checkbox label="I accept the terms and conditions" />
-  <Field.Error />
+  <Field.Error>You must accept the terms.</Field.Error>
 </Field.Root>
 ```
 
@@ -106,7 +106,7 @@ function TermsForm() {
               onBlur={field.onBlur}
               inputRef={field.ref}
             />
-            <Field.Error />
+            <Field.Error>{fieldState.error?.message}</Field.Error>
           </Field.Root>
         )}
       />
@@ -115,6 +115,40 @@ function TermsForm() {
   );
 }
 ```
+
+## With a shadcn-style `FormField`
+
+`Checkbox` also drops into the common shadcn `FormField` / `FormControl` / `FormMessage`
+pattern — no AppShell `Field` needed. `FormControl` injects `id`, `aria-describedby`, and
+`aria-invalid` onto the control; `Checkbox` forwards them (and `ref`, in React 19) to the
+underlying element and styles its error state off `aria-invalid`, so the invalid highlight
+works here too.
+
+```tsx
+<FormField
+  control={control}
+  name="acceptTerms"
+  render={({ field }) => (
+    <FormItem>
+      <FormControl>
+        <Checkbox
+          label="I accept the terms and conditions"
+          checked={field.value}
+          onCheckedChange={field.onChange}
+          onBlur={field.onBlur}
+          inputRef={field.ref}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+> Use the inline `label` prop for the checkbox text (it wraps the box in a `<label>`, so
+> clicking the text toggles it). A separate `FormLabel` with `htmlFor` is descriptive only —
+> the control renders a `<span role="checkbox">`, which isn't a natively labelable element,
+> so a sibling label won't toggle it on click.
 
 ## TypeScript
 

@@ -759,6 +759,11 @@ function DataTableRows<TRow extends Record<string, unknown>>({
             key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
             aria-selected={hasSelection ? selected : undefined}
+            // `Table.Row` styles the selected background off `data-[state=selected]`,
+            // so set it here too. Without it, only the pinned cells (which carry
+            // their own `group-aria-selected:bg-muted`) tint on selection, leaving
+            // the scrollable cells un-highlighted. `aria-selected` stays for a11y.
+            data-state={hasSelection && selected ? "selected" : undefined}
             className={cn("astw:group", onClickRow && "astw:cursor-pointer")}
             onClick={onClickRow ? () => onClickRow(row) : undefined}
           >

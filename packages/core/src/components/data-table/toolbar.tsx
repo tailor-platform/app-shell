@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { Checkbox } from "@base-ui/react/checkbox";
-import { ChevronDown, Plus, X, Check } from "lucide-react";
+import { ChevronDown, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { Checkbox } from "@/components/checkbox";
 import { Select } from "@/components/select-standalone";
 import { DatePicker } from "@/components/date-field";
 import { parseDate, DateFormatter } from "@internationalized/date";
@@ -355,7 +355,7 @@ function AddFilterPopover({
                   "astw:hover:bg-accent astw:hover:text-accent-foreground",
                 )}
               >
-                <Checkbox.Root
+                <Checkbox
                   checked={isChecked}
                   onCheckedChange={() => {
                     const current = new Set(selectedValues);
@@ -366,15 +366,7 @@ function AddFilterPopover({
                     }
                     setValue([...current]);
                   }}
-                  className={cn(
-                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                  )}
-                >
-                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                    <Check className="astw:size-3" />
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
                 {option.label}
               </label>
             );
@@ -555,18 +547,12 @@ function AddFilterPopover({
               ) : null}
               {renderValueEditor()}
               {selectedColumn?.filter.type === "string" && (
-                <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
-                  <Checkbox.Root
-                    checked={caseSensitive}
-                    onCheckedChange={setCaseSensitive}
-                    className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
-                  >
-                    <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
-                      <Check className="astw:size-3" />
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
-                  {t("filterCaseSensitive")}
-                </label>
+                <Checkbox
+                  label={t("filterCaseSensitive")}
+                  checked={caseSensitive}
+                  onCheckedChange={setCaseSensitive}
+                  className="astw:gap-1.5"
+                />
               )}
               <Button
                 size="xs"
@@ -767,18 +753,7 @@ function EnumFilterEditor({
               "astw:hover:bg-accent astw:hover:text-accent-foreground",
             )}
           >
-            <Checkbox.Root
-              checked={isChecked}
-              onCheckedChange={() => handleToggle(option.value)}
-              className={cn(
-                "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-              )}
-            >
-              <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                <Check className="astw:size-3" />
-              </Checkbox.Indicator>
-            </Checkbox.Root>
+            <Checkbox checked={isChecked} onCheckedChange={() => handleToggle(option.value)} />
             {option.label}
           </label>
         );
@@ -910,18 +885,12 @@ function StringFilterEditor({
         }}
         className="astw:h-8 astw:text-sm"
       />
-      <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
-        <Checkbox.Root
-          checked={localCaseSensitive}
-          onCheckedChange={setLocalCaseSensitive}
-          className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
-        >
-          <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
-            <Check className="astw:size-3" />
-          </Checkbox.Indicator>
-        </Checkbox.Root>
-        {t("filterCaseSensitive")}
-      </label>
+      <Checkbox
+        label={t("filterCaseSensitive")}
+        checked={localCaseSensitive}
+        onCheckedChange={setLocalCaseSensitive}
+        className="astw:gap-1.5"
+      />
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>

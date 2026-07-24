@@ -249,6 +249,7 @@ The `Field` context handles only accessibility wiring (`htmlFor`, `aria-describe
 ## Related
 
 - [Input](./input.md) — Standalone styled input, useful outside of forms.
+- [Checkbox](./checkbox.md) — Boolean control that integrates automatically with `Field`.
 - [Select](./select.md) — Dropdown that integrates automatically with `Field`.
 - [Combobox](./combobox.md) — Searchable combobox that integrates automatically with `Field`.
 - [Autocomplete](./autocomplete.md) — Free-text input with suggestions that integrates automatically with `Field`.

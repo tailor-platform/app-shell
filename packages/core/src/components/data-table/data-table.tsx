@@ -10,12 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { Ellipsis } from "lucide-react";
-import { Checkbox } from "@base-ui/react/checkbox";
-import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
+import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
 import type { SortConfig } from "@/types/collection";
@@ -537,7 +536,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             );
             return (
               <Table.Head data-col-key={SELECTION_KEY} style={style} className={className}>
-                <Checkbox.Root
+                <Checkbox
                   checked={isAllSelected}
                   indeterminate={isIndeterminate}
                   onCheckedChange={(checked) => {
@@ -548,20 +547,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                     }
                   }}
                   aria-label={t("selectAll")}
-                  className={cn(
-                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                    "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
-                  )}
-                >
-                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                    {isIndeterminate ? (
-                      <Minus className="astw:size-3" />
-                    ) : (
-                      <Check className="astw:size-3" />
-                    )}
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
               </Table.Head>
             );
           })()}
@@ -774,6 +760,11 @@ function DataTableRows<TRow extends Record<string, unknown>>({
             key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
             aria-selected={hasSelection ? selected : undefined}
+            // `Table.Row` styles the selected background off `data-[state=selected]`,
+            // so set it here too. Without it, only the pinned cells (which carry
+            // their own `group-aria-selected:bg-muted`) tint on selection, leaving
+            // the scrollable cells un-highlighted. `aria-selected` stays for a11y.
+            data-state={hasSelection && selected ? "selected" : undefined}
             className={cn("astw:group", onClickRow && "astw:cursor-pointer")}
             onClick={onClickRow ? () => onClickRow(row) : undefined}
           >
@@ -791,19 +782,11 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     className={className}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Checkbox.Root
+                    <Checkbox
                       checked={selected}
                       onCheckedChange={() => toggleRowSelection(row)}
                       aria-label={t("selectRow")}
-                      className={cn(
-                        "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                        "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                      )}
-                    >
-                      <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                        <Check className="astw:size-3" />
-                      </Checkbox.Indicator>
-                    </Checkbox.Root>
+                    />
                   </Table.Cell>
                 );
               })()}

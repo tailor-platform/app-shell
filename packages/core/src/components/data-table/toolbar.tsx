@@ -1,18 +1,26 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { Checkbox } from "@base-ui/react/checkbox";
-import { ChevronDown, Plus, X, Check } from "lucide-react";
+import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { Checkbox } from "@/components/checkbox";
 import { Select } from "@/components/select-standalone";
 import { DatePicker } from "@/components/date-field";
+import { Calendar } from "@/components/calendar";
+import { Tooltip } from "@/components/tooltip";
 import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import type { CollectionControl, Filter, FilterConfig, FilterOperator } from "@/types/collection";
+import type {
+  CollectionControl,
+  Filter,
+  FilterConfig,
+  FilterOperator,
+  SelectOption,
+} from "@/types/collection";
 import type { Column } from "./types";
 
 // =============================================================================
@@ -103,7 +111,25 @@ type FilterableColumn = Column<Record<string, unknown>> & {
 type AddFilterDraftValue = string | string[];
 
 /** Use `DataTable.Filters` instead of calling this directly. */
-function DataTableFilters({ className }: { className?: string }) {
+function DataTableFilters({
+  className,
+  slot = "all",
+  addIconOnly = false,
+}: {
+  className?: string;
+  /**
+   * Which part to render, for custom toolbar layouts:
+   * - `"all"` (default) — active filter chips plus the **Add filter** trigger.
+   * - `"chips"` — only the active filter chips (renders nothing when there are none).
+   * - `"add"` — only the **Add filter** trigger.
+   *
+   * Render `"add"` and `"chips"` separately to place the trigger and the chips on
+   * different rows (e.g. the trigger in a header row, chips on the row below).
+   */
+  slot?: "all" | "chips" | "add";
+  /** Render the **Add filter** trigger as an icon-only button (label → `aria-label`). */
+  addIconOnly?: boolean;
+}) {
   const ctx = useDataTableContext();
   const control = useCollectionControlOptional();
   if (!control) {
@@ -118,40 +144,693 @@ function DataTableFilters({ className }: { className?: string }) {
     [ctx.columns],
   );
 
-  // Fields that currently have an active filter
-  const activeFields = useMemo(
-    () => new Set(control.filters.map((f) => f.field)),
-    [control.filters],
-  );
-
-  // Fields available for the "Add filter" menu
-  const availableColumns = useMemo(
-    () => filterableColumns.filter((col) => !activeFields.has(col.filter.field)),
-    [filterableColumns, activeFields],
-  );
-
   if (filterableColumns.length === 0) return null;
 
+  const chips = filterableColumns
+    .map((col) => {
+      const active = control.filters.find((f) => f.field === col.filter.field);
+      return active ? (
+        <FilterChip key={col.filter.field} column={col} filter={active} control={control} />
+      ) : null;
+    })
+    .filter(Boolean);
+
+  // The Add filter trigger only. Wrapped in a shrink-to-content box so the button
+  // keeps its natural width instead of stretching to fill a column-flex toolbar
+  // (DataTable.Toolbar is `flex-col`, which stretches its children by default).
+  if (slot === "add") {
+    return (
+      <div className={cn("astw:w-fit", className)}>
+        <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
+      </div>
+    );
+  }
+
+  // Active chips only — nothing when there are no active filters.
+  if (slot === "chips") {
+    if (chips.length === 0) return null;
+    return (
+      <div
+        data-slot="data-table-filters"
+        className={cn("astw:flex astw:flex-wrap astw:items-center astw:gap-2", className)}
+      >
+        {chips}
+      </div>
+    );
+  }
+
+  // Default: chips (grow to fill) + the right-aligned Add filter trigger.
   return (
     <div
       data-slot="data-table-filters"
-      className={cn("astw:flex astw:flex-wrap astw:items-center astw:gap-2", className)}
+      className={cn("astw:flex astw:items-start astw:gap-2", className)}
     >
-      {/* Active filter chips */}
-      {filterableColumns.map((col) => {
-        const active = control.filters.find((f) => f.field === col.filter.field);
-        if (!active) return null;
-        return <FilterChip key={col.filter.field} column={col} filter={active} control={control} />;
-      })}
-
-      {/* Add filter button */}
-      {availableColumns.length > 0 && (
-        <AddFilterPopover availableColumns={availableColumns} control={control} />
-      )}
+      <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
+        {chips}
+      </div>
+      {/* Trigger stays pinned right so it doesn't shift as chips are added. */}
+      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
     </div>
   );
 }
 DataTableFilters.displayName = "DataTable.Filters";
+
+// =============================================================================
+// AddFilterPanel — the add-filter surface: one popover with three columns
+// (field ▸ condition ▸ value). The condition column appears for fields with
+// more than one operator. Values are drafted and committed with an Apply button
+// (the panel stays open so several filters can be added in a row).
+// =============================================================================
+
+const PANEL_COLUMN_ROW = cn(
+  "astw:flex astw:w-full astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5",
+  "astw:text-left astw:text-sm astw:outline-hidden astw:cursor-default astw:transition-colors",
+);
+// Distinct row states: hover is a subtle muted tint; selection is the solid accent
+// (+ bold). Applied exclusively — hover is only added when the row isn't selected —
+// so hovering the selected row doesn't repaint it and the two never look alike.
+const PANEL_ROW_HOVER = "astw:hover:bg-muted astw:focus-visible:bg-muted";
+const PANEL_ROW_SELECTED = "astw:bg-accent astw:font-medium astw:text-accent-foreground";
+
+/**
+ * Seed the add-panel's operator for a field: reuse an active filter's operator
+ * when it's valid for the field type, so re-opening an already-filtered field
+ * shows its current condition (and lets the value editor prefill) instead of
+ * resetting to the default — which on Apply could silently overwrite the filter.
+ * Falls back to the type default when there's no active filter.
+ */
+function seedPanelOperator(
+  control: CollectionControl,
+  col: FilterableColumn | undefined,
+): FilterOperator {
+  if (!col) return "eq";
+  const active = control.filters.find((f) => f.field === col.filter.field);
+  const ops = getAddFilterOperators(col.filter.type);
+  if (active && ops.includes(active.operator)) return active.operator;
+  return DEFAULT_OPERATOR[col.filter.type];
+}
+
+function AddFilterPanel({
+  columns,
+  control,
+  iconOnly = false,
+}: {
+  columns: FilterableColumn[];
+  control: CollectionControl;
+  /** Render the trigger as an icon-only button (label kept as `aria-label`). */
+  iconOnly?: boolean;
+}) {
+  const t = useDataTableT();
+  const [open, setOpen] = useState(false);
+  const [fieldName, setFieldName] = useState<string>(columns[0]?.filter.field ?? "");
+
+  const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
+  const config = selectedColumn?.filter;
+  const operators = config ? getAddFilterOperators(config.type) : [];
+  // Show the condition column for any field that has more than one operator
+  // (single-operator types like enum/uuid go straight field ▸ value).
+  const showConditions = operators.length > 1;
+
+  const [operator, setOperator] = useState<FilterOperator>(() =>
+    seedPanelOperator(control, selectedColumn),
+  );
+
+  const selectField = (name: string) => {
+    setFieldName(name);
+    const col = columns.find((c) => c.filter.field === name);
+    if (col) setOperator(seedPanelOperator(control, col));
+  };
+
+  // Always reopen on the first field rather than wherever the user last was.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) selectField(columns[0]?.filter.field ?? "");
+  };
+
+  const activeFields = new Set(control.filters.map((f) => f.field));
+  const activeFilter = control.filters.find((f) => f.field === fieldName);
+  let effectiveOperator: FilterOperator | undefined;
+  if (config) {
+    effectiveOperator = showConditions ? operator : DEFAULT_OPERATOR[config.type];
+  }
+
+  return (
+    <Popover.Root open={open} onOpenChange={handleOpenChange}>
+      <Popover.Trigger
+        render={
+          <Button variant="outline" size="xs" aria-label={iconOnly ? t("addFilter") : undefined}>
+            {/* Icon-only reads better a touch larger (matching icon-button convention);
+                inline-with-label stays smaller so it sits neatly beside the text. */}
+            <FilterIcon className={iconOnly ? "astw:size-3.5" : "astw:size-3"} />
+            {!iconOnly && t("addFilter")}
+          </Button>
+        }
+      />
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+        {/* align="end" anchors the panel's right edge to the (right-aligned) trigger
+            so it grows/shrinks toward the right as columns appear/disappear. We keep
+            anchor tracking on (no disableAnchorTracking) so the positioner re-aligns
+            the right edge when the width changes; the trigger itself no longer moves
+            when chips are added (they live in a separate flex-1 container), so there's
+            nothing to jump away from. */}
+        <Popover.Positioner sideOffset={4} side="bottom" align="end">
+          <Popover.Popup
+            data-slot="data-table-filter-panel"
+            className={cn(
+              // Fixed height + width so switching field/condition never resizes the
+              // popup: the width stays constant whether the condition column (2 vs 3
+              // columns) is shown — column 3 flexes to absorb the difference — so the
+              // panel and its left column never shift under the cursor. The width is
+              // sized so column 3 fits the inline calendar (~290px) even in 3-column
+              // mode (col1 11rem + col2 12rem + ~19.5rem for the value editor).
+              // Height fits the tallest editor: the datetime range (From/To tabs +
+              // inline calendar + "Choose time" picker) without the time being clipped.
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
+            )}
+          >
+            {/* Column 1 — fields (scrolls), with a sticky "Clear all" footer */}
+            <div className="astw:flex astw:w-44 astw:flex-col">
+              <div className="astw:flex-1 astw:overflow-y-auto astw:p-1">
+                {columns.map((col) => {
+                  const isSelected = col.filter.field === fieldName;
+                  return (
+                    <button
+                      key={col.filter.field}
+                      type="button"
+                      onClick={() => selectField(col.filter.field)}
+                      className={cn(
+                        PANEL_COLUMN_ROW,
+                        isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
+                      )}
+                    >
+                      <span className="astw:truncate">{col.label ?? col.filter.field}</span>
+                      {activeFields.has(col.filter.field) && (
+                        <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {control.filters.length > 0 && (
+                <div className="astw:border-t astw:border-border astw:p-1">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => control.clearFilters()}
+                    className="astw:w-full astw:justify-start astw:text-muted-foreground"
+                  >
+                    {t("clearAllFilters")}
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Column 2 — conditions (only when the field opts into choosing one) */}
+            {showConditions && config && (
+              <div className="astw:flex astw:w-48 astw:flex-col astw:overflow-y-auto astw:border-l astw:border-border astw:p-1">
+                {operators.map((op) => (
+                  <button
+                    key={op}
+                    type="button"
+                    onClick={() => setOperator(op)}
+                    className={cn(
+                      PANEL_COLUMN_ROW,
+                      op === operator ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
+                    )}
+                  >
+                    <span className="astw:truncate">{getOperatorLabel(op, t, config.type)}</span>
+                    {op === operator && (
+                      <Check className="astw:ml-auto astw:size-3.5 astw:shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Column 3 — value editor; flex-1 so it absorbs the width freed when
+                the condition column is hidden, keeping the popup width constant. */}
+            <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:border-l astw:border-border">
+              {selectedColumn && effectiveOperator && (
+                <PanelValueEditor
+                  key={`${fieldName}:${effectiveOperator}`}
+                  column={selectedColumn}
+                  operator={effectiveOperator}
+                  filter={activeFilter}
+                  control={control}
+                />
+              )}
+            </div>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+AddFilterPanel.displayName = "DataTable.AddFilterPanel";
+
+/**
+ * Inline calendar for the panel's single-date editor — our `Calendar` rendered
+ * directly in the value column (no popover to nest inside the panel). The
+ * pointer-down guard stops the panel's outside-press dismissal from firing when
+ * a day cell re-renders on selection.
+ */
+function PanelDateInput({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDate(value) : null;
+  return (
+    // Center the fixed-width (w-fit) calendar within the wider value column.
+    <div
+      className="astw:flex astw:justify-center"
+      onPointerDownCapture={(e) => e.stopPropagation()}
+      onMouseDownCapture={(e) => e.stopPropagation()}
+    >
+      <Calendar
+        aria-label={ariaLabel}
+        value={calValue}
+        onChange={(v) => onChange(v ? v.toString() : "")}
+      />
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// TODO(app-shell): replace the temporal filter editors below with dedicated
+// pickers once app-shell ships them:
+//   - `time`     → a proper TimePicker (currently a native <input type="time">).
+//   - `datetime` → a DateTimePicker (currently a date `DatePicker` + a native
+//                  time box, combined into an ISO string — see PanelDateTimeInput
+//                  and DateTimeFilterInput).
+//   - `datetime`/`date` "between" → a DateRangePicker / DateTimeRangePicker
+//                  (currently one inline calendar with From/To tabs, see
+//                  PanelDateRangeInput; the chip editor uses two From/To fields).
+// These stopgaps intentionally emit the same ISO value shapes, so each swap is
+// UI-only — no change to the committed filter values.
+// -----------------------------------------------------------------------------
+
+/**
+ * Single-datetime editor for the panel: the inline `Calendar` up front with a
+ * labelled time picker beneath it, bridging a local ISO `"YYYY-MM-DDTHH:mm:ss"`
+ * string. (The chip and the "between" range keep the compact date-picker + time
+ * box to stay short.)
+ */
+function PanelDateTimeInput({
+  ariaLabel,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const t = useDataTableT();
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
+  const datePart = match?.[1] ?? "";
+  const timePart = match?.[2] ?? "";
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+  const emit = (nextDate: string, nextTime: string) => {
+    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+  };
+  return (
+    <div className="astw:flex astw:flex-col astw:gap-3">
+      <div
+        className="astw:flex astw:justify-center"
+        onPointerDownCapture={(e) => e.stopPropagation()}
+        onMouseDownCapture={(e) => e.stopPropagation()}
+      >
+        <Calendar
+          aria-label={ariaLabel}
+          value={calValue}
+          onChange={(v) => emit(v ? v.toString() : "", timePart)}
+        />
+      </div>
+      <div className="astw:flex astw:flex-col astw:gap-1">
+        <span className="astw:text-xs astw:text-muted-foreground">{t("chooseTime")}</span>
+        <Input
+          type="time"
+          aria-label={`${ariaLabel} (${t("chooseTime")})`}
+          value={timePart}
+          onChange={(e) => emit(datePart, e.target.value)}
+          className="astw:h-8 astw:text-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Range editor for date / datetime "between" in the panel: one inline calendar
+ * (reusing the single-value editors) with a From/To tab bar on top. Picking a
+ * bound edits whichever tab is active; each tab shows its current value. Keeps
+ * the range on a single calendar instead of two stacked fields.
+ */
+function PanelDateRangeInput({
+  label,
+  min,
+  max,
+  onChangeMin,
+  onChangeMax,
+  withTime = false,
+}: {
+  label: string;
+  min: string;
+  max: string;
+  onChangeMin: (value: string) => void;
+  onChangeMax: (value: string) => void;
+  /** datetime range — the active bound also gets a time picker. */
+  withTime?: boolean;
+}) {
+  const t = useDataTableT();
+  const { locale } = useResolvedLocale();
+  const [active, setActive] = useState<"from" | "to">("from");
+
+  const fmt = (v: string) => {
+    if (!v) return "—";
+    return withTime ? formatDateTimeValue(v, locale) : formatDateValue(v, locale);
+  };
+  const bounds = [
+    { key: "from" as const, label: t("filterBetweenFrom"), value: min, onChange: onChangeMin },
+    { key: "to" as const, label: t("filterBetweenTo"), value: max, onChange: onChangeMax },
+  ];
+  const activeBound = bounds.find((b) => b.key === active) ?? bounds[0];
+  const error = betweenOrderError(
+    withTime ? "datetime" : "date",
+    min,
+    max,
+    t("filterBetweenFrom"),
+    t("filterBetweenTo"),
+    t,
+  );
+
+  return (
+    <div className="astw:flex astw:flex-col astw:gap-3">
+      {/* From / To tab bar (each tab shows its picked value) */}
+      <div className="astw:grid astw:grid-cols-2 astw:gap-1 astw:rounded-md astw:bg-muted astw:p-1">
+        {bounds.map((b) => (
+          <button
+            key={b.key}
+            type="button"
+            onClick={() => setActive(b.key)}
+            className={cn(
+              "astw:flex astw:flex-col astw:items-start astw:gap-0.5 astw:overflow-hidden astw:rounded-sm astw:px-2 astw:py-1 astw:text-left",
+              active === b.key && "astw:bg-background astw:shadow-sm",
+            )}
+          >
+            <span className="astw:text-xs astw:text-muted-foreground">{b.label}</span>
+            <span
+              className={cn(
+                "astw:w-full astw:truncate astw:text-sm",
+                active === b.key ? "astw:text-foreground" : "astw:text-muted-foreground",
+              )}
+            >
+              {fmt(b.value)}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Inline calendar (+ time) for the active bound */}
+      {withTime ? (
+        <PanelDateTimeInput
+          ariaLabel={`${label} — ${activeBound.label}`}
+          value={activeBound.value}
+          onChange={activeBound.onChange}
+        />
+      ) : (
+        <PanelDateInput
+          ariaLabel={`${label} — ${activeBound.label}`}
+          value={activeBound.value}
+          onChange={activeBound.onChange}
+        />
+      )}
+
+      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * Draft value editor for the panel's third column, keyed by field + operator.
+ * Holds local draft state and commits via an explicit Apply button (the panel
+ * stays open so several filters can be added in a row).
+ */
+function PanelValueEditor({
+  column,
+  operator,
+  filter,
+  control,
+}: {
+  column: FilterableColumn;
+  operator: FilterOperator;
+  filter: Filter | undefined;
+  control: CollectionControl;
+}) {
+  const t = useDataTableT();
+  const config = column.filter;
+  const field = config.field;
+  const label = column.label ?? field;
+  const type = config.type;
+  const isBetween = operator === "between";
+
+  // Draft state, prefilled from an existing filter on the same field/operator.
+  const [enumSel, setEnumSel] = useState<string[]>(
+    type === "enum" && Array.isArray(filter?.value) ? (filter.value as string[]) : [],
+  );
+  const [boolVal, setBoolVal] = useState(typeof filter?.value === "boolean" ? filter.value : true);
+  const [text, setText] = useState(() => {
+    if (isBetween) return "";
+    if (typeof filter?.value === "string") return filter.value;
+    if (typeof filter?.value === "number") return String(filter.value);
+    return "";
+  });
+  const range =
+    isBetween && filter?.value && typeof filter.value === "object"
+      ? (filter.value as { min?: unknown; max?: unknown })
+      : null;
+  const [min, setMin] = useState(range?.min != null ? String(range.min) : "");
+  const [max, setMax] = useState(range?.max != null ? String(range.max) : "");
+
+  const apply = () => {
+    if (type === "enum") {
+      if (enumSel.length === 0) control.removeFilter(field);
+      else control.addFilter(field, "in", enumSel);
+      return;
+    }
+    if (type === "boolean") {
+      control.addFilter(field, operator, boolVal);
+      return;
+    }
+    if (isBetween) {
+      const draft: AddFilterDraftValue = [min, max];
+      if (!isAddFilterDraftValueValid(type, "between", draft)) return;
+      if (!isRangeOrdered(type, min, max)) return;
+      control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
+      return;
+    }
+    if (text.trim() === "") {
+      control.removeFilter(field);
+      return;
+    }
+    if (!isAddFilterDraftValueValid(type, operator, text)) return;
+    control.addFilter(
+      field,
+      operator,
+      toAddFilterSubmittedValue(type, operator, text),
+      // Preserve the existing filter's case-sensitivity (the panel has no toggle;
+      // the chip's string editor owns it) instead of silently clearing it.
+      type === "string" ? { caseSensitive: filter?.caseSensitive ?? false } : undefined,
+    );
+  };
+
+  // Remove this field's active filter and reset the draft. Shown only while a
+  // filter is active (there's nothing to clear on a fresh add).
+  const clearThis = () => {
+    control.removeFilter(field);
+    setEnumSel([]);
+    setBoolVal(true);
+    setText("");
+    setMin("");
+    setMax("");
+  };
+
+  // Gate the Apply button so it's disabled on invalid input (rather than enabled
+  // but inert). An empty draft is allowed only when it clears an existing filter.
+  const canApply = (() => {
+    if (type === "enum") return enumSel.length > 0 || !!filter;
+    if (type === "boolean") return true;
+    if (isBetween) {
+      const minEmpty = min.trim() === "";
+      const maxEmpty = max.trim() === "";
+      if (minEmpty && maxEmpty) return !!filter;
+      if (minEmpty || maxEmpty) return false;
+      if (!isAddFilterDraftValueValid(type, "between", [min, max])) return false;
+      return isRangeOrdered(type, min, max);
+    }
+    if (text.trim() === "") return !!filter;
+    return isAddFilterDraftValueValid(type, operator, text);
+  })();
+
+  let editor: ReactNode;
+  if (type === "enum") {
+    editor = (
+      <EnumOptionList
+        options={config.options}
+        selected={enumSel}
+        onToggle={(v) =>
+          setEnumSel((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]))
+        }
+      />
+    );
+  } else if (type === "boolean") {
+    editor = (
+      <div className="astw:p-1">
+        {[true, false].map((v) => (
+          <button
+            key={String(v)}
+            type="button"
+            onClick={() => setBoolVal(v)}
+            className={cn(PANEL_COLUMN_ROW, boolVal === v ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER)}
+          >
+            <span>{v ? t("filterBooleanTrue") : t("filterBooleanFalse")}</span>
+            {boolVal === v && <Check className="astw:ml-auto astw:size-3.5 astw:shrink-0" />}
+          </button>
+        ))}
+      </div>
+    );
+  } else if (isBetween && type === "date") {
+    // Range dates: one inline calendar with From/To tabs on top.
+    editor = (
+      <div className="astw:p-2">
+        <PanelDateRangeInput
+          label={label}
+          min={min}
+          max={max}
+          onChangeMin={setMin}
+          onChangeMax={setMax}
+        />
+      </div>
+    );
+  } else if (isBetween && type === "datetime") {
+    // Range datetimes: one inline calendar + time with From/To tabs on top.
+    editor = (
+      <div className="astw:p-2">
+        <PanelDateRangeInput
+          label={label}
+          min={min}
+          max={max}
+          onChangeMin={setMin}
+          onChangeMax={setMax}
+          withTime
+        />
+      </div>
+    );
+  } else if (isBetween) {
+    // Non-date range: two simple From/To (or Min/Max) text boxes.
+    const numeric = type === "number";
+    const labels: [string, string] = numeric
+      ? [t("filterBetweenMin"), t("filterBetweenMax")]
+      : [t("filterBetweenFrom"), t("filterBetweenTo")];
+    editor = (
+      <div className="astw:p-2">
+        <BetweenInputGroup
+          labels={labels}
+          values={[min, max]}
+          onChangeMin={setMin}
+          onChangeMax={setMax}
+          onSubmit={apply}
+          inputProps={
+            numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
+          }
+          error={betweenOrderError(type, min, max, labels[0], labels[1], t)}
+        />
+      </div>
+    );
+  } else if (type === "date") {
+    editor = (
+      <div className="astw:p-2">
+        <PanelDateInput ariaLabel={label} value={text} onChange={setText} />
+      </div>
+    );
+  } else if (type === "datetime") {
+    // Single datetime: inline calendar up front + a labelled time picker below.
+    editor = (
+      <div className="astw:p-2">
+        <PanelDateTimeInput ariaLabel={label} value={text} onChange={setText} />
+      </div>
+    );
+  } else if (isTemporalFilterType(type)) {
+    // Single-value `time` uses the native time input. (`date`/`datetime` above.)
+    editor = (
+      <div className="astw:p-2">
+        <Input
+          {...getTemporalInputProps(type)}
+          aria-label={label}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") apply();
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      </div>
+    );
+  } else {
+    editor = (
+      <div className="astw:p-2">
+        <Input
+          type={type === "number" ? "number" : "text"}
+          value={text}
+          placeholder={t("filterValuePlaceholder", { field: label })}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") apply();
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="astw:flex astw:flex-1 astw:flex-col astw:overflow-hidden">
+      <div className="astw:flex-1 astw:overflow-y-auto">{editor}</div>
+      <div className="astw:flex astw:items-center astw:gap-1 astw:border-t astw:border-border astw:p-1">
+        {/* Icon-only Clear, shown only when there's an active filter to remove. */}
+        {filter && (
+          <Tooltip.Provider delay={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                render={
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    onClick={clearThis}
+                    aria-label={t("clearFilter")}
+                  >
+                    <X className="astw:size-3" />
+                  </Button>
+                }
+              />
+              <Tooltip.Content>{t("clearFilter")}</Tooltip.Content>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        )}
+        {/* "Update" when re-editing an already-active field (the panel is seeded
+            from it), "Apply" when adding a fresh filter. */}
+        <Button size="xs" onClick={apply} disabled={!canApply} className="astw:flex-1">
+          {filter ? t("updateFilter") : t("applyFilter")}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // =============================================================================
 // BetweenInputGroup — shared UI for "between" filter inputs
@@ -164,6 +843,7 @@ function BetweenInputGroup({
   onChangeMax,
   onSubmit,
   inputProps,
+  error,
 }: {
   labels: [string, string];
   values: [string, string];
@@ -171,41 +851,77 @@ function BetweenInputGroup({
   onChangeMax: (value: string) => void;
   onSubmit: () => void;
   inputProps?: React.ComponentProps<typeof Input>;
+  /** Validation message shown below the inputs (e.g. a reversed range). */
+  error?: string;
 }) {
+  const rowBase =
+    "astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:shadow-xs astw:has-focus-visible:ring-[3px]";
+  const rowOk =
+    "astw:border-input astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50";
+  const rowError = "astw:border-destructive astw:has-focus-visible:ring-destructive/30";
+  const labelCell =
+    "astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-muted astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14";
+  const inputCell =
+    "astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0";
   return (
     <div className="astw:flex astw:flex-col astw:gap-1.5">
-      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
-        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
-          {labels[0]}
-        </span>
+      <div className={cn(rowBase, rowOk)}>
+        <span className={labelCell}>{labels[0]}</span>
         <Input
           {...inputProps}
           aria-label={labels[0]}
           value={values[0]}
           onChange={(e) => onChangeMin(e.target.value)}
           onKeyDown={(e) => {
+            e.stopPropagation();
             if (e.key === "Enter") onSubmit();
           }}
-          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+          className={inputCell}
         />
       </div>
-      <div className="astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:border-input astw:shadow-xs astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50 astw:has-focus-visible:ring-[3px]">
-        <span className="astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-background astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14">
-          {labels[1]}
-        </span>
+      <div className={cn(rowBase, error ? rowError : rowOk)}>
+        <span className={labelCell}>{labels[1]}</span>
         <Input
           {...inputProps}
           aria-label={labels[1]}
+          aria-invalid={error ? true : undefined}
           value={values[1]}
           onChange={(e) => onChangeMax(e.target.value)}
           onKeyDown={(e) => {
+            e.stopPropagation();
             if (e.key === "Enter") onSubmit();
           }}
-          className="astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0"
+          className={inputCell}
         />
       </div>
+      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
     </div>
   );
+}
+
+/**
+ * Validation message for a "between" range when the bounds are reversed
+ * (max < min). Returns undefined until both bounds are present and individually
+ * valid, so it only appears once there's a genuine ordering problem.
+ */
+function betweenOrderError(
+  type: FilterConfig["type"],
+  min: string,
+  max: string,
+  minLabel: string,
+  maxLabel: string,
+  t: ReturnType<typeof useDataTableT>,
+): string | undefined {
+  if (min.trim() === "" || max.trim() === "") return undefined;
+  let bothValid = true;
+  if (type === "number") {
+    bothValid = !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
+  } else if (isTemporalFilterType(type)) {
+    bothValid = isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+  }
+  if (!bothValid) return undefined;
+  if (isRangeOrdered(type, min, max)) return undefined;
+  return t("filterBetweenOrderError", { min: minLabel, max: maxLabel });
 }
 
 /**
@@ -232,340 +948,49 @@ function DateFilterPicker({
   );
 }
 
-function AddFilterPopover({
-  availableColumns,
-  control,
+/**
+ * Datetime filter input: the app-shell date `DatePicker` (calendar) paired with a
+ * native time box, bridging an ISO `"YYYY-MM-DDTHH:mm:ss"` string. Entering a full
+ * datetime by hand is awkward, so the date and time are picked separately and
+ * combined. This is a stopgap — it's replaced 1:1 once a dedicated DateTime picker
+ * component lands.
+ */
+function DateTimeFilterInput({
+  ariaLabel,
+  value,
+  onChange,
 }: {
-  availableColumns: FilterableColumn[];
-  control: CollectionControl;
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const t = useDataTableT();
-  const [open, setOpen] = useState(false);
-  const [field, setField] = useState<string | null>(null);
-  const [operator, setOperator] = useState<FilterOperator>("eq");
-  const [value, setValue] = useState<AddFilterDraftValue>("");
-  const [caseSensitive, setCaseSensitive] = useState(false);
+  // Split "YYYY-MM-DDTHH:mm[:ss][Z]" into its date and "HH:mm" parts.
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
+  const datePart = match?.[1] ?? "";
+  const timePart = match?.[2] ?? "";
+  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
 
-  const fieldLabelMap = useMemo(
-    () => new Map(availableColumns.map((col) => [col.filter.field, col.label ?? col.filter.field])),
-    [availableColumns],
-  );
-
-  const selectedColumn = useMemo(
-    () => availableColumns.find((col) => col.filter.field === field) ?? availableColumns[0] ?? null,
-    [availableColumns, field],
-  );
-
-  const operatorItems = useMemo(
-    () =>
-      selectedColumn ? getAddFilterOperators(selectedColumn.filter.type) : ([] as FilterOperator[]),
-    [selectedColumn],
-  );
-
-  const canSubmit =
-    selectedColumn != null &&
-    isAddFilterDraftValueValid(selectedColumn.filter.type, operator, value);
-
-  const initDraft = useCallback((column: FilterableColumn | null) => {
-    if (!column) {
-      setField(null);
-      setOperator("eq");
-      setValue("");
-      setCaseSensitive(false);
-      return;
-    }
-
-    setField(column.filter.field);
-    setOperator(DEFAULT_OPERATOR[column.filter.type]);
-    setValue(getInitialAddFilterDraftValue(column.filter.type));
-    setCaseSensitive(false);
-  }, []);
-
-  const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
-      setOpen(isOpen);
-
-      if (isOpen) {
-        initDraft(availableColumns[0] ?? null);
-      }
-    },
-    [availableColumns, initDraft],
-  );
-
-  const handleFieldChange = useCallback(
-    (nextField: string | null) => {
-      if (!nextField) return;
-
-      const nextColumn = availableColumns.find((col) => col.filter.field === nextField) ?? null;
-      if (!nextColumn) return;
-
-      setField(nextField);
-      setOperator(DEFAULT_OPERATOR[nextColumn.filter.type]);
-      setValue(getInitialAddFilterDraftValue(nextColumn.filter.type));
-      setCaseSensitive(false);
-    },
-    [availableColumns],
-  );
-
-  const handleSubmit = useCallback(() => {
-    if (!selectedColumn) return;
-    if (!isAddFilterDraftValueValid(selectedColumn.filter.type, operator, value)) return;
-
-    control.addFilter(
-      selectedColumn.filter.field,
-      operator,
-      toAddFilterSubmittedValue(selectedColumn.filter.type, operator, value),
-      selectedColumn.filter.type === "string" ? { caseSensitive } : undefined,
-    );
-    setOpen(false);
-  }, [selectedColumn, value, operator, caseSensitive, control]);
-
-  const renderValueEditor = () => {
-    if (!selectedColumn) return null;
-
-    const config = selectedColumn.filter;
-
-    if (config.type === "enum") {
-      const selectedValues = Array.isArray(value) ? (value as string[]) : [];
-
-      return (
-        <div className="astw:max-h-44 astw:overflow-auto astw:rounded-md astw:border astw:border-border astw:py-1">
-          {config.options.map((option) => {
-            const isChecked = selectedValues.includes(option.value);
-            return (
-              <label
-                key={option.value}
-                className={cn(
-                  "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:px-3 astw:py-1.5 astw:text-sm",
-                  "astw:hover:bg-accent astw:hover:text-accent-foreground",
-                )}
-              >
-                <Checkbox.Root
-                  checked={isChecked}
-                  onCheckedChange={() => {
-                    const current = new Set(selectedValues);
-                    if (current.has(option.value)) {
-                      current.delete(option.value);
-                    } else {
-                      current.add(option.value);
-                    }
-                    setValue([...current]);
-                  }}
-                  className={cn(
-                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                  )}
-                >
-                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                    <Check className="astw:size-3" />
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
-                {option.label}
-              </label>
-            );
-          })}
-        </div>
-      );
-    }
-
-    if (config.type === "boolean") {
-      return (
-        <Select
-          items={["true", "false"]}
-          value={typeof value === "string" ? value : ""}
-          onValueChange={(v) => {
-            if (v) setValue(v);
-          }}
-          mapItem={(v) => ({
-            value: v,
-            label: v === "true" ? t("filterBooleanTrue") : t("filterBooleanFalse"),
-          })}
-          className="astw:h-8 astw:text-sm"
-        />
-      );
-    }
-
-    if (isTemporalFilterType(config.type)) {
-      const isDate = config.type === "date";
-      const fieldLabel = selectedColumn.label ?? config.field;
-      if (operator === "between") {
-        const [min, max] = Array.isArray(value) ? value : ["", ""];
-        if (isDate) {
-          return (
-            <div className="astw:flex astw:flex-col astw:gap-1.5">
-              <DateFilterPicker
-                ariaLabel={`${fieldLabel} — ${t("filterBetweenFrom")}`}
-                value={min}
-                onChange={(v) => setValue([v, max])}
-              />
-              <DateFilterPicker
-                ariaLabel={`${fieldLabel} — ${t("filterBetweenTo")}`}
-                value={max}
-                onChange={(v) => setValue([min, v])}
-              />
-            </div>
-          );
-        }
-        return (
-          <BetweenInputGroup
-            labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
-            values={[min, max]}
-            onChangeMin={(v) => setValue([v, max])}
-            onChangeMax={(v) => setValue([min, v])}
-            onSubmit={handleSubmit}
-            inputProps={getTemporalInputProps(config.type)}
-          />
-        );
-      }
-      if (isDate) {
-        return (
-          <DateFilterPicker
-            ariaLabel={fieldLabel}
-            value={typeof value === "string" ? value : ""}
-            onChange={(v) => setValue(v)}
-          />
-        );
-      }
-      return (
-        <Input
-          {...getTemporalInputProps(config.type)}
-          value={typeof value === "string" ? value : ""}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSubmit();
-            }
-          }}
-          className="astw:h-8 astw:text-sm"
-        />
-      );
-    }
-
-    if (config.type === "number") {
-      if (operator === "between") {
-        const [min, max] = Array.isArray(value) ? value : ["", ""];
-        return (
-          <BetweenInputGroup
-            labels={[t("filterBetweenMin"), t("filterBetweenMax")]}
-            values={[min, max]}
-            onChangeMin={(v) => setValue([v, max])}
-            onChangeMax={(v) => setValue([min, v])}
-            onSubmit={handleSubmit}
-            inputProps={{ type: "number" }}
-          />
-        );
-      }
-      return (
-        <Input
-          type="number"
-          value={typeof value === "string" ? value : ""}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSubmit();
-            }
-          }}
-          className="astw:h-8 astw:text-sm"
-        />
-      );
-    }
-
-    return (
-      <Input
-        value={typeof value === "string" ? value : ""}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSubmit();
-          }
-        }}
-        className="astw:h-8 astw:text-sm"
-      />
-    );
+  // Emit a combined value only once a date is chosen; time defaults to midnight.
+  const emit = (nextDate: string, nextTime: string) => {
+    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
   };
 
   return (
-    <Popover.Root open={open} onOpenChange={handleOpenChange}>
-      <Popover.Trigger
-        render={
-          <Button variant="outline" size="xs">
-            <Plus className="astw:size-3" />
-            {t("addFilter")}
-          </Button>
-        }
+    <div className="astw:flex astw:items-center astw:gap-2">
+      <DatePicker
+        aria-label={`${ariaLabel} (date)`}
+        value={calValue}
+        onChange={(v) => emit(v ? v.toString() : "", timePart)}
+        className="astw:min-w-0 astw:flex-1"
       />
-      {/* Stacking context on the portal container so the popup renders above
-          positioned elements like DataTable's sticky header row (z-index: 10) —
-          the Popup's own z-index is inert (it's position: static; the
-          Positioner is the positioned element). Same pattern as Menu/Tooltip. */}
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        <Popover.Positioner sideOffset={4} side="bottom" align="start">
-          <Popover.Popup
-            data-slot="data-table-filter-add-popup"
-            className={cn(
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-80 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
-              "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
-            )}
-          >
-            <div className="astw:flex astw:flex-col astw:gap-2 astw:p-3">
-              <Select
-                items={availableColumns.map((col) => col.filter.field)}
-                value={selectedColumn?.filter.field ?? null}
-                onValueChange={handleFieldChange}
-                mapItem={(item) => ({
-                  value: item,
-                  label: fieldLabelMap.get(item) ?? item,
-                })}
-                className="astw:h-8 astw:text-sm"
-              />
-              {operatorItems.length > 1 ? (
-                <Select
-                  items={operatorItems}
-                  value={operator}
-                  onValueChange={(nextOp) => {
-                    if (!nextOp) return;
-                    const wasBetween = operator === "between";
-                    const isBetween = nextOp === "between";
-                    setOperator(nextOp);
-                    if (wasBetween !== isBetween) {
-                      setValue(isBetween ? ["", ""] : "");
-                    }
-                  }}
-                  mapItem={(op) => ({
-                    value: op,
-                    label: getOperatorLabel(op, t, selectedColumn?.filter.type),
-                  })}
-                  className="astw:h-8 astw:text-sm"
-                />
-              ) : null}
-              {renderValueEditor()}
-              {selectedColumn?.filter.type === "string" && (
-                <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
-                  <Checkbox.Root
-                    checked={caseSensitive}
-                    onCheckedChange={setCaseSensitive}
-                    className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
-                  >
-                    <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
-                      <Check className="astw:size-3" />
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
-                  {t("filterCaseSensitive")}
-                </label>
-              )}
-              <Button
-                size="xs"
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-                className="astw:self-end"
-              >
-                {t("addFilter")}
-              </Button>
-            </div>
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+      <Input
+        type="time"
+        aria-label={`${ariaLabel} (time)`}
+        value={timePart}
+        onChange={(e) => emit(datePart, e.target.value)}
+        className="astw:h-8 astw:w-28 astw:shrink-0 astw:text-sm"
+      />
+    </div>
   );
 }
 
@@ -587,39 +1012,133 @@ function FilterChip({
   const config = column.filter;
   const label = column.label ?? config.field;
 
-  const [open, setOpen] = useState(false);
-
-  const handleOpenChange = useCallback((isOpen: boolean) => {
-    setOpen(isOpen);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setOpen(false);
-  }, []);
+  const [opOpen, setOpOpen] = useState(false);
+  const [valOpen, setValOpen] = useState(false);
 
   const handleRemove = useCallback(() => {
     control.removeFilter(config.field);
   }, [control, config.field]);
 
-  const chipLabel = getChipDisplayLabel(label, filter, config, t, locale);
+  // Switching operator re-commits the filter, seeding a valid value when the
+  // arity changes (single ↔ between) so the intermediate filter is never
+  // malformed. Fine-tuning the value happens in the value segment.
+  const handleOperatorSelect = useCallback(
+    (nextOp: FilterOperator) => {
+      // Coerce to a finite number, falling back to 0 for malformed values (e.g.
+      // a non-numeric value from persisted/URL state) so we never seed NaN.
+      const toNum = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const arity = (op: FilterOperator) => (op === "between" ? 2 : 1);
+      if (arity(nextOp) === arity(filter.operator)) {
+        control.addFilter(
+          config.field,
+          nextOp,
+          filter.value,
+          config.type === "string" && filter.caseSensitive ? { caseSensitive: true } : undefined,
+        );
+      } else if (nextOp === "between") {
+        const v = filter.value;
+        if (config.type === "number") {
+          const n = toNum(v);
+          control.addFilter(config.field, nextOp, { min: n, max: n });
+        } else {
+          const s = v == null ? "" : String(v);
+          control.addFilter(config.field, nextOp, { min: s, max: s });
+        }
+      } else {
+        const range = (filter.value ?? {}) as { min?: unknown; max?: unknown };
+        const lower = range.min ?? range.max ?? "";
+        control.addFilter(
+          config.field,
+          nextOp,
+          config.type === "number" ? toNum(lower) : String(lower),
+        );
+      }
+      setOpOpen(false);
+    },
+    [control, config.field, config.type, filter.operator, filter.value, filter.caseSensitive],
+  );
+
+  const operators = getAddFilterOperators(config.type);
+  const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
+  const valueLabel = formatFilterValue(filter, config, t, locale, label);
+
+  const segment =
+    "astw:flex astw:items-center astw:h-6 astw:px-2 astw:text-xs astw:whitespace-nowrap astw:outline-hidden";
+  const interactiveSegment = cn(
+    segment,
+    "astw:cursor-pointer astw:hover:bg-accent astw:focus-visible:bg-accent astw:data-popup-open:bg-accent",
+  );
 
   return (
-    <div data-slot="data-table-filter-chip" className="astw:flex astw:items-center astw:gap-0">
-      <Popover.Root open={open} onOpenChange={handleOpenChange}>
+    <div
+      data-slot="data-table-filter-chip"
+      // Same surface tokens as the outline "Add filter" Button. The bloom/cream
+      // themes force this slot transparent (see their transparent-chrome rules)
+      // so the chip stays visually identical to the outline button per theme.
+      className="astw:inline-flex astw:items-center astw:divide-x astw:divide-border astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-background astw:shadow-xs astw:dark:border-input astw:dark:bg-input/30"
+    >
+      {/* Field segment (icon arrives in Stage 2) */}
+      <span className={cn(segment, "astw:font-medium astw:text-foreground")}>{label}</span>
+
+      {/* Operator segment — searchable dropdown when more than one operator */}
+      {operators.length > 1 ? (
+        <Popover.Root open={opOpen} onOpenChange={setOpOpen}>
+          <Popover.Trigger
+            render={
+              <button
+                type="button"
+                className={cn(interactiveSegment, "astw:text-muted-foreground")}
+              >
+                {operatorLabel}
+              </button>
+            }
+          />
+          <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+            <Popover.Positioner sideOffset={4} side="bottom" align="start">
+              <Popover.Popup
+                data-slot="data-table-filter-operator-popup"
+                className={cn(
+                  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-56 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+                  "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
+                )}
+              >
+                <OperatorList
+                  operators={operators}
+                  current={filter.operator}
+                  type={config.type}
+                  onSelect={handleOperatorSelect}
+                />
+              </Popover.Popup>
+            </Popover.Positioner>
+          </Popover.Portal>
+        </Popover.Root>
+      ) : (
+        <span className={cn(segment, "astw:text-muted-foreground")}>{operatorLabel}</span>
+      )}
+
+      {/* Value segment — opens the value editor (operator hidden; it lives above) */}
+      <Popover.Root open={valOpen} onOpenChange={setValOpen}>
         <Popover.Trigger
           render={
-            <Button
-              variant="outline"
-              size="xs"
-              className="astw:rounded-r-none astw:border-r-0 astw:pr-1.5"
+            <button
+              type="button"
+              className={cn(interactiveSegment, "astw:gap-1 astw:font-medium astw:text-foreground")}
             >
-              {chipLabel}
+              {valueLabel ? (
+                // Cap long values (e.g. a uuid or a long "contains" string) so the
+                // chip stays a reasonable width instead of stretching the toolbar.
+                <span className="astw:max-w-[12rem] astw:truncate">{valueLabel}</span>
+              ) : (
+                <span className="astw:text-muted-foreground">…</span>
+              )}
               <ChevronDown className="astw:size-3 astw:text-muted-foreground" />
-            </Button>
+            </button>
           }
         />
-        {/* See AddFilterPopover — stacking context so the popup clears the
-            sticky table header. */}
+        {/* Stacking context on the portal so the popup clears the sticky table header. */}
         <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
           <Popover.Positioner sideOffset={4} side="bottom" align="start">
             <Popover.Popup
@@ -633,21 +1152,93 @@ function FilterChip({
                 column={column}
                 filter={filter}
                 control={control}
-                onClose={handleClose}
+                onClose={() => setValOpen(false)}
+                hideOperator
               />
             </Popover.Popup>
           </Popover.Positioner>
         </Popover.Portal>
       </Popover.Root>
-      <Button
-        variant="outline"
-        size="xs"
-        className="astw:rounded-l-none astw:px-1"
+
+      {/* Remove segment */}
+      <button
+        type="button"
+        className={cn(
+          interactiveSegment,
+          "astw:px-1.5 astw:text-muted-foreground astw:hover:text-foreground",
+        )}
         onClick={handleRemove}
         aria-label={t("removeFilter")}
       >
         <X className="astw:size-3" />
-      </Button>
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
+// OperatorList — searchable operator picker shown in the chip's operator segment
+// =============================================================================
+
+function OperatorList({
+  operators,
+  current,
+  type,
+  onSelect,
+}: {
+  operators: FilterOperator[];
+  current: FilterOperator;
+  type: FilterConfig["type"];
+  onSelect: (op: FilterOperator) => void;
+}) {
+  const t = useDataTableT();
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => ref.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const q = query.trim().toLowerCase();
+  const items = operators
+    .map((op) => ({ op, label: getOperatorLabel(op, t, type) }))
+    .filter(({ label }) => label.toLowerCase().includes(q));
+
+  return (
+    <div className="astw:flex astw:flex-col">
+      <div className="astw:flex astw:items-center astw:gap-2 astw:border-b astw:border-border astw:px-2.5">
+        <Search className="astw:size-3.5 astw:text-muted-foreground" />
+        <input
+          ref={ref}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("filterOperatorSearchPlaceholder")}
+          className="astw:h-9 astw:w-full astw:bg-transparent astw:text-sm astw:outline-hidden astw:placeholder:text-muted-foreground"
+        />
+      </div>
+      <div className="astw:p-1">
+        {items.map(({ op, label }) => (
+          <button
+            key={op}
+            type="button"
+            onClick={() => onSelect(op)}
+            className={cn(
+              "astw:flex astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-left astw:text-sm astw:outline-hidden",
+              "astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus-visible:bg-accent",
+              op === current && "astw:bg-accent/60",
+            )}
+          >
+            {label}
+            {op === current && <Check className="astw:size-3.5" />}
+          </button>
+        ))}
+        {items.length === 0 && (
+          <output className="astw:block astw:px-2 astw:py-1.5 astw:text-sm astw:text-muted-foreground">
+            {t("filterOperatorNoResults")}
+          </output>
+        )}
+      </div>
     </div>
   );
 }
@@ -661,11 +1252,18 @@ function FilterPopoverContent({
   filter,
   control,
   onClose,
+  hideOperator = false,
 }: {
   column: Column<Record<string, unknown>> & { filter: FilterConfig };
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
+  /**
+   * Hide the in-editor operator selector. Used by the segmented FilterChip,
+   * where the operator lives in its own chip segment; the editor commits with
+   * the filter's current operator.
+   */
+  hideOperator?: boolean;
 }) {
   const config = column.filter;
   const label = column.label ?? config.field;
@@ -675,11 +1273,23 @@ function FilterPopoverContent({
       return <EnumFilterEditor config={config} filter={filter} control={control} />;
     case "boolean":
       return (
-        <BooleanFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+        <BooleanFilterEditor
+          config={config}
+          filter={filter}
+          control={control}
+          onClose={onClose}
+          hideOperator={hideOperator}
+        />
       );
     case "string":
       return (
-        <StringFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+        <StringFilterEditor
+          config={config}
+          filter={filter}
+          control={control}
+          onClose={onClose}
+          hideOperator={hideOperator}
+        />
       );
     case "uuid":
       return (
@@ -687,7 +1297,13 @@ function FilterPopoverContent({
       );
     case "number":
       return (
-        <NumericFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
+        <NumericFilterEditor
+          config={config}
+          filter={filter}
+          control={control}
+          onClose={onClose}
+          hideOperator={hideOperator}
+        />
       );
     case "datetime":
     case "date":
@@ -699,9 +1315,45 @@ function FilterPopoverContent({
           filter={filter}
           control={control}
           onClose={onClose}
+          hideOperator={hideOperator}
         />
       );
   }
+}
+
+/**
+ * Multi-select option list for enum filters. Rendered identically in the
+ * add-filter panel and the chip's value editor so the checkbox style is
+ * consistent in both places.
+ */
+function EnumOptionList({
+  options,
+  selected,
+  onToggle,
+}: {
+  options: readonly SelectOption[];
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div data-slot="data-table-filter-enum" className="astw:p-1">
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className={cn(
+            "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm",
+            "astw:hover:bg-accent astw:hover:text-accent-foreground",
+          )}
+        >
+          <Checkbox
+            checked={selected.includes(option.value)}
+            onCheckedChange={() => onToggle(option.value)}
+          />
+          {option.label}
+        </label>
+      ))}
+    </div>
+  );
 }
 
 // =============================================================================
@@ -741,34 +1393,7 @@ function EnumFilterEditor({
   );
 
   return (
-    <div data-slot="data-table-filter-enum" className="astw:py-1">
-      {config.options.map((option) => {
-        const isChecked = selectedValues.includes(option.value);
-        return (
-          <label
-            key={option.value}
-            className={cn(
-              "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:px-3 astw:py-1.5 astw:text-sm",
-              "astw:hover:bg-accent astw:hover:text-accent-foreground",
-            )}
-          >
-            <Checkbox.Root
-              checked={isChecked}
-              onCheckedChange={() => handleToggle(option.value)}
-              className={cn(
-                "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-              )}
-            >
-              <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                <Check className="astw:size-3" />
-              </Checkbox.Indicator>
-            </Checkbox.Root>
-            {option.label}
-          </label>
-        );
-      })}
-    </div>
+    <EnumOptionList options={config.options} selected={selectedValues} onToggle={handleToggle} />
   );
 }
 
@@ -784,11 +1409,13 @@ function BooleanFilterEditor({
   filter,
   control,
   onClose,
+  hideOperator = false,
 }: {
   config: Extract<FilterConfig, { type: "boolean" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
+  hideOperator?: boolean;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<BooleanOperator>(
@@ -810,15 +1437,17 @@ function BooleanFilterEditor({
       data-slot="data-table-filter-boolean"
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
-      <Select
-        items={[...BOOLEAN_OPERATORS]}
-        value={localOp}
-        onValueChange={(v) => {
-          if (v) setLocalOp(v as BooleanOperator);
-        }}
-        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t) })}
-        className="astw:h-8 astw:text-sm"
-      />
+      {!hideOperator && (
+        <Select
+          items={[...BOOLEAN_OPERATORS]}
+          value={localOp}
+          onValueChange={(v) => {
+            if (v) setLocalOp(v as BooleanOperator);
+          }}
+          mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t) })}
+          className="astw:h-8 astw:text-sm"
+        />
+      )}
       <Select
         items={["true", "false"]}
         value={localValue}
@@ -847,11 +1476,13 @@ function StringFilterEditor({
   filter,
   control,
   onClose,
+  hideOperator = false,
 }: {
   config: Extract<FilterConfig, { type: "string" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
+  hideOperator?: boolean;
 }) {
   const t = useDataTableT();
   const [localOp, setLocalOp] = useState<StringOperator>(
@@ -878,35 +1509,33 @@ function StringFilterEditor({
       data-slot="data-table-filter-string"
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
-      <Select
-        items={[...STRING_OPERATORS]}
-        value={localOp}
-        onValueChange={(v) => {
-          if (v) setLocalOp(v);
-        }}
-        mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
-        className="astw:h-8 astw:text-sm"
-      />
+      {!hideOperator && (
+        <Select
+          items={[...STRING_OPERATORS]}
+          value={localOp}
+          onValueChange={(v) => {
+            if (v) setLocalOp(v);
+          }}
+          mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
+          className="astw:h-8 astw:text-sm"
+        />
+      )}
       <Input
         value={localValue}
+        placeholder={t("filterValuePlaceholder", { field: config.field })}
         onChange={(e) => setLocalValue(e.target.value)}
         onKeyDown={(e) => {
+          e.stopPropagation();
           if (e.key === "Enter") handleCommit();
         }}
         className="astw:h-8 astw:text-sm"
       />
-      <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
-        <Checkbox.Root
-          checked={localCaseSensitive}
-          onCheckedChange={setLocalCaseSensitive}
-          className="astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input data-[checked]:astw:border-primary data-[checked]:astw:bg-primary data-[checked]:astw:text-primary-foreground"
-        >
-          <Checkbox.Indicator className="astw:flex astw:items-center astw:justify-center">
-            <Check className="astw:size-3" />
-          </Checkbox.Indicator>
-        </Checkbox.Root>
-        {t("filterCaseSensitive")}
-      </label>
+      <Checkbox
+        label={t("filterCaseSensitive")}
+        checked={localCaseSensitive}
+        onCheckedChange={setLocalCaseSensitive}
+        className="astw:gap-1.5"
+      />
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
@@ -945,8 +1574,10 @@ function UuidFilterEditor({
     <div data-slot="data-table-filter-uuid" className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
       <Input
         value={localValue}
+        placeholder={t("filterValuePlaceholder", { field: config.field })}
         onChange={(e) => setLocalValue(e.target.value)}
         onKeyDown={(e) => {
+          e.stopPropagation();
           if (e.key === "Enter") handleCommit();
         }}
         className="astw:h-8 astw:text-sm"
@@ -967,11 +1598,13 @@ function NumericFilterEditor({
   filter,
   control,
   onClose,
+  hideOperator = false,
 }: {
   config: Extract<FilterConfig, { type: "number" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
+  hideOperator?: boolean;
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
@@ -1000,7 +1633,11 @@ function NumericFilterEditor({
       const maxEmpty = localValueMax.trim() === "";
       if (minEmpty && maxEmpty) return true; // will removeFilter
       if (minEmpty || maxEmpty) return false; // both required
-      return !Number.isNaN(Number(localValue)) && !Number.isNaN(Number(localValueMax));
+      return (
+        !Number.isNaN(Number(localValue)) &&
+        !Number.isNaN(Number(localValueMax)) &&
+        isRangeOrdered("number", localValue, localValueMax)
+      );
     }
     return localValue.trim() === "" || !Number.isNaN(Number(localValue));
   })();
@@ -1014,7 +1651,7 @@ function NumericFilterEditor({
       } else if (!minEmpty && !maxEmpty) {
         const min = Number(localValue);
         const max = Number(localValueMax);
-        if (!Number.isNaN(min) && !Number.isNaN(max)) {
+        if (!Number.isNaN(min) && !Number.isNaN(max) && min <= max) {
           control.addFilter(config.field, localOp, { min, max });
         } else {
           return;
@@ -1038,15 +1675,17 @@ function NumericFilterEditor({
       data-slot="data-table-filter-number"
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
-      <Select
-        items={[...operatorItems]}
-        value={localOp}
-        onValueChange={(v) => {
-          if (v) setLocalOp(v);
-        }}
-        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
-        className="astw:h-8 astw:text-sm"
-      />
+      {!hideOperator && (
+        <Select
+          items={[...operatorItems]}
+          value={localOp}
+          onValueChange={(v) => {
+            if (v) setLocalOp(v);
+          }}
+          mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
+          className="astw:h-8 astw:text-sm"
+        />
+      )}
       {localOp === "between" ? (
         <BetweenInputGroup
           labels={[t("filterBetweenMin"), t("filterBetweenMax")]}
@@ -1055,13 +1694,23 @@ function NumericFilterEditor({
           onChangeMax={setLocalValueMax}
           onSubmit={handleCommit}
           inputProps={{ type: "number" }}
+          error={betweenOrderError(
+            "number",
+            localValue,
+            localValueMax,
+            t("filterBetweenMin"),
+            t("filterBetweenMax"),
+            t,
+          )}
         />
       ) : (
         <Input
           type="number"
           value={localValue}
+          placeholder={t("filterValuePlaceholder", { field: config.field })}
           onChange={(e) => setLocalValue(e.target.value)}
           onKeyDown={(e) => {
+            e.stopPropagation();
             if (e.key === "Enter") handleCommit();
           }}
           className="astw:h-8 astw:text-sm"
@@ -1084,6 +1733,7 @@ function TemporalFilterEditor({
   filter,
   control,
   onClose,
+  hideOperator = false,
 }: {
   config: Extract<FilterConfig, { type: "datetime" | "date" | "time" }>;
   /** The column's visible label — used for the date picker's accessible name. */
@@ -1091,6 +1741,7 @@ function TemporalFilterEditor({
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
+  hideOperator?: boolean;
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
@@ -1121,7 +1772,8 @@ function TemporalFilterEditor({
       if (minEmpty || maxEmpty) return false; // both required
       return (
         isTemporalFilterValueValid(config.type, localValue) &&
-        isTemporalFilterValueValid(config.type, localValueMax)
+        isTemporalFilterValueValid(config.type, localValueMax) &&
+        isRangeOrdered(config.type, localValue, localValueMax)
       );
     }
     return localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
@@ -1137,6 +1789,7 @@ function TemporalFilterEditor({
         const minValid = isTemporalFilterValueValid(config.type, localValue);
         const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
         if (!minValid || !maxValid) return;
+        if (!isRangeOrdered(config.type, localValue, localValueMax)) return;
         control.addFilter(config.field, localOp, {
           min: localValue,
           max: localValueMax,
@@ -1157,49 +1810,68 @@ function TemporalFilterEditor({
   }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
   const isDate = config.type === "date";
+  const isDateTime = config.type === "datetime";
+  // date + datetime pickers share the same { ariaLabel, value, onChange } shape.
+  const Picker = isDateTime ? DateTimeFilterInput : DateFilterPicker;
+  const betweenError =
+    localOp === "between"
+      ? betweenOrderError(
+          config.type,
+          localValue,
+          localValueMax,
+          t("filterBetweenFrom"),
+          t("filterBetweenTo"),
+          t,
+        )
+      : undefined;
   let valueInput: ReactNode;
   if (localOp === "between") {
-    valueInput = isDate ? (
-      <div className="astw:flex astw:flex-col astw:gap-1.5">
-        <DateFilterPicker
-          ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
-          value={localValue}
-          onChange={setLocalValue}
+    valueInput =
+      isDate || isDateTime ? (
+        <div className="astw:flex astw:flex-col astw:gap-1.5">
+          <Picker
+            ariaLabel={`${label} — ${t("filterBetweenFrom")}`}
+            value={localValue}
+            onChange={setLocalValue}
+          />
+          <Picker
+            ariaLabel={`${label} — ${t("filterBetweenTo")}`}
+            value={localValueMax}
+            onChange={setLocalValueMax}
+          />
+          {betweenError && <p className="astw:text-destructive astw:text-xs">{betweenError}</p>}
+        </div>
+      ) : (
+        <BetweenInputGroup
+          labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
+          values={[localValue, localValueMax]}
+          onChangeMin={setLocalValue}
+          onChangeMax={setLocalValueMax}
+          onSubmit={handleCommit}
+          inputProps={getTemporalInputProps(config.type)}
+          error={betweenError}
         />
-        <DateFilterPicker
-          ariaLabel={`${label} — ${t("filterBetweenTo")}`}
-          value={localValueMax}
-          onChange={setLocalValueMax}
-        />
-      </div>
-    ) : (
-      <BetweenInputGroup
-        labels={[t("filterBetweenFrom"), t("filterBetweenTo")]}
-        values={[localValue, localValueMax]}
-        onChangeMin={setLocalValue}
-        onChangeMax={setLocalValueMax}
-        onSubmit={handleCommit}
-        inputProps={getTemporalInputProps(config.type)}
-      />
-    );
+      );
   } else {
-    valueInput = isDate ? (
-      <DateFilterPicker ariaLabel={label} value={localValue} onChange={setLocalValue} />
-    ) : (
-      <Input
-        {...getTemporalInputProps(config.type)}
-        value={localValue}
-        onChange={(e) => {
-          setLocalValue(e.target.value);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleCommit();
-          }
-        }}
-        className="astw:h-8 astw:text-sm"
-      />
-    );
+    valueInput =
+      isDate || isDateTime ? (
+        <Picker ariaLabel={label} value={localValue} onChange={setLocalValue} />
+      ) : (
+        <Input
+          {...getTemporalInputProps(config.type)}
+          value={localValue}
+          onChange={(e) => {
+            setLocalValue(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") {
+              handleCommit();
+            }
+          }}
+          className="astw:h-8 astw:text-sm"
+        />
+      );
   }
 
   return (
@@ -1207,15 +1879,17 @@ function TemporalFilterEditor({
       data-slot={`data-table-filter-${config.type}`}
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
-      <Select
-        items={[...operatorItems]}
-        value={localOp}
-        onValueChange={(v) => {
-          if (v) setLocalOp(v);
-        }}
-        mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
-        className="astw:h-8 astw:text-sm"
-      />
+      {!hideOperator && (
+        <Select
+          items={[...operatorItems]}
+          value={localOp}
+          onValueChange={(v) => {
+            if (v) setLocalOp(v);
+          }}
+          mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
+          className="astw:h-8 astw:text-sm"
+        />
+      )}
       {valueInput}
       <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
         {t("applyFilter")}
@@ -1245,12 +1919,6 @@ function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
     case "uuid":
       return ["eq"];
   }
-}
-
-function getInitialAddFilterDraftValue(type: FilterConfig["type"]): AddFilterDraftValue {
-  if (type === "enum") return [];
-  if (type === "boolean") return "true";
-  return "";
 }
 
 function isAddFilterDraftValueValid(
@@ -1334,13 +2002,28 @@ function isTemporalFilterType(type: FilterConfig["type"]): type is "datetime" | 
   return type === "datetime" || type === "date" || type === "time";
 }
 
+/**
+ * Whether a "between" range's bounds are correctly ordered (min ≤ max). Numbers
+ * compare numerically; temporal ISO strings compare lexicographically (which
+ * matches chronological order for our `YYYY-MM-DD`, `HH:MM`, and RFC datetime
+ * formats). `min === max` is allowed — a valid single-point inclusive range.
+ * Assumes both bounds are already individually valid and non-empty.
+ */
+function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): boolean {
+  if (type === "number") return Number(min) <= Number(max);
+  if (isTemporalFilterType(type)) return min <= max;
+  return true;
+}
+
 function isTemporalFilterValueValid(type: "datetime" | "date" | "time", value: string): boolean {
   const trimmedValue = value.trim();
   if (trimmedValue === "") return false;
 
   switch (type) {
     case "datetime":
-      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
+      // The datetime editor emits a local "YYYY-MM-DDTHH:mm:ss" (no zone); a
+      // trailing Z or ±hh:mm offset is still accepted for externally-set values.
+      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
         trimmedValue,
       );
     case "date":
@@ -1433,16 +2116,52 @@ function formatDateValue(iso: string, locale: string): string {
   }
 }
 
+/**
+ * Date range for chip display: "15 Jul 2026 – 17 Jul 2026". Each bound is
+ * formatted with the same locale-aware medium date used elsewhere, joined with
+ * an en dash. (A tighter same-month collapse was avoided — partial Intl date
+ * parts render inconsistently across locales.)
+ */
+function formatDateRange(minIso: string, maxIso: string, locale: string): string {
+  return [minIso && formatDateValue(minIso, locale), maxIso && formatDateValue(maxIso, locale)]
+    .filter(Boolean)
+    .join(" – ");
+}
+
+/** Format a local "YYYY-MM-DDTHH:mm[:ss]" as a locale medium date + short time. */
+function formatDateTimeValue(iso: string, locale: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return iso;
+  const [, y, mo, d, h, min] = m;
+  try {
+    return new DateFormatter(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min)));
+  } catch {
+    return iso;
+  }
+}
+
 function formatFilterValue(
   filter: Filter,
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
   locale: string,
+  /** Column label — used to summarize multi-select enums as "N labels". */
+  label?: string,
 ): string {
   if (config.type === "enum" && Array.isArray(filter.value)) {
     const labels = filter.value
       .map((v) => config.options.find((option) => option.value === v)?.label ?? String(v))
       .filter((v) => v !== "");
+    // Summarize multiple selections as "2 Status(s)" rather than listing them.
+    if (labels.length > 1 && label) {
+      return t("filterEnumCount", { count: labels.length, noun: label });
+    }
     return labels.join(", ");
   }
 
@@ -1462,12 +2181,24 @@ function formatFilterValue(
     if (filter.operator === "between") {
       const range = filter.value as { min?: unknown; max?: unknown } | null;
       if (!range || typeof range !== "object") return "";
-      const min = range.min != null ? formatDateValue(String(range.min), locale) : "";
-      const max = range.max != null ? formatDateValue(String(range.max), locale) : "";
-      return [min, max].filter(Boolean).join(" - ");
+      const minIso = range.min != null ? String(range.min) : "";
+      const maxIso = range.max != null ? String(range.max) : "";
+      return formatDateRange(minIso, maxIso, locale);
     }
     if (filter.value == null || filter.value === "") return "";
     return formatDateValue(String(filter.value), locale);
+  }
+
+  if (config.type === "datetime") {
+    if (filter.operator === "between") {
+      const range = filter.value as { min?: unknown; max?: unknown } | null;
+      if (!range || typeof range !== "object") return "";
+      const min = range.min != null ? formatDateTimeValue(String(range.min), locale) : "";
+      const max = range.max != null ? formatDateTimeValue(String(range.max), locale) : "";
+      return [min, max].filter(Boolean).join(" – ");
+    }
+    if (filter.value == null || filter.value === "") return "";
+    return formatDateTimeValue(String(filter.value), locale);
   }
 
   if (isTemporalFilterType(config.type) && filter.operator === "between") {
@@ -1484,36 +2215,6 @@ function formatFilterValue(
 
   if (filter.value == null || filter.value === "") return "";
   return String(filter.value);
-}
-
-function getChipDisplayLabel(
-  columnLabel: string,
-  filter: Filter,
-  config: FilterConfig,
-  t: ReturnType<typeof useDataTableT>,
-  locale: string,
-): string {
-  const valueLabel = formatFilterValue(filter, config, t, locale);
-  if (!valueLabel) return columnLabel;
-
-  const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
-  const ciSuffix = filter.caseSensitive ? " (Aa)" : "";
-
-  if (config.type === "enum") {
-    return t("filterChipLabelEnum", {
-      column: columnLabel,
-      operator: operatorLabel,
-      value: valueLabel,
-    });
-  }
-
-  return (
-    t("filterChipLabel", {
-      column: columnLabel,
-      operator: operatorLabel,
-      value: valueLabel,
-    }) + ciSuffix
-  );
 }
 
 export { DataTableToolbar, DataTableFilters };

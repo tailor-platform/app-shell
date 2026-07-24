@@ -193,12 +193,22 @@ const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
 
 Combine `Autocomplete.useAsync` with `Autocomplete.Parts` for full control over layout and rendering:
 
+`Autocomplete.useAsync` accepts the same options as `Autocomplete.Async` (including `onFetchError`) and returns:
+
+| Property  | Type         | Description                                             |
+| --------- | ------------ | ------------------------------------------------------- |
+| `items`   | `T[]`        | Currently loaded items                                  |
+| `loading` | `boolean`    | Whether a fetch is in progress                          |
+| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
+| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+
 ```tsx
 const suggestions = Autocomplete.useAsync({
   fetcher: async (query, { signal }) => {
     const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
     return res.json();
   },
+  onFetchError: (error) => reportError(error),
 });
 
 <Autocomplete.Parts.Root {...suggestions} filter={null}>
@@ -214,7 +224,13 @@ const suggestions = Autocomplete.useAsync({
         </Autocomplete.Parts.Item>
       ))}
       <Autocomplete.Parts.Empty>
-        {suggestions.loading ? "Loading..." : "No results."}
+        {suggestions.error ? (
+          <button onClick={suggestions.retry}>Couldn't load. Retry</button>
+        ) : suggestions.loading ? (
+          "Loading..."
+        ) : (
+          "No results."
+        )}
       </Autocomplete.Parts.Empty>
     </Autocomplete.Parts.List>
   </Autocomplete.Parts.Content>

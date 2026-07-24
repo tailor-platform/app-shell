@@ -644,6 +644,14 @@ const table = useDataTable({
 **API:** `InputProps` — extends native `<input>` props.
 **Used in patterns:** all `form/*`.
 
+### `Checkbox`
+
+**Import:** `import { Checkbox } from '@tailor-platform/app-shell'`
+**Purpose:** Boolean form control. Maps to spec field type: `boolean`. Also used for row selection and filter toggles.
+**API:** `CheckboxProps` — extends Base UI `Checkbox.Root` (`checked`/`defaultChecked`, `onCheckedChange`, `indeterminate`, `disabled`, `required`, `name`, `inputRef`) and adds an inline `label`. Integrates with `Field` for invalid/disabled/label state exactly like `Input`/`Select` — no bespoke `error` prop.
+**Accessible name:** the inline `label` prop (enclosing) or a sibling `Field.Label`; for a bare box (e.g. a table row-select cell) pass `aria-label`.
+**Used in patterns:** `form/*` (boolean fields), `list/*` (row selection), DataTable filter/column controls.
+
 ### `Select`
 
 **Import:** `import { Select } from '@tailor-platform/app-shell'`

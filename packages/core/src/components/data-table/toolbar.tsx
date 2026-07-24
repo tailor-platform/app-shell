@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { Checkbox } from "@base-ui/react/checkbox";
 import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { Checkbox } from "@/components/checkbox";
 import { Select } from "@/components/select-standalone";
 import { DatePicker } from "@/components/date-field";
 import { Calendar } from "@/components/calendar";
@@ -1336,39 +1336,6 @@ function FilterPopoverContent({
   }
 }
 
-// =============================================================================
-// Shared filter checkbox controls — one blue (primary) checkbox style reused
-// everywhere in the filter UI (enum lists in both the add-filter panel and the
-// chip value editor, plus the case-sensitive toggle) so they stay consistent.
-// =============================================================================
-
-/** The single checkbox visual used across all filter surfaces. */
-function FilterCheckbox({
-  checked,
-  onCheckedChange,
-  className,
-}: {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  className?: string;
-}) {
-  return (
-    <Checkbox.Root
-      checked={checked}
-      onCheckedChange={onCheckedChange}
-      className={cn(
-        "astw:flex astw:size-4 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-sm astw:border astw:border-input",
-        "astw:data-checked:border-primary astw:data-checked:bg-primary astw:data-checked:text-primary-foreground",
-        className,
-      )}
-    >
-      <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-        <Check className="astw:size-3" />
-      </Checkbox.Indicator>
-    </Checkbox.Root>
-  );
-}
-
 /**
  * Multi-select option list for enum filters. Rendered identically in the
  * add-filter panel and the chip's value editor so the checkbox style is
@@ -1393,7 +1360,7 @@ function EnumOptionList({
             "astw:hover:bg-accent astw:hover:text-accent-foreground",
           )}
         >
-          <FilterCheckbox
+          <Checkbox
             checked={selected.includes(option.value)}
             onCheckedChange={() => onToggle(option.value)}
           />
@@ -1578,10 +1545,12 @@ function StringFilterEditor({
         }}
         className="astw:h-8 astw:text-sm"
       />
-      <label className="astw:flex astw:items-center astw:gap-1.5 astw:text-sm">
-        <FilterCheckbox checked={localCaseSensitive} onCheckedChange={setLocalCaseSensitive} />
-        {t("filterCaseSensitive")}
-      </label>
+      <Checkbox
+        label={t("filterCaseSensitive")}
+        checked={localCaseSensitive}
+        onCheckedChange={setLocalCaseSensitive}
+        className="astw:gap-1.5"
+      />
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>

@@ -96,6 +96,20 @@ describe("Checkbox", () => {
     expect(checkbox.hasAttribute("data-disabled")).toBe(true);
   });
 
+  it("dims the bare box itself when disabled", () => {
+    render(<Checkbox aria-label="Accept" disabled />);
+    expect(screen.getByRole("checkbox").className).toContain("data-disabled:opacity-50");
+  });
+
+  it("does not double-dim the box when disabled with a label (the wrapper owns the dim)", () => {
+    render(<Checkbox label="Accept" disabled />);
+    const box = screen.getByRole("checkbox");
+    const label = box.closest("label");
+    // Opacity lives on the enclosing label only, so it doesn't compound on the box.
+    expect(box.className).not.toContain("data-disabled:opacity-50");
+    expect(label?.className).toContain("has-data-disabled:opacity-50");
+  });
+
   it("exposes the mixed state when indeterminate", () => {
     render(<Checkbox aria-label="Select all" indeterminate />);
     const checkbox = screen.getByRole("checkbox");

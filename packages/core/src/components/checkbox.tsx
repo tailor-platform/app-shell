@@ -29,7 +29,7 @@ const checkboxBoxClasses = cn(
   "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
   "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
   "astw:data-invalid:border-destructive astw:data-invalid:ring-destructive/20 astw:dark:data-invalid:ring-destructive/40",
-  "astw:data-disabled:cursor-not-allowed astw:data-disabled:opacity-50",
+  "astw:data-disabled:cursor-not-allowed",
 );
 
 /**
@@ -88,7 +88,14 @@ function Checkbox({ className, label, ...props }: CheckboxProps) {
   const box = (
     <BaseCheckbox.Root
       data-slot="checkbox"
-      className={cn(checkboxBoxClasses, !label && className)}
+      // When there's a label, the enclosing <label> owns the disabled dim
+      // (`has-data-disabled:opacity-50`); dimming the box too would compound the
+      // opacity. Only the bare box dims itself.
+      className={cn(
+        checkboxBoxClasses,
+        !label && "astw:data-disabled:opacity-50",
+        !label && className,
+      )}
       {...props}
     >
       <BaseCheckbox.Indicator

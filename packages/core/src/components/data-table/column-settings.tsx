@@ -185,13 +185,18 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           {meta.label.get(key)}
         </button>
         <Tooltip.Root>
-          <Tooltip.Trigger render={<span className="astw:inline-flex astw:shrink-0" />}>
-            <Checkbox
-              checked={isColumnVisible(key)}
-              onCheckedChange={() => toggleColumn(key)}
-              aria-label={meta.label.get(key)}
-            />
-          </Tooltip.Trigger>
+          {/* The checkbox itself is the trigger (props, incl. ref in React 19,
+              forward to Checkbox.Root) so hover AND keyboard focus open the
+              tooltip and its text is wired to the control via aria-describedby. */}
+          <Tooltip.Trigger
+            render={
+              <Checkbox
+                checked={isColumnVisible(key)}
+                onCheckedChange={() => toggleColumn(key)}
+                aria-label={meta.label.get(key)}
+              />
+            }
+          />
           <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
         </Tooltip.Root>
       </div>

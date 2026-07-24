@@ -1,0 +1,11 @@
+import type { AppShellPageProps } from "@tailor-platform/app-shell";
+
+import { DocPage } from "../../../_lib/DocPage";
+
+const Page = () => <DocPage slug="button" />;
+
+Page.appShellPageProps = {
+  meta: { title: "Button" },
+} satisfies AppShellPageProps;
+
+export default Page;

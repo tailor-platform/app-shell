@@ -4,6 +4,7 @@ import {
   Card,
   Button,
   Input,
+  Checkbox,
   Badge,
   Tooltip,
   Dialog,
@@ -27,6 +28,11 @@ export const primitiveComponentsDemoResource = defineResource({
   },
   component: () => {
     const [inputValue, setInputValue] = React.useState("");
+    const [subscribed, setSubscribed] = React.useState(true);
+    const [optionA, setOptionA] = React.useState(true);
+    const [optionB, setOptionB] = React.useState(false);
+    const allOptionsChecked = optionA && optionB;
+    const someOptionsChecked = (optionA || optionB) && !allOptionsChecked;
     const [showToolbar, setShowToolbar] = React.useState(true);
     const [showSidebar, setShowSidebar] = React.useState(false);
     const [sortOrder, setSortOrder] = React.useState("date");
@@ -88,6 +94,43 @@ export const primitiveComponentsDemoResource = defineResource({
                 />
                 <Input style={{ maxWidth: "240px" }} type="email" placeholder="Email" />
                 <Input style={{ maxWidth: "240px" }} disabled placeholder="Disabled" />
+              </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Checkbox */}
+          <Card.Root>
+            <Card.Header title="Checkbox" />
+            <Card.Content>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <Checkbox
+                  label="Subscribe to updates"
+                  checked={subscribed}
+                  onCheckedChange={setSubscribed}
+                />
+                <Checkbox label="Disabled option" disabled />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <Checkbox
+                    label="Select all"
+                    checked={allOptionsChecked}
+                    indeterminate={someOptionsChecked}
+                    onCheckedChange={(checked) => {
+                      setOptionA(checked);
+                      setOptionB(checked);
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                      paddingLeft: "1.5rem",
+                    }}
+                  >
+                    <Checkbox label="Option A" checked={optionA} onCheckedChange={setOptionA} />
+                    <Checkbox label="Option B" checked={optionB} onCheckedChange={setOptionB} />
+                  </div>
+                </div>
               </div>
             </Card.Content>
           </Card.Root>

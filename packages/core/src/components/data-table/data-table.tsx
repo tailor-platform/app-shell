@@ -10,12 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { Ellipsis } from "lucide-react";
-import { Checkbox } from "@base-ui/react/checkbox";
-import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
+import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
 import type { Column, HeaderRenderContext, RowAction, UseDataTableReturn } from "./types";
@@ -247,9 +246,9 @@ function pinCellProps(
         // border already paints over the cell background.
         "astw:bg-card astw:before:pointer-events-none astw:before:absolute astw:before:inset-x-0 astw:before:bottom-0 astw:before:h-px astw:before:bg-border astw:before:content-['']"
       : cn(
-          "astw:bg-card",
-          // Exact opaque equivalent of the row's `bg-muted/50` hover so pinned
-          // cells match the rest of the row; theme-aware via the tokens.
+          "astw:bg-card astw:transition-colors",
+          // Match the row's hover/selected fade timing; without the cell-level
+          // transition, sticky pinned cells snap while the rest of the row fades.
           "astw:group-hover:[background-color:color-mix(in_srgb,var(--muted)_50%,var(--card))]",
           "astw:group-aria-selected:bg-muted",
         ),
@@ -535,7 +534,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             );
             return (
               <Table.Head data-col-key={SELECTION_KEY} style={style} className={className}>
-                <Checkbox.Root
+                <Checkbox
                   checked={isAllSelected}
                   indeterminate={isIndeterminate}
                   onCheckedChange={(checked) => {
@@ -546,20 +545,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                     }
                   }}
                   aria-label={t("selectAll")}
-                  className={cn(
-                    "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                    "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                    "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
-                  )}
-                >
-                  <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                    {isIndeterminate ? (
-                      <Minus className="astw:size-3" />
-                    ) : (
-                      <Check className="astw:size-3" />
-                    )}
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
               </Table.Head>
             );
           })()}
@@ -800,19 +786,11 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     className={className}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Checkbox.Root
+                    <Checkbox
                       checked={selected}
                       onCheckedChange={() => toggleRowSelection(row)}
                       aria-label={t("selectRow")}
-                      className={cn(
-                        "astw:flex astw:size-4 astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input",
-                        "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
-                      )}
-                    >
-                      <Checkbox.Indicator className="astw:flex astw:data-unchecked:hidden">
-                        <Check className="astw:size-3" />
-                      </Checkbox.Indicator>
-                    </Checkbox.Root>
+                    />
                   </Table.Cell>
                 );
               })()}

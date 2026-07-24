@@ -19,4 +19,4 @@ column({
 });
 ```
 
-Function headers receive a typed `HeaderRenderContext`: non-sortable columns only get `{ label, sortable: false }`, while sortable columns also get `sortDirection` and `activateSort()`. When you provide a function header, that renderer owns the sort click surface via `ctx.activateSort()`.
+Plain `ReactNode` headers keep the built-in sortable header renderer. Function headers receive a typed `HeaderRenderContext`: non-sortable columns only get `{ label, sortable: false }`, while sortable columns also get `sortDirection` and `activateSort()`. When you provide a function header, that renderer owns the sort click surface and sort UI via `ctx.activateSort()`.

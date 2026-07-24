@@ -161,6 +161,44 @@ describe("DataTable", () => {
       expect(screen.queryByText("Name")).toBeNull();
     });
 
+    it("keeps built-in sort behavior for sortable ReactNode headers", () => {
+      const control = makeControl();
+
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: [
+            {
+              label: "Name",
+              sort: { field: "name", type: "string" },
+              header: (
+                <>
+                  <span>Customer</span>
+                  <span aria-hidden>*</span>
+                </>
+              ),
+              render: (row) => row.name,
+            },
+          ],
+          data: testData,
+          control,
+        });
+
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      render(<Harness />, { wrapper });
+
+      fireEvent.click(screen.getByRole("button", { name: "Customer" }));
+
+      expect(control.clearSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledWith("name", "Asc");
+    });
+
     it("passes non-sortable context when sort config exists but sorting is inactive", () => {
       let seenSortable: boolean | undefined;
       const columns: Column<TestRow>[] = [

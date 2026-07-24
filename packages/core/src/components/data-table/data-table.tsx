@@ -50,6 +50,28 @@ function nextSortDirection(current: string | undefined): "Asc" | "Desc" | undefi
   return "Asc";
 }
 
+function renderDefaultHeader(
+  content: ReactNode,
+  ctx: HeaderRenderContext,
+  align: "left" | "right",
+): ReactNode {
+  if (!ctx.sortable) return content;
+
+  return (
+    <button
+      type="button"
+      onClick={ctx.activateSort}
+      className={cn(
+        "astw:flex astw:w-full astw:cursor-pointer astw:select-none astw:items-center astw:gap-1 astw:border-0 astw:bg-transparent astw:p-0 astw:text-inherit astw:outline-none astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
+        align === "right" ? "astw:justify-end astw:text-right" : "astw:text-left",
+      )}
+    >
+      {content}
+      {ctx.sortDirection && <SortIndicator direction={ctx.sortDirection} />}
+    </button>
+  );
+}
+
 // =============================================================================
 // Column pinning (sticky columns)
 // =============================================================================
@@ -571,39 +593,27 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 activateSort,
               }
             : { label, sortable: false };
-          const isCustomHeader = typeof col.header === "function";
-          const content = isCustomHeader ? col.header(headerContext) : (col.header ?? label);
-          const enableDefaultHeaderClick = isSortable && !isCustomHeader;
 
           const align = resolveAlign(col);
+          const header = col.header;
+          const renderHeader =
+            typeof header === "function"
+              ? header
+              : (renderContext: HeaderRenderContext) =>
+                  renderDefaultHeader(header ?? label, renderContext, align);
+          const content = renderHeader(headerContext);
+
           const { style, className } = pinCellProps(
             placements.get(col),
             {
               style: col.width ? { width: col.width } : undefined,
-              className: cn(
-                enableDefaultHeaderClick && "astw:cursor-pointer astw:select-none",
-                align === "right" && "astw:text-right",
-              ),
+              className: cn(align === "right" && "astw:text-right"),
             },
             "header",
           );
           return (
-            <Table.Head
-              key={key}
-              data-col-key={key}
-              style={style}
-              className={className}
-              onClick={enableDefaultHeaderClick ? activateSort : undefined}
-            >
-              <span
-                className={cn(
-                  "astw:inline-flex astw:items-center astw:gap-1",
-                  align === "right" && "astw:justify-end",
-                )}
-              >
-                {content}
-                {currentSort && <SortIndicator direction={currentSort.direction} />}
-              </span>
+            <Table.Head key={key} data-col-key={key} style={style} className={className}>
+              {content}
             </Table.Head>
           );
         })}

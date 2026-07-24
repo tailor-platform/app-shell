@@ -130,9 +130,10 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /**
    * Custom header content.
    *
-   * Pass a `ReactNode` for static decoration (icons, highlighted text, etc.),
-   * or a function to react to sort state while keeping the surrounding header
-   * cell's built-in sort behavior.
+   * Pass a `ReactNode` to replace the label while keeping the built-in header
+   * renderer (including its sortable button behavior). Pass a function to
+   * fully control the header UI; sortable function headers receive
+   * `activateSort()` and own the sort click surface.
    */
   header?: ReactNode | ((ctx: HeaderRenderContext) => ReactNode);
   /**

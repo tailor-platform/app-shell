@@ -147,7 +147,7 @@ function JournalsPage() {
 | `DataTable.Root`       | Context provider. Wraps all other sub-components. Required.                                                                                                                           |
 | `DataTable.Table`      | Renders the `<table>` with headers and body. Required.                                                                                                                                |
 | `DataTable.Toolbar`    | Container for toolbar content (e.g. filters). Optional. Pass `columnSettings` to render the built-in "Columns" control (show/hide + reorder + pin) at the top-right. See props below. |
-| `DataTable.Filters`    | Auto-generated filter chips from column filter configs. Requires `control` from `useCollectionVariables`.                                                                             |
+| `DataTable.Filters`    | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                  |
 | `DataTable.Footer`     | Footer container for pagination and other footer content. Optional.                                                                                                                   |
 | `DataTable.Pagination` | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                          |
 
@@ -166,6 +166,31 @@ function JournalsPage() {
 | `children`       | `ReactNode` | —       | Toolbar content (e.g. `DataTable.Filters`), laid out on the left.                                                                                   |
 | `columnSettings` | `boolean`   | `false` | Render the built-in "Columns" control (show/hide + reorder + pin) anchored to the top-right. Persists per-user when `useDataTable` has a `tableId`. |
 | `className`      | `string`    | —       | Additional CSS class for the toolbar container.                                                                                                     |
+
+### `DataTable.Filters` Props
+
+| Prop          | Type                        | Default | Description                                                                                    |
+| ------------- | --------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `slot`        | `"all" \| "chips" \| "add"` | `"all"` | Which part to render (see below).                                                              |
+| `addIconOnly` | `boolean`                   | `false` | Render the **Add filter** trigger as an icon-only button (the label becomes its `aria-label`). |
+| `className`   | `string`                    | —       | Additional CSS class for the filters container.                                                |
+
+By default `DataTable.Filters` renders the active filter chips plus the **Add filter** trigger together. The `slot` prop lets you split them across a custom toolbar layout:
+
+- `"all"` — chips + the **Add filter** trigger (default).
+- `"chips"` — only the active chips (renders nothing when there are none).
+- `"add"` — only the **Add filter** trigger.
+
+```tsx
+// Add filter in a header row (with tabs, etc.); chips on the row below.
+<DataTable.Toolbar>
+  <div className="flex items-center justify-between">
+    <MyViewTabs />
+    <DataTable.Filters slot="add" />
+  </div>
+  <DataTable.Filters slot="chips" />
+</DataTable.Toolbar>
+```
 
 ### `DataTable.Pagination` Props
 
@@ -506,7 +531,7 @@ When you spread `...infer("field")`, add `accessor` when you want a typed render
 
 ## `FilterConfig`
 
-The `filter` property on a column accepts a `FilterConfig` object. When set, the column appears as an option in `DataTable.Filters` and the filter chip renders an input editor appropriate for the type.
+The `filter` property on a column accepts a `FilterConfig` object. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
 
 | Property  | Type             | Description                                                  |
 | --------- | ---------------- | ------------------------------------------------------------ |
@@ -514,24 +539,31 @@ The `filter` property on a column accepts a `FilterConfig` object. When set, the
 | `type`    | `FilterType`     | Filter editor type (see table below).                        |
 | `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values. |
 
+### Adding and editing filters
+
+`DataTable.Filters` renders active filters as segmented chips followed by an **Add filter** button:
+
+- **Add filter panel** — a single popover laid out in up to three columns: **field ▸ condition ▸ value**. The condition column appears for fields with more than one operator (number, date/time, string); single-operator fields (enum, uuid) go straight to the value. Enter a value and click **Apply**; the panel stays open so several filters can be added in a row.
+- **Segmented chip** — each active filter shows `field │ operator │ value │ ✕`. The operator segment opens a searchable dropdown to change the condition; the value segment reopens the type-specific editor; `✕` removes the filter. Multi-select enum values are summarized as "N items" (e.g. "2 statuses").
+
 ### Filter Types and Operators
 
-| Type       | Input editor   | Supported operators                                                                                          |
-| ---------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
-| `string`   | Text           | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
-| `number`   | Number         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `datetime` | Datetime-local | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
-| `time`     | Time           | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `enum`     | Dropdown       | `eq`, `ne`, `in`, `nin`                                                                                      |
-| `boolean`  | Toggle         | `eq`, `ne`                                                                                                   |
-| `uuid`     | Text           | `eq`, `ne`, `in`, `nin`                                                                                      |
+| Type       | Input editor              | Supported operators                                                                                          |
+| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `string`   | Text                      | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
+| `number`   | Number                    | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | Datetime-local            | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **Calendar / DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `time`     | Time                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `enum`     | Dropdown                  | `eq`, `ne`, `in`, `nin`                                                                                      |
+| `boolean`  | Toggle                    | `eq`, `ne`                                                                                                   |
+| `uuid`     | Text                      | `eq`, `ne`, `in`, `nin`                                                                                      |
 
-When the user selects the `between` operator on a `number`, `datetime`, `date`, or `time` column, the filter chip renders a range input with **min** and **max** bounds.
+When the `between` operator is selected on a `number`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
 
 ### Date Filters
 
-`date` columns use the app-shell [`DatePicker`](./date-picker.md) as the filter input (single value and `between` ranges) and present a friendlier, slimmer operator set:
+`date` columns render app-shell date components as the value editor: single-value operators (`eq` / `gte` / `lte`) use an inline `Calendar`, and the `between` range uses two [`DatePicker`](./date-picker.md) **From** / **To** fields. (The range fields are a stopgap — they'll be replaced with a single range calendar once date-range support lands in the date-picker component.) `date` columns also present a friendlier, slimmer operator set:
 
 | Operator  | Label        | Meaning                    |
 | --------- | ------------ | -------------------------- |

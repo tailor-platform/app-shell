@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
@@ -44,21 +44,85 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
 function TestFilters({
   control,
   columns,
+  slot,
+  addIconOnly,
 }: {
   control: CollectionControl;
   columns: Column<TestRow>[];
+  slot?: "all" | "chips" | "add";
+  addIconOnly?: boolean;
 }) {
   const table = useDataTable<TestRow>({ columns, data: { rows: [] }, control });
   return (
     <DataTable.Root value={table}>
       <DataTable.Toolbar>
-        <DataTable.Filters />
+        <DataTable.Filters slot={slot} addIconOnly={addIconOnly} />
       </DataTable.Toolbar>
     </DataTable.Root>
   );
 }
 
 const wrapper = createAppShellWrapper("en");
+
+// ---------------------------------------------------------------------------
+// Filter chip segment helpers
+// ---------------------------------------------------------------------------
+// The redesigned filter chip (`data-slot="data-table-filter-chip"`) is a
+// segmented control. Its buttons are, in order, [operator?, value, remove]:
+//   - field  → a plain <span> (never a button)
+//   - operator → a <button> when the field has >1 operator, otherwise a <span>
+//   - value  → always a <button>; clicking it opens the value-editor popover
+//   - remove → a <button> with aria-label "Remove filter"
+// The value segment is therefore always the *second-to-last* button, regardless
+// of whether the operator segment is a button — a stable way to open the value
+// editor without depending on the (type-specific, now value-only) button name.
+
+function valueSegmentButton(chipIndex = 0): HTMLButtonElement {
+  const chip = document.querySelectorAll('[data-slot="data-table-filter-chip"]')[chipIndex];
+  if (!chip) throw new Error("No filter chip rendered");
+  const buttons = chip.querySelectorAll("button");
+  return buttons[buttons.length - 2] as HTMLButtonElement;
+}
+
+async function openValueEditor(user: ReturnType<typeof userEvent.setup>, chipIndex = 0) {
+  await user.click(valueSegmentButton(chipIndex));
+}
+
+// ---------------------------------------------------------------------------
+// Date filter (DatePicker) helpers
+// ---------------------------------------------------------------------------
+// `date` filters render the app-shell DatePicker — a labelled group of
+// `spinbutton` segments — instead of a native date input. These helpers drive
+// it via the segments, re-querying by index so they survive controlled
+// re-renders.
+
+const datePickerGroup = (index: number) => screen.getAllByRole("group")[index];
+
+async function typeDateInto(
+  user: ReturnType<typeof userEvent.setup>,
+  groupIndex: number,
+  iso: string,
+) {
+  const [year, month, day] = iso.split("-");
+  const seg = (name: string) =>
+    within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name });
+  await user.click(seg("month"));
+  await user.keyboard(month);
+  await user.click(seg("day"));
+  await user.keyboard(day);
+  await user.click(seg("year"));
+  await user.keyboard(year);
+}
+
+async function clearDateIn(user: ReturnType<typeof userEvent.setup>, groupIndex: number) {
+  // Clear every segment. Leaving the day set would trigger the field's on-blur
+  // backfill (assume current month/year), so a genuine "cleared" state must
+  // remove the day too — the day is the trigger for that backfill.
+  for (const name of ["day", "month", "year"]) {
+    await user.click(within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name }));
+    await user.keyboard("{Delete}");
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Column fixtures
@@ -128,42 +192,6 @@ const booleanColumn: Column<TestRow> = {
 };
 
 // ---------------------------------------------------------------------------
-// Date filter (DatePicker) helpers
-// ---------------------------------------------------------------------------
-// `date` filters render the app-shell DatePicker — a labelled group of
-// `spinbutton` segments — instead of a native date input. These helpers drive
-// it via the segments, re-querying by index so they survive controlled
-// re-renders.
-
-const datePickerGroup = (index: number) => screen.getAllByRole("group")[index];
-
-async function typeDateInto(
-  user: ReturnType<typeof userEvent.setup>,
-  groupIndex: number,
-  iso: string,
-) {
-  const [year, month, day] = iso.split("-");
-  const seg = (name: string) =>
-    within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name });
-  await user.click(seg("month"));
-  await user.keyboard(month);
-  await user.click(seg("day"));
-  await user.keyboard(day);
-  await user.click(seg("year"));
-  await user.keyboard(year);
-}
-
-async function clearDateIn(user: ReturnType<typeof userEvent.setup>, groupIndex: number) {
-  // Clear every segment. Leaving the day set would trigger the field's on-blur
-  // backfill (assume current month/year), so a genuine "cleared" state must
-  // remove the day too — the day is the trigger for that backfill.
-  for (const name of ["day", "month", "year"]) {
-    await user.click(within(datePickerGroup(groupIndex)).getByRole("spinbutton", { name }));
-    await user.keyboard("{Delete}");
-  }
-}
-
-// ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
 // ---------------------------------------------------------------------------
 
@@ -176,7 +204,7 @@ describe("DataTable.Filters", () => {
     expect(container.querySelector('[data-slot="data-table-filter-chip"]')).toBeNull();
   });
 
-  it("renders a filter chip for each active filter", () => {
+  it("renders a segmented filter chip (field / operator / value) for each active filter", () => {
     const control = makeControl({
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
     });
@@ -184,7 +212,11 @@ describe("DataTable.Filters", () => {
       wrapper,
     });
     expect(container.querySelector('[data-slot="data-table-filter-chip"]')).not.toBeNull();
-    expect(screen.getByText(/Name contains Alice/)).toBeDefined();
+    // The chip is segmented: the field, operator, and value each render in their
+    // own element rather than a single combined label.
+    expect(screen.getByText("Name")).toBeDefined();
+    expect(screen.getByText("contains")).toBeDefined();
+    expect(screen.getByText("Alice")).toBeDefined();
   });
 
   it("renders the add filter button when there are unfiltered filterable columns", () => {
@@ -195,14 +227,17 @@ describe("DataTable.Filters", () => {
     expect(screen.getByText("Add filter")).toBeDefined();
   });
 
-  it("does not render the add filter button when all filterable columns are active", () => {
+  it("still renders the add filter button when all filterable columns are active", () => {
+    // The add-filter trigger is always available now (it re-opens the editor for
+    // active fields too), so it must remain present even when every filterable
+    // column already has a chip.
     const control = makeControl({
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
     });
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,
     });
-    expect(screen.queryByText("Add filter")).toBeNull();
+    expect(screen.getByText("Add filter")).toBeDefined();
   });
 
   it("returns null when there are no filterable columns", () => {
@@ -217,6 +252,142 @@ describe("DataTable.Filters", () => {
       { wrapper },
     );
     expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();
+  });
+
+  it("slot='add' renders only the Add filter trigger (no chips)", () => {
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} slot="add" />, { wrapper });
+    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(document.querySelector('[data-slot="data-table-filter-chip"]')).toBeNull();
+  });
+
+  it("slot='chips' renders only active chips (no Add filter trigger)", () => {
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} slot="chips" />, { wrapper });
+    expect(document.querySelector('[data-slot="data-table-filter-chip"]')).not.toBeNull();
+    expect(screen.queryByText("Add filter")).toBeNull();
+  });
+
+  it("slot='chips' renders nothing when there are no active filters", () => {
+    const control = makeControl({ filters: [] });
+    const { container } = render(
+      <TestFilters control={control} columns={[stringColumn]} slot="chips" />,
+      { wrapper },
+    );
+    expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();
+  });
+
+  it("addIconOnly renders an icon-only trigger (label kept as aria-label)", () => {
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn]} slot="add" addIconOnly />, {
+      wrapper,
+    });
+    // Reachable by its accessible name, but the label text is not rendered.
+    const trigger = screen.getByRole("button", { name: "Add filter" });
+    expect(trigger.textContent).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AddFilterPanel — the add-filter trigger opens a 3-column panel
+// ---------------------------------------------------------------------------
+
+describe("AddFilterPanel", () => {
+  it("opens a panel listing every filterable field", async () => {
+    // The add-filter surface is a single popover with three columns
+    // (field ▸ condition ▸ value); the first column lists each filterable field
+    // as a button.
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(await screen.findByRole("button", { name: /^Name$/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
+  });
+
+  it("selecting a field shows the value editor with an Apply button", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Count$/ }));
+
+    // Amount/Count is numeric → condition column + a value input + Apply.
+    expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
+  });
+
+  it("seeds an already-filtered field's operator/value so the panel preserves them", async () => {
+    // Re-opening the panel on a field that already has a non-default filter
+    // (here a number "between") must keep that operator and value rather than
+    // resetting to the type default — otherwise applying would silently overwrite.
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "count", operator: "between", value: { min: 5, max: 10 } }],
+    });
+    render(<TestFilters control={control} columns={[numberColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // The commit button reads "Update" (not "Add"/"Apply") for an active field.
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("count", "between", { min: 5, max: 10 });
+  });
+
+  it("preserves case-sensitivity when re-applying a string filter from the panel", async () => {
+    // The panel has no case-sensitive toggle; re-applying must carry the active
+    // filter's caseSensitive flag through rather than clearing it.
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice", caseSensitive: true }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseSensitive: true,
+    });
+  });
+
+  it("disables the commit button when the between range is reversed (min > max)", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[numberColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // Choose "is between", then enter a reversed range.
+    await user.click(await screen.findByRole("button", { name: /is between/i }));
+    await user.type(screen.getByRole("spinbutton", { name: "Min" }), "10");
+    await user.type(screen.getByRole("spinbutton", { name: "Max" }), "5");
+
+    const commit = screen.getByRole("button", { name: /^(Apply|Update)$/ });
+    expect((commit as HTMLButtonElement).disabled).toBe(true);
+    // ...and an inline error explains why.
+    expect(screen.getByText(/must be greater than or equal to/i)).toBeDefined();
+  });
+
+  it("renders a native time input for a single-value time filter", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[timeColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // `time` defaults to a single-value operator → native time input (not a
+    // plain text box).
+    const input = await screen.findByLabelText("Opens At");
+    expect(input.getAttribute("type")).toBe("time");
   });
 });
 
@@ -245,7 +416,7 @@ describe("FilterChip", () => {
 // ---------------------------------------------------------------------------
 
 describe("StringFilterEditor", () => {
-  it("shows an Apply button after opening the chip popover", async () => {
+  it("shows an Apply button after opening the chip value popover", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
@@ -254,7 +425,7 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -268,13 +439,15 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("textbox");
     await user.clear(input);
     await user.type(input, "Bob");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
+    // The operator comes from the chip's own operator segment (the editor is
+    // rendered with hideOperator), so it stays "contains".
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
       caseSensitive: false,
     });
@@ -289,7 +462,7 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("textbox");
     await user.clear(input);
@@ -310,7 +483,7 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("textbox");
     await user.clear(input);
@@ -328,7 +501,7 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     expect(await screen.findByText("Case sensitive")).toBeDefined();
   });
@@ -342,7 +515,7 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     const checkbox = await screen.findByRole("checkbox");
     await user.click(checkbox);
@@ -370,7 +543,7 @@ describe("StringFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Name contains Alice/ }));
+    await openValueEditor(user);
 
     const checkbox = await screen.findByRole("checkbox");
     expect((checkbox as HTMLElement).dataset.checked).toBeDefined();
@@ -382,7 +555,7 @@ describe("StringFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("UuidFilterEditor", () => {
-  it("shows an Apply button after opening the chip popover", async () => {
+  it("shows an Apply button after opening the chip value popover", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "id", operator: "eq", value: "uuid-123" }],
@@ -391,7 +564,7 @@ describe("UuidFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /ID equals uuid-123/ }));
+    await openValueEditor(user);
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -405,7 +578,7 @@ describe("UuidFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /ID equals uuid-123/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("textbox");
     await user.clear(input);
@@ -424,7 +597,7 @@ describe("UuidFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /ID equals uuid-123/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("textbox");
     await user.clear(input);
@@ -440,7 +613,7 @@ describe("UuidFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("NumericFilterEditor", () => {
-  it("shows an Apply button after opening the chip popover", async () => {
+  it("shows an Apply button after opening the chip value popover", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "count", operator: "eq", value: 42 }],
@@ -449,7 +622,7 @@ describe("NumericFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count equals 42/ }));
+    await openValueEditor(user);
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -463,7 +636,7 @@ describe("NumericFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count equals 42/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("spinbutton");
     await user.clear(input);
@@ -482,7 +655,7 @@ describe("NumericFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count equals 42/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByRole("spinbutton");
     await user.clear(input);
@@ -498,7 +671,7 @@ describe("NumericFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("DateFilterEditor", () => {
-  it("shows an Apply button after opening the chip popover", async () => {
+  it("shows an Apply button after opening the chip value popover", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "createdAt", operator: "eq", value: "2025-01-01" }],
@@ -507,7 +680,7 @@ describe("DateFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
+    await openValueEditor(user);
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -519,7 +692,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
+    await openValueEditor(user);
 
     // The editor uses the app-shell DatePicker: a labelled group of spinbuttons.
     expect(
@@ -534,7 +707,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
+    await openValueEditor(user);
     await screen.findByRole("button", { name: "Apply" });
 
     await typeDateInto(user, 0, "2026-06-15");
@@ -550,7 +723,7 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(screen.getByRole("button", { name: /Created At exact date/ }));
+    await openValueEditor(user);
     await screen.findByRole("button", { name: "Apply" });
 
     await clearDateIn(user, 0);
@@ -559,43 +732,44 @@ describe("DateFilterEditor", () => {
     expect(control.removeFilter).toHaveBeenCalledWith("createdAt");
   });
 
-  it("labels date operators as exact date / after / before", () => {
-    const control = makeControl({
-      filters: [
-        { field: "createdAt", operator: "eq", value: "2025-01-01" },
-        { field: "createdAt", operator: "gte", value: "2025-02-01" },
-        { field: "createdAt", operator: "lte", value: "2025-03-01" },
-      ],
-    });
-    // Render each via its own chip; assert the friendly date labels appear and
-    // the numeric labels do not.
+  it("labels date operators as exact date / after / before and formats the value", () => {
+    // The chip's operator segment shows the friendly date labels, and the value
+    // segment shows a locale-formatted medium date (never the raw ISO string).
     const { rerender } = render(
       <TestFilters
-        control={makeControl({ filters: [control.filters[0]] })}
+        control={makeControl({
+          filters: [{ field: "createdAt", operator: "eq", value: "2025-01-01" }],
+        })}
         columns={[dateColumn]}
       />,
       { wrapper },
     );
-    // Operator label is friendly, and the value is locale-formatted (not raw ISO).
-    expect(screen.getByText(/Created At exact date Jan 1, 2025/)).toBeDefined();
+    expect(screen.getByText("exact date")).toBeDefined();
+    expect(screen.getByText("Jan 1, 2025")).toBeDefined();
     expect(screen.queryByText(/2025-01-01/)).toBeNull();
 
     rerender(
       <TestFilters
-        control={makeControl({ filters: [control.filters[1]] })}
+        control={makeControl({
+          filters: [{ field: "createdAt", operator: "gte", value: "2025-02-01" }],
+        })}
         columns={[dateColumn]}
       />,
     );
-    expect(screen.getByText(/Created At after Feb 1, 2025/)).toBeDefined();
-    expect(screen.queryByText(/greater than/)).toBeNull();
+    expect(screen.getByText("after")).toBeDefined();
+    expect(screen.getByText("Feb 1, 2025")).toBeDefined();
+    expect(screen.queryByText("greater than")).toBeNull();
 
     rerender(
       <TestFilters
-        control={makeControl({ filters: [control.filters[2]] })}
+        control={makeControl({
+          filters: [{ field: "createdAt", operator: "lte", value: "2025-03-01" }],
+        })}
         columns={[dateColumn]}
       />,
     );
-    expect(screen.getByText(/Created At before Mar 1, 2025/)).toBeDefined();
+    expect(screen.getByText("before")).toBeDefined();
+    expect(screen.getByText("Mar 1, 2025")).toBeDefined();
   });
 
   it("preserves a legacy operator (e.g. gt) on Apply instead of coercing to eq", async () => {
@@ -608,12 +782,15 @@ describe("DateFilterEditor", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    // The chip still renders the legacy operator's (generic) label.
-    await user.click(screen.getByRole("button", { name: /Created At greater than/ }));
-    await screen.findByRole("button", { name: "Apply" });
+    // The chip's operator segment still renders the legacy operator's (generic) label.
+    expect(screen.getByText("greater than")).toBeDefined();
 
-    // Apply without touching the operator → the operator is preserved.
+    // Open the value editor (operator hidden there) and Apply without touching
+    // anything → the operator is preserved.
+    await openValueEditor(user);
+    await screen.findByRole("button", { name: "Apply" });
     await user.click(screen.getByRole("button", { name: "Apply" }));
+
     expect(control.addFilter).toHaveBeenCalledWith("createdAt", "gt", "2025-01-01");
     expect(control.addFilter).not.toHaveBeenCalledWith("createdAt", "eq", expect.anything());
   });
@@ -624,7 +801,7 @@ describe("DateFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("TemporalFilterEditor", () => {
-  it("Apply button calls addFilter with a full RFC3339 datetime", async () => {
+  it("renders a date picker + time box for datetime (seeded, no raw ISO textbox)", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
@@ -633,25 +810,15 @@ describe("TemporalFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /Published At equals 2025-01-01T10:30:00Z/,
-      }),
-    );
+    await openValueEditor(user);
 
-    const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
-    await user.clear(input);
-    await user.type(input, "2026-06-15T08:45:30+09:00");
-    await user.click(screen.getByRole("button", { name: "Apply" }));
-
-    expect(control.addFilter).toHaveBeenCalledWith(
-      "publishedAt",
-      "eq",
-      "2026-06-15T08:45:30+09:00",
-    );
+    // Date part is a segmented picker (a group), time part a native time box
+    // seeded from the value — no free-text ISO field.
+    expect(await screen.findByRole("group")).toBeDefined();
+    expect(screen.getByDisplayValue("10:30")).toBeDefined();
   });
 
-  it("Apply button stays disabled for an invalid RFC3339 datetime", async () => {
+  it("combines the date + time box into an ISO datetime on Apply", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
@@ -660,19 +827,13 @@ describe("TemporalFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /Published At equals 2025-01-01T10:30:00Z/,
-      }),
-    );
+    await openValueEditor(user);
 
-    const input = await screen.findByDisplayValue("2025-01-01T10:30:00Z");
-    await user.clear(input);
-    await user.type(input, "2026-06-15T08:45");
+    fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
+    await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    // Date kept, time replaced, seconds defaulted → local ISO (no zone).
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "eq", "2025-01-01T08:45:00");
   });
 
   it("Apply button calls addFilter with an HH:MM time", async () => {
@@ -684,7 +845,7 @@ describe("TemporalFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Opens At equals 09:30/ }));
+    await openValueEditor(user);
 
     const input = await screen.findByDisplayValue("09:30");
     await user.clear(input);
@@ -700,6 +861,18 @@ describe("TemporalFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("EnumFilterEditor", () => {
+  it("shows the operator segment as 'is any of' and summarizes multiple selections", () => {
+    const control = makeControl({
+      filters: [{ field: "status", operator: "in", value: ["active", "inactive"] }],
+    });
+    render(<TestFilters control={control} columns={[enumColumn]} />, { wrapper });
+
+    // enum has a single operator, so it renders as plain text, not a button.
+    expect(screen.getByText("is any of")).toBeDefined();
+    // >1 option selected is summarized as "N <label>(s)".
+    expect(screen.getByText("2 Status(s)")).toBeDefined();
+  });
+
   it("toggling a checkbox calls addFilter immediately without an Apply button", async () => {
     const user = userEvent.setup();
     const control = makeControl({
@@ -709,9 +882,9 @@ describe("EnumFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Status in: Active/ }));
+    await openValueEditor(user);
 
-    // Click the "Inactive" option
+    // Click the "Inactive" option (only appears in the opened value list).
     await user.click(await screen.findByText("Inactive"));
 
     expect(control.addFilter).toHaveBeenCalledWith("status", "in", ["active", "inactive"]);
@@ -728,21 +901,24 @@ describe("EnumFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Status in: Active/ }));
+    await openValueEditor(user);
 
-    // Uncheck "Active" (the currently selected option)
-    await user.click(await screen.findByText("Active"));
+    // Wait for the value list to open, then uncheck "Active" from within it.
+    // ("Active" also appears in the chip's value segment, so scope to the list.)
+    await screen.findByText("Inactive");
+    const list = document.querySelector('[data-slot="data-table-filter-enum"]') as HTMLElement;
+    await user.click(within(list).getByText("Active"));
 
     expect(control.removeFilter).toHaveBeenCalledWith("status");
   });
 });
 
 // ---------------------------------------------------------------------------
-// BooleanFilterEditor — operator selector + value select + Apply button
+// BooleanFilterEditor — value select + Apply button (operator lives on the chip)
 // ---------------------------------------------------------------------------
 
 describe("BooleanFilterEditor", () => {
-  it("shows an Apply button after opening the chip popover", async () => {
+  it("shows an Apply button after opening the chip value popover", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "enabled", operator: "eq", value: true }],
@@ -751,7 +927,11 @@ describe("BooleanFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Enabled equals True/ }));
+    // Operator segment reflects the "is" (eq) operator; value segment shows "True".
+    expect(screen.getByText("is")).toBeDefined();
+    expect(screen.getByText("True")).toBeDefined();
+
+    await openValueEditor(user);
 
     expect(await screen.findByRole("button", { name: "Apply" })).toBeDefined();
   });
@@ -765,7 +945,7 @@ describe("BooleanFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Enabled equals True/ }));
+    await openValueEditor(user);
     await screen.findByRole("button", { name: "Apply" });
 
     expect(control.addFilter).not.toHaveBeenCalled();
@@ -780,7 +960,7 @@ describe("BooleanFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Enabled equals True/ }));
+    await openValueEditor(user);
     await user.click(await screen.findByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("enabled", "eq", true);
@@ -795,7 +975,7 @@ describe("BooleanFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Enabled equals False/ }));
+    await openValueEditor(user);
     await user.click(await screen.findByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("enabled", "eq", false);
@@ -810,7 +990,11 @@ describe("BooleanFilterEditor", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Enabled not equals True/ }));
+    // Operator segment reflects "is not" (ne); the hidden editor operator is
+    // seeded from the filter's operator, so Apply preserves ne.
+    expect(screen.getByText("is not")).toBeDefined();
+
+    await openValueEditor(user);
     await user.click(await screen.findByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("enabled", "ne", true);
@@ -822,7 +1006,7 @@ describe("BooleanFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("NumericFilterEditor (between)", () => {
-  it("shows two number inputs when filter operator is between", async () => {
+  it("shows the between value summary and two number inputs when operator is between", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [{ field: "count", operator: "between", value: { min: 10, max: 50 } }],
@@ -831,7 +1015,11 @@ describe("NumericFilterEditor (between)", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count between 10 - 50/ }));
+    // Chip: operator segment "is between", value segment "10 - 50".
+    expect(screen.getByText("is between")).toBeDefined();
+    expect(screen.getByText("10 - 50")).toBeDefined();
+
+    await openValueEditor(user);
 
     const inputs = await screen.findAllByRole("spinbutton");
     expect(inputs.length).toBe(2);
@@ -848,7 +1036,7 @@ describe("NumericFilterEditor (between)", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count between 10 - 50/ }));
+    await openValueEditor(user);
 
     const inputs = await screen.findAllByRole("spinbutton");
     await user.clear(inputs[0]);
@@ -872,13 +1060,14 @@ describe("NumericFilterEditor (between)", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count between 10/ }));
+    await openValueEditor(user);
 
     const inputs = await screen.findAllByRole("spinbutton");
     // min should already be "10", max should be empty
     expect((inputs[0] as HTMLInputElement).value).toBe("10");
     expect((inputs[1] as HTMLInputElement).value).toBe("");
 
+    // A half-filled range is invalid, so Apply is disabled and commits nothing.
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).not.toHaveBeenCalled();
@@ -893,7 +1082,7 @@ describe("NumericFilterEditor (between)", () => {
       wrapper,
     });
 
-    await user.click(screen.getByRole("button", { name: /Count between 10 - 50/ }));
+    await openValueEditor(user);
 
     const inputs = await screen.findAllByRole("spinbutton");
     await user.clear(inputs[0]);
@@ -909,7 +1098,7 @@ describe("NumericFilterEditor (between)", () => {
 // ---------------------------------------------------------------------------
 
 describe("TemporalFilterEditor (between)", () => {
-  it("shows two date pickers when filter operator is between", async () => {
+  it("shows a date range value (en dash, medium dates) and two date pickers", async () => {
     const user = userEvent.setup();
     const control = makeControl({
       filters: [
@@ -922,11 +1111,14 @@ describe("TemporalFilterEditor (between)", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /Created At between/,
-      }),
-    );
+    // The value segment renders "<min> – <max>" using medium dates (en dash).
+    expect(
+      screen.getByText(
+        (content) => content.includes("Jan 1, 2025") && content.includes("Dec 31, 2025"),
+      ),
+    ).toBeDefined();
+
+    await openValueEditor(user);
 
     await screen.findByRole("button", { name: "Apply" });
     expect(screen.getAllByRole("group")).toHaveLength(2);
@@ -945,11 +1137,7 @@ describe("TemporalFilterEditor (between)", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /Created At between/,
-      }),
-    );
+    await openValueEditor(user);
     await screen.findByRole("button", { name: "Apply" });
 
     await typeDateInto(user, 0, "2026-03-01");
@@ -975,11 +1163,7 @@ describe("TemporalFilterEditor (between)", () => {
     });
     render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /Created At between/,
-      }),
-    );
+    await openValueEditor(user);
     await screen.findByRole("button", { name: "Apply" });
 
     await clearDateIn(user, 0);

@@ -73,6 +73,7 @@ Given one discussion URL: run preflight, resolve the component from `--component
 
 - Re-derive state every run; never rely on a previous run's memory.
 - Read a discussion's comments before proposing a comment — comment presence is the truth for "already done".
+- **Never write a bare `#NNN`** — digest, chat replies, issue/PR bodies, commit messages, anywhere. Three repos share the number space, and a bare ref resolves against whichever repo the reader is in (reconcile.md → Referring to discussions and tickets).
 - **Resolve identifiers, never infer them.** Node ids by `number`; forward links by discussion reference, not marker text; ticket links from the query's own `url` field. Two production misfires came from inferring an identifier that looked right (reconcile.md → _Forward-linked?_ and → Resolving node IDs). Verify every mutation's returned URL before calling it done.
 - Approval is required for everything a customer sees (comments, tickets, `LABEL`/`status:` labels) plus milestone writes; only `pf-triaged` and forward-link backfill are auto.
 - Flag-only states (de-scope, wontfix, regression, version-ambiguous, low-confidence, duplicates, multi-candidate) are listed, never acted on.

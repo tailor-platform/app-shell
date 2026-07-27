@@ -28,6 +28,33 @@ The values in **`UPPER_CASE`** below come from the **active component file**
 > [../../pf-feedback-triage/references/project-routing.md](../../pf-feedback-triage/references/project-routing.md);
 > prefer the discovered values — they change if a field is recreated.
 
+## Referring to discussions and tickets
+
+This applies to **every surface**: the digest, chat replies to the operator,
+issue and PR bodies, commit messages — anywhere a number is written down.
+
+**Never write a bare `#NNN`.** Three repos are in play at once, each with its
+own number namespace, and a bare `#NNN` silently resolves against whatever repo
+the _reader_ is in — the terminal's working repo, or the repo hosting the
+comment. The same number usually exists in all three as unrelated things:
+knowledge discussion 350 (a DataTable.Toolbar request) versus app-shell PR 350
+(DataTable internal scrolling) is a real collision that has caused confusion.
+
+Always use a full markdown link to the correct host:
+
+| Thing                    | Link                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| Discussion               | `https://github.com/tailor-professional-service/knowledge/discussions/{number}` |
+| Ticket                   | `https://github.com/tailor-inc/platform-planning/issues/{number}`               |
+| Component repo PR/commit | the component's own `release_repo` — label it as such                           |
+
+Prefer the `url` field the queries already return over building links by hand.
+When writing prose, qualify the number too ("knowledge discussion 350", "pp#1261")
+so it stays unambiguous even as plain text. The one exception is **inside a
+comment posted to a discussion or ticket**, where GitHub's own autolinking makes
+`owner/repo#N` correct and a bare `#N` correct only for the hosting repo — use
+the `owner/repo#N` form there.
+
 ## Loading the active component
 
 - `--component <name>` → load `references/components/<name>.md`. `--all` → load
@@ -496,8 +523,9 @@ The digest is **action-oriented**: only items that need attention appear. In-syn
 discussions are collapsed to a single count, never listed individually. When
 `--all`, render one section per component.
 
-**Link formatting (always):** make every reference a clickable markdown link to
-the correct host — never plain `#NNN`.
+**Link formatting (always):** see
+[Referring to discussions and tickets](#referring-to-discussions-and-tickets) —
+the rule is global, not digest-only. Never plain `#NNN`.
 
 - Discussion → `https://github.com/tailor-professional-service/knowledge/discussions/{number}`
 - Ticket → `https://github.com/tailor-inc/platform-planning/issues/{number}`

@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `header` to DataTable columns so consumers can customize header content with icons, styled text, and sort-aware UI.
+Add `header` to DataTable columns so consumers can fully customize header UI while keeping the built-in header behavior when `header` is omitted.
 
 ```tsx
 column({
@@ -19,4 +19,4 @@ column({
 });
 ```
 
-Plain `ReactNode` headers keep the built-in sortable header renderer. Function headers receive a typed `HeaderRenderContext`: non-sortable columns only get `{ label, sortable: false }`, while sortable columns also get `sortDirection` and `activateSort()`. When you provide a function header, that renderer owns the sort click surface and sort UI via `ctx.activateSort()`.
+`header` is a typed render function. Non-sortable columns receive `{ label, sortable: false }`; sortable columns also receive `sortDirection` and `activateSort()`. Custom headers own their click surface and sort indicator, while the default header keeps the built-in sort button and hit area.

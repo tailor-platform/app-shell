@@ -144,7 +144,7 @@ describe("DataTable", () => {
       const columns: Column<TestRow>[] = [
         {
           label: "Name",
-          header: (
+          header: () => (
             <>
               <span>Customer</span>
               <span aria-hidden>*</span>
@@ -161,7 +161,7 @@ describe("DataTable", () => {
       expect(screen.queryByText("Name")).toBeNull();
     });
 
-    it("keeps built-in sort behavior for sortable ReactNode headers", () => {
+    it("keeps built-in sort behavior and hit area when header is omitted", () => {
       const control = makeControl();
 
       function Harness() {
@@ -170,12 +170,6 @@ describe("DataTable", () => {
             {
               label: "Name",
               sort: { field: "name", type: "string" },
-              header: (
-                <>
-                  <span>Customer</span>
-                  <span aria-hidden>*</span>
-                </>
-              ),
               render: (row) => row.name,
             },
           ],
@@ -192,7 +186,12 @@ describe("DataTable", () => {
 
       render(<Harness />, { wrapper });
 
-      fireEvent.click(screen.getByRole("button", { name: "Customer" }));
+      const button = screen.getByRole("button", { name: "Name" });
+      expect(button.className).toContain("astw:h-10");
+      expect(button.className).toContain("astw:-mx-2");
+      expect(button.className).toContain("astw:px-2");
+
+      fireEvent.click(button);
 
       expect(control.clearSort).toHaveBeenCalledTimes(1);
       expect(control.setSort).toHaveBeenCalledTimes(1);

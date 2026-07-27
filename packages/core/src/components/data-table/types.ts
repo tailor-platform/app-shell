@@ -128,14 +128,15 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   render?: (row: TRow) => ReactNode;
   /**
-   * Custom header content.
+   * Custom header renderer.
    *
-   * Pass a `ReactNode` to replace the label while keeping the built-in header
-   * renderer (including its sortable button behavior). Pass a function to
-   * fully control the header UI; sortable function headers receive
-   * `activateSort()` and own the sort click surface.
+   * When omitted, the built-in header renders `label` and, for sortable
+   * columns, owns the sort button and indicator. When provided, the return
+   * value replaces the built-in header entirely. Sortable custom headers
+   * receive `sortDirection` and `activateSort()` and must render their own
+   * click surface and sort indicator.
    */
-  header?: ReactNode | ((ctx: HeaderRenderContext) => ReactNode);
+  header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is

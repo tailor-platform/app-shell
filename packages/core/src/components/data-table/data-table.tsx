@@ -54,6 +54,7 @@ function renderDefaultHeader(
   content: ReactNode,
   ctx: HeaderRenderContext,
   align: "left" | "right",
+  edges?: { bleedLeft?: boolean; bleedRight?: boolean },
 ): ReactNode {
   if (!ctx.sortable) return content;
 
@@ -62,7 +63,9 @@ function renderDefaultHeader(
       type="button"
       onClick={ctx.activateSort}
       className={cn(
-        "astw:flex astw:w-full astw:cursor-pointer astw:select-none astw:items-center astw:gap-1 astw:border-0 astw:bg-transparent astw:p-0 astw:text-inherit astw:outline-none astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
+        "astw:flex astw:h-10 astw:w-full astw:cursor-pointer astw:select-none astw:items-center astw:gap-1 astw:border-0 astw:bg-transparent astw:-mx-2 astw:p-0 astw:px-2 astw:text-inherit astw:outline-none astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
+        edges?.bleedLeft && "astw:-ml-6 astw:pl-6",
+        edges?.bleedRight && "astw:-mr-6 astw:pr-6",
         align === "right" ? "astw:justify-end astw:text-right" : "astw:text-left",
       )}
     >
@@ -571,7 +574,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               </Table.Head>
             );
           })()}
-        {ordered?.map((col) => {
+        {ordered?.map((col, index) => {
           const key = keys.get(col) as string;
           const label = col.label;
           const sortField = col.sort?.field;
@@ -595,13 +598,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             : { label, sortable: false };
 
           const align = resolveAlign(col);
-          const header = col.header;
-          const renderHeader =
-            typeof header === "function"
-              ? header
-              : (renderContext: HeaderRenderContext) =>
-                  renderDefaultHeader(header ?? label, renderContext, align);
-          const content = renderHeader(headerContext);
+          const content = col.header
+            ? col.header(headerContext)
+            : renderDefaultHeader(label, headerContext, align, {
+                bleedLeft: !hasSelection && index === 0,
+                bleedRight: !hasRowActions && index === ordered.length - 1,
+              });
 
           const { style, className } = pinCellProps(
             placements.get(col),

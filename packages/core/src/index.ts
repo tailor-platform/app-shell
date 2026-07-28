@@ -230,6 +230,7 @@ export {
   type DataTableRootProps,
   type Column,
   type DataTableData,
+  type HeaderRenderContext,
   type RowAction,
   type UseDataTableOptions,
   type UseDataTableReturn,

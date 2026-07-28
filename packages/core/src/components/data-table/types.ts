@@ -84,12 +84,38 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
 }
 
 /**
+ * Header render context for non-sortable columns.
+ */
+interface NonSortableHeaderRenderContext {
+  label?: string;
+  sortable: false;
+}
+
+/**
+ * Header render context for sortable columns.
+ */
+interface SortableHeaderRenderContext {
+  label?: string;
+  sortable: true;
+  sortDirection: "Asc" | "Desc" | undefined;
+  activateSort: () => void;
+}
+
+/**
+ * Context passed to custom `header` renderers.
+ */
+export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
+
+/**
  * Fields shared by every `Column` regardless of `type`. Prefer `Column<TRow>`
  * in most cases; this is exported so consumers can compose more specific
  * column types (e.g. `type MoneyColumn<TRow> = ColumnBase<TRow> & { type: "money"; … }`).
  */
 export interface ColumnBase<TRow extends Record<string, unknown>> {
-  /** Column header text. Omit for action or icon-only columns. */
+  /**
+   * Column header text. Used as the default header content and passed to
+   * custom `header` renderers.
+   */
   label?: string;
   /**
    * Renders the cell content for a given row. Optional — when omitted, the
@@ -101,6 +127,16 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * across spread-then-override patterns like `column({ ...inferred, render })`.
    */
   render?: (row: TRow) => ReactNode;
+  /**
+   * Custom header renderer.
+   *
+   * When omitted, the built-in header renders `label` and, for sortable
+   * columns, owns the sort button and indicator. When provided, the return
+   * value replaces the built-in header entirely. Sortable custom headers
+   * receive `sortDirection` and `activateSort()` and must render their own
+   * click surface and sort indicator.
+   */
+  header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is

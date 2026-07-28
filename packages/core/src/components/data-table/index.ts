@@ -15,6 +15,7 @@ export type {
   ColumnBase,
   ColumnCellType,
   ColumnTypeBranch,
+  HeaderRenderContext,
   DataTableData,
   DateCellOptions,
   LinkCellOptions,

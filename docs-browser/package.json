@@ -1,5 +1,5 @@
 {
-  "name": "@tailor-platform/app-shell-docs-app",
+  "name": "@tailor-platform/app-shell-docs-browser",
   "private": true,
   "description": "Docs explorer — renders the generated docs/ (markdown + live examples) in place. Dogfoods app-shell. SKELETON: see TODOs before shipping.",
   "type": "module",

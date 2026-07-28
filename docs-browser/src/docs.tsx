@@ -1,12 +1,12 @@
 import type { ComponentType } from "react";
 
-import manifestJson from "../../../docs/docs-manifest.json";
+import manifestJson from "../../docs/docs-manifest.json";
 
 // Glob the generated docs IN PLACE (repo-root docs/, outside this app). Vite
 // resolves these at build time; in dev they are served straight from source.
 // NOTE: import.meta.glob's options must be an inline object literal — Vite
 // parses them statically, so a shared const is rejected.
-const markdown = import.meta.glob("../../../docs/**/*.md", {
+const markdown = import.meta.glob("../../docs/**/*.md", {
   query: "?raw",
   import: "default",
   eager: true,
@@ -14,11 +14,11 @@ const markdown = import.meta.glob("../../../docs/**/*.md", {
 // Examples are authored SOURCE, colocated with each outline in src/ (not in the
 // generated docs/ output), so glob the two source trees.
 const exampleSource = import.meta.glob(
-  ["../../../packages/core/src/**/*.docs.examples.tsx", "../../../docs-src/**/*.docs.examples.tsx"],
+  ["../../packages/core/src/**/*.docs.examples.tsx", "../../docs-src/**/*.docs.examples.tsx"],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 const exampleModule = import.meta.glob(
-  ["../../../packages/core/src/**/*.docs.examples.tsx", "../../../docs-src/**/*.docs.examples.tsx"],
+  ["../../packages/core/src/**/*.docs.examples.tsx", "../../docs-src/**/*.docs.examples.tsx"],
   { eager: true },
 ) as Record<string, Record<string, unknown>>;
 
@@ -44,7 +44,7 @@ export interface DocUnit {
   examples: Example[];
 }
 
-const key = (repoRel: string): string => `../../../${repoRel}`;
+const key = (repoRel: string): string => `../../${repoRel}`;
 
 /** Strip the generated frontmatter block and HTML comments before rendering —
  * react-markdown would otherwise show them as literal text. */

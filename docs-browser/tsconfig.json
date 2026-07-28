@@ -26,7 +26,7 @@
   "include": [
     "src",
     "vite.config.ts",
-    "../../packages/core/src/**/*.docs.examples.tsx",
-    "../../docs-src/**/*.docs.examples.tsx"
+    "../packages/core/src/**/*.docs.examples.tsx",
+    "../docs-src/**/*.docs.examples.tsx"
   ]
 }

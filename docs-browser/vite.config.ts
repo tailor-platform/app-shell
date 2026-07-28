@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
-const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const appRoot = fileURLToPath(new URL(".", import.meta.url));
 // The authored examples (`*.docs.examples.tsx`) live in src/ (outside this app),
 // so their bare imports don't resolve against this app's node_modules. Resolve

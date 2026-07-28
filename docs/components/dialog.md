@@ -7,8 +7,6 @@ description: Modal dialog with a compound component API
 
 # Dialog
 
-# Dialog
-
 The `Dialog` component provides a modal dialog with a compound component API. It is backed by Base UI's Dialog primitive.
 
 ## Import
@@ -18,6 +16,8 @@ import { Dialog } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
+
+<example-preview name="basic-usage"></example-preview>
 
 ```tsx
 function BasicUsage() {
@@ -73,6 +73,8 @@ Accepts `className` and all standard HTML `<div>` props.
 Accept a `render` prop for custom element rendering (Base UI render pattern), plus standard button props.
 
 ## Controlled Usage
+
+<example-preview name="controlled"></example-preview>
 
 ```tsx
 function Controlled() {

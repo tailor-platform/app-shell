@@ -7,8 +7,6 @@ description: High-density scannable list backed by GraphQL connections with Data
 
 # Dense Scan List
 
-# pattern/list/dense-scan
-
 ## When to Use
 
 - Browsing many records of one entity type (orders, POs, products, invoices) with GraphQL pagination
@@ -20,6 +18,8 @@ description: High-density scannable list backed by GraphQL connections with Data
 Columns are defined with `createColumnHelper` (see the example below) — each column has a `label` and an `accessor`, or a custom `render` for cells like status badges.
 
 ## Page Implementation
+
+<example-preview name="dense-scan"></example-preview>
 
 ```tsx
 function DenseScan() {

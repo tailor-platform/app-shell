@@ -15,6 +15,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-markdown": "^9.0.1",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "tailwindcss": "catalog:"
   },

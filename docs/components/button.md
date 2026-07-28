@@ -7,8 +7,6 @@ description: Styled button with multiple variants and sizes
 
 # Button
 
-# Button
-
 The `Button` component is a styled button with multiple visual variants and sizes. It supports rendering as a custom element via the `render` prop (Base UI render pattern).
 
 ## Import
@@ -18,6 +16,8 @@ import { Button } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
+
+<example-preview name="basic-usage"></example-preview>
 
 ```tsx
 function BasicUsage() {
@@ -45,6 +45,8 @@ All standard HTML `<button>` props are also accepted.
 
 ## Variants
 
+<example-preview name="variants"></example-preview>
+
 ```tsx
 function Variants() {
   return (
@@ -61,6 +63,8 @@ function Variants() {
 ```
 
 ## Sizes
+
+<example-preview name="sizes"></example-preview>
 
 ```tsx
 function Sizes() {

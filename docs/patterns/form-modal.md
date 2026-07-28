@@ -7,8 +7,6 @@ description: Default form pattern for Create/Edit — keeps user in context on t
 
 # Modal Form
 
-# pattern/form/modal
-
 ## When to Use
 
 - Default for most Create and Edit forms — keeps user in context on parent screen
@@ -17,6 +15,8 @@ description: Default form pattern for Create/Edit — keeps user in context on t
 - Any form the design hasn't explicitly called out as a full-page routed screen
 
 ## Page Implementation
+
+<example-preview name="modal-form"></example-preview>
 
 ```tsx
 function ModalForm() {

@@ -7,8 +7,6 @@ description: Compound data table component with sortable columns, filter chips, 
 
 # DataTable
 
-# DataTable
-
 `DataTable` is a compound component for displaying collections of records. It integrates with the collection variable hooks (`useCollectionVariables`) to drive sorting, filtering, and cursor-based pagination through a GraphQL API.
 
 ## Import
@@ -145,6 +143,8 @@ function JournalsPage() {
 ## Live example
 
 A self-contained `DataTable` with static rows (no GraphQL) demonstrating the same compound API:
+
+<example-preview name="basic-usage"></example-preview>
 
 ```tsx
 function BasicUsage() {

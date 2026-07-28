@@ -124,7 +124,15 @@ export function assembleMarkdown(opts: {
         `docs-kit: ${outline.examplesPath} has no exported "${name}" for example token "${key}"`,
       );
     }
-    return "```tsx\n" + stripExport(src).trim() + "\n```";
+    // Emit an anchor the docs renderer replaces with the LIVE example, in place,
+    // followed by the extracted source. The anchor is a custom element, so it is
+    // sanitized away (invisible) on GitHub and other plain markdown renderers.
+    return (
+      `<example-preview name="${key}"></example-preview>\n\n` +
+      "```tsx\n" +
+      stripExport(src).trim() +
+      "\n```"
+    );
   });
 
   const title = outline.frontmatter.title ?? titleCase(outline.slug);

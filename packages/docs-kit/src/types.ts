@@ -84,4 +84,8 @@ export interface DocsConfig {
   exclusions: string[];
   /** Repo-relative dir holding centralized test snapshots (advisory signal). */
   snapshotDir?: string;
+  /** Repo-relative dir of the docs-browser's file-based routes. When set, sync
+   * generates a per-unit `<category>/<slug>/page.tsx` route stub here so new
+   * units appear in the browser with zero manual wiring. */
+  pagesDir?: string;
 }

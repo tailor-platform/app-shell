@@ -16,5 +16,6 @@ export function loadConfig(repoRoot: string): DocsConfig {
     enforceCoverage: parsed.enforceCoverage ?? false,
     exclusions: parsed.exclusions ?? [],
     snapshotDir: parsed.snapshotDir,
+    pagesDir: parsed.pagesDir,
   };
 }

@@ -13,5 +13,6 @@
   ],
   "enforceCoverage": false,
   "exclusions": [],
-  "snapshotDir": "packages/core/__snapshots__"
+  "snapshotDir": "packages/core/__snapshots__",
+  "pagesDir": "docs-browser/src/pages"
 }

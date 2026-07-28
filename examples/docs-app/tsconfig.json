@@ -22,6 +22,11 @@
       "lucide-react": ["./node_modules/lucide-react"]
     }
   },
-  "comment": "The generated examples live at repo-root docs/ (outside this package) and are imported in place. baseUrl/paths make their bare imports resolve to this app's deps so tsc can type-check them against core — the CI 'examples compile against core' gate.",
-  "include": ["src", "vite.config.ts", "../../docs/**/*.examples.tsx"]
+  "comment": "The authored examples (*.docs.examples.tsx) live in src/ (outside this package) and are imported in place. baseUrl/paths make their bare imports resolve to this app's deps so tsc can type-check them against core — the CI 'examples compile against core' gate.",
+  "include": [
+    "src",
+    "vite.config.ts",
+    "../../packages/core/src/**/*.docs.examples.tsx",
+    "../../docs-src/**/*.docs.examples.tsx"
+  ]
 }

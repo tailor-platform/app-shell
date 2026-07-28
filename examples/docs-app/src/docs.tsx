@@ -11,14 +11,16 @@ const markdown = import.meta.glob("../../../docs/**/*.md", {
   import: "default",
   eager: true,
 }) as Record<string, string>;
-const exampleSource = import.meta.glob("../../../docs/**/*.examples.tsx", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-}) as Record<string, string>;
-const exampleModule = import.meta.glob("../../../docs/**/*.examples.tsx", {
-  eager: true,
-}) as Record<string, Record<string, unknown>>;
+// Examples are authored SOURCE, colocated with each outline in src/ (not in the
+// generated docs/ output), so glob the two source trees.
+const exampleSource = import.meta.glob(
+  ["../../../packages/core/src/**/*.docs.examples.tsx", "../../../docs-src/**/*.docs.examples.tsx"],
+  { query: "?raw", import: "default", eager: true },
+) as Record<string, string>;
+const exampleModule = import.meta.glob(
+  ["../../../packages/core/src/**/*.docs.examples.tsx", "../../../docs-src/**/*.docs.examples.tsx"],
+  { eager: true },
+) as Record<string, Record<string, unknown>>;
 
 interface ManifestEntry {
   slug: string;

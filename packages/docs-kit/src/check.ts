@@ -75,11 +75,11 @@ export function check(repoRoot: string): CheckResult {
       });
     }
 
-    if (entry.hashes.outputExamples) {
+    if (entry.hashes.examples) {
       const exAbs = join(repoRoot, outline.examplesPath);
       if (!existsSync(exAbs)) {
         findings.push({ level: "block", slug, message: `missing ${outline.examplesPath}.` });
-      } else if (hash(normalizeText(readFileSync(exAbs, "utf8"))) !== entry.hashes.outputExamples) {
+      } else if (hash(normalizeText(readFileSync(exAbs, "utf8"))) !== entry.hashes.examples) {
         findings.push({
           level: "block",
           slug,

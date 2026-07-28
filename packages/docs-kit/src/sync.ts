@@ -88,7 +88,7 @@ export function sync(repoRoot: string): SyncResult {
             ? snapshotHashForSlug(repoRoot, config, outline.slug)
             : null,
         outputMd: hash(normalizeText(readFileSync(mdAbs, "utf8"))),
-        outputExamples: hasExamples ? hash(normalizeText(readFileSync(examplesAbs, "utf8"))) : null,
+        examples: hasExamples ? hash(normalizeText(readFileSync(examplesAbs, "utf8"))) : null,
       },
     };
   }

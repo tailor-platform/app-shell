@@ -8,20 +8,18 @@ import { defineConfig, type Plugin } from "vite";
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 const appRoot = fileURLToPath(new URL(".", import.meta.url));
-const docsDir = resolve(repoRoot, "docs");
-
-// The generated examples live at repo-root docs/ (outside this app), so their
-// bare imports don't resolve against this app's node_modules. Resolve them as
-// if imported from this app — SCOPED to docs/ importers so it never touches
-// App.tsx, whose `@tailor-platform/app-shell` import the routing plugin
-// intercepts (via `entrypoint`) to inject the file-based pages.
+// The authored examples (`*.docs.examples.tsx`) live in src/ (outside this app),
+// so their bare imports don't resolve against this app's node_modules. Resolve
+// them as if imported from this app — SCOPED to example files by suffix so it
+// never touches App.tsx, whose `@tailor-platform/app-shell` import the routing
+// plugin intercepts (via `entrypoint`) to inject the file-based pages.
 function resolveExampleDeps(): Plugin {
   const EXAMPLE_DEPS = /^(@tailor-platform\/app-shell|react|react-dom|lucide-react)(\/|$)/;
   return {
     name: "docs-app:resolve-example-deps",
     enforce: "pre",
     async resolveId(source, importer) {
-      if (!importer || !importer.startsWith(docsDir)) return null;
+      if (!importer || !importer.endsWith(".docs.examples.tsx")) return null;
       if (!EXAMPLE_DEPS.test(source)) return null;
       const resolved = await this.resolve(source, resolve(appRoot, "src/main.tsx"), {
         skipSelf: true,

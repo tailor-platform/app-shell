@@ -40,7 +40,7 @@ export interface UnitHashes {
   /** Advisory only. */
   snapshot: string | null;
   outputMd: string | null;
-  outputExamples: string | null;
+  examples: string | null;
 }
 
 export interface ManifestEntry {

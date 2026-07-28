@@ -6,7 +6,7 @@ import picomatch from "picomatch";
 
 import type { DocsConfig, Outline, OutlineFrontmatter, UnitKind } from "./types";
 
-const OUTLINE_SUFFIX = ".docs-outline.md";
+const OUTLINE_SUFFIX = ".docs.outline.md";
 
 function toPosix(p: string): string {
   return p.split("\\").join("/");
@@ -37,7 +37,8 @@ function outDirFor(outlineRel: string, config: DocsConfig): string | null {
   return null;
 }
 
-/** Discover and parse every `*.docs-outline.md` under the configured roots. */
+/** Discover and parse every `*.docs.outline.md` under the configured roots. Its
+ * examples live in a sibling `*.docs.examples.tsx` (both are authored SOURCE). */
 export function discoverOutlines(repoRoot: string, config: DocsConfig): Outline[] {
   const outlines: Outline[] = [];
   for (const root of config.roots) {
@@ -58,7 +59,9 @@ export function discoverOutlines(repoRoot: string, config: DocsConfig): Outline[
         body: parsed.content,
         outDir,
         mdPath: `${outDir}/${slug}.md`,
-        examplesPath: `${outDir}/${slug}.examples.tsx`,
+        // Examples are authored SOURCE, colocated with the outline (a sibling),
+        // NOT in the generated output dir. sync only ever writes to `${outDir}`.
+        examplesPath: outlineRel.replace(/\.docs\.outline\.md$/, ".docs.examples.tsx"),
       });
     }
   }

@@ -111,7 +111,12 @@ export function assembleMarkdown(opts: {
   const { repoRoot, outline, surface, owned } = opts;
   const examples = extractExamples(join(repoRoot, outline.examplesPath));
 
-  const body = outline.body.replace(EXAMPLE_TOKEN, (_match, key: string) => {
+  // The frontmatter title is the canonical H1 (prepended below). Drop a leading
+  // H1 the outline body may already carry — outlines migrated from docs/*.md
+  // start with their own `# Title` — so the output has a single header.
+  const bodyWithoutH1 = outline.body.replace(/^\s*#\s+[^\n]*\r?\n+/, "");
+
+  const body = bodyWithoutH1.replace(EXAMPLE_TOKEN, (_match, key: string) => {
     const name = pascal(key);
     const src = examples.get(name);
     if (!src) {

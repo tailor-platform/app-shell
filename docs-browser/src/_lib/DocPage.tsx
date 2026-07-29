@@ -115,7 +115,7 @@ export function DocPage({ slug }: { slug: string }) {
             <Tabs.Panel value="preview" className="p-6">
               <example.Component />
             </Tabs.Panel>
-            <Tabs.Panel value="code" className="overflow-x-auto bg-muted/40 text-sm [&>pre]:p-4">
+            <Tabs.Panel value="code" className="[&>pre]:my-0 [&>pre]:rounded-none">
               {children}
             </Tabs.Panel>
           </Tabs.Root>
@@ -139,6 +139,23 @@ export function DocPage({ slug }: { slug: string }) {
     ),
     h4: ({ node, ...props }: ComponentProps<"h4"> & { node?: unknown }) => (
       <h4 className="text-foreground mt-2 font-semibold" {...props} />
+    ),
+
+    // Code — a tidy, distinct surface + monospace (no real syntax highlighting
+    // yet). The same styles apply to standalone fences AND the Code tab; a
+    // fenced block is `pre > code`, so `pre` resets the inline `code` chip for
+    // its child. Inline `code` (in prose, tables, headings) keeps the chip.
+    pre: ({ node, ...props }: ComponentProps<"pre"> & { node?: unknown }) => (
+      <pre
+        className="bg-muted text-foreground my-4 overflow-x-auto rounded-lg p-4 font-mono text-sm [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-sm"
+        {...props}
+      />
+    ),
+    code: ({ node, className, ...props }: ComponentProps<"code"> & { node?: unknown }) => (
+      <code
+        className={`bg-muted text-foreground rounded px-1.5 py-0.5 font-mono text-[0.85em] ${className ?? ""}`}
+        {...props}
+      />
     ),
 
     // Dogfood the AppShell Table for every markdown table — remark-gfm emits

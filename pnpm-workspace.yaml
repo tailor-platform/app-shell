@@ -46,6 +46,8 @@ minimumReleaseAge: 4320
 # specific one.
 minimumReleaseAgeExclude:
   - "@tailor-platform/auth-public-client"
+  # Renovate security update: postcss@8.5.18
+  - postcss@8.5.18
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.

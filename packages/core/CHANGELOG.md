@@ -1,5 +1,89 @@
 # @tailor-platform/app-shell
 
+## 1.10.0
+
+### Minor Changes
+
+- 73d0c0a: Add a built-in error state to `Combobox.Async`, `Autocomplete.Async`, and `Select.Async`
+
+  When an async fetcher throws or rejects, the components now render an inline error state in the popover — a "Couldn't load results." message plus a **Retry** button that re-runs the last fetch — instead of silently falling back to the misleading "No results." empty state. This makes failed fetches distinguishable from genuinely-empty results without any consumer code.
+
+  The debounce/abort lifecycle is handled centrally: aborted/superseded requests are ignored, and outages are de-duped so typing during an outage doesn't stack repeated announcements.
+
+  Three new props on each `.Async` component:
+
+  | Prop           | Type                       | Default                    | Description                                                        |
+  | -------------- | -------------------------- | -------------------------- | ------------------------------------------------------------------ |
+  | `errorText`    | `string`                   | `"Couldn't load results."` | Message shown in the popover when the fetcher fails                |
+  | `retryText`    | `string`                   | `"Retry"`                  | Label for the retry button                                         |
+  | `onFetchError` | `(error: unknown) => void` | -                          | Called once per outage when a fetch fails (logging/error tracking) |
+
+  The `Combobox.useAsync` / `Autocomplete.useAsync` / `Select.useAsync` hooks now also expose `error` and a `retry()` function and accept an `onFetchError` option, for consumers building custom compositions with `Parts`.
+
+- 16c1046: Add a built-in `/__appinfo` page to `AppShell` for exposing app metadata and the current AppShell version.
+
+  ```tsx
+  <AppShell
+    title="My App"
+    appInfo={{
+      metadata: [
+        { label: "Environment", value: "staging" },
+        { label: "Release", value: "2026.07.16" },
+      ],
+    }}
+  />
+  ```
+
+  The page stays out of AppShell's built-in auto-generated sidebar navigation, appears in the Command Palette as a page entry, and includes a copy button for the rendered app information.
+
+- 35ab98a: DataTable: sticky/pinned columns and user column settings
+
+  - **Pinned columns** — add `pin: "left" | "right"` to a `Column` to freeze it during horizontal scroll (sticky offsets are measured from the rendered layout; `width` is optional but recommended for stable sizing). The selection column auto-pins left and the row-actions column auto-pins right, with a subtle freeze shadow at the frozen edge once content scrolls under it.
+  - **Column settings** — pass `columnSettings` to `DataTable.Toolbar` to render a built-in "Columns" control (top-right) that lets users show/hide columns, reorder them (drag), and change pinning by dragging a column between the Fixed left / Scrollable / Fixed right zones.
+  - **Persisted column layout** — pass a stable `tableId` to `useDataTable` to persist each user's column visibility, order, and pinning to `localStorage` (per-user preference; not stored in the URL). Omit for in-memory-only layout.
+  - `Table.Root` now accepts an optional `containerRef` for its scroll container.
+
+- b32f003: Redesign `DataTable.Filters` for a faster, more direct filtering experience.
+
+  - **Add-filter panel**: replaces the old popover + nested selects with a single popover laid out in up to three columns — **field ▸ condition ▸ value**. The condition column appears for fields with more than one operator; single-operator fields (enum, uuid) go straight to the value. Values are drafted and committed with an **Apply**/**Update** button, and the panel stays open so several filters can be added in a row. A per-field **Clear** and a sticky **Clear all filters** are built in.
+  - **Segmented filter chips**: each active filter renders as `field │ operator │ value │ ✕`. The operator segment opens a searchable dropdown to switch the condition; the value segment opens the type-specific editor. Long values are truncated.
+  - **Date & time use app-shell's own components**: single date → inline `Calendar`; single datetime → inline calendar + a "Choose time" picker; `date`/`datetime` **between** → one inline calendar with **From / To** tabs; `time` → native time input. (Swaps to the dedicated date-range / datetime pickers 1:1 once those land.)
+  - Friendlier operator labels (`is`, `is not`, `is between`, `is any of`, …), multi-select enum values summarized as "N items" (localized), an inline error for reversed `between` ranges, and a consistent primary-colored checkbox across every filter surface.
+  - **New `slot` prop** on `DataTable.Filters` (`"all"` | `"chips"` | `"add"`) to render the chips and the **Add filter** trigger separately for custom toolbar layouts (e.g. trigger in a header row, chips on the row below).
+
+- 19bc874: Add `header` to DataTable columns so consumers can fully customize header UI while keeping the built-in header behavior when `header` is omitted.
+
+  ```tsx
+  column({
+    label: "Amount",
+    sort: { field: "amount", type: "number" },
+    header: (ctx) =>
+      ctx.sortable ? (
+        <button type="button" onClick={ctx.activateSort}>
+          {ctx.label}{" "}
+          {ctx.sortDirection === "Asc"
+            ? "▲"
+            : ctx.sortDirection === "Desc"
+            ? "▼"
+            : null}
+        </button>
+      ) : (
+        ctx.label
+      ),
+  });
+  ```
+
+  `header` is a typed render function. Non-sortable columns receive `{ label, sortable: false }`; sortable columns also receive `sortDirection` and `activateSort()`. Custom headers own their click surface and sort indicator, while the default header keeps the built-in sort button and hit area.
+
+- 7832718: Add standalone `Checkbox` component
+
+  - New `Checkbox` — a styled boolean control wrapping Base UI's checkbox. Supports controlled (`checked`) and uncontrolled (`defaultChecked`) use, an `indeterminate` state, and an optional inline `label`. Integrates with `Field` and React Hook Form for label association, `disabled`, and invalid/error state exactly like `Input`/`Select` (no bespoke `error` prop) — drive it via `Controller` with `onCheckedChange`/`inputRef`. The invalid state is styled off both `data-invalid` (AppShell `Field.Root`) and `aria-invalid` (shadcn-style `FormControl`), so it fits either form stack.
+  - DataTable now uses `Checkbox` internally for row selection, the header select-all (indeterminate), the enum and case-sensitive filter controls, and the column-settings visibility toggles — replacing the previously hand-rolled, slightly inconsistent checkbox styling with one shared control.
+
+### Patch Changes
+
+- 7a9e958: Fix DataTable row-selection highlight. Selecting a row now tints the **whole** row, not just the pinned selection/actions cells. The row sets `data-state="selected"` (which `Table.Row` keys its selected background off of) in addition to the existing `aria-selected`; previously only the pinned cells — which carry their own `group-aria-selected:bg-muted` — were highlighted.
+
 ## 1.9.0
 
 ### Minor Changes

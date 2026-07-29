@@ -39,6 +39,7 @@ export interface DocUnit {
   slug: string;
   kind: string;
   category: string;
+  title: string | null;
   markdown: string;
   source: string | null;
   examples: Example[];
@@ -46,12 +47,24 @@ export interface DocUnit {
 
 const key = (repoRel: string): string => `../../${repoRel}`;
 
+/** Pull the `title:` out of the generated frontmatter — shown in the page
+ * header (the body's own H1 is stripped by cleanMarkdown to avoid duplication). */
+function frontmatterTitle(md: string): string | null {
+  const block = md.match(/^---\n([\s\S]*?)\n---/);
+  const line = block?.[1].match(/^title:\s*(.+)$/m);
+  return line ? line[1].trim() : null;
+}
+
 /** Strip the generated frontmatter block and HTML comments before rendering —
- * react-markdown would otherwise show them as literal text. */
+ * react-markdown would otherwise show them as literal text — and drop the
+ * leading H1 (the page header renders the title instead, so keeping it would
+ * duplicate it). */
 function cleanMarkdown(md: string): string {
   return md
     .replace(/^---\n[\s\S]*?\n---\n/, "")
     .replace(/<!--[\s\S]*?-->/g, "")
+    .trim()
+    .replace(/^#\s+[^\n]*\r?\n+/, "")
     .trim();
 }
 
@@ -62,11 +75,13 @@ export const units: DocUnit[] = Object.values(manifest.units).map((entry) => {
         .filter(([, value]) => typeof value === "function")
         .map(([name, value]) => ({ name, Component: value as ComponentType }))
     : [];
+  const raw = markdown[key(entry.output)] ?? "";
   return {
     slug: entry.slug,
     kind: entry.kind,
     category: entry.output.split("/")[1] ?? "misc",
-    markdown: cleanMarkdown(markdown[key(entry.output)] ?? ""),
+    title: frontmatterTitle(raw),
+    markdown: cleanMarkdown(raw),
     source: entry.examples ? (exampleSource[key(entry.examples)] ?? null) : null,
     examples,
   };

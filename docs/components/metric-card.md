@@ -7,6 +7,8 @@ description: Compact card for dashboard KPI summaries with title, value, optiona
 
 `MetricCard` is a presentational card for displaying a single KPI (key performance indicator) on dashboards. It shows a small title, a prominent value, and optionally a trend indicator and supplementary description text. In v1 the component is static (no click handler or internal actions).
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/metric-card)
+
 ## Import
 
 ```tsx

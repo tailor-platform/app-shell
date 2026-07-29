@@ -7,6 +7,8 @@ description: Searchable combobox with single/multi selection, built-in filtering
 
 The `Combobox` component provides a searchable combobox with built-in filtering. Pass `items` and get a ready-to-use combobox out of the box. For async data fetching use `Combobox.Async`. For user-created items add an `onCreateItem` prop. For custom compositions use `Combobox.Parts`.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/combobox)
+
 ## Import
 
 ```tsx

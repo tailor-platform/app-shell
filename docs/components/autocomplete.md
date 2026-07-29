@@ -7,6 +7,8 @@ description: Text input with a suggestion list — value is the raw input string
 
 The `Autocomplete` component provides a free-text input with a suggestion list. Unlike `Select` and `Combobox`, the component value is the raw input string — not a discrete item selection. For async suggestions use `Autocomplete.Async`. For custom compositions use `Autocomplete.Parts`.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/autocomplete)
+
 ## Import
 
 ```tsx

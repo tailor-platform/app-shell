@@ -7,6 +7,8 @@ description: The root component that provides routing, navigation, and theming f
 
 `AppShell` is the root component that wires together routing, navigation, authentication, and theming for your AppShell application. It should wrap your entire application layout.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/app-shell)
+
 ## Import
 
 ```tsx

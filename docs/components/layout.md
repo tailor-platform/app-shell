@@ -7,6 +7,8 @@ description: Responsive column layout component for organizing page content in 1
 
 `Layout` is a responsive column layout component that helps you organize page content into 1, 2, or 3 columns with automatic responsive behavior. Perfect for detail pages, dashboards, and forms.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/layout)
+
 ## Import
 
 ```tsx

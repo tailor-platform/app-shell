@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "docs/**/*.md"
+      - "scripts/check-catalogue-links.sh"
   workflow_dispatch:
 
 jobs:
@@ -23,3 +24,9 @@ jobs:
             --exclude 'mailto:'
             'docs/**/*.md'
           fail: true
+
+      # lychee cannot validate UI Catalogue deep links: the catalogue is a
+      # client-side-routed SPA, so an unknown /components/<slug> still answers
+      # HTTP 200 and only renders "404 Not Found" after hydration.
+      - name: Check UI Catalogue deep links
+        run: ./scripts/check-catalogue-links.sh

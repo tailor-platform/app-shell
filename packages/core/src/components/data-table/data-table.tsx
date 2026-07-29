@@ -17,8 +17,7 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
-import type { SortConfig } from "@/types/collection";
-import type { Column, RowAction, UseDataTableReturn } from "./types";
+import type { Column, HeaderRenderContext, RowAction, UseDataTableReturn } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
@@ -49,6 +48,31 @@ function nextSortDirection(current: string | undefined): "Asc" | "Desc" | undefi
   if (current === "Asc") return "Desc";
   if (current === "Desc") return undefined;
   return "Asc";
+}
+
+function renderDefaultHeader(
+  content: ReactNode,
+  ctx: HeaderRenderContext,
+  align: "left" | "right",
+  edges?: { bleedLeft?: boolean; bleedRight?: boolean },
+): ReactNode {
+  if (!ctx.sortable) return content;
+
+  return (
+    <button
+      type="button"
+      onClick={ctx.activateSort}
+      className={cn(
+        "astw:flex astw:h-10 astw:w-full astw:cursor-pointer astw:select-none astw:items-center astw:gap-1 astw:border-0 astw:bg-transparent astw:-mx-2 astw:p-0 astw:px-2 astw:text-inherit astw:outline-none astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
+        edges?.bleedLeft && "astw:-ml-6 astw:pl-6",
+        edges?.bleedRight && "astw:-mr-6 astw:pr-6",
+        align === "right" ? "astw:justify-end astw:text-right" : "astw:text-left",
+      )}
+    >
+      {content}
+      {ctx.sortDirection && <SortIndicator direction={ctx.sortDirection} />}
+    </button>
+  );
 }
 
 // =============================================================================
@@ -550,49 +574,48 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               </Table.Head>
             );
           })()}
-        {ordered?.map((col) => {
+        {ordered?.map((col, index) => {
           const key = keys.get(col) as string;
           const label = col.label;
-
-          const isSortable = !!col.sort;
-          const currentSort = col.sort
-            ? sortStates?.find((s) => s.field === (col.sort as SortConfig).field)
+          const sortField = col.sort?.field;
+          const currentSort = sortField
+            ? sortStates?.find((s) => s.field === sortField)
             : undefined;
+          const isSortable = !!sortField && !!onSort;
 
-          const handleClick = () => {
-            if (!isSortable || !onSort || !col.sort) return;
-            onSort(col.sort.field, nextSortDirection(currentSort?.direction));
+          const activateSort = () => {
+            if (!sortField || !onSort) return;
+            onSort(sortField, nextSortDirection(currentSort?.direction));
           };
 
+          const headerContext: HeaderRenderContext = isSortable
+            ? {
+                label,
+                sortable: true,
+                sortDirection: currentSort?.direction,
+                activateSort,
+              }
+            : { label, sortable: false };
+
           const align = resolveAlign(col);
+          const content = col.header
+            ? col.header(headerContext)
+            : renderDefaultHeader(label, headerContext, align, {
+                bleedLeft: !hasSelection && index === 0,
+                bleedRight: !hasRowActions && index === ordered.length - 1,
+              });
+
           const { style, className } = pinCellProps(
             placements.get(col),
             {
               style: col.width ? { width: col.width } : undefined,
-              className: cn(
-                isSortable && "astw:cursor-pointer astw:select-none",
-                align === "right" && "astw:text-right",
-              ),
+              className: cn(align === "right" && "astw:text-right"),
             },
             "header",
           );
           return (
-            <Table.Head
-              key={key}
-              data-col-key={key}
-              style={style}
-              className={className}
-              onClick={isSortable ? handleClick : undefined}
-            >
-              <span
-                className={cn(
-                  "astw:inline-flex astw:items-center astw:gap-1",
-                  align === "right" && "astw:justify-end",
-                )}
-              >
-                {label}
-                {currentSort && <SortIndicator direction={currentSort.direction} />}
-              </span>
+            <Table.Head key={key} data-col-key={key} style={style} className={className}>
+              {content}
             </Table.Head>
           );
         })}

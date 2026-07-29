@@ -1,8 +1,9 @@
+import { type ComponentProps } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
-import { Layout } from "@tailor-platform/app-shell";
+import { Layout, Table } from "@tailor-platform/app-shell";
 
 import { units } from "../docs";
 
@@ -44,6 +45,34 @@ export function DocPage({ slug }: { slug: string }) {
         </div>
       );
     },
+    // Dogfood the AppShell Table for every markdown table — remark-gfm emits
+    // basic 2-D tables, so each element maps 1:1 onto a Table sub-component
+    // (`node` is react-markdown's hast node, not a DOM prop; drop it).
+    table: ({ node, ...props }: ComponentProps<"table"> & { node?: unknown }) => (
+      <Table.Root {...props} />
+    ),
+    thead: ({ node, ...props }: ComponentProps<"thead"> & { node?: unknown }) => (
+      <Table.Header {...props} />
+    ),
+    tbody: ({ node, ...props }: ComponentProps<"tbody"> & { node?: unknown }) => (
+      <Table.Body {...props} />
+    ),
+    tfoot: ({ node, ...props }: ComponentProps<"tfoot"> & { node?: unknown }) => (
+      <Table.Footer {...props} />
+    ),
+    tr: ({ node, ...props }: ComponentProps<"tr"> & { node?: unknown }) => <Table.Row {...props} />,
+    // `align` is remark-gfm's deprecated string attr; drop it (alignment also
+    // arrives as inline `style`, which Table.Head/Cell honor) so it doesn't
+    // clash with Table's typed `align`.
+    th: ({ node, align, ...props }: ComponentProps<"th"> & { node?: unknown }) => (
+      <Table.Head {...props} />
+    ),
+    td: ({ node, align, ...props }: ComponentProps<"td"> & { node?: unknown }) => (
+      <Table.Cell {...props} />
+    ),
+    caption: ({ node, ...props }: ComponentProps<"caption"> & { node?: unknown }) => (
+      <Table.Caption {...props} />
+    ),
   } as Components;
 
   return (

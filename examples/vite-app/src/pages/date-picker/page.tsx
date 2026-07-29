@@ -85,7 +85,8 @@ const DatePickerPage = () => {
                 <Field.Label>With description</Field.Label>
                 <DateField
                   aria-label="With description"
-                  constraints={{ min: tomorrow, max: threeMonths }}
+                  minValue={tomorrow}
+                  maxValue={threeMonths}
                 />
                 <Field.Description>Select a date within the next 3 months</Field.Description>
               </Field.Root>
@@ -95,7 +96,7 @@ const DatePickerPage = () => {
               </Field.Root>
               <Field.Root>
                 <Field.Label>Required</Field.Label>
-                <DateField aria-label="Required" constraints={{ required: true }} />
+                <DateField aria-label="Required" isRequired />
               </Field.Root>
             </div>
 
@@ -121,28 +122,23 @@ const DatePickerPage = () => {
               </Field.Root>
               <Field.Root>
                 <Field.Label>Future dates only</Field.Label>
-                <DatePicker aria-label="Future dates only" constraints={{ min: tomorrow }} />
+                <DatePicker aria-label="Future dates only" minValue={tomorrow} />
                 <Field.Description>Minimum: tomorrow</Field.Description>
               </Field.Root>
               <Field.Root>
                 <Field.Label>No weekends</Field.Label>
                 <DatePicker
                   aria-label="No weekends"
-                  constraints={{
-                    unavailable: (d) => {
-                      const day = d.toDate(tz.value).getDay();
-                      return day === 0 || day === 6;
-                    },
+                  isDateUnavailable={(d) => {
+                    const day = d.toDate(tz.value).getDay();
+                    return day === 0 || day === 6;
                   }}
                 />
                 <Field.Description>Weekday dates only</Field.Description>
               </Field.Root>
               <Field.Root>
                 <Field.Label>With range</Field.Label>
-                <DatePicker
-                  aria-label="With range"
-                  constraints={{ min: tz.today(), max: threeMonths }}
-                />
+                <DatePicker aria-label="With range" minValue={tz.today()} maxValue={threeMonths} />
                 <Field.Description>{`Today → ${threeMonths.toString()}`}</Field.Description>
               </Field.Root>
             </div>
@@ -171,7 +167,7 @@ const DatePickerPage = () => {
                 <Field.Label>Delivery date</Field.Label>
                 <DatePicker
                   aria-label="Delivery date"
-                  constraints={{ required: true }}
+                  isRequired
                   value={deliveryDate}
                   onChange={(v) => {
                     setDeliveryDate(v as CalendarDate | null);

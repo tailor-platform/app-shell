@@ -1,9 +1,17 @@
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarDate, parseDate } from "@internationalized/date";
+import {
+  CalendarDate,
+  parseDate,
+  today,
+  getLocalTimeZone,
+  isSameDay,
+} from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Field } from "../field";
+import { Form } from "../form";
 import { DateField, DatePicker } from "./date-field";
 
 afterEach(() => {
@@ -17,6 +25,24 @@ function getCalendarCells() {
 function getEnabledCalendarCells() {
   return getCalendarCells().filter(
     (c) => !c.hasAttribute("data-disabled") && !c.hasAttribute("data-outside-month"),
+  );
+}
+
+function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+  const [value, setValue] = useState<CalendarDate | null>(null);
+
+  return (
+    <>
+      <DateField
+        aria-label="Date"
+        value={value}
+        onChange={(nextValue) => {
+          setValue(nextValue as CalendarDate | null);
+          onChange(nextValue);
+        }}
+      />
+      <button type="button">elsewhere</button>
+    </>
   );
 }
 
@@ -96,6 +122,117 @@ describe("DateField", () => {
     });
   });
 
+  it("auto-advances across segments as a full date is typed", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField aria-label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02152025");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-02-15");
+    });
+  });
+
+  it("accumulates a non-leading-zero entry (2 then 9 → 29, not 9)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField aria-label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("12");
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2025");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-29");
+    });
+  });
+
+  it("accepts day 31 typed before a month", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField aria-label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("31");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("12");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2025");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-31");
+    });
+  });
+
+  it("clamps an impossible day to the month's length on blur", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField aria-label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("30");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
+    });
+  });
+
+  it("keeps 29 Feb in a leap year (no over-clamp)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField aria-label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2024");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2024-02-29");
+    });
+  });
+
+  it("clamps an impossible day on blur even when controlled", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<ControlledField onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("29");
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("02");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("2026");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2026-02-28");
+    });
+  });
+
   it("calls onBlur once when focus leaves the whole group", async () => {
     const user = userEvent.setup();
     const onBlur = vi.fn();
@@ -128,22 +265,18 @@ describe("DateField", () => {
     );
   });
 
-  it("marks the segments required when constraints.required is set", () => {
-    render(<DateField aria-label="Date" constraints={{ required: true }} />);
+  it("marks the segments required when isRequired is set", () => {
+    render(<DateField aria-label="Date" isRequired />);
     expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-required")).toBe(
       "true",
     );
   });
 
-  it("flags a typed date before constraints.min invalid, but still emits it", async () => {
+  it("flags a typed date before minValue invalid, but still emits it", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DateField
-        aria-label="Date"
-        constraints={{ min: new CalendarDate(2025, 6, 10) }}
-        onChange={onChange}
-      />,
+      <DateField aria-label="Date" minValue={new CalendarDate(2025, 6, 10)} onChange={onChange} />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -155,15 +288,10 @@ describe("DateField", () => {
     expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
   });
 
-  it("flags a typed date invalid when constraints.unavailable rejects it", async () => {
+  it("flags a typed date invalid when isDateUnavailable rejects it", async () => {
     const user = userEvent.setup();
     render(
-      <DateField
-        aria-label="Date"
-        constraints={{
-          unavailable: (d) => d.toString() === "2025-06-12",
-        }}
-      />,
+      <DateField aria-label="Date" isDateUnavailable={(d) => d.toString() === "2025-06-12"} />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -228,14 +356,46 @@ describe("DatePicker", () => {
     });
   });
 
-  it("flags a field shortcut invalid when it lands before constraints.min (popover closed)", async () => {
+  it("renders cells with data-disabled when minValue is set", async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        aria-label="Date"
+        minValue={new CalendarDate(2025, 6, 10)}
+        defaultValue={new CalendarDate(2025, 6, 15)}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open calendar" }));
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+
+    expect(getCalendarCells().some((cell) => cell.hasAttribute("data-disabled"))).toBe(true);
+  });
+
+  it("renders cells with data-unavailable when isDateUnavailable returns true", async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        isDateUnavailable={(date) => isSameDay(date, new CalendarDate(2025, 6, 12))}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open calendar" }));
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+
+    expect(getCalendarCells().some((cell) => cell.hasAttribute("data-unavailable"))).toBe(true);
+  });
+
+  it("flags a field shortcut invalid when it lands before minValue (popover closed)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
       <DatePicker
         aria-label="Date"
         defaultValue={new CalendarDate(2025, 6, 15)}
-        constraints={{ min: new CalendarDate(2025, 6, 10) }}
+        minValue={new CalendarDate(2025, 6, 10)}
         onChange={onChange}
       />,
     );
@@ -269,5 +429,79 @@ describe("DatePicker", () => {
     expect(screen.getByRole("spinbutton", { name: "月" }).getAttribute("aria-valuetext")).toBe(
       "未入力",
     );
+  });
+});
+
+describe("DatePicker + Form", () => {
+  it("blocks submit and surfaces valueMissing through Field.Error", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(
+      <Form onSubmit={onSubmit}>
+        <Field.Root>
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker aria-label="Delivery date" name="deliveryDate" isRequired />
+          <Field.Error match="valueMissing">Required</Field.Error>
+        </Field.Root>
+        <button type="submit">Submit</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(await screen.findByText("Required")).toBeDefined();
+  });
+
+  it("blocks submit and surfaces local range validation through Field.Error", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(
+      <Form onSubmit={onSubmit}>
+        <Field.Root>
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker
+            aria-label="Delivery date"
+            name="deliveryDate"
+            minValue={today(getLocalTimeZone())}
+          />
+          <Field.Error />
+        </Field.Root>
+        <button type="submit">Submit</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("01012025");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(await screen.findByText("Date is outside the allowed range.")).toBeDefined();
+  });
+
+  it("submits once a required field has a valid date", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    render(
+      <Form onSubmit={onSubmit}>
+        <Field.Root>
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker aria-label="Delivery date" name="deliveryDate" isRequired />
+          <Field.Error match="valueMissing">Required</Field.Error>
+        </Field.Root>
+        <button type="submit">Submit</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06152025");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
   });
 });

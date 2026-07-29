@@ -1,5 +1,7 @@
 import * as React from "react";
 import type { DateValue } from "@internationalized/date";
+import { DEFAULT_VALIDITY_STATE } from "@base-ui/react/internals/field-constants";
+import { useFormContext } from "@base-ui/react/internals/form-context";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { useRegisterFieldControl } from "@base-ui/react/internals/field-register-control";
 import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/labelable-provider";
@@ -18,13 +20,12 @@ import { useDateFieldT } from "./i18n";
  * and compose with Field.Root for label / description / error presentation.
  */
 
-type DateControlMode = "editable" | "readonly" | "disabled";
-
-interface DateConstraints<T extends DateValue> {
-  required?: true;
-  min?: DateValue;
-  max?: DateValue;
-  unavailable?: (date: T) => boolean;
+function invalidMessageKey(
+  reason: "range" | "unavailable" | null | undefined,
+): "dateUnavailable" | "dateOutOfRange" | null {
+  if (reason === "unavailable") return "dateUnavailable";
+  if (reason === "range") return "dateOutOfRange";
+  return null;
 }
 
 function joinIds(...ids: Array<string | null | undefined | false>) {
@@ -66,8 +67,12 @@ interface DateControlProps<T extends DateValue> {
   onChange?: (value: T | null) => void;
   onBlur?: () => void;
   granularity?: Granularity;
-  constraints?: DateConstraints<T>;
-  mode?: DateControlMode;
+  minValue?: DateValue;
+  maxValue?: DateValue;
+  isDateUnavailable?: (date: T) => boolean;
+  isDisabled?: boolean;
+  isReadOnly?: boolean;
+  isRequired?: boolean;
   autoFocus?: boolean;
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
@@ -93,10 +98,12 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
 interface DateFieldA11yOptions {
   id?: string;
   name?: string;
-  mode?: DateControlMode;
   fieldValue: string;
   hasInput: boolean;
-  localInvalid: boolean;
+  localValidationMessage?: string;
+  isDisabled?: boolean;
+  isReadOnly?: boolean;
+  isRequired?: boolean;
   labelledBy?: string;
   ariaLabel?: string;
   onBlur?: () => void;
@@ -107,10 +114,12 @@ interface DateFieldA11yOptions {
 function useDateFieldA11y({
   id: idProp,
   name: nameProp,
-  mode,
   fieldValue,
   hasInput,
-  localInvalid,
+  localValidationMessage,
+  isDisabled,
+  isReadOnly,
+  isRequired,
   labelledBy: labelledByProp,
   ariaLabel,
   onBlur,
@@ -118,18 +127,74 @@ function useDateFieldA11y({
   forwardedRef,
 }: DateFieldA11yOptions) {
   const fieldRoot = useFieldRootContext();
+  const { formRef } = useFormContext();
   const { labelId, messageIds } = useLabelableContext();
   const proxyRef = React.useRef<HTMLInputElement>(null);
   const controlId = useLabelableId({ id: idProp, controlRef: proxyRef });
+  const nativeValidateRef = React.useRef<(() => void) | null>(null);
+  const localValidationMessageRef = React.useRef(localValidationMessage);
+  localValidationMessageRef.current = localValidationMessage;
 
   useRegisterFieldControl(proxyRef, controlId, fieldValue, () => proxyRef.current?.value ?? "");
+
+  const commitLocalValidation = React.useCallback(() => {
+    const message = localValidationMessageRef.current;
+    if (!message) return;
+
+    const nextValidityData = {
+      value: proxyRef.current?.value ?? "",
+      state: {
+        ...DEFAULT_VALIDITY_STATE,
+        customError: true,
+        valid: false,
+      },
+      error: message,
+      errors: [message],
+      initialValue: fieldRoot.validityData.initialValue,
+    };
+
+    fieldRoot.setValidityData(nextValidityData);
+
+    if (!controlId) return;
+    const field = formRef.current.fields.get(controlId);
+    if (!field) return;
+    formRef.current.fields.set(controlId, {
+      ...field,
+      validityData: nextValidityData,
+    });
+  }, [controlId, fieldRoot, formRef]);
+
+  const wrappedValidateRef = React.useRef<(() => void) | undefined>(undefined);
+  if (!wrappedValidateRef.current) {
+    wrappedValidateRef.current = () => {
+      if (localValidationMessageRef.current) {
+        commitLocalValidation();
+        return;
+      }
+      nativeValidateRef.current?.();
+    };
+  }
+
+  React.useEffect(() => {
+    if (!controlId) return;
+    const field = formRef.current.fields.get(controlId);
+    if (!field) return;
+    if (field.validate !== wrappedValidateRef.current) {
+      nativeValidateRef.current = field.validate;
+      formRef.current.fields.set(controlId, {
+        ...field,
+        validate: wrappedValidateRef.current!,
+      });
+    }
+  }, [commitLocalValidation, controlId, fieldValue, formRef, localValidationMessage]);
 
   const setProxyRef = React.useCallback(
     (node: HTMLInputElement | null) => {
       proxyRef.current = node;
+      fieldRoot.validation.inputRef.current = node;
       assignRef(forwardedRef, node);
     },
-    [forwardedRef],
+    [fieldRoot.validation.inputRef, forwardedRef],
   );
 
   const focusFirstSegment = React.useCallback(() => {
@@ -137,48 +202,59 @@ function useDateFieldA11y({
     first?.focus();
   }, [groupRef]);
 
-  const name = fieldRoot?.name ?? nameProp;
-  const isDisabled = fieldRoot?.disabled || mode === "disabled";
-  const isReadOnly = mode === "readonly";
-  const externalInvalid = fieldRoot?.state.valid === false;
-  const derivedInvalid = !!externalInvalid || localInvalid;
+  const name = fieldRoot.name ?? nameProp;
+  const externalInvalid = fieldRoot.state.valid === false;
+  const derivedInvalid = !!externalInvalid || !!localValidationMessage;
   const labelledBy = joinIds(labelledByProp, labelId);
   const describedBy = joinIds(...messageIds);
   const initialValue =
-    typeof fieldRoot?.validityData.initialValue === "string"
+    typeof fieldRoot.validityData.initialValue === "string"
       ? fieldRoot.validityData.initialValue
       : "";
 
   React.useEffect(() => {
-    fieldRoot?.setFilled(hasInput);
-    fieldRoot?.setDirty(fieldValue !== initialValue || (hasInput && fieldValue === ""));
+    proxyRef.current?.setCustomValidity(localValidationMessage ?? "");
+  }, [localValidationMessage]);
 
-    if (!fieldRoot?.shouldValidateOnChange()) return;
+  React.useEffect(() => {
+    fieldRoot.setFilled(hasInput);
+    fieldRoot.setDirty(fieldValue !== initialValue || (hasInput && fieldValue === ""));
+
+    if (!fieldRoot.shouldValidateOnChange()) return;
     queueMicrotask(() => {
+      if (localValidationMessageRef.current) {
+        commitLocalValidation();
+        return;
+      }
       fieldRoot.validation.commit(proxyRef.current?.value ?? "");
     });
-  }, [fieldRoot, hasInput, fieldValue, initialValue]);
+  }, [commitLocalValidation, fieldRoot, hasInput, fieldValue, initialValue]);
 
   const handleGroupFocus = React.useCallback(() => {
-    fieldRoot?.setFocused(true);
+    fieldRoot.setFocused(true);
   }, [fieldRoot]);
 
   const handleGroupBlur = React.useCallback(() => {
-    fieldRoot?.setTouched(true);
-    fieldRoot?.setFocused(false);
+    fieldRoot.setTouched(true);
+    fieldRoot.setFocused(false);
     onBlur?.();
 
-    if (fieldRoot?.validationMode !== "onBlur") return;
+    if (fieldRoot.validationMode !== "onBlur") return;
     queueMicrotask(() => {
+      if (localValidationMessageRef.current) {
+        commitLocalValidation();
+        return;
+      }
       fieldRoot.validation.commit(proxyRef.current?.value ?? "");
     });
-  }, [fieldRoot, onBlur]);
+  }, [commitLocalValidation, fieldRoot, onBlur]);
 
   return {
     controlId,
     name,
     isDisabled,
     isReadOnly,
+    isRequired,
     isInvalid: derivedInvalid,
     labelledBy,
     describedBy,
@@ -206,8 +282,12 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
     onChange,
     onBlur,
     granularity,
-    constraints,
-    mode,
+    minValue,
+    maxValue,
+    isDateUnavailable,
+    isDisabled,
+    isReadOnly,
+    isRequired,
     hourCycle,
     placeholderValue,
     autoFocus,
@@ -218,9 +298,13 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
   }: DateFieldProps<T>,
   ref: React.ForwardedRef<HTMLInputElement>,
 ) {
+  const fieldRoot = useFieldRootContext();
   const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
+  const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
+  const resolvedReadOnly = !!isReadOnly;
   const groupRef = React.useRef<HTMLDivElement>(null);
+  const t = useDateFieldT();
 
   const state = useDateFieldState({
     value,
@@ -230,24 +314,30 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
     locale: resolvedLocale,
     hourCycle,
     placeholderValue,
-    minValue: constraints?.min,
-    maxValue: constraints?.max,
-    isDateUnavailable: constraints?.unavailable as ((date: DateValue) => boolean) | undefined,
+    minValue,
+    maxValue,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
-    isReadOnly: mode === "readonly",
+    isReadOnly: resolvedReadOnly,
   });
 
   const hasInput = React.useMemo(
     () => state.segments.some((segment) => segment.isEditable && !segment.isPlaceholder),
     [state.segments],
   );
+  const localValidationMessage = React.useMemo(() => {
+    const key = invalidMessageKey(state.invalidReason);
+    return key ? t(key) : undefined;
+  }, [state.invalidReason, t]);
   const bindings = useDateFieldA11y({
     id,
     name,
-    mode,
     fieldValue: state.fieldValue?.toString() ?? "",
     hasInput,
-    localInvalid: state.isInvalid,
+    localValidationMessage,
+    isDisabled: resolvedDisabled,
+    isReadOnly: resolvedReadOnly,
+    isRequired,
     labelledBy: ariaLabelledby,
     ariaLabel,
     onBlur,
@@ -262,9 +352,11 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
         id={bindings.controlId}
         name={bindings.name}
         tabIndex={-1}
-        readOnly
         aria-hidden="true"
+        disabled={bindings.isDisabled}
+        required={bindings.isRequired}
         value={state.fieldValue?.toString() ?? ""}
+        onChange={() => {}}
         onFocus={bindings.focusFirstSegment}
         className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
       />
@@ -280,7 +372,7 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
         isDisabled={bindings.isDisabled}
         isReadOnly={bindings.isReadOnly}
         isInvalid={bindings.isInvalid}
-        isRequired={constraints?.required}
+        isRequired={bindings.isRequired}
         autoFocus={autoFocus}
         ariaLabelledby={bindings.labelledBy}
         ariaLabel={bindings.ariaLabel}
@@ -312,8 +404,12 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
     onChange,
     onBlur,
     granularity,
-    constraints,
-    mode,
+    minValue,
+    maxValue,
+    isDateUnavailable,
+    isDisabled,
+    isReadOnly,
+    isRequired,
     hourCycle,
     placeholderValue,
     autoFocus,
@@ -324,10 +420,13 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
   }: DatePickerProps<T>,
   ref: React.ForwardedRef<HTMLInputElement>,
 ) {
+  const fieldRoot = useFieldRootContext();
   const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz.value;
+  const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
+  const resolvedReadOnly = !!isReadOnly;
   const t = useDateFieldT();
 
   const [open, setOpen] = React.useState(false);
@@ -346,11 +445,11 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
     timeZone: resolvedTz,
     hourCycle,
     placeholderValue,
-    minValue: constraints?.min,
-    maxValue: constraints?.max,
-    isDateUnavailable: constraints?.unavailable as ((date: DateValue) => boolean) | undefined,
+    minValue,
+    maxValue,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
-    isReadOnly: mode === "readonly",
+    isReadOnly: resolvedReadOnly,
   });
 
   const calState = useCalendarState({
@@ -359,11 +458,11 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
       setVal(d);
       setOpen(false);
     },
-    minValue: constraints?.min,
-    maxValue: constraints?.max,
-    isDateUnavailable: constraints?.unavailable as ((date: DateValue) => boolean) | undefined,
-    isDisabled: mode === "disabled",
-    isReadOnly: mode === "readonly",
+    minValue,
+    maxValue,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDisabled: resolvedDisabled,
+    isReadOnly: resolvedReadOnly,
     firstDayOfWeek,
     locale: resolvedLocale,
     timeZone: resolvedTz,
@@ -373,13 +472,19 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
     () => fieldState.segments.some((segment) => segment.isEditable && !segment.isPlaceholder),
     [fieldState.segments],
   );
+  const localValidationMessage = React.useMemo(() => {
+    const key = invalidMessageKey(fieldState.invalidReason);
+    return key ? t(key) : undefined;
+  }, [fieldState.invalidReason, t]);
   const bindings = useDateFieldA11y({
     id,
     name,
-    mode,
     fieldValue: fieldState.fieldValue?.toString() ?? "",
     hasInput,
-    localInvalid: fieldState.isInvalid,
+    localValidationMessage,
+    isDisabled: resolvedDisabled,
+    isReadOnly: resolvedReadOnly,
+    isRequired,
     labelledBy: ariaLabelledby,
     ariaLabel,
     onBlur,
@@ -394,9 +499,11 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
         id={bindings.controlId}
         name={bindings.name}
         tabIndex={-1}
-        readOnly
         aria-hidden="true"
+        disabled={bindings.isDisabled}
+        required={bindings.isRequired}
         value={fieldState.fieldValue?.toString() ?? ""}
+        onChange={() => {}}
         onFocus={bindings.focusFirstSegment}
         className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
       />
@@ -419,7 +526,7 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
             isDisabled={bindings.isDisabled}
             isReadOnly={bindings.isReadOnly}
             isInvalid={bindings.isInvalid}
-            isRequired={constraints?.required}
+            isRequired={bindings.isRequired}
             autoFocus={autoFocus}
             ariaLabelledby={bindings.labelledBy}
             ariaLabel={bindings.ariaLabel}

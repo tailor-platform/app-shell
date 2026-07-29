@@ -18,6 +18,7 @@ import {
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
   getLocalTimeZone,
+  today,
   type CalendarDate,
   type DateValue,
 } from "@tailor-platform/app-shell";
@@ -76,12 +77,10 @@ Constrained + unavailable dates:
   <Field.Label>Delivery date</Field.Label>
   <DatePicker
     aria-label="Delivery date"
-    constraints={{
-      min: today(getLocalTimeZone()),
-      unavailable: (date) => {
-        const dow = date.toDate(getLocalTimeZone()).getDay();
-        return dow === 0 || dow === 6; // weekends
-      },
+    minValue={today(getLocalTimeZone())}
+    isDateUnavailable={(date) => {
+      const dow = date.toDate(getLocalTimeZone()).getDay();
+      return dow === 0 || dow === 6; // weekends
     }}
   />
 </Field.Root>
@@ -131,21 +130,24 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 
 ### DateFieldProps
 
-| Prop                             | Type                                                          | Description                                         |
-| -------------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
-| `value` / `defaultValue`         | `DateValue \| null`                                          | Controlled / uncontrolled value                     |
-| `onChange`                       | `(v: DateValue \| null) => void`                             | Fires when the value changes                        |
-| `onBlur`                         | `() => void`                                                  | Fires when focus leaves the whole segmented control |
-| `constraints`                    | `{ required?, min?, max?, unavailable? }`                     | Date constraints and required flag                  |
-| `mode`                           | `"editable" \| "readonly" \| "disabled"`               | Control mode                                        |
-| `placeholderValue`               | `DateValue`                                                   | Seeds unset segments                                |
-| `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                    |
-| `locale`                         | `string`                                                      | BCP-47 locale override                              |
-| `name`                           | `string`                                                      | Emits a form value through the hidden proxy input   |
-| `id`                             | `string`                                                      | Control id                                          |
+| Prop                             | Type                                                          | Description                                                |
+| -------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------- |
+| `value` / `defaultValue`         | `DateValue \| null`                                           | Controlled / uncontrolled value                            |
+| `onChange`                       | `(v: DateValue \| null) => void`                              | Fires when the value changes                               |
+| `onBlur`                         | `() => void`                                                  | Fires when focus leaves the whole segmented control        |
+| `minValue` / `maxValue`          | `DateValue`                                                   | Inclusive date range bounds                                |
+| `isDateUnavailable`              | `(date: DateValue) => boolean`                                | Marks specific dates unavailable                           |
+| `isDisabled`                     | `boolean`                                                     | Disables interaction and form submission                   |
+| `isReadOnly`                     | `boolean`                                                     | Allows focus/navigation without editing                    |
+| `isRequired`                     | `boolean`                                                     | Marks the control required                                 |
+| `placeholderValue`               | `DateValue`                                                   | Seeds unset segments                                       |
+| `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                           |
+| `locale`                         | `string`                                                      | BCP-47 locale override                                     |
+| `name`                           | `string`                                                      | Emits a form value through the hidden proxy input          |
+| `id`                             | `string`                                                      | Control id                                                 |
 | `firstDayOfWeek`                 | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale week start used by `w` / `k` shortcuts |
-| `aria-label` / `aria-labelledby` | `string`                                                      | Accessible name                                     |
-| `className`                      | `string`                                                      | Root element class                                  |
+| `aria-label` / `aria-labelledby` | `string`                                                      | Accessible name                                            |
+| `className`                      | `string`                                                      | Root element class                                         |
 
 ### DatePickerProps
 

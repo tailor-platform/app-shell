@@ -79,6 +79,21 @@ const allProgrammingLanguages = [
   "CSS",
 ];
 
+// ── Error-state demos ──
+// These fetchers always reject, so the built-in inline error state is shown and
+// clicking "Retry" re-runs the fetch (which fails again) — keeping the example
+// idempotent across reloads. Return types are annotated so the pickers still
+// infer their item type despite the fetcher never resolving.
+const failingFruitFetcher = async (): Promise<Fruit[]> => {
+  await new Promise((r) => setTimeout(r, 600));
+  throw new Error("Simulated network error");
+};
+
+const failingLanguageFetcher = async (_query: string | null): Promise<string[]> => {
+  await new Promise((r) => setTimeout(r, 400));
+  throw new Error("Simulated network error");
+};
+
 /**
  * Example: Combobox creatable with a confirmation dialog.
  * Demonstrates awaiting user input in onCreateItem via Promise.
@@ -285,6 +300,19 @@ const DropdownComponentsDemoPage = () => {
                   placeholder="Async multi-select..."
                 />
               </div>
+
+              {/* Error + retry: first open fails, Retry recovers */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Error + retry</div>
+                <Select.Async
+                  fetcher={failingFruitFetcher}
+                  mapItem={(f) => ({ label: f.name, key: f.id })}
+                  placeholder="Open to see the error..."
+                  errorText="Couldn't load fruits."
+                  retryText="Try again"
+                  onFetchError={(error) => console.error("Select.Async fetch failed:", error)}
+                />
+              </div>
             </div>
           </Card.Content>
         </Card.Root>
@@ -382,6 +410,19 @@ const DropdownComponentsDemoPage = () => {
                   }}
                   multiple
                   placeholder="Add programming languages..."
+                />
+              </div>
+
+              {/* Error + retry: first fetch fails, Retry recovers */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Error + retry</div>
+                <Combobox.Async
+                  fetcher={failingLanguageFetcher}
+                  placeholder="Type to trigger a failure..."
+                  loadingText="Searching..."
+                  errorText="Couldn't load languages."
+                  retryText="Try again"
+                  onFetchError={(error) => console.error("Combobox.Async fetch failed:", error)}
                 />
               </div>
             </div>
@@ -492,6 +533,18 @@ const DropdownComponentsDemoPage = () => {
                     );
                   }}
                   placeholder="Search programming language..."
+                />
+              </div>
+
+              {/* Error + retry: first fetch fails, Retry recovers */}
+              <div style={sectionStyle}>
+                <div style={subHeadingStyle}>Error + retry</div>
+                <Autocomplete.Async
+                  fetcher={failingLanguageFetcher}
+                  placeholder="Type to trigger a failure..."
+                  errorText="Couldn't load languages."
+                  retryText="Try again"
+                  onFetchError={(error) => console.error("Autocomplete.Async fetch failed:", error)}
                 />
               </div>
             </div>

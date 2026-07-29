@@ -31,6 +31,8 @@ export {
   useAppShellData,
   useResolvedLocale,
   useTimeZone,
+  type AppInfo,
+  type AppInfoEntry,
   type TimeZone,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";
@@ -134,6 +136,7 @@ export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
+export { Checkbox, type CheckboxProps } from "./components/checkbox";
 export { Table } from "./components/table";
 export { Card } from "./components/card";
 export { Dialog } from "./components/dialog";
@@ -227,6 +230,7 @@ export {
   type DataTableRootProps,
   type Column,
   type DataTableData,
+  type HeaderRenderContext,
   type RowAction,
   type UseDataTableOptions,
   type UseDataTableReturn,

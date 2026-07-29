@@ -25,6 +25,11 @@ export const labels = defineI18nLabels({
     commandPalettePages: "Pages",
     commandPaletteSearchModes: "Search Modes",
     commandPaletteSearching: "Searching...",
+    appInfoTitle: "App info",
+    appInfoDescription: "Information about the current app and AppShell.",
+    appInfoAppName: "App name",
+    appInfoAppShellVersion: "AppShell version",
+    appInfoCopy: "Copy",
   },
   ja: {
     home: "ホーム",
@@ -50,6 +55,11 @@ export const labels = defineI18nLabels({
     commandPalettePages: "ページ",
     commandPaletteSearchModes: "検索モード",
     commandPaletteSearching: "検索中...",
+    appInfoTitle: "アプリ情報",
+    appInfoDescription: "現在のアプリと AppShell の情報です。",
+    appInfoAppName: "アプリ名",
+    appInfoAppShellVersion: "AppShell バージョン",
+    appInfoCopy: "コピー",
   },
 });
 

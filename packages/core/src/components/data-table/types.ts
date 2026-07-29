@@ -84,12 +84,38 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
 }
 
 /**
+ * Header render context for non-sortable columns.
+ */
+interface NonSortableHeaderRenderContext {
+  label?: string;
+  sortable: false;
+}
+
+/**
+ * Header render context for sortable columns.
+ */
+interface SortableHeaderRenderContext {
+  label?: string;
+  sortable: true;
+  sortDirection: "Asc" | "Desc" | undefined;
+  activateSort: () => void;
+}
+
+/**
+ * Context passed to custom `header` renderers.
+ */
+export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
+
+/**
  * Fields shared by every `Column` regardless of `type`. Prefer `Column<TRow>`
  * in most cases; this is exported so consumers can compose more specific
  * column types (e.g. `type MoneyColumn<TRow> = ColumnBase<TRow> & { type: "money"; … }`).
  */
 export interface ColumnBase<TRow extends Record<string, unknown>> {
-  /** Column header text. Omit for action or icon-only columns. */
+  /**
+   * Column header text. Used as the default header content and passed to
+   * custom `header` renderers.
+   */
   label?: string;
   /**
    * Renders the cell content for a given row. Optional — when omitted, the
@@ -102,6 +128,16 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   render?: (row: TRow) => ReactNode;
   /**
+   * Custom header renderer.
+   *
+   * When omitted, the built-in header renders `label` and, for sortable
+   * columns, owns the sort button and indicator. When provided, the return
+   * value replaces the built-in header entirely. Sortable custom headers
+   * receive `sortDirection` and `activateSort()` and must render their own
+   * click surface and sort indicator.
+   */
+  header?: (ctx: HeaderRenderContext) => ReactNode;
+  /**
    * Stable identifier used for column visibility toggling and as the React key.
    * Falls back to `label` when omitted. Set this explicitly when `label` is
    * absent or not unique.
@@ -109,6 +145,17 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   id?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
   width?: number;
+  /**
+   * Freeze this column to the left or right edge so it stays visible while the
+   * table scrolls horizontally. This is the **default** pin; the user can
+   * override it at runtime via the toolbar's `columnSettings` control (persisted when
+   * `tableId` is set).
+   *
+   * Sticky offsets for stacked pinned columns are measured from the rendered
+   * layout, so a `width` is not required — but setting `width` on pinned columns
+   * is recommended so their size stays stable as row content changes.
+   */
+  pin?: "left" | "right";
   /**
    * Horizontal alignment for the header and body cell. When omitted, numeric
    * `type` values (`"number"` and `"money"`) default to `"right"` so digits
@@ -241,6 +288,12 @@ export type UseDataTableOptions<
    * using `DataTable.Pagination` or `DataTable.Filters`.
    */
   control?: CollectionControl<TFieldName, TFilter>;
+  /**
+   * Stable id used to persist per-user column layout (visibility, order, and
+   * pinning) to `localStorage`, keyed by this id. When omitted, column layout is
+   * in-memory only and resets on reload.
+   */
+  tableId?: string;
   /** Called when the user clicks a row. Adds a pointer cursor to rows. */
   onClickRow?: (row: TRow) => void;
   /**
@@ -323,6 +376,20 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   showAllColumns: () => void;
   hideAllColumns: () => void;
   isColumnVisible: (fieldOrId: string) => boolean;
+  /** Column keys in display order (visible and hidden). */
+  columnOrder: string[];
+  /** Move the column with `key` to `toIndex` within the ordered column list. */
+  moveColumn: (key: string, toIndex: number) => void;
+  /** Replace the full column order with `keys`. */
+  setColumnOrder: (keys: string[]) => void;
+  /** Per-user pin overrides, keyed by column key (`"none"` = explicitly unpinned). */
+  pinnedColumns: Record<string, "left" | "right" | "none">;
+  /**
+   * Set the pin for the column with `key`: `"left"`/`"right"` to pin, `"none"` to
+   * explicitly unpin (overriding a default `pin`), or `null` to clear the override
+   * and fall back to the column's default.
+   */
+  setPin: (key: string, side: "left" | "right" | "none" | null) => void;
 
   /**
    * The resolved page size derived from the collection control.

@@ -387,7 +387,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Import:** compound namespace + helpers from `'@tailor-platform/app-shell'`, e.g. `DataTable`, `useDataTable`, `useCollectionVariables`, `createColumnHelper`, and types such as `Column`, `UseDataTableReturn`.
 
-**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column).
+**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **column pinning** (`pin: "left" | "right"`) and built-in **column settings** (`<DataTable.Toolbar columnSettings>` — user show/hide + reorder + pin, persisted per-user via **`tableId`**).
 
 **Primitives:** Builds on low-level **`Table`**; do not reinvent pagination/filters manually unless the dataset is trivial.
 
@@ -404,12 +404,13 @@ const table = useDataTable({
   data: fetching ? undefined : mappedFromQuery,
   loading: fetching,
   control,
+  tableId: "purchase-orders", // persist user column layout to localStorage
   onClickRow: (row) => navigate(detailHref(row)),
   // onSelectionChange, rowActions, sort: …
 });
 
 <DataTable.Root value={table}>
-  <DataTable.Toolbar>
+  <DataTable.Toolbar columnSettings>
     <DataTable.Filters />
   </DataTable.Toolbar>
   <DataTable.Table />
@@ -418,6 +419,10 @@ const table = useDataTable({
   </DataTable.Footer>
 </DataTable.Root>;
 ```
+
+**Row navigation:** whole row is clickable via **`onClickRow`** → `navigate(detailHref(row))`; wrap the primary identifier cell in `<Link>` for keyboard/SR access. Never add a per-row "View" / "Open" / "→" button. (A first-class row-interaction API is under design — see the row-interaction tracking issue.)
+
+**Column pinning & settings:** set `pin: "left" | "right"` on a `Column` to freeze it during horizontal scroll — selection auto-pins left, row-actions auto-pins right (a `width` is optional but recommended for stable sizing). Pass **`columnSettings`** to **`DataTable.Toolbar`** to render the built-in "Columns" control (show/hide, reorder, re-pin) at the top-right; pass a stable, **unique** **`tableId`** to persist each user's layout to `localStorage` (a per-user preference — intentionally not in the URL like filters/sort).
 
 **Column alignment:** each `Column` accepts **`align`** (`"left" | "right"`) applied to both header and body cell. Numeric `type` columns (`"number"`, `"money"`) default to `"right"` automatically so digits align on the decimal place — pass `align="left"` to opt out; everything else defaults to `"left"`.
 
@@ -637,6 +642,14 @@ const table = useDataTable({
 **Purpose:** Text input. Maps to spec field types: `string`, `email`, `number`, `password`, `tel`, `url`.
 **API:** `InputProps` — extends native `<input>` props.
 **Used in patterns:** all `form/*`.
+
+### `Checkbox`
+
+**Import:** `import { Checkbox } from '@tailor-platform/app-shell'`
+**Purpose:** Boolean form control. Maps to spec field type: `boolean`. Also used for row selection and filter toggles.
+**API:** `CheckboxProps` — extends Base UI `Checkbox.Root` (`checked`/`defaultChecked`, `onCheckedChange`, `indeterminate`, `disabled`, `required`, `name`, `inputRef`) and adds an inline `label`. Integrates with `Field` for invalid/disabled/label state exactly like `Input`/`Select` — no bespoke `error` prop.
+**Accessible name:** the inline `label` prop (enclosing) or a sibling `Field.Label`; for a bare box (e.g. a table row-select cell) pass `aria-label`.
+**Used in patterns:** `form/*` (boolean fields), `list/*` (row selection), DataTable filter/column controls.
 
 ### `Select`
 

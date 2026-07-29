@@ -1,6 +1,8 @@
 ---
 slug: pattern/form/modal
 name: Modal Form
+title: Modal Form
+group: form-modal
 category: pattern
 subcategory: form
 description: Default form pattern for Create/Edit — keeps user in context on the parent screen
@@ -28,11 +30,11 @@ dont:
 
 ## Page Implementation
 
-<!-- source: modal-form.tsx -->
+<!-- example: modal-form -->
 
 ## Route-driven Variant
 
-<!-- source: modal-form-routed.tsx -->
+The route-driven variant renders the same component at both the parent path and the `create` / `edit` path, with `onOpenChange` navigating back so the URL stays in sync.
 
 ## Constraints
 

@@ -1,0 +1,18 @@
+{
+  "$comment": "Config for @tailor-platform/app-shell-docs-kit. See decisions/documentation-management-overhaul.md.",
+  "roots": ["packages/core/src", "docs-src"],
+  "tsconfig": "packages/core/tsconfig.json",
+  "indexFile": "packages/core/src/index.ts",
+  "manifestFile": "docs/docs-manifest.json",
+  "categories": [
+    { "match": "packages/core/src/components/**", "outDir": "docs/components" },
+    { "match": "packages/core/src/hooks/**", "outDir": "docs/api" },
+    { "match": "docs-src/concepts/**", "outDir": "docs/concepts" },
+    { "match": "docs-src/patterns/**", "outDir": "docs/patterns" },
+    { "match": "docs-src/references/**", "outDir": "docs/references" }
+  ],
+  "enforceCoverage": false,
+  "exclusions": [],
+  "snapshotDir": "packages/core/__snapshots__",
+  "pagesDir": "docs-browser/src/pages"
+}

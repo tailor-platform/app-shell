@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@tailor-platform/app-shell": [
+        "./node_modules/@tailor-platform/app-shell/dist/app-shell.d.ts"
+      ],
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "react-dom": ["./node_modules/@types/react-dom"],
+      "react-dom/client": ["./node_modules/@types/react-dom/client"],
+      "lucide-react": ["./node_modules/lucide-react"]
+    }
+  },
+  "comment": "The authored examples (*.docs.examples.tsx) live in src/ (outside this package) and are imported in place. baseUrl/paths make their bare imports resolve to this app's deps so tsc can type-check them against core — the CI 'examples compile against core' gate.",
+  "include": [
+    "src",
+    "vite.config.ts",
+    "../packages/core/src/**/*.docs.examples.tsx",
+    "../docs-src/**/*.docs.examples.tsx"
+  ]
+}

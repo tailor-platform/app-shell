@@ -22,5 +22,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["."]
+  "include": ["."],
+  "comment:exclude": "Doc examples are authored consumer-style (they import @tailor-platform/app-shell, this package's own public name), so they are not part of core's compilation — the docs-app type-checks them instead.",
+  "exclude": ["**/*.docs.examples.tsx"]
 }

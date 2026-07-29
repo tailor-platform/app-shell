@@ -1,0 +1,31 @@
+{
+  "name": "@tailor-platform/app-shell-docs-browser",
+  "private": true,
+  "description": "Docs explorer — renders the generated docs/ (markdown + live examples) in place. Dogfoods app-shell. SKELETON: see TODOs before shipping.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tailor-platform/app-shell": "workspace:*",
+    "@tailor-platform/app-shell-vite-plugin": "workspace:*",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-markdown": "^9.0.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.0",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "^5",
+    "vite": "catalog:"
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "units": {
+    "button": {
+      "slug": "button",
+      "kind": "code-backed",
+      "outline": "packages/core/src/components/button.docs.outline.md",
+      "output": "docs/components/button.md",
+      "examples": "packages/core/src/components/button.docs.examples.tsx",
+      "sources": ["packages/core/src/components/button.tsx"],
+      "claims": [],
+      "symbols": ["Button", "ButtonProps", "buttonVariants"],
+      "hashes": {
+        "typeSurface": "16df9927f8394548",
+        "outline": "e32d0264496ae851",
+        "snapshot": "d607a315ffce3abc",
+        "outputMd": "40dff8253fd93de2",
+        "examples": "8cc0091758773a45"
+      }
+    },
+    "data-table": {
+      "slug": "data-table",
+      "kind": "code-backed",
+      "outline": "packages/core/src/components/data-table/data-table.docs.outline.md",
+      "output": "docs/components/data-table.md",
+      "examples": "packages/core/src/components/data-table/data-table.docs.examples.tsx",
+      "sources": [
+        "packages/core/src/components/data-table/**",
+        "packages/core/src/hooks/use-collection-variables.ts",
+        "packages/core/src/lib/collection-url-state.ts",
+        "packages/core/src/contexts/collection-control-context.tsx",
+        "packages/core/src/types/collection.ts"
+      ],
+      "claims": [],
+      "symbols": [
+        "BuildQueryVariables",
+        "CollectionControl",
+        "CollectionControlProvider",
+        "CollectionInitialState",
+        "CollectionParams",
+        "CollectionPersistedState",
+        "CollectionResult",
+        "CollectionVariables",
+        "Column",
+        "DataTable",
+        "DataTableContextValue",
+        "DataTableData",
+        "DataTablePaginationProps",
+        "DataTableRootProps",
+        "FieldMetadata",
+        "FieldType",
+        "Filter",
+        "FilterConfig",
+        "FilterOperator",
+        "MetadataFieldOptions",
+        "NodeType",
+        "OPERATORS_BY_FILTER_TYPE",
+        "PageInfo",
+        "PaginationVariables",
+        "RowAction",
+        "SelectOption",
+        "SortConfig",
+        "SortState",
+        "TableFieldName",
+        "TableMetadata",
+        "TableMetadataFilter",
+        "TableMetadataMap",
+        "TableOrderableFieldName",
+        "UseCollectionOptions",
+        "UseCollectionReturn",
+        "UseDataTableOptions",
+        "UseDataTableReturn",
+        "createColumnHelper",
+        "fieldTypeToFilterConfig",
+        "fieldTypeToSortConfig",
+        "useCollectionControl",
+        "useCollectionVariables",
+        "useDataTable",
+        "useDataTableContext",
+        "useURLCollectionVariables",
+        "withURLCollectionState"
+      ],
+      "hashes": {
+        "typeSurface": "b74872a25bf644f3",
+        "outline": "316243eb4a84e13d",
+        "snapshot": null,
+        "outputMd": "d573012393c40fb5",
+        "examples": "c4c02203e17221eb"
+      }
+    },
+    "dialog": {
+      "slug": "dialog",
+      "kind": "code-backed",
+      "outline": "packages/core/src/components/dialog.docs.outline.md",
+      "output": "docs/components/dialog.md",
+      "examples": "packages/core/src/components/dialog.docs.examples.tsx",
+      "sources": ["packages/core/src/components/dialog.tsx"],
+      "claims": [],
+      "symbols": ["Dialog"],
+      "hashes": {
+        "typeSurface": "b1614970f950ceb6",
+        "outline": "a8f69aa1e5eeb3a2",
+        "snapshot": "125a10821f041e34",
+        "outputMd": "7e3a50ff9ba0519c",
+        "examples": "934c52d4e8761404"
+      }
+    },
+    "form-modal": {
+      "slug": "form-modal",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-modal.docs.outline.md",
+      "output": "docs/patterns/form-modal.md",
+      "examples": "docs-src/patterns/form-modal.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "dc2d8147c3ae5670",
+        "snapshot": null,
+        "outputMd": "bae6c79bcfe6d5c4",
+        "examples": "5851d00933ce0062"
+      }
+    },
+    "list-dense-scan": {
+      "slug": "list-dense-scan",
+      "kind": "prose",
+      "outline": "docs-src/patterns/list-dense-scan.docs.outline.md",
+      "output": "docs/patterns/list-dense-scan.md",
+      "examples": "docs-src/patterns/list-dense-scan.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "3025ac6274b38bbb",
+        "snapshot": null,
+        "outputMd": "e5a7cf3707024627",
+        "examples": "6e46b2f7bab2eaf6"
+      }
+    },
+    "styling": {
+      "slug": "styling",
+      "kind": "prose",
+      "outline": "docs-src/concepts/styling.docs.outline.md",
+      "output": "docs/concepts/styling.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "057d44a8467a93c1",
+        "snapshot": null,
+        "outputMd": "92810a764123d6df",
+        "examples": null
+      }
+    }
+  }
+}

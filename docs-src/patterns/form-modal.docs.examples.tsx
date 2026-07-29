@@ -1,11 +1,6 @@
-/* pattern: form/modal */
-import { Button, Dialog, Input, Field } from "@tailor-platform/app-shell";
+import { Button, Dialog, Field, Input } from "@tailor-platform/app-shell";
 
-type Props = {
-  onSave: (data: { label: string; street: string; city: string }) => void;
-};
-
-export default function ModalForm({ onSave }: Props) {
+export function ModalForm() {
   return (
     <Dialog.Root>
       <Dialog.Trigger render={<Button />}>Add address</Dialog.Trigger>
@@ -15,17 +10,13 @@ export default function ModalForm({ onSave }: Props) {
           <Dialog.Description>Add a shipping address to this order.</Dialog.Description>
         </Dialog.Header>
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            onSave({
-              label: formData.get("label") as string,
-              street: formData.get("street") as string,
-              city: formData.get("city") as string,
-            });
+          onSubmit={(event) => {
+            event.preventDefault();
+            const data = new FormData(event.currentTarget);
+            window.alert(`Saving ${data.get("label") ?? ""}`);
           }}
         >
-          <div className="space-y-4 py-4">
+          <div className="flex flex-col gap-4 py-4">
             <Field.Root name="label">
               <Field.Label>Label</Field.Label>
               <Field.Control render={<Input />} />

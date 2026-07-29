@@ -75,7 +75,7 @@ export function DenseScan() {
   const table = useDataTable({ data: { rows: orders, total: orders.length }, columns });
 
   return (
-    <Layout fill>
+    <Layout>
       <Layout.Header
         title="Orders"
         actions={[

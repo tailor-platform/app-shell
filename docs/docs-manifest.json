@@ -144,16 +144,16 @@
       "kind": "prose",
       "outline": "docs-src/concepts/styling.docs.outline.md",
       "output": "docs/concepts/styling.md",
-      "examples": null,
+      "examples": "docs-src/concepts/styling.docs.examples.tsx",
       "sources": [],
       "claims": [],
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "057d44a8467a93c1",
+        "outline": "ecf30ad9f0be57dc",
         "snapshot": null,
-        "outputMd": "92810a764123d6df",
-        "examples": null
+        "outputMd": "4dbd167697db66cd",
+        "examples": "d3cca347b055a503"
       }
     }
   }

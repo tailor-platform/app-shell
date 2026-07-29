@@ -6,7 +6,7 @@ import { DocPage } from "../../../_lib/DocPage";
 const Page = () => <DocPage slug="styling" />;
 
 Page.appShellPageProps = {
-  meta: { title: "Styling & Tailwind setup" },
+  meta: { title: "Styling and Theming" },
 } satisfies AppShellPageProps;
 
 export default Page;

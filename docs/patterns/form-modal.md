@@ -64,6 +64,56 @@ function ModalForm() {
 
 The route-driven variant renders the same component at both the parent path and the `create` / `edit` path, with `onOpenChange` navigating back so the URL stays in sync.
 
+<example-preview name="modal-form-routed"></example-preview>
+
+```tsx
+function ModalFormRouted() {
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  return (
+    <Layout>
+      <Layout.Header
+        title="Products"
+        actions={[
+          <Button key="create" onClick={() => setCreateOpen(true)}>
+            Create
+          </Button>,
+        ]}
+      />
+      <Layout.Column>{/* products list — see list/dense-scan */}</Layout.Column>
+
+      <Dialog.Root open={isCreateOpen} onOpenChange={setCreateOpen}>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Create product</Dialog.Title>
+          </Dialog.Header>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              window.alert(`Saving ${data.get("name") ?? ""}`);
+              setCreateOpen(false);
+            }}
+          >
+            <div className="flex flex-col gap-4 py-4">
+              <Field.Root name="name">
+                <Field.Label>Name</Field.Label>
+                <Field.Control render={<Input />} />
+              </Field.Root>
+            </div>
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save</Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
+    </Layout>
+  );
+}
+```
+
 ## Constraints
 
 - Dialog renders full-screen sheet below 1024px; centered max-w-md at 1024–1280px

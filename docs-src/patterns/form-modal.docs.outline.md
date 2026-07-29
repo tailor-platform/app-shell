@@ -36,6 +36,8 @@ dont:
 
 The route-driven variant renders the same component at both the parent path and the `create` / `edit` path, with `onOpenChange` navigating back so the URL stays in sync.
 
+<!-- example: modal-form-routed -->
+
 ## Constraints
 
 - Dialog renders full-screen sheet below 1024px; centered max-w-md at 1024–1280px

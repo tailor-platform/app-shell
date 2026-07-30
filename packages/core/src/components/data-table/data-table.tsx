@@ -398,17 +398,16 @@ interface DataTableStatusRowProps {
 function DataTableStatusRow({ totalColSpan, state, children }: DataTableStatusRowProps) {
   return (
     <Table.Row data-datatable-state={state} className="astw:border-0 astw:hover:bg-transparent">
-      {/* Fixed 3-row height, independent of pageSize — never pageSize-worth,
-          which at large page sizes creates a huge blank (or scrollable)
-          region. The message is sticky (offsets resolve against the
-          scrollport) so it stays in view even when a height-constrained
-          container (e.g. inside <Layout fill>) is shorter than this height. */}
+      {/* Reserve a fixed 3-row height (acts as a minimum — the cell grows if a
+          bounded container makes the row taller), independent of pageSize so
+          large page sizes don't create a huge blank/scrollable region.
+          `align-middle` centres the message vertically within that height. */}
       <Table.Cell
         colSpan={totalColSpan}
         style={{ height: `${STATUS_ROWS * ROW_HEIGHT_PX}px` }}
-        className="astw:text-center astw:align-top"
+        className="astw:text-center astw:align-middle"
       >
-        <div className="astw:sticky astw:top-[45%]">{children}</div>
+        {children}
       </Table.Cell>
     </Table.Row>
   );

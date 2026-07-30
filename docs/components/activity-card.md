@@ -7,6 +7,8 @@ description: Timeline of recent document activities with avatars and overflow di
 
 The `ActivityCard` component displays a timeline of recent activities (e.g. changes on a PO, SO, or GR document). Each entry shows an avatar, user name, description, and timestamp. A limited number of activities are shown in the card; additional activities are available via a clickable overflow that opens a dialog with a scrollable full list.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/activity-card)
+
 ## Import
 
 ```tsx

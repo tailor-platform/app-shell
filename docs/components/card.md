@@ -7,6 +7,8 @@ description: General-purpose container with consistent styling using a compound 
 
 `Card` is a general-purpose container component with a compound component API (`Card.Root`, `Card.Header`, `Card.Content`). It provides consistent surface styling (background, border, border-radius, shadow) for grouping related content.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/card)
+
 ## Import
 
 ```tsx

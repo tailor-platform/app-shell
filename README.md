@@ -27,6 +27,13 @@ For users building applications with AppShell, see the detailed guides in `docs/
 - [Introduction](./docs/introduction.md) — What is AppShell and why use it
 - [Quick Start](./docs/quickstart.md) — Installation, setup, and first steps
 
+Hosted references, no checkout required:
+
+| Site                                                    | Description                                                                            |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [UI Catalogue](https://ui.tailor.tech)                  | Live component previews, full-page samples, composite UI patterns, and routing recipes |
+| [Theme Generator](https://theme.tailor.tech/playground) | Generate an AppShell palette CSS file from a primary color                             |
+
 ## Development
 
 This project is a monorepo managed with pnpm + turbo. For prerequisites, setup, the end-to-end

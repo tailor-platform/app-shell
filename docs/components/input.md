@@ -7,6 +7,8 @@ description: Styled text input with consistent theming
 
 The `Input` component is a styled text input that provides consistent theming across your application.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/input)
+
 ## Import
 
 ```tsx

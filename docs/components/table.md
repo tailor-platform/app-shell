@@ -7,6 +7,8 @@ description: Semantic HTML table with pre-styled sub-components
 
 The `Table` component provides a set of pre-styled, semantic HTML table sub-components. It wraps a standard `<table>` element in a horizontally scrollable container.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/table)
+
 ## Import
 
 ```tsx

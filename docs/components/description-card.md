@@ -7,6 +7,8 @@ description: Display structured key-value information in a responsive grid layou
 
 `DescriptionCard` is a powerful component for displaying structured document information in ERP applications. It automatically renders field-value pairs in a responsive grid with support for multiple field types, dividers, and smart empty value handling.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/description-card)
+
 ## Import
 
 ```tsx

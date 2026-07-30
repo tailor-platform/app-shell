@@ -7,6 +7,8 @@ description: Modal dialog with a compound component API
 
 The `Dialog` component provides a modal dialog with a compound component API. It is backed by Base UI's Dialog primitive.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/dialog)
+
 ## Import
 
 ```tsx

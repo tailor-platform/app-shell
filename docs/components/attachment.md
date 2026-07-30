@@ -7,6 +7,8 @@ description: Attachment list with upload, previews, and per-item actions; compos
 
 `Attachment` is a reusable file/image attachment surface for ERP detail pages. It provides upload affordance (click or drag-and-drop onto the upload tile), optional helper text via `uploadHint`, image/file preview tiles, and per-item menu actions for download and delete.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/attachment)
+
 ## Import
 
 ```tsx

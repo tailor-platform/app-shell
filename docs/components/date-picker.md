@@ -9,6 +9,8 @@ Three related components for date input — a segmented field, a field with a ca
 
 > **Implementation note.** This is the `@internationalized/date` + Base UI variant. The public API and accessibility contract are identical to the react-aria variant; only the internals differ.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/date-picker)
+
 ## Import
 
 ```tsx

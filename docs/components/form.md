@@ -7,6 +7,8 @@ description: Components for building validated forms with automatic accessibilit
 
 `Form`, `Field`, and `Fieldset` are compound components for building accessible, validated forms. They handle label association, `aria-describedby`, validation state, and external error routing automatically.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/form)
+
 ## Import
 
 ```tsx

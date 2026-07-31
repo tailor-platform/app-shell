@@ -34,11 +34,30 @@ import { useDateFieldT } from "./i18n";
 /**
  * Public date controls.
  *
- * These are standalone composite widgets built on plain accessible markup and a
- * proxy input for form value / native validity. When rendered inside
- * `Field.Root`, they also bridge into Base UI's field/form wiring so
- * `Field.Label`, `Field.Description`, `Field.Error`, and form error routing work
- * the same way they do for the other AppShell form controls.
+ * These are standalone composite widgets built from plain accessible markup:
+ * the visible UI is a `role="group"` containing segment-level
+ * `role="spinbutton"` elements rather than a single native `<input>`.
+ *
+ * Because of that, they also render a hidden **proxy input**.
+ *
+ * What the proxy input is:
+ * - a real `<input>` that mirrors the composed date value as a string
+ * - visually hidden and not used for direct text entry
+ * - the native form/validation anchor that the composite widget can delegate to
+ *
+ * Why it exists:
+ * - native form submission expects a real form control with `name` / `value`
+ * - browser validity APIs such as `setCustomValidity()` only exist on native
+ *   form controls
+ * - `<label htmlFor>` and Base UI's `Field` / `Form` infrastructure need a
+ *   concrete control element to point at / register
+ * - native validation bubbles should anchor near the date widget rather than at
+ *   some unrelated off-screen element
+ *
+ * When rendered inside `Field.Root`, the proxy input is also bridged into Base
+ * UI's field/form wiring so `Field.Label`, `Field.Description`, `Field.Error`,
+ * and form error routing work the same way they do for the other AppShell form
+ * controls.
  */
 
 function invalidMessageKey(
@@ -58,6 +77,22 @@ function assignRef<T>(ref: Ref<T | null> | undefined, value: T | null) {
   ref.current = value;
 }
 
+/**
+ * Produces the ref callback used by the hidden proxy input.
+ *
+ * The proxy input has two distinct consumers:
+ * - Base UI field/form internals, which need the DOM node to register the
+ *   control, run validation, and focus it from `Field.Label`
+ * - the component's forwarded `ref`, so consumers can still receive the input
+ *   element exposed by `DateField` / `DatePicker`
+ *
+ * It also applies the current custom validity message to the DOM node via
+ * `setCustomValidity()`. That imperative step must happen on the actual
+ * `<input>` element; it cannot be expressed declaratively in JSX props.
+ *
+ * In short: this hook is the small piece that turns the hidden input from
+ * "just some DOM node" into the date widget's native form/validation bridge.
+ */
 function useProxyInputRef(
   fieldRef: Ref<HTMLInputElement> | undefined,
   forwardedRef: Ref<HTMLInputElement> | undefined,
@@ -391,6 +426,13 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
 
   return (
     <div data-slot="date-field" className={cn("astw:relative", className)}>
+      {/*
+        Hidden proxy input:
+        - carries the serialized form value
+        - receives native/custom validity
+        - is the target for external labels / Base UI Field wiring
+        - forwards focus into the first visible date segment
+      */}
       <input
         ref={bridge.setProxyRef}
         id={bridge.id}
@@ -541,6 +583,13 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
+      {/*
+        Hidden proxy input:
+        - carries the serialized form value
+        - receives native/custom validity
+        - is the target for external labels / Base UI Field wiring
+        - forwards focus into the first visible date segment
+      */}
       <input
         ref={bridge.setProxyRef}
         id={bridge.id}

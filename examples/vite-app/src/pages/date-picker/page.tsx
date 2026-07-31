@@ -1,4 +1,4 @@
-import { cloneElement, useState, type ReactElement } from "react";
+import { cloneElement, useState, type FormEvent, type ReactElement } from "react";
 import {
   Layout,
   DateField,
@@ -76,11 +76,31 @@ const DatePickerPage = () => {
   const [rangeValue, setRangeValue] = useState<DateRange | null>(null);
   const [inlineRange, setInlineRange] = useState<DateRange | null>(null);
 
+  // Form-validation demo state.
   const [deliveryDate, setDeliveryDate] = useState<CalendarDate | null>(null);
+  const [deliveryError, setDeliveryError] = useState<string | undefined>(undefined);
   const [confirmedDate, setConfirmedDate] = useState<string | null>(null);
 
   const tomorrow = tz.today().add({ days: 1 });
   const threeMonths = tz.today().add({ months: 3 });
+
+  // Validation runs on submit; label / description / error wiring stays plain
+  // HTML + ARIA so the date controls don't depend on Base UI's internal Field plumbing.
+  const handleDeliverySubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!deliveryDate) {
+      setConfirmedDate(null);
+      setDeliveryError("Please select a delivery date.");
+      return;
+    }
+    if (deliveryDate.compare(tz.today()) < 0) {
+      setConfirmedDate(null);
+      setDeliveryError("Delivery date can't be in the past.");
+      return;
+    }
+    setDeliveryError(undefined);
+    setConfirmedDate(deliveryDate.toString());
+  };
 
   return (
     <Layout>
@@ -225,34 +245,31 @@ const DatePickerPage = () => {
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">In a form (submit validation)</h2>
             <p className="text-sm text-muted-foreground">
-              Standard <code className="bg-muted px-1 py-0.5 rounded">Form</code> +{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">Field.Root</code>. Submitting empty (or
-              with a past date) blocks submit, shows the field error, and clears as soon as a valid
-              date is picked.
+              Standard form submit with a manually wired label + description + error. Submitting
+              empty (or with a past date) marks the date picker invalid through its public props,
+              and the error clears as soon as a valid date is picked.
             </p>
-            <Form<{ deliveryDate: string }>
-              onFormSubmit={({ deliveryDate: submittedDeliveryDate }) =>
-                setConfirmedDate(submittedDeliveryDate)
-              }
+            <form
+              onSubmit={handleDeliverySubmit}
               className="flex flex-col items-start gap-4 max-w-sm"
             >
-              <Field.Root name="deliveryDate">
-                <Field.Label>Delivery date</Field.Label>
+              <DemoField
+                id="delivery-date"
+                label="Delivery date"
+                description="When should we ship your order?"
+                error={deliveryError}
+              >
                 <DatePicker
+                  isRequired
                   value={deliveryDate}
                   onChange={(v) => {
                     setDeliveryDate(v as CalendarDate | null);
-                    setConfirmedDate(null);
+                    if (v) setDeliveryError(undefined);
                   }}
-                  isRequired
-                  minValue={tz.today()}
                 />
-                <Field.Description>When should we ship your order?</Field.Description>
-                <Field.Error match="valueMissing">Please select a delivery date.</Field.Error>
-                <Field.Error match="customError" />
-              </Field.Root>
+              </DemoField>
               <Button type="submit">Schedule delivery</Button>
-            </Form>
+            </form>
             {confirmedDate && (
               <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                 ✓ Delivery scheduled for <strong>{confirmedDate}</strong>

@@ -9,34 +9,66 @@ import {
   type Ref,
 } from "react";
 import type { DateValue } from "@internationalized/date";
-import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { cn } from "@/lib/utils";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
-import {
-  useDateFieldState,
-  type DateFieldStateChange,
-  type Granularity,
-  type HourCycle,
-} from "./use-date-field-state";
+import { useDateFieldState, type Granularity, type HourCycle } from "./use-date-field-state";
 import { useCalendarState, type FirstDayOfWeek } from "../calendar/use-calendar-state";
 import { CalendarView } from "../calendar/calendar-view";
 import { DateInputGroup, DatePopover, DatePickerPopoverTrigger } from "./date-input-group";
 import { useDateFieldT } from "./i18n";
-import {
-  invalidMessageKey,
-  isTargetWithin,
-  useControlledState,
-  useDateFieldFieldBridge,
-} from "./use-date-field-bridge";
 
 /**
  * Public date controls.
  *
  * These are standalone composite widgets built on plain accessible markup and a
- * proxy input for form value / native validity. Inside `Field.Root`, they also
- * register with Base UI's label, description, and validation plumbing. All of
- * that coupling lives in `useDateFieldFieldBridge` (see `./use-date-field-bridge`).
+ * proxy input for form value / native validity. They intentionally do not hook
+ * into Base UI's internal Field/Form wiring.
  */
+
+function invalidMessageKey(
+  reason: "range" | "unavailable" | null | undefined,
+): "dateUnavailable" | "dateOutOfRange" | null {
+  if (reason === "unavailable") return "dateUnavailable";
+  if (reason === "range") return "dateOutOfRange";
+  return null;
+}
+
+function assignRef<T>(ref: Ref<T | null> | undefined, value: T | null) {
+  if (!ref) return;
+  if (typeof ref === "function") {
+    ref(value);
+    return;
+  }
+  ref.current = value;
+}
+
+function useProxyInputRef(forwardedRef: Ref<HTMLInputElement> | undefined, customValidity: string) {
+  return useCallback(
+    (node: HTMLInputElement | null) => {
+      if (node) node.setCustomValidity(customValidity);
+      assignRef(forwardedRef, node);
+    },
+    [customValidity, forwardedRef],
+  );
+}
+
+function useControlledState<V>(
+  controlled: V | undefined,
+  defaultValue: V,
+  onChange?: (value: V) => void,
+): [V, (value: V) => void] {
+  const isControlled = controlled !== undefined;
+  const [internal, setInternal] = useState<V>(defaultValue);
+  const value = isControlled ? (controlled as V) : internal;
+  const set = useCallback(
+    (next: V) => {
+      if (!isControlled) setInternal(next);
+      onChange?.(next);
+    },
+    [isControlled, onChange],
+  );
+  return [value, set];
+}
 
 interface DateControlProps<T extends DateValue> {
   value?: T | null;
@@ -46,7 +78,7 @@ interface DateControlProps<T extends DateValue> {
   granularity?: Granularity;
   minValue?: DateValue;
   maxValue?: DateValue;
-  isDateUnavailable?: (date: DateValue) => boolean;
+  isDateUnavailable?: (date: T) => boolean;
   isDisabled?: boolean;
   isReadOnly?: boolean;
   isRequired?: boolean;
@@ -78,8 +110,9 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
 /**
  * A segmented date/time input field with no popover.
  *
- * Compose with `Field.Root` for label / description / error presentation, or
- * provide standalone ARIA wiring yourself.
+ * Provide an accessible name with `aria-label` or `aria-labelledby`. For
+ * visible labels / descriptions / errors, wire them manually with standard
+ * HTML + ARIA attributes.
  */
 const DateField = forwardRef(function DateField<T extends DateValue = DateValue>(
   {
@@ -109,68 +142,53 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   }: DateFieldProps<T>,
   ref: ForwardedRef<HTMLInputElement>,
 ) {
-  const fieldRoot = useFieldRootContext();
   const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
-  const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
-  const resolvedReadOnly = !!isReadOnly;
   const groupRef = useRef<HTMLDivElement>(null);
   const t = useDateFieldT();
-  const handleStateChangeRef = useRef<(change: DateFieldStateChange) => void>(() => {});
 
   const state = useDateFieldState({
     value,
     defaultValue,
     onChange: onChange as (v: DateValue | null) => void,
-    onStateChange: (change) => handleStateChangeRef.current(change),
     granularity,
     locale: resolvedLocale,
     hourCycle,
     placeholderValue,
     minValue,
     maxValue,
-    isDateUnavailable,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
-    isReadOnly: resolvedReadOnly,
+    isReadOnly,
   });
 
   const localValidationMessage = useMemo(() => {
     const key = invalidMessageKey(state.invalidReason);
-    return key ? t(key) : undefined;
+    return key ? t(key) : "";
   }, [state.invalidReason, t]);
-  const bindings = useDateFieldFieldBridge({
-    id,
-    name,
-    inputValue: state.fieldValue?.toString() ?? "",
-    hasInput: state.hasInput,
-    localValidationMessage,
-    isDisabled: resolvedDisabled,
-    isReadOnly: resolvedReadOnly,
-    isRequired,
-    isInvalid,
-    labelledBy: ariaLabelledby,
-    describedBy: ariaDescribedby,
-    ariaLabel,
-    onBlur,
-    groupRef,
-    forwardedRef: ref,
-  });
-  handleStateChangeRef.current = bindings.handleStateChange;
+  const derivedInvalid = !!isInvalid || !!localValidationMessage;
+
+  const setProxyRef = useProxyInputRef(ref, localValidationMessage);
+
+  const focusFirstSegment = useCallback(() => {
+    const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
+    first?.focus();
+  }, []);
 
   return (
     <div data-slot="date-field" className={cn("astw:relative", className)}>
       <input
-        ref={bindings.proxyRef}
-        id={bindings.controlId}
-        name={bindings.name}
+        ref={setProxyRef}
+        id={id}
+        name={name}
         tabIndex={-1}
         aria-hidden="true"
-        disabled={bindings.isDisabled}
-        readOnly={bindings.isReadOnly}
-        required={bindings.isRequired}
+        disabled={isDisabled}
+        readOnly={isReadOnly}
+        required={isRequired}
         value={state.fieldValue?.toString() ?? ""}
         onChange={() => {}}
-        onFocus={bindings.focusFirstSegment}
+        onFocus={focusFirstSegment}
         className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
       />
       <DateInputGroup
@@ -182,17 +200,16 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
         applyShortcut={state.applyShortcut}
         commitOnBlur={state.commitOnBlur}
         expandShortYear={state.expandShortYear}
-        isDisabled={bindings.isDisabled}
-        isReadOnly={bindings.isReadOnly}
-        isInvalid={bindings.isInvalid}
-        isRequired={bindings.isRequired}
+        isDisabled={isDisabled}
+        isReadOnly={isReadOnly}
+        isInvalid={derivedInvalid}
+        isRequired={isRequired}
         autoFocus={autoFocus}
-        ariaLabelledby={bindings.labelledBy}
-        ariaLabel={bindings.ariaLabel}
-        describedById={bindings.describedBy}
+        ariaLabelledby={ariaLabelledby}
+        ariaLabel={ariaLabel}
+        describedById={ariaDescribedby}
         groupRef={groupRef}
-        onGroupFocus={bindings.handleGroupFocus}
-        onGroupBlur={bindings.handleGroupBlur}
+        onGroupBlur={onBlur}
       />
     </div>
   );
@@ -203,8 +220,9 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
 /**
  * A date/time input with a popover calendar.
  *
- * Compose with `Field.Root` for label / description / error presentation, or
- * provide standalone ARIA wiring yourself.
+ * Provide an accessible name with `aria-label` or `aria-labelledby`. For
+ * visible labels / descriptions / errors, wire them manually with standard
+ * HTML + ARIA attributes.
  */
 const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValue>(
   {
@@ -235,20 +253,14 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   }: DatePickerProps<T>,
   ref: ForwardedRef<HTMLInputElement>,
 ) {
-  const fieldRoot = useFieldRootContext();
   const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz.value;
-  const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
-  const resolvedReadOnly = !!isReadOnly;
   const t = useDateFieldT();
 
   const [open, setOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
-  const hasFocusWithinRef = useRef(false);
-  const handleStateChangeRef = useRef<(change: DateFieldStateChange) => void>(() => {});
   const [val, setVal] = useControlledState<DateValue | null>(
     value,
     defaultValue ?? null,
@@ -258,7 +270,6 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   const fieldState = useDateFieldState({
     value: val,
     onChange: setVal,
-    onStateChange: (change) => handleStateChangeRef.current(change),
     granularity,
     locale: resolvedLocale,
     timeZone: resolvedTz,
@@ -266,9 +277,9 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     placeholderValue,
     minValue,
     maxValue,
-    isDateUnavailable,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
-    isReadOnly: resolvedReadOnly,
+    isReadOnly,
   });
 
   const calState = useCalendarState({
@@ -279,9 +290,9 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     },
     minValue,
     maxValue,
-    isDateUnavailable,
-    isDisabled: resolvedDisabled,
-    isReadOnly: resolvedReadOnly,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDisabled,
+    isReadOnly,
     firstDayOfWeek,
     locale: resolvedLocale,
     timeZone: resolvedTz,
@@ -289,82 +300,37 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
 
   const localValidationMessage = useMemo(() => {
     const key = invalidMessageKey(fieldState.invalidReason);
-    return key ? t(key) : undefined;
+    return key ? t(key) : "";
   }, [fieldState.invalidReason, t]);
-  const bindings = useDateFieldFieldBridge({
-    id,
-    name,
-    inputValue: fieldState.fieldValue?.toString() ?? "",
-    hasInput: fieldState.hasInput,
-    localValidationMessage,
-    isDisabled: resolvedDisabled,
-    isReadOnly: resolvedReadOnly,
-    isRequired,
-    isInvalid,
-    labelledBy: ariaLabelledby,
-    describedBy: ariaDescribedby,
-    ariaLabel,
-    onBlur,
-    groupRef: fieldRef,
-    forwardedRef: ref,
-  });
-  handleStateChangeRef.current = bindings.handleStateChange;
+  const derivedInvalid = !!isInvalid || !!localValidationMessage;
 
-  const handleCompositeFocus = useCallback(() => {
-    hasFocusWithinRef.current = true;
-    bindings.handleGroupFocus();
-  }, [bindings]);
+  const setProxyRef = useProxyInputRef(ref, localValidationMessage);
 
-  const handleCompositeBlur = useCallback(() => {
-    if (!hasFocusWithinRef.current) return;
-    hasFocusWithinRef.current = false;
-    bindings.handleGroupBlur();
-  }, [bindings]);
-
-  const handleGroupBlur = useCallback(
-    (nextFocused: EventTarget | null) => {
-      if (isTargetWithin(nextFocused, popupRef)) return;
-      handleCompositeBlur();
-    },
-    [handleCompositeBlur],
-  );
-
-  const handlePopupBlur = useCallback(
-    (nextFocused: EventTarget | null) => {
-      if (isTargetWithin(nextFocused, fieldRef) || isTargetWithin(nextFocused, popupRef)) return;
-      handleCompositeBlur();
-    },
-    [handleCompositeBlur],
-  );
-
-  let popoverAriaLabel: string | undefined;
-  if (bindings.labelledBy == null) {
-    popoverAriaLabel = ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate");
-  }
+  const focusFirstSegment = useCallback(() => {
+    const first = fieldRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
+    first?.focus();
+  }, []);
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
       <input
-        ref={bindings.proxyRef}
-        id={bindings.controlId}
-        name={bindings.name}
+        ref={setProxyRef}
+        id={id}
+        name={name}
         tabIndex={-1}
         aria-hidden="true"
-        disabled={bindings.isDisabled}
-        readOnly={bindings.isReadOnly}
-        required={bindings.isRequired}
+        disabled={isDisabled}
+        readOnly={isReadOnly}
+        required={isRequired}
         value={fieldState.fieldValue?.toString() ?? ""}
         onChange={() => {}}
-        onFocus={bindings.focusFirstSegment}
+        onFocus={focusFirstSegment}
         className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
       />
       <DatePopover
         open={open}
         onOpenChange={setOpen}
-        ariaLabel={popoverAriaLabel}
-        ariaLabelledby={bindings.labelledBy}
-        popupRef={popupRef}
-        onPopupBlur={handlePopupBlur}
+        ariaLabel={ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate")}
         anchor={fieldRef}
         field={
           <DateInputGroup
@@ -377,27 +343,21 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
             onOpenCalendar={() => setOpen(true)}
-            isDisabled={bindings.isDisabled}
-            isReadOnly={bindings.isReadOnly}
-            isInvalid={bindings.isInvalid}
-            isRequired={bindings.isRequired}
+            isDisabled={isDisabled}
+            isReadOnly={isReadOnly}
+            isInvalid={derivedInvalid}
+            isRequired={isRequired}
             autoFocus={autoFocus}
-            ariaLabelledby={bindings.labelledBy}
-            ariaLabel={bindings.ariaLabel}
-            describedById={bindings.describedBy}
+            ariaLabelledby={ariaLabelledby}
+            ariaLabel={ariaLabel}
+            describedById={ariaDescribedby}
             groupRef={fieldRef}
-            trigger={<DatePickerPopoverTrigger disabled={bindings.isDisabled} />}
-            onGroupFocus={handleCompositeFocus}
-            onGroupBlur={handleGroupBlur}
+            trigger={<DatePickerPopoverTrigger disabled={isDisabled} />}
+            onGroupBlur={onBlur}
           />
         }
       >
-        <CalendarView
-          state={calState}
-          ariaLabel={bindings.labelledBy ? undefined : (ariaLabel ?? t("calendar"))}
-          ariaLabelledBy={bindings.labelledBy}
-          inPopover
-        />
+        <CalendarView state={calState} ariaLabel={ariaLabel ?? t("calendar")} inPopover />
       </DatePopover>
     </div>
   );
@@ -406,4 +366,3 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
 ) => ReactElement;
 
 export { DateField, DatePicker };
-export type { DateControlProps };

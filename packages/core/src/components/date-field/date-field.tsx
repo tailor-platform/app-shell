@@ -8,6 +8,7 @@ import {
   type ForwardedRef,
   type ReactElement,
   type Ref,
+  type RefObject,
 } from "react";
 import type { DateValue } from "@internationalized/date";
 import { useRegisterFieldControl } from "@base-ui/react/internals/field-register-control";
@@ -129,6 +130,13 @@ function useControlledState<V>(
 function isSameDateValue(a: DateValue | null | undefined, b: DateValue | null | undefined) {
   if (a == null || b == null) return a == null && b == null;
   return a.compare(b as never) === 0;
+}
+
+function isTargetWithin(
+  target: EventTarget | null,
+  ref: RefObject<HTMLElement | null>,
+): target is Node {
+  return target instanceof Node && ref.current?.contains(target) === true;
 }
 
 interface DateFieldBridgeOptions {
@@ -521,6 +529,8 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
 
   const [open, setOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const hasFocusWithinRef = useRef(false);
   const [val, setVal] = useControlledState<DateValue | null>(
     value,
     defaultValue ?? null,
@@ -540,22 +550,6 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
     firstDayOfWeek,
     isReadOnly,
-  });
-
-  const calState = useCalendarState({
-    value: val,
-    onChange: (d) => {
-      setVal(d);
-      setOpen(false);
-    },
-    minValue,
-    maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
-    isDisabled,
-    isReadOnly,
-    firstDayOfWeek,
-    locale: resolvedLocale,
-    timeZone: resolvedTz,
   });
 
   const localValidationMessage = useMemo(() => {
@@ -580,6 +574,63 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     const first = fieldRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
     first?.focus();
   }, []);
+
+  const handleCompositeFocus = useCallback(() => {
+    hasFocusWithinRef.current = true;
+    bridge.onGroupFocus();
+  }, [bridge]);
+
+  const handleCompositeBlur = useCallback(() => {
+    if (!hasFocusWithinRef.current) return;
+    hasFocusWithinRef.current = false;
+    bridge.onGroupBlur();
+    onBlur?.();
+  }, [bridge, onBlur]);
+
+  const handleGroupBlur = useCallback(
+    (nextFocused: EventTarget | null) => {
+      if (isTargetWithin(nextFocused, popupRef)) return;
+      handleCompositeBlur();
+    },
+    [handleCompositeBlur],
+  );
+
+  const handlePopupBlur = useCallback(
+    (nextFocused: EventTarget | null) => {
+      if (isTargetWithin(nextFocused, fieldRef) || isTargetWithin(nextFocused, popupRef)) return;
+      handleCompositeBlur();
+    },
+    [handleCompositeBlur],
+  );
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      setOpen(nextOpen);
+      if (nextOpen) return;
+      queueMicrotask(() => {
+        if (isTargetWithin(document.activeElement, fieldRef)) return;
+        if (isTargetWithin(document.activeElement, popupRef)) return;
+        handleCompositeBlur();
+      });
+    },
+    [handleCompositeBlur],
+  );
+
+  const calState = useCalendarState({
+    value: val,
+    onChange: (d) => {
+      setVal(d);
+      handleOpenChange(false);
+    },
+    minValue,
+    maxValue,
+    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDisabled,
+    isReadOnly,
+    firstDayOfWeek,
+    locale: resolvedLocale,
+    timeZone: resolvedTz,
+  });
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
@@ -606,8 +657,17 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
       />
       <DatePopover
         open={open}
-        onOpenChange={setOpen}
-        ariaLabel={ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate")}
+        onOpenChange={handleOpenChange}
+        ariaLabel={
+          bridge.ariaLabelledby
+            ? undefined
+            : ariaLabel
+              ? t("chooseDateFor", { name: ariaLabel })
+              : t("chooseDate")
+        }
+        ariaLabelledby={bridge.ariaLabelledby}
+        popupRef={popupRef}
+        onPopupBlur={handlePopupBlur}
         anchor={fieldRef}
         field={
           <DateInputGroup
@@ -619,7 +679,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             applyShortcut={fieldState.applyShortcut}
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
-            onOpenCalendar={() => setOpen(true)}
+            onOpenCalendar={() => handleOpenChange(true)}
             isDisabled={bridge.isDisabled}
             isReadOnly={isReadOnly}
             isInvalid={bridge.isInvalid}
@@ -630,15 +690,17 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             describedById={bridge.describedById}
             groupRef={fieldRef}
             trigger={<DatePickerPopoverTrigger disabled={bridge.isDisabled} />}
-            onGroupFocus={bridge.onGroupFocus}
-            onGroupBlur={() => {
-              bridge.onGroupBlur();
-              onBlur?.();
-            }}
+            onGroupFocus={handleCompositeFocus}
+            onGroupBlur={handleGroupBlur}
           />
         }
       >
-        <CalendarView state={calState} ariaLabel={ariaLabel ?? t("calendar")} inPopover />
+        <CalendarView
+          state={calState}
+          ariaLabel={bridge.ariaLabelledby ? undefined : (ariaLabel ?? t("calendar"))}
+          ariaLabelledBy={bridge.ariaLabelledby}
+          inPopover
+        />
       </DatePopover>
     </div>
   );

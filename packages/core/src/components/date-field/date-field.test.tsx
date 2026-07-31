@@ -917,6 +917,20 @@ describe("DatePicker", () => {
     expect(document.activeElement?.getAttribute("role")).not.toBe("spinbutton");
   });
 
+  it("uses the Field.Root label for the popup dialog and calendar", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="shipDate">
+        <Field.Label>Ship date</Field.Label>
+        <DatePicker />
+      </Field.Root>,
+    );
+
+    await user.click(screen.getAllByRole("button")[0]);
+    expect(await screen.findByRole("dialog", { name: "Ship date" })).toBeDefined();
+    expect(screen.getByRole("grid", { name: "Ship date" })).toBeDefined();
+  });
+
   it("clears a controlled DatePicker when the value is reset to null", () => {
     const { rerender } = render(
       <DatePicker
@@ -967,6 +981,39 @@ describe("DatePicker keyboard", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeDefined();
+    });
+  });
+
+  it("does not blur when focus moves from the field into the popup", async () => {
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    render(<DatePicker aria-label="Date" onBlur={onBlur} />);
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => {
+      expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
+    });
+    expect(onBlur).not.toHaveBeenCalled();
+  });
+
+  it("blurs once focus leaves the popup", async () => {
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    render(
+      <>
+        <DatePicker aria-label="Date" onBlur={onBlur} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => {
+      expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
+    });
+
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+    await waitFor(() => {
+      expect(onBlur).toHaveBeenCalledTimes(1);
     });
   });
 

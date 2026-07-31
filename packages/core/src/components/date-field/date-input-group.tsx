@@ -78,7 +78,7 @@ interface DateInputGroupProps {
   /** Called once when focus enters the group from outside. */
   onGroupFocus?: () => void;
   /** Called once when focus leaves the group entirely. */
-  onGroupBlur?: () => void;
+  onGroupBlur?: (nextFocused: EventTarget | null) => void;
 }
 
 export function DateInputGroup({
@@ -249,7 +249,7 @@ export function DateInputGroup({
         // impossible day.
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
           commitOnBlur();
-          onGroupBlur?.();
+          onGroupBlur?.(e.relatedTarget);
         }
       }}
     >
@@ -355,6 +355,9 @@ interface DatePopoverProps {
   field: ReactNode;
   children: ReactNode;
   ariaLabel?: string;
+  ariaLabelledby?: string;
+  popupRef?: Ref<HTMLDivElement>;
+  onPopupBlur?: (nextFocused: EventTarget | null) => void;
   /**
    * Element to position the calendar against. Defaults to the trigger; pass the
    * field group so the calendar aligns to the field's edge (not the icon),
@@ -369,6 +372,9 @@ export function DatePopover({
   field,
   children,
   ariaLabel,
+  ariaLabelledby,
+  popupRef,
+  onPopupBlur,
   anchor,
 }: DatePopoverProps) {
   const t = useDateFieldT();
@@ -379,14 +385,21 @@ export function DatePopover({
         <Popover.Positioner anchor={anchor} sideOffset={4} side="bottom" align="start">
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup
+            ref={popupRef}
             role="dialog"
-            aria-label={ariaLabel ?? t("chooseDate")}
+            aria-labelledby={ariaLabelledby}
+            aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t("chooseDate"))}
             data-slot="date-picker-popover"
             className={cn(
               "astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95",
               "astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                onPopupBlur?.(e.relatedTarget);
+              }
+            }}
           >
             {children}
           </Popover.Popup>

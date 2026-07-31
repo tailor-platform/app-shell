@@ -350,6 +350,13 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
   timeZone?: string;
 };
 
+function toDateUnavailablePredicate<T extends DateValue>(
+  predicate?: (date: T) => boolean,
+): ((date: DateValue) => boolean) | undefined {
+  if (!predicate) return undefined;
+  return (date: DateValue) => predicate(date as T);
+}
+
 function hasSegmentValue(segments: Segment[]) {
   return segments.some((segment) => segment.type !== "literal" && !segment.isPlaceholder);
 }
@@ -360,6 +367,18 @@ function hasSegmentValue(segments: Segment[]) {
  * Provide an accessible name with `aria-label` or `aria-labelledby`. When used
  * inside `Field.Root`, `Field.Label` / `Field.Description` / `Field.Error`
  * wiring is automatic.
+ *
+ * @example
+ * ```tsx
+ * import { DateField, Field } from "@tailor-platform/app-shell";
+ *
+ * <DateField aria-label="Invoice date" />;
+ *
+ * <Field.Root name="invoiceDate">
+ *   <Field.Label>Invoice date</Field.Label>
+ *   <DateField />
+ * </Field.Root>;
+ * ```
  */
 const DateField = forwardRef(function DateField<T extends DateValue = DateValue>(
   {
@@ -393,6 +412,10 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   const resolvedLocale = localeProp ?? shellLocale;
   const groupRef = useRef<HTMLDivElement>(null);
   const t = useDateFieldT();
+  const dateUnavailable = useMemo(
+    () => toDateUnavailablePredicate(isDateUnavailable),
+    [isDateUnavailable],
+  );
 
   const state = useDateFieldState({
     value,
@@ -404,7 +427,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     placeholderValue,
     minValue,
     maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDateUnavailable: dateUnavailable,
     firstDayOfWeek,
     isReadOnly,
   });
@@ -491,6 +514,18 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
  * Provide an accessible name with `aria-label` or `aria-labelledby`. When used
  * inside `Field.Root`, `Field.Label` / `Field.Description` / `Field.Error`
  * wiring is automatic.
+ *
+ * @example
+ * ```tsx
+ * import { DatePicker, Field, getLocalTimeZone, today } from "@tailor-platform/app-shell";
+ *
+ * <DatePicker aria-label="Ship date" />;
+ *
+ * <Field.Root name="shipDate">
+ *   <Field.Label>Ship date</Field.Label>
+ *   <DatePicker minValue={today(getLocalTimeZone())} />
+ * </Field.Root>;
+ * ```
  */
 const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValue>(
   {
@@ -526,6 +561,10 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz.value;
   const t = useDateFieldT();
+  const dateUnavailable = useMemo(
+    () => toDateUnavailablePredicate(isDateUnavailable),
+    [isDateUnavailable],
+  );
 
   const [open, setOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -547,7 +586,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     placeholderValue,
     minValue,
     maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDateUnavailable: dateUnavailable,
     firstDayOfWeek,
     isReadOnly,
   });
@@ -624,13 +663,18 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     },
     minValue,
     maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDateUnavailable: dateUnavailable,
     isDisabled,
     isReadOnly,
     firstDayOfWeek,
     locale: resolvedLocale,
     timeZone: resolvedTz,
   });
+
+  let popoverAriaLabel: string | undefined;
+  if (!bridge.ariaLabelledby) {
+    popoverAriaLabel = ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate");
+  }
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
@@ -658,13 +702,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
       <DatePopover
         open={open}
         onOpenChange={handleOpenChange}
-        ariaLabel={
-          bridge.ariaLabelledby
-            ? undefined
-            : ariaLabel
-              ? t("chooseDateFor", { name: ariaLabel })
-              : t("chooseDate")
-        }
+        ariaLabel={popoverAriaLabel}
         ariaLabelledby={bridge.ariaLabelledby}
         popupRef={popupRef}
         onPopupBlur={handlePopupBlur}

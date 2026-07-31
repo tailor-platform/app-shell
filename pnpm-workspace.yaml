@@ -48,6 +48,8 @@ minimumReleaseAgeExclude:
   - "@tailor-platform/auth-public-client"
   # Renovate security update: postcss@8.5.18
   - postcss@8.5.18
+  # Renovate security update: vite@7.3.5
+  - vite@7.3.5
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.

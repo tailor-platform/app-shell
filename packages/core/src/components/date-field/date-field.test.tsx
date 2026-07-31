@@ -12,6 +12,7 @@ import {
   isSameDay,
 } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import { Field } from "../field";
 import { DateField, DatePicker } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
@@ -67,7 +68,7 @@ describe("snapshots", () => {
 
   it("DatePicker — closed", () => {
     const { container } = render(<DatePicker aria-label="Ship date" />);
-    expect(container.innerHTML).toMatchSnapshot();
+    expect(container.innerHTML.replace(/id="base-ui-[^"]+"/g, 'id="base-ui-ID"')).toMatchSnapshot();
   });
 });
 
@@ -114,6 +115,37 @@ describe("DateField", () => {
     const group = screen.getByRole("group");
     expect(group.getAttribute("aria-describedby")).toBe("date-help date-error");
     expect(group.hasAttribute("data-invalid")).toBe(true);
+    expect(screen.getByText("Required")).toBeDefined();
+  });
+
+  it("integrates with Field.Root label + description wiring", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="invoiceDate">
+        <Field.Label>Invoice date</Field.Label>
+        <DateField />
+        <Field.Description>Pick the invoice date</Field.Description>
+      </Field.Root>,
+    );
+
+    const group = screen.getByRole("group", { name: "Invoice date" });
+    expect(group.getAttribute("aria-describedby")).toBeTruthy();
+    expect(screen.getByText("Pick the invoice date")).toBeDefined();
+
+    await user.click(screen.getByText("Invoice date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
+  });
+
+  it("inherits invalid state from Field.Root", () => {
+    render(
+      <Field.Root name="invoiceDate" error={{ message: "Required" }}>
+        <Field.Label>Invoice date</Field.Label>
+        <DateField />
+        <Field.Error match={true}>Required</Field.Error>
+      </Field.Root>,
+    );
+
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
     expect(screen.getByText("Required")).toBeDefined();
   });
 
@@ -865,6 +897,24 @@ describe("DatePicker", () => {
   it("supports manual invalid state", () => {
     render(<DatePicker aria-label="Date" isInvalid />);
     expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+  });
+
+  it("integrates with Field.Root label + disabled state", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="shipDate" disabled>
+        <Field.Label>Ship date</Field.Label>
+        <DatePicker />
+        <Field.Description>Choose a ship date</Field.Description>
+      </Field.Root>,
+    );
+
+    const group = screen.getByRole("group", { name: "Ship date" });
+    expect(group.getAttribute("aria-disabled")).toBe("true");
+    expect(group.getAttribute("aria-describedby")).toBeTruthy();
+
+    await user.click(screen.getByText("Ship date"));
+    expect(document.activeElement?.getAttribute("role")).not.toBe("spinbutton");
   });
 
   it("clears a controlled DatePicker when the value is reset to null", () => {

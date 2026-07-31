@@ -1,6 +1,7 @@
-import { cloneElement, useState, type FormEvent, type ReactElement } from "react";
+import { useState, type FormEvent, type ReactElement } from "react";
 import {
   Layout,
+  Field,
   DateField,
   DatePicker,
   Calendar,
@@ -13,13 +14,6 @@ import {
 } from "@tailor-platform/app-shell";
 import { CalendarDays } from "lucide-react";
 
-type DemoFieldControlProps = {
-  id?: string;
-  "aria-labelledby"?: string;
-  "aria-describedby"?: string;
-  isInvalid?: boolean;
-};
-
 function DemoField({
   id,
   label,
@@ -31,34 +25,15 @@ function DemoField({
   label: string;
   description?: string;
   error?: string;
-  children: ReactElement<DemoFieldControlProps>;
+  children: ReactElement;
 }) {
-  const describedBy = [description && `${id}-description`, error && `${id}-error`]
-    .filter(Boolean)
-    .join(" ");
-
   return (
-    <div className="flex flex-col gap-1 items-start">
-      <label id={`${id}-label`} htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {cloneElement(children, {
-        id,
-        "aria-labelledby": `${id}-label`,
-        "aria-describedby": describedBy || undefined,
-        isInvalid: !!error || children.props.isInvalid,
-      })}
-      {description && (
-        <p id={`${id}-description`} className="text-sm text-muted-foreground">
-          {description}
-        </p>
-      )}
-      {error && (
-        <p id={`${id}-error`} className="text-sm font-medium text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+    <Field.Root name={id} invalid={!!error} className="flex flex-col gap-1 items-start">
+      <Field.Label>{label}</Field.Label>
+      {children}
+      {description && <Field.Description>{description}</Field.Description>}
+      {error && <Field.Error match={true}>{error}</Field.Error>}
+    </Field.Root>
   );
 }
 
@@ -77,8 +52,8 @@ const DatePickerPage = () => {
   const tomorrow = tz.today().add({ days: 1 });
   const threeMonths = tz.today().add({ months: 3 });
 
-  // Validation runs on submit; label / description / error wiring stays plain
-  // HTML + ARIA so the date controls don't depend on Base UI's internal Field plumbing.
+  // Validation runs on submit; the example uses AppShell's `Field` wiring so
+  // the date controls behave like the other form inputs in the library.
   const handleDeliverySubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!deliveryDate) {
@@ -198,9 +173,10 @@ const DatePickerPage = () => {
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">In a form (submit validation)</h2>
             <p className="text-sm text-muted-foreground">
-              Standard form submit with a manually wired label + description + error. Submitting
-              empty (or with a past date) marks the date picker invalid through its public props,
-              and the error clears as soon as a valid date is picked.
+              Standard form submit with AppShell{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">Field</code> wiring. Submitting empty
+              (or with a past date) marks the date picker invalid, and the error clears as soon as a
+              valid date is picked.
             </p>
             <form
               onSubmit={handleDeliverySubmit}

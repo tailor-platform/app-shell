@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -9,9 +10,22 @@ import {
   type Ref,
 } from "react";
 import type { DateValue } from "@internationalized/date";
+import { useRegisterFieldControl } from "@base-ui/react/internals/field-register-control";
+import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
+import { useFormContext } from "@base-ui/react/internals/form-context";
+import {
+  useAriaLabelledBy,
+  useLabelableContext,
+  useLabelableId,
+} from "@base-ui/react/internals/labelable-provider";
 import { cn } from "@/lib/utils";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
-import { useDateFieldState, type Granularity, type HourCycle } from "./use-date-field-state";
+import {
+  useDateFieldState,
+  type Granularity,
+  type HourCycle,
+  type Segment,
+} from "./use-date-field-state";
 import { useCalendarState, type FirstDayOfWeek } from "../calendar/use-calendar-state";
 import { CalendarView } from "../calendar/calendar-view";
 import { DateInputGroup, DatePopover, DatePickerPopoverTrigger } from "./date-input-group";
@@ -21,8 +35,10 @@ import { useDateFieldT } from "./i18n";
  * Public date controls.
  *
  * These are standalone composite widgets built on plain accessible markup and a
- * proxy input for form value / native validity. They intentionally do not hook
- * into Base UI's internal Field/Form wiring.
+ * proxy input for form value / native validity. When rendered inside
+ * `Field.Root`, they also bridge into Base UI's field/form wiring so
+ * `Field.Label`, `Field.Description`, `Field.Error`, and form error routing work
+ * the same way they do for the other AppShell form controls.
  */
 
 function invalidMessageKey(
@@ -42,13 +58,18 @@ function assignRef<T>(ref: Ref<T | null> | undefined, value: T | null) {
   ref.current = value;
 }
 
-function useProxyInputRef(forwardedRef: Ref<HTMLInputElement> | undefined, customValidity: string) {
+function useProxyInputRef(
+  fieldRef: Ref<HTMLInputElement> | undefined,
+  forwardedRef: Ref<HTMLInputElement> | undefined,
+  customValidity: string,
+) {
   return useCallback(
     (node: HTMLInputElement | null) => {
       if (node) node.setCustomValidity(customValidity);
+      assignRef(fieldRef, node);
       assignRef(forwardedRef, node);
     },
-    [customValidity, forwardedRef],
+    [customValidity, fieldRef, forwardedRef],
   );
 }
 
@@ -68,6 +89,185 @@ function useControlledState<V>(
     [isControlled, onChange],
   );
   return [value, set];
+}
+
+function isSameDateValue(a: DateValue | null | undefined, b: DateValue | null | undefined) {
+  if (a == null || b == null) return a == null && b == null;
+  return a.compare(b as never) === 0;
+}
+
+interface DateFieldBridgeOptions {
+  id?: string;
+  name?: string;
+  value: DateValue | null;
+  hasValue: boolean;
+  isDisabled?: boolean;
+  isInvalid?: boolean;
+  customValidity: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  ref?: Ref<HTMLInputElement>;
+}
+
+/**
+ * Adapts the standalone date widgets to Base UI's `Field` / `Form` contract.
+ *
+ * Why this exists:
+ * - `DateField` / `DatePicker` are hand-rolled composite widgets made of a
+ *   labelled `role="group"` plus per-segment `role="spinbutton"` elements.
+ * - Base UI's form ecosystem (`Field.Root`, `Field.Label`, `Field.Description`,
+ *   `Field.Error`, `Form`) is built around a *registered control* that exposes
+ *   an id, name, ref, value, validation lifecycle, and field state updates.
+ * - The date widgets already render a hidden proxy `<input>` for native form
+ *   submission and validity bubbles, but without this bridge that input is just
+ *   a DOM detail — Base UI wouldn't know to associate labels/descriptions with
+ *   it, treat it as the field's control, or drive dirty/touched/focused state.
+ *
+ * What this hook does:
+ * - resolves the effective control `id` / `name`
+ * - derives `aria-labelledby` / `aria-describedby` from Base UI's labelable
+ *   context so `Field.Label` / `Field.Description` / `Field.Error` work
+ * - registers the hidden proxy input as the field control via
+ *   `useRegisterFieldControl`
+ * - mirrors Base UI field state onto the visual date group (`disabled`,
+ *   `invalid`) so styling and accessibility stay in sync
+ * - updates form state (`filled`, `dirty`, `focused`, `touched`) and triggers
+ *   validation / server-error clearing on change and blur
+ *
+ * Standalone safety:
+ * Base UI's internals fall back to inert default contexts outside `Field.Root`
+ * / `Form`, so this hook becomes a no-op bridge and the date widgets continue
+ * to work as plain standalone controls.
+ *
+ * We keep all Base UI internals usage here so the dependency surface is narrow:
+ * if Base UI changes these internals in the future, this is the one place to
+ * adjust rather than spreading the coupling throughout both date components.
+ */
+function useDateFieldFieldBridge({
+  id: idProp,
+  name: nameProp,
+  value,
+  hasValue,
+  isDisabled,
+  isInvalid,
+  customValidity,
+  "aria-labelledby": ariaLabelledbyProp,
+  "aria-describedby": ariaDescribedbyProp,
+  ref,
+}: DateFieldBridgeOptions) {
+  const { clearErrors, errors } = useFormContext();
+  const {
+    name: fieldName,
+    disabled: fieldDisabled,
+    invalid: fieldInvalid,
+    state: fieldState,
+    validityData,
+    setTouched,
+    setDirty,
+    setFilled,
+    setFocused,
+    validationMode,
+    validation,
+    shouldValidateOnChange,
+  } = useFieldRootContext();
+  const { labelId, messageIds } = useLabelableContext();
+
+  const needsRegisteredId = idProp != null || fieldName != null || labelId != null;
+  const generatedId = useLabelableId({ id: idProp });
+  const id = needsRegisteredId ? generatedId : idProp;
+  const ariaLabelledby = useAriaLabelledBy(
+    ariaLabelledbyProp,
+    labelId,
+    validation.inputRef,
+    true,
+    id,
+  );
+  const describedById = [ariaDescribedbyProp, ...messageIds].filter(Boolean).join(" ") || undefined;
+
+  const resolvedDisabled = fieldDisabled || isDisabled;
+  const resolvedName = fieldName ?? nameProp;
+  const hasFormError =
+    !!resolvedName && Object.hasOwn(errors, resolvedName) && errors[resolvedName] !== undefined;
+  const resolvedInvalid =
+    !!isInvalid || fieldInvalid === true || fieldState.valid === false || hasFormError;
+
+  const setProxyRef = useProxyInputRef(validation.inputRef, ref, customValidity);
+  const getFormValue = useCallback(() => value?.toString() ?? "", [value]);
+  useRegisterFieldControl(validation.inputRef, id, value, getFormValue, id != null);
+
+  const latestValueRef = useRef<DateValue | null>(value);
+  latestValueRef.current = value;
+
+  const didMountRef = useRef(false);
+  const pendingBlurValidationRef = useRef(false);
+
+  useEffect(() => {
+    const initialValue = validityData.initialValue as DateValue | null;
+    const isDirty =
+      value != null && initialValue != null
+        ? !isSameDateValue(value, initialValue)
+        : hasValue || initialValue != null;
+
+    setFilled(hasValue);
+    setDirty(isDirty);
+
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    if (resolvedName) clearErrors(resolvedName);
+
+    if (pendingBlurValidationRef.current) {
+      pendingBlurValidationRef.current = false;
+      validation.commit(latestValueRef.current);
+      return;
+    }
+
+    if (shouldValidateOnChange() && (value != null || !hasValue)) {
+      validation.commit(latestValueRef.current);
+    }
+  }, [
+    clearErrors,
+    hasValue,
+    resolvedName,
+    setDirty,
+    setFilled,
+    shouldValidateOnChange,
+    validation,
+    validityData.initialValue,
+    value,
+  ]);
+
+  const handleGroupFocus = useCallback(() => {
+    setFocused(true);
+  }, [setFocused]);
+
+  const handleGroupBlur = useCallback(() => {
+    setTouched(true);
+    setFocused(false);
+
+    if (validationMode === "onBlur") {
+      pendingBlurValidationRef.current = true;
+      queueMicrotask(() => {
+        if (!pendingBlurValidationRef.current) return;
+        pendingBlurValidationRef.current = false;
+        validation.commit(latestValueRef.current);
+      });
+    }
+  }, [setFocused, setTouched, validation, validationMode]);
+
+  return {
+    id,
+    name: resolvedName,
+    isDisabled: resolvedDisabled,
+    isInvalid: resolvedInvalid,
+    ariaLabelledby,
+    describedById,
+    setProxyRef,
+    onGroupFocus: handleGroupFocus,
+    onGroupBlur: handleGroupBlur,
+  };
 }
 
 interface DateControlProps<T extends DateValue> {
@@ -107,12 +307,16 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
   timeZone?: string;
 };
 
+function hasSegmentValue(segments: Segment[]) {
+  return segments.some((segment) => segment.type !== "literal" && !segment.isPlaceholder);
+}
+
 /**
  * A segmented date/time input field with no popover.
  *
- * Provide an accessible name with `aria-label` or `aria-labelledby`. For
- * visible labels / descriptions / errors, wire them manually with standard
- * HTML + ARIA attributes.
+ * Provide an accessible name with `aria-label` or `aria-labelledby`. When used
+ * inside `Field.Root`, `Field.Label` / `Field.Description` / `Field.Error`
+ * wiring is automatic.
  */
 const DateField = forwardRef(function DateField<T extends DateValue = DateValue>(
   {
@@ -166,9 +370,19 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     const key = invalidMessageKey(state.invalidReason);
     return key ? t(key) : "";
   }, [state.invalidReason, t]);
-  const derivedInvalid = !!isInvalid || !!localValidationMessage;
 
-  const setProxyRef = useProxyInputRef(ref, localValidationMessage);
+  const bridge = useDateFieldFieldBridge({
+    id,
+    name,
+    value: state.fieldValue,
+    hasValue: hasSegmentValue(state.segments),
+    isDisabled,
+    isInvalid: !!isInvalid || !!localValidationMessage,
+    customValidity: localValidationMessage,
+    ref,
+    "aria-labelledby": ariaLabelledby,
+    "aria-describedby": ariaDescribedby,
+  });
 
   const focusFirstSegment = useCallback(() => {
     const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
@@ -178,12 +392,12 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   return (
     <div data-slot="date-field" className={cn("astw:relative", className)}>
       <input
-        ref={setProxyRef}
-        id={id}
-        name={name}
+        ref={bridge.setProxyRef}
+        id={bridge.id}
+        name={bridge.name}
         tabIndex={-1}
         aria-hidden="true"
-        disabled={isDisabled}
+        disabled={bridge.isDisabled}
         readOnly={isReadOnly}
         required={isRequired}
         value={state.fieldValue?.toString() ?? ""}
@@ -200,16 +414,20 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
         applyShortcut={state.applyShortcut}
         commitOnBlur={state.commitOnBlur}
         expandShortYear={state.expandShortYear}
-        isDisabled={isDisabled}
+        isDisabled={bridge.isDisabled}
         isReadOnly={isReadOnly}
-        isInvalid={derivedInvalid}
+        isInvalid={bridge.isInvalid}
         isRequired={isRequired}
         autoFocus={autoFocus}
-        ariaLabelledby={ariaLabelledby}
+        ariaLabelledby={bridge.ariaLabelledby}
         ariaLabel={ariaLabel}
-        describedById={ariaDescribedby}
+        describedById={bridge.describedById}
         groupRef={groupRef}
-        onGroupBlur={onBlur}
+        onGroupFocus={bridge.onGroupFocus}
+        onGroupBlur={() => {
+          bridge.onGroupBlur();
+          onBlur?.();
+        }}
       />
     </div>
   );
@@ -220,9 +438,9 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
 /**
  * A date/time input with a popover calendar.
  *
- * Provide an accessible name with `aria-label` or `aria-labelledby`. For
- * visible labels / descriptions / errors, wire them manually with standard
- * HTML + ARIA attributes.
+ * Provide an accessible name with `aria-label` or `aria-labelledby`. When used
+ * inside `Field.Root`, `Field.Label` / `Field.Description` / `Field.Error`
+ * wiring is automatic.
  */
 const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValue>(
   {
@@ -302,9 +520,19 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     const key = invalidMessageKey(fieldState.invalidReason);
     return key ? t(key) : "";
   }, [fieldState.invalidReason, t]);
-  const derivedInvalid = !!isInvalid || !!localValidationMessage;
 
-  const setProxyRef = useProxyInputRef(ref, localValidationMessage);
+  const bridge = useDateFieldFieldBridge({
+    id,
+    name,
+    value: fieldState.fieldValue,
+    hasValue: hasSegmentValue(fieldState.segments),
+    isDisabled,
+    isInvalid: !!isInvalid || !!localValidationMessage,
+    customValidity: localValidationMessage,
+    ref,
+    "aria-labelledby": ariaLabelledby,
+    "aria-describedby": ariaDescribedby,
+  });
 
   const focusFirstSegment = useCallback(() => {
     const first = fieldRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
@@ -314,12 +542,12 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
       <input
-        ref={setProxyRef}
-        id={id}
-        name={name}
+        ref={bridge.setProxyRef}
+        id={bridge.id}
+        name={bridge.name}
         tabIndex={-1}
         aria-hidden="true"
-        disabled={isDisabled}
+        disabled={bridge.isDisabled}
         readOnly={isReadOnly}
         required={isRequired}
         value={fieldState.fieldValue?.toString() ?? ""}
@@ -343,17 +571,21 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
             onOpenCalendar={() => setOpen(true)}
-            isDisabled={isDisabled}
+            isDisabled={bridge.isDisabled}
             isReadOnly={isReadOnly}
-            isInvalid={derivedInvalid}
+            isInvalid={bridge.isInvalid}
             isRequired={isRequired}
             autoFocus={autoFocus}
-            ariaLabelledby={ariaLabelledby}
+            ariaLabelledby={bridge.ariaLabelledby}
             ariaLabel={ariaLabel}
-            describedById={ariaDescribedby}
+            describedById={bridge.describedById}
             groupRef={fieldRef}
-            trigger={<DatePickerPopoverTrigger disabled={isDisabled} />}
-            onGroupBlur={onBlur}
+            trigger={<DatePickerPopoverTrigger disabled={bridge.isDisabled} />}
+            onGroupFocus={bridge.onGroupFocus}
+            onGroupBlur={() => {
+              bridge.onGroupBlur();
+              onBlur?.();
+            }}
           />
         }
       >

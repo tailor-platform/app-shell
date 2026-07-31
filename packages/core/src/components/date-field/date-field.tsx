@@ -24,13 +24,26 @@ function invalidMessageKey(
   return null;
 }
 
-function assignRef<T>(ref: React.Ref<T> | undefined, value: T) {
+function assignRef<T>(ref: React.Ref<T | null> | undefined, value: T | null) {
   if (!ref) return;
   if (typeof ref === "function") {
     ref(value);
     return;
   }
   ref.current = value;
+}
+
+function useProxyInputRef(
+  forwardedRef: React.Ref<HTMLInputElement> | undefined,
+  customValidity: string,
+) {
+  return React.useCallback(
+    (node: HTMLInputElement | null) => {
+      if (node) node.setCustomValidity(customValidity);
+      assignRef(forwardedRef, node);
+    },
+    [customValidity, forwardedRef],
+  );
 }
 
 function useControlledState<V>(
@@ -126,7 +139,6 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
   const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
   const groupRef = React.useRef<HTMLDivElement>(null);
-  const proxyRef = React.useRef<HTMLInputElement>(null);
   const t = useDateFieldT();
 
   const state = useDateFieldState({
@@ -150,22 +162,12 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
   }, [state.invalidReason, t]);
   const derivedInvalid = !!isInvalid || !!localValidationMessage;
 
-  const setProxyRef = React.useCallback(
-    (node: HTMLInputElement | null) => {
-      proxyRef.current = node;
-      assignRef(ref, node);
-    },
-    [ref],
-  );
+  const setProxyRef = useProxyInputRef(ref, localValidationMessage);
 
   const focusFirstSegment = React.useCallback(() => {
     const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
     first?.focus();
   }, []);
-
-  React.useEffect(() => {
-    proxyRef.current?.setCustomValidity(localValidationMessage);
-  }, [localValidationMessage]);
 
   return (
     <div data-slot="date-field" className={cn("astw:relative", className)}>
@@ -253,7 +255,6 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
 
   const [open, setOpen] = React.useState(false);
   const fieldRef = React.useRef<HTMLDivElement>(null);
-  const proxyRef = React.useRef<HTMLInputElement>(null);
   const [val, setVal] = useControlledState<DateValue | null>(
     value,
     defaultValue ?? null,
@@ -297,22 +298,12 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
   }, [fieldState.invalidReason, t]);
   const derivedInvalid = !!isInvalid || !!localValidationMessage;
 
-  const setProxyRef = React.useCallback(
-    (node: HTMLInputElement | null) => {
-      proxyRef.current = node;
-      assignRef(ref, node);
-    },
-    [ref],
-  );
+  const setProxyRef = useProxyInputRef(ref, localValidationMessage);
 
   const focusFirstSegment = React.useCallback(() => {
     const first = fieldRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
     first?.focus();
   }, []);
-
-  React.useEffect(() => {
-    proxyRef.current?.setCustomValidity(localValidationMessage);
-  }, [localValidationMessage]);
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>

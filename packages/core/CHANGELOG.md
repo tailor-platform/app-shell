@@ -1,5 +1,18 @@
 # @tailor-platform/app-shell
 
+## 1.10.1
+
+### Patch Changes
+
+- adf2119: Fix `DataTable` empty/error-state message not being vertically centered — it now
+  centers in the reserved area instead of sitting near the top. The message was
+  positioned with `position: sticky`, whose offset only applies while scrolling,
+  so in the common (non-scrolling) case it stayed at the top of the cell; it now
+  uses `vertical-align: middle`.
+- f45aa47: Raise the bundled `react-router` dependency to the latest v7 release.
+
+  This picks up the current v7 security and hardening fixes while avoiding the breaking changes in React Router v8.
+
 ## 1.10.0
 
 ### Minor Changes

@@ -1,4 +1,13 @@
-import * as React from "react";
+import {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ForwardedRef,
+  type ReactElement,
+  type Ref,
+} from "react";
 import type { DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
@@ -24,7 +33,7 @@ function invalidMessageKey(
   return null;
 }
 
-function assignRef<T>(ref: React.Ref<T | null> | undefined, value: T | null) {
+function assignRef<T>(ref: Ref<T | null> | undefined, value: T | null) {
   if (!ref) return;
   if (typeof ref === "function") {
     ref(value);
@@ -33,11 +42,8 @@ function assignRef<T>(ref: React.Ref<T | null> | undefined, value: T | null) {
   ref.current = value;
 }
 
-function useProxyInputRef(
-  forwardedRef: React.Ref<HTMLInputElement> | undefined,
-  customValidity: string,
-) {
-  return React.useCallback(
+function useProxyInputRef(forwardedRef: Ref<HTMLInputElement> | undefined, customValidity: string) {
+  return useCallback(
     (node: HTMLInputElement | null) => {
       if (node) node.setCustomValidity(customValidity);
       assignRef(forwardedRef, node);
@@ -52,9 +58,9 @@ function useControlledState<V>(
   onChange?: (value: V) => void,
 ): [V, (value: V) => void] {
   const isControlled = controlled !== undefined;
-  const [internal, setInternal] = React.useState<V>(defaultValue);
+  const [internal, setInternal] = useState<V>(defaultValue);
   const value = isControlled ? (controlled as V) : internal;
-  const set = React.useCallback(
+  const set = useCallback(
     (next: V) => {
       if (!isControlled) setInternal(next);
       onChange?.(next);
@@ -108,7 +114,7 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
  * visible labels / descriptions / errors, wire them manually with standard
  * HTML + ARIA attributes.
  */
-const DateField = React.forwardRef(function DateField<T extends DateValue = DateValue>(
+const DateField = forwardRef(function DateField<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -134,11 +140,11 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
     "aria-labelledby": ariaLabelledby,
     "aria-describedby": ariaDescribedby,
   }: DateFieldProps<T>,
-  ref: React.ForwardedRef<HTMLInputElement>,
+  ref: ForwardedRef<HTMLInputElement>,
 ) {
   const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
-  const groupRef = React.useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
   const t = useDateFieldT();
 
   const state = useDateFieldState({
@@ -156,7 +162,7 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
     isReadOnly,
   });
 
-  const localValidationMessage = React.useMemo(() => {
+  const localValidationMessage = useMemo(() => {
     const key = invalidMessageKey(state.invalidReason);
     return key ? t(key) : "";
   }, [state.invalidReason, t]);
@@ -164,7 +170,7 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
 
   const setProxyRef = useProxyInputRef(ref, localValidationMessage);
 
-  const focusFirstSegment = React.useCallback(() => {
+  const focusFirstSegment = useCallback(() => {
     const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
     first?.focus();
   }, []);
@@ -208,8 +214,8 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
     </div>
   );
 }) as <T extends DateValue = DateValue>(
-  props: DateFieldProps<T> & { ref?: React.Ref<HTMLInputElement> },
-) => React.ReactElement;
+  props: DateFieldProps<T> & { ref?: Ref<HTMLInputElement> },
+) => ReactElement;
 
 /**
  * A date/time input with a popover calendar.
@@ -218,7 +224,7 @@ const DateField = React.forwardRef(function DateField<T extends DateValue = Date
  * visible labels / descriptions / errors, wire them manually with standard
  * HTML + ARIA attributes.
  */
-const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = DateValue>(
+const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -245,7 +251,7 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
     "aria-labelledby": ariaLabelledby,
     "aria-describedby": ariaDescribedby,
   }: DatePickerProps<T>,
-  ref: React.ForwardedRef<HTMLInputElement>,
+  ref: ForwardedRef<HTMLInputElement>,
 ) {
   const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
@@ -253,8 +259,8 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
   const resolvedTz = timeZoneProp ?? shellTz.value;
   const t = useDateFieldT();
 
-  const [open, setOpen] = React.useState(false);
-  const fieldRef = React.useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const fieldRef = useRef<HTMLDivElement>(null);
   const [val, setVal] = useControlledState<DateValue | null>(
     value,
     defaultValue ?? null,
@@ -292,7 +298,7 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
     timeZone: resolvedTz,
   });
 
-  const localValidationMessage = React.useMemo(() => {
+  const localValidationMessage = useMemo(() => {
     const key = invalidMessageKey(fieldState.invalidReason);
     return key ? t(key) : "";
   }, [fieldState.invalidReason, t]);
@@ -300,7 +306,7 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
 
   const setProxyRef = useProxyInputRef(ref, localValidationMessage);
 
-  const focusFirstSegment = React.useCallback(() => {
+  const focusFirstSegment = useCallback(() => {
     const first = fieldRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
     first?.focus();
   }, []);
@@ -356,7 +362,7 @@ const DatePicker = React.forwardRef(function DatePicker<T extends DateValue = Da
     </div>
   );
 }) as <T extends DateValue = DateValue>(
-  props: DatePickerProps<T> & { ref?: React.Ref<HTMLInputElement> },
-) => React.ReactElement;
+  props: DatePickerProps<T> & { ref?: Ref<HTMLInputElement> },
+) => ReactElement;
 
 export { DateField, DatePicker };

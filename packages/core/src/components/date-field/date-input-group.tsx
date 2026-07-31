@@ -1,4 +1,13 @@
-import * as React from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type ComponentProps,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+} from "react";
 import { Popover } from "@base-ui/react/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,9 +72,9 @@ interface DateInputGroupProps {
   ariaLabel?: string;
   describedById?: string;
   className?: string;
-  trigger?: React.ReactNode;
+  trigger?: ReactNode;
   /** Ref to the group element — used to anchor the popover to the whole field. */
-  groupRef?: React.Ref<HTMLDivElement>;
+  groupRef?: Ref<HTMLDivElement>;
   /** Called once when focus enters the group from outside. */
   onGroupFocus?: () => void;
   /** Called once when focus leaves the group entirely. */
@@ -97,19 +106,19 @@ export function DateInputGroup({
   onGroupBlur,
 }: DateInputGroupProps) {
   const t = useDateFieldT();
-  const editableRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const editableRefs = useRef<(HTMLDivElement | null)[]>([]);
   // Digits typed into the currently-focused segment this session. Reset on
   // focus; the first digit (count 0) replaces, and the count decides when the
   // segment is "full" and should auto-advance.
-  const typedCountRef = React.useRef(0);
+  const typedCountRef = useRef(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (autoFocus && !isDisabled) editableRefs.current[0]?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Index editable segments for left/right focus movement.
-  const editableIndexById = React.useMemo(() => {
+  const editableIndexById = useMemo(() => {
     const map = new Map<number, number>();
     let i = 0;
     segments.forEach((s, idx) => {
@@ -124,7 +133,7 @@ export function DateInputGroup({
   };
 
   const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLDivElement>,
+    e: KeyboardEvent<HTMLDivElement>,
     segment: Segment,
     editableIndex: number,
   ) => {
@@ -321,7 +330,7 @@ const triggerClasses = cn(
 export function DatePickerPopoverTrigger({
   className,
   ...props
-}: React.ComponentProps<typeof Popover.Trigger>) {
+}: ComponentProps<typeof Popover.Trigger>) {
   const t = useDateFieldT();
   return (
     <Popover.Trigger
@@ -343,15 +352,15 @@ interface DatePopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** The field group — must contain a `DatePickerPopoverTrigger`. */
-  field: React.ReactNode;
-  children: React.ReactNode;
+  field: ReactNode;
+  children: ReactNode;
   ariaLabel?: string;
   /**
    * Element to position the calendar against. Defaults to the trigger; pass the
    * field group so the calendar aligns to the field's edge (not the icon),
    * overlapping it horizontally and shifting inward near the viewport edge.
    */
-  anchor?: React.RefObject<HTMLElement | null>;
+  anchor?: RefObject<HTMLElement | null>;
 }
 
 export function DatePopover({

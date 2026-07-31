@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, useState, type FormEvent, type ReactElement } from "react";
+import { cloneElement, useState, type FormEvent, type ReactElement } from "react";
 import {
   Layout,
   DateField,
@@ -13,6 +13,13 @@ import {
 } from "@tailor-platform/app-shell";
 import { CalendarDays } from "lucide-react";
 
+type DemoFieldControlProps = {
+  id?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  isInvalid?: boolean;
+};
+
 function DemoField({
   id,
   label,
@@ -24,7 +31,7 @@ function DemoField({
   label: string;
   description?: string;
   error?: string;
-  children: ReactElement;
+  children: ReactElement<DemoFieldControlProps>;
 }) {
   const describedBy = [description && `${id}-description`, error && `${id}-error`]
     .filter(Boolean)
@@ -35,14 +42,12 @@ function DemoField({
       <label id={`${id}-label`} htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
-      {isValidElement(children)
-        ? cloneElement(children, {
-            id,
-            "aria-labelledby": `${id}-label`,
-            "aria-describedby": describedBy || undefined,
-            isInvalid: !!error || children.props.isInvalid,
-          })
-        : children}
+      {cloneElement(children, {
+        id,
+        "aria-labelledby": `${id}-label`,
+        "aria-describedby": describedBy || undefined,
+        isInvalid: !!error || children.props.isInvalid,
+      })}
       {description && (
         <p id={`${id}-description`} className="text-sm text-muted-foreground">
           {description}

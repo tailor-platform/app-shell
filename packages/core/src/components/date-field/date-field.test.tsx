@@ -13,10 +13,18 @@ import {
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DateField, DatePicker } from "./date-field";
 
+// This suite is the parity contract for the standalone DateField / DatePicker:
+// it asserts public behaviour + the DOM accessibility contract (spinbutton
+// segments, role="grid" cells with data-* state attributes, role="dialog"
+// popover), not implementation details.
+
 afterEach(() => {
   cleanup();
 });
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Find day cells inside a calendar grid (not nav buttons). */
 function getCalendarCells() {
   return screen.getAllByRole("button", { hidden: true }).filter((c) => c.closest('[role="grid"]'));
 }
@@ -34,6 +42,9 @@ async function expectLastEmit(onChange: ReturnType<typeof vi.fn>, expected: stri
 }
 
 function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+  // A controlled field round-trips every emit through the parent's `value`, so
+  // these guard the clamp against external-sync interference (the uncontrolled
+  // cases above don't exercise that path).
   const [value, setValue] = useState<CalendarDate | null>(null);
 
   return (
@@ -50,6 +61,10 @@ function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
     </>
   );
 }
+
+// ─── Snapshots ──────────────────────────────────────────────────────────────
+// Visual-structure snapshots per the add-component convention. Inputs are
+// pinned (fixed `defaultValue`, no live "today" in view) so output is stable.
 
 describe("snapshots", () => {
   it("DateField", () => {
@@ -82,9 +97,12 @@ describe("snapshots", () => {
   });
 });
 
+// ─── DateField ─────────────────────────────────────────────────────────────
+
 describe("DateField", () => {
   it("renders standalone with an aria-label", () => {
     render(<DateField aria-label="Invoice date" />);
+    // segments are exposed as spinbuttons for day, month, year
     expect(screen.getAllByRole("spinbutton").length).toBeGreaterThan(0);
   });
 
@@ -124,6 +142,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(<DateField aria-label="Date" onChange={onChange} />);
 
+    // Fill every segment by aria-label (order-independent across locales).
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("06");
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
@@ -139,6 +158,8 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(<DateField aria-label="Date" onChange={onChange} />);
 
+    // Locale here is "en" → MM/DD/YYYY. Typing carries across segments:
+    // "02" fills+advances month, "15" fills+advances day, "2025" fills year.
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("02152025");
 
@@ -165,6 +186,8 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(<DateField aria-label="Date" onChange={onChange} />);
 
+    // Type the day first — "31" must not collapse to "1" just because the
+    // eventual month might have fewer days.
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("31");
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -185,12 +208,14 @@ describe("DateField", () => {
       </>,
     );
 
+    // Enter 30 / 02 / 2026 (Feb 2026 has 28 days) — invalid until blur.
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("30");
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("02");
     await user.click(screen.getByRole("spinbutton", { name: "year" }));
     await user.keyboard("2026");
+    // Blur the field.
     await user.click(screen.getByRole("button", { name: "elsewhere" }));
 
     await expectLastEmit(onChange, "2026-02-28");
@@ -238,6 +263,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(<ControlledField onChange={onChange} />);
 
+    // First enter a genuinely valid leap-year date.
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("29");
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -246,6 +272,7 @@ describe("DateField", () => {
     await user.keyboard("2024");
     await expectLastEmit(onChange, "2024-02-29");
 
+    // Now change the year to a non-leap year — 29 Feb no longer exists.
     await user.click(screen.getByRole("spinbutton", { name: "year" }));
     await user.keyboard("2026");
     await user.click(screen.getByRole("button", { name: "elsewhere" }));
@@ -258,6 +285,8 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(<DateField aria-label="Date" onChange={onChange} />);
 
+    // 29 typed before the month (allowed), then Feb 2026 (28 days). The moment
+    // the 4-digit year lands, the day self-corrects — without leaving the field.
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("29");
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -281,12 +310,16 @@ describe("DateField", () => {
     await user.keyboard("2024");
     await expectLastEmit(onChange, "2024-02-29");
 
+    // Retype the year to a non-leap year — corrects on completion, no blur.
     await user.click(screen.getByRole("spinbutton", { name: "year" }));
     await user.keyboard("2026");
 
     await expectLastEmit(onChange, "2026-02-28");
   });
 
+  // On-blur backfill: a provided day (finest unit) lets the coarser fields
+  // default to the current month/year. The anchor for a bare DateField is
+  // today("UTC"), so expectations are derived from that same basis.
   it("backfills the current month + year when only the day is entered, on blur", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -337,6 +370,7 @@ describe("DateField", () => {
     await user.keyboard("2025");
     await user.click(screen.getByRole("button", { name: "elsewhere" }));
 
+    // The day is the trigger for backfill; without it we never guess a value.
     expect(onChange.mock.calls.some(([value]) => value != null)).toBe(false);
   });
 
@@ -366,6 +400,7 @@ describe("DateField", () => {
     );
     expect(screen.getByRole("spinbutton", { name: "day" }).textContent).toBe("15");
 
+    // Parent clears the field: value={null} is controlled-empty, not uncontrolled.
     rerender(<DateField aria-label="Date" value={null} onChange={() => {}} />);
     expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
       "Empty",
@@ -386,6 +421,7 @@ describe("DateField", () => {
       <DateField aria-label="Date" minValue={new CalendarDate(2025, 6, 10)} onChange={onChange} />,
     );
 
+    // en order: month / day / year — type 5 Jun 2025 (before the 10 Jun min).
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("06052025");
 
@@ -405,6 +441,8 @@ describe("DateField", () => {
     expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
   });
 
+  // The standalone DateField (no calendar) also exposes firstDayOfWeek so a
+  // consumer in a non-default-week-start locale can steer the w/k shortcuts.
   it("honours firstDayOfWeek for 'w' in a standalone DateField", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -424,6 +462,11 @@ describe("DateField", () => {
     await expectLastEmit(onChange, "2025-06-16");
   });
 });
+
+// ─── Keyboard: whole-date shortcuts (QBO-style) ───────────────────────────
+// These fire from any focused date segment and set the entire date in one go.
+// A bare DateField anchors on today("UTC"), so "today"/empty-field expectations
+// derive from that same basis. Locale here is "en" (weeks start Sunday).
 
 describe("DateField keyboard shortcuts", () => {
   it("'t' jumps to today (case-insensitive)", async () => {
@@ -621,6 +664,8 @@ describe("DateField keyboard shortcuts", () => {
     await user.keyboard("15");
     await user.click(screen.getByRole("spinbutton", { name: "year" }));
     await user.keyboard("26");
+    // Move focus to a sibling segment — never leaving the field/group. The year
+    // should still expand (mirrors tabbing to the calendar icon).
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
 
     await expectLastEmit(onChange, "2026-06-15");
@@ -641,11 +686,11 @@ describe("DateField keyboard shortcuts", () => {
     const group = screen.getByRole("group");
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
-    await user.keyboard("y");
+    await user.keyboard("y"); // year start = 1 Jan 2025 — before min; emitted, NOT clamped
     await expectLastEmit(onChange, "2025-01-01");
     expect(group.hasAttribute("data-invalid")).toBe(true);
 
-    await user.keyboard("r");
+    await user.keyboard("r"); // year end = 31 Dec 2025 — after max; emitted, NOT clamped
     await expectLastEmit(onChange, "2025-12-31");
     expect(group.hasAttribute("data-invalid")).toBe(true);
   });
@@ -672,6 +717,8 @@ describe("DateField keyboard shortcuts", () => {
     const onChange = vi.fn();
     render(<DateField aria-label="Date" onChange={onChange} />);
 
+    // en order: month / day / year. Type a single "1" into the month, then "/"
+    // to declare "that's the whole month" and move on to the day.
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("1/15");
     await user.keyboard("2025");
@@ -679,6 +726,8 @@ describe("DateField keyboard shortcuts", () => {
     await expectLastEmit(onChange, "2025-01-15");
   });
 });
+
+// ─── DatePicker ────────────────────────────────────────────────────────────
 
 describe("DatePicker", () => {
   it("renders standalone with an aria-label", () => {
@@ -756,12 +805,16 @@ describe("DatePicker", () => {
     );
     expect(screen.getByRole("spinbutton", { name: "day" }).textContent).toBe("15");
 
+    // Parent clears the field: value={null} is controlled-empty, not uncontrolled.
     rerender(<DatePicker aria-label="Date" value={null} onChange={() => {}} />);
     expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
       "Empty",
     );
   });
 
+  // Regression: the field path must honour DatePicker's firstDayOfWeek for w/k,
+  // not silently fall back to the locale default (which would disagree with the
+  // calendar path). en-US defaults to Sunday; firstDayOfWeek="mon" forces Monday.
   it("honours firstDayOfWeek for 'w' in the field path when the popover is closed", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -794,6 +847,9 @@ describe("DatePicker", () => {
       />,
     );
 
+    // Focus a segment (not the trigger) — the popover stays closed, so this is
+    // the field path. "y" targets 1 Jan: emitted as-is and flagged invalid,
+    // where the open-popover (calendar) path instead clamps the roving focus.
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("y");
 
@@ -809,13 +865,18 @@ describe("DatePicker", () => {
 
   it("localizes segment names and chrome from the AppShell locale (ja)", () => {
     render(<DatePicker aria-label="日付" />, { wrapper: createAppShellWrapper("ja") });
+    // Segment accessible name: month → 月.
     expect(screen.getByRole("spinbutton", { name: "月" })).toBeDefined();
+    // Popover trigger aria-label is localized too.
     expect(screen.getByRole("button", { name: "カレンダーを開く" })).toBeDefined();
+    // Empty segments announce the localized placeholder.
     expect(screen.getByRole("spinbutton", { name: "月" }).getAttribute("aria-valuetext")).toBe(
       "未入力",
     );
   });
 });
+
+// ─── Keyboard: popover focus ───────────────────────────────────────────────
 
 describe("DatePicker keyboard", () => {
   it("moves focus into the calendar grid when the popover opens", async () => {
@@ -841,6 +902,9 @@ describe("DatePicker keyboard", () => {
     });
   });
 
+  // While the popover is open, focus is in the grid — the shortcuts move the
+  // highlight (like the arrows), and Enter confirms. This is the calendar path,
+  // not the segment path.
   it("a shortcut moves the calendar highlight while the popover is open", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

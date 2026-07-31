@@ -16,7 +16,6 @@ import {
   DateField,
   DatePicker,
   Calendar,
-  Field,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
   getLocalTimeZone,
@@ -28,12 +27,11 @@ import {
 
 ## API shape
 
-`DateField` and `DatePicker` are **control-first** components.
+`DateField` and `DatePicker` are standalone composite controls.
 
 - They own date entry, keyboard behavior, constraints, locale/timezone handling, and form value serialization.
-- `Field.Root` owns label, description, invalid presentation, and error rendering.
-
-That matches the rest of the form stack (`Field`, `Select`, `Combobox`, `Autocomplete`).
+- They expose standard labeling hooks: `id`, `aria-label`, `aria-labelledby`, `aria-describedby`, and `isInvalid`.
+- They do **not** auto-wire into Base UI `Field.Root`; use standard HTML labels / descriptions / errors instead.
 
 ## DateField
 
@@ -43,14 +41,18 @@ Standalone usage with an accessible name:
 <DateField aria-label="Invoice date" />
 ```
 
-With `Field.Root` composition:
+With a visible label + description:
 
 ```tsx
-<Field.Root>
-  <Field.Label>Invoice date</Field.Label>
-  <DateField aria-label="Invoice date" />
-  <Field.Description>Format follows your locale</Field.Description>
-</Field.Root>
+<label id="invoice-date-label" htmlFor="invoice-date">
+  Invoice date
+</label>
+<DateField
+  id="invoice-date"
+  aria-labelledby="invoice-date-label"
+  aria-describedby="invoice-date-help"
+/>
+<p id="invoice-date-help">Format follows your locale</p>
 ```
 
 Controlled:
@@ -58,10 +60,7 @@ Controlled:
 ```tsx
 const [date, setDate] = useState<CalendarDate | null>(null);
 
-<Field.Root>
-  <Field.Label>Invoice date</Field.Label>
-  <DateField aria-label="Invoice date" value={date} onChange={setDate} />
-</Field.Root>;
+<DateField aria-label="Invoice date" value={date} onChange={setDate} />;
 ```
 
 ## DatePicker
@@ -75,17 +74,18 @@ A `DateField` with a calendar popover.
 Constrained + unavailable dates:
 
 ```tsx
-<Field.Root>
-  <Field.Label>Delivery date</Field.Label>
-  <DatePicker
-    aria-label="Delivery date"
-    minValue={today(getLocalTimeZone())}
-    isDateUnavailable={(date) => {
-      const dow = date.toDate(getLocalTimeZone()).getDay();
-      return dow === 0 || dow === 6; // weekends
-    }}
-  />
-</Field.Root>
+<label id="delivery-date-label" htmlFor="delivery-date">
+  Delivery date
+</label>
+<DatePicker
+  id="delivery-date"
+  aria-labelledby="delivery-date-label"
+  minValue={today(getLocalTimeZone())}
+  isDateUnavailable={(date) => {
+    const dow = date.toDate(getLocalTimeZone()).getDay();
+    return dow === 0 || dow === 6; // weekends
+  }}
+/>
 ```
 
 Week start:
@@ -94,16 +94,23 @@ Week start:
 <DatePicker aria-label="Date" firstDayOfWeek="mon" />
 ```
 
-## Validation with Field.Root
+## External errors
 
-Use the field shell for labels and external errors:
+Use standard HTML + ARIA for external errors:
 
 ```tsx
-<Field.Root invalid={!!error}>
-  <Field.Label>Delivery date</Field.Label>
-  <DatePicker aria-label="Delivery date" value={value} onChange={setValue} />
-  <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
+<label id="delivery-date-label" htmlFor="delivery-date">
+  Delivery date
+</label>
+<DatePicker
+  id="delivery-date"
+  aria-labelledby="delivery-date-label"
+  aria-describedby={error ? "delivery-date-error" : undefined}
+  isInvalid={!!error}
+  value={value}
+  onChange={setValue}
+/>
+{error && <p id="delivery-date-error">{error}</p>}
 ```
 
 ## Calendar
@@ -142,13 +149,15 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 | `isDisabled`                     | `boolean`                                                     | Disables interaction and form submission                   |
 | `isReadOnly`                     | `boolean`                                                     | Allows focus/navigation without editing                    |
 | `isRequired`                     | `boolean`                                                     | Marks the control required                                 |
+| `isInvalid`                      | `boolean`                                                     | Adds invalid styling / `aria-invalid` to the segmented UI  |
 | `placeholderValue`               | `DateValue`                                                   | Seeds unset segments                                       |
 | `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                           |
 | `locale`                         | `string`                                                      | BCP-47 locale override                                     |
-| `name`                           | `string`                                                      | Emits a form value through the hidden proxy input          |
-| `id`                             | `string`                                                      | Control id                                                 |
+| `name`                           | `string`                                                      | Emits a form value through the proxy input                 |
+| `id`                             | `string`                                                      | Proxy input id (use with external `<label htmlFor>`).      |
 | `firstDayOfWeek`                 | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale week start used by `w` / `k` shortcuts |
 | `aria-label` / `aria-labelledby` | `string`                                                      | Accessible name                                            |
+| `aria-describedby`               | `string`                                                      | IDs of description / error elements                        |
 | `className`                      | `string`                                                      | Root element class                                         |
 
 ### DatePickerProps
@@ -166,6 +175,5 @@ See the calendar docs in-code: controlled/uncontrolled value, min/max, unavailab
 
 ## Related
 
-- [Field](./form.md) — field shell for labels, descriptions, and errors
 - [useTimeZone](../api/use-time-zone.md)
 - [useResolvedLocale](../api/use-resolved-locale.md)

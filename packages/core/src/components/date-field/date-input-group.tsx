@@ -8,50 +8,14 @@ import { DATE_SHORTCUT_KEYS, type DateShortcut } from "@/lib/date-shortcuts";
 import type { Segment } from "./use-date-field-state";
 
 /**
- * Field presentation for the date components — the segmented spinbutton group,
- * its labels/description/error, and the popover wrapper used by `DatePicker`.
- * Built on Base UI primitives (`Popover`) + plain accessible markup, driven by
+ * Field presentation for the date components — the segmented spinbutton group
+ * and the popover wrapper used by `DatePicker`. Built on Base UI primitives
+ * (`Popover`) + plain accessible markup, driven by
  * our own `useDateFieldState` engine. Not exported from the package.
  *
  * Styling mirrors the rest of the library (`astw:` tokens, dark mode, the same
  * popover token set as our other Base UI popovers).
  */
-
-// ─── Field labels / description / error ───────────────────────────────────────
-
-// A composite spinbutton group can't be labelled by a native <label htmlFor>,
-// so the label is a <span> referenced via the group's `aria-labelledby` (the
-// APG date-field pattern).
-export function DatePickerLabel({ className, ...props }: React.ComponentProps<"span">) {
-  return (
-    <span
-      data-slot="date-picker-label"
-      className={cn("astw:text-sm astw:font-medium astw:text-foreground", className)}
-      {...props}
-    />
-  );
-}
-
-export function DatePickerDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="date-picker-description"
-      className={cn("astw:text-sm astw:text-muted-foreground", className)}
-      {...props}
-    />
-  );
-}
-
-export function DatePickerError({ className, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="date-picker-error"
-      role="alert"
-      className={cn("astw:text-sm astw:font-medium astw:text-destructive", className)}
-      {...props}
-    />
-  );
-}
 
 // ─── Segmented input group ────────────────────────────────────────────────────
 

@@ -2,16 +2,8 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  CalendarDate,
-  parseDate,
-  today,
-  getLocalTimeZone,
-  isSameDay,
-} from "@internationalized/date";
+import { CalendarDate, parseDate, isSameDay } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
-import { Field } from "../field";
-import { Form } from "../form";
 import { DateField, DatePicker } from "./date-field";
 
 afterEach(() => {
@@ -52,14 +44,21 @@ describe("snapshots", () => {
     expect(container.innerHTML).toMatchSnapshot();
   });
 
-  it("DateField — inside Field.Root", () => {
+  it("DateField — manually labelled + described", () => {
     const { container } = render(
-      <Field.Root invalid>
-        <Field.Label>Date</Field.Label>
-        <DateField aria-label="Date" />
-        <Field.Description>Pick a date</Field.Description>
-        <Field.Error match={true}>Required</Field.Error>
-      </Field.Root>,
+      <>
+        <label id="date-label" htmlFor="date-input">
+          Date
+        </label>
+        <DateField
+          id="date-input"
+          aria-labelledby="date-label"
+          aria-describedby="date-help date-error"
+          isInvalid
+        />
+        <p id="date-help">Pick a date</p>
+        <p id="date-error">Required</p>
+      </>,
     );
     expect(container.innerHTML).toMatchSnapshot();
   });
@@ -76,31 +75,33 @@ describe("DateField", () => {
     expect(screen.getAllByRole("spinbutton").length).toBeGreaterThan(0);
   });
 
-  it("integrates with Field.Label and focuses the first segment when the label is clicked", async () => {
+  it("focuses the first segment when a linked external label is clicked", async () => {
     const user = userEvent.setup();
     render(
-      <Field.Root>
-        <Field.Label>Date</Field.Label>
-        <DateField aria-label="Date" />
-      </Field.Root>,
+      <>
+        <label id="date-label" htmlFor="date-input">
+          Date
+        </label>
+        <DateField id="date-input" aria-labelledby="date-label" />
+      </>,
     );
 
     await user.click(screen.getByText("Date"));
     expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
   });
 
-  it("wires Field.Description / Field.Error through aria-describedby and invalid state", () => {
+  it("supports manual aria-describedby and invalid state", () => {
     render(
-      <Field.Root invalid>
-        <Field.Label>Date</Field.Label>
-        <DateField aria-label="Date" />
-        <Field.Description>Pick a date</Field.Description>
-        <Field.Error match={true}>Required</Field.Error>
-      </Field.Root>,
+      <>
+        <span id="date-label">Date</span>
+        <DateField aria-labelledby="date-label" aria-describedby="date-help date-error" isInvalid />
+        <p id="date-help">Pick a date</p>
+        <p id="date-error">Required</p>
+      </>,
     );
 
     const group = screen.getByRole("group");
-    expect(group.getAttribute("aria-describedby")).toBeTruthy();
+    expect(group.getAttribute("aria-describedby")).toBe("date-help date-error");
     expect(group.hasAttribute("data-invalid")).toBe(true);
     expect(screen.getByText("Required")).toBeDefined();
   });
@@ -410,15 +411,8 @@ describe("DatePicker", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("inherits invalid state from Field.Root", () => {
-    render(
-      <Field.Root invalid>
-        <Field.Label>Date</Field.Label>
-        <DatePicker aria-label="Date" />
-        <Field.Error match={true}>Required</Field.Error>
-      </Field.Root>,
-    );
-
+  it("supports manual invalid state", () => {
+    render(<DatePicker aria-label="Date" isInvalid />);
     expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
   });
 
@@ -429,79 +423,5 @@ describe("DatePicker", () => {
     expect(screen.getByRole("spinbutton", { name: "月" }).getAttribute("aria-valuetext")).toBe(
       "未入力",
     );
-  });
-});
-
-describe("DatePicker + Form", () => {
-  it("blocks submit and surfaces valueMissing through Field.Error", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(
-      <Form onSubmit={onSubmit}>
-        <Field.Root>
-          <Field.Label>Delivery date</Field.Label>
-          <DatePicker aria-label="Delivery date" name="deliveryDate" isRequired />
-          <Field.Error match="valueMissing">Required</Field.Error>
-        </Field.Root>
-        <button type="submit">Submit</button>
-      </Form>,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(await screen.findByText("Required")).toBeDefined();
-  });
-
-  it("blocks submit and surfaces local range validation through Field.Error", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(
-      <Form onSubmit={onSubmit}>
-        <Field.Root>
-          <Field.Label>Delivery date</Field.Label>
-          <DatePicker
-            aria-label="Delivery date"
-            name="deliveryDate"
-            minValue={today(getLocalTimeZone())}
-          />
-          <Field.Error />
-        </Field.Root>
-        <button type="submit">Submit</button>
-      </Form>,
-    );
-
-    await user.click(screen.getByRole("spinbutton", { name: "month" }));
-    await user.keyboard("01012025");
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(await screen.findByText("Date is outside the allowed range.")).toBeDefined();
-  });
-
-  it("submits once a required field has a valid date", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(
-      <Form onSubmit={onSubmit}>
-        <Field.Root>
-          <Field.Label>Delivery date</Field.Label>
-          <DatePicker aria-label="Delivery date" name="deliveryDate" isRequired />
-          <Field.Error match="valueMissing">Required</Field.Error>
-        </Field.Root>
-        <button type="submit">Submit</button>
-      </Form>,
-    );
-
-    await user.click(screen.getByRole("spinbutton", { name: "month" }));
-    await user.keyboard("06152025");
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
   });
 });

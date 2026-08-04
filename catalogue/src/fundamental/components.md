@@ -1,6 +1,6 @@
 # AppShell Components
 
-> **AppShell version:** `0.36.0` (matches `packages/erp-kit/templates/scaffold/app/*/frontend/package.json` pinned `@tailor-platform/app-shell` semver)
+> **AppShell version:** `1.7.0` (matches `packages/erp-kit/templates/scaffold/app/*/frontend/package.json` pinned `@tailor-platform/app-shell` semver)
 > **Source of truth:** `@tailor-platform/app-shell` exports
 > **Update process:** see "Keeping this file in sync" at the bottom
 
@@ -81,8 +81,8 @@ import { Button, Layout, Tabs } from "@tailor-platform/app-shell";
   <Layout.Header title="Purchase orders" actions={[<Button key="create">Create</Button>]}>
     <Tabs.Root value={bucket} onValueChange={setBucket}>
       <Tabs.List>
-        <Tabs.Trigger value="all">All</Tabs.Trigger>
-        <Tabs.Trigger value="open">Open</Tabs.Trigger>
+        <Tabs.Tab value="all">All</Tabs.Tab>
+        <Tabs.Tab value="open">Open</Tabs.Tab>
       </Tabs.List>
     </Tabs.Root>
   </Layout.Header>
@@ -108,6 +108,28 @@ import { Button, Layout, Tabs } from "@tailor-platform/app-shell";
 **Notes:** Children that aren't `Layout.Header` or `Layout.Column` are filtered out. Column gap overrides (`<Layout className="astw:gap-6" />`) → **`design-system.md`** §5 (`astw:` rules).
 
 **Used in patterns:** every page pattern (`list/*`, `detail/*`, `form/*`).
+
+### `Grid`
+
+**Import:** `import { Grid } from '@tailor-platform/app-shell'`
+**Purpose:** Presentational CSS-Grid container for laying tiles/cards into equal or custom columns with responsive reflow — the canonical wrapper for **metric / KPI strips** and card galleries. Purely layout; makes no data assumptions.
+**API:** `GridProps` — `columns` (number | CSS track string like `"280px 1fr"` | responsive object `{ initial, sm, md, lg, xl }`), `gap` (spacing step, default `3`) plus `gapX` / `gapY`, `minChildWidth` (auto-fit: as many ≥Npx columns as fit, no breakpoints needed), `rows`, `flow`, `align`, `justify`. Sub-component **`Grid.Item`** for spanning/placement — `colSpan`, `rowSpan`, `colStart`, `colEnd` (all responsive). Root carries `data-slot="grid"`.
+**Example — responsive KPI grid:**
+
+```tsx
+import { Grid, MetricCard } from "@tailor-platform/app-shell";
+
+<Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
+  <MetricCard title="Net total" value="$1,500" trend={{ direction: "up", value: "+5%" }} />
+  <MetricCard title="Open orders" value="42" />
+  <MetricCard title="Overdue" value="7" />
+  <MetricCard title="Suppliers" value="18" />
+</Grid>;
+```
+
+**Used in patterns:** metric / KPI strips on `detail/*` and dashboards; any equal-column card layout.
+
+**Notes:** Metric tiles and KPI cards **always** go in a `Grid` — never stacked one-per-row or in a single column. Use a responsive `columns` object (e.g. `{ initial: 1, md: 2, xl: 4 }`) so tiles reflow at smaller widths; reach for `minChildWidth` when the tile count is dynamic.
 
 ### `SidebarLayout`
 
@@ -266,6 +288,28 @@ import { Button, Link } from '@tailor-platform/app-shell';
 **API:** Compound — `Tooltip.Root`, `Tooltip.Trigger`, `Tooltip.Content`.
 **Used in patterns:** any pattern with icon-only buttons (must have `aria-label` AND a tooltip).
 
+### `Tabs`
+
+**Import:** `import { Tabs } from '@tailor-platform/app-shell'`
+**Purpose:** In-page tab navigation — split one record's sections (Overview / Line items / Activity) or bucket a list (All / Open / …) into switchable panels. Presentational; owns only the active-tab state.
+**API:** Compound — `Tabs.Root` (`variant`: `default | line | capsule`; controlled `value` + `onValueChange`, or uncontrolled `defaultValue`), `Tabs.List`, `Tabs.Tab` (`value`), `Tabs.Panel` (`value`). Note: the sub-component is **`Tabs.Tab`**, not `Tabs.Trigger`.
+**Example:**
+
+```tsx
+<Tabs.Root defaultValue="overview" variant="line">
+  <Tabs.List>
+    <Tabs.Tab value="overview">Overview</Tabs.Tab>
+    <Tabs.Tab value="items">Line items</Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panel value="overview">{/* … */}</Tabs.Panel>
+  <Tabs.Panel value="items">{/* … */}</Tabs.Panel>
+</Tabs.Root>
+```
+
+**Used in patterns:** `list-dense-scan` (bucket tabs composed **above** `DataTable.Root`, synced to `useCollectionVariables` — see the `DataTable` "Bucket tabs" note), `detail/*` (sectioned record content).
+
+**Notes:** For lists, AppShell's own filtering surface is **toolbar chips** (`DataTable.Filters`), not tabs — reach for `Tabs` only when the business genuinely thinks in a small set of named buckets. Don't render a `Tab` per enum value where a filter chip belongs.
+
 ---
 
 ## Display
@@ -276,14 +320,27 @@ import { Button, Link } from '@tailor-platform/app-shell';
 
 **Import:** `import { Badge } from '@tailor-platform/app-shell'`
 **Purpose:** Status labels and small categorical chips.
-**API:** `BadgeProps` — `variant`: `default | success | warning | neutral | error | destructive`. Plus `badgeVariants` CVA for custom-styled siblings.
+**API:** `BadgeProps` — `variant` (15 total):
+
+- **Filled** (high emphasis): `default` (primary), `success`, `warning`, `error`, `neutral`, `info`
+- **Subtle** (low emphasis, tinted): `subtle-success`, `subtle-warning`, `subtle-error`, `subtle-info`
+- **Outline** (renders a status dot — for row/list statuses): `outline-success`, `outline-warning`, `outline-error`, `outline-info`, `outline-neutral`
+
+Plus `badgeVariants` CVA for custom-styled siblings.
 **Example:**
 
 ```tsx
-<Badge variant="success">Active</Badge>
+// Primary / lifecycle status — filled semantic variant
+<Badge variant="success">Confirmed</Badge>
+// Secondary status (delivery, billing) — outline with status dot
+<Badge variant="outline-warning">Partially received</Badge>
+// Tag / label — subtle
+<Badge variant="subtle-info">New</Badge>
 ```
 
-**Used in patterns:** `list/*` (status column), `detail/*` (header status).
+**Used in patterns:** `list/*` (status column → `outline-*`), `detail/*` (header status).
+
+**Notes:** Encode status by **semantic color** with a primary/secondary split: a record's **primary/lifecycle status** uses a **filled** semantic variant (one per row / one in a detail header); **secondary statuses** (delivery, billing) use **`outline-*`** (status dot); tags use **`subtle-*`**. Reserve **`default`** (brand) for non-status emphasis. Full rule: **`design-system.md`** → Composition & emphasis rules.
 
 ### `Table`
 
@@ -291,7 +348,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
 
 **Import:** `import { Table } from '@tailor-platform/app-shell'`
 **Purpose:** Semantic data table with scrollable container.
-**API:** Compound — `Table.Root`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`. `Table.Root` accepts `containerClassName` for the outer wrapper, `className` for the inner `<table>`.
+**API:** Compound — `Table.Root`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`. `Table.Root` accepts `containerClassName` for the outer wrapper, `className` for the inner `<table>`. `Table.Head` and `Table.Cell` accept **`align`** (`"left" | "center" | "right"`, default `"left"`) — prefer this over ad-hoc `className="astw:text-right"` and pair the same alignment on the head and its column's cells (right for numeric/money, center for compact status/icon columns).
 **Example:**
 
 ```tsx
@@ -300,7 +357,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
     <Table.Row>
       <Table.Head>Order</Table.Head>
       <Table.Head>Status</Table.Head>
-      <Table.Head className="astw:text-right">Total</Table.Head>
+      <Table.Head align="right">Total</Table.Head>
     </Table.Row>
   </Table.Header>
   <Table.Body>
@@ -310,7 +367,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
         <Table.Cell>
           <Badge variant={statusVariant(o.status)}>{o.status}</Badge>
         </Table.Cell>
-        <Table.Cell className="astw:text-right">{formatMoney(o.total)}</Table.Cell>
+        <Table.Cell align="right">{formatMoney(o.total)}</Table.Cell>
       </Table.Row>
     ))}
   </Table.Body>
@@ -330,7 +387,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
 
 **Import:** compound namespace + helpers from `'@tailor-platform/app-shell'`, e.g. `DataTable`, `useDataTable`, `useCollectionVariables`, `createColumnHelper`, and types such as `Column`, `UseDataTableReturn`.
 
-**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column).
+**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **column pinning** (`pin: "left" | "right"`) and built-in **column settings** (`<DataTable.Toolbar columnSettings>` — user show/hide + reorder + pin, persisted per-user via **`tableId`**).
 
 **Primitives:** Builds on low-level **`Table`**; do not reinvent pagination/filters manually unless the dataset is trivial.
 
@@ -347,12 +404,13 @@ const table = useDataTable({
   data: fetching ? undefined : mappedFromQuery,
   loading: fetching,
   control,
+  tableId: "purchase-orders", // persist user column layout to localStorage
   onClickRow: (row) => navigate(detailHref(row)),
   // onSelectionChange, rowActions, sort: …
 });
 
 <DataTable.Root value={table}>
-  <DataTable.Toolbar>
+  <DataTable.Toolbar columnSettings>
     <DataTable.Filters />
   </DataTable.Toolbar>
   <DataTable.Table />
@@ -361,6 +419,12 @@ const table = useDataTable({
   </DataTable.Footer>
 </DataTable.Root>;
 ```
+
+**Row navigation:** whole row is clickable via **`onClickRow`** → `navigate(detailHref(row))`; wrap the primary identifier cell in `<Link>` for keyboard/SR access. Never add a per-row "View" / "Open" / "→" button. (A first-class row-interaction API is under design — see the row-interaction tracking issue.)
+
+**Column pinning & settings:** set `pin: "left" | "right"` on a `Column` to freeze it during horizontal scroll — selection auto-pins left, row-actions auto-pins right (a `width` is optional but recommended for stable sizing). Pass **`columnSettings`** to **`DataTable.Toolbar`** to render the built-in "Columns" control (show/hide, reorder, re-pin) at the top-right; pass a stable, **unique** **`tableId`** to persist each user's layout to `localStorage` (a per-user preference — intentionally not in the URL like filters/sort).
+
+**Column alignment:** each `Column` accepts **`align`** (`"left" | "right"`) applied to both header and body cell. Numeric `type` columns (`"number"`, `"money"`) default to `"right"` automatically so digits align on the decimal place — pass `align="left"` to opt out; everything else defaults to `"left"`.
 
 **Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/app-shell-sdk-plugin` codegen) when available so enum/datetime/string filters bind to the right editors.
 
@@ -426,25 +490,31 @@ const table = useDataTable({
 **Import:** `import { MetricCard } from '@tailor-platform/app-shell'`
 **Purpose:** KPI tile for dashboards or hero metric strip.
 **API:** `MetricCardProps` — `title`, `value`, `trend: { direction, value }`, `description`, `icon`.
-**Example:**
+**Example:** metric tiles are laid out in a `Grid` (never one-per-row):
 
 ```tsx
-<MetricCard
-  title="Net total"
-  value="$1,500"
-  trend={{ direction: "up", value: "+5%" }}
-  description="vs last month"
-  icon={<DollarSign />}
-/>
+<Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
+  <MetricCard
+    title="Net total"
+    value="$1,500"
+    trend={{ direction: "up", value: "+5%" }}
+    description="vs last month"
+    icon={<DollarSign />}
+  />
+  <MetricCard title="Open orders" value="42" />
+  {/* …more tiles */}
+</Grid>
 ```
 
 **Used in patterns:** KPI tiles, dashboards, **`detail/*`** metric strips where specs call for them.
 
+**Notes:** Always wrap metric tiles in **`Grid`** (see the `Grid` entry) — a column of single-width `MetricCard`s stacked one-per-row is an anti-pattern.
+
 ### `DocumentProgressCard`
 
 **Import:** `import { DocumentProgressCard } from '@tailor-platform/app-shell'`
-**Purpose:** Generic document lifecycle/fulfilment state — optional percentage, stacked progress bar, status legend; arbitrary `segments`.
-**API:** `DocumentProgressCardProps` — `segments` (`{ label, value, color? }[]`), `title?`, `percent?`, `legend?` (defaults to `segments`), `total?` (bar denominator; larger than the sum leaves an empty track), `className?`. View-only — `percent` is explicit.
+**Purpose:** Presentational card for a document's lifecycle / fulfilment state — an optional headline percentage, a stacked progress bar, and a status legend. Domain-agnostic and view-only: pass an arbitrary set of `segments` (e.g. shipped / returned / pending) plus an explicit `percent`; derive both in the consumer.
+**API:** `DocumentProgressCardProps` — `segments` (required; array of `{ label, value, color }`), `percent?` (0–100, headline shown top-right), `title?`, `legend?` (defaults to `segments`; supply only when the legend should differ from the bar, e.g. overlapping buckets), `total?` (bar denominator; defaults to the sum of segment values — a larger value leaves an unfilled remainder), `className?`. Segment `color`: `indigo | pink | green | amber | red | blue | neutral`.
 **Example:**
 
 ```tsx
@@ -459,7 +529,7 @@ const table = useDataTable({
 />
 ```
 
-**Used in patterns:** **`detail/*`** right-rail cards for arbitrary status breakdowns (shipped/cancelled/pending, PO received/returned/yet-to-receive, etc.). For the purchase-order fulfilment recipe (derived %, net-received/returned bar split, legend override), see `docs/components/document-progress-card.md`.
+**Used in patterns:** `detail/*` — fulfilment / lifecycle summary cards (e.g. a purchase-order receipt progress) in the main column or right rail.
 
 ### `Avatar`
 
@@ -520,6 +590,24 @@ const table = useDataTable({
 **API:** Compound — `ActivityCard.Root`, `ActivityCard.Items` (generic over item type), plus `ActivityCardProps`, `ActivityCardItem`, `ActivityCardItemProps`. Items render with timestamp + actor + description.
 **Used in patterns:** `detail/hero-with-actions` (right column or bottom section).
 
+### `Alert`
+
+**Import:** `import { Alert } from '@tailor-platform/app-shell'`
+**Purpose:** Inline, in-page banner for a persistent status message — a form/record error, a warning, or a success/info notice attached to a section. (Transient notifications use `useToast`; blocking confirmations use `Dialog` — see `interaction/confirm`.)
+**API:** Compound — `Alert.Root` (`variant`: `neutral | success | warning | error | info`, default `neutral`; a matching icon is rendered automatically; optional `action?: ReactNode`, `dismissible?: boolean`, `onDismiss?: () => void`), `Alert.Title`, `Alert.Description`.
+**Example:**
+
+```tsx
+<Alert.Root variant="error">
+  <Alert.Title>Couldn't load line items</Alert.Title>
+  <Alert.Description>Check your connection and try again.</Alert.Description>
+</Alert.Root>
+```
+
+**Used in patterns:** any data-backed screen's **error** state (inline error + retry) and record-level warnings — the error affordance the composition rules require (**`design-system.md`** → Composition & emphasis rules → States).
+
+**Notes:** Encode severity by `variant` (semantic color), same discipline as `Badge` — don't use `error` for a routine notice. Pair a retry/next-step control via `action` rather than a separate stray button.
+
 ---
 
 ## Forms
@@ -555,11 +643,20 @@ const table = useDataTable({
 **API:** `InputProps` — extends native `<input>` props.
 **Used in patterns:** all `form/*`.
 
+### `Checkbox`
+
+**Import:** `import { Checkbox } from '@tailor-platform/app-shell'`
+**Purpose:** Boolean form control. Maps to spec field type: `boolean`. Also used for row selection and filter toggles.
+**API:** `CheckboxProps` — extends Base UI `Checkbox.Root` (`checked`/`defaultChecked`, `onCheckedChange`, `indeterminate`, `disabled`, `required`, `name`, `inputRef`) and adds an inline `label`. Integrates with `Field` for invalid/disabled/label state exactly like `Input`/`Select` — no bespoke `error` prop.
+**Accessible name:** the inline `label` prop (enclosing) or a sibling `Field.Label`; for a bare box (e.g. a table row-select cell) pass `aria-label`.
+**Used in patterns:** `form/*` (boolean fields), `list/*` (row selection), DataTable filter/column controls.
+
 ### `Select`
 
 **Import:** `import { Select } from '@tailor-platform/app-shell'`
 **Purpose:** Dropdown for fixed enumerations.
 **API:** Compound. Sync version (small option lists). For async/typeahead, see `Combobox` and `Autocomplete`. Type: `SelectAsyncFetcher<T>` for the async variant.
+**Accessible name:** inside a `Form` the field label provides it automatically. When used **standalone** (outside a `Form`), pass `aria-label` (or `aria-labelledby` / `id`) — these now forward to the underlying combobox element, so it isn't left named only by its current value. Same applies to `Combobox` and `Autocomplete`.
 **Used in patterns:** all `form/*` (enum fields).
 
 ### `Combobox`
@@ -642,7 +739,7 @@ Types for authoring guard functions used by `WithGuard` and `appShellPageProps.g
 
 ### `RouteParams`, `PageComponent`, `PageMeta`, `AppShellPageProps`, `AppShellRegister`, `ContextData` (types)
 
-Types for declaring page props (`appShellPageProps = { meta, guards, loader }`), reading typed route params, and registering route types globally. See `project-setup.md` for usage.
+Types for declaring page props (`appShellPageProps = { meta, guards }`), reading typed route params, and registering route types globally. See `project-setup.md` for usage.
 
 ---
 

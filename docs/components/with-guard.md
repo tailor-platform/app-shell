@@ -7,6 +7,8 @@ description: Conditionally render UI elements based on guard evaluation with sup
 
 `WithGuard` is a component for conditionally rendering UI elements based on guard evaluation. It uses the same guard system as route-level guards, making permission logic reusable throughout your application.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/with-guard)
+
 ## Import
 
 ```tsx

@@ -1,5 +1,318 @@
 # @tailor-platform/app-shell
 
+## 1.10.1
+
+### Patch Changes
+
+- adf2119: Fix `DataTable` empty/error-state message not being vertically centered — it now
+  centers in the reserved area instead of sitting near the top. The message was
+  positioned with `position: sticky`, whose offset only applies while scrolling,
+  so in the common (non-scrolling) case it stayed at the top of the cell; it now
+  uses `vertical-align: middle`.
+- f45aa47: Raise the bundled `react-router` dependency to the latest v7 release.
+
+  This picks up the current v7 security and hardening fixes while avoiding the breaking changes in React Router v8.
+
+## 1.10.0
+
+### Minor Changes
+
+- 73d0c0a: Add a built-in error state to `Combobox.Async`, `Autocomplete.Async`, and `Select.Async`
+
+  When an async fetcher throws or rejects, the components now render an inline error state in the popover — a "Couldn't load results." message plus a **Retry** button that re-runs the last fetch — instead of silently falling back to the misleading "No results." empty state. This makes failed fetches distinguishable from genuinely-empty results without any consumer code.
+
+  The debounce/abort lifecycle is handled centrally: aborted/superseded requests are ignored, and outages are de-duped so typing during an outage doesn't stack repeated announcements.
+
+  Three new props on each `.Async` component:
+
+  | Prop           | Type                       | Default                    | Description                                                        |
+  | -------------- | -------------------------- | -------------------------- | ------------------------------------------------------------------ |
+  | `errorText`    | `string`                   | `"Couldn't load results."` | Message shown in the popover when the fetcher fails                |
+  | `retryText`    | `string`                   | `"Retry"`                  | Label for the retry button                                         |
+  | `onFetchError` | `(error: unknown) => void` | -                          | Called once per outage when a fetch fails (logging/error tracking) |
+
+  The `Combobox.useAsync` / `Autocomplete.useAsync` / `Select.useAsync` hooks now also expose `error` and a `retry()` function and accept an `onFetchError` option, for consumers building custom compositions with `Parts`.
+
+- 16c1046: Add a built-in `/__appinfo` page to `AppShell` for exposing app metadata and the current AppShell version.
+
+  ```tsx
+  <AppShell
+    title="My App"
+    appInfo={{
+      metadata: [
+        { label: "Environment", value: "staging" },
+        { label: "Release", value: "2026.07.16" },
+      ],
+    }}
+  />
+  ```
+
+  The page stays out of AppShell's built-in auto-generated sidebar navigation, appears in the Command Palette as a page entry, and includes a copy button for the rendered app information.
+
+- 35ab98a: DataTable: sticky/pinned columns and user column settings
+
+  - **Pinned columns** — add `pin: "left" | "right"` to a `Column` to freeze it during horizontal scroll (sticky offsets are measured from the rendered layout; `width` is optional but recommended for stable sizing). The selection column auto-pins left and the row-actions column auto-pins right, with a subtle freeze shadow at the frozen edge once content scrolls under it.
+  - **Column settings** — pass `columnSettings` to `DataTable.Toolbar` to render a built-in "Columns" control (top-right) that lets users show/hide columns, reorder them (drag), and change pinning by dragging a column between the Fixed left / Scrollable / Fixed right zones.
+  - **Persisted column layout** — pass a stable `tableId` to `useDataTable` to persist each user's column visibility, order, and pinning to `localStorage` (per-user preference; not stored in the URL). Omit for in-memory-only layout.
+  - `Table.Root` now accepts an optional `containerRef` for its scroll container.
+
+- b32f003: Redesign `DataTable.Filters` for a faster, more direct filtering experience.
+
+  - **Add-filter panel**: replaces the old popover + nested selects with a single popover laid out in up to three columns — **field ▸ condition ▸ value**. The condition column appears for fields with more than one operator; single-operator fields (enum, uuid) go straight to the value. Values are drafted and committed with an **Apply**/**Update** button, and the panel stays open so several filters can be added in a row. A per-field **Clear** and a sticky **Clear all filters** are built in.
+  - **Segmented filter chips**: each active filter renders as `field │ operator │ value │ ✕`. The operator segment opens a searchable dropdown to switch the condition; the value segment opens the type-specific editor. Long values are truncated.
+  - **Date & time use app-shell's own components**: single date → inline `Calendar`; single datetime → inline calendar + a "Choose time" picker; `date`/`datetime` **between** → one inline calendar with **From / To** tabs; `time` → native time input. (Swaps to the dedicated date-range / datetime pickers 1:1 once those land.)
+  - Friendlier operator labels (`is`, `is not`, `is between`, `is any of`, …), multi-select enum values summarized as "N items" (localized), an inline error for reversed `between` ranges, and a consistent primary-colored checkbox across every filter surface.
+  - **New `slot` prop** on `DataTable.Filters` (`"all"` | `"chips"` | `"add"`) to render the chips and the **Add filter** trigger separately for custom toolbar layouts (e.g. trigger in a header row, chips on the row below).
+
+- 19bc874: Add `header` to DataTable columns so consumers can fully customize header UI while keeping the built-in header behavior when `header` is omitted.
+
+  ```tsx
+  column({
+    label: "Amount",
+    sort: { field: "amount", type: "number" },
+    header: (ctx) =>
+      ctx.sortable ? (
+        <button type="button" onClick={ctx.activateSort}>
+          {ctx.label}{" "}
+          {ctx.sortDirection === "Asc"
+            ? "▲"
+            : ctx.sortDirection === "Desc"
+            ? "▼"
+            : null}
+        </button>
+      ) : (
+        ctx.label
+      ),
+  });
+  ```
+
+  `header` is a typed render function. Non-sortable columns receive `{ label, sortable: false }`; sortable columns also receive `sortDirection` and `activateSort()`. Custom headers own their click surface and sort indicator, while the default header keeps the built-in sort button and hit area.
+
+- 7832718: Add standalone `Checkbox` component
+
+  - New `Checkbox` — a styled boolean control wrapping Base UI's checkbox. Supports controlled (`checked`) and uncontrolled (`defaultChecked`) use, an `indeterminate` state, and an optional inline `label`. Integrates with `Field` and React Hook Form for label association, `disabled`, and invalid/error state exactly like `Input`/`Select` (no bespoke `error` prop) — drive it via `Controller` with `onCheckedChange`/`inputRef`. The invalid state is styled off both `data-invalid` (AppShell `Field.Root`) and `aria-invalid` (shadcn-style `FormControl`), so it fits either form stack.
+  - DataTable now uses `Checkbox` internally for row selection, the header select-all (indeterminate), the enum and case-sensitive filter controls, and the column-settings visibility toggles — replacing the previously hand-rolled, slightly inconsistent checkbox styling with one shared control.
+
+### Patch Changes
+
+- 7a9e958: Fix DataTable row-selection highlight. Selecting a row now tints the **whole** row, not just the pinned selection/actions cells. The row sets `data-state="selected"` (which `Table.Row` keys its selected background off of) in addition to the existing `aria-selected`; previously only the pinned cells — which carry their own `group-aria-selected:bg-muted` — were highlighted.
+
+## 1.9.0
+
+### Minor Changes
+
+- 423ae75: Add an `xs` (16px) size to `Avatar`
+
+  `Avatar.Root` now accepts `size="xs"` for a 16px circle, extending the existing `sm` / `default` / `lg` scale:
+
+  | `size`    | circle |
+  | --------- | ------ |
+  | `xs`      | 16px   |
+  | `sm`      | 24px   |
+  | `default` | 28px   |
+  | `lg`      | 40px   |
+
+  `xs` is intended for compact/inline contexts and single-glyph or icon content; two-letter initials will be cramped at this size. Purely additive — the default size is unchanged.
+
+- 6f767f5: Add QuickBooks-style keyboard shortcuts to `DateField` / `DatePicker`
+
+  When any date segment is focused, the field now supports whole-date navigation (all case-insensitive):
+
+  - `t` — today
+  - `m` / `h` — first / last day of the entered month (or the current month when no date is entered)
+  - `y` / `r` — first / last day of the entered year
+  - `w` / `k` — first / last day of the week (locale-aware week start)
+  - `-` — previous day; `=` / `+` — next day. Both step across month **and** year boundaries (e.g. 1 Jan − 1 day → 31 Dec of the prior year). `+` works whether or not Shift is held.
+  - `/` — commit the current segment as-is and advance to the next (e.g. typing `1` then `/` means "January", not the start of `1x`)
+  - `Alt+↓` — open the calendar popover (`DatePicker` only)
+
+  A 1–2 digit year is also expanded to the 2000s on blur (`26` → `2026`).
+
+  Both `DateField` and `DatePicker` now accept an optional `firstDayOfWeek` prop to override the locale's week start for the `w`/`k` shortcuts (previously `DatePicker`-only).
+
+  The shortcuts also work **while the calendar popover is open** — there they move the highlighted day (like the arrow keys), and `Enter` confirms. Targets are clamped to `minValue`/`maxValue` in both the field and the calendar, so a shortcut can't jump to an out-of-range date; unavailable days can be highlighted but not confirmed.
+
+- 0817cf1: AppShell now bundles and injects a small default favicon set instead of a single 32×32 icon. When no `favicon` prop is passed (and the host page declares no `<link rel="icon">`), AppShell renders 16×16 and 32×32 PNG tab icons plus a 180×180 Apple touch icon — all embedded as data URIs, so no asset-copy step is needed. The Apple touch icon covers "Add to Home Screen" on both iOS and Android; the legacy `.ico` and PWA `android-chrome-*` icons are intentionally omitted to keep the bundle small (this is not a PWA).
+
+  Behavior for consumers is unchanged: passing `favicon` still replaces the whole set with your single href, and an existing host-page favicon is still respected.
+
+- 2497a2d: Add `useOpenCommandPalette()` for opening the built-in command palette from application code.
+
+  ```tsx
+  const openCommandPalette = useOpenCommandPalette();
+
+  openCommandPalette();
+  openCommandPalette({ search: "PO: alice" });
+  ```
+
+- 57a3870: Add composable `Timeline` primitives for building time-based layouts, including axis guides/levels, row backgrounds, intervals, and dependency links.
+
+  - `Timeline.Root` defines the shared start/end range.
+  - `Timeline.Viewport` renders the axis, decorations, scrolling area, and link layer.
+  - `Timeline.Row` defines one timeline lane and owns row height/background.
+  - `Timeline.Interval` positions content across a time range.
+  - `Timeline.Link` draws dependency lines between timeline items.
+
+  ```tsx
+  import { Timeline } from "@tailor-platform/app-shell";
+
+  <Timeline.Root start={0} end={100}>
+    <Timeline.Viewport
+      axis={{
+        guides: [{ at: 0 }, { at: 50 }, { at: 100 }],
+        levels: [
+          {
+            kind: "spans",
+            items: [
+              { start: 0, end: 50, label: "Phase 1" },
+              { start: 50, end: 100, label: "Phase 2" },
+            ],
+          },
+        ],
+      }}
+    >
+      <Timeline.Row height={40}>
+        <Timeline.Interval start={10} end={35}>
+          <div className="h-full rounded-md bg-primary" />
+        </Timeline.Interval>
+      </Timeline.Row>
+    </Timeline.Viewport>
+  </Timeline.Root>;
+  ```
+
+  `Tooltip.Content` also now accepts `noArrow` for popover-like timeline labels and custom overlays.
+
+### Patch Changes
+
+- ca1c8c7: Raise the `@tailor-platform/auth-public-client` dependency floor from `^0.5.0` to `^0.5.1` so fresh installs cannot resolve the broken `0.5.0` release.
+- 6e61cc2: Fix `DateField` / `DatePicker` not validating typed input against `minValue`, `maxValue`, or `isDateUnavailable`. A date entered by typing (or via a keyboard shortcut) that fell outside the allowed range was silently accepted. It's now flagged invalid (`aria-invalid` + a built-in message) while the value still flows through `onChange` — matching how the calendar already behaves and the react-aria validation contract.
+
+  - Keyboard shortcuts (`t`, `m`, `y`, …) no longer clamp their target to the boundary; like typing, an out-of-range result is surfaced as invalid instead of being silently coerced.
+  - `isDateUnavailable` now also drives field validation (e.g. weekends or specific blackout dates typed into the field are flagged), not just calendar selection.
+  - Consumer `errorMessage` still takes precedence over the built-in messages.
+
+## 1.8.0
+
+### Minor Changes
+
+- a4f735c: Add DateField, DatePicker, and Calendar components (@internationalized/date + Base UI implementation)
+
+  Introduces three accessible date-input components, implemented on `@internationalized/date` (value layer) and Base UI (`Popover`) with hand-rolled segmented-input and calendar-grid behaviour:
+
+  - `DateField` — segmented date/time input with label, description, and error message
+  - `DatePicker` — date field with a popover calendar
+  - `Calendar` — standalone calendar grid
+
+  All three accept `LocalizedString` labels/descriptions and resolve locale + timezone from the AppShell context. The `@internationalized/date` value types (`CalendarDate`, `CalendarDateTime`, `ZonedDateTime`, …) and helpers (`parseDate`, `getLocalTimeZone`, …) are re-exported from `@tailor-platform/app-shell`.
+
+  New AppShell context hooks:
+
+  - `useResolvedLocale()` — full BCP-47 locale (e.g. `"en-GB"`) plus the language code
+  - `useTimeZone()` — returns a `TimeZone` object with `.value` (IANA string), `.today()`, and `.now()` bound to the configured timezone
+
+  AppShell now accepts an optional `timeZone` prop.
+
+  > This is the **`@internationalized/date` + Base UI** variant — the lighter foundation tracked in the design proposal (§9). Net-new dependency is just `@internationalized/date` (~11 KB gz); Base UI is already in the bundle. Public API and accessibility contract are identical to the react-aria variant.
+  >
+  > **Known limitation:** the segmented input is built from `role="spinbutton"` elements that aren't `contentEditable`, so on-screen-keyboard typing on touch devices is limited — the calendar popover is the touch-friendly path (desktop keyboard entry works fully). The APG behaviour is unit-tested but not yet screen-reader-audited.
+
+- ef5c788: DataTable now scrolls internally: add `fill` prop to `Layout` to pin page chrome and scroll only the table rows.
+
+  ```tsx
+  <Layout fill>
+    <Layout.Header title="Products" />
+    <Layout.Column>
+      <DataTable.Root value={table}>
+        <DataTable.Toolbar>…</DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Footer>
+          <DataTable.Pagination />
+        </DataTable.Footer>
+      </DataTable.Root>
+    </Layout.Column>
+  </Layout>
+  ```
+
+  With `fill`, the page title, table toolbar, column header row (sticky), and footer stay visible at all heights — only the rows region scrolls vertically. Without `fill`, pages grow and scroll as before. Tables short enough to fit render without a scrollbar or layout shift.
+
+  **Behavior change:** the AppShell layout is now viewport-bounded (`h-svh` instead of `min-h-svh`), so page content scrolls inside the content area rather than on the document. Code relying on `window`/document scroll position should target the content area instead.
+
+  Also fixes the empty/error state reserving `pageSize`-worth of height — it is now capped at 5 rows, so large page sizes no longer produce a huge blank region below "No data".
+
+- ef5c788: Add `useAppShellScrollContainer()` — a supported handle to the content scroll container
+
+  Now that the shell is viewport-bounded (`h-svh`) and page content scrolls inside the content area rather than on the document, consumers that previously relied on `window`/document scroll need a stable way to reach the element that actually scrolls.
+
+  `useAppShellScrollContainer()` returns a ref to that element:
+
+  ```tsx
+  const scrollRef = useAppShellScrollContainer();
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () =>
+      setProgress(el.scrollTop / (el.scrollHeight - el.clientHeight));
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
+  ```
+
+  Use it wherever you would previously have reached for `window.scrollY`, a `window` `scroll` listener, `window.scrollTo(...)`, or an `IntersectionObserver` with the default viewport root.
+
+  - On a `<Layout fill>` page the element does not scroll (its children manage their own scrolling).
+  - Outside a `SidebarLayout` the ref's `current` is always `null`.
+  - The container also carries a `data-appshell-scroll-container` attribute for non-React access (CSS, tests, `document.querySelector`).
+
+- aa9306a: Add a `header` slot to `SidebarLayout` and a `SidebarLayout.DefaultHeader` building block
+
+  `SidebarLayout` now accepts a full-region `header?: ReactNode` prop, mirroring the existing `sidebar` slot. It defaults to the built-in header (`SidebarLayout.DefaultHeader`), so existing usage is unchanged.
+
+  To extend the built-in header (e.g. add a notification bell or user menu) without reconstructing the trigger and breadcrumb, use `SidebarLayout.DefaultHeader` with its `actions` slot:
+
+  ```tsx
+  <SidebarLayout
+    header={
+      <SidebarLayout.DefaultHeader
+        actions={[
+          <NotificationBell key="bell" />,
+          <AppearanceSwitcher key="appearance" />,
+        ]}
+      />
+    }
+  />
+  ```
+
+  - `DefaultHeader`'s `actions` prop (single node or array) controls the entire right-hand cluster, laid out in a horizontal, vertically-centered row.
+  - `actions` **defaults to `[<AppearanceSwitcher />]`**, and **passing `actions` replaces the whole cluster including the switcher** — include `<AppearanceSwitcher />` explicitly to keep it. This keeps the API a single slot instead of accumulating one-off props.
+  - `DefaultHeader` is available as `SidebarLayout.DefaultHeader` and as a top-level `DefaultHeader` export.
+  - `DefaultSidebar` is now also exposed as `SidebarLayout.DefaultSidebar` for symmetry; the top-level `DefaultSidebar` export is retained for backwards compatibility.
+
+  This provides an official, composable extension point for the top bar, replacing fragile consumer workarounds that queried the header DOM and injected a React portal.
+
+- 078130e: Add a `size` prop to `Tabs` and make `capsule` icon-only tabs square
+
+  `Tabs.Root` now accepts `size?: "xs" | "sm" | "default" | "lg"` (default `"default"`), mirroring `Button`'s height tiers. It sets a **minimum** height on the `capsule` variant — taller content still grows — so a capsule track sits flush next to a `Button`:
+
+  | `size`    | capsule track | matches Button |
+  | --------- | ------------- | -------------- |
+  | `xs`      | 28px          | `size="xs"`    |
+  | `sm`      | 32px          | `size="sm"`    |
+  | `default` | 36px          | default        |
+  | `lg`      | 40px          | `size="lg"`    |
+
+  Two `capsule` fixes from the same change:
+
+  - The list no longer hard-locks to `h-10` (40px); its height derives from the tab size floor.
+  - A tab whose only child is an icon now renders **square** (`min-width` follows `min-height`), instead of the previous wider-than-tall, shrunken look — ideal for icon-only view toggles.
+
+  The default `capsule` height moves from 40px to 36px to align with `Button`'s default height. `size` only affects the `capsule` variant; `line` and `default` are unchanged.
+
+### Patch Changes
+
+- eeb10ab: Remove the `stream` option from `useAIChat()` and `AIGatewayChatRequest`.
+
+  AppShell now selects the appropriate transport (streaming vs JSON) automatically based on the model. Passing `stream` is no longer needed.
+
 ## 1.7.0
 
 ### Minor Changes

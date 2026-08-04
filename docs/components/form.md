@@ -7,6 +7,8 @@ description: Components for building validated forms with automatic accessibilit
 
 `Form`, `Field`, and `Fieldset` are compound components for building accessible, validated forms. They handle label association, `aria-describedby`, validation state, and external error routing automatically.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/form)
+
 ## Import
 
 ```tsx
@@ -249,6 +251,7 @@ The `Field` context handles only accessibility wiring (`htmlFor`, `aria-describe
 ## Related
 
 - [Input](./input.md) — Standalone styled input, useful outside of forms.
+- [Checkbox](./checkbox.md) — Boolean control that integrates automatically with `Field`.
 - [Select](./select.md) — Dropdown that integrates automatically with `Field`.
 - [Combobox](./combobox.md) — Searchable combobox that integrates automatically with `Field`.
 - [Autocomplete](./autocomplete.md) — Free-text input with suggestions that integrates automatically with `Field`.

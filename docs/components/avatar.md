@@ -7,6 +7,8 @@ description: User avatar with image and fallback (Base UI)
 
 The `Avatar` component wraps [Base UI Avatar](https://base-ui.com/react/components/avatar): a root container with an optional image and fallback content (typically initials) when the image is missing or fails to load.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/avatar)
+
 ## Import
 
 ```tsx
@@ -32,17 +34,22 @@ import { Avatar } from "@tailor-platform/app-shell";
 
 ## Root props
 
-| Prop        | Type                        | Default     | Description                |
-| ----------- | --------------------------- | ----------- | -------------------------- |
-| `size`      | `"sm" \| "default" \| "lg"` | `"default"` | Circle size (28px default) |
-| `className` | `string`                    | —           | Extra classes              |
-| `children`  | `React.ReactNode`           | —           | Image + fallback           |
+| Prop        | Type                                | Default     | Description                |
+| ----------- | ----------------------------------- | ----------- | -------------------------- |
+| `size`      | `"xs" \| "sm" \| "default" \| "lg"` | `"default"` | Circle size (28px default) |
+| `className` | `string`                            | —           | Extra classes              |
+| `children`  | `React.ReactNode`                   | —           | Image + fallback           |
 
 `Avatar.Root` forwards other stable props from Base UI (for example `aria-hidden`, `style`) and standard HTML attributes for the `<span>` root.
 
 ## Sizes
 
+The smallest size, `xs` (16px), is intended for compact/inline contexts and single-glyph or icon content; two-letter initials will be cramped.
+
 ```tsx
+<Avatar.Root size="xs">
+  <Avatar.Fallback>A</Avatar.Fallback>
+</Avatar.Root>
 <Avatar.Root size="sm">
   <Avatar.Fallback>AB</Avatar.Fallback>
 </Avatar.Root>

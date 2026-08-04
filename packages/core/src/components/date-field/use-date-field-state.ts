@@ -6,11 +6,13 @@ import {
   DateFormatter,
   endOfMonth,
   now,
+  toCalendarDate,
   toCalendarDateTime,
   toZoned,
   today,
   type DateValue,
 } from "@internationalized/date";
+import { resolveDateShortcut, type DateShortcut, type FirstDayOfWeek } from "@/lib/date-shortcuts";
 
 /**
  * Hand-rolled segmented-date-field state.
@@ -79,6 +81,22 @@ export interface DateFieldStateOptions {
   timeZone?: string;
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
+  /**
+   * Bounds used to flag the composed value invalid when it falls outside
+   * `[minValue, maxValue]`. The field is free-entry, so it is NOT clamped —
+   * typed dates and the QBO shortcuts may land outside the range and are
+   * surfaced as invalid (matching react-aria's validation contract).
+   */
+  minValue?: DateValue;
+  maxValue?: DateValue;
+  /**
+   * Marks the composed value invalid when it returns `true` (e.g. weekends or
+   * specific blackout dates). Mirrors the calendar's `isDateUnavailable`; here
+   * it drives validation rather than blocking entry.
+   */
+  isDateUnavailable?: (date: DateValue) => boolean;
+  /** Week-start for the `w`/`k` shortcuts; defaults to the locale convention. */
+  firstDayOfWeek?: FirstDayOfWeek;
   isDisabled?: boolean;
   isReadOnly?: boolean;
 }
@@ -109,6 +127,18 @@ function clampCompleteDay(f: Fields): Fields {
   return day > maxDay ? { ...f, day: maxDay } : f;
 }
 
+/**
+ * The currently-entered date as a `CalendarDate`, or `null` if it isn't a
+ * complete, in-range day/month/year. Used by the day/week shortcuts, which need
+ * a concrete date to step from (falling back to today when there isn't one).
+ */
+function completeCalendarDate(f: Fields): CalendarDate | null {
+  if (f.year == null || f.month == null || f.day == null) return null;
+  if (f.month < 1 || f.month > 12 || f.day < 1) return null;
+  if (f.day > endOfMonth(new CalendarDate(f.year, f.month, 1)).day) return null;
+  return new CalendarDate(f.year, f.month, f.day);
+}
+
 function fieldsFromValue(v: DateValue | null | undefined): Fields {
   if (!v) return {};
   const f: Fields = {};
@@ -137,6 +167,30 @@ function use12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
   }
 }
 
+/** Why a composed value is invalid — out of `[min,max]`, or `isDateUnavailable`. */
+export type DateFieldInvalidReason = "range" | "unavailable";
+
+/**
+ * Validation for a free-entry field: the value still emits, but a date outside
+ * `[minValue, maxValue]` or rejected by `isDateUnavailable` is flagged invalid.
+ * Range bounds are compared at day granularity (via `toCalendarDate`), matching
+ * how the calendar clamps. Returns `null` when the value is complete and allowed
+ * (or incomplete, i.e. nothing to validate yet).
+ */
+function getInvalidReason(
+  value: DateValue | null,
+  minValue?: DateValue,
+  maxValue?: DateValue,
+  isDateUnavailable?: (date: DateValue) => boolean,
+): DateFieldInvalidReason | null {
+  if (value == null) return null;
+  const cd = toCalendarDate(value as never);
+  if (minValue != null && cd.compare(toCalendarDate(minValue as never)) < 0) return "range";
+  if (maxValue != null && cd.compare(toCalendarDate(maxValue as never)) > 0) return "range";
+  if (isDateUnavailable?.(value)) return "unavailable";
+  return null;
+}
+
 export function useDateFieldState(options: DateFieldStateOptions) {
   const {
     value: controlledValue,
@@ -147,6 +201,10 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     timeZone,
     hourCycle,
     placeholderValue,
+    minValue,
+    maxValue,
+    isDateUnavailable,
+    firstDayOfWeek,
     isReadOnly,
   } = options;
 
@@ -357,6 +415,64 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
 
   /**
+   * Whole-date navigation (QBO-style shortcuts): pick the reference date the
+   * command steps from, resolve the target via {@link resolveDateShortcut}
+   * (shared with the calendar grid), clamp into range, and commit — keeping any
+   * time segments intact.
+   *
+   * The reference differs by command:
+   * - **Month/year jumps** (`monthStart`/`monthEnd`/`yearStart`/`yearEnd`) prefer
+   *   the month/year already entered — even in an incomplete date — so "m" on a
+   *   half-typed "08/…" lands on 1 Aug of the current year. They fall back to
+   *   today's month/year when nothing usable is entered.
+   * - **Day/week jumps** (`dayPrev`/`dayNext`/`weekStart`/`weekEnd`) need a
+   *   concrete date, so they step from the complete entered date if there is one,
+   *   otherwise from today.
+   */
+  const applyShortcut = useCallback(
+    (cmd: DateShortcut) => {
+      if (isReadOnly) return;
+      const ref = today(timeZone ?? "UTC");
+      const usesEnteredMonthYear =
+        cmd === "monthStart" || cmd === "monthEnd" || cmd === "yearStart" || cmd === "yearEnd";
+      let base: CalendarDate;
+      if (usesEnteredMonthYear) {
+        const monthEntered = fields.month != null && fields.month >= 1 && fields.month <= 12;
+        base = new CalendarDate(
+          fields.year ?? ref.year,
+          monthEntered ? (fields.month as number) : ref.month,
+          1,
+        );
+      } else {
+        base = completeCalendarDate(fields) ?? ref;
+      }
+      const next = resolveDateShortcut(cmd, base, ref, locale, firstDayOfWeek);
+      // No clamping: like typing, a shortcut may land outside [minValue, maxValue]
+      // (or on an unavailable date). An out-of-range result is surfaced as invalid
+      // (see the validation below) rather than silently coerced to the boundary —
+      // the same free-entry contract as typing.
+      commit({ ...fields, year: next.year, month: next.month, day: next.day });
+    },
+    [fields, timeZone, locale, isReadOnly, commit, firstDayOfWeek],
+  );
+
+  /**
+   * Expand a 1–2 digit year to the 2000s (e.g. "26" ⇒ 2026) as soon as the year
+   * segment is left — moving to a sibling segment, tabbing to the calendar icon,
+   * or leaving the field entirely. The calendar icon sits inside the group, so
+   * relying on `commitOnBlur` (whole-group blur) would leave "26" showing until
+   * focus escaped the icon too; firing on the year segment's own blur closes that
+   * gap. Idempotent — a full-width year (≥ 100) is left untouched — so the
+   * `commitOnBlur` backstop can safely run over it as well.
+   */
+  const expandShortYear = useCallback(() => {
+    if (isReadOnly) return;
+    const y = fields.year;
+    if (y == null || y >= 100) return;
+    commit({ ...fields, year: 2000 + y });
+  }, [fields, isReadOnly, commit]);
+
+  /**
    * On-blur normalization — two corrections applied in a single commit when
    * focus leaves the whole group:
    *
@@ -374,6 +490,11 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   const commitOnBlur = useCallback(() => {
     if (isReadOnly) return;
     const next: Fields = { ...fields };
+
+    // (0) Expand a 1–2 digit year to the 2000s (e.g. "26" ⇒ 2026). A full-width
+    //     (3–4 digit) year is left untouched. Done first so the leap-year-aware
+    //     day clamp below sees the resolved year.
+    if (next.year != null && next.year < 100) next.year = 2000 + next.year;
 
     // (1) Backfill — the day (finest, un-guessable unit) is the trigger.
     if (next.day != null) {
@@ -451,14 +572,21 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   }, [segmentFormat, fields, editableTypes, getLimits]);
 
   const fieldValue = composeValue(fields);
+  // Free-entry validation: the value still emits (it's what the user typed), but
+  // an out-of-range or unavailable date is surfaced as invalid, not clamped.
+  const invalidReason = getInvalidReason(fieldValue, minValue, maxValue, isDateUnavailable);
 
   return {
     segments,
     fieldValue,
+    isInvalid: invalidReason != null,
+    invalidReason,
     cycle,
     setDigit,
     setDayPeriod,
     clearSegment,
+    applyShortcut,
+    expandShortYear,
     commitOnBlur,
   };
 }

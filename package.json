@@ -14,8 +14,8 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
-    "lefthook": "2.1.6",
+    "@changesets/cli": "^2.31.1",
+    "lefthook": "2.1.10",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "turbo": "^2.9.14"
@@ -23,5 +23,5 @@
   "engines": {
     "node": "24.x"
   },
-  "packageManager": "pnpm@11.5.0"
+  "packageManager": "pnpm@11.17.0"
 }

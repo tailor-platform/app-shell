@@ -7,6 +7,8 @@ description: Tab navigation with a compound component API
 
 The `Tabs` component provides tab-based navigation for toggling between related panels on the same page. It is backed by Base UI's Tabs primitive.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/tabs)
+
 ## Import
 
 ```tsx

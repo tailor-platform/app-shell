@@ -55,6 +55,7 @@ const App = () => {
             </SidebarGroup>
             <SidebarItem to="/date-picker" />
             <SidebarItem to="/data-table" />
+            <SidebarItem to="/data-table-lab" />
             <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>
         }

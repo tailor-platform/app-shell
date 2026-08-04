@@ -7,6 +7,8 @@ description: Styled text input with consistent theming
 
 The `Input` component is a styled text input that provides consistent theming across your application.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/input)
+
 ## Import
 
 ```tsx
@@ -73,3 +75,4 @@ import { type InputProps } from "@tailor-platform/app-shell";
 ## Related Components
 
 - [Button](./button.md) - Pair with inputs in forms
+- [Checkbox](./checkbox.md) - Boolean control with the same `Field` / React Hook Form integration

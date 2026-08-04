@@ -13,6 +13,19 @@ export const dataTableLabels = defineI18nLabels({
     // RowActionsMenu aria-label
     rowActions: "Row actions",
 
+    // Column settings (DataTable.Toolbar columnSettings)
+    columns: "Columns",
+    columnSettings: "Column settings",
+    showAllColumns: "Show all",
+    hideAllColumns: "Hide all",
+    dragToReorder: "Drag to reorder",
+    sectionPinnedLeft: "Fixed left",
+    sectionScrollable: "Scrollable",
+    sectionPinnedRight: "Fixed right",
+    dropColumnsHere: "Drag columns here",
+    showColumn: "Show column",
+    hideColumn: "Hide column",
+
     // Row selection
     selectAll: "Select all rows",
     selectRow: "Select row",
@@ -32,11 +45,21 @@ export const dataTableLabels = defineI18nLabels({
     // Filters
     addFilter: "Add filter",
     applyFilter: "Apply",
+    updateFilter: "Update",
     removeFilter: "Remove filter",
+    clearFilter: "Clear this filter",
+    clearAllFilters: "Clear all filters",
+    chooseTime: "Choose time",
+    filterOperatorSearchPlaceholder: "Search...",
+    filterOperatorNoResults: "No results",
+    filterValuePlaceholder: (props: { field: string }) => `Enter ${props.field.toLowerCase()}`,
+    // Multi-select enum chip summary, e.g. "2 Status(s)". Uses a simple "(s)"
+    // suffix rather than owning English pluralization rules.
+    filterEnumCount: (props: { count: number; noun: string }) => `${props.count} ${props.noun}(s)`,
     filterBooleanTrue: "True",
     filterBooleanFalse: "False",
-    filterOperator_eq: "equals",
-    filterOperator_ne: "not equals",
+    filterOperator_eq: "is",
+    filterOperator_ne: "is not",
     filterOperator_gt: "greater than",
     filterOperator_gte: "greater than or equal",
     filterOperator_lt: "less than",
@@ -47,9 +70,9 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_hasSuffix: "ends with",
     filterOperator_notHasPrefix: "does not start with",
     filterOperator_notHasSuffix: "does not end with",
-    filterOperator_between: "between",
-    filterOperator_in: "in",
-    filterOperator_nin: "not in",
+    filterOperator_between: "is between",
+    filterOperator_in: "is any of",
+    filterOperator_nin: "is none of",
     // Date-specific operator labels (date filters drop gt/lt/ne and treat the
     // boundary as inclusive).
     filterDateOperator_eq: "exact date",
@@ -59,6 +82,8 @@ export const dataTableLabels = defineI18nLabels({
     filterBetweenTo: "To",
     filterBetweenMin: "Min",
     filterBetweenMax: "Max",
+    filterBetweenOrderError: (props: { min: string; max: string }) =>
+      `${props.max} must be greater than or equal to ${props.min}`,
     filterCaseSensitive: "Case sensitive",
 
     // Filter chip label templates
@@ -73,6 +98,20 @@ export const dataTableLabels = defineI18nLabels({
     errorPrefix: "エラー:",
     actionsHeader: "操作",
     rowActions: "行の操作",
+
+    // Column settings
+    columns: "列",
+    columnSettings: "列の設定",
+    showAllColumns: "すべて表示",
+    hideAllColumns: "すべて非表示",
+    dragToReorder: "ドラッグして並び替え",
+    sectionPinnedLeft: "左に固定",
+    sectionScrollable: "スクロール",
+    sectionPinnedRight: "右に固定",
+    dropColumnsHere: "ここに列をドラッグ",
+    showColumn: "列を表示",
+    hideColumn: "列を非表示",
+
     selectAll: "全行を選択",
     selectRow: "行を選択",
     paginationFirst: "最初のページ",
@@ -89,7 +128,16 @@ export const dataTableLabels = defineI18nLabels({
     // Filters
     addFilter: "フィルタを追加",
     applyFilter: "適用",
+    updateFilter: "更新",
     removeFilter: "フィルタを削除",
+    clearFilter: "このフィルタをクリア",
+    clearAllFilters: "すべてのフィルタをクリア",
+    chooseTime: "時刻を選択",
+    filterOperatorSearchPlaceholder: "検索...",
+    filterOperatorNoResults: "該当なし",
+    filterValuePlaceholder: (props: { field: string }) => `${props.field}を入力`,
+    // Multi-select enum chip summary, e.g. "ステータス2件".
+    filterEnumCount: (props: { count: number; noun: string }) => `${props.noun}${props.count}件`,
     filterBooleanTrue: "真",
     filterBooleanFalse: "偽",
     filterOperator_eq: "と等しい",
@@ -114,6 +162,8 @@ export const dataTableLabels = defineI18nLabels({
     filterBetweenTo: "終了",
     filterBetweenMin: "最小",
     filterBetweenMax: "最大",
+    filterBetweenOrderError: (props: { min: string; max: string }) =>
+      `${props.max}は${props.min}以上にしてください`,
     filterCaseSensitive: "大文字小文字を区別する",
 
     // Filter chip label templates (Japanese: column: value operator)

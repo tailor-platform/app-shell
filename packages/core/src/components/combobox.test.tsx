@@ -15,7 +15,7 @@ function SimpleCombobox(props: {
   value?: string;
 }) {
   return (
-    <ComboboxParts.Root {...props}>
+    <ComboboxParts.Root<string> {...props}>
       <ComboboxParts.Input data-testid="input" placeholder="Search fruits..." />
       <ComboboxParts.Content>
         <ComboboxParts.List>
@@ -50,6 +50,9 @@ describe("Combobox.Parts", () => {
       await user.type(input, "a");
       await waitFor(() => {
         expect(screen.getByText("Apple")).toBeDefined();
+      });
+      await waitFor(() => {
+        expect(screen.getByRole("status").textContent).toBe("No results found");
       });
       expect(baseElement.innerHTML).toMatchSnapshot();
     });
@@ -1353,6 +1356,7 @@ describe("useAsync", () => {
     expect(result.current).toHaveProperty("loading");
     expect(result.current).toHaveProperty("query");
     expect(result.current).toHaveProperty("error");
+    expect(result.current).toHaveProperty("retry");
     expect(result.current).toHaveProperty("onInputValueChange");
   });
 
@@ -1460,5 +1464,123 @@ describe("useAsync", () => {
     await advanceAndFlush(300);
 
     expect(capturedSignals[0].aborted).toBe(true);
+  });
+
+  it("clears the error after a subsequent successful fetch", async () => {
+    let shouldFail = true;
+    const fetcher = vi.fn(async () => {
+      if (shouldFail) throw new Error("API error");
+      return ["ok"];
+    });
+    const { result } = renderHook(() => useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("a");
+    });
+    await advanceAndFlush(300);
+    expect(result.current.error).toBeInstanceOf(Error);
+
+    shouldFail = false;
+    act(() => {
+      result.current.onInputValueChange("ab");
+    });
+    await advanceAndFlush(300);
+
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.items).toEqual(["ok"]);
+  });
+
+  it("retry re-runs the most recent fetch without debounce", async () => {
+    let shouldFail = true;
+    const fetcher = vi.fn(async (q: string | null) => {
+      if (shouldFail) throw new Error("API error");
+      return [q ?? ""];
+    });
+    const { result } = renderHook(() => useAsync({ fetcher }));
+
+    act(() => {
+      result.current.onInputValueChange("react");
+    });
+    await advanceAndFlush(300);
+    expect(result.current.error).toBeInstanceOf(Error);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    // Recover, then retry the same query — should fire immediately (no debounce)
+    shouldFail = false;
+    act(() => {
+      result.current.retry();
+    });
+    await advanceAndFlush(0);
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenLastCalledWith("react", expect.anything());
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.items).toEqual(["react"]);
+  });
+
+  it("fires onFetchError once per outage and re-arms after a success", async () => {
+    let shouldFail = true;
+    const fetcher = vi.fn(async () => {
+      if (shouldFail) throw new Error("API error");
+      return ["ok"];
+    });
+    const onFetchError = vi.fn();
+    const { result } = renderHook(() => useAsync({ fetcher, onFetchError }));
+
+    // First failure → fires once
+    act(() => {
+      result.current.onInputValueChange("a");
+    });
+    await advanceAndFlush(300);
+    expect(onFetchError).toHaveBeenCalledTimes(1);
+
+    // Still broken, more keystrokes → does NOT re-fire during the same outage
+    act(() => {
+      result.current.onInputValueChange("ab");
+    });
+    await advanceAndFlush(300);
+    expect(onFetchError).toHaveBeenCalledTimes(1);
+
+    // Recover
+    shouldFail = false;
+    act(() => {
+      result.current.onInputValueChange("abc");
+    });
+    await advanceAndFlush(300);
+    expect(onFetchError).toHaveBeenCalledTimes(1);
+
+    // New outage → fires again
+    shouldFail = true;
+    act(() => {
+      result.current.onInputValueChange("abcd");
+    });
+    await advanceAndFlush(300);
+    expect(onFetchError).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not fire onFetchError for aborted (superseded) requests", async () => {
+    const onFetchError = vi.fn();
+    const fetcher = vi.fn(async (_q: string | null, opts: { signal: AbortSignal }) => {
+      return new Promise<string[]>((_resolve, reject) => {
+        opts.signal.addEventListener("abort", () =>
+          reject(new DOMException("Aborted", "AbortError")),
+        );
+        setTimeout(() => reject(new Error("late failure")), 200);
+      });
+    });
+    const { result } = renderHook(() => useAsync({ fetcher, onFetchError }));
+
+    act(() => {
+      result.current.onInputValueChange("first");
+    });
+    await advanceAndFlush(300);
+
+    // Supersede before the first settles
+    act(() => {
+      result.current.onInputValueChange("second");
+    });
+    await advanceAndFlush(300);
+
+    expect(onFetchError).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,8 @@ description: Searchable combobox with single/multi selection, built-in filtering
 
 The `Combobox` component provides a searchable combobox with built-in filtering. Pass `items` and get a ready-to-use combobox out of the box. For async data fetching use `Combobox.Async`. For user-created items add an `onCreateItem` prop. For custom compositions use `Combobox.Parts`.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/combobox)
+
 ## Import
 
 ```tsx
@@ -144,10 +146,13 @@ const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
 
 Accepts all the same props as `Combobox` except `items`, plus:
 
-| Prop          | Type                      | Default        | Description                                             |
-| ------------- | ------------------------- | -------------- | ------------------------------------------------------- |
-| `fetcher`     | `ComboboxAsyncFetcher<T>` | -              | Fetcher called on each keystroke (debounced by default) |
-| `loadingText` | `string`                  | `"Loading..."` | Text shown while loading                                |
+| Prop           | Type                       | Default                    | Description                                                        |
+| -------------- | -------------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `fetcher`      | `ComboboxAsyncFetcher<T>`  | -                          | Fetcher called on each keystroke (debounced by default)            |
+| `loadingText`  | `string`                   | `"Loading..."`             | Text shown while loading                                           |
+| `errorText`    | `string`                   | `"Couldn't load results."` | Message shown in the popover when the fetcher fails (with Retry)   |
+| `retryText`    | `string`                   | `"Retry"`                  | Label for the retry button in the error state                      |
+| `onFetchError` | `(error: unknown) => void` | -                          | Called once per outage when a fetch fails (logging/error tracking) |
 
 ### ComboboxAsyncFetcher
 
@@ -160,7 +165,22 @@ type ComboboxAsyncFetcher<T> =
     };
 ```
 
-`query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay. Errors thrown by the fetcher are silently caught — handle errors inside the fetcher.
+`query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay.
+
+### Error handling
+
+If the fetcher throws or rejects, `Combobox.Async` renders a built-in inline error state in the popover — the `errorText` message plus a **Retry** button that re-runs the last fetch — instead of the misleading "No results." empty state. Aborted/superseded requests (a keystroke replaced by a newer one) are ignored, and the component de-dupes per outage so typing during an outage doesn't stack repeated announcements.
+
+To run a side effect on failure (log to error tracking, show a toast), pass `onFetchError` — it fires **once per outage** (on the transition into the error state) and re-arms after the next successful fetch. The inline error state is shown regardless.
+
+```tsx
+<Combobox.Async
+  fetcher={fetcher}
+  errorText="Couldn't load users."
+  retryText="Try again"
+  onFetchError={(error) => reportError(error)}
+/>
+```
 
 ## Low-level Primitives
 
@@ -208,6 +228,15 @@ const [selected, setSelected] = useState<User | null>(null);
 
 Combine `Combobox.useAsync` with `Combobox.Parts` for full control over layout and rendering:
 
+`Combobox.useAsync` accepts the same options as `Combobox.Async` (including `onFetchError`) and returns:
+
+| Property  | Type         | Description                                             |
+| --------- | ------------ | ------------------------------------------------------- |
+| `items`   | `T[]`        | Currently loaded items                                  |
+| `loading` | `boolean`    | Whether a fetch is in progress                          |
+| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
+| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+
 ```tsx
 type Country = { code: string; name: string };
 
@@ -217,6 +246,7 @@ const countries = Combobox.useAsync({
     if (!res.ok) return [];
     return res.json() as Promise<Country[]>;
   },
+  onFetchError: (error) => reportError(error),
 });
 
 <Combobox.Parts.Root {...countries} filter={null} itemToStringLabel={(c) => c.name}>
@@ -233,7 +263,13 @@ const countries = Combobox.useAsync({
         </Combobox.Parts.Item>
       ))}
       <Combobox.Parts.Empty>
-        {countries.loading ? "Loading..." : "No results."}
+        {countries.error ? (
+          <button onClick={countries.retry}>Couldn't load. Retry</button>
+        ) : countries.loading ? (
+          "Loading..."
+        ) : (
+          "No results."
+        )}
       </Combobox.Parts.Empty>
     </Combobox.Parts.List>
   </Combobox.Parts.Content>

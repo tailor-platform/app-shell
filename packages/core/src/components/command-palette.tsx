@@ -1,5 +1,6 @@
 import { useReducer, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
+import { useAppInfoPageRoute } from "@/components/app-info";
 import { SearchIcon, LoaderCircleIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
@@ -96,6 +97,7 @@ export type UseCommandPaletteReturn = {
   handleOpenChange: (open: boolean) => void;
   search: string;
   setSearch: (search: string) => void;
+  initializeSearch: (search: string) => void;
   selectedIndex: number;
   filteredActions: Array<CommandPaletteAction>;
   filteredRoutes: Array<NavigatableRoute>;
@@ -136,13 +138,18 @@ type PaletteState =
       isSearching: boolean;
     };
 
+// Parsed search-mode metadata shared by both normal typing and programmatic
+// open. We compute this before dispatch because the reducer only sees state +
+// action and does not have direct access to `searchSources`.
+type ParsedSearchActionPayload = {
+  value: string;
+  detectedSource?: SearchSource;
+  detectedQuery?: string;
+};
+
 type PaletteAction =
-  | {
-      type: "SET_SEARCH";
-      value: string;
-      detectedSource?: SearchSource;
-      detectedQuery?: string;
-    }
+  | ({ type: "SET_SEARCH" } & ParsedSearchActionPayload)
+  | ({ type: "INITIALIZE_SEARCH" } & ParsedSearchActionPayload)
   | { type: "ARROW_DOWN"; maxIndex: number }
   | { type: "ARROW_UP" }
   | { type: "ENTER_SEARCH_MODE"; source: SearchSource }
@@ -177,6 +184,23 @@ function paletteReducer(state: PaletteState, action: PaletteAction): PaletteStat
         };
       }
       return { ...state, search: action.value, selectedIndex: 0 };
+
+    case "INITIALIZE_SEARCH":
+      if (action.detectedSource) {
+        return {
+          mode: "search",
+          source: action.detectedSource,
+          query: action.detectedQuery ?? "",
+          selectedIndex: 0,
+          results: [],
+          isSearching: false,
+        };
+      }
+      return {
+        mode: "browse",
+        search: action.value,
+        selectedIndex: 0,
+      };
 
     case "ENTER_SEARCH_MODE":
       return {
@@ -362,6 +386,19 @@ export function useCommandPalette({
     [state.mode, searchSources],
   );
 
+  const initializeSearch = useCallback(
+    (newSearch: string) => {
+      const parsed = parseSearchMode(newSearch, searchSources);
+      dispatch({
+        type: "INITIALIZE_SEARCH",
+        value: newSearch,
+        detectedSource: parsed.activeSource ?? undefined,
+        detectedQuery: parsed.activeSource ? parsed.searchQuery : undefined,
+      });
+    },
+    [searchSources],
+  );
+
   // Handler for dialog open state changes
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
@@ -448,6 +485,7 @@ export function useCommandPalette({
     handleOpenChange,
     search,
     setSearch,
+    initializeSearch,
     selectedIndex,
     filteredActions,
     filteredRoutes,
@@ -463,18 +501,23 @@ export function useCommandPalette({
 
 type CommandPaletteContentProps = {
   navItems: Array<NavItem>;
+  extraRoutes?: Array<NavigatableRoute>;
 };
 
-export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) {
+export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
-  const { searchSources, open, setOpen } = useCommandPaletteState();
-  const routes = useMemo(() => navItemsToRoutes(navItems), [navItems]);
+  const { searchSources, open, setOpen, openRequest, clearOpenRequest } = useCommandPaletteState();
+  const routes = useMemo(
+    () => [...navItemsToRoutes(navItems), ...extraRoutes],
+    [extraRoutes, navItems],
+  );
   const {
     open: paletteOpen,
     handleOpenChange,
     search,
     setSearch,
+    initializeSearch,
     selectedIndex,
     filteredActions,
     filteredRoutes,
@@ -492,6 +535,12 @@ export function CommandPaletteContent({ navItems }: CommandPaletteContentProps) 
     open,
     setOpen,
   });
+
+  useEffect(() => {
+    if (!openRequest) return;
+    initializeSearch(openRequest.search ?? "");
+    clearOpenRequest();
+  }, [openRequest, initializeSearch, clearOpenRequest]);
 
   // Compute index offsets for each section
   const searchModeItems = activeSearchSource
@@ -704,11 +753,12 @@ export function CommandPalette(): React.ReactNode {
  */
 export function BuiltInCommandPalette() {
   const navItems = useNavItems();
+  const appInfoRoute = useAppInfoPageRoute();
 
   return (
     <Suspense fallback={null}>
       <Await resolve={navItems}>
-        {(items) => <CommandPaletteContent navItems={items ?? []} />}
+        {(items) => <CommandPaletteContent navItems={items ?? []} extraRoutes={[appInfoRoute]} />}
       </Await>
     </Suspense>
   );

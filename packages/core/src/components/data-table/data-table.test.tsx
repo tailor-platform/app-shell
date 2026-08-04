@@ -1,11 +1,12 @@
-import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
+import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData, RowAction } from "./types";
+import type { Column, DataTableData, RowAction, UseDataTableReturn } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -24,6 +25,30 @@ const testData: DataTableData<TestRow> = {
     { id: "2", name: "Bob", status: "Inactive" },
   ],
 };
+
+function makeControl(overrides?: Partial<CollectionControl>): CollectionControl {
+  return {
+    filters: [],
+    addFilter: vi.fn(),
+    setFilters: vi.fn(),
+    removeFilter: vi.fn(),
+    clearFilters: vi.fn(),
+    sortStates: [],
+    setSort: vi.fn(),
+    clearSort: vi.fn(),
+    pageSize: 10,
+    setPageSize: vi.fn(),
+    goToNextPage: vi.fn(),
+    goToPrevPage: vi.fn(),
+    resetPage: vi.fn(),
+    goToFirstPage: vi.fn(),
+    goToLastPage: vi.fn(),
+    resetCount: 0,
+    getHasPrevPage: () => false,
+    getHasNextPage: (pageInfo) => pageInfo.hasNextPage,
+    ...overrides,
+  };
+}
 
 function TestDataTable(props: {
   columns?: Column<TestRow>[];
@@ -54,6 +79,11 @@ function TestDataTable(props: {
 }
 
 const wrapper = createAppShellWrapper("en");
+
+const headByText = (container: HTMLElement, text: string) =>
+  Array.from(container.querySelectorAll<HTMLElement>('[data-slot="data-table-header"] th')).find(
+    (th) => th.textContent?.trim() === text,
+  );
 
 // When a cell is wrapped in `Tooltip.Trigger`, Base UI tags the trigger
 // element with a generated `base-ui-…` id (used for the popup's
@@ -107,6 +137,151 @@ describe("DataTable", () => {
     expect(container.querySelector('[data-slot="data-table-table"]')).toBeDefined();
     expect(container.querySelector('[data-slot="data-table-header"]')).toBeDefined();
     expect(container.querySelector('[data-slot="data-table-body"]')).toBeDefined();
+  });
+
+  describe("custom headers", () => {
+    it("renders custom header content", () => {
+      const columns: Column<TestRow>[] = [
+        {
+          label: "Name",
+          header: () => (
+            <>
+              <span>Customer</span>
+              <span aria-hidden>*</span>
+            </>
+          ),
+          render: (row) => row.name,
+        },
+      ];
+
+      render(<TestDataTable columns={columns} />, { wrapper });
+
+      expect(screen.getByText("Customer")).toBeDefined();
+      expect(screen.getByText("*")).toBeDefined();
+      expect(screen.queryByText("Name")).toBeNull();
+    });
+
+    it("keeps built-in sort behavior and hit area when header is omitted", () => {
+      const control = makeControl();
+
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: [
+            {
+              label: "Name",
+              sort: { field: "name", type: "string" },
+              render: (row) => row.name,
+            },
+          ],
+          data: testData,
+          control,
+        });
+
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      render(<Harness />, { wrapper });
+
+      const button = screen.getByRole("button", { name: "Name" });
+      expect(button.className).toContain("astw:h-10");
+      expect(button.className).toContain("astw:-mx-2");
+      expect(button.className).toContain("astw:px-2");
+
+      fireEvent.click(button);
+
+      expect(control.clearSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledWith("name", "Asc");
+    });
+
+    it("passes non-sortable context when sort config exists but sorting is inactive", () => {
+      let seenSortable: boolean | undefined;
+      const columns: Column<TestRow>[] = [
+        {
+          label: "Name",
+          sort: { field: "name", type: "string" },
+          header: (ctx) => {
+            seenSortable = ctx.sortable;
+            return ctx.sortable ? "sortable" : "static";
+          },
+          render: (row) => row.name,
+        },
+      ];
+
+      render(<TestDataTable columns={columns} />, { wrapper });
+
+      expect(screen.getByText("static")).toBeDefined();
+      expect(seenSortable).toBe(false);
+    });
+
+    it("passes sortable context and activateSort reuses the shared sort behavior", () => {
+      const control = makeControl({
+        sortStates: [{ field: "name", direction: "Asc" }],
+      });
+
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: [
+            {
+              label: "Name",
+              sort: { field: "name", type: "string" },
+              header: (ctx) =>
+                ctx.sortable ? (
+                  <button type="button" onClick={ctx.activateSort}>
+                    {ctx.label} {ctx.sortDirection}
+                  </button>
+                ) : null,
+              render: (row) => row.name,
+            },
+          ],
+          data: testData,
+          control,
+        });
+
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      render(<Harness />, { wrapper });
+
+      fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
+
+      expect(control.clearSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledTimes(1);
+      expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
+    });
+
+    it("narrows header render context by sortable", () => {
+      const column: Column<TestRow> = {
+        label: "Name",
+        header: (ctx) => {
+          if (ctx.sortable) {
+            expectTypeOf(ctx).toEqualTypeOf<{
+              label?: string;
+              sortable: true;
+              sortDirection: "Asc" | "Desc" | undefined;
+              activateSort: () => void;
+            }>();
+          } else {
+            expectTypeOf(ctx).toEqualTypeOf<{
+              label?: string;
+              sortable: false;
+            }>();
+          }
+          return ctx.label;
+        },
+        render: (row) => row.name,
+      };
+
+      expect(column).toBeDefined();
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -420,7 +595,7 @@ describe("DataTable", () => {
   // Column truncate
   // -------------------------------------------------------------------------
   describe("column truncate", () => {
-    it("adds truncate + max-w-0 to body cells when truncate=true", () => {
+    it("constrains the cell width and truncates in an inner span when truncate=true", () => {
       const cols: Column<TestRow>[] = [
         {
           label: "Name",
@@ -435,9 +610,13 @@ describe("DataTable", () => {
       });
       const firstRow = container.querySelector('[data-slot="data-table-row"]');
       const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
-      expect(cells[0]?.className).toContain("truncate");
+      // The cell keeps the width constraint but NOT `overflow: hidden` (which would
+      // clip a pinned column's freeze shadow); truncation moves to an inner span.
       expect(cells[0]?.className).toContain("max-w-0");
-      expect(cells[1]?.className).not.toContain("truncate");
+      expect(cells[0]?.className).not.toContain("astw:truncate");
+      expect(cells[0]?.querySelector('span[class*="truncate"]')).toBeTruthy();
+      expect(cells[1]?.className).not.toContain("max-w-0");
+      expect(cells[1]?.querySelector('span[class*="truncate"]')).toBeFalsy();
     });
 
     it("wires a Tooltip when accessor returns a string", () => {
@@ -508,8 +687,8 @@ describe("DataTable", () => {
       }
       const { container } = render(<Harness />, { wrapper });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
-      // Truncate classes still apply, but no Tooltip wraps the cell.
-      expect(cell?.className).toContain("truncate");
+      // Truncation still applies (inner span), but no Tooltip wraps the cell.
+      expect(cell?.querySelector('span[class*="truncate"]')).toBeTruthy();
       expect(isTooltipWired(cell)).toBe(false);
     });
 
@@ -525,7 +704,7 @@ describe("DataTable", () => {
         wrapper,
       });
       const cell = container.querySelector('[data-slot="data-table-cell"]');
-      expect(cell?.className).toContain("truncate");
+      expect(cell?.querySelector('span[class*="truncate"]')).toBeTruthy();
       expect(isTooltipWired(cell)).toBe(false);
     });
 
@@ -1092,6 +1271,140 @@ describe("DataTable", () => {
       fireEvent.click(checkboxes[0]);
 
       expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
+    });
+
+    it("marks the selected row with data-state='selected' so the whole row highlights", () => {
+      const { container } = render(<TestDataTable onSelectionChange={vi.fn()} />, { wrapper });
+
+      // Nothing selected initially.
+      expect(
+        container.querySelector('[data-slot="data-table-row"][data-state="selected"]'),
+      ).toBeNull();
+
+      // checkboxes[0] = header, checkboxes[1] = first data row.
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+
+      // The row (not just the pinned cells) must carry data-state="selected",
+      // which is what `Table.Row` keys its selected background off of.
+      expect(
+        container.querySelectorAll('[data-slot="data-table-row"][data-state="selected"]'),
+      ).toHaveLength(1);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Sticky / pinned columns
+  // -------------------------------------------------------------------------
+  describe("pinned columns", () => {
+    type Row = { id: string; a: string; b: string; c: string };
+    const rows: Row[] = [{ id: "1", a: "A1", b: "B1", c: "C1" }];
+    const pinnedCols: Column<Row>[] = [
+      { id: "a", label: "A", width: 100, pin: "left", render: (r) => r.a },
+      { id: "b", label: "B", width: 100, render: (r) => r.b },
+      { id: "c", label: "C", width: 100, pin: "right", render: (r) => r.c },
+    ];
+
+    function PinHarness(props: { onSelectionChange?: (ids: string[]) => void }) {
+      const table = useDataTable<Row>({
+        columns: pinnedCols,
+        data: { rows },
+        onSelectionChange: props.onSelectionChange,
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+
+    it("applies sticky positioning + edge offsets to pinned columns", () => {
+      const { container } = render(<PinHarness />, { wrapper });
+      const a = headByText(container, "A");
+      const c = headByText(container, "C");
+      expect(a?.style.position).toBe("sticky");
+      expect(a?.style.left).toBe("0px");
+      expect(c?.style.position).toBe("sticky");
+      expect(c?.style.right).toBe("0px");
+      // Non-pinned column is not sticky.
+      expect(headByText(container, "B")?.style.position).toBe("");
+    });
+
+    it("offsets a left-pinned column past the auto-pinned selection column", () => {
+      const { container } = render(<PinHarness onSelectionChange={() => {}} />, { wrapper });
+      // Selection column auto-pins to the left edge; column A stacks after it.
+      const a = headByText(container, "A");
+      expect(a?.style.left).toBe("52px");
+    });
+
+    it("marks the boundary pinned cell with a scroll-aware freeze shadow", () => {
+      const { container } = render(<PinHarness />, { wrapper });
+      // The shadow pseudo-element is revealed only when the container is scrolled
+      // under that edge (data-pin-shadow-left / -right toggled by DataTable.Table).
+      expect(headByText(container, "A")?.className).toContain("data-pin-shadow-left");
+      expect(headByText(container, "C")?.className).toContain("data-pin-shadow-right");
+    });
+
+    it("honours a pin without a width (offsets come from measured widths)", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const cols: Column<Row>[] = [
+        { id: "a", label: "A", pin: "left", render: (r) => r.a },
+        { id: "b", label: "B", width: 100, render: (r) => r.b },
+      ];
+      function Harness() {
+        const table = useDataTable<Row>({ columns: cols, data: { rows } });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      // Width is no longer required to pin — the column is still frozen (offsets
+      // are measured at runtime), and there is no dev warning.
+      expect(headByText(container, "A")?.style.position).toBe("sticky");
+      expect(headByText(container, "A")?.style.left).toBe("0px");
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it("keeps stored pin state keyed to definition order for a column with no id/label", () => {
+      // The middle column has neither `id` nor `label`, so its key falls back to
+      // its definition index ("1"). Regression for the two-index-space bug:
+      // resolving the render key from the *visible* array would re-key this
+      // column to "0" once the column ahead of it is hidden, silently detaching
+      // its stored pin (and visibility) state.
+      type R = { id: string; a: string; b: string; c: string };
+      const dataRows: R[] = [{ id: "1", a: "A1", b: "B1", c: "C1" }];
+      const cols: Column<R>[] = [
+        { id: "a", label: "A", width: 100, render: (r) => r.a },
+        { width: 100, render: (r) => r.b }, // no id, no label → definition key "1"
+        { id: "c", label: "C", width: 100, render: (r) => r.c },
+      ];
+      let api!: UseDataTableReturn<R>;
+      function Harness() {
+        const table = useDataTable<R>({ columns: cols, data: { rows: dataRows } });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      const keyless = () =>
+        container.querySelector<HTMLElement>(
+          '[data-slot="data-table-header"] th[data-col-key="1"]',
+        );
+
+      // Renders under its definition-order key, then pin it (stored under "1").
+      expect(keyless()).not.toBeNull();
+      act(() => api.setPin("1", "left"));
+      expect(keyless()?.style.position).toBe("sticky");
+
+      // Hiding the column ahead of it must NOT re-key it to its new visible
+      // index and drop the pin.
+      act(() => api.toggleColumn("a"));
+      expect(keyless()?.style.position).toBe("sticky");
     });
   });
 });

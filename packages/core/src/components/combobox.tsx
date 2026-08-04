@@ -722,7 +722,11 @@ function useCreatable<T extends object>(
  * >
  *   ...
  *   <Combobox.Empty>
- *     {countries.loading ? "Loading..." : "No results."}
+ *     {countries.loading
+ *       ? "Loading..."
+ *       : countries.error
+ *         ? <button onClick={countries.retry}>Couldn't load results. Retry</button>
+ *         : "No results."}
  *   </Combobox.Empty>
  * </Combobox.Root>
  * ```

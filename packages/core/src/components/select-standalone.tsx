@@ -12,6 +12,7 @@ import {
 } from "./select";
 import { defaultMapItem, isGroupedItems } from "./dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
+import { AsyncErrorState, resolveAsyncContent } from "./async-error-state";
 
 /**
  * Fetcher type for `Select.Async`.
@@ -30,10 +31,10 @@ import type { MappedItem, ItemGroup, ExtractItem } from "./dropdown-items";
  * If caching or deduplication is needed, implement it in the fetcher
  * (e.g. via a query library or a simple cache layer).
  *
- * **Error handling:** Errors should be handled inside the fetcher.
- * If the fetcher throws, the component silently falls back to an empty
- * item list — there is no `onError` callback. Catch errors in the
- * fetcher to show toasts, log to error tracking, or return fallback data.
+ * **Error handling:** If the fetcher throws or rejects, the component renders
+ * a built-in inline error state (with a Retry affordance) in place of the
+ * empty item list — the failure is no longer silently swallowed. To run a side
+ * effect on failure (logging, error tracking, a toast), pass `onFetchError`.
  */
 export type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
 
@@ -217,6 +218,12 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
 interface UseSelectAsyncOptions<T> {
   /** Fetcher for async item loading. Called each time the dropdown is opened. */
   fetcher: SelectAsyncFetcher<T>;
+  /**
+   * Called when a fetch fails. Fires once per outage (not on every re-open
+   * while broken) and re-arms after the next success. Use for logging or error
+   * tracking; the inline error state is shown regardless.
+   */
+  onFetchError?: (error: unknown) => void;
 }
 
 interface UseSelectAsyncReturn<T> {
@@ -226,6 +233,8 @@ interface UseSelectAsyncReturn<T> {
   loading: boolean;
   /** The error thrown by the last fetch, if any */
   error: unknown;
+  /** Re-runs the fetch immediately. Use for a Retry affordance. */
+  retry: () => void;
   /** Open change handler — pass to the Root `onOpenChange` prop */
   onOpenChange: (open: boolean) => void;
 }
@@ -263,56 +272,74 @@ interface UseSelectAsyncReturn<T> {
  * </Select.Parts.Root>
  * ```
  */
-function useAsync<T>({ fetcher }: UseSelectAsyncOptions<T>): UseSelectAsyncReturn<T> {
+function useAsync<T>({ fetcher, onFetchError }: UseSelectAsyncOptions<T>): UseSelectAsyncReturn<T> {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(undefined);
 
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+  const onFetchErrorRef = useRef(onFetchError);
+  onFetchErrorRef.current = onFetchError;
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Whether we are currently in an error state, so onFetchError fires once per
+  // outage (on the transition into the error state) rather than on every re-open.
+  const inErrorStateRef = useRef(false);
 
-  const onOpenChange = React.useCallback((open: boolean) => {
-    if (open) {
-      abortControllerRef.current?.abort();
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-      setLoading(true);
+  const runFetch = React.useCallback(() => {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    setLoading(true);
 
-      fetcherRef
-        .current({ signal: controller.signal })
-        .then((result) => {
-          if (!controller.signal.aborted) {
-            setItems(result);
-            setError(undefined);
+    fetcherRef
+      .current({ signal: controller.signal })
+      .then((result) => {
+        if (!controller.signal.aborted) {
+          setItems(result);
+          setError(undefined);
+          inErrorStateRef.current = false;
+        }
+      })
+      .catch((e) => {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (!controller.signal.aborted) {
+          setItems([]);
+          setError(e);
+          // Announce the outage only on the transition into the error state.
+          if (!inErrorStateRef.current) {
+            inErrorStateRef.current = true;
+            onFetchErrorRef.current?.(e);
           }
-        })
-        .catch((e) => {
-          if (e instanceof DOMException && e.name === "AbortError") return;
-          if (!controller.signal.aborted) {
-            setItems([]);
-            setError(e);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setLoading(false);
-          }
-        });
-    } else {
-      // Abort in-flight fetch on close to prevent content changes during
-      // the close animation, which can break Base UI's transition tracking.
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-    }
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
   }, []);
+
+  const onOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (open) {
+        runFetch();
+      } else {
+        // Abort in-flight fetch on close to prevent content changes during
+        // the close animation, which can break Base UI's transition tracking.
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+      }
+    },
+    [runFetch],
+  );
 
   useEffect(() => {
     return () => abortControllerRef.current?.abort();
   }, []);
 
-  return { items, loading, error, onOpenChange };
+  return { items, loading, error, retry: runFetch, onOpenChange };
 }
 
 // ============================================================================
@@ -324,6 +351,20 @@ interface SelectAsyncOwnProps<T> {
   fetcher: SelectAsyncFetcher<T>;
   /** Text shown while loading. @default "Loading..." */
   loadingText?: string;
+  /**
+   * Message shown in the dropdown when the fetcher fails, alongside a Retry
+   * affordance. Replaces the misleading empty state.
+   * @default "Couldn't load results."
+   */
+  errorText?: string;
+  /** Label for the retry button in the error state. @default "Retry" */
+  retryText?: string;
+  /**
+   * Called when a fetch fails. Fires once per outage (not on every re-open
+   * while broken) and re-arms after the next success. Use for logging or error
+   * tracking — the inline error state is shown regardless.
+   */
+  onFetchError?: (error: unknown) => void;
   /**
    * Whether the select behaves as a modal (traps focus).
    * Set to `true` when rendering inside a Dialog or Sheet to preserve focus-trap.
@@ -346,6 +387,9 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     fetcher,
     placeholder,
     loadingText = "Loading...",
+    errorText = "Couldn't load results.",
+    retryText = "Retry",
+    onFetchError,
     // Base UI's modal + anchored alignment path can leave async selects
     // scroll-locked or invisible after reopening once items have loaded.
     modal = false,
@@ -368,18 +412,39 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     id,
   };
 
-  const { items, loading, onOpenChange: handleOpenChange } = useAsync({ fetcher });
+  const {
+    items,
+    loading,
+    error,
+    retry,
+    onOpenChange: handleOpenChange,
+  } = useAsync({
+    fetcher,
+    onFetchError,
+  });
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
 
-  const content = loading ? (
-    <div className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground">
-      {loadingText}
-    </div>
-  ) : (
-    renderFlatItems(items, mapItem)
-  );
+  const content = resolveAsyncContent<React.ReactNode>({
+    loading,
+    error,
+    loadingContent: (
+      <div className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground">
+        {loadingText}
+      </div>
+    ),
+    errorContent: (
+      <AsyncErrorState
+        slot="select-error"
+        className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground"
+        message={errorText}
+        retryText={retryText}
+        onRetry={retry}
+      />
+    ),
+    defaultContent: renderFlatItems(items, mapItem),
+  });
 
   if (rest.multiple) {
     const { value, defaultValue, onValueChange, renderValue } = rest as SelectPropsMultiple<T>;

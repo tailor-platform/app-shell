@@ -133,14 +133,14 @@ describe("createContentRoutes", () => {
       settingsResources: [settingsResource],
     });
 
-    const indexSettingsRoute = routes[2];
-    expect(indexSettingsRoute.path).toBe("settings");
-    expect(indexSettingsRoute.index).toBe(true);
+    const indexSettingsRoute = routes.find((route) => route.path === "settings" && route.index);
+    expect(indexSettingsRoute?.path).toBe("settings");
+    expect(indexSettingsRoute?.index).toBe(true);
 
-    const settingsWrapperRoute = routes[3];
-    expect(settingsWrapperRoute.Component).toBe(SettingsWrapper);
+    const settingsWrapperRoute = routes.find((route) => route.Component === SettingsWrapper);
+    expect(settingsWrapperRoute?.Component).toBe(SettingsWrapper);
 
-    const childRoute = settingsWrapperRoute.children?.[0];
+    const childRoute = settingsWrapperRoute?.children?.[0];
     expect(childRoute?.path).toBe("profile");
     expect(typeof childRoute?.ErrorBoundary).toBe("function");
   });

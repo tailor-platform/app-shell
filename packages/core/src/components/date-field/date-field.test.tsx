@@ -2,7 +2,15 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarDate, parseDate, today, getLocalTimeZone } from "@internationalized/date";
+import {
+  CalendarDate,
+  parseDate,
+  today,
+  getLocalTimeZone,
+  startOfWeek,
+  endOfWeek,
+  isSameDay,
+} from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DateField, DatePicker } from "./date-field";
 
@@ -401,6 +409,335 @@ describe("DateField", () => {
   });
 });
 
+// ─── Keyboard: whole-date shortcuts (QBO-style) ──────────────────────────────
+// These fire from any focused date segment and set the entire date in one go.
+// A bare DateField anchors on today("UTC"), so "today"/empty-field expectations
+// derive from that same basis. Locale here is "en" (weeks start Sunday).
+
+describe("DateField keyboard shortcuts", () => {
+  async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
+    });
+  }
+
+  it("'t' jumps to today (case-insensitive)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("T"); // upper-case → same as "t"
+
+    await lastEmit(onChange, today("UTC").toString());
+  });
+
+  it("'m' goes to the start of the entered month", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("m");
+
+    await lastEmit(onChange, "2025-06-01");
+  });
+
+  it("'m' falls back to the start of the current month when no date is entered", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("m");
+
+    await lastEmit(onChange, today("UTC").set({ day: 1 }).toString());
+  });
+
+  it("'h' goes to the end of the entered month", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("h");
+
+    await lastEmit(onChange, "2025-06-30");
+  });
+
+  it("'y' and 'r' jump to the start / end of the entered year", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("y");
+    await lastEmit(onChange, "2025-01-01");
+
+    await user.keyboard("r");
+    await lastEmit(onChange, "2025-12-31");
+  });
+
+  it("'w' and 'k' jump to the start / end of the week (locale-aware)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const start = new CalendarDate(2025, 6, 18); // a Wednesday
+    render(<DateField label="Date" defaultValue={start} onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("w");
+    await lastEmit(onChange, startOfWeek(start, "en").toString());
+
+    await user.keyboard("k");
+    await lastEmit(onChange, endOfWeek(start, "en").toString());
+  });
+
+  it("'-' decrements a day and rolls back over the month boundary", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField label="Date" defaultValue={new CalendarDate(2025, 3, 1)} onChange={onChange} />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("-");
+
+    await lastEmit(onChange, "2025-02-28");
+  });
+
+  it("'-' rolls back over the year boundary (1 Jan → 31 Dec of the prior year)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField label="Date" defaultValue={new CalendarDate(2025, 1, 1)} onChange={onChange} />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("-");
+
+    await lastEmit(onChange, "2024-12-31");
+  });
+
+  it("'=' and '+' both increment a day and roll over the year boundary", async () => {
+    const user = userEvent.setup();
+
+    const onChangeEq = vi.fn();
+    const { unmount } = render(
+      <DateField
+        label="Date"
+        defaultValue={new CalendarDate(2025, 12, 31)}
+        onChange={onChangeEq}
+      />,
+    );
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("="); // unshifted plus
+    await lastEmit(onChangeEq, "2026-01-01");
+    unmount();
+
+    const onChangePlus = vi.fn();
+    render(
+      <DateField
+        label="Date"
+        defaultValue={new CalendarDate(2025, 12, 31)}
+        onChange={onChangePlus}
+      />,
+    );
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("+"); // shifted plus
+    await lastEmit(onChangePlus, "2026-01-01");
+  });
+
+  it("'-' / '+' step from today when the field is empty", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("+");
+
+    await lastEmit(onChange, today("UTC").add({ days: 1 }).toString());
+  });
+
+  it("expands a 2-digit year to the 2000s on blur ('26' → 2026)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <>
+        <DateField label="Date" onChange={onChange} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06");
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("15");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("26");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    await lastEmit(onChange, "2026-06-15");
+  });
+
+  it("expands a 2-digit year as soon as the year segment is left (still inside the field)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06");
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("15");
+    await user.click(screen.getByRole("spinbutton", { name: "year" }));
+    await user.keyboard("26");
+    // Move focus back to a sibling segment — never leaving the field/group. The
+    // year should still expand (mirrors tabbing to the calendar icon).
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+
+    await lastEmit(onChange, "2026-06-15");
+  });
+
+  // Regression: the field path must honour DatePicker's firstDayOfWeek for w/k,
+  // not silently fall back to the locale default (which would disagree with the
+  // calendar path). en-US defaults to Sunday; firstDayOfWeek="mon" forces Monday.
+  it("honours firstDayOfWeek for 'w' in the field path (popover closed)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        label="Date"
+        locale="en-US"
+        firstDayOfWeek="mon"
+        defaultValue={new CalendarDate(2025, 6, 18)} // a Wednesday
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("w"); // Monday-start week → 16 Jun (not 15 Jun, the Sunday)
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-16");
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  // The standalone DateField (no calendar) also exposes firstDayOfWeek so a
+  // consumer in a non-default-week-start locale can steer the w/k shortcuts.
+  it("honours firstDayOfWeek for 'w' in a standalone DateField", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField
+        label="Date"
+        locale="en-US"
+        firstDayOfWeek="mon"
+        defaultValue={new CalendarDate(2025, 6, 18)} // a Wednesday
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("w"); // Monday-start week → 16 Jun (not 15 Jun, the Sunday)
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-16");
+    });
+  });
+
+  it("flags a shortcut target invalid when it lands outside minValue / maxValue (no clamp)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DateField
+        label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        minValue={new CalendarDate(2025, 6, 10)}
+        maxValue={new CalendarDate(2025, 6, 20)}
+        onChange={onChange}
+      />,
+    );
+    const group = screen.getByRole("group");
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("y"); // year start = 1 Jan 2025 — before min; emitted, NOT clamped
+    await lastEmit(onChange, "2025-01-01");
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+
+    await user.keyboard("r"); // year end = 31 Dec 2025 — after max; emitted, NOT clamped
+    await lastEmit(onChange, "2025-12-31");
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+  });
+
+  it("flags a typed date before minValue invalid, but still emits it", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" minValue={new CalendarDate(2025, 6, 10)} onChange={onChange} />);
+    const group = screen.getByRole("group");
+
+    // en order: month / day / year — type 5 Jun 2025 (before the 10 Jun min).
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06052025");
+    await lastEmit(onChange, "2025-06-05"); // value flows through, not clamped
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+    // Built-in message (no consumer errorMessage provided).
+    expect(screen.getByText("Date is outside the allowed range.")).toBeDefined();
+  });
+
+  it("clears the invalid flag once the typed date is back within range", async () => {
+    const user = userEvent.setup();
+    render(<DateField label="Date" minValue={new CalendarDate(2025, 6, 10)} />);
+    const group = screen.getByRole("group");
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06052025"); // 5 Jun — before min → invalid
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("15"); // 15 Jun — within range → valid again
+    expect(group.hasAttribute("data-invalid")).toBe(false);
+  });
+
+  it("flags a typed date invalid when isDateUnavailable rejects it", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const unavailable = new CalendarDate(2025, 6, 12);
+    render(
+      <DateField
+        label="Date"
+        isDateUnavailable={(d) => isSameDay(d, unavailable)}
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06122025"); // the unavailable 12 Jun 2025
+    await lastEmit(onChange, "2025-06-12");
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+    expect(screen.getByText("This date is unavailable.")).toBeDefined();
+  });
+
+  it("'/' commits the current segment and advances to the next ('1/' ⇒ month 01)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DateField label="Date" onChange={onChange} />);
+
+    // en order: month / day / year. Type a single "1" into the month, then "/"
+    // to declare "that's the whole month" and move on to the day.
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("1/15");
+    await user.keyboard("2025");
+
+    await lastEmit(onChange, "2025-01-15");
+  });
+});
+
 // ─── DatePicker ───────────────────────────────────────────────────────────────
 
 describe("DatePicker", () => {
@@ -523,5 +860,86 @@ describe("DatePicker keyboard", () => {
     await waitFor(() => {
       expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
     });
+  });
+
+  it("opens the calendar with Alt+↓ from a focused segment", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker label="Date" />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog")).toBeDefined();
+    });
+  });
+
+  // While the popover is open, focus is in the grid — the shortcuts move the
+  // highlight (like the arrows), and Enter confirms. This is the calendar path,
+  // not the segment path.
+  it("a shortcut moves the calendar highlight while the popover is open", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+    );
+
+    await user.click(screen.getAllByRole("button")[0]); // open (focus → 15 Jun)
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+
+    await user.keyboard("m"); // month start → 1 Jun
+    await user.keyboard("{Enter}"); // confirm
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-01");
+    });
+  });
+
+  it("clamps an open-popover shortcut to minValue (can't highlight before the min)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        minValue={new CalendarDate(2025, 6, 10)}
+        onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+
+    await user.keyboard("y"); // year start (1 Jan) is before min → clamps to 10 Jun
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-06-10");
+    });
+  });
+
+  it("flags a field shortcut invalid when it lands before minValue (no clamp, popover closed)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        minValue={new CalendarDate(2025, 6, 10)}
+        onChange={onChange}
+      />,
+    );
+
+    // Focus a segment (not the trigger) — the popover stays closed, so this is
+    // the field path. "y" targets 1 Jan: emitted as-is and flagged invalid,
+    // where the open-popover (calendar) path instead clamps the roving focus.
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("y");
+
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-01-01");
+    });
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

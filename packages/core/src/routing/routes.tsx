@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { RouteObject, Navigate } from "react-router";
+import { AppInfoPage, APP_INFO_SLUG } from "@/components/app-info";
 import { EmptyOutlet, SettingsWrapper } from "@/components/content";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 import {
@@ -143,6 +144,10 @@ export const createContentRoutes = ({
     ...(rootRouteConfig ? [rootRouteConfig] : []),
     {
       children: routesFromModules(modules),
+    },
+    {
+      path: APP_INFO_SLUG,
+      Component: AppInfoPage,
     },
     ...settingsRoutes,
     {

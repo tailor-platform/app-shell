@@ -6,6 +6,7 @@ import {
   useCommandPaletteDispatch,
   useCommandPaletteActions,
   useCommandPaletteState,
+  useOpenCommandPalette,
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
 } from "./command-palette-context";
@@ -191,6 +192,33 @@ describe("CommandPaletteProvider", () => {
       result.current[0].onSelect();
       expect(first).not.toHaveBeenCalled();
       expect(second).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("useOpenCommandPalette", () => {
+    it("throws when used outside provider", () => {
+      expect(() => {
+        renderHook(() => useOpenCommandPalette());
+      }).toThrow("useOpenCommandPalette must be used within CommandPaletteProvider");
+    });
+
+    it("opens the palette programmatically", () => {
+      const { result } = renderHook(
+        () => {
+          const openCommandPalette = useOpenCommandPalette();
+          const state = useCommandPaletteState();
+          return { openCommandPalette, state };
+        },
+        { wrapper },
+      );
+
+      expect(result.current.state.open).toBe(false);
+
+      act(() => {
+        result.current.openCommandPalette();
+      });
+
+      expect(result.current.state.open).toBe(true);
     });
   });
 

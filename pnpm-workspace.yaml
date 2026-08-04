@@ -6,7 +6,7 @@ packages:
 
 catalog:
   "@tailwindcss/postcss": ^4.3.0
-  "@types/node": ^25.9.1
+  "@types/node": ^25.9.5
   "@types/react": ^19
   "@types/react-dom": ^19
   "@vitejs/plugin-react": ^5.2.0
@@ -40,6 +40,19 @@ trustLockfile: true
 
 # Require packages to be published for at least 3 days before allowing install (default: 1 day)
 minimumReleaseAge: 4320
+# First-party Tailor packages are exempt from the maturity gate: the gate guards
+# against compromised third-party republishes, not packages we publish ourselves.
+# Note: this matches on package name (glob), so it exempts all versions, not a
+# specific one.
+minimumReleaseAgeExclude:
+  - "@tailor-platform/auth-public-client"
+  # Renovate security update: postcss@8.5.18
+  - postcss@8.5.18
+  # Renovate security update: vite@7.3.5
+  - vite@7.3.5
+  # Security alert response: react-router@7.18.2 was needed urgently.
+  # See: https://github.com/tailor-platform/app-shell/pull/411
+  - react-router@7.18.2
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.
@@ -67,10 +80,6 @@ trustPolicyExclude:
   # The semver maintainer states this is not a security concern.
   # See: https://github.com/npm/node-semver/issues/838
   - "semver@6.3.1"
-  # reselect@5.1.1 was published locally by a maintainer without provenance,
-  # while 5.1.0 was published via GitHub Actions with provenance. Fixed in v5.2.0.
-  # See: https://github.com/reduxjs/reselect/issues/752
-  - "reselect@5.1.1"
   # tinyexec@1.2.1+ was published via npm's staged publishing, which loses
   # Trusted Publisher metadata due to an npm bug. pnpm sees this as a trust
   # downgrade (trusted publisher → provenance only) even though provenance is present.
@@ -84,5 +93,5 @@ saveExact: true
 # Without this, pnpm only warns on Node < 24 and the install proceeds,
 # leading to a cryptic build failure: tsdown's config loader needs Node 24's
 # native TypeScript stripping and otherwise falls back to `unrun` (not a
-# tsdown dependency). Fail fast at install time instead. See README "Development".
+# tsdown dependency). Fail fast at install time instead. See CONTRIBUTING.md.
 engineStrict: true

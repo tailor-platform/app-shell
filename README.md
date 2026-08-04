@@ -27,45 +27,14 @@ For users building applications with AppShell, see the detailed guides in `docs/
 - [Introduction](./docs/introduction.md) — What is AppShell and why use it
 - [Quick Start](./docs/quickstart.md) — Installation, setup, and first steps
 
+Hosted references, no checkout required:
+
+| Site                                                    | Description                                                                            |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [UI Catalogue](https://ui.tailor.tech)                  | Live component previews, full-page samples, composite UI patterns, and routing recipes |
+| [Theme Generator](https://theme.tailor.tech/playground) | Generate an AppShell palette CSS file from a primary color                             |
+
 ## Development
 
-This project is a monorepo managed with pnpm.
-
-### Prerequisites
-
-This project requires **Node.js 24** (see `engines` in `package.json`; CI runs on Node 24). Some build tooling (`tsdown`) relies on Node 24's native TypeScript config loading — on older versions it falls back to a loader that isn't installed, and the build fails. `engine-strict` is enabled, so `pnpm install` will refuse to run on an unsupported version.
-
-If you use [nvm](https://github.com/nvm-sh/nvm), a `.nvmrc` is provided:
-
-```bash
-nvm use      # or: nvm install
-```
-
-### Setup
-
-```bash
-pnpm install
-```
-
-### Commands
-
-```bash
-pnpm dev          # Start all packages in development mode with hot reloading
-pnpm build        # Build all packages for production
-pnpm type-check   # Run type checking across all packages
-```
-
-### Testing
-
-```bash
-cd packages/core && pnpm test
-```
-
-### Publishing
-
-This project uses [changesets](https://github.com/changesets/changesets) for version management:
-
-```bash
-pnpm changeset:create    # Create a changeset describing your changes
-pnpm changeset:publish   # Build and publish to NPM (automated via CI)
-```
+This project is a monorepo managed with pnpm + turbo. For prerequisites, setup, the end-to-end
+development workflow, and publishing, see **[CONTRIBUTING.md](./CONTRIBUTING.md)**.

@@ -2,9 +2,11 @@ export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
 export { CommandPalette } from "./components/command-palette";
 export {
+  useOpenCommandPalette,
   useRegisterCommandPaletteActions,
   type CommandPaletteAction,
   type CommandPaletteSearchResult,
+  type OpenCommandPaletteOptions,
   type SearchSource,
 } from "./contexts/command-palette-context";
 
@@ -29,6 +31,8 @@ export {
   useAppShellData,
   useResolvedLocale,
   useTimeZone,
+  type AppInfo,
+  type AppInfoEntry,
   type TimeZone,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";
@@ -148,6 +152,7 @@ export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
+export { Checkbox, type CheckboxProps } from "./components/checkbox";
 export { Table } from "./components/table";
 export { Card } from "./components/card";
 export { Dialog } from "./components/dialog";
@@ -241,6 +246,7 @@ export {
   type DataTableRootProps,
   type Column,
   type DataTableData,
+  type HeaderRenderContext,
   type RowAction,
   type UseDataTableOptions,
   type UseDataTableReturn,
@@ -253,3 +259,22 @@ export {
   CollectionControlProvider,
   useCollectionControl,
 } from "./contexts/collection-control-context";
+
+export {
+  Timeline,
+  type TimelineAxis,
+  type TimelineAxisLevel,
+  type TimelineAxisSpan,
+  type TimelineAxisTick,
+  type TimelineBand,
+  type TimelineDecorations,
+  type TimelineGuide,
+  type TimelineIntervalProps,
+  type TimelineLinkDefaults,
+  type TimelineLinkProps,
+  type TimelineMarker,
+  type TimelineRootProps,
+  type TimelineRowBackground,
+  type TimelineRowProps,
+  type TimelineViewportProps,
+} from "./components/timeline";

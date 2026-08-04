@@ -7,6 +7,8 @@ description: Styled button with multiple variants and sizes
 
 The `Button` component is a styled button with multiple visual variants and sizes. It supports rendering as a custom element via the `render` prop (Base UI render pattern).
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/button)
+
 ## Import
 
 ```tsx

@@ -7,6 +7,8 @@ description: Display a title and a vertical list of actions with per-row loading
 
 `ActionPanel` is a presentational card component for rendering a vertical list of actions (icon + label). It is designed for ERP detail pages and side panels where available actions are often backend-driven.
 
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/action-panel)
+
 ## Import
 
 ```tsx

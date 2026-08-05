@@ -28,12 +28,26 @@ type Invoice = {
   issued: string;
   dueDate: string;
   notes: string;
+  poNumber: string;
+  terms: string;
+  currency: string;
+  category: string;
+  priority: string;
+  department: string;
+  discount: number;
+  balance: number;
+  createdBy: string;
+  lastContact: string;
 };
 
 const CUSTOMERS = ["Acme Corp", "Globex", "Initech", "Umbrella", "Soylent", "Hooli", "Stark Ind."];
 const REGIONS = ["North America", "EMEA", "APAC", "LATAM"];
 const OWNERS = ["A. Kimura", "B. Osei", "C. Lindqvist", "D. Alvarez", "E. Nakamura"];
 const STATUSES: InvoiceStatus[] = ["draft", "sent", "paid", "overdue"];
+const TERMS = ["Net 15", "Net 30", "Net 45", "Net 60"];
+const CATEGORIES = ["Software", "Hardware", "Services", "Support", "Consulting"];
+const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+const DEPARTMENTS = ["Sales", "Finance", "Operations", "Marketing", "Legal"];
 
 // Deterministic pseudo-random so the dataset is stable across renders/reloads.
 function makeInvoices(count: number): Invoice[] {
@@ -64,6 +78,18 @@ function makeInvoices(count: number): Invoice[] {
       issued: issued.toISOString().slice(0, 10),
       dueDate: due.toISOString().slice(0, 10),
       notes: `Follow-up scheduled with ${pick(OWNERS)} regarding ${pick(REGIONS)} terms and renewal.`,
+      poNumber: `PO-${String(5000 + i)}`,
+      terms: pick(TERMS),
+      currency: "USD",
+      category: pick(CATEGORIES),
+      priority: pick(PRIORITIES),
+      department: pick(DEPARTMENTS),
+      discount: Math.round(rand() * 15 * 10) / 10,
+      balance: Math.round(rand() * amount * 100) / 100,
+      createdBy: pick(OWNERS),
+      lastContact: new Date(base + Math.floor(rand() * 120) * 86_400_000)
+        .toISOString()
+        .slice(0, 10),
     });
   }
   return rows;
@@ -208,6 +234,82 @@ const baseColumns = [
     accessor: (r) => r.notes,
     width: 260,
     truncate: true,
+  }),
+  // Extra columns to exercise the column-settings popup with 20+ entries.
+  column({
+    id: "poNumber",
+    label: "PO number",
+    type: "text",
+    accessor: (r) => r.poNumber,
+    width: 130,
+  }),
+  column({
+    id: "terms",
+    label: "Payment terms",
+    type: "text",
+    accessor: (r) => r.terms,
+    width: 150,
+  }),
+  column({
+    id: "currency",
+    label: "Currency",
+    type: "text",
+    accessor: (r) => r.currency,
+    width: 110,
+  }),
+  column({
+    id: "category",
+    label: "Category",
+    type: "text",
+    accessor: (r) => r.category,
+    width: 150,
+    filter: {
+      field: "category",
+      type: "enum",
+      options: CATEGORIES.map((c) => ({ value: c, label: c })),
+    },
+  }),
+  column({
+    id: "priority",
+    label: "Priority",
+    type: "text",
+    accessor: (r) => r.priority,
+    width: 120,
+  }),
+  column({
+    id: "department",
+    label: "Department",
+    type: "text",
+    accessor: (r) => r.department,
+    width: 150,
+  }),
+  column({
+    id: "discount",
+    label: "Discount",
+    type: "text",
+    accessor: (r) => `${r.discount}%`,
+    width: 110,
+  }),
+  column({
+    id: "balance",
+    label: "Balance",
+    type: "money",
+    accessor: (r) => r.balance,
+    width: 130,
+  }),
+  column({
+    id: "createdBy",
+    label: "Created by",
+    type: "text",
+    accessor: (r) => r.createdBy,
+    width: 150,
+  }),
+  column({
+    id: "lastContact",
+    label: "Last contact",
+    type: "date",
+    accessor: (r) => r.lastContact,
+    width: 150,
   }),
 ];
 

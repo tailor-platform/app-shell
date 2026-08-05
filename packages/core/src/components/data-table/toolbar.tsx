@@ -129,7 +129,7 @@ type AddFilterDraftValue = string | string[];
 function DataTableFilters({
   className,
   slot = "all",
-  addIconOnly = false,
+  addIconOnly = true,
 }: {
   className?: string;
   /**
@@ -142,7 +142,10 @@ function DataTableFilters({
    * different rows (e.g. the trigger in a header row, chips on the row below).
    */
   slot?: "all" | "chips" | "add";
-  /** Render the **Add filter** trigger as an icon-only button (label → `aria-label`). */
+  /**
+   * Render the **Add filter** trigger as an icon-only button (label → `aria-label`).
+   * Defaults to `true`; pass `addIconOnly={false}` to show the "Add filter" text label.
+   */
   addIconOnly?: boolean;
 }) {
   const ctx = useDataTableContext();
@@ -194,17 +197,18 @@ function DataTableFilters({
     );
   }
 
-  // Default: chips (grow to fill) + the right-aligned Add filter trigger.
+  // Default: the left-aligned Add filter trigger + chips (grow to fill) to its right.
   return (
     <div
       data-slot="data-table-filters"
       className={cn("astw:flex astw:items-start astw:gap-2", className)}
     >
+      {/* Trigger comes first so it stays pinned left and doesn't shift as chips are
+          added — the chips grow to its right inside their own flex-1 container. */}
+      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
       <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
         {chips}
       </div>
-      {/* Trigger stays pinned right so it doesn't shift as chips are added. */}
-      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
     </div>
   );
 }
@@ -302,13 +306,13 @@ function AddFilterPanel({
         }
       />
       <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        {/* align="end" anchors the panel's right edge to the (right-aligned) trigger
+        {/* align="start" anchors the panel's left edge to the (left-aligned) trigger
             so it grows/shrinks toward the right as columns appear/disappear. We keep
             anchor tracking on (no disableAnchorTracking) so the positioner re-aligns
-            the right edge when the width changes; the trigger itself no longer moves
+            the left edge when the width changes; the trigger itself no longer moves
             when chips are added (they live in a separate flex-1 container), so there's
-            nothing to jump away from. */}
-        <Popover.Positioner sideOffset={4} side="bottom" align="end">
+            nothing to jump away from. base-ui still shifts the panel to stay on-screen. */}
+        <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(

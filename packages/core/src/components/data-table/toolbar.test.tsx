@@ -224,7 +224,7 @@ describe("DataTable.Filters", () => {
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,
     });
-    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add filter" })).toBeDefined();
   });
 
   it("still renders the add filter button when all filterable columns are active", () => {
@@ -237,7 +237,7 @@ describe("DataTable.Filters", () => {
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,
     });
-    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add filter" })).toBeDefined();
   });
 
   it("returns null when there are no filterable columns", () => {
@@ -259,7 +259,7 @@ describe("DataTable.Filters", () => {
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
     });
     render(<TestFilters control={control} columns={[stringColumn]} slot="add" />, { wrapper });
-    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add filter" })).toBeDefined();
     expect(document.querySelector('[data-slot="data-table-filter-chip"]')).toBeNull();
   });
 
@@ -269,7 +269,7 @@ describe("DataTable.Filters", () => {
     });
     render(<TestFilters control={control} columns={[stringColumn]} slot="chips" />, { wrapper });
     expect(document.querySelector('[data-slot="data-table-filter-chip"]')).not.toBeNull();
-    expect(screen.queryByText("Add filter")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add filter" })).toBeNull();
   });
 
   it("slot='chips' renders nothing when there are no active filters", () => {
@@ -281,14 +281,24 @@ describe("DataTable.Filters", () => {
     expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();
   });
 
-  it("addIconOnly renders an icon-only trigger (label kept as aria-label)", () => {
+  it("renders an icon-only trigger by default (label kept as aria-label)", () => {
     const control = makeControl({ filters: [] });
-    render(<TestFilters control={control} columns={[stringColumn]} slot="add" addIconOnly />, {
+    render(<TestFilters control={control} columns={[stringColumn]} slot="add" />, {
       wrapper,
     });
     // Reachable by its accessible name, but the label text is not rendered.
     const trigger = screen.getByRole("button", { name: "Add filter" });
     expect(trigger.textContent).toBe("");
+  });
+
+  it("addIconOnly={false} renders the visible 'Add filter' text label", () => {
+    const control = makeControl({ filters: [] });
+    render(
+      <TestFilters control={control} columns={[stringColumn]} slot="add" addIconOnly={false} />,
+      { wrapper },
+    );
+    const trigger = screen.getByRole("button", { name: "Add filter" });
+    expect(trigger.textContent).toContain("Add filter");
   });
 });
 

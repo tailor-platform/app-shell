@@ -984,7 +984,11 @@ function DataTableTable({ className }: { className?: string }) {
       const next: ColumnWidths = {};
       cells.forEach((cell) => {
         const key = cell.dataset.colKey;
-        if (key) next[key] = cell.offsetWidth;
+        // Fractional width (not the integer-rounded offsetWidth) so accumulated
+        // sticky offsets land exactly on each column's real edge — otherwise the
+        // rounding drift opens a sub-pixel gap between adjacent pinned columns
+        // where scrolling rows bleed through.
+        if (key) next[key] = cell.getBoundingClientRect().width;
       });
       setWidths((prev) => (sameWidths(prev, next) ? prev : next));
     };

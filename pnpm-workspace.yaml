@@ -13,8 +13,8 @@ catalog:
   lucide-react: ^1.8.0
   oxfmt: ^0.47.0
   oxlint: ^1.64.0
-  react: ^19.2.6
-  react-dom: ^19.2.6
+  react: ^19.2.7
+  react-dom: ^19.2.7
   tailwindcss: ^4.2.4
   tsdown: ^0.22.0
   typescript: ^5
@@ -46,8 +46,8 @@ minimumReleaseAge: 4320
 # specific one.
 minimumReleaseAgeExclude:
   - "@tailor-platform/auth-public-client"
-  # Renovate security update: postcss@8.5.18
-  - postcss@8.5.18
+  # Renovate security update: postcss@8.5.18 || 8.5.23
+  - postcss@8.5.18 || 8.5.23
   # Renovate security update: vite@7.3.5
   - vite@7.3.5
   # Security alert response: react-router@7.18.2 was needed urgently.

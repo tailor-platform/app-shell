@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { RouterContainer } from "./router";
+import { RouterContainer, routerFactories } from "./router";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
-import * as ReactRouter from "react-router";
 import { Link, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
@@ -518,7 +517,7 @@ describe("RouterContainer with AuthProvider", () => {
       isReady: false,
     };
     const listeners: Array<(event: { type: string }) => void> = [];
-    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+    const createMemoryRouterSpy = vi.spyOn(routerFactories, "createMemoryRouter");
 
     const authClient = createMockAuthClient(snapshot, {
       getState: vi.fn(() => snapshot),
@@ -541,8 +540,6 @@ describe("RouterContainer with AuthProvider", () => {
       });
 
       expect(await screen.findByText("Loading...")).toBeDefined();
-      // With guardComponent now applied in AuthProvider (not the router),
-      // RouterContainer is not mounted until auth is ready.
       expect(createMemoryRouterSpy).toHaveBeenCalledTimes(0);
 
       act(() => {
@@ -557,7 +554,6 @@ describe("RouterContainer with AuthProvider", () => {
       });
 
       expect(await screen.findByText("Home")).toBeDefined();
-      // Router is created once when children first render after auth is ready.
       expect(createMemoryRouterSpy).toHaveBeenCalledTimes(1);
     } finally {
       createMemoryRouterSpy.mockRestore();
@@ -565,7 +561,7 @@ describe("RouterContainer with AuthProvider", () => {
   });
 
   it("recreates the router when route-defining config changes", async () => {
-    const createMemoryRouterSpy = vi.spyOn(ReactRouter, "createMemoryRouter");
+    const createMemoryRouterSpy = vi.spyOn(routerFactories, "createMemoryRouter");
     const module = defineModule({
       path: "dashboard",
       component: () => <div>Dashboard</div>,

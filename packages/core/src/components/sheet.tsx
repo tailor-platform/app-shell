@@ -14,6 +14,12 @@ const sideToCloseIcon: Record<Side, React.ComponentType<React.SVGProps<SVGSVGEle
 type Side = "top" | "right" | "bottom" | "left";
 type Size = "sm" | "md" | "lg" | "xl" | "full";
 
+type SheetContextValue = {
+  side: Side;
+  showBackdrop: boolean;
+  allowOutsidePointerEvents: boolean;
+};
+
 const sideToSwipeDirection: Record<Side, "up" | "right" | "down" | "left"> = {
   top: "up",
   right: "right",
@@ -29,7 +35,11 @@ const sizeClasses: Record<Size, string> = {
   full: "astw:w-full astw:max-w-full",
 };
 
-const SheetContext = React.createContext<Side>("right");
+const SheetContext = React.createContext<SheetContextValue>({
+  side: "right",
+  showBackdrop: true,
+  allowOutsidePointerEvents: false,
+});
 
 // Only the props relevant to the Sheet abstraction are picked from Drawer.Root.
 // Drawer-specific props (e.g. snapPoints, dismissThreshold) are intentionally excluded
@@ -62,10 +72,23 @@ type SheetRootProps = Pick<
  * </Sheet.Root>
  * ```
  */
-function Root({ side = "right", ...props }: SheetRootProps) {
+function Root({ side = "right", modal, ...props }: SheetRootProps) {
+  const resolvedModal = modal ?? true;
+
   return (
-    <SheetContext.Provider value={side}>
-      <Drawer.Root data-slot="sheet" swipeDirection={sideToSwipeDirection[side]} {...props} />
+    <SheetContext.Provider
+      value={{
+        side,
+        showBackdrop: resolvedModal !== false,
+        allowOutsidePointerEvents: resolvedModal !== true,
+      }}
+    >
+      <Drawer.Root
+        data-slot="sheet"
+        swipeDirection={sideToSwipeDirection[side]}
+        modal={resolvedModal}
+        {...props}
+      />
     </SheetContext.Provider>
   );
 }
@@ -109,15 +132,17 @@ type SheetContentProps = React.ComponentProps<typeof Drawer.Popup> & {
   size?: Size;
 };
 
-/** The main sheet panel. The `side` is inherited from `Sheet.Root` via context. */
+/** The main sheet panel. The `side` and modal behavior are inherited from `Sheet.Root` via context. */
 function Content({ className, children, size = "sm", ...props }: SheetContentProps) {
   // `side` is controlled by `Root` via context, not accepted as a prop, to keep swipe direction and CSS position in sync.
-  const side = React.useContext(SheetContext);
+  const { side, showBackdrop, allowOutsidePointerEvents } = React.useContext(SheetContext);
   const isHorizontal = side === "right" || side === "left";
 
   return (
     <Portal>
-      <Overlay />
+      {showBackdrop && (
+        <Overlay className={allowOutsidePointerEvents ? "astw:pointer-events-none" : undefined} />
+      )}
       <Drawer.Viewport
         data-slot="sheet-viewport"
         className={cn(
@@ -126,6 +151,7 @@ function Content({ className, children, size = "sm", ...props }: SheetContentPro
           side === "left" && "astw:items-stretch astw:justify-start",
           side === "top" && "astw:items-start astw:justify-stretch",
           side === "bottom" && "astw:items-end astw:justify-stretch",
+          allowOutsidePointerEvents && "astw:pointer-events-none",
         )}
       >
         <Drawer.Popup
@@ -141,6 +167,7 @@ function Content({ className, children, size = "sm", ...props }: SheetContentPro
             side === "bottom" &&
               "astw:w-full astw:h-auto astw:border-t astw:border-border astw:[transform:translateY(var(--drawer-swipe-movement-y))] astw:data-ending-style:[transform:translateY(100%)] astw:data-starting-style:[transform:translateY(100%)]",
             isHorizontal && sizeClasses[size],
+            allowOutsidePointerEvents && "astw:pointer-events-auto",
             "astw:data-swiping:select-none",
             className,
           )}
@@ -158,7 +185,7 @@ Content.displayName = "Sheet.Content";
 
 /** @internal Close button that renders a directional chevron icon based on `side`. */
 function CloseButton() {
-  const side = React.useContext(SheetContext);
+  const { side } = React.useContext(SheetContext);
   const Icon = sideToCloseIcon[side];
   return (
     <Drawer.Close

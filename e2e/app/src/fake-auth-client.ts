@@ -21,6 +21,20 @@ const writeSession = (isAuthenticated: boolean) => {
   window.localStorage.setItem(STORAGE_KEY, String(isAuthenticated));
 };
 
+// A tiny in-browser auth client used only by the local routing smoke tests.
+//
+// Why this fake exists:
+// - the new routing smoke tests want to exercise AppShell + AuthProvider +
+//   React Router together in a real browser
+// - those checks should stay fast and deterministic, without depending on an
+//   external IDP, network round-trips, or seeded remote test users
+// - for these tests we do not need to prove OAuth correctness; we only need the
+//   auth contract that AuthProvider consumes (`getState`, `login`, `logout`,
+//   `checkAuthStatus`, and auth_state_changed events)
+//
+// The real OAuth flow is still covered separately in auth.spec.ts. This fake is
+// only for the cheaper local path that validates auth/router integration such
+// as protected deep links, redirects, reload persistence, and logout behavior.
 export const createFakeAuthClient = (): EnhancedAuthClient => {
   let state: AuthState = {
     isAuthenticated: false,
@@ -53,6 +67,8 @@ export const createFakeAuthClient = (): EnhancedAuthClient => {
     getAuthUrl: async () => window.location.href,
     handleCallback: async () => {},
     checkAuthStatus: async () => {
+      // Re-hydrate from localStorage so reload-based tests observe the same
+      // session behavior that a real persisted auth client would expose.
       const nextState = {
         isAuthenticated: readSession(),
         error: null,

@@ -19,6 +19,18 @@ const requireRealAuthCredentials = () => {
   return { email: email!, password: password! };
 };
 
+// Drive the complete real OAuth sign-in round-trip used by the smoke tests.
+//
+// What this helper does:
+// 1. open the local E2E app
+// 2. click AppShell's "Sign in" button, which hands control to the Tailor IDP
+// 3. wait until the browser is actually on the hosted IDP sign-in page
+// 4. fill the credentials from the test environment
+// 5. submit the IDP form and wait until the browser lands back on the local app
+//
+// The helper intentionally stops there. Each test then asserts the post-login
+// behavior it cares about (authenticated content, logout, reload persistence,
+// AI smoke, etc.) instead of hiding those expectations inside the login step.
 const loginViaTailor = async (page: Page) => {
   const { email, password } = requireRealAuthCredentials();
 

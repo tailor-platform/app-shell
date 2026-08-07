@@ -15,7 +15,6 @@ import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import { TruncatedLabel } from "./truncated-label";
 import type {
   CollectionControl,
   Filter,
@@ -378,15 +377,15 @@ function AddFilterPanel({
                         key={col.filter.field}
                         type="button"
                         onClick={() => selectField(col.filter.field)}
+                        title={col.label ?? col.filter.field}
                         className={cn(
                           PANEL_COLUMN_ROW,
                           isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
                         )}
                       >
-                        <TruncatedLabel
-                          text={col.label ?? col.filter.field}
-                          className="astw:min-w-0 astw:flex-1"
-                        />
+                        <span className="astw:min-w-0 astw:flex-1 astw:truncate">
+                          {col.label ?? col.filter.field}
+                        </span>
                         {activeFields.has(col.filter.field) && (
                           <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
                         )}

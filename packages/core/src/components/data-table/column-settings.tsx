@@ -8,7 +8,6 @@ import { Input } from "@/components/input";
 import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import { TruncatedLabel } from "./truncated-label";
 
 // Shared popup styling, matching DataTable's filter popover. The width cap lives
 // on the popup itself (not the inner fieldset) so base-ui measures the real width
@@ -200,9 +199,10 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => toggleColumn(key)}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:text-left astw:text-sm"
+          title={meta.label.get(key) ?? key}
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
         >
-          <TruncatedLabel text={meta.label.get(key) ?? key} />
+          {meta.label.get(key) ?? key}
         </button>
         <Tooltip.Root>
           {/* The checkbox itself is the trigger (props, incl. ref in React 19,

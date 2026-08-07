@@ -9,7 +9,6 @@ import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { TruncatedLabel } from "./truncated-label";
-import { autoHideScrollbarClasses, useAutoHideScroll } from "./use-autohide-scroll";
 
 // Shared popup styling, matching DataTable's filter popover. The width cap lives
 // on the popup itself (not the inner fieldset) so base-ui measures the real width
@@ -121,9 +120,6 @@ function DataTableColumnSettings({ className }: { className?: string }) {
 
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ section: Section; index: number } | null>(null);
-
-  // Overlay scrollbar that only shows while scrolling (or on hover).
-  const { isScrolling, onScroll } = useAutoHideScroll();
 
   const resetDrag = () => {
     setDragKey(null);
@@ -284,17 +280,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         {/* Only the Scrollable section gets an internal scroll cap; the pinned
             zones stay fully visible. */}
         {opts?.scroll ? (
-          <div
-            onScroll={onScroll}
-            className={cn(
-              "astw:flex astw:max-h-[min(50vh,20rem)] astw:flex-col astw:overflow-y-auto",
-              // Float a thin (3px) scrollbar over the fieldset's right padding so
-              // it never reserves width — the checkboxes stay aligned with the
-              // pinned zones instead of shifting when the bar appears.
-              "astw:-mr-2 astw:pr-2",
-              autoHideScrollbarClasses(isScrolling),
-            )}
-          >
+          <div className="astw:flex astw:max-h-[min(50vh,20rem)] astw:flex-col astw:overflow-y-auto">
             {rows}
           </div>
         ) : (

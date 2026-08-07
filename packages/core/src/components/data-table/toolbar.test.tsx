@@ -345,6 +345,23 @@ describe("AddFilterPanel", () => {
     expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
   });
 
+  it("advances the selection when the search filters out the active field", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // Select the numeric "Count" field — its editor has no "contains" operator.
+    await user.click(await screen.findByRole("button", { name: /^Count$/ }));
+    expect(screen.queryByRole("button", { name: "contains" })).toBeNull();
+
+    // Searching "na" filters the list to "Name" only, filtering out the active
+    // "Count" field. Selection must advance to "Name" so the list and the editor
+    // stay in sync — the string editor's "contains" operator now appears.
+    fireEvent.change(screen.getByPlaceholderText("Search fields"), { target: { value: "na" } });
+    expect(await screen.findByRole("button", { name: "contains" })).toBeDefined();
+  });
+
   it("selecting a field shows the value editor with an Apply button", async () => {
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });

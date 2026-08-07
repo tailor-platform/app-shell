@@ -16,7 +16,6 @@ import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { TruncatedLabel } from "./truncated-label";
-import { autoHideScrollbarClasses, useAutoHideScroll } from "./use-autohide-scroll";
 import type {
   CollectionControl,
   Filter,
@@ -267,7 +266,6 @@ function AddFilterPanel({
   // Field search: enterprise tables can have many filterable fields, so the
   // panel always offers a search box over the field list.
   const [fieldQuery, setFieldQuery] = useState("");
-  const { isScrolling, onScroll } = useAutoHideScroll();
   const fq = fieldQuery.trim().toLowerCase();
   const visibleFieldColumns = fq
     ? columns.filter((c) => (c.label ?? c.filter.field).toLowerCase().includes(fq))
@@ -289,6 +287,18 @@ function AddFilterPanel({
     const col = columns.find((c) => c.filter.field === name);
     if (col) setOperator(seedPanelOperator(control, col));
   };
+
+  // Keep the selection in sync with the search: if the query filters out the
+  // currently-selected field, advance to the first still-visible field so the
+  // field list and the value editor don't desync (empty highlight on the left
+  // while the right still shows the old field's editor).
+  useEffect(() => {
+    if (!fq || visibleFieldColumns.length === 0) return;
+    if (visibleFieldColumns.some((c) => c.filter.field === fieldName)) return;
+    const first = visibleFieldColumns[0];
+    setFieldName(first.filter.field);
+    setOperator(seedPanelOperator(control, first));
+  }, [fq, visibleFieldColumns, fieldName, control]);
 
   // Always reopen on the first field rather than wherever the user last was.
   const handleOpenChange = (next: boolean) => {
@@ -355,15 +365,7 @@ function AddFilterPanel({
                   className="astw:h-8 astw:pl-8 astw:text-sm"
                 />
               </div>
-              <div
-                onScroll={onScroll}
-                className={cn(
-                  // Overlay the thin scrollbar into col1's right padding so it
-                  // reserves no width (field names keep their space).
-                  "astw:-mr-1 astw:flex-1 astw:overflow-y-auto astw:pr-1",
-                  autoHideScrollbarClasses(isScrolling),
-                )}
-              >
+              <div className="astw:flex-1 astw:overflow-y-auto">
                 {visibleFieldColumns.length === 0 ? (
                   <div className="astw:px-2 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
                     {t("noFieldsMatch")}

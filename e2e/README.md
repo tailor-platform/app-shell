@@ -1,6 +1,9 @@
-# E2E Tests for AuthProvider and AI Gateway
+# E2E Tests for AuthProvider, Routing, and AI Gateway
 
-Playwright-based E2E tests that verify the AuthProvider OAuth authentication flow and a minimal AI Gateway smoke check against a real Tailor Platform workspace.
+Playwright-based E2E tests that cover two layers:
+
+- a local fake-auth routing smoke suite for AppShell + React Router integration
+- a real Tailor Platform OAuth flow plus a minimal AI Gateway smoke check
 
 ## Setup
 
@@ -67,10 +70,10 @@ cd e2e && npx playwright install chromium
 
 ```bash
 # From monorepo root
-cd e2e && pnpm test
+cd e2e && pnpm test:e2e
 
 # With Playwright UI
-cd e2e && pnpm test:ui
+cd e2e && pnpm test:e2e:ui
 
 # Dev server only (for debugging)
 cd e2e && pnpm dev
@@ -78,25 +81,28 @@ cd e2e && pnpm dev
 
 ## Test Scenarios
 
-| Test                | Description                                                         |
-| ------------------- | ------------------------------------------------------------------- |
-| Auth guard display  | Verifies unauthenticated users see the login UI                     |
-| Login flow          | Full OAuth redirect → IDP login → callback → authenticated state    |
-| Logout              | Verifies logout returns to auth guard                               |
-| Session persistence | Confirms page reload maintains authentication                       |
-| AI Gateway smoke    | Sends `PING` and checks the OpenAI-compatible reply contains `PONG` |
+| Test                  | Description                                                         |
+| --------------------- | ------------------------------------------------------------------- |
+| Local auth deep link  | Protected nested route stays intact after local fake-auth login     |
+| Local auth navigation | Covers `Link`, `useNavigate`, redirect guards, reload, and logout   |
+| Auth guard display    | Verifies unauthenticated users see the login UI                     |
+| Login flow            | Full OAuth redirect → IDP login → callback → authenticated state    |
+| Logout                | Verifies logout returns to auth guard                               |
+| Session persistence   | Confirms page reload maintains authentication                       |
+| AI Gateway smoke      | Sends `PING` and checks the OpenAI-compatible reply contains `PONG` |
 
 ## Architecture
 
 ```
 e2e/
-├── app/              # Minimal Vite app with AuthProvider
-│   ├── src/App.tsx   # Test app using AuthProvider + guardComponent
+├── app/              # Minimal Vite app with real-auth and local fake-auth demos
+│   ├── src/App.tsx   # Test app routing between the two demos
 │   └── vite.config.ts
 ├── backend/          # Tailor Platform config for E2E workspace
 │   ├── tailor.config.ts
 │   └── src/tailordb/user.ts
 ├── tests/
-│   └── auth.spec.ts  # Playwright test specs
+│   ├── auth.spec.ts               # Real Tailor OAuth + AI smoke specs
+│   └── local-auth-routing.spec.ts # Local fake-auth routing smoke specs
 └── playwright.config.ts
 ```

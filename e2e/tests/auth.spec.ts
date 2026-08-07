@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 /**
  * E2E tests for AuthProvider authentication flow.
@@ -10,6 +10,27 @@ import { test, expect } from "@playwright/test";
  * 3. Set environment variables in e2e/.env
  */
 
+const requireRealAuthCredentials = () => {
+  const email = process.env.E2E_USER_EMAIL;
+  const password = process.env.E2E_USER_PASSWORD;
+
+  test.skip(!email || !password, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
+
+  return { email: email!, password: password! };
+};
+
+const loginViaTailor = async (page: Page) => {
+  const { email, password } = requireRealAuthCredentials();
+
+  await page.goto("/");
+  await page.getByTestId("login-button").click();
+  await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
+  await page.getByLabel(/email/i).fill(email);
+  await page.locator("#password").fill(password);
+  await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
+  await page.waitForURL("http://localhost:3100/**");
+};
+
 test.describe("AuthProvider", () => {
   test("shows auth guard when not authenticated", async ({ page }) => {
     await page.goto("/");
@@ -18,32 +39,8 @@ test.describe("AuthProvider", () => {
   });
 
   test("login redirects to Tailor Platform and back", async ({ page }) => {
-    await page.goto("/");
+    await loginViaTailor(page);
 
-    // Click the login button to initiate OAuth flow
-    await page.getByTestId("login-button").click();
-
-    // Should be redirected to Tailor Platform's IDP signin page
-    await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
-
-    // Fill in credentials on the Tailor Platform login page
-    const email = process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_USER_PASSWORD;
-
-    if (!email || !password) {
-      test.skip(true, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
-      return;
-    }
-
-    // The login form on erp.dev typically has email/password fields
-    await page.getByLabel(/email/i).fill(email);
-    await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-
-    // After successful auth, should redirect back to the app
-    await page.waitForURL("http://localhost:3100/**");
-
-    // Should now show authenticated content
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
@@ -51,64 +48,22 @@ test.describe("AuthProvider", () => {
   });
 
   test("logout returns to auth guard", async ({ page }) => {
-    // First, login
-    await page.goto("/");
-    await page.getByTestId("login-button").click();
+    await loginViaTailor(page);
 
-    const email = process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_USER_PASSWORD;
-
-    if (!email || !password) {
-      test.skip(true, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
-      return;
-    }
-
-    await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
-    await page.getByLabel(/email/i).fill(email);
-    await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-
-    // Wait for authenticated state
-    await page.waitForURL("http://localhost:3100/**");
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
-
-    // Click logout
     await page.getByTestId("logout-button").click();
-
-    // Should return to auth guard
-    await expect(page.getByTestId("auth-guard")).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.getByTestId("auth-guard")).toBeVisible({ timeout: 10000 });
   });
 
   test("maintains session on page reload after login", async ({ page }) => {
-    await page.goto("/");
-    await page.getByTestId("login-button").click();
+    await loginViaTailor(page);
 
-    const email = process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_USER_PASSWORD;
-
-    if (!email || !password) {
-      test.skip(true, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
-      return;
-    }
-
-    await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
-    await page.getByLabel(/email/i).fill(email);
-    await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-
-    await page.waitForURL("http://localhost:3100/**");
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
-
-    // Reload the page
     await page.reload();
-
-    // Should still be authenticated (session persisted)
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
@@ -116,35 +71,14 @@ test.describe("AuthProvider", () => {
   });
 
   test("authenticated user can reach AI Gateway with an OpenAI smoke prompt", async ({ page }) => {
-    const email = process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_USER_PASSWORD;
-    const aiGatewayUrl = process.env.VITE_TAILOR_AI_GATEWAY_URL;
+    test.skip(!process.env.VITE_TAILOR_AI_GATEWAY_URL, "VITE_TAILOR_AI_GATEWAY_URL must be set");
 
-    if (!email || !password) {
-      test.skip(true, "E2E_USER_EMAIL and E2E_USER_PASSWORD must be set");
-      return;
-    }
+    await loginViaTailor(page);
 
-    if (!aiGatewayUrl) {
-      test.skip(true, "VITE_TAILOR_AI_GATEWAY_URL must be set");
-      return;
-    }
-
-    await page.goto("/");
-    await page.getByTestId("login-button").click();
-
-    await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
-    await page.getByLabel(/email/i).fill(email);
-    await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-
-    await page.waitForURL("http://localhost:3100/**");
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
-
     await page.getByTestId("ai-smoke-button").click();
-
     await expect(page.getByTestId("ai-smoke-response")).toContainText(/pong/i, {
       timeout: 30000,
     });

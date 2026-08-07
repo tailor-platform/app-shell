@@ -95,14 +95,16 @@ cd e2e && pnpm dev
 
 ```
 e2e/
-├── app/              # Minimal Vite app with real-auth and local fake-auth demos
-│   ├── src/App.tsx   # Test app routing between the two demos
-│   └── vite.config.ts
-├── backend/          # Tailor Platform config for E2E workspace
+├── app/                         # Minimal Vite app used by Playwright
+│   └── src/
+│       ├── App.tsx              # Path switch: choose local-auth vs real-auth fixture
+│       ├── LocalAuthDemoApp.tsx # AppShell + fake-auth routing smoke fixture
+│       ├── RealAuthDemoApp.tsx  # Real Tailor OAuth + AI smoke fixture
+│       └── fake-auth-client.ts  # Tiny in-browser auth client for local routing tests
+├── backend/                     # Tailor Platform config for E2E workspace
 │   ├── tailor.config.ts
 │   └── src/tailordb/user.ts
-├── tests/
-│   ├── auth.spec.ts               # Real Tailor OAuth + AI smoke specs
-│   └── local-auth-routing.spec.ts # Local fake-auth routing smoke specs
-└── playwright.config.ts
+└── tests/
+    ├── auth.spec.ts             # Real Tailor OAuth + AI smoke specs
+    └── local-auth-routing.spec.ts # Local fake-auth routing smoke specs
 ```

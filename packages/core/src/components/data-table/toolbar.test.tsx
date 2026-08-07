@@ -323,6 +323,28 @@ describe("AddFilterPanel", () => {
     expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
   });
 
+  it("the field search filters the field list and shows an empty state", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    const search = await screen.findByPlaceholderText("Search fields");
+
+    fireEvent.change(search, { target: { value: "coun" } });
+    expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
+    expect(screen.queryByRole("button", { name: /^Name$/ })).toBeNull();
+
+    fireEvent.change(search, { target: { value: "zzz" } });
+    expect(screen.getByText(/no fields match/i)).toBeDefined();
+
+    fireEvent.change(search, { target: { value: "" } });
+    expect(screen.getByRole("button", { name: /^Name$/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
+  });
+
   it("selecting a field shows the value editor with an Apply button", async () => {
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });

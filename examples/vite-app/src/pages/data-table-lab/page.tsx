@@ -173,7 +173,7 @@ const baseColumns = [
   }),
   column({
     id: "email",
-    label: "Billing email",
+    label: "Billing email address for invoicing",
     type: "text",
     accessor: (r) => r.email,
     width: 240,
@@ -192,7 +192,7 @@ const baseColumns = [
   }),
   column({
     id: "owner",
-    label: "Account owner",
+    label: "Primary account owner / relationship manager",
     type: "text",
     accessor: (r) => r.owner,
     width: 160,
@@ -229,7 +229,7 @@ const baseColumns = [
   }),
   column({
     id: "notes",
-    label: "Notes",
+    label: "Internal notes, follow-up commentary, and account renewal reminders",
     type: "text",
     accessor: (r) => r.notes,
     width: 260,
@@ -238,14 +238,14 @@ const baseColumns = [
   // Extra columns to exercise the column-settings popup with 20+ entries.
   column({
     id: "poNumber",
-    label: "PO number",
+    label: "Purchase order reference number",
     type: "text",
     accessor: (r) => r.poNumber,
     width: 130,
   }),
   column({
     id: "terms",
-    label: "Payment terms",
+    label: "Standard payment terms and conditions",
     type: "text",
     accessor: (r) => r.terms,
     width: 150,
@@ -357,7 +357,14 @@ const DataTableLabPage = () => {
   // Column settings + default pins + row actions. `tableId` persists the user's
   // layout (visibility, order, pinning) to localStorage across reloads.
   const settingsTable = useDataTable<Invoice>({
-    columns: baseColumns.map((c) => (c.id === "id" ? { ...c, pin: "left" as const } : c)),
+    columns: baseColumns.map((c) => {
+      const pinned = c.id === "id" ? { ...c, pin: "left" as const } : c;
+      // Demo: make every column filterable so the add-filter field list is long
+      // enough to surface the field search (AppShell shows it past a threshold).
+      return pinned.filter
+        ? pinned
+        : { ...pinned, filter: { field: c.id as string, type: "string" as const } };
+    }),
     data: { rows, total: rows.length },
     control,
     tableId: "lab-invoices-settings",

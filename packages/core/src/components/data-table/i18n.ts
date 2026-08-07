@@ -27,6 +27,8 @@ export const dataTableLabels = defineI18nLabels({
     hideColumn: "Hide column",
     searchColumns: "Search columns",
     noColumnsMatch: "No columns match",
+    searchFields: "Search fields",
+    noFieldsMatch: "No fields match",
 
     // Row selection
     selectAll: "Select all rows",
@@ -115,6 +117,8 @@ export const dataTableLabels = defineI18nLabels({
     hideColumn: "列を非表示",
     searchColumns: "列を検索",
     noColumnsMatch: "一致する列がありません",
+    searchFields: "フィールドを検索",
+    noFieldsMatch: "一致するフィールドがありません",
 
     selectAll: "全行を選択",
     selectRow: "行を選択",

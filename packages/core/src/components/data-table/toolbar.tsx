@@ -15,6 +15,8 @@ import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
+import { TruncatedLabel } from "./truncated-label";
+import { autoHideScrollbarClasses, useAutoHideScroll } from "./use-autohide-scroll";
 import type {
   CollectionControl,
   Filter,
@@ -262,6 +264,14 @@ function AddFilterPanel({
   const t = useDataTableT();
   const [open, setOpen] = useState(false);
   const [fieldName, setFieldName] = useState<string>(columns[0]?.filter.field ?? "");
+  // Field search: enterprise tables can have many filterable fields, so the
+  // panel always offers a search box over the field list.
+  const [fieldQuery, setFieldQuery] = useState("");
+  const { isScrolling, onScroll } = useAutoHideScroll();
+  const fq = fieldQuery.trim().toLowerCase();
+  const visibleFieldColumns = fq
+    ? columns.filter((c) => (c.label ?? c.filter.field).toLowerCase().includes(fq))
+    : columns;
 
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
@@ -283,7 +293,10 @@ function AddFilterPanel({
   // Always reopen on the first field rather than wherever the user last was.
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (next) selectField(columns[0]?.filter.field ?? "");
+    if (next) {
+      setFieldQuery("");
+      selectField(columns[0]?.filter.field ?? "");
+    }
   };
 
   const activeFields = new Set(control.filters.map((f) => f.field));
@@ -316,43 +329,72 @@ function AddFilterPanel({
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(
-              // Fixed height + width so switching field/condition never resizes the
-              // popup: the width stays constant whether the condition column (2 vs 3
-              // columns) is shown — column 3 flexes to absorb the difference — so the
-              // panel and its left column never shift under the cursor. The width is
-              // sized so column 3 fits the inline calendar (~290px) even in 3-column
-              // mode (col1 11rem + col2 12rem + ~19.5rem for the value editor).
-              // Height fits the tallest editor: the datetime range (From/To tabs +
-              // inline calendar + "Choose time" picker) without the time being clipped.
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // The panel hugs its columns (no fixed width): column 1 hugs the field
+              // names (up to a cap), column 2 (conditions) is fixed, and column 3 (the
+              // value editor) is a fixed 260px. So a wider field column grows the panel
+              // rightward (it's anchored left) instead of squeezing the value editor.
+              // Fixed height fits the tallest editor (datetime range: From/To tabs +
+              // calendar + "Choose time").
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
-            {/* Column 1 — fields (scrolls), with a sticky "Clear all" footer */}
-            <div className="astw:flex astw:w-44 astw:flex-col">
-              <div className="astw:flex-1 astw:overflow-y-auto astw:p-1">
-                {columns.map((col) => {
-                  const isSelected = col.filter.field === fieldName;
-                  return (
-                    <button
-                      key={col.filter.field}
-                      type="button"
-                      onClick={() => selectField(col.filter.field)}
-                      className={cn(
-                        PANEL_COLUMN_ROW,
-                        isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
-                      )}
-                    >
-                      <span className="astw:truncate">{col.label ?? col.filter.field}</span>
-                      {activeFields.has(col.filter.field) && (
-                        <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
-                      )}
-                    </button>
-                  );
-                })}
+            {/* Column 1 — fields (scrolls), with a search header and a sticky
+                "Clear all" footer. Hugs the field-name width up to a cap so long
+                names aren't needlessly truncated. */}
+            <div className="astw:flex astw:min-w-44 astw:max-w-[22.5rem] astw:flex-col astw:p-1">
+              {/* Field search — spacing/style mirrors the ColumnSettings search. */}
+              <div className="astw:relative astw:mb-1">
+                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={fieldQuery}
+                  onChange={(e) => setFieldQuery(e.target.value)}
+                  placeholder={t("searchFields")}
+                  aria-label={t("searchFields")}
+                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                />
+              </div>
+              <div
+                onScroll={onScroll}
+                className={cn(
+                  // Overlay the thin scrollbar into col1's right padding so it
+                  // reserves no width (field names keep their space).
+                  "astw:-mr-1 astw:flex-1 astw:overflow-y-auto astw:pr-1",
+                  autoHideScrollbarClasses(isScrolling),
+                )}
+              >
+                {visibleFieldColumns.length === 0 ? (
+                  <div className="astw:px-2 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+                    {t("noFieldsMatch")}
+                  </div>
+                ) : (
+                  visibleFieldColumns.map((col) => {
+                    const isSelected = col.filter.field === fieldName;
+                    return (
+                      <button
+                        key={col.filter.field}
+                        type="button"
+                        onClick={() => selectField(col.filter.field)}
+                        className={cn(
+                          PANEL_COLUMN_ROW,
+                          isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
+                        )}
+                      >
+                        <TruncatedLabel
+                          text={col.label ?? col.filter.field}
+                          className="astw:min-w-0 astw:flex-1"
+                        />
+                        {activeFields.has(col.filter.field) && (
+                          <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
+                        )}
+                      </button>
+                    );
+                  })
+                )}
               </div>
               {control.filters.length > 0 && (
-                <div className="astw:border-t astw:border-border astw:p-1">
+                <div className="astw:mt-1 astw:border-t astw:border-border astw:pt-1">
                   <Button
                     variant="ghost"
                     size="xs"
@@ -387,9 +429,9 @@ function AddFilterPanel({
               </div>
             )}
 
-            {/* Column 3 — value editor; flex-1 so it absorbs the width freed when
-                the condition column is hidden, keeping the popup width constant. */}
-            <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:border-l astw:border-border">
+            {/* Column 3 — value editor; fixed width so it never shrinks when column 1
+                (fields) grows wider. */}
+            <div className="astw:flex astw:w-[260px] astw:min-w-0 astw:flex-col astw:border-l astw:border-border">
               {selectedColumn && effectiveOperator && (
                 <PanelValueEditor
                   key={`${fieldName}:${effectiveOperator}`}

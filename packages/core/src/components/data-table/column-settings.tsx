@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { GripVertical, Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,10 +8,14 @@ import { Input } from "@/components/input";
 import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
+import { TruncatedLabel } from "./truncated-label";
+import { autoHideScrollbarClasses, useAutoHideScroll } from "./use-autohide-scroll";
 
-// Shared popup styling, matching DataTable's filter popover.
+// Shared popup styling, matching DataTable's filter popover. The width cap lives
+// on the popup itself (not the inner fieldset) so base-ui measures the real width
+// and anchors it flush under the trigger.
 const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
@@ -118,23 +122,8 @@ function DataTableColumnSettings({ className }: { className?: string }) {
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ section: Section; index: number } | null>(null);
 
-  // Show the (overlay) scrollbar only while actively scrolling; fade it out
-  // shortly after. Hover still reveals it (handled in CSS).
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleScroll = useCallback(() => {
-    setIsScrolling(true);
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false);
-      scrollTimeoutRef.current = null;
-    }, 600);
-  }, []);
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, []);
+  // Overlay scrollbar that only shows while scrolling (or on hover).
+  const { isScrolling, onScroll } = useAutoHideScroll();
 
   const resetDrag = () => {
     setDragKey(null);
@@ -215,9 +204,9 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => toggleColumn(key)}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:text-left astw:text-sm"
         >
-          {meta.label.get(key)}
+          <TruncatedLabel text={meta.label.get(key) ?? key} />
         </button>
         <Tooltip.Root>
           {/* The checkbox itself is the trigger (props, incl. ref in React 19,
@@ -296,21 +285,14 @@ function DataTableColumnSettings({ className }: { className?: string }) {
             zones stay fully visible. */}
         {opts?.scroll ? (
           <div
-            onScroll={handleScroll}
+            onScroll={onScroll}
             className={cn(
               "astw:flex astw:max-h-[min(50vh,20rem)] astw:flex-col astw:overflow-y-auto",
               // Float a thin (3px) scrollbar over the fieldset's right padding so
               // it never reserves width — the checkboxes stay aligned with the
               // pinned zones instead of shifting when the bar appears.
-              "astw:-mr-2 astw:pr-2 astw:[scrollbar-width:thin]",
-              "astw:[&::-webkit-scrollbar]:w-[3px] astw:[&::-webkit-scrollbar]:bg-transparent",
-              "astw:[&::-webkit-scrollbar-track]:bg-transparent",
-              "astw:[&::-webkit-scrollbar-thumb]:rounded-full astw:[&::-webkit-scrollbar-thumb]:bg-border",
-              "astw:[&::-webkit-scrollbar-thumb]:transition-opacity astw:[&::-webkit-scrollbar-thumb]:duration-300",
-              // Only visible while scrolling (or on hover); otherwise faded out.
-              isScrolling
-                ? "astw:[&::-webkit-scrollbar-thumb]:opacity-100"
-                : "astw:[&::-webkit-scrollbar-thumb]:opacity-0 astw:hover:[&::-webkit-scrollbar-thumb]:opacity-100",
+              "astw:-mr-2 astw:pr-2",
+              autoHideScrollbarClasses(isScrolling),
             )}
           >
             {rows}

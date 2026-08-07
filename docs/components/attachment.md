@@ -88,7 +88,8 @@ Represents a single pending change buffered by `useAttachment`. Passed as an arr
 
 ```ts
 type AttachmentOperation =
-  { type: "upload"; file: File; item: AttachmentItem } | { type: "delete"; item: AttachmentItem };
+  | { type: "upload"; file: File; item: AttachmentItem }
+  | { type: "delete"; item: AttachmentItem };
 ```
 
 ## AttachmentItem

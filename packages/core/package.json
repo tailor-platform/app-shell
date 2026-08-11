@@ -77,7 +77,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "happy-dom": "^20.9.0",
-    "postcss": "^8",
+    "postcss": "^8.5.26",
     "react": "catalog:",
     "react-dom": "catalog:",
     "tailwindcss": "catalog:",

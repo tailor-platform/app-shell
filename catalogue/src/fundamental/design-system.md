@@ -2,7 +2,7 @@
 
 Authority for **visual-only** decisions — tokens, theme imports, breakpoints intent, `**astw:`** rules, and custom-component conformance. For **React component APIs** (imports, props, JSX composition), pair this file with `**components.md`\*\*; that split avoids duplicating tables and lengthy examples across both docs.
 
-`@tailor-platform/app-shell` (ERP scaffolds target **≥0.36**; bump your app’s pinned version deliberately) ships an opinionated design system via CSS variables and a `theme.css` import. Use it whether you are consuming AppShell components (most cases) or building a custom component to fill a gap.
+`@tailor-platform/app-shell` (ERP scaffolds target **≥0.36**; bump your app’s pinned version deliberately) ships an opinionated design system via CSS variables, delivered by the `styles` import. Use it whether you are consuming AppShell components (most cases) or building a custom component to fill a gap.
 
 **The tokens are the rails.** Consistency across customers, apps, and AI runs comes from the token system, not from rules written in prose. A hand-typed `#fff` or `padding: 13px` is not a "small deviation" — it is the mechanism by which consistency dies. Every visual value you reach for must resolve to a token in this file. If a token is missing, add one; never inline.
 
@@ -15,38 +15,40 @@ Authoritative app wiring also lives in `**project-setup.md`**; **scaffold `index
 @import "tw-animate-css";
 
 @import "@tailor-platform/app-shell/styles";
-@import "@tailor-platform/app-shell/theme.css";
 ```
 
-Adjust if your App Shell version documents a different barrel filename, but keep this split:
+That is the whole wiring:
 
-- `**theme.css**` — design tokens as CSS variables on `:root`.
-- `**styles**` (package export) — bundled component styles AppShell ships for primitives.
-- `**tailwindcss**` — utilities; token-backed classes (`bg-surface-1`, `text-fg-muted`) resolve through the theme.
+- `**styles**` (package export) — design tokens as CSS variables (light **and** dark), the Tailwind v4 `@theme inline` bridge, the `dark` custom variant, and the bundled component styles AppShell ships for primitives. One import, everything.
+- `**tailwindcss**` — utilities; token-backed classes (`bg-background`, `text-muted-foreground`) resolve through the bridge that `styles` provides.
 
-Older docs referred to `app-shell.css`; prefer the `**styles**` import the template uses.
+Older docs referred to `app-shell.css` or to a separate `@tailor-platform/app-shell/theme.css` import; use neither. Since 1.6.0 `theme.css` is a deprecated no-op shim kept only so pre-1.6 apps keep building.
+
+**Do not paste a `@theme inline` block, a `@custom-variant dark` rule, or a copy of AppShell's palette into the app's entry CSS.** A 1.5.0-era workaround did exactly that; on 1.6+ those unlayered copies beat AppShell's layered palette and silently break dark mode. See [Styling and Theming → Upgrading from 1.5.x](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/styling-theming.md#upgrading-from-15x-remove-the-theme-bridge-workaround) for the removal and detection steps.
 
 Tailwind v4 stays CSS-first; minimal `vite` / PostCSS wiring is in `**project-setup.md**`.
 
 ## 2. Theming via CSS variables
 
-AppShell controls its theme through CSS variables. Override them in `:root` (global) or a scoped selector (per-section, per-tenant, dark mode) to customize. Any token defined in `theme.css` can be overridden after the import.
+AppShell controls its theme through CSS variables. Override them in `:root` (global) or a scoped selector (per-section, per-tenant) to customize. AppShell's palette is imported inside a cascade layer, so your unlayered declarations win after the import.
+
+Override **only** the specific tokens you mean to change, and set each one in both modes — a `:root`-only override leaks its light value into dark mode:
 
 ```css
 :root {
-  --color-primary: #3b82f6;
-  --color-background: #ffffff;
+  --primary: #3b82f6;
+  --background: #ffffff;
 }
 
-[data-theme="dark"] {
-  --color-background: #0a0a0a;
-  --color-foreground: #fafafa;
+.dark {
+  --primary: #60a5fa;
+  --background: #0a0a0a;
 }
 ```
 
-Override at the highest scope where the change applies. Do not duplicate token values across files — change them at the source.
+Override at the highest scope where the change applies. Do not duplicate token values across files — change them at the source. Never copy the palette wholesale; tokens you did not copy stay on AppShell's values and the two halves drift apart on every upgrade.
 
-**Dark mode** is supported via `[data-theme="dark"]` on the root element. AppShell primitives respect it automatically. Custom components inherit dark-mode behaviour for free as long as they reference tokens (`bg-surface-1`, `text-fg-default`) and never inline literal colors.
+**Dark mode** is driven by a `.dark` class on the root element, managed by AppShell (`useTheme()` / `<AppearanceSwitcher />`). AppShell primitives respect it automatically. Custom components inherit dark-mode behaviour for free as long as they reference tokens (`bg-background`, `text-foreground`) and never inline literal colors.
 
 ## 3. Component styling with data attributes
 

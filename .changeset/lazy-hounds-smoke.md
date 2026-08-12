@@ -16,3 +16,5 @@ const table = useDataTable<Order>({
 ```
 
 Rows must have a string or number `id` (the same constraint as row selection); rows without one render no chevron. Several rows can be open at once, and expansion survives page changes — `collapseAllRows()` resets it. Pass `expandedIds` + `onExpandedChange` to control expansion yourself.
+
+Also fixes `onSelectionChange` firing twice per toggle under React StrictMode. It was dispatched from inside a state updater, which StrictMode intentionally double-invokes to surface impurity, so handlers doing real work (fetches, analytics, history entries) ran twice in development. It is now dispatched from the event handler and fires exactly once. No signature change; if you added your own de-duplication to work around this, it is no longer needed.

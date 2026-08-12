@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
 import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import type { ReactNode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
@@ -101,6 +101,17 @@ const focusableDetail = () => (
     Inner
   </button>
 );
+
+// StrictMode double-invokes state updaters to surface impure ones, so it is what
+// proves the selection/expansion callbacks fire outside the updater.
+const strictWrapper = ({ children }: { children: ReactNode }) => {
+  const Wrapper = wrapper;
+  return (
+    <StrictMode>
+      <Wrapper>{children}</Wrapper>
+    </StrictMode>
+  );
+};
 
 describe("DataTable", () => {
   it("renders a basic data table with headers and rows", () => {
@@ -1270,6 +1281,18 @@ describe("DataTable", () => {
       expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
     });
 
+    it("calls onSelectionChange once per toggle under StrictMode", () => {
+      const onSelectionChange = vi.fn();
+      render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper: strictWrapper,
+      });
+
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+
+      expect(onSelectionChange).toHaveBeenCalledTimes(1);
+      expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
+    });
+
     it("clicking the header checkbox selects all rows", () => {
       const onSelectionChange = vi.fn();
       render(<TestDataTable onSelectionChange={onSelectionChange} />, {
@@ -1907,6 +1930,18 @@ describe("DataTable", () => {
       fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
       expect(screen.getByText("Details for Alice")).toBeDefined();
       expect(seen[seen.length - 1]).toBe(seen[0]);
+    });
+
+    it("calls onExpandedChange once per toggle under StrictMode", () => {
+      const onExpandedChange = vi.fn();
+      render(<ExpandHarness renderExpandedRow={detail} onExpandedChange={onExpandedChange} />, {
+        wrapper: strictWrapper,
+      });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      expect(onExpandedChange).toHaveBeenCalledTimes(1);
+      expect(onExpandedChange).toHaveBeenCalledWith(["1"]);
     });
 
     it("keeps toggleRowExpansion stable across an expansion", () => {

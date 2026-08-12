@@ -283,8 +283,6 @@ useEffect(() => {
 
 **Batching caveat.** Each toggle derives the next array from the current value of `expandedIds`, not from a functional update. Two toggles dispatched before your state commits both read the same base, so the first is lost. This matters when `expandedIds` lives behind an async store (Redux/Zustand middleware, a debounced URL sync, a `startTransition`), or when looping `toggleRowExpansion` over many rows to build an "expand all". Compute such updates yourself and set `expandedIds` directly rather than driving them through repeated toggles.
 
-**StrictMode double-fire.** In _uncontrolled_ mode `onExpandedChange` fires from inside a state updater, which React StrictMode intentionally double-invokes — expect two calls per toggle in development. This matches the existing `onSelectionChange` behaviour. Keep the handler idempotent, or move side effects (fetches, analytics) into an effect keyed on the ids.
-
 ### Accessibility
 
 The trigger is a native `<button>`, so Enter/Space activation and the focus ring come for free, and it carries `aria-expanded` — that is what announces the state change on activation. The panel is a `role="region"` with an accessible name, and it sits immediately after its trigger in DOM order, so forward-tabbing reaches it next. Collapsing while focus is inside the panel hands focus back to the trigger rather than dropping it to `<body>`. The chevron's rotation and the panel's reveal both respect `prefers-reduced-motion`. Panel content wider than the viewport scrolls horizontally within the panel, and on a horizontally scrolled table the panel stays pinned to the left edge of the scrollport.
@@ -323,7 +321,7 @@ const table = useDataTable({
 | `canExpandRow`      | `(row: TRow) => boolean`           | Decides whether a row can be expanded. Rows returning `false` render no chevron. Defaults to `true` for every row with an `id`.                                                    |
 | `expandRowLabel`    | `(row: TRow) => string`            | Bare record identity (e.g. `"INV-1001"`) composed into the trigger and panel accessible names. Not a sentence.                                                                     |
 | `expandedIds`       | `string[]`                         | Ids of the expanded rows. Passing this switches expansion to controlled mode; internal state is no longer written and `onExpandedChange` becomes required.                         |
-| `onExpandedChange`  | `(ids: string[]) => void`          | Called with the full array of expanded row ids whenever expansion changes. Fires twice per toggle under StrictMode in uncontrolled mode.                                           |
+| `onExpandedChange`  | `(ids: string[]) => void`          | Called with the full array of expanded row ids whenever expansion changes. Fires once per toggle.                                                                                  |
 | `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                          |
 
 ### `DataTableData`

@@ -335,12 +335,10 @@ export type UseDataTableOptions<
    */
   canExpandRow?: (row: TRow) => boolean;
   /**
-   * Returns the row's record identity — a **bare identifier** such as
-   * `"INV-1001"`, not a sentence. It is composed into the accessible names of
-   * the chevron ("Expand row INV-1001") and the detail panel ("INV-1001
-   * details") via the built-in i18n labels, so English and Japanese word order
-   * both stay correct. Without it, the generic "Expand row" / "Row details"
-   * fallbacks are used.
+   * The row's record identity — a **bare identifier** such as `"INV-1001"`, not
+   * a sentence. The built-in i18n labels compose it into the accessible names of
+   * the chevron ("Expand row INV-1001") and the panel ("INV-1001 details").
+   * Without it, the generic "Expand row" / "Row details" fallbacks are used.
    */
   expandRowLabel?: (row: TRow) => string;
   /**
@@ -351,25 +349,17 @@ export type UseDataTableOptions<
    * **Required with `onExpandedChange`** — without it the chevrons cannot change
    * anything and are inert (a dev-mode warning fires).
    *
-   * **Batching caveat:** each toggle derives the next array from the current
-   * value of this prop, not from a functional update. Two toggles dispatched
-   * before your state commits both read the same base, so the first is lost.
-   * This matters when `expandedIds` lives behind an async store (Redux/Zustand
-   * middleware, a debounced URL sync, a `startTransition`) or when looping the
-   * toggle over many rows. Apply such updates yourself rather than driving them
-   * through repeated `toggleRowExpansion` calls.
+   * **Batching caveat:** each toggle derives the next array from this prop's
+   * current value, so two toggles dispatched before your state commits share a
+   * base and the first is lost. Relevant behind an async store (a debounced URL
+   * sync, `startTransition`) or when looping the toggle over many rows — apply
+   * those updates yourself instead.
    */
   expandedIds?: string[];
   /**
    * Called with the full array of expanded row ids whenever expansion changes.
    * Required for controlled mode; optional as a notification in uncontrolled
-   * mode.
-   *
-   * **Note:** in uncontrolled mode this fires from inside a state updater, which
-   * React StrictMode intentionally double-invokes — expect two calls per toggle
-   * in development. This matches the existing `onSelectionChange` behaviour.
-   * Keep the handler idempotent, or move side effects (fetches, analytics) into
-   * an effect keyed on the ids.
+   * mode. Fires exactly once per toggle, including under StrictMode.
    */
   onExpandedChange?: (ids: string[]) => void;
   /**

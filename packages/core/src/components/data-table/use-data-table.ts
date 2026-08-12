@@ -290,6 +290,9 @@ export function useDataTable<
   }, []);
 
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  // Mirrors the state so the toggle can compute the next set outside an updater.
+  const selectedRowIdsRef = useRef(selectedRowIds);
+  selectedRowIdsRef.current = selectedRowIds;
 
   const isRowSelected = useCallback(
     (row: TRow) => {
@@ -300,20 +303,21 @@ export function useDataTable<
     [selectedRowIds, getRowId],
   );
 
+  // Computed outside the updater: updaters must be pure, and StrictMode
+  // double-invokes them, so dispatching from inside fired `onSelectionChange`
+  // twice per toggle in dev. Matches `selectAllRows` / `clearSelection`.
   const toggleRowSelection = onSelectionChange
     ? (row: TRow) => {
         const id = getRowId(row);
         if (id === null) return;
-        setSelectedRowIds((prev) => {
-          const next = new Set(prev);
-          if (next.has(id)) {
-            next.delete(id);
-          } else {
-            next.add(id);
-          }
-          onSelectionChange([...next]);
-          return next;
-        });
+        const next = new Set(selectedRowIdsRef.current);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        setSelectedRowIds(next);
+        onSelectionChange([...next]);
       }
     : undefined;
 
@@ -368,32 +372,26 @@ export function useDataTable<
     [expandedRowIds, getRowId],
   );
 
-  // Hold the change callback AND the current expansion set in refs, so
-  // `toggleRowExpansion` / `collapseAllRows` keep a stable identity. Both would
-  // otherwise churn: the callback is usually an inline arrow, and
-  // `expandedRowIds` is a fresh Set on every expansion change. Reading them
-  // through refs keeps the deps down to genuinely stable values, which is what
-  // makes the documented "collapse on page change" recipe safe — depending on
-  // `expandedRowIds` directly meant every expand re-fired that effect and
-  // immediately collapsed the row the user had just opened.
+  // Refs keep `toggleRowExpansion` / `collapseAllRows` identity-stable: the
+  // callback is usually an inline arrow and `expandedRowIds` is a fresh Set on
+  // every change, so depending on either directly re-fired the documented
+  // "collapse on page change" effect and shut the row the user just opened.
   const onExpandedChangeRef = useRef(onExpandedChange);
   onExpandedChangeRef.current = onExpandedChange;
   const expandedRowIdsRef = useRef(expandedRowIds);
   expandedRowIdsRef.current = expandedRowIds;
 
-  // A controlled table whose caller never wired `onExpandedChange` can never
-  // change state: the toggle computes the next set and hands it to a callback
-  // that isn't there, so every chevron is inert. Warn rather than fail silently.
+  // Controlled without `onExpandedChange` means every chevron is inert — the
+  // toggle hands the next set to a callback that isn't there. Warn, don't fail
+  // silently.
   useEffect(() => {
     if (renderExpandedRow && isExpansionControlled && !onExpandedChange) {
       console.warn(
         "[DataTable] `expandedIds` was provided without `onExpandedChange`: expansion is controlled, so the built-in chevrons cannot change state and will do nothing when activated. Pass `onExpandedChange`, or drop `expandedIds` to let useDataTable own the state.",
       );
     }
-    // Depend on *presence*, not identity: `renderExpandedRow` and
-    // `onExpandedChange` are almost always inline arrows, so depending on the
-    // functions themselves would re-run this every render and turn a one-off
-    // misconfiguration notice into console spam.
+    // Presence, not identity — these are usually inline arrows, and depending on
+    // them would turn a one-off notice into per-render console spam.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!renderExpandedRow, isExpansionControlled, !onExpandedChange]);
 
@@ -401,29 +399,18 @@ export function useDataTable<
     (row: TRow) => {
       const id = getRowId(row);
       if (id === null) return;
-      if (isExpansionControlled) {
-        // Controlled mode derives the next set from the current prop value, so
-        // two toggles dispatched before the caller's state commits both read the
-        // same base and the first is lost. See the `expandedIds` TSDoc.
-        const next = new Set(expandedRowIdsRef.current);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-        onExpandedChangeRef.current?.([...next]);
-        return;
+      // Computed outside the updater, as in `toggleRowSelection`. Both modes read
+      // the current set, so two toggles dispatched before it commits share a base
+      // and the first is lost — see the `expandedIds` TSDoc.
+      const next = new Set(expandedRowIdsRef.current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
       }
-      setUncontrolledExpandedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-        onExpandedChangeRef.current?.([...next]);
-        return next;
-      });
+      // Controlled callers own the state; internal state is never written then.
+      if (!isExpansionControlled) setUncontrolledExpandedIds(next);
+      onExpandedChangeRef.current?.([...next]);
     },
     [getRowId, isExpansionControlled],
   );

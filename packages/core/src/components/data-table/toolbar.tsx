@@ -129,7 +129,7 @@ type AddFilterDraftValue = string | string[];
 function DataTableFilters({
   className,
   slot = "all",
-  addIconOnly = false,
+  addIconOnly = true,
 }: {
   className?: string;
   /**
@@ -142,7 +142,10 @@ function DataTableFilters({
    * different rows (e.g. the trigger in a header row, chips on the row below).
    */
   slot?: "all" | "chips" | "add";
-  /** Render the **Add filter** trigger as an icon-only button (label → `aria-label`). */
+  /**
+   * Render the **Add filter** trigger as an icon-only button (label → `aria-label`).
+   * Defaults to `true`; pass `addIconOnly={false}` to show the "Add filter" text label.
+   */
   addIconOnly?: boolean;
 }) {
   const ctx = useDataTableContext();
@@ -194,17 +197,18 @@ function DataTableFilters({
     );
   }
 
-  // Default: chips (grow to fill) + the right-aligned Add filter trigger.
+  // Default: the left-aligned Add filter trigger + chips (grow to fill) to its right.
   return (
     <div
       data-slot="data-table-filters"
       className={cn("astw:flex astw:items-start astw:gap-2", className)}
     >
+      {/* Trigger comes first so it stays pinned left and doesn't shift as chips are
+          added — the chips grow to its right inside their own flex-1 container. */}
+      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
       <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
         {chips}
       </div>
-      {/* Trigger stays pinned right so it doesn't shift as chips are added. */}
-      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
     </div>
   );
 }
@@ -258,6 +262,13 @@ function AddFilterPanel({
   const t = useDataTableT();
   const [open, setOpen] = useState(false);
   const [fieldName, setFieldName] = useState<string>(columns[0]?.filter.field ?? "");
+  // Field search: enterprise tables can have many filterable fields, so the
+  // panel always offers a search box over the field list.
+  const [fieldQuery, setFieldQuery] = useState("");
+  const fq = fieldQuery.trim().toLowerCase();
+  const visibleFieldColumns = fq
+    ? columns.filter((c) => (c.label ?? c.filter.field).toLowerCase().includes(fq))
+    : columns;
 
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
@@ -276,10 +287,25 @@ function AddFilterPanel({
     if (col) setOperator(seedPanelOperator(control, col));
   };
 
+  // Keep the selection in sync with the search: if the query filters out the
+  // currently-selected field, advance to the first still-visible field so the
+  // field list and the value editor don't desync (empty highlight on the left
+  // while the right still shows the old field's editor).
+  useEffect(() => {
+    if (!fq || visibleFieldColumns.length === 0) return;
+    if (visibleFieldColumns.some((c) => c.filter.field === fieldName)) return;
+    const first = visibleFieldColumns[0];
+    setFieldName(first.filter.field);
+    setOperator(seedPanelOperator(control, first));
+  }, [fq, visibleFieldColumns, fieldName, control]);
+
   // Always reopen on the first field rather than wherever the user last was.
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (next) selectField(columns[0]?.filter.field ?? "");
+    if (next) {
+      setFieldQuery("");
+      selectField(columns[0]?.filter.field ?? "");
+    }
   };
 
   const activeFields = new Set(control.filters.map((f) => f.field));
@@ -302,53 +328,74 @@ function AddFilterPanel({
         }
       />
       <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        {/* align="end" anchors the panel's right edge to the (right-aligned) trigger
+        {/* align="start" anchors the panel's left edge to the (left-aligned) trigger
             so it grows/shrinks toward the right as columns appear/disappear. We keep
             anchor tracking on (no disableAnchorTracking) so the positioner re-aligns
-            the right edge when the width changes; the trigger itself no longer moves
+            the left edge when the width changes; the trigger itself no longer moves
             when chips are added (they live in a separate flex-1 container), so there's
-            nothing to jump away from. */}
-        <Popover.Positioner sideOffset={4} side="bottom" align="end">
+            nothing to jump away from. base-ui still shifts the panel to stay on-screen. */}
+        <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(
-              // Fixed height + width so switching field/condition never resizes the
-              // popup: the width stays constant whether the condition column (2 vs 3
-              // columns) is shown — column 3 flexes to absorb the difference — so the
-              // panel and its left column never shift under the cursor. The width is
-              // sized so column 3 fits the inline calendar (~290px) even in 3-column
-              // mode (col1 11rem + col2 12rem + ~19.5rem for the value editor).
-              // Height fits the tallest editor: the datetime range (From/To tabs +
-              // inline calendar + "Choose time" picker) without the time being clipped.
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // The panel hugs its columns (no fixed width): column 1 hugs the field
+              // names (up to a cap), column 2 (conditions) is fixed, and column 3 (the
+              // value editor) is a fixed 260px. So a wider field column grows the panel
+              // rightward (it's anchored left) instead of squeezing the value editor.
+              // Fixed height fits the tallest editor (datetime range: From/To tabs +
+              // calendar + "Choose time").
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
-            {/* Column 1 — fields (scrolls), with a sticky "Clear all" footer */}
-            <div className="astw:flex astw:w-44 astw:flex-col">
-              <div className="astw:flex-1 astw:overflow-y-auto astw:p-1">
-                {columns.map((col) => {
-                  const isSelected = col.filter.field === fieldName;
-                  return (
-                    <button
-                      key={col.filter.field}
-                      type="button"
-                      onClick={() => selectField(col.filter.field)}
-                      className={cn(
-                        PANEL_COLUMN_ROW,
-                        isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
-                      )}
-                    >
-                      <span className="astw:truncate">{col.label ?? col.filter.field}</span>
-                      {activeFields.has(col.filter.field) && (
-                        <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
-                      )}
-                    </button>
-                  );
-                })}
+            {/* Column 1 — fields (scrolls), with a search header and a sticky
+                "Clear all" footer. Hugs the field-name width up to a cap so long
+                names aren't needlessly truncated. */}
+            <div className="astw:flex astw:min-w-44 astw:max-w-[22.5rem] astw:flex-col astw:p-1">
+              {/* Field search — spacing/style mirrors the ColumnSettings search. */}
+              <div className="astw:relative astw:mb-1">
+                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={fieldQuery}
+                  onChange={(e) => setFieldQuery(e.target.value)}
+                  placeholder={t("searchFields")}
+                  aria-label={t("searchFields")}
+                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                />
+              </div>
+              <div className="astw:flex-1 astw:overflow-y-auto">
+                {visibleFieldColumns.length === 0 ? (
+                  <div className="astw:px-2 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+                    {t("noFieldsMatch")}
+                  </div>
+                ) : (
+                  visibleFieldColumns.map((col) => {
+                    const isSelected = col.filter.field === fieldName;
+                    return (
+                      <button
+                        key={col.filter.field}
+                        type="button"
+                        onClick={() => selectField(col.filter.field)}
+                        title={col.label ?? col.filter.field}
+                        className={cn(
+                          PANEL_COLUMN_ROW,
+                          isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
+                        )}
+                      >
+                        <span className="astw:min-w-0 astw:flex-1 astw:truncate">
+                          {col.label ?? col.filter.field}
+                        </span>
+                        {activeFields.has(col.filter.field) && (
+                          <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
+                        )}
+                      </button>
+                    );
+                  })
+                )}
               </div>
               {control.filters.length > 0 && (
-                <div className="astw:border-t astw:border-border astw:p-1">
+                <div className="astw:mt-1 astw:border-t astw:border-border astw:pt-1">
                   <Button
                     variant="ghost"
                     size="xs"
@@ -383,9 +430,9 @@ function AddFilterPanel({
               </div>
             )}
 
-            {/* Column 3 — value editor; flex-1 so it absorbs the width freed when
-                the condition column is hidden, keeping the popup width constant. */}
-            <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:border-l astw:border-border">
+            {/* Column 3 — value editor; fixed width so it never shrinks when column 1
+                (fields) grows wider. */}
+            <div className="astw:flex astw:w-[260px] astw:min-w-0 astw:flex-col astw:border-l astw:border-border">
               {selectedColumn && effectiveOperator && (
                 <PanelValueEditor
                   key={`${fieldName}:${effectiveOperator}`}

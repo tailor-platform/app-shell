@@ -1,16 +1,19 @@
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { GripVertical, SlidersHorizontal } from "lucide-react";
+import { GripVertical, Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
+import { Input } from "@/components/input";
 import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 
-// Shared popup styling, matching DataTable's filter popover.
+// Shared popup styling, matching DataTable's filter popover. The width cap lives
+// on the popup itself (not the inner fieldset) so base-ui measures the real width
+// and anchors it flush under the trigger.
 const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
@@ -102,6 +105,18 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     return grouped;
   }, [columnOrder, sectionOf]);
 
+  // Free-text filter over column labels. Only the Scrollable list narrows to
+  // matches (the pinned zones always show in full); drag-and-drop stays enabled
+  // because drop positions are keyed to each row's full-order index (renderRow).
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const isSearching = q.length > 0;
+  const matchKeys = useCallback(
+    (keys: string[]) =>
+      isSearching ? keys.filter((k) => (meta.label.get(k) ?? "").toLowerCase().includes(q)) : keys,
+    [isSearching, q, meta],
+  );
+
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ section: Section; index: number } | null>(null);
 
@@ -135,18 +150,22 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     resetDrag();
   };
 
-  const renderRow = (key: string, section: Section, index: number, isLast: boolean) => {
+  const renderRow = (key: string, section: Section, isLast: boolean) => {
+    // Drop positions are keyed to the FULL bucket index (not the rendered
+    // position), so drag-and-drop stays correct even while the Scrollable list
+    // is filtered by search — a hovered row maps to its real slot in the order.
+    const fullIndex = buckets[section].indexOf(key);
     // Insertion indicator: an absolutely-positioned line that sits in the gap
     // between rows (straddling the shared border). Being absolute, it never
     // shifts the rows under the cursor — a flow element there made the drop
     // target recompute on every reflow and the line "jump".
     const showBefore =
-      dragKey != null && dropTarget?.section === section && dropTarget.index === index;
+      dragKey != null && dropTarget?.section === section && dropTarget.index === fullIndex;
     const showAfter =
       dragKey != null &&
       dropTarget?.section === section &&
       isLast &&
-      dropTarget.index === index + 1;
+      dropTarget.index === fullIndex + 1;
     return (
       <div
         key={key}
@@ -158,7 +177,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           e.stopPropagation();
           const rect = e.currentTarget.getBoundingClientRect();
           const after = e.clientY > rect.top + rect.height / 2;
-          setDropTarget({ section, index: after ? index + 1 : index });
+          setDropTarget({ section, index: after ? fullIndex + 1 : fullIndex });
         }}
         className={cn(
           "astw:relative astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
@@ -180,9 +199,10 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => toggleColumn(key)}
+          title={meta.label.get(key) ?? key}
           className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
         >
-          {meta.label.get(key)}
+          {meta.label.get(key) ?? key}
         </button>
         <Tooltip.Root>
           {/* The checkbox itself is the trigger (props, incl. ref in React 19,
@@ -203,17 +223,45 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     );
   };
 
-  const renderSection = (section: Section, title: string) => {
-    const keys = buckets[section];
+  const renderSection = (
+    section: Section,
+    title: string,
+    opts?: { scroll?: boolean; filter?: boolean },
+  ) => {
+    // Search only narrows the section that opts in (the Scrollable list); the
+    // pinned zones always show their full contents.
+    const filtered = !!opts?.filter && isSearching;
+    const keys = filtered ? matchKeys(buckets[section]) : buckets[section];
     const active = dragKey != null && dropTarget?.section === section;
+    let rows: ReactNode;
+    if (keys.length === 0) {
+      rows = filtered ? (
+        // Filtered to nothing — show a search empty state, not the drop zone.
+        <div className="astw:px-1.5 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+          {t("noColumnsMatch")}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-xs astw:text-muted-foreground astw:italic",
+            active && "astw:border-primary astw:text-primary",
+          )}
+        >
+          {t("dropColumnsHere")}
+        </div>
+      );
+    } else {
+      rows = keys.map((key, i) => renderRow(key, section, i === keys.length - 1));
+    }
     return (
       <div
         data-section={section}
         onDragOver={(e) => {
           e.preventDefault();
           // Only fires for the header / padding / empty area (rows stop
-          // propagation) → drop at the end of the section.
-          setDropTarget({ section, index: keys.length });
+          // propagation) → drop at the end of the section. Use the full bucket
+          // length (not the filtered count) so a drop lands at the true end.
+          setDropTarget({ section, index: buckets[section].length });
         }}
         onDrop={(e) => {
           e.preventDefault();
@@ -229,17 +277,14 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         <div className="astw:px-1.5 astw:pb-1 astw:text-xs astw:font-medium astw:text-muted-foreground">
           {title}
         </div>
-        {keys.length === 0 ? (
-          <div
-            className={cn(
-              "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-xs astw:text-muted-foreground astw:italic",
-              active && "astw:border-primary astw:text-primary",
-            )}
-          >
-            {t("dropColumnsHere")}
+        {/* Only the Scrollable section gets an internal scroll cap; the pinned
+            zones stay fully visible. */}
+        {opts?.scroll ? (
+          <div className="astw:flex astw:max-h-[min(50vh,20rem)] astw:flex-col astw:overflow-y-auto">
+            {rows}
           </div>
         ) : (
-          keys.map((key, i) => renderRow(key, section, i, i === keys.length - 1))
+          rows
         )}
       </div>
     );
@@ -264,9 +309,23 @@ function DataTableColumnSettings({ className }: { className?: string }) {
               aria-label={t("columnSettings")}
               className="astw:m-0 astw:flex astw:min-w-72 astw:flex-col astw:border-0 astw:p-2"
             >
+              {/* Search sits above the pinned-left section; it filters only the
+                  Scrollable list — the Fixed left / right zones always show in
+                  full. */}
+              <div className="astw:relative astw:mb-1 astw:px-1">
+                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-3.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("searchColumns")}
+                  aria-label={t("searchColumns")}
+                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                />
+              </div>
               {renderSection("left", t("sectionPinnedLeft"))}
               <div className="astw:mx-1 astw:border-t astw:border-border" />
-              {renderSection("scrollable", t("sectionScrollable"))}
+              {renderSection("scrollable", t("sectionScrollable"), { scroll: true, filter: true })}
               <div className="astw:mx-1 astw:border-t astw:border-border" />
               {renderSection("right", t("sectionPinnedRight"))}
               <div className="astw:mx-1 astw:mt-1 astw:border-t astw:border-border" />

@@ -28,12 +28,26 @@ type Invoice = {
   issued: string;
   dueDate: string;
   notes: string;
+  poNumber: string;
+  terms: string;
+  currency: string;
+  category: string;
+  priority: string;
+  department: string;
+  discount: number;
+  balance: number;
+  createdBy: string;
+  lastContact: string;
 };
 
 const CUSTOMERS = ["Acme Corp", "Globex", "Initech", "Umbrella", "Soylent", "Hooli", "Stark Ind."];
 const REGIONS = ["North America", "EMEA", "APAC", "LATAM"];
 const OWNERS = ["A. Kimura", "B. Osei", "C. Lindqvist", "D. Alvarez", "E. Nakamura"];
 const STATUSES: InvoiceStatus[] = ["draft", "sent", "paid", "overdue"];
+const TERMS = ["Net 15", "Net 30", "Net 45", "Net 60"];
+const CATEGORIES = ["Software", "Hardware", "Services", "Support", "Consulting"];
+const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+const DEPARTMENTS = ["Sales", "Finance", "Operations", "Marketing", "Legal"];
 
 // Deterministic pseudo-random so the dataset is stable across renders/reloads.
 function makeInvoices(count: number): Invoice[] {
@@ -64,6 +78,18 @@ function makeInvoices(count: number): Invoice[] {
       issued: issued.toISOString().slice(0, 10),
       dueDate: due.toISOString().slice(0, 10),
       notes: `Follow-up scheduled with ${pick(OWNERS)} regarding ${pick(REGIONS)} terms and renewal.`,
+      poNumber: `PO-${String(5000 + i)}`,
+      terms: pick(TERMS),
+      currency: "USD",
+      category: pick(CATEGORIES),
+      priority: pick(PRIORITIES),
+      department: pick(DEPARTMENTS),
+      discount: Math.round(rand() * 15 * 10) / 10,
+      balance: Math.round(rand() * amount * 100) / 100,
+      createdBy: pick(OWNERS),
+      lastContact: new Date(base + Math.floor(rand() * 120) * 86_400_000)
+        .toISOString()
+        .slice(0, 10),
     });
   }
   return rows;
@@ -147,7 +173,7 @@ const baseColumns = [
   }),
   column({
     id: "email",
-    label: "Billing email",
+    label: "Billing email address for invoicing",
     type: "text",
     accessor: (r) => r.email,
     width: 240,
@@ -166,7 +192,7 @@ const baseColumns = [
   }),
   column({
     id: "owner",
-    label: "Account owner",
+    label: "Primary account owner / relationship manager",
     type: "text",
     accessor: (r) => r.owner,
     width: 160,
@@ -203,11 +229,87 @@ const baseColumns = [
   }),
   column({
     id: "notes",
-    label: "Notes",
+    label: "Internal notes, follow-up commentary, and account renewal reminders",
     type: "text",
     accessor: (r) => r.notes,
     width: 260,
     truncate: true,
+  }),
+  // Extra columns to exercise the column-settings popup with 20+ entries.
+  column({
+    id: "poNumber",
+    label: "Purchase order reference number",
+    type: "text",
+    accessor: (r) => r.poNumber,
+    width: 130,
+  }),
+  column({
+    id: "terms",
+    label: "Standard payment terms and conditions",
+    type: "text",
+    accessor: (r) => r.terms,
+    width: 150,
+  }),
+  column({
+    id: "currency",
+    label: "Currency",
+    type: "text",
+    accessor: (r) => r.currency,
+    width: 110,
+  }),
+  column({
+    id: "category",
+    label: "Category",
+    type: "text",
+    accessor: (r) => r.category,
+    width: 150,
+    filter: {
+      field: "category",
+      type: "enum",
+      options: CATEGORIES.map((c) => ({ value: c, label: c })),
+    },
+  }),
+  column({
+    id: "priority",
+    label: "Priority",
+    type: "text",
+    accessor: (r) => r.priority,
+    width: 120,
+  }),
+  column({
+    id: "department",
+    label: "Department",
+    type: "text",
+    accessor: (r) => r.department,
+    width: 150,
+  }),
+  column({
+    id: "discount",
+    label: "Discount",
+    type: "text",
+    accessor: (r) => `${r.discount}%`,
+    width: 110,
+  }),
+  column({
+    id: "balance",
+    label: "Balance",
+    type: "money",
+    accessor: (r) => r.balance,
+    width: 130,
+  }),
+  column({
+    id: "createdBy",
+    label: "Created by",
+    type: "text",
+    accessor: (r) => r.createdBy,
+    width: 150,
+  }),
+  column({
+    id: "lastContact",
+    label: "Last contact",
+    type: "date",
+    accessor: (r) => r.lastContact,
+    width: 150,
   }),
 ];
 
@@ -255,7 +357,14 @@ const DataTableLabPage = () => {
   // Column settings + default pins + row actions. `tableId` persists the user's
   // layout (visibility, order, pinning) to localStorage across reloads.
   const settingsTable = useDataTable<Invoice>({
-    columns: baseColumns.map((c) => (c.id === "id" ? { ...c, pin: "left" as const } : c)),
+    columns: baseColumns.map((c) => {
+      const pinned = c.id === "id" ? { ...c, pin: "left" as const } : c;
+      // Demo: make every column filterable so the add-filter field list is long
+      // enough to surface the field search (AppShell shows it past a threshold).
+      return pinned.filter
+        ? pinned
+        : { ...pinned, filter: { field: c.id as string, type: "string" as const } };
+    }),
     data: { rows, total: rows.length },
     control,
     tableId: "lab-invoices-settings",

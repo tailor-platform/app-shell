@@ -1,23 +1,113 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["github>tailor-inc/renovate-config"],
   "timezone": "Asia/Tokyo",
   "schedule": ["before 9am on monday"],
   "labels": ["dependencies"],
   "rangeStrategy": "bump",
-  "minimumReleaseAge": "3 days",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on monday"]
+  },
   "packageRules": [
     {
-      "groupName": "react",
-      "matchPackageNames": ["react", "react-dom"]
+      "description": "First-party Tailor packages: skip the release-age delay inherited from the shared preset. The gate guards against compromised third-party republishes, not packages we publish ourselves.",
+      "matchPackageNames": ["@tailor-platform/**"],
+      "minimumReleaseAge": "0 days"
+    },
+
+    {
+      "description": "Type definitions move together and are build-time only. react/react-dom types are pulled out into the react group below.",
+      "groupName": "type definitions",
+      "matchPackageNames": ["@types/**"]
     },
     {
+      "description": "oxlint and oxfmt ship from the same project and are pinned together in the pnpm catalog — lint/format toolchain.",
+      "groupName": "oxc",
+      "matchPackageNames": ["oxlint", "oxfmt", "oxc-parser", "@oxc-project/**"]
+    },
+    {
+      "description": "react + react-dom share an exact version and their @types track major.minor. packages/core declares both as peerDependencies, so raising the floor is a consumer-facing breaking change — always review. Must stay after the type-definitions rule to reclaim @types/react.",
+      "groupName": "react",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    },
+    {
+      "description": "@base-ui/react — runtime UI primitives the component library is built on. Review: behaviour and a11y changes are not caught by CI.",
+      "groupName": "base-ui",
+      "matchPackageNames": ["@base-ui/react"]
+    },
+    {
+      "description": "tailwindcss and its postcss/vite adapters share an exact version (same monorepo). Review — minor bumps can change generated CSS, which CI does not catch.",
+      "groupName": "tailwindcss",
+      "matchPackageNames": [
+        "tailwindcss",
+        "@tailwindcss/postcss",
+        "@tailwindcss/vite",
+        "tw-animate-css"
+      ]
+    },
+    {
+      "description": "@testing-library packages are versioned independently but are only meaningful together.",
+      "groupName": "testing-library",
+      "matchPackageNames": ["@testing-library/**"]
+    },
+    {
+      "description": "vitest core and its subpackages move in lockstep; happy-dom is the environment they run against.",
+      "groupName": "vitest",
+      "matchPackageNames": ["vitest", "@vitest/**", "happy-dom"]
+    },
+    {
+      "description": "The Playwright npm package and browser bundles must move together or E2E fails to launch.",
+      "groupName": "playwright",
+      "matchPackageNames": ["@playwright/test", "playwright"]
+    },
+    {
+      "description": "vite and the plugins that hook its build pipeline — a plugin bump alone can break against an older vite.",
+      "groupName": "vite",
+      "matchPackageNames": [
+        "vite",
+        "@vitejs/plugin-react",
+        "vite-plugin-dts",
+        "vite-plugin-externalize-deps",
+        "vite-tsconfig-paths"
+      ]
+    },
+    {
+      "description": "tsdown depends on rolldown — bundler for the vite-plugin and catalogue builds.",
+      "groupName": "rolldown",
+      "matchPackageNames": ["rolldown", "tsdown"]
+    },
+    {
+      "description": "@changesets/cli and the changelog generators must stay in sync — release tooling, review.",
+      "groupName": "changesets",
+      "matchPackageNames": ["@changesets/**"]
+    },
+    {
+      "description": "Group all GitHub Actions bumps into one PR. Digests are pinned by the shared preset; majors are held by :approveMajorUpdates.",
+      "groupName": "github-actions",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch", "minor", "digest"]
+    },
+
+    {
+      "description": "Held below a known-breaking major — see the vite 8 / plugin-react 6 incompatibility.",
       "matchPackageNames": ["@vitejs/plugin-react"],
       "allowedVersions": "< 6.0.0"
     },
     {
       "matchPackageNames": ["vite"],
       "allowedVersions": "< 8.0.0"
+    },
+
+    {
+      "description": "Gated by minimumReleaseAgeExclude in pnpm-workspace.yaml: pnpm's own maturity check blocks these until a matching exclude entry is hand-added, which Renovate cannot write. If CI fails at install with a trust/maturity error, add the entry before re-running.",
+      "matchPackageNames": [
+        "postcss",
+        "vite",
+        "react-router",
+        "@tailor-platform/auth-public-client"
+      ],
+      "addLabels": ["maturity-gated"]
     }
   ]
 }

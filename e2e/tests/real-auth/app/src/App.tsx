@@ -143,7 +143,7 @@ const realAuthModules = [
   }),
 ];
 
-export const RealAuthDemoApp = () => {
+export const App = () => {
   if (!authClient) {
     return (
       <main data-testid="real-auth-config-missing">

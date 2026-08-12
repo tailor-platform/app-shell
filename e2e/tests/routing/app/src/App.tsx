@@ -129,7 +129,7 @@ const LocalAuthSidebar = () => {
   );
 };
 
-export const LocalAuthDemoApp = () => {
+export const App = () => {
   return (
     <AuthProvider client={localAuthClient} guardComponent={LocalAuthGuard}>
       <AppShell title="Local Auth Routing" modules={localAuthModules}>

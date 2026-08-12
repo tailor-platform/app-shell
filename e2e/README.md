@@ -103,12 +103,12 @@ e2e/
     ├── routing/
     │   ├── app/                    # Suite-specific Vite app for routing smoke tests
     │   │   └── src/
-    │   │       ├── LocalAuthDemoApp.tsx
+    │   │       ├── App.tsx
     │   │       └── fake-auth-client.ts
     │   └── routing.spec.ts
     └── real-auth/
         ├── app/                    # Suite-specific Vite app for hosted OAuth / AI smoke tests
         │   └── src/
-        │       └── RealAuthDemoApp.tsx
+        │       └── App.tsx
         └── auth.spec.ts            # Auth flow tests, plus AI smoke via the /ai page
 ```

@@ -16,14 +16,14 @@ const alertVariants = cva(
     variants: {
       variant: {
         neutral:
-          "astw:bg-[color:var(--alert-neutral-background)] astw:text-[color:var(--alert-neutral-foreground)] astw:border-[color:var(--alert-neutral-border)] *:data-[slot=alert-description]:astw:text-[color:var(--alert-neutral-foreground-muted)]",
+          "astw:bg-alert-neutral-background astw:text-alert-neutral-foreground astw:border-alert-neutral-border *:data-[slot=alert-description]:astw:text-alert-neutral-foreground-muted",
         success:
-          "astw:bg-[color:var(--alert-success-background)] astw:text-[color:var(--alert-success-foreground)] astw:border-[color:var(--alert-success-border)] *:data-[slot=alert-description]:astw:text-[color:var(--alert-success-foreground-muted)]",
+          "astw:bg-alert-success-background astw:text-alert-success-foreground astw:border-alert-success-border *:data-[slot=alert-description]:astw:text-alert-success-foreground-muted",
         warning:
-          "astw:bg-[color:var(--alert-warning-background)] astw:text-[color:var(--alert-warning-foreground)] astw:border-[color:var(--alert-warning-border)] *:data-[slot=alert-description]:astw:text-[color:var(--alert-warning-foreground-muted)]",
+          "astw:bg-alert-warning-background astw:text-alert-warning-foreground astw:border-alert-warning-border *:data-[slot=alert-description]:astw:text-alert-warning-foreground-muted",
         error:
-          "astw:bg-[color:var(--alert-error-background)] astw:text-[color:var(--alert-error-foreground)] astw:border-[color:var(--alert-error-border)] *:data-[slot=alert-description]:astw:text-[color:var(--alert-error-foreground-muted)]",
-        info: "astw:bg-[color:var(--alert-info-background)] astw:text-[color:var(--alert-info-foreground)] astw:border-[color:var(--alert-info-border)] *:data-[slot=alert-description]:astw:text-[color:var(--alert-info-foreground-muted)]",
+          "astw:bg-alert-error-background astw:text-alert-error-foreground astw:border-alert-error-border *:data-[slot=alert-description]:astw:text-alert-error-foreground-muted",
+        info: "astw:bg-alert-info-background astw:text-alert-info-foreground astw:border-alert-info-border *:data-[slot=alert-description]:astw:text-alert-info-foreground-muted",
       },
     },
     defaultVariants: {

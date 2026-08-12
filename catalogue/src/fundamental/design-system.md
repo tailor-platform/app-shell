@@ -32,7 +32,7 @@ Tailwind v4 stays CSS-first; minimal `vite` / PostCSS wiring is in `**project-se
 
 AppShell controls its theme through CSS variables. Override them after the AppShell imports, using `:root` for light and `:root.dark` for dark — that pair wins against both the layered default palette and the unlayered branded ones (`cream`, `bloom`), which define their dark values on `:root.dark` and so outrank a bare `.dark`.
 
-Override **only** the specific tokens you mean to change, and set each one in both modes — a `:root`-only override leaks its light value into dark mode:
+Override **only** the specific tokens you mean to change, and set each one in both modes. Overriding just `:root` misbehaves either way: on the default palette the light value carries into dark mode, and on a branded palette the override stops applying in dark mode altogether.
 
 ```css
 :root {
@@ -44,7 +44,7 @@ Override **only** the specific tokens you mean to change, and set each one in bo
 }
 ```
 
-Override at the highest scope where the change applies. Do not duplicate token values across files — change them at the source. Never copy the palette wholesale; tokens you did not copy stay on AppShell's values and the two halves drift apart on every upgrade.
+Override at the highest scope where the change applies. A narrower scope (per-section, per-tenant) needs the same both-modes treatment, and its dark rule must still outrank a branded palette's `:root.dark` — pair `.tenant-a` with `:root.dark .tenant-a`. Do not duplicate token values across files — change them at the source. Never copy the palette wholesale; tokens you did not copy stay on AppShell's values and the two halves drift apart on every upgrade.
 
 **Dark mode** is driven by a `.dark` class on the root element, managed by AppShell (`useTheme()` / `<AppearanceSwitcher />`). AppShell primitives respect it automatically. Custom components inherit dark-mode behaviour for free as long as they reference tokens (`bg-background`, `text-foreground`) and never inline literal colors.
 

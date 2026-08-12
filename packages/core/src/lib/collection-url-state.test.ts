@@ -68,6 +68,24 @@ describe("parseCollectionSearchParams", () => {
     });
   });
 
+  it("filters out URL operators excluded by filterPolicy", () => {
+    const result = parseCollectionSearchParams(
+      tableMetadata.task,
+      new URLSearchParams("f.title:contains=acme&f.title:hasSuffix=labs"),
+      {
+        filterPolicy: {
+          string: {
+            operators: ["contains"],
+          },
+        },
+      },
+    );
+
+    expect(result).toEqual({
+      filters: [{ field: "title", operator: "contains", value: "acme", caseSensitive: false }],
+    });
+  });
+
   it("supports untyped parsing without metadata", () => {
     const result = parseCollectionSearchParams(
       new URLSearchParams('p=25&s=name:asc&f.tags:in=["a","b"]'),
@@ -109,6 +127,24 @@ describe("parseCollectionSearchParams", () => {
     const result = parseCollectionSearchParams(new URLSearchParams("f.price:gt=130"));
 
     expect(result.filters).toEqual([{ field: "price", operator: "gt", value: "130" }]);
+  });
+
+  it("defaults URL string filters to exact-case when filterPolicy disables case-insensitive mode", () => {
+    const result = parseCollectionSearchParams(
+      tableMetadata.task,
+      new URLSearchParams("f.title:contains=Acme"),
+      {
+        filterPolicy: {
+          string: {
+            supportsCaseInsensitive: false,
+          },
+        },
+      },
+    );
+
+    expect(result.filters).toEqual([
+      { field: "title", operator: "contains", value: "Acme", caseSensitive: true },
+    ]);
   });
 });
 
@@ -161,6 +197,28 @@ describe("withURLCollectionState", () => {
       initialFilters: [{ field: "status", operator: "eq", value: "active" }],
       initialSort: [{ field: "createdAt", direction: "Desc" }],
       pageSize: 50,
+    });
+  });
+
+  it("applies filterPolicy when hydrating URL state", () => {
+    const setSearchParams = vi.fn();
+    const options = withURLCollectionState(
+      {
+        tableMetadata: tableMetadata.task,
+        filterPolicy: {
+          string: {
+            operators: ["contains"],
+            supportsCaseInsensitive: false,
+          },
+        },
+      },
+      [new URLSearchParams("f.title:contains=Acme&f.title:hasSuffix=Labs"), setSearchParams],
+    );
+
+    expect(options.params).toEqual({
+      initialFilters: [
+        { field: "title", operator: "contains", value: "Acme", caseSensitive: true },
+      ],
     });
   });
 
@@ -223,6 +281,29 @@ describe("useURLCollectionVariables", () => {
     ]);
     expect(result.current.control.sortStates).toEqual([{ field: "createdAt", direction: "Desc" }]);
     expect(result.current.control.pageSize).toBe(50);
+  });
+
+  it("applies filterPolicy when seeding string filters from the URL", () => {
+    function PolicyWrapper({ children }: PropsWithChildren) {
+      return createElement(MemoryRouter, { initialEntries: ["/?f.title:contains=Acme"] }, children);
+    }
+
+    const { result } = renderHook(
+      () =>
+        useURLCollectionVariables({
+          tableMetadata: tableMetadata.task,
+          filterPolicy: {
+            string: {
+              supportsCaseInsensitive: false,
+            },
+          },
+        }),
+      { wrapper: PolicyWrapper },
+    );
+
+    expect(result.current.control.filters).toEqual([
+      { field: "title", operator: "contains", value: "Acme", caseSensitive: true },
+    ]);
   });
 });
 

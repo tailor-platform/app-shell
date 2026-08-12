@@ -1,4 +1,10 @@
-import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
+import type {
+  FieldTypeToFilterConfigOptions,
+  FilterConfig,
+  SortConfig,
+  TableFieldName,
+  TableMetadata,
+} from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
 import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
 
@@ -20,6 +26,8 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
 // inferColumns() — metadata-driven column defaults
 // =============================================================================
 
+export interface InferColumnsOptions extends FieldTypeToFilterConfigOptions {}
+
 /**
  * Return a function that produces `Column` from metadata field names.
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
@@ -27,7 +35,7 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
 export function inferColumns<
   TRow extends Record<string, unknown>,
   const TTable extends TableMetadata = TableMetadata,
->(tableMetadata: TTable): ColumnInferFn<TRow, TTable> {
+>(tableMetadata: TTable, options?: InferColumnsOptions): ColumnInferFn<TRow, TTable> {
   const fields = tableMetadata.fields;
 
   return (
@@ -47,7 +55,9 @@ export function inferColumns<
 
     let filter: FilterConfig | undefined;
     if (columnOptions?.filter !== false) {
-      filter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
+      filter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues, {
+        filterPolicy: options?.filterPolicy,
+      });
     }
 
     const label = columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;
@@ -136,6 +146,7 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
    */
   inferColumns: <const TTable extends TableMetadata = TableMetadata>(
     tableMetadata: TTable,
+    options?: InferColumnsOptions,
   ) => ColumnInferFn<TRow, TTable>;
 }
 
@@ -157,7 +168,9 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
 export function createColumnHelper<TRow extends Record<string, unknown>>(): ColumnHelper<TRow> {
   return {
     column: (options: Column<TRow>) => column<TRow>(options),
-    inferColumns: <const TTable extends TableMetadata = TableMetadata>(tableMetadata: TTable) =>
-      inferColumns<TRow, TTable>(tableMetadata),
+    inferColumns: <const TTable extends TableMetadata = TableMetadata>(
+      tableMetadata: TTable,
+      options?: InferColumnsOptions,
+    ) => inferColumns<TRow, TTable>(tableMetadata, options),
   };
 }

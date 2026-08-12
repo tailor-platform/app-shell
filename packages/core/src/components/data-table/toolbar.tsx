@@ -90,6 +90,27 @@ function temporalOperatorsFor(type: FilterConfig["type"]): readonly NumericTempo
   return type === "date" ? DATE_OPERATORS : NUMERIC_TEMPORAL_OPERATORS;
 }
 
+function intersectOperators<TOperator extends FilterOperator>(
+  standard: readonly TOperator[],
+  configured?: readonly FilterOperator[],
+): TOperator[] {
+  return configured ? standard.filter((op) => configured.includes(op)) : [...standard];
+}
+
+function stringOperatorsFor(config: Extract<FilterConfig, { type: "string" }>): StringOperator[] {
+  return intersectOperators(STRING_OPERATORS, config.operators);
+}
+
+function booleanOperatorsFor(
+  config: Extract<FilterConfig, { type: "boolean" }>,
+): BooleanOperator[] {
+  return intersectOperators(BOOLEAN_OPERATORS, config.operators);
+}
+
+function supportsCaseInsensitive(config: Extract<FilterConfig, { type: "string" }>): boolean {
+  return config.supportsCaseInsensitive !== false;
+}
+
 /**
  * Operator options + initial selection for a numeric/temporal editor.
  *
@@ -161,8 +182,10 @@ function DataTableFilters({
     () => ctx.columns.filter((col): col is FilterableColumn => !!col.filter),
     [ctx.columns],
   );
-
-  if (filterableColumns.length === 0) return null;
+  const addableColumns = useMemo(
+    () => filterableColumns.filter((col) => getAddFilterOperators(col.filter).length > 0),
+    [filterableColumns],
+  );
 
   const chips = filterableColumns
     .map((col) => {
@@ -173,13 +196,16 @@ function DataTableFilters({
     })
     .filter(Boolean);
 
+  if (chips.length === 0 && addableColumns.length === 0) return null;
+
   // The Add filter trigger only. Wrapped in a shrink-to-content box so the button
   // keeps its natural width instead of stretching to fill a column-flex toolbar
   // (DataTable.Toolbar is `flex-col`, which stretches its children by default).
   if (slot === "add") {
+    if (addableColumns.length === 0) return null;
     return (
       <div className={cn("astw:w-fit", className)}>
-        <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
+        <AddFilterPanel columns={addableColumns} control={control} iconOnly={addIconOnly} />
       </div>
     );
   }
@@ -205,7 +231,9 @@ function DataTableFilters({
     >
       {/* Trigger comes first so it stays pinned left and doesn't shift as chips are
           added — the chips grow to its right inside their own flex-1 container. */}
-      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
+      {addableColumns.length > 0 && (
+        <AddFilterPanel columns={addableColumns} control={control} iconOnly={addIconOnly} />
+      )}
       <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
         {chips}
       </div>
@@ -244,9 +272,9 @@ function seedPanelOperator(
 ): FilterOperator {
   if (!col) return "eq";
   const active = control.filters.find((f) => f.field === col.filter.field);
-  const ops = getAddFilterOperators(col.filter.type);
+  const ops = getAddFilterOperators(col.filter);
   if (active && ops.includes(active.operator)) return active.operator;
-  return DEFAULT_OPERATOR[col.filter.type];
+  return ops[0] ?? DEFAULT_OPERATOR[col.filter.type];
 }
 
 function AddFilterPanel({
@@ -272,7 +300,7 @@ function AddFilterPanel({
 
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
-  const operators = config ? getAddFilterOperators(config.type) : [];
+  const operators = config ? getAddFilterOperators(config) : [];
   // Show the condition column for any field that has more than one operator
   // (single-operator types like enum/uuid go straight field ▸ value).
   const showConditions = operators.length > 1;
@@ -707,7 +735,13 @@ function PanelValueEditor({
       toAddFilterSubmittedValue(type, operator, text),
       // Preserve the existing filter's case-sensitivity (the panel has no toggle;
       // the chip's string editor owns it) instead of silently clearing it.
-      type === "string" ? { caseSensitive: filter?.caseSensitive ?? false } : undefined,
+      type === "string"
+        ? {
+            caseSensitive: supportsCaseInsensitive(config)
+              ? (filter?.caseSensitive ?? false)
+              : true,
+          }
+        : undefined,
     );
   };
 
@@ -1123,7 +1157,7 @@ function FilterChip({
     [control, config.field, config.type, filter.operator, filter.value, filter.caseSensitive],
   );
 
-  const operators = getAddFilterOperators(config.type);
+  const operators = getAddFilterOperators(config);
   const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
   const valueLabel = formatFilterValue(filter, config, t, locale, label);
 
@@ -1480,10 +1514,11 @@ function BooleanFilterEditor({
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const operatorItems = booleanOperatorsFor(config);
   const [localOp, setLocalOp] = useState<BooleanOperator>(
-    BOOLEAN_OPERATORS.includes(filter.operator as BooleanOperator)
+    operatorItems.includes(filter.operator as BooleanOperator)
       ? (filter.operator as BooleanOperator)
-      : "eq",
+      : (operatorItems[0] ?? "eq"),
   );
   const [localValue, setLocalValue] = useState(
     typeof filter.value === "boolean" ? String(filter.value) : "true",
@@ -1501,7 +1536,7 @@ function BooleanFilterEditor({
     >
       {!hideOperator && (
         <Select
-          items={[...BOOLEAN_OPERATORS]}
+          items={[...operatorItems]}
           value={localOp}
           onValueChange={(v) => {
             if (v) setLocalOp(v as BooleanOperator);
@@ -1547,13 +1582,16 @@ function StringFilterEditor({
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const operatorItems = stringOperatorsFor(config);
   const [localOp, setLocalOp] = useState<StringOperator>(
-    STRING_OPERATORS.includes(filter.operator as StringOperator)
+    operatorItems.includes(filter.operator as StringOperator)
       ? (filter.operator as StringOperator)
-      : "contains",
+      : (operatorItems[0] ?? "contains"),
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
-  const [localCaseSensitive, setLocalCaseSensitive] = useState(filter.caseSensitive ?? false);
+  const [localCaseSensitive, setLocalCaseSensitive] = useState(
+    supportsCaseInsensitive(config) ? (filter.caseSensitive ?? false) : true,
+  );
 
   const handleCommit = useCallback(() => {
     if (localValue.trim() === "") {
@@ -1573,7 +1611,7 @@ function StringFilterEditor({
     >
       {!hideOperator && (
         <Select
-          items={[...STRING_OPERATORS]}
+          items={[...operatorItems]}
           value={localOp}
           onValueChange={(v) => {
             if (v) setLocalOp(v);
@@ -1592,12 +1630,14 @@ function StringFilterEditor({
         }}
         className="astw:h-8 astw:text-sm"
       />
-      <Checkbox
-        label={t("filterCaseSensitive")}
-        checked={localCaseSensitive}
-        onCheckedChange={setLocalCaseSensitive}
-        className="astw:gap-1.5"
-      />
+      {supportsCaseInsensitive(config) && (
+        <Checkbox
+          label={t("filterCaseSensitive")}
+          checked={localCaseSensitive}
+          onCheckedChange={setLocalCaseSensitive}
+          className="astw:gap-1.5"
+        />
+      )}
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
       </Button>
@@ -1670,7 +1710,7 @@ function NumericFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    temporalOperatorsFor(config.type),
+    intersectOperators(temporalOperatorsFor(config.type), config.operators),
     filter.operator,
   );
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
@@ -1807,7 +1847,7 @@ function TemporalFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    temporalOperatorsFor(config.type),
+    intersectOperators(temporalOperatorsFor(config.type), config.operators),
     filter.operator,
   );
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
@@ -1964,22 +2004,22 @@ function TemporalFilterEditor({
 // Helpers
 // =============================================================================
 
-function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
-  switch (type) {
+function getAddFilterOperators(config: FilterConfig): FilterOperator[] {
+  switch (config.type) {
     case "string":
-      return [...STRING_OPERATORS];
+      return stringOperatorsFor(config);
     case "date":
-      return [...DATE_OPERATORS];
+      return intersectOperators(DATE_OPERATORS, config.operators);
     case "number":
     case "datetime":
     case "time":
-      return [...NUMERIC_TEMPORAL_OPERATORS];
+      return intersectOperators(NUMERIC_TEMPORAL_OPERATORS, config.operators);
     case "enum":
-      return ["in"];
+      return intersectOperators(["in"], config.operators);
     case "boolean":
-      return [...BOOLEAN_OPERATORS];
+      return booleanOperatorsFor(config);
     case "uuid":
-      return ["eq"];
+      return intersectOperators(["eq"], config.operators);
   }
 }
 

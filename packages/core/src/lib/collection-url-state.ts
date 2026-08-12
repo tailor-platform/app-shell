@@ -8,7 +8,10 @@ import {
   type CollectionPersistedState,
   type CollectionVariables,
   type FieldType,
+  type FieldTypeToFilterConfigOptions,
   type Filter,
+  type FilterConfig,
+  type FilterPolicy,
   type TableFieldName,
   type TableMetadata,
   type TableMetadataFilter,
@@ -38,23 +41,31 @@ function isValidSortField(tableMetadata: TableMetadata | undefined, field: strin
   return !!metadataField && !!fieldTypeToSortConfig(metadataField.name, metadataField.type);
 }
 
+function resolveFilterConfig(
+  tableMetadata: TableMetadata | undefined,
+  field: string,
+  filterPolicy?: FilterPolicy,
+): FilterConfig | undefined {
+  if (!tableMetadata) return undefined;
+  const metadataField = tableMetadata.fields.find((candidate) => candidate.name === field);
+  if (!metadataField) return undefined;
+  return fieldTypeToFilterConfig(metadataField.name, metadataField.type, metadataField.enumValues, {
+    filterPolicy,
+  });
+}
+
 function isValidFilter(
   tableMetadata: TableMetadata | undefined,
   field: string,
   operator: string,
+  filterPolicy?: FilterPolicy,
 ): boolean {
   if (!tableMetadata) return true;
-  const metadataField = tableMetadata.fields.find((candidate) => candidate.name === field);
-  if (!metadataField) return false;
-
-  const filterConfig = fieldTypeToFilterConfig(
-    metadataField.name,
-    metadataField.type,
-    metadataField.enumValues,
-  );
+  const filterConfig = resolveFilterConfig(tableMetadata, field, filterPolicy);
   if (!filterConfig) return false;
 
-  return OPERATORS_BY_FILTER_TYPE[filterConfig.type].includes(operator as never);
+  const allowedOperators = filterConfig.operators ?? OPERATORS_BY_FILTER_TYPE[filterConfig.type];
+  return allowedOperators.includes(operator as never);
 }
 
 /** Look up a field's metadata-declared type, if metadata is available. */
@@ -112,14 +123,18 @@ function coerceFilterValueToFieldType(type: FieldType, value: unknown): unknown 
 export function parseCollectionSearchParams<const TTable extends TableMetadata>(
   tableMetadata: TTable,
   params: URLSearchParams,
+  options?: FieldTypeToFilterConfigOptions,
 ): CollectionInitialState<TableFieldName<TTable>, TableMetadataFilter<TTable>>;
 export function parseCollectionSearchParams(params: URLSearchParams): CollectionInitialState;
 export function parseCollectionSearchParams(
   tableMetadataOrParams: TableMetadata | URLSearchParams,
-  maybeParams?: URLSearchParams,
+  maybeParamsOrOptions?: URLSearchParams | FieldTypeToFilterConfigOptions,
+  maybeOptions?: FieldTypeToFilterConfigOptions,
 ): CollectionInitialState {
-  const tableMetadata = maybeParams ? (tableMetadataOrParams as TableMetadata) : undefined;
-  const params = maybeParams ?? (tableMetadataOrParams as URLSearchParams);
+  const hasMetadata = maybeParamsOrOptions instanceof URLSearchParams;
+  const tableMetadata = hasMetadata ? (tableMetadataOrParams as TableMetadata) : undefined;
+  const params = hasMetadata ? maybeParamsOrOptions : (tableMetadataOrParams as URLSearchParams);
+  const options = hasMetadata ? maybeOptions : undefined;
   const nextState: CollectionInitialState = {};
 
   const pageSize = params.get(KEY_PAGE_SIZE);
@@ -140,9 +155,16 @@ export function parseCollectionSearchParams(
   for (const [key, value] of params.entries()) {
     if (!key.startsWith(FILTER_PREFIX) || !value) continue;
     const [field, operator] = key.slice(FILTER_PREFIX.length).split(":");
-    if (!field || !operator || !isValidFilter(tableMetadata, field, operator)) continue;
+    if (
+      !field ||
+      !operator ||
+      !isValidFilter(tableMetadata, field, operator, options?.filterPolicy)
+    ) {
+      continue;
+    }
     const decoded = decodeFilterValue(value);
     const fieldType = fieldTypeOf(tableMetadata, field);
+    const filterConfig = resolveFilterConfig(tableMetadata, field, options?.filterPolicy);
     nextFilters.push({
       field,
       operator: operator as Filter["operator"],
@@ -150,6 +172,9 @@ export function parseCollectionSearchParams(
       // that `decodeFilterValue` returned as strings. Without metadata (untyped
       // overload) we can't, so the value stays a string.
       value: fieldType ? coerceFilterValueToFieldType(fieldType, decoded) : decoded,
+      ...(filterConfig?.type === "string"
+        ? { caseSensitive: filterConfig.supportsCaseInsensitive === false }
+        : {}),
     });
   }
   if (nextFilters.length > 0) nextState.filters = nextFilters;
@@ -204,30 +229,35 @@ export function writeCollectionSearchParams<
 export function withURLCollectionState<const TTable extends TableMetadata>(
   options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
     tableMetadata: TTable;
+    filterPolicy?: FilterPolicy;
   },
   [searchParams, setSearchParams]: SearchParamsBinding,
 ): UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
   tableMetadata: TTable;
+  filterPolicy?: FilterPolicy;
 };
 export function withURLCollectionState(
   options: UseCollectionOptions & {
     tableMetadata?: never;
+    filterPolicy?: never;
   },
   [searchParams, setSearchParams]: SearchParamsBinding,
 ): UseCollectionOptions;
 export function withURLCollectionState(
-  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata; filterPolicy?: FilterPolicy },
   searchParamsBinding: SearchParamsBinding,
-): UseCollectionOptions & { tableMetadata?: TableMetadata } {
+): UseCollectionOptions & { tableMetadata?: TableMetadata; filterPolicy?: FilterPolicy } {
   return applyURLCollectionState(options, searchParamsBinding);
 }
 
 function applyURLCollectionState(
-  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata; filterPolicy?: FilterPolicy },
   [searchParams, setSearchParams]: SearchParamsBinding,
-): UseCollectionOptions & { tableMetadata?: TableMetadata } {
+): UseCollectionOptions & { tableMetadata?: TableMetadata; filterPolicy?: FilterPolicy } {
   const initialState = options.tableMetadata
-    ? parseCollectionSearchParams(options.tableMetadata, searchParams)
+    ? parseCollectionSearchParams(options.tableMetadata, searchParams, {
+        filterPolicy: options.filterPolicy,
+      })
     : parseCollectionSearchParams(searchParams);
 
   return {
@@ -293,6 +323,7 @@ function mergeCollectionStateIntoParams(
 export function useURLCollectionVariables<const TTable extends TableMetadata>(
   options: UseCollectionOptions<TableFieldName<TTable>, TableMetadataFilter<TTable>> & {
     tableMetadata: TTable;
+    filterPolicy?: FilterPolicy;
   },
 ): UseCollectionReturn<
   TableFieldName<TTable>,
@@ -300,10 +331,10 @@ export function useURLCollectionVariables<const TTable extends TableMetadata>(
   TableMetadataFilter<TTable>
 >;
 export function useURLCollectionVariables(
-  options: UseCollectionOptions & { tableMetadata?: never },
+  options: UseCollectionOptions & { tableMetadata?: never; filterPolicy?: never },
 ): UseCollectionReturn<string, CollectionVariables>;
 export function useURLCollectionVariables(
-  options: UseCollectionOptions & { tableMetadata?: TableMetadata },
+  options: UseCollectionOptions & { tableMetadata?: TableMetadata; filterPolicy?: FilterPolicy },
 ): unknown {
   const searchParamsBinding = useSearchParams();
   // `useCollectionVariables` is overloaded on whether `tableMetadata` is present;

@@ -135,6 +135,18 @@ const stringColumn: Column<TestRow> = {
   filter: { type: "string", field: "name" },
 };
 
+const stringLimitedColumn: Column<TestRow> = {
+  id: "name",
+  label: "Name",
+  render: (r) => String(r.name ?? ""),
+  filter: {
+    type: "string",
+    field: "name",
+    operators: ["eq", "contains"],
+    supportsCaseInsensitive: false,
+  },
+};
+
 const uuidColumn: Column<TestRow> = {
   id: "id",
   label: "ID",
@@ -410,6 +422,19 @@ describe("AddFilterPanel", () => {
     });
   });
 
+  it("hides operators excluded by filter config", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringLimitedColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(await screen.findByRole("button", { name: /^contains$/ })).toBeDefined();
+    expect(screen.queryByRole("button", { name: /^not contains$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^starts with$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^ends with$/ })).toBeNull();
+  });
+
   it("disables the commit button when the between range is reversed (min > max)", async () => {
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });
@@ -596,6 +621,25 @@ describe("StringFilterEditor", () => {
 
     const checkbox = await screen.findByRole("checkbox");
     expect((checkbox as HTMLElement).dataset.checked).toBeDefined();
+  });
+
+  it("hides case-sensitivity UI when the filter config disables it", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringLimitedColumn]} />, {
+      wrapper,
+    });
+
+    await openValueEditor(user);
+
+    expect(screen.queryByText("Case sensitive")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseSensitive: true,
+    });
   });
 });
 

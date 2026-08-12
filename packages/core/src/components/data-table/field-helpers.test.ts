@@ -199,6 +199,24 @@ describe("fieldTypeToFilterConfig", () => {
     });
   });
 
+  it("applies filter policy overrides", () => {
+    expect(
+      fieldTypeToFilterConfig("name", "string", undefined, {
+        filterPolicy: {
+          string: {
+            operators: ["eq", "contains"],
+            supportsCaseInsensitive: false,
+          },
+        },
+      }),
+    ).toEqual({
+      field: "name",
+      type: "string",
+      operators: ["eq", "contains"],
+      supportsCaseInsensitive: false,
+    });
+  });
+
   it("returns undefined for array", () => {
     expect(fieldTypeToFilterConfig("tags", "array")).toBeUndefined();
   });
@@ -294,6 +312,37 @@ describe("inferColumns() with metadata", () => {
     expect(opts.filter).toEqual({ field: "id", type: "uuid" });
   });
 
+  it("applies filterPolicy passed to inferColumns", () => {
+    const infer = inferColumns<TaskRow>(testMetadata.task, {
+      filterPolicy: {
+        string: {
+          operators: ["eq", "contains"],
+          supportsCaseInsensitive: false,
+        },
+        enum: {
+          operators: ["in"],
+        },
+      },
+    });
+
+    expect(infer("title").filter).toEqual({
+      field: "title",
+      type: "string",
+      operators: ["eq", "contains"],
+      supportsCaseInsensitive: false,
+    });
+    expect(infer("status").filter).toEqual({
+      field: "status",
+      type: "enum",
+      options: [
+        { value: "todo", label: "todo" },
+        { value: "in_progress", label: "in_progress" },
+        { value: "done", label: "done" },
+      ],
+      operators: ["in"],
+    });
+  });
+
   it("array type has no sort/filter", () => {
     const infer = inferColumns<TaskRow>(testMetadata.task);
     const opts = infer("tags");
@@ -370,11 +419,16 @@ describe("createColumnHelper()", () => {
 
     const { column: helperColumn, inferColumns: helperInferColumns } =
       createColumnHelper<OrderRow>();
-    const infer = helperInferColumns(metadata);
+    const infer = helperInferColumns(metadata, {
+      filterPolicy: {
+        string: { operators: ["eq"] },
+      },
+    });
 
     const col = helperColumn(infer("name"));
     expect(col.label).toBe("name");
     expect(col.sort).toEqual({ field: "name", type: "string" });
+    expect(col.filter).toEqual({ field: "name", type: "string", operators: ["eq"] });
   });
 
   it("column + inferColumns spread override", () => {

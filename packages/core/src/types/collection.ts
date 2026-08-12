@@ -79,19 +79,17 @@ export interface SelectOption {
 }
 
 /**
- * Filter configuration for a column.
- * The `type` determines which operators are available.
- * The `field` identifies the backend field name used for filtering.
+ * Filter types supported by DataTable's built-in filter editors.
  */
-export type FilterConfig =
-  | { field: string; type: "string" }
-  | { field: string; type: "number" }
-  | { field: string; type: "datetime" }
-  | { field: string; type: "date" }
-  | { field: string; type: "time" }
-  | { field: string; type: "enum"; options: SelectOption[] }
-  | { field: string; type: "boolean" }
-  | { field: string; type: "uuid" };
+export type FilterConfigType =
+  | "string"
+  | "number"
+  | "datetime"
+  | "date"
+  | "time"
+  | "enum"
+  | "boolean"
+  | "uuid";
 
 // =============================================================================
 // Filter Operators (Single Source of Truth)
@@ -121,19 +119,60 @@ export const OPERATORS_BY_FILTER_TYPE = {
   enum: ["eq", "ne", "in", "nin"],
   boolean: ["eq", "ne"],
   uuid: ["eq", "ne", "in", "nin"],
-} as const satisfies Record<FilterConfig["type"], readonly string[]>;
+} as const satisfies Record<FilterConfigType, readonly string[]>;
 
 /**
  * Maps each filter type to the union of operators it supports.
  */
 export type OperatorForFilterType = {
-  [T in FilterConfig["type"]]: (typeof OPERATORS_BY_FILTER_TYPE)[T][number];
+  [T in FilterConfigType]: (typeof OPERATORS_BY_FILTER_TYPE)[T][number];
 };
 
 /**
  * Union of all available filter operators.
  */
-export type FilterOperator = OperatorForFilterType[FilterConfig["type"]];
+export type FilterOperator = OperatorForFilterType[FilterConfigType];
+
+type FilterConfigBase<TType extends FilterConfigType> = {
+  field: string;
+  type: TType;
+  /**
+   * Optional operator subset exposed by the UI for this field.
+   * When omitted, the built-in defaults for the filter type are used.
+   */
+  operators?: readonly OperatorForFilterType[TType][];
+};
+
+/**
+ * Filter configuration for a column.
+ * The `type` determines which operators are available.
+ * The `field` identifies the backend field name used for filtering.
+ */
+export type FilterConfig =
+  | (FilterConfigBase<"string"> & { supportsCaseInsensitive?: boolean })
+  | FilterConfigBase<"number">
+  | FilterConfigBase<"datetime">
+  | FilterConfigBase<"date">
+  | FilterConfigBase<"time">
+  | (FilterConfigBase<"enum"> & { options: SelectOption[] })
+  | FilterConfigBase<"boolean">
+  | FilterConfigBase<"uuid">;
+
+/**
+ * Per-filter-type overrides applied when deriving `FilterConfig` from metadata.
+ * Useful for backend-wide defaults such as disabling regex-backed
+ * case-insensitive string filters or trimming the operator set.
+ */
+export interface FilterPolicy {
+  string?: Pick<Extract<FilterConfig, { type: "string" }>, "operators" | "supportsCaseInsensitive">;
+  number?: Pick<Extract<FilterConfig, { type: "number" }>, "operators">;
+  datetime?: Pick<Extract<FilterConfig, { type: "datetime" }>, "operators">;
+  date?: Pick<Extract<FilterConfig, { type: "date" }>, "operators">;
+  time?: Pick<Extract<FilterConfig, { type: "time" }>, "operators">;
+  enum?: Pick<Extract<FilterConfig, { type: "enum" }>, "operators">;
+  boolean?: Pick<Extract<FilterConfig, { type: "boolean" }>, "operators">;
+  uuid?: Pick<Extract<FilterConfig, { type: "uuid" }>, "operators">;
+}
 
 /**
  * Resolve the operator union for a specific field within a filter type.
@@ -532,6 +571,20 @@ export function fieldTypeToSortConfig(field: string, type: FieldType): SortConfi
   }
 }
 
+/** Options for `fieldTypeToFilterConfig`. */
+export interface FieldTypeToFilterConfigOptions {
+  /** Backend-wide defaults to merge into the derived filter config. */
+  filterPolicy?: FilterPolicy;
+}
+
+function applyFilterPolicy<TConfig extends FilterConfig>(
+  config: TConfig,
+  filterPolicy?: FilterPolicy,
+): TConfig {
+  const policy = filterPolicy?.[config.type];
+  return policy ? ({ ...config, ...policy } as TConfig) : config;
+}
+
 /**
  * Map metadata field type to FilterConfig.
  * Returns undefined for types that don't support filtering.
@@ -540,28 +593,32 @@ export function fieldTypeToFilterConfig(
   field: string,
   type: FieldType,
   enumValues?: readonly string[],
+  options?: FieldTypeToFilterConfigOptions,
 ): FilterConfig | undefined {
   switch (type) {
     case "string":
-      return { field, type: "string" };
+      return applyFilterPolicy({ field, type: "string" }, options?.filterPolicy);
     case "number":
-      return { field, type: "number" };
+      return applyFilterPolicy({ field, type: "number" }, options?.filterPolicy);
     case "boolean":
-      return { field, type: "boolean" };
+      return applyFilterPolicy({ field, type: "boolean" }, options?.filterPolicy);
     case "uuid":
-      return { field, type: "uuid" };
+      return applyFilterPolicy({ field, type: "uuid" }, options?.filterPolicy);
     case "datetime":
-      return { field, type: "datetime" };
+      return applyFilterPolicy({ field, type: "datetime" }, options?.filterPolicy);
     case "date":
-      return { field, type: "date" };
+      return applyFilterPolicy({ field, type: "date" }, options?.filterPolicy);
     case "time":
-      return { field, type: "time" };
+      return applyFilterPolicy({ field, type: "time" }, options?.filterPolicy);
     case "enum":
-      return {
-        field,
-        type: "enum",
-        options: (enumValues ?? []).map((v) => ({ value: v, label: v })),
-      };
+      return applyFilterPolicy(
+        {
+          field,
+          type: "enum",
+          options: (enumValues ?? []).map((v) => ({ value: v, label: v })),
+        },
+        options?.filterPolicy,
+      );
     default:
       return undefined;
   }

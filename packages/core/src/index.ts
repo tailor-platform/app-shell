@@ -196,6 +196,8 @@ export {
   fieldTypeToFilterConfig,
   type SortConfig,
   type FilterConfig,
+  type FilterPolicy,
+  type FieldTypeToFilterConfigOptions,
   type SortState,
   type Filter,
   type FilterOperator,
@@ -237,6 +239,7 @@ export {
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
+  type InferColumnsOptions,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

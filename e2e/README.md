@@ -3,7 +3,7 @@
 Playwright-based E2E tests that cover two layers:
 
 - a routing smoke suite backed by a fake-auth fixture for AppShell + React Router integration
-- a real-auth suite that exercises the hosted Tailor Platform OAuth flow plus a minimal AI Gateway smoke check
+- a real-auth suite that exercises the hosted Tailor Platform OAuth flow plus a minimal AI Gateway smoke check on separate `/auth` and `/ai` pages
 
 ## Setup
 
@@ -110,5 +110,5 @@ e2e/
         ├── app/                    # Suite-specific Vite app for hosted OAuth / AI smoke tests
         │   └── src/
         │       └── RealAuthDemoApp.tsx
-        └── auth.spec.ts
+        └── auth.spec.ts            # Auth flow tests, plus AI smoke via the /ai page
 ```

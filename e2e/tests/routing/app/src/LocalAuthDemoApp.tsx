@@ -1,6 +1,5 @@
 import {
   AppShell,
-  AppearanceSwitcher,
   AuthProvider,
   Button,
   SidebarGroup,
@@ -114,7 +113,6 @@ const LocalAuthHeaderActions = () => {
       >
         Log out
       </Button>
-      <AppearanceSwitcher />
     </>
   );
 };

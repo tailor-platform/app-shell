@@ -22,7 +22,7 @@ const requireRealAuthCredentials = () => {
 // Drive the complete real OAuth sign-in round-trip used by the smoke tests.
 //
 // What this helper does:
-// 1. open the real-auth E2E app
+// 1. open a real-auth page inside the suite-local AppShell app
 // 2. click AppShell's "Sign in" button, which hands control to the Tailor IDP
 // 3. wait until the browser is actually on the hosted IDP sign-in page
 // 4. fill the credentials from the test environment
@@ -31,16 +31,16 @@ const requireRealAuthCredentials = () => {
 // The helper intentionally stops there. Each test then asserts the post-login
 // behavior it cares about (authenticated content, logout, reload persistence,
 // AI smoke, etc.) instead of hiding those expectations inside the login step.
-const loginViaTailor = async (page: Page) => {
+const loginViaTailor = async (page: Page, path = "/auth") => {
   const { email, password } = requireRealAuthCredentials();
 
-  await page.goto("/");
+  await page.goto(path);
   await page.getByTestId("login-button").click();
   await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
   await page.getByLabel(/email/i).fill(email);
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-  await page.waitForURL("http://localhost:3101/**");
+  await page.waitForURL(/http:\/\/localhost:3101\/.+/);
 };
 
 test.describe("AuthProvider", () => {
@@ -50,32 +50,34 @@ test.describe("AuthProvider", () => {
   );
 
   test("shows auth guard when not authenticated", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth");
     await expect(page.getByTestId("auth-guard")).toBeVisible();
     await expect(page.getByTestId("login-button")).toBeVisible();
   });
 
   test("login redirects to Tailor Platform and back", async ({ page }) => {
-    await loginViaTailor(page);
+    await loginViaTailor(page, "/auth");
 
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
     await expect(page.getByTestId("auth-status")).toHaveText("Logged in");
+    await expect(page).toHaveURL(/\/auth$/);
   });
 
   test("logout returns to auth guard", async ({ page }) => {
-    await loginViaTailor(page);
+    await loginViaTailor(page, "/auth");
 
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
     });
     await page.getByTestId("logout-button").click();
     await expect(page.getByTestId("auth-guard")).toBeVisible({ timeout: 10000 });
+    await expect(page).toHaveURL(/\/auth$/);
   });
 
   test("maintains session on page reload after login", async ({ page }) => {
-    await loginViaTailor(page);
+    await loginViaTailor(page, "/auth");
 
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
@@ -85,16 +87,18 @@ test.describe("AuthProvider", () => {
       timeout: 10000,
     });
     await expect(page.getByTestId("auth-status")).toHaveText("Logged in");
+    await expect(page).toHaveURL(/\/auth$/);
   });
 
   test("authenticated user can reach AI Gateway with an OpenAI smoke prompt", async ({ page }) => {
     test.skip(!process.env.VITE_TAILOR_AI_GATEWAY_URL, "VITE_TAILOR_AI_GATEWAY_URL must be set");
 
-    await loginViaTailor(page);
+    await loginViaTailor(page, "/ai");
 
-    await expect(page.getByTestId("authenticated-content")).toBeVisible({
+    await expect(page.getByTestId("ai-page")).toBeVisible({
       timeout: 10000,
     });
+    await expect(page).toHaveURL(/\/ai$/);
     await page.getByTestId("ai-smoke-button").click();
     await expect(page.getByTestId("ai-smoke-response")).toContainText(/pong/i, {
       timeout: 30000,

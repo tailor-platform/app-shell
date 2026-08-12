@@ -1,9 +1,14 @@
 import {
   type AIGatewayClient,
+  AppShell,
   AuthProvider,
   Button,
+  SidebarGroup,
+  SidebarItem,
+  SidebarLayout,
   createAIGatewayClient,
   createAuthClient,
+  defineModule,
   useAIChat,
   useAuth,
 } from "@tailor-platform/app-shell";
@@ -47,8 +52,47 @@ const RealAuthGuard = () => {
   );
 };
 
-const RealAuthenticatedContent = () => {
+const RealAuthHeaderActions = () => {
   const { logout, isAuthenticated } = useAuth();
+
+  return (
+    <>
+      <p data-testid="auth-status">{isAuthenticated ? "Logged in" : "Not logged in"}</p>
+      <Button
+        type="button"
+        data-testid="logout-button"
+        variant="outline"
+        onClick={() => {
+          void logout();
+        }}
+      >
+        Log out
+      </Button>
+    </>
+  );
+};
+
+const RealAuthSidebar = () => {
+  return (
+    <SidebarLayout.DefaultSidebar>
+      <SidebarGroup title="Real auth navigation">
+        <SidebarItem to="/auth" title="Auth" />
+        <SidebarItem to="/ai" title="AI Gateway" />
+      </SidebarGroup>
+    </SidebarLayout.DefaultSidebar>
+  );
+};
+
+const AuthPage = () => {
+  return (
+    <main data-testid="authenticated-content">
+      <h1>Authenticated</h1>
+      <p>Use this page for login, logout, and session persistence checks.</p>
+    </main>
+  );
+};
+
+const AIPage = () => {
   const { messages, status, error, sendMessage } = useAIChat({
     client: aiClient ?? unavailableAIClient,
     model: "gpt-4o-mini",
@@ -65,18 +109,8 @@ const RealAuthenticatedContent = () => {
   };
 
   return (
-    <main data-testid="authenticated-content">
-      <h1>Authenticated</h1>
-      <p data-testid="auth-status">{isAuthenticated ? "Logged in" : "Not logged in"}</p>
-      <Button
-        type="button"
-        data-testid="logout-button"
-        onClick={() => {
-          void logout();
-        }}
-      >
-        Log out
-      </Button>
+    <main data-testid="ai-page">
+      <h1>AI Gateway</h1>
       <Button
         type="button"
         data-testid="ai-smoke-button"
@@ -94,6 +128,21 @@ const RealAuthenticatedContent = () => {
   );
 };
 
+const realAuthModules = [
+  defineModule({
+    path: "auth",
+    meta: { title: "Auth" },
+    component: AuthPage,
+    resources: [],
+  }),
+  defineModule({
+    path: "ai",
+    meta: { title: "AI Gateway" },
+    component: AIPage,
+    resources: [],
+  }),
+];
+
 export const RealAuthDemoApp = () => {
   if (!authClient) {
     return (
@@ -106,7 +155,12 @@ export const RealAuthDemoApp = () => {
 
   return (
     <AuthProvider client={authClient} guardComponent={RealAuthGuard}>
-      <RealAuthenticatedContent />
+      <AppShell title="Real Auth" modules={realAuthModules}>
+        <SidebarLayout
+          header={<SidebarLayout.DefaultHeader actions={<RealAuthHeaderActions />} />}
+          sidebar={<RealAuthSidebar />}
+        />
+      </AppShell>
     </AuthProvider>
   );
 };

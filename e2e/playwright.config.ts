@@ -6,13 +6,14 @@ config({ path: resolve(import.meta.dirname, ".env") });
 
 const suites = [
   {
-    name: "routing",
-    root: "tests/routing",
+    name: "real-auth",
+    root: "tests/real-auth",
+    // Keep this aligned with e2e/backend/tailor.config.ts redirectURIs.
     port: 3100,
   },
   {
-    name: "real-auth",
-    root: "tests/real-auth",
+    name: "routing",
+    root: "tests/routing",
     port: 3101,
   },
 ] as const;

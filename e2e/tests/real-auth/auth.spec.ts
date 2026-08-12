@@ -40,7 +40,7 @@ const loginViaTailor = async (page: Page, path = "/auth") => {
   await page.getByLabel(/email/i).fill(email);
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-  await page.waitForURL(/http:\/\/localhost:3101\/.+/);
+  await page.waitForURL(/http:\/\/localhost:3100\/.+/);
 };
 
 test.describe("AuthProvider", () => {

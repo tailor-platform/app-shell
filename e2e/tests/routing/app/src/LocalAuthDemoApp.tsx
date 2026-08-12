@@ -134,7 +134,7 @@ const LocalAuthSidebar = () => {
 export const LocalAuthDemoApp = () => {
   return (
     <AuthProvider client={localAuthClient} guardComponent={LocalAuthGuard}>
-      <AppShell title="Local Auth Routing" basePath="local-auth" modules={localAuthModules}>
+      <AppShell title="Local Auth Routing" modules={localAuthModules}>
         <SidebarLayout
           header={<SidebarLayout.DefaultHeader actions={<LocalAuthHeaderActions />} />}
           sidebar={<LocalAuthSidebar />}

@@ -22,7 +22,7 @@ const requireRealAuthCredentials = () => {
 // Drive the complete real OAuth sign-in round-trip used by the smoke tests.
 //
 // What this helper does:
-// 1. open the local E2E app
+// 1. open the real-auth E2E app
 // 2. click AppShell's "Sign in" button, which hands control to the Tailor IDP
 // 3. wait until the browser is actually on the hosted IDP sign-in page
 // 4. fill the credentials from the test environment
@@ -40,10 +40,15 @@ const loginViaTailor = async (page: Page) => {
   await page.getByLabel(/email/i).fill(email);
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-  await page.waitForURL("http://localhost:3100/**");
+  await page.waitForURL("http://localhost:3101/**");
 };
 
 test.describe("AuthProvider", () => {
+  test.skip(
+    !process.env.VITE_TAILOR_APP_URL || !process.env.VITE_TAILOR_CLIENT_ID,
+    "VITE_TAILOR_APP_URL and VITE_TAILOR_CLIENT_ID must be set",
+  );
+
   test("shows auth guard when not authenticated", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByTestId("auth-guard")).toBeVisible();

@@ -8,18 +8,18 @@ import {
   useAuth,
 } from "@tailor-platform/app-shell";
 
-const authClient = createAuthClient({
-  appUri: import.meta.env.VITE_TAILOR_APP_URL,
-  clientId: import.meta.env.VITE_TAILOR_CLIENT_ID,
-});
-
+const appUri = import.meta.env.VITE_TAILOR_APP_URL;
+const clientId = import.meta.env.VITE_TAILOR_CLIENT_ID;
 const aiGatewayUrl = import.meta.env.VITE_TAILOR_AI_GATEWAY_URL;
-const aiClient = aiGatewayUrl
-  ? createAIGatewayClient({
-      gatewayUri: aiGatewayUrl,
-      authClient,
-    })
-  : null;
+
+const authClient = appUri && clientId ? createAuthClient({ appUri, clientId }) : null;
+const aiClient =
+  authClient && aiGatewayUrl
+    ? createAIGatewayClient({
+        gatewayUri: aiGatewayUrl,
+        authClient,
+      })
+    : null;
 
 const unavailableAIClient = {
   streamChatCompletion(): AsyncIterable<never> {
@@ -95,6 +95,15 @@ const RealAuthenticatedContent = () => {
 };
 
 export const RealAuthDemoApp = () => {
+  if (!authClient) {
+    return (
+      <main data-testid="real-auth-config-missing">
+        <h1>Real auth demo is not configured</h1>
+        <p>Set VITE_TAILOR_APP_URL and VITE_TAILOR_CLIENT_ID to run this suite.</p>
+      </main>
+    );
+  }
+
   return (
     <AuthProvider client={authClient} guardComponent={RealAuthGuard}>
       <RealAuthenticatedContent />

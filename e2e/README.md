@@ -2,8 +2,8 @@
 
 Playwright-based E2E tests that cover two layers:
 
-- a local fake-auth routing smoke suite for AppShell + React Router integration
-- a real Tailor Platform OAuth flow plus a minimal AI Gateway smoke check
+- a routing smoke suite backed by a fake-auth fixture for AppShell + React Router integration
+- a real-auth suite that exercises the hosted Tailor Platform OAuth flow plus a minimal AI Gateway smoke check
 
 ## Setup
 
@@ -75,36 +75,40 @@ cd e2e && pnpm test:e2e
 # With Playwright UI
 cd e2e && pnpm test:e2e:ui
 
-# Dev server only (for debugging)
-cd e2e && pnpm dev
+# One suite app only (for debugging)
+cd e2e && pnpm exec vite --config tests/routing/app/vite.config.ts
+cd e2e && pnpm exec vite --config tests/real-auth/app/vite.config.ts
 ```
 
 ## Test Scenarios
 
-| Test                  | Description                                                         |
-| --------------------- | ------------------------------------------------------------------- |
-| Local auth deep link  | Protected nested route stays intact after local fake-auth login     |
-| Local auth navigation | Covers `Link`, `useNavigate`, redirect guards, reload, and logout   |
-| Auth guard display    | Verifies unauthenticated users see the login UI                     |
-| Login flow            | Full OAuth redirect → IDP login → callback → authenticated state    |
-| Logout                | Verifies logout returns to auth guard                               |
-| Session persistence   | Confirms page reload maintains authentication                       |
-| AI Gateway smoke      | Sends `PING` and checks the OpenAI-compatible reply contains `PONG` |
+| Test                | Description                                                         |
+| ------------------- | ------------------------------------------------------------------- |
+| Routing deep link   | Protected nested route stays intact after fake-auth login           |
+| Routing navigation  | Covers `Link`, `useNavigate`, redirect guards, reload, and logout   |
+| Auth guard display  | Verifies unauthenticated users see the login UI                     |
+| Login flow          | Full OAuth redirect → IDP login → callback → authenticated state    |
+| Logout              | Verifies logout returns to auth guard                               |
+| Session persistence | Confirms page reload maintains authentication                       |
+| AI Gateway smoke    | Sends `PING` and checks the OpenAI-compatible reply contains `PONG` |
 
 ## Architecture
 
 ```
 e2e/
-├── app/                         # Minimal Vite app used by Playwright
-│   └── src/
-│       ├── App.tsx              # Path switch: choose local-auth vs real-auth fixture
-│       ├── LocalAuthDemoApp.tsx # AppShell + fake-auth routing smoke fixture
-│       ├── RealAuthDemoApp.tsx  # Real Tailor OAuth + AI smoke fixture
-│       └── fake-auth-client.ts  # Tiny in-browser auth client for local routing tests
-├── backend/                     # Tailor Platform config for E2E workspace
+├── backend/                         # Tailor Platform config for E2E workspace
 │   ├── tailor.config.ts
 │   └── src/tailordb/user.ts
 └── tests/
-    ├── auth.spec.ts             # Real Tailor OAuth + AI smoke specs
-    └── local-auth-routing.spec.ts # Local fake-auth routing smoke specs
+    ├── routing/
+    │   ├── app/                    # Suite-specific Vite app for routing smoke tests
+    │   │   └── src/
+    │   │       ├── LocalAuthDemoApp.tsx
+    │   │       └── fake-auth-client.ts
+    │   └── routing.spec.ts
+    └── real-auth/
+        ├── app/                    # Suite-specific Vite app for hosted OAuth / AI smoke tests
+        │   └── src/
+        │       └── RealAuthDemoApp.tsx
+        └── auth.spec.ts
 ```

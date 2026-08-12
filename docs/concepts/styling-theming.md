@@ -72,6 +72,8 @@ These are the tokens the [`Alert`](../components/alert.md) component uses intern
 
 > Prefer these named utilities over arbitrary-value syntax like `bg-[color:var(--alert-info-background)]`. Both produce identical CSS, but a typo in an arbitrary value fails silently — the element simply renders unstyled — whereas a misspelled utility class is caught by editor tooling.
 
+Note that the `background` and `border` slots are already semi-transparent (a ~10% and ~20% tint respectively). An opacity modifier therefore compounds rather than replaces: `bg-alert-info-background/50` yields roughly 5% alpha, not 50%. Set the background with an unmodified utility, or reach for the underlying accent color if you need a specific opacity.
+
 ## A note on AppShell component class names
 
 AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.

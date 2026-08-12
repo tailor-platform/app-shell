@@ -31,16 +31,16 @@ const requireRealAuthCredentials = () => {
 // The helper intentionally stops there. Each test then asserts the post-login
 // behavior it cares about (authenticated content, logout, reload persistence,
 // AI smoke, etc.) instead of hiding those expectations inside the login step.
-const loginViaTailor = async (page: Page, path = "/auth") => {
+const loginViaTailor = async (page: Page) => {
   const { email, password } = requireRealAuthCredentials();
 
-  await page.goto(path);
+  await page.goto("/auth");
   await page.getByTestId("login-button").click();
   await page.waitForURL(/idp\.erp\.dev\/.*\/signin/);
   await page.getByLabel(/email/i).fill(email);
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: /sign in|log in|submit/i }).click();
-  await page.waitForURL(/http:\/\/localhost:3100\/.+/);
+  await page.waitForURL(/http:\/\/localhost:3100\/auth$/);
 };
 
 test.describe("AuthProvider", () => {
@@ -56,7 +56,7 @@ test.describe("AuthProvider", () => {
   });
 
   test("login redirects to Tailor Platform and back", async ({ page }) => {
-    await loginViaTailor(page, "/auth");
+    await loginViaTailor(page);
 
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
@@ -66,7 +66,7 @@ test.describe("AuthProvider", () => {
   });
 
   test("logout returns to auth guard", async ({ page }) => {
-    await loginViaTailor(page, "/auth");
+    await loginViaTailor(page);
 
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
@@ -77,7 +77,7 @@ test.describe("AuthProvider", () => {
   });
 
   test("maintains session on page reload after login", async ({ page }) => {
-    await loginViaTailor(page, "/auth");
+    await loginViaTailor(page);
 
     await expect(page.getByTestId("authenticated-content")).toBeVisible({
       timeout: 10000,
@@ -93,8 +93,9 @@ test.describe("AuthProvider", () => {
   test("authenticated user can reach AI Gateway with an OpenAI smoke prompt", async ({ page }) => {
     test.skip(!process.env.VITE_TAILOR_AI_GATEWAY_URL, "VITE_TAILOR_AI_GATEWAY_URL must be set");
 
-    await loginViaTailor(page, "/ai");
+    await loginViaTailor(page);
 
+    await page.goto("/ai");
     await expect(page.getByTestId("ai-page")).toBeVisible({
       timeout: 10000,
     });

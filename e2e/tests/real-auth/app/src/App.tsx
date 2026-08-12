@@ -9,6 +9,7 @@ import {
   createAIGatewayClient,
   createAuthClient,
   defineModule,
+  redirectTo,
   useAIChat,
   useAuth,
 } from "@tailor-platform/app-shell";
@@ -155,7 +156,11 @@ export const App = () => {
 
   return (
     <AuthProvider client={authClient} guardComponent={RealAuthGuard}>
-      <AppShell title="Real Auth" modules={realAuthModules}>
+      <AppShell
+        title="Real Auth"
+        modules={realAuthModules}
+        rootGuards={[() => redirectTo("/auth")]}
+      >
         <SidebarLayout
           header={<SidebarLayout.DefaultHeader actions={<RealAuthHeaderActions />} />}
           sidebar={<RealAuthSidebar />}

@@ -64,6 +64,24 @@ describe("Sheet", () => {
       expect(baseElement.innerHTML).toMatchSnapshot();
     });
 
+    it("open non-modal sheet without backdrop", async () => {
+      const { baseElement } = render(
+        <Sheet.Root defaultOpen modal={false}>
+          <Sheet.Trigger>Open</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>No Backdrop</Sheet.Title>
+            </Sheet.Header>
+          </Sheet.Content>
+        </Sheet.Root>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("No Backdrop")).toBeDefined();
+      });
+      expect(baseElement.innerHTML).toMatchSnapshot();
+    });
+
     it("open sheet with header and footer", async () => {
       const { baseElement } = render(
         <Sheet.Root defaultOpen>
@@ -224,6 +242,50 @@ describe("Sheet", () => {
       const content = screen.getByTestId("content");
       expect(content.className).toContain("border-r");
     });
+  });
+
+  it("does not render backdrop when modal is false", async () => {
+    render(
+      <Sheet.Root defaultOpen modal={false}>
+        <Sheet.Trigger>Open</Sheet.Trigger>
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Sheet Title")).toBeDefined();
+    });
+
+    expect(document.querySelector('[data-slot="sheet-overlay"]')).toBeNull();
+  });
+
+  it("keeps outside pointer interactions enabled when modal is false", async () => {
+    render(
+      <Sheet.Root defaultOpen modal={false}>
+        <Sheet.Trigger>Open</Sheet.Trigger>
+        <Sheet.Content data-testid="content">
+          <Sheet.Header>
+            <Sheet.Title>Sheet Title</Sheet.Title>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Sheet Title")).toBeDefined();
+    });
+
+    const viewport = document.querySelector('[data-slot="sheet-viewport"]');
+    const overlay = document.querySelector('[data-slot="sheet-overlay"]');
+    const content = screen.getByTestId("content");
+
+    expect(viewport?.className).toContain("pointer-events-none");
+    expect(content.className).toContain("pointer-events-auto");
+    expect(overlay).toBeNull();
   });
 
   it("renders SheetFooter", async () => {

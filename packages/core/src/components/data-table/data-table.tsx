@@ -1,7 +1,9 @@
 import {
   createContext,
+  Fragment,
   useContext,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -9,7 +11,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { Ellipsis } from "lucide-react";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
@@ -83,9 +85,11 @@ function renderDefaultHeader(
 // innermost anchors before the real widths are measured.
 const SELECTION_WIDTH = 52;
 const ACTIONS_WIDTH = 50;
+const EXPAND_WIDTH = 44;
 // Keys for the built-in selection / row-actions columns in the measured-width map.
 const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
+const EXPAND_KEY = "__datatable_expand__";
 
 type PinSide = "left" | "right";
 type ColumnWidths = Record<string, number>;
@@ -118,6 +122,8 @@ interface PinLayout<TRow extends Record<string, unknown>> {
   placements: Map<Column<TRow>, PinPlacement>;
   /** Placement for the built-in selection column, when pinned. */
   selection?: PinPlacement;
+  /** Placement for the built-in expand column, when present. */
+  expand?: PinPlacement;
   /** Placement for the built-in row-actions column, when pinned. */
   actions?: PinPlacement;
 }
@@ -176,9 +182,9 @@ function buildColumnKeys<TRow extends Record<string, unknown>>(
 
 /**
  * Group the visible columns by pin side and compute cumulative sticky offsets.
- * The selection column (if present) auto-pins to the left edge and row-actions
- * (if present) auto-pins to the right edge, with user-pinned columns stacking
- * outward from them.
+ * The selection and expand columns (when present) auto-pin to the left edge and
+ * row-actions (if present) auto-pins to the right edge, with user-pinned columns
+ * stacking outward from them.
  *
  * `columnKeys` is the definition-order key map (see {@link buildColumnKeys});
  * `columns` here is the visible/reordered subset, so keys are resolved by
@@ -189,12 +195,13 @@ function computePinLayout<TRow extends Record<string, unknown>>(
   pinnedColumns: Record<string, "left" | "right" | "none">,
   opts: {
     hasSelection: boolean;
+    hasExpand: boolean;
     hasRowActions: boolean;
     widths: ColumnWidths;
     columnKeys: Map<Column<TRow>, string>;
   },
 ): PinLayout<TRow> {
-  const { hasSelection, hasRowActions, widths, columnKeys } = opts;
+  const { hasSelection, hasExpand, hasRowActions, widths, columnKeys } = opts;
 
   const keyOf = (col: Column<TRow>): string => columnKeys.get(col) as string;
 
@@ -214,13 +221,20 @@ function computePinLayout<TRow extends Record<string, unknown>>(
 
   const placements = new Map<Column<TRow>, PinPlacement>();
 
-  // Left group, visually [selection?, ...left]; offsets accumulate rightward
-  // using the measured (or declared) width of each preceding pinned column.
+  // Left group, visually [selection?, expand?, ...left]; offsets accumulate
+  // rightward using the measured (or declared) width of each preceding pinned
+  // column. `isBoundary` marks the outermost cell of the group — the one that
+  // draws the freeze seam — so it moves to `expand` as soon as that column exists.
   let leftOffset = 0;
   let selection: PinPlacement | undefined;
+  let expand: PinPlacement | undefined;
   if (hasSelection) {
-    selection = { side: "left", offset: 0, isBoundary: left.length === 0 };
+    selection = { side: "left", offset: 0, isBoundary: !hasExpand && left.length === 0 };
     leftOffset = resolveWidth(SELECTION_KEY, SELECTION_WIDTH, widths);
+  }
+  if (hasExpand) {
+    expand = { side: "left", offset: leftOffset, isBoundary: left.length === 0 };
+    leftOffset += resolveWidth(EXPAND_KEY, EXPAND_WIDTH, widths);
   }
   left.forEach((col, i) => {
     placements.set(col, { side: "left", offset: leftOffset, isBoundary: i === left.length - 1 });
@@ -240,7 +254,7 @@ function computePinLayout<TRow extends Record<string, unknown>>(
     rightOffset += resolveWidth(keys.get(col) as string, col.width, widths);
   }
 
-  return { ordered: [...left, ...middle, ...right], keys, placements, selection, actions };
+  return { ordered: [...left, ...middle, ...right], keys, placements, selection, expand, actions };
 }
 
 /**
@@ -301,6 +315,7 @@ interface DataTableLoaderRowsProps<TRow extends Record<string, unknown>> {
   rowCount: number;
   pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
+  hasExpand: boolean;
   hasRowActions: boolean;
 }
 
@@ -312,9 +327,10 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   rowCount,
   pinLayout,
   hasSelection,
+  hasExpand,
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
-  const { ordered: columns, keys, placements, selection, actions } = pinLayout;
+  const { ordered: columns, keys, placements, selection, expand, actions } = pinLayout;
   // No fixed row height: each cell's placeholder matches the height of the
   // real content it stands in for (text line, badge, icon button), so the
   // skeleton rows resolve to exactly the same row height as loaded rows and
@@ -333,6 +349,23 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
               return (
                 <Table.Cell style={style} className={className}>
                   <div className="astw:size-4 astw:rounded-xs astw:bg-muted astw:animate-pulse" />
+                </Table.Cell>
+              );
+            })()}
+          {hasExpand &&
+            (() => {
+              const { style, className } = pinCellProps(
+                expand,
+                { style: { width: EXPAND_WIDTH } },
+                "body",
+              );
+              return (
+                <Table.Cell style={style} className={className}>
+                  {/* size-9 box = the real chevron Button's footprint, so the
+                      skeleton row resolves to the same height as a loaded row */}
+                  <div className="astw:mx-auto astw:flex astw:size-9 astw:items-center astw:justify-center">
+                    <div className="astw:size-4 astw:rounded astw:bg-muted astw:animate-pulse" />
+                  </div>
                 </Table.Cell>
               );
             })()}
@@ -467,6 +500,13 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     clearSelection: value.clearSelection,
     isAllSelected: value.isAllSelected,
     isIndeterminate: value.isIndeterminate,
+    expandedIds: value.expandedIds,
+    isRowExpanded: value.isRowExpanded,
+    toggleRowExpansion: value.toggleRowExpansion,
+    collapseAllRows: value.collapseAllRows,
+    renderExpandedRow: value.renderExpandedRow,
+    canExpandRow: value.canExpandRow,
+    expandRowLabel: value.expandRowLabel,
   };
 
   const controlValue = value.control ?? null;
@@ -523,16 +563,24 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     clearSelection,
     isAllSelected,
     isIndeterminate,
+    renderExpandedRow,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection;
+  const hasExpand = !!renderExpandedRow;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
-  const { ordered, keys, placements, selection, actions } = useMemo(
+  const { ordered, keys, placements, selection, expand, actions } = useMemo(
     () =>
-      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
-    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
+      computePinLayout(columns, pinnedColumns, {
+        hasSelection,
+        hasExpand,
+        hasRowActions,
+        widths,
+        columnKeys,
+      }),
+    [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
 
   return (
@@ -573,6 +621,19 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               </Table.Head>
             );
           })()}
+        {hasExpand &&
+          (() => {
+            const { style, className } = pinCellProps(
+              expand,
+              { style: { width: EXPAND_WIDTH } },
+              "header",
+            );
+            return (
+              <Table.Head data-col-key={EXPAND_KEY} style={style} className={className}>
+                <span className="astw:sr-only">{t("expandColumnHeader")}</span>
+              </Table.Head>
+            );
+          })()}
         {ordered?.map((col, index) => {
           const key = keys.get(col) as string;
           const label = col.label;
@@ -600,7 +661,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const content = col.header
             ? col.header(headerContext)
             : renderDefaultHeader(label, headerContext, align, {
-                bleedLeft: !hasSelection && index === 0,
+                bleedLeft: !hasSelection && !hasExpand && index === 0,
                 bleedRight: !hasRowActions && index === ordered.length - 1,
               });
 
@@ -672,18 +733,31 @@ function DataTableBody({ className }: { className?: string }) {
     isRowSelected,
     toggleRowSelection,
     pageSize,
+    renderExpandedRow,
+    canExpandRow,
+    expandRowLabel,
+    isRowExpanded,
+    toggleRowExpansion,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const hasSelection = !!toggleRowSelection;
-  const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
+  const hasExpand = !!renderExpandedRow;
+  const totalColSpan =
+    (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const pinLayout = useMemo(
     () =>
-      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
-    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
+      computePinLayout(columns, pinnedColumns, {
+        hasSelection,
+        hasExpand,
+        hasRowActions,
+        widths,
+        columnKeys,
+      }),
+    [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
   const tableBodyProps = {
     "data-slot": "data-table-body",
@@ -697,6 +771,7 @@ function DataTableBody({ className }: { className?: string }) {
           rowCount={rowCount}
           pinLayout={pinLayout}
           hasSelection={hasSelection}
+          hasExpand={hasExpand}
           hasRowActions={hasRowActions}
         />
       </Table.Body>
@@ -731,11 +806,18 @@ function DataTableBody({ className }: { className?: string }) {
         rows={rows}
         pinLayout={pinLayout}
         hasSelection={hasSelection}
+        hasExpand={hasExpand}
         hasRowActions={hasRowActions}
         isRowSelected={isRowSelected}
         toggleRowSelection={toggleRowSelection}
         rowActions={rowActions}
         onClickRow={onClickRow}
+        totalColSpan={totalColSpan}
+        renderExpandedRow={renderExpandedRow}
+        canExpandRow={canExpandRow}
+        expandRowLabel={expandRowLabel}
+        isRowExpanded={isRowExpanded}
+        toggleRowExpansion={toggleRowExpansion}
       />
     </Table.Body>
   );
@@ -750,11 +832,18 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   rows: TRow[];
   pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
+  hasExpand: boolean;
   hasRowActions: boolean;
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
   onClickRow?: (row: TRow) => void;
+  totalColSpan: number;
+  renderExpandedRow?: (row: TRow) => ReactNode;
+  canExpandRow?: (row: TRow) => boolean;
+  expandRowLabel?: (row: TRow) => string;
+  isRowExpanded: (row: TRow) => boolean;
+  toggleRowExpansion?: (row: TRow) => void;
 }
 
 /** @internal */
@@ -762,23 +851,37 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   rows,
   pinLayout,
   hasSelection,
+  hasExpand,
   hasRowActions,
   isRowSelected,
   toggleRowSelection,
   rowActions,
   onClickRow,
+  totalColSpan,
+  renderExpandedRow,
+  canExpandRow,
+  expandRowLabel,
+  isRowExpanded,
+  toggleRowExpansion,
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
-  const { ordered, keys, placements, selection, actions } = pinLayout;
+  const baseId = useId();
+  const { ordered, keys, placements, selection, expand, actions } = pinLayout;
 
   return (
     <>
       {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
-        return (
+        const rowKey = rowId != null ? String(rowId) : String(rowIndex);
+        // Expansion is keyed by id, so a row without one gets no chevron at all
+        // rather than a disabled one — it must never be un-toggleable (D5).
+        const expandable = hasExpand && rowId != null && (canExpandRow?.(row) ?? true);
+        const expanded = expandable && isRowExpanded(row);
+        const panelId = `${baseId}-panel-${rowKey}`;
+        const triggerId = `${baseId}-trigger-${rowKey}`;
+        const dataRow = (
           <Table.Row
-            key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
             aria-selected={hasSelection ? selected : undefined}
             // `Table.Row` styles the selected background off `data-[state=selected]`,
@@ -808,6 +911,34 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                       onCheckedChange={() => toggleRowSelection(row)}
                       aria-label={t("selectRow")}
                     />
+                  </Table.Cell>
+                );
+              })()}
+            {hasExpand &&
+              (() => {
+                const { style, className } = pinCellProps(
+                  expand,
+                  { style: { width: EXPAND_WIDTH } },
+                  "body",
+                );
+                return (
+                  // `stopPropagation` so using the chevron never fires `onClickRow`
+                  // (the selection cell does the same). Non-expandable rows still
+                  // render the cell — empty — so the column count stays consistent.
+                  <Table.Cell
+                    style={style}
+                    className={className}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {expandable && toggleRowExpansion && (
+                      <RowExpandToggle
+                        id={triggerId}
+                        expanded={expanded}
+                        label={expandRowLabel?.(row)}
+                        panelId={panelId}
+                        onToggle={() => toggleRowExpansion(row)}
+                      />
+                    )}
                   </Table.Cell>
                 );
               })()}
@@ -902,8 +1033,149 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
           </Table.Row>
         );
+
+        // `expanded` is always false without `renderExpandedRow`, so a table
+        // that doesn't use the feature renders exactly the rows it did before.
+        return (
+          <Fragment key={rowKey}>
+            {dataRow}
+            {expanded && renderExpandedRow && (
+              <DataTableExpandedRow
+                totalColSpan={totalColSpan}
+                panelId={panelId}
+                triggerId={triggerId}
+                label={expandRowLabel?.(row)}
+              >
+                {renderExpandedRow(row)}
+              </DataTableExpandedRow>
+            )}
+          </Fragment>
+        );
       })}
     </>
+  );
+}
+
+// =============================================================================
+// RowExpandToggle (internal)
+// =============================================================================
+
+interface RowExpandToggleProps {
+  id: string;
+  expanded: boolean;
+  label: string | undefined;
+  panelId: string;
+  onToggle: () => void;
+}
+
+/**
+ * The chevron trigger. A native `<button>` (via app-shell's `Button`), so
+ * Enter/Space activation and the focus ring come for free — no custom key
+ * handling. `aria-expanded` is what announces the state change on activation.
+ *
+ * @internal
+ */
+function RowExpandToggle({ id, expanded, label, panelId, onToggle }: RowExpandToggleProps) {
+  const t = useDataTableT();
+  // A contextual name ("Expand row INV-1001") — "Expand row" repeated down the
+  // column conveys nothing. The i18n label owns the word order per locale.
+  let name: string;
+  if (expanded) {
+    name = label ? t("collapseRowNamed", { label }) : t("collapseRow");
+  } else {
+    name = label ? t("expandRowNamed", { label }) : t("expandRow");
+  }
+
+  return (
+    <Button
+      id={id}
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-expanded={expanded}
+      // Only while expanded — it must never point at an id absent from the DOM.
+      aria-controls={expanded ? panelId : undefined}
+      aria-label={name}
+      onClick={onToggle}
+    >
+      <ChevronRight
+        className={cn(
+          "astw:size-4 astw:transition-transform astw:motion-reduce:transition-none",
+          expanded && "astw:rotate-90",
+        )}
+      />
+    </Button>
+  );
+}
+
+// =============================================================================
+// DataTableExpandedRow (internal)
+// =============================================================================
+
+interface DataTableExpandedRowProps {
+  totalColSpan: number;
+  panelId: string;
+  triggerId: string;
+  label: string | undefined;
+  children: ReactNode;
+}
+
+/**
+ * The detail row: one full-width `<tr>` with a single `colSpan` cell, rendered
+ * immediately after its parent row so forward-tabbing reaches the panel next.
+ *
+ * @internal
+ */
+function DataTableExpandedRow({
+  totalColSpan,
+  panelId,
+  triggerId,
+  label,
+  children,
+}: DataTableExpandedRowProps) {
+  const t = useDataTableT();
+  const panelRef = useRef<HTMLElement>(null);
+
+  // If focus is inside the panel when it unmounts, it would fall to <body> and
+  // the user would lose their place. Hand it back to the trigger first. A layout
+  // effect so the cleanup runs before React removes the nodes.
+  useIsomorphicLayoutEffect(() => {
+    const panel = panelRef.current;
+    return () => {
+      if (panel && panel.contains(document.activeElement)) {
+        document.getElementById(triggerId)?.focus();
+      }
+    };
+  }, [triggerId]);
+
+  return (
+    <Table.Row
+      data-slot="data-table-expanded-row"
+      className="astw:bg-muted/30 astw:hover:bg-transparent"
+    >
+      <Table.Cell colSpan={totalColSpan} className="astw:p-0">
+        {/* The colSpan cell spans the whole table, so on a horizontally scrolled
+            table the panel would otherwise sit off-screen. Pin it to the left
+            edge of the scrollport. `min(100%, …)` makes this a no-op when the
+            table fits its container: 100% of the cell is then narrower than the
+            viewport and sticky has nothing to do. */}
+        <div
+          className="astw:sticky astw:left-0 astw:overflow-x-auto"
+          style={{ width: "min(100%, var(--data-table-viewport, 100%))" }}
+        >
+          {/* A named `<section>` maps to `role="region"`, so the panel announces
+              as a named region rather than as loose table content. */}
+          <section
+            ref={panelRef}
+            id={panelId}
+            aria-label={label ? t("expandedDetails", { label }) : t("expandedDetailsGeneric")}
+            className="astw:px-6 astw:py-3"
+          >
+            {children}
+          </section>
+        </div>
+      </Table.Cell>
+    </Table.Row>
   );
 }
 
@@ -991,6 +1263,10 @@ function DataTableTable({ className }: { className?: string }) {
         if (key) next[key] = cell.getBoundingClientRect().width;
       });
       setWidths((prev) => (sameWidths(prev, next) ? prev : next));
+      // Publish the scrollport's own width so an expanded row's sticky panel can
+      // cap itself to it. Set here (not in the scroll effect) so it updates on
+      // resize rather than on every scroll event.
+      el.style.setProperty("--data-table-viewport", `${el.clientWidth}px`);
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;

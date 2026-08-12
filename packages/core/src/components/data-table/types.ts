@@ -314,6 +314,48 @@ export type UseDataTableOptions<
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
+   * Renders the detail panel for an expanded row. Providing this prop enables
+   * the whole feature: a chevron column is added at the left edge (auto-pinned
+   * left, after the selection column) and the returned content renders in a
+   * full-width row directly beneath its parent row.
+   *
+   * **Requirement:** Each row must have a string or number `id` field.
+   * Expansion is keyed by `id`, so rows without one render no chevron and
+   * cannot be expanded.
+   *
+   * **Note:** Expansion is **not** cleared on page change — ids of rows that
+   * are no longer on the page simply do not render. Call `collapseAllRows()`
+   * to reset.
+   */
+  renderExpandedRow?: (row: TRow) => ReactNode;
+  /**
+   * Decides whether a given row can be expanded. Rows returning `false` render
+   * an empty cell in place of the chevron. Defaults to `true` for every row
+   * that has an `id`. Ignored when `renderExpandedRow` is not provided.
+   */
+  canExpandRow?: (row: TRow) => boolean;
+  /**
+   * Returns the row's record identity — a **bare identifier** such as
+   * `"INV-1001"`, not a sentence. It is composed into the accessible names of
+   * the chevron ("Expand row INV-1001") and the detail panel ("INV-1001
+   * details") via the built-in i18n labels, so English and Japanese word order
+   * both stay correct. Without it, the generic "Expand row" / "Row details"
+   * fallbacks are used.
+   */
+  expandRowLabel?: (row: TRow) => string;
+  /**
+   * Ids of the currently expanded rows. Passing this switches expansion to
+   * **controlled** mode: internal state is no longer written and the caller is
+   * responsible for updating this array from `onExpandedChange`.
+   */
+  expandedIds?: string[];
+  /**
+   * Called with the full array of expanded row ids whenever expansion changes.
+   * Required for controlled mode; optional as a notification in uncontrolled
+   * mode.
+   */
+  onExpandedChange?: (ids: string[]) => void;
+  /**
    * Sort behaviour configuration.
    *
    * - `false` — disables sorting entirely (headers become non-clickable).
@@ -423,6 +465,22 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   clearSelection?: () => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
+
+  // Row expansion
+  /** Ids of the currently expanded rows. */
+  expandedIds: string[];
+  /** Whether `row` is currently expanded. Always `false` for rows without an `id`. */
+  isRowExpanded: (row: TRow) => boolean;
+  /** Toggle `row`'s detail panel. Undefined when `renderExpandedRow` is not provided. */
+  toggleRowExpansion?: (row: TRow) => void;
+  /** Collapse every expanded row. Undefined when `renderExpandedRow` is not provided. */
+  collapseAllRows?: () => void;
+  /** Detail-panel renderer (passthrough for `DataTable.Root`). */
+  renderExpandedRow?: (row: TRow) => ReactNode;
+  /** Per-row expandability predicate (passthrough for `DataTable.Root`). */
+  canExpandRow?: (row: TRow) => boolean;
+  /** Per-row identity for accessible names (passthrough for `DataTable.Root`). */
+  expandRowLabel?: (row: TRow) => string;
 }
 
 // =============================================================================

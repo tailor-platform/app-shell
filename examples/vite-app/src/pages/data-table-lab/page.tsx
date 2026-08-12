@@ -323,6 +323,49 @@ const rowActions = [
   },
 ];
 
+// ─── Expanded-row panel ──────────────────────────────────────────────────────
+// The render prop owns its own layout entirely; DataTable only supplies the
+// full-width row, the sticky wrapper and the accessible region around it.
+
+function InvoiceDetail({ invoice }: { invoice: Invoice }) {
+  const lines = [
+    { label: "Billing email", value: invoice.email },
+    { label: "Region", value: invoice.region },
+    { label: "Account owner", value: invoice.owner },
+    { label: "Issued", value: invoice.issued },
+    { label: "Due date", value: invoice.dueDate },
+  ];
+  return (
+    <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_260px]">
+      <dl className="grid grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+        {lines.map((line) => (
+          <div key={line.label} className="contents">
+            <dt className="text-muted-foreground">{line.label}</dt>
+            <dd>{line.value}</dd>
+          </div>
+        ))}
+        <dt className="text-muted-foreground">Notes</dt>
+        <dd className="text-muted-foreground">{invoice.notes}</dd>
+      </dl>
+      <div className="rounded-md border border-border p-3 text-sm">
+        <div className="mb-2 font-medium">Totals</div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Amount</span>
+          <span>${invoice.amount.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Tax</span>
+          <span>${invoice.tax.toFixed(2)}</span>
+        </div>
+        <div className="mt-1 flex justify-between border-t border-border pt-1 font-medium">
+          <span>Total</span>
+          <span>${invoice.total.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Section shell ───────────────────────────────────────────────────────────
 
 function Section({
@@ -371,6 +414,22 @@ const DataTableLabPage = () => {
     rowActions,
   });
 
+  // Expandable rows next to everything they have to survive: selection, a
+  // left-pinned column, row actions and horizontal scroll. `expandRowLabel`
+  // returns the bare record identity — the accessible names ("Expand row
+  // INV-1000", "INV-1000 details") are composed from it by AppShell.
+  const expandTable = useDataTable<Invoice>({
+    columns: baseColumns.map((c) => (c.id === "id" ? { ...c, pin: "left" as const } : c)),
+    data: { rows, total: rows.length },
+    control,
+    tableId: "lab-invoices-expand",
+    rowActions,
+    onSelectionChange: () => {},
+    renderExpandedRow: (row) => <InvoiceDetail invoice={row} />,
+    canExpandRow: (row) => row.status !== "draft",
+    expandRowLabel: (row) => row.id,
+  });
+
   return (
     <Layout>
       <Layout.Header title="DataTable Lab" />
@@ -397,6 +456,24 @@ const DataTableLabPage = () => {
             <DataTable.Toolbar columnSettings>
               <DataTable.Filters />
             </DataTable.Toolbar>
+            <DataTable.Table />
+          </DataTable.Root>
+        </Section>
+
+        <Section
+          title="Expandable rows"
+          description={
+            <>
+              Passing <code>renderExpandedRow</code> adds the chevron column at the left edge
+              (auto-pinned after the selection column) and a full-width detail panel beneath each
+              open row. Several rows can be open at once. <code>canExpandRow</code> hides the
+              chevron on <em>draft</em> invoices. Scroll horizontally with a row open — the panel
+              stays pinned to the left edge — and note that clicking the chevron never selects or
+              triggers the row itself.
+            </>
+          }
+        >
+          <DataTable.Root value={expandTable}>
             <DataTable.Table />
           </DataTable.Root>
         </Section>

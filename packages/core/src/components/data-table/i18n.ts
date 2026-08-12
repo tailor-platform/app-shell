@@ -34,6 +34,17 @@ export const dataTableLabels = defineI18nLabels({
     selectAll: "Select all rows",
     selectRow: "Select row",
 
+    // Row expansion. The `…Named` variants take a bare record identity from
+    // `expandRowLabel` (e.g. "INV-1001") and own the word order, so the
+    // accessible name reads naturally in each locale.
+    expandColumnHeader: "Expand",
+    expandRow: "Expand row",
+    expandRowNamed: (props: { label: string }) => `Expand row ${props.label}`,
+    collapseRow: "Collapse row",
+    collapseRowNamed: (props: { label: string }) => `Collapse row ${props.label}`,
+    expandedDetails: (props: { label: string }) => `${props.label} details`,
+    expandedDetailsGeneric: "Row details",
+
     // Pagination
     paginationFirst: "First page",
     paginationPrevious: "Previous page",
@@ -122,6 +133,16 @@ export const dataTableLabels = defineI18nLabels({
 
     selectAll: "全行を選択",
     selectRow: "行を選択",
+
+    // Row expansion
+    expandColumnHeader: "展開",
+    expandRow: "行を展開",
+    expandRowNamed: (props: { label: string }) => `${props.label}の行を展開`,
+    collapseRow: "行を折りたたむ",
+    collapseRowNamed: (props: { label: string }) => `${props.label}の行を折りたたむ`,
+    expandedDetails: (props: { label: string }) => `${props.label}の詳細`,
+    expandedDetailsGeneric: "行の詳細",
+
     paginationFirst: "最初のページ",
     paginationPrevious: "前のページ",
     paginationNext: "次のページ",

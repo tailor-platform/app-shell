@@ -93,6 +93,9 @@ const headByText = (container: HTMLElement, text: string) =>
 const isTooltipWired = (cell: Element | null) =>
   typeof cell?.id === "string" && cell.id.startsWith("base-ui-");
 
+// Detail-panel render prop shared by the "expandable rows" block.
+const detail = (row: TestRow) => <div>Details for {row.name}</div>;
+
 describe("DataTable", () => {
   it("renders a basic data table with headers and rows", () => {
     render(<TestDataTable />, { wrapper });
@@ -1289,6 +1292,302 @@ describe("DataTable", () => {
       expect(
         container.querySelectorAll('[data-slot="data-table-row"][data-state="selected"]'),
       ).toHaveLength(1);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Expandable rows
+  // -------------------------------------------------------------------------
+  describe("expandable rows", () => {
+    const EXPAND_TH = '[data-slot="data-table-header"] th[data-col-key="__datatable_expand__"]';
+    const EXPANDED_ROW = '[data-slot="data-table-expanded-row"]';
+
+    function ExpandHarness(props: {
+      data?: DataTableData<TestRow>;
+      loading?: boolean;
+      error?: Error | null;
+      onClickRow?: (row: TestRow) => void;
+      onSelectionChange?: (ids: string[]) => void;
+      rowActions?: RowAction<TestRow>[];
+      renderExpandedRow?: (row: TestRow) => ReactNode;
+      canExpandRow?: (row: TestRow) => boolean;
+      expandRowLabel?: (row: TestRow) => string;
+      expandedIds?: string[];
+      onExpandedChange?: (ids: string[]) => void;
+    }) {
+      const table = useDataTable<TestRow>({
+        columns: testColumns,
+        data: "data" in props ? props.data : testData,
+        loading: props.loading,
+        error: props.error,
+        onClickRow: props.onClickRow,
+        onSelectionChange: props.onSelectionChange,
+        rowActions: props.rowActions,
+        renderExpandedRow: props.renderExpandedRow,
+        canExpandRow: props.canExpandRow,
+        expandRowLabel: props.expandRowLabel,
+        expandedIds: props.expandedIds,
+        onExpandedChange: props.onExpandedChange,
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+
+    it("renders no expand column when renderExpandedRow is absent", () => {
+      const { container } = render(<ExpandHarness />, { wrapper });
+
+      expect(container.querySelector(EXPAND_TH)).toBeNull();
+      expect(screen.queryByLabelText("Expand row")).toBeNull();
+    });
+
+    it("renders an expand column when renderExpandedRow is provided", () => {
+      const { container } = render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      const th = container.querySelector(EXPAND_TH);
+      expect(th).not.toBeNull();
+      // Never an empty <th> — the header carries sr-only text.
+      expect(th?.textContent).toBe("Expand");
+      expect(screen.getAllByLabelText("Expand row")).toHaveLength(2);
+    });
+
+    it("clicking the chevron reveals the render prop's content", () => {
+      render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      expect(screen.queryByText("Details for Alice")).toBeNull();
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+      // Only the clicked row opens.
+      expect(screen.queryByText("Details for Bob")).toBeNull();
+    });
+
+    it("clicking the chevron again collapses the row", () => {
+      render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+
+      fireEvent.click(screen.getByLabelText("Collapse row"));
+      expect(screen.queryByText("Details for Alice")).toBeNull();
+    });
+
+    it("exposes aria-expanded on the trigger, flipping false → true", () => {
+      render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      const trigger = screen.getAllByLabelText("Expand row")[0];
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+      fireEvent.click(trigger);
+      expect(screen.getByLabelText("Collapse row").getAttribute("aria-expanded")).toBe("true");
+    });
+
+    it("points aria-controls at a present element while expanded, and omits it while collapsed", () => {
+      render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      const trigger = screen.getAllByLabelText("Expand row")[0];
+      // Must never point at an id that is absent from the DOM.
+      expect(trigger.getAttribute("aria-controls")).toBeNull();
+
+      fireEvent.click(trigger);
+      const controls = screen.getByLabelText("Collapse row").getAttribute("aria-controls");
+      expect(controls).toBeTruthy();
+      expect(document.getElementById(controls as string)).not.toBeNull();
+    });
+
+    it("spans the detail cell across selection + expand + columns + actions", () => {
+      const { container } = render(
+        <ExpandHarness
+          renderExpandedRow={detail}
+          onSelectionChange={vi.fn()}
+          rowActions={[{ id: "edit", label: "Edit", onClick: vi.fn() }]}
+        />,
+        { wrapper },
+      );
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      // 1 selection + 1 expand + 2 visible columns + 1 actions
+      expect(container.querySelector(`${EXPANDED_ROW} td`)?.getAttribute("colspan")).toBe("5");
+    });
+
+    it("keeps several rows open at once", () => {
+      const { container } = render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      const triggers = screen.getAllByLabelText("Expand row");
+      fireEvent.click(triggers[0]);
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]); // Bob's, after Alice's flipped
+
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+      expect(screen.getByText("Details for Bob")).toBeDefined();
+      expect(container.querySelectorAll(EXPANDED_ROW)).toHaveLength(2);
+    });
+
+    it("does not fire onClickRow when the chevron is used", () => {
+      const onClickRow = vi.fn();
+      render(<ExpandHarness renderExpandedRow={detail} onClickRow={onClickRow} />, { wrapper });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      expect(onClickRow).not.toHaveBeenCalled();
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+    });
+
+    it("renders no chevron for rows without an id", () => {
+      // Expansion is keyed by id, so an id-less row gets no chevron at all
+      // rather than a disabled one — a row must never be un-toggleable.
+      const mixed: DataTableData<TestRow> = {
+        rows: [
+          { id: "1", name: "Alice", status: "Active" },
+          { name: "Bob", status: "Inactive" } as TestRow,
+        ],
+      };
+      const { container } = render(<ExpandHarness data={mixed} renderExpandedRow={detail} />, {
+        wrapper,
+      });
+
+      expect(screen.getAllByLabelText("Expand row")).toHaveLength(1);
+      // The cell is still rendered (empty), so the column count stays consistent.
+      const bodyRows = container.querySelectorAll('[data-slot="data-table-row"]');
+      expect(bodyRows[1].querySelectorAll("td")).toHaveLength(3);
+    });
+
+    it("renders no chevron for a row that canExpandRow rejects", () => {
+      render(
+        <ExpandHarness renderExpandedRow={detail} canExpandRow={(row) => row.name === "Alice"} />,
+        { wrapper },
+      );
+
+      const triggers = screen.getAllByLabelText("Expand row");
+      expect(triggers).toHaveLength(1);
+      fireEvent.click(triggers[0]);
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+    });
+
+    it("builds a contextual accessible name from expandRowLabel", () => {
+      render(<ExpandHarness renderExpandedRow={detail} expandRowLabel={(row) => row.name} />, {
+        wrapper,
+      });
+
+      const trigger = screen.getByLabelText("Expand row Alice");
+      expect(screen.getByLabelText("Expand row Bob")).toBeDefined();
+
+      fireEvent.click(trigger);
+      expect(screen.getByLabelText("Collapse row Alice")).toBeDefined();
+    });
+
+    it("renders the panel as a named region", () => {
+      render(<ExpandHarness renderExpandedRow={detail} expandRowLabel={(row) => row.name} />, {
+        wrapper,
+      });
+
+      fireEvent.click(screen.getByLabelText("Expand row Alice"));
+
+      const region = screen.getByRole("region", { name: "Alice details" });
+      expect(region.textContent).toBe("Details for Alice");
+    });
+
+    it("returns focus to the trigger when the panel collapses while focus is inside it", () => {
+      render(
+        <ExpandHarness
+          renderExpandedRow={() => (
+            <button type="button" data-testid="inner">
+              Inner
+            </button>
+          )}
+        />,
+        { wrapper },
+      );
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      const inner = screen.getByTestId("inner");
+      act(() => inner.focus());
+      expect(document.activeElement).toBe(inner);
+
+      const trigger = screen.getByLabelText("Collapse row");
+      fireEvent.click(trigger);
+
+      // Without the handoff, focus would fall to <body> and the user would
+      // lose their place in the table.
+      expect(document.activeElement).toBe(trigger);
+    });
+
+    it("renders the matching rows open from a controlled expandedIds", () => {
+      const { container } = render(
+        <ExpandHarness renderExpandedRow={detail} expandedIds={["2"]} onExpandedChange={vi.fn()} />,
+        { wrapper },
+      );
+
+      expect(screen.getByText("Details for Bob")).toBeDefined();
+      expect(screen.queryByText("Details for Alice")).toBeNull();
+      expect(container.querySelectorAll(EXPANDED_ROW)).toHaveLength(1);
+    });
+
+    it("reports controlled toggles through onExpandedChange without changing internal state", () => {
+      const onExpandedChange = vi.fn();
+      render(
+        <ExpandHarness
+          renderExpandedRow={detail}
+          expandedIds={[]}
+          onExpandedChange={onExpandedChange}
+        />,
+        { wrapper },
+      );
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      expect(onExpandedChange).toHaveBeenCalledWith(["1"]);
+      // The caller owns the state — nothing opens until `expandedIds` changes.
+      expect(screen.queryByText("Details for Alice")).toBeNull();
+    });
+
+    it("pins the expand column left at the selection column's measured offset", () => {
+      const { container } = render(
+        <ExpandHarness renderExpandedRow={detail} onSelectionChange={vi.fn()} />,
+        { wrapper },
+      );
+
+      const th = container.querySelector<HTMLElement>(EXPAND_TH);
+      expect(th?.style.position).toBe("sticky");
+      expect(th?.style.left).toBe("52px");
+      // The freeze seam moves off the selection column onto the expand column.
+      const selectionTh = container.querySelector<HTMLElement>(
+        '[data-slot="data-table-header"] th[data-col-key="__datatable_selection__"]',
+      );
+      expect(th?.className).toContain("data-pin-shadow-left");
+      expect(selectionTh?.className).not.toContain("data-pin-shadow-left");
+    });
+
+    it("includes an expand cell in the skeleton rows", () => {
+      const { container } = render(
+        <ExpandHarness data={undefined} loading renderExpandedRow={detail} />,
+        { wrapper },
+      );
+
+      const loadingRow = container.querySelector('[data-datatable-state="loading"]');
+      // 1 expand + 2 visible columns — row heights match before and after load.
+      expect(loadingRow?.querySelectorAll("td")).toHaveLength(3);
+    });
+
+    it("spans the expand column in the empty and error status rows", () => {
+      const { container: emptyContainer } = render(
+        <ExpandHarness data={{ rows: [] }} renderExpandedRow={detail} />,
+        { wrapper },
+      );
+      expect(
+        emptyContainer.querySelector('[data-datatable-state="empty"] td')?.getAttribute("colspan"),
+      ).toBe("3");
+
+      const { container: errorContainer } = render(
+        <ExpandHarness data={undefined} error={new Error("boom")} renderExpandedRow={detail} />,
+        { wrapper },
+      );
+      expect(
+        errorContainer.querySelector('[data-datatable-state="error"] td')?.getAttribute("colspan"),
+      ).toBe("3");
     });
   });
 

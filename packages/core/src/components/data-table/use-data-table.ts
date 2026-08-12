@@ -75,6 +75,11 @@ export function useDataTable<
     onClickRow,
     rowActions,
     onSelectionChange,
+    renderExpandedRow,
+    canExpandRow,
+    expandRowLabel,
+    expandedIds,
+    onExpandedChange,
     sort: sortOption,
   } = options;
 
@@ -342,6 +347,64 @@ export function useDataTable<
   const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
 
   // ---------------------------------------------------------------------------
+  // Row expansion
+  // ---------------------------------------------------------------------------
+  // Keyed by the same `getRowId` as selection — there is one row-id convention.
+  const [uncontrolledExpandedIds, setUncontrolledExpandedIds] = useState<Set<string>>(new Set());
+
+  // Controlled when the caller passes `expandedIds`; internal state is then never written.
+  const isExpansionControlled = expandedIds !== undefined;
+
+  const expandedRowIds = useMemo(
+    () => (isExpansionControlled ? new Set(expandedIds) : uncontrolledExpandedIds),
+    [isExpansionControlled, expandedIds, uncontrolledExpandedIds],
+  );
+
+  const isRowExpanded = useCallback(
+    (row: TRow) => {
+      const id = getRowId(row);
+      return id !== null && expandedRowIds.has(id);
+    },
+    [expandedRowIds, getRowId],
+  );
+
+  const toggleRowExpansion = renderExpandedRow
+    ? (row: TRow) => {
+        const id = getRowId(row);
+        if (id === null) return;
+        if (isExpansionControlled) {
+          const next = new Set(expandedRowIds);
+          if (next.has(id)) {
+            next.delete(id);
+          } else {
+            next.add(id);
+          }
+          onExpandedChange?.([...next]);
+          return;
+        }
+        setUncontrolledExpandedIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(id)) {
+            next.delete(id);
+          } else {
+            next.add(id);
+          }
+          onExpandedChange?.([...next]);
+          return next;
+        });
+      }
+    : undefined;
+
+  const collapseAllRows = renderExpandedRow
+    ? () => {
+        if (!isExpansionControlled) setUncontrolledExpandedIds(new Set());
+        onExpandedChange?.([]);
+      }
+    : undefined;
+
+  const expandedIdsList = useMemo(() => [...expandedRowIds], [expandedRowIds]);
+
+  // ---------------------------------------------------------------------------
   // Return
   // ---------------------------------------------------------------------------
   return {
@@ -383,5 +446,12 @@ export function useDataTable<
     clearSelection,
     isAllSelected,
     isIndeterminate,
+    expandedIds: expandedIdsList,
+    isRowExpanded,
+    toggleRowExpansion,
+    collapseAllRows,
+    renderExpandedRow,
+    canExpandRow,
+    expandRowLabel,
   };
 }

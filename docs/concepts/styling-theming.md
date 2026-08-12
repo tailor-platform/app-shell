@@ -14,7 +14,7 @@ To configure your application, import AppShell styles from your global CSS or to
 @import "@tailor-platform/app-shell/styles";
 ```
 
-That is the whole setup. `styles` already ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant — your entry CSS should not declare any of them itself. If yours contains a `@theme inline` block, a `@custom-variant dark` rule, or copies of AppShell's palette tokens, see [Upgrading from 1.5.x](#upgrading-from-15x-remove-the-theme-bridge-workaround): they will silently break dark mode.
+That is the whole setup. Since 1.7.0, `styles` ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant, so your entry CSS should declare none of them itself. If yours does, see [Upgrading from 1.5.x or 1.6.x](#upgrading-from-15x-or-16x-remove-the-theme-bridge-workaround) — those leftovers silently break dark mode.
 
 If you want a branded palette, import exactly one theme file after `styles`:
 
@@ -99,106 +99,61 @@ Select a palette by importing its CSS file — no prop needed. Import it in your
 
 Only import one palette at a time.
 
-## Overriding tokens and cascade layers
+## Overriding tokens
 
-AppShell's palette is imported inside a cascade layer:
-
-```css
-/* inside @tailor-platform/app-shell/styles */
-@import "./themes/default.css" layer(theme.defaults);
-```
-
-Anything you declare in your own CSS is **unlayered**, and unlayered declarations always beat layered ones — regardless of specificity or source order. That is deliberate: it is what lets you override a token without `!important` or import-order games.
+Redeclare any token after the AppShell imports. Use `:root` for light and `:root.dark` for dark — that pair wins against every palette AppShell ships:
 
 ```css
 @import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
 
-/* Wins over the layered default. This is the supported way to override. */
 :root {
-  --radius: 0.5rem;
+  --primary: #2563eb;
+}
+
+:root.dark {
+  --primary: #60a5fa;
 }
 ```
 
-The trap is that this cuts both ways. Because your declarations always win, a **partial** copy of AppShell's palette silently pins whatever it defines, and any token you did not copy stays on AppShell's value. The two halves then drift apart across upgrades.
+Two rules:
 
-Two rules keep you out of trouble:
+- **Set each override in both modes.** A `:root`-only override applies in dark mode too, so a light value leaks there.
+- **Override individual tokens; never copy the palette wholesale.** Copied tokens freeze at the value you copied while everything else tracks AppShell, and the two halves drift apart on upgrade. That is the failure described in [Upgrading from 1.5.x or 1.6.x](#upgrading-from-15x-or-16x-remove-the-theme-bridge-workaround).
 
-- Override the specific tokens you mean to change, and nothing else. Never copy the palette wholesale.
-- If you override a token in `:root`, override it in `.dark` too. A `:root`-only override applies in both modes, so a light-mode value will leak into dark mode.
+`:root.dark` rather than `.dark` because the two palette families behave differently. The default palette is imported inside a cascade layer (`layer(theme.defaults)`), so any unlayered declaration of yours beats it. The branded palettes (`cream`, `bloom`) are imported by you, unlayered, and define dark values on `:root.dark` — which outranks a bare `.dark`, so a `.dark` override would silently lose. `:root.dark` is correct against both.
 
-```css
-/* Good — one token, both modes */
-:root {
-  --card: rgba(255, 255, 255, 1);
-}
+## Upgrading from 1.5.x or 1.6.x: remove the theme bridge workaround
 
-.dark {
-  --card: rgba(23, 23, 23, 1);
-}
-```
+**Applies to:** apps that pasted the `@theme inline` block, `@custom-variant dark`, and AppShell's palette into their entry CSS — the workaround for `styles` shipping without the Tailwind bridge.
 
-## Upgrading from 1.5.x: remove the theme bridge workaround
+**`styles` regained the bridge in 1.7.0.** On 1.5.0–1.6.1 the workaround is load-bearing, so upgrade to 1.7.0 or later _before_ deleting any of it. Remove it earlier and every token-backed utility — `bg-card`, `text-muted-foreground`, `rounded-lg`, all `dark:` variants — stops resolving.
 
-**Applies to:** apps upgrading from 1.5.x to 1.6 or later that adopted the documented 1.5.0 workaround.
+From 1.7.0 the workaround is not merely redundant. It actively breaks dark mode, and the build succeeds with no warning:
 
-In 1.5.0 the `@tailor-platform/app-shell/theme.css` export stopped shipping the Tailwind v4 theme bridge, and the recommended workaround was to paste the `@theme inline` block, a `@custom-variant dark` rule, and the palette definitions into your app's entry CSS.
+- Your pasted `:root` and `.dark` blocks are unlayered, so they beat AppShell's layered default palette. Colours freeze at the values you copied, and any surface AppShell has added since has no dark value at all — so it renders light colours in dark mode: white text on white cards, unreadable disabled inputs.
+- `@custom-variant dark (&:is(.dark *))` overrides AppShell's `&:where(.dark, .dark *)`. The `:is(.dark *)` form matches only _descendants_ of `.dark`, so `dark:` utilities stop applying to the `.dark` element itself.
 
-From 1.6.0 onwards `@tailor-platform/app-shell/styles` ships all three again, so the workaround is no longer needed. **It is not merely redundant — leaving it in place actively breaks dark mode**, and the build succeeds with no warning:
-
-- Your pasted `:root` and `.dark` palette blocks are unlayered, so they beat AppShell's layered palette. The app renders your frozen 1.5.0-era colours forever. Any surface added to AppShell after you copied the palette has no dark value at all, so it renders light-mode colours in dark mode — white text on white cards, unreadable values in disabled inputs.
-- The workaround's `@custom-variant dark (&:is(.dark *))` overrides AppShell's `@custom-variant dark (&:where(.dark, .dark *))`. The `:is(.dark *)` form matches only _descendants_ of `.dark`, so `dark:` utilities stop applying to the `.dark` element itself.
-- Because the symptoms look like ordinary app-side CSS bugs, they are expensive to trace back to the workaround.
-
-### Detecting it
-
-Search your app's CSS for the three shapes of the workaround:
-
-```bash
-grep -rn "@theme inline\|@custom-variant dark\|--card:\|--background:" src --include="*.css"
-```
-
-Hits inside your own entry CSS are the workaround (or overrides that need the treatment described in [Overriding tokens and cascade layers](#overriding-tokens-and-cascade-layers)). A clean app has none.
-
-### Fixing it
+### Removing it
 
 Delete from your entry CSS:
 
-- the entire `@theme inline { … }` block,
+- the `@theme inline { … }` block,
 - the `@custom-variant dark (…)` rule,
-- every `:root` and `.dark` block that redefines AppShell palette tokens (`--background`, `--foreground`, `--card`, `--popover`, `--muted`, `--border`, `--input`, `--primary`, `--secondary`, `--accent`, `--destructive`, `--ring`, `--radius`, `--chart-*`, `--sidebar-*`),
-- any `@import "@tailor-platform/app-shell/theme.css"` (a deprecated no-op shim since 1.6.0 — kept only so old apps keep building).
+- every `:root` and `.dark` block copied from AppShell's palette — **all** of it, including the `*-foreground` pairs, `--status-*`, `--alert-*`, `--sidebar-*` and `--semantic-shadow-*`. The foregrounds are what leave text white on white, so a partial deletion reproduces the bug.
+- any `@import "@tailor-platform/app-shell/theme.css"` (a no-op shim since 1.6.0, kept only so older apps keep building).
 
-Keep only genuine app-specific rules. The correct end state is short:
+To find it, search every CSS file the app loads — not just the entry point, since `app/` and `styles/` are as common as `src/`:
 
-```css
-/* Before — 1.5.0 workaround, breaks dark mode on 1.6+ */
-@import "tailwindcss";
-@import "@tailor-platform/app-shell/styles";
-@import "@tailor-platform/app-shell/theme.css";
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-card: var(--card);
-  /* …dozens more… */
-}
-
-:root {
-  --background: rgba(250, 250, 250, 1);
-  --card: rgba(255, 255, 255, 1);
-  /* …the whole palette… */
-}
-
-.dark {
-  --background: rgba(10, 10, 10, 1);
-  /* …the whole dark palette… */
-}
+```bash
+grep -rnE "@theme inline|@custom-variant|app-shell/theme\.css|^ *--" --include="*.css" .
 ```
 
+Hits are either the workaround, which goes, or deliberate overrides, which should take the `:root` / `:root.dark` form above.
+
+What remains is short — [`examples/vite-app/src/index.css`](https://github.com/tailor-platform/app-shell/blob/main/examples/vite-app/src/index.css) is a working reference for the shape (it also imports a branded palette, which is optional):
+
 ```css
-/* After — everything comes from `styles` */
 @import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
 
@@ -209,13 +164,11 @@ body {
 }
 ```
 
-[`examples/vite-app/src/index.css`](https://github.com/tailor-platform/app-shell/blob/main/examples/vite-app/src/index.css) is a working reference for this shape.
+### Verifying
 
-If you need to change specific colours, add a branded palette import (see [Theme Palettes](#theme-palettes)) or override individual tokens per [Overriding tokens and cascade layers](#overriding-tokens-and-cascade-layers) — do not reinstate the copied palette.
+Toggle dark mode and confirm a real surface changes: inspect a `Card` and watch its computed `background-color` go from `rgb(255, 255, 255)` to `rgb(23, 23, 23)` on the default palette.
 
-### Verifying the fix
-
-Switch the app to dark mode and confirm the computed values flip. Against the default palette you should see `--card` go from `#fff` to `#171717`, `--input` from `#e5e5e5` to `rgba(255, 255, 255, 0.15)`, and `--destructive` from `#dc2626` to `#f87171`.
+Check the rendered colour, not the variable. `getPropertyValue("--card")` echoes whatever value is authored, so it reads the same whether the token came from AppShell or from a stale copy.
 
 ## Z-Index Layering
 

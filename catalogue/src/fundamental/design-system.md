@@ -19,30 +19,28 @@ Authoritative app wiring also lives in `**project-setup.md`**; **scaffold `index
 
 That is the whole wiring:
 
-- `**styles**` (package export) — design tokens as CSS variables (light **and** dark), the Tailwind v4 `@theme inline` bridge, the `dark` custom variant, and the bundled component styles AppShell ships for primitives. One import, everything.
+- `**styles**` (package export) — design tokens as CSS variables (light **and** dark), the Tailwind v4 `@theme inline` bridge, the `dark` custom variant, and the bundled component styles AppShell ships for primitives. One import, everything (since 1.7.0).
 - `**tailwindcss**` — utilities; token-backed classes (`bg-background`, `text-muted-foreground`) resolve through the bridge that `styles` provides.
 
-Older docs referred to `app-shell.css` or to a separate `@tailor-platform/app-shell/theme.css` import; use neither. Since 1.6.0 `theme.css` is a deprecated no-op shim kept only so pre-1.6 apps keep building.
+Older docs referred to `app-shell.css` or to a separate `@tailor-platform/app-shell/theme.css` import; use neither. `theme.css` is a deprecated no-op shim kept only so pre-1.6 apps keep building.
 
-**Do not paste a `@theme inline` block, a `@custom-variant dark` rule, or a copy of AppShell's palette into the app's entry CSS.** A 1.5.0-era workaround did exactly that; on 1.6+ those unlayered copies beat AppShell's layered palette and silently break dark mode. See [Styling and Theming → Upgrading from 1.5.x](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/styling-theming.md#upgrading-from-15x-remove-the-theme-bridge-workaround) for the removal and detection steps.
+**Do not paste a `@theme inline` block, a `@custom-variant dark` rule, or a copy of AppShell's palette into the app's entry CSS.** A workaround for 1.5.0–1.6.1, where `styles` shipped without the bridge, did exactly that; from 1.7.0 those unlayered copies beat AppShell's layered palette and silently break dark mode. On 1.6.x the workaround is still load-bearing — upgrade to ≥1.7.0 before removing it. See [Styling and Theming → Upgrading from 1.5.x or 1.6.x](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/styling-theming.md#upgrading-from-15x-or-16x-remove-the-theme-bridge-workaround) for the removal steps.
 
 Tailwind v4 stays CSS-first; minimal `vite` / PostCSS wiring is in `**project-setup.md**`.
 
 ## 2. Theming via CSS variables
 
-AppShell controls its theme through CSS variables. Override them in `:root` (global) or a scoped selector (per-section, per-tenant) to customize. AppShell's palette is imported inside a cascade layer, so your unlayered declarations win after the import.
+AppShell controls its theme through CSS variables. Override them after the AppShell imports, using `:root` for light and `:root.dark` for dark — that pair wins against both the layered default palette and the unlayered branded ones (`cream`, `bloom`), which define their dark values on `:root.dark` and so outrank a bare `.dark`.
 
 Override **only** the specific tokens you mean to change, and set each one in both modes — a `:root`-only override leaks its light value into dark mode:
 
 ```css
 :root {
   --primary: #3b82f6;
-  --background: #ffffff;
 }
 
-.dark {
+:root.dark {
   --primary: #60a5fa;
-  --background: #0a0a0a;
 }
 ```
 
@@ -76,7 +74,7 @@ Check each component's API reference (`components.md`) for the data attributes i
 
 ## 4. Tokens
 
-All values below are exposed by `theme.css`. **Use the token, never hand-type the value.** A hex literal or magic px in a PR is a review failure.
+The values below come from the `styles` import. **Use the token, never hand-type the value.** A hex literal or magic px in a PR is a review failure.
 
 ### Color
 

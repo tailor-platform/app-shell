@@ -1838,11 +1838,35 @@ describe("DataTable", () => {
       expect(selectionHeaders).toHaveLength(2);
       expect([selectionHeaders[0].offsetWidth, selectionHeaders[1].offsetWidth]).toEqual([70, 40]);
 
+      // Preconditions for the production filter (`cell.closest("table") === ownTable`).
+      // Asserted explicitly so that if a DOM implementation resolves either side
+      // differently, this names the cause instead of surfacing as a pin offset.
+      const scrollContainer = container.querySelector('[data-slot="table-container"]');
+      const outerTable = scrollContainer?.querySelector("table");
+      expect(outerTable).not.toBeNull();
+      expect(selectionHeaders[0].closest("table")).toBe(outerTable);
+      expect(selectionHeaders[1].closest("table")).not.toBe(outerTable);
+      // eslint-disable-next-line no-console -- temporary CI diagnostic
+      console.log("DIAG-nested", {
+        tables: container.querySelectorAll("table").length,
+        leftBeforeToggle: container.querySelector<HTMLElement>(EXPAND_TH)?.style.left,
+        viewportVar: (scrollContainer as HTMLElement | null)?.style.getPropertyValue(
+          "--data-table-viewport",
+        ),
+      });
+
       // Force the measure effect to re-run now that the nested table is mounted
       // (in a browser the ResizeObserver does this when the row expands).
       act(() => api.toggleColumn("Status"));
 
       const outerExpandTh = container.querySelector<HTMLElement>(EXPAND_TH);
+      // eslint-disable-next-line no-console -- temporary CI diagnostic
+      console.log("DIAG-nested-after", {
+        leftAfterToggle: outerExpandTh?.style.left,
+        outerSelectionWidth: container.querySelector<HTMLElement>(
+          '[data-slot="data-table-header"] th[data-col-key="__datatable_selection__"]',
+        )?.offsetWidth,
+      });
       expect(outerExpandTh?.style.left).toBe("70px");
       offsetWidth.mockRestore();
     });

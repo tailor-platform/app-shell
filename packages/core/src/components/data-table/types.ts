@@ -347,12 +347,29 @@ export type UseDataTableOptions<
    * Ids of the currently expanded rows. Passing this switches expansion to
    * **controlled** mode: internal state is no longer written and the caller is
    * responsible for updating this array from `onExpandedChange`.
+   *
+   * **Required with `onExpandedChange`** — without it the chevrons cannot change
+   * anything and are inert (a dev-mode warning fires).
+   *
+   * **Batching caveat:** each toggle derives the next array from the current
+   * value of this prop, not from a functional update. Two toggles dispatched
+   * before your state commits both read the same base, so the first is lost.
+   * This matters when `expandedIds` lives behind an async store (Redux/Zustand
+   * middleware, a debounced URL sync, a `startTransition`) or when looping the
+   * toggle over many rows. Apply such updates yourself rather than driving them
+   * through repeated `toggleRowExpansion` calls.
    */
   expandedIds?: string[];
   /**
    * Called with the full array of expanded row ids whenever expansion changes.
    * Required for controlled mode; optional as a notification in uncontrolled
    * mode.
+   *
+   * **Note:** in uncontrolled mode this fires from inside a state updater, which
+   * React StrictMode intentionally double-invokes — expect two calls per toggle
+   * in development. This matches the existing `onSelectionChange` behaviour.
+   * Keep the handler idempotent, or move side effects (fetches, analytics) into
+   * an effect keyed on the ids.
    */
   onExpandedChange?: (ids: string[]) => void;
   /**

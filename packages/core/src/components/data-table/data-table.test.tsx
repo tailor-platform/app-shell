@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
@@ -93,8 +93,14 @@ const headByText = (container: HTMLElement, text: string) =>
 const isTooltipWired = (cell: Element | null) =>
   typeof cell?.id === "string" && cell.id.startsWith("base-ui-");
 
-// Detail-panel render prop shared by the "expandable rows" block.
+// Detail-panel render props shared by the "expandable rows" block. The
+// focusable variant lets tests drive focus into an open panel.
 const detail = (row: TestRow) => <div>Details for {row.name}</div>;
+const focusableDetail = () => (
+  <button type="button" data-testid="inner">
+    Inner
+  </button>
+);
 
 describe("DataTable", () => {
   it("renders a basic data table with headers and rows", () => {
@@ -1364,14 +1370,36 @@ describe("DataTable", () => {
       expect(screen.queryByText("Details for Bob")).toBeNull();
     });
 
-    it("clicking the chevron again collapses the row", () => {
+    it("clicking the chevron again collapses the row", async () => {
       render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
 
       fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
       expect(screen.getByText("Details for Alice")).toBeDefined();
 
       fireEvent.click(screen.getByLabelText("Collapse row"));
-      expect(screen.queryByText("Details for Alice")).toBeNull();
+
+      // The row stays mounted while the collapse transition plays, so removal
+      // is asynchronous — `aria-expanded` flips immediately, the DOM catches up.
+      await waitFor(() => expect(screen.queryByText("Details for Alice")).toBeNull());
+    });
+
+    it("keeps the detail row mounted while collapsing, marked data-state='closed'", async () => {
+      const { container } = render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      expect(container.querySelector(`${EXPANDED_ROW}[data-state="open"]`)).not.toBeNull();
+
+      fireEvent.click(screen.getByLabelText("Collapse row"));
+
+      // Still in the DOM, but flipped to the closed state — this is what gives
+      // the exit transition something to animate. Without the presence state
+      // machine React would remove the row on the same tick and it would snap.
+      expect(container.querySelector(`${EXPANDED_ROW}[data-state="closed"]`)).not.toBeNull();
+      // The trigger's state is not deferred — it reports collapsed right away
+      // (both rows now read "Expand row", so index into them).
+      expect(screen.getAllByLabelText("Expand row")[0].getAttribute("aria-expanded")).toBe("false");
+
+      await waitFor(() => expect(container.querySelector(EXPANDED_ROW)).toBeNull());
     });
 
     it("exposes aria-expanded on the trigger, flipping false → true", () => {
@@ -1489,17 +1517,8 @@ describe("DataTable", () => {
       expect(region.textContent).toBe("Details for Alice");
     });
 
-    it("returns focus to the trigger when the panel collapses while focus is inside it", () => {
-      render(
-        <ExpandHarness
-          renderExpandedRow={() => (
-            <button type="button" data-testid="inner">
-              Inner
-            </button>
-          )}
-        />,
-        { wrapper },
-      );
+    it("returns focus to the trigger when the panel collapses while focus is inside it", async () => {
+      render(<ExpandHarness renderExpandedRow={focusableDetail} />, { wrapper });
 
       fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
 
@@ -1510,9 +1529,10 @@ describe("DataTable", () => {
       const trigger = screen.getByLabelText("Collapse row");
       fireEvent.click(trigger);
 
-      // Without the handoff, focus would fall to <body> and the user would
+      // The handoff runs on unmount, which now waits for the collapse
+      // transition. Without it, focus would fall to <body> and the user would
       // lose their place in the table.
-      expect(document.activeElement).toBe(trigger);
+      await waitFor(() => expect(document.activeElement).toBe(trigger));
     });
 
     it("renders the matching rows open from a controlled expandedIds", () => {
@@ -1588,6 +1608,205 @@ describe("DataTable", () => {
       expect(
         errorContainer.querySelector('[data-datatable-state="error"] td')?.getAttribute("colspan"),
       ).toBe("3");
+    });
+
+    // -----------------------------------------------------------------------
+    // Regressions found in review
+    // -----------------------------------------------------------------------
+
+    it("keeps row keys unique when an id-less row's index matches another row's id", () => {
+      // `{id: "1"}` at index 0 and an id-less row at index 1 both keyed to "1"
+      // (React stringifies keys), so React reconciled two siblings under one key.
+      // The keys are namespaced now, so the two spaces can't overlap.
+      const err = vi.spyOn(console, "error").mockImplementation(() => {});
+      const collidingData: DataTableData<TestRow> = {
+        rows: [
+          { id: "1", name: "Alice", status: "Active" },
+          { name: "Bob", status: "Inactive" } as TestRow,
+          { id: "2", name: "Carol", status: "Active" },
+        ],
+      };
+      render(<ExpandHarness data={collidingData} renderExpandedRow={detail} />, { wrapper });
+
+      expect(err.mock.calls.filter((call) => String(call[0]).includes("same key"))).toHaveLength(0);
+      err.mockRestore();
+    });
+
+    it("keeps the collapse chevron on a row that becomes non-expandable while open", () => {
+      // Otherwise the panel and its trigger both vanish, stranding the row open
+      // with the id still in `expandedIds` and no way for the user to close it.
+      function Harness({ canExpand }: { canExpand: boolean }) {
+        return (
+          <ExpandHarness
+            renderExpandedRow={detail}
+            canExpandRow={() => canExpand}
+            expandedIds={["1"]}
+            onExpandedChange={vi.fn()}
+          />
+        );
+      }
+      const { rerender } = render(<Harness canExpand />, { wrapper });
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+
+      rerender(<Harness canExpand={false} />);
+
+      // Panel stays, and so does a working collapse affordance.
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+      expect(screen.getByLabelText("Collapse row")).toBeDefined();
+      // The row that is merely non-expandable (and closed) still has no chevron.
+      expect(screen.queryByLabelText("Expand row")).toBeNull();
+    });
+
+    it("moves focus to the table container when the whole row unmounts from under it", () => {
+      // The collapse-by-click test covers the case where the trigger survives.
+      // Here the row disappears (refetch/filter/pagination) while focus is in the
+      // panel, so the trigger is gone too and focus would otherwise hit <body>.
+      const { container, rerender } = render(
+        <ExpandHarness data={testData} renderExpandedRow={focusableDetail} />,
+        { wrapper },
+      );
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      const inner = screen.getByTestId("inner");
+      act(() => inner.focus());
+      expect(document.activeElement).toBe(inner);
+
+      // Alice drops out of the result set entirely.
+      rerender(
+        <ExpandHarness
+          data={{ rows: [{ id: "2", name: "Bob", status: "Inactive" }] }}
+          renderExpandedRow={focusableDetail}
+        />,
+      );
+
+      const scrollContainer = container.querySelector<HTMLElement>('[data-slot="table-container"]');
+      expect(document.activeElement).toBe(scrollContainer);
+      expect(document.activeElement).not.toBe(document.body);
+    });
+
+    it("warns when expandedIds is passed without onExpandedChange", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      render(<ExpandHarness renderExpandedRow={detail} expandedIds={[]} />, { wrapper });
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("expandedIds"));
+      warn.mockRestore();
+    });
+
+    it("does not warn when controlled mode is wired correctly", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      render(
+        <ExpandHarness renderExpandedRow={detail} expandedIds={[]} onExpandedChange={vi.fn()} />,
+        { wrapper },
+      );
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it("does not measure a nested DataTable's header into the outer table's widths", () => {
+      // Built-in column keys are module constants shared by every instance, so an
+      // unscoped descendant query let the inner table's selection column (later
+      // in document order) overwrite the outer one's measured width and shift
+      // every pinned column left of where it belongs.
+      //
+      // Widths are 0 in the test DOM, so stub the two selection headers to
+      // distinguishable non-zero values — 70 outer, 40 inner. The outer expand
+      // column must land at 70, never 40.
+      const offsetWidth = vi
+        .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+        .mockImplementation(function (this: HTMLElement) {
+          if (this.dataset.colKey !== "__datatable_selection__") return 0;
+          return this.closest("[data-nested]") ? 40 : 70;
+        });
+
+      function NestedTable() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: { rows: [testData.rows[0]] },
+          onSelectionChange: vi.fn(),
+        });
+        return (
+          <div data-nested>
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          </div>
+        );
+      }
+
+      let api!: UseDataTableReturn<TestRow>;
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          onSelectionChange: vi.fn(),
+          renderExpandedRow: () => <NestedTable />,
+        });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      expect(container.querySelectorAll("table").length).toBeGreaterThan(1);
+
+      // Force the measure effect to re-run now that the nested table is mounted
+      // (in a browser the ResizeObserver does this when the row expands).
+      act(() => api.toggleColumn("Status"));
+
+      const outerExpandTh = container.querySelector<HTMLElement>(EXPAND_TH);
+      expect(outerExpandTh?.style.left).toBe("70px");
+      offsetWidth.mockRestore();
+    });
+
+    it("keeps collapseAllRows stable and inert while nothing is expanded", () => {
+      // The documented "collapse on page change" recipe lists it in an effect's
+      // dependency array; an unstable identity plus an unconditional state write
+      // there loops until React bails with a max-update-depth error.
+      const seen: (() => void)[] = [];
+      const onExpandedChange = vi.fn();
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          renderExpandedRow: detail,
+          onExpandedChange,
+        });
+        if (table.collapseAllRows) seen.push(table.collapseAllRows);
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { rerender } = render(<Harness />, { wrapper });
+      rerender(<Harness />);
+
+      expect(seen.length).toBeGreaterThan(1);
+      expect(seen[seen.length - 1]).toBe(seen[0]);
+
+      // Collapsing an already-collapsed table is a no-op, not a spurious event.
+      act(() => seen[0]());
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("leaves --data-table-viewport unset when the scrollport measures zero", () => {
+      // jsdom reports clientWidth 0, matching a table mounted inside a hidden
+      // container. Writing `0px` would collapse every panel via min(100%, 0px).
+      const { container } = render(<ExpandHarness renderExpandedRow={detail} />, { wrapper });
+
+      const scrollContainer = container.querySelector<HTMLElement>('[data-slot="table-container"]');
+      expect(scrollContainer?.style.getPropertyValue("--data-table-viewport")).toBe("");
+
+      // The panel therefore falls back to 100% rather than 0.
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      expect(screen.getByText("Details for Alice")).toBeDefined();
     });
   });
 

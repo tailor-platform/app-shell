@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
 import { usePageCounter } from "./use-page-counter";
 import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
@@ -368,39 +368,70 @@ export function useDataTable<
     [expandedRowIds, getRowId],
   );
 
-  const toggleRowExpansion = renderExpandedRow
-    ? (row: TRow) => {
-        const id = getRowId(row);
-        if (id === null) return;
-        if (isExpansionControlled) {
-          const next = new Set(expandedRowIds);
-          if (next.has(id)) {
-            next.delete(id);
-          } else {
-            next.add(id);
-          }
-          onExpandedChange?.([...next]);
-          return;
-        }
-        setUncontrolledExpandedIds((prev) => {
-          const next = new Set(prev);
-          if (next.has(id)) {
-            next.delete(id);
-          } else {
-            next.add(id);
-          }
-          onExpandedChange?.([...next]);
-          return next;
-        });
-      }
-    : undefined;
+  // Hold the change callback in a ref so `toggleRowExpansion` / `collapseAllRows`
+  // keep a stable identity even when the caller passes an inline arrow. Without
+  // it, consumers who list them in an effect's dependency array (the documented
+  // "collapse on page change" recipe) get a new function every render.
+  const onExpandedChangeRef = useRef(onExpandedChange);
+  onExpandedChangeRef.current = onExpandedChange;
 
-  const collapseAllRows = renderExpandedRow
-    ? () => {
-        if (!isExpansionControlled) setUncontrolledExpandedIds(new Set());
-        onExpandedChange?.([]);
+  // A controlled table whose caller never wired `onExpandedChange` can never
+  // change state: the toggle computes the next set and hands it to a callback
+  // that isn't there, so every chevron is inert. Warn rather than fail silently.
+  useEffect(() => {
+    if (renderExpandedRow && isExpansionControlled && !onExpandedChange) {
+      console.warn(
+        "[DataTable] `expandedIds` was provided without `onExpandedChange`: expansion is controlled, so the built-in chevrons cannot change state and will do nothing when activated. Pass `onExpandedChange`, or drop `expandedIds` to let useDataTable own the state.",
+      );
+    }
+    // Depend on *presence*, not identity: `renderExpandedRow` and
+    // `onExpandedChange` are almost always inline arrows, so depending on the
+    // functions themselves would re-run this every render and turn a one-off
+    // misconfiguration notice into console spam.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!renderExpandedRow, isExpansionControlled, !onExpandedChange]);
+
+  const toggleRowExpansionImpl = useCallback(
+    (row: TRow) => {
+      const id = getRowId(row);
+      if (id === null) return;
+      if (isExpansionControlled) {
+        // Controlled mode derives the next set from the current prop value, so
+        // two toggles dispatched before the caller's state commits both read the
+        // same base and the first is lost. See the `expandedIds` TSDoc.
+        const next = new Set(expandedRowIds);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        onExpandedChangeRef.current?.([...next]);
+        return;
       }
-    : undefined;
+      setUncontrolledExpandedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        onExpandedChangeRef.current?.([...next]);
+        return next;
+      });
+    },
+    [getRowId, isExpansionControlled, expandedRowIds],
+  );
+
+  const collapseAllRowsImpl = useCallback(() => {
+    // Nothing open — skip the state write and the callback entirely, so calling
+    // this from an effect can't drive an endless render loop.
+    if (expandedRowIds.size === 0) return;
+    if (!isExpansionControlled) setUncontrolledExpandedIds(new Set());
+    onExpandedChangeRef.current?.([]);
+  }, [expandedRowIds, isExpansionControlled]);
+
+  const toggleRowExpansion = renderExpandedRow ? toggleRowExpansionImpl : undefined;
+  const collapseAllRows = renderExpandedRow ? collapseAllRowsImpl : undefined;
 
   const expandedIdsList = useMemo(() => [...expandedRowIds], [expandedRowIds]);
 

@@ -1,6 +1,7 @@
 import {
   Layout,
   Badge,
+  Button,
   DataTable,
   useDataTable,
   useCollectionVariables,
@@ -323,47 +324,150 @@ const rowActions = [
   },
 ];
 
-// ─── Expanded-row panel ──────────────────────────────────────────────────────
-// The render prop owns its own layout entirely; DataTable only supplies the
-// full-width row, the sticky wrapper and the accessible region around it.
+// ─── Expanded-row panels ─────────────────────────────────────────────────────
+// The render prop owns its layout entirely — DataTable only supplies the
+// full-width row, the sticky wrapper and the accessible region around it. It is
+// a plain `(row) => ReactNode`, so the panel can differ per row. Here each
+// status gets a different panel to make that concrete: a line-item table, a
+// payment receipt, or a collections view.
 
-function InvoiceDetail({ invoice }: { invoice: Invoice }) {
-  const lines = [
-    { label: "Billing email", value: invoice.email },
-    { label: "Region", value: invoice.region },
-    { label: "Account owner", value: invoice.owner },
-    { label: "Issued", value: invoice.issued },
-    { label: "Due date", value: invoice.dueDate },
+const money = (n: number) => `$${n.toFixed(2)}`;
+
+const SKUS = ["Platform licence", "Onboarding", "Support retainer", "Data migration", "Training"];
+
+// Deterministic line items derived from the invoice, so they're stable across
+// renders without any state.
+function lineItemsFor(invoice: Invoice) {
+  const seed = Number(invoice.id.slice(4));
+  const count = (seed % 3) + 2;
+  const items = Array.from({ length: count }, (_, i) => {
+    const qty = ((seed + i * 7) % 5) + 1;
+    const unit = Math.round((invoice.amount / count / qty) * 100) / 100;
+    return {
+      sku: SKUS[(seed + i) % SKUS.length],
+      qty,
+      unit,
+      total: Math.round(qty * unit * 100) / 100,
+    };
+  });
+  return items;
+}
+
+function LineItems({ invoice }: { invoice: Invoice }) {
+  return (
+    <table className="w-full max-w-2xl text-sm">
+      <thead>
+        <tr className="border-b border-border text-left text-muted-foreground">
+          <th className="pb-1 font-medium">Item</th>
+          <th className="pb-1 text-right font-medium">Qty</th>
+          <th className="pb-1 text-right font-medium">Unit</th>
+          <th className="pb-1 text-right font-medium">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {lineItemsFor(invoice).map((item) => (
+          <tr key={item.sku} className="border-b border-border/50 last:border-0">
+            <td className="py-1">{item.sku}</td>
+            <td className="py-1 text-right tabular-nums">{item.qty}</td>
+            <td className="py-1 text-right tabular-nums">{money(item.unit)}</td>
+            <td className="py-1 text-right tabular-nums">{money(item.total)}</td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr className="font-medium">
+          <td className="pt-1" colSpan={3}>
+            Total incl. tax
+          </td>
+          <td className="pt-1 text-right tabular-nums">{money(invoice.total)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  );
+}
+
+function PaymentReceipt({ invoice }: { invoice: Invoice }) {
+  const steps = [
+    { label: "Issued", date: invoice.issued },
+    { label: "Sent to customer", date: invoice.issued },
+    { label: "Payment received", date: invoice.dueDate },
   ];
   return (
-    <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_260px]">
-      <dl className="grid grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
-        {lines.map((line) => (
-          <div key={line.label} className="contents">
-            <dt className="text-muted-foreground">{line.label}</dt>
-            <dd>{line.value}</dd>
-          </div>
+    <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_280px]">
+      <ol className="space-y-2 text-sm">
+        {steps.map((step) => (
+          <li key={step.label} className="flex items-center gap-2">
+            <span aria-hidden className="size-1.5 rounded-full bg-status-completed" />
+            <span>{step.label}</span>
+            <span className="text-muted-foreground">{step.date}</span>
+          </li>
         ))}
-        <dt className="text-muted-foreground">Notes</dt>
-        <dd className="text-muted-foreground">{invoice.notes}</dd>
-      </dl>
+      </ol>
       <div className="rounded-md border border-border p-3 text-sm">
-        <div className="mb-2 font-medium">Totals</div>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-medium">Paid in full</span>
+          <Badge variant="success">receipt</Badge>
+        </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Amount</span>
-          <span>${invoice.amount.toFixed(2)}</span>
+          <span className="tabular-nums">{money(invoice.amount)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Tax</span>
-          <span>${invoice.tax.toFixed(2)}</span>
+          <span className="tabular-nums">{money(invoice.tax)}</span>
         </div>
         <div className="mt-1 flex justify-between border-t border-border pt-1 font-medium">
           <span>Total</span>
-          <span>${invoice.total.toFixed(2)}</span>
+          <span className="tabular-nums">{money(invoice.total)}</span>
         </div>
       </div>
     </div>
   );
+}
+
+function CollectionsPanel({ invoice }: { invoice: Invoice }) {
+  const daysOverdue = Math.max(
+    1,
+    Math.round((Date.parse("2026-06-01") - Date.parse(invoice.dueDate)) / 86_400_000),
+  );
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md border border-status-attention/40 bg-status-attention/10 px-3 py-2 text-sm">
+        <strong>{daysOverdue} days overdue.</strong> Last contact was {invoice.owner}; the account
+        is flagged for follow-up.
+      </div>
+      <dl className="grid max-w-xl grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+        <dt className="text-muted-foreground">Outstanding</dt>
+        <dd className="tabular-nums">{money(invoice.total)}</dd>
+        <dt className="text-muted-foreground">Due date</dt>
+        <dd>{invoice.dueDate}</dd>
+        <dt className="text-muted-foreground">Billing email</dt>
+        <dd>{invoice.email}</dd>
+        <dt className="text-muted-foreground">Notes</dt>
+        <dd className="text-muted-foreground">{invoice.notes}</dd>
+      </dl>
+      {/* Focusable content, so you can tab into the panel and watch focus
+          return to the chevron when the row collapses. */}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => alert(`Reminder sent for ${invoice.id}`)}
+        >
+          Send reminder
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => alert(`Escalated ${invoice.id}`)}>
+          Escalate
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceDetail({ invoice }: { invoice: Invoice }) {
+  if (invoice.status === "paid") return <PaymentReceipt invoice={invoice} />;
+  if (invoice.status === "overdue") return <CollectionsPanel invoice={invoice} />;
+  return <LineItems invoice={invoice} />;
 }
 
 // ─── Section shell ───────────────────────────────────────────────────────────
@@ -466,10 +570,12 @@ const DataTableLabPage = () => {
             <>
               Passing <code>renderExpandedRow</code> adds the chevron column at the left edge
               (auto-pinned after the selection column) and a full-width detail panel beneath each
-              open row. Several rows can be open at once. <code>canExpandRow</code> hides the
-              chevron on <em>draft</em> invoices. Scroll horizontally with a row open — the panel
-              stays pinned to the left edge — and note that clicking the chevron never selects or
-              triggers the row itself.
+              open row. Several rows can be open at once. The render prop is just{" "}
+              <code>(row) =&gt; ReactNode</code>, so the panel differs per row here — <em>sent</em>{" "}
+              shows line items, <em>paid</em> a receipt, <em>overdue</em> a collections view — and{" "}
+              <code>canExpandRow</code> hides the chevron on <em>draft</em> invoices entirely.
+              Scroll horizontally with a row open — the panel stays pinned to the left edge — and
+              note that clicking the chevron never selects or triggers the row itself.
             </>
           }
         >

@@ -246,7 +246,7 @@ const table = useDataTable<Order>({
 ```
 
 - **Rows must have an `id`.** Expansion is keyed by `row.id`, the same constraint as row selection. Rows without one render **no chevron** (not a disabled one) — a row must never be un-toggleable.
-- **`canExpandRow`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent.
+- **`canExpandRow`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. A row that is _already open_ when `canExpandRow` starts returning `false` keeps both its panel and its chevron, so it can always be closed — the predicate gates opening, never closing.
 - **`expandRowLabel`** returns a **bare identifier** — `"INV-1001"`, not `"Expand row INV-1001"`. The built-in i18n labels compose it into the trigger's accessible name (`"Expand row INV-1001"`) and the panel's (`"INV-1001 details"`), so English and Japanese word order both stay correct. Without it, the generic "Expand row" / "Row details" strings are used — set it on any table with more than a couple of rows.
 - **`onClickRow` is unaffected.** The chevron lives in its own column and stops click propagation, so row-level navigation keeps working.
 - **Expansion survives page changes.** Ids of rows that are no longer on the page simply don't render. Call `collapseAllRows()` to reset.
@@ -268,11 +268,28 @@ const table = useDataTable<Order>({
 });
 ```
 
-`useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `renderExpandedRow` is not provided.
+`useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `renderExpandedRow` is not provided, and both keep a stable identity across renders, so they are safe to list in an effect's dependency array:
+
+```tsx
+// Collapse everything when the page changes.
+useEffect(() => {
+  collapseAllRows?.();
+}, [collapseAllRows, currentPage]);
+```
+
+`collapseAllRows()` is a no-op when nothing is open — it neither writes state nor fires `onExpandedChange`.
+
+**`onExpandedChange` is required in controlled mode.** Without it the chevrons have nowhere to send the new state and do nothing when activated; a dev-mode console warning fires to catch this.
+
+**Batching caveat.** Each toggle derives the next array from the current value of `expandedIds`, not from a functional update. Two toggles dispatched before your state commits both read the same base, so the first is lost. This matters when `expandedIds` lives behind an async store (Redux/Zustand middleware, a debounced URL sync, a `startTransition`), or when looping `toggleRowExpansion` over many rows to build an "expand all". Compute such updates yourself and set `expandedIds` directly rather than driving them through repeated toggles.
+
+**StrictMode double-fire.** In _uncontrolled_ mode `onExpandedChange` fires from inside a state updater, which React StrictMode intentionally double-invokes — expect two calls per toggle in development. This matches the existing `onSelectionChange` behaviour. Keep the handler idempotent, or move side effects (fetches, analytics) into an effect keyed on the ids.
 
 ### Accessibility
 
-The trigger is a native `<button>`, so Enter/Space activation and the focus ring come for free, and it carries `aria-expanded` — that is what announces the state change on activation. The panel is a `role="region"` with an accessible name, and it sits immediately after its trigger in DOM order, so forward-tabbing reaches it next. Collapsing while focus is inside the panel hands focus back to the trigger rather than dropping it to `<body>`. The chevron's rotation respects `prefers-reduced-motion`. Panel content wider than the viewport scrolls horizontally within the panel, and on a horizontally scrolled table the panel stays pinned to the left edge of the scrollport.
+The trigger is a native `<button>`, so Enter/Space activation and the focus ring come for free, and it carries `aria-expanded` — that is what announces the state change on activation. The panel is a `role="region"` with an accessible name, and it sits immediately after its trigger in DOM order, so forward-tabbing reaches it next. Collapsing while focus is inside the panel hands focus back to the trigger rather than dropping it to `<body>`. The chevron's rotation and the panel's reveal both respect `prefers-reduced-motion`. Panel content wider than the viewport scrolls horizontally within the panel, and on a horizontally scrolled table the panel stays pinned to the left edge of the scrollport.
+
+**Expand/collapse is animated** — the panel reveals by transitioning `grid-template-rows` from `0fr` to `1fr`, so it animates to its exact natural height whatever you render, with no height cap to clip tall content. One consequence worth knowing when writing tests against a table: `aria-expanded` flips immediately, but the detail row stays mounted for the ~200ms collapse (marked `data-state="closed"` meanwhile) before it is removed. Assert its removal with `waitFor` rather than synchronously. Under `prefers-reduced-motion` the transition is skipped, but the unmount is still deferred by the same interval.
 
 **Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
 
@@ -305,8 +322,8 @@ const table = useDataTable({
 | `renderExpandedRow` | `(row: TRow) => ReactNode`         | Renders the detail panel for an expanded row. Providing this enables the expand (chevron) column. Rows must have a string or number `id`. See [Expandable rows](#expandable-rows). |
 | `canExpandRow`      | `(row: TRow) => boolean`           | Decides whether a row can be expanded. Rows returning `false` render no chevron. Defaults to `true` for every row with an `id`.                                                    |
 | `expandRowLabel`    | `(row: TRow) => string`            | Bare record identity (e.g. `"INV-1001"`) composed into the trigger and panel accessible names. Not a sentence.                                                                     |
-| `expandedIds`       | `string[]`                         | Ids of the expanded rows. Passing this switches expansion to controlled mode; internal state is no longer written.                                                                 |
-| `onExpandedChange`  | `(ids: string[]) => void`          | Called with the full array of expanded row ids whenever expansion changes.                                                                                                         |
+| `expandedIds`       | `string[]`                         | Ids of the expanded rows. Passing this switches expansion to controlled mode; internal state is no longer written and `onExpandedChange` becomes required.                         |
+| `onExpandedChange`  | `(ids: string[]) => void`          | Called with the full array of expanded row ids whenever expansion changes. Fires twice per toggle under StrictMode in uncontrolled mode.                                           |
 | `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                          |
 
 ### `DataTableData`

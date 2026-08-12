@@ -35,16 +35,16 @@ import { Sheet } from "@tailor-platform/app-shell";
 
 ## Sub-components
 
-| Sub-component       | Description                                                                   |
-| ------------------- | ----------------------------------------------------------------------------- |
-| `Sheet.Root`        | Manages open/close state and controls the slide direction                     |
-| `Sheet.Trigger`     | Element that opens the sheet when clicked                                     |
-| `Sheet.Content`     | The main sheet panel; includes close button and backdrop when `modal={true}`  |
-| `Sheet.Header`      | Layout wrapper for title and description                                      |
-| `Sheet.Footer`      | Layout wrapper for action buttons                                             |
-| `Sheet.Title`       | Sheet title (announced by screen readers)                                     |
-| `Sheet.Description` | Additional context below the title                                            |
-| `Sheet.Close`       | Button that closes the sheet                                                  |
+| Sub-component       | Description                                                                  |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `Sheet.Root`        | Manages open/close state and controls the slide direction                    |
+| `Sheet.Trigger`     | Element that opens the sheet when clicked                                    |
+| `Sheet.Content`     | The main sheet panel; includes close button and backdrop when `modal={true}` |
+| `Sheet.Header`      | Layout wrapper for title and description                                     |
+| `Sheet.Footer`      | Layout wrapper for action buttons                                            |
+| `Sheet.Title`       | Sheet title (announced by screen readers)                                    |
+| `Sheet.Description` | Additional context below the title                                           |
+| `Sheet.Close`       | Button that closes the sheet                                                 |
 
 ## Props
 

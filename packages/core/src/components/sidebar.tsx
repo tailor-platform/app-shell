@@ -390,7 +390,12 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "astw:bg-background astw:relative astw:flex astw:min-h-0 astw:w-full astw:flex-1 astw:flex-col",
+        // min-w-0 (not a width calc): as a flex item its `min-width: auto`
+        // would otherwise resolve against `w-full`, flooring it at the full row
+        // width and overflowing the row by the sidebar's width. min-w-0 lets it
+        // shrink to whatever space is left — which is what makes the `body`
+        // slot able to place sibling columns beside it.
+        "astw:bg-background astw:relative astw:flex astw:min-h-0 astw:min-w-0 astw:w-full astw:flex-1 astw:flex-col",
         "astw:px-4 astw:md:peer-data-[variant=inset]:px-8 astw:md:peer-data-[variant=inset]:py-2", //  astw:md:peer-data-[variant=inset]:peer-data-[state=collapsed]:pl-2
         className,
       )}
@@ -772,6 +777,7 @@ function SidebarMenuSubButton({
 }
 
 export {
+  SidebarContext,
   Sidebar,
   SidebarContent,
   SidebarFooter,

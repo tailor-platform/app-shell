@@ -4,3 +4,5 @@ export { SidebarSeparator } from "./sidebar-separator";
 export { DefaultSidebar, type DefaultSidebarProps } from "./default-sidebar";
 export { DefaultHeader, type DefaultHeaderProps } from "./default-header";
 export { SidebarLayout, type SidebarLayoutProps } from "./sidebar-layout";
+export { ContentContainer, type ContentContainerProps } from "./content-container";
+export { useAppShellSidebar, type AppShellSidebarState } from "./use-app-shell-sidebar";

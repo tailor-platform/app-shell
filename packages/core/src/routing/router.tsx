@@ -1,5 +1,6 @@
 import { type PropsWithChildren, type ReactNode, useMemo } from "react";
-import { Outlet, createMemoryRouter, createBrowserRouter, RouterProvider } from "react-router";
+import { Outlet, createMemoryRouter, createBrowserRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
 import type { RouteObject } from "react-router";
 import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
@@ -68,6 +69,13 @@ export type RouterContainerProps =
       initialEntries: Array<string>;
     };
 
+// Small indirection so tests can observe router creation under react-router v8's
+// ESM-only exports, which Vitest cannot spy on directly.
+export const routerFactories = {
+  createBrowserRouter,
+  createMemoryRouter,
+};
+
 export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) => {
   const { children } = props;
   const { configurations } = useAppShellConfig();
@@ -101,11 +109,11 @@ export const RouterContainer = (props: PropsWithChildren<RouterContainerProps>) 
   const router = useMemo(
     () =>
       props.memory
-        ? createMemoryRouter(routes, {
+        ? routerFactories.createMemoryRouter(routes, {
             basename,
             ...(initialEntries ? { initialEntries } : {}),
           })
-        : createBrowserRouter(routes, {
+        : routerFactories.createBrowserRouter(routes, {
             basename,
           }),
     [basename, initialEntries, props.memory, routes],

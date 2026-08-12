@@ -5,9 +5,9 @@ description: Learn how to navigate between pages using React Router hooks and co
 
 # Routing and Navigation
 
-Because AppShell manages routing internally, it has its own instance of the RouterProvider from `react-router`.
+Because AppShell manages routing internally, it owns the application's `RouterProvider` instance.
 
-To use client-side navigation from AppShell pages, instead of installing `react-router` to package.json and importing components and hooks from your application's dependencies, we must use the exports from `@tailor-platform/app-shell`, such as `Link` component, or `useParams`, `useNavigate` hooks. These components and hooks internally use the correct context for the AppShell `RouterProvider` to properly recognize the intent.
+To use client-side navigation from AppShell pages, use the exports from `@tailor-platform/app-shell`, such as the `Link` component or `useParams` / `useNavigate` hooks, instead of importing those primitives from your app's `react-router` dependency. This keeps every hook and component on the same router context; mixing AppShell with a separate `react-router` import can fail at runtime, especially across mismatched major versions.
 
 ## Exported React Router Hooks
 

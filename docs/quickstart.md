@@ -10,7 +10,7 @@ Get your first AppShell application running in minutes.
 ## Prerequisites
 
 - Node.js 16+
-- React 19+ (React 18 supported)
+- React 19.2.7+
 - A React project (Vite, Next.js, or any bundler)
 
 ## Step 1: Install AppShell

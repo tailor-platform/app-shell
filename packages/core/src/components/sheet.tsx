@@ -72,21 +72,19 @@ type SheetRootProps = Pick<
  * </Sheet.Root>
  * ```
  */
-function Root({ side = "right", modal, ...props }: SheetRootProps) {
-  const resolvedModal = modal ?? true;
-
+function Root({ side = "right", modal = true, ...props }: SheetRootProps) {
   return (
     <SheetContext.Provider
       value={{
         side,
-        showBackdrop: resolvedModal !== false,
-        allowOutsidePointerEvents: resolvedModal !== true,
+        showBackdrop: modal !== false,
+        allowOutsidePointerEvents: modal !== true,
       }}
     >
       <Drawer.Root
         data-slot="sheet"
         swipeDirection={sideToSwipeDirection[side]}
-        modal={resolvedModal}
+        modal={modal}
         {...props}
       />
     </SheetContext.Provider>

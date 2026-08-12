@@ -1853,6 +1853,19 @@ describe("DataTable", () => {
         viewportVar: (scrollContainer as HTMLElement | null)?.style.getPropertyValue(
           "--data-table-viewport",
         ),
+        // The exact selector the measure effect uses, run from here.
+        prodSelector: scrollContainer?.querySelectorAll(
+          "[data-slot='data-table-header'] [data-col-key]",
+        ).length,
+        doubleQuoted: scrollContainer?.querySelectorAll(
+          '[data-slot="data-table-header"] [data-col-key]',
+        ).length,
+        stubbedOn: (offsetWidthOwner as { constructor?: { name?: string } })?.constructor?.name,
+        widthsSeen: Array.from(
+          scrollContainer?.querySelectorAll<HTMLElement>(
+            "[data-slot='data-table-header'] [data-col-key]",
+          ) ?? [],
+        ).map((c) => [c.dataset.colKey, c.offsetWidth]),
       });
 
       // Force the measure effect to re-run now that the nested table is mounted

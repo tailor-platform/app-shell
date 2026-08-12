@@ -1768,6 +1768,30 @@ describe("DataTable", () => {
       // Widths are 0 in the test DOM, so the two selection headers are stubbed to
       // distinguishable non-zero values — 70 outer, 40 inner. The outer expand
       // column must land at 70, never 40.
+      // Stub on whichever prototype actually owns `offsetWidth` (installing one
+      // if none does), rather than assuming `HTMLElement`. A spy on the wrong
+      // link of the chain silently no-ops and every cell measures 0, and a stub
+      // placed on the elements themselves is lost if React recreates the header
+      // nodes on re-render. This survives both.
+      const offsetWidthOwner = (() => {
+        let proto: object | null = Object.getPrototypeOf(document.createElement("th"));
+        while (proto && !Object.getOwnPropertyDescriptor(proto, "offsetWidth")) {
+          proto = Object.getPrototypeOf(proto);
+        }
+        if (proto) return proto;
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+          configurable: true,
+          get: () => 0,
+        });
+        return HTMLElement.prototype;
+      })();
+      const offsetWidth = vi
+        .spyOn(offsetWidthOwner as HTMLElement, "offsetWidth", "get")
+        .mockImplementation(function (this: HTMLElement) {
+          if (this.dataset?.colKey !== "__datatable_selection__") return 0;
+          return this.closest("[data-nested]") ? 40 : 70;
+        });
+
       function NestedTable() {
         const table = useDataTable<TestRow>({
           columns: testColumns,
@@ -1775,7 +1799,7 @@ describe("DataTable", () => {
           onSelectionChange: vi.fn(),
         });
         return (
-          <div>
+          <div data-nested>
             <DataTable.Root value={table}>
               <DataTable.Table />
             </DataTable.Root>
@@ -1803,19 +1827,16 @@ describe("DataTable", () => {
       fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
       expect(container.querySelectorAll("table").length).toBeGreaterThan(1);
 
-      // Stub the two selection headers directly rather than spying on
-      // `HTMLElement.prototype`: which link of the prototype chain a DOM
-      // implementation defines `offsetWidth` on is not guaranteed, and a
-      // prototype spy that lands on the wrong one silently no-ops, leaving the
-      // width at 0 and the assertion reading the declared fallback instead.
-      // That is exactly how this passed locally and failed in CI.
-      const selectionHeaders = container.querySelectorAll(
+      // Guard the stub itself, so a future environment where it stops taking
+      // effect fails here — naming the cause — rather than at the layout
+      // assertion below, which would just read the declared 52px fallback and
+      // look like a pinning bug.
+      const selectionHeaders = container.querySelectorAll<HTMLElement>(
         '[data-slot="data-table-header"] th[data-col-key="__datatable_selection__"]',
       );
       // Outer thead precedes the nested table in the outer tbody.
       expect(selectionHeaders).toHaveLength(2);
-      Object.defineProperty(selectionHeaders[0], "offsetWidth", { value: 70, configurable: true });
-      Object.defineProperty(selectionHeaders[1], "offsetWidth", { value: 40, configurable: true });
+      expect([selectionHeaders[0].offsetWidth, selectionHeaders[1].offsetWidth]).toEqual([70, 40]);
 
       // Force the measure effect to re-run now that the nested table is mounted
       // (in a browser the ResizeObserver does this when the row expands).
@@ -1823,6 +1844,7 @@ describe("DataTable", () => {
 
       const outerExpandTh = container.querySelector<HTMLElement>(EXPAND_TH);
       expect(outerExpandTh?.style.left).toBe("70px");
+      offsetWidth.mockRestore();
     });
 
     it("keeps collapseAllRows stable and inert while nothing is expanded", () => {

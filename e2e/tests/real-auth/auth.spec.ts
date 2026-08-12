@@ -1,4 +1,8 @@
+import { config as loadEnv } from "dotenv";
+import { resolve } from "path";
 import { expect, test, type Page } from "@playwright/test";
+
+loadEnv({ path: resolve(import.meta.dirname, ".env") });
 
 /**
  * E2E tests for AuthProvider authentication flow.
@@ -7,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
  * 1. Deploy backend to the Tailor Platform workspace:
  *    cd e2e/backend && TAILOR_PLATFORM_WORKSPACE_ID=<id> pnpm deploy
  * 2. Create a test user via the IDP API (see README)
- * 3. Set environment variables in e2e/.env
+ * 3. Set environment variables in e2e/tests/real-auth/.env
  */
 
 const requireRealAuthCredentials = () => {

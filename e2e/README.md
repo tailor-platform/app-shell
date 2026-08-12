@@ -54,10 +54,10 @@ mutation CreateUserProfile {
 ### 3. Configure environment
 
 ```bash
-cp e2e/.env.example e2e/.env
+cp e2e/tests/real-auth/.env.example e2e/tests/real-auth/.env
 ```
 
-Fill in `VITE_TAILOR_APP_URL`, `VITE_TAILOR_CLIENT_ID`, and `VITE_TAILOR_AI_GATEWAY_URL` (retrieved above). The test user credentials are pre-filled.
+Put the hosted OAuth / AI Gateway values in `e2e/tests/real-auth/.env`. The test user credentials are pre-filled in the example file. The routing suite does not need env setup.
 
 ### 4. Install dependencies & browsers
 

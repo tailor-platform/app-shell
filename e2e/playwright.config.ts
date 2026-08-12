@@ -1,8 +1,4 @@
 import { defineConfig, devices } from "@playwright/test";
-import { config } from "dotenv";
-import { resolve } from "path";
-
-config({ path: resolve(import.meta.dirname, ".env") });
 
 const suites = [
   {

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterContainer, routerFactories } from "./router";
 import { AppShellConfigContext, AppShellDataContext } from "@/contexts/appshell-context";
-import { Link, Outlet, useNavigate } from "react-router";
+import { Link, Navigate, Outlet, useNavigate } from "react-router";
 import {
   defineModule,
   defineResource,
@@ -195,6 +195,37 @@ describe("RouterContainer (memory)", () => {
 
     const resource = await screen.findByText("Reports Resource");
     expect(resource.textContent).toContain("Reports Resource");
+  });
+
+  // Pins that a declarative redirect resolves relative to the basename, the
+  // part AppShell owns. That the public entry re-exports this same component
+  // is covered separately in index.test.ts.
+  it("redirects declaratively using Navigate", async () => {
+    const overviewResource = defineResource({
+      path: "overview",
+      component: () => <div>Overview Resource</div>,
+      meta: {
+        title: "Overview",
+      },
+    });
+
+    const redirectingModule = defineModule({
+      path: "dashboard",
+      component: () => <Navigate to="overview" replace />,
+      meta: {
+        title: "Dashboard",
+      },
+      resources: [overviewResource],
+    });
+
+    renderWithConfig({
+      modules: [redirectingModule],
+      basePath: "console",
+      initialEntries: ["/console/dashboard"],
+    });
+
+    const resource = await screen.findByText("Overview Resource");
+    expect(resource.textContent).toContain("Overview Resource");
   });
 
   it("uses DefaultErrorBoundary when none is provided", async () => {

@@ -76,11 +76,14 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   isIndeterminate: boolean;
 
   // Row expansion
-  // toggleRowExpansion / collapseAllRows are undefined when renderExpandedRow is not provided
+  // toggleRowExpansion / collapseAllRows are undefined when renderExpandedRow is not provided.
+  // Every member here is optional: this interface is documented as hand-constructible
+  // (custom providers, test doubles, adapters over another data source), so adding a
+  // required member would break those callers' `tsc` on a minor release.
   /** Ids of the currently expanded rows. */
-  expandedIds: string[];
+  expandedIds?: string[];
   /** Whether `row` is currently expanded. Always `false` for rows without an `id`. */
-  isRowExpanded: (row: TRow) => boolean;
+  isRowExpanded?: (row: TRow) => boolean;
   toggleRowExpansion?: (row: TRow) => void;
   collapseAllRows?: () => void;
   /**

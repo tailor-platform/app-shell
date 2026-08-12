@@ -91,10 +91,11 @@ const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
 const EXPAND_KEY = "__datatable_expand__";
 
-// Expand/collapse transition length. Must stay in sync with the `duration-200`
+// Expand/collapse transition length. Must stay in sync with the `duration-300`
 // utility on the reveal wrapper — it also drives how long the detail row is kept
-// mounted while collapsing.
-const EXPAND_TRANSITION_MS = 200;
+// mounted while collapsing, and a CSS duration longer than this one would be cut
+// off when the row unmounts mid-animation.
+const EXPAND_TRANSITION_MS = 300;
 
 type PinSide = "left" | "right";
 type ColumnWidths = Record<string, number>;
@@ -847,7 +848,8 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   renderExpandedRow?: (row: TRow) => ReactNode;
   canExpandRow?: (row: TRow) => boolean;
   expandRowLabel?: (row: TRow) => string;
-  isRowExpanded: (row: TRow) => boolean;
+  /** Optional — `DataTableContextValue` may be hand-constructed without it. */
+  isRowExpanded?: (row: TRow) => boolean;
   toggleRowExpansion?: (row: TRow) => void;
 }
 
@@ -888,13 +890,21 @@ function DataTableRows<TRow extends Record<string, unknown>>({
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
         const expandable = hasExpand && rowId != null && (canExpandRow?.(row) ?? true);
-        // Deliberately NOT gated on `canExpandRow`: a row that goes
-        // non-expandable while open (a refetch drops its line items, say) must
-        // keep both its panel and — below — its chevron, or the user is left with
-        // an open row and no way to close it.
-        const expanded = hasExpand && rowId != null && isRowExpanded(row);
-        const panelId = `${baseId}-panel-${rowKey}`;
-        const triggerId = `${baseId}-trigger-${rowKey}`;
+        // Gated on `canExpandRow` in BOTH directions. Letting the expansion set
+        // alone open a panel means a row the consumer excluded still renders one
+        // — `renderExpandedRow` would run against a row it was told to skip, on
+        // any table restoring `expandedIds` from a URL or storage. A row whose
+        // predicate flips to false while open therefore just goes quiet: nothing
+        // is left open on screen, its id stays in `expandedIds` inert, and
+        // `collapseAllRows()` clears it.
+        const expanded = expandable && (isRowExpanded?.(row) ?? false);
+        // HTML forbids ASCII whitespace in `id`, and `aria-controls` is an
+        // IDREF *list* — an unescaped `{ id: "ORD 4471" }` would emit an invalid
+        // id and an `aria-controls` the UA splits into two dead references,
+        // silently dropping the association the chevron advertises.
+        const domKey = rowKey.replace(/\s+/g, "_");
+        const panelId = `${baseId}-panel-${domKey}`;
+        const triggerId = `${baseId}-trigger-${domKey}`;
         const dataRow = (
           <Table.Row
             data-slot="data-table-row"
@@ -945,7 +955,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     className={className}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {(expandable || expanded) && toggleRowExpansion && (
+                    {expandable && toggleRowExpansion && (
                       <RowExpandToggle
                         id={triggerId}
                         expanded={expanded}
@@ -1054,7 +1064,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
         return (
           <Fragment key={rowKey}>
             {dataRow}
-            {(expandable || expanded) && renderExpandedRow && (
+            {expandable && renderExpandedRow && (
               // Mounted whenever the row could be open, not only while it is —
               // the component owns the open/closed transition and renders
               // nothing until there is something to show.
@@ -1245,6 +1255,18 @@ function ExpandedRowContent({
   // `getElementById` there would return null and silently drop focus. The scroll
   // container is the fallback: it survives any row-level change, so focus stays
   // inside the table.
+  // The collapse starts here, not at unmount: the panel goes `inert` for the
+  // closing window (below), and making an element inert while it holds focus
+  // drops that focus to <body>. Hand it back to the trigger first, which is also
+  // better behaviour — the user lands on the control they just activated rather
+  // than waiting out the transition.
+  useIsomorphicLayoutEffect(() => {
+    if (open) return;
+    const panel = panelRef.current;
+    if (!panel || !panel.contains(document.activeElement)) return;
+    document.getElementById(triggerId)?.focus();
+  }, [open, triggerId]);
+
   useIsomorphicLayoutEffect(() => {
     const panel = panelRef.current;
     const trigger = document.getElementById(triggerId);
@@ -1256,10 +1278,16 @@ function ExpandedRowContent({
         return;
       }
       if (container?.isConnected) {
-        // Containers aren't focusable by default; make it programmatically
-        // focusable without adding it to the tab order.
-        if (!container.hasAttribute("tabindex")) container.setAttribute("tabindex", "-1");
+        // Containers aren't focusable by default, so borrow `tabindex` just long
+        // enough to move focus and then put the attribute back exactly as it
+        // was. Leaving a `-1` behind would permanently strip the scroll region
+        // from the tab order — browsers make a scrollable div tabbable by
+        // default *unless* the author sets tabindex, and this container is
+        // `table.tsx`'s, shared by every `Table.Root` consumer.
+        const hadTabIndex = container.hasAttribute("tabindex");
+        if (!hadTabIndex) container.setAttribute("tabindex", "-1");
         container.focus();
+        if (!hadTabIndex) container.removeAttribute("tabindex");
       }
     };
   }, [triggerId]);
@@ -1270,7 +1298,12 @@ function ExpandedRowContent({
       data-state={open ? "open" : "closed"}
       className="astw:bg-muted/30 astw:hover:bg-transparent"
     >
-      <Table.Cell colSpan={totalColSpan} className="astw:p-0">
+      {/* `p-0!` — `Table.Cell` hardcodes `first:pl-6 last:pr-6`, and this cell is
+          both first and last. tailwind-merge won't merge a variant utility
+          against an unvariated one, and `.first\:pl-6:first-child` outranks
+          `.p-0` on specificity, so an unimportant `p-0` loses and insets the
+          sticky panel by 24px — pushing its right edge outside the scrollport. */}
+      <Table.Cell colSpan={totalColSpan} className="astw:p-0!">
         {/* The colSpan cell spans the whole table, so on a horizontally scrolled
             table the panel would otherwise sit off-screen. Pin it to the left
             edge of the scrollport. `min(100%, …)` makes this a no-op when the
@@ -1288,7 +1321,7 @@ function ExpandedRowContent({
               the row follows the panel for free, and animating row heights under
               `border-collapse` is unreliable. */}
           <div
-            className="astw:grid astw:transition-[grid-template-rows,opacity] astw:duration-200 astw:ease-out astw:motion-reduce:transition-none"
+            className="astw:grid astw:transition-[grid-template-rows,opacity] astw:duration-300 astw:ease-out astw:motion-reduce:transition-none"
             style={{ gridTemplateRows: entered ? "1fr" : "0fr", opacity: entered ? 1 : 0 }}
           >
             {/* `min-h-0` lets the grid item shrink below its content (grid items
@@ -1300,9 +1333,15 @@ function ExpandedRowContent({
             <div className="astw:min-h-0 astw:overflow-x-auto astw:overflow-y-hidden">
               {/* A named `<section>` maps to `role="region"`, so the panel
                   announces as a named region rather than loose table content. */}
+              {/* `inert` for the closing window. Zero height and zero opacity
+                  leave descendants focusable and in the accessibility tree, so
+                  without this a screen reader keeps reading a row it has just
+                  announced as collapsed, and Tab can land on an invisible
+                  control inside it. */}
               <section
                 ref={panelRef}
                 id={panelId}
+                inert={open ? undefined : true}
                 aria-label={label ? t("expandedDetails", { label }) : t("expandedDetailsGeneric")}
                 className="astw:px-6 astw:py-3"
               >
@@ -1386,6 +1425,14 @@ function DataTableTable({ className }: { className?: string }) {
   useIsomorphicLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    // Widths can only change when something got wider or narrower. The observer
+    // also fires on every frame of a detail row's 300ms reveal, which is a pure
+    // height change — without this guard each toggle re-ran the whole scan
+    // (a full-subtree query plus an `offsetWidth` read per header cell, over a
+    // container that now holds every open panel's content) dozens of times.
+    let lastWidth = -1;
+    let lastTableWidth = -1;
+
     const measure = () => {
       // Own table only. `renderExpandedRow` can nest a whole DataTable inside a
       // detail row, and the built-in column keys are module constants shared by
@@ -1393,6 +1440,11 @@ function DataTableTable({ className }: { className?: string }) {
       // table's header overwrite this one's measured widths and shift every
       // pinned column. `querySelector` is pre-order, so the first <table> is ours.
       const ownTable = el.querySelector("table");
+      const width = el.clientWidth;
+      const tableWidth = ownTable?.offsetWidth ?? 0;
+      if (width === lastWidth && tableWidth === lastTableWidth) return;
+      lastWidth = width;
+      lastTableWidth = tableWidth;
       const cells = el.querySelectorAll<HTMLElement>(
         "[data-slot='data-table-header'] [data-col-key]",
       );
@@ -1416,9 +1468,8 @@ function DataTableTable({ className }: { className?: string }) {
       // leaving the property unset lets its `100%` fallback apply instead. Write
       // only on a real change, so this mutation inside the ResizeObserver
       // callback can't feed back into the observer as an endless resize loop.
-      const viewport = el.clientWidth;
-      if (viewport > 0) {
-        const value = `${viewport}px`;
+      if (width > 0) {
+        const value = `${width}px`;
         if (el.style.getPropertyValue("--data-table-viewport") !== value) {
           el.style.setProperty("--data-table-viewport", value);
         }

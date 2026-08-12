@@ -1632,9 +1632,11 @@ describe("DataTable", () => {
       err.mockRestore();
     });
 
-    it("keeps the collapse chevron on a row that becomes non-expandable while open", () => {
-      // Otherwise the panel and its trigger both vanish, stranding the row open
-      // with the id still in `expandedIds` and no way for the user to close it.
+    it("closes a row that becomes non-expandable while open", async () => {
+      // `canExpandRow` gates both directions. A row whose predicate flips to
+      // false goes quiet: no panel, no chevron. Its id stays in `expandedIds`
+      // but is inert — the alternative (letting the set alone open a panel)
+      // renders detail content for a row the consumer told us to skip.
       function Harness({ canExpand }: { canExpand: boolean }) {
         return (
           <ExpandHarness
@@ -1650,11 +1652,63 @@ describe("DataTable", () => {
 
       rerender(<Harness canExpand={false} />);
 
-      // Panel stays, and so does a working collapse affordance.
-      expect(screen.getByText("Details for Alice")).toBeDefined();
-      expect(screen.getByLabelText("Collapse row")).toBeDefined();
-      // The row that is merely non-expandable (and closed) still has no chevron.
+      await waitFor(() => expect(screen.queryByText("Details for Alice")).toBeNull());
+      expect(screen.queryByLabelText("Collapse row")).toBeNull();
       expect(screen.queryByLabelText("Expand row")).toBeNull();
+    });
+
+    it("does not open a panel for a row canExpandRow rejects, even when its id is in expandedIds", () => {
+      // Restoring `expandedIds` from a URL or storage must not run
+      // `renderExpandedRow` against a row the consumer excluded — that row may
+      // have no detail data at all.
+      const renderExpandedRow = vi.fn(detail);
+      render(
+        <ExpandHarness
+          renderExpandedRow={renderExpandedRow}
+          canExpandRow={() => false}
+          expandedIds={["1", "2"]}
+          onExpandedChange={vi.fn()}
+        />,
+        { wrapper },
+      );
+
+      expect(screen.queryByText("Details for Alice")).toBeNull();
+      expect(screen.queryByRole("region")).toBeNull();
+      expect(renderExpandedRow).not.toHaveBeenCalled();
+    });
+
+    it("marks the closing panel inert so it leaves the tab order and a11y tree", async () => {
+      const { container } = render(<ExpandHarness renderExpandedRow={focusableDetail} />, {
+        wrapper,
+      });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      const panel = container.querySelector(`${EXPANDED_ROW} section`);
+      expect(panel?.hasAttribute("inert")).toBe(false);
+
+      fireEvent.click(screen.getByLabelText("Collapse row"));
+
+      // Zero height and zero opacity still leave descendants focusable and
+      // announced, so the closing window needs `inert` explicitly.
+      expect(container.querySelector(`${EXPANDED_ROW} section`)?.hasAttribute("inert")).toBe(true);
+      await waitFor(() => expect(container.querySelector(EXPANDED_ROW)).toBeNull());
+    });
+
+    it("sanitises whitespace in row ids so the panel id and aria-controls stay valid", () => {
+      const spaced: DataTableData<TestRow> = {
+        rows: [{ id: "ORD 4471", name: "Alice", status: "Active" }],
+      };
+      render(<ExpandHarness data={spaced} renderExpandedRow={detail} />, { wrapper });
+
+      fireEvent.click(screen.getByLabelText("Expand row"));
+
+      const controls = screen
+        .getByLabelText("Collapse row")
+        .getAttribute("aria-controls") as string;
+      // `aria-controls` is an IDREF *list*: a space would split it into two
+      // references that resolve to nothing, silently dropping the association.
+      expect(controls).not.toMatch(/\s/);
+      expect(document.getElementById(controls)).not.toBeNull();
     });
 
     it("moves focus to the table container when the whole row unmounts from under it", () => {
@@ -1794,6 +1848,38 @@ describe("DataTable", () => {
       // Collapsing an already-collapsed table is a no-op, not a spurious event.
       act(() => seen[0]());
       expect(onExpandedChange).not.toHaveBeenCalled();
+
+      // The identity must survive an actual expansion, not just a re-render.
+      // `expandedRowIds` is a fresh Set on every expansion change, so having it
+      // in the useCallback deps kept the identity churning — and the documented
+      // effect recipe then re-fired on expand and collapsed the row the user had
+      // just opened. A rerender-only assertion never sees that.
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      expect(screen.getByText("Details for Alice")).toBeDefined();
+      expect(seen[seen.length - 1]).toBe(seen[0]);
+    });
+
+    it("keeps toggleRowExpansion stable across an expansion", () => {
+      const seen: ((row: TestRow) => void)[] = [];
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          renderExpandedRow: detail,
+        });
+        if (table.toggleRowExpansion) seen.push(table.toggleRowExpansion);
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      render(<Harness />, { wrapper });
+
+      fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+
+      expect(seen.length).toBeGreaterThan(1);
+      expect(seen[seen.length - 1]).toBe(seen[0]);
     });
 
     it("leaves --data-table-viewport unset when the scrollport measures zero", () => {

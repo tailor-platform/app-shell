@@ -368,12 +368,18 @@ export function useDataTable<
     [expandedRowIds, getRowId],
   );
 
-  // Hold the change callback in a ref so `toggleRowExpansion` / `collapseAllRows`
-  // keep a stable identity even when the caller passes an inline arrow. Without
-  // it, consumers who list them in an effect's dependency array (the documented
-  // "collapse on page change" recipe) get a new function every render.
+  // Hold the change callback AND the current expansion set in refs, so
+  // `toggleRowExpansion` / `collapseAllRows` keep a stable identity. Both would
+  // otherwise churn: the callback is usually an inline arrow, and
+  // `expandedRowIds` is a fresh Set on every expansion change. Reading them
+  // through refs keeps the deps down to genuinely stable values, which is what
+  // makes the documented "collapse on page change" recipe safe — depending on
+  // `expandedRowIds` directly meant every expand re-fired that effect and
+  // immediately collapsed the row the user had just opened.
   const onExpandedChangeRef = useRef(onExpandedChange);
   onExpandedChangeRef.current = onExpandedChange;
+  const expandedRowIdsRef = useRef(expandedRowIds);
+  expandedRowIdsRef.current = expandedRowIds;
 
   // A controlled table whose caller never wired `onExpandedChange` can never
   // change state: the toggle computes the next set and hands it to a callback
@@ -399,7 +405,7 @@ export function useDataTable<
         // Controlled mode derives the next set from the current prop value, so
         // two toggles dispatched before the caller's state commits both read the
         // same base and the first is lost. See the `expandedIds` TSDoc.
-        const next = new Set(expandedRowIds);
+        const next = new Set(expandedRowIdsRef.current);
         if (next.has(id)) {
           next.delete(id);
         } else {
@@ -419,16 +425,16 @@ export function useDataTable<
         return next;
       });
     },
-    [getRowId, isExpansionControlled, expandedRowIds],
+    [getRowId, isExpansionControlled],
   );
 
   const collapseAllRowsImpl = useCallback(() => {
     // Nothing open — skip the state write and the callback entirely, so calling
     // this from an effect can't drive an endless render loop.
-    if (expandedRowIds.size === 0) return;
+    if (expandedRowIdsRef.current.size === 0) return;
     if (!isExpansionControlled) setUncontrolledExpandedIds(new Set());
     onExpandedChangeRef.current?.([]);
-  }, [expandedRowIds, isExpansionControlled]);
+  }, [isExpansionControlled]);
 
   const toggleRowExpansion = renderExpandedRow ? toggleRowExpansionImpl : undefined;
   const collapseAllRows = renderExpandedRow ? collapseAllRowsImpl : undefined;

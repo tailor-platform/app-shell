@@ -14,7 +14,7 @@ To configure your application, import AppShell styles from your global CSS or to
 @import "@tailor-platform/app-shell/styles";
 ```
 
-That is the whole setup. Since 1.7.0, `styles` ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant, so your entry CSS should declare none of them itself. If yours does, see [Upgrading from 1.5.x or 1.6.x](#upgrading-from-15x-or-16x-remove-the-theme-bridge-workaround) — those leftovers silently break dark mode.
+That is the whole setup. Since 1.7.0, `styles` ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant, so your entry CSS should declare none of them itself. If yours does, see [Migrations → remove the theme bridge workaround](../migrations.md#150--170-remove-the-theme-bridge-workaround) — those leftovers silently break dark mode.
 
 If you want a branded palette, import exactly one theme file after `styles`:
 
@@ -119,58 +119,11 @@ Redeclare any token after the AppShell imports. Use `:root` for light and `:root
 Two rules:
 
 - **Set each override in both modes.** Overriding only `:root` misbehaves either way: on the default palette the light value carries into dark mode, and on a branded palette the override stops applying in dark mode altogether.
-- **Override individual tokens; never copy the palette wholesale.** Copied tokens freeze at the value you copied while everything else tracks AppShell, and the two halves drift apart on upgrade. That is the failure described in [Upgrading from 1.5.x or 1.6.x](#upgrading-from-15x-or-16x-remove-the-theme-bridge-workaround).
+- **Override individual tokens; never copy the palette wholesale.** Copied tokens freeze at the value you copied while everything else tracks AppShell, and the two halves drift apart on upgrade. That is the failure described in [Migrations → remove the theme bridge workaround](../migrations.md#150--170-remove-the-theme-bridge-workaround).
 
 `:root.dark` rather than `.dark` because the two palette families behave differently. The default palette is imported inside a cascade layer (`layer(theme.defaults)`), so any unlayered declaration of yours beats it. The branded palettes (`cream`, `bloom`) are imported by you, unlayered, and define dark values on `:root.dark` — which outranks a bare `.dark`, so a `.dark` override would silently lose. `:root.dark` is correct against both.
 
 Overriding under a narrower scope — per-section or per-tenant — needs the same care: pair `.tenant-a` with `:root.dark .tenant-a` so the dark rule still outranks a branded palette's `:root.dark`. Note also that `:root.dark` matches only `<html class="dark">`; if you apply `.dark` to a subtree to darken one region, scope your overrides to that subtree rather than to `:root.dark`.
-
-## Upgrading from 1.5.x or 1.6.x: remove the theme bridge workaround
-
-**Applies to:** apps that pasted the `@theme inline` block, `@custom-variant dark`, and AppShell's palette into their entry CSS — the workaround for `styles` shipping without the Tailwind bridge.
-
-**`styles` regained the bridge in 1.7.0.** On 1.5.0–1.6.1 the workaround is load-bearing, so upgrade to 1.7.0 or later _before_ deleting any of it. Remove it earlier and every AppShell-token utility — `bg-card`, `bg-background`, `text-muted-foreground`, `border-border` — stops resolving, while `dark:` variants fall back to Tailwind's `prefers-color-scheme` default and stop tracking the `.dark` class.
-
-From 1.7.0 the workaround is not merely redundant. It actively breaks dark mode, and the build succeeds with no warning:
-
-- Your pasted `:root` and `.dark` blocks are unlayered, so they beat AppShell's layered default palette. Colours freeze at the values you copied, and any surface AppShell has added since has no dark value at all — so it renders light colours in dark mode: white text on white cards, unreadable disabled inputs.
-- `@custom-variant dark (&:is(.dark *))` overrides AppShell's `&:where(.dark, .dark *)`. The `:is(.dark *)` form matches only _descendants_ of `.dark`, so `dark:` utilities stop applying to the `.dark` element itself.
-
-### Removing it
-
-Delete from your entry CSS:
-
-- the `@theme inline { … }` block,
-- the `@custom-variant dark (…)` rule,
-- every `:root` and `.dark` block copied from AppShell's palette — **all** of it, including the `*-foreground` pairs, `--status-*`, `--alert-*`, `--sidebar-*` and `--semantic-shadow-*`. The foregrounds are what leave text white on white, so a partial deletion reproduces the bug.
-- any `@import "@tailor-platform/app-shell/theme.css"` (a no-op shim since 1.6.0, kept only so older apps keep building).
-
-To find it, search every CSS file the app loads — not just the entry point, since `app/` and `styles/` are as common as `src/`:
-
-```bash
-grep -rnE "@theme inline|@custom-variant|app-shell/theme\.css|--(card|popover|muted|sidebar|destructive|accent)(-foreground)?:" --include="*.css" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.next .
-```
-
-Excluding `node_modules` matters: AppShell's own palette files declare these tokens too, and they must not be touched. In your own CSS, hits are either the workaround, which goes, or deliberate overrides, which should take the `:root` / `:root.dark` form above.
-
-What remains is short — [`examples/vite-app/src/index.css`](https://github.com/tailor-platform/app-shell/blob/main/examples/vite-app/src/index.css) is a working reference for the shape (it also imports a branded palette, which is optional):
-
-```css
-@import "tailwindcss";
-@import "@tailor-platform/app-shell/styles";
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
-```
-
-### Verifying
-
-Toggle dark mode and confirm a real surface changes: inspect a `Card` and watch its computed `background-color` go from `rgb(255, 255, 255)` to `rgb(23, 23, 23)` on the default palette.
-
-Reading the token directly also works — `getComputedStyle(document.documentElement).getPropertyValue("--card")` returns the winning declaration, so a stale copy shows up as its own value. Just compare against the authored notation: AppShell writes `rgba(23, 23, 23, 1)`, not `#171717`, and the computed value preserves that form.
 
 ## Z-Index Layering
 

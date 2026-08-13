@@ -26,6 +26,7 @@ For users building applications with AppShell, see the detailed guides in `docs/
 
 - [Introduction](./docs/introduction.md) — What is AppShell and why use it
 - [Quick Start](./docs/quickstart.md) — Installation, setup, and first steps
+- [Migrations](./docs/migrations.md) — Breaking changes and the steps each one requires, newest first
 
 Hosted references, no checkout required:
 

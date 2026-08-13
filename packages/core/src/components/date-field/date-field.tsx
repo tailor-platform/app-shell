@@ -327,10 +327,9 @@ function useDateFieldProxyInput({
  * `useDateFieldProxyInput()` handles the DOM-facing hidden-input mechanics;
  * this hook stays focused on the form-state contract layered on top of it.
  *
- * One `useEffect` remains intentionally: Base UI's field registration populates
- * the form registry after render, so we patch the registered `validate` handler
- * once the field exists. That is the minimal place where we still have to align
- * with Base UI's lifecycle.
+ * One `useEffect` remains intentionally: Base UI creates the form-registry
+ * entry after registration, so we replace its `validate` handler once that
+ * entry exists.
  */
 function useDateFieldFieldBridge({
   id: idProp,
@@ -445,8 +444,9 @@ function useDateFieldFieldBridge({
     !a11y.isDisabled,
   );
 
+  // Base UI creates the form-registry entry after control registration, so we
+  // replace `field.validate` here once that entry exists.
   useEffect(() => {
-    proxyInput.syncProxyInput();
     if (!a11y.controlId) return;
 
     const field = formRef.current.fields.get(a11y.controlId);

@@ -4,7 +4,7 @@
 
 Refactor `DateField` / `DatePicker` to follow the same composition model as `Field`, `Select`, `Combobox`, and `Autocomplete`.
 
-The date controls are now **control-first**: field chrome moved out of the control props and into `Field.Root` composition.
+The date controls are now **control-first**: field chrome moved out of the control props and into `Field.Root` composition. They also interoperate correctly with `Form` / `Field.Root` label wiring, `onFormSubmit` value collection, and submit-time validation for required and out-of-range default values.
 
 Breaking changes:
 

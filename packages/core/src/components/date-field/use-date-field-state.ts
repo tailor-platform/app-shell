@@ -71,10 +71,21 @@ export interface Segment {
   maxValue?: number;
 }
 
+export type DateFieldStateChangeSource = "edit" | "clear" | "external";
+
+export interface DateFieldStateChange {
+  source: DateFieldStateChangeSource;
+  fieldValue: DateValue | null;
+  inputValue: string;
+  hasInput: boolean;
+  invalidReason: DateFieldInvalidReason | null;
+}
+
 export interface DateFieldStateOptions {
   value?: DateValue | null;
   defaultValue?: DateValue | null;
   onChange?: (value: DateValue | null) => void;
+  onStateChange?: (change: DateFieldStateChange) => void;
   granularity?: Granularity;
   locale: string;
   /** Used only to construct `ZonedDateTime` values for time granularities. */
@@ -196,6 +207,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     value: controlledValue,
     defaultValue,
     onChange,
+    onStateChange,
     granularity = "day",
     locale,
     timeZone,
@@ -305,19 +317,37 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     [hasTime, is12, controlledValue, defaultValue, placeholderValue, timeZone],
   );
 
+  const buildStateChange = useCallback(
+    (nextFields: Fields, source: DateFieldStateChangeSource): DateFieldStateChange => {
+      const fieldValue = composeValue(nextFields);
+      const hasInput = editableTypes.some((type) => nextFields[type] != null);
+      const invalidReason = getInvalidReason(fieldValue, minValue, maxValue, isDateUnavailable);
+      return {
+        source,
+        fieldValue,
+        inputValue: fieldValue?.toString() ?? "",
+        hasInput,
+        invalidReason,
+      };
+    },
+    [composeValue, editableTypes, isDateUnavailable, maxValue, minValue],
+  );
+
   const commit = useCallback(
     (next: Fields, intent: "edit" | "clear" = "edit") => {
       // Self-correct an impossible day as soon as the date is complete, so an
       // unreachable date (e.g. 29 Feb in a non-leap year) never persists — no
       // matter how the field is left. Skipped while clearing a segment.
       const f = intent === "edit" ? clampCompleteDay(next) : next;
+      const change = buildStateChange(f, intent === "clear" ? "clear" : "edit");
       setInternalFields(f);
-      const composed = composeValue(f);
+      onStateChange?.(change);
+
       // While editing, only emit a *complete & valid* value — never `null` for a
       // half-typed/out-of-range intermediate (that would thrash a controlled
       // value and lose the in-progress entry). Clearing explicitly emits `null`.
       let emit: DateValue | null | undefined;
-      if (composed != null) emit = composed;
+      if (change.fieldValue != null) emit = change.fieldValue;
       else if (intent === "clear") emit = null;
       else emit = undefined;
       if (emit === undefined) return;
@@ -331,7 +361,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         onChange?.(emit);
       }
     },
-    [composeValue, onChange],
+    [buildStateChange, onChange, onStateChange],
   );
 
   // Sync internal segments when a *controlled* value changes externally (i.e.
@@ -344,10 +374,12 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     const same =
       (cv == null && le == null) || (cv != null && le != null && cv.compare(le as never) === 0);
     if (!same) {
+      const nextFields = fieldsFromValue(cv);
       lastEmitted.current = cv;
-      setInternalFields(fieldsFromValue(cv));
+      setInternalFields(nextFields);
+      onStateChange?.(buildStateChange(nextFields, "external"));
     }
-  }, [controlledValue, isControlled]);
+  }, [buildStateChange, controlledValue, isControlled, onStateChange]);
 
   // ── Mutations ───────────────────────────────────────────────────────────────
   const cycle = useCallback(
@@ -571,16 +603,14 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     });
   }, [segmentFormat, fields, editableTypes, getLimits]);
 
-  const fieldValue = composeValue(fields);
-  // Free-entry validation: the value still emits (it's what the user typed), but
-  // an out-of-range or unavailable date is surfaced as invalid, not clamped.
-  const invalidReason = getInvalidReason(fieldValue, minValue, maxValue, isDateUnavailable);
+  const currentChange = buildStateChange(fields, "edit");
 
   return {
     segments,
-    fieldValue,
-    isInvalid: invalidReason != null,
-    invalidReason,
+    fieldValue: currentChange.fieldValue,
+    hasInput: currentChange.hasInput,
+    isInvalid: currentChange.invalidReason != null,
+    invalidReason: currentChange.invalidReason,
     cycle,
     setDigit,
     setDayPeriod,

@@ -1,10 +1,11 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { cloneElement, useState, type ReactElement } from "react";
 import {
   Layout,
-  Field,
   DateField,
   DatePicker,
   Calendar,
+  Form,
+  Field,
   Button,
   useTimeZone,
   parseDate,
@@ -13,6 +14,13 @@ import {
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { CalendarDays } from "lucide-react";
+
+type DemoFieldControlProps = {
+  id?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  isInvalid?: boolean;
+};
 
 function DemoField({
   id,
@@ -25,15 +33,34 @@ function DemoField({
   label: string;
   description?: string;
   error?: string;
-  children: ReactElement;
+  children: ReactElement<DemoFieldControlProps>;
 }) {
+  const describedBy = [description && `${id}-description`, error && `${id}-error`]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <Field.Root name={id} invalid={!!error} className="flex flex-col gap-1 items-start">
-      <Field.Label>{label}</Field.Label>
-      {children}
-      {description && <Field.Description>{description}</Field.Description>}
-      {error && <Field.Error match={true}>{error}</Field.Error>}
-    </Field.Root>
+    <div className="flex flex-col gap-1 items-start">
+      <label id={`${id}-label`} htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
+      {cloneElement(children, {
+        id,
+        "aria-labelledby": `${id}-label`,
+        "aria-describedby": describedBy || undefined,
+        isInvalid: !!error || children.props.isInvalid,
+      })}
+      {description && (
+        <p id={`${id}-description`} className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
+      {error && (
+        <p id={`${id}-error`} className="text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -44,31 +71,11 @@ const DatePickerPage = () => {
   const [calendarValue, setCalendarValue] = useState<DateValue | null>(null);
   const [weekendValue, setWeekendValue] = useState<CalendarDate | null>(null);
 
-  // Form-validation demo state.
   const [deliveryDate, setDeliveryDate] = useState<CalendarDate | null>(null);
-  const [deliveryError, setDeliveryError] = useState<string | undefined>(undefined);
   const [confirmedDate, setConfirmedDate] = useState<string | null>(null);
 
   const tomorrow = tz.today().add({ days: 1 });
   const threeMonths = tz.today().add({ months: 3 });
-
-  // Validation runs on submit; the example uses AppShell's `Field` wiring so
-  // the date controls behave like the other form inputs in the library.
-  const handleDeliverySubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!deliveryDate) {
-      setConfirmedDate(null);
-      setDeliveryError("Please select a delivery date.");
-      return;
-    }
-    if (deliveryDate.compare(tz.today()) < 0) {
-      setConfirmedDate(null);
-      setDeliveryError("Delivery date can't be in the past.");
-      return;
-    }
-    setDeliveryError(undefined);
-    setConfirmedDate(deliveryDate.toString());
-  };
 
   return (
     <Layout>
@@ -173,32 +180,34 @@ const DatePickerPage = () => {
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">In a form (submit validation)</h2>
             <p className="text-sm text-muted-foreground">
-              Standard form submit with AppShell{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">Field</code> wiring. Submitting empty
-              (or with a past date) marks the date picker invalid, and the error clears as soon as a
-              valid date is picked.
+              Standard <code className="bg-muted px-1 py-0.5 rounded">Form</code> +{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">Field.Root</code>. Submitting empty (or
+              with a past date) blocks submit, shows the field error, and clears as soon as a valid
+              date is picked.
             </p>
-            <form
-              onSubmit={handleDeliverySubmit}
+            <Form<{ deliveryDate: string }>
+              onFormSubmit={({ deliveryDate: submittedDeliveryDate }) =>
+                setConfirmedDate(submittedDeliveryDate)
+              }
               className="flex flex-col items-start gap-4 max-w-sm"
             >
-              <DemoField
-                id="delivery-date"
-                label="Delivery date"
-                description="When should we ship your order?"
-                error={deliveryError}
-              >
+              <Field.Root name="deliveryDate">
+                <Field.Label>Delivery date</Field.Label>
                 <DatePicker
-                  isRequired
                   value={deliveryDate}
                   onChange={(v) => {
                     setDeliveryDate(v as CalendarDate | null);
-                    if (v) setDeliveryError(undefined);
+                    setConfirmedDate(null);
                   }}
+                  isRequired
+                  minValue={tz.today()}
                 />
-              </DemoField>
+                <Field.Description>When should we ship your order?</Field.Description>
+                <Field.Error match="valueMissing">Please select a delivery date.</Field.Error>
+                <Field.Error match="customError" />
+              </Field.Root>
               <Button type="submit">Schedule delivery</Button>
-            </form>
+            </Form>
             {confirmedDate && (
               <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                 ✓ Delivery scheduled for <strong>{confirmedDate}</strong>

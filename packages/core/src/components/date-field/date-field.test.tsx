@@ -13,6 +13,7 @@ import {
 } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Field } from "../field";
+import { Form } from "../form";
 import { DateField, DatePicker } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
@@ -99,6 +100,19 @@ describe("DateField", () => {
     );
 
     await user.click(screen.getByText("Date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
+  });
+
+  it("integrates with Field.Label", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="invoiceDate">
+        <Field.Label>Invoice date</Field.Label>
+        <DateField />
+      </Field.Root>,
+    );
+
+    await user.click(screen.getByText("Invoice date"));
     expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
   });
 
@@ -957,6 +971,65 @@ describe("DatePicker", () => {
     expect(screen.getByRole("spinbutton", { name: "月" }).getAttribute("aria-valuetext")).toBe(
       "未入力",
     );
+  });
+
+  it("integrates with Field.Label", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="deliveryDate">
+        <Field.Label>Delivery date</Field.Label>
+        <DatePicker />
+      </Field.Root>,
+    );
+
+    await user.click(screen.getByText("Delivery date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
+  });
+
+  it("registers with Form and includes defaultValue in onFormSubmit", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    render(
+      <Form onFormSubmit={onFormSubmit}>
+        <Field.Root name="deliveryDate">
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker defaultValue={parseDate("2025-06-15") as CalendarDate} />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(onFormSubmit).toHaveBeenCalled();
+    });
+    expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ deliveryDate: "2025-06-15" });
+  });
+
+  it("blocks Form submit when defaultValue is out of range", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    render(
+      <Form onFormSubmit={onFormSubmit}>
+        <Field.Root name="deliveryDate">
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker
+            defaultValue={parseDate("2025-06-15") as CalendarDate}
+            minValue={parseDate("2025-06-16")}
+          />
+          <Field.Error match="customError" />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onFormSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
   });
 });
 

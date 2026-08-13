@@ -71,8 +71,24 @@ export interface Segment {
   maxValue?: number;
 }
 
+/**
+ * Why the state machine emitted a change notification.
+ *
+ * - `edit`: the user changed one or more segments
+ * - `clear`: the user explicitly cleared a segment, which may emit `null`
+ * - `external`: the controlled `value` prop changed from outside the widget
+ */
 export type DateFieldStateChangeSource = "edit" | "clear" | "external";
 
+/**
+ * Snapshot emitted to consumers that need more than the composed `DateValue`.
+ *
+ * `useDateFieldState()` is the source of truth for segmented editing. Most
+ * callers only care about `onChange(value)`, but the Field/Form bridge also
+ * needs the serialized input string, whether any segment is currently filled,
+ * and whether the composed value is locally invalid. This payload exposes that
+ * derived state at the same moment the internal segment state changes.
+ */
 export interface DateFieldStateChange {
   source: DateFieldStateChangeSource;
   fieldValue: DateValue | null;
@@ -202,6 +218,33 @@ function getInvalidReason(
   return null;
 }
 
+/**
+ * Stateful engine for segmented date/time entry.
+ *
+ * This hook owns the editable segment model used by both `DateField` and
+ * `DatePicker`. It is intentionally lower-level than a normal input hook:
+ * instead of tracking one text string, it tracks logical date segments
+ * (`year`, `month`, `day`, optional time parts) and derives everything else
+ * from that state.
+ *
+ * Responsibilities:
+ * - keep per-segment editing state stable across partial/incomplete input
+ * - compose a public `DateValue` once the entered segments form a complete date
+ * - preserve controlled/uncontrolled behaviour without clobbering in-progress edits
+ * - implement keyboard editing semantics such as increment/decrement,
+ *   auto-advance, shortcuts, and blur-time normalization
+ * - surface local invalid reasons (`range` / `unavailable`) without coercing the value
+ *
+ * Outputs are split in two layers:
+ * - `onChange(value)` for the public component contract
+ * - `onStateChange(change)` for internal consumers that need richer derived
+ *   state, such as the hidden proxy-input bridge used by `Field` / `Form`
+ *
+ * In practice, this hook is the date-widget equivalent of an input state
+ * machine: callers render the segments it describes, invoke the returned
+ * mutation helpers in response to keyboard interactions, and react to the
+ * emitted value/state snapshots.
+ */
 export function useDateFieldState(options: DateFieldStateOptions) {
   const {
     value: controlledValue,

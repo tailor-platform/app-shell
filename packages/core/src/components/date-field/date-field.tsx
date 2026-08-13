@@ -122,7 +122,20 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
   timeZone?: string;
 };
 
-interface DateFieldA11yOptions {
+interface DateFieldA11yLabelingOptions {
+  id?: string;
+  name?: string;
+  isDisabled?: boolean;
+  isReadOnly?: boolean;
+  isRequired?: boolean;
+  isInvalid?: boolean;
+  labelledBy?: string;
+  describedBy?: string;
+  ariaLabel?: string;
+  proxyRef: RefObject<HTMLInputElement | null>;
+}
+
+interface DateFieldFieldBridgeOptions {
   id?: string;
   name?: string;
   inputValue: string;
@@ -140,13 +153,186 @@ interface DateFieldA11yOptions {
   forwardedRef?: Ref<HTMLInputElement>;
 }
 
-interface DateFieldBridgeState {
+interface DateFieldProxyInputOptions {
   inputValue: string;
-  hasInput: boolean;
+  localValidationMessage?: string;
+  groupRef: RefObject<HTMLDivElement | null>;
+  forwardedRef?: Ref<HTMLInputElement>;
+  validationInputRef: RefObject<HTMLInputElement | null>;
+}
+
+interface DateFieldProxyInputState {
+  inputValue: string;
   localValidationMessage?: string;
 }
 
-function useDateFieldA11y({
+interface DateFieldBridgeState extends DateFieldProxyInputState {
+  hasInput: boolean;
+}
+
+/**
+ * Resolve the labeling/accessibility contract for the date widgets.
+ *
+ * The visible control is not a native `<input>`; it is a `role="group"` with
+ * per-segment `role="spinbutton"` children plus a hidden proxy input. This hook
+ * answers the “what should this control be called and described by?” part of the
+ * problem by merging three sources of metadata into one small object:
+ *
+ * - explicit props passed to `DateField` / `DatePicker`
+ * - `Field.Root` / `Field.Label` / `Field.Description` / `Field.Error` context
+ * - the generated control id used by Base UI's labelable system
+ *
+ * Concretely it computes:
+ * - the control id that labels point at
+ * - the effective field `name`
+ * - merged `aria-labelledby` and `aria-describedby` ids
+ * - the externally-derived invalid state coming from `Field.Root`
+ *
+ * Deliberately, this hook does **not** touch DOM nodes, register form fields, or
+ * run validation. It is the narrow “A11y + labeling metadata” layer that the
+ * heavier field/form bridge builds on top of.
+ */
+function useDateFieldA11yLabeling({
+  id: idProp,
+  name: nameProp,
+  isDisabled,
+  isReadOnly,
+  isRequired,
+  isInvalid,
+  labelledBy: labelledByProp,
+  describedBy: describedByProp,
+  ariaLabel,
+  proxyRef,
+}: DateFieldA11yLabelingOptions) {
+  const fieldRoot = useFieldRootContext();
+  const { labelId, messageIds } = useLabelableContext();
+  const controlId = useLabelableId({ id: idProp, controlRef: proxyRef });
+  const name = fieldRoot.name ?? nameProp;
+  const externalInvalid = fieldRoot.state.valid === false;
+
+  return {
+    controlId,
+    name,
+    isDisabled,
+    isReadOnly,
+    isRequired,
+    isInvalid: !!externalInvalid || !!isInvalid,
+    labelledBy: joinIds(labelledByProp, labelId),
+    describedBy: joinIds(describedByProp, ...messageIds),
+    ariaLabel,
+  };
+}
+
+/**
+ * Own the hidden proxy input that backs the composite date widget.
+ *
+ * The visible date UI is a segmented `role="group"`, but form systems and the
+ * browser's validity APIs still need a real `<input>`. This hook centralizes the
+ * DOM-level work for that hidden proxy input:
+ *
+ * - keep the current serialized value and `setCustomValidity()` message in sync
+ * - attach the proxy node to Base UI's validation input ref
+ * - forward the proxy node through the component ref
+ * - provide a helper that focuses the first visible date segment when the proxy
+ *   input receives focus from a label or form logic
+ *
+ * Importantly, this hook does not know about `Field.Root`, dirty/touched state,
+ * or form registration. It is only the DOM bridge for the backing input so the
+ * field/form adapter can stay focused on higher-level state integration.
+ */
+function useDateFieldProxyInput({
+  inputValue,
+  localValidationMessage,
+  groupRef,
+  forwardedRef,
+  validationInputRef,
+}: DateFieldProxyInputOptions) {
+  const proxyRef = useRef<HTMLInputElement>(null);
+  const snapshotRef = useRef<DateFieldProxyInputState>({
+    inputValue,
+    localValidationMessage,
+  });
+  snapshotRef.current = {
+    inputValue,
+    localValidationMessage,
+  };
+
+  const syncProxyInput = useCallback(
+    (
+      snapshot: DateFieldProxyInputState = snapshotRef.current,
+      node: HTMLInputElement | null = proxyRef.current,
+    ) => {
+      if (!node) return;
+      if (node.value !== snapshot.inputValue) node.value = snapshot.inputValue;
+      node.setCustomValidity(snapshot.localValidationMessage ?? "");
+    },
+    [],
+  );
+
+  const setProxyState = useCallback(
+    (snapshot: DateFieldProxyInputState) => {
+      snapshotRef.current = snapshot;
+      syncProxyInput(snapshot);
+    },
+    [syncProxyInput],
+  );
+
+  const setProxyRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      proxyRef.current = node;
+      validationInputRef.current = node;
+      syncProxyInput(snapshotRef.current, node);
+      assignRef(forwardedRef, node);
+    },
+    [forwardedRef, syncProxyInput, validationInputRef],
+  );
+
+  const focusFirstSegment = useCallback(() => {
+    const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
+    first?.focus();
+  }, [groupRef]);
+
+  return {
+    proxyRef,
+    setProxyRef,
+    setProxyState,
+    syncProxyInput,
+    focusFirstSegment,
+    getValue: () => proxyRef.current?.value ?? snapshotRef.current.inputValue,
+  };
+}
+
+/**
+ * Bridge the date widgets into Base UI's `Field` / `Form` infrastructure.
+ *
+ * `DateField` and `DatePicker` are composite controls with a hidden proxy input,
+ * so Base UI cannot treat them like a normal text input automatically. This hook
+ * is the adapter that makes them behave like one field from the form system's
+ * perspective.
+ *
+ * Responsibilities:
+ * - register the proxy input as the field control so `Form.onFormSubmit()` and
+ *   field-level focus/validation logic can see it
+ * - convert date-specific invalid states (range/unavailable) into Base UI
+ *   `FieldValidityData` so submit blocking and `Field.Error` work
+ * - mirror field state transitions (`filled`, `dirty`, `focused`, `touched`)
+ *   into `Field.Root`
+ * - clear form errors on user edits and trigger validation on change / blur
+ *
+ * The hook consumes state transitions emitted by `useDateFieldState` via
+ * `handleStateChange()`. That keeps the date engine as the single source of
+ * truth and makes the field bridge react to explicit edit/clear/external-sync
+ * events instead of inferring them later from effects.
+ *
+ * `useDateFieldProxyInput()` handles the DOM-facing hidden-input mechanics;
+ * this hook stays focused on the form-state contract layered on top of it.
+ *
+ * One `useEffect` remains intentionally: Base UI's field registration populates
+ * the form registry after render, so we patch the registered `validate` handler
+ * once the field exists. That is the minimal place where we still have to align
+ * with Base UI's lifecycle.
+ */
+function useDateFieldFieldBridge({
   id: idProp,
   name: nameProp,
   inputValue,
@@ -162,16 +348,32 @@ function useDateFieldA11y({
   onBlur,
   groupRef,
   forwardedRef,
-}: DateFieldA11yOptions) {
+}: DateFieldFieldBridgeOptions) {
   const fieldRoot = useFieldRootContext();
   const fieldRootRef = useRef(fieldRoot);
   fieldRootRef.current = fieldRoot;
 
   const { formRef, clearErrors } = useFormContext();
-  const { labelId, messageIds } = useLabelableContext();
   const t = useDateFieldT();
-  const proxyRef = useRef<HTMLInputElement>(null);
-  const controlId = useLabelableId({ id: idProp, controlRef: proxyRef });
+  const proxyInput = useDateFieldProxyInput({
+    inputValue,
+    localValidationMessage,
+    groupRef,
+    forwardedRef,
+    validationInputRef: fieldRoot.validation.inputRef,
+  });
+  const a11y = useDateFieldA11yLabeling({
+    id: idProp,
+    name: nameProp,
+    isDisabled,
+    isReadOnly,
+    isRequired,
+    isInvalid,
+    labelledBy: labelledByProp,
+    describedBy: describedByProp,
+    ariaLabel,
+    proxyRef: proxyInput.proxyRef,
+  });
   const nameRef = useRef(nameProp);
   nameRef.current = nameProp;
 
@@ -186,29 +388,17 @@ function useDateFieldA11y({
     localValidationMessage,
   };
 
-  const syncProxyInput = useCallback(
-    (
-      snapshot: DateFieldBridgeState = stateRef.current,
-      node: HTMLInputElement | null = proxyRef.current,
-    ) => {
-      if (!node) return;
-      if (node.value !== snapshot.inputValue) node.value = snapshot.inputValue;
-      node.setCustomValidity(snapshot.localValidationMessage ?? "");
-    },
-    [],
-  );
-
   const updateRegisteredValidity = useCallback(
     (nextValidityData: FieldValidityData) => {
-      if (!controlId) return;
-      const field = formRef.current.fields.get(controlId);
+      if (!a11y.controlId) return;
+      const field = formRef.current.fields.get(a11y.controlId);
       if (!field) return;
-      formRef.current.fields.set(controlId, {
+      formRef.current.fields.set(a11y.controlId, {
         ...field,
         validityData: nextValidityData,
       });
     },
-    [controlId, formRef],
+    [a11y.controlId, formRef],
   );
 
   const commitLocalValidation = useCallback(
@@ -241,49 +431,34 @@ function useDateFieldA11y({
   if (!wrappedValidateRef.current) {
     wrappedValidateRef.current = () => {
       const snapshot = stateRef.current;
-      syncProxyInput(snapshot);
+      proxyInput.syncProxyInput(snapshot);
       if (commitLocalValidation(snapshot)) return;
       nativeValidateRef.current?.();
     };
   }
 
   useRegisterFieldControl(
-    proxyRef,
-    controlId,
+    proxyInput.proxyRef,
+    a11y.controlId,
     inputValue,
-    () => proxyRef.current?.value ?? stateRef.current.inputValue,
-    !isDisabled,
+    proxyInput.getValue,
+    !a11y.isDisabled,
   );
 
   useEffect(() => {
-    syncProxyInput();
-    if (!controlId) return;
+    proxyInput.syncProxyInput();
+    if (!a11y.controlId) return;
 
-    const field = formRef.current.fields.get(controlId);
+    const field = formRef.current.fields.get(a11y.controlId);
     if (!field) return;
     if (field.validate === wrappedValidateRef.current) return;
 
     nativeValidateRef.current = field.validate;
-    formRef.current.fields.set(controlId, {
+    formRef.current.fields.set(a11y.controlId, {
       ...field,
       validate: wrappedValidateRef.current!,
     });
   });
-
-  const setProxyRef = useCallback(
-    (node: HTMLInputElement | null) => {
-      proxyRef.current = node;
-      fieldRootRef.current.validation.inputRef.current = node;
-      syncProxyInput(stateRef.current, node);
-      assignRef(forwardedRef, node);
-    },
-    [forwardedRef, syncProxyInput],
-  );
-
-  const focusFirstSegment = useCallback(() => {
-    const first = groupRef.current?.querySelector<HTMLElement>('[role="spinbutton"]');
-    first?.focus();
-  }, [groupRef]);
 
   const handleStateChange = useCallback(
     ({
@@ -299,7 +474,7 @@ function useDateFieldA11y({
         localValidationMessage: validationKey ? t(validationKey) : undefined,
       } satisfies DateFieldBridgeState;
       stateRef.current = snapshot;
-      syncProxyInput(snapshot);
+      proxyInput.setProxyState(snapshot);
 
       const root = fieldRootRef.current;
       const initialValue =
@@ -318,14 +493,8 @@ function useDateFieldA11y({
       if (commitLocalValidation(snapshot)) return;
       root.validation.commit(snapshot.inputValue);
     },
-    [clearErrors, commitLocalValidation, syncProxyInput, t],
+    [clearErrors, commitLocalValidation, proxyInput, t],
   );
-
-  const name = fieldRoot.name ?? nameProp;
-  const externalInvalid = fieldRoot.state.valid === false;
-  const derivedInvalid = !!externalInvalid || !!localValidationMessage || !!isInvalid;
-  const labelledBy = joinIds(labelledByProp, labelId);
-  const describedBy = joinIds(describedByProp, ...messageIds);
 
   const handleGroupFocus = useCallback(() => {
     fieldRootRef.current.setFocused(true);
@@ -338,26 +507,19 @@ function useDateFieldA11y({
     onBlur?.();
 
     if (root.validationMode !== "onBlur") return;
-    syncProxyInput();
+    proxyInput.syncProxyInput();
     if (commitLocalValidation()) return;
     root.validation.commit(stateRef.current.inputValue);
-  }, [commitLocalValidation, onBlur, syncProxyInput]);
+  }, [commitLocalValidation, onBlur, proxyInput]);
 
   return {
-    controlId,
-    name,
-    isDisabled,
-    isReadOnly,
-    isRequired,
-    isInvalid: derivedInvalid,
-    labelledBy,
-    describedBy,
-    proxyRef: setProxyRef,
-    focusFirstSegment,
+    ...a11y,
+    isInvalid: a11y.isInvalid || !!localValidationMessage,
+    proxyRef: proxyInput.setProxyRef,
+    focusFirstSegment: proxyInput.focusFirstSegment,
     handleGroupFocus,
     handleGroupBlur,
     handleStateChange,
-    ariaLabel,
   };
 }
 
@@ -424,7 +586,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     const key = invalidMessageKey(state.invalidReason);
     return key ? t(key) : undefined;
   }, [state.invalidReason, t]);
-  const bindings = useDateFieldA11y({
+  const bindings = useDateFieldFieldBridge({
     id,
     name,
     inputValue: state.fieldValue?.toString() ?? "",
@@ -577,7 +739,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     const key = invalidMessageKey(fieldState.invalidReason);
     return key ? t(key) : undefined;
   }, [fieldState.invalidReason, t]);
-  const bindings = useDateFieldA11y({
+  const bindings = useDateFieldFieldBridge({
     id,
     name,
     inputValue: fieldState.fieldValue?.toString() ?? "",
@@ -623,12 +785,10 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     [handleCompositeBlur],
   );
 
-  const popoverAriaLabel =
-    bindings.labelledBy == null
-      ? ariaLabel
-        ? t("chooseDateFor", { name: ariaLabel })
-        : t("chooseDate")
-      : undefined;
+  let popoverAriaLabel: string | undefined;
+  if (bindings.labelledBy == null) {
+    popoverAriaLabel = ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate");
+  }
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>

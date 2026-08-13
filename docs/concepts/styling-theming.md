@@ -14,7 +14,7 @@ To configure your application, import AppShell styles from your global CSS or to
 @import "@tailor-platform/app-shell/styles";
 ```
 
-That is the whole setup. Since 1.7.0, `styles` ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant, so your entry CSS should declare none of them itself. If yours does, see [Migrations → remove the theme bridge workaround](../migrations.md#150--170-remove-the-theme-bridge-workaround) — those leftovers silently break dark mode.
+That is the whole setup. `styles` ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant, so your entry CSS should declare none of them itself. A copy of any of them in your own CSS overrides AppShell's and silently breaks dark mode.
 
 If you want a branded palette, import exactly one theme file after `styles`:
 
@@ -119,7 +119,7 @@ Redeclare any token after the AppShell imports. Use `:root` for light and `:root
 Two rules:
 
 - **Set each override in both modes.** Overriding only `:root` misbehaves either way: on the default palette the light value carries into dark mode, and on a branded palette the override stops applying in dark mode altogether.
-- **Override individual tokens; never copy the palette wholesale.** Copied tokens freeze at the value you copied while everything else tracks AppShell, and the two halves drift apart on upgrade. That is the failure described in [Migrations → remove the theme bridge workaround](../migrations.md#150--170-remove-the-theme-bridge-workaround).
+- **Override individual tokens; never copy the palette wholesale.** Copied tokens freeze at the value you copied while everything else tracks AppShell, so the two halves drift apart — and any surface AppShell adds later has no value in your copy at all.
 
 `:root.dark` rather than `.dark` because the two palette families behave differently. The default palette is imported inside a cascade layer (`layer(theme.defaults)`), so any unlayered declaration of yours beats it. The branded palettes (`cream`, `bloom`) are imported by you, unlayered, and define dark values on `:root.dark` — which outranks a bare `.dark`, so a `.dark` override would silently lose. `:root.dark` is correct against both.
 

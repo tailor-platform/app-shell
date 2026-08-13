@@ -250,7 +250,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
 
 **Used in patterns:** `list/*` (filter sheet variant).
 
-**Notes:** Size the panel with **`contentClassName`** (often `astw:*` utilities). Rules → **`design-system.md`** §5.
+**Notes:** Size the panel with `Sheet.Content`'s **`size`** prop (`"sm" | "md" | "lg" | "xl" | "full"`, default `"sm"`) — not a width utility. `astw:` rules → **`design-system.md`** §5.
 
 ### `Menu`
 
@@ -378,7 +378,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Notes:**
 
-- **Inside a card?** Pass `containerClassName="astw:px-6"` on `Table.Root` for the horizontal inset, and either drop `Card.Content` (bare list form) or pass `Card.Content className="astw:px-0"` (header+content form). Skipping the `containerClassName` lands the first column flush against the card edge. See the `Card` entry for the two canonical forms and a DON'T example. Dense cell typography (**`text-body-sm`**, **`text-mono`**) → **`design-system.md`** §4 Typography.
+- **Inside a card?** Pass `containerClassName="astw:px-6"` on `Table.Root` for the horizontal inset, and either drop `Card.Content` (bare list form) or pass `Card.Content className="astw:px-0"` (header+content form). Skipping the `containerClassName` lands the first column flush against the card edge. See the `Card` entry for the two canonical forms and a DON'T example. Dense cell typography (**`text-sm`**, **`tabular-nums`** for figures, **`font-mono`** for identifiers) → **`design-system.md`** §4 Typography.
 - **Whole row is clickable.** Use `<Table.Row onClick={() => navigate(detailPath)} className="astw:cursor-pointer">`. For keyboard and screen-reader users, also wrap the primary identifier cell content in `<Link>` (so the row is reachable via Tab; `Table.Row` is a `<tr>` and cannot itself be a Link — wrapping a `<tr>` in `<a>` is invalid HTML). **No per-row "View" / "Open" / "→" buttons.** Per-row `Menu` (overflow `…`) is the only allowed per-row action surface and is reserved for non-navigation actions like Archive, Duplicate.
 
 ### `DataTable`

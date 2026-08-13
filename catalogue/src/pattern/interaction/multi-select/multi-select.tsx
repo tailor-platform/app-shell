@@ -73,7 +73,7 @@ export default function MultiSelect({ orders, onArchive, onExport }: Props) {
         <div
           role="toolbar"
           aria-label="Bulk actions"
-          className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-md border bg-surface-2 px-3 py-2 shadow-lg"
+          className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-md border bg-popover px-3 py-2 shadow-lg"
         >
           <span className="text-sm font-medium">{selectedCount} selected</span>
           <Button size="sm" onClick={() => onArchive([...selectedIds])}>

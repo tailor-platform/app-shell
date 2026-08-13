@@ -147,28 +147,8 @@ type SidebarLayoutBodyProps = SidebarLayoutCommonProps & {
  */
 export type SidebarLayoutProps = SidebarLayoutDefaultProps | SidebarLayoutBodyProps;
 
-// Widened view of the union for use inside the component, where both branches
-// are handled at once.
-type SidebarLayoutAnyProps = SidebarLayoutCommonProps & {
-  header?: React.ReactNode;
-  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
-  body?: React.ReactNode;
-};
-
 export function SidebarLayout(props: SidebarLayoutProps) {
-  const { sidebar, header, children, body, defaultOpen, collapsible } =
-    props as SidebarLayoutAnyProps;
-
-  // The union already makes this a type error. Types are erased at runtime
-  // though, so keep the guard for JS consumers and `as any` escapes — the
-  // failure mode otherwise is a silently dropped header.
-  if (body && (header || children)) {
-    console.warn(
-      "[AppShell] SidebarLayout received `body` alongside `header` and/or `children`. " +
-        "`body` replaces the entire region to the right of the sidebar, so those props are ignored. " +
-        "Place your header inside `body` (e.g. via <SidebarLayout.ContentContainer header={…}>) instead.",
-    );
-  }
+  const { sidebar, header, children, body, defaultOpen, collapsible } = props;
 
   return (
     <SidebarProvider

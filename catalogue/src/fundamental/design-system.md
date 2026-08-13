@@ -132,26 +132,15 @@ Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `
 
 `--chart-1` … `--chart-5` → `bg-chart-1`, `text-chart-1`, `fill-chart-1`. Use them in order for categorical series.
 
-#### Alerts
+#### Alerts — variables only, no utilities
 
-`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` — five variants × four slots, each bridged into Tailwind:
+`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` exist as raw CSS variables but are **deliberately not in the Tailwind bridge**. `bg-alert-success-background` is not a class and will emit nothing.
 
-| Slot               | Tailwind                           | Use for                    |
-| ------------------ | ---------------------------------- | -------------------------- |
-| `background`       | `bg-alert-info-background`         | Callout fill               |
-| `foreground`       | `text-alert-info-foreground`       | Primary text and icons     |
-| `foreground-muted` | `text-alert-info-foreground-muted` | Secondary/description text |
-| `border`           | `border-alert-info-border`         | Callout border             |
-
-Prefer the `Alert` component — it already pairs the four slots per variant and supplies the icon. Reach for the utilities directly only on custom surfaces `Alert` doesn't cover, such as a status-highlighted table row or an inline note:
+Use the `Alert` component. If you genuinely need these on a custom surface, reference them directly:
 
 ```tsx
-<div className="rounded-lg border bg-alert-warning-background text-alert-warning-foreground border-alert-warning-border">
-  …
-</div>
+<div style={{ borderColor: "var(--alert-warning-border)" }} />
 ```
-
-The `background` and `border` slots are already semi-transparent tints (~10% and ~20%), so an opacity modifier compounds rather than replaces — `bg-alert-info-background/50` lands near 5% alpha, not 50%.
 
 ```tsx
 // Good — semantic token pairs, and a variant where one exists

@@ -5,27 +5,7 @@ import { DefaultHeader } from "./default-header";
 import { ContentContainer } from "./content-container";
 import { Trigger } from "./sidebar-trigger";
 
-export type SidebarLayoutProps = {
-  /**
-   * Custom content renderer.
-   *
-   * Ignored when `body` is set — `body` replaces the region this renders into.
-   *
-   * @example
-   * ```tsx
-   * <SidebarLayout>
-   *   {({ Outlet }) => (
-   *     <>
-   *       <CustomHeader />
-   *       <Outlet />
-   *       <CustomFooter />
-   *     </>
-   *   )}
-   * </SidebarLayout>
-   * ```
-   */
-  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
-
+type SidebarLayoutCommonProps = {
   /**
    * Custom sidebar content. Replaces the whole sidebar region.
    *
@@ -38,14 +18,33 @@ export type SidebarLayoutProps = {
   sidebar?: React.ReactNode;
 
   /**
+   * Whether the sidebar is open by default on desktop.
+   *
+   * @default true
+   */
+  defaultOpen?: boolean;
+
+  /**
+   * Whether the sidebar can be collapsed.
+   * When set to `false`, the sidebar is always visible and cannot be toggled.
+   * `defaultOpen` is ignored when this is `false`.
+   *
+   * @default true
+   */
+  collapsible?: boolean;
+};
+
+/**
+ * The default layout: AppShell owns the content column, you customise its
+ * header and content.
+ */
+type SidebarLayoutDefaultProps = SidebarLayoutCommonProps & {
+  /**
    * Custom header content. Replaces the whole top-bar region.
    *
    * Omit it for the built-in header. To slightly extend the built-in header
    * (e.g. add a notification bell), pass `<SidebarLayout.DefaultHeader />` with
    * its `actions` slot rather than reconstructing the header from scratch.
-   *
-   * Ignored when `body` is set — with `body` you place the header yourself,
-   * inside (or outside) `<SidebarLayout.ContentContainer>`.
    *
    * @default <SidebarLayout.DefaultHeader />
    * @example
@@ -66,6 +65,34 @@ export type SidebarLayoutProps = {
   header?: React.ReactNode;
 
   /**
+   * Custom content renderer.
+   *
+   * @example
+   * ```tsx
+   * <SidebarLayout>
+   *   {({ Outlet }) => (
+   *     <>
+   *       <CustomHeader />
+   *       <Outlet />
+   *       <CustomFooter />
+   *     </>
+   *   )}
+   * </SidebarLayout>
+   * ```
+   */
+  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
+
+  /** Not available alongside `header`/`children` — see the `body` overload. */
+  body?: never;
+};
+
+/**
+ * The eject: you own the whole region beside the sidebar, including where the
+ * header goes. `header` and `children` are unavailable here by construction —
+ * they describe a content column you are now supplying yourself.
+ */
+type SidebarLayoutBodyProps = SidebarLayoutCommonProps & {
+  /**
    * Replaces everything to the right of the sidebar — the escape hatch for
    * page layouts the default content column can't express, such as a
    * table-of-contents rail or an assistant panel docked flush against the
@@ -82,8 +109,8 @@ export type SidebarLayoutProps = {
    * - `<SidebarLayout.Trigger />` — the sidebar collapse toggle
    * - `useAppShellSidebar()` — subscribe to the sidebar's collapsed state
    *
-   * Setting `body` takes over the whole region, so `header` and `children` no
-   * longer apply and are ignored.
+   * The header lives inside `body` too — pass it to `ContentContainer` so it
+   * stays pinned above that column's scroll region.
    *
    * @example
    * ```tsx
@@ -104,27 +131,38 @@ export type SidebarLayoutProps = {
    * />
    * ```
    */
+  body: React.ReactNode;
+
+  /** Place your header inside `body`, via `<SidebarLayout.ContentContainer header={…}>`. */
+  header?: never;
+
+  /** Place your content inside `body`, via `<SidebarLayout.Outlet />`. */
+  children?: never;
+};
+
+/**
+ * Either the default layout (`header` + `children`) or the ejected one (`body`)
+ * — never both. Passing `body` alongside `header`/`children` is a type error,
+ * because `body` replaces the very region those two describe.
+ */
+export type SidebarLayoutProps = SidebarLayoutDefaultProps | SidebarLayoutBodyProps;
+
+// Widened view of the union for use inside the component, where both branches
+// are handled at once.
+type SidebarLayoutAnyProps = SidebarLayoutCommonProps & {
+  header?: React.ReactNode;
+  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
   body?: React.ReactNode;
-
-  /**
-   * Whether the sidebar is open by default on desktop.
-   *
-   * @default true
-   */
-  defaultOpen?: boolean;
-
-  /**
-   * Whether the sidebar can be collapsed.
-   * When set to `false`, the sidebar is always visible and cannot be toggled.
-   * `defaultOpen` is ignored when this is `false`.
-   *
-   * @default true
-   */
-  collapsible?: boolean;
 };
 
 export function SidebarLayout(props: SidebarLayoutProps) {
-  if (props.body && (props.header || props.children)) {
+  const { sidebar, header, children, body, defaultOpen, collapsible } =
+    props as SidebarLayoutAnyProps;
+
+  // The union already makes this a type error. Types are erased at runtime
+  // though, so keep the guard for JS consumers and `as any` escapes — the
+  // failure mode otherwise is a silently dropped header.
+  if (body && (header || children)) {
     console.warn(
       "[AppShell] SidebarLayout received `body` alongside `header` and/or `children`. " +
         "`body` replaces the entire region to the right of the sidebar, so those props are ignored. " +
@@ -134,15 +172,15 @@ export function SidebarLayout(props: SidebarLayoutProps) {
 
   return (
     <SidebarProvider
-      defaultOpen={props.defaultOpen}
-      collapsible={props.collapsible}
+      defaultOpen={defaultOpen}
+      collapsible={collapsible}
       className="astw:flex astw:flex-col"
     >
       <div className="astw:flex astw:flex-1 astw:min-h-0">
-        {props.sidebar ?? <DefaultSidebar />}
-        {props.body ?? (
-          <ContentContainer header={props.header ?? <DefaultHeader />}>
-            {props.children ? props.children({ Outlet: AppShellOutlet }) : <AppShellOutlet />}
+        {sidebar ?? <DefaultSidebar />}
+        {body ?? (
+          <ContentContainer header={header ?? <DefaultHeader />}>
+            {children ? children({ Outlet: AppShellOutlet }) : <AppShellOutlet />}
           </ContentContainer>
         )}
       </div>

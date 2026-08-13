@@ -1,6 +1,6 @@
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, afterEach, assert } from "vitest";
+import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
@@ -15,18 +15,12 @@ import { AppShell } from "@/components/appshell";
 import { Home, Package } from "lucide-react";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
-const originalNavigatorPlatform = navigator.platform;
-
-const setNavigatorPlatform = (platform: string) => {
-  Object.defineProperty(navigator, "platform", {
-    configurable: true,
-    value: platform,
-  });
-};
+const mockNavigatorPlatform = (platform: string) =>
+  vi.spyOn(window.navigator, "platform", "get").mockReturnValue(platform);
 
 afterEach(() => {
   cleanup();
-  setNavigatorPlatform(originalNavigatorPlatform);
+  vi.restoreAllMocks();
 });
 
 const createTestModules = () => [
@@ -83,7 +77,7 @@ const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboa
 describe("DefaultSidebar", () => {
   it("renders an input-like search entry with mac shortcut hint, spacing, and opens the palette", async () => {
     const user = userEvent.setup();
-    setNavigatorPlatform("MacIntel");
+    mockNavigatorPlatform("MacIntel");
 
     render(
       <AppShell title="Test" modules={createTestModules()}>
@@ -105,7 +99,7 @@ describe("DefaultSidebar", () => {
   });
 
   it("renders windows shortcut hint on non-mac platforms", async () => {
-    setNavigatorPlatform("Win32");
+    mockNavigatorPlatform("Win32");
 
     render(
       <AppShell title="Test" modules={createTestModules()}>

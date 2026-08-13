@@ -80,7 +80,7 @@ export {
   type ErrorBoundaryComponent,
 } from "./resource";
 
-// Re-exports react-router hooks
+// Re-exports react-router hooks and components
 export {
   useLocation,
   useNavigate,
@@ -88,6 +88,7 @@ export {
   useSearchParams,
   useRouteError,
   Link,
+  Navigate,
 } from "react-router";
 
 // File-based routing types

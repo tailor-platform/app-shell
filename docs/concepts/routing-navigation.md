@@ -11,7 +11,7 @@ To use client-side navigation from AppShell pages, use the exports from `@tailor
 
 ## Exported React Router Hooks
 
-AppShell re-exports the following hooks from `react-router` for use in your components:
+AppShell re-exports the following hooks and components from `react-router` for use in your components:
 
 - `useLocation` - Access the current location object
 - `useNavigate` - Programmatic navigation
@@ -19,6 +19,7 @@ AppShell re-exports the following hooks from `react-router` for use in your comp
 - `useSearchParams` - Access and manipulate URL search parameters
 - `useRouteError` - Access error details in error boundaries
 - `Link` - Client-side navigation component
+- `Navigate` - Declarative redirect component
 
 ### Example Usage
 
@@ -48,6 +49,37 @@ const MyComponent = () => {
   );
 };
 ```
+
+## Declarative Redirects
+
+`Navigate` redirects as a render result, which avoids the `useEffect` + `navigate()` pattern (that pattern renders the old page for a frame before it redirects):
+
+```tsx
+import { Navigate, useAppShellData } from "@tailor-platform/app-shell";
+
+const AdminPage = () => {
+  const { currentUser } = useAppShellData();
+
+  if (currentUser?.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <AdminDashboard />;
+};
+```
+
+Pass `replace` when the redirect should not leave the abandoned route in history — otherwise the browser Back button lands the user right back on it, and bounces them forward again.
+
+### Choosing between `Navigate` and `redirectTo()`
+
+Both redirect, but they run at different points:
+
+|                                                | Runs                                     | Use for                                                                                            |
+| ---------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [`redirectTo()`](../api/guards/redirect-to.md) | Route guard, before the component mounts | Route-level access control — the preferred option when the decision can be made from guard context |
+| `Navigate`                                     | During render, from inside a component   | Decisions that depend on component state, hooks, or fetched data                                   |
+
+Reach for `redirectTo()` first: it never mounts the component. `Navigate` is the fallback for cases a guard cannot express — notably [`WithGuard`](../components/with-guard.md), which does not support `redirectTo()`.
 
 ## Breadcrumbs
 

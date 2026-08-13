@@ -248,30 +248,24 @@ function useDateFieldProxyInput({
   validationInputRef,
 }: DateFieldProxyInputOptions) {
   const proxyRef = useRef<HTMLInputElement>(null);
-  const snapshotRef = useRef<DateFieldProxyInputState>({
-    inputValue,
-    localValidationMessage,
-  });
-  snapshotRef.current = {
-    inputValue,
-    localValidationMessage,
-  };
 
   const syncProxyInput = useCallback(
     (
-      snapshot: DateFieldProxyInputState = snapshotRef.current,
+      snapshot: DateFieldProxyInputState = {
+        inputValue,
+        localValidationMessage,
+      },
       node: HTMLInputElement | null = proxyRef.current,
     ) => {
       if (!node) return;
       if (node.value !== snapshot.inputValue) node.value = snapshot.inputValue;
       node.setCustomValidity(snapshot.localValidationMessage ?? "");
     },
-    [],
+    [inputValue, localValidationMessage],
   );
 
   const setProxyState = useCallback(
     (snapshot: DateFieldProxyInputState) => {
-      snapshotRef.current = snapshot;
       syncProxyInput(snapshot);
     },
     [syncProxyInput],
@@ -281,7 +275,7 @@ function useDateFieldProxyInput({
     (node: HTMLInputElement | null) => {
       proxyRef.current = node;
       validationInputRef.current = node;
-      syncProxyInput(snapshotRef.current, node);
+      syncProxyInput(undefined, node);
       assignRef(forwardedRef, node);
     },
     [forwardedRef, syncProxyInput, validationInputRef],
@@ -292,13 +286,15 @@ function useDateFieldProxyInput({
     first?.focus();
   }, [groupRef]);
 
+  const getValue = useCallback(() => proxyRef.current?.value ?? inputValue, [inputValue]);
+
   return {
     proxyRef,
     setProxyRef,
     setProxyState,
     syncProxyInput,
     focusFirstSegment,
-    getValue: () => proxyRef.current?.value ?? snapshotRef.current.inputValue,
+    getValue,
   };
 }
 
@@ -349,9 +345,6 @@ function useDateFieldFieldBridge({
   forwardedRef,
 }: DateFieldFieldBridgeOptions) {
   const fieldRoot = useFieldRootContext();
-  const fieldRootRef = useRef(fieldRoot);
-  fieldRootRef.current = fieldRoot;
-
   const { formRef, clearErrors } = useFormContext();
   const t = useDateFieldT();
   const proxyInput = useDateFieldProxyInput({
@@ -373,15 +366,20 @@ function useDateFieldFieldBridge({
     ariaLabel,
     proxyRef: proxyInput.proxyRef,
   });
-  const nameRef = useRef(nameProp);
-  nameRef.current = nameProp;
 
-  const stateRef = useRef<DateFieldBridgeState>({
-    inputValue,
-    hasInput,
-    localValidationMessage,
+  const bridgeRef = useRef({
+    fieldRoot,
+    fieldName: nameProp,
+    state: {
+      inputValue,
+      hasInput,
+      localValidationMessage,
+    } as DateFieldBridgeState,
+    nativeValidate: null as (() => void) | null,
   });
-  stateRef.current = {
+  bridgeRef.current.fieldRoot = fieldRoot;
+  bridgeRef.current.fieldName = nameProp;
+  bridgeRef.current.state = {
     inputValue,
     hasInput,
     localValidationMessage,
@@ -401,11 +399,11 @@ function useDateFieldFieldBridge({
   );
 
   const commitLocalValidation = useCallback(
-    (snapshot: DateFieldBridgeState = stateRef.current) => {
+    (snapshot: DateFieldBridgeState = bridgeRef.current.state) => {
       const message = snapshot.localValidationMessage;
       if (!message) return false;
 
-      const root = fieldRootRef.current;
+      const root = bridgeRef.current.fieldRoot;
       const nextValidityData: FieldValidityData = {
         value: snapshot.inputValue,
         state: {
@@ -425,14 +423,13 @@ function useDateFieldFieldBridge({
     [updateRegisteredValidity],
   );
 
-  const nativeValidateRef = useRef<(() => void) | null>(null);
   const wrappedValidateRef = useRef<(() => void) | undefined>(undefined);
   if (!wrappedValidateRef.current) {
     wrappedValidateRef.current = () => {
-      const snapshot = stateRef.current;
+      const snapshot = bridgeRef.current.state;
       proxyInput.syncProxyInput(snapshot);
       if (commitLocalValidation(snapshot)) return;
-      nativeValidateRef.current?.();
+      bridgeRef.current.nativeValidate?.();
     };
   }
 
@@ -453,7 +450,7 @@ function useDateFieldFieldBridge({
     if (!field) return;
     if (field.validate === wrappedValidateRef.current) return;
 
-    nativeValidateRef.current = field.validate;
+    bridgeRef.current.nativeValidate = field.validate;
     formRef.current.fields.set(a11y.controlId, {
       ...field,
       validate: wrappedValidateRef.current!,
@@ -473,10 +470,10 @@ function useDateFieldFieldBridge({
         hasInput: nextHasInput,
         localValidationMessage: validationKey ? t(validationKey) : undefined,
       } satisfies DateFieldBridgeState;
-      stateRef.current = snapshot;
+      bridgeRef.current.state = snapshot;
       proxyInput.setProxyState(snapshot);
 
-      const root = fieldRootRef.current;
+      const root = bridgeRef.current.fieldRoot;
       const initialValue =
         typeof root.validityData.initialValue === "string" ? root.validityData.initialValue : "";
 
@@ -487,7 +484,7 @@ function useDateFieldFieldBridge({
 
       if (source === "external") return;
 
-      const fieldName = root.name ?? nameRef.current;
+      const fieldName = root.name ?? bridgeRef.current.fieldName;
       if (fieldName) clearErrors(fieldName);
       if (!root.shouldValidateOnChange()) return;
       if (commitLocalValidation(snapshot)) return;
@@ -497,11 +494,11 @@ function useDateFieldFieldBridge({
   );
 
   const handleGroupFocus = useCallback(() => {
-    fieldRootRef.current.setFocused(true);
+    bridgeRef.current.fieldRoot.setFocused(true);
   }, []);
 
   const handleGroupBlur = useCallback(() => {
-    const root = fieldRootRef.current;
+    const root = bridgeRef.current.fieldRoot;
     root.setTouched(true);
     root.setFocused(false);
     onBlur?.();
@@ -509,7 +506,7 @@ function useDateFieldFieldBridge({
     if (root.validationMode !== "onBlur") return;
     proxyInput.syncProxyInput();
     if (commitLocalValidation()) return;
-    root.validation.commit(stateRef.current.inputValue);
+    root.validation.commit(bridgeRef.current.state.inputValue);
   }, [commitLocalValidation, onBlur, proxyInput]);
 
   return {

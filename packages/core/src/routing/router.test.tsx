@@ -198,8 +198,7 @@ describe("RouterContainer (memory)", () => {
   });
 
   // Pins that a declarative redirect resolves relative to the basename, the
-  // part AppShell owns. That the public entry re-exports this same component
-  // is covered separately in index.test.ts.
+  // part AppShell owns.
   it("redirects declaratively using Navigate", async () => {
     const overviewResource = defineResource({
       path: "overview",

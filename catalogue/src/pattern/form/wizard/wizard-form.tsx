@@ -56,7 +56,7 @@ export default function WizardForm({ onComplete }: Props) {
             )}
             {currentStep === 1 && (
               <div className="space-y-4">
-                <p className="text-fg-muted">Map CSV columns to product fields</p>
+                <p className="text-sm text-muted-foreground">Map CSV columns to product fields</p>
                 <Field.Root name="nameColumn">
                   <Field.Label>Name column</Field.Label>
                   <Field.Control render={<Input placeholder="e.g. Column A" />} />
@@ -69,12 +69,14 @@ export default function WizardForm({ onComplete }: Props) {
             )}
             {currentStep === 2 && (
               <div className="space-y-4">
-                <p className="text-fg-muted">Review your import — 42 products will be created.</p>
+                <p className="text-sm text-muted-foreground">
+                  Review your import — 42 products will be created.
+                </p>
               </div>
             )}
             {currentStep === 3 && (
               <div className="space-y-4">
-                <p className="text-fg-default">Import complete! 42 products created.</p>
+                <p className="text-sm text-foreground">Import complete! 42 products created.</p>
               </div>
             )}
           </Card.Content>

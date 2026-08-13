@@ -1,6 +1,9 @@
-# E2E Tests for AuthProvider and AI Gateway
+# E2E Tests for AuthProvider, Routing, and AI Gateway
 
-Playwright-based E2E tests that verify the AuthProvider OAuth authentication flow and a minimal AI Gateway smoke check against a real Tailor Platform workspace.
+Playwright-based E2E tests that cover two layers:
+
+- a routing smoke suite backed by a fake-auth fixture for AppShell + React Router integration
+- a real-auth suite that exercises the hosted Tailor Platform OAuth flow plus a minimal AI Gateway smoke check on separate `/auth` and `/ai` pages
 
 ## Setup
 
@@ -51,10 +54,10 @@ mutation CreateUserProfile {
 ### 3. Configure environment
 
 ```bash
-cp e2e/.env.example e2e/.env
+cp e2e/tests/real-auth/.env.example e2e/tests/real-auth/.env
 ```
 
-Fill in `VITE_TAILOR_APP_URL`, `VITE_TAILOR_CLIENT_ID`, and `VITE_TAILOR_AI_GATEWAY_URL` (retrieved above). The test user credentials are pre-filled.
+Put the hosted OAuth / AI Gateway values in `e2e/tests/real-auth/.env`. The test user credentials are pre-filled in the example file. The routing suite does not need env setup.
 
 ### 4. Install dependencies & browsers
 
@@ -67,19 +70,22 @@ cd e2e && npx playwright install chromium
 
 ```bash
 # From monorepo root
-cd e2e && pnpm test
+cd e2e && pnpm test:e2e
 
 # With Playwright UI
-cd e2e && pnpm test:ui
+cd e2e && pnpm test:e2e:ui
 
-# Dev server only (for debugging)
-cd e2e && pnpm dev
+# One suite app only (for debugging)
+cd e2e && pnpm exec vite --config tests/routing/app/vite.config.ts
+cd e2e && pnpm exec vite --config tests/real-auth/app/vite.config.ts
 ```
 
 ## Test Scenarios
 
 | Test                | Description                                                         |
 | ------------------- | ------------------------------------------------------------------- |
+| Routing deep link   | Protected nested route stays intact after fake-auth login           |
+| Routing navigation  | Covers `Link`, `useNavigate`, redirect guards, reload, and logout   |
 | Auth guard display  | Verifies unauthenticated users see the login UI                     |
 | Login flow          | Full OAuth redirect → IDP login → callback → authenticated state    |
 | Logout              | Verifies logout returns to auth guard                               |
@@ -90,13 +96,19 @@ cd e2e && pnpm dev
 
 ```
 e2e/
-├── app/              # Minimal Vite app with AuthProvider
-│   ├── src/App.tsx   # Test app using AuthProvider + guardComponent
-│   └── vite.config.ts
-├── backend/          # Tailor Platform config for E2E workspace
+├── backend/                         # Tailor Platform config for E2E workspace
 │   ├── tailor.config.ts
 │   └── src/tailordb/user.ts
-├── tests/
-│   └── auth.spec.ts  # Playwright test specs
-└── playwright.config.ts
+└── tests/
+    ├── routing/
+    │   ├── app/                    # Suite-specific Vite app for routing smoke tests
+    │   │   └── src/
+    │   │       ├── App.tsx
+    │   │       └── fake-auth-client.ts
+    │   └── routing.spec.ts
+    └── real-auth/
+        ├── app/                    # Suite-specific Vite app for hosted OAuth / AI smoke tests
+        │   └── src/
+        │       └── App.tsx
+        └── auth.spec.ts            # Auth flow tests, plus AI smoke via the /ai page
 ```

@@ -5,8 +5,7 @@
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "dev": "vite --config app/vite.config.ts",
-    "lint": "oxlint app/src app/vite.config.ts backend/tailor.config.ts tests playwright.config.ts",
+    "lint": "oxlint tests backend/tailor.config.ts playwright.config.ts",
     "type-check": "tsc --project tsconfig.json --noEmit",
     "deploy:backend": "cd backend && tailor-sdk apply --workspace-id $TAILOR_PLATFORM_WORKSPACE_ID --yes"
   },

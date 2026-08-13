@@ -133,4 +133,4 @@ This ensures you're using AppShell's router instance.
 
 - [useParams](./use-params.md) - Access route parameters
 - [useLocation](./use-location.md) - Access current location
-- [Routing & Navigation](../../concepts/routing-navigation.md) - Navigation guide
+- [Routing & Navigation](../../concepts/routing-navigation.md) - Navigation guide, including the `Navigate` component for declarative redirects

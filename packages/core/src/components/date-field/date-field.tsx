@@ -93,7 +93,7 @@ interface DateControlProps<T extends DateValue> {
   granularity?: Granularity;
   minValue?: DateValue;
   maxValue?: DateValue;
-  isDateUnavailable?: (date: T) => boolean;
+  isDateUnavailable?: (date: DateValue) => boolean;
   isDisabled?: boolean;
   isReadOnly?: boolean;
   isRequired?: boolean;
@@ -323,9 +323,9 @@ function useDateFieldProxyInput({
  * `useDateFieldProxyInput()` handles the DOM-facing hidden-input mechanics;
  * this hook stays focused on the form-state contract layered on top of it.
  *
- * One `useEffect` remains intentionally: Base UI creates the form-registry
- * entry after registration, so we replace its `validate` handler once that
- * entry exists.
+ * Base UI refreshes the registry entry from layout effects whenever the
+ * registered value / validity changes, so we re-apply our wrapped `validate`
+ * handler after those writes settle instead of on every render.
  */
 function useDateFieldFieldBridge({
   id: idProp,
@@ -441,8 +441,8 @@ function useDateFieldFieldBridge({
     !a11y.isDisabled,
   );
 
-  // Base UI creates the form-registry entry after control registration, so we
-  // replace `field.validate` here once that entry exists.
+  // Base UI registers / refreshes the field entry from layout effects, so patch
+  // the registry after those writes settle whenever that entry's inputs change.
   useEffect(() => {
     if (!a11y.controlId) return;
 
@@ -455,7 +455,14 @@ function useDateFieldFieldBridge({
       ...field,
       validate: wrappedValidateRef.current!,
     });
-  });
+  }, [
+    a11y.controlId,
+    a11y.isDisabled,
+    fieldRoot.state.valid,
+    fieldRoot.validityData,
+    formRef,
+    inputValue,
+  ]);
 
   const handleStateChange = useCallback(
     ({
@@ -574,7 +581,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     placeholderValue,
     minValue,
     maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDateUnavailable,
     firstDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
@@ -711,7 +718,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     placeholderValue,
     minValue,
     maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDateUnavailable,
     firstDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
@@ -724,7 +731,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     },
     minValue,
     maxValue,
-    isDateUnavailable: isDateUnavailable as ((date: DateValue) => boolean) | undefined,
+    isDateUnavailable,
     isDisabled: resolvedDisabled,
     isReadOnly: resolvedReadOnly,
     firstDayOfWeek,

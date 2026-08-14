@@ -1008,6 +1008,50 @@ describe("DatePicker", () => {
     expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ deliveryDate: "2025-06-15" });
   });
 
+  it("supports the controlled Form + Field.Root flow from the example page", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    function ControlledFormDatePicker() {
+      const [deliveryDate, setDeliveryDate] = useState<CalendarDate | null>(null);
+      return (
+        <Form onFormSubmit={onFormSubmit}>
+          <Field.Root name="deliveryDate">
+            <Field.Label>Delivery date</Field.Label>
+            <DatePicker
+              value={deliveryDate}
+              onChange={(value) => {
+                setDeliveryDate(value as CalendarDate | null);
+              }}
+              isRequired
+              minValue={today(getLocalTimeZone())}
+            />
+            <Field.Error match="valueMissing">Please select a delivery date.</Field.Error>
+            <Field.Error match="customError" />
+          </Field.Root>
+          <button type="submit">Save</button>
+        </Form>
+      );
+    }
+
+    render(<ControlledFormDatePicker />);
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onFormSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+    await user.click(getEnabledCalendarCells()[0]);
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(onFormSubmit).toHaveBeenCalled();
+    });
+    expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ deliveryDate: expect.any(String) });
+  });
+
   it("blocks Form submit when defaultValue is out of range", async () => {
     const user = userEvent.setup();
     const onFormSubmit = vi.fn();

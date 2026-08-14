@@ -34,6 +34,48 @@ E.g.
 
 Note, many of these are default Tailwind colors, but there are some differences. If you omit this, much of the UI will look the same, but we will lose some of the Tailor-preferred colors.
 
+## Semantic color utilities
+
+Beyond the standard shadcn/Tailwind names (`background`, `muted`, `primary`, …), AppShell bridges two semantic token families into Tailwind's color namespace, so they work with any color utility (`bg-`, `text-`, `border-`, `ring-`, …) and appear in editor autocomplete.
+
+**Status** — flat colors, typically for badges and indicators:
+
+| Utility suffix     | Token                |
+| ------------------ | -------------------- |
+| `status-default`   | `--status-default`   |
+| `status-neutral`   | `--status-neutral`   |
+| `status-completed` | `--status-completed` |
+| `status-attention` | `--status-attention` |
+| `status-danger`    | `--status-danger`    |
+
+```tsx
+<span className="bg-status-attention">Pending review</span>
+```
+
+**Alert** — grouped sets for callouts, banners, and highlighted rows. Each of the five variants (`neutral`, `success`, `warning`, `error`, `info`) provides four slots:
+
+| Slot               | Utility example                    | Use for                    |
+| ------------------ | ---------------------------------- | -------------------------- |
+| `background`       | `bg-alert-info-background`         | Callout fill               |
+| `foreground`       | `text-alert-info-foreground`       | Primary text and icons     |
+| `foreground-muted` | `text-alert-info-foreground-muted` | Secondary/description text |
+| `border`           | `border-alert-info-border`         | Callout border             |
+
+```tsx
+<div className="rounded-lg border px-4 py-3 bg-alert-info-background text-alert-info-foreground border-alert-info-border">
+  <p className="font-medium">Heads up</p>
+  <p className="text-alert-info-foreground-muted">
+    This is the same palette the built-in Alert uses.
+  </p>
+</div>
+```
+
+These are the tokens the [`Alert`](../components/alert.md) component uses internally — reach for them when you need the same callout treatment somewhere `Alert` doesn't fit. All twenty resolve in both light and dark mode, and branded palettes inherit them from the default palette.
+
+> Prefer these named utilities over arbitrary-value syntax like `bg-[color:var(--alert-info-background)]`. Both produce identical CSS, but a typo in an arbitrary value fails silently — the element simply renders unstyled — whereas a misspelled utility class is caught by editor tooling.
+
+Note that the `background` and `border` slots are already semi-transparent (a ~10% and ~20% tint respectively). An opacity modifier therefore compounds rather than replaces: `bg-alert-info-background/50` yields roughly 5% alpha, not 50%. Set the background with an unmodified utility, or reach for the underlying accent color if you need a specific opacity.
+
 ## A note on AppShell component class names
 
 AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.

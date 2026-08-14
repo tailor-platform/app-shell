@@ -209,6 +209,46 @@ Links to related documents with auto-generated URLs using react-router `<Link>` 
 }
 ```
 
+## Custom Rendering
+
+When no built-in `type` fits, pass `render` to draw the field yourself. It receives the resolved value at `key` (dot notation is applied first) and the full `data` object:
+
+```tsx
+<DescriptionCard
+  data={orderData}
+  title="Order"
+  fields={[
+    { key: "orderNumber", label: "Order Number" }, // default text
+    { key: "status", label: "Status", type: "badge" }, // preset
+    {
+      key: "deliveryBreakdown",
+      label: "Delivery",
+      render: (value) => <PieChart data={value} />, // fully custom
+    },
+  ]}
+/>
+```
+
+Use the second argument to draw from related keys:
+
+```tsx
+{
+  key: "total",
+  label: "Total",
+  render: (value, data) => (
+    <MoneyWithConversion amount={value} from={data.currency} to="USD" />
+  ),
+}
+```
+
+This is the same convention as [DataTable's](./data-table.md) column `render`, so the two data-display components behave alike.
+
+### Rules
+
+- **`render` always wins over `type`.** Both may be set, but the built-in renderer is skipped entirely.
+- **`meta` is not applied.** A custom renderer owns its own presentation — the copy button, truncation, badge maps, and the `–` empty placeholder are all built-in behaviour that `render` replaces. Render them yourself if you want them.
+- **`render` still runs for empty values,** so you decide how to display them. `emptyBehavior: "hide"` is checked first and removes the field before `render` is called.
+
 ## Dividers
 
 Use dividers to visually separate field groups:
@@ -469,10 +509,10 @@ The component uses container queries for responsive layouts:
 
 ## TypeScript
 
-Full type safety with TypeScript:
+`DescriptionCard` is generic over the shape of `data`, which is normally inferred:
 
 ```typescript
-import { type DescriptionCardProps } from "@tailor-platform/app-shell";
+import { DescriptionCard, type DescriptionCardProps } from "@tailor-platform/app-shell";
 
 // Define your data type
 interface Order {
@@ -483,15 +523,32 @@ interface Order {
   currency: string;
 }
 
-// Type-safe field definitions
-const fields: DescriptionCardProps["fields"] = [
+declare const orderData: Order;
+
+// `data` inside render is typed as Order - no annotation needed
+<DescriptionCard
+  data={orderData}
+  title="Order"
+  fields={[
+    { key: "orderNumber", label: "Order" },
+    { key: "status", label: "Status", type: "badge" },
+    { key: "total", label: "Total", render: (value, data) => `${value} ${data.currency}` },
+  ]}
+/>;
+```
+
+To declare the fields array separately, parameterise `DescriptionCardProps` with your data type so `render` callbacks stay typed:
+
+```typescript
+const fields: DescriptionCardProps<Order>["fields"] = [
   { key: "orderNumber", label: "Order" },
-  { key: "status", label: "Status", type: "badge" },
-  // ... more fields
+  { key: "total", label: "Total", render: (value, data) => `${value} ${data.currency}` },
 ];
 
-<DescriptionCard<Order> data={orderData} fields={fields} />
+<DescriptionCard<Order> data={orderData} title="Order" fields={fields} />;
 ```
+
+`key` is a plain `string` and accepts dot-notation paths, so the value passed to `render` is `unknown` — narrow it yourself.
 
 ## Related Components
 

@@ -35,21 +35,23 @@ Tokens exist in two layers, and knowing which one you are touching matters:
 1. **Raw CSS variables** (`--background`, `--primary`, `--radius`) — defined on `:root` in `themes/*.css`. These are what you **override**.
 2. **The Tailwind bridge** (`@theme inline` in `theme.bridge.css`) — maps each raw variable into Tailwind's namespace (`--background` → `--color-background`), which is what makes `bg-background` a real utility. You do **not** edit this layer.
 
-Override raw variables in `:root` (global) or a scoped selector, after the `styles` import:
+Override raw variables after the `styles` import, using `:root` for light and `:root.dark` for dark. Set every override in both modes — overriding just `:root` misbehaves either way: on the default palette the light value carries into dark mode, and on a branded palette the override stops applying in dark mode altogether.
 
 ```css
 :root {
   --primary: #3b82f6;
-  --background: #ffffff;
 }
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
+:root.dark {
+  --primary: #60a5fa;
 }
 ```
 
-Override at the highest scope where the change applies. Do not duplicate token values across files — change them at the source.
+Use `:root.dark`, not a bare `.dark`. The default palette is imported inside a cascade layer (`layer(theme.defaults)`), so any unlayered declaration of yours beats it — but the branded palettes (`cream`, `bloom`) are imported unlayered and define their dark values on `:root.dark`, which outranks `.dark`. A `.dark` override would silently lose against those.
+
+Override at the highest scope where the change applies. A narrower scope (per-section, per-tenant) needs the same both-modes treatment, and its dark rule must still outrank a branded palette's `:root.dark` — pair `.tenant-a` with `:root.dark .tenant-a`. Do not duplicate token values across files — change them at the source. Never copy the palette wholesale; tokens you did not copy stay on AppShell's values, so the two halves drift apart and any surface AppShell adds later has no value in the copy at all.
+
+**Do not paste a `@theme inline` block, a `@custom-variant dark` rule, or a copy of AppShell's palette into the app's entry CSS.** `styles` provides all three. A copy of any of them in the app's own CSS is unlayered, so it beats AppShell's layered palette and silently breaks dark mode — the build succeeds and nothing warns.
 
 **Dark mode is a `.dark` class on `<html>`**, not a data attribute. AppShell's theme provider toggles `document.documentElement.classList` between `light` and `dark` and persists the choice under the `appshell-ui-theme` localStorage key; the bundled `AppearanceSwitcher` component drives it. The bridge registers `@custom-variant dark (&:where(.dark, .dark *))`, so the `dark:` variant works in your own markup.
 

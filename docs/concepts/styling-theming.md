@@ -14,6 +14,8 @@ To configure your application, import AppShell styles from your global CSS or to
 @import "@tailor-platform/app-shell/styles";
 ```
 
+That is the whole setup. `styles` ships the palette (light **and** dark), the Tailwind v4 `@theme inline` bridge, and the `dark` custom variant, so your entry CSS should declare none of them itself. A copy of any of them in your own CSS overrides AppShell's and silently breaks dark mode.
+
 If you want a branded palette, import exactly one theme file after `styles`:
 
 ```css
@@ -132,12 +134,38 @@ AppShell ships three palettes, each with light and dark variants:
 Select a palette by importing its CSS file — no prop needed. Import it in your global CSS **after** `@tailor-platform/app-shell/styles`:
 
 ```css
+@import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
 @import "@tailor-platform/app-shell/themes/cream"; /* overrides default palette */
-@import "tailwindcss";
 ```
 
 Only import one palette at a time.
+
+## Overriding tokens
+
+Redeclare any token after the AppShell imports. Use `:root` for light and `:root.dark` for dark — that pair wins against every palette AppShell ships:
+
+```css
+@import "tailwindcss";
+@import "@tailor-platform/app-shell/styles";
+
+:root {
+  --primary: #2563eb;
+}
+
+:root.dark {
+  --primary: #60a5fa;
+}
+```
+
+Two rules:
+
+- **Set each override in both modes.** Overriding only `:root` misbehaves either way: on the default palette the light value carries into dark mode, and on a branded palette the override stops applying in dark mode altogether.
+- **Override individual tokens; never copy the palette wholesale.** Copied tokens freeze at the value you copied while everything else tracks AppShell, so the two halves drift apart — and any surface AppShell adds later has no value in your copy at all.
+
+`:root.dark` rather than `.dark` because the two palette families behave differently. The default palette is imported inside a cascade layer (`layer(theme.defaults)`), so any unlayered declaration of yours beats it. The branded palettes (`cream`, `bloom`) are imported by you, unlayered, and define dark values on `:root.dark` — which outranks a bare `.dark`, so a `.dark` override would silently lose. `:root.dark` is correct against both.
+
+Overriding under a narrower scope — per-section or per-tenant — needs the same care: pair `.tenant-a` with `:root.dark .tenant-a` so the dark rule still outranks a branded palette's `:root.dark`. Note also that `:root.dark` matches only `<html class="dark">`; if you apply `.dark` to a subtree to darken one region, scope your overrides to that subtree rather than to `:root.dark`.
 
 ## Z-Index Layering
 

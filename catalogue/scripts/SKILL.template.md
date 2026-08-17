@@ -1,6 +1,6 @@
 ---
 name: app-shell-patterns
-description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — or when choosing the right AppShell component, layout, or design token for a UI."
+description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — when choosing the right AppShell component, layout, or design token for a UI — or when upgrading @tailor-platform/app-shell, or diagnosing styling, theming, or dark-mode breakage that appeared after a version bump."
 ---
 
 # App-Shell Patterns
@@ -14,6 +14,12 @@ Select and implement the correct UI pattern using @tailor-platform/app-shell com
 These are the foundational rules that underpin all patterns. All patterns build on top of these references.
 
 {{FUNDAMENTAL_TABLE}}
+
+## Migrations
+
+[`migrations.md`](references/migrations.md) lists every change that requires editing the consuming app, newest first — what breaks, how to detect it, and what to change.
+
+Read it when upgrading `@tailor-platform/app-shell`, and whenever styling, theming, or dark mode looks wrong after a version bump. These breakages are silent: the build succeeds and nothing warns, so the cause is not discoverable from the error output. The package ships no CHANGELOG, so this file is the only migration record available locally.
 
 ## Available Patterns
 

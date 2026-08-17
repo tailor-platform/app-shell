@@ -28,8 +28,8 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 ### Essential Concepts for Code Navigation
 
 - **Module System**: `defineModule()` creates top-level nav items, `defineResource()` creates pages/sub-pages
-- **Routing**: Uses react-router v7 (not Next.js file-based routing)
-- **Redirects**: Use `redirectToResource()` helper instead of deprecated `defaultResourceRedirectPath`
+- **Routing**: Uses react-router v8 (not Next.js file-based routing)
+- **Redirects**: Use a guard returning `redirectTo("/path")`. The older `defaultResourceRedirectPath` prop and `redirectToResource()` helper were both removed (in 0.13.0 and 0.24.0 respectively) and no longer exist
 - **Core Components**: `AppShell` (root provider), `SidebarLayout` (default layout)
 - **Context**: Access via `useAppShell()` hook
 

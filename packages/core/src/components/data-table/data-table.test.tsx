@@ -6,7 +6,14 @@ import { createAppShellWrapper } from "../../../tests/test-utils";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData, RowAction, UseDataTableReturn } from "./types";
+import type {
+  Column,
+  DataTableData,
+  RowAction,
+  RowExpansionOptions,
+  UseDataTableOptions,
+  UseDataTableReturn,
+} from "./types";
 
 afterEach(() => {
   cleanup();
@@ -1352,11 +1359,18 @@ describe("DataTable", () => {
         onClickRow: props.onClickRow,
         onSelectionChange: props.onSelectionChange,
         rowActions: props.rowActions,
-        renderExpandedRow: props.renderExpandedRow,
-        canExpandRow: props.canExpandRow,
-        expandRowLabel: props.expandRowLabel,
-        expandedIds: props.expandedIds,
-        onExpandedChange: props.onExpandedChange,
+        rowExpansion: props.renderExpandedRow
+          ? // Cast because the harness keeps flat props and picks the union
+            // branch at runtime; the branches themselves are covered by the
+            // type-level test below.
+            ({
+              render: props.renderExpandedRow,
+              canExpand: props.canExpandRow,
+              getLabel: props.expandRowLabel,
+              expandedIds: props.expandedIds,
+              onChange: props.onExpandedChange,
+            } as RowExpansionOptions<TestRow>)
+          : undefined,
       });
       return (
         <DataTable.Root value={table}>
@@ -1364,6 +1378,40 @@ describe("DataTable", () => {
         </DataTable.Root>
       );
     }
+
+    it("rejects incoherent rowExpansion configs at compile time", () => {
+      const base = { columns: testColumns, data: testData } as const;
+
+      // Controlled: both halves together.
+      expectTypeOf<UseDataTableOptions<TestRow>["rowExpansion"]>().toExtend<
+        { render: (row: TestRow) => ReactNode } | undefined
+      >();
+
+      // @ts-expect-error — `expandedIds` without `onChange` is inert, so the
+      // union makes it unrepresentable. This is what removed the dev-time
+      // warning effect the hook used to carry.
+      void {
+        ...base,
+        rowExpansion: { render: detail, expandedIds: ["1"] },
+      } satisfies UseDataTableOptions<TestRow>;
+
+      // @ts-expect-error — a label or predicate with no renderer does nothing.
+      void {
+        ...base,
+        rowExpansion: { getLabel: (r: TestRow) => r.name },
+      } satisfies UseDataTableOptions<TestRow>;
+
+      // Valid: controlled, uncontrolled, and uncontrolled-with-notification.
+      void ({
+        ...base,
+        rowExpansion: { render: detail, expandedIds: ["1"], onChange: () => {} },
+      } satisfies UseDataTableOptions<TestRow>);
+      void ({ ...base, rowExpansion: { render: detail } } satisfies UseDataTableOptions<TestRow>);
+      void ({
+        ...base,
+        rowExpansion: { render: detail, onChange: () => {} },
+      } satisfies UseDataTableOptions<TestRow>);
+    });
 
     it("renders no expand column when renderExpandedRow is absent", () => {
       const { container } = render(<ExpandHarness />, { wrapper });
@@ -1761,27 +1809,6 @@ describe("DataTable", () => {
       expect(document.activeElement).not.toBe(document.body);
     });
 
-    it("warns when expandedIds is passed without onExpandedChange", () => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      render(<ExpandHarness renderExpandedRow={detail} expandedIds={[]} />, { wrapper });
-
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("expandedIds"));
-      warn.mockRestore();
-    });
-
-    it("does not warn when controlled mode is wired correctly", () => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      render(
-        <ExpandHarness renderExpandedRow={detail} expandedIds={[]} onExpandedChange={vi.fn()} />,
-        { wrapper },
-      );
-
-      expect(warn).not.toHaveBeenCalled();
-      warn.mockRestore();
-    });
-
     it("does not measure a nested DataTable's header into the outer table's widths", () => {
       // Built-in column keys are module constants shared by every instance, so an
       // unscoped descendant query let the inner table's selection column (later
@@ -1836,7 +1863,7 @@ describe("DataTable", () => {
           columns: testColumns,
           data: testData,
           onSelectionChange: vi.fn(),
-          renderExpandedRow: () => <NestedTable />,
+          rowExpansion: { render: () => <NestedTable /> },
         });
         api = table;
         return (
@@ -1902,8 +1929,7 @@ describe("DataTable", () => {
         const table = useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
-          renderExpandedRow: detail,
-          onExpandedChange,
+          rowExpansion: { render: detail, onChange: onExpandedChange },
         });
         if (table.collapseAllRows) seen.push(table.collapseAllRows);
         return (
@@ -1950,7 +1976,7 @@ describe("DataTable", () => {
         const table = useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
-          renderExpandedRow: detail,
+          rowExpansion: { render: detail },
         });
         if (table.toggleRowExpansion) seen.push(table.toggleRowExpansion);
         return (

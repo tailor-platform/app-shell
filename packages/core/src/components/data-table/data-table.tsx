@@ -19,7 +19,13 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
-import type { Column, HeaderRenderContext, RowAction, UseDataTableReturn } from "./types";
+import type {
+  Column,
+  HeaderRenderContext,
+  RowAction,
+  RowExpansionOptions,
+  UseDataTableReturn,
+} from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
@@ -509,9 +515,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     isRowExpanded: value.isRowExpanded,
     toggleRowExpansion: value.toggleRowExpansion,
     collapseAllRows: value.collapseAllRows,
-    renderExpandedRow: value.renderExpandedRow,
-    canExpandRow: value.canExpandRow,
-    expandRowLabel: value.expandRowLabel,
+    rowExpansion: value.rowExpansion,
   };
 
   const controlValue = value.control ?? null;
@@ -568,12 +572,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     clearSelection,
     isAllSelected,
     isIndeterminate,
-    renderExpandedRow,
+    rowExpansion,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection;
-  const hasExpand = !!renderExpandedRow;
+  const hasExpand = !!rowExpansion;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const { ordered, keys, placements, selection, expand, actions } = useMemo(
@@ -738,9 +742,7 @@ function DataTableBody({ className }: { className?: string }) {
     isRowSelected,
     toggleRowSelection,
     pageSize,
-    renderExpandedRow,
-    canExpandRow,
-    expandRowLabel,
+    rowExpansion,
     isRowExpanded,
     toggleRowExpansion,
   } = ctx;
@@ -748,7 +750,7 @@ function DataTableBody({ className }: { className?: string }) {
   const widths = useContext(PinMeasureContext);
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const hasSelection = !!toggleRowSelection;
-  const hasExpand = !!renderExpandedRow;
+  const hasExpand = !!rowExpansion;
   const totalColSpan =
     (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
@@ -818,9 +820,7 @@ function DataTableBody({ className }: { className?: string }) {
         rowActions={rowActions}
         onClickRow={onClickRow}
         totalColSpan={totalColSpan}
-        renderExpandedRow={renderExpandedRow}
-        canExpandRow={canExpandRow}
-        expandRowLabel={expandRowLabel}
+        rowExpansion={rowExpansion}
         isRowExpanded={isRowExpanded}
         toggleRowExpansion={toggleRowExpansion}
       />
@@ -844,9 +844,7 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   rowActions?: RowAction<TRow>[];
   onClickRow?: (row: TRow) => void;
   totalColSpan: number;
-  renderExpandedRow?: (row: TRow) => ReactNode;
-  canExpandRow?: (row: TRow) => boolean;
-  expandRowLabel?: (row: TRow) => string;
+  rowExpansion?: RowExpansionOptions<TRow>;
   /** Optional — `DataTableContextValue` may be hand-constructed without it. */
   isRowExpanded?: (row: TRow) => boolean;
   toggleRowExpansion?: (row: TRow) => void;
@@ -864,9 +862,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   rowActions,
   onClickRow,
   totalColSpan,
-  renderExpandedRow,
-  canExpandRow,
-  expandRowLabel,
+  rowExpansion,
   isRowExpanded,
   toggleRowExpansion,
 }: DataTableRowsProps<TRow>) {
@@ -885,8 +881,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
         const rowKey = rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
-        const expandable = hasExpand && rowId != null && (canExpandRow?.(row) ?? true);
-        // Gated on `canExpandRow` in both directions, so a stale id (restored from
+        const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
+        // Gated on `canExpand` in both directions, so a stale id (restored from
         // a URL, say) can't open a panel for a row the consumer excluded. Such an
         // id stays in `expandedIds` inert until `collapseAllRows()`.
         const expanded = expandable && (isRowExpanded?.(row) ?? false);
@@ -949,7 +945,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                       <RowExpandToggle
                         id={triggerId}
                         expanded={expanded}
-                        label={expandRowLabel?.(row)}
+                        label={rowExpansion?.getLabel?.(row)}
                         panelId={panelId}
                         onToggle={() => toggleRowExpansion(row)}
                       />
@@ -1049,12 +1045,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
           </Table.Row>
         );
 
-        // `expanded` is always false without `renderExpandedRow`, so a table
+        // `expanded` is always false without `rowExpansion`, so a table
         // that doesn't use the feature renders exactly the rows it did before.
         return (
           <Fragment key={rowKey}>
             {dataRow}
-            {expandable && renderExpandedRow && (
+            {expandable && rowExpansion && (
               // Mounted whenever the row could be open, not only while it is —
               // the component owns the open/closed transition and renders
               // nothing until there is something to show.
@@ -1063,8 +1059,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 totalColSpan={totalColSpan}
                 panelId={panelId}
                 triggerId={triggerId}
-                label={expandRowLabel?.(row)}
-                render={() => renderExpandedRow(row)}
+                label={rowExpansion.getLabel?.(row)}
+                render={() => rowExpansion.render(row)}
               />
             )}
           </Fragment>
@@ -1145,7 +1141,7 @@ interface DataTableExpandedRowProps {
  *
  * Mounted for every expandable row (returning `null` while closed) so the
  * collapse has something to animate. `render` is a thunk, not `children`, so
- * `renderExpandedRow` only runs while the panel is on screen.
+ * `rowExpansion.render` only runs while the panel is on screen.
  *
  * @internal
  */
@@ -1390,7 +1386,7 @@ function DataTableTable({ className }: { className?: string }) {
     let lastTableWidth = -1;
 
     const measure = () => {
-      // Own table only: `renderExpandedRow` can nest a DataTable, and the built-in
+      // Own table only: `rowExpansion.render` can nest a DataTable, and the built-in
       // column keys are module constants, so an unscoped query would let an inner
       // header overwrite these widths. `querySelector` is pre-order.
       const ownTable = el.querySelector("table");

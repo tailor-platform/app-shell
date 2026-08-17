@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
 import { usePageCounter } from "./use-page-counter";
 import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
@@ -75,11 +75,7 @@ export function useDataTable<
     onClickRow,
     rowActions,
     onSelectionChange,
-    renderExpandedRow,
-    canExpandRow,
-    expandRowLabel,
-    expandedIds,
-    onExpandedChange,
+    rowExpansion,
     sort: sortOption,
   } = options;
 
@@ -357,11 +353,12 @@ export function useDataTable<
   const [uncontrolledExpandedIds, setUncontrolledExpandedIds] = useState<Set<string>>(new Set());
 
   // Controlled when the caller passes `expandedIds`; internal state is then never written.
-  const isExpansionControlled = expandedIds !== undefined;
+  const controlledExpandedIds = rowExpansion?.expandedIds;
+  const isExpansionControlled = controlledExpandedIds !== undefined;
 
   const expandedRowIds = useMemo(
-    () => (isExpansionControlled ? new Set(expandedIds) : uncontrolledExpandedIds),
-    [isExpansionControlled, expandedIds, uncontrolledExpandedIds],
+    () => (isExpansionControlled ? new Set(controlledExpandedIds) : uncontrolledExpandedIds),
+    [isExpansionControlled, controlledExpandedIds, uncontrolledExpandedIds],
   );
 
   const isRowExpanded = useCallback(
@@ -376,24 +373,10 @@ export function useDataTable<
   // callback is usually an inline arrow and `expandedRowIds` is a fresh Set on
   // every change, so depending on either directly re-fired the documented
   // "collapse on page change" effect and shut the row the user just opened.
-  const onExpandedChangeRef = useRef(onExpandedChange);
-  onExpandedChangeRef.current = onExpandedChange;
+  const onExpandedChangeRef = useRef(rowExpansion?.onChange);
+  onExpandedChangeRef.current = rowExpansion?.onChange;
   const expandedRowIdsRef = useRef(expandedRowIds);
   expandedRowIdsRef.current = expandedRowIds;
-
-  // Controlled without `onExpandedChange` means every chevron is inert — the
-  // toggle hands the next set to a callback that isn't there. Warn, don't fail
-  // silently.
-  useEffect(() => {
-    if (renderExpandedRow && isExpansionControlled && !onExpandedChange) {
-      console.warn(
-        "[DataTable] `expandedIds` was provided without `onExpandedChange`: expansion is controlled, so the built-in chevrons cannot change state and will do nothing when activated. Pass `onExpandedChange`, or drop `expandedIds` to let useDataTable own the state.",
-      );
-    }
-    // Presence, not identity — these are usually inline arrows, and depending on
-    // them would turn a one-off notice into per-render console spam.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!renderExpandedRow, isExpansionControlled, !onExpandedChange]);
 
   const toggleRowExpansionImpl = useCallback(
     (row: TRow) => {
@@ -423,8 +406,8 @@ export function useDataTable<
     onExpandedChangeRef.current?.([]);
   }, [isExpansionControlled]);
 
-  const toggleRowExpansion = renderExpandedRow ? toggleRowExpansionImpl : undefined;
-  const collapseAllRows = renderExpandedRow ? collapseAllRowsImpl : undefined;
+  const toggleRowExpansion = rowExpansion ? toggleRowExpansionImpl : undefined;
+  const collapseAllRows = rowExpansion ? collapseAllRowsImpl : undefined;
 
   const expandedIdsList = useMemo(() => [...expandedRowIds], [expandedRowIds]);
 
@@ -474,8 +457,6 @@ export function useDataTable<
     isRowExpanded,
     toggleRowExpansion,
     collapseAllRows,
-    renderExpandedRow,
-    canExpandRow,
-    expandRowLabel,
+    rowExpansion,
   };
 }

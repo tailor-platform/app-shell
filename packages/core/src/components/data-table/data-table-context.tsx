@@ -1,5 +1,5 @@
-import { createContext, useContext, type ReactNode } from "react";
-import type { Column, RowAction } from "./types";
+import { createContext, useContext } from "react";
+import type { Column, RowAction, RowExpansionOptions } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 
 /**
@@ -86,15 +86,8 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   isRowExpanded?: (row: TRow) => boolean;
   toggleRowExpansion?: (row: TRow) => void;
   collapseAllRows?: () => void;
-  /**
-   * Detail-panel renderer. Its presence is what enables the expand column and
-   * the detail rows.
-   */
-  renderExpandedRow?: (row: TRow) => ReactNode;
-  /** Per-row expandability predicate. Defaults to `true` for rows with an `id`. */
-  canExpandRow?: (row: TRow) => boolean;
-  /** Per-row record identity used to build the accessible names. */
-  expandRowLabel?: (row: TRow) => string;
+  /** Expansion config. Its presence enables the expand column and detail rows. */
+  rowExpansion?: RowExpansionOptions<TRow>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

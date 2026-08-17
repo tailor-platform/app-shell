@@ -519,7 +519,7 @@ const DataTableLabPage = () => {
   });
 
   // Expandable rows next to everything they have to survive: selection, a
-  // left-pinned column, row actions and horizontal scroll. `expandRowLabel`
+  // left-pinned column, row actions and horizontal scroll. `getLabel`
   // returns the bare record identity — the accessible names ("Expand row
   // INV-1000", "INV-1000 details") are composed from it by AppShell.
   const expandTable = useDataTable<Invoice>({
@@ -529,9 +529,11 @@ const DataTableLabPage = () => {
     tableId: "lab-invoices-expand",
     rowActions,
     onSelectionChange: () => {},
-    renderExpandedRow: (row) => <InvoiceDetail invoice={row} />,
-    canExpandRow: (row) => row.status !== "draft",
-    expandRowLabel: (row) => row.id,
+    rowExpansion: {
+      render: (row) => <InvoiceDetail invoice={row} />,
+      canExpand: (row) => row.status !== "draft",
+      getLabel: (row) => row.id,
+    },
   });
 
   return (
@@ -568,14 +570,14 @@ const DataTableLabPage = () => {
           title="Expandable rows"
           description={
             <>
-              Passing <code>renderExpandedRow</code> adds the chevron column at the left edge
+              Passing <code>rowExpansion</code> adds the chevron column at the left edge
               (auto-pinned after the selection column) and a full-width detail panel beneath each
               open row. Several rows can be open at once. The render prop is just{" "}
               <code>(row) =&gt; ReactNode</code>, so the panel differs per row here — <em>sent</em>{" "}
               shows line items, <em>paid</em> a receipt, <em>overdue</em> a collections view — and{" "}
-              <code>canExpandRow</code> hides the chevron on <em>draft</em> invoices entirely.
-              Scroll horizontally with a row open — the panel stays pinned to the left edge — and
-              note that clicking the chevron never selects or triggers the row itself.
+              <code>canExpand</code> hides the chevron on <em>draft</em> invoices entirely. Scroll
+              horizontally with a row open — the panel stays pinned to the left edge — and note that
+              clicking the chevron never selects or triggers the row itself.
             </>
           }
         >

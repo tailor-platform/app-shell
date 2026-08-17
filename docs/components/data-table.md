@@ -232,29 +232,33 @@ const table = useDataTable<Order>({
 
 ## Expandable rows
 
-Pass `renderExpandedRow` to `useDataTable` and each row gets a chevron that reveals a detail panel beneath it. Providing the prop is what enables the feature — a dedicated chevron column is added at the left edge (auto-pinned left, after the selection column) and the detail row renders automatically. There is nothing new to compose in JSX.
+Pass `rowExpansion` to `useDataTable` and each row gets a chevron that reveals a detail panel beneath it. Providing the option is what enables the feature — a dedicated chevron column is added at the left edge (auto-pinned left, after the selection column) and the detail row renders automatically. There is nothing new to compose in JSX.
+
+The parts are grouped rather than flat so the type system rejects incoherent setups: a `getLabel` or `canExpand` with no `render`, or `expandedIds` without `onChange`, are compile errors rather than silently inert configurations.
 
 ```tsx
 const table = useDataTable<Order>({
   columns,
   data,
   control,
-  renderExpandedRow: (row) => <OrderLineItems orderId={row.id} />,
-  canExpandRow: (row) => row.lineItemCount > 0,
-  expandRowLabel: (row) => row.orderNumber,
+  rowExpansion: {
+    render: (row) => <OrderLineItems orderId={row.id} />,
+    canExpand: (row) => row.lineItemCount > 0,
+    getLabel: (row) => row.orderNumber,
+  },
 });
 ```
 
 - **Rows must have an `id`.** Expansion is keyed by `row.id`, the same constraint as row selection. Rows without one render **no chevron** (not a disabled one) — a row must never be un-toggleable.
-- **`canExpandRow`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. The predicate gates the panel in **both** directions: a row whose result flips to `false` while open closes immediately, and an id sitting in `expandedIds` never opens a panel for a row the predicate rejects. That matters when restoring `expandedIds` from a URL or storage — the excluded row may have no detail data to render at all. Its id stays in `expandedIds` but is inert; `collapseAllRows()` clears it.
-- **`expandRowLabel`** returns a **bare identifier** — `"INV-1001"`, not `"Expand row INV-1001"`. The built-in i18n labels compose it into the trigger's accessible name (`"Expand row INV-1001"`) and the panel's (`"INV-1001 details"`), so English and Japanese word order both stay correct. Without it, the generic "Expand row" / "Row details" strings are used — set it on any table with more than a couple of rows.
+- **`canExpand`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. The predicate gates the panel in **both** directions: a row whose result flips to `false` while open closes immediately, and an id sitting in `expandedIds` never opens a panel for a row the predicate rejects. That matters when restoring `expandedIds` from a URL or storage — the excluded row may have no detail data to render at all. Its id stays in `expandedIds` but is inert; `collapseAllRows()` clears it.
+- **`getLabel`** returns a **bare identifier** — `"INV-1001"`, not `"Expand row INV-1001"`. The built-in i18n labels compose it into the trigger's accessible name (`"Expand row INV-1001"`) and the panel's (`"INV-1001 details"`), so English and Japanese word order both stay correct. Without it, the generic "Expand row" / "Row details" strings are used — set it on any table with more than a couple of rows.
 - **`onClickRow` is unaffected.** The chevron lives in its own column and stops click propagation, so row-level navigation keeps working.
 - **Expansion survives page changes.** Ids of rows that are no longer on the page simply don't render. Call `collapseAllRows()` to reset.
 - **Multiple rows can be open at once.** There is no accordion / single-open mode.
 
 ### Controlled mode
 
-Pass `expandedIds` to own the state yourself; internal state is then never written and you update the array from `onExpandedChange`.
+Pass `expandedIds` to own the state yourself; internal state is then never written and you update the array from `onChange`. The two must be passed together — the type rejects either alone.
 
 ```tsx
 const [expandedIds, setExpandedIds] = useState<string[]>([]);
@@ -262,13 +266,15 @@ const [expandedIds, setExpandedIds] = useState<string[]>([]);
 const table = useDataTable<Order>({
   columns,
   data,
-  renderExpandedRow: (row) => <OrderLineItems orderId={row.id} />,
-  expandedIds,
-  onExpandedChange: setExpandedIds,
+  rowExpansion: {
+    render: (row) => <OrderLineItems orderId={row.id} />,
+    expandedIds,
+    onChange: setExpandedIds,
+  },
 });
 ```
 
-`useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `renderExpandedRow` is not provided, and both keep a stable identity across renders, so they are safe to list in an effect's dependency array:
+`useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `rowExpansion` is not provided, and both keep a stable identity across renders, so they are safe to list in an effect's dependency array:
 
 ```tsx
 // Collapse everything when the page changes.
@@ -279,9 +285,9 @@ useEffect(() => {
 
 `collapseAllRows()` is a no-op when nothing is open — it neither writes state nor fires `onExpandedChange`.
 
-**`onExpandedChange` is required in controlled mode.** Without it the chevrons have nowhere to send the new state and do nothing when activated; a dev-mode console warning fires to catch this.
-
 **Batching caveat.** Each toggle derives the next array from the current value of `expandedIds`, not from a functional update. Two toggles dispatched before your state commits both read the same base, so the first is lost. This matters when `expandedIds` lives behind an async store (Redux/Zustand middleware, a debounced URL sync, a `startTransition`), or when looping `toggleRowExpansion` over many rows to build an "expand all". Compute such updates yourself and set `expandedIds` directly rather than driving them through repeated toggles.
+
+In uncontrolled mode `onChange` is still allowed on its own, as a notification.
 
 ### Accessibility
 
@@ -306,23 +312,19 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                        |
-| ------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                      |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                      |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                           |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                              |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                   |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                  |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.               |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                            |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                                  |
-| `renderExpandedRow` | `(row: TRow) => ReactNode`         | Renders the detail panel for an expanded row. Providing this enables the expand (chevron) column. Rows must have a string or number `id`. See [Expandable rows](#expandable-rows). |
-| `canExpandRow`      | `(row: TRow) => boolean`           | Decides whether a row can be expanded. Rows returning `false` render no chevron. Defaults to `true` for every row with an `id`.                                                    |
-| `expandRowLabel`    | `(row: TRow) => string`            | Bare record identity (e.g. `"INV-1001"`) composed into the trigger and panel accessible names. Not a sentence.                                                                     |
-| `expandedIds`       | `string[]`                         | Ids of the expanded rows. Passing this switches expansion to controlled mode; internal state is no longer written and `onExpandedChange` becomes required.                         |
-| `onExpandedChange`  | `(ids: string[]) => void`          | Called with the full array of expanded row ids whenever expansion changes. Fires once per toggle.                                                                                  |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                          |
+| Option              | Type                               | Description                                                                                                                                                                     |
+| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                   |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                   |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                        |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                           |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
+| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                               |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
 
 ### `DataTableData`
 

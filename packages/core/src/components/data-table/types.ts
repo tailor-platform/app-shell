@@ -265,6 +265,57 @@ export interface DataTableData<TRow> {
 }
 
 /**
+ * Expandable-row configuration for `useDataTable`.
+ *
+ * The union is what makes an invalid setup unrepresentable: pass `expandedIds`
+ * and you must pass `onChange` with it (controlled), or pass neither and let
+ * the hook own the state. `onChange` alone is still allowed — in uncontrolled
+ * mode it is a notification.
+ */
+export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
+  /** Renders the detail panel for an expanded row. */
+  render: (row: TRow) => ReactNode;
+  /**
+   * Decides whether a row can be expanded. Rows returning `false` render an
+   * empty cell in place of the chevron. Defaults to `true` for rows with an
+   * `id`. Gates the panel in both directions: an id in `expandedIds` never
+   * opens a panel for a row this rejects.
+   */
+  canExpand?: (row: TRow) => boolean;
+  /**
+   * The row's record identity — a **bare identifier** such as `"INV-1001"`, not
+   * a sentence. The built-in i18n labels compose it into the accessible names of
+   * the chevron ("Expand row INV-1001") and the panel ("INV-1001 details").
+   * Without it, the generic "Expand row" / "Row details" fallbacks are used.
+   */
+  getLabel?: (row: TRow) => string;
+} & (
+  | {
+      /**
+       * Ids of the expanded rows. Passing this switches expansion to
+       * **controlled** mode: internal state is never written and you update this
+       * array from `onChange`.
+       *
+       * **Batching caveat:** each toggle derives the next array from this
+       * value, so two toggles dispatched before your state commits share a base
+       * and the first is lost. Relevant behind an async store (a debounced URL
+       * sync, `startTransition`) or when looping the toggle over many rows.
+       */
+      expandedIds: string[];
+      /** Called with the full array of expanded ids. Fires once per toggle. */
+      onChange: (ids: string[]) => void;
+    }
+  | {
+      expandedIds?: never;
+      /**
+       * Optional notification in uncontrolled mode, called with the full array
+       * of expanded ids. Fires once per toggle, including under StrictMode.
+       */
+      onChange?: (ids: string[]) => void;
+    }
+);
+
+/**
  * Options for `useDataTable` hook.
  */
 export type UseDataTableOptions<
@@ -314,54 +365,21 @@ export type UseDataTableOptions<
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
-   * Renders the detail panel for an expanded row. Providing this prop enables
-   * the whole feature: a chevron column is added at the left edge (auto-pinned
-   * left, after the selection column) and the returned content renders in a
-   * full-width row directly beneath its parent row.
+   * Expandable detail rows. Providing this enables the whole feature: a chevron
+   * column is added at the left edge (auto-pinned left, after the selection
+   * column) and `render`'s output appears in a full-width row beneath its parent.
+   *
+   * Grouped rather than flat so the parts can't be configured in a broken
+   * combination — a label or predicate without a renderer, or `expandedIds`
+   * without `onChange`, are all compile errors.
    *
    * **Requirement:** Each row must have a string or number `id` field.
-   * Expansion is keyed by `id`, so rows without one render no chevron and
-   * cannot be expanded.
+   * Expansion is keyed by `id`, so rows without one render no chevron.
    *
-   * **Note:** Expansion is **not** cleared on page change — ids of rows that
-   * are no longer on the page simply do not render. Call `collapseAllRows()`
-   * to reset.
+   * **Note:** Expansion is **not** cleared on page change — ids of rows no
+   * longer on the page simply do not render. Call `collapseAllRows()` to reset.
    */
-  renderExpandedRow?: (row: TRow) => ReactNode;
-  /**
-   * Decides whether a given row can be expanded. Rows returning `false` render
-   * an empty cell in place of the chevron. Defaults to `true` for every row
-   * that has an `id`. Ignored when `renderExpandedRow` is not provided.
-   */
-  canExpandRow?: (row: TRow) => boolean;
-  /**
-   * The row's record identity — a **bare identifier** such as `"INV-1001"`, not
-   * a sentence. The built-in i18n labels compose it into the accessible names of
-   * the chevron ("Expand row INV-1001") and the panel ("INV-1001 details").
-   * Without it, the generic "Expand row" / "Row details" fallbacks are used.
-   */
-  expandRowLabel?: (row: TRow) => string;
-  /**
-   * Ids of the currently expanded rows. Passing this switches expansion to
-   * **controlled** mode: internal state is no longer written and the caller is
-   * responsible for updating this array from `onExpandedChange`.
-   *
-   * **Required with `onExpandedChange`** — without it the chevrons cannot change
-   * anything and are inert (a dev-mode warning fires).
-   *
-   * **Batching caveat:** each toggle derives the next array from this prop's
-   * current value, so two toggles dispatched before your state commits share a
-   * base and the first is lost. Relevant behind an async store (a debounced URL
-   * sync, `startTransition`) or when looping the toggle over many rows — apply
-   * those updates yourself instead.
-   */
-  expandedIds?: string[];
-  /**
-   * Called with the full array of expanded row ids whenever expansion changes.
-   * Required for controlled mode; optional as a notification in uncontrolled
-   * mode. Fires exactly once per toggle, including under StrictMode.
-   */
-  onExpandedChange?: (ids: string[]) => void;
+  rowExpansion?: RowExpansionOptions<TRow>;
   /**
    * Sort behaviour configuration.
    *
@@ -478,16 +496,12 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   expandedIds: string[];
   /** Whether `row` is currently expanded. Always `false` for rows without an `id`. */
   isRowExpanded: (row: TRow) => boolean;
-  /** Toggle `row`'s detail panel. Undefined when `renderExpandedRow` is not provided. */
+  /** Toggle `row`'s detail panel. Undefined when `rowExpansion` is not provided. */
   toggleRowExpansion?: (row: TRow) => void;
-  /** Collapse every expanded row. Undefined when `renderExpandedRow` is not provided. */
+  /** Collapse every expanded row. Undefined when `rowExpansion` is not provided. */
   collapseAllRows?: () => void;
-  /** Detail-panel renderer (passthrough for `DataTable.Root`). */
-  renderExpandedRow?: (row: TRow) => ReactNode;
-  /** Per-row expandability predicate (passthrough for `DataTable.Root`). */
-  canExpandRow?: (row: TRow) => boolean;
-  /** Per-row identity for accessible names (passthrough for `DataTable.Root`). */
-  expandRowLabel?: (row: TRow) => string;
+  /** Expansion config (passthrough for `DataTable.Root`). */
+  rowExpansion?: RowExpansionOptions<TRow>;
 }
 
 // =============================================================================

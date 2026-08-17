@@ -1380,37 +1380,42 @@ describe("DataTable", () => {
     }
 
     it("rejects incoherent rowExpansion configs at compile time", () => {
-      const base = { columns: testColumns, data: testData } as const;
+      const base = { columns: testColumns, data: testData };
+      type Options = UseDataTableOptions<TestRow>;
 
-      // Controlled: both halves together.
-      expectTypeOf<UseDataTableOptions<TestRow>["rowExpansion"]>().toExtend<
-        { render: (row: TestRow) => ReactNode } | undefined
-      >();
-
-      // @ts-expect-error — `expandedIds` without `onChange` is inert, so the
-      // union makes it unrepresentable. This is what removed the dev-time
-      // warning effect the hook used to carry.
-      void {
+      // The directive sits on the offending property, which is where TS reports
+      // the mismatch.
+      const missingOnChange: Options = {
         ...base,
+        // @ts-expect-error — `expandedIds` without `onChange` is inert. Making it
+        // unrepresentable is what removed the hook's dev-time warning effect.
         rowExpansion: { render: detail, expandedIds: ["1"] },
-      } satisfies UseDataTableOptions<TestRow>;
+      };
 
-      // @ts-expect-error — a label or predicate with no renderer does nothing.
-      void {
+      const labelWithoutRender: Options = {
         ...base,
+        // @ts-expect-error — a label with no renderer does nothing.
         rowExpansion: { getLabel: (r: TestRow) => r.name },
-      } satisfies UseDataTableOptions<TestRow>;
+      };
 
-      // Valid: controlled, uncontrolled, and uncontrolled-with-notification.
-      void ({
+      const controlled: Options = {
         ...base,
         rowExpansion: { render: detail, expandedIds: ["1"], onChange: () => {} },
-      } satisfies UseDataTableOptions<TestRow>);
-      void ({ ...base, rowExpansion: { render: detail } } satisfies UseDataTableOptions<TestRow>);
-      void ({
+      };
+      const uncontrolled: Options = { ...base, rowExpansion: { render: detail } };
+      // `onChange` alone stays legal — in uncontrolled mode it is a notification.
+      const notified: Options = {
         ...base,
         rowExpansion: { render: detail, onChange: () => {} },
-      } satisfies UseDataTableOptions<TestRow>);
+      };
+
+      expect([
+        missingOnChange,
+        labelWithoutRender,
+        controlled,
+        uncontrolled,
+        notified,
+      ]).toHaveLength(5);
     });
 
     it("renders no expand column when renderExpandedRow is absent", () => {

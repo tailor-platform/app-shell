@@ -34,16 +34,16 @@ export const dataTableLabels = defineI18nLabels({
     selectAll: "Select all rows",
     selectRow: "Select row",
 
-    // Row expansion. The `…Named` variants take a bare record identity from
-    // `expandRowLabel` (e.g. "INV-1001") and own the word order, so the
-    // accessible name reads naturally in each locale.
+    // Row expansion. `label` is a bare record identity from
+    // `rowExpansion.getLabel` (e.g. "INV-1001"); each locale owns the word
+    // order, and the unnamed fallback, so the accessible name reads naturally.
     expandColumnHeader: "Expand",
-    expandRow: "Expand row",
-    expandRowNamed: (props: { label: string }) => `Expand row ${props.label}`,
-    collapseRow: "Collapse row",
-    collapseRowNamed: (props: { label: string }) => `Collapse row ${props.label}`,
-    expandedDetails: (props: { label: string }) => `${props.label} details`,
-    expandedDetailsGeneric: "Row details",
+    expandRow: (props: { label?: string }) =>
+      props.label ? `Expand row ${props.label}` : "Expand row",
+    collapseRow: (props: { label?: string }) =>
+      props.label ? `Collapse row ${props.label}` : "Collapse row",
+    expandedDetails: (props: { label?: string }) =>
+      props.label ? `${props.label} details` : "Row details",
 
     // Pagination
     paginationFirst: "First page",
@@ -136,12 +136,12 @@ export const dataTableLabels = defineI18nLabels({
 
     // Row expansion
     expandColumnHeader: "展開",
-    expandRow: "行を展開",
-    expandRowNamed: (props: { label: string }) => `${props.label}の行を展開`,
-    collapseRow: "行を折りたたむ",
-    collapseRowNamed: (props: { label: string }) => `${props.label}の行を折りたたむ`,
-    expandedDetails: (props: { label: string }) => `${props.label}の詳細`,
-    expandedDetailsGeneric: "行の詳細",
+    expandRow: (props: { label?: string }) =>
+      props.label ? `${props.label}の行を展開` : "行を展開",
+    collapseRow: (props: { label?: string }) =>
+      props.label ? `${props.label}の行を折りたたむ` : "行を折りたたむ",
+    expandedDetails: (props: { label?: string }) =>
+      props.label ? `${props.label}の詳細` : "行の詳細",
 
     paginationFirst: "最初のページ",
     paginationPrevious: "前のページ",

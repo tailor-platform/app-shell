@@ -97,9 +97,8 @@ const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
 const EXPAND_KEY = "__datatable_expand__";
 
-// Keep in sync with the `duration-300` utility on the reveal wrapper: this also
-// governs how long the detail row stays mounted while collapsing, so a longer
-// CSS duration would be cut off mid-animation.
+// Drives both the CSS transition and how long the detail row stays mounted while
+// collapsing, so the two cannot drift apart.
 const EXPAND_TRANSITION_MS = 300;
 
 type PinSide = "left" | "right";
@@ -813,7 +812,6 @@ function DataTableBody({ className }: { className?: string }) {
         rows={rows}
         pinLayout={pinLayout}
         hasSelection={hasSelection}
-        hasExpand={hasExpand}
         hasRowActions={hasRowActions}
         isRowSelected={isRowSelected}
         toggleRowSelection={toggleRowSelection}
@@ -837,7 +835,6 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   rows: TRow[];
   pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
-  hasExpand: boolean;
   hasRowActions: boolean;
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
@@ -855,7 +852,6 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   rows,
   pinLayout,
   hasSelection,
-  hasExpand,
   hasRowActions,
   isRowSelected,
   toggleRowSelection,
@@ -868,6 +864,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const baseId = useId();
+  const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
 
   return (
@@ -1092,13 +1089,8 @@ interface RowExpandToggleProps {
 function RowExpandToggle({ id, expanded, label, panelId, onToggle }: RowExpandToggleProps) {
   const t = useDataTableT();
   // A contextual name ("Expand row INV-1001") — "Expand row" repeated down the
-  // column conveys nothing. The i18n label owns the word order per locale.
-  let name: string;
-  if (expanded) {
-    name = label ? t("collapseRowNamed", { label }) : t("collapseRow");
-  } else {
-    name = label ? t("expandRowNamed", { label }) : t("expandRow");
-  }
+  // column conveys nothing. The locale owns word order and the unnamed fallback.
+  const name = t(expanded ? "collapseRow" : "expandRow", { label });
 
   return (
     <Button
@@ -1282,8 +1274,12 @@ function ExpandedRowContent({
               end. The `<tr>`/`<td>` are left alone — rows size to their content,
               and animating row heights under `border-collapse` is unreliable. */}
           <div
-            className="astw:grid astw:transition-[grid-template-rows,opacity] astw:duration-300 astw:ease-out astw:motion-reduce:transition-none"
-            style={{ gridTemplateRows: entered ? "1fr" : "0fr", opacity: entered ? 1 : 0 }}
+            className="astw:grid astw:transition-[grid-template-rows,opacity] astw:ease-out astw:motion-reduce:transition-none"
+            style={{
+              gridTemplateRows: entered ? "1fr" : "0fr",
+              opacity: entered ? 1 : 0,
+              transitionDuration: `${EXPAND_TRANSITION_MS}ms`,
+            }}
           >
             {/* `min-h-0` — grid items default to `min-height: auto` and would
                 refuse to collapse. `overflow-y-hidden` clips mid-reveal;
@@ -1296,7 +1292,7 @@ function ExpandedRowContent({
                 ref={panelRef}
                 id={panelId}
                 inert={open ? undefined : true}
-                aria-label={label ? t("expandedDetails", { label }) : t("expandedDetailsGeneric")}
+                aria-label={t("expandedDetails", { label })}
                 className="astw:px-6 astw:py-3"
               >
                 {render()}

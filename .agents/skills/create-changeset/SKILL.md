@@ -108,18 +108,27 @@ Fix sidebar not collapsing properly on mobile viewports when navigating between 
 "@tailor-platform/app-shell": major
 ---
 
-Replace `defaultResourceRedirectPath` with `redirectToResource()` helper for module-level redirects.
+Replace `accessControl` with a `guards` array on `defineModule` and `defineResource`. Guards run in order, and the first non-`pass` result stops the chain.
 
 Before:
 
 ```tsx
-defineModule({ defaultResourceRedirectPath: "/dashboard" });
+defineResource({
+  path: "admin",
+  component: AdminPage,
+  accessControl: async () => ({ state: (await isAdmin()) ? "visible" : "hidden" }),
+});
 ```
 
 After:
 
 ```tsx
-import { redirectToResource } from "@tailor-platform/app-shell";
-defineModule({ redirect: redirectToResource("dashboard") });
+import { defineResource, hidden, pass } from "@tailor-platform/app-shell";
+
+defineResource({
+  path: "admin",
+  component: AdminPage,
+  guards: [async () => ((await isAdmin()) ? pass() : hidden())],
+});
 ```
 ````

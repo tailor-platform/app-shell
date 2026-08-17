@@ -20,6 +20,17 @@ const skillsDir = join(repoRoot, "packages", "core", "skills", "app-shell-patter
 const referencesDir = join(skillsDir, "references");
 
 /**
+ * docs/migrations.md is authored for GitHub but has to reach consumers too:
+ * the published package contains only dist/** and skills/**, so a consumer
+ * app has no docs/ tree and no CHANGELOG.md to read. Copying it into the
+ * skill is the only channel that puts migration steps in node_modules, where
+ * coding agents working in a consumer app can actually find them.
+ */
+const migrationsSource = join(repoRoot, "docs", "migrations.md");
+const migrationsOutput = join(referencesDir, "migrations.md");
+const repoBlobUrl = "https://github.com/tailor-platform/app-shell/blob/main";
+
+/**
  * Category definitions. To add a new category, append an entry here
  * and add a corresponding {{<templateKey>}} placeholder to SKILL.template.md.
  *
@@ -171,6 +182,30 @@ async function processEntryCategory(category, categoryDir, outputDir) {
   return { category, entries };
 }
 
+/**
+ * Copy docs/migrations.md to references/migrations.md.
+ *
+ * Two transforms are needed because the source is written for GitHub:
+ * relative links resolve against docs/, which does not exist in the package,
+ * so they become absolute repo URLs; and the frontmatter is dropped to match
+ * the other copied reference files.
+ */
+async function processMigrations() {
+  const raw = await readFile(migrationsSource, "utf-8");
+  const { content } = matter(raw);
+
+  const body = content
+    .trim()
+    .replace(
+      /\]\((\.{1,2}\/[^)\s]+)\)/g,
+      (_match, target) => `](${repoBlobUrl}/${join("docs", target)})`,
+    );
+
+  await mkdir(referencesDir, { recursive: true });
+  await writeFile(migrationsOutput, `${body}\n`);
+  console.log("  Generated references/migrations.md");
+}
+
 async function main() {
   // Process all categories
   const results = [];
@@ -178,6 +213,8 @@ async function main() {
     const result = await processCategory(category);
     results.push(result);
   }
+
+  await processMigrations();
 
   // Generate SKILL.md index
   const skillMd = await generateSkillIndex(results);

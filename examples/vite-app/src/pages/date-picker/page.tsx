@@ -3,7 +3,9 @@ import {
   Layout,
   DateField,
   DatePicker,
+  DateRangePicker,
   Calendar,
+  RangeCalendar,
   Form,
   Field,
   Button,
@@ -11,6 +13,7 @@ import {
   parseDate,
   type CalendarDate,
   type DateValue,
+  type DateRange,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { CalendarDays } from "lucide-react";
@@ -70,6 +73,8 @@ const DatePickerPage = () => {
   const [pickerValue, setPickerValue] = useState<CalendarDate | null>(null);
   const [calendarValue, setCalendarValue] = useState<DateValue | null>(null);
   const [weekendValue, setWeekendValue] = useState<CalendarDate | null>(null);
+  const [rangeValue, setRangeValue] = useState<DateRange | null>(null);
+  const [inlineRange, setInlineRange] = useState<DateRange | null>(null);
 
   const [deliveryDate, setDeliveryDate] = useState<CalendarDate | null>(null);
   const [confirmedDate, setConfirmedDate] = useState<string | null>(null);
@@ -172,6 +177,46 @@ const DatePickerPage = () => {
             {pickerValue && (
               <p className="text-sm text-muted-foreground">
                 Selected: <strong>{pickerValue.toString()}</strong>
+              </p>
+            )}
+          </section>
+
+          {/* ── DateRangePicker ────────────────────────────────────── */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold border-b pb-2">DateRangePicker</h2>
+            <p className="text-sm text-muted-foreground">
+              One shared calendar: the first pick anchors the range (the popover stays open and the
+              highlight follows the pointer/arrows), the second pick completes it. Picking backwards
+              swaps the endpoints; a range <em>typed</em> in reverse is flagged invalid instead.
+            </p>
+            <div className="flex flex-wrap gap-6 items-start">
+              <DemoField id="date-range-basic" label="Basic">
+                <DateRangePicker value={rangeValue} onChange={setRangeValue} />
+              </DemoField>
+              <DemoField
+                id="date-range-future"
+                label="Future dates only"
+                description="Minimum: tomorrow"
+              >
+                <DateRangePicker minValue={tomorrow} />
+              </DemoField>
+              <DemoField
+                id="date-range-no-weekends"
+                label="No weekends"
+                description="A range can't cross a weekend"
+              >
+                <DateRangePicker
+                  isDateUnavailable={(dt) => {
+                    const day = dt.toDate(tz.value).getDay();
+                    return day === 0 || day === 6;
+                  }}
+                />
+              </DemoField>
+            </div>
+            {rangeValue && (
+              <p className="text-sm text-muted-foreground">
+                Selected: <strong>{rangeValue.start.toString()}</strong> →{" "}
+                <strong>{rangeValue.end.toString()}</strong>
               </p>
             )}
           </section>
@@ -294,6 +339,21 @@ const DatePickerPage = () => {
                   value={weekendValue}
                   onChange={(v) => setWeekendValue(v as CalendarDate)}
                 />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium">RangeCalendar</p>
+                <RangeCalendar
+                  aria-label="Select range"
+                  value={inlineRange}
+                  onChange={setInlineRange}
+                />
+                {inlineRange && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: <strong>{inlineRange.start.toString()}</strong> →{" "}
+                    <strong>{inlineRange.end.toString()}</strong>
+                  </p>
+                )}
               </div>
             </div>
           </section>

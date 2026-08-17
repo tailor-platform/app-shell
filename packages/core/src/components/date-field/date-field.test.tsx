@@ -12,6 +12,8 @@ import {
   isSameDay,
 } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import { Field } from "../field";
+import { Form } from "../form";
 import { DateField, DatePicker } from "./date-field";
 
 // This suite is the parity contract shared with the react-aria implementation:
@@ -42,65 +44,136 @@ function getEnabledCalendarCells() {
 
 describe("snapshots", () => {
   it("DateField", () => {
-    const { container } = render(<DateField label="Invoice date" />);
+    const { container } = render(<DateField aria-label="Invoice date" />);
     expect(container.innerHTML).toMatchSnapshot();
   });
 
-  it("DateField — invalid with error", () => {
+  it("DateField — manually labelled + described", () => {
     const { container } = render(
-      <DateField label="Date" errorMessage="Required" description="Pick a date" />,
+      <>
+        <label id="date-label" htmlFor="date-input">
+          Date
+        </label>
+        <DateField
+          id="date-input"
+          aria-labelledby="date-label"
+          aria-describedby="date-help date-error"
+          isInvalid
+        />
+        <p id="date-help">Pick a date</p>
+        <p id="date-error">Required</p>
+      </>,
     );
     expect(container.innerHTML).toMatchSnapshot();
   });
 
   it("DatePicker — closed", () => {
-    const { container } = render(<DatePicker label="Ship date" />);
-    expect(container.innerHTML).toMatchSnapshot();
+    const { container } = render(<DatePicker aria-label="Ship date" />);
+    expect(container.innerHTML.replace(/id="base-ui-[^"]+"/g, 'id="base-ui-ID"')).toMatchSnapshot();
   });
 });
 
 // ─── DateField ─────────────────────────────────────────────────────────────────
 
 describe("DateField", () => {
-  it("renders with a label", () => {
-    render(<DateField label="Invoice date" />);
-    expect(screen.getByText("Invoice date")).toBeDefined();
+  it("renders with an aria-label", () => {
+    render(<DateField aria-label="Invoice date" />);
+    expect(screen.getByRole("group", { name: "Invoice date" })).toBeDefined();
   });
 
   it("renders date segments", () => {
-    render(<DateField label="Date" />);
+    render(<DateField aria-label="Date" />);
     // segments are exposed as spinbuttons for day, month, year
     const segments = screen.getAllByRole("spinbutton");
     expect(segments.length).toBeGreaterThan(0);
   });
 
-  it("renders with description", () => {
-    render(<DateField label="Date" description="Pick any date" />);
-    expect(screen.getByText("Pick any date")).toBeDefined();
+  it("focuses the first segment when a linked external label is clicked", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <label id="date-label" htmlFor="date-input">
+          Date
+        </label>
+        <DateField id="date-input" aria-labelledby="date-label" />
+      </>,
+    );
+
+    await user.click(screen.getByText("Date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
   });
 
-  it("renders error message when isInvalid", () => {
-    render(<DateField label="Date" errorMessage="Required" />);
+  it("integrates with Field.Label", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="invoiceDate">
+        <Field.Label>Invoice date</Field.Label>
+        <DateField />
+      </Field.Root>,
+    );
+
+    await user.click(screen.getByText("Invoice date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
+  });
+
+  it("supports manual aria-describedby and invalid state", () => {
+    render(
+      <>
+        <span id="date-label">Date</span>
+        <DateField aria-labelledby="date-label" aria-describedby="date-help date-error" isInvalid />
+        <p id="date-help">Pick a date</p>
+        <p id="date-error">Required</p>
+      </>,
+    );
+
+    const group = screen.getByRole("group");
+    expect(group.getAttribute("aria-describedby")).toBe("date-help date-error");
+    expect(group.hasAttribute("data-invalid")).toBe(true);
+    expect(screen.getByText("Required")).toBeDefined();
+  });
+
+  it("integrates with Field.Root label + description wiring", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="invoiceDate">
+        <Field.Label>Invoice date</Field.Label>
+        <DateField />
+        <Field.Description>Pick the invoice date</Field.Description>
+      </Field.Root>,
+    );
+
+    const group = screen.getByRole("group", { name: "Invoice date" });
+    expect(group.getAttribute("aria-describedby")).toBeTruthy();
+    expect(screen.getByText("Pick the invoice date")).toBeDefined();
+
+    await user.click(screen.getByText("Invoice date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
+  });
+
+  it("inherits invalid state from Field.Root", () => {
+    render(
+      <Field.Root name="invoiceDate" error={{ message: "Required" }}>
+        <Field.Label>Invoice date</Field.Label>
+        <DateField />
+        <Field.Error match={true}>Required</Field.Error>
+      </Field.Root>,
+    );
+
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
     expect(screen.getByText("Required")).toBeDefined();
   });
 
   it("renders as disabled", () => {
-    render(<DateField label="Date" isDisabled />);
+    render(<DateField aria-label="Date" isDisabled />);
     const groups = screen.getAllByRole("group");
     const disabledGroup = groups.find((g) => g.getAttribute("aria-disabled") === "true");
     expect(disabledGroup).toBeDefined();
   });
 
-  it("resolves LocalizedString label with language fallback", () => {
-    render(<DateField label={(locale) => (locale === "ja" ? "日付" : "Date")} />);
-    // default locale resolves to english
-    expect(screen.getByText("Date")).toBeDefined();
-  });
-
   it("fires onChange once a complete date is typed across the segments", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     // Fill every segment by aria-label (order-independent across locales).
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -120,7 +193,7 @@ describe("DateField", () => {
   it("auto-advances across segments as a full date is typed (no explicit tabbing)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     // Locale here is "en" → MM/DD/YYYY. Typing carries across segments:
     // "02" fills+advances month, "15" fills+advances day, "2025" fills year.
@@ -135,7 +208,7 @@ describe("DateField", () => {
   it("accumulates a non-leading-zero entry (2 then 9 → 29, not 9)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("12");
@@ -152,7 +225,7 @@ describe("DateField", () => {
   it("accepts day 31 typed before a month (day max isn't tied to the current month)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     // Type the day first — "31" must not collapse to "1" just because the
     // current (anchor) month happens to have 30/28 days.
@@ -173,7 +246,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(
       <>
-        <DateField label="Date" onChange={onChange} />
+        <DateField aria-label="Date" onChange={onChange} />
         <button type="button">elsewhere</button>
       </>,
     );
@@ -198,7 +271,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(
       <>
-        <DateField label="Date" onChange={onChange} />
+        <DateField aria-label="Date" onChange={onChange} />
         <button type="button">elsewhere</button>
       </>,
     );
@@ -224,7 +297,7 @@ describe("DateField", () => {
     return (
       <>
         <DateField
-          label="Date"
+          aria-label="Date"
           value={v}
           onChange={(nv) => {
             setV(nv as CalendarDate | null);
@@ -283,7 +356,7 @@ describe("DateField", () => {
   it("auto-corrects an impossible day as soon as the year is complete (no blur)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     // 29 typed before the month (allowed), then Feb 2026 (28 days). The moment
     // the 4-digit year lands, the day self-corrects — without leaving the field.
@@ -302,7 +375,7 @@ describe("DateField", () => {
   it("re-corrects on year completion when a leap day turns invalid (no blur)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("29");
@@ -330,7 +403,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(
       <>
-        <DateField label="Date" onChange={onChange} />
+        <DateField aria-label="Date" onChange={onChange} />
         <button type="button">elsewhere</button>
       </>,
     );
@@ -350,7 +423,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(
       <>
-        <DateField label="Date" onChange={onChange} />
+        <DateField aria-label="Date" onChange={onChange} />
         <button type="button">elsewhere</button>
       </>,
     );
@@ -372,7 +445,7 @@ describe("DateField", () => {
     const onChange = vi.fn();
     render(
       <>
-        <DateField label="Date" onChange={onChange} />
+        <DateField aria-label="Date" onChange={onChange} />
         <button type="button">elsewhere</button>
       </>,
     );
@@ -388,7 +461,7 @@ describe("DateField", () => {
   it("clears a controlled DateField when the value is reset to null", () => {
     const { rerender } = render(
       <DateField
-        label="Date"
+        aria-label="Date"
         value={parseDate("2025-06-15") as CalendarDate}
         onChange={() => {}}
       />,
@@ -396,14 +469,14 @@ describe("DateField", () => {
     expect(screen.getByRole("spinbutton", { name: "day" }).textContent).toBe("15");
 
     // Parent clears the field: value={null} is controlled-empty, not uncontrolled.
-    rerender(<DateField label="Date" value={null} onChange={() => {}} />);
+    rerender(<DateField aria-label="Date" value={null} onChange={() => {}} />);
     expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
       "Empty",
     );
   });
 
   it("sets aria-required on the segments when isRequired", () => {
-    render(<DateField label="Date" isRequired />);
+    render(<DateField aria-label="Date" isRequired />);
     const day = screen.getByRole("spinbutton", { name: "day" });
     expect(day.getAttribute("aria-required")).toBe("true");
   });
@@ -424,7 +497,7 @@ describe("DateField keyboard shortcuts", () => {
   it("'t' jumps to today (case-insensitive)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("T"); // upper-case → same as "t"
@@ -436,7 +509,11 @@ describe("DateField keyboard shortcuts", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DateField label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+      <DateField
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        onChange={onChange}
+      />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
@@ -448,7 +525,7 @@ describe("DateField keyboard shortcuts", () => {
   it("'m' falls back to the start of the current month when no date is entered", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("m");
@@ -460,7 +537,11 @@ describe("DateField keyboard shortcuts", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DateField label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+      <DateField
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        onChange={onChange}
+      />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
@@ -473,7 +554,11 @@ describe("DateField keyboard shortcuts", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DateField label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+      <DateField
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        onChange={onChange}
+      />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
@@ -488,7 +573,7 @@ describe("DateField keyboard shortcuts", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     const start = new CalendarDate(2025, 6, 18); // a Wednesday
-    render(<DateField label="Date" defaultValue={start} onChange={onChange} />);
+    render(<DateField aria-label="Date" defaultValue={start} onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("w");
@@ -502,7 +587,11 @@ describe("DateField keyboard shortcuts", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DateField label="Date" defaultValue={new CalendarDate(2025, 3, 1)} onChange={onChange} />,
+      <DateField
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 3, 1)}
+        onChange={onChange}
+      />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
@@ -515,7 +604,11 @@ describe("DateField keyboard shortcuts", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DateField label="Date" defaultValue={new CalendarDate(2025, 1, 1)} onChange={onChange} />,
+      <DateField
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 1, 1)}
+        onChange={onChange}
+      />,
     );
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
@@ -530,7 +623,7 @@ describe("DateField keyboard shortcuts", () => {
     const onChangeEq = vi.fn();
     const { unmount } = render(
       <DateField
-        label="Date"
+        aria-label="Date"
         defaultValue={new CalendarDate(2025, 12, 31)}
         onChange={onChangeEq}
       />,
@@ -543,7 +636,7 @@ describe("DateField keyboard shortcuts", () => {
     const onChangePlus = vi.fn();
     render(
       <DateField
-        label="Date"
+        aria-label="Date"
         defaultValue={new CalendarDate(2025, 12, 31)}
         onChange={onChangePlus}
       />,
@@ -556,7 +649,7 @@ describe("DateField keyboard shortcuts", () => {
   it("'-' / '+' step from today when the field is empty", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("+");
@@ -569,7 +662,7 @@ describe("DateField keyboard shortcuts", () => {
     const onChange = vi.fn();
     render(
       <>
-        <DateField label="Date" onChange={onChange} />
+        <DateField aria-label="Date" onChange={onChange} />
         <button type="button">elsewhere</button>
       </>,
     );
@@ -588,7 +681,7 @@ describe("DateField keyboard shortcuts", () => {
   it("expands a 2-digit year as soon as the year segment is left (still inside the field)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
     await user.keyboard("06");
@@ -611,7 +704,7 @@ describe("DateField keyboard shortcuts", () => {
     const onChange = vi.fn();
     render(
       <DatePicker
-        label="Date"
+        aria-label="Date"
         locale="en-US"
         firstDayOfWeek="mon"
         defaultValue={new CalendarDate(2025, 6, 18)} // a Wednesday
@@ -635,7 +728,7 @@ describe("DateField keyboard shortcuts", () => {
     const onChange = vi.fn();
     render(
       <DateField
-        label="Date"
+        aria-label="Date"
         locale="en-US"
         firstDayOfWeek="mon"
         defaultValue={new CalendarDate(2025, 6, 18)} // a Wednesday
@@ -656,7 +749,7 @@ describe("DateField keyboard shortcuts", () => {
     const onChange = vi.fn();
     render(
       <DateField
-        label="Date"
+        aria-label="Date"
         defaultValue={new CalendarDate(2025, 6, 15)}
         minValue={new CalendarDate(2025, 6, 10)}
         maxValue={new CalendarDate(2025, 6, 20)}
@@ -678,7 +771,9 @@ describe("DateField keyboard shortcuts", () => {
   it("flags a typed date before minValue invalid, but still emits it", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" minValue={new CalendarDate(2025, 6, 10)} onChange={onChange} />);
+    render(
+      <DateField aria-label="Date" minValue={new CalendarDate(2025, 6, 10)} onChange={onChange} />,
+    );
     const group = screen.getByRole("group");
 
     // en order: month / day / year — type 5 Jun 2025 (before the 10 Jun min).
@@ -686,13 +781,11 @@ describe("DateField keyboard shortcuts", () => {
     await user.keyboard("06052025");
     await lastEmit(onChange, "2025-06-05"); // value flows through, not clamped
     expect(group.hasAttribute("data-invalid")).toBe(true);
-    // Built-in message (no consumer errorMessage provided).
-    expect(screen.getByText("Date is outside the allowed range.")).toBeDefined();
   });
 
   it("clears the invalid flag once the typed date is back within range", async () => {
     const user = userEvent.setup();
-    render(<DateField label="Date" minValue={new CalendarDate(2025, 6, 10)} />);
+    render(<DateField aria-label="Date" minValue={new CalendarDate(2025, 6, 10)} />);
     const group = screen.getByRole("group");
 
     await user.click(screen.getByRole("spinbutton", { name: "month" }));
@@ -710,7 +803,7 @@ describe("DateField keyboard shortcuts", () => {
     const unavailable = new CalendarDate(2025, 6, 12);
     render(
       <DateField
-        label="Date"
+        aria-label="Date"
         isDateUnavailable={(d) => isSameDay(d, unavailable)}
         onChange={onChange}
       />,
@@ -720,13 +813,12 @@ describe("DateField keyboard shortcuts", () => {
     await user.keyboard("06122025"); // the unavailable 12 Jun 2025
     await lastEmit(onChange, "2025-06-12");
     expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
-    expect(screen.getByText("This date is unavailable.")).toBeDefined();
   });
 
   it("'/' commits the current segment and advances to the next ('1/' ⇒ month 01)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DateField label="Date" onChange={onChange} />);
+    render(<DateField aria-label="Date" onChange={onChange} />);
 
     // en order: month / day / year. Type a single "1" into the month, then "/"
     // to declare "that's the whole month" and move on to the day.
@@ -741,20 +833,20 @@ describe("DateField keyboard shortcuts", () => {
 // ─── DatePicker ───────────────────────────────────────────────────────────────
 
 describe("DatePicker", () => {
-  it("renders with a label", () => {
-    render(<DatePicker label="Ship date" />);
-    expect(screen.getByText("Ship date")).toBeDefined();
+  it("renders with an aria-label", () => {
+    render(<DatePicker aria-label="Ship date" />);
+    expect(screen.getByRole("group", { name: "Ship date" })).toBeDefined();
   });
 
   it("renders the calendar trigger button", () => {
-    render(<DatePicker label="Date" />);
+    render(<DatePicker aria-label="Date" />);
     const btn = screen.getAllByRole("button").find((b) => !b.closest('[role="grid"]'));
     expect(btn).toBeDefined();
   });
 
   it("opens the popover when the trigger is clicked", async () => {
     const user = userEvent.setup();
-    render(<DatePicker label="Date" />);
+    render(<DatePicker aria-label="Date" />);
 
     const triggerBtn = screen.getAllByRole("button")[0];
     await user.click(triggerBtn);
@@ -766,7 +858,7 @@ describe("DatePicker", () => {
 
   it("shows a calendar grid in the popover", async () => {
     const user = userEvent.setup();
-    render(<DatePicker label="Date" />);
+    render(<DatePicker aria-label="Date" />);
 
     await user.click(screen.getAllByRole("button")[0]);
 
@@ -778,7 +870,7 @@ describe("DatePicker", () => {
   it("fires onChange when a calendar date cell is clicked", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<DatePicker label="Date" onChange={onChange} />);
+    render(<DatePicker aria-label="Date" onChange={onChange} />);
 
     await user.click(screen.getAllByRole("button")[0]);
     await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
@@ -796,7 +888,7 @@ describe("DatePicker", () => {
   it("renders cells with data-disabled when minValue is set", async () => {
     const user = userEvent.setup();
     const tomorrow = today(getLocalTimeZone()).add({ days: 1 });
-    render(<DatePicker label="Date" minValue={tomorrow} />);
+    render(<DatePicker aria-label="Date" minValue={tomorrow} />);
 
     await user.click(screen.getAllByRole("button")[0]);
     await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
@@ -807,7 +899,7 @@ describe("DatePicker", () => {
 
   it("renders cells with data-unavailable when isDateUnavailable returns true", async () => {
     const user = userEvent.setup();
-    render(<DatePicker label="Date" isDateUnavailable={() => true} />);
+    render(<DatePicker aria-label="Date" isDateUnavailable={() => true} />);
 
     await user.click(screen.getAllByRole("button")[0]);
     await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
@@ -816,29 +908,61 @@ describe("DatePicker", () => {
     expect(unavailable.length).toBeGreaterThan(0);
   });
 
-  it("renders error message when errorMessage is set", () => {
-    render(<DatePicker label="Date" errorMessage="Date is required" />);
-    expect(screen.getByText("Date is required")).toBeDefined();
+  it("supports manual invalid state", () => {
+    render(<DatePicker aria-label="Date" isInvalid />);
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+  });
+
+  it("integrates with Field.Root label + disabled state", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="shipDate" disabled>
+        <Field.Label>Ship date</Field.Label>
+        <DatePicker />
+        <Field.Description>Choose a ship date</Field.Description>
+      </Field.Root>,
+    );
+
+    const group = screen.getByRole("group", { name: "Ship date" });
+    expect(group.getAttribute("aria-disabled")).toBe("true");
+    expect(group.getAttribute("aria-describedby")).toBeTruthy();
+
+    await user.click(screen.getByText("Ship date"));
+    expect(document.activeElement?.getAttribute("role")).not.toBe("spinbutton");
+  });
+
+  it("uses the Field.Root label for the popup dialog and calendar", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="shipDate">
+        <Field.Label>Ship date</Field.Label>
+        <DatePicker />
+      </Field.Root>,
+    );
+
+    await user.click(screen.getAllByRole("button")[0]);
+    expect(await screen.findByRole("dialog", { name: "Ship date" })).toBeDefined();
+    expect(screen.getByRole("grid", { name: "Ship date" })).toBeDefined();
   });
 
   it("clears a controlled DatePicker when the value is reset to null", () => {
     const { rerender } = render(
       <DatePicker
-        label="Date"
+        aria-label="Date"
         value={parseDate("2025-06-15") as CalendarDate}
         onChange={() => {}}
       />,
     );
     expect(screen.getByRole("spinbutton", { name: "day" }).textContent).toBe("15");
 
-    rerender(<DatePicker label="Date" value={null} onChange={() => {}} />);
+    rerender(<DatePicker aria-label="Date" value={null} onChange={() => {}} />);
     expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
       "Empty",
     );
   });
 
   it("localizes segment names and chrome from the AppShell locale (ja)", () => {
-    render(<DatePicker label="日付" />, { wrapper: createAppShellWrapper("ja") });
+    render(<DatePicker aria-label="日付" />, { wrapper: createAppShellWrapper("ja") });
     // Segment accessible name: month → 月.
     expect(screen.getByRole("spinbutton", { name: "月" })).toBeDefined();
     // Popover trigger aria-label is localized too.
@@ -848,6 +972,109 @@ describe("DatePicker", () => {
       "未入力",
     );
   });
+
+  it("integrates with Field.Label", async () => {
+    const user = userEvent.setup();
+    render(
+      <Field.Root name="deliveryDate">
+        <Field.Label>Delivery date</Field.Label>
+        <DatePicker />
+      </Field.Root>,
+    );
+
+    await user.click(screen.getByText("Delivery date"));
+    expect(document.activeElement?.getAttribute("role")).toBe("spinbutton");
+  });
+
+  it("registers with Form and includes defaultValue in onFormSubmit", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    render(
+      <Form onFormSubmit={onFormSubmit}>
+        <Field.Root name="deliveryDate">
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker defaultValue={parseDate("2025-06-15") as CalendarDate} />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(onFormSubmit).toHaveBeenCalled();
+    });
+    expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ deliveryDate: "2025-06-15" });
+  });
+
+  it("supports the controlled Form + Field.Root flow from the example page", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    function ControlledFormDatePicker() {
+      const [deliveryDate, setDeliveryDate] = useState<CalendarDate | null>(null);
+      return (
+        <Form onFormSubmit={onFormSubmit}>
+          <Field.Root name="deliveryDate">
+            <Field.Label>Delivery date</Field.Label>
+            <DatePicker
+              value={deliveryDate}
+              onChange={(value) => {
+                setDeliveryDate(value as CalendarDate | null);
+              }}
+              isRequired
+              minValue={today(getLocalTimeZone())}
+            />
+            <Field.Error match="valueMissing">Please select a delivery date.</Field.Error>
+            <Field.Error match="customError" />
+          </Field.Root>
+          <button type="submit">Save</button>
+        </Form>
+      );
+    }
+
+    render(<ControlledFormDatePicker />);
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onFormSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+    await user.click(getEnabledCalendarCells()[0]);
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(onFormSubmit).toHaveBeenCalled();
+    });
+    expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ deliveryDate: expect.any(String) });
+  });
+
+  it("blocks Form submit when defaultValue is out of range", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    render(
+      <Form onFormSubmit={onFormSubmit}>
+        <Field.Root name="deliveryDate">
+          <Field.Label>Delivery date</Field.Label>
+          <DatePicker
+            defaultValue={parseDate("2025-06-15") as CalendarDate}
+            minValue={parseDate("2025-06-16")}
+          />
+          <Field.Error match="customError" />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onFormSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
+  });
 });
 
 // ─── Keyboard: popover focus ─────────────────────────────────────────────────
@@ -855,7 +1082,7 @@ describe("DatePicker", () => {
 describe("DatePicker keyboard", () => {
   it("moves focus into the calendar grid when the popover opens", async () => {
     const user = userEvent.setup();
-    render(<DatePicker label="Date" />);
+    render(<DatePicker aria-label="Date" />);
     await user.click(screen.getAllByRole("button")[0]);
     await waitFor(() => {
       expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
@@ -864,13 +1091,46 @@ describe("DatePicker keyboard", () => {
 
   it("opens the calendar with Alt+↓ from a focused segment", async () => {
     const user = userEvent.setup();
-    render(<DatePicker label="Date" />);
+    render(<DatePicker aria-label="Date" />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
 
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeDefined();
+    });
+  });
+
+  it("does not blur when focus moves from the field into the popup", async () => {
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    render(<DatePicker aria-label="Date" onBlur={onBlur} />);
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => {
+      expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
+    });
+    expect(onBlur).not.toHaveBeenCalled();
+  });
+
+  it("blurs once focus leaves the popup", async () => {
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    render(
+      <>
+        <DatePicker aria-label="Date" onBlur={onBlur} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+
+    await user.click(screen.getAllByRole("button")[0]);
+    await waitFor(() => {
+      expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
+    });
+
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+    await waitFor(() => {
+      expect(onBlur).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -881,7 +1141,11 @@ describe("DatePicker keyboard", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DatePicker label="Date" defaultValue={new CalendarDate(2025, 6, 15)} onChange={onChange} />,
+      <DatePicker
+        aria-label="Date"
+        defaultValue={new CalendarDate(2025, 6, 15)}
+        onChange={onChange}
+      />,
     );
 
     await user.click(screen.getAllByRole("button")[0]); // open (focus → 15 Jun)
@@ -900,7 +1164,7 @@ describe("DatePicker keyboard", () => {
     const onChange = vi.fn();
     render(
       <DatePicker
-        label="Date"
+        aria-label="Date"
         defaultValue={new CalendarDate(2025, 6, 15)}
         minValue={new CalendarDate(2025, 6, 10)}
         onChange={onChange}
@@ -923,7 +1187,7 @@ describe("DatePicker keyboard", () => {
     const onChange = vi.fn();
     render(
       <DatePicker
-        label="Date"
+        aria-label="Date"
         defaultValue={new CalendarDate(2025, 6, 15)}
         minValue={new CalendarDate(2025, 6, 10)}
         onChange={onChange}

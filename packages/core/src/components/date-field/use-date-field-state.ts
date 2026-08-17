@@ -71,10 +71,37 @@ export interface Segment {
   maxValue?: number;
 }
 
+/**
+ * Why the state machine emitted a change notification.
+ *
+ * - `edit`: the user changed one or more segments
+ * - `clear`: the user explicitly cleared a segment, which may emit `null`
+ * - `external`: the controlled `value` prop changed from outside the widget
+ */
+export type DateFieldStateChangeSource = "edit" | "clear" | "external";
+
+/**
+ * Snapshot emitted to consumers that need more than the composed `DateValue`.
+ *
+ * `useDateFieldState()` is the source of truth for segmented editing. Most
+ * callers only care about `onChange(value)`, but the Field/Form bridge also
+ * needs the serialized input string, whether any segment is currently filled,
+ * and whether the composed value is locally invalid. This payload exposes that
+ * derived state at the same moment the internal segment state changes.
+ */
+export interface DateFieldStateChange {
+  source: DateFieldStateChangeSource;
+  fieldValue: DateValue | null;
+  inputValue: string;
+  hasInput: boolean;
+  invalidReason: DateFieldInvalidReason | null;
+}
+
 export interface DateFieldStateOptions {
   value?: DateValue | null;
   defaultValue?: DateValue | null;
   onChange?: (value: DateValue | null) => void;
+  onStateChange?: (change: DateFieldStateChange) => void;
   granularity?: Granularity;
   locale: string;
   /** Used only to construct `ZonedDateTime` values for time granularities. */
@@ -191,11 +218,39 @@ function getInvalidReason(
   return null;
 }
 
+/**
+ * Stateful engine for segmented date/time entry.
+ *
+ * This hook owns the editable segment model used by both `DateField` and
+ * `DatePicker`. It is intentionally lower-level than a normal input hook:
+ * instead of tracking one text string, it tracks logical date segments
+ * (`year`, `month`, `day`, optional time parts) and derives everything else
+ * from that state.
+ *
+ * Responsibilities:
+ * - keep per-segment editing state stable across partial/incomplete input
+ * - compose a public `DateValue` once the entered segments form a complete date
+ * - preserve controlled/uncontrolled behaviour without clobbering in-progress edits
+ * - implement keyboard editing semantics such as increment/decrement,
+ *   auto-advance, shortcuts, and blur-time normalization
+ * - surface local invalid reasons (`range` / `unavailable`) without coercing the value
+ *
+ * Outputs are split in two layers:
+ * - `onChange(value)` for the public component contract
+ * - `onStateChange(change)` for internal consumers that need richer derived
+ *   state, such as the hidden proxy-input bridge used by `Field` / `Form`
+ *
+ * In practice, this hook is the date-widget equivalent of an input state
+ * machine: callers render the segments it describes, invoke the returned
+ * mutation helpers in response to keyboard interactions, and react to the
+ * emitted value/state snapshots.
+ */
 export function useDateFieldState(options: DateFieldStateOptions) {
   const {
     value: controlledValue,
     defaultValue,
     onChange,
+    onStateChange,
     granularity = "day",
     locale,
     timeZone,
@@ -305,19 +360,37 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     [hasTime, is12, controlledValue, defaultValue, placeholderValue, timeZone],
   );
 
+  const buildStateChange = useCallback(
+    (nextFields: Fields, source: DateFieldStateChangeSource): DateFieldStateChange => {
+      const fieldValue = composeValue(nextFields);
+      const hasInput = editableTypes.some((type) => nextFields[type] != null);
+      const invalidReason = getInvalidReason(fieldValue, minValue, maxValue, isDateUnavailable);
+      return {
+        source,
+        fieldValue,
+        inputValue: fieldValue?.toString() ?? "",
+        hasInput,
+        invalidReason,
+      };
+    },
+    [composeValue, editableTypes, isDateUnavailable, maxValue, minValue],
+  );
+
   const commit = useCallback(
     (next: Fields, intent: "edit" | "clear" = "edit") => {
       // Self-correct an impossible day as soon as the date is complete, so an
       // unreachable date (e.g. 29 Feb in a non-leap year) never persists — no
       // matter how the field is left. Skipped while clearing a segment.
       const f = intent === "edit" ? clampCompleteDay(next) : next;
+      const change = buildStateChange(f, intent === "clear" ? "clear" : "edit");
       setInternalFields(f);
-      const composed = composeValue(f);
+      onStateChange?.(change);
+
       // While editing, only emit a *complete & valid* value — never `null` for a
       // half-typed/out-of-range intermediate (that would thrash a controlled
       // value and lose the in-progress entry). Clearing explicitly emits `null`.
       let emit: DateValue | null | undefined;
-      if (composed != null) emit = composed;
+      if (change.fieldValue != null) emit = change.fieldValue;
       else if (intent === "clear") emit = null;
       else emit = undefined;
       if (emit === undefined) return;
@@ -331,7 +404,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         onChange?.(emit);
       }
     },
-    [composeValue, onChange],
+    [buildStateChange, onChange, onStateChange],
   );
 
   // Sync internal segments when a *controlled* value changes externally (i.e.
@@ -344,10 +417,12 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     const same =
       (cv == null && le == null) || (cv != null && le != null && cv.compare(le as never) === 0);
     if (!same) {
+      const nextFields = fieldsFromValue(cv);
       lastEmitted.current = cv;
-      setInternalFields(fieldsFromValue(cv));
+      setInternalFields(nextFields);
+      onStateChange?.(buildStateChange(nextFields, "external"));
     }
-  }, [controlledValue, isControlled]);
+  }, [buildStateChange, controlledValue, isControlled, onStateChange]);
 
   // ── Mutations ───────────────────────────────────────────────────────────────
   const cycle = useCallback(
@@ -571,16 +646,14 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     });
   }, [segmentFormat, fields, editableTypes, getLimits]);
 
-  const fieldValue = composeValue(fields);
-  // Free-entry validation: the value still emits (it's what the user typed), but
-  // an out-of-range or unavailable date is surfaced as invalid, not clamped.
-  const invalidReason = getInvalidReason(fieldValue, minValue, maxValue, isDateUnavailable);
+  const currentChange = buildStateChange(fields, "edit");
 
   return {
     segments,
-    fieldValue,
-    isInvalid: invalidReason != null,
-    invalidReason,
+    fieldValue: currentChange.fieldValue,
+    hasInput: currentChange.hasInput,
+    isInvalid: currentChange.invalidReason != null,
+    invalidReason: currentChange.invalidReason,
     cycle,
     setDigit,
     setDayPeriod,

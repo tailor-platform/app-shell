@@ -260,6 +260,117 @@ const DatePickerPage = () => {
             )}
           </section>
 
+          {/* ── DateRangePicker in a form (+ React Hook Form) ────────── */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold border-b pb-2">DateRangePicker in a form</h2>
+            <p className="text-sm text-muted-foreground">
+              In situ inside the app-shell{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">Form</code> +{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">Field.Root</code>. The range registers{" "}
+              <strong>one combined field</strong> whose value is empty until both ends are entered,
+              so <code className="bg-muted px-1 py-0.5 rounded">isRequired</code> blocks a partial
+              range. Reversed or out-of-range typing surfaces as a{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">customError</code>. Submit to alert the
+              collected values.
+            </p>
+            <Form<{ billingPeriod: string }>
+              onFormSubmit={({ billingPeriod }) => {
+                const [start, end] = billingPeriod ? billingPeriod.split("/") : ["", ""];
+                alert(
+                  `onFormSubmit values:\n\n` +
+                    `  billingPeriod: "${billingPeriod}"   ← one combined field\n` +
+                    `  start:         "${start}"\n` +
+                    `  end:           "${end}"`,
+                );
+              }}
+              className="flex flex-col items-start gap-4 max-w-sm"
+            >
+              <Field.Root name="billingPeriod">
+                <Field.Label>Billing period</Field.Label>
+                <DateRangePicker
+                  isRequired
+                  minValue={tz.today()}
+                  startName="billingStart"
+                  endName="billingEnd"
+                />
+                <Field.Description>Both dates required; must be today or later.</Field.Description>
+                <Field.Error match="valueMissing">Please select a full range.</Field.Error>
+                <Field.Error match="customError" />
+              </Field.Root>
+              <Button type="submit">Submit range</Button>
+            </Form>
+            <p className="text-sm text-muted-foreground">
+              <code className="bg-muted px-1 py-0.5 rounded">onFormSubmit</code> collects the{" "}
+              <strong>registered</strong> combined value as{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">"start/end"</code> (ISO).{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">startName</code> /{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">endName</code> additionally emit two
+              plain hidden inputs, so a classic multipart POST (native{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">FormData</code>) also carries{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">billingStart</code> and{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">billingEnd</code> separately.
+            </p>
+
+            <h3 className="text-sm font-semibold mt-2">With React Hook Form</h3>
+            <p className="text-sm text-muted-foreground">
+              <code className="bg-muted px-1 py-0.5 rounded">DateRangePicker</code> is a{" "}
+              <strong>controlled, object-valued</strong> control (
+              <code className="bg-muted px-1 py-0.5 rounded">value: DateRange</code> /{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">onChange</code>), so RHF wires it with{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">{"<Controller>"}</code> rather than{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">register()</code>. The field value is a{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">{"{ start, end }"}</code> object of{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">DateValue</code>s — <em>not</em> a
+              string — which is the main departure from RHF's native-input convention.
+            </p>
+            <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs leading-relaxed">
+              {`import { useForm, Controller } from "react-hook-form";
+import { DateRangePicker, type DateRange } from "@tailor-platform/app-shell";
+
+const { control, handleSubmit, watch } = useForm<{ period: DateRange | null }>({
+  defaultValues: { period: null },
+});
+
+// Read anywhere: watch("period") / getValues("period") → { start, end } | null
+watch("period")?.start.toString(); // "2025-06-10"
+
+<form onSubmit={handleSubmit((data) => {
+  // data.period is a DateRange OBJECT, not a string:
+  //   data.period?.start.toString(), data.period?.end.toString()
+})}>
+  <Controller
+    name="period"
+    control={control}
+    rules={{ required: true }}
+    render={({ field }) => (
+      <DateRangePicker
+        aria-label="Billing period"
+        value={field.value}        // { start, end } | null
+        onChange={field.onChange}  // receives the { start, end } object
+        onBlur={field.onBlur}
+      />
+    )}
+  />
+</form>`}
+            </pre>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 flex flex-col gap-1">
+              <li>
+                <strong>Controller, not register.</strong> {"register()"} targets uncontrolled
+                native inputs; the picker owns its value, so bind it through {"<Controller>"}.
+              </li>
+              <li>
+                <strong>Object value, not string.</strong> {'watch("period")'} returns{" "}
+                {"{ start, end }"} (internationalized {"DateValue"}s); serialize for a backend with{" "}
+                {".toString()"} per end.
+              </li>
+              <li>
+                <strong>Validation.</strong> App-shell {"Field.Error"} (valueMissing / customError)
+                is native to the {"Form"} path; under RHF use {"rules"} / a resolver and read{" "}
+                {"formState.errors"} instead.
+              </li>
+            </ul>
+          </section>
+
           {/* ── DatePicker week start ───────────────────────────────── */}
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">DatePicker — week start</h2>

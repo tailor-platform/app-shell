@@ -287,6 +287,10 @@ export function useDataTable<
 
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   // Mirrors the state so the toggle can compute the next set outside an updater.
+  // Every writer below must also assign it: this render-time sync only catches
+  // up on commit, so without an eager write two dispatches in the same commit
+  // both read the same base and the first is lost. A functional updater got
+  // this for free from `prev`; computing outside one makes it our job.
   const selectedRowIdsRef = useRef(selectedRowIds);
   selectedRowIdsRef.current = selectedRowIds;
 
@@ -312,6 +316,7 @@ export function useDataTable<
         } else {
           next.add(id);
         }
+        selectedRowIdsRef.current = next;
         setSelectedRowIds(next);
         onSelectionChange([...next]);
       }
@@ -322,6 +327,7 @@ export function useDataTable<
         const allIds = new Set(
           rows.map((r) => getRowId(r)).filter((id): id is string => id !== null),
         );
+        selectedRowIdsRef.current = allIds;
         setSelectedRowIds(allIds);
         onSelectionChange([...allIds]);
       }
@@ -329,7 +335,9 @@ export function useDataTable<
 
   const clearSelection = onSelectionChange
     ? () => {
-        setSelectedRowIds(new Set());
+        const empty = new Set<string>();
+        selectedRowIdsRef.current = empty;
+        setSelectedRowIds(empty);
         onSelectionChange([]);
       }
     : undefined;
@@ -382,17 +390,22 @@ export function useDataTable<
     (row: TRow) => {
       const id = getRowId(row);
       if (id === null) return;
-      // Computed outside the updater, as in `toggleRowSelection`. Both modes read
-      // the current set, so two toggles dispatched before it commits share a base
-      // and the first is lost — see the `expandedIds` TSDoc.
+      // Computed outside the updater, as in `toggleRowSelection`. Uncontrolled
+      // composes correctly because the ref is written eagerly below; controlled
+      // mode still reads the caller's prop, so repeated toggles before their
+      // state commits share a base — see the `expandedIds` TSDoc.
       const next = new Set(expandedRowIdsRef.current);
       if (next.has(id)) {
         next.delete(id);
       } else {
         next.add(id);
       }
-      // Controlled callers own the state; internal state is never written then.
-      if (!isExpansionControlled) setUncontrolledExpandedIds(next);
+      // Controlled callers own the state; internal state is never written then,
+      // and the ref must keep mirroring their prop rather than our guess.
+      if (!isExpansionControlled) {
+        expandedRowIdsRef.current = next;
+        setUncontrolledExpandedIds(next);
+      }
       onExpandedChangeRef.current?.([...next]);
     },
     [getRowId, isExpansionControlled],
@@ -402,7 +415,11 @@ export function useDataTable<
     // Nothing open — skip the state write and the callback entirely, so calling
     // this from an effect can't drive an endless render loop.
     if (expandedRowIdsRef.current.size === 0) return;
-    if (!isExpansionControlled) setUncontrolledExpandedIds(new Set());
+    if (!isExpansionControlled) {
+      const empty = new Set<string>();
+      expandedRowIdsRef.current = empty;
+      setUncontrolledExpandedIds(empty);
+    }
     onExpandedChangeRef.current?.([]);
   }, [isExpansionControlled]);
 

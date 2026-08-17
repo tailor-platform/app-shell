@@ -1312,6 +1312,67 @@ describe("DataTable", () => {
       expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
     });
 
+    it("composes several toggles dispatched in one commit", () => {
+      // Consumer code like `overdue.forEach((r) => toggleRowSelection(r))`.
+      // Every built-in affordance fires exactly one toggle per commit, so this
+      // is only reachable through the public API.
+      const onSelectionChange = vi.fn();
+      let api!: UseDataTableReturn<TestRow>;
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          onSelectionChange,
+        });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      render(<Harness />, { wrapper });
+
+      act(() => {
+        api.toggleRowSelection?.(testData.rows[0]);
+        api.toggleRowSelection?.(testData.rows[1]);
+      });
+
+      expect(api.selectedIds).toEqual(["1", "2"]);
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "2"]);
+    });
+
+    it("applies clearSelection before a toggle in the same commit", () => {
+      const onSelectionChange = vi.fn();
+      let api!: UseDataTableReturn<TestRow>;
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          onSelectionChange,
+        });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      render(<Harness />, { wrapper });
+
+      act(() => api.selectAllRows?.());
+      expect(api.selectedIds).toEqual(["1", "2"]);
+
+      // "replace the selection with just this row"
+      act(() => {
+        api.clearSelection?.();
+        api.toggleRowSelection?.(testData.rows[1]);
+      });
+
+      expect(api.selectedIds).toEqual(["2"]);
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["2"]);
+    });
+
     it("marks the selected row with data-state='selected' so the whole row highlights", () => {
       const { container } = render(<TestDataTable onSelectionChange={vi.fn()} />, { wrapper });
 
@@ -1973,6 +2034,63 @@ describe("DataTable", () => {
 
       expect(onExpandedChange).toHaveBeenCalledTimes(1);
       expect(onExpandedChange).toHaveBeenCalledWith(["1"]);
+    });
+
+    it("composes several expansion toggles dispatched in one commit", () => {
+      const onChange = vi.fn();
+      let api!: UseDataTableReturn<TestRow>;
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          rowExpansion: { render: detail, onChange },
+        });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      render(<Harness />, { wrapper });
+
+      act(() => {
+        api.toggleRowExpansion?.(testData.rows[0]);
+        api.toggleRowExpansion?.(testData.rows[1]);
+      });
+
+      expect(api.expandedIds).toEqual(["1", "2"]);
+      expect(onChange).toHaveBeenLastCalledWith(["1", "2"]);
+    });
+
+    it("applies collapseAllRows before a toggle in the same commit", () => {
+      let api!: UseDataTableReturn<TestRow>;
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          rowExpansion: { render: detail },
+        });
+        api = table;
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      render(<Harness />, { wrapper });
+
+      act(() => {
+        api.toggleRowExpansion?.(testData.rows[0]);
+        api.toggleRowExpansion?.(testData.rows[1]);
+      });
+
+      act(() => {
+        api.collapseAllRows?.();
+        api.toggleRowExpansion?.(testData.rows[1]);
+      });
+
+      expect(api.expandedIds).toEqual(["2"]);
     });
 
     it("keeps toggleRowExpansion stable across an expansion", () => {

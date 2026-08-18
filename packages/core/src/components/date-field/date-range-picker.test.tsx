@@ -83,6 +83,37 @@ describe("DateRangePicker structure", () => {
     );
     expect(container.querySelector<HTMLInputElement>('input[name="to"]')?.value).toBe("2025-06-15");
   });
+
+  it("exposes one combined start/end field via the standalone name prop", () => {
+    const { container } = render(
+      <DateRangePicker
+        aria-label="Billing period"
+        name="period"
+        defaultValue={{ start: d("2025-06-10"), end: d("2025-06-15") }}
+      />,
+    );
+    // Mirrors DateField/DatePicker `name`: a single hidden field, empty until
+    // both ends complete.
+    expect(container.querySelector<HTMLInputElement>('input[name="period"]')?.value).toBe(
+      "2025-06-10/2025-06-15",
+    );
+  });
+
+  it("lets a Field.Root name take precedence over the name prop", () => {
+    const { container } = render(
+      <Field.Root name="fieldName">
+        <DateRangePicker
+          aria-label="Billing period"
+          name="propName"
+          defaultValue={{ start: d("2025-06-10"), end: d("2025-06-15") }}
+        />
+      </Field.Root>,
+    );
+    expect(container.querySelector('input[name="propName"]')).toBeNull();
+    expect(container.querySelector<HTMLInputElement>('input[name="fieldName"]')?.value).toBe(
+      "2025-06-10/2025-06-15",
+    );
+  });
 });
 
 // ─── Typing ───────────────────────────────────────────────────────────────────

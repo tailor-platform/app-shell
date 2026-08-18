@@ -65,6 +65,13 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
   firstDayOfWeek?: FirstDayOfWeek;
+  /**
+   * Name for the combined hidden proxy input — a single `name=start/end` field
+   * for native form POST, mirroring `DateField` / `DatePicker`. Inside
+   * `Field.Root`, the Field's `name` takes precedence. For two separate fields,
+   * use `startName` / `endName` instead.
+   */
+  name?: string;
   /** Names for the two plain hidden start/end inputs (classic form POST). */
   startName?: string;
   endName?: string;
@@ -121,6 +128,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     isInvalid,
     autoFocus,
     firstDayOfWeek,
+    name,
     startName,
     endName,
     "aria-label": ariaLabel,
@@ -280,9 +288,9 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
 
   const bindings = useDateFieldFieldBridge({
     id,
-    // The combined proxy takes the Field's name (composed usage); classic POST
-    // uses the two plain startName/endName inputs below.
-    name: undefined,
+    // Standalone: the combined proxy carries `name` (one `start/end` field);
+    // inside Field.Root the Field's name wins. Split POST uses startName/endName.
+    name,
     inputValue: combinedInputValue,
     hasInput: combinedHasInput,
     localValidationMessage: combinedMessage,

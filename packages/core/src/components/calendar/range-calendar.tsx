@@ -72,6 +72,12 @@ function RangeCalendar<T extends DateValue = DateValue>({
   const state = useRangeCalendarState({
     value,
     defaultValue,
+    // Erased to the non-generic DateRange the engine emits. Param contravariance
+    // blocks `(DateRange<T>) => void` ⇒ `(DateRange) => void`, and `T` isn't a
+    // runtime invariant anyway: each endpoint's concrete type is decided per
+    // pick by `withDatePart` (a cold selection with no prior value emits a plain
+    // CalendarDate regardless of `T`). Preservation of a seeded part-type is
+    // covered by the `withDatePart` unit tests. Mirrors the single Calendar.
     onChange: onChange as (v: DateRange) => void,
     minValue,
     maxValue,

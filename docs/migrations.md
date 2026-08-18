@@ -11,16 +11,54 @@ This page is deliberately narrow. It is **not** a changelog — see [`packages/c
 
 Each entry states which versions are affected, what breaks, how to detect it, and what to change. Entries stay here permanently; they are not pruned when they get old, because apps upgrade across arbitrary version gaps.
 
-| Version       | Change                                                                                             |
-| ------------- | -------------------------------------------------------------------------------------------------- |
-| 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required) |
-| 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)        |
-| 1.8.0         | [`stream` removed from `useAIChat()`](#180-stream-removed-from-useaichat)                          |
-| 1.5.0 → 1.7.0 | [Remove the theme bridge workaround](#150--170-remove-the-theme-bridge-workaround)                 |
-| 1.5.0         | [`loader` removed from file-based pages](#150-loader-removed-from-file-based-page-definitions)     |
-| 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)    |
-| 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)              |
-| before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                             |
+| Version       | Change                                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
+| 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
+| 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                  |
+| 1.8.0         | [`stream` removed from `useAIChat()`](#180-stream-removed-from-useaichat)                                                    |
+| 1.5.0 → 1.7.0 | [Remove the theme bridge workaround](#150--170-remove-the-theme-bridge-workaround)                                           |
+| 1.5.0         | [`loader` removed from file-based pages](#150-loader-removed-from-file-based-page-definitions)                               |
+| 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
+| 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
+| before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.12.0: `DateField` / `DatePicker` field chrome moved to `Field.Root`
+
+**Applies to:** apps passing `label`, `description`, `errorMessage`, or `hideTimeZone` to `DateField` or `DatePicker`.
+
+The date controls now follow the same composition model as `Field`, `Select`, `Combobox`, and `Autocomplete`. Field chrome (`label`, `description`, `errorMessage`) has moved out of the control and into `Field.Root`. `hideTimeZone` is removed — it was accepted by the prop types but had no effect.
+
+TypeScript will error on the removed props; delete them and compose with `Field.Root` instead.
+
+Before:
+
+```tsx
+<DatePicker
+  label="Delivery date"
+  description="When should we ship your order?"
+  minValue={today(getLocalTimeZone())}
+  errorMessage={error}
+  isInvalid={!!error}
+/>
+```
+
+After:
+
+```tsx
+<Field.Root invalid={!!error}>
+  <Field.Label>Delivery date</Field.Label>
+  <DatePicker aria-label="Delivery date" minValue={today(getLocalTimeZone())} />
+  <Field.Description>When should we ship your order?</Field.Description>
+  <Field.Error match={!!error}>{error}</Field.Error>
+</Field.Root>
+```
+
+`isInvalid` remains a top-level prop for externally-controlled invalid styling. Semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and unchanged. Standalone usage still works with an accessible name:
+
+```tsx
+<DateField aria-label="Invoice date" />
+```
 
 ## 1.11.0: React 19.2.7 and React Router v8 are now required
 

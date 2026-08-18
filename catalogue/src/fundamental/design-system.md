@@ -171,7 +171,7 @@ Hand-typing `padding: 13px` is a smell. Round to the nearest scale step; if noth
 
 ### Typography
 
-**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable) → `font-sans`, which the base layer already applies to `body`.
+**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable) → `font-sans`, which the base layer already applies to `body`. Override the whole stack by setting `--astw-font-sans` on `:root`.
 
 Compose roles from stock Tailwind utilities. These pairings are what AppShell's own components use — match them so your screens sit consistently alongside the primitives:
 
@@ -193,6 +193,24 @@ Compose roles from stock Tailwind utilities. These pairings are what AppShell's 
 ```
 
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
+
+#### Japanese text and `font-medium`
+
+`font-medium` is the most-used weight in AppShell, and it **silently fails for Japanese**
+unless the app opts into the Japanese font bundle. Inter carries no CJK glyphs, so Japanese
+falls through to the system font, and system Japanese fonts have no 500 weight — Yu Gothic UI
+on Windows ships only Light/Semilight/Regular/Semibold/Bold, so `font-weight: 500` resolves
+down to Regular and the label looks identical to body copy.
+
+If the app renders Japanese, it needs one extra import in global CSS:
+
+```css
+@import "@tailor-platform/app-shell/fonts/noto-sans-jp";
+```
+
+With it, all four weights are real in both scripts and mixed Japanese/Latin strings are
+metric-matched. Without it, do not rely on weight alone to carry hierarchy in Japanese —
+reach for `text-muted-foreground` or a size step instead.
 
 ### Radius
 

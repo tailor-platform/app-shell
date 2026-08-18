@@ -84,13 +84,7 @@ export interface FieldDivider {
   type: "divider";
 }
 
-/**
- * Renders a field from the data object.
- *
- * Receives the whole `data` object rather than a pre-resolved value, mirroring
- * `render` on DataTable's `Column`. Destructure or index the keys you need and
- * they keep their declared types - nothing is widened to `unknown`.
- */
+/** Renders a field from the whole `data` object, like `render` on DataTable's `Column`. */
 export type FieldRender<TData extends object = Record<string, unknown>> = (
   data: TData,
 ) => ReactNode;
@@ -110,18 +104,9 @@ export interface FieldDefinition<TData extends object = Record<string, unknown>>
   /** Behavior when value is empty (defaults to "dash") */
   emptyBehavior?: EmptyBehavior;
   /**
-   * Renders this field yourself instead of using a built-in `type` renderer.
-   *
-   * Receives the whole `data` object - reach into it for the keys you need and
-   * they keep their declared types. Mirrors `render` on DataTable's `Column`.
-   *
-   * Always wins when both are present, and its return value replaces the
-   * built-in output entirely - `meta` (copy button, truncation, badge maps,
-   * …) is not applied, so a custom renderer owns its own presentation.
-   *
-   * `key` is still required: it identifies the field and is what
-   * `emptyBehavior` tests. A custom renderer runs even when the value at `key`
-   * is empty, but `emptyBehavior: "hide"` removes the field before that.
+   * Draws the field from `data` instead of using `type`. Wins over `type` and
+   * replaces the built-in output, so `meta` is not applied. Still runs when the
+   * value at `key` is empty; `emptyBehavior: "hide"` is checked first.
    */
   render?: FieldRender<TData>;
 }
@@ -138,10 +123,8 @@ export type Columns = 3 | 4;
 /**
  * Props for the DescriptionCard component
  *
- * `TData` is inferred from `data`, which types the second argument passed to a
- * field's `render`. It is constrained to `object` rather than
- * `Record<string, unknown>` so `interface`-typed data is accepted - interfaces
- * have no implicit index signature.
+ * `TData` is inferred from `data`; constrained to `object` rather than
+ * `Record<string, unknown>` so interfaces are accepted.
  */
 export interface DescriptionCardProps<TData extends object = Record<string, unknown>> {
   /** Raw backend data object */
@@ -182,11 +165,7 @@ export interface ResolvedField {
   meta?: FieldMeta;
   /** Full data object (for accessing related keys) */
   data: Record<string, unknown>;
-  /**
-   * Custom renderer, pre-bound to the original (still correctly-typed) data
-   * object at resolve time. Binding here keeps `ResolvedField` free of a
-   * `TData` parameter without an unsound cast.
-   */
+  /** Custom renderer, pre-bound to `data` so this type needs no `TData` parameter. */
   render?: () => ReactNode;
 }
 

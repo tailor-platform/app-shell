@@ -68,8 +68,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.3",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.3",
     "@types/encoding-japanese": "^2.2.1",
     "@types/node": "catalog:",
     "@types/papaparse": "^5.5.2",

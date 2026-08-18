@@ -1,4 +1,13 @@
-import * as React from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type ComponentProps,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+} from "react";
 import { Popover } from "@base-ui/react/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,50 +17,14 @@ import { DATE_SHORTCUT_KEYS, type DateShortcut } from "@/lib/date-shortcuts";
 import type { Segment } from "./use-date-field-state";
 
 /**
- * Field presentation for the date components — the segmented spinbutton group,
- * its labels/description/error, and the popover wrapper used by `DatePicker`.
- * Built on Base UI primitives (`Popover`) + plain accessible markup, driven by
+ * Field presentation for the date components — the segmented spinbutton group
+ * and the popover wrapper used by `DatePicker`. Built on Base UI primitives
+ * (`Popover`) + plain accessible markup, driven by
  * our own `useDateFieldState` engine. Not exported from the package.
  *
  * Styling mirrors the rest of the library (`astw:` tokens, dark mode, the same
  * popover token set as our other Base UI popovers).
  */
-
-// ─── Field labels / description / error ───────────────────────────────────────
-
-// A composite spinbutton group can't be labelled by a native <label htmlFor>,
-// so the label is a <span> referenced via the group's `aria-labelledby` (the
-// APG date-field pattern).
-export function DatePickerLabel({ className, ...props }: React.ComponentProps<"span">) {
-  return (
-    <span
-      data-slot="date-picker-label"
-      className={cn("astw:text-sm astw:font-medium astw:text-foreground", className)}
-      {...props}
-    />
-  );
-}
-
-export function DatePickerDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="date-picker-description"
-      className={cn("astw:text-sm astw:text-muted-foreground", className)}
-      {...props}
-    />
-  );
-}
-
-export function DatePickerError({ className, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="date-picker-error"
-      role="alert"
-      className={cn("astw:text-sm astw:font-medium astw:text-destructive", className)}
-      {...props}
-    />
-  );
-}
 
 // ─── Segmented input group ────────────────────────────────────────────────────
 
@@ -93,14 +66,19 @@ interface DateInputGroupProps {
   isInvalid?: boolean;
   isRequired?: boolean;
   autoFocus?: boolean;
-  labelId?: string;
+  /** ID of the element(s) that label the group. */
+  ariaLabelledby?: string;
   /** Accessible name when there is no visible label (e.g. a compact filter input). */
   ariaLabel?: string;
   describedById?: string;
   className?: string;
-  trigger?: React.ReactNode;
+  trigger?: ReactNode;
   /** Ref to the group element — used to anchor the popover to the whole field. */
-  groupRef?: React.Ref<HTMLDivElement>;
+  groupRef?: Ref<HTMLDivElement>;
+  /** Called once when focus enters the group from outside. */
+  onGroupFocus?: () => void;
+  /** Called once when focus leaves the group entirely. */
+  onGroupBlur?: (nextFocused: EventTarget | null) => void;
 }
 
 export function DateInputGroup({
@@ -118,27 +96,29 @@ export function DateInputGroup({
   isInvalid,
   isRequired,
   autoFocus,
-  labelId,
+  ariaLabelledby,
   ariaLabel,
   describedById,
   className,
   trigger,
   groupRef,
+  onGroupFocus,
+  onGroupBlur,
 }: DateInputGroupProps) {
   const t = useDateFieldT();
-  const editableRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const editableRefs = useRef<(HTMLDivElement | null)[]>([]);
   // Digits typed into the currently-focused segment this session. Reset on
   // focus; the first digit (count 0) replaces, and the count decides when the
   // segment is "full" and should auto-advance.
-  const typedCountRef = React.useRef(0);
+  const typedCountRef = useRef(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (autoFocus && !isDisabled) editableRefs.current[0]?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Index editable segments for left/right focus movement.
-  const editableIndexById = React.useMemo(() => {
+  const editableIndexById = useMemo(() => {
     const map = new Map<number, number>();
     let i = 0;
     segments.forEach((s, idx) => {
@@ -153,7 +133,7 @@ export function DateInputGroup({
   };
 
   const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLDivElement>,
+    e: KeyboardEvent<HTMLDivElement>,
     segment: Segment,
     editableIndex: number,
   ) => {
@@ -248,13 +228,16 @@ export function DateInputGroup({
       ref={groupRef}
       role="group"
       data-slot="date-picker-group"
-      aria-labelledby={labelId}
-      aria-label={labelId ? undefined : ariaLabel}
+      aria-labelledby={ariaLabelledby}
+      aria-label={ariaLabelledby ? undefined : ariaLabel}
       aria-describedby={describedById}
       aria-disabled={isDisabled || undefined}
       data-disabled={isDisabled || undefined}
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, className)}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onGroupFocus?.();
+      }}
       onBlur={(e) => {
         // Leaving the year segment (to a sibling, the calendar icon, or out of
         // the field) expands a 1–2 digit year to the 2000s right away — the icon
@@ -264,7 +247,10 @@ export function DateInputGroup({
         // Focus left the whole group (not just moved between segments) →
         // backfill the current month/year for a partial entry and clamp an
         // impossible day.
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commitOnBlur();
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          commitOnBlur();
+          onGroupBlur?.(e.relatedTarget);
+        }
       }}
     >
       <div data-slot="date-input" className="astw:flex astw:flex-1 astw:items-center astw:gap-px">
@@ -344,7 +330,7 @@ const triggerClasses = cn(
 export function DatePickerPopoverTrigger({
   className,
   ...props
-}: React.ComponentProps<typeof Popover.Trigger>) {
+}: ComponentProps<typeof Popover.Trigger>) {
   const t = useDateFieldT();
   return (
     <Popover.Trigger
@@ -366,15 +352,18 @@ interface DatePopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** The field group — must contain a `DatePickerPopoverTrigger`. */
-  field: React.ReactNode;
-  children: React.ReactNode;
+  field: ReactNode;
+  children: ReactNode;
   ariaLabel?: string;
+  ariaLabelledby?: string;
+  popupRef?: Ref<HTMLDivElement>;
+  onPopupBlur?: (nextFocused: EventTarget | null) => void;
   /**
    * Element to position the calendar against. Defaults to the trigger; pass the
    * field group so the calendar aligns to the field's edge (not the icon),
    * overlapping it horizontally and shifting inward near the viewport edge.
    */
-  anchor?: React.RefObject<HTMLElement | null>;
+  anchor?: RefObject<HTMLElement | null>;
 }
 
 export function DatePopover({
@@ -383,6 +372,9 @@ export function DatePopover({
   field,
   children,
   ariaLabel,
+  ariaLabelledby,
+  popupRef,
+  onPopupBlur,
   anchor,
 }: DatePopoverProps) {
   const t = useDateFieldT();
@@ -393,14 +385,21 @@ export function DatePopover({
         <Popover.Positioner anchor={anchor} sideOffset={4} side="bottom" align="start">
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup
+            ref={popupRef}
             role="dialog"
-            aria-label={ariaLabel ?? t("chooseDate")}
+            aria-labelledby={ariaLabelledby}
+            aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t("chooseDate"))}
             data-slot="date-picker-popover"
             className={cn(
               "astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95",
               "astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                onPopupBlur?.(e.relatedTarget);
+              }
+            }}
           >
             {children}
           </Popover.Popup>

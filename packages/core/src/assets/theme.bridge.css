@@ -64,6 +64,27 @@
   --color-status-attention: var(--status-attention);
   --color-status-danger: var(--status-danger);
 
+  --color-alert-neutral-background: var(--alert-neutral-background);
+  --color-alert-neutral-foreground: var(--alert-neutral-foreground);
+  --color-alert-neutral-foreground-muted: var(--alert-neutral-foreground-muted);
+  --color-alert-neutral-border: var(--alert-neutral-border);
+  --color-alert-success-background: var(--alert-success-background);
+  --color-alert-success-foreground: var(--alert-success-foreground);
+  --color-alert-success-foreground-muted: var(--alert-success-foreground-muted);
+  --color-alert-success-border: var(--alert-success-border);
+  --color-alert-warning-background: var(--alert-warning-background);
+  --color-alert-warning-foreground: var(--alert-warning-foreground);
+  --color-alert-warning-foreground-muted: var(--alert-warning-foreground-muted);
+  --color-alert-warning-border: var(--alert-warning-border);
+  --color-alert-error-background: var(--alert-error-background);
+  --color-alert-error-foreground: var(--alert-error-foreground);
+  --color-alert-error-foreground-muted: var(--alert-error-foreground-muted);
+  --color-alert-error-border: var(--alert-error-border);
+  --color-alert-info-background: var(--alert-info-background);
+  --color-alert-info-foreground: var(--alert-info-foreground);
+  --color-alert-info-foreground-muted: var(--alert-info-foreground-muted);
+  --color-alert-info-border: var(--alert-info-border);
+
   --shadow-xs: var(--semantic-shadow-xs);
   --shadow-sm: var(--semantic-shadow-sm);
   --shadow-md: var(--semantic-shadow-md);

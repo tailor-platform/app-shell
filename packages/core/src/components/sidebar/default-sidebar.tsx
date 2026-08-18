@@ -33,21 +33,48 @@ function resolveCollapsibleMode(
   return "offcanvas";
 }
 
+function resolveCommandPaletteShortcutLabel() {
+  if (typeof navigator === "undefined") return "Ctrl+K";
+
+  const platform =
+    (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ??
+    navigator.platform ??
+    "";
+
+  return /mac|iphone|ipad|ipod/i.test(platform) ? "⌘K" : "Ctrl+K";
+}
+
 // Always rendered regardless of searchSources — the palette searches routes
 // and contextual actions too, so there is always something to search.
 const SearchEntry = () => {
-  const { setOpen: openPalette } = useCommandPaletteState();
+  const { openCommandPalette } = useCommandPaletteState();
   const t = useT();
+  const shortcutLabel = resolveCommandPaletteShortcutLabel();
+  const tooltipLabel = `${t("search")} (${shortcutLabel})`;
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="astw:mt-1 astw:pb-2">
       <SidebarMenuButton
         render={<button type="button" />}
-        tooltip={t("search")}
-        onClick={() => openPalette(true)}
+        tooltip={tooltipLabel}
+        aria-label={tooltipLabel}
+        onClick={() => openCommandPalette()}
+        className={cn(
+          "astw:h-8 astw:justify-start astw:gap-2.5 astw:border astw:border-border/80 astw:bg-background/70 astw:px-2.5 astw:py-1.5 astw:text-xs astw:font-normal astw:text-muted-foreground astw:shadow-none",
+          "astw:hover:bg-muted/30 astw:hover:text-muted-foreground",
+          "astw:focus-visible:border-ring astw:focus-visible:ring-ring/40 astw:focus-visible:ring-2",
+        )}
       >
-        <SearchIcon className="astw:size-4" />
-        <span>{t("search")}</span>
+        <SearchIcon className="astw:size-3.5 astw:text-muted-foreground astw:opacity-70" />
+        <span className="astw:flex-1 astw:truncate astw:text-xs astw:text-muted-foreground astw:group-data-[collapsible=icon]:hidden">
+          {t("commandPaletteSearch")}
+        </span>
+        <kbd
+          aria-hidden="true"
+          className="astw:pointer-events-none astw:shrink-0 astw:font-normal astw:text-xs astw:text-muted-foreground astw:opacity-70 astw:group-data-[collapsible=icon]:hidden"
+        >
+          {shortcutLabel}
+        </kbd>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

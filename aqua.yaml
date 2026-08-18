@@ -7,3 +7,4 @@ packages:
   - name: rhysd/actionlint@v1.7.12
   - name: suzuki-shunsuke/ghalint@v1.5.6
   - name: lycheeverse/lychee@lychee-v0.24.2
+  - name: zizmorcore/zizmor@v1.29.0

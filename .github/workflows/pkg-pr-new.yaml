@@ -32,4 +32,7 @@ jobs:
           node-version-file: "./package.json"
       - run: pnpm install
       - run: pnpm build
-      - run: pnpm dlx pkg-pr-new publish "./packages/*" --commentWithSha --packageManager=pnpm
+      # pkg.pr.new recommends executing from the lockfile instead of pnpm dlx in CI.
+      # This repo also uses pnpm catalogs, so packing must go through pnpm rather than
+      # npm's default pack implementation.
+      - run: pnpm exec pkg-pr-new publish --pnpm "./packages/*" --commentWithSha --packageManager=pnpm # zizmor: ignore[use-trusted-publishing] pkg.pr.new preview releases do not upload to npm, so npm trusted publishing is not applicable here.

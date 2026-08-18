@@ -79,3 +79,8 @@ jobs:
           cd .gha-lint
           ghalint run
           ghalint run-action
+
+      # zizmor can audit both workflows and action metadata from a directory, so run
+      # it against the same prepared workspace.
+      - name: Run zizmor
+        run: zizmor --no-progress --collect=workflows,actions .gha-lint/

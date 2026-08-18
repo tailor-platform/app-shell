@@ -375,7 +375,7 @@ export function DateInputGroup({
         // impossible day.
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
           commitOnBlur();
-          onGroupBlur?.();
+          onGroupBlur?.(e.relatedTarget);
         }
       }}
     >
@@ -425,6 +425,9 @@ interface DatePopoverProps {
   field: ReactNode;
   children: ReactNode;
   ariaLabel?: string;
+  ariaLabelledby?: string;
+  popupRef?: Ref<HTMLDivElement>;
+  onPopupBlur?: (nextFocused: EventTarget | null) => void;
   /**
    * Element to position the calendar against. Defaults to the trigger; pass the
    * field group so the calendar aligns to the field's edge (not the icon),
@@ -439,6 +442,9 @@ export function DatePopover({
   field,
   children,
   ariaLabel,
+  ariaLabelledby,
+  popupRef,
+  onPopupBlur,
   anchor,
 }: DatePopoverProps) {
   const t = useDateFieldT();
@@ -449,8 +455,11 @@ export function DatePopover({
         <Popover.Positioner anchor={anchor} sideOffset={4} side="bottom" align="start">
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup
+            ref={popupRef}
             role="dialog"
-            aria-label={ariaLabel ?? t("chooseDate")}
+            aria-labelledby={ariaLabelledby}
+            aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t("chooseDate"))}
+            onBlur={(e) => onPopupBlur?.(e.relatedTarget)}
             data-slot="date-picker-popover"
             className={cn(
               "astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",

@@ -52,6 +52,10 @@ function useProxyInputRef(forwardedRef: Ref<HTMLInputElement> | undefined, custo
   );
 }
 
+function isTargetWithin(target: EventTarget | null, ref: { current: HTMLElement | null }) {
+  return target instanceof Node && ref.current?.contains(target) === true;
+}
+
 function useControlledState<V>(
   controlled: V | undefined,
   defaultValue: V,
@@ -209,7 +213,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
         ariaLabel={ariaLabel}
         describedById={ariaDescribedby}
         groupRef={groupRef}
-        onGroupBlur={onBlur}
+        onGroupBlur={onBlur ? () => onBlur() : undefined}
       />
     </div>
   );
@@ -261,6 +265,8 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
 
   const [open, setOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const hasFocusWithinRef = useRef(false);
   const [val, setVal] = useControlledState<DateValue | null>(
     value,
     defaultValue ?? null,
@@ -311,6 +317,38 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     first?.focus();
   }, []);
 
+  const handleCompositeFocus = useCallback(() => {
+    hasFocusWithinRef.current = true;
+  }, []);
+
+  const handleCompositeBlur = useCallback(() => {
+    if (!hasFocusWithinRef.current) return;
+    hasFocusWithinRef.current = false;
+    onBlur?.();
+  }, [onBlur]);
+
+  const handleGroupBlur = useCallback(
+    (nextFocused: EventTarget | null) => {
+      if (isTargetWithin(nextFocused, popupRef)) return;
+      handleCompositeBlur();
+    },
+    [handleCompositeBlur],
+  );
+
+  const handlePopupBlur = useCallback(
+    (nextFocused: EventTarget | null) => {
+      if (isTargetWithin(nextFocused, fieldRef) || isTargetWithin(nextFocused, popupRef)) return;
+      handleCompositeBlur();
+    },
+    [handleCompositeBlur],
+  );
+
+  const popoverAriaLabel = ariaLabelledby
+    ? undefined
+    : ariaLabel
+      ? t("chooseDateFor", { name: ariaLabel })
+      : t("chooseDate");
+
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
       <input
@@ -330,7 +368,10 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
       <DatePopover
         open={open}
         onOpenChange={setOpen}
-        ariaLabel={ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate")}
+        ariaLabel={popoverAriaLabel}
+        ariaLabelledby={ariaLabelledby}
+        popupRef={popupRef}
+        onPopupBlur={handlePopupBlur}
         anchor={fieldRef}
         field={
           <DateInputGroup
@@ -353,11 +394,17 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             describedById={ariaDescribedby}
             groupRef={fieldRef}
             trigger={<DatePickerPopoverTrigger disabled={isDisabled} />}
-            onGroupBlur={onBlur}
+            onGroupFocus={handleCompositeFocus}
+            onGroupBlur={handleGroupBlur}
           />
         }
       >
-        <CalendarView state={calState} ariaLabel={ariaLabel ?? t("calendar")} inPopover />
+        <CalendarView
+          state={calState}
+          ariaLabel={ariaLabelledby ? undefined : (ariaLabel ?? t("calendar"))}
+          ariaLabelledBy={ariaLabelledby}
+          inPopover
+        />
       </DatePopover>
     </div>
   );

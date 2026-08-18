@@ -341,6 +341,36 @@ describe("DatePicker", () => {
     });
   });
 
+  it("does not blur when focus moves from the field into the popup", async () => {
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    render(<DatePicker aria-label="Date" onBlur={onBlur} />);
+
+    await user.click(screen.getByRole("button", { name: "Open calendar" }));
+    await waitFor(() => {
+      expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull();
+    });
+
+    expect(onBlur).not.toHaveBeenCalled();
+  });
+
+  it("uses the external label for the popup dialog and calendar", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <label id="ship-date-label" htmlFor="ship-date">
+          Ship date
+        </label>
+        <DatePicker id="ship-date" aria-labelledby="ship-date-label" />
+      </>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open calendar" }));
+
+    expect(await screen.findByRole("dialog", { name: "Ship date" })).toBeDefined();
+    expect(screen.getByRole("grid", { name: "Ship date" })).toBeDefined();
+  });
+
   it("fires onChange when a calendar date cell is clicked", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

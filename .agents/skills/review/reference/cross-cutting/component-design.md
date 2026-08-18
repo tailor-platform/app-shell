@@ -204,7 +204,12 @@ interface ComponentNameStandaloneProps<I> {
   onValueChange?: (value: ExtractItem<I> | null) => void;
 }
 
-function ComponentNameStandalone<I>({ className, items, value, onValueChange }: ComponentNameStandaloneProps<I>) {
+function ComponentNameStandalone<I>({
+  className,
+  items,
+  value,
+  onValueChange,
+}: ComponentNameStandaloneProps<I>) {
   return (
     <div className={className}>
       <ComponentNameRoot items={items} value={value} onValueChange={onValueChange}>

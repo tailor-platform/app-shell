@@ -69,15 +69,18 @@ Use this format:
 
 ```md
 ## Scope
+
 - reviewed:
 - skipped:
 - references applied:
 
 ## Findings
+
 [1/N — High] ...
 [2/N — Medium] ...
 
 ## Missing Evidence
+
 - ...
 
 **Verdict: Approve | Request Changes**

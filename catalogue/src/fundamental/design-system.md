@@ -207,23 +207,15 @@ Compose roles from stock Tailwind utilities. These pairings are what AppShell's 
 
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
 
-#### Japanese text and `font-medium`
+#### Japanese text
 
-`font-medium` is the most-used weight in AppShell, and it **silently fails for Japanese**
-unless the app opts into the Japanese font bundle. Inter carries no CJK glyphs, so Japanese
-falls through to the system font, and system Japanese fonts have no 500 weight — Yu Gothic UI
-on Windows ships only Light/Semilight/Regular/Semibold/Bold, so `font-weight: 500` resolves
-down to Regular and the label looks identical to body copy.
-
-If the app renders Japanese, it needs one extra import in global CSS:
+The weight tokens only resolve correctly for Japanese if the app imports the Japanese font
+bundle — Inter carries no CJK glyphs and system Japanese fonts have no 500 weight. If the app
+renders Japanese, add to global CSS:
 
 ```css
 @import "@tailor-platform/app-shell/fonts/noto-sans-jp";
 ```
-
-With it, all four weights are real in both scripts and mixed Japanese/Latin strings are
-metric-matched. Without it, do not rely on weight alone to carry hierarchy in Japanese —
-reach for `text-muted-foreground` or a size step instead.
 
 ### Radius
 

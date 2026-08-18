@@ -49,22 +49,21 @@ jobs:
             | sort > workflows.txt
 
       # actionlint accepts an explicit file list, but ghalint discovers workflows
-      # under .github/workflows and actions under .github/actions. Build a temporary
-      # mini-repo containing only the files we actually want ghalint to lint.
+      # under .github/workflows and action metadata under .github/actions. Build a
+      # temporary mini-repo containing both sets of authored files.
       - name: Prepare ghalint workspace
         run: |
           set -euo pipefail
           rm -rf .gha-lint
           mkdir -p .gha-lint/.github/workflows .gha-lint/.github/actions
 
-          # Preserve the original relative paths so the temp tree still looks like a
-          # normal repository layout to ghalint.
-          while IFS= read -r path; do
-            mkdir -p ".gha-lint/$(dirname "$path")"
-            cp "$path" ".gha-lint/$path"
-          done < workflows.txt
-
-          find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \) | sort | while IFS= read -r path; do
+          # Merge the selected workflow files with local action metadata files, then
+          # copy everything into .gha-lint while preserving relative paths so the
+          # temp tree still looks like a normal repository layout to ghalint.
+          {
+            cat workflows.txt
+            find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \)
+          } | sort | while IFS= read -r path; do
             mkdir -p ".gha-lint/$(dirname "$path")"
             cp "$path" ".gha-lint/$path"
           done

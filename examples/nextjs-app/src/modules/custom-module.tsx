@@ -19,6 +19,7 @@ import {
 import { primitiveComponentsDemoResource } from "./pages/primitives-demo";
 import { dropdownComponentsDemoResource } from "./pages/dropdown-demo";
 import { formComponentsDemoResource, zodRHFFormDemoResource } from "./pages/form-demo";
+import { dateRangeRHFDemoResource } from "./pages/date-range-rhf-demo";
 import { csvImporterDemoResource } from "./pages/csv-importer-demo";
 import { dataTableDemoResource } from "./pages/data-table-demo";
 import { colorDemoResource } from "./pages/color-demo";
@@ -199,6 +200,17 @@ export const customPageModule = defineModule({
           </p>
           <p>
             <Link
+              to="/custom-page/date-range-rhf-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              DateRangePicker + RHF Demo (Form + Field.Root, zod + server errors)
+            </Link>
+          </p>
+          <p>
+            <Link
               to="/custom-page/csv-importer-demo"
               style={{
                 color: "hsl(var(--primary))",
@@ -266,6 +278,7 @@ export const customPageModule = defineModule({
     dropdownComponentsDemoResource,
     formComponentsDemoResource,
     zodRHFFormDemoResource,
+    dateRangeRHFDemoResource,
     csvImporterDemoResource,
     dataTableDemoResource,
     gridDemoResource,

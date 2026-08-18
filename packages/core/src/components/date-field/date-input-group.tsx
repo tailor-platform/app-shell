@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
 import { useDateFieldT } from "./i18n";
 import { DATE_SHORTCUT_KEYS, type DateShortcut } from "@/lib/date-shortcuts";
-import type { Segment } from "./use-date-field-state";
+import type { EditableSegmentType, Segment } from "./use-date-field-state";
 
 /**
  * Field presentation for the date components — the segmented spinbutton group
@@ -28,7 +28,7 @@ import type { Segment } from "./use-date-field-state";
 
 // ─── Segmented input group ────────────────────────────────────────────────────
 
-const groupClasses = cn(
+export const groupClasses = cn(
   inputBaseClasses,
   // Floor the width to comfortably fit "dd / mm / yyyy" + the trigger icon plus
   // padding (142px) so the field doesn't collapse in a narrow/flex container.
@@ -39,7 +39,13 @@ const groupClasses = cn(
   "astw:data-[disabled]:cursor-not-allowed astw:data-[disabled]:opacity-50",
 );
 
-interface DateInputGroupProps {
+/** Imperative focus entry points for cross-field (range) arrow navigation. */
+export interface DateFieldRowHandle {
+  focusFirst: () => void;
+  focusLast: () => void;
+}
+
+interface DateFieldRowProps {
   segments: Segment[];
   cycle: (type: Exclude<Segment["type"], "literal">, delta: number) => void;
   setDigit: (
@@ -52,13 +58,6 @@ interface DateInputGroupProps {
   clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
   /** Apply a whole-date keyboard shortcut (today, month/year/week jumps, ±day). */
   applyShortcut: (cmd: DateShortcut) => void;
-  /**
-   * Normalize the value when focus leaves the group: backfill the current
-   * month/year when only finer fields are set, and clamp an impossible day.
-   */
-  commitOnBlur: () => void;
-  /** Expand a 1–2 digit year to the 2000s when the year segment loses focus. */
-  expandShortYear: () => void;
   /** Open the calendar popover (Alt+↓). Omitted for the popover-less `DateField`. */
   onOpenCalendar?: () => void;
   isDisabled?: boolean;
@@ -66,45 +65,48 @@ interface DateInputGroupProps {
   isInvalid?: boolean;
   isRequired?: boolean;
   autoFocus?: boolean;
-  /** ID of the element(s) that label the group. */
-  ariaLabelledby?: string;
-  /** Accessible name when there is no visible label (e.g. a compact filter input). */
-  ariaLabel?: string;
-  describedById?: string;
+  /**
+   * Accessible name per segment; defaults to the plain segment name. The range
+   * group scopes it to the field ("start date month") so the two identical
+   * segment sets stay distinguishable to a screen reader.
+   */
+  segmentLabel?: (type: EditableSegmentType) => string;
+  /**
+   * Focus moved past the first/last segment (arrows, "/", or typing auto-
+   * advance). Lets the range group chain its two rows into one focus run.
+   */
+  onNavigateOut?: (edge: "prev" | "next") => void;
+  handleRef?: (handle: DateFieldRowHandle | null) => void;
+  /** Ref to the row's segment container — the blur-containment boundary. */
+  rowRef?: Ref<HTMLDivElement>;
   className?: string;
-  trigger?: ReactNode;
-  /** Ref to the group element — used to anchor the popover to the whole field. */
-  groupRef?: Ref<HTMLDivElement>;
-  /** Called once when focus enters the group from outside. */
-  onGroupFocus?: () => void;
-  /** Called once when focus leaves the group entirely. */
-  onGroupBlur?: (nextFocused: EventTarget | null) => void;
 }
 
-export function DateInputGroup({
+/**
+ * One run of editable date segments — the segment markup and its whole key
+ * layer. Shared by the single-field `DateInputGroup` and the range group's two
+ * rows. Renders only the segment container (`data-slot="date-input"`); the
+ * enclosing group owns the `role="group"` wrapper + blur normalization.
+ */
+export function DateFieldRow({
   segments,
   cycle,
   setDigit,
   setDayPeriod,
   clearSegment,
   applyShortcut,
-  commitOnBlur,
-  expandShortYear,
   onOpenCalendar,
   isDisabled,
   isReadOnly,
   isInvalid,
   isRequired,
   autoFocus,
-  ariaLabelledby,
-  ariaLabel,
-  describedById,
+  segmentLabel,
+  onNavigateOut,
+  handleRef,
+  rowRef,
   className,
-  trigger,
-  groupRef,
-  onGroupFocus,
-  onGroupBlur,
-}: DateInputGroupProps) {
+}: DateFieldRowProps) {
   const t = useDateFieldT();
   const editableRefs = useRef<(HTMLDivElement | null)[]>([]);
   // Digits typed into the currently-focused segment this session. Reset on
@@ -114,6 +116,16 @@ export function DateInputGroup({
 
   useEffect(() => {
     if (autoFocus && !isDisabled) editableRefs.current[0]?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!handleRef) return;
+    handleRef({
+      focusFirst: () => editableRefs.current[0]?.focus(),
+      focusLast: () => editableRefs.current[editableRefs.current.length - 1]?.focus(),
+    });
+    return () => handleRef(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -128,8 +140,16 @@ export function DateInputGroup({
   }, [segments]);
 
   const focusEditable = (editableIndex: number) => {
+    if (editableIndex < 0) {
+      onNavigateOut?.("prev");
+      return;
+    }
     const el = editableRefs.current[editableIndex];
-    el?.focus();
+    if (el) {
+      el.focus();
+    } else if (editableIndex >= editableRefs.current.length) {
+      onNavigateOut?.("next");
+    }
   };
 
   const handleKeyDown = (
@@ -223,6 +243,112 @@ export function DateInputGroup({
   };
 
   return (
+    <div
+      ref={rowRef}
+      data-slot="date-input"
+      className={cn("astw:flex astw:flex-1 astw:items-center astw:gap-px", className)}
+    >
+      {segments.map((segment, idx) => {
+        if (segment.type === "literal") {
+          return (
+            <span
+              key={idx}
+              aria-hidden="true"
+              data-slot="date-segment"
+              data-type="literal"
+              className="astw:select-none astw:px-px astw:text-muted-foreground/60"
+            >
+              {segment.text}
+            </span>
+          );
+        }
+        const editableIndex = editableIndexById.get(idx)!;
+        return (
+          // Editable date segment: the APG spinbutton pattern. A <div role="spinbutton">
+          // (not an <input>) so we render locale-formatted text with no caret.
+          <div
+            key={idx}
+            ref={(el) => {
+              editableRefs.current[editableIndex] = el;
+            }}
+            role="spinbutton"
+            data-slot="date-segment"
+            data-type={segment.type}
+            data-placeholder={segment.isPlaceholder || undefined}
+            contentEditable={false}
+            suppressContentEditableWarning
+            tabIndex={isDisabled ? -1 : 0}
+            aria-label={segmentLabel ? segmentLabel(segment.type) : t(segment.type)}
+            aria-disabled={isDisabled || undefined}
+            aria-readonly={isReadOnly || undefined}
+            aria-invalid={isInvalid || undefined}
+            // aria-required lives on the spinbutton segments, not the role="group"
+            // wrapper — ARIA only supports it on widget roles (spinbutton), not group.
+            aria-required={isRequired || undefined}
+            aria-valuemin={segment.minValue}
+            aria-valuemax={segment.maxValue}
+            aria-valuenow={segment.value}
+            aria-valuetext={segment.isPlaceholder ? t("empty") : segment.text}
+            onFocus={() => {
+              typedCountRef.current = 0;
+            }}
+            onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
+            className={cn(
+              "astw:rounded astw:px-0.5 astw:tabular-nums astw:caret-transparent astw:outline-none",
+              "astw:focus:bg-primary astw:focus:text-primary-foreground",
+              "astw:data-[placeholder]:text-muted-foreground",
+            )}
+          >
+            {segment.text}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+interface DateInputGroupProps extends Omit<
+  DateFieldRowProps,
+  "segmentLabel" | "onNavigateOut" | "handleRef" | "rowRef" | "className"
+> {
+  /**
+   * Normalize the value when focus leaves the group: backfill the current
+   * month/year when only finer fields are set, and clamp an impossible day.
+   */
+  commitOnBlur: () => void;
+  /** Expand a 1–2 digit year to the 2000s when the year segment loses focus. */
+  expandShortYear: () => void;
+  /** ID of the element(s) that label the group. */
+  ariaLabelledby?: string;
+  /** Accessible name when there is no visible label (e.g. a compact filter input). */
+  ariaLabel?: string;
+  describedById?: string;
+  className?: string;
+  trigger?: ReactNode;
+  /** Ref to the group element — used to anchor the popover to the whole field. */
+  groupRef?: Ref<HTMLDivElement>;
+  /** Called once when focus enters the group from outside. */
+  onGroupFocus?: () => void;
+  /** Called once when focus leaves the group entirely. */
+  onGroupBlur?: (nextFocused: EventTarget | null) => void;
+}
+
+export function DateInputGroup({
+  commitOnBlur,
+  expandShortYear,
+  isDisabled,
+  isInvalid,
+  ariaLabelledby,
+  ariaLabel,
+  describedById,
+  className,
+  trigger,
+  groupRef,
+  onGroupFocus,
+  onGroupBlur,
+  ...rowProps
+}: DateInputGroupProps) {
+  return (
     // Deliberate APG date-field pattern: a labelled group wrapping spinbutton segments.
     <div
       ref={groupRef}
@@ -253,63 +379,7 @@ export function DateInputGroup({
         }
       }}
     >
-      <div data-slot="date-input" className="astw:flex astw:flex-1 astw:items-center astw:gap-px">
-        {segments.map((segment, idx) => {
-          if (segment.type === "literal") {
-            return (
-              <span
-                key={idx}
-                aria-hidden="true"
-                data-slot="date-segment"
-                data-type="literal"
-                className="astw:select-none astw:px-px astw:text-muted-foreground/60"
-              >
-                {segment.text}
-              </span>
-            );
-          }
-          const editableIndex = editableIndexById.get(idx)!;
-          return (
-            // Editable date segment: the APG spinbutton pattern. A <div role="spinbutton">
-            // (not an <input>) so we render locale-formatted text with no caret.
-            <div
-              key={idx}
-              ref={(el) => {
-                editableRefs.current[editableIndex] = el;
-              }}
-              role="spinbutton"
-              data-slot="date-segment"
-              data-type={segment.type}
-              data-placeholder={segment.isPlaceholder || undefined}
-              contentEditable={false}
-              suppressContentEditableWarning
-              tabIndex={isDisabled ? -1 : 0}
-              aria-label={t(segment.type)}
-              aria-disabled={isDisabled || undefined}
-              aria-readonly={isReadOnly || undefined}
-              aria-invalid={isInvalid || undefined}
-              // aria-required lives on the spinbutton segments, not the role="group"
-              // wrapper — ARIA only supports it on widget roles (spinbutton), not group.
-              aria-required={isRequired || undefined}
-              aria-valuemin={segment.minValue}
-              aria-valuemax={segment.maxValue}
-              aria-valuenow={segment.value}
-              aria-valuetext={segment.isPlaceholder ? t("empty") : segment.text}
-              onFocus={() => {
-                typedCountRef.current = 0;
-              }}
-              onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
-              className={cn(
-                "astw:rounded astw:px-0.5 astw:tabular-nums astw:caret-transparent astw:outline-none",
-                "astw:focus:bg-primary astw:focus:text-primary-foreground",
-                "astw:data-[placeholder]:text-muted-foreground",
-              )}
-            >
-              {segment.text}
-            </div>
-          );
-        })}
-      </div>
+      <DateFieldRow {...rowProps} isDisabled={isDisabled} isInvalid={isInvalid} />
       {trigger}
     </div>
   );

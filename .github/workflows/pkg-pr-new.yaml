@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  publish:
+  publish: # zizmor: ignore[use-trusted-publishing] pkg.pr.new preview releases do not upload to npm, so npm trusted publishing is not applicable here.
     if: contains(github.event.pull_request.labels.*.name, 'preview')
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -35,4 +35,4 @@ jobs:
       # pkg.pr.new recommends executing from the lockfile instead of pnpm dlx in CI.
       # This repo also uses pnpm catalogs, so packing must go through pnpm rather than
       # npm's default pack implementation.
-      - run: pnpm exec pkg-pr-new publish --pnpm "./packages/*" --commentWithSha --packageManager=pnpm # zizmor: ignore[use-trusted-publishing] pkg.pr.new preview releases do not upload to npm, so npm trusted publishing is not applicable here.
+      - run: pnpm exec pkg-pr-new publish --pnpm "./packages/*" --commentWithSha --packageManager=pnpm

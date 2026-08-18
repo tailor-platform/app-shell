@@ -48,11 +48,6 @@ jobs:
             ! -name 'agentics-maintenance.yml' \
             | sort > workflows.txt
 
-      - name: Collect action targets
-        run: |
-          set -euo pipefail
-          find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \) | sort > actions.txt
-
       # actionlint accepts an explicit file list, but ghalint discovers workflows
       # under .github/workflows and actions under .github/actions. Build a temporary
       # mini-repo containing only the files we actually want ghalint to lint.
@@ -69,10 +64,10 @@ jobs:
             cp "$path" ".gha-lint/$path"
           done < workflows.txt
 
-          while IFS= read -r path; do
+          find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \) | sort | while IFS= read -r path; do
             mkdir -p ".gha-lint/$(dirname "$path")"
             cp "$path" ".gha-lint/$path"
-          done < actions.txt
+          done
 
       - name: Run actionlint
         run: xargs actionlint < workflows.txt

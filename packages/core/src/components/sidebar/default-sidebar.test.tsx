@@ -1,5 +1,6 @@
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, afterEach, assert } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
@@ -14,8 +15,12 @@ import { AppShell } from "@/components/appshell";
 import { Home, Package } from "lucide-react";
 import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
+const mockNavigatorPlatform = (platform: string) =>
+  vi.spyOn(window.navigator, "platform", "get").mockReturnValue(platform);
+
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 const createTestModules = () => [
@@ -70,6 +75,43 @@ const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboa
 };
 
 describe("DefaultSidebar", () => {
+  it("renders an input-like search entry with mac shortcut hint, spacing, and opens the palette", async () => {
+    const user = userEvent.setup();
+    mockNavigatorPlatform("MacIntel");
+
+    render(
+      <AppShell title="Test" modules={createTestModules()}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    const searchButton = await screen.findByRole("button", { name: /search/i });
+    expect(searchButton.textContent).toContain("Search pages...");
+    expect(searchButton.textContent).toContain("⌘K");
+    expect(searchButton.textContent).not.toContain("Ctrl+K");
+    expect(searchButton.className).toContain("astw:h-8");
+    expect(searchButton.className).toContain("astw:text-xs");
+    expect(searchButton.closest("li")?.className).toContain("astw:pb-2");
+
+    await user.click(searchButton);
+
+    expect(await screen.findByPlaceholderText("Search pages...")).toBeDefined();
+  });
+
+  it("renders windows shortcut hint on non-mac platforms", async () => {
+    mockNavigatorPlatform("Win32");
+
+    render(
+      <AppShell title="Test" modules={createTestModules()}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    const searchButton = await screen.findByRole("button", { name: /search/i });
+    expect(searchButton.textContent).toContain("Ctrl+K");
+    expect(searchButton.textContent).not.toContain("⌘K");
+  });
+
   it("renders children instead of auto-generated nav", () => {
     renderDefaultSidebar(
       <>

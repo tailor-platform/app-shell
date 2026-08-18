@@ -15,7 +15,7 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.51.1-noble
+      image: mcr.microsoft.com/playwright:v1.51.1-noble@sha256:146d046a8d79a1b3a87596c4457b0b1c47f811bf4fc2cc1b99e873ae7f1cbbbd
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

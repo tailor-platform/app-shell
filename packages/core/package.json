@@ -30,6 +30,7 @@
     "./styles": "./dist/app-shell.css",
     "./theme.css": "./dist/theme.shims.css",
     "./themes/*": "./dist/themes/*.css",
+    "./fonts/noto-sans-jp": "./dist/fonts/noto-sans-jp.css",
     ".": {
       "types": "./dist/app-shell.d.ts",
       "default": "./dist/app-shell.js"
@@ -43,8 +44,8 @@
     "access": "public"
   },
   "scripts": {
-    "dev": "vite build --watch --mode development",
-    "build": "vite build",
+    "dev": "node scripts/sync-noto-fonts.mjs && vite build --watch --mode development",
+    "build": "node scripts/sync-noto-fonts.mjs && vite build",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
     "type-check": "tsc --incremental"
@@ -67,6 +68,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@fontsource-variable/noto-sans-jp": "5.3.0",
     "@tailwindcss/postcss": "catalog:",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.3",

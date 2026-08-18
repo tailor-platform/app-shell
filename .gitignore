@@ -6,3 +6,10 @@ dist
 .cursor/
 .claude/
 .pnpm-store
+
+# Vendored Noto Sans JP subsets and the generated stylesheet behind the opt-in
+# Japanese font bundle. Regenerated from the pinned @fontsource-variable/noto-sans-jp
+# devDependency by packages/core/scripts/sync-noto-fonts.mjs during build, so ~5 MB
+# of binaries stay out of git history.
+packages/core/src/assets/fonts/files/noto-sans-jp-*.woff2
+packages/core/src/assets/fonts/noto-sans-jp.css

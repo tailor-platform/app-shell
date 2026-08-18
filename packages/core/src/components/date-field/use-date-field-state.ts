@@ -95,6 +95,13 @@ export interface DateFieldStateChange {
   inputValue: string;
   hasInput: boolean;
   invalidReason: DateFieldInvalidReason | null;
+  /**
+   * A fully-resolved validation message that overrides the reason-derived one.
+   * Unused by the segment engine; the range picker synthesizes a combined
+   * change (reversed-range / per-end) and sets this so the bridge surfaces it
+   * verbatim.
+   */
+  localValidationMessage?: string;
 }
 
 export interface DateFieldStateOptions {

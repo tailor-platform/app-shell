@@ -15,7 +15,9 @@ Three related components for date input — a segmented field, a field with a ca
 import {
   DateField,
   DatePicker,
+  DateRangePicker,
   Calendar,
+  RangeCalendar,
   Field,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
@@ -23,6 +25,7 @@ import {
   today,
   type CalendarDate,
   type DateValue,
+  type DateRange,
 } from "@tailor-platform/app-shell";
 ```
 
@@ -142,6 +145,34 @@ A standalone calendar grid for custom date-selection UIs.
 <Calendar aria-label="Select date" onChange={(date) => console.log(date)} />
 ```
 
+## DateRangePicker
+
+Start and end segmented inputs sharing one calendar popover, with a `{ start, end }` value (`DateRange`) — a **separate component** from `DatePicker`, not a mode. Same composition model as the other controls: standalone with `aria-*`, or inside `Field.Root`. Selection follows the react-aria model — the first calendar pick anchors the range and keeps the popover open, the highlight follows the pointer/arrows, and the second pick completes it; picking backwards swaps the endpoints, while a range **typed** in reverse is flagged invalid (`Field.Error match="customError"`) rather than swapped.
+
+```tsx
+const [range, setRange] = useState<DateRange | null>(null);
+
+// standalone
+<DateRangePicker aria-label="Billing period" value={range} onChange={setRange} />
+
+// composed
+<Field.Root name="period">
+  <Field.Label>Billing period</Field.Label>
+  <DateRangePicker />
+  <Field.Error match="customError" />
+</Field.Root>
+```
+
+A single combined proxy input is registered as the one Field control — its value is empty until **both** ends are complete, so `isRequired` blocks a partial range. Give that combined input a `name` for a single `start/end` native-POST field (a wrapping `Field.Root` name wins), or use `startName` / `endName` to emit two plain hidden inputs for classic form-POST.
+
+## RangeCalendar
+
+The standalone inline range calendar (the grid inside `DateRangePicker`), for custom layouts.
+
+```tsx
+<RangeCalendar aria-label="Stay dates" onChange={(range) => console.log(range)} />
+```
+
 ## Localization
 
 Locale and timezone come from AppShell automatically. Override per field with `locale` / `timeZone`:
@@ -193,6 +224,23 @@ All `DateFieldProps`, plus:
 ### CalendarProps
 
 See the calendar docs in-code: controlled/uncontrolled value, min/max, unavailable dates, focused date, locale, timezone, accessible naming, and className.
+
+### DateRangePickerProps
+
+The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `firstDayOfWeek`, `timeZone`, `locale`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
+
+| Prop                     | Type                             | Description                                                                     |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------- |
+| `value` / `defaultValue` | `DateRange \| null`              | Controlled / uncontrolled `{ start, end }` range                                |
+| `onChange`               | `(v: DateRange \| null) => void` | Fires with a complete range, or `null` when cleared/incomplete                  |
+| `name`                   | `string`                         | One combined hidden input (`start/end`) for native POST; `Field.Root` name wins |
+| `startName` / `endName`  | `string`                         | Emit two plain hidden inputs with the ISO start/end (classic POST)              |
+
+A typed range with `end` before `start` sets the invalid state and reports a built-in `customError` message (`Field.Error match="customError"`); the calendar always commits ordered endpoints.
+
+### RangeCalendarProps
+
+Same surface as `CalendarProps`, with `value` / `defaultValue`: `DateRange | null` and `onChange`: `(v: DateRange) => void` (fired once per selection, when the second date completes the range).
 
 ## Related
 

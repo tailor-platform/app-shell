@@ -35,7 +35,7 @@ import {
 
 - They own date entry, keyboard behavior, constraints, locale/timezone handling, and form value serialization.
 - They expose standard labeling hooks: `id`, `aria-label`, `aria-labelledby`, `aria-describedby`, and `isInvalid`.
-- They do **not** auto-wire into Base UI `Field.Root`; use standard HTML labels / descriptions / errors instead.
+- They also auto-wire into `Field.Root`, so `Field.Label`, `Field.Description`, `Field.Error`, and form validation state work the same way as the other AppShell form controls.
 
 ## DateField
 
@@ -57,6 +57,16 @@ With a visible label + description:
   aria-describedby="invoice-date-help"
 />
 <p id="invoice-date-help">Format follows your locale</p>
+```
+
+Inside `Field.Root`:
+
+```tsx
+<Field.Root name="invoiceDate">
+  <Field.Label>Invoice date</Field.Label>
+  <DateField />
+  <Field.Description>Format follows your locale</Field.Description>
+</Field.Root>
 ```
 
 Controlled:
@@ -98,9 +108,9 @@ Week start:
 <DatePicker aria-label="Date" firstDayOfWeek="mon" />
 ```
 
-## External errors
+## Validation and errors
 
-Use standard HTML + ARIA for external errors:
+Use standard HTML + ARIA when rendering the field standalone:
 
 ```tsx
 <label id="delivery-date-label" htmlFor="delivery-date">
@@ -115,6 +125,16 @@ Use standard HTML + ARIA for external errors:
   onChange={setValue}
 />
 {error && <p id="delivery-date-error">{error}</p>}
+```
+
+Or let `Field.Root` wire the label, description, and error elements:
+
+```tsx
+<Field.Root name="deliveryDate" error={error ? { message: error } : undefined}>
+  <Field.Label>Delivery date</Field.Label>
+  <DatePicker value={value} onChange={setValue} />
+  <Field.Error match={!!error}>{error}</Field.Error>
+</Field.Root>
 ```
 
 ## Calendar

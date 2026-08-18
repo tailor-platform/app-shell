@@ -1,41 +1,42 @@
 ---
-"@tailor-platform/app-shell": major
+"@tailor-platform/app-shell": minor
 ---
 
-Refactor `DateField` / `DatePicker` into standalone composite controls.
+Refactor `DateField` / `DatePicker` to follow the same composition model as `Field`, `Select`, `Combobox`, and `Autocomplete`.
 
-The date controls no longer depend on Base UI's internal `Field` / `Form` wiring. They keep their date-entry behavior, constraints, localization, and proxy-input form value serialization, but visible labels, descriptions, and external errors must now be wired with standard HTML + ARIA props (`id`, `aria-label`, `aria-labelledby`, `aria-describedby`, `isInvalid`).
+The date controls are now **control-first**: field chrome moved out of the control props and into `Field.Root` composition. They also interoperate correctly with `Form` / `Field.Root` label wiring, `onFormSubmit` value collection, and submit-time validation for required and out-of-range default values.
 
-This is a breaking change for consumers relying on automatic `Field.Root` / `Form.onFormSubmit` integration.
+Breaking changes:
+
+- `label`, `description`, and `errorMessage` were removed from `DateField` / `DatePicker`; compose them with `Field.Root`, `Field.Label`, `Field.Description`, and `Field.Error` instead.
+- `hideTimeZone` was removed; it was previously accepted by the prop types but had no effect.
+
+`isInvalid` still remains a top-level prop for externally-controlled invalid styling, and the semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and aligned with `Calendar`.
 
 Before:
 
 ```tsx
-<Field.Root name="deliveryDate" error={error ? { message: error } : undefined}>
-  <Field.Label>Delivery date</Field.Label>
-  <DatePicker value={value} onChange={setValue} />
-  <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
+<DatePicker
+  label="Delivery date"
+  description="When should we ship your order?"
+  minValue={today(getLocalTimeZone())}
+  errorMessage={error}
+  isInvalid={!!error}
+/>
 ```
 
 After:
 
 ```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  aria-describedby={error ? "delivery-date-error" : undefined}
-  isInvalid={!!error}
-  value={value}
-  onChange={setValue}
-/>
-{error && <p id="delivery-date-error">{error}</p>}
+<Field.Root invalid={!!error}>
+  <Field.Label>Delivery date</Field.Label>
+  <DatePicker aria-label="Delivery date" minValue={today(getLocalTimeZone())} />
+  <Field.Description>When should we ship your order?</Field.Description>
+  <Field.Error match={!!error}>{error}</Field.Error>
+</Field.Root>
 ```
 
-Standalone usage remains supported:
+Standalone usage still works with accessible naming:
 
 ```tsx
 <DateField aria-label="Invoice date" />

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -287,22 +287,17 @@ function AddFilterPanel({
     if (col) setOperator(seedPanelOperator(control, col));
   };
 
-  const handleFieldQueryChange = (value: string) => {
-    setFieldQuery(value);
-
-    const nextQuery = value.trim().toLowerCase();
-    if (!nextQuery) return;
-
-    const nextVisible = columns.filter((c) =>
-      (c.label ?? c.filter.field).toLowerCase().includes(nextQuery),
-    );
-    if (nextVisible.length === 0) return;
-    if (nextVisible.some((c) => c.filter.field === fieldName)) return;
-
-    const first = nextVisible[0];
+  // Keep the selection in sync with the search: if the query filters out the
+  // currently-selected field, advance to the first still-visible field so the
+  // field list and the value editor don't desync (empty highlight on the left
+  // while the right still shows the old field's editor).
+  useEffect(() => {
+    if (!fq || visibleFieldColumns.length === 0) return;
+    if (visibleFieldColumns.some((c) => c.filter.field === fieldName)) return;
+    const first = visibleFieldColumns[0];
     setFieldName(first.filter.field);
     setOperator(seedPanelOperator(control, first));
-  };
+  }, [fq, visibleFieldColumns, fieldName, control]);
 
   // Always reopen on the first field rather than wherever the user last was.
   const handleOpenChange = (next: boolean) => {
@@ -363,7 +358,7 @@ function AddFilterPanel({
                 <Input
                   type="search"
                   value={fieldQuery}
-                  onChange={(e) => handleFieldQueryChange(e.target.value)}
+                  onChange={(e) => setFieldQuery(e.target.value)}
                   placeholder={t("searchFields")}
                   aria-label={t("searchFields")}
                   className="astw:h-8 astw:pl-8 astw:text-sm"
@@ -1260,6 +1255,12 @@ function OperatorList({
 }) {
   const t = useDataTableT();
   const [query, setQuery] = useState("");
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => ref.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const q = query.trim().toLowerCase();
   const items = operators
@@ -1270,10 +1271,8 @@ function OperatorList({
     <div className="astw:flex astw:flex-col">
       <div className="astw:flex astw:items-center astw:gap-2 astw:border-b astw:border-border astw:px-2.5">
         <Search className="astw:size-3.5 astw:text-muted-foreground" />
-        {/* Base UI's Popover.Popup moves initial focus to the first tabbable
-            element by default, which is this input. On touch it focuses the
-            popup instead so the virtual keyboard doesn't jump open. */}
         <input
+          ref={ref}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("filterOperatorSearchPlaceholder")}

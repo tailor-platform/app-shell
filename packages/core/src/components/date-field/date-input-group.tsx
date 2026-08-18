@@ -459,13 +459,17 @@ export function DatePopover({
             role="dialog"
             aria-labelledby={ariaLabelledby}
             aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t("chooseDate"))}
-            onBlur={(e) => onPopupBlur?.(e.relatedTarget)}
             data-slot="date-picker-popover"
             className={cn(
               "astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95",
               "astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                onPopupBlur?.(e.relatedTarget);
+              }
+            }}
           >
             {children}
           </Popover.Popup>

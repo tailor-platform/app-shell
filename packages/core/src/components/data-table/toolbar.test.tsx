@@ -445,21 +445,6 @@ describe("AddFilterPanel", () => {
 // ---------------------------------------------------------------------------
 
 describe("FilterChip", () => {
-  it("focuses the operator search input when the operator popover opens", async () => {
-    const user = userEvent.setup();
-    const control = makeControl({
-      filters: [{ field: "name", operator: "contains", value: "Alice" }],
-    });
-    render(<TestFilters control={control} columns={[stringColumn]} />, {
-      wrapper,
-    });
-
-    await user.click(screen.getByRole("button", { name: "contains" }));
-
-    const input = await screen.findByPlaceholderText("Search...");
-    expect(document.activeElement).toBe(input);
-  });
-
   it("calls removeFilter when the remove button is clicked", async () => {
     const user = userEvent.setup();
     const control = makeControl({

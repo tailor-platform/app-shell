@@ -24,7 +24,6 @@ Load these cross-cutting references by default:
 Load these area references only when they match the touched files or behavior:
 
 - `/.agents/skills/review/reference/areas/routing-and-auth.md` — `packages/core/src/routing/**`, auth providers/contexts/callback handling, navigation generation, command-palette routing, breadcrumb/page-meta behavior tied to routing
-- `/.agents/skills/review/reference/areas/data-table-and-stateful-ui.md` — DataTable components/hooks/models, persisted or synchronized UI state, sorting/filtering/pagination/pinning/selection/column visibility
 - `/.agents/skills/review/reference/areas/theme-style-and-exports.md` — `packages/*/src/index.ts`, package `exports` or other consumer entrypoints, CSS/theme assets, style entrypoints, published style contract
 - `/.agents/skills/review/reference/areas/overlays-and-portals.md` — dialog/popover/sheet/menu/tooltip behavior, portal/container ownership, layering, focus boundary, shell popup integration
 - `/.agents/skills/review/reference/areas/complex-form-controls.md` — `Field` / `Form` bridging, composite inputs such as select/combobox-like controls, proxy inputs, hidden inputs, validation wiring
@@ -50,7 +49,7 @@ Treat these as defaults unless the change is truly trivial:
 
 - public TypeScript API change → consumer-shaped type coverage
 - routing/auth change → browser-level or e2e smoke evidence
-- DataTable / overlay / theme / complex form control change → example, visual, or interaction verification
+- stateful UI / overlay / theme / complex form control change → example, visual, or interaction verification
 - low-level browser/timing API or non-obvious `useEffect` → rationale comment or focused test
 
 ## Severity

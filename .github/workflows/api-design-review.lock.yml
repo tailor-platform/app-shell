@@ -28,7 +28,7 @@
 # Resolved workflow manifest:
 #   Imports:
 #     - ../agents/api-design-reviewer.md
-#     - /.agents/skills/api-design-review/instruction.md
+#     - /.agents/skills/review/SKILL.md
 #
 # Secrets used:
 #   - GH_AW_GITHUB_MCP_SERVER_TOKEN
@@ -331,7 +331,7 @@ jobs:
           cat << 'GH_AW_PROMPT_533761015fd122c4_EOF'
           </system>
           {{#runtime-import .github/agents/api-design-reviewer.md}}
-          {{#runtime-import /.agents/skills/api-design-review/instruction.md}}
+          {{#runtime-import /.agents/skills/review/SKILL.md}}
           {{#runtime-import .github/workflows/api-design-review.md}}
           GH_AW_PROMPT_533761015fd122c4_EOF
           } > "$GH_AW_PROMPT"

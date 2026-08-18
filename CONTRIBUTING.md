@@ -26,11 +26,11 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 2. Branch from main
   │
-  ├─ 3. Develop ................... .agents/skills/add-component, catalogue/ (app-shell-patterns source)
+  ├─ 3. Develop ................... .agents/skills/review, catalogue/ (app-shell-patterns source)
   │
-  ├─ 4. Quality-check locally ..... .agents/skills/quality-check
+  ├─ 4. Quality-check locally ..... pnpm type-check / lint / test / fmt
   │
-  ├─ 5. Add a changeset ........... .agents/skills/create-changeset  (user-facing changes only)
+  ├─ 5. Add a changeset ........... pnpm changeset:create  (user-facing changes only)
   │
   ├─ 6. Open a PR ................. CI runs automatically; comment `/review` for the API Design Review bot
   │
@@ -107,8 +107,7 @@ Conventions are encoded as skills under **`.agents/skills/`**. Read the relevant
 (or let your coding agent auto-load it) — these are the **authoritative** procedures, so
 this guide won't restate their rules (they'd only go stale here).
 
-- **Adding or changing a UI component** → `.agents/skills/add-component/SKILL.md` (component
-  patterns, styling conventions, public API rules, test expectations).
+- **Adding or changing a UI component** → `.agents/skills/review/SKILL.md` (the review skill routes you to the shared component-design and related references for the change).
 - **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
   **generated** from the `catalogue/` package (`catalogue/src/**` is the source) into
   `packages/core/skills/app-shell-patterns/`, which is gitignored and shipped to consumers via
@@ -121,21 +120,23 @@ this guide won't restate their rules (they'd only go stale here).
 
 ## 5. Run quality checks locally
 
-Use the **`quality-check`** skill (`.agents/skills/quality-check/SKILL.md`) for the exact
-commands and order — it's the source of truth for what "clean" means and stays current as
-tooling changes.
+Run the standard local checks before pushing:
 
-For `packages/**` changes, also consider running the API Design Review locally before pushing
-— see `.agents/skills/api-design-review/` (Claude Code/CLI agents) or
-`.github/prompts/api-design-review.prompt.md` (Copilot).
+```bash
+pnpm type-check
+pnpm lint
+pnpm test
+pnpm fmt
+```
+
+For review guidance, use `.agents/skills/review/SKILL.md` locally.
+For `packages/**` changes, you can also use `.github/prompts/api-design-review.prompt.md` in Copilot-style flows.
 
 ---
 
 ## 6. Add a changeset
 
-This repo versions and publishes `@tailor-platform/app-shell` with [changesets]. Use the
-**`create-changeset`** skill (`.agents/skills/create-changeset/SKILL.md`) for bump-type
-guidance and file format — or just run `pnpm changeset:create`.
+This repo versions and publishes `@tailor-platform/app-shell` with [changesets]. Use `pnpm changeset:create` to add a changeset when needed.
 
 **Add one when** the change is user-facing: new component/hook/util, behavior-changing bug fix,
 API change, breaking change, perf improvement, or docs that affect API usage. **Skip** it for
@@ -181,8 +182,7 @@ PR, and eventually inclusion in a "Version Packages" release PR.
 Rather than duplicate file-by-file details here (they go stale — see `.agents/skills/**` and
 `.github/workflows/*.yaml` for what's actually authoritative), these are the places to look:
 
-- **`.agents/skills/`** — contributor procedures (add-component, quality-check,
-  create-changeset, api-design-review).
+- **`.agents/skills/`** — contributor procedures, primarily the shared `review` skill.
 - **`catalogue/`** — source for the `app-shell-patterns` skill shipped to consumers; generated
   into `packages/core/skills/` (gitignored) via `pnpm build`.
 - **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.

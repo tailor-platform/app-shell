@@ -20,3 +20,21 @@ Use the Impact Analyzer results to:
 
 - **Skip internal files entirely** — do not review files marked as `internal`.
 - **Focus review on risk areas** — prioritize symbols with high usage count or flagged risks.
+
+Then load the shared review references that apply to the diff:
+
+- Load these cross-cutting references by default:
+  - `/.agents/skills/review/reference/cross-cutting/component-design.md`
+  - `/.agents/skills/review/reference/cross-cutting/react.md`
+  - `/.agents/skills/review/reference/cross-cutting/accessibility.md`
+  - `/.agents/skills/review/reference/cross-cutting/low-level-apis.md`
+- Load relevant area docs under `/.agents/skills/review/reference/areas/` when the diff touches a known high-risk area such as:
+
+- routing/auth
+- DataTable or other stateful UI
+- theme/style/export behavior
+- overlays/portals
+- date/form controls
+
+Use `/.agents/skills/review/SKILL.md` as the shared review procedure and reporting baseline.
+Treat the shared review reference as the source of truth for component design, React ownership, accessibility, and area-specific review criteria.

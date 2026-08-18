@@ -37,12 +37,6 @@ When you need to trace code paths or verify exports:
 - Use file search and read tools to inspect referenced files in the workspace.
 - Check `packages/core/src/index.ts` for public API exports.
 - Follow type/function references through the codebase to evaluate impact.
-- Load these cross-cutting references by default:
-  - `/.agents/skills/review/reference/cross-cutting/component-design.md`
-  - `/.agents/skills/review/reference/cross-cutting/react.md`
-  - `/.agents/skills/review/reference/cross-cutting/accessibility.md`
-  - `/.agents/skills/review/reference/cross-cutting/low-level-apis.md`
-- Load relevant area docs under `/.agents/skills/review/reference/areas/` when the package diff touches routing/auth, stateful UI, theme/style/export behavior, overlays/portals, or date/form controls.
 
 ## Output
 

@@ -8,7 +8,7 @@ on:
     events: [pull_request_comment]
 imports:
   - ../agents/api-design-reviewer.md
-  - /.agents/skills/review/SKILL.md
+  - /.agents/skills/review/instruction.md
 permissions:
   contents: read
   pull-requests: read

@@ -21,7 +21,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  actionlint:
+  lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -35,8 +35,11 @@ jobs:
         with:
           aqua_version: v2.62.3
 
-      # actionlint accepts an explicit file list, so keep this job simple and run it
-      # only on the hand-authored workflows we care about.
+      # Both linters should only check the hand-authored workflows in this repo.
+      # Exclude gh-aw generated *.lock.yml files and agentics-maintenance.yml:
+      # those generated workflows currently use syntax and permission keys these
+      # linters do not consistently understand yet, which creates noisy false
+      # positives and hides real issues in the authored workflows.
       - name: Collect workflow targets
         run: |
           set -euo pipefail
@@ -45,60 +48,38 @@ jobs:
             ! -name 'agentics-maintenance.yml' \
             | sort > workflows.txt
 
-      - name: Run actionlint
-        run: xargs actionlint < workflows.txt
+      - name: Collect action targets
+        run: |
+          set -euo pipefail
+          find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \) | sort > actions.txt
 
-  ghalint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-
-      - uses: aquaproj/aqua-installer@96a9bc20066c5bf5e275b41019cfc165b25f4e2e # v4.0.5
-        with:
-          aqua_version: v2.62.3
-
-      # ghalint is more directory-oriented than actionlint: it discovers workflows
+      # actionlint accepts an explicit file list, but ghalint discovers workflows
       # under .github/workflows and actions under .github/actions. Build a temporary
-      # mini-repo containing only the files we actually want to lint.
-      #
-      # We intentionally exclude gh-aw generated *.lock.yml files and
-      # agentics-maintenance.yml. Those generated workflows currently use some
-      # generated/copilot-specific syntax and permission keys that these linters do
-      # not consistently understand yet, which creates noisy false positives and
-      # hides real issues in the authored workflows.
-      - name: Collect ghalint targets
+      # mini-repo containing only the files we actually want ghalint to lint.
+      - name: Prepare ghalint workspace
         run: |
           set -euo pipefail
           rm -rf .gha-lint
           mkdir -p .gha-lint/.github/workflows .gha-lint/.github/actions
-
-          find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) \
-            ! -name '*.lock.yml' \
-            ! -name 'agentics-maintenance.yml' \
-            | sort > .gha-lint/workflows.txt
 
           # Preserve the original relative paths so the temp tree still looks like a
           # normal repository layout to ghalint.
           while IFS= read -r path; do
             mkdir -p ".gha-lint/$(dirname "$path")"
             cp "$path" ".gha-lint/$path"
-          done < .gha-lint/workflows.txt
-
-          find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \) | sort > .gha-lint/actions.txt
+          done < workflows.txt
 
           while IFS= read -r path; do
             mkdir -p ".gha-lint/$(dirname "$path")"
             cp "$path" ".gha-lint/$path"
-          done < .gha-lint/actions.txt
+          done < actions.txt
+
+      - name: Run actionlint
+        run: xargs actionlint < workflows.txt
 
       - name: Run ghalint
         run: |
           set -euo pipefail
           cd .gha-lint
           ghalint run
-          xargs ghalint run-action < actions.txt
+          ghalint run-action

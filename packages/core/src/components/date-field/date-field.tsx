@@ -343,11 +343,10 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     [handleCompositeBlur],
   );
 
-  const popoverAriaLabel = ariaLabelledby
-    ? undefined
-    : ariaLabel
-      ? t("chooseDateFor", { name: ariaLabel })
-      : t("chooseDate");
+  let popoverAriaLabel: string | undefined;
+  if (ariaLabelledby == null) {
+    popoverAriaLabel = ariaLabel ? t("chooseDateFor", { name: ariaLabel }) : t("chooseDate");
+  }
 
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>

@@ -387,7 +387,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Import:** compound namespace + helpers from `'@tailor-platform/app-shell'`, e.g. `DataTable`, `useDataTable`, `useCollectionVariables`, `createColumnHelper`, and types such as `Column`, `UseDataTableReturn`.
 
-**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **column pinning** (`pin: "left" | "right"`) and built-in **column settings** (`<DataTable.Toolbar columnSettings>` — user show/hide + reorder + pin, persisted per-user via **`tableId`**).
+**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **expandable rows** (**`rowExpansion`** — a chevron column plus a full-width detail panel per row; `render` with optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` for controlled mode), **column pinning** (`pin: "left" | "right"`) and built-in **column settings** (`<DataTable.Toolbar columnSettings>` — user show/hide + reorder + pin, persisted per-user via **`tableId`**).
 
 **Primitives:** Builds on low-level **`Table`**; do not reinvent pagination/filters manually unless the dataset is trivial.
 

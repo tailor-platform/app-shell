@@ -55,6 +55,6 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 **📋 For changeset creation procedures, see:** [Create Changeset Skill](./.agents/skills/create-changeset/SKILL.md)
 
-## API Design & Component Styling
+## Package Design & Review
 
-**📋 For component export patterns, styling rules, implementation procedures, and related review guidance, use:** [Review Skill](./.agents/skills/review/SKILL.md)
+**📋 For public API patterns, styling/export rules, implementation procedures, and package review guidance, use:** [Review Skill](./.agents/skills/review/SKILL.md)

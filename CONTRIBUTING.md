@@ -107,13 +107,13 @@ Conventions are encoded as skills under **`.agents/skills/`**. Read the relevant
 (or let your coding agent auto-load it) — these are the **authoritative** procedures, so
 this guide won't restate their rules (they'd only go stale here).
 
-- **Adding or changing a UI component** → `.agents/skills/review/SKILL.md` (the review skill routes you to the shared component-design and related references for the change).
+- **Changing implementation under `packages/**`** → `.agents/skills/review/SKILL.md` (the review skill routes you to the shared cross-cutting and area references for the change).
 - **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
   **generated** from the `catalogue/` package (`catalogue/src/**` is the source) into
   `packages/core/skills/app-shell-patterns/`, which is gitignored and shipped to consumers via
   the npm package. **Edit the source in `catalogue/` and regenerate with `pnpm build`** (see
   [`catalogue/README.md`](./catalogue/README.md)) — never hand-edit the generated skill. CI's
-  `check-generated-skills` test fails if the two drift, so if you change a component's API,
+  `check-generated-skills` test fails if the two drift, so if you change a public API,
   design tokens, or a pattern, update the catalogue source too.
 
 ---

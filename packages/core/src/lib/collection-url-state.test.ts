@@ -82,8 +82,17 @@ describe("parseCollectionSearchParams", () => {
     );
 
     expect(result).toEqual({
-      filters: [{ field: "title", operator: "contains", value: "acme", caseSensitive: false }],
+      filters: [{ field: "title", operator: "contains", value: "acme" }],
     });
+  });
+
+  it("does not add caseSensitive for typed string filters without a policy override", () => {
+    const result = parseCollectionSearchParams(
+      tableMetadata.task,
+      new URLSearchParams("f.title:contains=Acme"),
+    );
+
+    expect(result.filters).toEqual([{ field: "title", operator: "contains", value: "Acme" }]);
   });
 
   it("supports untyped parsing without metadata", () => {

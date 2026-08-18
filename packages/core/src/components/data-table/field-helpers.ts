@@ -26,7 +26,7 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
 // inferColumns() — metadata-driven column defaults
 // =============================================================================
 
-export interface InferColumnsOptions extends FieldTypeToFilterConfigOptions {}
+export type InferColumnsOptions = FieldTypeToFilterConfigOptions;
 
 /**
  * Return a function that produces `Column` from metadata field names.

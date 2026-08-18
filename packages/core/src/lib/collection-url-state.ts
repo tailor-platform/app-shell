@@ -172,8 +172,8 @@ export function parseCollectionSearchParams(
       // that `decodeFilterValue` returned as strings. Without metadata (untyped
       // overload) we can't, so the value stays a string.
       value: fieldType ? coerceFilterValueToFieldType(fieldType, decoded) : decoded,
-      ...(filterConfig?.type === "string"
-        ? { caseSensitive: filterConfig.supportsCaseInsensitive === false }
+      ...(filterConfig?.type === "string" && filterConfig.supportsCaseInsensitive === false
+        ? { caseSensitive: true }
         : {}),
     });
   }

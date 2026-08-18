@@ -49,11 +49,11 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 ## Testing & Quality
 
-**📋 For review guidance and related development conventions, use:** [Review Skill](./.agents/skills/review/SKILL.md)
+**📋 For formatting, type-check, and lint procedures, see:** [Quality Check Skill](./.agents/skills/quality-check/SKILL.md)
 
 ## Versioning & Publishing
 
-**📋 For release/versioning workflow details, see:** [CONTRIBUTING.md](./CONTRIBUTING.md)
+**📋 For changeset creation procedures, see:** [Create Changeset Skill](./.agents/skills/create-changeset/SKILL.md)
 
 ## API Design & Component Styling
 

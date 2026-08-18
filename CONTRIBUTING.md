@@ -28,9 +28,9 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 3. Develop ................... .agents/skills/review, catalogue/ (app-shell-patterns source)
   │
-  ├─ 4. Quality-check locally ..... pnpm type-check / lint / test / fmt
+  ├─ 4. Quality-check locally ..... .agents/skills/quality-check
   │
-  ├─ 5. Add a changeset ........... pnpm changeset:create  (user-facing changes only)
+  ├─ 5. Add a changeset ........... .agents/skills/create-changeset  (user-facing changes only)
   │
   ├─ 6. Open a PR ................. CI runs automatically; comment `/review` for the API Design Review bot
   │
@@ -120,23 +120,20 @@ this guide won't restate their rules (they'd only go stale here).
 
 ## 5. Run quality checks locally
 
-Run the standard local checks before pushing:
+Use the **`quality-check`** skill (`.agents/skills/quality-check/SKILL.md`) for the exact
+commands and order — it's the source of truth for what "clean" means and stays current as
+tooling changes.
 
-```bash
-pnpm type-check
-pnpm lint
-pnpm test
-pnpm fmt
-```
-
-For review guidance, use `.agents/skills/review/SKILL.md` locally.
-For `packages/**` changes, you can also use `.github/prompts/api-design-review.prompt.md` in Copilot-style flows.
+For `packages/**` changes, use `.agents/skills/review/SKILL.md` for review guidance locally.
+You can also use `.github/prompts/api-design-review.prompt.md` in Copilot-style flows.
 
 ---
 
 ## 6. Add a changeset
 
-This repo versions and publishes `@tailor-platform/app-shell` with [changesets]. Use `pnpm changeset:create` to add a changeset when needed.
+This repo versions and publishes `@tailor-platform/app-shell` with [changesets]. Use the
+**`create-changeset`** skill (`.agents/skills/create-changeset/SKILL.md`) for bump-type
+guidance and file format — or just run `pnpm changeset:create`.
 
 **Add one when** the change is user-facing: new component/hook/util, behavior-changing bug fix,
 API change, breaking change, perf improvement, or docs that affect API usage. **Skip** it for
@@ -182,7 +179,8 @@ PR, and eventually inclusion in a "Version Packages" release PR.
 Rather than duplicate file-by-file details here (they go stale — see `.agents/skills/**` and
 `.github/workflows/*.yaml` for what's actually authoritative), these are the places to look:
 
-- **`.agents/skills/`** — contributor procedures, primarily the shared `review` skill.
+- **`.agents/skills/`** — contributor procedures, primarily `review`, `quality-check`, and
+  `create-changeset`.
 - **`catalogue/`** — source for the `app-shell-patterns` skill shipped to consumers; generated
   into `packages/core/skills/` (gitignored) via `pnpm build`.
 - **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.

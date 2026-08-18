@@ -12,7 +12,6 @@ on:
       - ".github/workflows/**"
       - ".github/actions/**"
       - "aqua.yaml"
-  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

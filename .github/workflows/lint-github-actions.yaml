@@ -35,6 +35,16 @@ jobs:
         with:
           aqua_version: v2.62.3
 
+      # actionlint can lint an explicit file list, but ghalint is more directory-
+      # oriented: it discovers workflows under .github/workflows and actions under
+      # .github/actions. To make both tools check the same hand-authored files, build
+      # a temporary mini-repo containing only the files we actually want to lint.
+      #
+      # We intentionally exclude gh-aw generated *.lock.yml files and
+      # agentics-maintenance.yml. Those generated workflows currently use some
+      # generated/copilot-specific syntax and permission keys that these linters do
+      # not consistently understand yet, which creates noisy false positives and
+      # hides real issues in the authored workflows.
       - name: Collect lint targets
         run: |
           set -euo pipefail
@@ -46,6 +56,8 @@ jobs:
             ! -name 'agentics-maintenance.yml' \
             | sort > .gha-lint/workflows.txt
 
+          # Preserve the original relative paths so the temp tree still looks like a
+          # normal repository layout to both linters.
           while IFS= read -r path; do
             mkdir -p ".gha-lint/$(dirname "$path")"
             cp "$path" ".gha-lint/$path"
@@ -58,9 +70,13 @@ jobs:
             cp "$path" ".gha-lint/$path"
           done < .gha-lint/actions.txt
 
+      # actionlint accepts an explicit file list, so run it against the collected
+      # workflow paths directly.
       - name: Run actionlint
         run: xargs actionlint < .gha-lint/workflows.txt
 
+      # ghalint discovers workflows/actions from the current repository layout, so run
+      # it from inside the temporary tree we prepared above.
       - name: Run ghalint
         run: |
           set -euo pipefail

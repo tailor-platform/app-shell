@@ -35,41 +35,43 @@ jobs:
         with:
           aqua_version: v2.62.3
 
-      # Both linters should only check the hand-authored workflows in this repo.
+      # Both linters should only check the hand-authored files in this repo.
+      # Collect workflows and local action metadata into one source of truth.
+      #
       # Exclude gh-aw generated *.lock.yml files and agentics-maintenance.yml:
       # those generated workflows currently use syntax and permission keys these
       # linters do not consistently understand yet, which creates noisy false
       # positives and hides real issues in the authored workflows.
-      - name: Collect workflow targets
+      - name: Collect lint targets
         run: |
           set -euo pipefail
-          find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) \
-            ! -name '*.lock.yml' \
-            ! -name 'agentics-maintenance.yml' \
-            | sort > workflows.txt
+          {
+            find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) \
+              ! -name '*.lock.yml' \
+              ! -name 'agentics-maintenance.yml'
+            find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \)
+          } | sort > targets.txt
 
       # actionlint accepts an explicit file list, but ghalint discovers workflows
       # under .github/workflows and action metadata under .github/actions. Build a
-      # temporary mini-repo containing both sets of authored files.
+      # temporary mini-repo containing the collected targets.
       - name: Prepare ghalint workspace
         run: |
           set -euo pipefail
           rm -rf .gha-lint
           mkdir -p .gha-lint/.github/workflows .gha-lint/.github/actions
 
-          # Merge the selected workflow files with local action metadata files, then
-          # copy everything into .gha-lint while preserving relative paths so the
-          # temp tree still looks like a normal repository layout to ghalint.
-          {
-            cat workflows.txt
-            find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \)
-          } | sort | while IFS= read -r path; do
+          # Preserve relative paths so the temp tree still looks like a normal
+          # repository layout to ghalint.
+          while IFS= read -r path; do
             mkdir -p ".gha-lint/$(dirname "$path")"
             cp "$path" ".gha-lint/$path"
-          done
+          done < targets.txt
 
+      # actionlint should only receive workflow files, so filter the shared target
+      # list down to .github/workflows/** before turning it into argv with xargs.
       - name: Run actionlint
-        run: xargs actionlint < workflows.txt
+        run: grep '^.github/workflows/' targets.txt | xargs actionlint
 
       - name: Run ghalint
         run: |

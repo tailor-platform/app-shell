@@ -85,13 +85,13 @@ export interface FieldDivider {
 }
 
 /**
- * Renders the value for a field.
+ * Renders a field from the data object.
  *
- * Receives the resolved value at `key` (dot notation is applied first) and the
- * full `data` object, so a field can draw itself from related keys.
+ * Receives the whole `data` object rather than a pre-resolved value, mirroring
+ * `render` on DataTable's `Column`. Destructure or index the keys you need and
+ * they keep their declared types - nothing is widened to `unknown`.
  */
 export type FieldRender<TData extends object = Record<string, unknown>> = (
-  value: unknown,
   data: TData,
 ) => ReactNode;
 
@@ -110,16 +110,18 @@ export interface FieldDefinition<TData extends object = Record<string, unknown>>
   /** Behavior when value is empty (defaults to "dash") */
   emptyBehavior?: EmptyBehavior;
   /**
-   * Renders the value yourself instead of using a built-in `type` renderer.
+   * Renders this field yourself instead of using a built-in `type` renderer.
+   *
+   * Receives the whole `data` object - reach into it for the keys you need and
+   * they keep their declared types. Mirrors `render` on DataTable's `Column`.
    *
    * Always wins when both are present, and its return value replaces the
    * built-in output entirely - `meta` (copy button, truncation, badge maps,
    * …) is not applied, so a custom renderer owns its own presentation.
    *
-   * Called even when the value is empty, so the renderer decides how to
-   * display that. `emptyBehavior: "hide"` still removes the field first.
-   *
-   * Mirrors `render` on DataTable's `Column`.
+   * `key` is still required: it identifies the field and is what
+   * `emptyBehavior` tests. A custom renderer runs even when the value at `key`
+   * is empty, but `emptyBehavior: "hide"` removes the field before that.
    */
   render?: FieldRender<TData>;
 }
@@ -181,9 +183,9 @@ export interface ResolvedField {
   /** Full data object (for accessing related keys) */
   data: Record<string, unknown>;
   /**
-   * Custom renderer, pre-bound to this field's value and the original
-   * (still correctly-typed) data object at resolve time. Binding here keeps
-   * `ResolvedField` free of a `TData` parameter without an unsound cast.
+   * Custom renderer, pre-bound to the original (still correctly-typed) data
+   * object at resolve time. Binding here keeps `ResolvedField` free of a
+   * `TData` parameter without an unsound cast.
    */
   render?: () => ReactNode;
 }

@@ -162,7 +162,7 @@ const PurchaseOrderDetailPage = () => {
               // `render` draws the field itself - it wins over any `type`
               key: "receiptBreakdown",
               label: "Receipt Progress",
-              render: (value) => <ReceiptBar {...(value as Record<string, number>)} />,
+              render: ({ receiptBreakdown }) => <ReceiptBar {...receiptBreakdown} />,
             },
           ]}
         />
@@ -193,15 +193,15 @@ const PurchaseOrderDetailPage = () => {
             },
             { key: "currency.code", label: "Currency" },
             {
-              // Derived from several keys at once - `data` is typed as the
-              // object passed to `data`, so no cast is needed here
+              // Derived from several keys at once - `render` receives the whole
+              // data object, typed, so destructuring needs no casts
               key: "amountPaid",
               label: "Balance Due",
-              render: (_value, data) =>
+              render: ({ total, amountPaid, currency }) =>
                 new Intl.NumberFormat(undefined, {
                   style: "currency",
-                  currency: data.currency.code,
-                }).format(data.total - data.amountPaid),
+                  currency: currency.code,
+                }).format(total - amountPaid),
             },
           ]}
         />

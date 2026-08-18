@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DescriptionCard } from "./DescriptionCard";
@@ -70,7 +70,6 @@ describe("DescriptionCard", () => {
     expect(screen.getByText("Fragile")).toBeDefined();
     expect(screen.getByText("International")).toBeDefined();
   });
-
   describe("render", () => {
     it("renders custom output in place of the built-in renderer", () => {
       render(
@@ -81,7 +80,7 @@ describe("DescriptionCard", () => {
             {
               key: "deliveryBreakdown",
               label: "Delivery",
-              render: (value) => <span>chart:{(value as number[]).join("/")}</span>,
+              render: (data) => <span>chart:{data.deliveryBreakdown.join("/")}</span>,
             },
           ]}
         />,
@@ -102,7 +101,7 @@ describe("DescriptionCard", () => {
               key: "status",
               label: "Status",
               type: "badge",
-              render: (value) => <span>custom-{String(value)}</span>,
+              render: (data) => <span>custom-{data.status}</span>,
             },
           ]}
         />,
@@ -114,34 +113,46 @@ describe("DescriptionCard", () => {
       expect(screen.queryByText("Confirmed")).toBeNull();
     });
 
-    it("receives the dot-notation value and the full data object", () => {
+    it("receives the data object it was given, as its only argument", () => {
       const data = { currency: { code: "JPY" }, total: 42 };
-      const seen: unknown[] = [];
+      const spy = vi.fn((_data: typeof data) => <span>rendered</span>);
 
       render(
         <DescriptionCard
           title="Order"
           data={data}
+          fields={[{ key: "currency.code", label: "Currency", render: spy }]}
+        />,
+        { wrapper },
+      );
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      // the same object identity, not a copy
+      expect(spy.mock.calls[0][0]).toBe(data);
+      // exactly one argument - no pre-resolved value is passed
+      expect(spy.mock.calls[0]).toHaveLength(1);
+    });
+
+    it("can reach nested keys itself, without dot-notation resolution", () => {
+      render(
+        <DescriptionCard
+          title="Order"
+          data={{ customer: { contact: { email: "a@b.example" } } }}
           fields={[
             {
-              key: "currency.code",
-              label: "Currency",
-              render: (value, rowData) => {
-                seen.push(value, rowData);
-                return <span>{String(value)}</span>;
-              },
+              key: "customer",
+              label: "Email",
+              render: (data) => <span>{data.customer.contact.email}</span>,
             },
           ]}
         />,
         { wrapper },
       );
 
-      expect(screen.getByText("JPY")).toBeDefined();
-      expect(seen[0]).toBe("JPY");
-      expect(seen[1]).toBe(data);
+      expect(screen.getByText("a@b.example")).toBeDefined();
     });
 
-    it("is still called when the value is empty", () => {
+    it("is still called when the value at key is empty", () => {
       render(
         <DescriptionCard
           title="Order"
@@ -150,7 +161,7 @@ describe("DescriptionCard", () => {
             {
               key: "note",
               label: "Note",
-              render: (value) => <span>{value === null ? "no note" : "has note"}</span>,
+              render: (data) => <span>{data.note === null ? "no note" : "has note"}</span>,
             },
           ]}
         />,
@@ -161,29 +172,21 @@ describe("DescriptionCard", () => {
     });
 
     it("does not run when emptyBehavior hides the field", () => {
-      let called = false;
+      const spy = vi.fn(() => <span>rendered</span>);
 
       render(
         <DescriptionCard
           title="Order"
           data={{ note: null, other: "x" }}
           fields={[
-            {
-              key: "note",
-              label: "Note",
-              emptyBehavior: "hide",
-              render: () => {
-                called = true;
-                return <span>rendered</span>;
-              },
-            },
+            { key: "note", label: "Note", emptyBehavior: "hide", render: spy },
             { key: "other", label: "Other" },
           ]}
         />,
         { wrapper },
       );
 
-      expect(called).toBe(false);
+      expect(spy).not.toHaveBeenCalled();
       expect(screen.queryByText("Note")).toBeNull();
       expect(screen.getByText("Other")).toBeDefined();
     });
@@ -203,10 +206,10 @@ describe("DescriptionCard", () => {
             {
               key: "total",
               label: "Total",
-              // `orderData` is typed as Order here - no cast needed
-              render: (value, orderData) => (
+              // `data` is typed as Order here - no cast, nothing is `unknown`
+              render: (data) => (
                 <span>
-                  {String(value)} {orderData.currency.code}
+                  {data.total} {data.currency.code}
                 </span>
               ),
             },

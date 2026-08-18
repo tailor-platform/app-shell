@@ -211,7 +211,7 @@ Links to related documents with auto-generated URLs using react-router `<Link>` 
 
 ## Custom Rendering
 
-When no built-in `type` fits, pass `render` to draw the field yourself. It receives the resolved value at `key` (dot notation is applied first) and the full `data` object:
+When no built-in `type` fits, pass `render` to draw the field yourself. It receives the whole `data` object — reach into it for whatever the field needs:
 
 ```tsx
 <DescriptionCard
@@ -223,31 +223,32 @@ When no built-in `type` fits, pass `render` to draw the field yourself. It recei
     {
       key: "deliveryBreakdown",
       label: "Delivery",
-      render: (value) => <PieChart data={value} />, // fully custom
+      render: (data) => <PieChart data={data.deliveryBreakdown} />, // fully custom
     },
   ]}
 />
 ```
 
-Use the second argument to draw from related keys:
+Because `render` takes the whole object, a field can be derived from several keys at once — destructure the ones you want:
 
 ```tsx
 {
   key: "total",
-  label: "Total",
-  render: (value, data) => (
-    <MoneyWithConversion amount={value} from={data.currency} to="USD" />
+  label: "Balance Due",
+  render: ({ total, amountPaid, currency }) => (
+    <Money amount={total - amountPaid} currency={currency} />
   ),
 }
 ```
 
-This is the same convention as [DataTable's](./data-table.md) column `render`, so the two data-display components behave alike.
+This is the same convention as [DataTable's](./data-table.md) column `render`, which also receives the whole row, so the two data-display components behave alike. It also means everything you touch keeps its declared type — nothing is widened to `unknown`.
 
 ### Rules
 
 - **`render` always wins over `type`.** Both may be set, but the built-in renderer is skipped entirely.
 - **`meta` is not applied.** A custom renderer owns its own presentation — the copy button, truncation, badge maps, and the `–` empty placeholder are all built-in behaviour that `render` replaces. Render them yourself if you want them.
-- **`render` still runs for empty values,** so you decide how to display them. `emptyBehavior: "hide"` is checked first and removes the field before `render` is called.
+- **`key` is still required.** It identifies the field and is what `emptyBehavior` tests. It does _not_ pre-resolve a value for `render` — dot-notation paths are only used by the built-in `type` renderers.
+- **`render` still runs when the value at `key` is empty,** so you decide how to display that. `emptyBehavior: "hide"` is checked first and removes the field before `render` is called.
 
 ## Dividers
 
@@ -532,7 +533,7 @@ declare const orderData: Order;
   fields={[
     { key: "orderNumber", label: "Order" },
     { key: "status", label: "Status", type: "badge" },
-    { key: "total", label: "Total", render: (value, data) => `${value} ${data.currency}` },
+    { key: "total", label: "Total", render: (data) => `${data.total} ${data.currency}` },
   ]}
 />;
 ```
@@ -542,13 +543,13 @@ To declare the fields array separately, parameterise `DescriptionCardProps` with
 ```typescript
 const fields: DescriptionCardProps<Order>["fields"] = [
   { key: "orderNumber", label: "Order" },
-  { key: "total", label: "Total", render: (value, data) => `${value} ${data.currency}` },
+  { key: "total", label: "Total", render: (data) => `${data.total} ${data.currency}` },
 ];
 
 <DescriptionCard<Order> data={orderData} title="Order" fields={fields} />;
 ```
 
-`key` is a plain `string` and accepts dot-notation paths, so the value passed to `render` is `unknown` — narrow it yourself.
+`render` receives `data` typed as your data type, so every key you reach for keeps its declared type. `key` remains a plain `string` accepting dot-notation paths, but it only feeds the built-in `type` renderers — it is not resolved and handed to `render`.
 
 ## Related Components
 

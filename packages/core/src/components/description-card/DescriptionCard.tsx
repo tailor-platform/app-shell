@@ -32,7 +32,7 @@ function resolveField<TData extends object>(
     meta: fieldDef.meta,
     data: data as Record<string, unknown>,
     // Bind while `data` is still typed as TData - see ResolvedField.render
-    render: render ? () => render(value, data) : undefined,
+    render: render ? () => render(data) : undefined,
   };
 }
 
@@ -132,7 +132,7 @@ function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
  *     { key: "orderNumber", label: "Order #", meta: { copyable: true } },
  *     { type: "divider" },
  *     { key: "total", label: "Total", type: "money" },
- *     { key: "deliveryBreakdown", label: "Delivery", render: (value) => <PieChart data={value} /> },
+ *     { key: "deliveryBreakdown", label: "Delivery", render: (d) => <PieChart data={d.deliveryBreakdown} /> },
  *   ]}
  * />
  * ```

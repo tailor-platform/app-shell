@@ -1,9 +1,9 @@
 ---
-name: review
+name: code-review
 description: "Review local packages/ changes for AppShell package implementation risks and consumer-facing contract changes."
 ---
 
-# Review
+# Code Review
 
 Review local code changes under `packages/**`.
 

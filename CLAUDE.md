@@ -57,4 +57,4 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 ## Package Design & Review
 
-**📋 For public API patterns, styling/export rules, implementation procedures, and package review guidance, use:** [Review Skill](./.agents/skills/review/SKILL.md)
+**📋 For public API patterns, styling/export rules, implementation procedures, and package review guidance, use:** [Code Review Skill](./.agents/skills/code-review/SKILL.md)

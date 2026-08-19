@@ -181,7 +181,22 @@ For the common case — a handful of controls side by side — `row` wraps every
 
 `col` is the opposite instruction: stack the children. It matches today's default, so adding it changes nothing right now.
 
-`row` is ignored when any child is already a `DataTable.ToolbarRow` — wrapping rows in a row would lay them side by side — and passing both `row` and `col` is a mistake; both cases log a development warning, and `row` takes precedence over `col`.
+`row` is ignored when **any** child is already a `DataTable.ToolbarRow` — including when every child is one, which is the ordinary multi-row toolbar. Wrapping rows in a row would lay them side by side rather than stacked, so the wrap is skipped and a development warning is logged.
+
+`row` and `col` are mutually exclusive in the type, so passing both is a compile error:
+
+```ts
+type ToolbarDirectionProps = { row?: boolean; col?: never } | { row?: never; col?: boolean };
+```
+
+```tsx
+<DataTable.Toolbar row />            // ok
+<DataTable.Toolbar col />            // ok
+<DataTable.Toolbar row={isWide} />   // ok — a boolean expression is still one arm
+<DataTable.Toolbar row col />        // Type error
+```
+
+The component also warns at runtime if both arrive anyway — via a spread, or from JavaScript — and treats `row` as the winner.
 
 > **Changing in the next major.** Bare children will be wrapped in an implicit `ToolbarRow`, making `row` the default. Two forward-compatible moves you can make today:
 >
@@ -198,13 +213,16 @@ The trade-off is that `className` styles the box the component sits in, not the 
 <DataTable.ToolbarRow className="mb-2 max-w-3xl">…</DataTable.ToolbarRow>
 ```
 
-Internal layout is controlled by props, not classes, because a wrapper cannot reach inside:
+`flex-direction`, `gap`, and `align-items` on the wrapper cannot change how children are arranged — those belong to the inner element that actually contains them. A wrapper can set the component's own box (`margin`, `width`, `position`, `overflow`, `background`, `border`) and anything inherited (`color`, `font-*`). Internal layout is controlled by props instead:
 
 | To change                           | Use                                    |
 | ----------------------------------- | -------------------------------------- |
 | Direction of the toolbar's children | `row` / `col` on `DataTable.Toolbar`   |
 | Space between a row's children      | `gap` on `DataTable.ToolbarRow`        |
 | Right-alignment of a group          | `endSection` on `DataTable.ToolbarRow` |
+
+`data-slot` attributes stay on the inner elements rather than the wrapper, so CSS already written
+against `[data-slot="data-table-toolbar"]` keeps matching the element it always matched.
 
 ## Deprecations
 

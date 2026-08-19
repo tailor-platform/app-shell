@@ -1,6 +1,6 @@
 ---
 description: "Review local package changes using the shared AppShell code-review guidance. Use when: reviewing local changes before pushing, checking packages/ changes locally."
-agent: "API Design Reviewer"
+agent: "Code Reviewer"
 ---
 
 # Local Package Code Review

@@ -1,5 +1,185 @@
 # @tailor-platform/app-shell
 
+## 1.12.0
+
+### Minor Changes
+
+- 6171c84: Add a `render` escape hatch to `DescriptionCard` fields, so custom rendering no longer requires a new built-in field type.
+
+  ```tsx
+  <DescriptionCard
+    data={orderData}
+    title="Order"
+    fields={[
+      { key: "orderNumber", label: "Order Number" }, // default text
+      { key: "status", label: "Status", type: "badge" }, // preset
+      {
+        key: "deliveryBreakdown",
+        label: "Delivery",
+        render: (data) => <PieChart data={data.deliveryBreakdown} />,
+      },
+    ]}
+  />
+  ```
+
+  `render` receives the whole `data` object — the same shape as `render` on DataTable's `Column`, which takes the whole row. Destructure the keys you need, and a field can be derived from several at once:
+
+  ```tsx
+  {
+    key: "total",
+    label: "Balance Due",
+    render: ({ total, amountPaid, currency }) => (
+      <Money amount={total - amountPaid} currency={currency} />
+    ),
+  }
+  ```
+
+  Semantics match DataTable's `render`: it always wins over `type`, and its return value replaces the built-in output entirely (so `meta` — copy button, truncation, badge maps, the `–` placeholder — is not applied). `key` is still required; it identifies the field and is what `emptyBehavior` tests, but it is not resolved into a value for `render`. A custom renderer still runs when the value at `key` is empty; `emptyBehavior: "hide"` is checked first.
+
+  `DescriptionCard` is now generic over the shape of `data`, inferred from the `data` prop, so everything `render` reaches for keeps its declared type. This is backward compatible — `DescriptionCardProps` defaults to `Record<string, unknown>`. To declare a fields array separately, parameterise it so `render` callbacks stay typed:
+
+  ```tsx
+  const fields: DescriptionCardProps<Order>["fields"] = [...];
+  ```
+
+- 08c29d6: Add expandable detail rows to `DataTable`. Pass `rowExpansion` to `useDataTable` and each row gets a chevron column (auto-pinned to the left edge, after the selection column) that reveals a full-width detail panel beneath the row — nothing new to compose in JSX.
+
+  ```tsx
+  const table = useDataTable<Order>({
+    columns,
+    data,
+    control,
+    rowExpansion: {
+      render: (row) => <OrderLineItems orderId={row.id} />,
+      canExpand: (row) => row.lineItemCount > 0,
+      getLabel: (row) => row.orderNumber, // → "Expand row INV-1001"
+    },
+  });
+  ```
+
+  Rows must have a string or number `id` (the same constraint as row selection); rows without one render no chevron. Several rows can be open at once, and expansion survives page changes — `collapseAllRows()` resets it. Pass `expandedIds` + `onChange` inside `rowExpansion` to control expansion yourself; the type requires them together, so a half-configured controlled table is a compile error rather than inert chevrons.
+
+  Also fixes `onSelectionChange` firing twice per toggle under React StrictMode. It was dispatched from inside a state updater, which StrictMode intentionally double-invokes to surface impurity, so handlers doing real work (fetches, analytics, history entries) ran twice in development. It is now dispatched from the event handler and fires exactly once. No signature change; if you added your own de-duplication to work around this, it is no longer needed.
+
+- b5289fc: Re-export react-router's `Navigate`, so apps no longer need `react-router` as a direct dependency for declarative redirects.
+
+  ```tsx
+  import { Navigate } from "@tailor-platform/app-shell";
+
+  if (!allowed) return <Navigate to="/dashboard" replace />;
+  ```
+
+  See [Declarative Redirects](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/routing-navigation.md#declarative-redirects) for when to prefer the route-level `redirectTo()` guard instead.
+
+- fd2f4bc: Refactor `DateField` / `DatePicker` to follow the same composition model as `Field`, `Select`, `Combobox`, and `Autocomplete`.
+
+  The date controls are now **control-first**: field chrome moved out of the control props and into `Field.Root` composition. They also interoperate correctly with `Form` / `Field.Root` label wiring, `onFormSubmit` value collection, and submit-time validation for required and out-of-range default values.
+
+  Breaking changes:
+
+  - `label`, `description`, and `errorMessage` were removed from `DateField` / `DatePicker`; compose them with `Field.Root`, `Field.Label`, `Field.Description`, and `Field.Error` instead.
+  - `hideTimeZone` was removed; it was previously accepted by the prop types but had no effect.
+
+  `isInvalid` still remains a top-level prop for externally-controlled invalid styling, and the semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and aligned with `Calendar`.
+
+  Before:
+
+  ```tsx
+  <DatePicker
+    label="Delivery date"
+    description="When should we ship your order?"
+    minValue={today(getLocalTimeZone())}
+    errorMessage={error}
+    isInvalid={!!error}
+  />
+  ```
+
+  After:
+
+  ```tsx
+  <Field.Root invalid={!!error}>
+    <Field.Label>Delivery date</Field.Label>
+    <DatePicker
+      aria-label="Delivery date"
+      minValue={today(getLocalTimeZone())}
+    />
+    <Field.Description>When should we ship your order?</Field.Description>
+    <Field.Error match={!!error}>{error}</Field.Error>
+  </Field.Root>
+  ```
+
+  Standalone usage still works with accessible naming:
+
+  ```tsx
+  <DateField aria-label="Invoice date" />
+  ```
+
+- fa587b2: Bridge `--alert-*` tokens into Tailwind's theme as `--color-alert-*`
+
+  The `--alert-*` design tokens (`neutral` / `success` / `warning` / `error` / `info` × `background` / `foreground` / `foreground-muted` / `border`) are now exposed through `@theme inline`, matching how `--status-*` is already bridged.
+
+  Application code can now use ordinary color utilities for callouts, banners, and status-highlighted rows:
+
+  ```tsx
+  // Before — arbitrary values, no autocomplete, silent failure on a typo
+  <div className="bg-[color:var(--alert-info-background)] text-[color:var(--alert-info-foreground)]" />
+
+  // After
+  <div className="bg-alert-info-background text-alert-info-foreground" />
+  ```
+
+  This is purely additive — existing arbitrary-value usage keeps working, and the generated CSS is unchanged.
+
+- 1a768e1: Add `DateRangePicker` and `RangeCalendar` components with a `{ start, end }` range value (exported as `DateRange`). Selection follows the react-aria model: the first calendar pick anchors the range and keeps the popover open, the highlight live-extends to the hovered/focused day, and the second pick completes it — picking backwards swaps the endpoints, while a range typed in reverse is flagged invalid instead of swapped.
+
+  Like `DateField` / `DatePicker`, they are standalone composite controls that also compose inside `Field.Root` (label / description / error / form validation). A single combined proxy input is registered as the one Field control (empty until both ends are complete, so `isRequired` blocks a partial range); `name` gives that combined input a name for native POST (`start/end`, with a wrapping `Field.Root` name taking precedence), while `startName` / `endName` emit two plain hidden inputs for classic form POST.
+
+  ```tsx
+  import {
+    DateRangePicker,
+    Field,
+    type DateRange,
+  } from "@tailor-platform/app-shell";
+
+  const [range, setRange] = useState<DateRange | null>(null);
+
+  // standalone
+  <DateRangePicker
+    aria-label="Billing period"
+    value={range}
+    onChange={setRange}
+  />;
+
+  // composed
+  <Field.Root name="period">
+    <Field.Label>Billing period</Field.Label>
+    <DateRangePicker />
+    <Field.Error match="customError" />
+  </Field.Root>;
+  ```
+
+### Patch Changes
+
+- 8b72b55: Document how to remove the `@theme` bridge workaround, which silently breaks dark mode on 1.7+.
+
+  Apps that pasted the `@theme inline` block, `@custom-variant dark (&:is(.dark *))`, and a copy of the palette into their entry CSS (the workaround while `styles` shipped without the bridge, 1.5.0–1.6.1) keep those definitions winning over AppShell's own palette, because the default palette is imported inside `layer(theme.defaults)` and consumer CSS is unlayered. The build succeeds with no warning, but surfaces added since the copy render light-mode colours in dark mode.
+
+  Adds `docs/migrations.md`, a curated list of breaking changes and the steps each one requires, newest first — separate from the changelog so upgraders and AI agents have one narrow place to look. The first entry covers detecting and removing this workaround, including the requirement to be on 1.7.0 or later first, since the workaround is load-bearing before that.
+
+  That page now ships with the package. The published tarball contains only `dist/**` and `skills/**` — no `docs/`, no `CHANGELOG.md` — so a consumer app previously had no migration record available locally at all. `docs/migrations.md` is generated into the bundled `app-shell-patterns` skill as `references/migrations.md` (with relative links rewritten to repo URLs), and the skill now names upgrades and post-version-bump styling breakage among its triggers, so coding agents reach it from `node_modules`. `packages/core/README.md` links it for the human path, since the README is the only human-readable file npm publishes.
+
+  `docs/concepts/styling-theming.md` and the bundled `app-shell-patterns` skill now document `:root` / `:root.dark` as the override form to use. A bare `.dark` override silently loses against the branded palettes (`cream`, `bloom`), which are imported unlayered and define their dark values on `:root.dark`.
+
+- 2a3f5e6: Polish the built-in sidebar search entry so it looks more like a compact text field.
+
+  The search affordance now shows the platform-specific keyboard shortcut (`⌘K` on Apple platforms, `Ctrl+K` elsewhere) and uses subtler spacing and typography.
+
+- 45218cc: Fix the bundled `app-shell-patterns` skill, whose `design-system.md` documented a token system that does not exist in the package. Agents read it as canonical and emitted classes like `bg-surface-1`, `text-fg-default`, and `bg-danger`, which produce no CSS at all — a silent failure with no error or warning.
+
+  Tokens, dark mode (`.dark` on `<html>`), elevation, z-index, and the `styles` import now match the shipped CSS, and the fabricated spacing, typography, motion, and icon scales are gone in favour of stock Tailwind. Also drops references to `Icon` and `Stat`, which aren't exported, and to a `Sheet` `contentClassName` prop that doesn't exist.
+
+  Documentation only — no runtime or CSS changes.
+
 ## 1.11.0
 
 ### Minor Changes

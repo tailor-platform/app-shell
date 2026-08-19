@@ -32,12 +32,7 @@ When the diff touches exported symbols or consumer-facing entrypoints:
 
 ## Evidence Expectations
 
-Treat these as defaults unless the change is truly trivial:
-
-- public TypeScript API change → consumer-shaped type coverage
-- routing/auth change → browser-level or e2e smoke evidence
-- stateful UI / overlay / theme / composite field control change → example, visual, or interaction verification
-- low-level browser/timing API or non-obvious `useEffect` → rationale comment or focused test
+When verification, documentation, or rationale is important to assess risk, call out missing evidence explicitly.
 
 ## Severity
 

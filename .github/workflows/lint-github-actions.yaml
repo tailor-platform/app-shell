@@ -82,4 +82,6 @@ jobs:
       # zizmor can audit both workflows and action metadata from a directory, so run
       # it against the same prepared workspace.
       - name: Run zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: zizmor --no-progress --collect=workflows,actions .gha-lint/

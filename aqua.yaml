@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/aquaproj/aqua/v2.62.3/json-schema/aqua-yaml.json
 registries:
   - type: standard
-    ref: v4.553.0 # renovate: depName=aquaproj/aqua-registry
+    ref: v4.553.0
 
 packages:
   - name: rhysd/actionlint@v1.7.12

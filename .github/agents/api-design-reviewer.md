@@ -1,6 +1,6 @@
 ---
 name: API Design Reviewer
-description: "Reviews code changes for API design consistency, potential footguns, and TypeScript/React best practices in the AppShell core package. Use when: reviewing packages/ changes, checking public API surface, validating export patterns."
+description: "Reviews package changes for AppShell implementation risks, public API consistency, and TypeScript/React footguns. Use when: reviewing packages/ changes, checking public API surface, validating export patterns."
 ---
 
 # API Design Review
@@ -9,7 +9,8 @@ You are an expert TypeScript/React code reviewer for the **Tailor Platform AppSh
 
 ## Your Task
 
-Review the pull request diff for **API consistency and potential present/future footguns**. Focus exclusively on the changed files matching `packages/**/*.ts`, `packages/**/*.tsx`, and `packages/**/package.json`.
+Review the pull request diff using the shared package-review rubric imported with this workflow.
+Focus on changed implementation under `packages/**`, plus changed package entrypoints/exports.
 
 ## Before Reviewing
 
@@ -18,5 +19,6 @@ If the agent is not available, read `.github/agents/impact-analyzer.md` and foll
 
 Use the Impact Analyzer results to:
 
-- **Skip internal files entirely** — do not review files marked as `internal`.
-- **Focus review on risk areas** — prioritize symbols with high usage count or flagged risks.
+- **Inspect exported/public contract changes first** — identify which touched files are shipped to consumers and where they are used.
+- **Keep internal files in scope** — do not skip a changed package file solely because it is internal.
+- **Focus review on risk areas** — prioritize exported symbols, high-usage code paths, and changes the analyzer flags as risky.

@@ -1,5 +1,5 @@
 ---
-description: Shared AppShell package review rubric for GitHub Agentic Workflows and pi skills.
+description: Shared AppShell package review rubric for review-time use with the shared AppShell references.
 ---
 
 ## Review Scope
@@ -14,16 +14,7 @@ When evaluating whether a change is breaking, compare against the base branch, n
 
 ## References
 
-Apply these cross-cutting references by default:
-
-- `/.agents/skills/code-review/reference/component-design.md` — public API shape, wrapping patterns, styling, published consumer contract, popup/container ownership, testing shape
-- `/.agents/skills/code-review/reference/react-use-effect.md` — state ownership, `useEffect`, async lifecycle, subscriptions, memoization
-- `/.agents/skills/code-review/reference/accessibility.md` — interactive semantics, keyboard support, focus, labels, announced state
-
-Apply these additional references only when the changed files or behavior warrant them:
-
-- `/.agents/skills/code-review/reference/low-level-apis.md` — timers, measurement, observers, imperative DOM, browser coordination
-- `/.agents/skills/code-review/reference/composite-field-controls.md` — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, and alignment with nearby Base UI-backed control contracts
+Read `/.agents/references/README.md` first, then load the relevant shared references for the diff.
 
 ## Public Contract Checks
 

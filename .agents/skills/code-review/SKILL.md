@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Review or implement AppShell package/component changes with consumer-facing contract checks and package implementation guidance."
+description: "Review AppShell package/component changes with consumer-facing contract checks and shared reference guidance."
 ---
 
 # Code Review
@@ -8,6 +8,7 @@ description: "Review or implement AppShell package/component changes with consum
 Review local code changes under `packages/**`.
 
 Read the shared review rubric first: [instruction.md](instruction.md)
+Then read `/.agents/references/README.md`: [../../references/README.md](../../references/README.md)
 
 ## Local Scope
 
@@ -15,7 +16,7 @@ Focus only on changed files under `packages/**`.
 
 ## References to Load
 
-See the shared rubric in [instruction.md](instruction.md).
+See the shared rubric in [instruction.md](instruction.md), then load the relevant shared references from [../../references/README.md](../../references/README.md).
 
 ## Before Reviewing
 

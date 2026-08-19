@@ -18,4 +18,4 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: IzumiSy/deps2changesets@main
+      - uses: IzumiSy/deps2changesets@08eeb2eeb40a652a9091fcba0d8f039df338a355 # main

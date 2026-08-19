@@ -72,7 +72,7 @@ importers:
         specifier: 0.0.88
         version: 0.0.88
       turbo:
-        specifier: ^2.9.14
+        specifier: 2.9.14
         version: 2.9.14
 
   catalogue:
@@ -127,7 +127,7 @@ importers:
         specifier: 'catalog:'
         version: 5.2.0(supports-color@8.1.1)(vite@7.3.5(@types/node@25.9.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))
       dotenv:
-        specifier: ^16.6.1
+        specifier: 16.6.1
         version: 16.6.1
       react:
         specifier: 'catalog:'
@@ -313,7 +313,7 @@ importers:
         specifier: 20.9.0
         version: 20.9.0
       postcss:
-        specifier: ^8.5.26
+        specifier: 8.5.26
         version: 8.5.26
       react:
         specifier: 'catalog:'
@@ -321,9 +321,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
-      react-hook-form:
-        specifier: ^7.71.2
-        version: 7.71.2(react@19.2.8)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.0
@@ -331,7 +328,7 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 'catalog:'
@@ -364,7 +361,7 @@ importers:
         specifier: 'catalog:'
         version: 0.22.14(@volar/typescript@2.4.27)(tsx@4.22.4)(typescript@5.9.3)
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
@@ -383,7 +380,7 @@ importers:
         specifier: 'catalog:'
         version: 0.22.14(@volar/typescript@2.4.27)(tsx@4.22.4)(typescript@5.9.3)
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 'catalog:'

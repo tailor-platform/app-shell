@@ -14,13 +14,14 @@ import { renderField, shouldHideField, isFullWidthField, getNestedValue } from "
 /**
  * Resolve an inline field definition to a complete resolved field with value
  */
-function resolveField(
-  fieldDef: FieldDefinition,
-  data: Record<string, unknown>,
+function resolveField<TData extends object>(
+  fieldDef: FieldDefinition<TData>,
+  data: TData,
   index: number,
 ): ResolvedField {
   // Get value from data using the key path
-  const value = getNestedValue(data, fieldDef.key);
+  const value = getNestedValue(data as Record<string, unknown>, fieldDef.key);
+  const { render } = fieldDef;
 
   return {
     id: `${fieldDef.key}-${index}`,
@@ -29,7 +30,9 @@ function resolveField(
     value,
     emptyBehavior: fieldDef.emptyBehavior ?? "dash",
     meta: fieldDef.meta,
-    data,
+    data: data as Record<string, unknown>,
+    // Bind while `data` is still typed as TData - see ResolvedField.render
+    render: render ? () => render(data) : undefined,
   };
 }
 
@@ -44,9 +47,9 @@ interface FieldSection {
 /**
  * Resolve all fields and group them into sections based on dividers
  */
-function resolveFieldsWithSections(
-  fieldConfigs: FieldConfig[],
-  data: Record<string, unknown>,
+function resolveFieldsWithSections<TData extends object>(
+  fieldConfigs: FieldConfig<TData>[],
+  data: TData,
 ): FieldSection[] {
   const sections: FieldSection[] = [];
   let currentSection: ResolvedField[] = [];
@@ -117,6 +120,8 @@ function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
  * Renders structured key-value information with automatic layout.
  * Use { type: "divider" } in the fields array to add dividers between sections.
  *
+ * Pass `render` on a field to draw it yourself when no built-in `type` fits.
+ *
  * @example
  * ```tsx
  * <DescriptionCard
@@ -127,11 +132,12 @@ function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
  *     { key: "orderNumber", label: "Order #", meta: { copyable: true } },
  *     { type: "divider" },
  *     { key: "total", label: "Total", type: "money" },
+ *     { key: "deliveryBreakdown", label: "Delivery", render: (d) => <PieChart data={d.deliveryBreakdown} /> },
  *   ]}
  * />
  * ```
  */
-export function DescriptionCard({
+export function DescriptionCard<TData extends object = Record<string, unknown>>({
   data,
   title,
   fields,
@@ -139,7 +145,7 @@ export function DescriptionCard({
   className,
   style,
   headerAction,
-}: DescriptionCardProps) {
+}: DescriptionCardProps<TData>) {
   // Resolve fields into sections (split by dividers)
   const sections = resolveFieldsWithSections(fields, data);
 
@@ -230,6 +236,7 @@ export type {
   FieldConfig,
   FieldDefinition,
   FieldDivider,
+  FieldRender,
   FieldType,
   FieldMeta,
   Columns,

@@ -25,10 +25,10 @@ Use `mcp_github_list_pull_requests` with the `head` parameter set to `"{owner}:{
 
 Use terminal commands to obtain the diff locally:
 
-- `git diff main -- 'packages/**'` for changes against `main`
+- `git diff main...HEAD -- 'packages/**'` for changes against `main` using the merge base
 - if `main` is unavailable, `git diff HEAD~1 -- 'packages/**'`
 
-If the diff against `main` is empty, stop — there are no package-review changes.
+If the diff against `main...HEAD` is empty, stop — there are no package-review changes.
 
 ## How to Read Context
 

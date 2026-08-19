@@ -203,7 +203,7 @@ export { ComponentNameRoot, ComponentNameItem, ComponentNameParts };
 
 ```tsx
 import { ComponentNameRoot, ComponentNameParts } from "./component-name";
-import type { MappedItem } from "./select-standalone";
+import type { ExtractItem, MappedItem } from "./dropdown-items";
 
 interface ComponentNameStandaloneProps<I> {
   items: I[];

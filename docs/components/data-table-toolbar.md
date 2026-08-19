@@ -113,36 +113,35 @@ Setting the boolean **and** placing the sub-component renders the control twice.
 
 ### `DataTable.Toolbar` Props
 
-| Prop                 | Type        | Default | Description                                                                                                                                                                     |
-| -------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`           | `ReactNode` | —       | Toolbar content, left-aligned. Use `DataTable.ToolbarRow` for explicit rows.                                                                                                    |
-| `showFilters`        | `boolean`   | `false` | Render the **Add filter** trigger and active chips in their default position. Requires `control`.                                                                               |
-| `showColumnSettings` | `boolean`   | `false` | Render the **Columns** control (show/hide + reorder + pin) anchored top-right. Persists per-user via `tableId`. Replaces `columnSettings` — see [Deprecations](#deprecations).  |
-| `row`                | `boolean`   | `false` | Wrap all children in a single `DataTable.ToolbarRow`, laying them out horizontally. See [Layout defaults](#layout-defaults).                                                    |
-| `col`                | `boolean`   | `false` | Stack children vertically. This is the current default, so passing it changes nothing today — it is the forward-compatible way to keep stacking once `row` becomes the default. |
-| `columnSettings`     | `boolean`   | `false` | **Deprecated** — renamed to `showColumnSettings`. See [Deprecations](#deprecations).                                                                                            |
-| `className`          | `string`    | —       | Additional CSS class. Applied to an outer wrapper — see [Styling](#styling).                                                                                                    |
+| Prop                 | Type             | Default | Description                                                                                                                                                                    |
+| -------------------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `children`           | `ReactNode`      | —       | Toolbar content, left-aligned. Use `DataTable.ToolbarRow` for explicit rows.                                                                                                   |
+| `showFilters`        | `boolean`        | `false` | Render the **Add filter** trigger and active chips in their default position. Requires `control`.                                                                              |
+| `showColumnSettings` | `boolean`        | `false` | Render the **Columns** control (show/hide + reorder + pin) anchored top-right. Persists per-user via `tableId`. Replaces `columnSettings` — see [Deprecations](#deprecations). |
+| `direction`          | `"row" \| "col"` | `"col"` | How children are laid out. `"row"` wraps them in a single `DataTable.ToolbarRow`; `"col"` stacks them. See [Layout defaults](#layout-defaults).                                |
+| `columnSettings`     | `boolean`        | `false` | **Deprecated** — renamed to `showColumnSettings`. See [Deprecations](#deprecations).                                                                                           |
+| `className`          | `string`         | —       | Additional CSS class, merged onto the toolbar container. See [Styling](#styling).                                                                                              |
 
 ### `DataTable.ToolbarRow` Props
 
-| Prop         | Type        | Default | Description                                                                  |
-| ------------ | ----------- | ------- | ---------------------------------------------------------------------------- |
-| `children`   | `ReactNode` | —       | Row content, laid out horizontally from the left.                            |
-| `endSection` | `ReactNode` | —       | Content aligned to the row's right-hand edge.                                |
-| `gap`        | `number`    | `2`     | Space between children, on the theme's spacing scale.                        |
-| `className`  | `string`    | —       | Additional CSS class. Applied to an outer wrapper — see [Styling](#styling). |
+| Prop         | Type        | Default | Description                                                         |
+| ------------ | ----------- | ------- | ------------------------------------------------------------------- |
+| `children`   | `ReactNode` | —       | Row content, laid out horizontally from the left.                   |
+| `endSection` | `ReactNode` | —       | Content aligned to the row's right-hand edge.                       |
+| `gap`        | `number`    | `2`     | Space between children, on the theme's spacing scale.               |
+| `className`  | `string`    | —       | Additional CSS class, merged onto the row. See [Styling](#styling). |
 
 ### `DataTable.ColumnSettings` Props
 
-| Prop        | Type     | Default | Description                                                                  |
-| ----------- | -------- | ------- | ---------------------------------------------------------------------------- |
-| `className` | `string` | —       | Additional CSS class. Applied to an outer wrapper — see [Styling](#styling). |
+| Prop        | Type     | Default | Description                                                                             |
+| ----------- | -------- | ------- | --------------------------------------------------------------------------------------- |
+| `className` | `string` | —       | Additional CSS class, applied to a wrapper around the control. See [Styling](#styling). |
 
 ### `DataTable.Separator` Props
 
-| Prop        | Type     | Default | Description                                                                  |
-| ----------- | -------- | ------- | ---------------------------------------------------------------------------- |
-| `className` | `string` | —       | Additional CSS class. Applied to an outer wrapper — see [Styling](#styling). |
+| Prop        | Type     | Default | Description                                                                                                                |
+| ----------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `className` | `string` | —       | Additional CSS class, applied to a wrapper around the rule — this is also how you set its height. See [Styling](#styling). |
 
 ## Layout defaults
 
@@ -160,13 +159,13 @@ Children passed directly to `DataTable.Toolbar` — without a `ToolbarRow` — s
 </DataTable.Toolbar>
 ```
 
-### `row` and `col`
+### `direction`
 
-For the common case — a handful of controls side by side — `row` wraps every child in a single `ToolbarRow` for you, so you don't have to nest one by hand:
+For the common case — a handful of controls side by side — `direction="row"` wraps every child in a single `ToolbarRow` for you, so you don't have to nest one by hand:
 
 ```tsx
 // These two are equivalent.
-<DataTable.Toolbar showFilters row>
+<DataTable.Toolbar showFilters direction="row">
   <CustomSearchBox />
   <CustomExportButton />
 </DataTable.Toolbar>
@@ -179,50 +178,56 @@ For the common case — a handful of controls side by side — `row` wraps every
 </DataTable.Toolbar>
 ```
 
-`col` is the opposite instruction: stack the children. It matches today's default, so adding it changes nothing right now.
+`direction="col"` is the opposite instruction: stack the children. It matches today's default, so setting it explicitly changes nothing right now.
 
-`row` is ignored when **any** child is already a `DataTable.ToolbarRow` — including when every child is one, which is the ordinary multi-row toolbar. Wrapping rows in a row would lay them side by side rather than stacked, so the wrap is skipped and a development warning is logged.
+`direction="row"` is ignored when **any** child is already a `DataTable.ToolbarRow` — including when every child is one, which is the ordinary multi-row toolbar. Wrapping rows in a row would lay them side by side rather than stacked, so the wrap is skipped and a development warning is logged.
 
-`row` and `col` are mutually exclusive in the type, so passing both is a compile error:
-
-```ts
-type ToolbarDirectionProps = { row?: boolean; col?: never } | { row?: never; col?: boolean };
-```
-
-```tsx
-<DataTable.Toolbar row />            // ok
-<DataTable.Toolbar col />            // ok
-<DataTable.Toolbar row={isWide} />   // ok — a boolean expression is still one arm
-<DataTable.Toolbar row col />        // Type error
-```
-
-The component also warns at runtime if both arrive anyway — via a spread, or from JavaScript — and treats `row` as the winner.
-
-> **Changing in the next major.** Bare children will be wrapped in an implicit `ToolbarRow`, making `row` the default. Two forward-compatible moves you can make today:
+> **Changing in the next major.** `direction` will default to `"row"`, wrapping bare children in an implicit `ToolbarRow`. Two forward-compatible moves you can make today:
 >
-> - **Want horizontal?** Pass `row` now, and drop it after the major.
-> - **Relying on stacking?** Pass `col` now. It is a no-op today and preserves your layout through the flip.
+> - **Want horizontal?** Set `direction="row"` now, and drop it after the major.
+> - **Relying on stacking?** Set `direction="col"` now. It is a no-op today and preserves your layout through the flip.
 
 ## Styling
 
-`className` is applied to an **outer wrapper element that carries no app-shell classes of its own**. Your classes therefore never compete with the component's internal styles, and never depend on stylesheet import order to win.
+`className` behaves differently depending on whether you are **placing** a component or **composing into** one, because those two jobs need different things.
 
-The trade-off is that `className` styles the box the component sits in, not the component's internals. Use it for the outside — margin, width, background, borders:
+### Placed components — `Filters`, `ColumnSettings`, `Separator`
+
+These are dropped into a layout you wrote, so what you need is to position and size them. Their `className` is applied to a **wrapper element that carries no app-shell classes**, so your classes never compete with the component's internals and never depend on stylesheet order to win:
+
+```tsx
+<DataTable.ToolbarRow>
+  <DataTable.Filters className="max-w-md flex-1" />
+  <DataTable.Separator className="h-6" />
+  <DataTable.ColumnSettings className="ml-auto" />
+</DataTable.ToolbarRow>
+```
+
+The wrapper is what makes `DataTable.Separator className="h-6"` work at all: the rule itself is `h-full`, so it takes the height of whatever box it is given.
+
+### Containers — `Toolbar`, `ToolbarRow`
+
+These hold **your** children, and you already own the element they sit in, so a wrapper would add a DOM node without adding capability. Their `className` is merged onto the container itself.
+
+That means it can set anything the container does not already set — `margin`, `max-width`, `background`, `position`:
 
 ```tsx
 <DataTable.ToolbarRow className="mb-2 max-w-3xl">…</DataTable.ToolbarRow>
 ```
 
-`flex-direction`, `gap`, and `align-items` on the wrapper cannot change how children are arranged — those belong to the inner element that actually contains them. A wrapper can set the component's own box (`margin`, `width`, `position`, `overflow`, `background`, `border`) and anything inherited (`color`, `font-*`). Internal layout is controlled by props instead:
+`DataTable.Toolbar` sets `padding`, `border-bottom` and `gap` on that element, so classes touching those three are unreliable: your class and app-shell's are both single-class selectors on the same property, so the winner depends on CSS source order rather than on which one you wrote. If you need to change them, say so on the ticket rather than reaching for `!important` — the fix is a prop, not a class.
+
+### Internal layout is always a prop
+
+No `className` — merged or wrappered — can change how a component arranges its own children. `flex-direction`, `gap` and `align-items` belong to the element that directly contains those children, and that element is never the one you styled:
 
 | To change                           | Use                                    |
 | ----------------------------------- | -------------------------------------- |
-| Direction of the toolbar's children | `row` / `col` on `DataTable.Toolbar`   |
+| Direction of the toolbar's children | `direction` on `DataTable.Toolbar`     |
 | Space between a row's children      | `gap` on `DataTable.ToolbarRow`        |
 | Right-alignment of a group          | `endSection` on `DataTable.ToolbarRow` |
 
-`data-slot` attributes stay on the inner elements rather than the wrapper, so CSS already written
-against `[data-slot="data-table-toolbar"]` keeps matching the element it always matched.
+`data-slot` attributes stay on the inner elements rather than on any wrapper, so CSS already written against `[data-slot="data-table-toolbar"]` keeps matching the element it always matched.
 
 ## Deprecations
 
@@ -237,7 +242,7 @@ against `[data-slot="data-table-toolbar"]` keeps matching the element it always 
 _This section is for review and will be removed before the API ships._
 
 1. **`DataTable.Filters` vs. `DataTable.ColumnFilters`.** The proposal named the filters escape hatch `ColumnFilters`, for symmetry with `ColumnSettings`. `DataTable.Filters` already exists and is the escape hatch today, so this doc keeps that name. Renaming buys symmetry at the cost of a deprecation cycle on a component shipped in 1.10.0 — worth it or not?
-2. **The `className` wrapper contract.** Applying `className` to a bare wrapper (see [Styling](#styling)) avoids conflicts with `astw:`-prefixed internals entirely, which configuring a `twMerge` prefix does not — a consumer writing unprefixed `gap-4` still collides with `astw:gap-2`, and source order decides. The costs: an extra DOM node per component, and no consumer control of internals, which is what makes `row` / `col` / `gap` first-class props rather than classes. Should this contract apply to every app-shell component or only the toolbar surface? And does `gap` want `rowGap` / `colGap` siblings, or is one knob enough?
+2. **Where the wrapper applies.** This doc wrappers the placed sub-components and merges on the two containers (see [Styling](#styling)). Worth confirming, along with two consequences. Configuring a `twMerge` prefix does **not** fix cross-boundary conflicts: `cn()` dedupes within one class string, so a consumer's unprefixed `gap-4` and app-shell's `astw:gap-2` are two unrelated classes that both survive and are resolved by source order, whichever way the prefix is configured. And `DataTable.Toolbar`'s own `padding` / `border-bottom` stay unreliable to override under either model — if there is real demand, they want props. Does `gap` also want `rowGap` / `colGap` siblings?
 3. **`endSection` prop vs. nested sub-component.** The prop matches house style (`DescriptionCard.headerAction`, `Layout.Header.actions`, `Sheet.Header.action`) and is documented here. A `DataTable.ToolbarSection align="start" | "end"` sub-component would take its own `className`, compose conditionally, and allow more than one node without a fragment. Toolbar end sections are usually groups rather than single nodes, which argues for the sub-component.
 4. **`DataTable.Separator` vs. the `Separator` primitive.** `packages/core/src/components/separator.tsx` already implements this with an `orientation` prop, but is not exported from `index.ts`. Options: export `Separator` and drop `DataTable.Separator`, or keep the namespaced one as a preset over it. Note the primitive's vertical variant is `h-full w-px`, which collapses in a centred row without an explicit height.
 5. **Implicit-row timing.** The default flip is deferred to the next major here. In this repo, 7 of 8 `DataTable.Toolbar` usages pass a single child and are unaffected; the exception is the split-slot recipe above, which wants stacking. A scan of consumer repos would size the real blast radius before committing.

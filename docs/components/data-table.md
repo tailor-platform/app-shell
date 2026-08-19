@@ -213,7 +213,7 @@ Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The
 
 ## Column pinning, visibility & ordering
 
-- **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection column auto-pins left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
+- **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection and expand columns auto-pin left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
 - **Column settings.** Pass `columnSettings` to `DataTable.Toolbar` to render a built-in "Columns" control — a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. It's a toolbar prop (not a composed sub-component) because the control always sits in the same top-right position.
 - **Persistence.** Pass a stable, **unique** `tableId` to persist each user's column layout (visibility, order, pinning) to `localStorage` (key `as:data-table:v1:<tableId>`). This is a per-user preference — it is deliberately **not** stored in the URL like filters/sort/pagination, so it survives reloads and isn't reset by shared/filtered links. Omit `tableId` for in-memory-only layout (state simply isn't persisted). Two tables mounted with the same `tableId` share one storage key and overwrite each other — use a unique id per table (e.g. `<route>:<entity>`); a dev-mode warning fires on duplicates.
 
@@ -230,6 +230,73 @@ const table = useDataTable<Order>({
 </DataTable.Root>;
 ```
 
+## Expandable rows
+
+Pass `rowExpansion` to `useDataTable` and each row gets a chevron that reveals a detail panel beneath it. Providing the option is what enables the feature — a dedicated chevron column is added at the left edge (auto-pinned left, after the selection column) and the detail row renders automatically. There is nothing new to compose in JSX.
+
+The parts are grouped rather than flat so the type system rejects incoherent setups: a `getLabel` or `canExpand` with no `render`, or `expandedIds` without `onChange`, are compile errors rather than silently inert configurations.
+
+```tsx
+const table = useDataTable<Order>({
+  columns,
+  data,
+  control,
+  rowExpansion: {
+    render: (row) => <OrderLineItems orderId={row.id} />,
+    canExpand: (row) => row.lineItemCount > 0,
+    getLabel: (row) => row.orderNumber,
+  },
+});
+```
+
+- **Rows must have an `id`.** Expansion is keyed by `row.id`, the same constraint as row selection. Rows without one render **no chevron** (not a disabled one) — a row must never be un-toggleable.
+- **`canExpand`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. The predicate gates the panel in **both** directions: a row whose result flips to `false` while open closes immediately, and an id sitting in `expandedIds` never opens a panel for a row the predicate rejects. That matters when restoring `expandedIds` from a URL or storage — the excluded row may have no detail data to render at all. Its id stays in `expandedIds` but is inert; `collapseAllRows()` clears it.
+- **`getLabel`** returns a **bare identifier** — `"INV-1001"`, not `"Expand row INV-1001"`. The built-in i18n labels compose it into the trigger's accessible name (`"Expand row INV-1001"`) and the panel's (`"INV-1001 details"`), so English and Japanese word order both stay correct. Without it, the generic "Expand row" / "Row details" strings are used — set it on any table with more than a couple of rows.
+- **`onClickRow` is unaffected.** The chevron lives in its own column and stops click propagation, so row-level navigation keeps working.
+- **Expansion survives page changes.** Ids of rows that are no longer on the page simply don't render. Call `collapseAllRows()` to reset.
+- **Multiple rows can be open at once.** There is no accordion / single-open mode.
+
+### Controlled mode
+
+Pass `expandedIds` to own the state yourself; internal state is then never written and you update the array from `onChange`. The two must be passed together — the type rejects either alone.
+
+```tsx
+const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+const table = useDataTable<Order>({
+  columns,
+  data,
+  rowExpansion: {
+    render: (row) => <OrderLineItems orderId={row.id} />,
+    expandedIds,
+    onChange: setExpandedIds,
+  },
+});
+```
+
+`useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `rowExpansion` is not provided, and both keep a stable identity across renders, so they are safe to list in an effect's dependency array:
+
+```tsx
+// Collapse everything when the page changes.
+useEffect(() => {
+  collapseAllRows?.();
+}, [collapseAllRows, currentPage]);
+```
+
+`collapseAllRows()` is a no-op when nothing is open — it neither writes state nor fires `onExpandedChange`.
+
+**Batching caveat.** Each toggle derives the next array from the current value of `expandedIds`, not from a functional update. Two toggles dispatched before your state commits both read the same base, so the first is lost. This matters when `expandedIds` lives behind an async store (Redux/Zustand middleware, a debounced URL sync, a `startTransition`), or when looping `toggleRowExpansion` over many rows to build an "expand all". Compute such updates yourself and set `expandedIds` directly rather than driving them through repeated toggles.
+
+In uncontrolled mode `onChange` is still allowed on its own, as a notification.
+
+### Accessibility
+
+The trigger is a native `<button>`, so Enter/Space activation and the focus ring come for free, and it carries `aria-expanded` — that is what announces the state change on activation. The panel is a `role="region"` with an accessible name, and it sits immediately after its trigger in DOM order, so forward-tabbing reaches it next. Collapsing while focus is inside the panel hands focus back to the trigger rather than dropping it to `<body>`. The chevron's rotation and the panel's reveal both respect `prefers-reduced-motion`. Panel content wider than the viewport scrolls horizontally within the panel, and on a horizontally scrolled table the panel stays pinned to the left edge of the scrollport.
+
+**Expand/collapse is animated** — the panel reveals by transitioning `grid-template-rows` from `0fr` to `1fr`, so it animates to its exact natural height whatever you render, with no height cap to clip tall content. One consequence worth knowing when writing tests against a table: `aria-expanded` flips immediately, but the detail row stays mounted for the ~300ms collapse (marked `data-state="closed"` meanwhile) before it is removed. Assert its removal with `waitFor` rather than synchronously. Under `prefers-reduced-motion` the transition is skipped, but the unmount is still deferred by the same interval.
+
+**Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
+
 ## `useDataTable`
 
 Creates the table state object to pass to `DataTable.Root`.
@@ -245,18 +312,19 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                          |
-| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                        |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                        |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                             |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                     |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                    |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload. |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                              |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                    |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).            |
+| Option              | Type                               | Description                                                                                                                                                                     |
+| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                   |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                   |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                        |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                           |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
+| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                               |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
 
 ### `DataTableData`
 
@@ -279,7 +347,7 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Optional — overrides the built-in `type` renderer when set.                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `id`       | `string`                                  | Stable identifier for column visibility and React key. Falls back to `label` when omitted.                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's `columnSettings` control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection column auto-pins left and the row-actions column auto-pins right.                                                                                    |
+| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's `columnSettings` control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pins right.                                                                         |
 | `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                          |
 | `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved cell value is a string or number — resolved via `accessor` first, then `row[col.id]` as a fallback — so hovering the cell reveals the full value. With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions). |
 | `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.                                                                                                                                                                        |

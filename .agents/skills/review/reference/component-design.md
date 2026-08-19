@@ -44,6 +44,16 @@ export { Dialog } from "./components/dialog";
 - internal files should not become public accidentally through convenience re-exports
 - do not export internal helper types, type guards, or enums by convenience
 
+## Consumer-facing entrypoints
+
+Review whether the shipped contract stays stable and understandable for consumers:
+
+- `packages/*/src/index.ts`, package `exports`, and style entrypoints should not drift silently
+- CSS entrypoints, compatibility shims, and import paths consumers rely on should stay intentional
+- consumers should not need repo-only imports or example-only setup for the component to work as documented
+- JS entrypoints should not pick up CSS side effects unless that contract is explicit
+- docs, examples, exports, and implementation should tell the same import story
+
 ---
 
 ## Pattern fit
@@ -336,6 +346,19 @@ function Component({ render, children, ...props }: ComponentProps) {
   });
 }
 ```
+
+---
+
+## Popup, portal, and container ownership
+
+For popup-like components or wrappers around them, review:
+
+- default portal target and optional `container` ownership
+- anchor and positioner ownership
+- whether one wrapper change silently alters behavior for an entire component family
+- layering inside real shell contexts such as dialogs, drawers, sticky UI, and scroll containers
+- modal vs non-modal boundaries: backdrop, outside pointer events, scroll lock, and dismissal
+- clipping, width, and position seams across nested or scrollable containers
 
 ---
 

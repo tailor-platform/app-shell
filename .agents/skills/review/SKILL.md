@@ -19,8 +19,8 @@ Focus only on changed files under `packages/**`.
    - Prefer `git diff main -- 'packages/**'`
    - If that is empty or `main` is unavailable, fall back to `git diff HEAD~1 -- 'packages/**'`
 2. Ignore non-package changes.
-3. Load the cross-cutting references by default.
-4. Load only the area references that match the touched files or behavior.
+3. Load the default references.
+4. Apply the relevant sections based on the touched files or behavior.
 5. If exported symbols or consumer entrypoints changed, inspect package entrypoints and trace usages/references.
 6. Follow the shared rubric and output format in [instruction.md](instruction.md).
 

@@ -14,19 +14,13 @@ When evaluating whether a change is breaking, compare against the base branch, n
 
 ## References
 
-Load these cross-cutting references by default:
+Load these default references and apply the relevant sections based on the touched files or behavior:
 
-- `/.agents/skills/review/reference/cross-cutting/component-design.md` — public API shape, wrapping patterns, styling, testing shape
-- `/.agents/skills/review/reference/cross-cutting/react.md` — state ownership, `useEffect`, async lifecycle, subscriptions, memoization
-- `/.agents/skills/review/reference/cross-cutting/accessibility.md` — interactive semantics, keyboard support, focus, labels, announced state
-- `/.agents/skills/review/reference/cross-cutting/low-level-apis.md` — timers, measurement, observers, imperative DOM, browser coordination
-- `/.agents/skills/review/reference/cross-cutting/complex-form-controls.md` — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, assisted-selection synchronization
-
-Load these area references only when they match the touched files or behavior:
-
-- `/.agents/skills/review/reference/areas/routing-and-auth.md` — `packages/core/src/routing/**`, auth providers/contexts/callback handling, navigation generation, command-palette routing, breadcrumb/page-meta behavior tied to routing
-- `/.agents/skills/review/reference/areas/theme-style-and-exports.md` — `packages/*/src/index.ts`, package `exports` or other consumer entrypoints, CSS/theme assets, style entrypoints, published style contract
-- `/.agents/skills/review/reference/areas/overlays-and-portals.md` — dialog/popover/sheet/menu/tooltip behavior, portal/container ownership, layering, focus boundary, shell popup integration
+- `/.agents/skills/review/reference/component-design.md` — public API shape, wrapping patterns, styling, published consumer contract, popup/container ownership, testing shape
+- `/.agents/skills/review/reference/react.md` — state ownership, `useEffect`, async lifecycle, subscriptions, memoization, browser-facing integration stability
+- `/.agents/skills/review/reference/accessibility.md` — interactive semantics, keyboard support, focus, labels, announced state
+- `/.agents/skills/review/reference/low-level-apis.md` — timers, measurement, observers, imperative DOM, browser coordination
+- `/.agents/skills/review/reference/complex-form-controls.md` — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, assisted-selection synchronization
 
 ## Public Contract Checks
 
@@ -39,9 +33,8 @@ When the diff touches exported symbols or consumer-facing entrypoints:
 ## Review Order
 
 1. exported/public contract
-2. area-specific concerns
-3. cross-cutting concerns
-4. missing evidence
+2. relevant default concerns
+3. missing evidence
 
 ## Evidence Expectations
 

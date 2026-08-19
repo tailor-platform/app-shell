@@ -1,21 +1,21 @@
 ---
 name: implementation-strategy
-description: "Plan AppShell package/component changes before coding by fixing scope, selecting existing patterns, and loading the right shared references."
+description: "Guide AppShell package/component implementation by fixing scope, reusing existing patterns, and loading the right shared references."
 ---
 
 # Implementation Strategy
 
-Use this skill before implementing or reshaping AppShell package/component changes under `packages/**`.
+Use this skill while implementing or reshaping AppShell package/component changes under `packages/**`.
 
 Read `/.agents/references/README.md` first: [../../references/README.md](../../references/README.md)
 
 ## Objective
 
-Choose the smallest coherent change before coding.
+Choose and keep the smallest coherent change during implementation.
 
 ## Scope Contract
 
-Record these four items before editing:
+Record these four items and keep them visible while editing:
 
 1. **Required behavior** — the smallest user-visible scenario that must work
 2. **Compatibility requirements** — existing behavior or public contract that must remain usable
@@ -38,7 +38,7 @@ Use `/.agents/references/README.md` to decide which shared references to load fo
 
 ## Output
 
-Return a short implementation plan covering:
+Return a short implementation brief covering:
 
 - required behavior
 - compatibility requirements

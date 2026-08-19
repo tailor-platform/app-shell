@@ -14,7 +14,7 @@
 #   grep -A1 'defineResource({' ui-catalogue/src/pages/components/resources.tsx
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../../.."
 
 readonly BASE="https://ui.tailor.tech/components/"
 status=0

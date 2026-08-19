@@ -73,7 +73,9 @@ export interface FieldMeta {
 /**
  * A field configuration - either a divider or a field definition
  */
-export type FieldConfig = FieldDivider | FieldDefinition;
+export type FieldConfig<TData extends object = Record<string, unknown>> =
+  | FieldDivider
+  | FieldDefinition<TData>;
 
 /**
  * Divider - creates a horizontal line between sections
@@ -82,10 +84,15 @@ export interface FieldDivider {
   type: "divider";
 }
 
+/** Renders a field from the whole `data` object, like `render` on DataTable's `Column`. */
+export type FieldRender<TData extends object = Record<string, unknown>> = (
+  data: TData,
+) => ReactNode;
+
 /**
  * Field definition - renders a key-value pair
  */
-export interface FieldDefinition {
+export interface FieldDefinition<TData extends object = Record<string, unknown>> {
   /** Field type determines rendering (defaults to "text") */
   type?: FieldType;
   /** Path to the value in the data object (supports dot notation) */
@@ -96,6 +103,12 @@ export interface FieldDefinition {
   meta?: FieldMeta;
   /** Behavior when value is empty (defaults to "dash") */
   emptyBehavior?: EmptyBehavior;
+  /**
+   * Draws the field from `data` instead of using `type`. Wins over `type` and
+   * replaces the built-in output, so `meta` is not applied. Still runs when the
+   * value at `key` is empty; `emptyBehavior: "hide"` is checked first.
+   */
+  render?: FieldRender<TData>;
 }
 
 // ============================================================================
@@ -109,14 +122,17 @@ export type Columns = 3 | 4;
 
 /**
  * Props for the DescriptionCard component
+ *
+ * `TData` is inferred from `data`; constrained to `object` rather than
+ * `Record<string, unknown>` so interfaces are accepted.
  */
-export interface DescriptionCardProps {
+export interface DescriptionCardProps<TData extends object = Record<string, unknown>> {
   /** Raw backend data object */
-  data: Record<string, unknown>;
+  data: TData;
   /** Card title */
   title: string;
   /** Ordered list of field definitions (use { type: "divider" } for dividers) */
-  fields: FieldConfig[];
+  fields: FieldConfig<TData>[];
   /** Number of columns on desktop (3 or 4) */
   columns?: Columns;
   /** Additional CSS classes */
@@ -149,6 +165,8 @@ export interface ResolvedField {
   meta?: FieldMeta;
   /** Full data object (for accessing related keys) */
   data: Record<string, unknown>;
+  /** Custom renderer, pre-bound to `data` so this type needs no `TData` parameter. */
+  render?: () => ReactNode;
 }
 
 // ============================================================================
@@ -158,13 +176,15 @@ export interface ResolvedField {
 /**
  * Check if a field config is a divider
  */
-export function isDivider(field: FieldConfig): field is FieldDivider {
+export function isDivider<TData extends object>(field: FieldConfig<TData>): field is FieldDivider {
   return field.type === "divider";
 }
 
 /**
  * Check if a field config is a field definition
  */
-export function isFieldDefinition(field: FieldConfig): field is FieldDefinition {
+export function isFieldDefinition<TData extends object>(
+  field: FieldConfig<TData>,
+): field is FieldDefinition<TData> {
   return field.type !== "divider" && "key" in field;
 }

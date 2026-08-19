@@ -373,6 +373,10 @@ Across form controls, review whether the API stays consistent around:
 - nullability and empty-state meaning
 - async and sync variant consistency
 
+Use existing Base UI-backed controls as the baseline contract for AppShell form components.
+
+When a control is not a thin Base UI wrapper and instead bridges one field across multiple internal parts, it should still keep the same consumer-facing contract and form integration shape as nearby Base UI-backed controls. Apply `composite-field-controls.md` for that review surface.
+
 ---
 
 ## Styling conventions

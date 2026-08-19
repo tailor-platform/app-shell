@@ -1,6 +1,6 @@
-# Complex Form Controls Review Criteria
+# Composite Field Controls Review Criteria
 
-Complex form controls are a default review surface when the changed code behaves like a user-editable field backed by multiple moving parts.
+Composite field controls are a default review surface when one user-facing field is implemented by composing multiple internal parts instead of a thin wrapper around a single Base UI primitive.
 
 Review these changes as **field semantics and composite-control design**, not as ordinary input wrappers.
 
@@ -14,15 +14,19 @@ This usually includes controls backed by:
 
 This same review surface applies to any field-like control where AppShell is bridging one user-facing field across several internal pieces.
 
+Thin Base UI wrappers are still the default. When AppShell introduces a field-like control that Base UI does not provide directly, review it against the same consumer contract and integration shape as nearby Base UI-backed controls. Internal complexity does not justify a parallel public API or weaker `Field.Root` / `Form` integration.
+
 ## Baseline checks
 
 ### Justify the extra complexity
 
-Before accepting a new abstraction or bridge layer, ask whether the control really needs composite-control behavior. Thin Base UI wrappers are still the default; custom state machines, proxy inputs, or bridge layers need a concrete reason.
+Before accepting a new abstraction or bridge layer, ask whether the control really needs composite-field behavior. Thin Base UI wrappers are still the default; custom state machines, proxy inputs, or bridge layers need a concrete reason.
 
-### Keep the public API aligned with the control family
+### Keep the public API aligned with the Base UI-backed control family
 
-Even when internals are special, the public contract should still look like the rest of AppShell where possible. Review for consistency around:
+Even when internals are special, the public contract should still look like the rest of AppShell where possible. Use nearby Base UI-backed controls as the comparison baseline, especially `Select`, `Combobox`, `Autocomplete`, and normal `Field.Root` composition patterns.
+
+Review for consistency around:
 
 - `value`, `defaultValue`, `onValueChange` / `onChange`
 - controlled vs uncontrolled ownership
@@ -31,7 +35,7 @@ Even when internals are special, the public contract should still look like the 
 - `className`
 - natural `Field.Root` composition
 
-Be skeptical when a complex control invents a parallel API unless the underlying semantics truly differ.
+Be skeptical when a composite field control invents a parallel API unless the underlying semantics truly differ.
 
 ### One semantic value across all input paths
 
@@ -77,7 +81,7 @@ For controls with richer selection behavior, also review:
 ## Current AppShell examples
 
 - `packages/core/src/components/field.tsx` defines the baseline `Field.Root` contract that all field-like controls should fit into.
-- `packages/core/src/components/select.tsx`, `packages/core/src/components/combobox.tsx`, and `packages/core/src/components/autocomplete.tsx` show the simpler control-family contract that more complex controls should still resemble from the outside.
+- `packages/core/src/components/select.tsx`, `packages/core/src/components/combobox.tsx`, and `packages/core/src/components/autocomplete.tsx` show the simpler control-family contract that composite controls should still resemble from the outside.
 - `packages/core/src/components/date-field/date-field.tsx` splits the problem into a11y labeling, proxy-input ownership, and `Field` / `Form` bridging.
 - `packages/core/src/components/date-field/use-date-field-state.ts` owns the segmented editing state machine, shortcut handling, controlled/uncontrolled behavior, and invalid-reason semantics.
 - `packages/core/src/components/date-field/date-input-group.tsx` renders the visible segmented `role="group"` UI and wires keyboard shortcuts plus popover opening.

@@ -20,7 +20,7 @@ Load these default references and apply the relevant sections based on the touch
 - `/.agents/skills/review/reference/react.md` — state ownership, `useEffect`, async lifecycle, subscriptions, memoization, browser-facing integration stability
 - `/.agents/skills/review/reference/accessibility.md` — interactive semantics, keyboard support, focus, labels, announced state
 - `/.agents/skills/review/reference/low-level-apis.md` — timers, measurement, observers, imperative DOM, browser coordination
-- `/.agents/skills/review/reference/complex-form-controls.md` — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, assisted-selection synchronization
+- `/.agents/skills/review/reference/composite-field-controls.md` — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, and alignment with nearby Base UI-backed control contracts
 
 ## Public Contract Checks
 
@@ -42,7 +42,7 @@ Treat these as defaults unless the change is truly trivial:
 
 - public TypeScript API change → consumer-shaped type coverage
 - routing/auth change → browser-level or e2e smoke evidence
-- stateful UI / overlay / theme / complex form control change → example, visual, or interaction verification
+- stateful UI / overlay / theme / composite field control change → example, visual, or interaction verification
 - low-level browser/timing API or non-obvious `useEffect` → rationale comment or focused test
 
 ## Severity

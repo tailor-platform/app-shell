@@ -1,4 +1,4 @@
-# React Review Criteria
+# React useEffect Review Criteria
 
 ## Core rule
 
@@ -115,15 +115,6 @@ React.useEffect(() => {
   inputRef.current?.focus();
 }, [open]);
 ```
-
-### Browser coordination
-
-For routing, auth, or other integrations that coordinate with browser state, review:
-
-- stable instance or identity across rerenders when re-creation would repeat work
-- callback or initialization paths that run exactly when intended
-- subscriptions, Suspense, or async startup that do not loop or race normal navigation
-- real browser behavior on deep links, reload, back/forward, login/logout, and fallback paths when applicable
 
 ## Review questions
 

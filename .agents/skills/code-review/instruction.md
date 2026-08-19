@@ -17,7 +17,7 @@ When evaluating whether a change is breaking, compare against the base branch, n
 Apply these cross-cutting references by default:
 
 - `/.agents/skills/code-review/reference/component-design.md` — public API shape, wrapping patterns, styling, published consumer contract, popup/container ownership, testing shape
-- `/.agents/skills/code-review/reference/react.md` — state ownership, `useEffect`, async lifecycle, subscriptions, memoization, browser-facing integration stability
+- `/.agents/skills/code-review/reference/react-use-effect.md` — state ownership, `useEffect`, async lifecycle, subscriptions, memoization
 - `/.agents/skills/code-review/reference/accessibility.md` — interactive semantics, keyboard support, focus, labels, announced state
 
 Apply these additional references only when the changed files or behavior warrant them:

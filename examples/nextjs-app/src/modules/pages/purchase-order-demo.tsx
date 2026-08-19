@@ -38,7 +38,30 @@ export const mockPurchaseOrder = {
   subtotal: 12500.0,
   tax: 1031.25,
   total: 13531.25,
+  amountPaid: 5000.0,
+  // No built-in field type can display this - see the `render` fields below
+  receiptBreakdown: { received: 34, inTransit: 41, pending: 25 },
 };
+
+/**
+ * Custom field renderer: a stacked bar no built-in field `type` can express.
+ *
+ * Colours come from the `--alert-*` design tokens directly rather than the
+ * `astw:bg-alert-*` utilities, because this example app's Tailwind build does
+ * not process app-shell's theme - only utilities app-shell itself already
+ * emits are present in its prebuilt stylesheet.
+ */
+const ReceiptBar = ({ received, inTransit, pending }: Record<string, number>) => (
+  <div className="astw:flex astw:flex-col astw:gap-1">
+    <div className="astw:flex astw:h-2 astw:w-full astw:overflow-hidden astw:rounded-full astw:bg-muted">
+      <div style={{ width: `${received}%`, backgroundColor: "var(--alert-success-foreground)" }} />
+      <div style={{ width: `${inTransit}%`, backgroundColor: "var(--alert-warning-foreground)" }} />
+    </div>
+    <span className="astw:text-xs astw:text-muted-foreground astw:tabular-nums">
+      {received}% received · {inTransit}% in transit · {pending}% pending
+    </span>
+  </div>
+);
 
 const PurchaseOrderDetailPage = () => {
   // In a real app, you'd fetch this data:
@@ -135,6 +158,12 @@ const PurchaseOrderDetailPage = () => {
               meta: { copyable: true },
             },
             { key: "note", label: "Notes", meta: { truncateLines: 3 } },
+            {
+              // `render` draws the field itself - it wins over any `type`
+              key: "receiptBreakdown",
+              label: "Receipt Progress",
+              render: ({ receiptBreakdown }) => <ReceiptBar {...receiptBreakdown} />,
+            },
           ]}
         />
 
@@ -163,6 +192,17 @@ const PurchaseOrderDetailPage = () => {
               meta: { currencyKey: "currency.code" },
             },
             { key: "currency.code", label: "Currency" },
+            {
+              // Derived from several keys at once - `render` receives the whole
+              // data object, typed, so destructuring needs no casts
+              key: "amountPaid",
+              label: "Balance Due",
+              render: ({ total, amountPaid, currency }) =>
+                new Intl.NumberFormat(undefined, {
+                  style: "currency",
+                  currency: currency.code,
+                }).format(total - amountPaid),
+            },
           ]}
         />
       </Layout.Column>

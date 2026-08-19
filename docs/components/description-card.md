@@ -209,6 +209,47 @@ Links to related documents with auto-generated URLs using react-router `<Link>` 
 }
 ```
 
+## Custom Rendering
+
+When no built-in `type` fits, pass `render` to draw the field yourself. It receives the whole `data` object — reach into it for whatever the field needs:
+
+```tsx
+<DescriptionCard
+  data={orderData}
+  title="Order"
+  fields={[
+    { key: "orderNumber", label: "Order Number" }, // default text
+    { key: "status", label: "Status", type: "badge" }, // preset
+    {
+      key: "deliveryBreakdown",
+      label: "Delivery",
+      render: (data) => <PieChart data={data.deliveryBreakdown} />, // fully custom
+    },
+  ]}
+/>
+```
+
+Because `render` takes the whole object, a field can be derived from several keys at once — destructure the ones you want:
+
+```tsx
+{
+  key: "total",
+  label: "Balance Due",
+  render: ({ total, amountPaid, currency }) => (
+    <Money amount={total - amountPaid} currency={currency} />
+  ),
+}
+```
+
+This is the same convention as [DataTable's](./data-table.md) column `render`, which also receives the whole row, so the two data-display components behave alike. It also means everything you touch keeps its declared type — nothing is widened to `unknown`.
+
+### Rules
+
+- **`render` always wins over `type`.** Both may be set, but the built-in renderer is skipped entirely.
+- **`meta` is not applied.** A custom renderer owns its own presentation — the copy button, truncation, badge maps, and the `–` empty placeholder are all built-in behaviour that `render` replaces. Render them yourself if you want them.
+- **`key` is still required.** It identifies the field and is what `emptyBehavior` tests. It does _not_ pre-resolve a value for `render` — dot-notation paths are only used by the built-in `type` renderers.
+- **`render` still runs when the value at `key` is empty,** so you decide how to display that. `emptyBehavior: "hide"` is checked first and removes the field before `render` is called.
+
 ## Dividers
 
 Use dividers to visually separate field groups:
@@ -469,10 +510,10 @@ The component uses container queries for responsive layouts:
 
 ## TypeScript
 
-Full type safety with TypeScript:
+`DescriptionCard` is generic over the shape of `data`, which is normally inferred:
 
 ```typescript
-import { type DescriptionCardProps } from "@tailor-platform/app-shell";
+import { DescriptionCard, type DescriptionCardProps } from "@tailor-platform/app-shell";
 
 // Define your data type
 interface Order {
@@ -483,15 +524,32 @@ interface Order {
   currency: string;
 }
 
-// Type-safe field definitions
-const fields: DescriptionCardProps["fields"] = [
+declare const orderData: Order;
+
+// `data` inside render is typed as Order - no annotation needed
+<DescriptionCard
+  data={orderData}
+  title="Order"
+  fields={[
+    { key: "orderNumber", label: "Order" },
+    { key: "status", label: "Status", type: "badge" },
+    { key: "total", label: "Total", render: (data) => `${data.total} ${data.currency}` },
+  ]}
+/>;
+```
+
+To declare the fields array separately, parameterise `DescriptionCardProps` with your data type so `render` callbacks stay typed:
+
+```typescript
+const fields: DescriptionCardProps<Order>["fields"] = [
   { key: "orderNumber", label: "Order" },
-  { key: "status", label: "Status", type: "badge" },
-  // ... more fields
+  { key: "total", label: "Total", render: (data) => `${data.total} ${data.currency}` },
 ];
 
-<DescriptionCard<Order> data={orderData} fields={fields} />
+<DescriptionCard<Order> data={orderData} title="Order" fields={fields} />;
 ```
+
+`render` receives `data` typed as your data type, so every key you reach for keeps its declared type. `key` remains a plain `string` accepting dot-notation paths, but it only feeds the built-in `type` renderers — it is not resolved and handed to `render`.
 
 ## Related Components
 

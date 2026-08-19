@@ -5,27 +5,20 @@ description: "Review AppShell package/component changes with consumer-facing con
 
 # Code Review
 
-Review local code changes under `packages/**`.
+Review local package changes using the shared AppShell package-review guidance.
 
-Read the shared review rubric first: [instruction.md](instruction.md)
-Then read `/.agents/references/README.md`: [../../references/README.md](../../references/README.md)
+The main review rubric lives in [instruction.md](instruction.md). Read that file first and follow it.
 
-## Local Scope
+## Local Review Flow
 
-Focus only on changed files under `packages/**`.
-
-## References to Load
-
-See the shared rubric in [instruction.md](instruction.md), then load the relevant shared references from [../../references/README.md](../../references/README.md).
-
-## Before Reviewing
-
-1. Obtain the local diff.
-   - Prefer `git diff main...HEAD -- 'packages/**'`
-   - If `main` is unavailable, fall back to `git diff HEAD~1 -- 'packages/**'`
-2. Ignore non-package changes.
-3. Load the shared rubric from [instruction.md](instruction.md), using its default cross-cutting guidance and conditional specialized references as needed.
-4. If exported symbols or consumer entrypoints changed, inspect package entrypoints and trace usages/references.
-5. Follow the shared rubric and output format in [instruction.md](instruction.md).
-
-If no matching files changed, state that there are no package-review changes to review.
+1. Obtain the review diff and context.
+   - If the current branch already has a PR, prefer reviewing that PR diff and context.
+   - Otherwise, use a local diff.
+2. For a local diff, prefer:
+   - `git diff main...HEAD -- 'packages/**'`
+   - if `main` is unavailable, `git diff HEAD~1 -- 'packages/**'`
+3. Filter to changed implementation under `packages/**`, plus changed package entrypoints/exports when relevant.
+4. If no matching package files remain, state that there are no package-review changes to review.
+5. Read `/.agents/references/README.md`, then load only the relevant shared references.
+6. Only read PR discussion or prior comments when a design decision is ambiguous and the discussion could change the review outcome.
+7. Report findings using the format and severity rules from [instruction.md](instruction.md).

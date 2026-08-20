@@ -1,7 +1,22 @@
 name: CI (packages)
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".octocov.yml"
+      - ".github/workflows/ci-packages.yaml"
   pull_request:
+    paths:
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".octocov.yml"
+      - ".github/workflows/ci-packages.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,10 +27,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
+      actions: write
       contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 2
           persist-credentials: false
       - uses: ./.github/actions/ci
+      - name: Collect packages/core coverage
+        run: pnpm --filter @tailor-platform/app-shell test:coverage
+      - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2

@@ -47,7 +47,7 @@
     "build": "vite build",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
-    "test:coverage": "APP_SHELL_COVERAGE=true vitest run",
+    "test:coverage": "CI=true vitest run",
     "type-check": "tsc --incremental"
   },
   "dependencies": {

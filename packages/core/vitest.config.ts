@@ -2,7 +2,7 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-const coverageEnabled = process.env.APP_SHELL_COVERAGE === "true";
+const coverageEnabled = process.env.CI === "true";
 
 export default defineConfig({
   plugins: [tsconfigPaths()],

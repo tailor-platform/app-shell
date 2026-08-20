@@ -47,7 +47,6 @@
     "build": "vite build",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
-    "test:coverage": "CI=true vitest run",
     "type-check": "tsc --incremental"
   },
   "dependencies": {

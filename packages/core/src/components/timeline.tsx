@@ -1174,7 +1174,7 @@ export type TimelineLinkProps = {
  *
  * If either referenced `Timeline.Interval` id is unresolved, nothing is rendered.
  */
-function Link({
+function TimelineLink({
   from,
   to,
   fromAnchor = "end",
@@ -1262,7 +1262,7 @@ function Link({
     overlayElement,
   );
 }
-Link.displayName = "Timeline.Link";
+TimelineLink.displayName = "Timeline.Link";
 
 /**
  * Timeline primitives for building app-specific schedule, trace, and dependency UIs.
@@ -1284,5 +1284,5 @@ export const Timeline = {
   Viewport,
   Row,
   Interval,
-  Link,
+  Link: TimelineLink,
 };

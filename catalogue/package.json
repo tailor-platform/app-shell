@@ -4,14 +4,14 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-skill.mjs",
-    "test": "node scripts/check-generated-skills.mjs",
+    "test": "node scripts/frontmatter.mjs && node scripts/check-generated-skills.mjs",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@tailor-platform/app-shell": "workspace:*",
-    "gray-matter": "4.0.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/react": "catalog:",

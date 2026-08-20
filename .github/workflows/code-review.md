@@ -1,14 +1,14 @@
 ---
 description: >
-  Reviews pull requests for API design consistency, potential footguns,
-  and TypeScript/React best practices in the AppShell core package.
+  Reviews pull requests for AppShell package/component implementation risks,
+  consumer-facing contract drift, and TypeScript/React best practices.
 on:
   slash_command:
     name: review
     events: [pull_request_comment]
 imports:
-  - ../agents/api-design-reviewer.md
-  - /.agents/skills/api-design-review/instruction.md
+  - ../agents/code-reviewer.md
+  - /.agents/skills/code-review/instruction.md
 permissions:
   contents: read
   pull-requests: read
@@ -23,7 +23,7 @@ safe-outputs:
   noop:
 ---
 
-# API Design Review
+# Code Review
 
 ## Review Round Awareness
 

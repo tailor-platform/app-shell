@@ -47,7 +47,7 @@
     "build": "vite build",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=lcov --coverage.reporter=text-summary --coverage.reportsDirectory=coverage",
+    "test:coverage": "APP_SHELL_COVERAGE=true vitest run",
     "type-check": "tsc --incremental"
   },
   "dependencies": {

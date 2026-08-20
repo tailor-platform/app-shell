@@ -1,0 +1,18 @@
+coverage:
+  paths:
+    - packages/core/coverage/lcov.info
+comment:
+  if: is_pull_request
+  updatePrevious: true
+  hideFooterLink: true
+summary:
+  if: true
+  hideFooterLink: true
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}/packages-core-octocov
+diff:
+  if: is_pull_request
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}/packages-core-octocov

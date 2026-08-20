@@ -6,6 +6,7 @@ dist
 .cursor/
 .claude/
 .pnpm-store
+coverage
 
 # Vendored Noto Sans JP subsets and the generated stylesheet behind the opt-in
 # Japanese font bundle. Regenerated from the pinned @fontsource-variable/noto-sans-jp

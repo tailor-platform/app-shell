@@ -1,6 +1,10 @@
 name: CI (packages)
 
 on:
+  push:
+    # Keep running on main so octocov can refresh the baseline artifact that PRs diff against.
+    branches:
+      - main
   pull_request:
 
 concurrency:
@@ -12,10 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
+      actions: write
       contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 2
           persist-credentials: false
       - uses: ./.github/actions/ci
+      - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2

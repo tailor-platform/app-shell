@@ -5,6 +5,7 @@ packages:
   - packages/**
 
 catalog:
+  "@tailor-platform/sdk": ^1.85.1
   "@tailwindcss/postcss": ^4.3.0
   "@types/node": ^25.9.5
   "@types/react": ^19

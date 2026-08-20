@@ -4,21 +4,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "packages/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - ".octocov.yml"
-      - ".github/actions/**"
-      - ".github/workflows/ci-packages.yaml"
   pull_request:
-    paths:
-      - "packages/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - ".octocov.yml"
-      - ".github/actions/**"
-      - ".github/workflows/ci-packages.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

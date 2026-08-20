@@ -2,6 +2,7 @@ name: CI (packages)
 
 on:
   push:
+    # Keep running on main so octocov can refresh the baseline artifact that PRs diff against.
     branches:
       - main
   pull_request:

@@ -18,6 +18,7 @@
     "lefthook": "2.1.10",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
+    "pkg-pr-new": "0.0.88",
     "turbo": "2.9.14"
   },
   "engines": {

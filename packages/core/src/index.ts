@@ -154,10 +154,18 @@ export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autoco
 export {
   DateField,
   DatePicker,
+  DateRangePicker,
   type DateFieldProps,
   type DatePickerProps,
+  type DateRangePickerProps,
 } from "./components/date-field";
-export { Calendar, type CalendarProps } from "./components/calendar";
+export {
+  Calendar,
+  RangeCalendar,
+  type CalendarProps,
+  type RangeCalendarProps,
+  type DateRange,
+} from "./components/calendar";
 
 // @internationalized/date re-exports — consumers import date helpers/types from
 // app-shell and install no extra packages. The long tail is available via direct

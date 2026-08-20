@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Column, RowAction } from "./types";
+import type { Column, RowAction, RowExpansionOptions } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 
 /**
@@ -74,6 +74,20 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   clearSelection?: () => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
+
+  // Row expansion
+  // toggleRowExpansion / collapseAllRows are undefined when renderExpandedRow is not provided.
+  // Every member here is optional: this interface is documented as hand-constructible
+  // (custom providers, test doubles, adapters over another data source), so adding a
+  // required member would break those callers' `tsc` on a minor release.
+  /** Ids of the currently expanded rows. */
+  expandedIds?: string[];
+  /** Whether `row` is currently expanded. Always `false` for rows without an `id`. */
+  isRowExpanded?: (row: TRow) => boolean;
+  toggleRowExpansion?: (row: TRow) => void;
+  collapseAllRows?: () => void;
+  /** Expansion config. Its presence enables the expand column and detail rows. */
+  rowExpansion?: RowExpansionOptions<TRow>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

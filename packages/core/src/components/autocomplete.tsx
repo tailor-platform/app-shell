@@ -1,6 +1,10 @@
 import * as React from "react";
 import { Autocomplete as BaseAutocomplete } from "@base-ui/react/autocomplete";
-import type { AutocompleteRootProps } from "@base-ui/react/autocomplete";
+import type {
+  AutocompleteFilter,
+  AutocompleteFilterOptions,
+  AutocompleteRootProps,
+} from "@base-ui/react/autocomplete";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
@@ -337,7 +341,9 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): AutocompleteUseAsyncRetu
  * </Autocomplete.Parts.Root>
  * ```
  */
-const useFilter = BaseAutocomplete.useFilter;
+function useFilter(options?: AutocompleteFilterOptions): AutocompleteFilter {
+  return BaseAutocomplete.useFilter(options);
+}
 
 // ============================================================================
 // Export

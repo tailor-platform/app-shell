@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState, useMemo, useCallback, useRef } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import type { ComboboxFilter, ComboboxFilterOptions } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAsyncItems } from "@/hooks/use-async-items";
@@ -754,7 +755,9 @@ function useAsync<T>(options: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
  * </Combobox.Parts.Root>
  * ```
  */
-const useFilter = BaseCombobox.useFilter;
+function useFilter(options?: ComboboxFilterOptions): ComboboxFilter {
+  return BaseCombobox.useFilter(options);
+}
 
 // ============================================================================
 // Export

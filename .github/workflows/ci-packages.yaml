@@ -38,6 +38,4 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
       - uses: ./.github/actions/ci
-      - name: Collect packages/core coverage
-        run: pnpm --filter @tailor-platform/app-shell test
       - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2

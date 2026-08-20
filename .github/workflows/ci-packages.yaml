@@ -9,6 +9,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - ".octocov.yml"
+      - ".github/actions/**"
       - ".github/workflows/ci-packages.yaml"
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - ".octocov.yml"
+      - ".github/actions/**"
       - ".github/workflows/ci-packages.yaml"
 
 concurrency:

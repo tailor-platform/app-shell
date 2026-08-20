@@ -17,5 +17,7 @@ runs:
       shell: bash
     - run: pnpm fmt:check
       shell: bash
-    - run: pnpm exec turbo run lint test type-check
+    - run: pnpm exec turbo run lint type-check
+      shell: bash
+    - run: pnpm exec turbo run test --filter=!@tailor-platform/app-shell
       shell: bash

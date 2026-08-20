@@ -12,7 +12,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@tailor-platform/app-shell": "workspace:*",
     "lucide-react": "catalog:",
-    "next": "16.2.6",
+    "next": "16.3.1",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "^7.71.2",

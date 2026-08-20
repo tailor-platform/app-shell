@@ -1,6 +1,6 @@
 ---
 name: Impact Analyzer
-description: "Analyzes which changed files are public exports and traces their impact across the codebase. Use as a sub-agent from API Design Reviewer."
+description: "Analyzes which changed files are public exports and traces their impact across the codebase. Use as a sub-agent from Code Reviewer."
 ---
 
 # Impact Analyzer

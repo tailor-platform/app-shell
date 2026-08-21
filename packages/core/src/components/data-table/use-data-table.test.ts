@@ -1,66 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { useDataTable } from "./use-data-table";
-import type { CollectionControl } from "@/types/collection";
-import type { Column, DataTableData } from "./types";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-type TestRow = { id: string; name: string; value: number };
-
-const columns: Column<TestRow>[] = [
-  { id: "name", label: "Name", render: (r) => r.name },
-  { id: "value", label: "Value", render: (r) => String(r.value) },
-];
-
-const testData: DataTableData<TestRow> = {
-  rows: [
-    { id: "1", name: "Alice", value: 10 },
-    { id: "2", name: "Bob", value: 20 },
-  ],
-  pageInfo: {
-    hasNextPage: true,
-    hasPreviousPage: false,
-    endCursor: "token-next",
-    startCursor: null,
-  },
-  total: 50,
-};
-
-function makeControl(overrides?: Partial<CollectionControl>): CollectionControl {
-  return {
-    filters: [],
-    addFilter: vi.fn(),
-    setFilters: vi.fn(),
-    removeFilter: vi.fn(),
-    clearFilters: vi.fn(),
-    sortStates: [],
-    setSort: vi.fn(),
-    clearSort: vi.fn(),
-    pageSize: 10,
-    setPageSize: vi.fn(),
-    goToNextPage: vi.fn(),
-    goToPrevPage: vi.fn(),
-    resetPage: vi.fn(),
-    goToFirstPage: vi.fn(),
-    goToLastPage: vi.fn(),
-    resetCount: 0,
-    getHasPrevPage: () => false,
-    getHasNextPage: (pageInfo) => pageInfo.hasNextPage,
-    ...overrides,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+import { columns, makeControl, testData, type TestRow } from "./use-data-table.test-helpers";
+import type { DataTableData } from "./types";
 
 describe("useDataTable", () => {
-  // -------------------------------------------------------------------------
-  // Data extraction
-  // -------------------------------------------------------------------------
   describe("data extraction", () => {
     it("extracts rows from data.rows", () => {
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
@@ -98,14 +42,11 @@ describe("useDataTable", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // Pagination derivation
-  // -------------------------------------------------------------------------
   describe("pagination derivation", () => {
     it("derives totalPages from total and pageSize", () => {
       const control = makeControl({ pageSize: 10 });
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
-      expect(result.current.totalPages).toBe(5); // 50 / 10
+      expect(result.current.totalPages).toBe(5);
     });
 
     it("returns null totalPages when total is not provided", () => {
@@ -115,15 +56,12 @@ describe("useDataTable", () => {
     });
 
     it("forward mode: hasPrevPage is false when cursorStack is empty", () => {
-      // Default getHasPrevPage returns false
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasPrevPage).toBe(false);
     });
 
     it("hasPrevPage is true when getHasPrevPage returns true", () => {
-      const control = makeControl({
-        getHasPrevPage: () => true,
-      });
+      const control = makeControl({ getHasPrevPage: () => true });
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
       expect(result.current.hasPrevPage).toBe(true);
     });
@@ -139,15 +77,12 @@ describe("useDataTable", () => {
         },
         total: 50,
       };
-      const control = makeControl({
-        getHasPrevPage: (pi) => pi.hasPreviousPage,
-      });
+      const control = makeControl({ getHasPrevPage: (pageInfo) => pageInfo.hasPreviousPage });
       const { result } = renderHook(() => useDataTable({ columns, data: dataWithPrev, control }));
       expect(result.current.hasPrevPage).toBe(true);
     });
 
     it("forward mode: hasNextPage uses pageInfo.hasNextPage", () => {
-      // testData has hasNextPage: true
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
       expect(result.current.hasNextPage).toBe(true);
     });
@@ -168,17 +103,13 @@ describe("useDataTable", () => {
     });
 
     it("hasNextPage is true when getHasNextPage returns true", () => {
-      const control = makeControl({
-        getHasNextPage: () => true,
-      });
+      const control = makeControl({ getHasNextPage: () => true });
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
       expect(result.current.hasNextPage).toBe(true);
     });
 
     it("hasNextPage is false when getHasNextPage returns false", () => {
-      const control = makeControl({
-        getHasNextPage: () => false,
-      });
+      const control = makeControl({ getHasNextPage: () => false });
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
       expect(result.current.hasNextPage).toBe(false);
     });
@@ -200,201 +131,13 @@ describe("useDataTable", () => {
       act(() => {
         result.current.goToPrevPage({ startCursor: "start-tok" });
       });
-      expect(control.goToPrevPage).toHaveBeenCalledWith({
-        startCursor: "start-tok",
-      });
+      expect(control.goToPrevPage).toHaveBeenCalledWith({ startCursor: "start-tok" });
     });
   });
 
-  // -------------------------------------------------------------------------
-  // Column visibility
-  // -------------------------------------------------------------------------
-  describe("column visibility", () => {
-    it("all columns visible by default", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-      expect(result.current.visibleColumns).toEqual(columns);
-      expect(result.current.isColumnVisible("name")).toBe(true);
-    });
-
-    it("toggleColumn hides and shows a column", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-
-      act(() => {
-        result.current.toggleColumn("name");
-      });
-      expect(result.current.visibleColumns).toHaveLength(1);
-      expect(result.current.isColumnVisible("name")).toBe(false);
-
-      act(() => {
-        result.current.toggleColumn("name");
-      });
-      expect(result.current.visibleColumns).toHaveLength(2);
-      expect(result.current.isColumnVisible("name")).toBe(true);
-    });
-
-    it("hideAllColumns hides all, showAllColumns restores", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-
-      act(() => {
-        result.current.hideAllColumns();
-      });
-      expect(result.current.visibleColumns).toHaveLength(0);
-
-      act(() => {
-        result.current.showAllColumns();
-      });
-      expect(result.current.visibleColumns).toHaveLength(2);
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Column order & pinning
-  // -------------------------------------------------------------------------
-  describe("column order & pinning", () => {
-    it("columnOrder defaults to definition order", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-      expect(result.current.columnOrder).toEqual(["name", "value"]);
-    });
-
-    it("moveColumn reorders columnOrder and visibleColumns", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-
-      act(() => {
-        result.current.moveColumn("value", 0);
-      });
-      expect(result.current.columnOrder).toEqual(["value", "name"]);
-      expect(result.current.visibleColumns.map((c) => c.id)).toEqual(["value", "name"]);
-    });
-
-    it("composes multiple moveColumn calls batched before a re-render", () => {
-      type Row3 = { id: string; a: string; b: string; c: string };
-      const cols: Column<Row3>[] = [
-        { id: "a", label: "A", render: (r) => r.a },
-        { id: "b", label: "B", render: (r) => r.b },
-        { id: "c", label: "C", render: (r) => r.c },
-      ];
-      const { result } = renderHook(() =>
-        useDataTable<Row3>({ columns: cols, data: { rows: [] } }),
-      );
-
-      act(() => {
-        result.current.moveColumn("a", 2); // [a,b,c] -> [b,c,a]
-        result.current.moveColumn("b", 2); // must build on [b,c,a] -> [c,a,b]
-      });
-      // Each move reconciles from the previous state, so they compose instead of
-      // the second clobbering the first (which would yield ["a","c","b"]).
-      expect(result.current.columnOrder).toEqual(["c", "a", "b"]);
-    });
-
-    it("keeps hidden columns hidden after a reorder", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-
-      act(() => {
-        result.current.toggleColumn("name");
-      });
-      act(() => {
-        result.current.moveColumn("value", 0);
-      });
-      expect(result.current.isColumnVisible("name")).toBe(false);
-      expect(result.current.visibleColumns.map((c) => c.id)).toEqual(["value"]);
-    });
-
-    it("setPin sets and clears a pin override", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-
-      act(() => {
-        result.current.setPin("name", "left");
-      });
-      expect(result.current.pinnedColumns).toEqual({ name: "left" });
-
-      act(() => {
-        result.current.setPin("name", null);
-      });
-      expect(result.current.pinnedColumns).toEqual({});
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Column state persistence (localStorage, keyed by tableId)
-  // -------------------------------------------------------------------------
-  describe("column state persistence", () => {
-    beforeEach(() => {
-      localStorage.clear();
-    });
-
-    it("persists visibility to localStorage keyed by tableId", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
-
-      act(() => {
-        result.current.toggleColumn("name");
-      });
-
-      const stored = JSON.parse(localStorage.getItem("as:data-table:v1:t1") as string);
-      expect(stored.hidden).toContain("name");
-    });
-
-    it("restores persisted state on remount with the same tableId", () => {
-      const first = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
-      act(() => {
-        first.result.current.toggleColumn("name");
-        first.result.current.setPin("value", "right");
-      });
-      first.unmount();
-
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
-      expect(result.current.isColumnVisible("name")).toBe(false);
-      expect(result.current.pinnedColumns).toEqual({ value: "right" });
-    });
-
-    it("does not persist when tableId is absent", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-      act(() => {
-        result.current.toggleColumn("name");
-      });
-      expect(localStorage.length).toBe(0);
-    });
-
-    it("resets to defaults when tableId is cleared (no stale layout leak)", () => {
-      const { result, rerender } = renderHook(
-        ({ id }: { id?: string }) => useDataTable({ columns, data: testData, tableId: id }),
-        { initialProps: { id: "t1" as string | undefined } },
-      );
-      act(() => {
-        result.current.toggleColumn("name");
-      });
-      expect(result.current.isColumnVisible("name")).toBe(false);
-
-      // Clearing tableId switches to in-memory mode — the previous table's
-      // persisted layout must not leak in.
-      rerender({ id: undefined });
-      expect(result.current.isColumnVisible("name")).toBe(true);
-    });
-
-    it("falls back to defaults on corrupt stored state", () => {
-      localStorage.setItem("as:data-table:v1:t1", "{ not valid json");
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
-      expect(result.current.visibleColumns).toHaveLength(2);
-    });
-
-    it("drops persisted keys no longer present and appends new columns", () => {
-      localStorage.setItem(
-        "as:data-table:v1:t1",
-        JSON.stringify({ order: ["value", "gone"], hidden: [], pinned: {} }),
-      );
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
-      // "gone" dropped (not in current columns); "name" appended after "value".
-      expect(result.current.columnOrder).toEqual(["value", "name"]);
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Sort delegation
-  // -------------------------------------------------------------------------
   describe("sort delegation", () => {
     it("passes sortStates from control", () => {
-      const control = makeControl({
-        sortStates: [{ field: "name", direction: "Asc" }],
-      });
+      const control = makeControl({ sortStates: [{ field: "name", direction: "Asc" }] });
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
       expect(result.current.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
     });
@@ -448,9 +191,7 @@ describe("useDataTable", () => {
     });
 
     it("sortStates is empty when sort is false", () => {
-      const control = makeControl({
-        sortStates: [{ field: "name", direction: "Asc" }],
-      });
+      const control = makeControl({ sortStates: [{ field: "name", direction: "Asc" }] });
       const { result } = renderHook(() =>
         useDataTable({ columns, data: testData, control, sort: false }),
       );
@@ -463,9 +204,6 @@ describe("useDataTable", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // Defaults
-  // -------------------------------------------------------------------------
   describe("defaults", () => {
     it("loading defaults to false", () => {
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
@@ -478,225 +216,12 @@ describe("useDataTable", () => {
     });
 
     it("passes through loading and error", () => {
-      const err = new Error("fail");
+      const error = new Error("fail");
       const { result } = renderHook(() =>
-        useDataTable({ columns, data: undefined, loading: true, error: err }),
+        useDataTable({ columns, data: undefined, loading: true, error }),
       );
       expect(result.current.loading).toBe(true);
-      expect(result.current.error).toBe(err);
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Row selection
-  // -------------------------------------------------------------------------
-  describe("row selection", () => {
-    it("selectedIds is empty by default", () => {
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
-      );
-      expect(result.current.selectedIds).toEqual([]);
-    });
-
-    it("isRowSelected returns false for unselected row", () => {
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
-      );
-      expect(result.current.isRowSelected(testData.rows[0])).toBe(false);
-    });
-
-    it("toggleRowSelection selects a row", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange }),
-      );
-
-      act(() => {
-        result.current.toggleRowSelection!(testData.rows[0]);
-      });
-
-      expect(result.current.isRowSelected(testData.rows[0])).toBe(true);
-      expect(result.current.selectedIds).toEqual(["1"]);
-      expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
-    });
-
-    it("toggleRowSelection deselects an already-selected row", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange }),
-      );
-
-      act(() => {
-        result.current.toggleRowSelection!(testData.rows[0]);
-      });
-      act(() => {
-        result.current.toggleRowSelection!(testData.rows[0]);
-      });
-
-      expect(result.current.isRowSelected(testData.rows[0])).toBe(false);
-      expect(result.current.selectedIds).toEqual([]);
-    });
-
-    it("selectAllRows selects every row on current page", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange }),
-      );
-
-      act(() => {
-        result.current.selectAllRows!();
-      });
-
-      expect(result.current.selectedIds).toEqual(["1", "2"]);
-      expect(result.current.isAllSelected).toBe(true);
-      expect(result.current.isIndeterminate).toBe(false);
-      expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
-    });
-
-    it("clearSelection removes all selections", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange }),
-      );
-
-      act(() => {
-        result.current.selectAllRows!();
-      });
-      act(() => {
-        result.current.clearSelection!();
-      });
-
-      expect(result.current.selectedIds).toEqual([]);
-      expect(result.current.isAllSelected).toBe(false);
-      expect(onSelectionChange).toHaveBeenLastCalledWith([]);
-    });
-
-    it("isIndeterminate is true when some but not all rows are selected", () => {
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
-      );
-
-      act(() => {
-        result.current.toggleRowSelection!(testData.rows[0]);
-      });
-
-      expect(result.current.isIndeterminate).toBe(true);
-      expect(result.current.isAllSelected).toBe(false);
-    });
-
-    it("selectedIds persists across rows update (simulates page change)", () => {
-      const onSelectionChange = vi.fn();
-      const { result, rerender } = renderHook(
-        ({ data }: { data: DataTableData<TestRow> }) =>
-          useDataTable({ columns, data, onSelectionChange }),
-        { initialProps: { data: testData } },
-      );
-
-      act(() => {
-        result.current.toggleRowSelection!(testData.rows[0]);
-      });
-      expect(result.current.selectedIds).toEqual(["1"]);
-
-      // Simulate page change: rows are replaced with a different page
-      const nextPageData: DataTableData<TestRow> = {
-        rows: [
-          { id: "3", name: "Carol", value: 30 },
-          { id: "4", name: "Dave", value: 40 },
-        ],
-      };
-      rerender({ data: nextPageData });
-
-      // ID "1" is still in selectedIds even though it's not in current rows
-      expect(result.current.selectedIds).toEqual(["1"]);
-    });
-
-    it("toggleRowSelection is undefined when onSelectionChange is not provided", () => {
-      const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-
-      expect(result.current.toggleRowSelection).toBeUndefined();
-      expect(result.current.selectAllRows).toBeUndefined();
-      expect(result.current.clearSelection).toBeUndefined();
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Rows without id
-  // -------------------------------------------------------------------------
-  describe("rows without id", () => {
-    type PartialRow = { id?: string; name: string };
-    const columnsPartial: Column<PartialRow>[] = [
-      { id: "name", label: "Name", render: (r) => r.name },
-    ];
-    const dataWithMissingId: DataTableData<PartialRow> = {
-      rows: [
-        { id: "1", name: "Alice" },
-        { name: "Bob" }, // no id
-        { id: "3", name: "Carol" },
-      ],
-    };
-
-    it("isRowSelected returns false for a row without id", () => {
-      const { result } = renderHook(() =>
-        useDataTable({
-          columns: columnsPartial,
-          data: dataWithMissingId,
-          onSelectionChange: vi.fn(),
-        }),
-      );
-      expect(result.current.isRowSelected(dataWithMissingId.rows[1])).toBe(false);
-    });
-
-    it("toggleRowSelection is a no-op for rows without id", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({
-          columns: columnsPartial,
-          data: dataWithMissingId,
-          onSelectionChange,
-        }),
-      );
-
-      act(() => {
-        result.current.toggleRowSelection!(dataWithMissingId.rows[1]);
-      });
-
-      expect(result.current.selectedIds).toEqual([]);
-      expect(onSelectionChange).not.toHaveBeenCalled();
-    });
-
-    it("selectAllRows only selects rows that have an id", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({
-          columns: columnsPartial,
-          data: dataWithMissingId,
-          onSelectionChange,
-        }),
-      );
-
-      act(() => {
-        result.current.selectAllRows!();
-      });
-
-      expect(result.current.selectedIds).toEqual(["1", "3"]);
-      expect(onSelectionChange).toHaveBeenCalledWith(["1", "3"]);
-    });
-
-    it("isAllSelected is true when all rows with id are selected (even if some lack id)", () => {
-      const onSelectionChange = vi.fn();
-      const { result } = renderHook(() =>
-        useDataTable({
-          columns: columnsPartial,
-          data: dataWithMissingId,
-          onSelectionChange,
-        }),
-      );
-
-      act(() => {
-        result.current.selectAllRows!();
-      });
-
-      expect(result.current.isAllSelected).toBe(true);
+      expect(result.current.error).toBe(error);
     });
   });
 });

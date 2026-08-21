@@ -93,7 +93,7 @@ function parseRange(value) {
     const lo = parseInt(m[1], 16);
     spans.push([lo, m[2] ? parseInt(m[2], 16) : lo]);
   }
-  return spans.sort((a, b) => a[0] - b[0]);
+  return spans.toSorted((a, b) => a[0] - b[0]);
 }
 
 /** Clamp spans to JP_BLOCKS, merging anything adjacent that survives. */
@@ -106,9 +106,8 @@ function clampToJapanese(spans) {
       if (s <= e) kept.push([s, e]);
     }
   }
-  kept.sort((a, b) => a[0] - b[0]);
   const merged = [];
-  for (const span of kept) {
+  for (const span of kept.toSorted((x, y) => x[0] - y[0])) {
     const last = merged[merged.length - 1];
     if (last && span[0] <= last[1] + 1) last[1] = Math.max(last[1], span[1]);
     else merged.push([span[0], span[1]]);

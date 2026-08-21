@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { renderRHFForm } from "../../tests/rhf-test-utils";
 import { Checkbox } from "./checkbox";
 import { Field } from "./field";
 
@@ -148,6 +149,72 @@ describe("Checkbox", () => {
         </Field.Root>,
       );
       expect(screen.getByRole("checkbox").hasAttribute("data-disabled")).toBe(true);
+    });
+  });
+
+  describe("RHF integration", () => {
+    it("submits boolean values and resets back to the default", async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+
+      renderRHFForm({
+        defaultValues: { acceptTerms: false },
+        name: "acceptTerms",
+        onSubmit,
+        render: ({ field, fieldState }) => (
+          <Field.Root name={field.name} {...fieldState}>
+            <Checkbox
+              label="Accept the terms"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+            />
+            <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+          </Field.Root>
+        ),
+      });
+
+      const checkbox = screen.getByRole("checkbox", { name: "Accept the terms" });
+      await user.click(checkbox);
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({ acceptTerms: true });
+      });
+
+      await user.click(screen.getByRole("button", { name: "Reset" }));
+      expect(checkbox.getAttribute("aria-checked")).toBe("false");
+    });
+
+    it("renders required errors after blur", async () => {
+      const user = userEvent.setup();
+
+      renderRHFForm({
+        defaultValues: { acceptTerms: false },
+        name: "acceptTerms",
+        mode: "onBlur",
+        rules: {
+          validate: (value) => value || "You must accept the terms.",
+        },
+        render: ({ field, fieldState }) => (
+          <Field.Root name={field.name} {...fieldState}>
+            <Checkbox
+              label="Accept the terms"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+            />
+            <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+          </Field.Root>
+        ),
+      });
+
+      await user.tab();
+      await user.tab();
+
+      expect(await screen.findByText("You must accept the terms.")).toBeDefined();
     });
   });
 });

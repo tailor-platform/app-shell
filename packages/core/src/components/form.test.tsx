@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { Controller, useForm } from "react-hook-form";
 import { Form } from "./form";
 import { Field } from "./field";
 
@@ -103,5 +105,51 @@ describe("Form", () => {
       </Form>,
     );
     expect(screen.getByText("Server says invalid")).not.toBeNull();
+  });
+
+  it("works with react-hook-form handleSubmit", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    function TestForm() {
+      const form = useForm<{ email: string }>({ defaultValues: { email: "" } });
+
+      return (
+        <Form onSubmit={form.handleSubmit(onSubmit)}>
+          <Controller
+            name="email"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field.Root name={field.name} {...fieldState}>
+                <Field.Label>Email</Field.Label>
+                <Field.Control {...field} type="email" />
+                {fieldState.error && (
+                  <Field.Error match={true}>{fieldState.error.message}</Field.Error>
+                )}
+              </Field.Root>
+            )}
+          />
+          <button type="submit">Submit</button>
+          <button type="button" onClick={() => form.reset()}>
+            Reset
+          </button>
+        </Form>
+      );
+    }
+
+    render(<TestForm />);
+
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "ada@example.com");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        { email: "ada@example.com" },
+        expect.objectContaining({ _reactName: "onSubmit" }),
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect((screen.getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("");
   });
 });

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderRHFForm } from "../../tests/rhf-test-utils";
+import { Field } from "./field";
 import { Combobox } from "./combobox-standalone";
 
 afterEach(() => {
@@ -172,6 +174,72 @@ describe("Combobox (standalone, multiple)", () => {
     });
     await user.click(screen.getByText("Apple"));
     expect(onValueChange).toHaveBeenCalledWith(["Apple"], expect.anything());
+  });
+});
+
+describe("Combobox (standalone, RHF integration)", () => {
+  it("submits the selected item and resets back to empty", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { fruit: null as string | null },
+      name: "fruit",
+      onSubmit,
+      render: ({ field, fieldState }) => (
+        <Field.Root name={field.name} {...fieldState}>
+          <Field.Label>Fruit</Field.Label>
+          <Combobox
+            items={fruits}
+            value={field.value}
+            onValueChange={field.onChange}
+            aria-label="Fruit"
+            placeholder="Search..."
+          />
+          <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+        </Field.Root>
+      ),
+    });
+
+    const input = screen.getByRole("combobox", { name: "Fruit" });
+    await user.click(input);
+    await user.type(input, "Ban");
+    await waitFor(() => expect(screen.getByText("Banana")).toBeDefined());
+    await user.click(screen.getByText("Banana"));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({ fruit: "Banana" });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect((screen.getByRole("combobox", { name: "Fruit" }) as HTMLInputElement).value).toBe("");
+  });
+
+  it("surfaces required errors on submit", async () => {
+    const user = userEvent.setup();
+
+    renderRHFForm({
+      defaultValues: { fruit: null as string | null },
+      name: "fruit",
+      rules: { required: "Fruit is required" },
+      render: ({ field, fieldState }) => (
+        <Field.Root name={field.name} {...fieldState}>
+          <Field.Label>Fruit</Field.Label>
+          <Combobox
+            items={fruits}
+            value={field.value}
+            onValueChange={field.onChange}
+            aria-label="Fruit"
+            placeholder="Search..."
+          />
+          <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+        </Field.Root>
+      ),
+    });
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Fruit is required")).toBeDefined();
   });
 });
 

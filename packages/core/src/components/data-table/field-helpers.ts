@@ -1,4 +1,4 @@
-import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
+import type { SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
 import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
 
@@ -30,8 +30,8 @@ export function inferColumns<
 >(tableMetadata: TTable): ColumnInferFn<TRow, TTable> {
   const fields = tableMetadata.fields;
 
-  return (
-    dataKey: TableFieldName<TTable>,
+  return <TFieldName extends TableFieldName<TTable>>(
+    dataKey: TFieldName,
     columnOptions?: MetadataFieldOptions,
   ): InferredColumn<TRow> => {
     const fieldName = dataKey as string;
@@ -45,9 +45,13 @@ export function inferColumns<
       sort = fieldTypeToSortConfig(fieldName, fieldMeta.type);
     }
 
-    let filter: FilterConfig | undefined;
-    if (columnOptions?.filter !== false) {
-      filter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
+    let filter: ColumnBase<TRow>["filter"];
+    const filterOption = columnOptions?.filter;
+    if (filterOption !== false) {
+      const baseFilter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
+      if (baseFilter) {
+        filter = typeof filterOption === "object" ? { ...baseFilter, ...filterOption } : baseFilter;
+      }
     }
 
     const label = columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;
@@ -85,7 +89,7 @@ export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TR
  * Per-field column factory returned by `inferColumns(tableMetadata)`.
  *
  * Derives label, sort config, and filter config from the field's metadata.
- * Sort and filter can be suppressed per call via `options`.
+ * Sort can be suppressed and filter can be suppressed or narrowed per call via `options`.
  *
  * @param dataKey - A field name from the bound table metadata.
  * @param options - Optional per-column overrides (label, width, sort, filter).
@@ -94,7 +98,10 @@ export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TR
 export type ColumnInferFn<
   TRow extends Record<string, unknown>,
   TTable extends TableMetadata = TableMetadata,
-> = (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => InferredColumn<TRow>;
+> = <TFieldName extends TableFieldName<TTable>>(
+  dataKey: TFieldName,
+  options?: MetadataFieldOptions,
+) => InferredColumn<TRow>;
 
 /**
  * Object returned by `createColumnHelper`.

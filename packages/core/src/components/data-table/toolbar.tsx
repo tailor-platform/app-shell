@@ -114,16 +114,80 @@ function resolveTemporalOperator(
       initial: current as NumericTemporalOperator,
     };
   }
-  return { items: standard, initial: "eq" };
+  return { items: standard, initial: standard[0] ?? "eq" };
 }
 
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
 type StringOperator = (typeof STRING_OPERATORS)[number];
+type DataTableFilterConfig = NonNullable<Column<Record<string, unknown>>["filter"]>;
 type FilterableColumn = Column<Record<string, unknown>> & {
-  filter: FilterConfig;
+  filter: DataTableFilterConfig;
 };
 type AddFilterDraftValue = string | string[];
+
+function getDefaultFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
+  switch (type) {
+    case "string":
+      return [...STRING_OPERATORS];
+    case "date":
+      return [...DATE_OPERATORS];
+    case "number":
+    case "datetime":
+    case "time":
+      return [...NUMERIC_TEMPORAL_OPERATORS];
+    case "enum":
+      return ["in"];
+    case "boolean":
+      return [...BOOLEAN_OPERATORS];
+    case "uuid":
+      return ["eq"];
+  }
+}
+
+function isUiOperatorAllowedForType(type: FilterConfig["type"], operator: FilterOperator): boolean {
+  switch (type) {
+    case "string":
+      return (STRING_OPERATORS as readonly string[]).includes(operator);
+    case "date":
+    case "number":
+    case "datetime":
+    case "time":
+      return (NUMERIC_TEMPORAL_OPERATORS as readonly string[]).includes(operator);
+    case "enum":
+      return operator === "in";
+    case "boolean":
+      return (BOOLEAN_OPERATORS as readonly string[]).includes(operator);
+    case "uuid":
+      return operator === "eq";
+  }
+}
+
+function getConfiguredFilterOperators(config: DataTableFilterConfig): FilterOperator[] {
+  const defaults = getDefaultFilterOperators(config.type);
+  const configured = config.operators as readonly FilterOperator[] | undefined;
+  if (!configured || configured.length === 0) return defaults;
+
+  const operators = configured.filter(
+    (operator, index) => defaults.includes(operator) && configured.indexOf(operator) === index,
+  );
+  return operators.length > 0 ? [...operators] : defaults;
+}
+
+function getVisibleFilterOperators(
+  config: DataTableFilterConfig,
+  current?: FilterOperator,
+): FilterOperator[] {
+  const operators = getConfiguredFilterOperators(config);
+  if (current && !operators.includes(current) && isUiOperatorAllowedForType(config.type, current)) {
+    return [...operators, current];
+  }
+  return operators;
+}
+
+function getDefaultFilterOperator(config: DataTableFilterConfig): FilterOperator {
+  return getConfiguredFilterOperators(config)[0] ?? DEFAULT_OPERATOR[config.type];
+}
 
 /** Use `DataTable.Filters` instead of calling this directly. */
 function DataTableFilters({
@@ -244,9 +308,9 @@ function seedPanelOperator(
 ): FilterOperator {
   if (!col) return "eq";
   const active = control.filters.find((f) => f.field === col.filter.field);
-  const ops = getAddFilterOperators(col.filter.type);
-  if (active && ops.includes(active.operator)) return active.operator;
-  return DEFAULT_OPERATOR[col.filter.type];
+  const operators = getVisibleFilterOperators(col.filter, active?.operator);
+  if (active && operators.includes(active.operator)) return active.operator;
+  return getDefaultFilterOperator(col.filter);
 }
 
 function AddFilterPanel({
@@ -272,7 +336,8 @@ function AddFilterPanel({
 
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
-  const operators = config ? getAddFilterOperators(config.type) : [];
+  const activeFilter = control.filters.find((f) => f.field === fieldName);
+  const operators = config ? getVisibleFilterOperators(config, activeFilter?.operator) : [];
   // Show the condition column for any field that has more than one operator
   // (single-operator types like enum/uuid go straight field ▸ value).
   const showConditions = operators.length > 1;
@@ -314,10 +379,9 @@ function AddFilterPanel({
   };
 
   const activeFields = new Set(control.filters.map((f) => f.field));
-  const activeFilter = control.filters.find((f) => f.field === fieldName);
   let effectiveOperator: FilterOperator | undefined;
   if (config) {
-    effectiveOperator = showConditions ? operator : DEFAULT_OPERATOR[config.type];
+    effectiveOperator = showConditions ? operator : getDefaultFilterOperator(config);
   }
 
   return (
@@ -1070,7 +1134,7 @@ function FilterChip({
   filter,
   control,
 }: {
-  column: Column<Record<string, unknown>> & { filter: FilterConfig };
+  column: Column<Record<string, unknown>> & { filter: DataTableFilterConfig };
   filter: Filter;
   control: CollectionControl;
 }) {
@@ -1128,7 +1192,7 @@ function FilterChip({
     [control, config.field, config.type, filter.operator, filter.value, filter.caseSensitive],
   );
 
-  const operators = getAddFilterOperators(config.type);
+  const operators = getVisibleFilterOperators(config, filter.operator);
   const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
   const valueLabel = formatFilterValue(filter, config, t, locale, label);
 
@@ -1317,7 +1381,7 @@ function FilterPopoverContent({
   onClose,
   hideOperator = false,
 }: {
-  column: Column<Record<string, unknown>> & { filter: FilterConfig };
+  column: Column<Record<string, unknown>> & { filter: DataTableFilterConfig };
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1428,7 +1492,7 @@ function EnumFilterEditor({
   filter,
   control,
 }: {
-  config: Extract<FilterConfig, { type: "enum" }>;
+  config: Extract<DataTableFilterConfig, { type: "enum" }>;
   filter: Filter;
   control: CollectionControl;
 }) {
@@ -1474,17 +1538,21 @@ function BooleanFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "boolean" }>;
+  config: Extract<DataTableFilterConfig, { type: "boolean" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const operatorItems = getVisibleFilterOperators(config, filter.operator).filter(
+    (operator): operator is BooleanOperator =>
+      BOOLEAN_OPERATORS.includes(operator as BooleanOperator),
+  );
   const [localOp, setLocalOp] = useState<BooleanOperator>(
-    BOOLEAN_OPERATORS.includes(filter.operator as BooleanOperator)
+    operatorItems.includes(filter.operator as BooleanOperator)
       ? (filter.operator as BooleanOperator)
-      : "eq",
+      : (operatorItems[0] ?? "eq"),
   );
   const [localValue, setLocalValue] = useState(
     typeof filter.value === "boolean" ? String(filter.value) : "true",
@@ -1502,7 +1570,7 @@ function BooleanFilterEditor({
     >
       {!hideOperator && (
         <Select
-          items={[...BOOLEAN_OPERATORS]}
+          items={[...operatorItems]}
           value={localOp}
           onValueChange={(v) => {
             if (v) setLocalOp(v as BooleanOperator);
@@ -1541,17 +1609,20 @@ function StringFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "string" }>;
+  config: Extract<DataTableFilterConfig, { type: "string" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const operatorItems = getVisibleFilterOperators(config, filter.operator).filter(
+    (operator): operator is StringOperator => STRING_OPERATORS.includes(operator as StringOperator),
+  );
   const [localOp, setLocalOp] = useState<StringOperator>(
-    STRING_OPERATORS.includes(filter.operator as StringOperator)
+    operatorItems.includes(filter.operator as StringOperator)
       ? (filter.operator as StringOperator)
-      : "contains",
+      : (operatorItems[0] ?? "contains"),
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
   const [localCaseSensitive, setLocalCaseSensitive] = useState(filter.caseSensitive ?? false);
@@ -1574,10 +1645,10 @@ function StringFilterEditor({
     >
       {!hideOperator && (
         <Select
-          items={[...STRING_OPERATORS]}
+          items={[...operatorItems]}
           value={localOp}
           onValueChange={(v) => {
-            if (v) setLocalOp(v);
+            if (v) setLocalOp(v as StringOperator);
           }}
           mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
           className="astw:h-8 astw:text-sm"
@@ -1616,7 +1687,7 @@ function UuidFilterEditor({
   control,
   onClose,
 }: {
-  config: Extract<FilterConfig, { type: "uuid" }>;
+  config: Extract<DataTableFilterConfig, { type: "uuid" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1663,7 +1734,7 @@ function NumericFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "number" }>;
+  config: Extract<DataTableFilterConfig, { type: "number" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1671,7 +1742,9 @@ function NumericFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    temporalOperatorsFor(config.type),
+    getConfiguredFilterOperators(config).filter((operator): operator is NumericTemporalOperator =>
+      temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
+    ),
     filter.operator,
   );
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
@@ -1798,7 +1871,7 @@ function TemporalFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "datetime" | "date" | "time" }>;
+  config: Extract<DataTableFilterConfig, { type: "datetime" | "date" | "time" }>;
   /** The column's visible label — used for the date picker's accessible name. */
   label: string;
   filter: Filter;
@@ -1808,7 +1881,9 @@ function TemporalFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    temporalOperatorsFor(config.type),
+    getConfiguredFilterOperators(config).filter((operator): operator is NumericTemporalOperator =>
+      temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
+    ),
     filter.operator,
   );
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
@@ -1964,25 +2039,6 @@ function TemporalFilterEditor({
 // =============================================================================
 // Helpers
 // =============================================================================
-
-function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
-  switch (type) {
-    case "string":
-      return [...STRING_OPERATORS];
-    case "date":
-      return [...DATE_OPERATORS];
-    case "number":
-    case "datetime":
-    case "time":
-      return [...NUMERIC_TEMPORAL_OPERATORS];
-    case "enum":
-      return ["in"];
-    case "boolean":
-      return [...BOOLEAN_OPERATORS];
-    case "uuid":
-      return ["eq"];
-  }
-}
 
 function isAddFilterDraftValueValid(
   type: FilterConfig["type"],

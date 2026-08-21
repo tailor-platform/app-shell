@@ -602,13 +602,16 @@ When you spread `...infer("field")`, add `accessor` when you want a typed render
 
 ## `FilterConfig`
 
-The `filter` property on a column accepts a `FilterConfig` object. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
+The `filter` property on a column accepts the same base shape as `FilterConfig`, plus a DataTable-only `operators` allowlist. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
 
-| Property  | Type             | Description                                                  |
-| --------- | ---------------- | ------------------------------------------------------------ |
-| `field`   | `string`         | API field name used in the generated query input.            |
-| `type`    | `FilterType`     | Filter editor type (see table below).                        |
-| `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values. |
+| Property    | Type               | Description                                                                          |
+| ----------- | ------------------ | ------------------------------------------------------------------------------------ |
+| `field`     | `string`           | API field name used in the generated query input.                                    |
+| `type`      | `FilterType`       | Filter editor type (see table below).                                                |
+| `options`   | `SelectOption[]`   | Required when `type` is `"enum"`. List of selectable values.                         |
+| `operators` | `FilterOperator[]` | Optional DataTable UI allowlist. Order controls menu order and the default operator. |
+
+`operators` only narrows what the built-in DataTable filter UI shows. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still use the broader backend operator set.
 
 ### Adding and editing filters
 

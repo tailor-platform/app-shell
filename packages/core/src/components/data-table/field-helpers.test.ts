@@ -287,6 +287,25 @@ describe("inferColumns() with metadata", () => {
     expect(opts.filter).toBeUndefined();
   });
 
+  it("narrows inferred filter operators with filter.operators", () => {
+    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const opts = infer("title", { filter: { operators: ["contains", "eq"] } });
+    expect(opts.filter).toEqual({
+      field: "title",
+      type: "string",
+      operators: ["contains", "eq"],
+    });
+  });
+
+  it("allows narrowing inferred filters with any DataTable-supported UI operators", () => {
+    const infer = inferColumns<TaskRow>(testMetadata.task);
+    expect(infer("title", { filter: { operators: ["contains"] } }).filter).toEqual({
+      field: "title",
+      type: "string",
+      operators: ["contains"],
+    });
+  });
+
   it("uuid has no sort, has uuid filter", () => {
     const infer = inferColumns<TaskRow>(testMetadata.task);
     const opts = infer("id");

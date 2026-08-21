@@ -191,6 +191,16 @@ const booleanColumn: Column<TestRow> = {
   filter: { type: "boolean", field: "enabled" },
 };
 
+const stringContainsOnlyColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: { type: "string", field: "name", operators: ["contains"] },
+};
+
+const stringEqOnlyColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: { type: "string", field: "name", operators: ["eq"] },
+};
+
 // ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
 // ---------------------------------------------------------------------------
@@ -376,6 +386,17 @@ describe("AddFilterPanel", () => {
     expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
   });
 
+  it("hides the condition column when a column restricts filters to one operator", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringContainsOnlyColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(screen.queryByRole("button", { name: /^contains$/ })).toBeNull();
+    expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
+  });
+
   it("seeds an already-filtered field's operator/value so the panel preserves them", async () => {
     // Re-opening the panel on a field that already has a non-default filter
     // (here a number "between") must keep that operator and value rather than
@@ -407,6 +428,23 @@ describe("AddFilterPanel", () => {
 
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
       caseSensitive: true,
+    });
+  });
+
+  it("preserves an active operator even when the column now restricts the allowlist", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringEqOnlyColumn]} />, { wrapper });
+
+    expect(screen.getByRole("button", { name: "contains" })).toBeDefined();
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseSensitive: false,
     });
   });
 

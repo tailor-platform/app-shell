@@ -1,5 +1,5 @@
 import { useRef, type RefObject } from "react";
-import { SidebarProvider, SidebarInset } from "@/components/sidebar";
+import { SidebarProvider, SidebarInset } from "./primitives";
 import { AppShellOutlet } from "@/components/content";
 import { AppShellScrollContainerProvider } from "@/contexts/scroll-container-context";
 import { DefaultSidebar } from "./default-sidebar";

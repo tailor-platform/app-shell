@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Combobox } from "@/components/combobox-standalone";
+import { Combobox } from "@/components/combobox";
 import type {
   CsvImporterProps,
   CsvImporterStep,

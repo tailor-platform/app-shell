@@ -2,7 +2,7 @@ import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider } from "@/components/sidebar";
+import { SidebarProvider } from "./primitives";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { DefaultSidebar } from "./default-sidebar";

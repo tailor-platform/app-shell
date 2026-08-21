@@ -62,9 +62,39 @@ Review whether the chosen pattern matches the actual component shape.
 
 Be skeptical when a heavier pattern adds public surface without reducing real complexity.
 
-### Pattern A — Simple single-file component
+### Standard filesystem shape
 
-Use when the component is mostly a styled element with variants and a small prop surface.
+Every component or helper family under `components/` gets its own directory.
+Implementation size does **not** decide whether something is a file or a directory.
+The stable entrypoint is always `components/<name>/index.ts`.
+
+```text
+components/
+  component-name/
+    index.ts
+    component-name.tsx
+```
+
+If the implementation grows, add files in the same directory instead of changing
+its outer shape.
+
+```text
+components/
+  component-name/
+    index.ts
+    component-name.tsx
+    types.ts
+    use-component-name.ts
+    component-name.test.tsx
+```
+
+```tsx
+// index.ts
+export * from "./component-name";
+// export { default } from "./component-name"; // only when a default export exists
+```
+
+A small component can still be a single implementation file internally:
 
 ```tsx
 import * as React from "react";
@@ -140,25 +170,6 @@ const ComponentName = {
 };
 
 export { ComponentName };
-```
-
-### Pattern C — Directory component
-
-Use when the implementation needs multiple internal files, but the public API should still stay small.
-
-```text
-components/
-  component-name/
-    ComponentName.tsx
-    types.ts
-    index.ts
-```
-
-```tsx
-// index.ts
-export { ComponentName, default } from "./ComponentName";
-export type { ComponentNameProps } from "./types";
-// DO NOT export internal types, type guards, or enums
 ```
 
 ### Pattern D — Standalone + `Parts`

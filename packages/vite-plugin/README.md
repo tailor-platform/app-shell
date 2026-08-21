@@ -146,7 +146,7 @@ Vite resolves node_modules packages first by default. To intercept `@tailor-plat
 ## AppShell.WithPages (Internal)
 
 ```typescript
-// packages/core/src/components/appshell.tsx
+// packages/core/src/components/appshell/appshell.tsx
 
 /**
  * @internal

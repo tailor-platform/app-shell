@@ -1,4 +1,4 @@
-import { SidebarTrigger, useSidebar } from "@/components/sidebar";
+import { SidebarTrigger, useSidebar } from "./primitives";
 import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 

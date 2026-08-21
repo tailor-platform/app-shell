@@ -1,0 +1,220 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { renderRHFForm } from "../../tests/rhf-test-utils";
+import { Checkbox } from "./checkbox";
+import { Field } from "../field";
+
+afterEach(() => {
+  cleanup();
+});
+
+describe("Checkbox", () => {
+  describe("snapshots", () => {
+    it("unchecked", () => {
+      const { container } = render(<Checkbox aria-label="Accept" />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("checked", () => {
+      const { container } = render(<Checkbox aria-label="Accept" defaultChecked />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("indeterminate", () => {
+      const { container } = render(<Checkbox aria-label="Select all" indeterminate />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("disabled", () => {
+      const { container } = render(<Checkbox aria-label="Accept" disabled />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
+    it("with label", () => {
+      const { container } = render(<Checkbox label="Subscribe to updates" />);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
+  it("renders a checkbox role", () => {
+    render(<Checkbox aria-label="Accept" />);
+    const checkbox = screen.getByRole("checkbox", { name: "Accept" });
+    expect(checkbox).toBeDefined();
+    expect(checkbox.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("renders the label text", () => {
+    render(<Checkbox label="Subscribe to updates" />);
+    expect(screen.getByText("Subscribe to updates")).toBeDefined();
+    // Label is associated so it resolves the checkbox's accessible name.
+    expect(screen.getByRole("checkbox", { name: "Subscribe to updates" })).toBeDefined();
+  });
+
+  it("toggles when uncontrolled", async () => {
+    const user = userEvent.setup();
+    render(<Checkbox aria-label="Accept" />);
+
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox.getAttribute("aria-checked")).toBe("false");
+
+    await user.click(checkbox);
+    expect(checkbox.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("calls onCheckedChange with a boolean when controlled", async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(<Checkbox aria-label="Accept" checked={false} onCheckedChange={onCheckedChange} />);
+
+    await user.click(screen.getByRole("checkbox"));
+
+    expect(onCheckedChange).toHaveBeenCalledTimes(1);
+    expect(onCheckedChange.mock.calls[0][0]).toBe(true);
+  });
+
+  it("toggles when the label text is clicked", async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(<Checkbox label="Accept" checked={false} onCheckedChange={onCheckedChange} />);
+
+    await user.click(screen.getByText("Accept"));
+
+    expect(onCheckedChange).toHaveBeenCalledTimes(1);
+    expect(onCheckedChange.mock.calls[0][0]).toBe(true);
+  });
+
+  it("does not toggle when disabled", async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(<Checkbox label="Accept" disabled onCheckedChange={onCheckedChange} />);
+
+    const checkbox = screen.getByRole("checkbox");
+    await user.click(checkbox);
+
+    expect(onCheckedChange).not.toHaveBeenCalled();
+    expect(checkbox.hasAttribute("data-disabled")).toBe(true);
+  });
+
+  it("dims the bare box itself when disabled", () => {
+    render(<Checkbox aria-label="Accept" disabled />);
+    expect(screen.getByRole("checkbox").className).toContain("data-disabled:opacity-50");
+  });
+
+  it("does not double-dim the box when disabled with a label (the wrapper owns the dim)", () => {
+    render(<Checkbox label="Accept" disabled />);
+    const box = screen.getByRole("checkbox");
+    const label = box.closest("label");
+    // Opacity lives on the enclosing label only, so it doesn't compound on the box.
+    expect(box.className).not.toContain("data-disabled:opacity-50");
+    expect(label?.className).toContain("has-data-disabled:opacity-50");
+  });
+
+  it("exposes the mixed state when indeterminate", () => {
+    render(<Checkbox aria-label="Select all" indeterminate />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox.getAttribute("aria-checked")).toBe("mixed");
+    expect(checkbox.hasAttribute("data-indeterminate")).toBe(true);
+  });
+
+  it("applies a custom className to the box when unlabelled", () => {
+    render(<Checkbox aria-label="Accept" className="astw:custom-box" />);
+    expect(screen.getByRole("checkbox").className).toContain("astw:custom-box");
+  });
+
+  it("styles the invalid state from aria-invalid (e.g. shadcn FormControl)", () => {
+    render(<Checkbox aria-label="Accept" aria-invalid />);
+    // shadcn's FormControl signals invalid via aria-invalid (no Base UI Field
+    // in play), so the box must key its destructive styling off it too.
+    expect(screen.getByRole("checkbox").className).toContain("aria-invalid:border-destructive");
+  });
+
+  describe("Field integration", () => {
+    it("inherits the invalid state from a surrounding Field.Root", () => {
+      render(
+        <Field.Root name="terms" error={{ message: "Required" }}>
+          <Checkbox label="Accept the terms" />
+        </Field.Root>,
+      );
+      // Base UI propagates the field's invalid state onto nested controls, so
+      // the box lights up destructive without a bespoke `error` prop.
+      expect(screen.getByRole("checkbox").hasAttribute("data-invalid")).toBe(true);
+    });
+
+    it("inherits the disabled state from a surrounding Field.Root", () => {
+      render(
+        <Field.Root name="terms" disabled>
+          <Checkbox label="Accept the terms" />
+        </Field.Root>,
+      );
+      expect(screen.getByRole("checkbox").hasAttribute("data-disabled")).toBe(true);
+    });
+  });
+
+  describe("RHF integration", () => {
+    it("submits boolean values and resets back to the default", async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+
+      renderRHFForm({
+        defaultValues: { acceptTerms: false },
+        name: "acceptTerms",
+        onSubmit,
+        render: ({ field, fieldState }) => (
+          <Field.Root name={field.name} {...fieldState}>
+            <Checkbox
+              label="Accept the terms"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+            />
+            <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+          </Field.Root>
+        ),
+      });
+
+      const checkbox = screen.getByRole("checkbox", { name: "Accept the terms" });
+      await user.click(checkbox);
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({ acceptTerms: true });
+      });
+
+      await user.click(screen.getByRole("button", { name: "Reset" }));
+      expect(checkbox.getAttribute("aria-checked")).toBe("false");
+    });
+
+    it("renders required errors after blur", async () => {
+      const user = userEvent.setup();
+
+      renderRHFForm({
+        defaultValues: { acceptTerms: false },
+        name: "acceptTerms",
+        mode: "onBlur",
+        rules: {
+          validate: (value) => value || "You must accept the terms.",
+        },
+        render: ({ field, fieldState }) => (
+          <Field.Root name={field.name} {...fieldState}>
+            <Checkbox
+              label="Accept the terms"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+            />
+            <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+          </Field.Root>
+        ),
+      });
+
+      await user.tab();
+      await user.tab();
+
+      expect(await screen.findByText("You must accept the terms.")).toBeDefined();
+    });
+  });
+});

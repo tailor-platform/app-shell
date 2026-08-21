@@ -13,7 +13,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarTrigger,
-} from "@/components/sidebar";
+} from "./primitives";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";

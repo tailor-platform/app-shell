@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import packageJson from "../../../package.json";
+import packageJson from "../../../../package.json";
 import { BuiltInCommandPalette } from "@/components/command-palette";
 import {
   AppShellConfigContext,

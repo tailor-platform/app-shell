@@ -1,6 +1,6 @@
 import { SidebarTrigger, useSidebar } from "./primitives";
 import { AppearanceSwitcher } from "@/components/appearance-switcher";
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
+import { DynamicBreadcrumb } from "@/components/internals/dynamic-breadcrumb";
 
 const HidableSidebarTrigger = () => {
   const { open, isIconMode, collapsible } = useSidebar();

@@ -20,7 +20,7 @@ import { SidebarGroup } from "./sidebar-group";
 import { SidebarSeparator } from "./sidebar-separator";
 import { defineModule, defineResource } from "@/resource";
 import { Home, Package } from "lucide-react";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 import { Link } from "react-router";
 
 afterEach(() => {

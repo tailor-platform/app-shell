@@ -1,6 +1,6 @@
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { useBreadcrumbOverrideOptional } from "@/contexts/breadcrumb-context";
-import { usePathSegments } from "@/components/dynamic-breadcrumb";
+import { usePathSegments } from "../dynamic-breadcrumb";
 import { DEFAULT_FAVICONS, type FaviconLink } from "@/lib/default-favicon";
 
 const SEPARATOR = " · ";

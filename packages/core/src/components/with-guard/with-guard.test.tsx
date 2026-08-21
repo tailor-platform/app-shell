@@ -7,7 +7,7 @@ import {
   type RootConfiguration,
 } from "@/contexts/appshell-context";
 import { pass, hidden, redirectTo, type Guard } from "@/resource";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 
 afterEach(() => {
   cleanup();

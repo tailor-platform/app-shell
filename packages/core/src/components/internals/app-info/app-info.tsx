@@ -1,4 +1,4 @@
-import packageJson from "../../../package.json";
+import packageJson from "../../../../package.json";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { useAppShellConfig, type AppInfoEntry } from "@/contexts/appshell-context";

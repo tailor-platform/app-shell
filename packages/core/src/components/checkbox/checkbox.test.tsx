@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { renderRHFForm } from "../../tests/rhf-test-utils";
+import { renderRHFForm } from "../../../tests/rhf-test-utils";
 import { Checkbox } from "./checkbox";
 import { Field } from "../field";
 

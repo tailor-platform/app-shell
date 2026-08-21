@@ -8,7 +8,7 @@ import { useIsTablet } from "@/hooks/use-tablet";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
-import { Separator } from "@/components/separator";
+import { Separator } from "@/components/internals/separator";
 import { Sheet } from "@/components/sheet";
 import { Tooltip } from "@/components/tooltip";
 

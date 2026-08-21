@@ -1,7 +1,7 @@
 import { parsePath } from "@tailor-platform/app-shell-vite-plugin/parser";
 import type { Module, Resource, Guard } from "@/resource";
 import { withGuardsLoader, titleFromPath } from "@/resource";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 import type { LocalizedString } from "@/lib/i18n";
 import type { PageEntry, PageComponent } from "./types";
 

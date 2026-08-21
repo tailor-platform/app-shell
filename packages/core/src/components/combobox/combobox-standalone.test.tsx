@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderRHFForm } from "../../tests/rhf-test-utils";
-import { Field } from "./field";
+import { renderRHFForm } from "../../../tests/rhf-test-utils";
+import { Field } from "../field";
 import { Combobox } from "./combobox-standalone";
 
 afterEach(() => {

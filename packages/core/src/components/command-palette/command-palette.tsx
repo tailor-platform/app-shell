@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
-import { useAppInfoPageRoute } from "@/components/app-info";
+import { useAppInfoPageRoute } from "@/components/internals/app-info";
 import { SearchIcon, LoaderCircleIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";

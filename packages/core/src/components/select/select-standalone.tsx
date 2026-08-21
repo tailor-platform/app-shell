@@ -12,7 +12,7 @@ import {
 } from "./select";
 import { defaultMapItem, isGroupedItems } from "../dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "../dropdown-items";
-import { AsyncErrorState, resolveAsyncContent } from "../async-error-state";
+import { AsyncErrorState, resolveAsyncContent } from "../internals/async-error-state";
 
 /**
  * Fetcher type for `Select.Async`.

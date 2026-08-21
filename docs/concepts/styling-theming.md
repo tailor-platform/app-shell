@@ -169,42 +169,42 @@ Overriding under a narrower scope — per-section or per-tenant — needs the sa
 
 ## Typography and Fonts
 
-AppShell bundles **Inter Variable** and applies it via the `body` rule in
-`@tailor-platform/app-shell/styles`. Because it is a variable font with a continuous
-100–900 weight axis, every weight the design system names — `font-normal`, `font-medium`,
-`font-semibold`, `font-bold` — resolves to a real weight rather than whatever faces happen
-to be installed.
-
-### Japanese text needs the opt-in font bundle
-
-Inter has no CJK glyphs, so Japanese characters fall through to the operating system's font.
-Those fonts do **not** ship a 500 weight — Yu Gothic UI on Windows has only
-Light/Semilight/Regular/Semibold/Bold — and CSS weight matching resolves a `font-weight: 500`
-request down to Regular. The practical effect is that `font-medium`, which AppShell uses for
-most labels, table cells and card titles, is **indistinguishable from body text in Japanese**.
-
-Import the Japanese font bundle to fix this:
+AppShell bundles **Inter Variable** for Latin and **Noto Sans JP Variable** for Japanese, and
+applies both via the `body` rule in `@tailor-platform/app-shell/styles`. No extra import:
 
 ```css
 @import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
-@import "@tailor-platform/app-shell/fonts/noto-sans-jp";
 ```
 
-This adds Noto Sans JP Variable — also a continuous 100–900 axis — so Japanese weights match
-Latin ones. It is metric-harmonised against Inter (`size-adjust: 94%` plus ascent/descent
-overrides) so mixed Japanese/Latin strings read at one optical size and a line containing
-Japanese is exactly as tall as one without.
+Both are variable fonts with a continuous 100–900 weight axis, so every weight the design
+system names — `font-normal`, `font-medium`, `font-semibold`, `font-bold` — resolves to a real
+weight in both scripts rather than to whatever faces happen to be installed.
 
-### Why it is opt-in
+### Why Japanese needs its own font
 
-The bundle is roughly **5 MB of woff2 subsets**, and a bundler emits every subset it can see
-into your build output regardless of which ones get used — it cannot know at build time which
-characters your data will contain. Apps that never render Japanese would pay that cost for
-nothing, so it ships behind the subpath import.
+Inter has no CJK glyphs, so without a bundled Japanese font, Japanese characters fall through
+to the operating system's. Those fonts do **not** ship a 500 weight — Yu Gothic UI on Windows
+has only Light/Semilight/Regular/Semibold/Bold — and CSS weight matching resolves a
+`font-weight: 500` request down to Regular. The effect is that `font-medium`, which AppShell
+uses for most labels, table cells and card titles, becomes **indistinguishable from body text
+in Japanese**.
 
-What your **users** download is much smaller. Each subset carries a `unicode-range`, so the
-browser fetches one only when it is about to paint a character in that range:
+Noto Sans JP is metric-harmonised against Inter (`size-adjust: 94%` plus ascent/descent
+overrides) so mixed Japanese/Latin strings read at one optical size, and a line containing
+Japanese is exactly as tall as one without. A metric-matched `local()` fallback covers the
+window before a subset arrives, so rows do not change height as fonts stream in.
+
+### What it costs
+
+The Japanese faces are roughly **5 MB of woff2 subsets**, and they land in your build output
+whether or not your app renders Japanese — a bundler emits every subset it can see, because it
+cannot know at build time which characters your data will contain. The stylesheet itself grows
+by about 160 KB uncompressed (46 KB gzipped).
+
+What your **users** download is much smaller, and proportional to what they actually read.
+Each subset carries a `unicode-range`, so the browser fetches one only when it is about to
+paint a character in that range — **an app that renders no Japanese downloads none of them**:
 
 | what the user has seen                   | downloaded  |
 | ---------------------------------------- | ----------- |
@@ -218,16 +218,20 @@ and it grows slowly as unusual characters appear in your data. Weight costs noth
 every weight lives in the same file, so using `font-medium` and `font-bold` downloads no more
 than `font-normal` alone.
 
+To drop the Japanese faces entirely, override the stack without naming them (see below).
+Nothing references them, so nothing is downloaded — though the files still ship in your build
+output.
+
 ### Using your own font
 
-Set `--astw-font-sans` on `:root` **after** importing AppShell styles to replace the whole
+Set `--app-shell-font-sans` on `:root` **after** importing AppShell styles to replace the whole
 stack:
 
 ```css
 @import "@tailor-platform/app-shell/styles";
 
 :root {
-  --astw-font-sans: "Your Brand Sans", ui-sans-serif, system-ui, sans-serif;
+  --app-shell-font-sans: "Your Brand Sans", ui-sans-serif, system-ui, sans-serif;
 }
 ```
 

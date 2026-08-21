@@ -30,7 +30,6 @@
     "./styles": "./dist/app-shell.css",
     "./theme.css": "./dist/theme.shims.css",
     "./themes/*": "./dist/themes/*.css",
-    "./fonts/noto-sans-jp": "./dist/fonts/noto-sans-jp.css",
     ".": {
       "types": "./dist/app-shell.d.ts",
       "default": "./dist/app-shell.js"

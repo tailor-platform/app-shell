@@ -1,13 +1,6 @@
 @import "tailwindcss";
 @import "@tailor-platform/app-shell/styles";
 @import "@tailor-platform/app-shell/themes/bloom";
-/*
- * Opt-in Japanese font bundle. System Japanese fonts have no 500 weight, so
- * `font-medium` is invisible in Japanese text without this. Importing it costs
- * ~5 MB of woff2 subsets in the build output, which is why it is not on by
- * default — the nextjs-app example deliberately omits it for comparison.
- */
-@import "@tailor-platform/app-shell/fonts/noto-sans-jp";
 
 html,
 body {

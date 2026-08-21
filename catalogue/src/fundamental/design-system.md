@@ -184,7 +184,7 @@ Hand-typing `padding: 13px` is a smell. Round to the nearest scale step; if noth
 
 ### Typography
 
-**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable) → `font-sans`, which the base layer already applies to `body`. Override the whole stack by setting `--astw-font-sans` on `:root`.
+**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable for Latin, Noto Sans JP Variable for Japanese) → `font-sans`, which the base layer already applies to `body`. Both are variable fonts, so every weight token is real in both scripts. Override the whole stack by setting `--app-shell-font-sans` on `:root`.
 
 Compose roles from stock Tailwind utilities. These pairings are what AppShell's own components use — match them so your screens sit consistently alongside the primitives:
 
@@ -206,16 +206,6 @@ Compose roles from stock Tailwind utilities. These pairings are what AppShell's 
 ```
 
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
-
-#### Japanese text
-
-The weight tokens only resolve correctly for Japanese if the app imports the Japanese font
-bundle — Inter carries no CJK glyphs and system Japanese fonts have no 500 weight. If the app
-renders Japanese, add to global CSS:
-
-```css
-@import "@tailor-platform/app-shell/fonts/noto-sans-jp";
-```
 
 ### Radius
 

@@ -53,37 +53,110 @@ const INTER_ASCENT = 97;
 const INTER_DESCENT = 24;
 const pct = (target) => `${Math.round((target / (SIZE_ADJUST / 100)) * 10) / 10}%`;
 
-/** Kana, CJK, and the fullwidth/halfwidth forms — keeps the fallback off Latin. */
-const JP_RANGE = [
-  "U+3000-303F",
-  "U+3040-309F",
-  "U+30A0-30FF",
-  "U+3400-4DBF",
-  "U+4E00-9FFF",
-  "U+F900-FAFF",
-  "U+FF00-FFEF",
-].join(", ");
+/*
+ * The codepoints a Japanese UI needs — and deliberately nothing else.
+ *
+ * Both the Noto faces and the local fallback are clamped to this set. Upstream's
+ * ranges also cover arrows, dingbats, geometric shapes, letterlike symbols and
+ * enclosed alphanumerics, which are shared with Latin text: leaving them in meant
+ * a Latin-only app pulled a Japanese subset the first time it rendered something
+ * like the DataTable's boolean "✓" (U+2713). Those blocks are excluded, so they
+ * resolve to Inter or the system font as they did before this font existed.
+ *
+ * Included on purpose: U+3200-33FF, which carries ㈱ ㍿ ㎡ — genuinely Japanese
+ * typography rather than shared symbols. Excluded on purpose: ℃ (U+2103) and
+ * ① (U+2460), which live in Latin-shared blocks; they render from the system font
+ * even inside Japanese text, which is the cost of keeping Latin-only apps clean.
+ */
+const JP_BLOCKS = [
+  [0x3000, 0x303f], // CJK symbols and punctuation
+  [0x3040, 0x309f], // hiragana
+  [0x30a0, 0x30ff], // katakana
+  [0x3190, 0x319f], // kanbun
+  [0x31f0, 0x31ff], // katakana phonetic extensions
+  [0x3200, 0x32ff], // enclosed CJK letters and months — ㈱
+  [0x3300, 0x33ff], // CJK compatibility — ㍿ ㎡
+  [0x3400, 0x4dbf], // CJK unified ideographs extension A
+  [0x4e00, 0x9fff], // CJK unified ideographs
+  [0xf900, 0xfaff], // CJK compatibility ideographs
+  [0xfe30, 0xfe4f], // CJK compatibility forms
+  [0xff00, 0xffef], // halfwidth and fullwidth forms
+  [0x20000, 0x2ffff], // extension B onward — rare and name kanji, 𠮷 𠮟
+];
+
+/** Parse a CSS `unicode-range` value into sorted [lo, hi] pairs. */
+function parseRange(value) {
+  const spans = [];
+  for (const tok of value.split(",")) {
+    const m = /^\s*U\+([0-9a-fA-F]+)(?:-([0-9a-fA-F]+))?\s*$/.exec(tok);
+    if (!m) continue;
+    const lo = parseInt(m[1], 16);
+    spans.push([lo, m[2] ? parseInt(m[2], 16) : lo]);
+  }
+  return spans.sort((a, b) => a[0] - b[0]);
+}
+
+/** Clamp spans to JP_BLOCKS, merging anything adjacent that survives. */
+function clampToJapanese(spans) {
+  const kept = [];
+  for (const [lo, hi] of spans) {
+    for (const [blo, bhi] of JP_BLOCKS) {
+      const s = Math.max(lo, blo);
+      const e = Math.min(hi, bhi);
+      if (s <= e) kept.push([s, e]);
+    }
+  }
+  kept.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const span of kept) {
+    const last = merged[merged.length - 1];
+    if (last && span[0] <= last[1] + 1) last[1] = Math.max(last[1], span[1]);
+    else merged.push([span[0], span[1]]);
+  }
+  return merged;
+}
+
+const hex = (n) => n.toString(16).toUpperCase().padStart(4, "0");
+const serializeRange = (spans) =>
+  spans.map(([lo, hi]) => (lo === hi ? `U+${hex(lo)}` : `U+${hex(lo)}-${hex(hi)}`)).join(", ");
 
 /*
- * `local()` matches PostScript / full names, never family names — `local("Hiragino
- * Sans")` silently fails where `local("HiraginoSans-W3")` resolves. Verified on
- * macOS; the Windows names follow the same convention but could not be checked on
- * this platform. An unresolvable `local()` is skipped harmlessly, so a wrong name
- * degrades to today's behaviour rather than breaking.
+ * Local fallback ladder, rendered during `font-display: swap` and for glyphs the
+ * subsets do not cover. `local()` matches PostScript names, not family names.
+ *
+ * The buckets exist because a single `100 500` bucket pointing at Regular made
+ * `font-weight: 500` render as Regular — the exact bug this package is fixing,
+ * and a regression on macOS, where the family sits ahead of `ui-sans-serif` and
+ * so pre-empts the system cascade that would otherwise have found Hiragino W5.
+ *
+ * Hiragino W0-W9 verified present and distinct on macOS 15 (ink for 漢 at 150px:
+ * W3 1.82M, W5 2.44M, W6 2.86M, W7 3.25M). The Windows names follow Microsoft's
+ * naming convention but are unverified from macOS; an unresolvable `local()` is
+ * skipped, so a wrong name degrades to the next entry rather than breaking.
+ * Yu Gothic (non-UI) is tried before Yu Gothic UI at 500 because only the former
+ * ships a true Medium.
  */
 const FALLBACK_FACES = [
   {
-    weight: "100 500",
+    weight: "100 449",
     src: ["HiraginoSans-W3", "YuGothicUI-Regular", "YuGothic-Regular", "Meiryo"],
   },
   {
-    weight: "501 900",
-    src: ["HiraginoSans-W6", "YuGothicUI-Bold", "YuGothic-Bold", "Meiryo-Bold"],
+    weight: "450 549",
+    src: ["HiraginoSans-W5", "YuGothic-Medium", "YuGothicUI-Semibold", "Meiryo"],
+  },
+  {
+    weight: "550 649",
+    src: ["HiraginoSans-W6", "YuGothicUI-Semibold", "YuGothic-Bold", "Meiryo-Bold"],
+  },
+  {
+    weight: "650 900",
+    src: ["HiraginoSans-W7", "YuGothicUI-Bold", "YuGothic-Bold", "Meiryo-Bold"],
   },
 ];
 
-const FALLBACK_FAMILY = "AppShell JP Fallback";
 const NOTO_FAMILY = "Noto Sans JP Variable";
+const FALLBACK_FAMILY = "AppShell JP Fallback";
 
 function parseUpstream() {
   const css = fs.readFileSync(upstreamCss, "utf8");
@@ -109,9 +182,27 @@ function syncWoff2(faces) {
   return copied;
 }
 
+/** Remove vendored woff2 that no emitted face references (e.g. after the clamp changed). */
+function pruneOrphanedWoff2(faces) {
+  if (!fs.existsSync(filesDir)) return 0;
+  const keep = new Set(faces.map(({ file }) => file));
+  let removed = 0;
+  for (const name of fs.readdirSync(filesDir)) {
+    if (!name.startsWith("noto-sans-jp-") || keep.has(name)) continue;
+    fs.rmSync(path.join(filesDir, name));
+    removed += 1;
+  }
+  return removed;
+}
+
 function renderCss(faces) {
-  const notoFaces = faces.map(
-    ({ file, range }) => `@font-face {
+  const notoFaces = faces
+    .map(({ file, range }) => ({ file, spans: clampToJapanese(parseRange(range)) }))
+    // A subset whose range is entirely non-Japanese (upstream's latin, cyrillic,
+    // greek and vietnamese slices) is unreachable behind Inter anyway — drop it.
+    .filter(({ spans }) => spans.length > 0)
+    .map(
+      ({ file, spans }) => `@font-face {
   font-family: "${NOTO_FAMILY}";
   font-style: normal;
   font-weight: 100 900;
@@ -121,20 +212,21 @@ function renderCss(faces) {
   descent-override: ${pct(INTER_DESCENT)};
   line-gap-override: 0%;
   src: url(./fonts/files/${file}) format("woff2-variations");
-  unicode-range: ${range};
+  unicode-range: ${serializeRange(spans)};
 }`,
-  );
+    );
 
   const fallbackFaces = FALLBACK_FACES.map(
     ({ weight, src }) => `@font-face {
   font-family: "${FALLBACK_FAMILY}";
   font-style: normal;
   font-weight: ${weight};
-  ascent-override: ${INTER_ASCENT}%;
-  descent-override: ${INTER_DESCENT}%;
+  size-adjust: ${SIZE_ADJUST}%;
+  ascent-override: ${pct(INTER_ASCENT)};
+  descent-override: ${pct(INTER_DESCENT)};
   line-gap-override: 0%;
   src: ${src.map((n) => `local("${n}")`).join(", ")};
-  unicode-range: ${JP_RANGE};
+  unicode-range: ${serializeRange(JP_BLOCKS)};
 }`,
   );
 
@@ -163,9 +255,10 @@ ${notoFaces.join("\n\n")}
 
 /*
  * Metric-matched local fallback. Rendered during \`font-display: swap\` and for
- * any glyph the subsets above do not cover, with Inter's line box forced onto
- * whichever system font resolves — so streaming a subset in mid-scroll does not
- * change row heights.
+ * any glyph the subsets above do not cover. Carries the same \`size-adjust\` as the
+ * Noto faces plus Inter's line box, so a subset arriving mid-scroll changes
+ * neither row heights nor advance widths. Weight is bucketed so that 500 lands on
+ * a real medium rather than collapsing to Regular.
  */
 ${fallbackFaces.join("\n\n")}
 `;
@@ -177,11 +270,19 @@ function syncLicense() {
   if (fs.existsSync(from)) fs.copyFileSync(from, to);
 }
 
-const faces = parseUpstream();
+const parsed = parseUpstream();
+/*
+ * Subsets left empty by the Japanese clamp are upstream's latin/cyrillic/greek/
+ * vietnamese slices and symbol-only ranges. Nothing can reach them behind Inter,
+ * so neither the face nor the file is shipped.
+ */
+const faces = parsed.filter(({ range }) => clampToJapanese(parseRange(range)).length > 0);
 const copied = syncWoff2(faces);
+pruneOrphanedWoff2(faces);
 fs.writeFileSync(path.join(assetsFonts, "noto-sans-jp.css"), renderCss(faces));
 syncLicense();
 console.log(
-  `sync-noto-fonts: ${faces.length} subsets (${copied} copied, ${faces.length - copied} current), ` +
-    `size-adjust ${SIZE_ADJUST}%, ascent ${pct(INTER_ASCENT)}, descent ${pct(INTER_DESCENT)}`,
+  `sync-noto-fonts: ${parsed.length} subsets upstream, ${faces.length} shipped after clamping to ` +
+    `Japanese (${copied} copied, ${faces.length - copied} current), size-adjust ${SIZE_ADJUST}%, ` +
+    `ascent ${pct(INTER_ASCENT)}, descent ${pct(INTER_DESCENT)}`,
 );

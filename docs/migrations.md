@@ -33,9 +33,9 @@ budgeted.
 text previously drew from the operating system's font — Hiragino Sans on macOS, Yu Gothic UI on
 Windows — and now draws from Noto Sans JP on every platform.
 
-This fixes `font-medium`: system Japanese fonts have no 500 weight, so `font-weight: 500`
-resolved down to Regular and the weight was invisible in Japanese. It is also a visual change to
-every existing Japanese screen.
+This fixes `font-medium` on Windows, where Yu Gothic UI has no 500 weight and `font-weight: 500`
+resolved down to Regular, making it invisible in Japanese. Current macOS was not affected (it
+ships Hiragino Sans W5). It is a visual change to every existing Japanese screen on both.
 
 **How to detect it.** Japanese runs measure about 6% narrower than before, because the bundled
 face is `size-adjust: 94%` to match Inter optically. Narrower text can _relieve_ truncation and
@@ -48,8 +48,9 @@ truncating, tables whose columns were sized by eye against Hiragino or Yu Gothic
 asserting on rendered width in a snapshot or visual-regression test.
 
 **What it costs.** About 5 MB of woff2 subsets land in your build output even if your app renders
-no Japanese, and the stylesheet grows by about 160 KB uncompressed (46 KB gzipped). Users
-download only the subsets their content touches — nothing at all with no Japanese on screen.
+no Japanese, and the stylesheet grows from about 98 KB to 200 KB uncompressed (15 KB to 45 KB
+gzipped). Users download only the subsets their content touches — nothing at all with no
+Japanese on screen, since the faces are restricted to Japanese codepoint blocks.
 
 **To keep the previous rendering,** or to use a brand font, set `--app-shell-font-sans` and do not
 name a Japanese family. Each face carries a `unicode-range`, so nothing is downloaded if nothing

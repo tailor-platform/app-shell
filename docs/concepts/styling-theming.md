@@ -184,11 +184,12 @@ weight in both scripts rather than to whatever faces happen to be installed.
 ### Why Japanese needs its own font
 
 Inter has no CJK glyphs, so without a bundled Japanese font, Japanese characters fall through
-to the operating system's. Those fonts do **not** ship a 500 weight — Yu Gothic UI on Windows
-has only Light/Semilight/Regular/Semibold/Bold — and CSS weight matching resolves a
-`font-weight: 500` request down to Regular. The effect is that `font-medium`, which AppShell
-uses for most labels, table cells and card titles, becomes **indistinguishable from body text
-in Japanese**.
+to the operating system's. On Windows that font is Yu Gothic UI, which ships only
+Light/Semilight/Regular/Semibold/Bold — no 500 — so CSS weight matching resolves a
+`font-weight: 500` request down to Regular, and `font-medium` becomes **indistinguishable from
+body text in Japanese**. Current macOS is not affected: it ships Hiragino Sans W0–W9 including
+W5, which `font-weight: 500` resolves to correctly. Bundling the font makes the weight scale
+hold on every platform rather than depending on what the OS happens to install.
 
 Noto Sans JP is metric-harmonised against Inter (`size-adjust: 94%` plus ascent/descent
 overrides) so mixed Japanese/Latin strings read at one optical size, and a line containing
@@ -199,12 +200,15 @@ window before a subset arrives, so rows do not change height as fonts stream in.
 
 The Japanese faces are roughly **5 MB of woff2 subsets**, and they land in your build output
 whether or not your app renders Japanese — a bundler emits every subset it can see, because it
-cannot know at build time which characters your data will contain. The stylesheet itself grows
-by about 160 KB uncompressed (46 KB gzipped).
+cannot know at build time which characters your data will contain. The stylesheet grows from
+about 98 KB to 200 KB uncompressed, or 15 KB to 45 KB gzipped.
 
 What your **users** download is much smaller, and proportional to what they actually read.
 Each subset carries a `unicode-range`, so the browser fetches one only when it is about to
-paint a character in that range — **an app that renders no Japanese downloads none of them**:
+paint a character in that range. The faces are restricted to Japanese blocks — kana, kanji,
+CJK punctuation, fullwidth forms and the compatibility blocks carrying ㈱ ㍿ ㎡ — so shared
+symbols such as `✓` or `→` resolve to Inter or the system font as before, and
+**an app that renders no Japanese downloads none of them**:
 
 | what the user has seen                   | downloaded  |
 | ---------------------------------------- | ----------- |

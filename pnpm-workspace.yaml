@@ -46,14 +46,9 @@ minimumReleaseAge: 4320
 # Note: this matches on package name (glob), so it exempts all versions, not a
 # specific one.
 minimumReleaseAgeExclude:
+  # First-party package exemption is intentional and permanent: this matches the
+  # package name, so every version is exempt from the maturity gate.
   - "@tailor-platform/auth-public-client"
-  # Renovate security update: postcss@8.5.18 || 8.5.23
-  - postcss@8.5.18 || 8.5.23
-  # Renovate security update: vite@7.3.5
-  - vite@7.3.5
-  # Security alert response: react-router@7.18.2 was needed urgently.
-  # See: https://github.com/tailor-platform/app-shell/pull/411
-  - react-router@7.18.2
 
 overrides:
   # ReDoS / inefficient-regex-complexity in expand()

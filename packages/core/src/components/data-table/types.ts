@@ -123,6 +123,17 @@ type DataTableEnumFilterOperator = Extract<OperatorForFilterType["enum"], "in">;
 type DataTableBooleanFilterOperator = OperatorForFilterType["boolean"];
 type DataTableUuidFilterOperator = Extract<OperatorForFilterType["uuid"], "eq">;
 
+type DataTableUiFilterOperatorByType = {
+  string: DataTableStringFilterOperator;
+  number: DataTableNumericTemporalFilterOperator;
+  datetime: DataTableNumericTemporalFilterOperator;
+  date: DataTableDateFilterOperator;
+  time: DataTableNumericTemporalFilterOperator;
+  enum: DataTableEnumFilterOperator;
+  boolean: DataTableBooleanFilterOperator;
+  uuid: DataTableUuidFilterOperator;
+};
+
 type DataTableFilterConfig =
   | (Extract<FilterConfig, { type: "string" }> & {
       /**
@@ -561,21 +572,14 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 // Metadata-based Column Inference Types (DataTable specific)
 // =============================================================================
 
-type MetadataFieldFilterOptions = {
-  operators?: readonly (
-    | DataTableStringFilterOperator
-    | DataTableNumericTemporalFilterOperator
-    | DataTableDateFilterOperator
-    | DataTableEnumFilterOperator
-    | DataTableBooleanFilterOperator
-    | DataTableUuidFilterOperator
-  )[];
+type MetadataFieldFilterOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
+  operators?: readonly DataTableUiFilterOperatorByType[TType][];
 };
 
 /**
  * Options for metadata-based single field inference.
  */
-export type MetadataFieldOptions = {
+export type MetadataFieldOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
   /** Override the column header text. Defaults to the field's `description` or `name` from metadata. */
   label?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
@@ -589,6 +593,11 @@ export type MetadataFieldOptions = {
    * Set to `false` to suppress the auto-generated filter config for this field,
    * or pass `operators` to narrow the DataTable filter conditions exposed for
    * this field.
+   *
+   * When used through `inferColumns()` with specific table metadata, operator
+   * literals are narrowed to the inferred field type. If the metadata has
+   * already widened to `TableMetadata`, mismatched operators are still filtered
+   * out at runtime.
    */
-  filter?: boolean | MetadataFieldFilterOptions;
+  filter?: boolean | MetadataFieldFilterOptions<TType>;
 };

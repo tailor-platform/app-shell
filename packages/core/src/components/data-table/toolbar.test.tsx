@@ -448,6 +448,27 @@ describe("AddFilterPanel", () => {
     });
   });
 
+  it("does not surface legacy numeric-only operators in the date condition list", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "createdAt", operator: "gt", value: "2025-01-01" }],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const panelQueries = within(panel as HTMLElement);
+    expect(panelQueries.queryByRole("button", { name: "greater than" })).toBeNull();
+    expect(panelQueries.getByRole("button", { name: "exact date" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "after" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "before" })).toBeDefined();
+  });
+
   it("disables the commit button when the between range is reversed (min > max)", async () => {
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });

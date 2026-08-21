@@ -150,6 +150,7 @@ function isUiOperatorAllowedForType(type: FilterConfig["type"], operator: Filter
     case "string":
       return (STRING_OPERATORS as readonly string[]).includes(operator);
     case "date":
+      return (DATE_OPERATORS as readonly string[]).includes(operator);
     case "number":
     case "datetime":
     case "time":

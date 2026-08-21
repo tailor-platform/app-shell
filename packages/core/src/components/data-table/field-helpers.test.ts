@@ -297,6 +297,21 @@ describe("inferColumns() with metadata", () => {
     });
   });
 
+  it("narrows inferred filter operator literals by field type", () => {
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
+
+    expect(infer("dueDate", { filter: { operators: ["gte", "between"] } }).filter).toEqual({
+      field: "dueDate",
+      type: "date",
+      operators: ["gte", "between"],
+    });
+
+    // @ts-expect-error string fields do not accept numeric/date-only operators
+    infer("title", { filter: { operators: ["gt"] } });
+    // @ts-expect-error date fields do not accept numeric-only operators omitted from the date UI
+    infer("dueDate", { filter: { operators: ["gt"] } });
+  });
+
   it("allows narrowing inferred filters with any DataTable-supported UI operators", () => {
     const infer = inferColumns<TaskRow>(testMetadata.task);
     expect(infer("title", { filter: { operators: ["contains"] } }).filter).toEqual({

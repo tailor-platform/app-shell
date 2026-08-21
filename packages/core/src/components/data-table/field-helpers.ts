@@ -1,4 +1,10 @@
-import type { SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
+import type {
+  FieldTypeToFilterConfigType,
+  FilterConfig,
+  SortConfig,
+  TableFieldName,
+  TableMetadata,
+} from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
 import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
 
@@ -20,6 +26,27 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
 // inferColumns() — metadata-driven column defaults
 // =============================================================================
 
+type InferredFieldFilterType<
+  TTable extends TableMetadata,
+  TFieldName extends TableFieldName<TTable>,
+> =
+  Extract<TTable["fields"][number], { readonly name: TFieldName }> extends {
+    readonly type: infer TType;
+  }
+    ? TType extends keyof FieldTypeToFilterConfigType
+      ? FieldTypeToFilterConfigType[TType]
+      : never
+    : never;
+
+type MetadataFieldOptionsForField<
+  TTable extends TableMetadata,
+  TFieldName extends TableFieldName<TTable>,
+> = MetadataFieldOptions<
+  [InferredFieldFilterType<TTable, TFieldName>] extends [never]
+    ? FilterConfig["type"]
+    : InferredFieldFilterType<TTable, TFieldName>
+>;
+
 /**
  * Return a function that produces `Column` from metadata field names.
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
@@ -32,7 +59,7 @@ export function inferColumns<
 
   return <TFieldName extends TableFieldName<TTable>>(
     dataKey: TFieldName,
-    columnOptions?: MetadataFieldOptions,
+    columnOptions?: MetadataFieldOptionsForField<TTable, NoInfer<TFieldName>>,
   ): InferredColumn<TRow> => {
     const fieldName = dataKey as string;
     const fieldMeta = fields.find((f) => f.name === fieldName);
@@ -100,7 +127,7 @@ export type ColumnInferFn<
   TTable extends TableMetadata = TableMetadata,
 > = <TFieldName extends TableFieldName<TTable>>(
   dataKey: TFieldName,
-  options?: MetadataFieldOptions,
+  options?: MetadataFieldOptionsForField<TTable, NoInfer<TFieldName>>,
 ) => InferredColumn<TRow>;
 
 /**

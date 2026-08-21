@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@tailor-platform/app-shell": "workspace:*",
-    "gray-matter": "4.0.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/react": "catalog:",

@@ -53,6 +53,7 @@ Review whether the shipped contract stays stable and understandable for consumer
 - consumers should not need repo-only imports or example-only setup for the component to work as documented
 - JS entrypoints should not pick up CSS side effects unless that contract is explicit
 - docs, examples, exports, and implementation should tell the same import story
+- `components/internals/*` is for internal-only shared UI building blocks; do not re-export those paths from package root or document them as consumer imports
 
 ---
 
@@ -64,9 +65,17 @@ Be skeptical when a heavier pattern adds public surface without reducing real co
 
 ### Standard filesystem shape
 
-Every component or helper family under `components/` gets its own directory.
+Every public component or helper family under `components/` gets its own directory.
 Implementation size does **not** decide whether something is a file or a directory.
 The stable entrypoint is always `components/<name>/index.ts`.
+
+For internal-only shared UI building blocks that are reused across multiple
+component families, use `components/internals/<name>/index.ts` instead.
+Do not surface those paths from `packages/*/src/index.ts`.
+
+If a piece has a narrower owner than `components/` — for example routing-owned
+UI like document head helpers, or sidebar-owned UI like a dynamic breadcrumb —
+keep it with that owner instead of putting it under `components/internals/`.
 
 ```text
 components/

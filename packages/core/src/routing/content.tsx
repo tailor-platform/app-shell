@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router";
 import { useAppShell } from "@/contexts/appshell-context";
-import { Button } from "../../button";
-import { Toaster } from "../sonner";
+import { Button } from "@/components/button";
+import { Toaster } from "@/components/internals/sonner";
 import { useT } from "@/i18n-labels";
 import { useTitleResolver } from "@/hooks/i18n";
 

@@ -7,7 +7,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "../breadcrumb";
+} from "../internals/breadcrumb";
 import { processPathSegments } from "@/routing/path";
 import { useBreadcrumbOverride } from "@/contexts/breadcrumb-context";
 import { useT } from "@/i18n-labels";

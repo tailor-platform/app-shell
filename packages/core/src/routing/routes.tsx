@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { RouteObject, Navigate } from "react-router";
 import { AppInfoPage, APP_INFO_SLUG } from "@/components/internals/app-info";
-import { EmptyOutlet, SettingsWrapper } from "@/components/internals/content";
+import { EmptyOutlet, SettingsWrapper } from "./content";
 import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 import {
   Modules,

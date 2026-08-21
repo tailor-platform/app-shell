@@ -13,7 +13,6 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1.13.0        | [Japanese text renders in Noto Sans JP](#1130-japanese-text-renders-in-noto-sans-jp)                                         |
 | 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
 | 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
 | 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                  |
@@ -23,49 +22,6 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
-
-## 1.13.0: Japanese text renders in Noto Sans JP
-
-**Applies to:** apps rendering Japanese text, and any app whose build size or stylesheet size is
-budgeted.
-
-`@tailor-platform/app-shell/styles` now bundles Noto Sans JP Variable alongside Inter. Japanese
-text previously drew from the operating system's font — Hiragino Sans on macOS, Yu Gothic UI on
-Windows — and now draws from Noto Sans JP on every platform.
-
-This fixes `font-medium` on Windows, where Yu Gothic UI has no 500 weight and `font-weight: 500`
-resolved down to Regular, making it invisible in Japanese. Current macOS was not affected (it
-ships Hiragino Sans W5). It is a visual change to every existing Japanese screen on both.
-
-**How to detect it.** Japanese runs measure about 6% narrower than before, because the bundled
-face is `size-adjust: 94%` to match Inter optically. Narrower text can _relieve_ truncation and
-wrapping but cannot cause it, so the risk is under-filled boxes and changed ellipsis positions
-rather than overflow. Latin is unaffected — it still resolves to Inter. Line box heights are
-unchanged: the face carries ascent/descent overrides matching Inter's.
-
-Check any layout pinned to the old Japanese metrics: fixed-width labels that relied on
-truncating, tables whose columns were sized by eye against Hiragino or Yu Gothic, and anything
-asserting on rendered width in a snapshot or visual-regression test.
-
-**What it costs.** About 5 MB of woff2 subsets land in your build output even if your app renders
-no Japanese, and the stylesheet grows from about 98 KB to 200 KB uncompressed (15 KB to 45 KB
-gzipped). Users download only the subsets their content touches — nothing at all with no
-Japanese on screen, since the faces are restricted to Japanese codepoint blocks.
-
-**To keep the previous rendering,** or to use a brand font, set `--app-shell-font-sans` and do not
-name a Japanese family. Each face carries a `unicode-range`, so nothing is downloaded if nothing
-references it (the files still ship in the build output):
-
-```css
-@import "@tailor-platform/app-shell/styles";
-
-:root {
-  --app-shell-font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
-}
-```
-
-Note the weight scale assumes real 400/500/600/700 faces exist. Opting out restores the original
-bug: `font-medium` will again be indistinguishable from body text in Japanese on Windows.
 
 ## 1.12.0: `DateField` / `DatePicker` field chrome moved to `Field.Root`
 

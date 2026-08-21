@@ -124,7 +124,7 @@ function Component({ className, variant, size, ...props }: ComponentProps) {
 export { Component, componentVariants, type ComponentProps };
 ```
 
-### Pattern B — Compound namespace object
+### Compound namespace object
 
 Use when the consumer must compose meaningful sub-components directly.
 
@@ -172,7 +172,7 @@ const ComponentName = {
 export { ComponentName };
 ```
 
-### Pattern D — Standalone + `Parts`
+### Standalone + `Parts`
 
 Use when there is a dominant pre-assembled use case, but advanced consumers still need composition escape hatches.
 

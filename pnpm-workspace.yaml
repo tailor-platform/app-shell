@@ -55,6 +55,18 @@ minimumReleaseAgeExclude:
   # See: https://github.com/tailor-platform/app-shell/pull/411
   - react-router@7.18.2
 
+overrides:
+  # ReDoS / inefficient-regex-complexity in expand()
+  # (CVE-2025-5889 / GHSA-v6h2-p8h4-qcjw).
+  #
+  # The vulnerable copy arrived transitively through minimatch in several tool
+  # chains (for example via api-extractor, ts-morph, and
+  # @typescript-eslint/typescript-estree). Those parents semver-allow a patched
+  # 5.x, but an older lockfile resolution still held brace-expansion@5.0.5.
+  # Keep an explicit workspace override so lockfile refreshes continue to force
+  # 5.0.9 until the upstream graph converges on newer minimatch releases.
+  brace-expansion: 5.0.9
+
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.
 allowBuilds:

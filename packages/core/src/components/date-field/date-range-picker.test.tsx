@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CalendarDate, parseDate, isSameDay } from "@internationalized/date";
+import { renderRHFForm } from "../../../tests/rhf-test-utils";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Field } from "../field";
 import { Form } from "../form";
@@ -259,6 +260,85 @@ describe("DateRangePicker labeling", () => {
 });
 
 // ─── Form validation ─────────────────────────────────────────────────────────
+
+describe("RHF integration", () => {
+  it("submits DateRangePicker values and resets both ends back to empty", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { period: null as { start: CalendarDate; end: CalendarDate } | null },
+      name: "period",
+      onSubmit,
+      render: ({ field, fieldState }) => (
+        <>
+          <DateRangePicker
+            aria-label="Billing period"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            ref={field.ref}
+            isInvalid={fieldState.invalid}
+          />
+          {fieldState.error && <p>{fieldState.error.message}</p>}
+        </>
+      ),
+    });
+
+    await typeDate(user, "start date", "2025-06-10");
+    await typeDate(user, "end date", "2025-06-15");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit.mock.calls[0][0].period?.start.toString()).toBe("2025-06-10");
+      expect(onSubmit.mock.calls[0][0].period?.end.toString()).toBe("2025-06-15");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(seg("start date", "day").getAttribute("aria-valuetext")).toBe("Empty");
+    expect(seg("end date", "day").getAttribute("aria-valuetext")).toBe("Empty");
+  });
+
+  it("surfaces required errors and submits once a full range is chosen", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { period: null as { start: CalendarDate; end: CalendarDate } | null },
+      name: "period",
+      rules: { required: "Billing period is required" },
+      onSubmit,
+      render: ({ field, fieldState }) => (
+        <>
+          <DateRangePicker
+            aria-label="Billing period"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            ref={field.ref}
+            isInvalid={fieldState.invalid}
+          />
+          {fieldState.error && <p>{fieldState.error.message}</p>}
+        </>
+      ),
+    });
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Billing period is required")).toBeDefined();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await typeDate(user, "start date", "2025-06-10");
+    await typeDate(user, "end date", "2025-06-15");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit.mock.calls[0][0].period?.start.toString()).toBe("2025-06-10");
+      expect(onSubmit.mock.calls[0][0].period?.end.toString()).toBe("2025-06-15");
+    });
+  });
+});
 
 describe("DateRangePicker form validation", () => {
   it("submits the combined range value through Form", async () => {

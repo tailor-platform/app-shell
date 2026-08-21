@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderRHFForm } from "../../tests/rhf-test-utils";
 import { Field } from "./field";
 
 afterEach(() => {
@@ -119,6 +121,36 @@ describe("Field", () => {
         </Field.Root>,
       );
       expect(container.querySelector("[data-invalid]")).not.toBeNull();
+    });
+
+    it("works with Controller field and fieldState", async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+
+      renderRHFForm({
+        defaultValues: { name: "" },
+        name: "name",
+        rules: { required: "Name is required" },
+        onSubmit,
+        render: ({ field, fieldState }) => (
+          <Field.Root name={field.name} {...fieldState}>
+            <Field.Label>Name</Field.Label>
+            <Field.Control {...field} />
+            <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+          </Field.Root>
+        ),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+      expect(await screen.findByText("Name is required")).toBeDefined();
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      await user.type(screen.getByRole("textbox", { name: "Name" }), "Ada");
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({ name: "Ada" });
+      });
     });
   });
 

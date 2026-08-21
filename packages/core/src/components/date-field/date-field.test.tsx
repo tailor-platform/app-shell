@@ -11,6 +11,7 @@ import {
   endOfWeek,
   isSameDay,
 } from "@internationalized/date";
+import { renderRHFForm } from "../../../tests/rhf-test-utils";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Field } from "../field";
 import { Form } from "../form";
@@ -1205,5 +1206,80 @@ describe("DatePicker keyboard", () => {
     });
     expect(screen.getByRole("group").hasAttribute("data-invalid")).toBe(true);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("RHF integration", () => {
+  it("submits DateField values and resets back to empty", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { invoiceDate: null as CalendarDate | null },
+      name: "invoiceDate",
+      onSubmit,
+      render: ({ field }) => (
+        <DateField
+          aria-label="Invoice date"
+          value={field.value}
+          onChange={field.onChange}
+          onBlur={field.onBlur}
+          ref={field.ref}
+        />
+      ),
+    });
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("06152025");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit.mock.calls[0][0].invoiceDate?.toString()).toBe("2025-06-15");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("spinbutton", { name: "day" }).getAttribute("aria-valuetext")).toBe(
+      "Empty",
+    );
+  });
+
+  it("surfaces required errors for DatePicker and submits once a date is chosen", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { deliveryDate: null as CalendarDate | null },
+      name: "deliveryDate",
+      rules: { required: "Delivery date is required" },
+      onSubmit,
+      render: ({ field, fieldState }) => (
+        <>
+          <DatePicker
+            aria-label="Delivery date"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            ref={field.ref}
+            isInvalid={fieldState.invalid}
+          />
+          {fieldState.error && <p>{fieldState.error.message}</p>}
+        </>
+      ),
+    });
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Delivery date is required")).toBeDefined();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Open calendar" }));
+    await waitFor(() => expect(screen.getByRole("grid")).toBeDefined());
+    await user.click(getEnabledCalendarCells()[0]);
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit.mock.calls[0][0].deliveryDate).not.toBeNull();
+    });
   });
 });

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderRHFForm } from "../../tests/rhf-test-utils";
+import { Field } from "./field";
 import { Select } from "./select-standalone";
 
 afterEach(() => {
@@ -275,6 +277,70 @@ describe("Select (standalone, grouped)", () => {
       expect(screen.getByText("Vegetables")).toBeDefined();
       expect(screen.getByText("Carrot")).toBeDefined();
     });
+  });
+});
+
+describe("Select (standalone, RHF integration)", () => {
+  it("submits the selected item and resets to the placeholder", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { fruit: null as string | null },
+      name: "fruit",
+      onSubmit,
+      render: ({ field, fieldState }) => (
+        <Field.Root name={field.name} {...fieldState}>
+          <Field.Label>Fruit</Field.Label>
+          <Select
+            items={["Apple", "Banana", "Cherry"]}
+            value={field.value}
+            onValueChange={field.onChange}
+            aria-label="Fruit"
+            placeholder="Pick one"
+          />
+          <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+        </Field.Root>
+      ),
+    });
+
+    await user.click(screen.getByText("Pick one"));
+    await waitFor(() => expect(screen.getByText("Banana")).toBeDefined());
+    await user.click(screen.getByText("Banana"));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({ fruit: "Banana" });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByText("Pick one")).toBeDefined();
+  });
+
+  it("surfaces required errors on submit", async () => {
+    const user = userEvent.setup();
+
+    renderRHFForm({
+      defaultValues: { fruit: null as string | null },
+      name: "fruit",
+      rules: { required: "Fruit is required" },
+      render: ({ field, fieldState }) => (
+        <Field.Root name={field.name} {...fieldState}>
+          <Field.Label>Fruit</Field.Label>
+          <Select
+            items={["Apple", "Banana", "Cherry"]}
+            value={field.value}
+            onValueChange={field.onChange}
+            aria-label="Fruit"
+            placeholder="Pick one"
+          />
+          <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+        </Field.Root>
+      ),
+    });
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Fruit is required")).toBeDefined();
   });
 });
 

@@ -13,6 +13,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.13.0        | [`react-router` is now a peer dependency](#1130-react-router-is-now-a-peer-dependency)                                       |
 | 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
 | 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
 | 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                  |
@@ -22,6 +23,28 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.13.0: `react-router` is now a peer dependency
+
+**Applies to:** every app upgrading to 1.13.0. This ships as a minor, so an app with `"@tailor-platform/app-shell": "^1.12.0"` picks it up on a routine dependency update.
+
+`react-router` moves from AppShell's `dependencies` to its `peerDependencies`, at `^8.3.0`. Your app now supplies it.
+
+```jsonc
+{
+  "dependencies": {
+    "react-router": "^8.3.0",
+  },
+}
+```
+
+**Why.** `react-router` carries React context, and context identity is per module instance, so AppShell and your app must share one copy. While it was a regular dependency that was never guaranteed: if your resolved `react-router` differed from AppShell's, both were installed, the two routers were disjoint, and your own `useNavigate` / `useLocation` / `<Link>` threw `may be used only in the context of a <Router> component` — while AppShell's own sidebar, breadcrumbs, and navigation kept working, so the app looked half-broken rather than misconfigured. TypeScript could not catch it.
+
+**If you already declare `react-router@^8.3.0`,** nothing changes.
+
+**If you do not declare it,** npm and pnpm will install a satisfying version for AppShell automatically and AppShell will work — but under pnpm it is not linked at your project's top level, so your own `import { useNavigate } from "react-router"` fails at build with `Failed to resolve import "react-router"`. Declare it to fix that. Worth grepping for direct `react-router` imports before upgrading.
+
+**If you are pinned to react-router 7,** you need the 7 → 8 upgrade in the same change. npm fails the install with `ERESOLVE`; pnpm warns `unmet peer react-router`. Note your app's router usage is already broken on 1.11.0–1.12.0 in this configuration, because AppShell resolved react-router 8 alongside your 7.x — the install-time message is how you find out. Do not reach for `--legacy-peer-deps`: two copies is the condition this change exists to prevent.
 
 ## 1.12.0: `DateField` / `DatePicker` field chrome moved to `Field.Root`
 

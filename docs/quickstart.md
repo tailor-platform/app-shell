@@ -15,15 +15,18 @@ Get your first AppShell application running in minutes.
 
 ## Step 1: Install AppShell
 
+`react-router` is a peer dependency — install it alongside AppShell so your app and AppShell
+share one router instance.
+
 ```bash
 # npm
-npm install @tailor-platform/app-shell
+npm install @tailor-platform/app-shell react-router
 
 # yarn
-yarn add @tailor-platform/app-shell
+yarn add @tailor-platform/app-shell react-router
 
 # pnpm
-pnpm add @tailor-platform/app-shell
+pnpm add @tailor-platform/app-shell react-router
 ```
 
 ## Step 2: Set Up File-Based Routing (Vite)

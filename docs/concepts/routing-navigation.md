@@ -7,7 +7,21 @@ description: Learn how to navigate between pages using React Router hooks and co
 
 Because AppShell manages routing internally, it owns the application's `RouterProvider` instance.
 
-To use client-side navigation from AppShell pages, use the exports from `@tailor-platform/app-shell`, such as the `Link` component or `useParams` / `useNavigate` hooks, instead of importing those primitives from your app's `react-router` dependency. This keeps every hook and component on the same router context; mixing AppShell with a separate `react-router` import can fail at runtime, especially across mismatched major versions.
+`react-router` is a peer dependency, so your app supplies it and there is exactly one copy in the
+bundle. That single instance is what makes the two sides interoperable: importing `useNavigate`
+from `@tailor-platform/app-shell` and importing it from `react-router` in your own code reach the
+same router context.
+
+Prefer the re-exports from `@tailor-platform/app-shell` for the common primitives — it keeps the
+import surface small and makes the AppShell dependency explicit at the call site. Reach for
+`react-router` directly when you need something AppShell does not re-export, such as `useBlocker`,
+`useMatch`, or `MemoryRouter` in tests. Both work.
+
+What must not happen is **two** copies of `react-router` in one bundle, which is what the peer
+dependency prevents: two copies means two disjoint router contexts, and your own `useNavigate` /
+`useLocation` / `<Link>` will throw `may be used only in the context of a <Router> component` while
+AppShell's own navigation keeps working. If you see that error, check for a duplicate — under pnpm,
+`pnpm why react-router`.
 
 ## Exported React Router Hooks
 

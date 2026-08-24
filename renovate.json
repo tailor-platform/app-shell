@@ -90,6 +90,12 @@
     },
 
     {
+      "description": "Vendored font subsets are committed, as Inter's are, and woff2 cannot delta-compress — every bump adds ~5 MB to git history permanently. A Noto patch release retouches glyph outlines nobody asked for, so bump it deliberately via `pnpm --filter @tailor-platform/app-shell vendor:fonts`, not weekly.",
+      "matchPackageNames": ["@fontsource-variable/**"],
+      "enabled": false
+    },
+
+    {
       "description": "Held below a known-breaking major — see the vite 8 / plugin-react 6 incompatibility.",
       "matchPackageNames": ["@vitejs/plugin-react"],
       "allowedVersions": "< 6.0.0"

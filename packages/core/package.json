@@ -43,8 +43,9 @@
     "access": "public"
   },
   "scripts": {
-    "dev": "node scripts/sync-noto-fonts.mjs && vite build --watch --mode development",
-    "build": "node scripts/sync-noto-fonts.mjs && vite build",
+    "dev": "vite build --watch --mode development",
+    "build": "vite build",
+    "vendor:fonts": "node scripts/sync-noto-fonts.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
     "type-check": "tsc --incremental"

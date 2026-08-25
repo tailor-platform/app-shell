@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderRHFForm } from "../../tests/rhf-test-utils";
+import { Field } from "./field";
 import { Autocomplete } from "./autocomplete-standalone";
 
 afterEach(() => {
@@ -143,6 +145,73 @@ describe("Autocomplete (standalone)", () => {
       <Autocomplete items={suggestions} className="my-class" placeholder="Type..." />,
     );
     expect((container.firstChild as HTMLElement).classList.contains("my-class")).toBe(true);
+  });
+});
+
+describe("Autocomplete (standalone, RHF integration)", () => {
+  it("submits the typed value and resets back to the default", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+
+    renderRHFForm({
+      defaultValues: { fruit: "Apple" },
+      name: "fruit",
+      onSubmit,
+      render: ({ field, fieldState }) => (
+        <Field.Root name={field.name} {...fieldState}>
+          <Field.Label>Fruit</Field.Label>
+          <Autocomplete
+            items={suggestions}
+            value={field.value}
+            onValueChange={field.onChange}
+            aria-label="Fruit"
+            placeholder="Type..."
+          />
+          <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+        </Field.Root>
+      ),
+    });
+
+    const input = screen.getByRole("combobox", { name: "Fruit" }) as HTMLInputElement;
+    expect(input.value).toBe("Apple");
+
+    await user.clear(input);
+    await user.type(input, "Cherry");
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({ fruit: "Cherry" });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(input.value).toBe("Apple");
+  });
+
+  it("surfaces required errors on submit", async () => {
+    const user = userEvent.setup();
+
+    renderRHFForm({
+      defaultValues: { fruit: "" },
+      name: "fruit",
+      rules: { required: "Fruit is required" },
+      render: ({ field, fieldState }) => (
+        <Field.Root name={field.name} {...fieldState}>
+          <Field.Label>Fruit</Field.Label>
+          <Autocomplete
+            items={suggestions}
+            value={field.value}
+            onValueChange={field.onChange}
+            aria-label="Fruit"
+            placeholder="Type..."
+          />
+          <Field.Error match={fieldState.invalid}>{fieldState.error?.message}</Field.Error>
+        </Field.Root>
+      ),
+    });
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText("Fruit is required")).toBeDefined();
   });
 });
 

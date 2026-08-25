@@ -11,7 +11,7 @@
 import { readdir, readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
+import { parseFrontmatter } from "./frontmatter.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const catalogueRoot = join(__dirname, "..");
@@ -159,7 +159,7 @@ async function processEntryCategory(category, categoryDir, outputDir) {
 
   for (const filePath of entryFiles) {
     const content = await readFile(filePath, "utf-8");
-    const { data: meta, content: body, matter: rawFrontmatter } = matter(content);
+    const { data: meta, content: body, matter: rawFrontmatter } = parseFrontmatter(content);
     if (!meta.slug) {
       console.warn(`Warning: No slug in frontmatter of ${filePath}`);
       continue;
@@ -192,7 +192,7 @@ async function processEntryCategory(category, categoryDir, outputDir) {
  */
 async function processMigrations() {
   const raw = await readFile(migrationsSource, "utf-8");
-  const { content } = matter(raw);
+  const { content } = parseFrontmatter(raw);
 
   const body = content
     .trim()

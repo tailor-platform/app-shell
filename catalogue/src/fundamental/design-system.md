@@ -184,7 +184,7 @@ Hand-typing `padding: 13px` is a smell. Round to the nearest scale step; if noth
 
 ### Typography
 
-**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable) → `font-sans`, which the base layer already applies to `body`.
+**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable for Latin, Noto Sans JP Variable for Japanese) → `font-sans`, which the base layer already applies to `body`. Both are variable fonts, so every weight token is real in both scripts. Override the whole stack by setting `--app-shell-font-sans` on `:root`.
 
 Compose roles from stock Tailwind utilities. These pairings are what AppShell's own components use — match them so your screens sit consistently alongside the primitives:
 

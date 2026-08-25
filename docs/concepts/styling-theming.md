@@ -167,6 +167,82 @@ Two rules:
 
 Overriding under a narrower scope — per-section or per-tenant — needs the same care: pair `.tenant-a` with `:root.dark .tenant-a` so the dark rule still outranks a branded palette's `:root.dark`. Note also that `:root.dark` matches only `<html class="dark">`; if you apply `.dark` to a subtree to darken one region, scope your overrides to that subtree rather than to `:root.dark`.
 
+## Typography and Fonts
+
+AppShell bundles **Inter Variable** for Latin and **Noto Sans JP Variable** for Japanese, and
+applies both via the `body` rule in `@tailor-platform/app-shell/styles`. No extra import:
+
+```css
+@import "tailwindcss";
+@import "@tailor-platform/app-shell/styles";
+```
+
+Both are variable fonts with a continuous 100–900 weight axis, so every weight the design
+system names — `font-normal`, `font-medium`, `font-semibold`, `font-bold` — resolves to a real
+weight in both scripts rather than to whatever faces happen to be installed.
+
+### Why Japanese needs its own font
+
+Inter has no CJK glyphs, so without a bundled Japanese font, Japanese characters fall through
+to the operating system's. On Windows that font is Yu Gothic UI, which ships only
+Light/Semilight/Regular/Semibold/Bold — no 500 — so CSS weight matching resolves a
+`font-weight: 500` request down to Regular, and `font-medium` becomes **indistinguishable from
+body text in Japanese**. Current macOS is not affected: it ships Hiragino Sans W0–W9 including
+W5, which `font-weight: 500` resolves to correctly. Bundling the font makes the weight scale
+hold on every platform rather than depending on what the OS happens to install.
+
+Noto Sans JP is metric-harmonised against Inter (`size-adjust: 94%` plus ascent/descent
+overrides) so mixed Japanese/Latin strings read at one optical size, and a line containing
+Japanese is exactly as tall as one without. A metric-matched `local()` fallback covers the
+window before a subset arrives, so rows do not change height as fonts stream in.
+
+### What it costs
+
+The Japanese faces are roughly **5 MB of woff2 subsets**, and they land in your build output
+whether or not your app renders Japanese — a bundler emits every subset it can see, because it
+cannot know at build time which characters your data will contain. The stylesheet grows from
+about 98 KB to 200 KB uncompressed, or 15 KB to 45 KB gzipped.
+
+What your **users** download is much smaller, and proportional to what they actually read.
+Each subset carries a `unicode-range`, so the browser fetches one only when it is about to
+paint a character in that range. The faces are restricted to Japanese blocks — kana, kanji,
+CJK punctuation, fullwidth forms and the compatibility blocks carrying ㈱ ㍿ ㎡ — so shared
+symbols such as `✓` or `→` resolve to Inter or the system font as before, and
+**an app that renders no Japanese downloads none of them**:
+
+| what the user has seen                   | downloaded  |
+| ---------------------------------------- | ----------- |
+| all hiragana + katakana                  | ~237 KB     |
+| + ~230 common ERP kanji                  | ~458 KB     |
+| + ~30 name kanji including variant forms | ~467 KB     |
+| **typical first Japanese screen**        | **~910 KB** |
+
+Files are content-hashed and cached, so the cost is front-loaded rather than per-navigation,
+and it grows slowly as unusual characters appear in your data. Weight costs nothing extra —
+every weight lives in the same file, so using `font-medium` and `font-bold` downloads no more
+than `font-normal` alone.
+
+To drop the Japanese faces entirely, override the stack without naming them (see below).
+Nothing references them, so nothing is downloaded — though the files still ship in your build
+output.
+
+### Using your own font
+
+Set `--app-shell-font-sans` on `:root` **after** importing AppShell styles to replace the whole
+stack:
+
+```css
+@import "@tailor-platform/app-shell/styles";
+
+:root {
+  --app-shell-font-sans: "Your Brand Sans", ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+A replacement should be a variable font, or otherwise supply real 400/500/600/700 faces —
+AppShell's weight scale assumes all four exist. If your app renders Japanese, include a
+Japanese family with a continuous weight axis for the same reason.
+
 ## Z-Index Layering
 
 AppShell defines CSS custom properties for z-index values so you can adjust the stacking order to integrate with other libraries or overlays in your application.

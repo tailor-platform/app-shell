@@ -51,7 +51,7 @@ type MetadataFieldOptionsForField<
  * Return a function that produces `Column` from metadata field names.
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
  */
-export function inferColumns<
+function inferColumns<
   TRow extends Record<string, unknown>,
   const TTable extends TableMetadata = TableMetadata,
 >(tableMetadata: TTable): ColumnInferFn<TRow, TTable> {

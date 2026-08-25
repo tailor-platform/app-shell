@@ -239,6 +239,7 @@ export {
   type DataTableRootProps,
   type Column,
   type DataTableData,
+  type DataTableFilterConfig,
   type HeaderRenderContext,
   type RowAction,
   type UseDataTableOptions,

@@ -1,5 +1,6 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
-import { column, inferColumns, createColumnHelper } from "./field-helpers";
+import { column, createColumnHelper } from "./field-helpers";
+import type { DataTableFilterConfig } from "./index";
 import type { NodeType, TableFieldName, TableMetadataMap } from "@/types/collection";
 import { fieldTypeToSortConfig, fieldTypeToFilterConfig } from "@/types/collection";
 
@@ -83,7 +84,7 @@ describe("inferColumns()", () => {
       ],
     } as const;
 
-    const infer = inferColumns<TaskRow>(metadata);
+    const infer = createColumnHelper<TaskRow>().inferColumns(metadata);
 
     const titleOpts = infer("title");
     expect(titleOpts.label).toBe("title");
@@ -242,7 +243,7 @@ describe("inferColumns() with metadata", () => {
   };
 
   it("creates column options with auto-detected sort/filter", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
 
     const titleOpts = infer("title");
     expect(titleOpts.label).toBe("title");
@@ -252,7 +253,7 @@ describe("inferColumns() with metadata", () => {
   });
 
   it("auto-detects enum options", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const statusOpts = infer("status");
     expect(statusOpts.filter).toEqual({
       field: "status",
@@ -267,28 +268,28 @@ describe("inferColumns() with metadata", () => {
   });
 
   it("auto-detects date type", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const dateOpts = infer("dueDate");
     expect(dateOpts.sort).toEqual({ field: "dueDate", type: "date" });
     expect(dateOpts.filter).toEqual({ field: "dueDate", type: "date" });
   });
 
   it("disables sort with sort: false", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const opts = infer("title", { sort: false });
     expect(opts.sort).toBeUndefined();
     expect(opts.filter).toEqual({ field: "title", type: "string" });
   });
 
   it("disables filter with filter: false", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const opts = infer("title", { filter: false });
     expect(opts.sort).toEqual({ field: "title", type: "string" });
     expect(opts.filter).toBeUndefined();
   });
 
   it("narrows inferred filter operators with filter.operators", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const opts = infer("title", { filter: { operators: ["contains", "eq"] } });
     expect(opts.filter).toEqual({
       field: "title",
@@ -310,10 +311,21 @@ describe("inferColumns() with metadata", () => {
     infer("title", { filter: { operators: ["gt"] } });
     // @ts-expect-error date fields do not accept numeric-only operators omitted from the date UI
     infer("dueDate", { filter: { operators: ["gt"] } });
+    // @ts-expect-error DataTable operator allowlists must be non-empty when provided
+    infer("title", { filter: { operators: [] } });
+  });
+
+  it("exports DataTableFilterConfig through the DataTable barrel", () => {
+    const filter: DataTableFilterConfig = {
+      field: "title",
+      type: "string",
+      operators: ["contains"],
+    };
+    expect(filter).toEqual({ field: "title", type: "string", operators: ["contains"] });
   });
 
   it("allows narrowing inferred filters with any DataTable-supported UI operators", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     expect(infer("title", { filter: { operators: ["contains"] } }).filter).toEqual({
       field: "title",
       type: "string",
@@ -322,28 +334,28 @@ describe("inferColumns() with metadata", () => {
   });
 
   it("uuid has no sort, has uuid filter", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const opts = infer("id");
     expect(opts.sort).toBeUndefined();
     expect(opts.filter).toEqual({ field: "id", type: "uuid" });
   });
 
   it("array type has no sort/filter", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     const opts = infer("tags");
     expect(opts.sort).toBeUndefined();
     expect(opts.filter).toBeUndefined();
   });
 
   it("does not set a default render function", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
 
     const opts = infer("title");
     expect(opts.render).toBeUndefined();
   });
 
   it("throws for non-existent field", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
     expect(() =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       infer("nonExistent" as any),
@@ -358,7 +370,7 @@ describe("inferColumns() with metadata", () => {
   });
 
   it("spread override works with column()", () => {
-    const infer = inferColumns<TaskRow>(testMetadata.task);
+    const infer = createColumnHelper<TaskRow>().inferColumns(testMetadata.task);
 
     const col = column({
       ...infer("title"),

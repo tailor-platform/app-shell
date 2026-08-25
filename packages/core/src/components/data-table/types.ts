@@ -122,6 +122,7 @@ type DataTableDateFilterOperator = Extract<
 type DataTableEnumFilterOperator = Extract<OperatorForFilterType["enum"], "in">;
 type DataTableBooleanFilterOperator = OperatorForFilterType["boolean"];
 type DataTableUuidFilterOperator = Extract<OperatorForFilterType["uuid"], "eq">;
+type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
 
 type DataTableUiFilterOperatorByType = {
   string: DataTableStringFilterOperator;
@@ -134,34 +135,34 @@ type DataTableUiFilterOperatorByType = {
   uuid: DataTableUuidFilterOperator;
 };
 
-type DataTableFilterConfig =
+export type DataTableFilterConfig =
   | (Extract<FilterConfig, { type: "string" }> & {
       /**
        * Allowlist of operators shown by `DataTable.Filters` for this column.
        * Order controls both the menu order and the default operator.
        */
-      operators?: readonly DataTableStringFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableStringFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "number" }> & {
-      operators?: readonly DataTableNumericTemporalFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "datetime" }> & {
-      operators?: readonly DataTableNumericTemporalFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "date" }> & {
-      operators?: readonly DataTableDateFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableDateFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "time" }> & {
-      operators?: readonly DataTableNumericTemporalFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "enum" }> & {
-      operators?: readonly DataTableEnumFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableEnumFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "boolean" }> & {
-      operators?: readonly DataTableBooleanFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableBooleanFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "uuid" }> & {
-      operators?: readonly DataTableUuidFilterOperator[];
+      operators?: NonEmptyReadonlyArray<DataTableUuidFilterOperator>;
     });
 
 /**
@@ -573,7 +574,7 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 // =============================================================================
 
 type MetadataFieldFilterOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
-  operators?: readonly DataTableUiFilterOperatorByType[TType][];
+  operators?: NonEmptyReadonlyArray<DataTableUiFilterOperatorByType[TType]>;
 };
 
 /**

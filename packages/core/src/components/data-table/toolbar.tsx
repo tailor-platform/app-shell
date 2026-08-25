@@ -22,7 +22,7 @@ import type {
   FilterOperator,
   SelectOption,
 } from "@/types/collection";
-import type { Column } from "./types";
+import type { Column, DataTableFilterConfig } from "./types";
 
 // =============================================================================
 // DataTable.Toolbar
@@ -120,7 +120,6 @@ function resolveTemporalOperator(
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
 type StringOperator = (typeof STRING_OPERATORS)[number];
-type DataTableFilterConfig = NonNullable<Column<Record<string, unknown>>["filter"]>;
 type FilterableColumn = Column<Record<string, unknown>> & {
   filter: DataTableFilterConfig;
 };
@@ -164,22 +163,22 @@ function isUiOperatorAllowedForType(type: FilterConfig["type"], operator: Filter
   }
 }
 
-function getConfiguredFilterOperators(config: DataTableFilterConfig): FilterOperator[] {
-  const defaults = getDefaultFilterOperators(config.type);
+function getConfiguredFilterOperators(config: DataTableFilterConfig): FilterOperator[] | undefined {
   const configured = config.operators as readonly FilterOperator[] | undefined;
-  if (!configured || configured.length === 0) return defaults;
+  if (!configured) return undefined;
 
+  const defaults = getDefaultFilterOperators(config.type);
   const operators = configured.filter(
     (operator, index) => defaults.includes(operator) && configured.indexOf(operator) === index,
   );
-  return operators.length > 0 ? [...operators] : defaults;
+  return operators.length > 0 ? [...operators] : [DEFAULT_OPERATOR[config.type]];
 }
 
 function getVisibleFilterOperators(
   config: DataTableFilterConfig,
   current?: FilterOperator,
 ): FilterOperator[] {
-  const operators = getConfiguredFilterOperators(config);
+  const operators = getConfiguredFilterOperators(config) ?? getDefaultFilterOperators(config.type);
   if (current && !operators.includes(current) && isUiOperatorAllowedForType(config.type, current)) {
     return [...operators, current];
   }
@@ -187,7 +186,7 @@ function getVisibleFilterOperators(
 }
 
 function getDefaultFilterOperator(config: DataTableFilterConfig): FilterOperator {
-  return getConfiguredFilterOperators(config)[0] ?? DEFAULT_OPERATOR[config.type];
+  return getConfiguredFilterOperators(config)?.[0] ?? DEFAULT_OPERATOR[config.type];
 }
 
 /** Use `DataTable.Filters` instead of calling this directly. */
@@ -1623,7 +1622,7 @@ function StringFilterEditor({
   const [localOp, setLocalOp] = useState<StringOperator>(
     operatorItems.includes(filter.operator as StringOperator)
       ? (filter.operator as StringOperator)
-      : (operatorItems[0] ?? "contains"),
+      : (DEFAULT_OPERATOR.string as StringOperator),
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
   const [localCaseSensitive, setLocalCaseSensitive] = useState(filter.caseSensitive ?? false);
@@ -1743,8 +1742,9 @@ function NumericFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    getConfiguredFilterOperators(config).filter((operator): operator is NumericTemporalOperator =>
-      temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
+    getVisibleFilterOperators(config, filter.operator).filter(
+      (operator): operator is NumericTemporalOperator =>
+        temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
     ),
     filter.operator,
   );
@@ -1882,8 +1882,9 @@ function TemporalFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    getConfiguredFilterOperators(config).filter((operator): operator is NumericTemporalOperator =>
-      temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
+    getVisibleFilterOperators(config, filter.operator).filter(
+      (operator): operator is NumericTemporalOperator =>
+        temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
     ),
     filter.operator,
   );

@@ -201,6 +201,15 @@ const stringEqOnlyColumn: Column<TestRow> = {
   filter: { type: "string", field: "name", operators: ["eq"] },
 };
 
+const stringInvalidOperatorColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: {
+    type: "string",
+    field: "name",
+    operators: ["gt"] as unknown as ["contains"],
+  },
+};
+
 // ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
 // ---------------------------------------------------------------------------
@@ -384,6 +393,50 @@ describe("AddFilterPanel", () => {
 
     // Amount/Count is numeric → condition column + a value input + Apply.
     expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
+  });
+
+  it("uses contains as the default operator for an unconfigured string column", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const textboxes = within(panel as HTMLElement).getAllByRole("textbox");
+    await user.type(textboxes[textboxes.length - 1] as HTMLInputElement, "Bob");
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseSensitive: false,
+    });
+  });
+
+  it("does not widen an invalid runtime string allowlist back to every operator", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringInvalidOperatorColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(screen.queryByRole("button", { name: /^contains$/ })).toBeNull();
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const textboxes = within(panel as HTMLElement).getAllByRole("textbox");
+    await user.type(textboxes[textboxes.length - 1] as HTMLInputElement, "Bob");
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseSensitive: false,
+    });
   });
 
   it("hides the condition column when a column restricts filters to one operator", async () => {

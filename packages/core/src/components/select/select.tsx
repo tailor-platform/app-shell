@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 // Only the props relevant to the Select abstraction are picked from BaseSelect.Root.
 // Base UI-internal props are intentionally excluded so that
 // upstream changes don't leak as breaking changes to consumers.
+//
+// The form-participation props (`name`, `form`, `required`, `inputRef`,
+// `itemToStringValue`) are included so the select can be submitted as part of a
+// native form: Base UI renders a hidden input named `name`, which is what
+// `Form`'s `onFormSubmit` reads. `itemToStringValue` controls how a non-string
+// item is serialised into that input.
 type SelectRootProps<Value, Multiple extends boolean | undefined = false> = Pick<
   React.ComponentProps<typeof BaseSelect.Root<Value, Multiple>>,
   | "value"
@@ -17,8 +23,14 @@ type SelectRootProps<Value, Multiple extends boolean | undefined = false> = Pick
   | "modal"
   | "multiple"
   | "itemToStringLabel"
+  | "itemToStringValue"
   | "disabled"
   | "children"
+  | "name"
+  | "form"
+  | "required"
+  | "inputRef"
+  | "id"
 >;
 
 function SelectRoot<Value, Multiple extends boolean | undefined = false>(

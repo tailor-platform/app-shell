@@ -25,6 +25,13 @@ type ComboboxRootProps<Value, Multiple extends boolean | undefined = false> = Pi
   | "itemToStringValue"
   | "disabled"
   | "children"
+  // Form participation: Base UI renders a hidden input named `name`, which is
+  // what native submission (and `Form`'s `onFormSubmit`) reads.
+  | "name"
+  | "form"
+  | "required"
+  | "inputRef"
+  | "id"
 >;
 
 function ComboboxRoot<Value, Multiple extends boolean | undefined = false>(

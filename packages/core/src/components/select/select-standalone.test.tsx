@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { renderRHFForm } from "../../../tests/rhf-test-utils";
 import { Field } from "../field";
 import { Select } from "./select-standalone";
+import { Form } from "../form";
 
 afterEach(() => {
   cleanup();
@@ -657,5 +658,157 @@ describe("Select.Async (standalone)", () => {
       render(<Select.Async fetcher={fetcher} aria-label="Async filter" />);
       expect(screen.getByRole("combobox", { name: "Async filter" })).toBeDefined();
     });
+  });
+});
+
+// ============================================================================
+// Form participation
+//
+// Two distinct mechanisms are at play, and they are worth keeping straight:
+//
+//  1. `Form`'s `onFormSubmit` collects values from registered `Field.Root`s,
+//     keyed by the *Field's* name — not from the DOM. That path already works
+//     without `name` on the control.
+//  2. `name` puts a hidden input in the DOM, which is what native submission
+//     reads: `new FormData(form)`, a plain uncontrolled `<form>`, and server
+//     actions. That is what these props add.
+// ============================================================================
+
+describe("Select — form participation", () => {
+  const items = ["Up", "Down"];
+
+  const objectItems = [
+    { value: "jp", label: "Japan" },
+    { value: "us", label: "United States" },
+  ];
+
+  it("renders a hidden input carrying name and value", () => {
+    const { container } = render(
+      <Select items={items} name="direction" defaultValue="Up" aria-label="Direction" />,
+    );
+    const input = container.querySelector('input[name="direction"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.value).toBe("Up");
+  });
+
+  it("is picked up by native FormData", () => {
+    const { container } = render(
+      <form>
+        <Select items={items} name="direction" defaultValue="Down" aria-label="Direction" />
+      </form>,
+    );
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("direction")).toBe("Down");
+  });
+
+  it("serialises `{ value, label }` items using `value`", () => {
+    const { container } = render(
+      <form>
+        <Select
+          items={objectItems}
+          name="country"
+          defaultValue={objectItems[0]}
+          mapItem={(item) => ({ label: item.label, key: item.value })}
+          aria-label="Country"
+        />
+      </form>,
+    );
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("country")).toBe("jp");
+  });
+
+  it("serialises arbitrary object items via itemToStringValue", () => {
+    const warehouses = [
+      { id: 7, name: "Warehouse A" },
+      { id: 9, name: "Warehouse B" },
+    ];
+    const { container } = render(
+      <form>
+        <Select
+          items={warehouses}
+          name="warehouse"
+          defaultValue={warehouses[1]}
+          mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+          itemToStringValue={(item) => String(item.id)}
+          aria-label="Warehouse"
+        />
+      </form>,
+    );
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("warehouse")).toBe("9");
+  });
+
+  it("associates the hidden input with an outer form via `form`", () => {
+    const { container } = render(
+      <div>
+        <form id="outer" />
+        <Select
+          items={items}
+          name="direction"
+          form="outer"
+          defaultValue="Up"
+          aria-label="Direction"
+        />
+      </div>,
+    );
+    const input = container.querySelector('input[name="direction"]') as HTMLInputElement;
+    expect(input.getAttribute("form")).toBe("outer");
+  });
+
+  it("exposes the hidden input through inputRef", () => {
+    const ref = { current: null } as React.RefObject<HTMLInputElement | null>;
+    render(<Select items={items} name="direction" inputRef={ref} aria-label="Direction" />);
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
+    expect(ref.current?.name).toBe("direction");
+  });
+
+  it("marks the hidden input required", () => {
+    const { container } = render(
+      <Select items={items} name="direction" required aria-label="Direction" />,
+    );
+    const input = container.querySelector('input[name="direction"]') as HTMLInputElement;
+    expect(input.required).toBe(true);
+  });
+
+  it("reflects the value chosen by the user", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <form>
+        <Select items={items} name="direction" aria-label="Direction" />
+      </form>,
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Direction" }));
+    await user.click(await screen.findByRole("option", { name: "Down" }));
+
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("direction")).toBe("Down");
+  });
+
+  it("Select.Async also renders the hidden input", async () => {
+    const fetcher = vi.fn().mockResolvedValue(items);
+    const { container } = render(
+      <Select.Async fetcher={fetcher} name="direction" aria-label="Direction" />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('input[name="direction"]')).not.toBeNull();
+    });
+  });
+
+  it("keeps working with Form + Field.Root, which reads registered fields", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+    render(
+      <Form noValidate onFormSubmit={onFormSubmit}>
+        <Field.Root name="direction">
+          <Field.Label>Direction</Field.Label>
+          <Select items={items} name="direction" defaultValue="Up" />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onFormSubmit.mock.calls[0][0]).toMatchObject({ direction: "Up" });
   });
 });

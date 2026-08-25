@@ -1,30 +1,11 @@
-import { useRef, type RefObject } from "react";
-import { SidebarProvider, SidebarInset } from "@/components/sidebar";
+import { SidebarProvider } from "@/components/sidebar";
 import { AppShellOutlet } from "@/components/content";
-import { AppShellScrollContainerProvider } from "@/contexts/scroll-container-context";
 import { DefaultSidebar } from "./default-sidebar";
 import { DefaultHeader } from "./default-header";
-import { cn } from "@/lib/utils";
+import { ContentContainer } from "./content-container";
+import { Trigger } from "./sidebar-trigger";
 
-export type SidebarLayoutProps = {
-  /**
-   * Custom content renderer.
-   *
-   * @example
-   * ```tsx
-   * <SidebarLayout>
-   *   {({ Outlet }) => (
-   *     <>
-   *       <CustomHeader />
-   *       <Outlet />
-   *       <CustomFooter />
-   *     </>
-   *   )}
-   * </SidebarLayout>
-   * ```
-   */
-  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
-
+type SidebarLayoutCommonProps = {
   /**
    * Custom sidebar content. Replaces the whole sidebar region.
    *
@@ -36,6 +17,28 @@ export type SidebarLayoutProps = {
    */
   sidebar?: React.ReactNode;
 
+  /**
+   * Whether the sidebar is open by default on desktop.
+   *
+   * @default true
+   */
+  defaultOpen?: boolean;
+
+  /**
+   * Whether the sidebar can be collapsed.
+   * When set to `false`, the sidebar is always visible and cannot be toggled.
+   * `defaultOpen` is ignored when this is `false`.
+   *
+   * @default true
+   */
+  collapsible?: boolean;
+};
+
+/**
+ * The default layout: AppShell owns the content column, you customise its
+ * header and content.
+ */
+type SidebarLayoutDefaultProps = SidebarLayoutCommonProps & {
   /**
    * Custom header content. Replaces the whole top-bar region.
    *
@@ -62,78 +65,104 @@ export type SidebarLayoutProps = {
   header?: React.ReactNode;
 
   /**
-   * Whether the sidebar is open by default on desktop.
+   * Custom content renderer.
    *
-   * @default true
+   * @example
+   * ```tsx
+   * <SidebarLayout>
+   *   {({ Outlet }) => (
+   *     <>
+   *       <CustomHeader />
+   *       <Outlet />
+   *       <CustomFooter />
+   *     </>
+   *   )}
+   * </SidebarLayout>
+   * ```
    */
-  defaultOpen?: boolean;
+  children?: (props: { Outlet: () => React.ReactNode }) => React.ReactNode;
 
-  /**
-   * Whether the sidebar can be collapsed.
-   * When set to `false`, the sidebar is always visible and cannot be toggled.
-   * `defaultOpen` is ignored when this is `false`.
-   *
-   * @default true
-   */
-  collapsible?: boolean;
+  /** Not available alongside `header`/`children` — see the `body` overload. */
+  body?: never;
 };
 
+/**
+ * The eject: you own the whole region beside the sidebar, including where the
+ * header goes. `header` and `children` are unavailable here by construction —
+ * they describe a content column you are now supplying yourself.
+ */
+type SidebarLayoutBodyProps = SidebarLayoutCommonProps & {
+  /**
+   * Replaces everything to the right of the sidebar — the escape hatch for
+   * page layouts the default content column can't express, such as a
+   * table-of-contents rail or an assistant panel docked flush against the
+   * viewport edge.
+   *
+   * Whatever you pass becomes a flex row alongside the sidebar, so it widens
+   * and narrows with the sidebar automatically. Compose it from the namespaced
+   * building blocks rather than rebuilding them:
+   *
+   * - `<SidebarLayout.ContentContainer>` — the stock content column (inset
+   *   padding, pinned header slot, scroll region, `useAppShellScrollContainer()`)
+   * - `<SidebarLayout.Outlet />` — the current page
+   * - `<SidebarLayout.DefaultHeader />` — the built-in top bar
+   * - `<SidebarLayout.Trigger />` — the sidebar collapse toggle
+   * - `useAppShellSidebar()` — subscribe to the sidebar's collapsed state
+   *
+   * The header lives inside `body` too — pass it to `ContentContainer` so it
+   * stays pinned above that column's scroll region.
+   *
+   * @example
+   * ```tsx
+   * <SidebarLayout
+   *   body={
+   *     <>
+   *       <aside className="w-64 shrink-0 border-r overflow-y-auto">
+   *         <TableOfContents />
+   *       </aside>
+   *       <SidebarLayout.ContentContainer header={<SidebarLayout.DefaultHeader />}>
+   *         <SidebarLayout.Outlet />
+   *       </SidebarLayout.ContentContainer>
+   *       <aside className="w-96 shrink-0 border-l overflow-y-auto">
+   *         <AssistantPanel />
+   *       </aside>
+   *     </>
+   *   }
+   * />
+   * ```
+   */
+  body: React.ReactNode;
+
+  /** Place your header inside `body`, via `<SidebarLayout.ContentContainer header={…}>`. */
+  header?: never;
+
+  /** Place your content inside `body`, via `<SidebarLayout.Outlet />`. */
+  children?: never;
+};
+
+/**
+ * Either the default layout (`header` + `children`) or the ejected one (`body`)
+ * — never both. Passing `body` alongside `header`/`children` is a type error,
+ * because `body` replaces the very region those two describe.
+ */
+export type SidebarLayoutProps = SidebarLayoutDefaultProps | SidebarLayoutBodyProps;
+
 export function SidebarLayout(props: SidebarLayoutProps) {
-  const Children = props.children ? props.children({ Outlet: AppShellOutlet }) : null;
-  // Handle to the content scroll region, exposed to pages via
-  // `useAppShellScrollContainer()`. The shell is viewport-bounded, so this is
-  // the element that scrolls page content (what `window` used to be).
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { sidebar, header, children, body, defaultOpen, collapsible } = props;
 
   return (
     <SidebarProvider
-      defaultOpen={props.defaultOpen}
-      collapsible={props.collapsible}
+      defaultOpen={defaultOpen}
+      collapsible={collapsible}
       className="astw:flex astw:flex-col"
     >
       <div className="astw:flex astw:flex-1 astw:min-h-0">
-        {props.sidebar ?? <DefaultSidebar />}
-        <SidebarInset className="astw:w-[calc(100%-var(--sidebar-width))]">
-          {props.header ?? <DefaultHeader />}
-          {/* Content scroll region. The shell is viewport-bounded (h-svh on the
-              sidebar wrapper), so regular pages scroll here; pages that pin
-              their own chrome (e.g. <Layout fill> with a DataTable) size to fit
-              and don't scroll this area. Exposed to pages via
-              `useAppShellScrollContainer()` and the `data-appshell-scroll-container`
-              marker — the supported handle for what used to be `window` scroll. */}
-          <AppShellScrollContainerProvider
-            value={scrollContainerRef as RefObject<HTMLElement | null>}
-          >
-            <div
-              ref={scrollContainerRef}
-              data-appshell-scroll-container=""
-              className={cn(
-                "astw:flex astw:flex-col astw:gap-4 astw:flex-1 astw:min-h-0 astw:overflow-y-auto",
-                // Full-bleed: break out of SidebarInset's right padding so the
-                // scrollbar sits at the window edge, then restore the padding
-                // inside so content stays aligned with the header. Mirrors
-                // SidebarInset's responsive padding (px-4 → px-8 at md for the
-                // inset variant).
-                "astw:-mr-4 astw:pr-4",
-                "astw:md:group-has-data-[variant=inset]/sidebar-wrapper:-mr-8 astw:md:group-has-data-[variant=inset]/sidebar-wrapper:pr-8",
-                // Scroll-fade: a scroll-driven animation masks the top edge as
-                // content scrolls under the pinned header, ramping over the first
-                // 2rem then holding. The alpha mask reveals the real themed
-                // backdrop; keyframes live in globals.css. No JS scroll listener.
-                "astw:[animation:appshell-content-fade_auto_linear_both] astw:[animation-timeline:scroll(self_block)] astw:[animation-range:0_2rem]",
-                // A <Layout fill> page bounds everything internally, so this area
-                // never needs to scroll: clip instead. This also makes the fade
-                // inert (no scroll range) and avoids any sub-pixel-overflow bar.
-                "astw:has-data-[layout-fill]:overflow-hidden",
-                // Reserve the scrollbar gutter so content doesn't shift when the
-                // bar toggles across navigations (no-op with overlay scrollbars).
-                "astw:[scrollbar-gutter:stable]",
-              )}
-            >
-              {Children ?? <AppShellOutlet />}
-            </div>
-          </AppShellScrollContainerProvider>
-        </SidebarInset>
+        {sidebar ?? <DefaultSidebar />}
+        {body ?? (
+          <ContentContainer header={header ?? <DefaultHeader />}>
+            {children ? children({ Outlet: AppShellOutlet }) : <AppShellOutlet />}
+          </ContentContainer>
+        )}
       </div>
     </SidebarProvider>
   );
@@ -143,3 +172,7 @@ export function SidebarLayout(props: SidebarLayoutProps) {
 // remains available as a top-level export for backwards compatibility.
 SidebarLayout.DefaultSidebar = DefaultSidebar;
 SidebarLayout.DefaultHeader = DefaultHeader;
+// Building blocks for the `body` slot.
+SidebarLayout.ContentContainer = ContentContainer;
+SidebarLayout.Outlet = AppShellOutlet;
+SidebarLayout.Trigger = Trigger;

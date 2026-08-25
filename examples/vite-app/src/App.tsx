@@ -1,15 +1,13 @@
 import {
   AppShell,
-  AppearanceSwitcher,
-  Button,
   SidebarGroup,
   SidebarItem,
   SidebarLayout,
   type SearchSource,
 } from "@tailor-platform/app-shell";
-import { BellIcon, CircleUserIcon } from "lucide-react";
 import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
+import { PanelsBody } from "./panels-body";
 
 // Demonstrates multiple search sources in the command palette
 const searchSources: SearchSource[] = [
@@ -29,21 +27,12 @@ const App = () => {
   return (
     <AppShell title="File-Based Routing Demo" searchSources={searchSources}>
       <SidebarLayout
-        header={
-          <SidebarLayout.DefaultHeader
-            actions={[
-              <Button key="notifications" variant="outline" size="icon" aria-label="Notifications">
-                <BellIcon />
-              </Button>,
-              <Button key="account" variant="outline" size="icon" aria-label="Account">
-                <CircleUserIcon />
-              </Button>,
-              // Opt back into the appearance switcher — `actions` replaces the
-              // default right-hand cluster, so include it explicitly to keep it.
-              <AppearanceSwitcher key="appearance" />,
-            ]}
-          />
-        }
+        // `body` replaces everything to the right of the sidebar. PanelsBody
+        // renders the stock content column via SidebarLayout.ContentContainer
+        // (so the header/padding/scrolling are unchanged) and adds page-specific
+        // columns beside it on /dashboard/panels. The header that used to live
+        // on the `header` prop moved inside PanelsBody.
+        body={<PanelsBody />}
         sidebar={
           <SidebarLayout.DefaultSidebar>
             <SidebarItem to="/" />
@@ -52,6 +41,7 @@ const App = () => {
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
               <SidebarItem to="/dashboard/document-progress" />
+              <SidebarItem to="/dashboard/panels" />
             </SidebarGroup>
             <SidebarItem to="/date-picker" />
             <SidebarItem to="/data-table" />

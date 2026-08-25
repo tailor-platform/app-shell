@@ -22,6 +22,7 @@ export type GeneratedRouteParams = {
   "/dashboard/long-content": {};
   "/dashboard/orders": {};
   "/dashboard/orders/:id": { id: string };
+  "/dashboard/panels": {};
   "/dashboard/products": {};
   "/data-table": {};
   "/data-table-lab": {};

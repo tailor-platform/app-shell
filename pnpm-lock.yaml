@@ -288,9 +288,9 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
-      '@microsoft/api-extractor':
-        specifier: ^7.57.0
-        version: 7.58.12(@types/node@25.9.5)
+      '@fontsource-variable/noto-sans-jp':
+        specifier: 5.3.0
+        version: 5.3.0
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.3.0
@@ -360,6 +360,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.5)(@vitest/coverage-v8@4.1.10)(happy-dom@20.9.0)(vite@7.3.5(@types/node@25.9.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@microsoft/api-extractor':
+        specifier: ^7.57.0
+        version: 7.58.12(@types/node@25.9.5)
 
   packages/sdk-plugin:
     devDependencies:
@@ -981,6 +984,9 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/noto-sans-jp@5.3.0':
+    resolution: {integrity: sha512-XVL9GfGBRjj523v9w3Bctu4mNq7E5rUa+AMZm8DK1EM3LAGlKC3DZMvuqkLn4DB4TwwoAjcsJUCiRpUTDzzOkw==}
 
   '@hookform/resolvers@5.4.0':
     resolution: {integrity: sha512-EIsqr/t/qbinPIhGjMdtvutIN1Kk4uwbROE9/UQ93CAVGR7GkA7Y92+fX80OzXi/OB67jVFYwKGO1WzkxmkFZw==}
@@ -4984,6 +4990,8 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource-variable/noto-sans-jp@5.3.0': {}
 
   '@hookform/resolvers@5.4.0(react-hook-form@7.71.2(react@19.2.8))':
     dependencies:

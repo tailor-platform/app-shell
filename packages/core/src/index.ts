@@ -1,5 +1,5 @@
 export { AppShell, type AppShellProps } from "./components/appshell";
-export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
+export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar";
 export { CommandPalette } from "./components/command-palette";
 export {
   useOpenCommandPalette,
@@ -20,7 +20,7 @@ export {
   type SidebarLayoutProps,
   type DefaultSidebarProps,
   type DefaultHeaderProps,
-} from "./components/sidebar/index";
+} from "./components/sidebar";
 
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
@@ -132,7 +132,7 @@ export {
   DocumentProgressCard,
   type DocumentProgressCardProps,
 } from "./components/document-progress-card";
-export { Layout, type LayoutProps } from "./components/layout/Layout";
+export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
@@ -148,9 +148,9 @@ export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Tooltip } from "./components/tooltip";
-export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
-export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
-export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
+export { Select, type SelectAsyncFetcher } from "./components/select";
+export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";
+export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete";
 export {
   DateField,
   DatePicker,

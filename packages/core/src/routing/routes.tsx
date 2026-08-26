@@ -1,8 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
 import { RouteObject, Navigate } from "react-router";
-import { AppInfoPage, APP_INFO_SLUG } from "@/components/app-info";
-import { EmptyOutlet, SettingsWrapper } from "@/components/content";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { AppInfoPage, APP_INFO_SLUG } from "@/components/internals/app-info";
+import { EmptyOutlet, SettingsWrapper } from "./content";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 import {
   Modules,
   Resource,

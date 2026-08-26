@@ -5,7 +5,7 @@ import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshe
 import { usePageMeta } from "./use-page-meta";
 import { defineModule, defineResource } from "@/resource";
 import { Folder, Home, Settings, ShoppingCart } from "lucide-react";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 
 const createTestModules = () => [
   defineModule({

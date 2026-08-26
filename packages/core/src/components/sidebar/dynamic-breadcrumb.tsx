@@ -1,0 +1,81 @@
+import { useLocation, useMatch } from "react-router";
+import { useAppShellConfig } from "@/contexts/appshell-context";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "../internals/breadcrumb";
+import { processPathSegments } from "@/routing/path";
+import { useBreadcrumbOverride } from "@/contexts/breadcrumb-context";
+import { useT } from "@/i18n-labels";
+
+/**
+ * Hook to retrieve the current path segments and their corresponding titles.
+ */
+export const usePathSegments = () => {
+  const { configurations } = useAppShellConfig();
+  const location = useLocation();
+
+  return processPathSegments(
+    location.pathname,
+    configurations.basePath,
+    configurations.modules,
+    configurations.locale,
+  );
+};
+
+export const DynamicBreadcrumb = () => {
+  const { basePath, segments } = usePathSegments();
+  const { overrides } = useBreadcrumbOverride();
+  const isSettings = useMatch("/:prefix/settings/:suffix");
+  const t = useT();
+
+  if (isSettings) {
+    return (
+      <Breadcrumb>
+        <BreadcrumbList>
+          <div className="astw:inline-flex astw:items-center astw:gap-3 astw:last:text-foreground">
+            <BreadcrumbItem>
+              <BreadcrumbLink to={`/${isSettings.params.prefix}/settings`}>
+                {t("settings")}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          </div>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {segments.map((segmentInfo, index) => {
+          const fullPath = basePath ? `/${basePath}/${segmentInfo.path}` : `/${segmentInfo.path}`;
+          const title = overrides.get(fullPath) ?? segmentInfo.title;
+          return (
+            <div
+              className="astw:inline-flex astw:items-center astw:gap-3 astw:last:text-foreground"
+              key={index}
+            >
+              <BreadcrumbItem>
+                {segmentInfo.clickable ? (
+                  <BreadcrumbLink to={segmentInfo.path}>{title}</BreadcrumbLink>
+                ) : (
+                  // Non-last segments use ariaCurrent={false} to avoid announcing
+                  // intermediate items as the current location to screen readers.
+                  <BreadcrumbPage ariaCurrent={index === segments.length - 1 ? "location" : false}>
+                    {title}
+                  </BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {index < segments.length - 1 && <BreadcrumbSeparator />}
+            </div>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+};

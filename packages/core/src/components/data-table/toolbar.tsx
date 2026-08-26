@@ -6,7 +6,7 @@ import { useCollectionControlOptional } from "@/contexts/collection-control-cont
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Checkbox } from "@/components/checkbox";
-import { Select } from "@/components/select-standalone";
+import { Select } from "@/components/select";
 import { DatePicker } from "@/components/date-field";
 import { Calendar } from "@/components/calendar";
 import { Tooltip } from "@/components/tooltip";

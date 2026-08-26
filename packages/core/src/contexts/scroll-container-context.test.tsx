@@ -1,7 +1,7 @@
 import { render, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { useEffect, type RefObject } from "react";
-import { SidebarLayout } from "@/components/sidebar/sidebar-layout";
+import { SidebarLayout } from "@/components/sidebar";
 import { AppShell } from "@/components/appshell";
 import { defineModule } from "@/resource";
 import { Home } from "lucide-react";

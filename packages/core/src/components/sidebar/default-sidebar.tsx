@@ -16,7 +16,7 @@ import {
   SidebarHeader,
   SidebarTrigger,
   useSidebar,
-} from "@/components/sidebar";
+} from "./primitives";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { useCommandPaletteState } from "@/contexts/command-palette-context";
 import { Link } from "react-router";

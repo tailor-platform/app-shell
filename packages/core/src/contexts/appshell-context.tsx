@@ -1,6 +1,6 @@
 import { ErrorBoundaryComponent, Modules, Resource } from "@/resource";
 import { createContext, useContext, type ReactNode } from "react";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
 import {
   DEFAULT_LOCALE,
   detectBrowserLocale,

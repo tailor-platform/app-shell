@@ -223,21 +223,18 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
       const authServerReportedError = currentUrl.searchParams.has("error");
       const { resolve, reject, deny } = callbackManager.start();
 
-      // auth-public-client only cleans the URL when the code exchange succeeds.
-      // Every failure path returns (or throws) with `code` / `error` still in the
-      // query string, which would otherwise leave the app wedged: the parameters
-      // make this look like a callback URL forever, and a reload just replays the
-      // same failing callback. Strip them on every outcome, before settling, so
-      // whatever observes the settled status already sees a clean URL.
-      //
       // The outcome is classified from the resulting auth state rather than from
       // whether the promise resolved. Not every failure throws — an `error` from
       // the authorization server and a state mismatch both return normally after
       // recording the error — so resolve-vs-throw is the wrong signal, and using
       // it would let those two skip the retry ceiling and loop.
+      //
+      // Note the URL is deliberately NOT cleaned here. auth-public-client owns
+      // callback URL cleanup and currently performs it only on success
+      // (tailor-platform/auth-public-client#139); on failure the parameters
+      // remain until that is fixed upstream. app-shell stays correct regardless,
+      // because auto-login is gated on this settled status, not on the URL.
       const settle = () => {
-        clearOAuthCallbackParams();
-
         if (baseClient.getState().isAuthenticated) {
           clearCallbackFailures();
           resolve();
@@ -357,54 +354,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const isOAuthCallbackUrl = (url: URL) =>
   url.searchParams.has("code") || url.searchParams.has("error");
 
-/**
- * Query parameters an authorization server may add when redirecting back.
- * Removed together so a settled callback cannot be mistaken for a pending one.
- */
-const OAUTH_CALLBACK_PARAMS = [
-  "code",
-  "state",
-  "error",
-  "error_description",
-  "error_uri",
-  "iss",
-] as const;
-
 const isCurrentOAuthCallbackUrl = () => {
   if (typeof window === "undefined") {
     return false;
   }
 
   return isOAuthCallbackUrl(new URL(window.location.href));
-};
-
-/**
- * Remove the OAuth callback parameters from the current URL, preserving any
- * unrelated query parameters and the hash. Uses `replaceState` so the failed
- * callback does not stay in session history for the back button to replay.
- */
-const clearOAuthCallbackParams = () => {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const url = new URL(window.location.href);
-  if (!isOAuthCallbackUrl(url)) {
-    return;
-  }
-
-  for (const param of OAUTH_CALLBACK_PARAMS) {
-    url.searchParams.delete(param);
-  }
-
-  // Preserve the existing history state: routers keep their own bookkeeping on
-  // it (react-router stores {usr, key, idx}, Next.js stores __NA), and replacing
-  // it with a fresh object desyncs them for the rest of the session.
-  window.history.replaceState(
-    window.history.state,
-    document.title,
-    `${url.pathname}${url.search}${url.hash}`,
-  );
 };
 
 /**
@@ -482,8 +437,10 @@ const useAutoLogin = (props: {
       // starts the exchange itself whenever it is constructed on a callback
       // URL, so "idle" here means nobody is handling these parameters and
       // redirecting is unsafe. Once a callback has run, its status is the
-      // authority — reading the URL instead is what used to strand the app,
-      // because a failed callback left its parameters in place forever.
+      // authority — reading the URL instead is what used to strand the app:
+      // upstream cleans the URL only on success, so a failed callback leaves
+      // its parameters in place (auth-public-client#139) and a URL-based gate
+      // treats the page as a live callback forever.
       (props.callbackStatus === "idle" && isCurrentOAuthCallbackUrl()) ||
       !authState.isReady ||
       authState.isAuthenticated ||

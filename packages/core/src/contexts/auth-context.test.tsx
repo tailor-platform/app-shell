@@ -993,35 +993,6 @@ describe("createAuthClient", () => {
       isReady: true,
     };
 
-    it("strips callback parameters when the authorization server returns an error", async () => {
-      window.history.replaceState(
-        {},
-        "",
-        "/dashboard?error=access_denied&error_description=No&tab=orders",
-      );
-
-      // The error branch upstream resolves rather than throwing, and never
-      // cleans the URL — only the success path does.
-      renderWithClient({}, vi.fn().mockResolvedValue(undefined));
-
-      await waitFor(() => {
-        expect(window.location.search).toBe("?tab=orders");
-      });
-      // Unrelated parameters and the path survive; only the OAuth ones go.
-      expect(window.location.pathname).toBe("/dashboard");
-    });
-
-    it("strips callback parameters when the code exchange throws", async () => {
-      vi.stubGlobal("console", { ...console, error: vi.fn() });
-      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
-
-      renderWithClient({}, vi.fn().mockRejectedValue(new Error("Missing session data")));
-
-      await waitFor(() => {
-        expect(window.location.search).toBe("");
-      });
-    });
-
     it("resumes auto-login after a failed code exchange", async () => {
       // The dead end this guards: before the parameters were cleared, `?code=`
       // stayed in the URL, attemptAutoLogin treated the page as a live callback
@@ -1108,20 +1079,6 @@ describe("createAuthClient", () => {
       expect(window.sessionStorage.getItem("tailor-app-shell:oauth-callback-failures")).toBeNull();
     });
 
-    it("preserves the router's history state while stripping parameters", async () => {
-      // react-router keeps {usr, key, idx} here and Next.js keeps __NA; replacing
-      // it with a fresh object desyncs both for the rest of the session.
-      const routerState = { idx: 3, key: "abc", usr: null };
-      window.history.replaceState(routerState, "", "/dashboard?code=auth-code-123");
-
-      renderWithClient({}, vi.fn().mockResolvedValue(undefined));
-
-      await waitFor(() => {
-        expect(window.location.search).toBe("");
-      });
-      expect(window.history.state).toEqual(routerState);
-    });
-
     it("clears the retry budget once a callback succeeds", async () => {
       window.sessionStorage.setItem("tailor-app-shell:oauth-callback-failures", "1");
       window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
@@ -1194,8 +1151,9 @@ describe("createAuthClient", () => {
       });
 
       expect(mockLogin).not.toHaveBeenCalled();
-      // The URL is still cleaned up, so a deliberate reload can retry.
-      expect(window.location.search).toBe("");
+      // The parameters stay in the URL until upstream cleans failed callbacks
+      // too (auth-public-client#139) — correctness here rests on the status.
+      expect(window.location.search).toBe("?error=access_denied");
     });
   });
 

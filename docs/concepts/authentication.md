@@ -219,7 +219,7 @@ function ChatScreen() {
 
 ## When the callback fails
 
-A sign-in that comes back from the authorization server unsuccessfully — the user declined, the client is not permitted, the exchange failed — leaves `isAuthenticated` false with the reason on `useAuth().error`. The stale callback parameters may remain in the URL (the auth client currently cleans them only on success — [auth-public-client#139](https://github.com/tailor-platform/auth-public-client/issues/139)), but they no longer affect AppShell's behaviour.
+A sign-in that comes back from the authorization server unsuccessfully — the user declined, the client is not permitted, the exchange failed — leaves `isAuthenticated` false with the reason on `useAuth().error`. The stale callback parameters may remain in the URL (the auth client currently cleans them only on success — tracked upstream as `tailor-platform/auth-public-client#139`; the repo is private, hence no link), but they no longer affect AppShell's behaviour.
 
 With `autoLogin`, a failure that looks recoverable is retried once automatically. Beyond that, and for any refusal the authorization server issues explicitly, AppShell stops: sending the user straight back would ask the same question, get the same answer, and loop.
 

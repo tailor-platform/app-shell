@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { capitalCase } from "change-case";
-import { DefaultErrorBoundary } from "./components/default-error-boundary";
+import { DefaultErrorBoundary } from "./components/internals/default-error-boundary";
 import { useAppShellConfig, type ContextData } from "./contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "./lib/i18n";
 import { labels } from "./i18n-labels";

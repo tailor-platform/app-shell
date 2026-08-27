@@ -1,6 +1,6 @@
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/button";
-import { Select } from "@/components/select-standalone";
+import { Select } from "@/components/select";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 

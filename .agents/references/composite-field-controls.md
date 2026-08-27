@@ -80,8 +80,8 @@ For controls with richer selection behavior, also review:
 
 ## Current AppShell examples
 
-- `packages/core/src/components/field.tsx` defines the baseline `Field.Root` contract that all field-like controls should fit into.
-- `packages/core/src/components/select.tsx`, `packages/core/src/components/combobox.tsx`, and `packages/core/src/components/autocomplete.tsx` show the simpler control-family contract that composite controls should still resemble from the outside.
+- `packages/core/src/components/field/field.tsx` defines the baseline `Field.Root` contract that all field-like controls should fit into.
+- `packages/core/src/components/select/select.tsx`, `packages/core/src/components/combobox/combobox.tsx`, and `packages/core/src/components/autocomplete/autocomplete.tsx` show the simpler control-family contract that composite controls should still resemble from the outside.
 - `packages/core/src/components/date-field/date-field.tsx` splits the problem into a11y labeling, proxy-input ownership, and `Field` / `Form` bridging.
 - `packages/core/src/components/date-field/use-date-field-state.ts` owns the segmented editing state machine, shortcut handling, controlled/uncontrolled behavior, and invalid-reason semantics.
 - `packages/core/src/components/date-field/date-input-group.tsx` renders the visible segmented `role="group"` UI and wires keyboard shortcuts plus popover opening.

@@ -1,6 +1,6 @@
 import { describe, expect, it, assert } from "vitest";
 import { createContentRoutes } from "./routes";
-import { EmptyOutlet, SettingsWrapper } from "@/components/content";
+import { EmptyOutlet, SettingsWrapper } from "./content";
 import { defineModule, defineResource, pass, redirectTo, hidden } from "@/resource";
 
 const createMockResource = (path: string) =>

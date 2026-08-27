@@ -4,6 +4,7 @@ import type {
   CollectionControl,
   Filter,
   FilterConfig,
+  OperatorForFilterType,
   PageInfo,
   SortConfig,
   SortState,
@@ -106,6 +107,64 @@ interface SortableHeaderRenderContext {
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
+type DataTableStringFilterOperator = Extract<
+  OperatorForFilterType["string"],
+  "eq" | "ne" | "contains" | "notContains" | "hasPrefix" | "hasSuffix"
+>;
+type DataTableNumericTemporalFilterOperator = Extract<
+  OperatorForFilterType["number"],
+  "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "between"
+>;
+type DataTableDateFilterOperator = Extract<
+  OperatorForFilterType["date"],
+  "eq" | "gte" | "lte" | "between"
+>;
+type DataTableEnumFilterOperator = Extract<OperatorForFilterType["enum"], "in">;
+type DataTableBooleanFilterOperator = OperatorForFilterType["boolean"];
+type DataTableUuidFilterOperator = Extract<OperatorForFilterType["uuid"], "eq">;
+type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
+
+type DataTableUiFilterOperatorByType = {
+  string: DataTableStringFilterOperator;
+  number: DataTableNumericTemporalFilterOperator;
+  datetime: DataTableNumericTemporalFilterOperator;
+  date: DataTableDateFilterOperator;
+  time: DataTableNumericTemporalFilterOperator;
+  enum: DataTableEnumFilterOperator;
+  boolean: DataTableBooleanFilterOperator;
+  uuid: DataTableUuidFilterOperator;
+};
+
+export type DataTableFilterConfig =
+  | (Extract<FilterConfig, { type: "string" }> & {
+      /**
+       * Allowlist of operators shown by `DataTable.Filters` for this column.
+       * Order controls both the menu order and the default operator.
+       */
+      operators?: NonEmptyReadonlyArray<DataTableStringFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "number" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "datetime" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "date" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableDateFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "time" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "enum" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableEnumFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "boolean" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableBooleanFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "uuid" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableUuidFilterOperator>;
+    });
+
 /**
  * Fields shared by every `Column` regardless of `type`. Prefer `Column<TRow>`
  * in most cases; this is exported so consumers can compose more specific
@@ -184,9 +243,15 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /**
    * Filter configuration. When set, this column appears as an option in
    * `DataTable.Filters`.
+   *
+   * `operators` optionally narrows the conditions exposed by the built-in
+   * filter UI for this column. Order controls both the menu order and the
+   * default operator. This affects the DataTable UI only — collection control
+   * APIs and persisted filter state still accept the full backend operator set.
+   *
    * Use `fieldTypeToFilterConfig` or `inferColumns` to derive this automatically.
    */
-  filter?: FilterConfig;
+  filter?: DataTableFilterConfig;
 }
 
 /**
@@ -508,10 +573,14 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 // Metadata-based Column Inference Types (DataTable specific)
 // =============================================================================
 
+type MetadataFieldFilterOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
+  operators?: NonEmptyReadonlyArray<DataTableUiFilterOperatorByType[TType]>;
+};
+
 /**
  * Options for metadata-based single field inference.
  */
-export interface MetadataFieldOptions {
+export type MetadataFieldOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
   /** Override the column header text. Defaults to the field's `description` or `name` from metadata. */
   label?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
@@ -522,8 +591,14 @@ export interface MetadataFieldOptions {
    */
   sort?: boolean;
   /**
-   * Set to `false` to suppress the auto-generated filter config for this field.
-   * Defaults to `true` (filter is enabled when the field type supports it).
+   * Set to `false` to suppress the auto-generated filter config for this field,
+   * or pass `operators` to narrow the DataTable filter conditions exposed for
+   * this field.
+   *
+   * When used through `inferColumns()` with specific table metadata, operator
+   * literals are narrowed to the inferred field type. If the metadata has
+   * already widened to `TableMetadata`, mismatched operators are still filtered
+   * out at runtime.
    */
-  filter?: boolean;
-}
+  filter?: boolean | MetadataFieldFilterOptions<TType>;
+};

@@ -191,6 +191,25 @@ const booleanColumn: Column<TestRow> = {
   filter: { type: "boolean", field: "enabled" },
 };
 
+const stringContainsOnlyColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: { type: "string", field: "name", operators: ["contains"] },
+};
+
+const stringEqOnlyColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: { type: "string", field: "name", operators: ["eq"] },
+};
+
+const stringInvalidOperatorColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: {
+    type: "string",
+    field: "name",
+    operators: ["gt"] as unknown as ["contains"],
+  },
+};
+
 // ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
 // ---------------------------------------------------------------------------
@@ -376,6 +395,61 @@ describe("AddFilterPanel", () => {
     expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
   });
 
+  it("uses contains as the default operator for an unconfigured string column", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const textboxes = within(panel as HTMLElement).getAllByRole("textbox");
+    await user.type(textboxes[textboxes.length - 1] as HTMLInputElement, "Bob");
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseSensitive: false,
+    });
+  });
+
+  it("does not widen an invalid runtime string allowlist back to every operator", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringInvalidOperatorColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(screen.queryByRole("button", { name: /^contains$/ })).toBeNull();
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const textboxes = within(panel as HTMLElement).getAllByRole("textbox");
+    await user.type(textboxes[textboxes.length - 1] as HTMLInputElement, "Bob");
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseSensitive: false,
+    });
+  });
+
+  it("hides the condition column when a column restricts filters to one operator", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringContainsOnlyColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(screen.queryByRole("button", { name: /^contains$/ })).toBeNull();
+    expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
+  });
+
   it("seeds an already-filtered field's operator/value so the panel preserves them", async () => {
     // Re-opening the panel on a field that already has a non-default filter
     // (here a number "between") must keep that operator and value rather than
@@ -408,6 +482,44 @@ describe("AddFilterPanel", () => {
     expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
       caseSensitive: true,
     });
+  });
+
+  it("preserves an active operator even when the column now restricts the allowlist", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringEqOnlyColumn]} />, { wrapper });
+
+    expect(screen.getByRole("button", { name: "contains" })).toBeDefined();
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseSensitive: false,
+    });
+  });
+
+  it("does not surface legacy numeric-only operators in the date condition list", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "createdAt", operator: "gt", value: "2025-01-01" }],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const panelQueries = within(panel as HTMLElement);
+    expect(panelQueries.queryByRole("button", { name: "greater than" })).toBeNull();
+    expect(panelQueries.getByRole("button", { name: "exact date" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "after" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "before" })).toBeDefined();
   });
 
   it("disables the commit button when the between range is reversed (min > max)", async () => {

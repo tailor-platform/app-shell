@@ -17,6 +17,7 @@ export type {
   ColumnTypeBranch,
   HeaderRenderContext,
   DataTableData,
+  DataTableFilterConfig,
   DateCellOptions,
   LinkCellOptions,
   MetadataFieldOptions,

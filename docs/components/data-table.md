@@ -602,13 +602,16 @@ When you spread `...infer("field")`, add `accessor` when you want a typed render
 
 ## `FilterConfig`
 
-The `filter` property on a column accepts a `FilterConfig` object. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
+The `filter` property on a column accepts the same base shape as `FilterConfig`, plus a DataTable-only `operators` allowlist. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
 
-| Property  | Type             | Description                                                  |
-| --------- | ---------------- | ------------------------------------------------------------ |
-| `field`   | `string`         | API field name used in the generated query input.            |
-| `type`    | `FilterType`     | Filter editor type (see table below).                        |
-| `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values. |
+| Property    | Type                                             | Description                                                                                                    |
+| ----------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `field`     | `string`                                         | API field name used in the generated query input.                                                              |
+| `type`      | `FilterType`                                     | Filter editor type (see table below).                                                                          |
+| `options`   | `SelectOption[]`                                 | Required when `type` is `"enum"`. List of selectable values.                                                   |
+| `operators` | `readonly [FilterOperator, ...FilterOperator[]]` | Optional non-empty DataTable UI allowlist. Order controls menu order and, when provided, the default operator. |
+
+`operators` only narrows what the built-in DataTable filter UI shows. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still use the broader backend operator set. When `operators` is omitted, the built-in UI keeps the normal default for that field type (for example, string fields still default to `contains`).
 
 ### Adding and editing filters
 
@@ -711,12 +714,14 @@ const columns = [
 
 The factory accepts an optional second argument to override per-column defaults:
 
-| Option   | Type      | Default                                     | Description                                                  |
-| -------- | --------- | ------------------------------------------- | ------------------------------------------------------------ |
-| `label`  | `string`  | Field `description` or `name` from metadata | Override the column header text.                             |
-| `width`  | `number`  | —                                           | Fixed column width in pixels.                                |
-| `sort`   | `boolean` | `true`                                      | Set to `false` to suppress the auto-generated sort config.   |
-| `filter` | `boolean` | `true`                                      | Set to `false` to suppress the auto-generated filter config. |
+| Option   | Type                                                                        | Default                                     | Description                                                                                                                              |
+| -------- | --------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`  | `string`                                                                    | Field `description` or `name` from metadata | Override the column header text.                                                                                                         |
+| `width`  | `number`                                                                    | —                                           | Fixed column width in pixels.                                                                                                            |
+| `sort`   | `boolean`                                                                   | `true`                                      | Set to `false` to suppress the auto-generated sort config.                                                                               |
+| `filter` | `boolean \| { operators?: readonly [FilterOperator, ...FilterOperator[]] }` | `true`                                      | Set to `false` to suppress the auto-generated filter config, or pass a non-empty `operators` allowlist to narrow the built-in filter UI. |
+
+Like `column.filter`, `operators` only affects the built-in DataTable UI. Order controls menu order and, when provided, the default operator. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still accept the broader backend operator set.
 
 ## `useCollectionVariables`
 

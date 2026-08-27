@@ -51,4 +51,12 @@ const columns = [
 ];
 ```
 
+You can still override per-column defaults when needed. For example, pass a non-empty `filter.operators` allowlist to narrow the built-in DataTable filter UI for one field:
+
+```ts
+const columns = [column(infer("title", { filter: { operators: ["contains", "eq"] } }))];
+```
+
+`operators` only affects the built-in DataTable filter UI. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still use the broader backend operator set.
+
 For full `DataTable` usage, see [`@tailor-platform/app-shell`](../core/README.md).

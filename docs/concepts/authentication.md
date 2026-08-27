@@ -241,7 +241,9 @@ What the user sees follows from the props you already pass:
 - With `guardComponent`, the guard renders in place of your app.
 - With neither, `useAuth().isAuthenticated` flips to `false` and your own UI decides.
 
-Transient failures are treated differently and deliberately do not end the session: a 5xx, a request timeout, and a network failure all leave it intact so a brief outage does not sign users out.
+Not every failed refresh ends the session. A request timeout, a network failure, and a plain 5xx from the token endpoint all leave it intact, so a dropped connection does not sign users out.
+
+The line is drawn on the shape of the response, not on how transient the underlying cause is. Any rejection the token endpoint returns as a 4xx carrying an `error` code ends the session — the sole exception is `use_dpop_nonce`. A server that reports overload as `400 {"error":"server_error"}` or `400 {"error":"temporarily_unavailable"}` will therefore sign users out, as will a 5xx that carries a `WWW-Authenticate` header. If you operate the token endpoint, prefer a bare 5xx for conditions you want treated as retryable.
 
 To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events:
 

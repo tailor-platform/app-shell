@@ -728,10 +728,14 @@ describe("AuthProvider", () => {
       });
     });
 
-    it("should trigger exactly one login for the teardown event sequence", async () => {
+    it("should drive auto-login from auth_state_changed only, not from logout", async () => {
       // auth-public-client 0.6.0 tears a server-rejected session down itself,
       // emitting `logout` immediately followed by `auth_state_changed`. Only the
-      // latter drives auto-login, so the pair must still yield a single redirect.
+      // latter may drive auto-login: if `logout` drove it too, the pair would
+      // race two redirects. Asserting `logout` alone is inert is what makes this
+      // test discriminating — asserting only the final count would still pass
+      // with the event filter removed, because loginInFlightRef would absorb
+      // the duplicate.
       let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
 
       const mockAddEventListener = vi.fn(
@@ -764,15 +768,22 @@ describe("AuthProvider", () => {
         expect(mockLogin).not.toHaveBeenCalled();
       });
 
-      // logoutImpl resets to ready + unauthenticated before emitting.
+      // logoutImpl resets to ready + unauthenticated before it emits anything,
+      // so the state is already login-eligible when `logout` arrives.
       currentState = {
         isAuthenticated: false,
         error: null,
         isReady: true,
       };
 
-      act(() => {
+      await act(async () => {
         authEventListener?.({ type: "logout", data: currentState });
+      });
+
+      // `logout` must not be what triggers the redirect.
+      expect(mockLogin).not.toHaveBeenCalled();
+
+      await act(async () => {
         authEventListener?.({ type: "auth_state_changed", data: currentState });
       });
 

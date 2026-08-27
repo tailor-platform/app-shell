@@ -728,6 +728,59 @@ describe("AuthProvider", () => {
       });
     });
 
+    it("should trigger exactly one login for the teardown event sequence", async () => {
+      // auth-public-client 0.6.0 tears a server-rejected session down itself,
+      // emitting `logout` immediately followed by `auth_state_changed`. Only the
+      // latter drives auto-login, so the pair must still yield a single redirect.
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+
+      const mockAddEventListener = vi.fn(
+        (listener: (event: { type: string; data?: unknown }) => void) => {
+          authEventListener = listener;
+          return () => {};
+        },
+      );
+
+      let currentState = {
+        isAuthenticated: true,
+        error: null as string | null,
+        isReady: true,
+      };
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockClient = createMockAuthClient(undefined, {
+        login: mockLogin,
+        addEventListener: mockAddEventListener,
+        getState: vi.fn(() => currentState),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockLogin).not.toHaveBeenCalled();
+      });
+
+      // logoutImpl resets to ready + unauthenticated before emitting.
+      currentState = {
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      };
+
+      act(() => {
+        authEventListener?.({ type: "logout", data: currentState });
+        authEventListener?.({ type: "auth_state_changed", data: currentState });
+      });
+
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it("should not login when autoLogin is false", async () => {
       const state = {
         isAuthenticated: false,

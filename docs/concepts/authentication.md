@@ -127,7 +127,7 @@ const authClient = createAuthClient({
 
 ### Using `authClient.fetch` with a GraphQL Client
 
-Pass `authClient.fetch` directly to your GraphQL client (e.g., urql). It transparently handles DPoP proof generation and token refresh on every request:
+Pass `authClient.fetch` directly to your GraphQL client (e.g., urql). It transparently handles DPoP proof generation and token refresh on every request. If the server rejects the grant outright, it ends the session rather than replaying a dead token — see [Session expiry](#session-expiry):
 
 ```tsx
 import { createAuthClient, AuthProvider } from "@tailor-platform/app-shell";
@@ -204,10 +204,10 @@ function ChatScreen() {
 
 ### `EnhancedAuthClient` Methods
 
-| Method / Property | Type           | Description                                                               |
-| ----------------- | -------------- | ------------------------------------------------------------------------- |
-| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                           |
-| `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation and token refresh |
+| Method / Property | Type           | Description                                                                                                      |
+| ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                                                                  |
+| `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation, token refresh, and session teardown on a rejected grant |
 
 ## `AuthProvider` Props
 
@@ -224,6 +224,33 @@ The authentication provider works seamlessly with AppShell's data layer, automat
 - OAuth2 token management
 - Authenticated fetch with DPoP proof generation
 - Session persistence and token refresh
+- Session teardown when the server rejects the grant
 - Automatic redirects for protected routes (via `autoLogin`)
 
 OAuth callback parameters (`code`, `state`) are automatically cleaned from the URL after a successful login — no dedicated callback page is needed.
+
+## Session expiry
+
+Access tokens are refreshed transparently, so a session normally outlives individual token lifetimes without the app doing anything.
+
+When a refresh cannot succeed — the refresh token has expired, been revoked, or is otherwise rejected by the token endpoint — the auth client ends the session instead of retrying indefinitely. It clears stored tokens, sets `isAuthenticated` to `false`, and emits `logout` followed by `auth_state_changed`.
+
+What the user sees follows from the props you already pass:
+
+- With `autoLogin`, `AuthProvider` redirects to sign-in.
+- With `guardComponent`, the guard renders in place of your app.
+- With neither, `useAuth().isAuthenticated` flips to `false` and your own UI decides.
+
+Transient failures are treated differently and deliberately do not end the session: a 5xx, a request timeout, and a network failure all leave it intact so a brief outage does not sign users out.
+
+To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events:
+
+```tsx
+useEffect(() => {
+  return authClient.addEventListener((event) => {
+    if (event.type === "logout") {
+      clearAppCaches();
+    }
+  });
+}, [authClient]);
+```

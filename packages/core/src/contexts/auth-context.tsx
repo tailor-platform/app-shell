@@ -31,11 +31,11 @@ export interface AuthClientConfig {
 /**
  * Internal type for tracking OAuth callback handling status.
  *
- * "denied" is distinct from "rejected": the authorization server itself
- * returned an `error` in the callback (the user declined consent, the client
- * is not permitted, and so on). Re-initiating login from that state would
- * bounce straight back to the same refusal, so auto-login stays out of it,
- * whereas "rejected" (a local exchange failure) is worth another attempt.
+ * "denied" is distinct from "rejected": it means another automatic login round
+ * trip will not help, so auto-login stays out of it. Two things land there —
+ * the authorization server refusing outright (the user declined consent, the
+ * client is not permitted), and a callback that keeps failing after its retry
+ * budget is spent. "rejected" is a failure that is still worth one more attempt.
  */
 type CallbackStatus = "idle" | "pending" | "resolved" | "rejected" | "denied";
 
@@ -119,6 +119,56 @@ const createCallbackStatusManager = () => {
 };
 
 /**
+ * How many times auto-login may re-run a callback that failed, per browser tab.
+ *
+ * A failed callback is worth one more attempt: the common causes (a PKCE
+ * verifier clobbered by a concurrent teardown, two tabs racing the same
+ * single-slot OAuth storage) clear on a second pass. A failure that survives
+ * the retry is treated as permanent, because every attempt is a full-page
+ * redirect to the authorization server — without a ceiling, a deterministic
+ * failure (blocked or evicted browser storage, a misconfigured client) becomes
+ * an unbounded redirect loop, which is worse than the dead end it replaced.
+ */
+const MAX_AUTOMATIC_CALLBACK_RETRIES = 1;
+
+const CALLBACK_FAILURE_COUNT_KEY = "tailor-app-shell:oauth-callback-failures";
+
+/**
+ * Read the consecutive-failure count for this tab.
+ *
+ * sessionStorage rather than memory, because each retry is a full page load and
+ * an in-memory counter resets with it. Reports failures as exhausted when
+ * storage is unreadable: without somewhere to count, the ceiling cannot be
+ * enforced, and looping is the worse failure. Such a browser cannot complete
+ * the flow anyway — the auth client needs IndexedDB.
+ */
+const readCallbackFailureCount = (): number | null => {
+  try {
+    const raw = window.sessionStorage.getItem(CALLBACK_FAILURE_COUNT_KEY);
+    const count = raw == null ? 0 : Number.parseInt(raw, 10);
+    return Number.isNaN(count) ? null : count;
+  } catch {
+    return null;
+  }
+};
+
+const recordCallbackFailure = (count: number) => {
+  try {
+    window.sessionStorage.setItem(CALLBACK_FAILURE_COUNT_KEY, String(count + 1));
+  } catch {
+    // Nothing to do: the read side already treats unreadable storage as exhausted.
+  }
+};
+
+const clearCallbackFailures = () => {
+  try {
+    window.sessionStorage.removeItem(CALLBACK_FAILURE_COUNT_KEY);
+  } catch {
+    // Best effort — a stale count only costs a retry, and it is tab-scoped.
+  }
+};
+
+/**
  * Create an enhanced authentication client.
  *
  * This wrapper around the original createAuthClient adds convenience methods
@@ -179,18 +229,40 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
       // make this look like a callback URL forever, and a reload just replays the
       // same failing callback. Strip them on every outcome, before settling, so
       // whatever observes the settled status already sees a clean URL.
-      const settle = (finish: () => void) => {
+      //
+      // The outcome is classified from the resulting auth state rather than from
+      // whether the promise resolved. Not every failure throws — an `error` from
+      // the authorization server and a state mismatch both return normally after
+      // recording the error — so resolve-vs-throw is the wrong signal, and using
+      // it would let those two skip the retry ceiling and loop.
+      const settle = () => {
         clearOAuthCallbackParams();
-        finish();
+
+        if (baseClient.getState().isAuthenticated) {
+          clearCallbackFailures();
+          resolve();
+          return;
+        }
+
+        const failureCount = readCallbackFailureCount();
+        if (
+          authServerReportedError ||
+          failureCount === null ||
+          failureCount >= MAX_AUTOMATIC_CALLBACK_RETRIES
+        ) {
+          deny();
+          return;
+        }
+
+        recordCallbackFailure(failureCount);
+        reject();
       };
 
       baseClient
         .handleCallback()
-        .then(() => {
-          settle(authServerReportedError ? deny : resolve);
-        })
+        .then(settle)
         .catch((error) => {
-          settle(reject);
+          settle();
           console.error("Failed to handle OAuth callback:", error);
         });
     }
@@ -325,7 +397,14 @@ const clearOAuthCallbackParams = () => {
     url.searchParams.delete(param);
   }
 
-  window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+  // Preserve the existing history state: routers keep their own bookkeeping on
+  // it (react-router stores {usr, key, idx}, Next.js stores __NA), and replacing
+  // it with a fresh object desyncs them for the rest of the session.
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    `${url.pathname}${url.search}${url.hash}`,
+  );
 };
 
 /**

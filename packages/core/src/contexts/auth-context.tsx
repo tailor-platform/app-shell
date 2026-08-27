@@ -30,8 +30,14 @@ export interface AuthClientConfig {
 
 /**
  * Internal type for tracking OAuth callback handling status.
+ *
+ * "denied" is distinct from "rejected": the authorization server itself
+ * returned an `error` in the callback (the user declined consent, the client
+ * is not permitted, and so on). Re-initiating login from that state would
+ * bounce straight back to the same refusal, so auto-login stays out of it,
+ * whereas "rejected" (a local exchange failure) is worth another attempt.
  */
-type CallbackStatus = "idle" | "pending" | "resolved" | "rejected";
+type CallbackStatus = "idle" | "pending" | "resolved" | "rejected" | "denied";
 
 /**
  * Enhanced auth client with additional helper methods
@@ -93,6 +99,9 @@ const createCallbackStatusManager = () => {
         },
         reject: () => {
           updateStatus("rejected");
+        },
+        deny: () => {
+          updateStatus("denied");
         },
       };
     },
@@ -160,13 +169,28 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
     const currentUrl = new URL(window.location.href);
 
     if (isOAuthCallbackUrl(currentUrl)) {
-      const { resolve, reject } = callbackManager.start();
+      // Read this before the callback settles: the parameters are stripped below.
+      const authServerReportedError = currentUrl.searchParams.has("error");
+      const { resolve, reject, deny } = callbackManager.start();
+
+      // auth-public-client only cleans the URL when the code exchange succeeds.
+      // Every failure path returns (or throws) with `code` / `error` still in the
+      // query string, which would otherwise leave the app wedged: the parameters
+      // make this look like a callback URL forever, and a reload just replays the
+      // same failing callback. Strip them on every outcome, before settling, so
+      // whatever observes the settled status already sees a clean URL.
+      const settle = (finish: () => void) => {
+        clearOAuthCallbackParams();
+        finish();
+      };
 
       baseClient
         .handleCallback()
-        .then(resolve)
+        .then(() => {
+          settle(authServerReportedError ? deny : resolve);
+        })
         .catch((error) => {
-          reject();
+          settle(reject);
           console.error("Failed to handle OAuth callback:", error);
         });
     }
@@ -261,12 +285,47 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const isOAuthCallbackUrl = (url: URL) =>
   url.searchParams.has("code") || url.searchParams.has("error");
 
+/**
+ * Query parameters an authorization server may add when redirecting back.
+ * Removed together so a settled callback cannot be mistaken for a pending one.
+ */
+const OAUTH_CALLBACK_PARAMS = [
+  "code",
+  "state",
+  "error",
+  "error_description",
+  "error_uri",
+  "iss",
+] as const;
+
 const isCurrentOAuthCallbackUrl = () => {
   if (typeof window === "undefined") {
     return false;
   }
 
   return isOAuthCallbackUrl(new URL(window.location.href));
+};
+
+/**
+ * Remove the OAuth callback parameters from the current URL, preserving any
+ * unrelated query parameters and the hash. Uses `replaceState` so the failed
+ * callback does not stay in session history for the back button to replay.
+ */
+const clearOAuthCallbackParams = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  if (!isOAuthCallbackUrl(url)) {
+    return;
+  }
+
+  for (const param of OAUTH_CALLBACK_PARAMS) {
+    url.searchParams.delete(param);
+  }
+
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
 };
 
 /**
@@ -321,7 +380,11 @@ type AuthProviderProps = {
  * - initial deferred auto-login attempt
  * - duplicate login prevention
  */
-const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) => {
+const useAutoLogin = (props: {
+  client: EnhancedAuthClient;
+  enabled?: boolean;
+  callbackStatus: CallbackStatus;
+}) => {
   // Prevent duplicate login redirects when multiple auth_state_changed
   // events fire before the first login attempt settles.
   const loginInFlightRef = useRef<Promise<void> | null>(null);
@@ -331,7 +394,18 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
     const authState = props.client.getState();
     if (
       !props.enabled ||
-      isCurrentOAuthCallbackUrl() ||
+      // Hold off while a code exchange is in flight, and stand down entirely
+      // once the authorization server has refused: redirecting back would ask
+      // the same question and get the same answer.
+      props.callbackStatus === "pending" ||
+      props.callbackStatus === "denied" ||
+      // Only consult the URL while no callback has been claimed. This client
+      // starts the exchange itself whenever it is constructed on a callback
+      // URL, so "idle" here means nobody is handling these parameters and
+      // redirecting is unsafe. Once a callback has run, its status is the
+      // authority — reading the URL instead is what used to strand the app,
+      // because a failed callback left its parameters in place forever.
+      (props.callbackStatus === "idle" && isCurrentOAuthCallbackUrl()) ||
       !authState.isReady ||
       authState.isAuthenticated ||
       loginInFlightRef.current
@@ -348,7 +422,7 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
       .finally(() => {
         loginInFlightRef.current = null;
       });
-  }, [props.client, props.enabled]);
+  }, [props.client, props.enabled, props.callbackStatus]);
 
   return {
     subscribeAuthState: useCallback(
@@ -459,20 +533,23 @@ const useCallbackStatus = (client: EnhancedAuthClient): CallbackStatus => {
 export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
+  // Read callback status first so it can be passed to both useAutoLogin and
+  // useEnsureAuthInitialized. This lets each retry automatically when a pending
+  // callback settles — the new function references trigger their effects again,
+  // which is what lets auto-login resume after a failed callback instead of
+  // being stranded by leftover parameters in the URL.
+  const callbackStatus = useCallbackStatus(client);
+
   // Set up auth state subscription for auto-login orchestration
   const { subscribeAuthState } = useAutoLogin({
     client,
     enabled: props.autoLogin,
+    callbackStatus,
   });
 
   // Use useSyncExternalStore for state management from auth client.
   const getSnapshot = useCallback(() => client.getState(), [client]);
   const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
-
-  // Read callback status first so it can be passed to useEnsureAuthInitialized.
-  // This lets initialization retry automatically when a pending callback settles
-  // to rejected — the new ensureInitialized reference triggers the useEffect again.
-  const callbackStatus = useCallbackStatus(client);
 
   // Prepare a shared initialization function so AuthProvider can start the
   // first auth check itself without depending on router navigation.

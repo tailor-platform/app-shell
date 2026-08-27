@@ -955,6 +955,115 @@ describe("createAuthClient", () => {
     expect(mockHandleCallback).toHaveBeenCalledTimes(1);
   });
 
+  describe("failed callback recovery", () => {
+    const renderWithClient = (
+      baseOverrides: Record<string, unknown>,
+      handleCallback: ReturnType<typeof vi.fn>,
+    ) => {
+      vi.mocked(createAuthClientMock).mockReturnValue({
+        ...makeBaseClient(handleCallback),
+        ...baseOverrides,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      return createAuthClient({ clientId: "test", appUri: "https://test.com" });
+    };
+
+    const readyUnauthenticated = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: true,
+    };
+
+    it("strips callback parameters when the authorization server returns an error", async () => {
+      window.history.replaceState(
+        {},
+        "",
+        "/dashboard?error=access_denied&error_description=No&tab=orders",
+      );
+
+      // The error branch upstream resolves rather than throwing, and never
+      // cleans the URL — only the success path does.
+      renderWithClient({}, vi.fn().mockResolvedValue(undefined));
+
+      await waitFor(() => {
+        expect(window.location.search).toBe("?tab=orders");
+      });
+      // Unrelated parameters and the path survive; only the OAuth ones go.
+      expect(window.location.pathname).toBe("/dashboard");
+    });
+
+    it("strips callback parameters when the code exchange throws", async () => {
+      vi.stubGlobal("console", { ...console, error: vi.fn() });
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
+
+      renderWithClient({}, vi.fn().mockRejectedValue(new Error("Missing session data")));
+
+      await waitFor(() => {
+        expect(window.location.search).toBe("");
+      });
+    });
+
+    it("resumes auto-login after a failed code exchange", async () => {
+      // The dead end this guards: before the parameters were cleared, `?code=`
+      // stayed in the URL, attemptAutoLogin treated the page as a live callback
+      // forever, and the app sat on guardComponent with no way back — a reload
+      // just replayed the same failing callback.
+      vi.stubGlobal("console", { ...console, error: vi.fn() });
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const client = renderWithClient(
+        { getState: vi.fn(() => readyUnauthenticated), login: mockLogin },
+        vi.fn().mockRejectedValue(new Error("Missing session data")),
+      );
+
+      render(
+        <AuthProvider client={client} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it("does not re-initiate login after the authorization server denies the callback", async () => {
+      // Recovering from a denial by redirecting straight back to the same
+      // authorization server would ask the same question and get the same
+      // answer — a redirect loop, which is worse than the dead end it replaced.
+      window.history.replaceState({}, "", "/?error=access_denied");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      // Stable reference: useSyncExternalStore loops if getSnapshot returns a
+      // fresh object each call.
+      const deniedState = { ...readyUnauthenticated, error: "access_denied" };
+      const client = renderWithClient(
+        { getState: vi.fn(() => deniedState), login: mockLogin },
+        vi.fn().mockResolvedValue(undefined),
+      );
+
+      render(
+        <AuthProvider client={client} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      // Let the callback settle and every queued auto-login check run.
+      await act(async () => {
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+      // The URL is still cleaned up, so a deliberate reload can retry.
+      expect(window.location.search).toBe("");
+    });
+  });
+
   it("does not call handleCallback when URL has no OAuth parameters", () => {
     // URL is already "/" from afterEach reset
 

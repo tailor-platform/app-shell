@@ -18,4 +18,4 @@ Let forms be driven natively: `Form` now accepts `id`, and `Select`, `Combobox`,
 
 For non-string items, `itemToStringValue` controls serialisation (items shaped `{ value, label }` use `value` automatically). It is not available on `Combobox`'s creatable variants, which derive it internally so the pending-item sentinel serialises correctly.
 
-Note this is a _separate_ mechanism from `Form`'s `onFormSubmit`, which collects values from registered `Field.Root`s keyed by the field's `name` — that path already worked without `name` on the control and is unchanged.
+Note this is a _separate_ mechanism from `Form`'s `onFormSubmit`, which collects values from registered `Field.Root`s keyed by the field's `name` — that path already worked without `name` on the control and is unchanged. Consequently, **inside a `Field.Root` the field's `name` wins and the control's own `name` is ignored**; set it only when the control is used outside a `Field.Root`.

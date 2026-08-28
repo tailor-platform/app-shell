@@ -762,12 +762,24 @@ describe("Select — form participation", () => {
     expect(ref.current?.name).toBe("direction");
   });
 
-  it("marks the hidden input required", () => {
-    const { container } = render(
-      <Select items={items} name="direction" required aria-label="Direction" />,
+  it("required blocks submission and surfaces the field error", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+    render(
+      <Form noValidate onFormSubmit={onFormSubmit}>
+        <Field.Root name="direction">
+          <Field.Label>Direction</Field.Label>
+          <Select items={items} required />
+          <Field.Error match="valueMissing">Direction is required.</Field.Error>
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
     );
-    const input = container.querySelector('input[name="direction"]') as HTMLInputElement;
-    expect(input.required).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onFormSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText("Direction is required.")).not.toBeNull();
   });
 
   it("reflects the value chosen by the user", async () => {
@@ -793,6 +805,29 @@ describe("Select — form participation", () => {
     await waitFor(() => {
       expect(container.querySelector('input[name="direction"]')).not.toBeNull();
     });
+  });
+
+  it("defers to the Field's name when nested in a Field.Root", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+    const { container } = render(
+      <Form noValidate onFormSubmit={onFormSubmit}>
+        <Field.Root name="fieldName">
+          <Field.Label>Direction</Field.Label>
+          {/* The control's own `name` is deliberately different — the Field's
+              name must win, so this one never reaches the DOM or the payload. */}
+          <Select items={items} name="controlName" defaultValue="Up" />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+
+    expect(container.querySelector('input[name="fieldName"]')).not.toBeNull();
+    expect(container.querySelector('input[name="controlName"]')).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onFormSubmit.mock.calls[0][0]).toMatchObject({ fieldName: "Up" });
+    expect(onFormSubmit.mock.calls[0][0]).not.toHaveProperty("controlName");
   });
 
   it("keeps working with Form + Field.Root, which reads registered fields", async () => {

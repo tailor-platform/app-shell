@@ -60,11 +60,16 @@ interface ComboboxPropsBase<T> {
   id?: string;
   /**
    * Identifies the field when a form is submitted. Base UI renders a hidden
-   * input under this name, so the selected value is picked up by native form
-   * submission — including `Form`'s `onFormSubmit`.
+   * input under this name, so the selected value is picked up by **native**
+   * form submission (`new FormData(form)`, a plain `<form>`, server actions).
    *
    * For non-string items, pair this with `itemToStringValue` to control how
    * the value is serialised.
+   *
+   * **Inside a `Field.Root`, the field's `name` wins and this prop is ignored** —
+   * the hidden input is named after the field. Set it only when the control is
+   * used outside a `Field.Root` (or when it must differ from the field name,
+   * which it cannot).
    */
   name?: string;
   /**

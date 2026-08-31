@@ -12,13 +12,16 @@ const packageJson = require("./package.json") as {
 // Keep runtime deps external so consumers resolve their own copies,
 // especially shared packages like react/react-dom, and so dist stays
 // aligned with the packages we declare in package.json.
-const externalPackages = Object.keys({
+const externalPackagePatterns = Object.keys({
   ...packageJson.dependencies,
   ...packageJson.peerDependencies,
-});
-const escapeForRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const externalPackagePatterns = externalPackages.map(
-  (pkg) => new RegExp(`^${escapeForRegex(pkg)}(?:/.*)?$`),
+}).map(
+  /**
+   * `esmExternalRequirePlugin` accepts package matchers as regexes.
+   * Escape package names first so future deps like `foo.bar` still match as
+   * literal package ids instead of regex syntax.
+   */
+  (pkg) => new RegExp(`^${pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:/.*)?$`),
 );
 
 const whenProductionBuild = (mode: string) => mode === "production";

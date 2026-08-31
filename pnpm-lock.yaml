@@ -57,7 +57,6 @@ catalogs:
 
 overrides:
   brace-expansion: 5.0.9
-  diff: 8.0.3
 
 importers:
 

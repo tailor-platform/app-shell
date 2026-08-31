@@ -1,18 +1,26 @@
-import tsconfigPaths from "vite-tsconfig-paths";
+import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
-import { externalizeDeps } from "vite-plugin-externalize-deps";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+
+const require = createRequire(import.meta.url);
+const packageJson = require("./package.json") as {
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+// AppShell ships as a library, not a standalone app bundle.
+// Keep runtime deps external so consumers resolve their own copies,
+// especially shared packages like react/react-dom, and so dist stays
+// aligned with the packages we declare in package.json.
+const externalPackages = Object.keys({
+  ...packageJson.dependencies,
+  ...packageJson.peerDependencies,
+});
 
 const whenProductionBuild = (mode: string) => mode === "production";
 
 export default defineConfig(({ mode }) => ({
   plugins: [
-    /**
-     * Automatically externalize imports in `dependencies` and `peerDependencies`.
-     */
-    externalizeDeps(),
-
     /**
      * Generate TypeScript declaration files.
      */
@@ -22,15 +30,13 @@ export default defineConfig(({ mode }) => ({
     }),
 
     /**
-     * Support path mapping based on tsconfig.json.
-     */
-    tsconfigPaths(),
-
-    /**
      * Support React JSX/TSX.
      */
     react(),
   ],
+  resolve: {
+    tsconfigPaths: true,
+  },
   publicDir: "src/assets",
   build: {
     lib: {
@@ -46,5 +52,10 @@ export default defineConfig(({ mode }) => ({
     minify: whenProductionBuild(mode),
     sourcemap: !whenProductionBuild(mode),
     cssCodeSplit: false,
+    rolldownOptions: {
+      // Vite 8 no longer uses the helper plugin we previously relied on,
+      // so keep the library externalization rule explicit here.
+      external: externalPackages,
+    },
   },
 }));

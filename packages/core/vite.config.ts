@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, esmExternalRequirePlugin } from "vite";
 import dts from "vite-plugin-dts";
 
 const require = createRequire(import.meta.url);
@@ -16,6 +16,10 @@ const externalPackages = Object.keys({
   ...packageJson.dependencies,
   ...packageJson.peerDependencies,
 });
+const escapeForRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const externalPackagePatterns = externalPackages.map(
+  (pkg) => new RegExp(`^${escapeForRegex(pkg)}(?:/.*)?$`),
+);
 
 const whenProductionBuild = (mode: string) => mode === "production";
 
@@ -33,6 +37,14 @@ export default defineConfig(({ mode }) => ({
      * Support React JSX/TSX.
      */
     react(),
+
+    /**
+     * Vite 8 / Rolldown preserves `require()` for externalized modules.
+     * Convert those back to ESM imports so the browser can load our ESM dist.
+     */
+    esmExternalRequirePlugin({
+      external: externalPackagePatterns,
+    }),
   ],
   resolve: {
     tsconfigPaths: true,
@@ -52,10 +64,5 @@ export default defineConfig(({ mode }) => ({
     minify: whenProductionBuild(mode),
     sourcemap: !whenProductionBuild(mode),
     cssCodeSplit: false,
-    rolldownOptions: {
-      // Vite 8 no longer uses the helper plugin we previously relied on,
-      // so keep the library externalization rule explicit here.
-      external: externalPackages,
-    },
   },
 }));

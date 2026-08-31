@@ -3,26 +3,31 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, esmExternalRequirePlugin } from "vite";
 import dts from "vite-plugin-dts";
 
-const require = createRequire(import.meta.url);
-const packageJson = require("./package.json") as {
-  dependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
+/**
+ * Vite 8 / Rolldown preserves `require()` for externalized modules.
+ * Convert those back to ESM imports so the browser can load our ESM dist.
+ */
+const externalizeDeps = () => {
+  const require = createRequire(import.meta.url);
+  const packageJson = require("./package.json") as {
+    dependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  };
+
+  return esmExternalRequirePlugin({
+    external: Object.keys({
+      ...packageJson.dependencies,
+      ...packageJson.peerDependencies,
+    }).map(
+      /**
+       * `esmExternalRequirePlugin` accepts package matchers as regexes.
+       * Escape package names first so future deps like `foo.bar` still match as
+       * literal package ids instead of regex syntax.
+       */
+      (pkg) => new RegExp(`^${pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:/.*)?$`),
+    ),
+  });
 };
-// AppShell ships as a library, not a standalone app bundle.
-// Keep runtime deps external so consumers resolve their own copies,
-// especially shared packages like react/react-dom, and so dist stays
-// aligned with the packages we declare in package.json.
-const externalPackagePatterns = Object.keys({
-  ...packageJson.dependencies,
-  ...packageJson.peerDependencies,
-}).map(
-  /**
-   * `esmExternalRequirePlugin` accepts package matchers as regexes.
-   * Escape package names first so future deps like `foo.bar` still match as
-   * literal package ids instead of regex syntax.
-   */
-  (pkg) => new RegExp(`^${pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:/.*)?$`),
-);
 
 const whenProductionBuild = (mode: string) => mode === "production";
 
@@ -42,12 +47,9 @@ export default defineConfig(({ mode }) => ({
     react(),
 
     /**
-     * Vite 8 / Rolldown preserves `require()` for externalized modules.
-     * Convert those back to ESM imports so the browser can load our ESM dist.
+     * Automatically externalize imports in `dependencies` and `peerDependencies`.
      */
-    esmExternalRequirePlugin({
-      external: externalPackagePatterns,
-    }),
+    externalizeDeps(),
   ],
   resolve: {
     tsconfigPaths: true,

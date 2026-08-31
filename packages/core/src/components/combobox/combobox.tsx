@@ -25,8 +25,10 @@ type ComboboxRootProps<Value, Multiple extends boolean | undefined = false> = Pi
   | "itemToStringValue"
   | "disabled"
   | "children"
-  // Form participation: Base UI renders a hidden input named `name`, which is
-  // what native submission (and `Form`'s `onFormSubmit`) reads.
+  // Form participation: Base UI renders a hidden input named `name` for
+  // **native** submission (`new FormData`, a plain `<form>`, server actions).
+  // `Form`'s `onFormSubmit` is a separate path — it reduces over registered
+  // `Field.Root`s, and already works without `name` on the control.
   | "name"
   | "form"
   | "required"

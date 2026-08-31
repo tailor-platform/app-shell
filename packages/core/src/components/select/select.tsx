@@ -9,10 +9,14 @@ import { cn } from "@/lib/utils";
 // upstream changes don't leak as breaking changes to consumers.
 //
 // The form-participation props (`name`, `form`, `required`, `inputRef`,
-// `itemToStringValue`) are included so the select can be submitted as part of a
-// native form: Base UI renders a hidden input named `name`, which is what
-// `Form`'s `onFormSubmit` reads. `itemToStringValue` controls how a non-string
-// item is serialised into that input.
+// `itemToStringValue`) are included so the select participates in **native**
+// form submission: Base UI renders a hidden input named `name`, which is what
+// `new FormData(form)`, a plain `<form>`, and server actions read.
+// `itemToStringValue` controls how a non-string item is serialised into it.
+//
+// `Form`'s `onFormSubmit` is a separate path — it reduces over registered
+// `Field.Root`s via `field.getValue()`, and already works without `name` on
+// the control. Inside a `Field.Root` the field's name wins.
 type SelectRootProps<Value, Multiple extends boolean | undefined = false> = Pick<
   React.ComponentProps<typeof BaseSelect.Root<Value, Multiple>>,
   | "value"

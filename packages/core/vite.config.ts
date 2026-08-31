@@ -1,18 +1,38 @@
-import tsconfigPaths from "vite-tsconfig-paths";
+import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
-import { externalizeDeps } from "vite-plugin-externalize-deps";
-import { defineConfig } from "vite";
+import { defineConfig, esmExternalRequirePlugin } from "vite";
 import dts from "vite-plugin-dts";
+
+/**
+ * Vite 8 / Rolldown preserves `require()` for externalized modules.
+ * Convert those back to ESM imports so the browser can load our ESM dist.
+ */
+const externalizeDeps = () => {
+  const require = createRequire(import.meta.url);
+  const packageJson = require("./package.json") as {
+    dependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  };
+
+  return esmExternalRequirePlugin({
+    external: Object.keys({
+      ...packageJson.dependencies,
+      ...packageJson.peerDependencies,
+    }).map(
+      /**
+       * `esmExternalRequirePlugin` accepts package matchers as regexes.
+       * Escape package names first so future deps like `foo.bar` still match as
+       * literal package ids instead of regex syntax.
+       */
+      (pkg) => new RegExp(`^${pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:/.*)?$`),
+    ),
+  });
+};
 
 const whenProductionBuild = (mode: string) => mode === "production";
 
 export default defineConfig(({ mode }) => ({
   plugins: [
-    /**
-     * Automatically externalize imports in `dependencies` and `peerDependencies`.
-     */
-    externalizeDeps(),
-
     /**
      * Generate TypeScript declaration files.
      */
@@ -22,15 +42,18 @@ export default defineConfig(({ mode }) => ({
     }),
 
     /**
-     * Support path mapping based on tsconfig.json.
-     */
-    tsconfigPaths(),
-
-    /**
      * Support React JSX/TSX.
      */
     react(),
+
+    /**
+     * Automatically externalize imports in `dependencies` and `peerDependencies`.
+     */
+    externalizeDeps(),
   ],
+  resolve: {
+    tsconfigPaths: true,
+  },
   publicDir: "src/assets",
   build: {
     lib: {

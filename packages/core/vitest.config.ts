@@ -1,11 +1,13 @@
 import path from "node:path";
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 const coverageEnabled = process.env.CI === "true";
+const projectDir = import.meta.dirname;
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     environment: "happy-dom",
     typecheck: {
@@ -18,9 +20,9 @@ export default defineConfig({
       reportsDirectory: "coverage",
     },
     resolveSnapshotPath: (testPath, snapExtension) => {
-      const relativePath = path.relative(__dirname, testPath);
+      const relativePath = path.relative(projectDir, testPath);
       const snapshotName = relativePath.replaceAll(path.sep, "__");
-      return path.join(__dirname, "__snapshots__", snapshotName + snapExtension);
+      return path.join(projectDir, "__snapshots__", snapshotName + snapExtension);
     },
   },
 });

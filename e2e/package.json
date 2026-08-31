@@ -10,10 +10,10 @@
     "deploy:backend": "cd backend && tailor-sdk apply --workspace-id $TAILOR_PLATFORM_WORKSPACE_ID --yes"
   },
   "devDependencies": {
-    "@playwright/test": "1.51.1",
+    "@playwright/test": "1.55.1",
     "@tailor-platform/app-shell": "workspace:*",
     "@tailor-platform/sdk": "catalog:",
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "4.3.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

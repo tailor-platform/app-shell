@@ -54,6 +54,6 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "vite": ">= 7.3.5"
+    "vite": ">= 7.3.6"
   }
 }

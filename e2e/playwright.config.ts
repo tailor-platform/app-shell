@@ -17,6 +17,7 @@ const suites = [
 export default defineConfig({
   testDir: "./tests",
   forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
   projects: suites.map((suite) => ({
     name: suite.name,
     testDir: `./${suite.root}`,

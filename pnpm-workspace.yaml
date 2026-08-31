@@ -19,7 +19,7 @@ catalog:
   tailwindcss: ^4.2.4
   tsdown: ^0.22.14
   typescript: ^5.9.3
-  vite: ^7.3.2
+  vite: ^7.3.6
   vitest: ^4.1.10
 
 # Supply-chain security settings.

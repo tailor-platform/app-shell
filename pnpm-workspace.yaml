@@ -61,6 +61,10 @@ overrides:
   # Keep an explicit workspace override so lockfile refreshes continue to force
   # 5.0.9 until the upstream graph converges on newer minimatch releases.
   brace-expansion: 5.0.9
+  # api-extractor still resolves diff@8.0.2, which pnpm audit flags as
+  # GHSA-73rr-hh4g-fpgx. Force the smallest patched 8.0.x here so lockfile
+  # refreshes keep the fix without widening this toolchain to diff@9.
+  "@microsoft/api-extractor>diff": 8.0.3
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.

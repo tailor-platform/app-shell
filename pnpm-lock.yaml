@@ -57,6 +57,7 @@ catalogs:
 
 overrides:
   brace-expansion: 5.0.9
+  '@microsoft/api-extractor>diff': 8.0.3
 
 importers:
 

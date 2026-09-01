@@ -265,9 +265,8 @@ export type AppShellProps = SharedAppShellProps & {
 /**
  * AppShell's props plus the routing mode. Memory routing is absent from the
  * public {@link AppShellProps} so it cannot be shipped by accident; tests reach
- * it via `@tailor-platform/app-shell/testing`.
- *
- * @internal
+ * it via `@tailor-platform/app-shell/testing`, which re-exports this as
+ * `TestAppShellProps`.
  */
 export type AppShellInternalProps = AppShellProps & RouterContainerProps;
 

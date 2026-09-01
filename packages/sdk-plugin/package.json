@@ -42,12 +42,13 @@
   "devDependencies": {
     "@tailor-platform/app-shell": "workspace:*",
     "@tailor-platform/sdk": "catalog:",
+    "@tailor-platform/sdk-v1": "npm:@tailor-platform/sdk@1.85.1",
     "oxlint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "5.9.3",
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@tailor-platform/sdk": ">= 1.0.0"
+    "@tailor-platform/sdk": "^1.0.0 || ^2.0.0"
   }
 }

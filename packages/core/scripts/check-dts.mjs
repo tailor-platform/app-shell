@@ -195,6 +195,7 @@ try {
 
   console.log("check-dts: type-checking with skipLibCheck: false…");
   let output = "";
+  let tscFailed = false;
   try {
     output = run(
       process.execPath,
@@ -207,21 +208,32 @@ try {
       project,
     );
   } catch (error) {
+    tscFailed = true;
     output = `${error.stdout ?? ""}${error.stderr ?? ""}`;
   }
 
-  const lines = output.split("\n").filter((line) => /error TS\d+:/.test(line));
-
   /**
-   * Only errors inside our own published package (or in the importing file,
-   * which means an entry point is unusable) fail the gate. Errors inside other
-   * packages' declarations are reported but not fatal — we do not control them,
-   * and failing on them is exactly the trap that rules out turning
-   * `skipLibCheck: false` on repo-wide.
+   * Three buckets:
+   * - `ours` — inside our published package, or in the importing file (which
+   *   means an entry point is unusable). Fatal; this is what the gate exists for.
+   * - `foreign` — inside another package's declarations. Reported but not fatal:
+   *   we do not control them, and failing on them is exactly the trap that rules
+   *   out turning `skipLibCheck: false` on repo-wide.
+   * - `unexpected` — anything not attributed to a file, e.g. a tsconfig error.
+   *   Fatal, so a broken harness can never masquerade as a clean run.
+   *
+   * tsc always writes diagnostic paths with forward slashes, on every platform.
    */
-  const ourPrefix = join("node_modules", corePkg.name.replace("/", "/"));
-  const ours = lines.filter((line) => line.includes(ourPrefix) || line.startsWith("check.tsx"));
-  const foreign = lines.filter((line) => !ours.includes(line));
+  const ourPrefix = `node_modules/${corePkg.name}`;
+  const ours = [];
+  const foreign = [];
+  const unexpected = [];
+  for (const line of output.split("\n")) {
+    if (!/error TS\d+:/.test(line)) continue;
+    if (line.includes(ourPrefix) || line.startsWith("check.tsx")) ours.push(line);
+    else if (line.includes("node_modules/")) foreign.push(line);
+    else unexpected.push(line);
+  }
 
   if (foreign.length > 0) {
     console.log(`\ncheck-dts: ${foreign.length} error(s) in third-party declarations (not fatal):`);
@@ -239,6 +251,10 @@ try {
         "every consumer compiling with `skipLibCheck: false`. Fix them at the source in\n" +
         "packages/core/src, then re-run `pnpm --filter @tailor-platform/app-shell check-dts`.",
     );
+  } else if (unexpected.length > 0 || (tscFailed && foreign.length === 0)) {
+    failed = true;
+    console.error("\ncheck-dts: FAILED — the check itself did not run cleanly:\n");
+    console.error(output.trim() || "(no output)");
   } else {
     console.log(
       `\ncheck-dts: OK — published declarations type-check cleanly for ${entryPoints.map((e) => e.subpath).join(", ")}.`,

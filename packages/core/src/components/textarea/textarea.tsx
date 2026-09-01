@@ -13,9 +13,22 @@ import { textareaBaseClasses } from "@/lib/input-classes";
 //
 // `cols` is deliberately absent: the base classes include `w-full`, which
 // always beats the width `cols` asks for, so accepting it would be accepting a
-// prop that can never do anything. Width is the parent's job.
-type TextareaProps = Omit<React.ComponentProps<typeof BaseField.Control>, "render" | "onChange"> &
-  Pick<React.ComponentProps<"textarea">, "onChange" | "rows" | "wrap">;
+// prop that can never do anything. Width is the parent's job. `wrap` goes with
+// it — per the HTML spec `wrap="hard"` only takes effect when `cols` is set,
+// and `wrap="off"` is defined relative to `cols`, so with no `cols` every value
+// collapses to the default `soft`.
+//
+// `className` is narrowed to `string`. Base UI types it as
+// `string | ((state) => string | undefined)`, but it is merged here through
+// `cn()`, which silently drops a function — so the function form would
+// type-check and then do nothing.
+type TextareaProps = Omit<
+  React.ComponentProps<typeof BaseField.Control>,
+  "render" | "onChange" | "className"
+> &
+  Pick<React.ComponentProps<"textarea">, "onChange" | "rows"> & {
+    className?: string;
+  };
 
 /**
  * A styled multi-line text input.

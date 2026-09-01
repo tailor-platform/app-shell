@@ -23,7 +23,7 @@ import { Textarea } from "@tailor-platform/app-shell";
 
 ## Props
 
-Accepts Base UI's field-control props plus the standard HTML `<textarea>` props, minus `cols` — the control is always `w-full`, so `cols` could never affect its width. The most common:
+Accepts Base UI's field-control props plus the standard HTML `<textarea>` props, minus `cols` and `wrap` — the control is always `w-full`, so `cols` could never affect its width, and every `wrap` value depends on `cols` being set. The most common:
 
 | Prop            | Type                                    | Default | Description                                             |
 | --------------- | --------------------------------------- | ------- | ------------------------------------------------------- |

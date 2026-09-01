@@ -649,7 +649,7 @@ const table = useDataTable({
 
 **Import:** `import { Textarea } from '@tailor-platform/app-shell'`
 **Purpose:** Multi-line text input. Maps to spec field types: `text`, long-form `string`. Use instead of `Input` whenever the value is prose (notes, descriptions, replies, reasons).
-**API:** `TextareaProps` — Base UI's field control (`value`, `defaultValue`, `onChange`, `onValueChange`, `disabled`, `required`, `readOnly`, `name`, aria-\*) rendered as a `<textarea>`, plus `rows` / `wrap`.
+**API:** `TextareaProps` — Base UI's field control (`value`, `defaultValue`, `onChange`, `onValueChange`, `disabled`, `required`, `readOnly`, `name`, aria-\*) rendered as a `<textarea>`, plus `rows`. `cols` / `wrap` are not accepted — the control is `w-full`, so neither can take effect.
 **Sizing:** no fixed height — `rows` sets the visible line count and the user can drag it taller. `min-h-16` is a hard floor, so `rows` only takes effect from 3 up. Width is the parent's job: the control is `w-full`, and `cols` is not accepted because it could never win against that. Do **not** reach for `Input` and a height override; `Input` is locked to `h-9`, and an `astw:h-*` override from a consuming app resolves to nothing unless that exact utility was compiled into the package CSS.
 **Field integration:** drops straight into `Field.Root` for label/description/error wiring exactly like `Input` and `Checkbox` — no bespoke `error` prop.
 **Example:**

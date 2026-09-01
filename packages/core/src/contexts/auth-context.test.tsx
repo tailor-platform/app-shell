@@ -731,6 +731,70 @@ describe("AuthProvider", () => {
       });
     });
 
+    it("should drive auto-login from auth_state_changed only, not from logout", async () => {
+      // auth-public-client 0.6.0 tears a server-rejected session down itself,
+      // emitting `logout` immediately followed by `auth_state_changed`. Only the
+      // latter may drive auto-login: if `logout` drove it too, the pair would
+      // race two redirects. Asserting `logout` alone is inert is what makes this
+      // test discriminating — asserting only the final count would still pass
+      // with the event filter removed, because loginInFlightRef would absorb
+      // the duplicate.
+      let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
+
+      const mockAddEventListener = vi.fn(
+        (listener: (event: { type: string; data?: unknown }) => void) => {
+          authEventListener = listener;
+          return () => {};
+        },
+      );
+
+      let currentState = {
+        isAuthenticated: true,
+        error: null as string | null,
+        isReady: true,
+      };
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockClient = createMockAuthClient(undefined, {
+        login: mockLogin,
+        addEventListener: mockAddEventListener,
+        getState: vi.fn(() => currentState),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockLogin).not.toHaveBeenCalled();
+      });
+
+      // logoutImpl resets to ready + unauthenticated before it emits anything,
+      // so the state is already login-eligible when `logout` arrives.
+      currentState = {
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      };
+
+      await act(async () => {
+        authEventListener?.({ type: "logout", data: currentState });
+      });
+
+      // `logout` must not be what triggers the redirect.
+      expect(mockLogin).not.toHaveBeenCalled();
+
+      await act(async () => {
+        authEventListener?.({ type: "auth_state_changed", data: currentState });
+      });
+
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it("should not login when autoLogin is false", async () => {
       const state = {
         isAuthenticated: false,

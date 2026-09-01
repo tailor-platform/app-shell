@@ -17,7 +17,7 @@ import {
   type AppInfo,
   type ContextData,
 } from "@/contexts/appshell-context";
-import { RouterContainer } from "@/routing/router";
+import { RouterContainer, type RouterContainerProps } from "@/routing/router";
 import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
 import { BreadcrumbOverrideProvider } from "@/contexts/breadcrumb-context";
 import { CommandPaletteProvider, type SearchSource } from "@/contexts/command-palette-context";
@@ -262,7 +262,15 @@ export type AppShellProps = SharedAppShellProps & {
   modules?: Modules;
 };
 
-export const AppShell = (props: AppShellProps) => {
+/**
+ * AppShell's props plus the routing mode. Memory routing is absent from the
+ * public {@link AppShellProps} so it cannot be shipped by accident; tests reach
+ * it via `@tailor-platform/app-shell/testing`, which re-exports this as
+ * `TestAppShellProps`.
+ */
+export type AppShellInternalProps = AppShellProps & RouterContainerProps;
+
+export const AppShellInternal = (props: AppShellInternalProps) => {
   const clientSide = useIsClient();
 
   // Set context data for guards (module scope)
@@ -270,6 +278,11 @@ export const AppShell = (props: AppShellProps) => {
   setContextData(contextData);
 
   const { modules: propsModules, rootComponent, rootGuards } = props;
+
+  // Narrow the union once so the router gets a well-typed pair.
+  const routingMode: RouterContainerProps = props.memory
+    ? { memory: true, initialEntries: props.initialEntries }
+    : { memory: false };
 
   const modules = useMemo(() => {
     if (!propsModules) return propsModules;
@@ -383,7 +396,7 @@ export const AppShell = (props: AppShellProps) => {
         <BreadcrumbOverrideProvider>
           <CommandPaletteProvider searchSources={props.searchSources}>
             <ThemeProvider defaultColorTheme={props.defaultColorTheme}>
-              <RouterContainer>
+              <RouterContainer {...routingMode}>
                 {props.children}
                 <BuiltInCommandPalette />
               </RouterContainer>
@@ -403,13 +416,27 @@ export const AppShell = (props: AppShellProps) => {
  * Users should not call this directly. Use the vite-plugin for automatic
  * page configuration, or pass the `modules` prop for manual configuration.
  */
-AppShell.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
+AppShellInternal.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
 
   const WrappedAppShell: FC<AppShellProps> = (props) => {
-    return <AppShell {...props} modules={allModules} />;
+    return <AppShellInternal {...props} modules={allModules} memory={false} />;
   };
 
   return WrappedAppShell;
 };
+
+/**
+ * The app shell: providers, routing, and layout for a Tailor application.
+ *
+ * Always browser routing. `memory` is pinned off rather than merely absent from
+ * {@link AppShellProps}, so it holds for JS callers and `any` spreads too;
+ * `@tailor-platform/app-shell/testing` is the only way to memory routing.
+ */
+const AppShellPublic = (props: AppShellProps) => <AppShellInternal {...props} memory={false} />;
+AppShellPublic.WithPages = AppShellInternal.WithPages;
+
+export const AppShell: ((props: AppShellProps) => React.ReactNode) & {
+  WithPages: (pages: PageEntry[]) => FC<AppShellProps>;
+} = AppShellPublic;

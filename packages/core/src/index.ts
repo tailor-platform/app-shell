@@ -80,15 +80,43 @@ export {
   type ErrorBoundaryComponent,
 } from "./resource";
 
-// Re-exports react-router hooks and components
+// React Router surface. AppShell owns the router, so apps consume it from here
+// and never depend on `react-router` directly — a second copy is a second,
+// disjoint router context.
+//
+// Withheld: router construction (`createBrowserRouter`, `RouterProvider`,
+// `MemoryRouter`, `Routes`, `Route`), available for tests from
+// `@tailor-platform/app-shell/testing`; and the data-router APIs
+// (`useLoaderData`, `Form`, `useSubmit`, `useFetcher`), which AppShell does not
+// wire up. Missing something? Add it here rather than in an app's dependencies.
 export {
   useLocation,
-  useNavigate,
   useParams,
   useSearchParams,
-  useRouteError,
+  useMatch,
+  useResolvedPath,
+  useNavigate,
+  useNavigation,
   Link,
+  NavLink,
   Navigate,
+  useBlocker,
+  useBeforeUnload,
+  useRouteError,
+} from "react-router";
+
+export type {
+  Blocker,
+  BlockerFunction,
+  LinkProps,
+  Location,
+  NavLinkProps,
+  NavigateFunction,
+  NavigateOptions,
+  Navigation,
+  Params,
+  PathMatch,
+  To,
 } from "react-router";
 
 // File-based routing types

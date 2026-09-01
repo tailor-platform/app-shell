@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => ({
         "app-shell": "src/index.ts",
         "style-entry": "src/style-entry.ts",
         "vite-plugin": "src/vite-plugin.ts",
+        testing: "src/testing/index.ts",
       },
       cssFileName: "app-shell-core",
       formats: ["es"],

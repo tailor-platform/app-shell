@@ -23,6 +23,9 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
   window.history.replaceState({}, "", "/");
+  // The failed-callback retry counter is tab-scoped and survives page loads by
+  // design, so it has to be reset between tests or it leaks across them.
+  window.sessionStorage.clear();
 });
 
 const LoadingGuard = () => <div>Loading...</div>;
@@ -1017,6 +1020,205 @@ describe("createAuthClient", () => {
     createAuthClient({ clientId: "test", appUri: "https://test.com" });
 
     expect(mockHandleCallback).toHaveBeenCalledTimes(1);
+  });
+
+  describe("failed callback recovery", () => {
+    const renderWithClient = (
+      baseOverrides: Record<string, unknown>,
+      handleCallback: ReturnType<typeof vi.fn>,
+    ) => {
+      vi.mocked(createAuthClientMock).mockReturnValue({
+        ...makeBaseClient(handleCallback),
+        ...baseOverrides,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      return createAuthClient({ clientId: "test", appUri: "https://test.com" });
+    };
+
+    // A client whose callback has already settled, so the gate must consult the
+    // status rather than the (still dirty) URL.
+    const createSettledCallbackClient = (
+      status: "resolved" | "rejected",
+      overrides: Record<string, unknown>,
+    ) =>
+      ({
+        ...makeBaseClient(vi.fn()),
+        getAppUri: vi.fn(() => "https://api.test.com"),
+        getCallbackStatusSnapshot: () => status,
+        subscribeCallbackStatus: () => () => {},
+        ...overrides,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any;
+
+    const readyUnauthenticated = {
+      isAuthenticated: false,
+      error: null as string | null,
+      isReady: true,
+    };
+
+    it("resumes auto-login after a failed code exchange", async () => {
+      // The dead end this guards: before the parameters were cleared, `?code=`
+      // stayed in the URL, attemptAutoLogin treated the page as a live callback
+      // forever, and the app sat on guardComponent with no way back — a reload
+      // just replayed the same failing callback.
+      vi.stubGlobal("console", { ...console, error: vi.fn() });
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const client = renderWithClient(
+        { getState: vi.fn(() => readyUnauthenticated), login: mockLogin },
+        vi.fn().mockRejectedValue(new Error("Missing session data")),
+      );
+
+      render(
+        <AuthProvider client={client} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it("stops re-initiating login once the callback retry budget is spent", async () => {
+      // Every retry is a full-page redirect to the authorization server, so a
+      // deterministic failure (evicted storage, misconfigured client) would loop
+      // forever without a ceiling.
+      vi.stubGlobal("console", { ...console, error: vi.fn() });
+      window.sessionStorage.setItem("tailor-app-shell:oauth-callback-failures", "1");
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const client = renderWithClient(
+        { getState: vi.fn(() => readyUnauthenticated), login: mockLogin },
+        vi.fn().mockRejectedValue(new Error("Missing session data")),
+      );
+
+      render(
+        <AuthProvider client={client} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+    });
+
+    it("treats a denial that throws as denied rather than retryable", async () => {
+      // The server's `error` branch clears OAuth temp data first, which opens
+      // IndexedDB and can reject. The denial must not be reclassified as a
+      // retryable failure just because it arrived as a throw.
+      vi.stubGlobal("console", { ...console, error: vi.fn() });
+      window.history.replaceState({}, "", "/?error=access_denied");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const client = renderWithClient(
+        { getState: vi.fn(() => readyUnauthenticated), login: mockLogin },
+        vi.fn().mockRejectedValue(new Error("storage unavailable")),
+      );
+
+      render(
+        <AuthProvider client={client} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+      // Nothing was spent from the retry budget: this outcome is terminal.
+      expect(window.sessionStorage.getItem("tailor-app-shell:oauth-callback-failures")).toBeNull();
+    });
+
+    it("clears the retry budget once a callback succeeds", async () => {
+      window.sessionStorage.setItem("tailor-app-shell:oauth-callback-failures", "1");
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
+
+      const authenticated = { isAuthenticated: true, error: null, isReady: true };
+      renderWithClient(
+        { getState: vi.fn(() => authenticated) },
+        vi.fn().mockResolvedValue(undefined),
+      );
+
+      await waitFor(() => {
+        expect(
+          window.sessionStorage.getItem("tailor-app-shell:oauth-callback-failures"),
+        ).toBeNull();
+      });
+    });
+
+    it("lets a settled callback drive auto-login even if parameters remain in the URL", async () => {
+      // Isolates the narrowing in the auto-login gate: the URL is only an
+      // authority while the status is "idle". Once a callback has run, its
+      // status decides — reading the URL there is what stranded the app, since
+      // a failed callback used to leave its parameters in place permanently.
+      window.history.replaceState({}, "", "/?code=auth-code-123&state=xyz");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const settledState = { isAuthenticated: false, error: "boom", isReady: true };
+      const mockClient = createSettledCallbackClient("rejected", {
+        login: mockLogin,
+        getState: vi.fn(() => settledState),
+      });
+
+      render(
+        <AuthProvider client={mockClient} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it("does not re-initiate login after the authorization server denies the callback", async () => {
+      // Recovering from a denial by redirecting straight back to the same
+      // authorization server would ask the same question and get the same
+      // answer — a redirect loop, which is worse than the dead end it replaced.
+      window.history.replaceState({}, "", "/?error=access_denied");
+
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      // Stable reference: useSyncExternalStore loops if getSnapshot returns a
+      // fresh object each call.
+      const deniedState = { ...readyUnauthenticated, error: "access_denied" };
+      const client = renderWithClient(
+        { getState: vi.fn(() => deniedState), login: mockLogin },
+        vi.fn().mockResolvedValue(undefined),
+      );
+
+      render(
+        <AuthProvider client={client} autoLogin={true}>
+          <div>Content</div>
+        </AuthProvider>,
+      );
+
+      // Let the callback settle and every queued auto-login check run.
+      await act(async () => {
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockLogin).not.toHaveBeenCalled();
+      // The parameters stay in the URL until upstream cleans failed callbacks
+      // too (auth-public-client#139) — correctness here rests on the status.
+      expect(window.location.search).toBe("?error=access_denied");
+    });
   });
 
   it("does not call handleCallback when URL has no OAuth parameters", () => {

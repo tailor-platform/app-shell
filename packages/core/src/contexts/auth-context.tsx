@@ -30,8 +30,14 @@ export interface AuthClientConfig {
 
 /**
  * Internal type for tracking OAuth callback handling status.
+ *
+ * "denied" is distinct from "rejected": it means another automatic login round
+ * trip will not help, so auto-login stays out of it. Two things land there —
+ * the authorization server refusing outright (the user declined consent, the
+ * client is not permitted), and a callback that keeps failing after its retry
+ * budget is spent. "rejected" is a failure that is still worth one more attempt.
  */
-type CallbackStatus = "idle" | "pending" | "resolved" | "rejected";
+type CallbackStatus = "idle" | "pending" | "resolved" | "rejected" | "denied";
 
 /**
  * Enhanced auth client with additional helper methods
@@ -94,6 +100,9 @@ const createCallbackStatusManager = () => {
         reject: () => {
           updateStatus("rejected");
         },
+        deny: () => {
+          updateStatus("denied");
+        },
       };
     },
     subscribe: (listener: () => void) => {
@@ -107,6 +116,56 @@ const createCallbackStatusManager = () => {
       };
     },
   };
+};
+
+/**
+ * How many times auto-login may re-run a callback that failed, per browser tab.
+ *
+ * A failed callback is worth one more attempt: the common causes (a PKCE
+ * verifier clobbered by a concurrent teardown, two tabs racing the same
+ * single-slot OAuth storage) clear on a second pass. A failure that survives
+ * the retry is treated as permanent, because every attempt is a full-page
+ * redirect to the authorization server — without a ceiling, a deterministic
+ * failure (blocked or evicted browser storage, a misconfigured client) becomes
+ * an unbounded redirect loop, which is worse than the dead end it replaced.
+ */
+const MAX_AUTOMATIC_CALLBACK_RETRIES = 1;
+
+const CALLBACK_FAILURE_COUNT_KEY = "tailor-app-shell:oauth-callback-failures";
+
+/**
+ * Read the consecutive-failure count for this tab.
+ *
+ * sessionStorage rather than memory, because each retry is a full page load and
+ * an in-memory counter resets with it. Reports failures as exhausted when
+ * storage is unreadable: without somewhere to count, the ceiling cannot be
+ * enforced, and looping is the worse failure. Such a browser cannot complete
+ * the flow anyway — the auth client needs IndexedDB.
+ */
+const readCallbackFailureCount = (): number | null => {
+  try {
+    const raw = window.sessionStorage.getItem(CALLBACK_FAILURE_COUNT_KEY);
+    const count = raw == null ? 0 : Number.parseInt(raw, 10);
+    return Number.isNaN(count) ? null : count;
+  } catch {
+    return null;
+  }
+};
+
+const recordCallbackFailure = (count: number) => {
+  try {
+    window.sessionStorage.setItem(CALLBACK_FAILURE_COUNT_KEY, String(count + 1));
+  } catch {
+    // Nothing to do: the read side already treats unreadable storage as exhausted.
+  }
+};
+
+const clearCallbackFailures = () => {
+  try {
+    window.sessionStorage.removeItem(CALLBACK_FAILURE_COUNT_KEY);
+  } catch {
+    // Best effort — a stale count only costs a retry, and it is tab-scoped.
+  }
 };
 
 /**
@@ -160,13 +219,47 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
     const currentUrl = new URL(window.location.href);
 
     if (isOAuthCallbackUrl(currentUrl)) {
-      const { resolve, reject } = callbackManager.start();
+      // Read this before the callback settles: the parameters are stripped below.
+      const authServerReportedError = currentUrl.searchParams.has("error");
+      const { resolve, reject, deny } = callbackManager.start();
+
+      // The outcome is classified from the resulting auth state rather than from
+      // whether the promise resolved. Not every failure throws — an `error` from
+      // the authorization server and a state mismatch both return normally after
+      // recording the error — so resolve-vs-throw is the wrong signal, and using
+      // it would let those two skip the retry ceiling and loop.
+      //
+      // Note the URL is deliberately NOT cleaned here. auth-public-client owns
+      // callback URL cleanup and currently performs it only on success
+      // (tailor-platform/auth-public-client#139); on failure the parameters
+      // remain until that is fixed upstream. app-shell stays correct regardless,
+      // because auto-login is gated on this settled status, not on the URL.
+      const settle = () => {
+        if (baseClient.getState().isAuthenticated) {
+          clearCallbackFailures();
+          resolve();
+          return;
+        }
+
+        const failureCount = readCallbackFailureCount();
+        if (
+          authServerReportedError ||
+          failureCount === null ||
+          failureCount >= MAX_AUTOMATIC_CALLBACK_RETRIES
+        ) {
+          deny();
+          return;
+        }
+
+        recordCallbackFailure(failureCount);
+        reject();
+      };
 
       baseClient
         .handleCallback()
-        .then(resolve)
+        .then(settle)
         .catch((error) => {
-          reject();
+          settle();
           console.error("Failed to handle OAuth callback:", error);
         });
     }
@@ -321,7 +414,11 @@ type AuthProviderProps = {
  * - initial deferred auto-login attempt
  * - duplicate login prevention
  */
-const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) => {
+const useAutoLogin = (props: {
+  client: EnhancedAuthClient;
+  enabled?: boolean;
+  callbackStatus: CallbackStatus;
+}) => {
   // Prevent duplicate login redirects when multiple auth_state_changed
   // events fire before the first login attempt settles.
   const loginInFlightRef = useRef<Promise<void> | null>(null);
@@ -331,7 +428,20 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
     const authState = props.client.getState();
     if (
       !props.enabled ||
-      isCurrentOAuthCallbackUrl() ||
+      // Hold off while a code exchange is in flight, and stand down entirely
+      // once the authorization server has refused: redirecting back would ask
+      // the same question and get the same answer.
+      props.callbackStatus === "pending" ||
+      props.callbackStatus === "denied" ||
+      // Only consult the URL while no callback has been claimed. This client
+      // starts the exchange itself whenever it is constructed on a callback
+      // URL, so "idle" here means nobody is handling these parameters and
+      // redirecting is unsafe. Once a callback has run, its status is the
+      // authority — reading the URL instead is what used to strand the app:
+      // upstream cleans the URL only on success, so a failed callback leaves
+      // its parameters in place (auth-public-client#139) and a URL-based gate
+      // treats the page as a live callback forever.
+      (props.callbackStatus === "idle" && isCurrentOAuthCallbackUrl()) ||
       !authState.isReady ||
       authState.isAuthenticated ||
       loginInFlightRef.current
@@ -348,7 +458,7 @@ const useAutoLogin = (props: { client: EnhancedAuthClient; enabled?: boolean }) 
       .finally(() => {
         loginInFlightRef.current = null;
       });
-  }, [props.client, props.enabled]);
+  }, [props.client, props.enabled, props.callbackStatus]);
 
   return {
     subscribeAuthState: useCallback(
@@ -459,20 +569,23 @@ const useCallbackStatus = (client: EnhancedAuthClient): CallbackStatus => {
 export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) => {
   const client = props.client;
 
+  // Read callback status first so it can be passed to both useAutoLogin and
+  // useEnsureAuthInitialized. This lets each retry automatically when a pending
+  // callback settles — the new function references trigger their effects again,
+  // which is what lets auto-login resume after a failed callback instead of
+  // being stranded by leftover parameters in the URL.
+  const callbackStatus = useCallbackStatus(client);
+
   // Set up auth state subscription for auto-login orchestration
   const { subscribeAuthState } = useAutoLogin({
     client,
     enabled: props.autoLogin,
+    callbackStatus,
   });
 
   // Use useSyncExternalStore for state management from auth client.
   const getSnapshot = useCallback(() => client.getState(), [client]);
   const authState = useSyncExternalStore(subscribeAuthState, getSnapshot);
-
-  // Read callback status first so it can be passed to useEnsureAuthInitialized.
-  // This lets initialization retry automatically when a pending callback settles
-  // to rejected — the new ensureInitialized reference triggers the useEffect again.
-  const callbackStatus = useCallbackStatus(client);
 
   // Prepare a shared initialization function so AuthProvider can start the
   // first auth check itself without depending on router navigation.

@@ -217,6 +217,31 @@ function ChatScreen() {
 | `autoLogin`      | `boolean`               | No       | Automatically redirect unauthenticated users to login |
 | `guardComponent` | `() => React.ReactNode` | No       | Rendered while loading or when not authenticated      |
 
+## When the callback fails
+
+A sign-in that comes back from the authorization server unsuccessfully — the user declined, the client is not permitted, the exchange failed — leaves `isAuthenticated` false with the reason on `useAuth().error`. The callback parameters are cleaned out of the URL on every outcome (since `auth-public-client` 0.6.1), preserving unrelated query parameters, the hash, and the router's history state.
+
+With `autoLogin`, a failure that looks recoverable is retried once automatically. Beyond that, and for any refusal the authorization server issues explicitly, AppShell stops: sending the user straight back would ask the same question, get the same answer, and loop.
+
+That makes the guard the place where a failed sign-in becomes visible. A guard that only ever renders a spinner will spin indefinitely in this case, so render the error and offer a way out:
+
+```tsx
+const AuthGate = () => {
+  const { isReady, error, login } = useAuth();
+
+  if (error) {
+    return (
+      <div>
+        <p>Sign-in failed: {error}</p>
+        <button onClick={() => login()}>Try again</button>
+      </div>
+    );
+  }
+
+  return isReady ? <LoginPrompt /> : <LoadingScreen />;
+};
+```
+
 ## Integration with AppShell
 
 The authentication provider works seamlessly with AppShell's data layer, automatically handling:

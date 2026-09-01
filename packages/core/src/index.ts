@@ -145,6 +145,8 @@ export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";
 export { Form, type FormProps } from "./components/form";
 export { Menu } from "./components/menu";
+// Shared by the `position` prop on `Menu.Content` and `Tooltip.Content`.
+export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Tooltip } from "./components/tooltip";

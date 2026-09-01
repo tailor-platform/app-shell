@@ -44,6 +44,24 @@ type FormProps<FormValues extends Record<string, any> = Record<string, any>> = P
 };
 
 /**
+ * Keep the exported component type explicit instead of letting the
+ * `function Form` + `Form.displayName` namespace merge define it.
+ *
+ * Why:
+ * - a `function` declaration carrying an expando `displayName` is emitted as a
+ *   function/namespace merge, which the declaration rollup duplicates as a
+ *   second, non-exported `declare namespace Form` (TS2395 for consumers)
+ * - keeps public `.d.ts` output resilient to resolver/config changes
+ * - preserves the `FormValues` generic so `<Form<MyValues>>` still infers
+ */
+interface FormComponent {
+  <FormValues extends Record<string, any> = Record<string, any>>(
+    props: FormProps<FormValues>,
+  ): React.JSX.Element;
+  displayName?: string;
+}
+
+/**
  * A form element with consolidated error handling and validation.
  *
  * Wraps every child `Field.Root` in a shared validation / error context.
@@ -107,17 +125,15 @@ type FormProps<FormValues extends Record<string, any> = Record<string, any>> = P
  * </Form>
  * ```
  */
-function Form<FormValues extends Record<string, any> = Record<string, any>>({
-  className,
-  children,
-  ...props
-}: FormProps<FormValues>) {
+const Form: FormComponent = function Form<
+  FormValues extends Record<string, any> = Record<string, any>,
+>({ className, children, ...props }: FormProps<FormValues>) {
   return (
     <BaseForm<FormValues> data-slot="form" className={cn(className)} {...props}>
       {children}
     </BaseForm>
   );
-}
+};
 Form.displayName = "Form";
 
 export { Form, type FormProps };

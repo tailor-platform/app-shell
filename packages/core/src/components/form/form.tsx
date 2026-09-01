@@ -44,15 +44,9 @@ type FormProps<FormValues extends Record<string, any> = Record<string, any>> = P
 };
 
 /**
- * Keep the exported component type explicit instead of letting the
- * `function Form` + `Form.displayName` namespace merge define it.
- *
- * Why:
- * - a `function` declaration carrying an expando `displayName` is emitted as a
- *   function/namespace merge, which the declaration rollup duplicates as a
- *   second, non-exported `declare namespace Form` (TS2395 for consumers)
- * - keeps public `.d.ts` output resilient to resolver/config changes
- * - preserves the `FormValues` generic so `<Form<MyValues>>` still infers
+ * Typed explicitly rather than as a `function` + `displayName` expando: that form is
+ * emitted as a namespace merge, which the declaration rollup duplicates as a second,
+ * non-exported `declare namespace Form` — TS2395 for consumers. See `check-dts`.
  */
 interface FormComponent {
   <FormValues extends Record<string, any> = Record<string, any>>(

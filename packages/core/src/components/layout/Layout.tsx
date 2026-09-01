@@ -252,14 +252,9 @@ function LayoutRoot({
 }
 
 /**
- * Keep the exported static API type explicit instead of relying on
- * `Object.assign(...)` inference.
- *
- * Why:
- * - `Layout.Header = Header` on a `function Layout` declaration emits
- *   `var Header: typeof import("./Layout").Header`, which the declaration
- *   rollup rewrites to a bare `Header` — a namespace, not a type (TS2709)
- * - keeps public `.d.ts` output resilient to resolver/config changes
+ * Typed explicitly rather than assigning onto a `function Layout`: that form emits
+ * `var Header: typeof import("./Layout").Header`, which the declaration rollup
+ * rewrites to a bare `Header` — a namespace, not a type (TS2709). See `check-dts`.
  */
 type LayoutComponent = typeof LayoutRoot & {
   Column: typeof Column;

@@ -3,23 +3,12 @@
  * Regression gate for the type declarations we publish to npm.
  *
  * `packages/core/tsconfig.json` sets `skipLibCheck: true`, so `pnpm type-check`
- * never type-checks our own emitted `.d.ts`. Broken declarations therefore ship
- * silently and only blow up for consumers who compile with
- * `skipLibCheck: false` — the errors originate inside our package, not theirs.
+ * never reads our own emitted `.d.ts` — broken declarations ship silently and
+ * only surface for consumers compiling with `skipLibCheck: false`. Flipping that
+ * flag here would not help: it checks `node_modules`, not what we emit. Hence the
+ * round-trip through a real tarball install.
  *
- * Flipping `skipLibCheck` in `packages/core/tsconfig.json` does *not* close that
- * gap: it checks the `.d.ts` files in `node_modules`, not the ones we emit. So
- * this gate reproduces what a consumer actually does:
- *
- *   build -> pnpm pack -> install the tarball into a throwaway project
- *   -> `tsc --noEmit` with `skipLibCheck: false`
- *
- * Every published entry point that declares `types` is imported and checked, so
- * a new entry point is covered the moment it is added to `exports`.
- *
- * Usage:
- *   node scripts/check-dts.mjs          # via `pnpm --filter ... check-dts`
- *   KEEP_DTS_FIXTURE=1 node scripts/...  # keep the scratch project for debugging
+ * Set KEEP_DTS_FIXTURE=1 to keep the scratch project for debugging.
  */
 
 import { execFileSync } from "node:child_process";
@@ -43,11 +32,7 @@ const vitePluginDir = join(repoRoot, "packages", "vite-plugin");
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
 const corePkg = readJson(join(corePkgDir, "package.json"));
 
-/**
- * The consumer-facing toolchain. Pinned to the versions this repo already
- * resolves so the gate fails on our declarations changing, never on a
- * background npm release.
- */
+/** Pin to what the repo already resolves, so a background npm release can't fail the gate. */
 const pinned = (name) => {
   const path = join(corePkgDir, "node_modules", name, "package.json");
   if (!existsSync(path)) {
@@ -56,12 +41,7 @@ const pinned = (name) => {
   return readJson(path).version;
 };
 
-/**
- * Entry points to verify: every `exports` subpath that publishes types.
- * Derived from `package.json` rather than hard-coded, so `./testing` and any
- * future entry point are covered automatically. CSS-only subpaths
- * (`./styles`, `./themes/*`) declare no `types` and are skipped.
- */
+/** Derived rather than hard-coded, so a newly added entry point is covered automatically. */
 const collectEntryPoints = () => {
   const entries = [];
   for (const [subpath, value] of Object.entries(corePkg.exports ?? {})) {
@@ -93,7 +73,6 @@ if (entryPoints.length === 0) {
   process.exit(1);
 }
 
-// Fail early and clearly when the package has not been built.
 const missing = entryPoints.filter(({ types }) => !existsSync(join(corePkgDir, types)));
 if (missing.length > 0) {
   console.error(`check-dts: missing declaration output: ${missing.map((e) => e.types).join(", ")}`);
@@ -117,9 +96,8 @@ try {
     `check-dts: verifying ${entryPoints.length} entry point(s): ${entryPoints.map((e) => e.subpath).join(", ")}`,
   );
 
-  // Pack the local vite-plugin too. Core depends on it via `workspace:*`, which
-  // pack rewrites to a concrete version; installing our own tarball keeps the
-  // gate hermetic instead of resolving that version from the registry.
+  // Core depends on vite-plugin via `workspace:*`, which pack rewrites to a concrete
+  // version; packing it locally too keeps the gate off the registry.
   const corePkgTarball = pack(corePkgDir, tarballDir);
   const vitePluginTarball = pack(vitePluginDir, tarballDir);
   const vitePluginName = readJson(join(vitePluginDir, "package.json")).name;
@@ -142,12 +120,9 @@ try {
           typescript: pinned("typescript"),
           "@types/react": pinned("@types/react"),
           "@types/react-dom": pinned("@types/react-dom"),
-          // The `./vite-plugin` entry pulls in Vite's own declarations, which
-          // reference `node:*` builtins. Any real consumer of a Vite plugin has
-          // these installed; without them the gate drowns in unrelated errors.
+          // Vite's declarations reference `node:*`; without these the gate drowns in noise.
           "@types/node": pinned("@types/node"),
         },
-        // Make sure the workspace build of the vite plugin is what core resolves.
         overrides: { [vitePluginName]: `file:${vitePluginTarball}` },
       },
       null,
@@ -155,11 +130,8 @@ try {
     )}\n`,
   );
 
-  /**
-   * `target`/`lib` are set explicitly: without them, `@types/react` and
-   * `react-router` report `Cannot find name 'Iterable'`, which is an artefact of
-   * this config rather than a defect in our declarations.
-   */
+  // `target`/`lib` are explicit: without them `@types/react` and `react-router` report
+  // `Cannot find name 'Iterable'`, an artefact of this config rather than a real defect.
   writeFileSync(
     join(project, "tsconfig.json"),
     `${JSON.stringify(
@@ -212,18 +184,10 @@ try {
     output = `${error.stdout ?? ""}${error.stderr ?? ""}`;
   }
 
-  /**
-   * Three buckets:
-   * - `ours` — inside our published package, or in the importing file (which
-   *   means an entry point is unusable). Fatal; this is what the gate exists for.
-   * - `foreign` — inside another package's declarations. Reported but not fatal:
-   *   we do not control them, and failing on them is exactly the trap that rules
-   *   out turning `skipLibCheck: false` on repo-wide.
-   * - `unexpected` — anything not attributed to a file, e.g. a tsconfig error.
-   *   Fatal, so a broken harness can never masquerade as a clean run.
-   *
-   * tsc always writes diagnostic paths with forward slashes, on every platform.
-   */
+  // Third-party errors are reported but not fatal — failing on declarations we don't
+  // control is the trap that rules out `skipLibCheck: false` repo-wide. Errors with no
+  // file attribution (a bad tsconfig, a crash) stay fatal so a broken harness can't
+  // masquerade as a clean run. tsc always writes paths with forward slashes.
   const ourPrefix = `node_modules/${corePkg.name}`;
   const ours = [];
   const foreign = [];

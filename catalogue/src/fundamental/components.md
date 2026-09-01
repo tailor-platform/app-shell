@@ -194,6 +194,13 @@ import { Button, Link } from '@tailor-platform/app-shell';
 **API:** `to`, `replace`, `state`, etc. — same as `react-router`.
 **Used in patterns:** all (navigation).
 
+### `NavLink`
+
+**Import:** `import { NavLink } from '@tailor-platform/app-shell'`
+**Purpose:** `Link` that knows when it is active — for nav menus and tab bars.
+**API:** `to`, plus `className` / `style` / `children` as render functions receiving `{ isActive, isPending }`.
+**Used in patterns:** navigation shells.
+
 ### `Dialog`
 
 > Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/dialog.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/dialog.md)
@@ -729,6 +736,32 @@ Types for authoring guard functions used by `WithGuard` and `appShellPageProps.g
 **Import:** `import { useNavigate, useParams, useSearchParams, useLocation, useRouteError } from '@tailor-platform/app-shell'`
 **Purpose:** Re-exported from `react-router`. Use the AppShell barrel — never import from `react-router` directly.
 **Used in patterns:** all (navigation, route params, query state).
+
+### `useMatch`, `useResolvedPath`, `useNavigation`
+
+**Import:** `import { useMatch, useResolvedPath, useNavigation } from '@tailor-platform/app-shell'`
+**Purpose:** `useMatch` tests a pattern against the current location (active states); `useResolvedPath` resolves a relative path; `useNavigation` exposes the in-flight navigation for pending UI.
+**Used in patterns:** navigation shells, list→detail transitions.
+
+### `useBlocker`, `useBeforeUnload`
+
+**Import:** `import { useBlocker, useBeforeUnload } from '@tailor-platform/app-shell'`
+**Purpose:** Guard navigation away from unsaved work — `useBlocker` for in-app navigation, `useBeforeUnload` for closing or reloading the tab.
+**Used in patterns:** form-heavy screens.
+
+### Types
+
+**Import:** `import type { Location, NavigateFunction, NavigateOptions, To, Params, PathMatch, LinkProps, NavLinkProps, Navigation, Blocker, BlockerFunction } from '@tailor-platform/app-shell'`
+**Purpose:** The React Router types that go with the hooks above, so app code never imports types from `react-router` either.
+
+### Not exported
+
+`createBrowserRouter`, `RouterProvider`, `MemoryRouter`, `Routes`, `Route` — AppShell builds the router; a second one nested inside it breaks navigation. `useLoaderData`, `Form`, `useSubmit`, `useFetcher`, `useActionData` — AppShell does not wire up React Router's data layer. Load data in the page component or the app's data layer.
+
+### Testing
+
+**Import:** `import { AppShell, TestRouter } from '@tailor-platform/app-shell/testing'`
+**Purpose:** Test routing without a `react-router` dependency. `AppShell` from this entry also accepts `memory` / `initialEntries`, for mounting a page at a fixed URL; `TestRouter` gives a single component router context, and takes `path` when that component reads the route (`useParams` is `{}` without it).
 
 ### `createTypedPaths`
 

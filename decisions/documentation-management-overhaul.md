@@ -30,15 +30,44 @@ One rule: **humans edit intent (outlines + examples, in `src`); AI produces ever
 | **Doc inclusion signal**       | **Explicit**: a unit exists because a `*.docs.outline.md` claims it. Reconciled against `index.ts` (see Coverage below). **Folders are NOT the signal** — folderization is a free code-organization choice, decoupled from docs.                                                                                                                                                                                                           |
 | **Scope**                      | Public surface (exported from `index.ts`). Internal-only files need no outline and may be folder-grouped freely without implying documentation.                                                                                                                                                                                                                                                                                            |
 | **Doc unit / grouping**        | A unit = one output doc. Its `docs.outline.md` (colocated with the anchor source) declares a `sources:` glob list that may span `components/`, `hooks/`, `lib/`, `contexts/`, `types/` — so a unit can gather cross-cutting, even _shared_, code (e.g. `collection` types shared across DataTable/Kanban/Gantt).                                                                                                                           |
-| **Output location**            | Inferred from where the outline lives: `components/…` → `docs/components/`, `hooks/…` → `docs/api/`, `docs-src/concepts/…` → `docs/concepts/`, etc. Slug from a `group`/filename.                                                                                                                                                                                                                                                          |
+| **Output location**            | Inferred from where the outline lives: `components/…` → `docs/components/`, `hooks/…` → `docs/api/`, `docs-src/concepts/…` → `docs/concepts/`, `docs-src/pages/…` → `docs/pages/`, etc. Slug from a `group`/filename.                                                                                                                                                                                                                      |
 | **Change signal**              | **Blocking:** type-surface hash + outline hash. **Advisory (non-blocking):** test-snapshot hash.                                                                                                                                                                                                                                                                                                                                           |
 | **Examples**                   | Per unit: one runnable **`[unit].docs.examples.tsx`** — authored SOURCE, colocated with the outline in `src` — with keyed named exports; the `.md` code fences are **derived deterministically** by extracting those exports. Compiles in CI. Per-segment keys ⇒ regenerate only the changed example, reuse the rest as baseline.                                                                                                          |
 | **Docs site**                  | A dedicated **AppShell-based renderer app** (`docs-browser/`, dogfooding). Build-time `import.meta.glob` of the generated `docs/**/*.md` + the authored `**/*.docs.examples.tsx` — imports in place, **no copy**. Dev serves from source w/ HMR; prod bundles.                                                                                                                                                                             |
 | **Fix path**                   | Deterministic pre-merge `check-docs` gate (**no LLM**) blocks the PR on drift. The local `resync-docs` skill is the **only** fix path. `docs-update.lock.yml` is **retired**. Pre-commit _warns_; CI _blocks_.                                                                                                                                                                                                                             |
-| **Non-component docs**         | Unified source→output; the whole `docs/` output tree is 100% generated. Hooks = code-backed units. Concepts/patterns = prose outlines in `docs-src/` (outline-hash trigger only; may embed live-example tokens). Tokens = code-backed from theme CSS. Re-exports = lightweight **reference units** (prose + upstream link; claim symbols by name; no type-surface hash).                                                                   |
+| **Non-component docs**         | Unified source→output; the whole `docs/` output tree is 100% generated. Hooks = code-backed units. Concepts/patterns/pages = prose outlines in `docs-src/` (outline-hash trigger only; may embed live-example tokens); see the taxonomy section for how those three differ. Tokens = code-backed from theme CSS. Re-exports = lightweight **reference units** (prose + upstream link; claim symbols by name; no type-surface hash).        |
 | **Drift baseline & integrity** | The **committed `docs-manifest.json`** stores per unit: output path, `sources` globs, the **input** hashes (type-surface / outline / `*.docs.examples.tsx` / snapshot) **and** the generated-`.md` output hash. `check-docs` recomputes and compares — no git-history diffing. Input drift (incl. an examples edit that leaves the `.md` fences stale) ⇒ needs resync; **a hand-edited generated `.md` ⇒ output-hash mismatch ⇒ CI fail**. |
 | **Migration**                  | AI **reverse-generates** outlines + `*.docs.examples.tsx` + manifest from the existing docs; humans curate/restructure; enforcement phases in per-unit.                                                                                                                                                                                                                                                                                    |
 | **`app-shell-patterns`**       | A **consumer-facing build skill** synthesized from component interfaces + pattern docs, manifest-tracked, resynced when upstream drifts.                                                                                                                                                                                                                                                                                                   |
+
+---
+
+## Doc taxonomy: pages, patterns, concepts
+
+`docs-src/` holds three prose categories. They are **peers**: a page is not a container for patterns, and nothing lives in two of them at once.
+
+| Category    | Answers                             | Scope                                                                                                                                       | Catalogue source            |
+| ----------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Page**    | "What shape should this screen be?" | A whole route — its layout and scroll model — plus the competing variants that could fill it, with guidance on when each applies.           | `ui.tailor.tech/page/*`     |
+| **Pattern** | "How do I build this bit?"          | One composition recipe used _within_ a screen: a composer, a bulk-actions bar, a modal form. A single recipe, not a choice between several. | `ui.tailor.tech/patterns/*` |
+| **Concept** | "How does this work at all?"        | Cross-cutting explanation with no single screen or recipe home (styling, theming).                                                          | —                           |
+
+**The test.** If it owns a route _and_ the doc's value is choosing between variants, it is a page. If it is one way to build one thing, it is a pattern. If it explains machinery rather than composition, it is a concept.
+
+**A page links; it does not restate.** Every variant a page compares should be — or become — a pattern doc, which the page cites instead of duplicating its code. This is the reason pages and patterns are peers rather than nested: the page carries the _decision_, the pattern carries the _implementation_. A page that inlines its variants' code has quietly absorbed those patterns and will drift from them.
+
+**Inventory from the migration assessment** (tailor-inc/platform-planning#1731). Four pages are agreed for migration, and each maps onto pattern docs that already exist or are already migrated — exactly the link-don't-restate relationship above:
+
+| Page (ticket)                                    | Variants it compares → pattern docs                                             |
+| ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Form-as-page (tailor-inc/platform-planning#1742) | `form/single-page`, `form/sectioned`, `form/wizard` — all still in `catalogue/` |
+| Collection (tailor-inc/platform-planning#1735)   | `list/dense-scan` (migrated), plus inline-edit and grid/list-toggle variants    |
+| Detail page (tailor-inc/platform-planning#1736)  | `detail/hero-with-actions` (still in `catalogue/`), plus a page-tabs variant    |
+| Master list (tailor-inc/platform-planning#1737)  | `form-modal` (migrated), plus a Sheet variant                                   |
+
+Two blockers are carried on those tickets and are out of scope here: tailor-inc/platform-planning#1742 needs `Layout` to support a centered, width-constrained form column, and tailor-inc/platform-planning#1737's overlap with Collection still needs defining.
+
+> **Naming collision to keep straight.** `pagesDir` in `docs.config.json` is the **docs-browser's route directory** (`docs-browser/src/pages`) and has nothing to do with this page _category_. Route stubs for the category therefore land at `docs-browser/src/pages/pages/<slug>/page.tsx`. That resolves correctly — the stub derives its relative import depth from the category — it just reads oddly.
 
 ---
 
@@ -149,9 +178,9 @@ packages/core/src/**/[unit].docs.examples.tsx  ← authored runnable examples, c
 packages/docs-kit/                            ← NEW private (unpublished) workspace pkg:
     type-surface extractor (reuses ts-morph, already a dep in vite-plugin)
     check-docs • manifest gen • md assembler (prose + extracted fences)
-docs-src/concepts|patterns|tokens/*.docs.outline.md   ← authored prose outlines (no code home)
-docs-src/**/[pattern].docs.examples.tsx               ← authored examples for prose patterns
-docs-src/references/*.docs.outline.md                 ← re-export reference outlines (claims by name + upstream link)
+docs-src/concepts|pages|patterns|tokens/*.docs.outline.md  ← authored prose outlines (no code home)
+docs-src/**/[pattern].docs.examples.tsx                    ← authored examples for prose patterns
+docs-src/references/*.docs.outline.md                      ← re-export reference outlines (claims by name + upstream link)
 
 docs/**/[unit].md                             ← generated output (repo root, as today); examples are NOT here — they are authored source in src
 docs/docs-manifest.json                       ← committed generated baseline

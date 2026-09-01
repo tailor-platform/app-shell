@@ -8,6 +8,7 @@
     { "match": "packages/core/src/components/**", "outDir": "docs/components" },
     { "match": "packages/core/src/hooks/**", "outDir": "docs/api" },
     { "match": "docs-src/concepts/**", "outDir": "docs/concepts" },
+    { "match": "docs-src/pages/**", "outDir": "docs/pages" },
     { "match": "docs-src/patterns/**", "outDir": "docs/patterns" },
     { "match": "docs-src/references/**", "outDir": "docs/references" }
   ],

@@ -1,7 +1,8 @@
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider } from "@/components/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { DefaultSidebar } from "./default-sidebar";
@@ -191,6 +192,33 @@ describe("DefaultSidebar opt-in props", () => {
     expect(sidebar).not.toBeNull();
     // Forced to icon width on mobile (no inline expand there).
     expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
+  });
+
+  it("opens the full sidebar as a slide-in overlay when the mobile toggle is tapped", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(500);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider>
+              <DefaultSidebar iconRail hideHeader footer={<SidebarTrigger />}>
+                <SidebarItem to="/dashboard" />
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+
+    // The rail is visible but the slide-in overlay is not mounted yet.
+    expect(document.querySelector('[data-slot="sidebar-overlay"]')).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /toggle sidebar/i }));
+
+    // The toggle opens the overlay drawer.
+    expect(document.querySelector('[data-slot="sidebar-overlay"]')).not.toBeNull();
   });
 });
 

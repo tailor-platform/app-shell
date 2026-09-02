@@ -1,7 +1,5 @@
 # @tailor-platform/sdk-plugin-app-shell
 
-> Historical entries before `0.2.0` refer to this package by its previous npm name, `@tailor-platform/app-shell-sdk-plugin`.
-
 ## 0.1.1
 
 ### Patch Changes

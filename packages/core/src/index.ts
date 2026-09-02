@@ -10,6 +10,10 @@ export {
   type SearchSource,
 } from "./contexts/command-palette-context";
 
+// Low-level sidebar primitives — for composing custom sidebar entries
+// (e.g. an action button) that behave in icon-rail mode like the built-ins.
+export { SidebarMenuItem, SidebarMenuButton } from "./components/sidebar";
+
 // Sidebar navigation components
 export {
   SidebarItem,

@@ -1,5 +1,5 @@
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, afterEach, assert } from "vitest";
+import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
@@ -16,7 +16,17 @@ import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
+
+/**
+ * Force a true desktop width (>= 1200px) so `isIconMode` (tablet) is false —
+ * the default test width lands in the tablet range, which forces the icon rail.
+ */
+const stubDesktopViewport = () => {
+  vi.spyOn(window, "innerWidth", "get").mockReturnValue(1280);
+  window.dispatchEvent(new Event("resize"));
+};
 
 const createTestModules = () => [
   defineModule({
@@ -100,6 +110,63 @@ describe("DefaultSidebar", () => {
     expect(screen.getByText("Settings")).toBeDefined();
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /products/i })).toBeDefined();
+  });
+});
+
+describe("DefaultSidebar opt-in props", () => {
+  const renderWithProps = (
+    props: React.ComponentProps<typeof DefaultSidebar>,
+    { defaultOpen = true }: { defaultOpen?: boolean } = {},
+  ) => {
+    stubDesktopViewport();
+    return render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider defaultOpen={defaultOpen}>
+              <DefaultSidebar {...props} />
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+  };
+
+  it("renders the built-in Search entry by default", () => {
+    renderWithProps({ children: <SidebarItem to="/dashboard" /> });
+    expect(screen.getByRole("button", { name: /search/i })).toBeDefined();
+  });
+
+  it("omits the Search entry when hideSearch is set", () => {
+    renderWithProps({ hideSearch: true, children: <SidebarItem to="/dashboard" /> });
+    expect(screen.queryByRole("button", { name: /search/i })).toBeNull();
+    // Children still render.
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
+  });
+
+  it("renders the sidebar header by default", () => {
+    renderWithProps({ children: <SidebarItem to="/dashboard" /> });
+    expect(document.querySelector('[data-slot="sidebar-header"]')).not.toBeNull();
+  });
+
+  it("omits the sidebar header when hideHeader is set", () => {
+    renderWithProps({ hideHeader: true, children: <SidebarItem to="/dashboard" /> });
+    expect(document.querySelector('[data-slot="sidebar-header"]')).toBeNull();
+  });
+
+  it("collapses off-canvas by default", () => {
+    renderWithProps({ children: <SidebarItem to="/dashboard" /> }, { defaultOpen: false });
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar?.getAttribute("data-collapsible")).toBe("offcanvas");
+  });
+
+  it("collapses to an icon rail when iconRail is set", () => {
+    renderWithProps(
+      { iconRail: true, children: <SidebarItem to="/dashboard" /> },
+      { defaultOpen: false },
+    );
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
   });
 });
 

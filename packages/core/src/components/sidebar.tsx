@@ -248,7 +248,7 @@ function Sidebar({
           <div
             data-slot="sidebar-container"
             className={cn(
-              "astw:fixed astw:inset-y-0 astw:z-(--z-sidebar) astw:hidden astw:h-svh astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
+              "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:hidden astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
               side === "left" ? "astw:left-0" : "astw:right-0",
               variant === "floating" || variant === "inset"
                 ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -313,7 +313,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "astw:fixed astw:inset-y-0 astw:z-(--z-sidebar) astw:hidden astw:h-svh astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
+          "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:hidden astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
           side === "left"
             ? "astw:left-0 astw:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "astw:right-0 astw:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",

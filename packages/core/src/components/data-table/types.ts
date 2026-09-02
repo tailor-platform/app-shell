@@ -330,6 +330,26 @@ export interface DataTableData<TRow> {
 }
 
 /**
+ * Infinite-scroll configuration for `useDataTable`.
+ *
+ * The consumer still owns fetching and row accumulation. DataTable only
+ * detects that the scrollport reached the bottom and calls `onLoadMore`.
+ *
+ * Intended for height-constrained tables whose rows scroll internally (for
+ * example `DataTable.Root` with `className="h-full"` inside a fixed-height
+ * parent, or a table on a `<Layout fill>` page). Do not combine with
+ * `DataTable.Pagination`.
+ */
+export interface DataTableInfiniteScrollOptions {
+  /** Called when the bottom sentinel enters the table's scrollport. */
+  onLoadMore: () => void;
+  /** Shows the bottom loading indicator while the next chunk is being fetched. */
+  loadingMore?: boolean;
+  /** Whether more rows are available. Defaults to the current `hasNextPage`. */
+  hasMore?: boolean;
+}
+
+/**
  * Expandable-row configuration for `useDataTable`.
  *
  * The union is what makes an invalid setup unrepresentable: pass `expandedIds`
@@ -412,6 +432,12 @@ export type UseDataTableOptions<
   tableId?: string;
   /** Called when the user clicks a row. Adds a pointer cursor to rows. */
   onClickRow?: (row: TRow) => void;
+  /**
+   * Bottom-reached loading for append-only tables. The consumer still owns
+   * fetching and concatenating `data.rows`; DataTable only detects the end of
+   * the scrollport and calls `onLoadMore`.
+   */
+  infiniteScroll?: DataTableInfiniteScrollOptions;
   /**
    * Per-row action items rendered in a kebab-menu column on the right.
    * The column is omitted when this array is empty or not provided.
@@ -545,6 +571,7 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
+  infiniteScroll?: DataTableInfiniteScrollOptions;
   rowActions?: RowAction<TRow>[];
 
   // Row selection

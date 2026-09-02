@@ -1,5 +1,10 @@
 import { createContext, useContext } from "react";
-import type { Column, RowAction, RowExpansionOptions } from "./types";
+import type {
+  Column,
+  DataTableInfiniteScrollOptions,
+  RowAction,
+  RowExpansionOptions,
+} from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 
 /**
@@ -59,6 +64,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
 
   // Row interaction
   onClickRow?: (row: TRow) => void;
+  infiniteScroll?: DataTableInfiniteScrollOptions;
   rowActions?: RowAction<TRow>[];
 
   // Row selection

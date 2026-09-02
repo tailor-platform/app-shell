@@ -1,6 +1,6 @@
 ---
 title: DataTable
-description: Compound data table component with sortable columns, filter chips, cursor-based pagination, row actions, and multi-row selection
+description: Compound data table component with sortable columns, filter chips, cursor-based pagination, infinite scroll, row actions, and multi-row selection
 ---
 
 # DataTable
@@ -22,6 +22,7 @@ import {
   type DataTableData,
   type DataTableRootProps,
   type DataTablePaginationProps,
+  type DataTableInfiniteScrollOptions,
   type RowAction,
   type UseDataTableOptions,
   type UseDataTableReturn,
@@ -210,6 +211,67 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
 Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`.
+
+## Infinite scroll
+
+Pass `infiniteScroll` to `useDataTable()` when the table should **append** rows as its own scrollport reaches the bottom. The consumer still owns fetching and concatenating `data.rows`; `DataTable` only detects the bottom and calls `onLoadMore`.
+
+Do **not** combine this with `DataTable.Pagination`.
+
+```tsx
+const [data, setData] = useState<DataTableData<Order>>();
+const [loading, setLoading] = useState(true);
+const [loadingMore, setLoadingMore] = useState(false);
+
+useEffect(() => {
+  const append = variables.pagination.after != null;
+  append ? setLoadingMore(true) : setLoading(true);
+
+  queryOrders(variables).then((result) => {
+    setData((prev) =>
+      append && prev
+        ? {
+            rows: [...prev.rows, ...result.rows],
+            pageInfo: result.pageInfo,
+            total: result.total,
+          }
+        : result,
+    );
+    setLoading(false);
+    setLoadingMore(false);
+  });
+}, [variables]);
+
+const table = useDataTable({
+  columns,
+  data,
+  loading,
+  control,
+  infiniteScroll: {
+    loadingMore,
+    onLoadMore: () => {
+      const endCursor = data?.pageInfo?.endCursor;
+      if (endCursor) control.goToNextPage({ endCursor });
+    },
+  },
+});
+
+<div className="h-[28rem] min-h-0">
+  <DataTable.Root value={table} className="h-full">
+    <DataTable.Table />
+  </DataTable.Root>
+</div>;
+```
+
+`infiniteScroll` options:
+
+| Prop          | Type         | Default                | Description                                                                              |
+| ------------- | ------------ | ---------------------- | ---------------------------------------------------------------------------------------- |
+| `onLoadMore`  | `() => void` | —                      | Called when the bottom sentinel enters the table's scrollport. Required.                 |
+| `loadingMore` | `boolean`    | `false`                | Shows a bottom loading row while the next chunk is being fetched.                        |
+| `hasMore`     | `boolean`    | `pageInfo.hasNextPage` | Override whether more rows are available. Omit it to reuse the current pagination state. |
+
+This is intended for height-constrained tables that scroll **internally** (for example inside a fixed-height wrapper, or on a [`<Layout fill>`](./layout.md#fill-mode) page). On a naturally growing page, the table itself does not own vertical scrolling, so infinite scroll will eagerly load.
 
 ## Column pinning, visibility & ordering
 

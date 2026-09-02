@@ -96,6 +96,22 @@ describe("useDataTable", () => {
       const { result } = renderHook(() => useDataTable({ columns, data: { rows: [] } }));
       expect(result.current.total).toBeNull();
     });
+
+    it("passes through infiniteScroll options", () => {
+      const onLoadMore = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable({
+          columns,
+          data: testData,
+          infiniteScroll: { onLoadMore, hasMore: true, loadingMore: true },
+        }),
+      );
+      expect(result.current.infiniteScroll).toEqual({
+        onLoadMore,
+        hasMore: true,
+        loadingMore: true,
+      });
+    });
   });
 
   // -------------------------------------------------------------------------

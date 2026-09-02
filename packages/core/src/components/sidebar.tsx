@@ -199,7 +199,9 @@ function Sidebar({
     );
   }
 
-  if (isMobile) {
+  // The persistent icon rail (collapsible="icon") stays visible at every width;
+  // only the other modes fall back to the off-canvas Sheet on mobile.
+  if (isMobile && collapsible !== "icon") {
     return (
       <Sheet.Root open={openMobile} onOpenChange={setOpenMobile} side={side} {...props}>
         <Sheet.Content
@@ -289,11 +291,25 @@ function Sidebar({
     );
   }
 
+  // On mobile the icon rail is always the collapsed icon width (there is no
+  // inline expand); on desktop it follows the expanded/collapsed state.
+  let dataCollapsible = "";
+  if (collapsible === "icon" && isMobile) {
+    dataCollapsible = "icon";
+  } else if (state === "collapsed") {
+    dataCollapsible = collapsible;
+  }
+
   return (
     <div
-      className="astw:group astw:peer astw:text-sidebar-foreground astw:hidden astw:md:block"
+      className={cn(
+        "astw:group astw:peer astw:text-sidebar-foreground",
+        // The icon rail is visible at every width; other modes stay desktop-only
+        // (mobile uses the Sheet above).
+        collapsible === "icon" ? "astw:block" : "astw:hidden astw:md:block",
+      )}
       data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
+      data-collapsible={dataCollapsible}
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
@@ -313,7 +329,9 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:hidden astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
+          "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear",
+          // Visible at every width for the icon rail; desktop-only otherwise.
+          collapsible === "icon" ? "astw:flex" : "astw:hidden astw:md:flex",
           side === "left"
             ? "astw:left-0 astw:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "astw:right-0 astw:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",

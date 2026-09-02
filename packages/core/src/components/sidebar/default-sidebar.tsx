@@ -87,8 +87,9 @@ export type DefaultSidebarProps = {
   hideSearch?: boolean;
 
   /**
-   * On desktop, collapse to a narrow icon rail (icons stay visible) instead of
-   * sliding fully off-canvas. Tablet always uses the icon rail regardless.
+   * Collapse to a narrow icon rail (icons stay visible) instead of sliding
+   * fully off-canvas. The rail then stays visible at every width — including
+   * mobile, where it replaces the off-canvas drawer with the icon-width rail.
    *
    * @default false
    */

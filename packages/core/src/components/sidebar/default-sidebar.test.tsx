@@ -168,6 +168,30 @@ describe("DefaultSidebar opt-in props", () => {
     const sidebar = document.querySelector('[data-slot="sidebar"]');
     expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
   });
+
+  it("keeps the icon rail visible on mobile instead of an off-canvas drawer", () => {
+    // Mobile width: without iconRail this would be a closed off-canvas Sheet
+    // (no persistent [data-slot=sidebar]); iconRail keeps the rail mounted.
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(500);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider>
+              <DefaultSidebar iconRail>
+                <SidebarItem to="/dashboard" />
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar).not.toBeNull();
+    // Forced to icon width on mobile (no inline expand there).
+    expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
+  });
 });
 
 describe("DefaultSidebar auto-generation", () => {

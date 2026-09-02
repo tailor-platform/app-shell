@@ -66,7 +66,7 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 | Path                   | What it is                                                                        |
 | ---------------------- | --------------------------------------------------------------------------------- |
 | `packages/core`        | `@tailor-platform/app-shell` — the published library (components, hooks, layouts) |
-| `packages/vite-plugin` | `@tailor-platform/app-shell-vite-plugin` — file-based routing                     |
+| `packages/vite-plugin` | `@tailor-platform/vite-plugin-app-shell` — file-based routing                     |
 | `packages/sdk-plugin`  | Tailor SDK plugin                                                                 |
 | `examples/`            | `vite-app` and `nextjs-app` reference integrations (what `pnpm dev` runs)         |
 | `e2e/`                 | Playwright suite + a real Tailor backend definition                               |

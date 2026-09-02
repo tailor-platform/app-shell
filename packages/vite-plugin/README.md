@@ -1,7 +1,7 @@
-# @tailor-platform/app-shell-vite-plugin
+# @tailor-platform/vite-plugin-app-shell
 
-[![npm version](https://img.shields.io/npm/v/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin)
-[![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin)
+[![npm version](https://img.shields.io/npm/v/@tailor-platform/vite-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/vite-plugin-app-shell)
+[![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/vite-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/vite-plugin-app-shell)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/tailor-platform/app-shell/blob/main/LICENSE.md)
 
 Vite plugin for file-based routing in AppShell applications. Define pages by placing components in a directory structure instead of assembling explicit module/resource hierarchies.
@@ -9,7 +9,7 @@ Vite plugin for file-based routing in AppShell applications. Define pages by pla
 ## Installation
 
 ```bash
-pnpm add @tailor-platform/app-shell-vite-plugin
+pnpm add @tailor-platform/vite-plugin-app-shell
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ pnpm add @tailor-platform/app-shell-vite-plugin
 // vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+import { appShellRoutes } from "@tailor-platform/vite-plugin-app-shell";
 
 export default defineConfig({
   plugins: [react(), appShellRoutes()],

@@ -1,4 +1,4 @@
-# @tailor-platform/app-shell-vite-plugin
+# @tailor-platform/vite-plugin-app-shell
 
 ## 0.2.3
 
@@ -54,11 +54,11 @@
 
   ### Vite Plugin
 
-  The new `@tailor-platform/app-shell-vite-plugin` package provides file-based routing support:
+  The new `@tailor-platform/vite-plugin-app-shell` package provides file-based routing support:
 
   ```typescript
   // vite.config.ts
-  import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+  import { appShellRoutes } from "@tailor-platform/vite-plugin-app-shell";
 
   export default defineConfig({
     plugins: [

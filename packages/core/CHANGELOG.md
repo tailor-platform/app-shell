@@ -809,7 +809,7 @@
 - 3138c6a: Fix DataTable checkbox vertical alignment. Remove unnecessary wrapper div and `translate-y-[2px]` hack so checkboxes align correctly with row content via `align-middle`.
 - 5353303: Set explicit `--accent` values per palette and mode, reorganise palette CSS into numbered tiers with a `_template.css` authoring guide, add `--alert-*` semantic tokens to the default palette, and wire `Alert` variants to those tokens (including lighter dark-mode foregrounds).
 - Updated dependencies [3d48b24]
-  - @tailor-platform/app-shell-vite-plugin@0.2.3
+  - @tailor-platform/vite-plugin-app-shell@0.2.3
 
 ## 1.4.1
 
@@ -1102,7 +1102,7 @@
 
 - 27bb5df: Remove `richColors` prop from the `Toaster` component. Toast notifications will no longer use color-coded styling for success, error, warning, and info variants.
 - Updated dependencies [ee7f7c7]
-  - @tailor-platform/app-shell-vite-plugin@0.2.2
+  - @tailor-platform/vite-plugin-app-shell@0.2.2
 
 ## 1.0.1
 
@@ -1494,7 +1494,7 @@
   - OAuth redirections are now handled before component rendering, eliminating unnecessary UI renders during the callback flow
 
 - Updated dependencies [01984ee]
-  - @tailor-platform/app-shell-vite-plugin@0.2.1
+  - @tailor-platform/vite-plugin-app-shell@0.2.1
 
 ## 0.33.0
 
@@ -1810,7 +1810,7 @@
 
 - e81fbd7: Updated [react-router](https://www.npmjs.com/package/react-router) (^7.4.0 -> ^7.13.1)
 - Updated dependencies [01a2249]
-  - @tailor-platform/app-shell-vite-plugin@0.2.0
+  - @tailor-platform/vite-plugin-app-shell@0.2.0
 
 ## 0.31.0
 
@@ -2335,11 +2335,11 @@
 
   ### Vite Plugin
 
-  The new `@tailor-platform/app-shell-vite-plugin` package provides file-based routing support:
+  The new `@tailor-platform/vite-plugin-app-shell` package provides file-based routing support:
 
   ```typescript
   // vite.config.ts
-  import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+  import { appShellRoutes } from "@tailor-platform/vite-plugin-app-shell";
 
   export default defineConfig({
     plugins: [
@@ -2517,7 +2517,7 @@
 - 50ddd5f: Updated [tailwind-merge](https://www.npmjs.com/package/tailwind-merge) (^3.4.0 -> ^3.5.0)
 - 1338776: Updated [es-toolkit](https://www.npmjs.com/package/es-toolkit) (^1.41.0 -> ^1.44.0)
 - Updated dependencies [e7fa8ec]
-  - @tailor-platform/app-shell-vite-plugin@0.27.0
+  - @tailor-platform/vite-plugin-app-shell@0.27.0
 
 ## 0.26.3
 

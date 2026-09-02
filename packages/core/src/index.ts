@@ -165,6 +165,7 @@ export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Input, type InputProps } from "./components/input";
+export { Textarea, type TextareaProps } from "./components/textarea";
 export { Checkbox, type CheckboxProps } from "./components/checkbox";
 export { Table } from "./components/table";
 export { Card } from "./components/card";

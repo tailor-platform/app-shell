@@ -148,9 +148,14 @@ export const GlobalTopBar = () => (
         <BreadcrumbMenu />
       </div>
     </div>
-    {/* Center zone: global search omnibar (wide only) */}
-    <div className="hidden justify-center lg:flex lg:w-[28rem] lg:max-w-full">
-      <HeaderSearch />
+    {/* Center zone: global search omnibar (wide only). The wrapper always
+        renders so the grid keeps three columns — otherwise a display:none
+        center would collapse the grid and the right cluster would drift inward
+        instead of hugging the far edge. */}
+    <div className="flex justify-center">
+      <div className="hidden w-[28rem] max-w-full lg:block">
+        <HeaderSearch />
+      </div>
     </div>
     {/* Right zone: search icon (narrow) + account + appearance + assistant */}
     <div className="flex items-center justify-end gap-2">

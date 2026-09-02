@@ -1,7 +1,5 @@
 # @tailor-platform/vite-plugin-app-shell
 
-> Historical entries before `0.3.0` refer to this package by its previous npm name, `@tailor-platform/app-shell-vite-plugin`.
-
 ## 0.2.3
 
 ### Patch Changes

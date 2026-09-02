@@ -13,6 +13,9 @@
     "type-check": {
       "dependsOn": ["^build"]
     },
+    "check-dts": {
+      "dependsOn": ["build"]
+    },
     "lint": {},
     "test": {
       "dependsOn": ["build", "^build"]

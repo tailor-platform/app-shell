@@ -4,7 +4,7 @@ name: Single Page Form
 category: pattern
 subcategory: form
 description: Routed full-page form for moderate field count (6-15) without natural sectioning
-requiredImports: [Layout, Form, Field, Fieldset, Input, Select, Button]
+requiredImports: [Layout, Form, Field, Fieldset, Input, Textarea, Select, Button]
 tags: [form, page, create, edit, routed]
 do:
   - A routed Create or Edit page that the design has explicitly called out (e.g. /orders/create)

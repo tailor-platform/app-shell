@@ -1,5 +1,5 @@
 /* pattern: form/single-page */
-import { Button, Layout, Input, Select, Field } from "@tailor-platform/app-shell";
+import { Button, Layout, Input, Textarea, Select, Field } from "@tailor-platform/app-shell";
 
 type Props = {
   onSave: (data: Record<string, string>) => void;
@@ -55,7 +55,7 @@ export default function SinglePageForm({ onSave, onCancel }: Props) {
           </Field.Root>
           <Field.Root name="description">
             <Field.Label>Description</Field.Label>
-            <Field.Control render={<Input />} />
+            <Textarea rows={4} />
           </Field.Root>
         </form>
       </Layout.Column>

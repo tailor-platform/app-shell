@@ -49,6 +49,7 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
+    "check-dts": "node scripts/check-dts.mjs",
     "vendor:fonts": "node scripts/sync-noto-fonts.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",

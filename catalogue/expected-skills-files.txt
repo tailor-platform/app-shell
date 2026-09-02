@@ -4,6 +4,7 @@ skills/app-shell-patterns/references/fundamental/design-system.md
 skills/app-shell-patterns/references/fundamental/graphql.md
 skills/app-shell-patterns/references/migrations.md
 skills/app-shell-patterns/references/patterns/detail-hero-with-actions.md
+skills/app-shell-patterns/references/patterns/form-composer.md
 skills/app-shell-patterns/references/patterns/form-modal.md
 skills/app-shell-patterns/references/patterns/form-sectioned.md
 skills/app-shell-patterns/references/patterns/form-single-page.md

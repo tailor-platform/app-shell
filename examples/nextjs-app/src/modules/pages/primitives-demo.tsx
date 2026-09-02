@@ -4,6 +4,7 @@ import {
   Card,
   Button,
   Input,
+  Textarea,
   Checkbox,
   Badge,
   Tooltip,
@@ -28,6 +29,7 @@ export const primitiveComponentsDemoResource = defineResource({
   },
   component: () => {
     const [inputValue, setInputValue] = React.useState("");
+    const [textareaValue, setTextareaValue] = React.useState("");
     const [subscribed, setSubscribed] = React.useState(true);
     const [optionA, setOptionA] = React.useState(true);
     const [optionB, setOptionB] = React.useState(false);
@@ -94,6 +96,22 @@ export const primitiveComponentsDemoResource = defineResource({
                 />
                 <Input style={{ maxWidth: "240px" }} type="email" placeholder="Email" />
                 <Input style={{ maxWidth: "240px" }} disabled placeholder="Disabled" />
+              </div>
+            </Card.Content>
+          </Card.Root>
+
+          {/* Textarea */}
+          <Card.Root>
+            <Card.Header title="Textarea" />
+            <Card.Content>
+              <div style={{ display: "grid", gap: "0.75rem", maxWidth: "480px" }}>
+                <Textarea
+                  placeholder="Type something longer... drag the corner to enlarge"
+                  value={textareaValue}
+                  onChange={(e) => setTextareaValue(e.target.value)}
+                />
+                <Textarea rows={6} placeholder="Taller starting height (rows=6)" />
+                <Textarea disabled placeholder="Disabled" />
               </div>
             </Card.Content>
           </Card.Root>

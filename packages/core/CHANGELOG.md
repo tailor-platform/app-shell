@@ -1,5 +1,135 @@
 # @tailor-platform/app-shell
 
+## 1.13.0
+
+### Minor Changes
+
+- 41ae0e3: Add `filter.operators` on DataTable columns to narrow which conditions the built-in filter UI exposes.
+  
+  ```tsx
+  column({
+    label: "Customer",
+    filter: { field: "customer", type: "string", operators: ["contains", "eq"] },
+  });
+  ```
+  
+  `inferColumns()` now also accepts `filter: { operators: [...] }` so metadata-derived columns can use the same restriction.
+- fdf7e6a: Bundle Noto Sans JP so `font-medium` is a real weight in Japanese text.
+  
+  Inter carries no CJK glyphs, so Japanese fell through to the system font. On Windows that is Yu Gothic UI, which ships only Light/Semilight/Regular/Semibold/Bold — no 500 — so CSS weight matching resolved `font-weight: 500` down to Regular and `font-medium`, the weight behind most labels, table cells and card titles, was indistinguishable from body copy. Current macOS was unaffected, since it ships Hiragino Sans W5. Bundling a variable font makes the weight scale hold on every platform instead of depending on what the OS installs.
+  
+  `@tailor-platform/app-shell/styles` now ships Noto Sans JP Variable (continuous 100–900 axis) alongside Inter, metric-harmonised against it so mixed Japanese/Latin strings read at one optical size and a line containing Japanese is exactly as tall as one without. No import change is needed.
+  
+  **This changes how Japanese text renders.** Japanese previously drew from the OS font (Hiragino Sans on macOS, Yu Gothic UI on Windows) and now draws from Noto Sans JP. Japanese runs measure about 6% narrower, which can relieve truncation and wrapping but not cause it; Latin is unaffected. Layouts pinned to the old Japanese metrics may need a look.
+  
+  It also adds roughly 4.8 MB of woff2 subsets to your build output even if your app renders no Japanese, and takes the stylesheet from about 98 KB to 200 KB uncompressed (15 KB to 45 KB gzipped). The faces are restricted to Japanese codepoint blocks, so users download only the subsets their content touches — nothing at all for an app with no Japanese, ~910 KB for a typical first Japanese screen — and weight costs nothing extra, since every weight shares one file.
+  
+  To opt out, or to use a brand font, set the new `--app-shell-font-sans` on `:root` after importing the styles:
+  
+  ```css
+  @import "@tailor-platform/app-shell/styles";
+  
+  :root {
+    --app-shell-font-sans: "Your Brand Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+  ```
+  
+  Naming no Japanese family opts out of the download entirely, since each face carries a `unicode-range`. A replacement should be a variable font, or otherwise supply real 400/500/600/700 faces — the weight scale assumes all four exist.
+  
+  See [Typography and Fonts](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/styling-theming.md#typography-and-fonts).
+- 891a253: Fix the published type declarations, which referenced types they never declared.
+  
+  `dist/app-shell.d.ts` shipped with nine errors inside our own package. Consumers who compile with `skipLibCheck: false` saw all nine attributed to `@tailor-platform/app-shell`, not to their own code. We never noticed because `packages/core/tsconfig.json` sets `skipLibCheck: true`, so neither `pnpm type-check` nor CI ever looked at the declarations we emit.
+  
+  Three defects, all now fixed at the source:
+  
+  - **`PositionProps` was referenced but never declared.** It is the type of the `position` prop on `Menu.Content` and `Tooltip.Content`, but it was tagged `@internal`, so the declaration rollup stripped it while keeping five references to it. It is now **exported from the package root**, which is the additive change that makes this release a minor: consumers can finally name the type they are required to pass.
+  
+    ```tsx
+    import { Menu, type PositionProps } from "@tailor-platform/app-shell";
+  
+    const dropdown: PositionProps = { side: "bottom", align: "start", sideOffset: 8 };
+    <Menu.Content position={dropdown} />;
+    ```
+  
+  - **`Form` emitted a broken merged declaration** (TS2395). A `function` declaration carrying an expando `displayName` is emitted as a function/namespace merge, and the rollup duplicated the namespace — once exported, once local. `Form` is now a const with an explicit component type, following the same idiom already used by `Select`, `Combobox`, and `Autocomplete`. Its generic is unchanged, so `<Form<MyValues>>` still infers callback values.
+  
+  - **`Layout.Header` was emitted as a type instead of a value** (TS2709). `Layout.Header = Header` emitted `var Header: typeof import("./Layout").Header`, which the rollup rewrote to a bare `Header` — a namespace, not a type. `Layout` now uses the explicit `Object.assign` idiom, like `Grid`.
+  
+  The public runtime API is unchanged: the built bundle exports exactly the same 100 names as before, and `PositionProps` is a type-only export.
+  
+  A `check-dts` gate now runs in CI to keep this from returning. It builds, packs the tarball, installs it into a scratch project, and type-checks every entry point that publishes `types` with `skipLibCheck: false` — the same thing a consumer does. Entry points are read from `package.json`, so new ones are covered as soon as they are added.
+- 7e1a1e3: Expand the re-exported React Router surface so an app never needs `react-router` as a direct
+  dependency, and add `memory` routing to `AppShell` for tests.
+  
+  AppShell owns the router — it builds the route tree, constructs the router, and renders the
+  `RouterProvider`. An app that also resolves its own copy of `react-router` ends up with two
+  copies in the bundle and two unrelated router contexts: AppShell's navigation keeps working
+  while the app's own `useNavigate` / `useLocation` / `<Link>` throw
+  `may be used only in the context of a <Router> component`, with nothing for TypeScript to catch.
+  Apps were reaching for a direct dependency because the re-exported surface was incomplete. This
+  closes those gaps.
+  
+  **Newly available from `@tailor-platform/app-shell`:**
+  
+  - `useMatch`, `useResolvedPath` — route matching, for active states and relative paths
+  - `useNavigation` — the in-flight navigation, for pending UI
+  - `NavLink` — a link that knows when it is active
+  - `useBlocker`, `useBeforeUnload` — guard navigation away from unsaved changes
+  - Types: `Location`, `NavigateFunction`, `NavigateOptions`, `To`, `Params`, `PathMatch`,
+    `LinkProps`, `NavLinkProps`, `Navigation`, `Blocker`, `BlockerFunction`
+  
+  **New `@tailor-platform/app-shell/testing` entry point**, so tests need no `react-router` either:
+  
+  - `AppShell` — the same shell, additionally accepting `memory` / `initialEntries` to mount at a
+    fixed URL without touching `window.location`. For page and integration tests.
+  - `TestRouter` — a minimal router context for unit-testing a single component that uses
+    `useNavigate` or renders a `<Link>`, without booting the whole shell. Pass `path` when the
+    component reads the route (`useParams`, `useMatch`), so the location matches something.
+  
+  ```tsx
+  import { AppShell, TestRouter } from "@tailor-platform/app-shell/testing";
+  
+  render(
+    <AppShell memory initialEntries={["/orders/A42"]} modules={modules}>
+      <SidebarLayout />
+    </AppShell>,
+  );
+  ```
+  
+  Memory routing is reachable only from `/testing`. The production `AppShell` pins it off, so it
+  holds for JS callers and `any` spreads as well as typed ones.
+  
+  Router construction (`createBrowserRouter`, `RouterProvider`, `MemoryRouter`, `Routes`, `Route`)
+  and the data-router APIs (`useLoaderData`, `useSubmit`, `useFetcher`, `useActionData`) remain
+  deliberately unexported: AppShell owns the former and does not wire up the latter. If something
+  you need is missing, ask for it rather than adding a direct `react-router` dependency.
+- 719ba91: Add standalone `Textarea` component
+  
+  - New `Textarea` — a styled multi-line text control wrapping Base UI's field control rendered as a `<textarea>`. Integrates with `Field` and React Hook Form for label association, `aria-describedby`, `disabled`, and invalid/error state exactly like `Input`/`Checkbox` (no bespoke `error` prop), and works standalone outside a `Field.Root`. The invalid state is styled off both `data-invalid` (AppShell `Field.Root`) and `aria-invalid` (shadcn-style `FormControl`), so it fits either form stack.
+  - Unlike `Input`, it has no fixed height: `rows` sets the visible line count, `min-h-16` is the floor, and `resize-y` lets the user drag it taller. Previously the only multi-line route was `<Field.Control render={<textarea />} />`, which inherited the single-line `h-9` and clipped the box to 36px.
+  - `cols` and `wrap` are not accepted: the control is always `w-full`, so `cols` can never affect its width, and per the HTML spec every `wrap` value depends on `cols` being set. `className` is typed as `string` rather than Base UI's `string | ((state) => string | undefined)`, because it is merged through `cn()`, which silently drops a function.
+  - Internal: `inputBaseClasses` now composes from a shared `controlBaseClasses` so `Input` and `Textarea` keep the same border/focus/placeholder treatment while owning their own height and padding. The emitted class list for `Input` and `Field.Control` is unchanged apart from ordering.
+
+### Patch Changes
+
+- 7b08250: Fix sessions hanging permanently after the server rejects the grant, by raising `@tailor-platform/auth-public-client` to `^0.6.1`. The new floor also picks up 0.6.1's callback-URL cleanup: a failed OAuth callback no longer leaves `?code=` / `?error=` in the URL, and cleanup on every outcome preserves unrelated query parameters, the hash, and the router's history state.
+  
+  When a refresh token expired or was revoked, the auth client kept `isAuthenticated` true and reattached the dead token to every request, so apps sat in a permanent `{"errors":[{"message":"unauthorized","type":"Gateway"}]}` loop that only a manual IndexedDB clear recovered from. Any token-endpoint rejection now ends the session (`use_dpop_nonce` excepted), emitting `logout` and `auth_state_changed`. `AuthProvider` responds as it already does for a signed-out user: `guardComponent` renders, and with `autoLogin` the app redirects to sign-in. A timeout, a network failure, and a plain 5xx still leave the session intact. Note that the boundary is the response shape rather than the underlying cause: any 4xx carrying an `error` code ends the session, so a token endpoint that reports overload as `400 {"error":"server_error"}` will sign users out.
+  
+  One behaviour change worth checking even though this is a patch: `fetch` and `getAuthHeaders` no longer throw `Error("No valid access token")` when a refresh is rejected — they throw the underlying error. If your app detects dead sessions by matching that message, it has stopped detecting them; listen for `logout` / `auth_state_changed` instead, which fire on exactly that condition. Grepping the installed package for the string will not tell you whether you are affected, because the throw still exists for the genuinely-no-token case — check your own error handling.
+- 17a03fe: Fix `autoLogin` being permanently disabled after a failed OAuth callback.
+  
+  `@tailor-platform/auth-public-client` cleans the callback parameters out of the URL only when the code exchange succeeds; every failure path leaves `?code=` or `?error=` in the query string (tailor-platform/auth-public-client#139). `AuthProvider` decided whether a callback was in progress by reading that URL, so after any failed callback it treated the page as a live callback forever: auto-login never fired again, the app sat on `guardComponent`, and reloading only replayed the same failing callback.
+  
+  Auto-login now decides from the callback's status rather than the URL — which is what the check meant all along: "is an exchange in flight", not "has this page ever been a callback". The URL is still the authority when no callback has been claimed at all, where redirecting away from unconsumed parameters would be unsafe.
+  
+  It will not loop, either. A recoverable failure is retried once per tab; beyond that, and for any refusal the authorization server issues explicitly, AppShell stops rather than redirecting the user back for the same answer. The outcome is classified from the resulting auth state rather than from whether the callback threw, because two failure paths — a server `error` and a state mismatch — return normally after recording the error.
+  
+  That makes `guardComponent` where a failed sign-in becomes visible: a guard that only renders a spinner will spin indefinitely, so render `useAuth().error` and offer a retry. See the authentication guide.
+  
+  The stale parameters themselves remain in the URL after a failure until the cleanup is fixed upstream (tailor-platform/auth-public-client#139) — app-shell no longer misbehaves because of them, but deliberately does not reimplement the library's URL cleanup.
+
 ## 1.12.0
 
 ### Minor Changes

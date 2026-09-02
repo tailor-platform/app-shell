@@ -127,7 +127,7 @@ const authClient = createAuthClient({
 
 ### Using `authClient.fetch` with a GraphQL Client
 
-Pass `authClient.fetch` directly to your GraphQL client (e.g., urql). It transparently handles DPoP proof generation and token refresh on every request:
+Pass `authClient.fetch` directly to your GraphQL client (e.g., urql). It transparently handles DPoP proof generation and token refresh on every request. If the server rejects the grant outright, it ends the session rather than replaying a dead token — see [Session expiry](#session-expiry):
 
 ```tsx
 import { createAuthClient, AuthProvider } from "@tailor-platform/app-shell";
@@ -204,10 +204,10 @@ function ChatScreen() {
 
 ### `EnhancedAuthClient` Methods
 
-| Method / Property | Type           | Description                                                               |
-| ----------------- | -------------- | ------------------------------------------------------------------------- |
-| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                           |
-| `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation and token refresh |
+| Method / Property | Type           | Description                                                                                                      |
+| ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `getAppUri()`     | `() => string` | Returns the `appUri` used to create this client                                                                  |
+| `fetch`           | `typeof fetch` | Authenticated fetch with built-in DPoP proof generation, token refresh, and session teardown on a rejected grant |
 
 ## `AuthProvider` Props
 
@@ -217,6 +217,31 @@ function ChatScreen() {
 | `autoLogin`      | `boolean`               | No       | Automatically redirect unauthenticated users to login |
 | `guardComponent` | `() => React.ReactNode` | No       | Rendered while loading or when not authenticated      |
 
+## When the callback fails
+
+A sign-in that comes back from the authorization server unsuccessfully — the user declined, the client is not permitted, the exchange failed — leaves `isAuthenticated` false with the reason on `useAuth().error`. The callback parameters are cleaned out of the URL on every outcome (since `auth-public-client` 0.6.1), preserving unrelated query parameters, the hash, and the router's history state.
+
+With `autoLogin`, a failure that looks recoverable is retried once automatically. Beyond that, and for any refusal the authorization server issues explicitly, AppShell stops: sending the user straight back would ask the same question, get the same answer, and loop.
+
+That makes the guard the place where a failed sign-in becomes visible. A guard that only ever renders a spinner will spin indefinitely in this case, so render the error and offer a way out:
+
+```tsx
+const AuthGate = () => {
+  const { isReady, error, login } = useAuth();
+
+  if (error) {
+    return (
+      <div>
+        <p>Sign-in failed: {error}</p>
+        <button onClick={() => login()}>Try again</button>
+      </div>
+    );
+  }
+
+  return isReady ? <LoginPrompt /> : <LoadingScreen />;
+};
+```
+
 ## Integration with AppShell
 
 The authentication provider works seamlessly with AppShell's data layer, automatically handling:
@@ -224,6 +249,35 @@ The authentication provider works seamlessly with AppShell's data layer, automat
 - OAuth2 token management
 - Authenticated fetch with DPoP proof generation
 - Session persistence and token refresh
+- Session teardown when the server rejects the grant
 - Automatic redirects for protected routes (via `autoLogin`)
 
 OAuth callback parameters (`code`, `state`) are automatically cleaned from the URL after a successful login — no dedicated callback page is needed.
+
+## Session expiry
+
+Access tokens are refreshed transparently, so a session normally outlives individual token lifetimes without the app doing anything.
+
+When a refresh cannot succeed — the refresh token has expired, been revoked, or is otherwise rejected by the token endpoint — the auth client ends the session instead of retrying indefinitely. It clears stored tokens, sets `isAuthenticated` to `false`, and emits `logout` followed by `auth_state_changed`.
+
+What the user sees follows from the props you already pass:
+
+- With `autoLogin`, `AuthProvider` redirects to sign-in.
+- With `guardComponent`, the guard renders in place of your app.
+- With neither, `useAuth().isAuthenticated` flips to `false` and your own UI decides.
+
+Not every failed refresh ends the session. A request timeout, a network failure, and a plain 5xx from the token endpoint all leave it intact, so a dropped connection does not sign users out.
+
+The line is drawn on the shape of the response, not on how transient the underlying cause is. Any rejection the token endpoint returns as a 4xx carrying an `error` code ends the session — the sole exception is `use_dpop_nonce`. A server that reports overload as `400 {"error":"server_error"}` or `400 {"error":"temporarily_unavailable"}` will therefore sign users out, as will a 5xx that carries a `WWW-Authenticate` header. If you operate the token endpoint, prefer a bare 5xx for conditions you want treated as retryable.
+
+To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events:
+
+```tsx
+useEffect(() => {
+  return authClient.addEventListener((event) => {
+    if (event.type === "logout") {
+      clearAppCaches();
+    }
+  });
+}, [authClient]);
+```

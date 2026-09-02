@@ -5,23 +5,128 @@ description: Learn how to navigate between pages using React Router hooks and co
 
 # Routing and Navigation
 
-Because AppShell manages routing internally, it owns the application's `RouterProvider` instance.
+AppShell owns the router. It builds the route tree from your modules and resources, constructs the router, and renders the `RouterProvider` itself. Your pages render _inside_ that router.
 
-To use client-side navigation from AppShell pages, use the exports from `@tailor-platform/app-shell`, such as the `Link` component or `useParams` / `useNavigate` hooks, instead of importing those primitives from your app's `react-router` dependency. This keeps every hook and component on the same router context; mixing AppShell with a separate `react-router` import can fail at runtime, especially across mismatched major versions.
+## Your app should not depend on `react-router`
 
-## Exported React Router Hooks
+**Do not add `react-router` to your application's dependencies.** Import everything you need for routing from `@tailor-platform/app-shell` instead.
 
-AppShell re-exports the following hooks and components from `react-router` for use in your components:
+This is not a style preference — it is what keeps your app working:
 
-- `useLocation` - Access the current location object
-- `useNavigate` - Programmatic navigation
-- `useParams` - Access route parameters
-- `useSearchParams` - Access and manipulate URL search parameters
-- `useRouteError` - Access error details in error boundaries
-- `Link` - Client-side navigation component
-- `Navigate` - Declarative redirect component
+```tsx
+// ✅ Do this
+import { useNavigate, Link } from "@tailor-platform/app-shell";
 
-### Example Usage
+// ❌ Not this
+import { useNavigate, Link } from "react-router";
+```
+
+React Router keeps its state in React context, and context identity belongs to a _module instance_. If your app resolves its own copy of `react-router` — a different version to the one AppShell resolved — the bundle ends up with two copies and therefore two unrelated routers. AppShell's own navigation keeps working, so the app looks fine at a glance, while every hook and component you imported yourself throws:
+
+```
+useNavigate() may be used only in the context of a <Router> component.
+```
+
+TypeScript cannot see this, so the build passes and the failure only appears at runtime. Under pnpm, an app that has not declared `react-router` cannot import it at all, which is the intended outcome: the rule enforces itself.
+
+If you already have a direct dependency, the fix is to delete it and change the import paths. The APIs are identical — they are the same functions, re-exported.
+
+## What AppShell gives you
+
+Everything you need to _consume_ the router AppShell created:
+
+**Location and route matching**
+
+- `useLocation` — the current location object
+- `useParams` — dynamic route parameters
+- `useSearchParams` — read and update the query string
+- `useMatch` — test whether a path matches the current location
+- `useResolvedPath` — resolve a relative path against the current route
+
+**Navigating**
+
+- `useNavigate` — navigate programmatically
+- `useNavigation` — the in-flight navigation, for pending UI
+- `Link` — a client-side link
+- `NavLink` — a link that knows when it is active, for nav menus
+- `Navigate` — redirect declaratively during render
+
+**Guarding unsaved work**
+
+- `useBlocker` — intercept an in-app navigation away from unsaved changes
+- `useBeforeUnload` — the same for closing or reloading the tab
+
+**Errors**
+
+- `useRouteError` — read the error inside an error boundary
+
+Types come with them: `Location`, `NavigateFunction`, `NavigateOptions`, `To`, `Params`, `PathMatch`, `LinkProps`, `NavLinkProps`, `Navigation`, `Blocker`, and `BlockerFunction`.
+
+### What it deliberately does not give you
+
+**Router construction** — `createBrowserRouter`, `RouterProvider`, `BrowserRouter`, `MemoryRouter`, `Routes`, `Route`. AppShell builds the router from your modules and resources; a second one nested inside it is the bug this page is about. To control routing in tests, use the [`/testing` entry point](#testing) rather than building your own router.
+
+**Data-router APIs** — `useLoaderData`, `Form`, `useSubmit`, `useFetcher`, `useActionData`, `useRevalidator`. AppShell does not wire up React Router's data layer, so these have nothing to talk to. Load data in the page component or your own data layer. (AppShell exports its own `Form`, which is part of the [form system](../components/form.md) and unrelated to React Router's.)
+
+Missing something you need? Ask for it to be added here rather than adding a direct `react-router` dependency — that is the trade this rule makes, and requests are the mechanism that keeps it honest.
+
+### One caveat
+
+A third-party library that itself depends on `react-router` can still pull in a second copy. That is rare, and outside what AppShell can control. If routing starts throwing the error above, look for a duplicate — under pnpm, `pnpm why react-router`.
+
+## Testing
+
+Test helpers live in a separate entry point, `@tailor-platform/app-shell/testing`. Memory routing is kept out of the main entry because an app that shipped it would render correctly while the URL bar silently stopped tracking navigation — the `AppShell` you import from `@tailor-platform/app-shell` always uses browser routing, and pins it off regardless of what you pass.
+
+### Pages and integration tests
+
+Because AppShell owns the router, a test mounts AppShell rather than building a router. The `AppShell` exported from `/testing` is the same shell, and additionally accepts `memory` with `initialEntries` so it starts at a known URL without touching `window.location`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { AppShell } from "@tailor-platform/app-shell/testing";
+import { SidebarLayout } from "@tailor-platform/app-shell";
+
+render(
+  <AppShell memory initialEntries={["/orders/A42"]} modules={modules}>
+    <SidebarLayout />
+  </AppShell>,
+);
+
+expect(await screen.findByText("Order A42")).toBeDefined();
+```
+
+`initialEntries` is the history stack to start with — the last entry is the current location. Each render owns its history, so tests do not leak navigation state into one another.
+
+### Unit tests
+
+A component that calls `useNavigate` or renders a `<Link>` needs a router above it, but mounting a whole AppShell for that is heavy. `TestRouter` provides just the router context:
+
+```tsx
+import { TestRouter } from "@tailor-platform/app-shell/testing";
+
+render(
+  <TestRouter initialEntries={["/orders/A42"]}>
+    <SaveButton />
+  </TestRouter>,
+);
+```
+
+**If the component reads the route**, pass `path`. A router on its own matches nothing, so `useParams()` comes back empty even when `initialEntries` holds a URL that looks like it should match:
+
+```tsx
+render(
+  <TestRouter path="/orders/:id" initialEntries={["/orders/A42"]}>
+    <OrderBadge /> {/* useParams() -> { id: "A42" } */}
+  </TestRouter>,
+);
+```
+
+The same applies to `useMatch` and to relative `<Link>` targets. Compose your own providers — a GraphQL client, say — around `TestRouter` as needed.
+
+Reach for `TestRouter` when the component under test is the subject; mount `AppShell memory` when the routing itself is.
+
+## Example
 
 ```tsx
 import { useNavigate, useParams, useLocation, Link } from "@tailor-platform/app-shell";

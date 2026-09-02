@@ -37,6 +37,10 @@
     "./vite-plugin": {
       "types": "./dist/vite-plugin.d.ts",
       "default": "./dist/vite-plugin.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "publishConfig": {
@@ -55,7 +59,7 @@
     "@internationalized/date": "3.12.2",
     "@standard-schema/spec": "^1.1.0",
     "@tailor-platform/app-shell-vite-plugin": "workspace:*",
-    "@tailor-platform/auth-public-client": "^0.5.1",
+    "@tailor-platform/auth-public-client": "^0.6.1",
     "change-case": "^5.4.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -73,9 +77,9 @@
     "@tailwindcss/postcss": "catalog:",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.6",
-    "@types/encoding-japanese": "^2.2.1",
+    "@types/encoding-japanese": "2.2.1",
     "@types/node": "catalog:",
-    "@types/papaparse": "^5.5.2",
+    "@types/papaparse": "5.5.2",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",

@@ -1,11 +1,12 @@
 import {
   AppearanceSwitcher,
   Button,
+  Menu,
   SidebarLayout,
   useLocation,
   useOpenCommandPalette,
 } from "@tailor-platform/app-shell";
-import { CircleUserIcon, PanelRightIcon, SearchIcon } from "lucide-react";
+import { CircleUserIcon, EllipsisIcon, PanelRightIcon, SearchIcon } from "lucide-react";
 import { PANEL_SECTIONS, sectionId } from "./panel-sections";
 import { useAssistant } from "./assistant-context";
 
@@ -23,8 +24,13 @@ const actions = [
   <AppearanceSwitcher key="appearance" />,
 ];
 
+// The breadcrumb trail — shared by the full breadcrumb (wide) and the
+// collapsed "⋯" menu (narrow).
+const BREADCRUMB = ["Dashboard", "Body Slot"];
+
 // Centered global search — opens the command palette (same one ⌘K opens),
 // styled as an omnibar input. This replaces the sidebar's built-in Search.
+// Shown on wide viewports; below `lg` it collapses to HeaderSearchButton.
 const HeaderSearch = () => {
   const openPalette = useOpenCommandPalette();
   return (
@@ -39,6 +45,34 @@ const HeaderSearch = () => {
     </button>
   );
 };
+
+// Icon-only search for narrow viewports — matches the account icon button, and
+// opens the same command palette.
+const HeaderSearchButton = () => {
+  const openPalette = useOpenCommandPalette();
+  return (
+    <Button variant="outline" size="icon" aria-label="Search" onClick={() => openPalette()}>
+      <SearchIcon />
+    </Button>
+  );
+};
+
+// Collapsed breadcrumb for narrow viewports — a "⋯" button that opens the trail
+// as a menu.
+const BreadcrumbMenu = () => (
+  <Menu.Root modal={false}>
+    <Menu.Trigger
+      render={<Button type="button" variant="ghost" size="icon" aria-label="Breadcrumb" />}
+    >
+      <EllipsisIcon />
+    </Menu.Trigger>
+    <Menu.Content position={{ side: "bottom", align: "start", sideOffset: 4 }}>
+      {BREADCRUMB.map((crumb) => (
+        <Menu.Item key={crumb}>{crumb}</Menu.Item>
+      ))}
+    </Menu.Content>
+  </Menu.Root>
+);
 
 const AssistantToggle = () => {
   const { toggleAssistant } = useAssistant();
@@ -93,23 +127,36 @@ const AssistantPanel = ({ onClose }: { onClose: () => void }) => (
  * actions; no sidebar toggle (that lives at the sidebar's bottom-left).
  */
 export const GlobalTopBar = () => (
-  <div className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-b px-4">
+  <div className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b px-4 sm:gap-4">
     {/* Left zone: org name + breadcrumb */}
     <div className="flex min-w-0 items-center gap-2">
-      <span className="shrink-0 text-sm font-semibold">File-Based Routing Demo</span>
-      <div className="mx-1 h-5 w-px shrink-0 bg-border" />
-      <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-        <span>Dashboard</span>
-        <span>/</span>
-        <span className="font-medium text-foreground">Body Slot</span>
+      <span className="truncate text-sm font-semibold">File-Based Routing Demo</span>
+      <div className="mx-1 hidden h-5 w-px shrink-0 bg-border sm:block" />
+      {/* Full breadcrumb on wide viewports */}
+      <nav className="hidden min-w-0 items-center gap-1.5 text-sm text-muted-foreground lg:flex">
+        {BREADCRUMB.map((crumb, i) => (
+          <span key={crumb} className="flex shrink-0 items-center gap-1.5">
+            {i > 0 && <span>/</span>}
+            <span className={i === BREADCRUMB.length - 1 ? "font-medium text-foreground" : ""}>
+              {crumb}
+            </span>
+          </span>
+        ))}
+      </nav>
+      {/* Collapsed to a "⋯" menu below lg */}
+      <div className="lg:hidden">
+        <BreadcrumbMenu />
       </div>
     </div>
-    {/* Center zone: global search */}
-    <div className="flex w-[28rem] max-w-full justify-center">
+    {/* Center zone: global search omnibar (wide only) */}
+    <div className="hidden justify-center lg:flex lg:w-[28rem] lg:max-w-full">
       <HeaderSearch />
     </div>
-    {/* Right zone: account + appearance + assistant */}
+    {/* Right zone: search icon (narrow) + account + appearance + assistant */}
     <div className="flex items-center justify-end gap-2">
+      <div className="lg:hidden">
+        <HeaderSearchButton />
+      </div>
       {actions}
       <AssistantToggle />
     </div>

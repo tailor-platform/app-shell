@@ -1,4 +1,4 @@
-# @tailor-platform/app-shell-sdk-plugin
+# @tailor-platform/sdk-plugin-app-shell
 
 ## 0.1.1
 
@@ -12,7 +12,7 @@
 
 ### Minor Changes
 
-- 3f31e8a: Initial release of `@tailor-platform/app-shell-sdk-plugin`.
+- 3f31e8a: Initial release of `@tailor-platform/sdk-plugin-app-shell`.
 
   A companion SDK plugin that generates `tableMetadata` from TailorDB type definitions for use with `@tailor-platform/app-shell`'s `DataTable` component and `createColumnHelper`.
 
@@ -20,7 +20,7 @@
 
   ```ts
   import { definePlugins } from "@tailor-platform/sdk";
-  import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+  import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
 
   export const plugins = definePlugins(
     appShellPlugin({

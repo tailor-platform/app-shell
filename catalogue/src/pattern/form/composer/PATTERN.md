@@ -4,7 +4,7 @@ name: Composer
 category: pattern
 subcategory: form
 description: Free-text composer — a multi-line input above a trailing action row, for notes, replies, and comments submitted in place
-requiredImports: [Card, Textarea, Button, Checkbox]
+requiredImports: [Card, Form, Field, Textarea, Button, Checkbox]
 tags: [composer, textarea, note, reply, comment, actions, discard, send]
 do:
   - A free-text box the user fills and submits in place — add a note, reply on a thread, leave a comment, give a rejection reason
@@ -66,10 +66,13 @@ Leave it empty and the buttons still sit correctly at the right; `justify-betwee
 
 - The body control is `Textarea`, never `Input` — `Input` is locked to `h-9` and clips prose to one 36px line.
 - Size the body with `rows` (3–5 is the usual range). Don't reach for an `astw:h-*` / `astw:min-h-*` override: `astw:` utilities only resolve if that exact class was compiled into the AppShell package CSS, so an arbitrary one written in a consuming app silently does nothing.
-- The `Textarea` needs an accessible name. There is usually no visible label in a composer, so pass `aria-label`; a placeholder is not a label.
+- The `Textarea` needs an accessible name. There is usually no visible label in a composer, so use a `sr-only` `Field.Label`; a placeholder is not a label. Prefer this over `aria-label` — the `Field.Root` is already there, and a real label keeps the error and description wiring available.
 - One primary `Button` in the action row. Discard is `ghost`, and any left-side action is `ghost` too.
 - The action row is one row at every width — the left side shrinks, the buttons do not wrap under the body.
 - Disable the submit on empty or whitespace-only input, and disable both buttons while `submitting`.
+- The composer is a `Form`, not a bare widget. The body sits in a `Field.Root name="…"`, Send is `type="submit"`, and Discard is `type="button"` — inside a `<Form>` an untyped `<button>` defaults to `submit`.
+- Keep the body **controlled**. It is read during render to gate Send and to swap the placeholder, which a submit-time handler cannot do. This is the one `form/*` pattern where field state is load-bearing rather than redundant.
+- Route server rejections (moderation, rate limit, thread closed) through `Form`'s `errors` prop into `Field.Error`, not a toast. A composer that can be rejected needs somewhere for the reason to land next to the text the user still has.
 - Wrap the composer in `Card.Root` when it sits among other cards (a detail page, the end of a thread). A composer that is already inside a `Sheet` or `Dialog` body does not need its own card.
 
 ## Anti-patterns
@@ -80,4 +83,6 @@ Leave it empty and the buttons still sit correctly at the right; `justify-betwee
 - The action row stacked above the `Textarea`, or the buttons wrapped onto their own line — the composer stops reading as one unit.
 - A left-side toggle that silently changes what the submit does without changing the submit's own affordance — if "internal note" changes the destination, the placeholder (or the label) should say so.
 - Submit enabled on an empty body, so the user can post nothing.
+- A bare `<div>` of controls with an `onClick` submit — no `Form`, so a server rejection has nowhere to go and the body has no field identity.
+- Clearing the body on a _failed_ submit — the user loses what they wrote. Clear only after the submit succeeds.
 - A body so tall (`rows={12}`) that the action row falls below the fold — the composer stops reading as one unit.

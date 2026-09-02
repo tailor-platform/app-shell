@@ -160,3 +160,4 @@ import { type CheckboxProps } from "@tailor-platform/app-shell";
 
 - [Form, Field, and Fieldset](./form.md) — Checkbox integrates with `Field` for labels, errors, and validation.
 - [Input](./input.md) — Text input counterpart.
+- [Textarea](./textarea.md) — Multi-line text counterpart.

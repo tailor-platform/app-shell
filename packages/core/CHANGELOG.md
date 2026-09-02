@@ -1120,7 +1120,7 @@
 
 ### Major Changes
 
-- 3f31e8a: Add `DataTable` compound component. Also introduces `@tailor-platform/sdk-plugin-app-shell` — a companion SDK plugin that generates `tableMetadata` from TailorDB type definitions for use with `createColumnHelper`.
+- 3f31e8a: Add `DataTable` compound component. Also introduces `@tailor-platform/app-shell-sdk-plugin` — a companion SDK plugin that generates `tableMetadata` from TailorDB type definitions for use with `createColumnHelper`.
 
   ## DataTable
 
@@ -1246,7 +1246,7 @@
 
   `useCollectionVariables` is intentionally decoupled from DataTable and any other UI component. The hook owns only the query state and exposes plain `variables` — how those variables are rendered is entirely up to the consumer. This means future collection-based views such as Kanban boards can adopt the same hook without modification, and any custom component you build can use a GraphQL cursor-based API as its backend with minimal wiring.
 
-  ## sdk-plugin (`@tailor-platform/sdk-plugin-app-shell`)
+  ## sdk-plugin (`@tailor-platform/app-shell-sdk-plugin`)
 
   `tableMetadata` is what bridges your TailorDB schema to the DataTable. It tells `inferColumns` how to render and filter each field — for example, which fields get a date picker, which get an enum dropdown (and with what options), and which are numeric. Without it, you would need to declare all of this manually per column.
 
@@ -1254,7 +1254,7 @@
 
   ```ts
   import { definePlugins } from "@tailor-platform/sdk";
-  import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
+  import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
 
   export const plugins = definePlugins(
     appShellPlugin({

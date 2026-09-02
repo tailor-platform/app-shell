@@ -14,13 +14,20 @@ permissions:
   issues: read
   pull-requests: read
   copilot-requests: write
+engine:
+  id: copilot
+  model: claude-sonnet-5
 tools:
   github:
     toolsets: [default]
 safe-outputs:
+  report-failure-as-issue: false
   create-pull-request:
     max: 1
+  report-incomplete:
+    create-issue: false
   noop:
+    report-as-issue: false
 ---
 
 # Documentation Updater

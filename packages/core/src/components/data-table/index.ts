@@ -18,6 +18,7 @@ export type {
   HeaderRenderContext,
   DataTableData,
   DataTableFilterConfig,
+  DataTableInfiniteScrollOptions,
   DateCellOptions,
   LinkCellOptions,
   MetadataFieldOptions,

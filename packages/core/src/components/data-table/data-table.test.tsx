@@ -9,14 +9,73 @@ import { useDataTable } from "./use-data-table";
 import type {
   Column,
   DataTableData,
+  DataTableInfiniteScrollOptions,
   RowAction,
   RowExpansionOptions,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";
 
+const originalIntersectionObserver = globalThis.IntersectionObserver;
+
+class MockIntersectionObserver implements IntersectionObserver {
+  static instances: MockIntersectionObserver[] = [];
+
+  readonly root: Element | Document | null;
+  readonly rootMargin: string;
+  readonly thresholds: number[];
+  observed = new Set<Element>();
+
+  constructor(
+    private readonly callback: IntersectionObserverCallback,
+    options: IntersectionObserverInit = {},
+  ) {
+    this.root = options.root ?? null;
+    this.rootMargin = options.rootMargin ?? "0px";
+    this.thresholds = Array.isArray(options.threshold)
+      ? options.threshold
+      : [options.threshold ?? 0];
+    MockIntersectionObserver.instances.push(this);
+  }
+
+  disconnect() {
+    this.observed.clear();
+  }
+
+  observe(target: Element) {
+    this.observed.add(target);
+  }
+
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+
+  unobserve(target: Element) {
+    this.observed.delete(target);
+  }
+
+  trigger(target: Element, isIntersecting = true) {
+    this.callback(
+      [
+        {
+          isIntersecting,
+          target,
+          time: 0,
+          intersectionRatio: isIntersecting ? 1 : 0,
+          boundingClientRect: target.getBoundingClientRect(),
+          intersectionRect: target.getBoundingClientRect(),
+          rootBounds: null,
+        } as IntersectionObserverEntry,
+      ],
+      this,
+    );
+  }
+}
+
 afterEach(() => {
   cleanup();
+  globalThis.IntersectionObserver = originalIntersectionObserver;
+  MockIntersectionObserver.instances = [];
 });
 
 type TestRow = { id: string; name: string; status: string };
@@ -63,6 +122,7 @@ function TestDataTable(props: {
   loading?: boolean;
   error?: Error | null;
   onSelectionChange?: (ids: string[]) => void;
+  infiniteScroll?: DataTableInfiniteScrollOptions;
 }) {
   const {
     columns = testColumns,
@@ -70,6 +130,7 @@ function TestDataTable(props: {
     loading,
     error,
     onSelectionChange,
+    infiniteScroll,
   } = props;
   const table = useDataTable<TestRow>({
     columns,
@@ -77,6 +138,7 @@ function TestDataTable(props: {
     loading,
     error,
     onSelectionChange,
+    infiniteScroll,
   });
   return (
     <DataTable.Root value={table}>
@@ -369,6 +431,109 @@ describe("DataTable", () => {
       expect(container.querySelectorAll('[data-datatable-state="loading"]')).toHaveLength(0);
       expect(container.querySelector('[data-datatable-state="error"]')).toBeNull();
       expect(container.querySelector('[data-datatable-state="empty"]')).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Infinite scroll
+  // -------------------------------------------------------------------------
+  describe("infinite scroll", () => {
+    it("calls onLoadMore once per pending request, then re-arms after rows append", () => {
+      globalThis.IntersectionObserver = MockIntersectionObserver as typeof IntersectionObserver;
+      const onLoadMore = vi.fn();
+      const data = {
+        ...testData,
+        pageInfo: {
+          hasNextPage: true,
+          hasPreviousPage: false,
+          endCursor: "cursor-2",
+          startCursor: null,
+        },
+      } satisfies DataTableData<TestRow>;
+
+      const { container, rerender } = render(
+        <TestDataTable data={data} infiniteScroll={{ hasMore: true, onLoadMore }} />,
+        { wrapper },
+      );
+
+      const observer = MockIntersectionObserver.instances.at(-1);
+      const sentinel = container.querySelector('[data-slot="data-table-load-more-sentinel"]');
+      const scrollContainer = container.querySelector('[data-slot="table-container"]');
+
+      expect(observer).toBeDefined();
+      expect(sentinel).not.toBeNull();
+      expect(observer?.root).toBe(scrollContainer);
+
+      act(() => {
+        observer?.trigger(sentinel!);
+        observer?.trigger(sentinel!);
+      });
+
+      expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <TestDataTable
+          data={{
+            rows: [...testData.rows, { id: "3", name: "Cara", status: "Pending" }],
+            pageInfo: {
+              hasNextPage: true,
+              hasPreviousPage: false,
+              endCursor: "cursor-3",
+              startCursor: null,
+            },
+          }}
+          infiniteScroll={{ hasMore: true, onLoadMore }}
+        />,
+      );
+
+      const nextObserver = MockIntersectionObserver.instances.at(-1);
+      const nextSentinel = container.querySelector('[data-slot="data-table-load-more-sentinel"]');
+
+      act(() => nextObserver?.trigger(nextSentinel!));
+
+      expect(onLoadMore).toHaveBeenCalledTimes(2);
+    });
+
+    it("shows a bottom loading indicator without replacing existing rows", () => {
+      const { container } = render(
+        <TestDataTable
+          data={testData}
+          infiniteScroll={{ hasMore: true, loadingMore: true, onLoadMore: vi.fn() }}
+        />,
+        { wrapper },
+      );
+
+      expect(screen.getByText("Alice")).toBeDefined();
+      expect(screen.getByText("Loading more...")).toBeDefined();
+      expect(container.querySelector('[data-datatable-state="loading-more"]')).not.toBeNull();
+      expect(container.querySelectorAll('[data-datatable-state="loading"]')).toHaveLength(0);
+    });
+
+    it("does not call onLoadMore while already loading or when there is no more data", () => {
+      globalThis.IntersectionObserver = MockIntersectionObserver as typeof IntersectionObserver;
+      const onLoadMore = vi.fn();
+      const { container, rerender } = render(
+        <TestDataTable
+          data={testData}
+          infiniteScroll={{ hasMore: true, loadingMore: true, onLoadMore }}
+        />,
+        { wrapper },
+      );
+
+      let observer = MockIntersectionObserver.instances.at(-1);
+      let sentinel = container.querySelector('[data-slot="data-table-load-more-sentinel"]');
+      act(() => observer?.trigger(sentinel!));
+      expect(onLoadMore).not.toHaveBeenCalled();
+
+      rerender(<TestDataTable data={testData} infiniteScroll={{ hasMore: false, onLoadMore }} />);
+
+      observer = MockIntersectionObserver.instances.at(-1);
+      sentinel = container.querySelector('[data-slot="data-table-load-more-sentinel"]');
+      expect(sentinel).toBeNull();
+      if (sentinel) {
+        act(() => observer?.trigger(sentinel));
+      }
+      expect(onLoadMore).not.toHaveBeenCalled();
     });
   });
 

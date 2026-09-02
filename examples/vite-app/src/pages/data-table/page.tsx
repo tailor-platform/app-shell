@@ -345,6 +345,77 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
   );
 }
 
+function InfiniteInvoiceTable() {
+  const { variables, control } = useCollectionVariables({
+    params: {
+      pageSize: 12,
+      initialSort: [{ field: "dueDate", direction: "Asc" }],
+    },
+  });
+
+  const [data, setData] = useState<DataTableData<Invoice>>();
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    const id = ++requestId.current;
+    const append = variables.pagination.after != null;
+
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setData(undefined);
+      setLoading(true);
+    }
+
+    queryInvoices(variables).then((result) => {
+      if (id !== requestId.current) return;
+
+      setData((prev) =>
+        append && prev
+          ? {
+              rows: [...prev.rows, ...result.rows],
+              pageInfo: result.pageInfo,
+              total: result.total,
+            }
+          : result,
+      );
+      setLoading(false);
+      setLoadingMore(false);
+    });
+  }, [variables]);
+
+  const table = useDataTable({
+    columns,
+    data,
+    loading,
+    control,
+    infiniteScroll: {
+      loadingMore,
+      onLoadMore: () => {
+        const endCursor = data?.pageInfo?.endCursor;
+        if (endCursor) {
+          control.goToNextPage({ endCursor });
+        }
+      },
+    },
+  });
+
+  return (
+    <DataTable.Root value={table} className="h-full">
+      <DataTable.Toolbar>
+        <div className="flex items-center gap-2">
+          <DataTable.Filters slot="add" addIconOnly />
+          <StatusTabs control={control} />
+        </div>
+        <DataTable.Filters slot="chips" />
+      </DataTable.Toolbar>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 const DataTablePage = () => {
@@ -389,6 +460,20 @@ const DataTablePage = () => {
               </>
             )}
           />
+        </section>
+
+        {/* Infinite scroll */}
+        <section className="mb-8">
+          <h3 className="mb-2 text-sm font-semibold">Infinite scroll</h3>
+          <p className="mb-2 text-sm text-muted-foreground">
+            Fixed-height wrapper +{" "}
+            <code className="bg-muted px-1 py-0.5 rounded">infiniteScroll</code>. The consumer keeps
+            appending <code className="bg-muted px-1 py-0.5 rounded">rows</code>; the table only
+            detects the bottom and asks for the next chunk. No pagination footer.
+          </p>
+          <div className="h-[28rem] min-h-0">
+            <InfiniteInvoiceTable />
+          </div>
         </section>
       </Layout.Column>
     </Layout>

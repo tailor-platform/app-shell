@@ -271,6 +271,7 @@ export {
   type Column,
   type DataTableData,
   type DataTableFilterConfig,
+  type DataTableInfiniteScrollOptions,
   type HeaderRenderContext,
   type RowAction,
   type UseDataTableOptions,

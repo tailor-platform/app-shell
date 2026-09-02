@@ -4,6 +4,7 @@ export const dataTableLabels = defineI18nLabels({
   en: {
     // DataTable.Body
     loading: "Loading...",
+    loadingMore: "Loading more...",
     noData: "No data",
     errorPrefix: "Error:",
 
@@ -109,6 +110,7 @@ export const dataTableLabels = defineI18nLabels({
   },
   ja: {
     loading: "読み込み中...",
+    loadingMore: "さらに読み込み中...",
     noData: "データがありません",
     errorPrefix: "エラー:",
     actionsHeader: "操作",

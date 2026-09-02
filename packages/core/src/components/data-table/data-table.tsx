@@ -10,8 +10,9 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type RefObject,
 } from "react";
-import { ChevronRight, Ellipsis } from "lucide-react";
+import { ChevronRight, Ellipsis, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
@@ -456,6 +457,49 @@ function DataTableStatusRow({ totalColSpan, state, children }: DataTableStatusRo
   );
 }
 
+interface DataTableLoadMoreRowProps {
+  totalColSpan: number;
+  loadingMore: boolean;
+  sentinelRef: RefObject<HTMLDivElement | null>;
+}
+
+/** @internal */
+function DataTableLoadMoreRow({
+  totalColSpan,
+  loadingMore,
+  sentinelRef,
+}: DataTableLoadMoreRowProps) {
+  const t = useDataTableT();
+
+  return (
+    <Table.Row
+      data-datatable-state={loadingMore ? "loading-more" : "load-more-sentinel"}
+      className="astw:border-0 astw:hover:bg-transparent"
+    >
+      <Table.Cell colSpan={totalColSpan} className="astw:px-0 astw:py-0">
+        <div
+          ref={sentinelRef}
+          data-slot="data-table-load-more-sentinel"
+          className={cn(
+            "astw:flex astw:w-full astw:items-center astw:justify-center",
+            loadingMore ? "astw:min-h-10 astw:px-6 astw:py-2" : "astw:h-px",
+          )}
+        >
+          {loadingMore ? (
+            <output
+              aria-live="polite"
+              className="astw:flex astw:items-center astw:gap-2 astw:text-sm astw:text-muted-foreground"
+            >
+              <LoaderCircle className="astw:size-4 astw:animate-spin" aria-hidden />
+              {t("loadingMore")}
+            </output>
+          ) : null}
+        </div>
+      </Table.Cell>
+    </Table.Row>
+  );
+}
+
 // =============================================================================
 // DataTable.Root
 // =============================================================================
@@ -502,6 +546,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasPrevPage: value.hasPrevPage,
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
+    infiniteScroll: value.infiniteScroll,
     rowActions: value.rowActions,
     selectedIds: value.selectedIds,
     isRowSelected: value.isRowSelected,
@@ -724,7 +769,13 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
 // =============================================================================
 
 /** @internal */
-function DataTableBody({ className }: { className?: string }) {
+function DataTableBody({
+  className,
+  loadMoreRef,
+}: {
+  className?: string;
+  loadMoreRef?: RefObject<HTMLDivElement | null>;
+}) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
     throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
@@ -741,9 +792,11 @@ function DataTableBody({ className }: { className?: string }) {
     isRowSelected,
     toggleRowSelection,
     pageSize,
+    hasNextPage,
     rowExpansion,
     isRowExpanded,
     toggleRowExpansion,
+    infiniteScroll,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
@@ -753,6 +806,8 @@ function DataTableBody({ className }: { className?: string }) {
   const totalColSpan =
     (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
+  const hasMore = infiniteScroll?.hasMore ?? hasNextPage;
+  const loadingMore = infiniteScroll?.loadingMore ?? false;
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const pinLayout = useMemo(
     () =>
@@ -822,6 +877,13 @@ function DataTableBody({ className }: { className?: string }) {
         isRowExpanded={isRowExpanded}
         toggleRowExpansion={toggleRowExpansion}
       />
+      {infiniteScroll && loadMoreRef && (hasMore || loadingMore) ? (
+        <DataTableLoadMoreRow
+          totalColSpan={totalColSpan}
+          loadingMore={loadingMore}
+          sentinelRef={loadMoreRef}
+        />
+      ) : null}
     </Table.Body>
   );
 }
@@ -1361,10 +1423,17 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
 function DataTableTable({ className }: { className?: string }) {
   const ctx = useContext(DataTableContext);
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadMoreRequestedRef = useRef(false);
   const [widths, setWidths] = useState<ColumnWidths>({});
 
   const visibleColumns = ctx?.visibleColumns;
   const pinnedColumns = ctx?.pinnedColumns;
+  const rows = ctx?.rows;
+  const loading = ctx?.loading ?? false;
+  const infiniteScroll = ctx?.infiniteScroll;
+  const hasMore = infiniteScroll?.hasMore ?? ctx?.hasNextPage ?? false;
+  const loadingMore = infiniteScroll?.loadingMore ?? false;
 
   // Measure each column's *rendered* width from the (always-present) header row
   // and publish it via PinMeasureContext, so sticky offsets reflect real
@@ -1450,6 +1519,35 @@ function DataTableTable({ className }: { className?: string }) {
     };
   }, [visibleColumns, pinnedColumns]);
 
+  useEffect(() => {
+    if (!loadingMore) {
+      loadMoreRequestedRef.current = false;
+    }
+  }, [loadingMore, hasMore, rows?.length]);
+
+  // Observe a bottom sentinel inside the table's own scrollport. This is for
+  // height-constrained tables (e.g. inside `<Layout fill>` or a fixed-height
+  // wrapper); the consumer still owns fetching and concatenating rows.
+  useEffect(() => {
+    if (!infiniteScroll) return;
+    const root = containerRef.current;
+    const target = loadMoreRef.current;
+    if (!root || !target || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        if (loading || loadingMore || !hasMore || loadMoreRequestedRef.current) return;
+        loadMoreRequestedRef.current = true;
+        infiniteScroll.onLoadMore();
+      },
+      { root },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, infiniteScroll, loading, loadingMore, rows?.length]);
+
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex
     // column; combined with the container's overflow-auto this is the region
@@ -1463,7 +1561,7 @@ function DataTableTable({ className }: { className?: string }) {
         className={className}
       >
         <DataTableHeaders />
-        <DataTableBody />
+        <DataTableBody loadMoreRef={loadMoreRef} />
       </Table.Root>
     </PinMeasureContext.Provider>
   );

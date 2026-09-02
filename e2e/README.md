@@ -10,23 +10,30 @@ Playwright-based E2E tests that cover two layers:
 ### 1. Deploy backend to Tailor Platform
 
 ```bash
-cd e2e/backend
-TAILOR_PLATFORM_WORKSPACE_ID=<your-workspace-id> pnpm deploy
+cd e2e
+TAILOR_PLATFORM_WORKSPACE_ID=<your-workspace-id> pnpm deploy:backend
 ```
 
-After deploy, retrieve the app URL, client ID, and AI Gateway URL using `tailor-sdk`:
+To refresh the generated `backend/tailor.d.ts` after changing the TailorDB schema or `tailor.config.ts`, run:
+
+```bash
+cd e2e
+pnpm exec tailor generate --config backend/tailor.config.ts
+```
+
+After deploy, retrieve the app URL, client ID, and AI Gateway URL using `tailor`:
 
 ```bash
 # Get the app URL
-npx tailor-sdk show --workspace-id <your-workspace-id> --json
+npx @tailor-platform/sdk show --workspace-id <your-workspace-id> --json
 # → {"url": "https://<slug>.erp.dev", ...}
 
 # Get the OAuth2 client ID
-npx tailor-sdk oauth2client list --workspace-id <your-workspace-id> --json
+npx @tailor-platform/sdk oauth2client list --workspace-id <your-workspace-id> --json
 # → [{"clientId": "tpoc_...", ...}]
 
 # Get the AI Gateway domain
-npx tailor-sdk workspace app list --workspace-id <your-workspace-id> --json
+npx @tailor-platform/sdk workspace app list --workspace-id <your-workspace-id> --json
 # → find the entry named "e2e-ai-gateway" and use https://<domain>
 ```
 

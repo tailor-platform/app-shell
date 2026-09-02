@@ -71,8 +71,16 @@ function toCamelCase(str: string): string {
  * );
  * ```
  *
- * Then run `tailor-sdk generate` to produce the metadata file.
+ * Then run `tailor generate` to produce the metadata file.
  */
+type TailorDBSchemaEntry =
+  TailorDBReadyContext<AppShellPluginOptions>["tailordb"][number]["tables"][string];
+type TailorDBNamespaceCompat =
+  | TailorDBReadyContext<AppShellPluginOptions>["tailordb"][number]
+  | (Omit<TailorDBReadyContext<AppShellPluginOptions>["tailordb"][number], "tables"> & {
+      types: Record<string, TailorDBSchemaEntry>;
+    });
+
 export function appShellPlugin(
   options: AppShellPluginOptions = {},
 ): Plugin<void, AppShellPluginOptions> {
@@ -87,8 +95,10 @@ export function appShellPlugin(
     onTailorDBReady(context: TailorDBReadyContext<AppShellPluginOptions>) {
       const metadataMap: Record<string, TableMetadata> = {};
 
-      for (const ns of context.tailordb) {
-        for (const [_typeName, type] of Object.entries(ns.types)) {
+      for (const ns of context.tailordb as readonly TailorDBNamespaceCompat[]) {
+        const schemaEntries = "tables" in ns ? ns.tables : ns.types;
+
+        for (const type of Object.values(schemaEntries)) {
           const fields: FieldMetadata[] = [];
           const relations: TableMetadata["relations"] extends readonly (infer R)[] | undefined
             ? R[]
@@ -111,12 +121,18 @@ export function appShellPlugin(
                 raw.type === "1-1";
 
               if (isForeignKey && raw.toward) {
-                const targetTableName = toCamelCase(raw.toward.type);
-                const relationFieldName = raw.toward.as ?? toCamelCase(raw.toward.type);
-                fieldRelation = {
-                  fieldName: relationFieldName,
-                  targetTable: targetTableName,
-                };
+                const targetName =
+                  (raw.toward as { table?: string; type?: string }).table ??
+                  (raw.toward as { table?: string; type?: string }).type;
+
+                if (targetName) {
+                  const targetTableName = toCamelCase(targetName);
+                  const relationFieldName = raw.toward.as ?? targetTableName;
+                  fieldRelation = {
+                    fieldName: relationFieldName,
+                    targetTable: targetTableName,
+                  };
+                }
               }
             }
 

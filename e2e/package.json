@@ -7,7 +7,7 @@
     "test:e2e:ui": "playwright test --ui",
     "lint": "oxlint tests backend/tailor.config.ts playwright.config.ts",
     "type-check": "tsc --project tsconfig.json --noEmit",
-    "deploy:backend": "cd backend && tailor-sdk apply --workspace-id $TAILOR_PLATFORM_WORKSPACE_ID --yes"
+    "deploy:backend": "cd backend && tailor deploy --workspace-id $TAILOR_PLATFORM_WORKSPACE_ID --yes"
   },
   "devDependencies": {
     "@playwright/test": "1.55.1",

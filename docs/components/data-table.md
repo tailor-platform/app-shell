@@ -843,9 +843,9 @@ function MyCustomPagination() {
 
 ## SDK Plugin (`@tailor-platform/app-shell-sdk-plugin`)
 
-The SDK plugin generates `tableMetadata` from TailorDB type definitions at code-gen time. This metadata bridges your schema to the DataTable — it specifies how each field should be rendered and filtered (e.g. date pickers for datetime fields, dropdown for enum fields).
+The SDK plugin generates `tableMetadata` from TailorDB table definitions at generate time. This metadata bridges your schema to the DataTable — it specifies how each field should be rendered and filtered (e.g. date pickers for datetime fields, dropdown for enum fields).
 
-Register the plugin in `tailor.config.ts` and run `tailor-sdk generate`:
+Register the plugin in `tailor.config.ts` and run `tailor generate`:
 
 ```ts
 import { definePlugins } from "@tailor-platform/sdk";

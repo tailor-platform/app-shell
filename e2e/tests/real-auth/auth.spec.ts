@@ -9,7 +9,7 @@ loadEnv({ path: resolve(import.meta.dirname, ".env") });
  *
  * Prerequisites:
  * 1. Deploy backend to the Tailor Platform workspace:
- *    cd e2e/backend && TAILOR_PLATFORM_WORKSPACE_ID=<id> pnpm deploy
+ *    cd e2e && TAILOR_PLATFORM_WORKSPACE_ID=<id> pnpm deploy:backend
  * 2. Create a test user via the IDP API (see README)
  * 3. Set environment variables in e2e/tests/real-auth/.env
  */

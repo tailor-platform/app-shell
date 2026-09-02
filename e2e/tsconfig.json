@@ -12,5 +12,5 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "node"]
   },
-  "include": ["backend/src", "backend/tailor.config.ts", "tests"]
+  "include": ["backend/src", "backend/tailor.config.ts", "backend/tailor.d.ts", "tests"]
 }

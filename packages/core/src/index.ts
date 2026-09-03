@@ -56,6 +56,15 @@ export {
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  AIChat,
+  type AIChatProps,
+  type AIChatAttachment,
+  type ToolState,
+  type ChainOfThoughtStepStatus,
+  type ChatHistoryGroupData,
+  type ChatHistoryItemData,
+} from "./components/ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";

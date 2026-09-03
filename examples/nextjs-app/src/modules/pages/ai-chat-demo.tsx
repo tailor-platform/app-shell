@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Copy, RefreshCw, Sparkles } from "lucide-react";
+import { Copy, Eraser, RefreshCw, Sparkles } from "lucide-react";
 import {
   AIChat,
   Card,
@@ -66,19 +66,25 @@ const AIChatDemoPage = () => {
     <Layout fill>
       <Layout.Header title="AIChat Demo" />
       <Layout.Column>
-        <Card.Root className="astw:flex astw:h-[640px] astw:flex-col">
-          <Card.Header
-            title="Assistant"
-            description="Runs on a scripted mock — no model is called."
-          />
+        <p className="astw:mb-4 astw:text-sm astw:text-muted-foreground">
+          Runs on a scripted mock — no model is called. Streaming, Stop, attachments, and the
+          message actions all exercise the real component.
+        </p>
+        {/* `overflow-hidden` keeps the header rule inside the card's rounded corners. */}
+        <Card.Root className="astw:flex astw:h-[640px] astw:flex-col astw:overflow-hidden">
           <AIChat
+            title="Assistant"
+            actions={
+              <AIChat.Action label="Clear conversation" onClick={() => window.location.reload()}>
+                <Eraser className="astw:size-3.5" aria-hidden />
+              </AIChat.Action>
+            }
             status={status}
             onSubmit={(message) => sendMessage(message)}
             onStop={stop}
             attachments
             composerActions={<Checkbox label="Search the knowledge base" />}
             placeholder="Ask about your orders…"
-            className="astw:min-h-0 astw:flex-1"
           >
             {messages.length === 0 ? (
               <AIChat.EmptyState>

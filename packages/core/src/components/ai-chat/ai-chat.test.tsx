@@ -21,6 +21,62 @@ describe("AIChat", () => {
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
+
+    it("with header", () => {
+      const { container } = render(
+        <AIChat
+          onSubmit={vi.fn()}
+          title="Assistant"
+          actions={
+            <AIChat.Action label="Clear conversation">
+              <span aria-hidden>x</span>
+            </AIChat.Action>
+          }
+        >
+          <div />
+        </AIChat>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+  });
+
+  describe("header", () => {
+    it("is absent when neither title nor actions is set", () => {
+      const { container } = render(
+        <AIChat onSubmit={vi.fn()}>
+          <div />
+        </AIChat>,
+      );
+      expect(container.querySelector('[data-slot="ai-chat-header"]')).toBeNull();
+    });
+
+    it("renders the title and a default graphic", () => {
+      const { container } = render(
+        <AIChat onSubmit={vi.fn()} title="Assistant">
+          <div />
+        </AIChat>,
+      );
+      expect(screen.getByText("Assistant")).toBeDefined();
+      expect(container.querySelector('[data-slot="ai-chat-header"] svg')).not.toBeNull();
+    });
+
+    it("drops the default graphic when icon is null", () => {
+      const { container } = render(
+        <AIChat onSubmit={vi.fn()} title="Assistant" icon={null}>
+          <div />
+        </AIChat>,
+      );
+      expect(container.querySelector('[data-slot="ai-chat-header"] svg')).toBeNull();
+    });
+
+    it("renders actions, and renders the strip for actions alone", () => {
+      render(
+        <AIChat onSubmit={vi.fn()} actions={<button type="button">Clear</button>}>
+          <div />
+        </AIChat>,
+      );
+      expect(screen.getByRole("button", { name: "Clear" })).toBeDefined();
+    });
   });
 
   it("renders the transcript passed as children", () => {

@@ -709,10 +709,11 @@ const table = useDataTable({
 > Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md)
 
 **Import:** `import { AIChat } from '@tailor-platform/app-shell'`
-**Purpose:** Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts. Root owns the frame (scroll area + composer); the transcript itself is `children`, composed from the attached parts.
-**API:** Standalone root (`onSubmit`, `status`, `value`/`onValueChange`, `attachments`, `composerActions`) + attached parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning`/`.ReasoningTrigger`/`.ReasoningContent`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, `.History`.
+**Purpose:** Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts. Root owns the frame (optional header strip + scroll area + composer); the transcript itself is `children`, composed from the attached parts.
+**API:** Standalone root (`title`, `icon`, `actions`, `onSubmit`, `status`, `value`/`onValueChange`, `attachments`, `composerActions`) + attached parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning`/`.ReasoningTrigger`/`.ReasoningContent`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, `.History`.
 **Composer:** Body is `Textarea` over one action row per `form/composer`'s layout. Enter submits (IME-safe), Shift+Enter newlines, and `status` from `useAIChat()` drives the busy/Stop state.
-**Renders no chrome:** no border or background — wrap in `Card`, `Sheet`, or a `Layout.Column`.
+**Header:** a 48px strip (graphic + `text-sm font-semibold` title + right action slot) closed by a full-width rule; renders only when `title` or `actions` is set.
+**Renders no chrome:** no border or background of its own — wrap in `Card`, `Sheet`, or a `Layout.Column`, with `overflow-hidden` so the header rule stays inside rounded corners.
 **Used in patterns:** none yet — a component, not a catalogue pattern (platform-planning#1748).
 
 ---

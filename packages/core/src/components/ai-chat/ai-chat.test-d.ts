@@ -10,7 +10,7 @@
  * To run: `pnpm test`
  */
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { describe, it, expectTypeOf } from "vitest";
 import { AIChat, type AIChatAttachment, type AIChatProps } from "./ai-chat";
 
@@ -35,5 +35,9 @@ describe("AIChat callback prop types", () => {
 
   it("types Source's title as the required display string, not the native tooltip", () => {
     expectTypeOf<ComponentProps<typeof AIChat.Source>["title"]>().toEqualTypeOf<string>();
+  });
+
+  it("types the root's title as header content, not the native tooltip attribute", () => {
+    expectTypeOf<AIChatProps["title"]>().toEqualTypeOf<ReactNode>();
   });
 });

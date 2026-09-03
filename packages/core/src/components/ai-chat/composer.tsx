@@ -159,7 +159,7 @@ function Composer({
   return (
     <form
       onSubmit={handleSubmit}
-      className="astw:flex astw:shrink-0 astw:flex-col astw:gap-2 astw:border-t astw:p-3"
+      className="astw:flex astw:shrink-0 astw:flex-col astw:gap-2 astw:p-3 astw:pt-0"
     >
       {attachmentsEnabled ? (
         <input

@@ -14,6 +14,7 @@ import {
 } from "./chain-of-thought";
 import { ChatHistory } from "./chat-history";
 import { Composer } from "./composer";
+import { Header } from "./header";
 import {
   Conversation,
   ConversationContent,
@@ -27,9 +28,15 @@ import { Source, Sources, SourcesContent, SourcesTrigger } from "./sources";
 import { Suggestion, Suggestions } from "./suggestion";
 import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "./tool";
 
-type AIChatProps = Omit<ComponentProps<"div">, "children" | "onSubmit"> & {
+type AIChatProps = Omit<ComponentProps<"div">, "children" | "onSubmit" | "title"> & {
   /** The transcript — compose it from `AIChat.Message`, `.Response`, `.Reasoning`, `.Tool`, `.Sources`, etc., or `AIChat.EmptyState` while there is none yet. */
   children: ReactNode;
+  /** Title in the header strip. The strip renders when `title` or `actions` is set. */
+  title?: ReactNode;
+  /** Leading graphic in the header strip. Defaults to a sparkle; pass `null` for none, or a control (e.g. a collapse button) for a docked panel. */
+  icon?: ReactNode;
+  /** Right-aligned slot in the header strip — compose it from `AIChat.Action`. */
+  actions?: ReactNode;
   /** Drives the composer's busy/Stop state. Plugs directly into `useAIChat()`'s `status`. */
   status?: AIChatStatus;
   /** Called with the trimmed prompt and any staged attachments when the composer submits. */
@@ -85,9 +92,8 @@ type AIChatProps = Omit<ComponentProps<"div">, "children" | "onSubmit"> & {
  * ```tsx
  * const { messages, status, sendMessage, stop } = useAIChat({ client, model: "gpt-5" });
  *
- * <Card.Root className="astw:flex astw:h-full astw:flex-col">
- *   <Card.Header title="Assistant" />
- *   <AIChat status={status} onSubmit={sendMessage} onStop={stop} className="astw:min-h-0 astw:flex-1">
+ * <Card.Root className="astw:flex astw:h-full astw:flex-col astw:overflow-hidden">
+ *   <AIChat title="Assistant" status={status} onSubmit={sendMessage} onStop={stop}>
  *     {messages.length === 0 ? (
  *       <AIChat.EmptyState title="Ask the assistant" />
  *     ) : (
@@ -104,6 +110,9 @@ type AIChatProps = Omit<ComponentProps<"div">, "children" | "onSubmit"> & {
 function AIChatRoot({
   className,
   children,
+  title,
+  icon,
+  actions,
   status = "ready",
   onSubmit,
   onStop,
@@ -134,6 +143,9 @@ function AIChatRoot({
       className={cn("astw:flex astw:h-full astw:min-h-0 astw:flex-col", className)}
       {...props}
     >
+      {title == null && actions == null ? null : (
+        <Header title={title} icon={icon} actions={actions} />
+      )}
       <Conversation autoScroll={autoScroll}>
         <ConversationContent>{children}</ConversationContent>
         <ConversationScrollButton />

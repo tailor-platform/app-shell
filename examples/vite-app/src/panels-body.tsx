@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "@tailor-platform/app-shell";
 import { CircleUserIcon, EllipsisIcon, PanelRightIcon } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { PANEL_SECTIONS, sectionId } from "./panel-sections";
 import { useAssistant } from "./assistant-context";
 
@@ -13,8 +14,8 @@ import { useAssistant } from "./assistant-context";
 // content). The primary sidebar collapses to an icon rail with its own toggle at
 // the bottom-left, so the top bar carries no sidebar toggle.
 //
-// Header zones: org + breadcrumb on the left, global search in the center, and
-// account/appearance on the right. Notifications moved into the sidebar (App.tsx).
+// Header zones: org + breadcrumb on the left, account/appearance on the right.
+// Search + notifications live in the sidebar (App.tsx).
 
 const actions = [
   <Button key="account" variant="outline" size="icon" aria-label="Account">
@@ -43,6 +44,56 @@ const BreadcrumbMenu = () => (
     </Menu.Content>
   </Menu.Root>
 );
+
+const FullBreadcrumb = () => (
+  <div className="flex items-center gap-1.5 whitespace-nowrap text-sm text-muted-foreground">
+    {BREADCRUMB.map((crumb, i) => (
+      <span key={crumb} className="flex items-center gap-1.5">
+        {i > 0 && <span>/</span>}
+        <span className={i === BREADCRUMB.length - 1 ? "font-medium text-foreground" : ""}>
+          {crumb}
+        </span>
+      </span>
+    ))}
+  </div>
+);
+
+// Shows the full breadcrumb while it fits; collapses to the "⋯" menu only when it
+// would actually overflow the space available (measured, not a fixed
+// breakpoint). A hidden probe holds the breadcrumb's natural width so the
+// decision stays stable in both states.
+const ResponsiveBreadcrumb = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const probeRef = useRef<HTMLDivElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const measure = () => {
+      const probe = probeRef.current;
+      if (probe) setCollapsed(probe.offsetWidth > container.clientWidth);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <nav
+      ref={containerRef}
+      aria-label="Breadcrumb"
+      className="flex min-w-0 flex-1 items-center overflow-hidden"
+    >
+      {/* Off-flow probe at natural width — the measuring reference. */}
+      <div ref={probeRef} aria-hidden className="pointer-events-none invisible absolute">
+        <FullBreadcrumb />
+      </div>
+      {collapsed ? <BreadcrumbMenu /> : <FullBreadcrumb />}
+    </nav>
+  );
+};
 
 const AssistantToggle = () => {
   const { toggleAssistant } = useAssistant();
@@ -98,25 +149,12 @@ const AssistantPanel = ({ onClose }: { onClose: () => void }) => (
  */
 export const GlobalTopBar = () => (
   <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 sm:gap-4">
-    {/* Left: org name + breadcrumb (search lives in the sidebar now) */}
-    <div className="flex min-w-0 items-center gap-2">
-      <span className="truncate text-sm font-semibold">File-Based Routing Demo</span>
-      <div className="mx-1 hidden h-5 w-px shrink-0 bg-border sm:block" />
-      {/* Full breadcrumb on wide viewports */}
-      <nav className="hidden min-w-0 items-center gap-1.5 text-sm text-muted-foreground lg:flex">
-        {BREADCRUMB.map((crumb, i) => (
-          <span key={crumb} className="flex shrink-0 items-center gap-1.5">
-            {i > 0 && <span>/</span>}
-            <span className={i === BREADCRUMB.length - 1 ? "font-medium text-foreground" : ""}>
-              {crumb}
-            </span>
-          </span>
-        ))}
-      </nav>
-      {/* Collapsed to a "⋯" menu below lg */}
-      <div className="lg:hidden">
-        <BreadcrumbMenu />
-      </div>
+    {/* Left: org name + breadcrumb (search lives in the sidebar now). The
+        breadcrumb collapses to a "⋯" menu only when it runs out of room. */}
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <span className="shrink-0 truncate text-sm font-semibold">File-Based Routing Demo</span>
+      <div className="mx-1 h-5 w-px shrink-0 bg-border" />
+      <ResponsiveBreadcrumb />
     </div>
     {/* Right: account + appearance + assistant */}
     <div className="flex items-center gap-2">

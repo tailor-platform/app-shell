@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -9,6 +9,15 @@ afterEach(() => {
 });
 
 describe("Reasoning", () => {
+  it("tells the caller when a part is used outside Reasoning", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(() => render(<ReasoningTrigger />)).toThrow(/must be used within <Reasoning>/);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it("is open while isStreaming is true", () => {
     render(
       <Reasoning isStreaming>

@@ -28,6 +28,14 @@ describe("ChatHistory", () => {
     expect(onSelect).toHaveBeenCalledWith("1");
   });
 
+  it("calls onDelete with the conversation id", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    render(<ChatHistory groups={GROUPS} onDelete={onDelete} />);
+    await user.click(screen.getByRole("button", { name: /Delete/ }));
+    expect(onDelete).toHaveBeenCalledWith("1");
+  });
+
   it("shows a delete action only when onDelete is provided", () => {
     const { rerender } = render(<ChatHistory groups={GROUPS} />);
     expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();

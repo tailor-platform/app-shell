@@ -344,6 +344,65 @@ describe("AIChat", () => {
     expect(screen.getByText("first.txt")).toBeDefined();
   });
 
+  it("renders message actions in an Actions row", () => {
+    render(
+      <AIChat onSubmit={vi.fn()}>
+        <AIChat.Message from="assistant">
+          <AIChat.Response>Answer.</AIChat.Response>
+          <AIChat.Actions>
+            <AIChat.Action label="Copy">
+              <span aria-hidden>c</span>
+            </AIChat.Action>
+          </AIChat.Actions>
+        </AIChat.Message>
+      </AIChat>,
+    );
+    const row = document.querySelector('[data-slot="ai-chat-actions"]');
+    expect(row).not.toBeNull();
+    expect(row?.querySelector('[data-slot="ai-chat-action"]')).not.toBeNull();
+  });
+
+  it("shows a thumbnail for a staged image attachment", async () => {
+    const user = userEvent.setup();
+    render(
+      <AIChat onSubmit={vi.fn()} attachments>
+        <div />
+      </AIChat>,
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, new File(["x"], "shot.png", { type: "image/png" }));
+    const img = screen.getByRole("img", { name: "shot.png" });
+    expect(img.getAttribute("src")).toMatch(/^blob:|^data:/);
+  });
+
+  it("removes a staged attachment from its chip", async () => {
+    const user = userEvent.setup();
+    render(
+      <AIChat onSubmit={vi.fn()} attachments>
+        <div />
+      </AIChat>,
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, new File(["x"], "notes.txt", { type: "text/plain" }));
+    expect(screen.getByText("notes.txt")).toBeDefined();
+
+    await user.click(screen.getByRole("button", { name: "Remove notes.txt" }));
+    expect(screen.queryByText("notes.txt")).toBeNull();
+  });
+
+  it("opens the file picker from the attach button", async () => {
+    const user = userEvent.setup();
+    render(
+      <AIChat onSubmit={vi.fn()} attachments>
+        <div />
+      </AIChat>,
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const click = vi.spyOn(input, "click").mockImplementation(() => {});
+    await user.click(screen.getByRole("button", { name: "Attach files" }));
+    expect(click).toHaveBeenCalledTimes(1);
+  });
+
   it("does not render the attach button when attachments is disabled", () => {
     render(
       <AIChat onSubmit={vi.fn()}>

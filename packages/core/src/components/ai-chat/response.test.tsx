@@ -38,6 +38,12 @@ describe("Response", () => {
     expect(screen.getByText("click me")).toBeDefined();
   });
 
+  it("renders a heading as emphasised text", () => {
+    render(<Response>{"## Order status"}</Response>);
+    const heading = screen.getByText("Order status");
+    expect(heading.className).toContain("font-semibold");
+  });
+
   it("renders a bulleted list", () => {
     render(<Response>{"- one\n- two"}</Response>);
     expect(screen.getByText("one").closest("ul")).not.toBeNull();

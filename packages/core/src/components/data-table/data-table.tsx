@@ -1365,6 +1365,8 @@ function DataTableTable({ className }: { className?: string }) {
 
   const visibleColumns = ctx?.visibleColumns;
   const pinnedColumns = ctx?.pinnedColumns;
+  const currentPage = ctx?.currentPage;
+  const pageSize = ctx?.pageSize;
 
   // Measure each column's *rendered* width from the (always-present) header row
   // and publish it via PinMeasureContext, so sticky offsets reflect real
@@ -1449,6 +1451,19 @@ function DataTableTable({ className }: { className?: string }) {
       observer.disconnect();
     };
   }, [visibleColumns, pinnedColumns]);
+
+  // Keep pagination-driven scroll reset local to the scroll owner. The scroll
+  // container lives here in `DataTable.Table`, while page changes can come from
+  // the built-in pagination or any custom consumer using the same context.
+  // Threading an imperative callback/event bus through `DataTable.Root` just to
+  // reach this ref would add API surface and create opt-in call sites; this
+  // effect stays as the single place that synchronizes page/page-size state to
+  // the DOM scroll position.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+  }, [currentPage, pageSize]);
 
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex

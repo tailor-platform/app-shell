@@ -7,7 +7,7 @@ import {
   SidebarMenuItem,
   type SearchSource,
 } from "@tailor-platform/app-shell";
-import { BellIcon } from "lucide-react";
+import { BellIcon, LayersIcon } from "lucide-react";
 import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
 import { GlobalTopBar, PanelsBody } from "./panels-body";
@@ -62,7 +62,7 @@ const AppInner = () => {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarItem to="/" />
-            <SidebarGroup title={labels.t("navMain")}>
+            <SidebarGroup title={labels.t("navMain")} icon={<LayersIcon />}>
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />

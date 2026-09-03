@@ -1,4 +1,4 @@
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -219,6 +219,33 @@ describe("DefaultSidebar opt-in props", () => {
 
     // The toggle opens the overlay drawer.
     expect(document.querySelector('[data-slot="sidebar-overlay"]')).not.toBeNull();
+  });
+
+  it("reveals a group's children in a hover flyout in the icon rail", async () => {
+    const user = userEvent.setup();
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <SidebarGroup title="Main" icon={<Home />}>
+            <SidebarItem to="/dashboard" />
+            <SidebarItem to="/products" />
+          </SidebarGroup>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    // No flyout until the group icon is hovered.
+    expect(document.querySelector('nav[aria-label="Main"]')).toBeNull();
+
+    await user.hover(screen.getByRole("button", { name: "Main" }));
+
+    const flyout = document.querySelector('nav[aria-label="Main"]') as HTMLElement;
+    expect(flyout).not.toBeNull();
+    expect(within(flyout).getByRole("link", { name: /dashboard/i })).toBeDefined();
+    expect(within(flyout).getByRole("link", { name: /products/i })).toBeDefined();
   });
 });
 

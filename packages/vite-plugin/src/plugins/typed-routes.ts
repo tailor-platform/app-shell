@@ -40,7 +40,7 @@ export function createTypedRoutesPlugin(ctx: PluginContext): Plugin {
     fs.mkdirSync(outputDir, { recursive: true });
 
     // Write file only if content changed
-let existingContent = "";
+    let existingContent = "";
     try {
       existingContent = fs.readFileSync(outputPath, "utf-8");
     } catch (error) {

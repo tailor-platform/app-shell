@@ -53,9 +53,25 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIGatewayTool,
+  type AIGatewayToolCall,
+  type AIGatewayFunctionTool,
+  type AIGatewayProviderTool,
   type AIChatCompletionEvent,
+  type AIChatSource,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  defineAIChatTool,
+  aiToolSchema,
+  aiProviderTool,
+  type AIChatConfiguredTool,
+  type AIChatToolContext,
+  type AIChatToolSchema,
+  type AILocalTool,
+  type AIOpenAIWebSearchTool,
+  type OpenAIWebSearchToolOptions,
+} from "./ai/tools";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";

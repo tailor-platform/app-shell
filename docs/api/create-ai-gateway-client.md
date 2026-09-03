@@ -5,7 +5,7 @@ description: Create a low-level AI Gateway client that reuses AppShell authentic
 
 # createAIGatewayClient
 
-Creates a small AI Gateway transport client for text-only chat completions.
+Creates a small AI Gateway transport client for chat completions, tool calls, and optional sources.
 
 ## Signature
 
@@ -41,7 +41,8 @@ interface AIGatewayClient {
 The iterable yields completion events:
 
 - `text-delta` — append `event.text` to build the assistant response
-- `done` — terminal event with an optional `finishReason`
+- `tool-call` — a local function tool call requested by the model
+- `done` — terminal event with an optional `finishReason` and optional `sources`
 
 ## Related Types
 
@@ -54,11 +55,40 @@ type AIGatewayChatMessage =
   | {
       role: "assistant";
       content?: string;
+      toolCalls?: AIGatewayToolCall[];
+    }
+  | {
+      role: "tool";
+      toolCallId: string;
+      content: string;
+    };
+
+interface AIGatewayToolCall {
+  id: string;
+  name: string;
+  argumentsText: string;
+}
+
+type AIGatewayTool =
+  | {
+      type: "function";
+      function: {
+        name: string;
+        description?: string;
+        parameters: Record<string, unknown>;
+      };
+    }
+  | {
+      type: "provider";
+      provider: "openai";
+      name: "web_search";
+      options?: unknown;
     };
 
 interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
+  tools?: AIGatewayTool[];
   signal?: AbortSignal;
 }
 
@@ -68,9 +98,22 @@ type AIChatCompletionEvent =
       text: string;
     }
   | {
+      type: "tool-call";
+      toolCallId: string;
+      toolName: string;
+      argumentsText: string;
+    }
+  | {
       type: "done";
       finishReason?: string;
+      sources?: AIChatSource[];
     };
+
+interface AIChatSource {
+  type: "url";
+  url: string;
+  title?: string;
+}
 ```
 
 ## Usage
@@ -104,7 +147,8 @@ console.log(text);
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- The low-level API is intentionally narrow: text deltas plus completion metadata
+- Local tools are sent as normalized `type: "function"` definitions; provider tools are passed through as normalized `type: "provider"` definitions
+- The low-level API stays event-based so hooks can layer streaming UI and tool loops on top
 - `request.signal` is passed through so callers can abort in-flight work
 
 ## Related

@@ -43,7 +43,7 @@ function renderInline(text: string): ReactNode[] {
         </code>,
       );
     } else {
-      const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
+      const linkMatch = /^\[([^\]]{1,500})\]\(([^)]{1,2000})\)$/.exec(token);
       if (linkMatch && isSafeHref(linkMatch[2])) {
         tokens.push(
           <a
@@ -93,7 +93,7 @@ function renderBlock(block: string, key: number): ReactNode {
       </ul>
     );
   }
-  const heading = /^(#{1,3})\s+(.*)$/.exec(block.trim());
+  const heading = /^(#{1,3})[ \t]+(\S.*)$/.exec(block.trim());
   if (heading) {
     return (
       <p key={key} className="astw:font-semibold">

@@ -65,6 +65,11 @@ describe("Response", () => {
       expect(backticks.container.textContent).toContain("```");
     });
 
+    it("handles a long run of whitespace after a heading marker", () => {
+      const { container } = render(<Response>{`##${" ".repeat(20000)}Title`}</Response>);
+      expect(container.textContent).toContain("Title");
+    });
+
     it("handles a long run of leading whitespace on a list-shaped line", () => {
       const { container } = render(<Response>{`${" ".repeat(20000)}- item`}</Response>);
       expect(container.textContent).toContain("item");

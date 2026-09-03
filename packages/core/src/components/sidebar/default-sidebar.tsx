@@ -77,12 +77,16 @@ export type DefaultSidebarProps = {
   /**
    * Hide the sidebar's own header row (org title + collapse toggle). Use when a
    * global top bar already owns those — e.g. `SidebarLayout topBar`.
+   *
+   * @default false
    */
   hideHeader?: boolean;
 
   /**
    * Hide the built-in Search entry. Use when the command palette is already
    * reachable elsewhere — e.g. a global search box in `SidebarLayout topBar`.
+   *
+   * @default false
    */
   hideSearch?: boolean;
 

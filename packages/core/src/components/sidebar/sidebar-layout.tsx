@@ -42,12 +42,11 @@ type SidebarLayoutCommonProps = {
    * This is distinct from the content `header` (which sits above the content
    * column only): use `topBar` when you want a single app-wide bar over the
    * whole layout. Pair it with `<SidebarLayout.DefaultSidebar hideHeader />`
-   * (and often `hideSearch` / `iconRail`) so the sidebar defers its own header
-   * and search to the bar.
+   * (and often `iconRail`) so the sidebar defers its own header to the bar.
    *
-   * The bar is expected to be `3.5rem` (h-14) tall — matching the default
-   * header — so the fixed sidebar starts just beneath it. For a different
-   * height, set `--appshell-topbar-h` yourself on the layout wrapper.
+   * The bar should be `3.5rem` (h-14) tall: the fixed sidebar is offset to start
+   * just beneath it (via the internal `--appshell-topbar-h`, fixed at `3.5rem`
+   * while a `topBar` is present).
    */
   topBar?: React.ReactNode;
 };

@@ -170,11 +170,15 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   // Icon rail: swap the inline collapsible submenu for a hover flyout. The group
   // icon is the trigger; hovering it reveals the child pages in a popover.
   if (isIconRail) {
+    // The label span is CSS-hidden at icon width, so give the trigger an
+    // explicit accessible name (the hover flyout's aria-label only mounts on
+    // hover).
     const trigger = to ? (
       <SidebarMenuButton
         render={
           <Link
             to={to}
+            aria-label={resolvedTitle}
             className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
           />
         }
@@ -183,7 +187,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>
     ) : (
-      <SidebarMenuButton render={<button type="button" />}>
+      <SidebarMenuButton render={<button type="button" aria-label={resolvedTitle} />}>
         {icon}
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>

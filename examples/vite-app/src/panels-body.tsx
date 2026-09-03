@@ -4,9 +4,8 @@ import {
   Menu,
   SidebarLayout,
   useLocation,
-  useOpenCommandPalette,
 } from "@tailor-platform/app-shell";
-import { CircleUserIcon, EllipsisIcon, PanelRightIcon, SearchIcon } from "lucide-react";
+import { CircleUserIcon, EllipsisIcon, PanelRightIcon } from "lucide-react";
 import { PANEL_SECTIONS, sectionId } from "./panel-sections";
 import { useAssistant } from "./assistant-context";
 
@@ -27,35 +26,6 @@ const actions = [
 // The breadcrumb trail — shared by the full breadcrumb (wide) and the
 // collapsed "⋯" menu (narrow).
 const BREADCRUMB = ["Dashboard", "Body Slot"];
-
-// Centered global search — opens the command palette (same one ⌘K opens),
-// styled as an omnibar input. This replaces the sidebar's built-in Search.
-// Shown on wide viewports; below `lg` it collapses to HeaderSearchButton.
-const HeaderSearch = () => {
-  const openPalette = useOpenCommandPalette();
-  return (
-    <button
-      type="button"
-      onClick={() => openPalette()}
-      className="flex h-9 w-full max-w-md items-center gap-2 rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted"
-    >
-      <SearchIcon className="size-4 shrink-0" />
-      <span className="flex-1 text-left">Search…</span>
-      <span className="pointer-events-none shrink-0 select-none text-muted-foreground">⌘K</span>
-    </button>
-  );
-};
-
-// Icon-only search for narrow viewports — matches the account icon button, and
-// opens the same command palette.
-const HeaderSearchButton = () => {
-  const openPalette = useOpenCommandPalette();
-  return (
-    <Button variant="outline" size="icon" aria-label="Search" onClick={() => openPalette()}>
-      <SearchIcon />
-    </Button>
-  );
-};
 
 // Collapsed breadcrumb for narrow viewports — a "⋯" button that opens the trail
 // as a menu.
@@ -127,8 +97,8 @@ const AssistantPanel = ({ onClose }: { onClose: () => void }) => (
  * actions; no sidebar toggle (that lives at the sidebar's bottom-left).
  */
 export const GlobalTopBar = () => (
-  <div className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b px-4 sm:gap-4">
-    {/* Left zone: org name + breadcrumb */}
+  <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 sm:gap-4">
+    {/* Left: org name + breadcrumb (search lives in the sidebar now) */}
     <div className="flex min-w-0 items-center gap-2">
       <span className="truncate text-sm font-semibold">File-Based Routing Demo</span>
       <div className="mx-1 hidden h-5 w-px shrink-0 bg-border sm:block" />
@@ -148,20 +118,8 @@ export const GlobalTopBar = () => (
         <BreadcrumbMenu />
       </div>
     </div>
-    {/* Center zone: global search omnibar (wide only). The wrapper always
-        renders so the grid keeps three columns — otherwise a display:none
-        center would collapse the grid and the right cluster would drift inward
-        instead of hugging the far edge. */}
-    <div className="flex justify-center">
-      <div className="hidden w-[28rem] max-w-full lg:block">
-        <HeaderSearch />
-      </div>
-    </div>
-    {/* Right zone: search icon (narrow) + account + appearance + assistant */}
-    <div className="flex items-center justify-end gap-2">
-      <div className="lg:hidden">
-        <HeaderSearchButton />
-      </div>
+    {/* Right: account + appearance + assistant */}
+    <div className="flex items-center gap-2">
       {actions}
       <AssistantToggle />
     </div>

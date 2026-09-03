@@ -40,7 +40,6 @@ const AppInner = () => {
           // header; its collapse toggle sits at the bottom-left instead.
           <SidebarLayout.DefaultSidebar
             hideHeader
-            hideSearch
             iconRail
             footer={
               <div className="mt-auto p-2">

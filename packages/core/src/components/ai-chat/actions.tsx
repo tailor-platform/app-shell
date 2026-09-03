@@ -17,35 +17,34 @@ function Actions({ className, ...props }: ActionsProps) {
   );
 }
 
-type ActionProps = React.ComponentProps<typeof Button> & {
+// Picked rather than inherited: an action is a fixed-size ghost icon button,
+// so `Button`'s variant, size and type are not ours to hand out.
+type ActionProps = Pick<
+  React.ComponentProps<typeof Button>,
+  "className" | "disabled" | "children" | "onClick"
+> & {
   /** Accessible name; also shown as the hover tooltip. */
   label: string;
 };
 
 /** A single icon-button action — copy, retry, feedback. */
-function Action({
-  label,
-  className,
-  variant = "ghost",
-  size = "icon",
-  children,
-  ...props
-}: ActionProps) {
+function Action({ label, className, disabled, children, onClick }: ActionProps) {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger
         render={
           <Button
             type="button"
-            variant={variant}
-            size={size}
+            variant="ghost"
+            size="icon"
+            disabled={disabled}
+            onClick={onClick}
             aria-label={label}
             data-slot="ai-chat-action"
             className={cn(
               "astw:size-7 astw:shrink-0 astw:text-muted-foreground astw:hover:text-foreground",
               className,
             )}
-            {...props}
           >
             {children}
           </Button>

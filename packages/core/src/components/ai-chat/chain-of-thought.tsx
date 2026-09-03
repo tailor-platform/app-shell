@@ -149,19 +149,22 @@ function ChainOfThoughtSearchResults({ className, ...props }: ChainOfThoughtSear
   );
 }
 
-type ChainOfThoughtSearchResultProps = ComponentProps<typeof Badge>;
+// Picked rather than inherited: `variant` stays available because conveying
+// status is what a Badge is for, but the rest of its surface is not ours.
+type ChainOfThoughtSearchResultProps = Pick<
+  ComponentProps<typeof Badge>,
+  "className" | "children" | "variant"
+>;
 
 function ChainOfThoughtSearchResult({
   className,
   variant = "outline-neutral",
-  ...props
+  children,
 }: ChainOfThoughtSearchResultProps) {
   return (
-    <Badge
-      variant={variant}
-      className={cn("astw:text-[10px] astw:font-normal", className)}
-      {...props}
-    />
+    <Badge variant={variant} className={cn("astw:text-[10px] astw:font-normal", className)}>
+      {children}
+    </Badge>
   );
 }
 

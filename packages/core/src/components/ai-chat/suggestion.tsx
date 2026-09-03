@@ -18,7 +18,14 @@ function Suggestions({ className, children, ...props }: SuggestionsProps) {
   );
 }
 
-type SuggestionProps = Omit<React.ComponentProps<typeof Button>, "onClick" | "onSelect"> & {
+// Picked rather than inherited: a chip is a fixed pill with a fixed
+// `secondary`/`sm` treatment, so `Button`'s variant, size, type and event
+// surface are not ours to hand out. Widen deliberately if a case turns up.
+type SuggestionProps = Pick<
+  React.ComponentProps<typeof Button>,
+  "className" | "disabled" | "children"
+> & {
+  /** Prompt text; submitted through `onSelect`, and shown unless `children` overrides it. */
   suggestion: string;
   onSelect?: (suggestion: string) => void;
 };
@@ -27,20 +34,13 @@ type SuggestionProps = Omit<React.ComponentProps<typeof Button>, "onClick" | "on
  * A starter-prompt chip. Submits `suggestion` as if the user had typed and
  * sent it — the fastest way to teach people what the assistant is good at.
  */
-function Suggestion({
-  suggestion,
-  onSelect,
-  className,
-  variant = "secondary",
-  size = "sm",
-  children,
-  ...props
-}: SuggestionProps) {
+function Suggestion({ suggestion, onSelect, className, disabled, children }: SuggestionProps) {
   return (
     <Button
       type="button"
-      variant={variant}
-      size={size}
+      variant="secondary"
+      size="sm"
+      disabled={disabled}
       data-slot="ai-chat-suggestion"
       className={cn(
         // `max-w-full` caps the chip at the container width so a long prompt
@@ -52,7 +52,6 @@ function Suggestion({
         className,
       )}
       onClick={() => onSelect?.(suggestion)}
-      {...props}
     >
       {children ?? suggestion}
     </Button>

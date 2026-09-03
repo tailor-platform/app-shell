@@ -41,3 +41,26 @@ describe("AIChat callback prop types", () => {
     expectTypeOf<AIChatProps["title"]>().toEqualTypeOf<ReactNode>();
   });
 });
+
+// These three wrap a Button or a Badge. They Pick what the part's job needs
+// rather than inheriting, so the wrapped component's surface cannot leak out
+// and become contract we did not intend to offer.
+describe("wrapper parts expose only picked props", () => {
+  it("keeps Suggestion to its own props plus className/disabled/children", () => {
+    expectTypeOf<keyof ComponentProps<typeof AIChat.Suggestion>>().toEqualTypeOf<
+      "className" | "disabled" | "children" | "suggestion" | "onSelect"
+    >();
+  });
+
+  it("keeps Action to its own label plus className/disabled/children/onClick", () => {
+    expectTypeOf<keyof ComponentProps<typeof AIChat.Action>>().toEqualTypeOf<
+      "className" | "disabled" | "children" | "onClick" | "label"
+    >();
+  });
+
+  it("keeps ChainOfThoughtSearchResult to className/children/variant", () => {
+    expectTypeOf<keyof ComponentProps<typeof AIChat.ChainOfThoughtSearchResult>>().toEqualTypeOf<
+      "className" | "children" | "variant"
+    >();
+  });
+});

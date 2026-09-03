@@ -14,8 +14,16 @@ function isSafeHref(href: string): boolean {
   return SAFE_LINK_PATTERN.test(href) || href.startsWith("/") || href.startsWith("#");
 }
 
+// Every quantifier here is bounded. This renderer runs on model output, and
+// an unbounded `[^x]+` scan that fails at each start position is quadratic in
+// the input length. The caps sit far above any real bold/code/link span, so a
+// longer one simply renders as literal text rather than costing a slow scan.
+const INLINE_PATTERN = /(\*\*[^*]{1,500}\*\*)|(`[^`]{1,500}`)|(\[[^\]]{1,500}\]\([^)]{1,2000}\))/;
+
 function renderInline(text: string): ReactNode[] {
-  const pattern = /(\*\*[^*]+\*\*)|(`[^`]+`)|(\[[^\]]+\]\([^)]+\))/g;
+  // A fresh instance per call: the `g` flag carries `lastIndex` between
+  // `exec`s, so a shared one would leak parse position across messages.
+  const pattern = new RegExp(INLINE_PATTERN, "g");
   const tokens: ReactNode[] = [];
   let cursor = 0;
   let key = 0;
@@ -58,16 +66,22 @@ function renderInline(text: string): ReactNode[] {
   return tokens;
 }
 
+// Indent is capped at 8 — deeper than any real list nesting — and matches
+// `[ \t]` rather than `\s` so a marker can never run across a newline.
+// Both call sites share these so the marker definition cannot drift.
+const LIST_MARKER = /^[ \t]{0,8}([-*]|\d{1,9}\.)[ \t]+/;
+const ORDERED_MARKER = /^[ \t]{0,8}\d{1,9}\./;
+
 function isListLine(line: string): boolean {
-  return /^\s*([-*]|\d+\.)\s+/.test(line);
+  return LIST_MARKER.test(line);
 }
 
 function renderBlock(block: string, key: number): ReactNode {
   const lines = block.split("\n").filter((line) => line.trim().length > 0);
   if (lines.length > 0 && lines.every(isListLine)) {
-    const ordered = /^\s*\d+\./.test(lines[0]);
+    const ordered = ORDERED_MARKER.test(lines[0]);
     const items = lines.map((line, i) => (
-      <li key={i}>{renderInline(line.replace(/^\s*([-*]|\d+\.)\s+/, ""))}</li>
+      <li key={i}>{renderInline(line.replace(LIST_MARKER, ""))}</li>
     ));
     return ordered ? (
       <ol key={key} className="astw:list-decimal astw:space-y-0.5 astw:pl-5">

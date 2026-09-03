@@ -1365,6 +1365,8 @@ function DataTableTable({ className }: { className?: string }) {
 
   const visibleColumns = ctx?.visibleColumns;
   const pinnedColumns = ctx?.pinnedColumns;
+  const currentPage = ctx?.currentPage;
+  const pageSize = ctx?.pageSize;
 
   // Measure each column's *rendered* width from the (always-present) header row
   // and publish it via PinMeasureContext, so sticky offsets reflect real
@@ -1449,6 +1451,14 @@ function DataTableTable({ className }: { className?: string }) {
       observer.disconnect();
     };
   }, [visibleColumns, pinnedColumns]);
+
+  // Pagination swaps the visible row window; keep the internal scrollport at
+  // the first row of the new page instead of preserving a stale vertical offset.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+  }, [currentPage, pageSize]);
 
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex

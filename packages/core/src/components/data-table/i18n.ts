@@ -177,7 +177,7 @@ export const dataTableLabels = defineI18nLabels({
     paginationSelectedRows: (props: { selected: number }) => `${props.selected} 行を選択中`,
 
     // Filters
-    addFilter: "フィルタを追加",
+    addFilter: "フィルタに追加",
     applyFilter: "適用",
     updateFilter: "更新",
     removeFilter: "フィルタを削除",

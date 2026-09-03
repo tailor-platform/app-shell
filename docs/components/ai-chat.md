@@ -9,7 +9,7 @@ description: Building blocks for an LLM assistant UI — a streaming conversatio
 
 It renders no border or background of its own. Wrap it in [`Card`](./card.md), [`Sheet`](./sheet.md), or a `Layout.Column` for the surrounding surface.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/patterns/ai-chat)
+> **Not a mirror of the catalogue pattern.** `AIChat` was migrated from the UI Catalogue's [AI chat pattern](https://ui.tailor.tech/patterns/ai-chat), which is a design reference built on its own primitives — not a preview of this component. The API differs, and several behaviours were changed deliberately to fit AppShell (see [Prop pass-through](#prop-pass-through) and the notes throughout). Read that page for the intent; read this one for the contract.
 
 ## Import
 
@@ -68,6 +68,29 @@ function Assistant() {
 | `accept`          | `string`                                                     | -         | Accepted file types for the hidden file input, when `attachments` is enabled.               |
 | `multiple`        | `boolean`                                                    | `true`    | Allow more than one staged attachment at a time.                                            |
 | `composerActions` | `ReactNode`                                                  | -         | Open slot on the composer's action row — a visibility toggle, a model picker, a select.     |
+
+## Prop pass-through
+
+Most props stay inside `AIChat` and reach only its own parts. These are the ones that land on **another AppShell component**, so they carry that component's contract — and any future change to it — rather than one `AIChat` defines:
+
+| Prop          | Reaches                                                                | Note                                    |
+| ------------- | ---------------------------------------------------------------------- | --------------------------------------- |
+| `value`       | [`Textarea`](./textarea.md) `value`                                    | The composer body is a real `Textarea`. |
+| `placeholder` | [`Textarea`](./textarea.md) `placeholder`                              |                                         |
+| `disabled`    | [`Textarea`](./textarea.md) **and** the attach [`Button`](./button.md) | One prop, two components.               |
+| `onStop`      | [`Button`](./button.md) `onClick`                                      | Becomes the Stop button's handler.      |
+
+`accept` and `multiple` reach a plain hidden `<input type="file">`, not an AppShell component. `onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds `AIChat`'s own state and is never forwarded. Everything else (`children`, `title`, `icon`, `actions`, `status`, `onSubmit`, `submitOnEnter`, `autoScroll`, `attachments`, `composerActions`) is consumed by `AIChat` or one of its parts. Unrecognised props spread onto the root `<div>`.
+
+Three attached parts are wrappers around an AppShell component and forward their whole prop surface to it:
+
+| Part                                | Wraps                                                      | Defaults it sets                                                                           |
+| ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `AIChat.Suggestion`                 | [`Button`](./button.md)                                    | `variant="secondary"`, `size="sm"`; `onClick` is replaced by `onSelect`                    |
+| `AIChat.Action`                     | [`Button`](./button.md) inside a [`Tooltip`](./tooltip.md) | `variant="ghost"`, `size="icon"`; `label` becomes both the accessible name and the tooltip |
+| `AIChat.ChainOfThoughtSearchResult` | [`Badge`](./badge.md)                                      | `variant="outline-neutral"`                                                                |
+
+Two consequences worth knowing. Those three accept any `Button`/`Badge` prop, including variants `AIChat` was never designed around — `<AIChat.Suggestion variant="destructive" />` is legal and will render. And a `className` you pass them is merged with `cn()`, which is not configured for the `astw:` prefix, so it cannot always override a base utility; if an override appears to do nothing, that is why.
 
 ## Filling the page
 

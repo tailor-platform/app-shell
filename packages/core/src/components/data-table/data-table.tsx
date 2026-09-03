@@ -1529,9 +1529,9 @@ export const DataTable = {
    * **Requires `control`** — `useDataTable()` must receive `control` from
    * `useCollectionVariables()`, otherwise this component throws at render time.
    *
-   * **Go-to-first / go-to-last buttons** — Rendered only when `totalPages` is
-   * non-null (i.e. the backend returns a total count). When `totalPages` is
-   * `null`, these buttons and the page counter are omitted.
+   * **Go-to-first / go-to-last buttons** — The first-page button is always
+   * rendered. The last-page button and page counter are rendered only when
+   * `totalPages` is non-null (i.e. the backend returns a `total` count).
    */
   Pagination: DataTablePagination,
 } as const;

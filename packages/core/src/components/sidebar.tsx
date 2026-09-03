@@ -633,7 +633,8 @@ function SidebarMenuButton({
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof Tooltip.Content>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+  const { isMobile, state, isIconMode, setOpenMobile, openIconMode, setOpenIconMode } =
+    useSidebar();
 
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -678,7 +679,9 @@ function SidebarMenuButton({
       <Tooltip.Trigger render={button} />
       <Tooltip.Content
         position={{ side: "right", align: "center" }}
-        hidden={state !== "collapsed" || isMobile}
+        // Shown whenever the sidebar is a narrow icon rail (tablet rail or a
+        // collapsed desktop rail), never on mobile or an expanded sidebar.
+        hidden={isMobile || !(state === "collapsed" || isIconMode)}
         {...tooltip}
       />
     </Tooltip.Root>

@@ -48,10 +48,10 @@ export type SidebarGroupProps = {
  * swaps its inline collapsible submenu for a hover flyout.
  */
 function useIsIconRail(): boolean {
-  // The desktop icon rail (collapsed but still visible). Tablet/mobile keep the
-  // toggle-driven overlay drawer, so the hover flyout is desktop-only.
-  const { state, isMobile } = useSidebar();
-  return !isMobile && state === "collapsed";
+  // The sidebar is a narrow icon rail whenever it's the tablet rail (isIconMode)
+  // or a collapsed desktop rail. Mobile keeps the toggle-driven slide-in drawer.
+  const { state, isMobile, isIconMode } = useSidebar();
+  return !isMobile && (isIconMode || state === "collapsed");
 }
 
 /**

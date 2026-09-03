@@ -67,6 +67,7 @@ const testConfig: RootConfiguration = {
  * Wrapper to render DefaultSidebar with all required providers.
  */
 const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboard/overview") => {
+  stubDesktopViewport();
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <AppShellConfigContext.Provider value={{ configurations: testConfig }}>

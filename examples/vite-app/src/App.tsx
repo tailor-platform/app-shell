@@ -56,6 +56,7 @@ const App = () => {
             <SidebarItem to="/date-picker" />
             <SidebarItem to="/data-table" />
             <SidebarItem to="/data-table-lab" />
+            <SidebarItem to="/data-table-selection" />
             <SidebarItem to="/alert-tokens" />
             <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>

@@ -5,6 +5,7 @@ UI pattern catalogue for `@tailor-platform/app-shell`. Contains reference implem
 ## Structure
 
 - `src/fundamental/` — Foundational references (components, design system, GraphQL)
+- `src/page/` — Screen-level page entries (the shape of a whole screen)
 - `src/pattern/` — UI pattern implementations (list, detail, form, interaction)
 - `scripts/` — Generation tooling
 

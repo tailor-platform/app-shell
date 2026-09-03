@@ -66,12 +66,12 @@ const AIChatDemoPage = () => {
     <Layout fill>
       <Layout.Header title="AIChat Demo" />
       <Layout.Column>
-        <p className="astw:mb-4 astw:text-sm astw:text-muted-foreground">
+        <p className="astw:text-sm astw:text-muted-foreground">
           Runs on a scripted mock — no model is called. Streaming, Stop, attachments, and the
           message actions all exercise the real component.
         </p>
         {/* `overflow-hidden` keeps the header rule inside the card's rounded corners. */}
-        <Card.Root className="astw:flex astw:h-[640px] astw:flex-col astw:overflow-hidden">
+        <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
           <AIChat
             title="Assistant"
             actions={

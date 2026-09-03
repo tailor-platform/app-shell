@@ -69,6 +69,27 @@ function Assistant() {
 | `multiple`        | `boolean`                                                    | `true`    | Allow more than one staged attachment at a time.                                            |
 | `composerActions` | `ReactNode`                                                  | -         | Open slot on the composer's action row — a visibility toggle, a model picker, a select.     |
 
+## Filling the page
+
+`AIChat` is `h-full`, so it fills whatever height its parent gives it and never grows the page — the transcript scrolls internally while the header and composer stay pinned. Give the surface around it a definite height.
+
+Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card takes the leftover space):
+
+```tsx
+<Layout fill>
+  <Layout.Header title="Assistant" />
+  <Layout.Column>
+    <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
+      <AIChat title="Assistant" onSubmit={sendMessage}>
+        {/* … */}
+      </AIChat>
+    </Card.Root>
+  </Layout.Column>
+</Layout>
+```
+
+`min-h-0` is what lets the card shrink below its content's natural height so the transcript scrolls instead of pushing the composer off-screen. In a docked panel or `Sheet` whose height is already fixed, `astw:h-full` on the card is enough.
+
 ## Header
 
 A 48px strip above the transcript: leading graphic, title, and an open action slot on the right, closed by a rule that runs the full width of the surface. It renders only when `title` or `actions` is set — omit both for a bare transcript-and-composer surface, and give the card `overflow-hidden` so the rule stays inside its rounded corners.

@@ -5,7 +5,7 @@ description: Building blocks for an LLM assistant UI — a streaming conversatio
 
 # AIChat
 
-`AIChat` owns the frame for an assistant UI: a scrollable, auto-following conversation view over a fixed composer. It takes the transcript itself as `children`, so you compose each turn from the attached parts — `AIChat.Message`, `AIChat.Response`, `AIChat.Reasoning`, `AIChat.Tool`, `AIChat.Sources`, and more — against your own [`useAIChat()`](./use-ai-chat.md) state.
+`AIChat` owns the frame for an assistant UI: a scrollable, auto-following conversation view over a fixed composer. It takes the transcript itself as `children`, so you compose each turn from the attached parts — `AIChat.Message`, `AIChat.Response`, `AIChat.Reasoning`, `AIChat.Tool`, `AIChat.Sources`, and more — against your own [`useAIChat()`](../api/use-ai-chat.md) state.
 
 It renders no border or background of its own. Wrap it in [`Card`](./card.md), [`Sheet`](./sheet.md), or a `Layout.Column` for the surrounding surface.
 
@@ -85,7 +85,7 @@ User turns render as a right-aligned primary bubble; assistant turns take the fu
 
 ### Response
 
-Renders the markdown subset a streamed LLM response actually emits — bold, inline code, links, headings, bullet/numbered lists — without a markdown dependency. Only `http(s):`, `mailto:`, and relative links render as clickable; anything else (a model can emit arbitrary text) renders as plain text. For full CommonMark, swap `<AIChat.Response>` for `react-markdown` or the AI SDK's `streamdown` — call sites keep the same shape.
+Renders the markdown subset a streamed LLM response actually emits — bold, inline code, links, headings, bullet/numbered lists — without a markdown dependency. Only `http(s):`, `mailto:`, and same-site relative links render as clickable; any other target renders as plain text, since the text passing through here is untrusted model output. For full CommonMark, swap `<AIChat.Response>` for `react-markdown` or the AI SDK's `streamdown` — call sites keep the same shape.
 
 ```tsx
 <AIChat.Response>{message.content}</AIChat.Response>
@@ -211,7 +211,7 @@ Set `attachments` to show the composer's paperclip button and staged-attachment 
 </AIChat>
 ```
 
-`Attachment`/`useAttachment` is built for a persisted record's file list — initial items, buffered upload/delete operations flushed via `applyChanges` — a different lifecycle from a composer's ephemeral attach-then-clear-on-send. `AIChat`'s composer keeps its own light buffer rather than reusing that hook, while sharing `AttachmentItem`'s field vocabulary for consistency.
+Staged files live in the composer until submit, then clear. For a persisted record's file list — initial items and buffered upload/delete operations flushed to a backend — use [`Attachment`](./attachment.md) instead.
 
 ## Related components
 
@@ -219,5 +219,5 @@ Set `attachments` to show the composer's paperclip button and staged-attachment 
 - [Attachment](./attachment.md) — for a persisted record's file list, a different lifecycle from the composer's own attachments
 - [Card](./card.md)
 - [Button](./button.md)
-- [use-ai-chat](./use-ai-chat.md)
-- [create-ai-gateway-client](./create-ai-gateway-client.md)
+- [useAIChat](../api/use-ai-chat.md)
+- [createAIGatewayClient](../api/create-ai-gateway-client.md)

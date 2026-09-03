@@ -37,6 +37,16 @@ describe("Reasoning", () => {
     expect(screen.queryByText("Thinking about it…")).toBeNull();
   });
 
+  it("stays open when defaultOpen is set and nothing is streaming", () => {
+    render(
+      <Reasoning defaultOpen>
+        <ReasoningTrigger />
+        <ReasoningContent>Thinking about it…</ReasoningContent>
+      </Reasoning>,
+    );
+    expect(screen.getByText("Thinking about it…")).toBeDefined();
+  });
+
   it("stays open after streaming ends once the reader has manually toggled it", async () => {
     const user = userEvent.setup();
     const { rerender } = render(

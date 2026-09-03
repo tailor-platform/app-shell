@@ -5,14 +5,8 @@ import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
 
 /**
- * A file staged in the composer before sending. Shares `AttachmentItem`'s
- * vocabulary (id/fileName/mimeType/previewUrl) with the detail-page
- * `Attachment` component, plus the raw `File` a send handler needs.
- * `Attachment`/`useAttachment` itself is built for a persisted record's file
- * list (initial items, buffered upload/delete operations flushed via
- * `applyChanges`) rather than an ephemeral attach-then-clear-on-send
- * composer, so the composer keeps its own light buffer instead of reusing
- * that hook.
+ * A file staged in the composer before sending: `AttachmentItem`'s vocabulary
+ * (id/fileName/mimeType/previewUrl) plus the raw `File` a send handler needs.
  */
 type AIChatAttachment = AttachmentItem & { file: File };
 

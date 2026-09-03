@@ -1,9 +1,15 @@
 import type { ComponentProps, ReactNode } from "react";
-import { ChevronDown, ListTree, type LucideIcon } from "lucide-react";
+import { ListTree, type LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/badge";
+import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
-import { DisclosureRoot, DisclosureTrigger, DisclosurePanel } from "./disclosure";
+import {
+  DisclosureRoot,
+  DisclosureTrigger,
+  DisclosureChevron,
+  DisclosurePanel,
+} from "./disclosure";
 
 type ChainOfThoughtProps = Omit<ComponentProps<typeof DisclosureRoot>, "children"> & {
   children: ReactNode;
@@ -35,22 +41,18 @@ function ChainOfThought({ className, children, ...props }: ChainOfThoughtProps) 
 }
 
 type ChainOfThoughtHeaderProps = Omit<ComponentProps<typeof DisclosureTrigger>, "children"> & {
+  /** Overrides the default "Chain of thought" label. */
   label?: string;
 };
 
-function ChainOfThoughtHeader({
-  label = "Chain of thought",
-  className,
-  ...props
-}: ChainOfThoughtHeaderProps) {
+function ChainOfThoughtHeader({ label, className, ...props }: ChainOfThoughtHeaderProps) {
+  const t = useT();
+
   return (
     <DisclosureTrigger className={className} {...props}>
       <ListTree className="astw:size-3.5" aria-hidden />
-      <span>{label}</span>
-      <ChevronDown
-        className="ai-chat-disclosure-chevron astw:size-3 astw:transition-transform"
-        aria-hidden
-      />
+      <span>{label ?? t("aiChatChainOfThought")}</span>
+      <DisclosureChevron />
     </DisclosureTrigger>
   );
 }

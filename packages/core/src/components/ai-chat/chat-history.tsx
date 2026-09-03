@@ -23,11 +23,10 @@ type ChatHistoryProps = Omit<ComponentProps<"nav">, "onSelect"> & {
 
 /**
  * Grouped list of past conversations ("Today", "Previous 7 days", …) for
- * reopening an earlier chat. Layout-agnostic — render it inside `AIChat`'s
- * header `actions` slot behind a popover, or as a sidebar section of a full
- * chat page. Group titles and bucketing are the caller's own — `AIChat` has
- * no opinion on date ranges. Deleting is optional — pass `onDelete` to reveal
- * a delete button on hover.
+ * reopening an earlier chat. Layout-agnostic — render it in a popover, a
+ * `Sheet`, or a sidebar section of a full chat page. Group titles and date
+ * bucketing are the caller's own. Deleting is optional — pass `onDelete` to
+ * reveal a delete button on hover.
  */
 function ChatHistory({
   groups,
@@ -43,7 +42,7 @@ function ChatHistory({
     <nav
       data-slot="ai-chat-history"
       className={cn("astw:flex astw:flex-col astw:gap-4", className)}
-      aria-label="Conversation history"
+      aria-label={t("aiChatConversationHistory")}
       {...props}
     >
       {groups

@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 const SAFE_LINK_PATTERN = /^(https?:|mailto:)/i;
 
 function isSafeHref(href: string): boolean {
+  // `//host` is protocol-relative — an off-site link wearing a same-site
+  // shape, so it does not count as a relative path.
+  if (href.startsWith("//")) return false;
   return SAFE_LINK_PATTERN.test(href) || href.startsWith("/") || href.startsWith("#");
 }
 

@@ -1,14 +1,19 @@
 import type * as React from "react";
+import { ChevronDown } from "lucide-react";
 import { Collapsible } from "@base-ui/react/collapsible";
 
 import { cn } from "@/lib/utils";
 
-// Shared collapsible shape for Reasoning, ChainOfThought, Tool, and Sources —
-// all four are a trigger row (label + chevron) over a hidden panel, differing
-// only in what the trigger and panel contain. Wraps Base UI's Collapsible the
-// same way `SidebarGroup` does, so state, ARIA (aria-expanded/aria-controls),
-// and the `data-panel-open` attribute all come from Base UI rather than four
-// separate hand-rolled `useState` + `aria-*` implementations.
+// Shared collapsible shape for Reasoning, ChainOfThought, Tool, and Sources:
+// a trigger row (label + chevron) over a hidden panel, differing only in what
+// the trigger and panel contain. Open state, ARIA, and the `data-panel-open`
+// attribute all come from Base UI's Collapsible.
+
+// The trigger carries `data-panel-open`, so the chevron rotates through a
+// descendant selector keyed on this class. The selector below has to spell the
+// class out literally — Tailwind only compiles utilities it can read as static
+// strings in source, so an interpolated one would resolve to nothing.
+const CHEVRON_MARKER = "ai-chat-disclosure-chevron";
 
 type DisclosureRootProps = Pick<
   React.ComponentProps<typeof Collapsible.Root>,
@@ -31,9 +36,6 @@ type DisclosureTriggerProps = Omit<React.ComponentProps<typeof Collapsible.Trigg
   children: React.ReactNode;
 };
 
-// The chevron rotates off `[data-panel-open]` on this trigger via a descendant
-// selector (`.ai-chat-disclosure-chevron`) rather than its own state — the same
-// technique `SidebarGroup` uses for its `.astw-rotate-target` marker.
 function DisclosureTrigger({ className, children, ...props }: DisclosureTriggerProps) {
   return (
     <Collapsible.Trigger
@@ -50,6 +52,16 @@ function DisclosureTrigger({ className, children, ...props }: DisclosureTriggerP
   );
 }
 
+/** Trailing chevron for a `DisclosureTrigger`; rotates when its trigger opens. */
+function DisclosureChevron({ className }: { className?: string }) {
+  return (
+    <ChevronDown
+      className={cn(CHEVRON_MARKER, "astw:size-3 astw:transition-transform", className)}
+      aria-hidden
+    />
+  );
+}
+
 type DisclosurePanelProps = React.ComponentProps<typeof Collapsible.Panel>;
 
 function DisclosurePanel({ className, ...props }: DisclosurePanelProps) {
@@ -62,4 +74,4 @@ function DisclosurePanel({ className, ...props }: DisclosurePanelProps) {
   );
 }
 
-export { DisclosureRoot, DisclosureTrigger, DisclosurePanel };
+export { DisclosureRoot, DisclosureTrigger, DisclosureChevron, DisclosurePanel };

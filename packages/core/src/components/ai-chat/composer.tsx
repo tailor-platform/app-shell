@@ -28,7 +28,6 @@ type ComposerProps = {
   accept?: string;
   multiple: boolean;
   composerActions?: ReactNode;
-  rows?: number;
 };
 
 type SubmitControlProps = {
@@ -78,12 +77,11 @@ function buildAttachment(file: File): AIChatAttachment {
 }
 
 /**
- * The composer AIChat renders as its own footer: an `AIChat`-body `Textarea`
- * over one action row, following the `form/composer` pattern — left side
- * open for `composerActions` (plus the attach button, when enabled), right
- * side fixed to the single submit control. Enter submits and is IME-safe;
- * Shift+Enter inserts a newline. The submit button becomes Stop while a
- * response is streaming.
+ * The composer AIChat renders as its own footer: a `Textarea` body over one
+ * action row, following the `form/composer` pattern — left side open for
+ * `composerActions` (plus the attach button, when enabled), right side fixed
+ * to a single submit control. Enter submits and is IME-safe; Shift+Enter
+ * inserts a newline. The submit button becomes Stop while a response streams.
  */
 function Composer({
   value,
@@ -98,7 +96,6 @@ function Composer({
   accept,
   multiple,
   composerActions,
-  rows = 2,
 }: ComposerProps) {
   const t = useT();
   const [files, setFiles] = useState<AIChatAttachment[]>([]);
@@ -190,14 +187,11 @@ function Composer({
         aria-label={t("aiChatMessage")}
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
-        // `Textarea`'s `onKeyDown` type is inherited from Base UI's
-        // `Field.Control`, which is typed against its default `<input>` tag —
-        // the same static-vs-runtime mismatch `Textarea` itself resolves for
-        // `onChange`. The handler that runs is the correct one; only the
-        // types disagree.
+        // `Field.Control` types its handlers against its default `<input>`
+        // tag; the element here is a `<textarea>`. Runtime is correct.
         onKeyDown={handleKeyDown as unknown as ComponentProps<typeof Textarea>["onKeyDown"]}
         placeholder={placeholder}
-        rows={rows}
+        rows={2}
         disabled={disabled}
       />
       <div className="astw:flex astw:items-center astw:justify-between astw:gap-2">

@@ -711,7 +711,7 @@ const table = useDataTable({
 **Import:** `import { AIChat } from '@tailor-platform/app-shell'`
 **Purpose:** Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts. Root owns the frame (scroll area + composer); the transcript itself is `children`, composed from the attached parts.
 **API:** Standalone root (`onSubmit`, `status`, `value`/`onValueChange`, `attachments`, `composerActions`) + attached parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning`/`.ReasoningTrigger`/`.ReasoningContent`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, `.History`.
-**Composer:** Body is `Textarea` per `form/composer`'s layout — no Discard, since a chat composer's Enter-submits shape is that pattern's own carve-out. `status` from `useAIChat()` plugs straight into the composer's busy/Stop state.
+**Composer:** Body is `Textarea` over one action row per `form/composer`'s layout. Enter submits (IME-safe), Shift+Enter newlines, and `status` from `useAIChat()` drives the busy/Stop state.
 **Renders no chrome:** no border or background — wrap in `Card`, `Sheet`, or a `Layout.Column`.
 **Used in patterns:** none yet — a component, not a catalogue pattern (platform-planning#1748).
 

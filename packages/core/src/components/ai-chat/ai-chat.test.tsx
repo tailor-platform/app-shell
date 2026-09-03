@@ -111,15 +111,35 @@ describe("AIChat", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("does not submit while status is submitted or streaming", async () => {
+  it.each(["submitted", "streaming"] as const)(
+    "does not submit while status is %s",
+    async (status) => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(
+        <AIChat onSubmit={onSubmit} status={status} defaultValue="hi">
+          <div />
+        </AIChat>,
+      );
+      await user.click(screen.getByRole("textbox", { name: "Message" }));
+      await user.keyboard("{Enter}");
+      expect(onSubmit).not.toHaveBeenCalled();
+    },
+  );
+
+  it("disables the composer when disabled", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(
-      <AIChat onSubmit={onSubmit} status="streaming">
+      <AIChat onSubmit={onSubmit} disabled defaultValue="already typed">
         <div />
       </AIChat>,
     );
-    await user.type(screen.getByRole("textbox", { name: "Message" }), "hi");
+    expect((screen.getByRole("textbox", { name: "Message" }) as HTMLTextAreaElement).disabled).toBe(
+      true,
+    );
+    expect((screen.getByRole("button", { name: "Send" }) as HTMLButtonElement).disabled).toBe(true);
+
     await user.keyboard("{Enter}");
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -246,6 +266,26 @@ describe("AIChat", () => {
     expect(attachments).toHaveLength(1);
     expect(attachments[0].fileName).toBe("notes.txt");
     expect(screen.queryByText("notes.txt")).toBeNull();
+  });
+
+  it("removes the newest attachment on Backspace in an empty composer", async () => {
+    const user = userEvent.setup();
+    render(
+      <AIChat onSubmit={vi.fn()} attachments>
+        <div />
+      </AIChat>,
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, [
+      new File(["a"], "first.txt", { type: "text/plain" }),
+      new File(["b"], "second.txt", { type: "text/plain" }),
+    ]);
+    expect(screen.getByText("second.txt")).toBeDefined();
+
+    await user.click(screen.getByRole("textbox", { name: "Message" }));
+    await user.keyboard("{Backspace}");
+    expect(screen.queryByText("second.txt")).toBeNull();
+    expect(screen.getByText("first.txt")).toBeDefined();
   });
 
   it("does not render the attach button when attachments is disabled", () => {

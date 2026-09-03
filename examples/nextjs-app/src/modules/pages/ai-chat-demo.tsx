@@ -31,10 +31,14 @@ function createScriptedClient(): AIGatewayClient {
         if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
         await new Promise<void>((resolve, reject) => {
           const timer = setTimeout(resolve, 60);
-          signal?.addEventListener("abort", () => {
-            clearTimeout(timer);
-            reject(new DOMException("Aborted", "AbortError"));
-          });
+          signal?.addEventListener(
+            "abort",
+            () => {
+              clearTimeout(timer);
+              reject(new DOMException("Aborted", "AbortError"));
+            },
+            { once: true },
+          );
         });
         yield { type: "text-delta", text: `${word} ` } satisfies AIChatCompletionEvent;
       }
@@ -52,6 +56,11 @@ const SUGGESTIONS = [
 const AIChatDemoPage = () => {
   const client = useMemo(() => createScriptedClient(), []);
   const { messages, status, sendMessage, stop } = useAIChat({ client, model: "demo-model" });
+
+  const retryLastQuestion = () => {
+    const lastUserTurn = messages.findLast((message) => message.role === "user");
+    if (lastUserTurn) void sendMessage(lastUserTurn.content);
+  };
 
   return (
     <Layout fill>
@@ -102,7 +111,7 @@ const AIChatDemoPage = () => {
                       >
                         <Copy className="astw:size-3.5" aria-hidden />
                       </AIChat.Action>
-                      <AIChat.Action label="Retry">
+                      <AIChat.Action label="Retry" onClick={retryLastQuestion}>
                         <RefreshCw className="astw:size-3.5" aria-hidden />
                       </AIChat.Action>
                     </AIChat.Actions>

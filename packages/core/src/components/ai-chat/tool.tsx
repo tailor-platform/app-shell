@@ -1,8 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
-import { CheckCircle2, ChevronDown, CircleDashed, Loader2, Wrench, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDashed, Loader2, Wrench, XCircle } from "lucide-react";
 
+import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
-import { DisclosureRoot, DisclosureTrigger, DisclosurePanel } from "./disclosure";
+import {
+  DisclosureRoot,
+  DisclosureTrigger,
+  DisclosureChevron,
+  DisclosurePanel,
+} from "./disclosure";
 
 /**
  * Maps 1:1 to the AI SDK's tool-part lifecycle, so a streaming loop can
@@ -14,15 +20,18 @@ import { DisclosureRoot, DisclosureTrigger, DisclosurePanel } from "./disclosure
  */
 type ToolState = "input-streaming" | "input-available" | "output-available" | "output-error";
 
-// Success is the expected outcome, so it stays quiet: just the check icon, no
-// label. The in-flight and error states keep their labels since those are the
-// ones worth a glance.
-const STATUS_LABELS: Record<ToolState, string | null> = {
-  "input-streaming": "Preparing",
-  "input-available": "Running",
+// Success is the expected outcome, so it stays quiet: the check icon carries
+// it and its label is screen-reader-only. The in-flight and error states keep
+// visible labels since those are the ones worth a glance.
+const STATUS_LABEL_KEYS = {
+  "input-streaming": "aiChatToolPreparing",
+  "input-available": "aiChatToolRunning",
   "output-available": null,
-  "output-error": "Error",
-};
+  "output-error": "aiChatToolError",
+} as const satisfies Record<
+  ToolState,
+  "aiChatToolPreparing" | "aiChatToolRunning" | "aiChatToolError" | null
+>;
 
 const STATUS_ICONS: Record<ToolState, ReactNode> = {
   "input-streaming": <CircleDashed className="astw:size-3.5" aria-hidden />,
@@ -67,6 +76,9 @@ type ToolHeaderProps = Omit<ComponentProps<typeof DisclosureTrigger>, "children"
 };
 
 function ToolHeader({ toolName, state, title, className, ...props }: ToolHeaderProps) {
+  const t = useT();
+  const labelKey = STATUS_LABEL_KEYS[state];
+
   return (
     <DisclosureTrigger
       className={cn("astw:w-full astw:justify-between astw:px-3 astw:py-2", className)}
@@ -81,12 +93,9 @@ function ToolHeader({ toolName, state, title, className, ...props }: ToolHeaderP
       <span className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">
         <span className="astw:flex astw:items-center astw:gap-1 astw:text-[10px] astw:text-muted-foreground">
           {STATUS_ICONS[state]}
-          {STATUS_LABELS[state] ?? <span className="astw:sr-only">Done</span>}
+          {labelKey ? t(labelKey) : <span className="astw:sr-only">{t("aiChatToolDone")}</span>}
         </span>
-        <ChevronDown
-          className="ai-chat-disclosure-chevron astw:size-3.5 astw:text-muted-foreground astw:transition-transform"
-          aria-hidden
-        />
+        <DisclosureChevron className="astw:size-3.5" />
       </span>
     </DisclosureTrigger>
   );
@@ -115,10 +124,12 @@ function JsonBlock({ value }: { value: unknown }) {
 type ToolInputProps = ComponentProps<"div"> & { input: unknown };
 
 function ToolInput({ input, className, ...props }: ToolInputProps) {
+  const t = useT();
+
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
       <h4 className="astw:text-[10px] astw:font-medium astw:uppercase astw:tracking-wide astw:text-muted-foreground">
-        Parameters
+        {t("aiChatToolParameters")}
       </h4>
       <JsonBlock value={input} />
     </div>
@@ -131,6 +142,8 @@ type ToolOutputProps = ComponentProps<"div"> & {
 };
 
 function ToolOutput({ output, errorText, className, ...props }: ToolOutputProps) {
+  const t = useT();
+
   if (output == null && !errorText) return null;
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
@@ -140,7 +153,7 @@ function ToolOutput({ output, errorText, className, ...props }: ToolOutputProps)
           errorText ? "astw:text-destructive" : "astw:text-muted-foreground",
         )}
       >
-        {errorText ? "Error" : "Result"}
+        {errorText ? t("aiChatToolError") : t("aiChatToolResult")}
       </h4>
       <JsonBlock value={errorText ?? output} />
     </div>

@@ -1,8 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
-import { Book, ChevronDown } from "lucide-react";
+import { Book } from "lucide-react";
 
+import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
-import { DisclosureRoot, DisclosureTrigger, DisclosurePanel } from "./disclosure";
+import {
+  DisclosureRoot,
+  DisclosureTrigger,
+  DisclosureChevron,
+  DisclosurePanel,
+} from "./disclosure";
 
 type SourcesProps = Omit<ComponentProps<typeof DisclosureRoot>, "children"> & {
   children: ReactNode;
@@ -41,16 +47,13 @@ type SourcesTriggerProps = Omit<ComponentProps<typeof DisclosureTrigger>, "child
 };
 
 function SourcesTrigger({ count, className, ...props }: SourcesTriggerProps) {
+  const t = useT();
+
   return (
     <DisclosureTrigger className={className} {...props}>
       <Book className="astw:size-3.5" aria-hidden />
-      <span>
-        Used {count} {count === 1 ? "source" : "sources"}
-      </span>
-      <ChevronDown
-        className="ai-chat-disclosure-chevron astw:size-3 astw:transition-transform"
-        aria-hidden
-      />
+      <span>{t("aiChatSourcesUsed", { count })}</span>
+      <DisclosureChevron />
     </DisclosureTrigger>
   );
 }
@@ -69,7 +72,10 @@ function SourcesContent({ className, ...props }: SourcesContentProps) {
   );
 }
 
-type SourceProps = ComponentProps<"button"> & { title: string };
+type SourceProps = Omit<ComponentProps<"button">, "title"> & {
+  /** Display name of the cited document. */
+  title: string;
+};
 
 function Source({ title, className, ...props }: SourceProps) {
   return (

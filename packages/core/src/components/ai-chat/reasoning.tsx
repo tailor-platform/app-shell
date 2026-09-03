@@ -1,16 +1,14 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
-import { Brain, ChevronDown } from "lucide-react";
+import { createContext, useContext, useState, type ComponentProps, type ReactNode } from "react";
+import { Brain } from "lucide-react";
 
+import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
-import { DisclosureRoot, DisclosureTrigger, DisclosurePanel } from "./disclosure";
+import {
+  DisclosureRoot,
+  DisclosureTrigger,
+  DisclosureChevron,
+  DisclosurePanel,
+} from "./disclosure";
 import { Response } from "./response";
 
 type ReasoningContextValue = {
@@ -31,15 +29,15 @@ type ReasoningProps = ComponentProps<"div"> & {
   isStreaming?: boolean;
   /** Seconds spent thinking; shown in the trigger once streaming ends. */
   duration?: number;
+  /** Keep the block open even when no tokens are streaming. */
   defaultOpen?: boolean;
   children: ReactNode;
 };
 
 /**
  * Collapsible "thinking" block for models that stream reasoning before the
- * final answer. Auto-opens when `isStreaming` turns true and auto-closes when
- * it turns false — thinking stays visible while it happens, then tucks away
- * once the reader has taken over by toggling it manually.
+ * final answer. Follows the stream — open while tokens arrive, closed once
+ * they stop — until the reader toggles it, after which their choice sticks.
  *
  * @example
  * ```tsx
@@ -57,24 +55,13 @@ function Reasoning({
   children,
   ...props
 }: ReasoningProps) {
-  const [open, setOpen] = useState(defaultOpen || isStreaming);
-  const userToggledRef = useRef(false);
-
-  useEffect(() => {
-    if (!userToggledRef.current) setOpen(isStreaming);
-  }, [isStreaming]);
+  // `null` until the reader takes over; from then on their choice wins.
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
+  const open = manualOpen ?? (isStreaming || defaultOpen);
 
   return (
     <ReasoningContext.Provider value={{ isStreaming, duration }}>
-      <DisclosureRoot
-        className={className}
-        open={open}
-        onOpenChange={(next) => {
-          userToggledRef.current = true;
-          setOpen(next);
-        }}
-        {...props}
-      >
+      <DisclosureRoot className={className} open={open} onOpenChange={setManualOpen} {...props}>
         {children}
       </DisclosureRoot>
     </ReasoningContext.Provider>
@@ -86,24 +73,22 @@ type ReasoningTriggerProps = Omit<ComponentProps<typeof DisclosureTrigger>, "chi
   label?: string;
 };
 
-function defaultReasoningLabel(isStreaming: boolean, duration: number | undefined): string {
-  if (isStreaming) return "Thinking…";
-  if (duration != null) return `Thought for ${duration}s`;
-  return "Reasoning";
-}
-
 function ReasoningTrigger({ label, className, ...props }: ReasoningTriggerProps) {
   const { isStreaming, duration } = useReasoningContext("ReasoningTrigger");
-  const defaultLabel = defaultReasoningLabel(isStreaming, duration);
+  const t = useT();
+
+  const resolveLabel = () => {
+    if (label) return label;
+    if (isStreaming) return t("aiChatThinking");
+    if (duration != null) return t("aiChatThoughtFor", { seconds: duration });
+    return t("aiChatReasoning");
+  };
 
   return (
     <DisclosureTrigger className={className} {...props}>
       <Brain className="astw:size-3.5" aria-hidden />
-      <span className={cn(isStreaming && "astw:animate-pulse")}>{label ?? defaultLabel}</span>
-      <ChevronDown
-        className="ai-chat-disclosure-chevron astw:size-3 astw:transition-transform"
-        aria-hidden
-      />
+      <span className={cn(isStreaming && "astw:animate-pulse")}>{resolveLabel()}</span>
+      <DisclosureChevron />
     </DisclosureTrigger>
   );
 }

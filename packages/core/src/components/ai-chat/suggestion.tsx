@@ -43,7 +43,12 @@ function Suggestion({
       size={size}
       data-slot="ai-chat-suggestion"
       className={cn(
-        "astw:h-auto astw:cursor-pointer astw:justify-start astw:whitespace-normal astw:rounded-full astw:px-3 astw:py-1.5 astw:text-left",
+        // `max-w-full` caps the chip at the container width so a long prompt
+        // wraps instead of overflowing. `Button`'s base sets `shrink-0`, and
+        // `twMerge` runs without the `astw:` prefix configured, so it cannot
+        // dedupe a competing `shrink` utility — capping the width sidesteps
+        // that entirely.
+        "astw:h-auto astw:max-w-full astw:cursor-pointer astw:justify-start astw:whitespace-normal astw:rounded-full astw:px-3 astw:py-1.5 astw:text-left",
         className,
       )}
       onClick={() => onSelect?.(suggestion)}

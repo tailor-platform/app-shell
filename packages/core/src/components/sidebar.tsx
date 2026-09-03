@@ -199,7 +199,9 @@ function Sidebar({
     );
   }
 
-  if (isMobile) {
+  // The persistent icon rail (collapsible="icon") stays visible at every width;
+  // only the other modes fall back to the off-canvas Sheet on mobile.
+  if (isMobile && collapsible !== "icon") {
     return (
       <Sheet.Root open={openMobile} onOpenChange={setOpenMobile} side={side} {...props}>
         <Sheet.Content
@@ -248,7 +250,7 @@ function Sidebar({
           <div
             data-slot="sidebar-container"
             className={cn(
-              "astw:fixed astw:inset-y-0 astw:z-(--z-sidebar) astw:hidden astw:h-svh astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
+              "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:hidden astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
               side === "left" ? "astw:left-0" : "astw:right-0",
               variant === "floating" || variant === "inset"
                 ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -289,52 +291,89 @@ function Sidebar({
     );
   }
 
+  // On mobile the icon rail is always the collapsed icon width (there is no
+  // inline expand); on desktop it follows the expanded/collapsed state.
+  let dataCollapsible = "";
+  if (collapsible === "icon" && isMobile) {
+    dataCollapsible = "icon";
+  } else if (state === "collapsed") {
+    dataCollapsible = collapsible;
+  }
+
   return (
-    <div
-      className="astw:group astw:peer astw:text-sidebar-foreground astw:hidden astw:md:block"
-      data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
-      data-variant={variant}
-      data-side={side}
-      data-slot="sidebar"
-    >
-      {/* This is what handles the sidebar gap on desktop */}
+    <>
       <div
-        data-slot="sidebar-gap"
         className={cn(
-          "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear",
-          "astw:group-data-[collapsible=offcanvas]:w-0",
-          "astw:group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+          "astw:group astw:peer astw:text-sidebar-foreground",
+          // The icon rail is visible at every width; other modes stay desktop-only
+          // (mobile uses the Sheet above).
+          collapsible === "icon" ? "astw:block" : "astw:hidden astw:md:block",
         )}
-      />
-      <div
-        data-slot="sidebar-container"
-        className={cn(
-          "astw:fixed astw:inset-y-0 astw:z-(--z-sidebar) astw:hidden astw:h-svh astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
-          side === "left"
-            ? "astw:left-0 astw:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-            : "astw:right-0 astw:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          // Adjust the padding for floating and inset variants.
-          variant === "floating" || variant === "inset"
-            ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon) astw:group-data-[side=left]:border-r astw:group-data-[side=right]:border-l",
-          variant === "inset" && "astw:border-x astw:border-x-border",
-          className,
-        )}
-        {...props}
+        data-state={state}
+        data-collapsible={dataCollapsible}
+        data-variant={variant}
+        data-side={side}
+        data-slot="sidebar"
       >
+        {/* This is what handles the sidebar gap on desktop */}
         <div
-          data-sidebar="sidebar"
-          data-slot="sidebar-inner"
-          className="astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm"
+          data-slot="sidebar-gap"
+          className={cn(
+            "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear",
+            "astw:group-data-[collapsible=offcanvas]:w-0",
+            "astw:group-data-[side=right]:rotate-180",
+            variant === "floating" || variant === "inset"
+              ? "astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+              : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+          )}
+        />
+        <div
+          data-slot="sidebar-container"
+          className={cn(
+            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear",
+            // Visible at every width for the icon rail; desktop-only otherwise.
+            collapsible === "icon" ? "astw:flex" : "astw:hidden astw:md:flex",
+            side === "left"
+              ? "astw:left-0 astw:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+              : "astw:right-0 astw:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+            // Adjust the padding for floating and inset variants.
+            variant === "floating" || variant === "inset"
+              ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
+              : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon) astw:group-data-[side=left]:border-r astw:group-data-[side=right]:border-l",
+            variant === "inset" && "astw:border-x astw:border-x-border",
+            className,
+          )}
+          {...props}
         >
-          {children}
+          <div
+            data-sidebar="sidebar"
+            data-slot="sidebar-inner"
+            className="astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm"
+          >
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+      {/* Mobile: the toggle opens the full sidebar as a slide-in overlay on top
+          of the persistent icon rail. */}
+      {isMobile && collapsible === "icon" && (
+        <Sheet.Root open={openMobile} onOpenChange={setOpenMobile} side={side}>
+          <Sheet.Content
+            data-sidebar="sidebar"
+            data-slot="sidebar-overlay"
+            data-mobile="true"
+            className="astw:bg-sidebar astw:text-sidebar-foreground astw:w-(--sidebar-width) astw:p-0 astw:[&>button]:hidden"
+            style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
+          >
+            <Sheet.Header className="astw:sr-only">
+              <Sheet.Title>Sidebar</Sheet.Title>
+              <Sheet.Description>Displays the mobile sidebar.</Sheet.Description>
+            </Sheet.Header>
+            <div className="astw:flex astw:h-full astw:w-full astw:flex-col">{children}</div>
+          </Sheet.Content>
+        </Sheet.Root>
+      )}
+    </>
   );
 }
 
@@ -594,7 +633,8 @@ function SidebarMenuButton({
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof Tooltip.Content>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+  const { isMobile, state, isIconMode, setOpenMobile, openIconMode, setOpenIconMode } =
+    useSidebar();
 
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -639,7 +679,9 @@ function SidebarMenuButton({
       <Tooltip.Trigger render={button} />
       <Tooltip.Content
         position={{ side: "right", align: "center" }}
-        hidden={state !== "collapsed" || isMobile}
+        // Shown whenever the sidebar is a narrow icon rail (tablet rail or a
+        // collapsed desktop rail), never on mobile or an expanded sidebar.
+        hidden={isMobile || !(state === "collapsed" || isIconMode)}
         {...tooltip}
       />
     </Tooltip.Root>

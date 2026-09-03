@@ -1,4 +1,5 @@
 import { SidebarProvider } from "@/components/sidebar";
+import { cn } from "@/lib/utils";
 import { AppShellOutlet } from "@/components/content";
 import { DefaultSidebar } from "./default-sidebar";
 import { DefaultHeader } from "./default-header";
@@ -32,6 +33,22 @@ type SidebarLayoutCommonProps = {
    * @default true
    */
   collapsible?: boolean;
+
+  /**
+   * A global top bar rendered above **everything** — spanning the full width
+   * across the top of the primary sidebar and the content region alike. The
+   * sidebar and content then sit in a row beneath it.
+   *
+   * This is distinct from the content `header` (which sits above the content
+   * column only): use `topBar` when you want a single app-wide bar over the
+   * whole layout. Pair it with `<SidebarLayout.DefaultSidebar hideHeader />`
+   * (and often `iconRail`) so the sidebar defers its own header to the bar.
+   *
+   * The bar should be `3.5rem` (h-14) tall: the fixed sidebar is offset to start
+   * just beneath it (via the internal `--appshell-topbar-h`, fixed at `3.5rem`
+   * while a `topBar` is present).
+   */
+  topBar?: React.ReactNode;
 };
 
 /**
@@ -148,14 +165,18 @@ type SidebarLayoutBodyProps = SidebarLayoutCommonProps & {
 export type SidebarLayoutProps = SidebarLayoutDefaultProps | SidebarLayoutBodyProps;
 
 export function SidebarLayout(props: SidebarLayoutProps) {
-  const { sidebar, header, children, body, defaultOpen, collapsible } = props;
+  const { sidebar, header, children, body, defaultOpen, collapsible, topBar } = props;
 
   return (
     <SidebarProvider
       defaultOpen={defaultOpen}
       collapsible={collapsible}
-      className="astw:flex astw:flex-col"
+      // When a global top bar is present, publish its height so the fixed sidebar
+      // starts below it (see --appshell-topbar-h in sidebar.tsx) instead of
+      // overlapping it.
+      className={cn("astw:flex astw:flex-col", topBar && "astw:[--appshell-topbar-h:3.5rem]")}
     >
+      {topBar}
       <div className="astw:flex astw:flex-1 astw:min-h-0">
         {sidebar ?? <DefaultSidebar />}
         {body ?? (

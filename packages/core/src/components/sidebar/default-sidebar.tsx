@@ -27,9 +27,13 @@ import { cn } from "@/lib/utils";
 function resolveCollapsibleMode(
   collapsible: boolean | undefined,
   isIconMode: boolean,
+  iconRail: boolean | undefined,
 ): "none" | "icon" | "offcanvas" {
   if (!collapsible) return "none";
-  if (isIconMode) return "icon";
+  // Tablet always uses the icon rail (there is no room to slide fully away).
+  // On desktop the icon rail is opt-in via `iconRail`; otherwise the sidebar
+  // collapses off-canvas as before.
+  if (isIconMode || iconRail) return "icon";
   return "offcanvas";
 }
 
@@ -69,6 +73,31 @@ export type DefaultSidebarProps = {
    * Auto-generation is completely disabled when children is specified.
    */
   children?: React.ReactNode;
+
+  /**
+   * Hide the sidebar's own header row (org title + collapse toggle). Use when a
+   * global top bar already owns those — e.g. `SidebarLayout topBar`.
+   *
+   * @default false
+   */
+  hideHeader?: boolean;
+
+  /**
+   * Hide the built-in Search entry. Use when the command palette is already
+   * reachable elsewhere — e.g. a global search box in `SidebarLayout topBar`.
+   *
+   * @default false
+   */
+  hideSearch?: boolean;
+
+  /**
+   * Collapse to a narrow icon rail (icons stay visible) instead of sliding
+   * fully off-canvas. The rail then stays visible at every width — including
+   * mobile, where it replaces the off-canvas drawer with the icon-width rail.
+   *
+   * @default false
+   */
+  iconRail?: boolean;
 };
 
 /**
@@ -111,11 +140,11 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   );
   const DefaultFooter = null;
 
-  const collapsibleMode = resolveCollapsibleMode(collapsible, isIconMode);
+  const collapsibleMode = resolveCollapsibleMode(collapsible, isIconMode, props.iconRail);
 
   return (
     <Sidebar variant="inset" collapsible={collapsibleMode}>
-      {!isIconMode && (
+      {!props.hideHeader && !isIconMode && (
         <div className="astw:flex astw:justify-between astw:items-center">
           {props.header ?? DefaultHeader}
           {collapsible && (
@@ -130,14 +159,14 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
           // New API: children-based explicit definition
           <SidebarGroup>
             <SidebarMenu>
-              <SearchEntry />
+              {!props.hideSearch && <SearchEntry />}
               {props.children}
             </SidebarMenu>
           </SidebarGroup>
         ) : (
           // Existing behavior: auto-generation from resources
           <Suspense fallback={<SidebarSkeleton />}>
-            <AutoSidebar currentPath={currentPath} />
+            <AutoSidebar currentPath={currentPath} hideSearch={props.hideSearch} />
           </Suspense>
         )}
       </SidebarContent>
@@ -149,12 +178,20 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
 /**
  * Component boundary to resolve and render automatic sidebar items.
  */
-const AutoSidebar = ({ currentPath }: { currentPath: string }) => {
+const AutoSidebar = ({
+  currentPath,
+  hideSearch,
+}: {
+  currentPath: string;
+  hideSearch?: boolean;
+}) => {
   const navItems = useNavItems();
 
   return (
     <Await resolve={navItems}>
-      {(items) => <AutoSidebarItems items={items ?? []} currentPath={currentPath} />}
+      {(items) => (
+        <AutoSidebarItems items={items ?? []} currentPath={currentPath} hideSearch={hideSearch} />
+      )}
     </Await>
   );
 };
@@ -172,13 +209,17 @@ const isActivePath = (url: string | undefined, currentPath: string) => {
 /**
  * Automatically generates sidebar items from navigation data.
  */
-const AutoSidebarItems = (props: { items: Array<NavItem>; currentPath: string }) => {
+const AutoSidebarItems = (props: {
+  items: Array<NavItem>;
+  currentPath: string;
+  hideSearch?: boolean;
+}) => {
   const t = useT();
 
   return (
     <SidebarGroup>
       <SidebarMenu>
-        <SearchEntry />
+        {!props.hideSearch && <SearchEntry />}
         {props.items.map((item) => {
           return (
             <Collapsible.Root key={item.title} render={<SidebarMenuItem />} defaultOpen={true}>

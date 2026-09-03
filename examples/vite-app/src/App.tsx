@@ -3,11 +3,15 @@ import {
   SidebarGroup,
   SidebarItem,
   SidebarLayout,
+  SidebarMenuButton,
+  SidebarMenuItem,
   type SearchSource,
 } from "@tailor-platform/app-shell";
+import { BellIcon, LayersIcon } from "lucide-react";
 import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
-import { PanelsBody } from "./panels-body";
+import { GlobalTopBar, PanelsBody } from "./panels-body";
+import { AssistantProvider } from "./assistant-context";
 
 // Demonstrates multiple search sources in the command palette
 const searchSources: SearchSource[] = [
@@ -23,20 +27,41 @@ const searchSources: SearchSource[] = [
   },
 ];
 
-const App = () => {
+const AppInner = () => {
   return (
     <AppShell title="File-Based Routing Demo" searchSources={searchSources}>
       <SidebarLayout
-        // `body` replaces everything to the right of the sidebar. PanelsBody
-        // renders the stock content column via SidebarLayout.ContentContainer
-        // (so the header/padding/scrolling are unchanged) and adds page-specific
-        // columns beside it on /dashboard/panels. The header that used to live
-        // on the `header` prop moved inside PanelsBody.
+        // A truly global top bar spanning above the primary sidebar and the
+        // content region.
+        topBar={<GlobalTopBar />}
         body={<PanelsBody />}
         sidebar={
-          <SidebarLayout.DefaultSidebar>
+          // The org title lives in the top bar, so the sidebar drops its own
+          // header; its collapse toggle sits at the bottom-left instead.
+          <SidebarLayout.DefaultSidebar
+            hideHeader
+            iconRail
+            footer={
+              <div className="mt-auto p-2">
+                <SidebarLayout.Trigger />
+              </div>
+            }
+          >
+            {/* A custom sidebar action, composed from the low-level primitives
+                so it collapses to an icon (with tooltip) in icon-rail mode,
+                exactly like the built-in nav items. */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<button type="button" />}
+                tooltip="Notifications"
+                onClick={() => alert("Notifications")}
+              >
+                <BellIcon className="size-4" />
+                <span>Notifications</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarItem to="/" />
-            <SidebarGroup title={labels.t("navMain")}>
+            <SidebarGroup title={labels.t("navMain")} icon={<LayersIcon />}>
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
@@ -53,5 +78,11 @@ const App = () => {
     </AppShell>
   );
 };
+
+const App = () => (
+  <AssistantProvider>
+    <AppInner />
+  </AssistantProvider>
+);
 
 export default App;

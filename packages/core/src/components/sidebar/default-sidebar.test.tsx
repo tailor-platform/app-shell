@@ -1,7 +1,8 @@
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, afterEach, assert } from "vitest";
+import { render, screen, cleanup, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider } from "@/components/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/sidebar";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { DefaultSidebar } from "./default-sidebar";
@@ -16,7 +17,17 @@ import { DefaultErrorBoundary } from "@/components/default-error-boundary";
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
+
+/**
+ * Force a true desktop width (>= 1200px) so `isIconMode` (tablet) is false —
+ * the default test width lands in the tablet range, which forces the icon rail.
+ */
+const stubDesktopViewport = () => {
+  vi.spyOn(window, "innerWidth", "get").mockReturnValue(1280);
+  window.dispatchEvent(new Event("resize"));
+};
 
 const createTestModules = () => [
   defineModule({
@@ -56,6 +67,7 @@ const testConfig: RootConfiguration = {
  * Wrapper to render DefaultSidebar with all required providers.
  */
 const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboard/overview") => {
+  stubDesktopViewport();
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
@@ -100,6 +112,141 @@ describe("DefaultSidebar", () => {
     expect(screen.getByText("Settings")).toBeDefined();
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /products/i })).toBeDefined();
+  });
+});
+
+describe("DefaultSidebar opt-in props", () => {
+  const renderWithProps = (
+    props: React.ComponentProps<typeof DefaultSidebar>,
+    { defaultOpen = true }: { defaultOpen?: boolean } = {},
+  ) => {
+    stubDesktopViewport();
+    return render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider defaultOpen={defaultOpen}>
+              <DefaultSidebar {...props} />
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+  };
+
+  it("renders the built-in Search entry by default", () => {
+    renderWithProps({ children: <SidebarItem to="/dashboard" /> });
+    expect(screen.getByRole("button", { name: /search/i })).toBeDefined();
+  });
+
+  it("omits the Search entry when hideSearch is set", () => {
+    renderWithProps({ hideSearch: true, children: <SidebarItem to="/dashboard" /> });
+    expect(screen.queryByRole("button", { name: /search/i })).toBeNull();
+    // Children still render.
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
+  });
+
+  it("renders the sidebar header by default", () => {
+    renderWithProps({ children: <SidebarItem to="/dashboard" /> });
+    expect(document.querySelector('[data-slot="sidebar-header"]')).not.toBeNull();
+  });
+
+  it("omits the sidebar header when hideHeader is set", () => {
+    renderWithProps({ hideHeader: true, children: <SidebarItem to="/dashboard" /> });
+    expect(document.querySelector('[data-slot="sidebar-header"]')).toBeNull();
+  });
+
+  it("collapses off-canvas by default", () => {
+    renderWithProps({ children: <SidebarItem to="/dashboard" /> }, { defaultOpen: false });
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar?.getAttribute("data-collapsible")).toBe("offcanvas");
+  });
+
+  it("collapses to an icon rail when iconRail is set", () => {
+    renderWithProps(
+      { iconRail: true, children: <SidebarItem to="/dashboard" /> },
+      { defaultOpen: false },
+    );
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
+  });
+
+  it("keeps the icon rail visible on mobile instead of an off-canvas drawer", () => {
+    // Mobile width: without iconRail this would be a closed off-canvas Sheet
+    // (no persistent [data-slot=sidebar]); iconRail keeps the rail mounted.
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(500);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider>
+              <DefaultSidebar iconRail>
+                <SidebarItem to="/dashboard" />
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar).not.toBeNull();
+    // Forced to icon width on mobile (no inline expand there).
+    expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
+  });
+
+  it("opens the full sidebar as a slide-in overlay when the mobile toggle is tapped", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(500);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider>
+              <DefaultSidebar iconRail hideHeader footer={<SidebarTrigger />}>
+                <SidebarItem to="/dashboard" />
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+
+    // The rail is visible but the slide-in overlay is not mounted yet.
+    expect(document.querySelector('[data-slot="sidebar-overlay"]')).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /toggle sidebar/i }));
+
+    // The toggle opens the overlay drawer.
+    expect(document.querySelector('[data-slot="sidebar-overlay"]')).not.toBeNull();
+  });
+
+  it("reveals a group's children in a hover flyout in the icon rail", async () => {
+    const user = userEvent.setup();
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <SidebarGroup title="Main" icon={<Home />}>
+            <SidebarItem to="/dashboard" />
+            <SidebarItem to="/products" />
+          </SidebarGroup>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    // No flyout until the group icon is hovered.
+    expect(document.querySelector('nav[aria-label="Main"]')).toBeNull();
+
+    await user.hover(screen.getByRole("button", { name: "Main" }));
+
+    const flyout = document.querySelector('nav[aria-label="Main"]') as HTMLElement;
+    expect(flyout).not.toBeNull();
+    expect(within(flyout).getByRole("link", { name: /dashboard/i })).toBeDefined();
+    expect(within(flyout).getByRole("link", { name: /products/i })).toBeDefined();
   });
 });
 

@@ -95,7 +95,12 @@ const IconRailFlyout = ({
     closeTimer.current = setTimeout(() => setOpen(false), 150);
   };
 
-  const flyoutCtx = useMemo(() => ({ ...ctx, state: "expanded" as const, isMobile: false }), [ctx]);
+  // Inside the flyout the sidebar is neither collapsed nor an icon rail, so the
+  // child items show their labels and suppress their own icon-rail tooltips.
+  const flyoutCtx = useMemo(
+    () => ({ ...ctx, state: "expanded" as const, isMobile: false, isIconMode: false }),
+    [ctx],
+  );
 
   return (
     <SidebarMenuItem onMouseEnter={(e) => openFrom(e.currentTarget)} onMouseLeave={scheduleClose}>

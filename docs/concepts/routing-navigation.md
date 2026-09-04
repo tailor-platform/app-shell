@@ -284,7 +284,7 @@ Enable `generateTypedRoutes` in your vite config:
 // vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
 
 export default defineConfig({
   plugins: [

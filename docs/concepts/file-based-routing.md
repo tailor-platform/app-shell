@@ -47,7 +47,7 @@ Guards defined on a `page.tsx` apply to that exact path. Directories without `pa
 // vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
 
 export default defineConfig({
   plugins: [
@@ -311,7 +311,7 @@ To migrate from `defineModule`/`defineResource` to file-based routing:
 
    ```typescript
    // vite.config.ts
-   import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+   import { appShellRoutes } from "@tailor-platform/app-shell/vite-plugin";
 
    export default defineConfig({
      plugins: [react(), appShellRoutes({ entrypoint: "src/App.tsx" })],

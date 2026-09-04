@@ -174,7 +174,7 @@ function getConfiguredFilterOperators(config: DataTableFilterConfig): FilterOper
   return operators.length > 0 ? [...operators] : [DEFAULT_OPERATOR[config.type]];
 }
 
-function getVisibleFilterOperators(
+export function getVisibleFilterOperators(
   config: DataTableFilterConfig,
   current?: FilterOperator,
 ): FilterOperator[] {
@@ -2173,7 +2173,7 @@ function getTemporalInputProps(type: "datetime" | "date" | "time") {
   }
 }
 
-function getOperatorLabel(
+export function getOperatorLabel(
   operator: FilterOperator,
   t: ReturnType<typeof useDataTableT>,
   type?: FilterConfig["type"],

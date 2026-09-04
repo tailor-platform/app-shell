@@ -100,12 +100,12 @@ describe("DataTable.Pagination", () => {
     expect(screen.queryByLabelText("Last page")).not.toBeNull();
   });
 
-  it("hides First/Last buttons when total is not provided", () => {
+  it("shows First button and hides Last button when total is not provided", () => {
     render(<TestPagination data={dataWithoutTotal} control={makeControl()} />, {
       wrapper,
     });
 
-    expect(screen.queryByLabelText("First page")).toBeNull();
+    expect(screen.queryByLabelText("First page")).not.toBeNull();
     expect(screen.queryByLabelText("Last page")).toBeNull();
   });
 

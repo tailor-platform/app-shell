@@ -21,6 +21,12 @@ These are the foundational rules that underpin all patterns. All patterns build 
 
 Read it when upgrading `@tailor-platform/app-shell`, and whenever styling, theming, or dark mode looks wrong after a version bump. These breakages are silent: the build succeeds and nothing warns, so the cause is not discoverable from the error output. The package ships no CHANGELOG, so this file is the only migration record available locally.
 
+## Available Pages
+
+A page is the shape of a whole screen — the outer choice, made before picking patterns for the parts inside it. Where a pattern is one recipe, a page compares the layouts a screen could take and says when each applies. Match the screen first, then use the patterns the entry cites for the pieces within it.
+
+{{PAGES_TABLE}}
+
 ## Available Patterns
 
 {{PATTERNS_TABLE}}

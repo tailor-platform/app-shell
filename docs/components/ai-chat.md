@@ -114,15 +114,17 @@ Most props stay inside their region. These `AIChat.Composer` props land on **ano
 
 `accept` and `multiple` reach a plain hidden `<input type="file">`, not an AppShell component. `onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds the composer's own state and is never forwarded. Nothing on `AIChat`, `AIChat.Header`, or `AIChat.Conversation` reaches another AppShell component.
 
-Three attached parts are wrappers around an AppShell component and forward their whole prop surface to it:
+Three attached parts wrap an AppShell component. They expose only the props the part's job needs rather than inheriting the wrapped component's surface, so its visual treatment is fixed and not yours to change:
 
-| Part                                | Wraps                                                      | Defaults it sets                                                                           |
-| ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `AIChat.Suggestion`                 | [`Button`](./button.md)                                    | `variant="secondary"`, `size="sm"`; `onClick` is replaced by `onSelect`                    |
-| `AIChat.Action`                     | [`Button`](./button.md) inside a [`Tooltip`](./tooltip.md) | `variant="ghost"`, `size="icon"`; `label` becomes both the accessible name and the tooltip |
-| `AIChat.ChainOfThoughtSearchResult` | [`Badge`](./badge.md)                                      | `variant="outline-neutral"`                                                                |
+| Part                                | Wraps                                                      | Accepts                                                       | Fixed                              |
+| ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------- |
+| `AIChat.Suggestion`                 | [`Button`](./button.md)                                    | `suggestion`, `onSelect`, `className`, `disabled`, `children` | `variant="secondary"`, `size="sm"` |
+| `AIChat.Action`                     | [`Button`](./button.md) inside a [`Tooltip`](./tooltip.md) | `label`, `onClick`, `className`, `disabled`, `children`       | `variant="ghost"`, `size="icon"`   |
+| `AIChat.ChainOfThoughtSearchResult` | [`Badge`](./badge.md)                                      | `className`, `children`, `variant`                            | —                                  |
 
-Two consequences worth knowing. Those three accept any `Button`/`Badge` prop, including variants `AIChat` was never designed around — `<AIChat.Suggestion variant="destructive" />` is legal and will render. And a `className` you pass them is merged with `cn()`, which is not configured for the `astw:` prefix, so it cannot always override a base utility; if an override appears to do nothing, that is why.
+`variant` stays open on `ChainOfThoughtSearchResult` because conveying status is what a `Badge` is for. `AIChat.Action`'s `label` becomes both the accessible name and the tooltip text.
+
+One thing to know about `className` on these: it is merged with `cn()`, which is not configured for the `astw:` prefix, so it cannot reliably override a base utility from the wrapped component. If an override appears to do nothing, that is why.
 
 ## Filling the page
 

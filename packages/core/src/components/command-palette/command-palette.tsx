@@ -763,6 +763,11 @@ export function BuiltInCommandPalette() {
 
   return (
     <Suspense fallback={null}>
+      {/*
+        Keep these Await boundaries separate. Wrapping the root-loader promises in
+        Promise.all() looks equivalent, but it can leave route transitions stuck
+        in pending state when a page updates search params during navigation.
+      */}
       <Await resolve={navItems}>
         {(items) => (
           <Await resolve={currentPathAwareRoutes}>

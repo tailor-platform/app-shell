@@ -9,25 +9,44 @@ import {
   type ReactNode,
 } from "react";
 
-import type { AIChatStatus } from "@/ai/use-ai-chat";
 import { Button } from "@/components/button";
 import { Textarea } from "@/components/textarea";
 import { useT } from "@/i18n-labels";
+import { cn } from "@/lib/utils";
+import { useAIChatContext } from "./ai-chat-context";
 import { AttachmentChip, type AIChatAttachment } from "./attachment-chip";
 
-type ComposerProps = {
-  value: string;
-  onValueChange: (value: string) => void;
+type AIChatComposerProps = {
+  /** Called with the trimmed prompt and any staged attachments when the composer submits. */
   onSubmit: (message: string, attachments: AIChatAttachment[]) => void;
+  /** Called from the Stop button while the chat's `status` is `"submitted"` or `"streaming"`. Omit to show a plain busy state with no Stop affordance. */
   onStop?: () => void;
-  status: AIChatStatus;
+  /** Controlled draft. Cleared (via `onValueChange("")`) after a successful submit. */
+  value?: string;
+  /** Uncontrolled draft's initial value. */
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
   placeholder?: string;
+  /** Disables the composer. The transcript above it is unaffected. */
   disabled?: boolean;
-  submitOnEnter: boolean;
-  attachments: boolean;
+  /**
+   * Enter submits; Shift+Enter inserts a newline. IME-safe: Enter during
+   * kana→kanji conversion confirms the candidate rather than submitting.
+   * @default true
+   */
+  submitOnEnter?: boolean;
+  /**
+   * Show the attach-file button and staged-attachment chips.
+   * @default false
+   */
+  attachments?: boolean;
+  /** Accepted file types for the hidden file input, when `attachments` is enabled. */
   accept?: string;
-  multiple: boolean;
-  composerActions?: ReactNode;
+  /** @default true */
+  multiple?: boolean;
+  /** Open slot on the action row, left of the attach button — a visibility toggle, a model picker, a template select. */
+  actions?: ReactNode;
+  className?: string;
 };
 
 type SubmitControlProps = {
@@ -77,27 +96,39 @@ function buildAttachment(file: File): AIChatAttachment {
 }
 
 /**
- * The composer AIChat renders as its own footer: a `Textarea` body over one
- * action row, following the `form/composer` pattern — left side open for
- * `composerActions` (plus the attach button, when enabled), right side fixed
- * to a single submit control. Enter submits and is IME-safe; Shift+Enter
- * inserts a newline. The submit button becomes Stop while a response streams.
+ * The chat's fixed footer: a `Textarea` body over one action row, following
+ * the `form/composer` pattern — left side open for `actions` (plus the attach
+ * button, when enabled), right side fixed to a single submit control. Enter
+ * submits and is IME-safe; Shift+Enter inserts a newline. The submit button
+ * becomes Stop while the chat's `status` is busy.
+ *
+ * Reads `status` from the surrounding `AIChat`.
  */
 function Composer({
-  value,
-  onValueChange,
   onSubmit,
   onStop,
-  status,
+  value,
+  defaultValue = "",
+  onValueChange,
   placeholder,
   disabled = false,
-  submitOnEnter,
-  attachments: attachmentsEnabled,
+  submitOnEnter = true,
+  attachments: attachmentsEnabled = false,
   accept,
-  multiple,
-  composerActions,
-}: ComposerProps) {
+  multiple = true,
+  actions,
+  className,
+}: AIChatComposerProps) {
+  const { status } = useAIChatContext("AIChat.Composer");
   const t = useT();
+
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const draft = value ?? internalValue;
+  const setDraft = (next: string) => {
+    if (value === undefined) setInternalValue(next);
+    onValueChange?.(next);
+  };
+
   const [files, setFiles] = useState<AIChatAttachment[]>([]);
   const filesRef = useRef(files);
   filesRef.current = files;
@@ -114,7 +145,7 @@ function Composer({
   }, []);
 
   const busy = status === "submitted" || status === "streaming";
-  const canSubmit = !disabled && !busy && value.trim().length > 0;
+  const canSubmit = !disabled && !busy && draft.trim().length > 0;
 
   const addFiles = (incoming: FileList | File[]) => {
     setFiles((prev) => [...prev, ...Array.from(incoming).map(buildAttachment)]);
@@ -133,8 +164,8 @@ function Composer({
     if (!canSubmit) return;
     const snapshot = files;
     setFiles([]);
-    onValueChange("");
-    onSubmit(value.trim(), snapshot);
+    setDraft("");
+    onSubmit(draft.trim(), snapshot);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -158,8 +189,12 @@ function Composer({
 
   return (
     <form
+      data-slot="ai-chat-composer"
       onSubmit={handleSubmit}
-      className="astw:flex astw:shrink-0 astw:flex-col astw:gap-2 astw:p-3 astw:pt-0"
+      className={cn(
+        "astw:flex astw:shrink-0 astw:flex-col astw:gap-2 astw:p-3 astw:pt-0",
+        className,
+      )}
     >
       {attachmentsEnabled ? (
         <input
@@ -185,8 +220,8 @@ function Composer({
       ) : null}
       <Textarea
         aria-label={t("aiChatMessage")}
-        value={value}
-        onChange={(event) => onValueChange(event.target.value)}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
         // `Field.Control` types its handlers against its default `<input>`
         // tag; the element here is a `<textarea>`. Runtime is correct.
         onKeyDown={handleKeyDown as unknown as ComponentProps<typeof Textarea>["onKeyDown"]}
@@ -208,7 +243,7 @@ function Composer({
               <Paperclip className="astw:size-4" aria-hidden />
             </Button>
           ) : null}
-          {composerActions}
+          {actions}
         </div>
         <div className="astw:shrink-0">
           <SubmitControl busy={busy} canSubmit={canSubmit} onStop={onStop} />
@@ -218,4 +253,4 @@ function Composer({
   );
 }
 
-export { Composer, type ComposerProps };
+export { Composer, type AIChatComposerProps };

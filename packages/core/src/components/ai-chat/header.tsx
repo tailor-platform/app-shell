@@ -3,9 +3,12 @@ import { Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-type HeaderProps = {
+type AIChatHeaderProps = {
+  /** Title text. */
   title?: ReactNode;
+  /** Leading graphic. Defaults to a sparkle; pass `null` for none, or a control (e.g. a collapse button) for a docked panel. */
   icon?: ReactNode;
+  /** Right-aligned slot — compose it from `AIChat.Action`. */
   actions?: ReactNode;
   className?: string;
 };
@@ -15,7 +18,7 @@ type HeaderProps = {
  * an open action slot on the right, closed by a rule that runs the full width
  * of the surface.
  */
-function Header({ title, icon, actions, className }: HeaderProps) {
+function Header({ title, icon, actions, className }: AIChatHeaderProps) {
   return (
     <div
       data-slot="ai-chat-header"
@@ -39,4 +42,4 @@ function Header({ title, icon, actions, className }: HeaderProps) {
   );
 }
 
-export { Header, type HeaderProps };
+export { Header, type AIChatHeaderProps };

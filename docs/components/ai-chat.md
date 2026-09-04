@@ -5,7 +5,7 @@ description: Building blocks for an LLM assistant UI — a streaming conversatio
 
 # AIChat
 
-`AIChat` owns the frame for an assistant UI: an optional header strip over a scrollable, auto-following conversation view, over a fixed composer. It takes the transcript itself as `children`, so you compose each turn from the attached parts — `AIChat.Message`, `AIChat.Response`, `AIChat.Reasoning`, `AIChat.Tool`, `AIChat.Sources`, and more — against your own [`useAIChat()`](../api/use-ai-chat.md) state.
+`AIChat` owns the frame for an assistant UI and places its three regions in a fixed order, the way [`Layout`](./layout.md) places `Layout.Header` and `Layout.Column`: **`AIChat.Header`** (optional) over **`AIChat.Conversation`** (required) over **`AIChat.Composer`** (optional). Each region carries its own props; the root carries only the chat's `status`. You compose the transcript inside `AIChat.Conversation` from the attached parts — `AIChat.Message`, `AIChat.Response`, `AIChat.Reasoning`, `AIChat.Tool`, `AIChat.Sources`, and more — against your own [`useAIChat()`](../api/use-ai-chat.md) state.
 
 It renders no border or background of its own. Wrap it in [`Card`](./card.md), [`Sheet`](./sheet.md), or a `Layout.Column` for the surrounding surface.
 
@@ -28,16 +28,20 @@ function Assistant() {
   return (
     // `overflow-hidden` keeps the header rule inside the card's rounded corners.
     <Card.Root className="astw:flex astw:h-full astw:flex-col astw:overflow-hidden">
-      <AIChat title="Assistant" status={status} onSubmit={sendMessage} onStop={stop}>
-        {messages.length === 0 ? (
-          <AIChat.EmptyState title="Ask the assistant" />
-        ) : (
-          messages.map((message) => (
-            <AIChat.Message key={message.id} from={message.role}>
-              <AIChat.Response>{message.content}</AIChat.Response>
-            </AIChat.Message>
-          ))
-        )}
+      <AIChat status={status}>
+        <AIChat.Header title="Assistant" />
+        <AIChat.Conversation>
+          {messages.length === 0 ? (
+            <AIChat.EmptyState title="Ask the assistant" />
+          ) : (
+            messages.map((message) => (
+              <AIChat.Message key={message.id} from={message.role}>
+                <AIChat.Response>{message.content}</AIChat.Response>
+              </AIChat.Message>
+            ))
+          )}
+        </AIChat.Conversation>
+        <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
       </AIChat>
     </Card.Root>
   );
@@ -46,32 +50,60 @@ function Assistant() {
 
 `message.role` ("user" | "assistant") from `useAIChat` lines up directly with `AIChat.Message`'s `from` prop — no mapping step. `AIChat` streams for real when the AI Gateway sends real SSE chunks; there is no client-side typewriter effect.
 
-## AIChat props
+The regions can appear in any source order — the root always renders Header, then Conversation, then Composer. Children that are not one of the three are dropped with a console warning, so a transcript accidentally passed as a loose child is loud rather than silently missing. Omit `AIChat.Composer` for a read-only transcript.
 
-| Prop              | Type                                                         | Default   | Description                                                                                 |
-| ----------------- | ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------- |
-| `children`        | `ReactNode`                                                  | required  | The transcript. Composed from the attached parts, or `AIChat.EmptyState` while empty.       |
-| `title`           | `ReactNode`                                                  | -         | Title in the header strip. The strip renders when `title` or `actions` is set.              |
-| `icon`            | `ReactNode`                                                  | sparkle   | Leading graphic in the header strip. Pass `null` for none, or a control for a docked panel. |
-| `actions`         | `ReactNode`                                                  | -         | Right-aligned header slot — compose it from `AIChat.Action`.                                |
-| `status`          | `"ready" \| "submitted" \| "streaming" \| "error"`           | `"ready"` | Drives the composer's busy/Stop state. Plugs directly into `useAIChat()`'s `status`.        |
-| `onSubmit`        | `(message: string, attachments: AIChatAttachment[]) => void` | required  | Called with the trimmed prompt and any staged attachments when the composer submits.        |
-| `onStop`          | `() => void`                                                 | -         | Called from the Stop button while busy. Omit to show a plain busy state with no Stop.       |
-| `value`           | `string`                                                     | -         | Controlled composer draft. Cleared via `onValueChange("")` after a successful submit.       |
-| `defaultValue`    | `string`                                                     | `""`      | Uncontrolled draft's initial value.                                                         |
-| `onValueChange`   | `(value: string) => void`                                    | -         | Called on every draft change, including the post-submit clear.                              |
-| `placeholder`     | `string`                                                     | -         | Composer placeholder text.                                                                  |
-| `disabled`        | `boolean`                                                    | `false`   | Disables the whole composer — not the transcript above it.                                  |
-| `submitOnEnter`   | `boolean`                                                    | `true`    | Enter submits (IME-safe); Shift+Enter always inserts a newline.                             |
-| `autoScroll`      | `boolean`                                                    | `true`    | Follow content growth while the reader is pinned to the bottom.                             |
-| `attachments`     | `boolean`                                                    | `false`   | Show the composer's attach-file button and staged-attachment chips.                         |
-| `accept`          | `string`                                                     | -         | Accepted file types for the hidden file input, when `attachments` is enabled.               |
-| `multiple`        | `boolean`                                                    | `true`    | Allow more than one staged attachment at a time.                                            |
-| `composerActions` | `ReactNode`                                                  | -         | Open slot on the composer's action row — a visibility toggle, a model picker, a select.     |
+## Props
+
+### `AIChat`
+
+| Prop        | Type                                               | Default   | Description                                                                                          |
+| ----------- | -------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
+| `children`  | `ReactNode`                                        | required  | `AIChat.Header`, `AIChat.Conversation`, and `AIChat.Composer`, in any order.                         |
+| `status`    | `"ready" \| "submitted" \| "streaming" \| "error"` | `"ready"` | The chat's state. Plugs directly into `useAIChat()`'s `status`; `AIChat.Composer` reads it.          |
+| `className` | `string`                                           | -         | Merged onto the root. It already fills a block parent (`h-full`) or a flex-column parent (`flex-1`). |
+
+Other props spread onto the root `<div>`.
+
+### `AIChat.Header`
+
+| Prop        | Type        | Default | Description                                                                                      |
+| ----------- | ----------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `title`     | `ReactNode` | -       | Title text.                                                                                      |
+| `icon`      | `ReactNode` | sparkle | Leading graphic. Pass `null` for none, or a control (e.g. a collapse button) for a docked panel. |
+| `actions`   | `ReactNode` | -       | Right-aligned slot — compose it from `AIChat.Action`.                                            |
+| `className` | `string`    | -       |                                                                                                  |
+
+### `AIChat.Conversation`
+
+| Prop         | Type        | Default  | Description                                                                           |
+| ------------ | ----------- | -------- | ------------------------------------------------------------------------------------- |
+| `children`   | `ReactNode` | required | The transcript. Composed from the attached parts, or `AIChat.EmptyState` while empty. |
+| `autoScroll` | `boolean`   | `true`   | Follow content growth while the reader is pinned to the bottom.                       |
+| `className`  | `string`    | -        |                                                                                       |
+
+Other props spread onto the region's outer `<div>`.
+
+### `AIChat.Composer`
+
+| Prop            | Type                                                         | Default  | Description                                                                      |
+| --------------- | ------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
+| `onSubmit`      | `(message: string, attachments: AIChatAttachment[]) => void` | required | Called with the trimmed prompt and any staged attachments.                       |
+| `onStop`        | `() => void`                                                 | -        | Called from the Stop button while the chat is busy. Omit for a plain busy state. |
+| `value`         | `string`                                                     | -        | Controlled draft. Cleared via `onValueChange("")` after a successful submit.     |
+| `defaultValue`  | `string`                                                     | `""`     | Uncontrolled draft's initial value.                                              |
+| `onValueChange` | `(value: string) => void`                                    | -        | Called on every draft change, including the post-submit clear.                   |
+| `placeholder`   | `string`                                                     | -        |                                                                                  |
+| `disabled`      | `boolean`                                                    | `false`  | Disables the composer — not the transcript above it.                             |
+| `submitOnEnter` | `boolean`                                                    | `true`   | Enter submits (IME-safe); Shift+Enter always inserts a newline.                  |
+| `attachments`   | `boolean`                                                    | `false`  | Show the attach-file button and staged-attachment chips.                         |
+| `accept`        | `string`                                                     | -        | Accepted file types for the hidden file input, when `attachments` is enabled.    |
+| `multiple`      | `boolean`                                                    | `true`   | Allow more than one staged attachment at a time.                                 |
+| `actions`       | `ReactNode`                                                  | -        | Open slot on the action row — a visibility toggle, a model picker, a select.     |
+| `className`     | `string`                                                     | -        |                                                                                  |
 
 ## Prop pass-through
 
-Most props stay inside `AIChat` and reach only its own parts. These are the ones that land on **another AppShell component**, so they carry that component's contract — and any future change to it — rather than one `AIChat` defines:
+Most props stay inside their region. These `AIChat.Composer` props land on **another AppShell component**, so they carry that component's contract — and any future change to it — rather than one `AIChat` defines:
 
 | Prop          | Reaches                                                                | Note                                    |
 | ------------- | ---------------------------------------------------------------------- | --------------------------------------- |
@@ -80,7 +112,7 @@ Most props stay inside `AIChat` and reach only its own parts. These are the ones
 | `disabled`    | [`Textarea`](./textarea.md) **and** the attach [`Button`](./button.md) | One prop, two components.               |
 | `onStop`      | [`Button`](./button.md) `onClick`                                      | Becomes the Stop button's handler.      |
 
-`accept` and `multiple` reach a plain hidden `<input type="file">`, not an AppShell component. `onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds `AIChat`'s own state and is never forwarded. Everything else (`children`, `title`, `icon`, `actions`, `status`, `onSubmit`, `submitOnEnter`, `autoScroll`, `attachments`, `composerActions`) is consumed by `AIChat` or one of its parts. Unrecognised props spread onto the root `<div>`.
+`accept` and `multiple` reach a plain hidden `<input type="file">`, not an AppShell component. `onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds the composer's own state and is never forwarded. Nothing on `AIChat`, `AIChat.Header`, or `AIChat.Conversation` reaches another AppShell component.
 
 Three attached parts are wrappers around an AppShell component and forward their whole prop surface to it:
 
@@ -94,7 +126,7 @@ Two consequences worth knowing. Those three accept any `Button`/`Badge` prop, in
 
 ## Filling the page
 
-`AIChat` is `h-full`, so it fills whatever height its parent gives it and never grows the page — the transcript scrolls internally while the header and composer stay pinned. Give the surface around it a definite height.
+`AIChat` fills whatever height its parent gives it — `h-full` for a block parent, `flex-1 min-h-0` for a flex column — and never grows the page: the transcript scrolls internally while the header and composer stay pinned. Give the surface around it a definite height.
 
 Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card takes the leftover space):
 
@@ -103,8 +135,10 @@ Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card take
   <Layout.Header title="Assistant" />
   <Layout.Column>
     <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
-      <AIChat title="Assistant" onSubmit={sendMessage}>
-        {/* … */}
+      <AIChat status={status}>
+        <AIChat.Header title="Assistant" />
+        <AIChat.Conversation>{/* … */}</AIChat.Conversation>
+        <AIChat.Composer onSubmit={sendMessage} />
       </AIChat>
     </Card.Root>
   </Layout.Column>
@@ -115,10 +149,10 @@ Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card take
 
 ## Header
 
-A 48px strip above the transcript: leading graphic, title, and an open action slot on the right, closed by a rule that runs the full width of the surface. It renders only when `title` or `actions` is set — omit both for a bare transcript-and-composer surface, and give the card `overflow-hidden` so the rule stays inside its rounded corners.
+A 48px strip above the transcript: leading graphic, title, and an open action slot on the right, closed by a rule that runs the full width of the surface. Omit it for a bare transcript-and-composer surface, and give the card `overflow-hidden` so the rule stays inside its rounded corners.
 
 ```tsx
-<AIChat
+<AIChat.Header
   title="Assistant"
   actions={
     <>
@@ -130,24 +164,20 @@ A 48px strip above the transcript: leading graphic, title, and an open action sl
       </AIChat.Action>
     </>
   }
-  onSubmit={sendMessage}
->
-  {/* … */}
-</AIChat>
+/>
 ```
 
 For a docked right panel, put the collapse control in `icon` so it takes the leading position:
 
 ```tsx
-<AIChat
+<AIChat.Header
   title="Assistant"
   icon={
     <AIChat.Action label="Collapse panel" onClick={onClose}>
       <ChevronsRight className="astw:size-3.5" aria-hidden />
     </AIChat.Action>
   }
-  onSubmit={sendMessage}
->
+/>
 ```
 
 ## Attached parts
@@ -278,22 +308,21 @@ Grouped list of past conversations for reopening an earlier chat. Layout-agnosti
 
 ## Attachments
 
-Set `attachments` to show the composer's paperclip button and staged-attachment chips. Staged files arrive in `onSubmit`'s second argument as `AIChatAttachment[]` — each one shares `AttachmentItem`'s shape (`id`, `fileName`, `mimeType`, `previewUrl`) plus the raw `file: File`:
+Set `attachments` on `AIChat.Composer` to show the paperclip button and staged-attachment chips. Staged files arrive in `onSubmit`'s second argument as `AIChatAttachment[]` — each one shares `AttachmentItem`'s shape (`id`, `fileName`, `mimeType`, `previewUrl`) plus the raw `file: File`:
 
 ```tsx
-<AIChat
+<AIChat.Composer
   attachments
   accept="image/*,application/pdf"
   onSubmit={(message, attachments) => sendMessage(message, attachments)}
->
-  {/* … */}
-</AIChat>
+/>
 ```
 
 Staged files live in the composer until submit, then clear. For a persisted record's file list — initial items and buffered upload/delete operations flushed to a backend — use [`Attachment`](./attachment.md) instead.
 
 ## Related components
 
+- [Layout](./layout.md) — the same children-placed-by-the-root shape
 - [Textarea](./textarea.md) — the composer's body control
 - [Attachment](./attachment.md) — for a persisted record's file list, a different lifecycle from the composer's own attachments
 - [Card](./card.md)

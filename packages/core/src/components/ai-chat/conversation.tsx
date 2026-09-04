@@ -30,24 +30,33 @@ function useConversationContext(component: string): ConversationContextValue {
   return ctx;
 }
 
-type ConversationProps = ComponentProps<"div"> & {
+type AIChatConversationProps = ComponentProps<"div"> & {
   /**
    * Follow content growth (streaming text, new turns) while the reader is
    * pinned to the bottom. Set `false` for a plain scrollable region with no
-   * auto-follow — `<ConversationScrollButton>` still works if rendered.
+   * auto-follow; the scroll-to-latest button still works.
    * @default true
    */
   autoScroll?: boolean;
 };
 
 /**
- * Scroll container that follows streaming output. While the reader is pinned
- * to the bottom, growing content keeps the view scrolled down; as soon as
- * they scroll up to reread earlier messages, following stops — a plain
- * scrollIntoView-on-change can't tell the difference and yanks the view back
- * mid-read.
+ * The transcript region: a scroll container that follows streaming output,
+ * with a scroll-to-latest button that appears once the reader scrolls away.
+ * While the reader is pinned to the bottom, growing content keeps the view
+ * scrolled down; as soon as they scroll up to reread earlier messages,
+ * following stops — a plain scrollIntoView-on-change can't tell the
+ * difference and yanks the view back mid-read.
+ *
+ * Compose the transcript inside it from `AIChat.Message`, `AIChat.Response`,
+ * and the other parts, or `AIChat.EmptyState` while there are no turns.
  */
-function Conversation({ className, autoScroll = true, children, ...props }: ConversationProps) {
+function Conversation({
+  className,
+  autoScroll = true,
+  children,
+  ...props
+}: AIChatConversationProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
@@ -114,7 +123,8 @@ function Conversation({ className, autoScroll = true, children, ...props }: Conv
               against the relative root above, so it stays pinned while
               content scrolls underneath it. */}
           <div ref={contentRef} className="astw:flex astw:min-h-full astw:flex-col">
-            {children}
+            <ConversationContent>{children}</ConversationContent>
+            <ConversationScrollButton />
           </div>
         </div>
       </div>
@@ -207,7 +217,7 @@ export {
   ConversationContent,
   ConversationEmptyState,
   ConversationScrollButton,
-  type ConversationProps,
+  type AIChatConversationProps,
   type ConversationContentProps,
   type ConversationEmptyStateProps,
   type ConversationScrollButtonProps,

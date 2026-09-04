@@ -1,8 +1,15 @@
-import { useState, type ComponentProps, type ReactNode } from "react";
+import {
+  Children,
+  isValidElement,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 
 import type { AIChatStatus } from "@/ai/use-ai-chat";
 import { cn } from "@/lib/utils";
 import { Action, Actions } from "./actions";
+import { AIChatContext } from "./ai-chat-context";
 import type { AIChatAttachment } from "./attachment-chip";
 import {
   ChainOfThought,
@@ -14,13 +21,8 @@ import {
 } from "./chain-of-thought";
 import { ChatHistory } from "./chat-history";
 import { Composer } from "./composer";
+import { Conversation, ConversationEmptyState } from "./conversation";
 import { Header } from "./header";
-import {
-  Conversation,
-  ConversationContent,
-  ConversationEmptyState,
-  ConversationScrollButton,
-} from "./conversation";
 import { Message } from "./message";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "./reasoning";
 import { Response } from "./response";
@@ -28,147 +30,99 @@ import { Source, Sources, SourcesContent, SourcesTrigger } from "./sources";
 import { Suggestion, Suggestions } from "./suggestion";
 import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "./tool";
 
-type AIChatProps = Omit<ComponentProps<"div">, "children" | "onSubmit" | "title"> & {
-  /** The transcript — compose it from `AIChat.Message`, `.Response`, `.Reasoning`, `.Tool`, `.Sources`, etc., or `AIChat.EmptyState` while there is none yet. */
+type AIChatProps = Omit<ComponentProps<"div">, "children"> & {
+  /** `AIChat.Header`, `AIChat.Conversation`, and `AIChat.Composer`, in any order — the root places them. */
   children: ReactNode;
-  /** Title in the header strip. The strip renders when `title` or `actions` is set. */
-  title?: ReactNode;
-  /** Leading graphic in the header strip. Defaults to a sparkle; pass `null` for none, or a control (e.g. a collapse button) for a docked panel. */
-  icon?: ReactNode;
-  /** Right-aligned slot in the header strip — compose it from `AIChat.Action`. */
-  actions?: ReactNode;
-  /** Drives the composer's busy/Stop state. Plugs directly into `useAIChat()`'s `status`. */
+  /** The chat's state. Plugs directly into `useAIChat()`'s `status`; `AIChat.Composer` reads it for its busy/Stop state. */
   status?: AIChatStatus;
-  /** Called with the trimmed prompt and any staged attachments when the composer submits. */
-  onSubmit: (message: string, attachments: AIChatAttachment[]) => void;
-  /** Called when the Stop button is pressed while `status` is `"submitted"` or `"streaming"`. Omit to show a plain busy state with no Stop affordance. */
-  onStop?: () => void;
-  /** Controlled composer draft. Cleared (via `onValueChange("")`) after a successful submit. */
-  value?: string;
-  /** Uncontrolled composer draft's initial value. */
-  defaultValue?: string;
-  onValueChange?: (value: string) => void;
-  placeholder?: string;
-  /** Disables the whole composer (not the transcript above it). */
-  disabled?: boolean;
-  /**
-   * Enter submits the composer; Shift+Enter inserts a newline. IME-safe:
-   * Enter during kana→kanji conversion confirms the candidate rather than
-   * submitting.
-   * @default true
-   */
-  submitOnEnter?: boolean;
-  /**
-   * Keep the transcript scrolled to the latest turn while the reader is
-   * pinned to the bottom.
-   * @default true
-   */
-  autoScroll?: boolean;
-  /**
-   * Show the composer's attach-file button and staged-attachment chips.
-   * @default false
-   */
-  attachments?: boolean;
-  /** Accepted file types for the hidden file input, when `attachments` is enabled. */
-  accept?: string;
-  /** @default true */
-  multiple?: boolean;
-  /** Open slot on the composer's action row, left of the attach button — a visibility toggle, a model picker, a template select. */
-  composerActions?: ReactNode;
 };
 
 /**
- * Building blocks for an LLM assistant UI: a streaming conversation view
- * with a fixed composer. `AIChat` owns the frame — the scrollable transcript
- * area and the composer — and takes the transcript itself as `children`, so
- * callers compose each turn from the attached parts (`AIChat.Message`,
- * `AIChat.Response`, `AIChat.Reasoning`, `AIChat.Tool`, `AIChat.Sources`, …)
- * against their own `useAIChat()` state.
+ * Building blocks for an LLM assistant UI. `AIChat` owns the frame and places
+ * its three regions in a fixed order — `AIChat.Header` (optional) over
+ * `AIChat.Conversation` (required) over `AIChat.Composer` (optional) — so the
+ * transcript always scrolls internally while the header and composer stay
+ * pinned. Each region carries its own props; the root carries the chat's
+ * `status`.
  *
- * Renders no border or background of its own — wrap it in `Card.Root`,
- * `Sheet`, or a `Layout.Column` for the surrounding surface.
+ * Fills the height its parent gives it and renders no border or background of
+ * its own — wrap it in `Card.Root`, `Sheet`, or a `Layout.Column`.
  *
  * @example
  * ```tsx
  * const { messages, status, sendMessage, stop } = useAIChat({ client, model: "gpt-5" });
  *
  * <Card.Root className="astw:flex astw:h-full astw:flex-col astw:overflow-hidden">
- *   <AIChat title="Assistant" status={status} onSubmit={sendMessage} onStop={stop}>
- *     {messages.length === 0 ? (
- *       <AIChat.EmptyState title="Ask the assistant" />
- *     ) : (
- *       messages.map((message) => (
- *         <AIChat.Message key={message.id} from={message.role}>
- *           <AIChat.Response>{message.content}</AIChat.Response>
- *         </AIChat.Message>
- *       ))
- *     )}
+ *   <AIChat status={status}>
+ *     <AIChat.Header title="Assistant" />
+ *     <AIChat.Conversation>
+ *       {messages.length === 0 ? (
+ *         <AIChat.EmptyState title="Ask the assistant" />
+ *       ) : (
+ *         messages.map((message) => (
+ *           <AIChat.Message key={message.id} from={message.role}>
+ *             <AIChat.Response>{message.content}</AIChat.Response>
+ *           </AIChat.Message>
+ *         ))
+ *       )}
+ *     </AIChat.Conversation>
+ *     <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
  *   </AIChat>
  * </Card.Root>
  * ```
  */
-function AIChatRoot({
-  className,
-  children,
-  title,
-  icon,
-  actions,
-  status = "ready",
-  onSubmit,
-  onStop,
-  value,
-  defaultValue = "",
-  onValueChange,
-  placeholder,
-  disabled = false,
-  submitOnEnter = true,
-  autoScroll = true,
-  attachments = false,
-  accept,
-  multiple = true,
-  composerActions,
-  ...props
-}: AIChatProps) {
-  const [internalValue, setInternalValue] = useState(defaultValue);
-  const draft = value ?? internalValue;
+function AIChatRoot({ className, children, status = "ready", ...props }: AIChatProps) {
+  let header: ReactElement | undefined;
+  let conversation: ReactElement | undefined;
+  let composer: ReactElement | undefined;
 
-  const setDraft = (next: string) => {
-    if (value === undefined) setInternalValue(next);
-    onValueChange?.(next);
-  };
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return;
+    if (child.type === Header) {
+      if (header) console.warn("AIChat: more than one AIChat.Header; only the first is rendered.");
+      header ??= child;
+    } else if (child.type === Conversation) {
+      if (conversation) {
+        console.warn("AIChat: more than one AIChat.Conversation; only the first is rendered.");
+      }
+      conversation ??= child;
+    } else if (child.type === Composer) {
+      if (composer)
+        console.warn("AIChat: more than one AIChat.Composer; only the first is rendered.");
+      composer ??= child;
+    } else {
+      console.warn(
+        "AIChat: children must be AIChat.Header, AIChat.Conversation, or AIChat.Composer. " +
+          "Other children are dropped — put the transcript inside AIChat.Conversation.",
+      );
+    }
+  });
+
+  if (!conversation) {
+    console.warn("AIChat: no AIChat.Conversation child; the transcript region will be empty.");
+  }
 
   return (
-    <div
-      data-slot="ai-chat"
-      className={cn("astw:flex astw:h-full astw:min-h-0 astw:flex-col", className)}
-      {...props}
-    >
-      {title == null && actions == null ? null : (
-        <Header title={title} icon={icon} actions={actions} />
-      )}
-      <Conversation autoScroll={autoScroll}>
-        <ConversationContent>{children}</ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-      <Composer
-        value={draft}
-        onValueChange={setDraft}
-        onSubmit={onSubmit}
-        onStop={onStop}
-        status={status}
-        placeholder={placeholder}
-        disabled={disabled}
-        submitOnEnter={submitOnEnter}
-        attachments={attachments}
-        accept={accept}
-        multiple={multiple}
-        composerActions={composerActions}
-      />
-    </div>
+    <AIChatContext.Provider value={{ status }}>
+      <div
+        data-slot="ai-chat"
+        // `h-full` fills a block parent; `flex-1 min-h-0` fills a flex-column
+        // parent (a Card, a Layout.Column). Both are inert in the other case.
+        className={cn("astw:flex astw:h-full astw:min-h-0 astw:flex-1 astw:flex-col", className)}
+        {...props}
+      >
+        {header}
+        {conversation}
+        {composer}
+      </div>
+    </AIChatContext.Provider>
   );
 }
 
 type AIChatComponent = typeof AIChatRoot & {
+  Header: typeof Header;
+  Conversation: typeof Conversation;
+  Composer: typeof Composer;
   EmptyState: typeof ConversationEmptyState;
   Message: typeof Message;
   Response: typeof Response;
@@ -198,6 +152,9 @@ type AIChatComponent = typeof AIChatRoot & {
 };
 
 const AIChat: AIChatComponent = Object.assign(AIChatRoot, {
+  Header,
+  Conversation,
+  Composer,
   EmptyState: ConversationEmptyState,
   Message,
   Response,
@@ -227,6 +184,9 @@ const AIChat: AIChatComponent = Object.assign(AIChatRoot, {
 });
 
 export { AIChat, type AIChatProps, type AIChatAttachment };
+export type { AIChatHeaderProps } from "./header";
+export type { AIChatConversationProps } from "./conversation";
+export type { AIChatComposerProps } from "./composer";
 export type { ToolState } from "./tool";
 export type { ChainOfThoughtStepStatus } from "./chain-of-thought";
 export type { ChatHistoryGroupData, ChatHistoryItemData } from "./chat-history";

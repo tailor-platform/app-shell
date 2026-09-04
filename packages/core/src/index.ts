@@ -59,6 +59,9 @@ export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-ch
 export {
   AIChat,
   type AIChatProps,
+  type AIChatHeaderProps,
+  type AIChatConversationProps,
+  type AIChatComposerProps,
   type AIChatAttachment,
   type ToolState,
   type ChainOfThoughtStepStatus,

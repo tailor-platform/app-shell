@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { Conversation, ConversationContent, ConversationScrollButton } from "./conversation";
+import { Conversation, ConversationScrollButton } from "./conversation";
 
 afterEach(() => {
   cleanup();
@@ -25,12 +25,7 @@ function setScrollMetrics(
 }
 
 function renderConversation() {
-  const view = render(
-    <Conversation>
-      <ConversationContent>content</ConversationContent>
-      <ConversationScrollButton />
-    </Conversation>,
-  );
+  const view = render(<Conversation>content</Conversation>);
   return { ...view, viewport: screen.getByRole("log") };
 }
 
@@ -106,21 +101,13 @@ describe("Conversation", () => {
     } as unknown as typeof ResizeObserver;
 
     try {
-      const { unmount } = render(
-        <Conversation>
-          <ConversationContent>content</ConversationContent>
-        </Conversation>,
-      );
+      const { unmount } = render(<Conversation>content</Conversation>);
       expect(observe).toHaveBeenCalledTimes(1);
       unmount();
       expect(disconnect).toHaveBeenCalledTimes(1);
 
       observe.mockClear();
-      render(
-        <Conversation autoScroll={false}>
-          <ConversationContent>content</ConversationContent>
-        </Conversation>,
-      );
+      render(<Conversation autoScroll={false}>content</Conversation>);
       expect(observe).not.toHaveBeenCalled();
     } finally {
       globalThis.ResizeObserver = original;

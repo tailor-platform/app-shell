@@ -72,59 +72,63 @@ const AIChatDemoPage = () => {
         </p>
         {/* `overflow-hidden` keeps the header rule inside the card's rounded corners. */}
         <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
-          <AIChat
-            title="Assistant"
-            actions={
-              <AIChat.Action label="Clear conversation" onClick={() => window.location.reload()}>
-                <Eraser className="astw:size-3.5" aria-hidden />
-              </AIChat.Action>
-            }
-            status={status}
-            onSubmit={(message) => sendMessage(message)}
-            onStop={stop}
-            attachments
-            composerActions={<Checkbox label="Search the knowledge base" />}
-            placeholder="Ask about your orders…"
-          >
-            {messages.length === 0 ? (
-              <AIChat.EmptyState>
-                <Sparkles className="astw:size-6 astw:text-primary" aria-hidden />
-                <div className="astw:space-y-1">
-                  <h3 className="astw:text-sm astw:font-medium">Ask the assistant</h3>
-                  <p className="astw:text-sm astw:text-muted-foreground">
-                    Answers are grounded in your help articles. This demo runs on scripted data.
-                  </p>
-                </div>
-                <AIChat.Suggestions>
-                  {SUGGESTIONS.map((suggestion) => (
-                    <AIChat.Suggestion
-                      key={suggestion}
-                      suggestion={suggestion}
-                      onSelect={sendMessage}
-                    />
-                  ))}
-                </AIChat.Suggestions>
-              </AIChat.EmptyState>
-            ) : (
-              messages.map((message) => (
-                <AIChat.Message key={message.id} from={message.role}>
-                  <AIChat.Response>{message.content}</AIChat.Response>
-                  {message.role === "assistant" && status === "ready" && message.content ? (
-                    <AIChat.Actions className="astw:-ml-1.5">
-                      <AIChat.Action
-                        label="Copy"
-                        onClick={() => void navigator.clipboard?.writeText(message.content)}
-                      >
-                        <Copy className="astw:size-3.5" aria-hidden />
-                      </AIChat.Action>
-                      <AIChat.Action label="Retry" onClick={retryLastQuestion}>
-                        <RefreshCw className="astw:size-3.5" aria-hidden />
-                      </AIChat.Action>
-                    </AIChat.Actions>
-                  ) : null}
-                </AIChat.Message>
-              ))
-            )}
+          <AIChat status={status}>
+            <AIChat.Header
+              title="Assistant"
+              actions={
+                <AIChat.Action label="Clear conversation" onClick={() => window.location.reload()}>
+                  <Eraser className="astw:size-3.5" aria-hidden />
+                </AIChat.Action>
+              }
+            />
+            <AIChat.Conversation>
+              {messages.length === 0 ? (
+                <AIChat.EmptyState>
+                  <Sparkles className="astw:size-6 astw:text-primary" aria-hidden />
+                  <div className="astw:space-y-1">
+                    <h3 className="astw:text-sm astw:font-medium">Ask the assistant</h3>
+                    <p className="astw:text-sm astw:text-muted-foreground">
+                      Answers are grounded in your help articles. This demo runs on scripted data.
+                    </p>
+                  </div>
+                  <AIChat.Suggestions>
+                    {SUGGESTIONS.map((suggestion) => (
+                      <AIChat.Suggestion
+                        key={suggestion}
+                        suggestion={suggestion}
+                        onSelect={sendMessage}
+                      />
+                    ))}
+                  </AIChat.Suggestions>
+                </AIChat.EmptyState>
+              ) : (
+                messages.map((message) => (
+                  <AIChat.Message key={message.id} from={message.role}>
+                    <AIChat.Response>{message.content}</AIChat.Response>
+                    {message.role === "assistant" && status === "ready" && message.content ? (
+                      <AIChat.Actions className="astw:-ml-1.5">
+                        <AIChat.Action
+                          label="Copy"
+                          onClick={() => void navigator.clipboard?.writeText(message.content)}
+                        >
+                          <Copy className="astw:size-3.5" aria-hidden />
+                        </AIChat.Action>
+                        <AIChat.Action label="Retry" onClick={retryLastQuestion}>
+                          <RefreshCw className="astw:size-3.5" aria-hidden />
+                        </AIChat.Action>
+                      </AIChat.Actions>
+                    ) : null}
+                  </AIChat.Message>
+                ))
+              )}
+            </AIChat.Conversation>
+            <AIChat.Composer
+              onSubmit={(message) => sendMessage(message)}
+              onStop={stop}
+              attachments
+              actions={<Checkbox label="Search the knowledge base" />}
+              placeholder="Ask about your orders…"
+            />
           </AIChat>
         </Card.Root>
       </Layout.Column>

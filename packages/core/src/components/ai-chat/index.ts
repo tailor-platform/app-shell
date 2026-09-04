@@ -1,6 +1,9 @@
 export {
   AIChat,
   type AIChatProps,
+  type AIChatHeaderProps,
+  type AIChatConversationProps,
+  type AIChatComposerProps,
   type AIChatAttachment,
   type ToolState,
   type ChainOfThoughtStepStatus,

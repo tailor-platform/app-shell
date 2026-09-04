@@ -47,6 +47,7 @@ A form element with consolidated error handling and validation. Wraps every chil
 | `validationMode` | `"onSubmit" \| "onBlur" \| "onChange"`                          | `"onSubmit"` | Controls when field validation fires.                                                                                               |
 | `noValidate`     | `boolean`                                                       | -            | Disables native browser validation UI (recommended — AppShell renders its own).                                                     |
 | `actionsRef`     | `React.Ref<{ validate: () => void }>`                           | -            | Ref to imperatively trigger validation from outside the submit flow.                                                                |
+| `id`             | `string`                                                        | -            | Applied to the `<form>` element. Lets a submit button outside the form target it via the native `form` attribute.                   |
 | `className`      | `string`                                                        | -            | Additional CSS classes for the `<form>` element.                                                                                    |
 
 ### External Errors
@@ -136,19 +137,74 @@ A compound component that groups all parts of a form field and manages its valid
 `Field.Control` can be omitted when using a Base UI-backed AppShell component (e.g. `Select`, `Combobox`). The component registers itself with the `Field` context automatically, inheriting label association and validation state.
 
 ```tsx
+const [country, setCountry] = React.useState<string | null>(null);
+
 <Field.Root name="country">
   <Field.Label>Country</Field.Label>
-  <Select>
-    <Select.Trigger>
-      <Select.Value placeholder="Select a country" />
-    </Select.Trigger>
-    <Select.Popup>
-      <Select.Item value="jp">Japan</Select.Item>
-      <Select.Item value="us">United States</Select.Item>
-    </Select.Popup>
-  </Select>
+  <Select
+    items={["Japan", "United States"]}
+    value={country}
+    onValueChange={setCountry}
+    placeholder="Select a country"
+  />
   <Field.Error>Please select a country.</Field.Error>
+</Field.Root>;
+```
+
+### How values reach `onFormSubmit`
+
+`onFormSubmit` does **not** read `FormData`. It collects values from the `Field.Root`s registered
+inside the `Form`, keyed by each field's `name`. Every AppShell control works this way once wrapped
+in a `Field.Root` — `Select`, `Combobox`, and `Autocomplete` included. They need no `name` of their
+own and no React state.
+
+Non-string items are serialised into the submitted value:
+
+| Item shape                             | Value in `onFormSubmit`              |
+| -------------------------------------- | ------------------------------------ |
+| `string`                               | the string                           |
+| `{ value, label }`                     | `value`, automatically               |
+| any other object                       | **JSON string** — usually not wanted |
+| any other object + `itemToStringValue` | whatever that function returns       |
+
+Multi-select submits an array. For arbitrary objects, pass `itemToStringValue` to choose what gets
+submitted — it is distinct from `mapItem`, which controls what the user sees:
+
+```tsx
+<Field.Root name="warehouse">
+  <Field.Label>Warehouse</Field.Label>
+  <Combobox
+    items={warehouses}
+    mapItem={(w) => ({ label: w.name, key: String(w.id) })}
+    itemToStringValue={(w) => String(w.id)}
+  />
 </Field.Root>
+```
+
+### Native form submission
+
+Separately from `onFormSubmit`, controls can participate in **native** submission — a plain
+`<form>`, `new FormData(form)`, or a server action. That path reads the DOM, so each control needs
+its own `name`. `Select`, `Combobox`, and `Autocomplete` accept `name` (plus `form`, `required`,
+`inputRef`) from 1.13.0; before that they contributed nothing to a native payload.
+
+### Submitting from outside the form
+
+Give the `Form` an `id` and point a detached submit button at it with the native `form` attribute —
+this is how a page-header Save reaches a form in the page body (1.13.0+).
+
+```tsx
+<Layout.Header
+  title="Create product"
+  actions={[
+    <Button key="save" type="submit" form="product-form">
+      Save
+    </Button>,
+  ]}
+/>
+<Form id="product-form" onFormSubmit={(values) => save(values)}>
+  {/* … */}
+</Form>
 ```
 
 ### Custom Validation UI with Field.Validity
@@ -210,6 +266,12 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 ---
 
 ## React Hook Form Integration
+
+React Hook Form is **optional and not an AppShell dependency** — install it in your own app. `Form` +
+`Field` is the default stack and covers most forms via `onFormSubmit`. Reach for RHF only when a form
+genuinely needs cross-field validation, field arrays, or a schema resolver (Zod). The two compose
+rather than compete: `Field` handles accessibility wiring and visual state, RHF handles values and
+the validation lifecycle.
 
 `Field.Root` accepts `isTouched`, `isDirty`, `invalid`, and `error` props that align with React Hook Form's `fieldState` shape, so you can spread `fieldState` directly. Use `Form`'s `onSubmit` prop to connect RHF's `handleSubmit`.
 

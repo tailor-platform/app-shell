@@ -15,7 +15,19 @@ import type { UseAsyncItemsOptions } from "@/hooks/use-async-items";
 // upstream changes don't leak as breaking changes to consumers.
 type AutocompletePickedRootProps<Value> = Pick<
   AutocompleteRootProps<Value>,
-  "value" | "defaultValue" | "onValueChange" | "filter" | "disabled" | "children"
+  | "value"
+  | "defaultValue"
+  | "onValueChange"
+  | "filter"
+  | "disabled"
+  | "children"
+  // Form participation. Autocomplete's value is the raw input string, so no
+  // `itemToStringValue` is needed (Base UI omits it here for that reason).
+  | "name"
+  | "form"
+  | "required"
+  | "inputRef"
+  | "id"
 > & {
   items?: readonly Value[];
 };

@@ -64,6 +64,29 @@ interface AutocompletePropsBase<T> {
   "aria-labelledby"?: string;
   /** ID applied to the combobox input element. */
   id?: string;
+  /**
+   * Identifies the field when a form is submitted, so the current text is
+   * picked up by **native** form submission (`new FormData(form)`, a plain
+   * `<form>`, server actions).
+   *
+   * Autocomplete's value is the raw input string, so no value-serialisation
+   * hook is needed (unlike `Select` and `Combobox`).
+   *
+   * **Inside a `Field.Root`, the field's `name` wins and this prop is ignored** —
+   * the hidden input is named after the field. Set it only when the control is
+   * used outside a `Field.Root` (or when it must differ from the field name,
+   * which it cannot).
+   */
+  name?: string;
+  /**
+   * `id` of the form that owns the input. Use when the autocomplete is
+   * rendered outside the `<form>` element it belongs to.
+   */
+  form?: string;
+  /** Whether a value must be entered before the owning form can be submitted. */
+  required?: boolean;
+  /** Ref to the underlying input element. */
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 // --- Autocomplete (static) ---
@@ -95,6 +118,10 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
     id,
+    name,
+    form,
+    required,
+    inputRef,
   } = props;
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
@@ -134,6 +161,10 @@ function AutocompleteStandalone<I>(props: AutocompleteStandaloneProps<I>) {
         defaultValue={defaultValue}
         onValueChange={onValueChange}
         disabled={disabled}
+        name={name}
+        form={form}
+        required={required}
+        inputRef={inputRef}
       >
         <AutocompleteInputGroup>
           <AutocompleteInput
@@ -197,6 +228,10 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
     id,
+    name,
+    form,
+    required,
+    inputRef,
   } = props;
 
   const async = useAsync({ fetcher, onFetchError });
@@ -220,6 +255,10 @@ function AutocompleteAsyncStandalone<T>(props: AutocompleteAsyncStandaloneProps<
         onValueChange={handleValueChange}
         filter={null}
         disabled={disabled}
+        name={name}
+        form={form}
+        required={required}
+        inputRef={inputRef}
       >
         <AutocompleteInputGroup>
           <AutocompleteInput

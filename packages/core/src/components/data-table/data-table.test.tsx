@@ -469,6 +469,51 @@ describe("DataTable", () => {
     });
   });
 
+  it("resets the table scroll position when pagination changes page", async () => {
+    const pagedData: DataTableData<TestRow> = {
+      rows: testData.rows,
+      pageInfo: {
+        hasNextPage: true,
+        hasPreviousPage: true,
+        endCursor: "next-tok",
+        startCursor: "prev-tok",
+      },
+      total: 50,
+    };
+
+    function PaginatedTable() {
+      const table = useDataTable<TestRow>({
+        columns: testColumns,
+        data: pagedData,
+        control: makeControl({ getHasPrevPage: () => true }),
+      });
+
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+          <DataTable.Footer>
+            <DataTable.Pagination />
+          </DataTable.Footer>
+        </DataTable.Root>
+      );
+    }
+
+    const { container } = render(<PaginatedTable />, { wrapper });
+    const scrollContainer = container.querySelector<HTMLDivElement>(
+      '[data-slot="table-container"]',
+    );
+
+    expect(scrollContainer).not.toBeNull();
+    if (!scrollContainer) return;
+
+    scrollContainer.scrollTop = 120;
+    fireEvent.click(screen.getByLabelText("Next page"));
+
+    await waitFor(() => {
+      expect(scrollContainer.scrollTop).toBe(0);
+    });
+  });
+
   describe("custom headers", () => {
     it("renders custom header content", () => {
       const columns: Column<TestRow>[] = [

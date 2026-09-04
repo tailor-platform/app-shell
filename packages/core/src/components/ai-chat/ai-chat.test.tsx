@@ -14,6 +14,14 @@ const textbox = () => screen.getByRole("textbox", { name: "Message" }) as HTMLTe
 const sendButton = () => screen.getByRole("button", { name: "Send" }) as HTMLButtonElement;
 const fileInput = () => document.querySelector('input[type="file"]') as HTMLInputElement;
 
+// A tree whose transcript changes per render, with one child the root rejects.
+const strayChildTree = (token: string) => (
+  <AIChat>
+    <AIChat.Conversation>{token}</AIChat.Conversation>
+    <span>stray</span>
+  </AIChat>
+);
+
 describe("AIChat", () => {
   describe("snapshots", () => {
     it("default", () => {
@@ -137,6 +145,29 @@ describe("AIChat", () => {
         </AIChat>,
       );
       expect(warn).toHaveBeenCalledWith(expect.stringMatching(/no AIChat\.Conversation/));
+    });
+
+    it("warns once per distinct message, not on every render", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { rerender } = render(strayChildTree("a"));
+      // Stand in for a streamed response: the root re-renders per token.
+      for (const token of ["ab", "abc", "abcd", "abcde"]) rerender(strayChildTree(token));
+      expect(warn).toHaveBeenCalledTimes(1);
+    });
+
+    it("names the direct-child requirement so a wrapped region is diagnosable", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const WrappedComposer = () => <AIChat.Composer onSubmit={vi.fn()} />;
+      render(
+        <AIChat>
+          <AIChat.Conversation>
+            <div />
+          </AIChat.Conversation>
+          <WrappedComposer />
+        </AIChat>,
+      );
+      expect(screen.queryByRole("textbox")).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/as direct children/));
     });
 
     it("tells the caller when Composer is used outside AIChat", () => {
@@ -359,6 +390,22 @@ describe("AIChat", () => {
         expect(attachments).toHaveLength(1);
         expect(attachments[0].fileName).toBe("notes.txt");
         expect(screen.queryByText("notes.txt")).toBeNull();
+      });
+
+      it("revokes the object URLs it created when the message is sent", async () => {
+        const user = userEvent.setup();
+        const revoke = vi.spyOn(URL, "revokeObjectURL");
+        const { onSubmit } = renderComposer({ attachments: true });
+        await user.upload(fileInput(), new File(["x"], "shot.png", { type: "image/png" }));
+        const staged = screen.getByRole("img", { name: "shot.png" }).getAttribute("src")!;
+        revoke.mockClear();
+
+        await user.type(textbox(), "see attached");
+        await user.keyboard("{Enter}");
+
+        expect(revoke).toHaveBeenCalledWith(staged);
+        // The caller still gets the File, which is what a send handler needs.
+        expect(onSubmit.mock.calls[0][1][0].file).toBeInstanceOf(File);
       });
 
       it("removes a staged attachment from its chip", async () => {

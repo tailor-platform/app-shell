@@ -50,7 +50,9 @@ function Assistant() {
 
 `message.role` ("user" | "assistant") from `useAIChat` lines up directly with `AIChat.Message`'s `from` prop — no mapping step. `AIChat` streams for real when the AI Gateway sends real SSE chunks; there is no client-side typewriter effect.
 
-The regions can appear in any source order — the root always renders Header, then Conversation, then Composer. Children that are not one of the three are dropped with a console warning, so a transcript accidentally passed as a loose child is loud rather than silently missing. Omit `AIChat.Composer` for a read-only transcript.
+The regions can appear in any source order — the root always renders Header, then Conversation, then Composer. Omit `AIChat.Composer` for a read-only transcript.
+
+They must be **direct** children. The root matches them by component identity, so a region wrapped in one of your own components — `const AppComposer = () => <AIChat.Composer … />` — is not recognised, and is dropped with a console warning like any other unexpected child. To preset props, export the props instead of the element: `<AIChat.Composer {...appComposerProps} />`.
 
 ## Props
 
@@ -321,6 +323,8 @@ Set `attachments` on `AIChat.Composer` to show the paperclip button and staged-a
 ```
 
 Staged files live in the composer until submit, then clear. For a persisted record's file list — initial items and buffered upload/delete operations flushed to a backend — use [`Attachment`](./attachment.md) instead.
+
+**`previewUrl` is only valid while the file is staged.** The composer creates those object URLs for the chip previews and revokes them on submit, so sending an image does not leak one for the life of the page. `onSubmit` still hands you `attachment.file`, which is what an upload needs; if you want to show a sent image in the transcript, create your own URL from that `File` and revoke it when you are done with it.
 
 ## Related components
 

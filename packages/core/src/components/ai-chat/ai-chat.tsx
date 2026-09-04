@@ -1,6 +1,9 @@
 import {
   Children,
   isValidElement,
+  useEffect,
+  useMemo,
+  useRef,
   type ComponentProps,
   type ReactElement,
   type ReactNode,
@@ -71,36 +74,87 @@ type AIChatProps = Omit<ComponentProps<"div">, "children"> & {
  * </Card.Root>
  * ```
  */
-function AIChatRoot({ className, children, status = "ready", ...props }: AIChatProps) {
-  let header: ReactElement | undefined;
-  let conversation: ReactElement | undefined;
-  let composer: ReactElement | undefined;
+/**
+ * Emits each distinct message once per mounted root.
+ *
+ * The root re-renders on every streamed token, so warning inline during
+ * render would repeat the same line hundreds of times in a single response —
+ * and twice per render again under StrictMode. Deliberately not gated on
+ * `process.env.NODE_ENV`: this package has no other reference to `process`,
+ * and adding one would break consumers whose bundler does not shim it.
+ */
+function useOnceWarnings(warnings: readonly string[]) {
+  const seen = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    for (const warning of warnings) {
+      if (seen.current.has(warning)) continue;
+      seen.current.add(warning);
+      console.warn(warning);
+    }
+  });
+}
+
+type Regions = {
+  header?: ReactElement;
+  conversation?: ReactElement;
+  composer?: ReactElement;
+  warnings: string[];
+};
+
+/**
+ * Sorts children into the three regions by component identity, so the root can
+ * render them in a fixed order whatever order they were written in. Matching
+ * on identity means a region has to be a direct child — the warning says so,
+ * because wrapping one in your own component is the way this bites.
+ */
+function splitRegions(children: ReactNode): Regions {
+  const regions: Regions = { warnings: [] };
 
   Children.forEach(children, (child) => {
     if (!isValidElement(child)) return;
     if (child.type === Header) {
-      if (header) console.warn("AIChat: more than one AIChat.Header; only the first is rendered.");
-      header ??= child;
-    } else if (child.type === Conversation) {
-      if (conversation) {
-        console.warn("AIChat: more than one AIChat.Conversation; only the first is rendered.");
+      if (regions.header) {
+        regions.warnings.push("AIChat: more than one AIChat.Header; only the first is rendered.");
       }
-      conversation ??= child;
+      regions.header ??= child;
+    } else if (child.type === Conversation) {
+      if (regions.conversation) {
+        regions.warnings.push(
+          "AIChat: more than one AIChat.Conversation; only the first is rendered.",
+        );
+      }
+      regions.conversation ??= child;
     } else if (child.type === Composer) {
-      if (composer)
-        console.warn("AIChat: more than one AIChat.Composer; only the first is rendered.");
-      composer ??= child;
+      if (regions.composer) {
+        regions.warnings.push("AIChat: more than one AIChat.Composer; only the first is rendered.");
+      }
+      regions.composer ??= child;
     } else {
-      console.warn(
-        "AIChat: children must be AIChat.Header, AIChat.Conversation, or AIChat.Composer. " +
-          "Other children are dropped — put the transcript inside AIChat.Conversation.",
+      regions.warnings.push(
+        "AIChat: children must be AIChat.Header, AIChat.Conversation, or AIChat.Composer, " +
+          "as direct children — a region wrapped in your own component is not recognised. " +
+          "Other children are dropped; put the transcript inside AIChat.Conversation.",
       );
     }
   });
 
-  if (!conversation) {
-    console.warn("AIChat: no AIChat.Conversation child; the transcript region will be empty.");
+  if (!regions.conversation) {
+    regions.warnings.push(
+      "AIChat: no AIChat.Conversation child; the transcript region will be empty.",
+    );
   }
+
+  return regions;
+}
+
+function AIChatRoot({ className, children, status = "ready", ...props }: AIChatProps) {
+  const { header, conversation, composer, warnings } = useMemo(
+    () => splitRegions(children),
+    [children],
+  );
+
+  useOnceWarnings(warnings);
 
   return (
     <AIChatContext.Provider value={{ status }}>

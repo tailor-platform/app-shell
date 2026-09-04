@@ -166,6 +166,13 @@ function Composer({
     setFiles([]);
     setDraft("");
     onSubmit(draft.trim(), snapshot);
+    // The composer revokes every URL it created, so sending an image does not
+    // leak one for the life of the page. `previewUrl` is therefore only valid
+    // while the file is staged; a caller that wants to show a sent image in
+    // the transcript makes its own URL from `attachment.file`, and owns it.
+    for (const attachment of snapshot) {
+      if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {

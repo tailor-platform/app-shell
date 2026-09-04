@@ -1,5 +1,13 @@
 # @tailor-platform/app-shell-vite-plugin
 
+## 0.2.4
+
+### Patch Changes
+
+- b624df2: Fix typed routes generation to avoid a file existence check before reading or writing the generated output.
+  
+  This keeps the generated routes file behavior the same while removing the race-prone filesystem pattern flagged by code scanning.
+
 ## 0.2.3
 
 ### Patch Changes

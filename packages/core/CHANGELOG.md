@@ -1,5 +1,51 @@
 # @tailor-platform/app-shell
 
+## 1.14.0
+
+### Minor Changes
+
+- 6bcbd51: Let forms be driven natively: `Form` now accepts `id`, and `Select`, `Combobox`, and `Autocomplete` accept `name`, `form`, `required`, and `inputRef` (plus `itemToStringValue` on `Select` and `Combobox`). These props were already supported by the underlying Base UI roots but were filtered out by the wrapper `Pick<>` types, so there was no way to reach them.
+  
+  **`Form` `id`** — a submit button rendered outside the form can now target it with the native `form` attribute, which is what the common "Save in the page header, fields in the body" layout needs:
+  
+  ```tsx
+  <Layout.Header
+    title="Create product"
+    actions={[<Button key="save" type="submit" form="product-form">Save</Button>]}
+  />
+  <Form id="product-form" onFormSubmit={save}>…</Form>
+  ```
+  
+  **`name` on the dropdowns** — Base UI renders a hidden input under that name, so the selected value is now visible to native submission: `new FormData(form)`, an uncontrolled `<form>`, and server actions. Previously these controls contributed nothing to the DOM payload, so a native form silently submitted without them.
+  
+  For non-string items, `itemToStringValue` controls serialisation (items shaped `{ value, label }` use `value` automatically). It is not available on `Combobox`'s creatable variants, which derive it internally so the pending-item sentinel serialises correctly.
+  
+  Note this is a _separate_ mechanism from `Form`'s `onFormSubmit`, which collects values from registered `Field.Root`s keyed by the field's `name` — that path already worked without `name` on the control and is unchanged. Consequently, **inside a `Field.Root` the field's `name` wins and the control's own `name` is ignored**; set it only when the control is used outside a `Field.Root`.
+- 483a501: Re-export `AppShellRoutesPluginOptions` and `TypedRoutesOptions` from `@tailor-platform/app-shell/vite-plugin` so the subpath can be used as the canonical TypeScript entrypoint.
+  
+  Update the file-based routing docs and examples to consistently import the Vite plugin from the `@tailor-platform/app-shell/vite-plugin` subpath.
+
+### Patch Changes
+
+- ecc3f93: Show the DataTable first-page button even when the backend does not return a total count.
+  
+  This keeps cursor-based pagination usable for datasets that support going back to the first page but do not know the last page.
+- 7639516: Add `page` as a catalogue category, so the bundled `app-shell-patterns` skill can carry screen-level guidance alongside its patterns.
+  
+  A page is the shape of a whole screen — the outer choice, made before picking patterns for the parts inside it. Where a pattern is one recipe ("how do I build this bit?"), a page compares the layouts a screen could take and says when each applies. The two are siblings rather than nested: a page cites the pattern entries that implement each variant instead of inlining them, so an implementation has exactly one home.
+  
+  This adds the machinery only — the generator category, the `PAGE.md` entry convention, and an "Available Pages" section in the skill ahead of "Available Patterns". No page entries are written yet, so the section currently carries the definition of the layer and no rows.
+- 58de8b1: Fix `DataTable` to reset its internal scroll position to the top when pagination changes page or page size.
+- 6bcbd51: Fix the bundled `app-shell-patterns` skill, whose form guidance contradicted the package. `components.md` described `Form` as "wired to react-hook-form" and `Field` as binding "to react-hook-form via `name`" — neither is true. `Form`/`Field`/`Fieldset` wrap Base UI and own accessibility wiring and visual state only; `react-hook-form` stopped being a runtime dependency in 1.4.0. Meanwhile every `form/*` reference implementation ignored `Form` entirely and hand-rolled `<form onSubmit>` + `new FormData(...)`, which skips validation and server-error routing — while the skill's own rules say to use AppShell components over raw HTML.
+  
+  The four `form/*` patterns now use `Form` with `onFormSubmit`, and document the model they implement: `onFormSubmit` collects values from registered `Field.Root`s rather than reading `FormData`, so **every** control — `Select`, `Combobox` and `Autocomplete` included — participates simply by being wrapped in a `Field.Root name="…"`. No `name` on the control, no `useState`, no merging in the submit handler.
+  
+  Documents two things that were previously undiscoverable: an object-valued dropdown submits as a JSON string unless `itemToStringValue` is supplied (items shaped `{ value, label }` use `value` automatically), and a page-header Save reaches a body form by matching `Form`'s `id` with a detached `<Button type="submit" form="…">`.
+  
+  Also corrects `docs/components/form.md`, which built its `Select` example from `Select.Trigger` / `Select.Popup` / `Select.Item`. That code could never have compiled: `Select` is the pre-assembled standalone component and its low-level sub-components live under `Select.Parts.*` by design, while `Select.Popup` has never existed at all — AppShell's is `Select.Content`.
+- Updated dependencies [b624df2]
+  - @tailor-platform/app-shell-vite-plugin@0.2.4
+
 ## 1.13.0
 
 ### Minor Changes

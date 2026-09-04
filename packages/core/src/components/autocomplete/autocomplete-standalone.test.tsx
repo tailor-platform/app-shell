@@ -434,3 +434,70 @@ describe("Autocomplete (standalone, grouped)", () => {
     });
   });
 });
+
+// ============================================================================
+// Form participation — Autocomplete's value is the raw input string, so `name`
+// applies directly to the text input; no value-serialisation hook is needed.
+// ============================================================================
+
+describe("Autocomplete — form participation", () => {
+  it("applies name to the input", () => {
+    const { container } = render(
+      <Autocomplete items={suggestions} name="fruit" aria-label="Fruit" />,
+    );
+    expect(container.querySelector('input[name="fruit"]')).not.toBeNull();
+  });
+
+  it("is picked up by native FormData", () => {
+    const { container } = render(
+      <form>
+        <Autocomplete items={suggestions} name="fruit" defaultValue="Cherry" aria-label="Fruit" />
+      </form>,
+    );
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("fruit")).toBe("Cherry");
+  });
+
+  it("reflects text typed by the user", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <form>
+        <Autocomplete items={suggestions} name="fruit" aria-label="Fruit" />
+      </form>,
+    );
+
+    await user.type(screen.getByRole("combobox", { name: "Fruit" }), "Ban");
+
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("fruit")).toBe("Ban");
+  });
+
+  it("associates the input with an outer form via `form`", () => {
+    const { container } = render(
+      <div>
+        <form id="outer" />
+        <Autocomplete items={suggestions} name="fruit" form="outer" aria-label="Fruit" />
+      </div>,
+    );
+    const input = container.querySelector('input[name="fruit"]') as HTMLInputElement;
+    expect(input.getAttribute("form")).toBe("outer");
+  });
+
+  it("marks the input required", () => {
+    const { container } = render(
+      <Autocomplete items={suggestions} name="fruit" required aria-label="Fruit" />,
+    );
+    const input = container.querySelector('input[name="fruit"]') as HTMLInputElement;
+    expect(input.required).toBe(true);
+  });
+
+  it("Autocomplete.Async also applies name", async () => {
+    const fetcher = vi.fn().mockResolvedValue(suggestions);
+    const { container } = render(
+      <Autocomplete.Async fetcher={fetcher} name="fruit" aria-label="Fruit" />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('input[name="fruit"]')).not.toBeNull();
+    });
+  });
+});

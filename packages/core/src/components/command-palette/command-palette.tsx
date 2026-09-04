@@ -7,7 +7,12 @@ import { Input } from "@/components/input";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
 import { filterRoutes, NavigatableRoute } from "@/routing/path";
-import { useNavItems, NavItem, NavItemResource } from "../../routing/navigation";
+import {
+  useNavItems,
+  useCommandPaletteRoutes,
+  NavItem,
+  NavItemResource,
+} from "../../routing/navigation";
 import {
   useCommandPaletteActions,
   useCommandPaletteState,
@@ -753,12 +758,24 @@ export function CommandPalette(): React.ReactNode {
  */
 export function BuiltInCommandPalette() {
   const navItems = useNavItems();
+  const currentPathAwareRoutes = useCommandPaletteRoutes();
   const appInfoRoute = useAppInfoPageRoute();
+
+  const paletteData = useMemo(
+    () =>
+      Promise.all([navItems ?? Promise.resolve([]), currentPathAwareRoutes ?? Promise.resolve([])]),
+    [navItems, currentPathAwareRoutes],
+  );
 
   return (
     <Suspense fallback={null}>
-      <Await resolve={navItems}>
-        {(items) => <CommandPaletteContent navItems={items ?? []} extraRoutes={[appInfoRoute]} />}
+      <Await resolve={paletteData}>
+        {([items, dynamicRoutes]) => (
+          <CommandPaletteContent
+            navItems={items ?? []}
+            extraRoutes={[...dynamicRoutes, appInfoRoute]}
+          />
+        )}
       </Await>
     </Suspense>
   );

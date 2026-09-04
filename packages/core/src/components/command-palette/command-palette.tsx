@@ -761,20 +761,18 @@ export function BuiltInCommandPalette() {
   const currentPathAwareRoutes = useCommandPaletteRoutes();
   const appInfoRoute = useAppInfoPageRoute();
 
-  const paletteData = useMemo(
-    () =>
-      Promise.all([navItems ?? Promise.resolve([]), currentPathAwareRoutes ?? Promise.resolve([])]),
-    [navItems, currentPathAwareRoutes],
-  );
-
   return (
     <Suspense fallback={null}>
-      <Await resolve={paletteData}>
-        {([items, dynamicRoutes]) => (
-          <CommandPaletteContent
-            navItems={items ?? []}
-            extraRoutes={[...dynamicRoutes, appInfoRoute]}
-          />
+      <Await resolve={navItems}>
+        {(items) => (
+          <Await resolve={currentPathAwareRoutes}>
+            {(dynamicRoutes) => (
+              <CommandPaletteContent
+                navItems={items ?? []}
+                extraRoutes={[...(dynamicRoutes ?? []), appInfoRoute]}
+              />
+            )}
+          </Await>
         )}
       </Await>
     </Suspense>

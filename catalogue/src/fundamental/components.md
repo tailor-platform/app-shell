@@ -792,6 +792,22 @@ Multi-select submits an array.
 
 ---
 
+## AI
+
+### `AIChat`
+
+> Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md)
+
+**Import:** `import { AIChat } from '@tailor-platform/app-shell'`
+**Purpose:** Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts. The root places three regions in a fixed order, `Layout`-style: `AIChat.Header` (optional) over `AIChat.Conversation` over `AIChat.Composer` (optional). Each region carries its own props; the root carries `status`.
+**API:** Root (`status`) + regions — `AIChat.Header` (`title`, `icon`, `actions`), `AIChat.Conversation` (`autoScroll`, transcript as children), `AIChat.Composer` (`onSubmit`, `onStop`, `value`/`defaultValue`/`onValueChange`, `placeholder`, `disabled`, `submitOnEnter`, `attachments`/`accept`/`multiple`, `actions`) — + transcript parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning`/`.ReasoningTrigger`/`.ReasoningContent`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, `.History`.
+**Composer:** Body is `Textarea` over one action row per `form/composer`'s layout. Enter submits (IME-safe), Shift+Enter newlines, and `status` from `useAIChat()` drives the busy/Stop state.
+**Header:** a 48px strip (graphic + `text-sm font-semibold` title + right action slot) closed by a full-width rule; renders only when `title` or `actions` is set.
+**Renders no chrome:** no border or background of its own — wrap in `Card`, `Sheet`, or a `Layout.Column`, with `overflow-hidden` so the header rule stays inside rounded corners.
+**Used in patterns:** none yet — a component, not a catalogue pattern (platform-planning#1748).
+
+---
+
 ## Auth & access
 
 ### `AuthProvider`

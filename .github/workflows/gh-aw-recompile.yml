@@ -129,6 +129,11 @@ jobs:
             echo "Opened by \`.github/workflows/gh-aw-recompile.yml\`."
           } > /tmp/pr-body.md
 
+          # --head is required: the push above went through an explicit token URL
+          # rather than a tracking remote, so the branch has no upstream and gh
+          # cannot infer the head on its own.
           gh pr create --draft \
+            --base "${GITHUB_REF_NAME}" \
+            --head "$BRANCH" \
             --title "chore(gh-aw): recompile generated files with ${VERSION:-latest}" \
             --body-file /tmp/pr-body.md

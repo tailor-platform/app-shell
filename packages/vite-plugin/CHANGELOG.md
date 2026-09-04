@@ -1,4 +1,4 @@
-# @tailor-platform/app-shell-vite-plugin
+# @tailor-platform/vite-plugin-app-shell
 
 ## 0.2.3
 

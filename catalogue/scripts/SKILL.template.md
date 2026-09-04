@@ -23,7 +23,7 @@ Read it when upgrading `@tailor-platform/app-shell`, and whenever styling, themi
 
 ## Available Pages
 
-A page is the shape of a whole screen — the outer choice, made before picking patterns for the parts inside it. Where a pattern is one recipe, a page compares the layouts a screen could take and says when each applies. Match the screen first, then use the patterns the entry cites for the pieces within it.
+A page is the shape of a whole screen — the outer choice, made before picking patterns for the parts inside it. Where a pattern is one recipe, a page fixes the layout of a whole screen and says what belongs in each part of it. Match the screen first, then use the patterns the entry cites for the pieces within it.
 
 {{PAGES_TABLE}}
 
@@ -34,16 +34,17 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 ## How to Use
 
 1. Identify the user's intent (list, detail, form, interaction, screen composition, recipe)
-2. Match constraints to an entry slug from the tables above
-3. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
-4. Read fundamental references for component APIs, design tokens, and GraphQL conventions: `references/fundamental/`
-5. Implement using ONLY the imports listed in the entry's `requiredImports`
+2. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
+3. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
+4. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
+5. Read fundamental references for component APIs, design tokens, and GraphQL conventions: `references/fundamental/`
+6. Implement using ONLY the imports listed in the entry's `requiredImports` — for a page, the `requiredImports` of the pattern it sent you to
 
 ## Rules
 
 - ALWAYS cite the entry slug in a comment at the top of the file:
-  `/* pattern: list/dense-scan */`
-- NEVER mix patterns in a single page component
+  `/* pattern: list/dense-scan */`. Cite the pattern you implemented, even when a page entry sent you to it.
+- NEVER mix two patterns that solve the same problem in one component — one part, one recipe. Composing patterns for _different_ parts of a screen is expected, and the screen's page entry says which.
 - ALWAYS use AppShell components — do NOT use raw HTML or third-party UI libraries
 - If no entry matches, compose directly from fundamental references
 

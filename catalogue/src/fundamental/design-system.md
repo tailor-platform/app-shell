@@ -302,6 +302,19 @@ Stock Tailwind breakpoints — AppShell does not change them.
 
 Two-column **behavior** (right rail stacks under `lg`): respect AppShell defaults — do not force side-by-side grids on narrow viewports. The `Layout` column width table lives in `components.md` → Layout; reuse those numbers instead of guessing rem values here.
 
+## 4b. Links
+
+One treatment for every text link — inside `DescriptionCard`, in table rows,
+in cards:
+
+- **`text-primary` at rest, `hover:underline` only.** Colour carries the affordance; a resting underline is noise. Pair with `underline-offset-4`.
+- **Internal routes** use app-shell's `Link` (`to`), never a bare `<a href>`.
+- **External destinations** use `<a target="_blank" rel="noopener noreferrer">` with a lucide `ExternalLink` at `size-3` after the label. There is no dedicated component for this; that markup is the convention.
+- **Identifiers** (document numbers, SKUs) keep `font-mono` on top of the link style.
+
+This is the treatment `DescriptionCard` already applies to its `type: "link"`
+fields — match it rather than inventing a second one.
+
 ## 5. The `astw:` prefix
 
 AppShell exposes **layout / sizing / overflow** escapes on some components via props like `containerClassName` and `className` on roots. Prefix those utilities with `astw:` so they apply to the wrapper AppShell controls.
@@ -311,7 +324,7 @@ AppShell exposes **layout / sizing / overflow** escapes on some components via p
 Minimal illustration — the same rules apply to other `*ClassName` hooks:
 
 ```tsx
-<Table.Root containerClassName="astw:px-6 astw:overflow-y-auto" />
+<Table.Root containerClassName="astw:max-h-96 astw:overflow-y-auto" />
 ```
 
 Rules:

@@ -1,93 +1,154 @@
 /* pattern: form/wizard */
 import { useState } from "react";
-import { Button, Card, Layout, Badge, Input, Field } from "@tailor-platform/app-shell";
+import {
+  Badge,
+  Button,
+  Card,
+  Field,
+  Fieldset,
+  Form,
+  Layout,
+  Select,
+} from "@tailor-platform/app-shell";
 
-const STEPS = ["Upload", "Map", "Review", "Done"] as const;
+const OWNERS = ["Tanaka", "Sato", "Suzuki", "Yamada"];
+const STEPS = ["Basic info", "Assignment", "Schedule", "Review"] as const;
 
-type Props = {
-  onComplete: () => void;
+type Draft = {
+  title: string;
+  description: string;
+  owner: string;
+  startDate: string;
+  estimate: string;
 };
 
-export default function WizardForm({ onComplete }: Props) {
-  const [currentStep, setCurrentStep] = useState(0);
+const INITIAL: Draft = {
+  title: "",
+  description: "",
+  owner: "",
+  startDate: "",
+  estimate: "",
+};
 
-  const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onComplete();
-    }
-  };
+type Props = {
+  onComplete: (draft: Draft) => void;
+  onCancel: () => void;
+};
 
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+export default function WizardForm({ onComplete, onCancel }: Props) {
+  const [step, setStep] = useState(0);
+  // Accumulated values. Each step's Form unmounts on navigation, so the draft
+  // is what makes Back non-destructive — fields re-read it via `defaultValue`.
+  const [draft, setDraft] = useState<Draft>(INITIAL);
+
+  const isLastStep = step === STEPS.length - 1;
+
+  /**
+   * Each step is its own `Form`, and "Next" is a `type="submit"` button.
+   * `onFormSubmit` fires only after that step's fields pass validation, so
+   * progression is gated natively — no manual per-step validity check, and
+   * no deferring every error to the final submit.
+   */
+  const handleStepSubmit = (values: Record<string, unknown>) => {
+    const merged = { ...draft, ...(values as Partial<Draft>) };
+    setDraft(merged);
+    if (isLastStep) {
+      onComplete(merged);
+      return;
     }
+    setStep(step + 1);
   };
 
   return (
     <Layout>
-      <Layout.Header title="Import products" />
+      <Layout.Header title="Create task" />
       <Layout.Column>
         <Card.Root>
           <Card.Content>
             <div className="flex items-center gap-2">
-              {STEPS.map((step, i) => (
+              {STEPS.map((label, i) => (
                 <Badge
-                  key={step}
-                  variant={i === currentStep ? "default" : i < currentStep ? "success" : "neutral"}
+                  key={label}
+                  variant={i === step ? "default" : i < step ? "success" : "neutral"}
                 >
-                  {i + 1}. {step}
+                  {i + 1}. {label}
                 </Badge>
               ))}
             </div>
           </Card.Content>
         </Card.Root>
 
-        <Card.Root>
-          <Card.Content>
-            {currentStep === 0 && (
-              <div className="space-y-4">
-                <Field.Root name="file">
-                  <Field.Label>CSV file</Field.Label>
-                  <Field.Control render={<Input type="file" accept=".csv" />} />
-                </Field.Root>
-              </div>
-            )}
-            {currentStep === 1 && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Map CSV columns to product fields</p>
-                <Field.Root name="nameColumn">
-                  <Field.Label>Name column</Field.Label>
-                  <Field.Control render={<Input placeholder="e.g. Column A" />} />
-                </Field.Root>
-                <Field.Root name="skuColumn">
-                  <Field.Label>SKU column</Field.Label>
-                  <Field.Control render={<Input placeholder="e.g. Column B" />} />
-                </Field.Root>
-              </div>
-            )}
-            {currentStep === 2 && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Review your import — 42 products will be created.
-                </p>
-              </div>
-            )}
-            {currentStep === 3 && (
-              <div className="space-y-4">
-                <p className="text-sm text-foreground">Import complete! 42 products created.</p>
-              </div>
-            )}
-          </Card.Content>
-        </Card.Root>
+        <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
+          <Card.Root>
+            <Card.Header title={STEPS[step]} />
+            <Card.Content>
+              {step === 0 && (
+                <Fieldset.Root className="space-y-4">
+                  <Field.Root name="title">
+                    <Field.Label>Title</Field.Label>
+                    <Field.Control required defaultValue={draft.title} />
+                    <Field.Error match="valueMissing">Title is required.</Field.Error>
+                  </Field.Root>
+                  <Field.Root name="description">
+                    <Field.Label>Description</Field.Label>
+                    <Field.Control defaultValue={draft.description} />
+                  </Field.Root>
+                </Fieldset.Root>
+              )}
 
-        <div className="flex justify-between">
-          <Button variant="ghost" onClick={handleBack} disabled={currentStep === 0}>
-            Back
-          </Button>
-          <Button onClick={handleNext}>{currentStep === STEPS.length - 1 ? "Done" : "Next"}</Button>
-        </div>
+              {step === 1 && (
+                <Field.Root name="owner">
+                  <Field.Label>Owner</Field.Label>
+                  {/* Uncontrolled like every other field — `defaultValue`
+                      restores the prior choice when the user steps Back. */}
+                  <Select
+                    items={OWNERS}
+                    defaultValue={draft.owner || null}
+                    placeholder="Assign owner"
+                  />
+                </Field.Root>
+              )}
+
+              {step === 2 && (
+                <Fieldset.Root className="grid gap-4 md:grid-cols-2">
+                  <Field.Root name="startDate">
+                    <Field.Label>Start date</Field.Label>
+                    <Field.Control type="date" required defaultValue={draft.startDate} />
+                    <Field.Error match="valueMissing">Start date is required.</Field.Error>
+                  </Field.Root>
+                  <Field.Root name="estimate">
+                    <Field.Label>Estimate (hours)</Field.Label>
+                    <Field.Control type="number" min={0} defaultValue={draft.estimate} />
+                  </Field.Root>
+                </Fieldset.Root>
+              )}
+
+              {step === 3 && (
+                <dl className="grid grid-cols-2 gap-2 text-sm">
+                  <dt className="text-muted-foreground">Title</dt>
+                  <dd>{draft.title}</dd>
+                  <dt className="text-muted-foreground">Owner</dt>
+                  <dd>{draft.owner || "—"}</dd>
+                  <dt className="text-muted-foreground">Start date</dt>
+                  <dd>{draft.startDate || "—"}</dd>
+                  <dt className="text-muted-foreground">Estimate</dt>
+                  <dd>{draft.estimate ? `${draft.estimate}h` : "—"}</dd>
+                </dl>
+              )}
+            </Card.Content>
+          </Card.Root>
+
+          <div className="flex justify-between pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
+            >
+              {step === 0 ? "Cancel" : "Back"}
+            </Button>
+            <Button type="submit">{isLastStep ? "Create" : "Next"}</Button>
+          </div>
+        </Form>
       </Layout.Column>
     </Layout>
   );

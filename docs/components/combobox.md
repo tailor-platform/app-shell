@@ -208,6 +208,25 @@ const {
 } = Combobox.Parts;
 ```
 
+## Form submission
+
+Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —
+see [Form](./form.md). They matter for **native** submission: a plain `<form>`, `new FormData(form)`,
+or a server action.
+
+| Prop                | Type                          | Default | Description                                                                                                                                                            |
+| ------------------- | ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`              | `string`                      | -       | Names the hidden input for native submission. **Ignored inside a `Field.Root`** — the field's name wins.                                                               |
+| `form`              | `string`                      | -       | `id` of the owning form, when the control is rendered outside it.                                                                                                      |
+| `required`          | `boolean`                     | `false` | Blocks submission until a value is chosen, surfacing the matching `Field.Error`.                                                                                       |
+| `inputRef`          | `React.Ref<HTMLInputElement>` | -       | Ref to the hidden input (use for React Hook Form's `field.ref`).                                                                                                       |
+| `itemToStringValue` | `(item: T) => string`         | -       | Serialises a non-string item for submission. Items shaped `{ value, label }` use `value` automatically. Not available on the creatable variant, which derives its own. |
+
+`itemToStringValue` is not accepted on the creatable variant (`onCreateItem`): `Combobox` derives
+its own there so the pending-item sentinel serialises correctly. A creatable combobox over object
+items therefore cannot customise the submitted value — use the non-creatable variant, or map the
+value in your submit handler.
+
 ## Examples
 
 ### Controlled Combobox

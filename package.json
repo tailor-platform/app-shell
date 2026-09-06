@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "3.0.1",
-    "lefthook": "2.1.10",
+    "lefthook": "2.1.12",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "pkg-pr-new": "0.0.88",

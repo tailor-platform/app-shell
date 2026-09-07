@@ -110,7 +110,7 @@ import { PencilIcon } from "lucide-react";
 <Tooltip.Root>
   <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
     <PencilIcon />
-    <span className="astw:sr-only">Edit</span>
+    <span className="sr-only">Edit</span>
   </Tooltip.Trigger>
   <Tooltip.Content>Edit order</Tooltip.Content>
 </Tooltip.Root>;

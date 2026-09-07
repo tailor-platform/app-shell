@@ -134,7 +134,7 @@ const priorities = [
   { label: "Critical", variant = "error" },
 ];
 
-<div className="astw:flex astw:gap-2">
+<div className="flex gap-2">
   {priorities.map((p) => (
     <Badge key={p.label} variant={p.variant}>
       {p.label}
@@ -148,17 +148,17 @@ const priorities = [
 ```tsx
 import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
 
-<div className="astw:flex astw:gap-2">
+<div className="flex gap-2">
   <Badge variant="success">
-    <CheckCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+    <CheckCircle className="w-3 h-3 mr-1" />
     Verified
   </Badge>
   <Badge variant="warning">
-    <AlertCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+    <AlertCircle className="w-3 h-3 mr-1" />
     Review
   </Badge>
   <Badge variant="error">
-    <XCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+    <XCircle className="w-3 h-3 mr-1" />
     Blocked
   </Badge>
 </div>;
@@ -188,7 +188,7 @@ function ProductBadge({ product }: { product: Product }) {
 ### Custom Styling
 
 ```tsx
-<Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
+<Badge variant="success" className="px-3! py-1! uppercase">
   Premium
 </Badge>
 ```
@@ -279,7 +279,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
 
 ## Styling
 
-Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
+Badges are styled with the library's internal `astw:`-prefixed utilities. Write **plain** Tailwind utilities in your own markup, adding a trailing `!` to override a value `Badge` sets itself — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components). Customize appearance by:
 
 1. **Using className prop** for additional styles
 2. **Overriding CSS variables** in your theme
@@ -289,5 +289,5 @@ Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
 import { badgeVariants } from "@tailor-platform/app-shell";
 import { cn } from "@/lib/utils";
 
-<div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>Custom Badge</div>;
+<div className={cn(badgeVariants({ variant: "success" }), "text-lg!")}>Custom Badge</div>;
 ```

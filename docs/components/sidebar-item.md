@@ -178,7 +178,7 @@ For full control, use the `render` prop:
 <SidebarItem
   to="/notifications"
   render={({ title, icon, isActive }) => (
-    <div className="astw:flex astw:items-center astw:gap-2">
+    <div className="flex items-center gap-2">
       {icon}
       <span>{title}</span>
       {isActive && <Badge>New</Badge>}
@@ -264,8 +264,8 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
   render={({ title, icon, isActive }) => (
     <>
       {icon}
-      <span className={isActive ? "astw:font-bold" : undefined}>{title}</span>
-      {isActive && <span className="astw:ml-auto">•</span>}
+      <span className={isActive ? "font-bold" : undefined}>{title}</span>
+      {isActive && <span className="ml-auto">•</span>}
     </>
   )}
 />
@@ -317,11 +317,11 @@ import { Package } from "lucide-react";
 
 ### Active State
 
-Active items automatically receive the `astw:bg-sidebar-accent` background class:
+Active items automatically receive the library's internal `astw:bg-sidebar-accent` background class. The colon needs escaping to write it as a CSS selector, and it is internal — prefer overriding the `--sidebar-accent` token:
 
 ```css
 /* Active item styling (automatic) */
-.astw:bg-sidebar-accent {
+.astw\:bg-sidebar-accent {
   background: var(--sidebar-accent);
   font-weight: 500;
 }
@@ -335,12 +335,7 @@ Add custom classes via the `render` prop:
 <SidebarItem
   to="/special"
   render={({ title, icon, isActive }) => (
-    <div
-      className={cn(
-        "astw:flex astw:items-center astw:gap-2",
-        isActive && "astw:border-l-4 astw:border-primary",
-      )}
-    >
+    <div className={cn("flex items-center gap-2", isActive && "border-l-4 border-primary")}>
       {icon}
       {title}
     </div>

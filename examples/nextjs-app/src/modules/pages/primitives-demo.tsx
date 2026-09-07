@@ -507,7 +507,7 @@ export const primitiveComponentsDemoResource = defineResource({
                         <Menu.Separator />
                         <Menu.Item
                           onClick={() => alert("Delete clicked")}
-                          className="astw:text-destructive"
+                          className="text-destructive"
                         >
                           Delete
                         </Menu.Item>

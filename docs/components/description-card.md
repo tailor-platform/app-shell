@@ -475,13 +475,14 @@ function OrderDetails() {
 The component uses container queries for responsive layouts:
 
 ```tsx
-// Custom styling
-<DescriptionCard
-  className="astw:bg-white astw:p-6 astw:rounded-lg astw:shadow"
-  data={data}
-  fields={fields}
-/>
+// Custom styling — the card sets no padding of its own, so this is an addition
+<DescriptionCard className="p-6" data={data} fields={fields} />
+
+// Overriding a value the card does set needs a trailing `!`
+<DescriptionCard className="rounded-lg! shadow-md!" data={data} fields={fields} />
 ```
+
+Write **plain** Tailwind utilities here — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components). Avoid painting over the card's own `bg-card`: a literal color like `bg-white` breaks dark mode.
 
 ## Accessibility
 

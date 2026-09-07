@@ -48,8 +48,8 @@ export default function HeroWithActionsDetail({ order, onApprove, onCancel }: Pr
         />
         <Card.Root>
           <Card.Header title="Line items" />
-          <Card.Content className="astw:px-0">
-            <Table.Root containerClassName="astw:px-6">
+          <Card.Content className="px-0!">
+            <Table.Root containerClassName="px-6">
               <Table.Header>
                 <Table.Row>
                   <Table.Head>SKU</Table.Head>

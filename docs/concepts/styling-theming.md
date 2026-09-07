@@ -76,15 +76,46 @@ These are the tokens the [`Alert`](../components/alert.md) component uses intern
 
 Note that the `background` and `border` slots are already semi-transparent (a ~10% and ~20% tint respectively). An opacity modifier therefore compounds rather than replaces: `bg-alert-info-background/50` yields roughly 5% alpha, not 50%. Set the background with an unmodified utility, or reach for the underlying accent color if you need a specific opacity.
 
-## A note on AppShell component class names
+## Styling AppShell components
 
-AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.
+Write **plain Tailwind utilities** in your application code, including in the `className` and `*ClassName` props AppShell components expose. Three rules cover every case:
 
-In CSS, the order of style-definition affects the final styles which are computed for an element. Tailwind takes this into account when generating its stylesheet, however because it does not know that there's already a Tailwind-generated stylesheet included in the browser (AppShell's styles), there would be incorrect ordering of style definitions, and clashes can (though do not always) occur.
+1. **Prefer a real prop** where the component exposes one. `Sheet.Content` takes `size`, `Table.Head` and `Table.Cell` take `align`, `Grid` takes `columns`. A prop is a supported contract; a utility class is not.
+2. **To add a property AppShell doesn't set** on that element, use a plain utility. `<Table.Root containerClassName="px-6">` works, because the table container sets no padding of its own.
+3. **To override a value AppShell does set**, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. `<Card.Content className="px-0!">` beats the component's own `px-6`; a plain `px-0` silently loses (see below).
 
-To avoid this situation, and to ensure correct style resolution, AppShell components use a class prefix "astw" (AppShell TailWind) to avoid clashes.
+```tsx
+// Prop where one exists
+<Sheet.Content size="lg" />
 
-This is important to note for developing in AppShell.
+// Adding a property AppShell doesn't set
+<Table.Root containerClassName="max-h-96 overflow-y-auto" />
+
+// Overriding an AppShell default
+<Card.Content className="px-0!" />
+```
+
+### Never write the `astw:` prefix in application code
+
+AppShell's own components are styled with utilities carrying an `astw:` prefix (AppShell TailWind). This exists because Tailwind generates classes at build time: AppShell's stylesheet is compiled and shipped before your application's is generated, and Tailwind cannot order two independently-generated stylesheets against each other. The prefix keeps the library's utilities from clashing with yours.
+
+The prefix is **internal to the library**. Your Tailwind build has no `astw` prefix configured, so it never generates `astw:*` classes — an `astw:` class written in application code only resolves if AppShell happens to already ship that exact utility for its own use. Roughly half of any given set does not, and Tailwind emits nothing for an unknown utility: no error, no warning, nothing in the console. The class lands in the DOM and does nothing.
+
+Worse, one `className` string can be half-applied. AppShell merges class names with `tailwind-merge`, which is not configured with the `astw` prefix, so it strips a conflicting _internal_ class while leaving an unshipped `astw:` class in place — the element keeps a dead class and loses the style it had.
+
+### Why an override needs `!`
+
+`tailwind-merge` groups `astw:px-6` and `px-0` separately — it reads the unknown `astw:` as a variant — so both survive on the element rather than the later one replacing the earlier. AppShell's precompiled stylesheet is imported before yours but at equal specificity, and its rule appears later in the cascade, so the library's value wins a plain conflict:
+
+```tsx
+// Element keeps both classes; padding stays at AppShell's 24px
+<Card.Content className="px-0" />
+
+// `!` wins regardless of cascade order
+<Card.Content className="px-0!" />
+```
+
+Reach for `!` only for the override case. Additions need nothing special, and a prop is better than either.
 
 ## Color Themes (Light / Dark / System)
 

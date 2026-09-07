@@ -102,7 +102,7 @@ Add these only when the record calls for them — none is mandatory. Each is a c
 - **Never duplicate an action** across `Layout.Header` and `ActionPanel` — each action has exactly one home.
 - Every content section MUST sit inside `Card.Root` (or `DescriptionCard`, which already self-contains). Raw divs are not allowed.
 - `ActionPanel` is workflow-only — never back-navigation (that lives in the breadcrumb).
-- `Table.Root` inside a Card requires `containerClassName="astw:px-6"`.
+- `Table.Root` inside a Card requires `containerClassName="px-6"`.
 
 ## Anti-patterns
 
@@ -110,6 +110,6 @@ Add these only when the record calls for them — none is mandatory. Each is a c
 - `ActionPanel` mixed with metadata in the same card — keep workflow separate from descriptive fields.
 - Bare `<div>` sections in the main column — every content section MUST sit inside `Card.Root`.
 - `ActionPanel` containing back-navigation (e.g. "Back to Product List") — back navigation lives in `Layout.Header`'s breadcrumb.
-- A `Table.Root` inside a Card without `containerClassName="astw:px-6"` — the first column lands flush against the card edge.
+- A `Table.Root` inside a Card without `containerClassName="px-6"` — the first column lands flush against the card edge.
 - The same action in both `Layout.Header` and the `ActionPanel` — duplicating it makes neither read as canonical. Pick one home.
 - Giving every status the same loud weight — the record's primary/lifecycle status is a **filled** semantic badge; secondary statuses (fulfilment, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules).

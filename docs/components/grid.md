@@ -167,7 +167,7 @@ There are three ways to size columns; pick whichever fits.
 
 ## Styling
 
-`Grid` is a presentational primitive: it renders a single `<div data-slot="grid">` (and `<div data-slot="grid-item">` for cells) styled with Tailwind utilities prefixed `astw:`. Dynamic templates are applied via CSS custom properties, so arbitrary column counts and responsive values work without extra configuration. Pass `className` or `style` to extend or override.
+`Grid` is a presentational primitive: it renders a single `<div data-slot="grid">` (and `<div data-slot="grid-item">` for cells) styled with the library's internal `astw:`-prefixed utilities. Dynamic templates are applied via CSS custom properties, so arbitrary column counts and responsive values work without extra configuration. Pass `className` (**plain** utilities, with a trailing `!` to override one `Grid` sets itself — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components)) or `style` to extend or override.
 
 ## Related Components
 

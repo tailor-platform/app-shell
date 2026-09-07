@@ -1,16 +1,20 @@
 ---
 title: useAIChat
-description: Simple text-only chat hook for AI Gateway
+description: AI Gateway chat hook with optional local and provider tools
 ---
 
 # useAIChat
 
-React hook for simple text-only chat on top of `createAIGatewayClient`.
+React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local and provider tool support.
 
 ## Signature
 
 ```typescript
-const useAIChat: (config: { client: AIGatewayClient; model: string }) => {
+const useAIChat: (config: {
+  client: AIGatewayClient;
+  model: string;
+  tools?: Record<string, AIChatConfiguredTool>;
+}) => {
   messages: AIChatMessage[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
@@ -28,6 +32,13 @@ interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: AIChatSource[];
+}
+
+interface AIChatSource {
+  type: "url";
+  url: string;
+  title?: string;
 }
 ```
 
@@ -52,10 +63,24 @@ interface AIChatMessage {
 - **Type:** `() => void`
 - **Description:** Aborts the current request if one is in progress
 
+### `tools`
+
+Register tools under a single object:
+
+- local tools created with `defineAIChatTool(...)`
+- provider tools such as `aiProviderTool.openai.webSearch(...)`
+
 ## Usage
 
 ```tsx
-import { createAuthClient, createAIGatewayClient, useAIChat } from "@tailor-platform/app-shell";
+import {
+  aiProviderTool,
+  aiToolSchema,
+  createAuthClient,
+  createAIGatewayClient,
+  defineAIChatTool,
+  useAIChat,
+} from "@tailor-platform/app-shell";
 
 const authClient = createAuthClient({
   clientId: "your-client-id",
@@ -67,10 +92,24 @@ const aiClient = createAIGatewayClient({
   authClient,
 });
 
+const lookupCustomer = defineAIChatTool({
+  description: "Look up a customer in the current workspace",
+  schema: aiToolSchema.object({
+    customerId: aiToolSchema.string(),
+  }),
+  async execute({ customerId }) {
+    return { customerId, name: "Acme Corp" };
+  },
+});
+
 export function ChatScreen() {
   const { messages, sendMessage, status, stop, error } = useAIChat({
     client: aiClient,
     model: "gpt-5-mini",
+    tools: {
+      lookupCustomer,
+      web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
+    },
   });
 
   return (
@@ -99,7 +138,8 @@ export function ChatScreen() {
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- The hook is intentionally text-only
+- Public messages stay user/assistant text-first; internal tool messages remain private to the hook
+- Provider tools can attach optional `sources` to assistant messages
 - System prompts and custom history shaping should use the low-level client directly
 - `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request
 

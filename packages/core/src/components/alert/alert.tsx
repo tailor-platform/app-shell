@@ -16,14 +16,14 @@ const alertVariants = cva(
     variants: {
       variant: {
         neutral:
-          "astw:bg-alert-neutral-background astw:text-alert-neutral-foreground astw:border-alert-neutral-border *:data-[slot=alert-description]:astw:text-alert-neutral-foreground-muted",
+          "astw:bg-alert-neutral-background astw:text-alert-neutral-foreground astw:border-alert-neutral-border astw:*:data-[slot=alert-description]:text-alert-neutral-foreground-muted",
         success:
-          "astw:bg-alert-success-background astw:text-alert-success-foreground astw:border-alert-success-border *:data-[slot=alert-description]:astw:text-alert-success-foreground-muted",
+          "astw:bg-alert-success-background astw:text-alert-success-foreground astw:border-alert-success-border astw:*:data-[slot=alert-description]:text-alert-success-foreground-muted",
         warning:
-          "astw:bg-alert-warning-background astw:text-alert-warning-foreground astw:border-alert-warning-border *:data-[slot=alert-description]:astw:text-alert-warning-foreground-muted",
+          "astw:bg-alert-warning-background astw:text-alert-warning-foreground astw:border-alert-warning-border astw:*:data-[slot=alert-description]:text-alert-warning-foreground-muted",
         error:
-          "astw:bg-alert-error-background astw:text-alert-error-foreground astw:border-alert-error-border *:data-[slot=alert-description]:astw:text-alert-error-foreground-muted",
-        info: "astw:bg-alert-info-background astw:text-alert-info-foreground astw:border-alert-info-border *:data-[slot=alert-description]:astw:text-alert-info-foreground-muted",
+          "astw:bg-alert-error-background astw:text-alert-error-foreground astw:border-alert-error-border astw:*:data-[slot=alert-description]:text-alert-error-foreground-muted",
+        info: "astw:bg-alert-info-background astw:text-alert-info-foreground astw:border-alert-info-border astw:*:data-[slot=alert-description]:text-alert-info-foreground-muted",
       },
     },
     defaultVariants: {
@@ -91,7 +91,7 @@ function Root({
           data-slot="alert-dismiss"
           type="button"
           onClick={handleDismiss}
-          className="astw:col-start-3 astw:row-span-full astw:self-center astw:inline-flex astw:items-center astw:justify-center astw:rounded-md astw:p-1 astw:opacity-70 astw:transition-opacity hover:astw:opacity-100 focus-visible:astw:outline-none focus-visible:astw:ring-2 focus-visible:astw:ring-ring"
+          className="astw:col-start-3 astw:row-span-full astw:self-center astw:inline-flex astw:items-center astw:justify-center astw:rounded-md astw:p-1 astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus-visible:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring"
           aria-label="Dismiss"
         >
           <XIcon className="astw:size-4" />
@@ -121,7 +121,7 @@ function Description({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-description"
       className={cn(
-        "astw:col-start-2 astw:grid astw:justify-items-start astw:gap-1 astw:text-sm [&_p]:astw:leading-relaxed",
+        "astw:col-start-2 astw:grid astw:justify-items-start astw:gap-1 astw:text-sm astw:[&_p]:leading-relaxed",
         className,
       )}
       {...props}

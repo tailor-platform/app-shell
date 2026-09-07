@@ -58,6 +58,37 @@ interface ComboboxPropsBase<T> {
   "aria-labelledby"?: string;
   /** ID applied to the combobox input element. */
   id?: string;
+  /**
+   * Identifies the field when a form is submitted. Base UI renders a hidden
+   * input under this name, so the selected value is picked up by **native**
+   * form submission (`new FormData(form)`, a plain `<form>`, server actions).
+   *
+   * For non-string items, pair this with `itemToStringValue` to control how
+   * the value is serialised.
+   *
+   * **Inside a `Field.Root`, the field's `name` wins and this prop is ignored** —
+   * the hidden input is named after the field. Set it only when the control is
+   * used outside a `Field.Root` (or when it must differ from the field name,
+   * which it cannot).
+   */
+  name?: string;
+  /**
+   * `id` of the form that owns the hidden input. Use when the combobox is
+   * rendered outside the `<form>` element it belongs to.
+   */
+  form?: string;
+  /** Whether a value must be chosen before the owning form can be submitted. */
+  required?: boolean;
+  /** Ref to the hidden input that carries the value during form submission. */
+  inputRef?: React.Ref<HTMLInputElement>;
+  /**
+   * Converts a non-string item to the string written into the hidden input on
+   * form submission. Items shaped `{ value, label }` use `value` automatically.
+   *
+   * Distinct from `mapItem`, which controls what the user sees. Not available
+   * on the creatable variants, which own value serialisation.
+   */
+  itemToStringValue?: (item: T) => string;
 }
 
 interface ComboboxPropsSingle<T> extends ComboboxPropsBase<T> {
@@ -120,6 +151,29 @@ interface CreatableInternalProps<T extends object> {
   onValueChange?: ((value: T | null) => void) | ((value: T[]) => void);
   onCreateItem: (value: string) => T | false | Promise<T | false>;
   formatCreateLabel?: (value: string) => string;
+  name?: string;
+  form?: string;
+  required?: boolean;
+  inputRef?: React.Ref<HTMLInputElement>;
+}
+
+/**
+ * Pull the props that make the hidden input part of native form submission.
+ * `itemToStringValue` is deliberately absent: the creatable variants derive it
+ * from `useCreatable` so the pending-item sentinel serialises correctly.
+ */
+function pickFormProps(props: {
+  name?: string;
+  form?: string;
+  required?: boolean;
+  inputRef?: React.Ref<HTMLInputElement>;
+}) {
+  return {
+    name: props.name,
+    form: props.form,
+    required: props.required,
+    inputRef: props.inputRef,
+  };
 }
 
 /** Pull the accessibility props that should be forwarded to the input. */
@@ -150,8 +204,10 @@ type ComboboxStaticPlainProps<I> =
 // -- Creatable --
 
 type ComboboxStaticCreatableProps<T extends object> =
-  | ({ items: T[] } & CreatableProps<T> & Omit<ComboboxPropsSingle<T>, "mapItem">)
-  | ({ items: T[] } & CreatableProps<T> & Omit<ComboboxPropsMultiple<T>, "mapItem">);
+  | ({ items: T[] } & CreatableProps<T> &
+      Omit<ComboboxPropsSingle<T>, "mapItem" | "itemToStringValue">)
+  | ({ items: T[] } & CreatableProps<T> &
+      Omit<ComboboxPropsMultiple<T>, "mapItem" | "itemToStringValue">);
 
 // ============================================================================
 // Shared internal layout — single place for single vs multiple rendering
@@ -389,6 +445,7 @@ function ComboboxStaticCreatable<T extends object>(props: ComboboxStaticCreatabl
       container={container}
       inputProps={pickInputProps(props)}
       rootProps={{
+        ...pickFormProps(props),
         items: creatable.items,
         value: value ?? creatable.value,
         onValueChange: creatable.onValueChange,
@@ -448,8 +505,12 @@ type ComboboxAsyncPlainProps<T> =
 // -- Creatable --
 
 type ComboboxAsyncCreatableProps<T extends object> =
-  | (ComboboxAsyncOwnProps<T> & CreatableProps<T> & Omit<ComboboxPropsSingle<T>, "mapItem">)
-  | (ComboboxAsyncOwnProps<T> & CreatableProps<T> & Omit<ComboboxPropsMultiple<T>, "mapItem">);
+  | (ComboboxAsyncOwnProps<T> &
+      CreatableProps<T> &
+      Omit<ComboboxPropsSingle<T>, "mapItem" | "itemToStringValue">)
+  | (ComboboxAsyncOwnProps<T> &
+      CreatableProps<T> &
+      Omit<ComboboxPropsMultiple<T>, "mapItem" | "itemToStringValue">);
 
 // ============================================================================
 // Combobox.Async — base (no creatable)
@@ -592,6 +653,7 @@ function ComboboxAsyncCreatable<T extends object>(props: ComboboxAsyncCreatableP
       container={container}
       inputProps={pickInputProps(props)}
       rootProps={{
+        ...pickFormProps(props),
         items: creatable.items,
         filter: null,
         value: value ?? creatable.value,

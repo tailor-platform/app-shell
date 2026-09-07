@@ -64,6 +64,36 @@ interface SelectPropsBase<T> {
   "aria-labelledby"?: string;
   /** ID applied to the combobox trigger element. */
   id?: string;
+  /**
+   * Identifies the field when a form is submitted. Base UI renders a hidden
+   * input under this name, so the selected value is picked up by **native**
+   * form submission (`new FormData(form)`, a plain `<form>`, server actions).
+   *
+   * For non-string items, pair this with `itemToStringValue` to control how
+   * the value is serialised.
+   *
+   * **Inside a `Field.Root`, the field's `name` wins and this prop is ignored** —
+   * the hidden input is named after the field. Set it only when the control is
+   * used outside a `Field.Root` (or when it must differ from the field name,
+   * which it cannot).
+   */
+  name?: string;
+  /**
+   * `id` of the form that owns the hidden input. Use when the select is
+   * rendered outside the `<form>` element it belongs to.
+   */
+  form?: string;
+  /** Whether a value must be chosen before the owning form can be submitted. */
+  required?: boolean;
+  /** Ref to the hidden input that carries the value during form submission. */
+  inputRef?: React.Ref<HTMLInputElement>;
+  /**
+   * Converts a non-string item to the string written into the hidden input on
+   * form submission. Items shaped `{ value, label }` use `value` automatically.
+   *
+   * Distinct from `mapItem`, which controls what the user sees.
+   */
+  itemToStringValue?: (item: T) => string;
 }
 
 interface SelectPropsSingle<T> extends SelectPropsBase<T> {
@@ -130,6 +160,11 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
     id,
+    name,
+    form,
+    required,
+    inputRef,
+    itemToStringValue,
     ...rest
   } = props;
 
@@ -138,6 +173,10 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
     "aria-labelledby": ariaLabelledby,
     id,
   };
+
+  // Forwarded to the Base UI root, which renders the hidden input that makes
+  // the selected value part of native form submission.
+  const formProps = { name, form, required, inputRef, itemToStringValue };
 
   const mapItem = (mapItemProp ?? defaultMapItem) as (item: T) => MappedItem;
   const getLabel = (item: T) => mapItem(item).label;
@@ -165,6 +204,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
           onValueChange={onValueChange && ((v: T[]) => (onValueChange as (v: T[]) => void)(v))}
           itemToStringLabel={getLabel}
           disabled={disabled}
+          {...formProps}
         >
           <SelectTrigger {...triggerProps}>
             {renderValue ? (
@@ -195,6 +235,7 @@ function SelectStandalone<I>(props: SelectStandaloneProps<I>) {
         }
         itemToStringLabel={getLabel}
         disabled={disabled}
+        {...formProps}
       >
         <SelectTrigger {...triggerProps}>
           {renderValue ? (
@@ -403,6 +444,11 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
     id,
+    name,
+    form,
+    required,
+    inputRef,
+    itemToStringValue,
     ...rest
   } = props;
 
@@ -411,6 +457,10 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     "aria-labelledby": ariaLabelledby,
     id,
   };
+
+  // Forwarded to the Base UI root, which renders the hidden input that makes
+  // the selected value part of native form submission.
+  const formProps = { name, form, required, inputRef, itemToStringValue };
 
   const {
     items,
@@ -460,6 +510,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
           onOpenChange={handleOpenChange}
           itemToStringLabel={getLabel}
           disabled={disabled}
+          {...formProps}
         >
           <SelectTrigger {...triggerProps}>
             {renderValue ? (
@@ -492,6 +543,7 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
         onOpenChange={handleOpenChange}
         itemToStringLabel={getLabel}
         disabled={disabled}
+        {...formProps}
       >
         <SelectTrigger {...triggerProps}>
           {renderValue ? (

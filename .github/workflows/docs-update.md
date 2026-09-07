@@ -14,9 +14,6 @@ permissions:
   issues: read
   pull-requests: read
   copilot-requests: write
-engine:
-  id: copilot
-  model: claude-sonnet-5
 tools:
   github:
     toolsets: [default]

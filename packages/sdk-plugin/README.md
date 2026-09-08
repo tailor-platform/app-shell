@@ -1,5 +1,9 @@
 # @tailor-platform/sdk-plugin-app-shell
 
+[![npm version](https://img.shields.io/npm/v/@tailor-platform/sdk-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/sdk-plugin-app-shell)
+[![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/sdk-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/sdk-plugin-app-shell)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/tailor-platform/app-shell/blob/main/LICENSE.md)
+
 Tailor Platform SDK plugin that generates `tableMetadata` from TailorDB table definitions for use with `@tailor-platform/app-shell`'s `DataTable` component.
 
 ## What it does

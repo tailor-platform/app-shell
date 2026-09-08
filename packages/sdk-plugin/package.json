@@ -1,5 +1,5 @@
 {
-  "name": "@tailor-platform/app-shell-sdk-plugin",
+  "name": "@tailor-platform/sdk-plugin-app-shell",
   "version": "0.1.1",
   "description": "Tailor Platform SDK plugins for AppShell (metadata generator)",
   "keywords": [
@@ -8,7 +8,7 @@
     "sdk-plugin",
     "tailor-platform"
   ],
-  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/sdk-plugins#readme",
+  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/sdk-plugin#readme",
   "bugs": {
     "url": "https://github.com/tailor-platform"
   },
@@ -16,7 +16,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/tailor-platform/app-shell",
-    "directory": "packages/sdk-plugins"
+    "directory": "packages/sdk-plugin"
   },
   "files": [
     "dist/**"

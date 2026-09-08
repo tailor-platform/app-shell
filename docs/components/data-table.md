@@ -198,7 +198,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 | Prop              | Type       | Default | Description                                                                                                                                                                             |
 | ----------------- | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. The First button is always shown; the Last button is shown only when the backend returns a `total` count. |
+| `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. The First button is always shown, even when the backend omits `total`; the Last button is shown only when the backend returns a `total` count. |
 
 `DataTable.Pagination` automatically displays a row count and selection info text on the left side of the pagination bar based on context state:
 
@@ -210,6 +210,8 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
 Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`.
+
+When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
 ## Column pinning, visibility & ordering
 

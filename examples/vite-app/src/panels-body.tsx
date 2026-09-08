@@ -51,20 +51,30 @@ const TocRail = () => (
   </aside>
 );
 
-const AssistantPanel = ({ onClose }: { onClose: () => void }) => (
-  <aside className="hidden w-96 shrink-0 flex-col overflow-y-auto border-l bg-background md:flex">
-    <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
-      <span className="text-sm font-semibold">Assistant</span>
-      <Button variant="ghost" size="sm" onClick={onClose}>
-        Close
-      </Button>
-    </div>
-    <div className="flex flex-col gap-3 p-4">
-      <div className="rounded-lg bg-muted p-3 text-sm">
-        The global header spans above the primary sidebar and both side columns.
+// In-flow side column: animate its width (0 ↔ 24rem) so opening/closing slides
+// the content over instead of snapping. The inner content keeps a fixed width so
+// it doesn't reflow while the column animates; overflow-hidden clips it.
+const AssistantPanel = ({ open, onClose }: { open: boolean; onClose: () => void }) => (
+  <aside
+    aria-hidden={!open}
+    className={`hidden shrink-0 overflow-hidden bg-background transition-[width] duration-300 ease-in-out md:block ${
+      open ? "w-96 border-l" : "w-0"
+    }`}
+  >
+    <div className="flex h-full w-96 flex-col overflow-y-auto">
+      <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
+        <span className="text-sm font-semibold">Assistant</span>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Close
+        </Button>
       </div>
-      <div className="rounded-lg border p-3 text-sm text-muted-foreground">
-        The primary sidebar collapses to an icon rail; its toggle sits at the bottom-left.
+      <div className="flex flex-col gap-3 p-4">
+        <div className="rounded-lg bg-muted p-3 text-sm">
+          The global header spans above the primary sidebar and both side columns.
+        </div>
+        <div className="rounded-lg border p-3 text-sm text-muted-foreground">
+          The primary sidebar collapses to an icon rail; its toggle sits at the bottom-left.
+        </div>
       </div>
     </div>
   </aside>
@@ -95,7 +105,8 @@ export const PanelsBody = () => {
       <GlobalHeaderLayout.ContentContainer>
         <GlobalHeaderLayout.Outlet />
       </GlobalHeaderLayout.ContentContainer>
-      {assistantOpen && <AssistantPanel onClose={toggleAssistant} />}
+      {/* Always mounted so its width can animate open/closed. */}
+      <AssistantPanel open={assistantOpen} onClose={toggleAssistant} />
     </>
   );
 };

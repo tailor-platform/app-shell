@@ -71,7 +71,6 @@ const App = () => {
               <SidebarItem to="/alert-tokens" />
             </SidebarGroup>
             <SidebarItem to="/spinner" />
-            <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>
         }
       />

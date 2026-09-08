@@ -80,7 +80,10 @@ function ChatHistory({
                       type="button"
                       aria-label={t("aiChatDeleteConversation", { title: item.title })}
                       onClick={() => onDelete(item.id)}
-                      className="astw:mr-1 astw:hidden astw:shrink-0 astw:rounded astw:p-1 astw:text-muted-foreground astw:hover:text-destructive astw:group-hover:block"
+                      // Tucked away visually but never removed from the tab
+                      // order or the a11y tree — `hidden` would make
+                      // `onDelete` mouse-only. Same pattern as `Attachment`.
+                      className="astw:mr-1 astw:shrink-0 astw:rounded astw:p-1 astw:text-muted-foreground astw:opacity-0 astw:transition-opacity astw:hover:text-destructive astw:group-hover:opacity-100 astw:group-focus-within:opacity-100"
                     >
                       <Trash2 className="astw:size-3.5" aria-hidden />
                     </button>

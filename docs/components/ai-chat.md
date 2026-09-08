@@ -87,21 +87,19 @@ Other props spread onto the region's outer `<div>`.
 
 ### `AIChat.Composer`
 
-| Prop            | Type                                                         | Default  | Description                                                                      |
-| --------------- | ------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
-| `onSubmit`      | `(message: string, attachments: AIChatAttachment[]) => void` | required | Called with the trimmed prompt and any staged attachments.                       |
-| `onStop`        | `() => void`                                                 | -        | Called from the Stop button while the chat is busy. Omit for a plain busy state. |
-| `value`         | `string`                                                     | -        | Controlled draft. Cleared via `onValueChange("")` after a successful submit.     |
-| `defaultValue`  | `string`                                                     | `""`     | Uncontrolled draft's initial value.                                              |
-| `onValueChange` | `(value: string) => void`                                    | -        | Called on every draft change, including the post-submit clear.                   |
-| `placeholder`   | `string`                                                     | -        |                                                                                  |
-| `disabled`      | `boolean`                                                    | `false`  | Disables the composer — not the transcript above it.                             |
-| `submitOnEnter` | `boolean`                                                    | `true`   | Enter submits (IME-safe); Shift+Enter always inserts a newline.                  |
-| `attachments`   | `boolean`                                                    | `false`  | Show the attach-file button and staged-attachment chips.                         |
-| `accept`        | `string`                                                     | -        | Accepted file types for the hidden file input, when `attachments` is enabled.    |
-| `multiple`      | `boolean`                                                    | `true`   | Allow more than one staged attachment at a time.                                 |
-| `actions`       | `ReactNode`                                                  | -        | Open slot on the action row — a visibility toggle, a model picker, a select.     |
-| `className`     | `string`                                                     | -        |                                                                                  |
+| Prop            | Type                                                         | Default  | Description                                                                           |
+| --------------- | ------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------- |
+| `onSubmit`      | `(message: string, attachments: AIChatAttachment[]) => void` | required | Called with the trimmed prompt and any staged attachments.                            |
+| `onStop`        | `() => void`                                                 | -        | Called from the Stop button while the chat is busy. Omit for a plain busy state.      |
+| `value`         | `string`                                                     | -        | Controlled draft. Cleared via `onValueChange("")` after a successful submit.          |
+| `defaultValue`  | `string`                                                     | `""`     | Uncontrolled draft's initial value.                                                   |
+| `onValueChange` | `(value: string) => void`                                    | -        | Called on every draft change, including the post-submit clear.                        |
+| `placeholder`   | `string`                                                     | -        |                                                                                       |
+| `disabled`      | `boolean`                                                    | `false`  | Disables the composer — not the transcript above it.                                  |
+| `submitOnEnter` | `boolean`                                                    | `true`   | Enter submits (IME-safe); Shift+Enter always inserts a newline.                       |
+| `attachments`   | `boolean \| { accept?: string; multiple?: boolean }`         | `false`  | Show the attach-file button and staged chips. Pass an object to configure the picker. |
+| `actions`       | `ReactNode`                                                  | -        | Open slot on the action row — a visibility toggle, a model picker, a select.          |
+| `className`     | `string`                                                     | -        |                                                                                       |
 
 ## Prop pass-through
 
@@ -311,15 +309,16 @@ Grouped list of past conversations for reopening an earlier chat. Layout-agnosti
 
 ## Attachments
 
-Set `attachments` on `AIChat.Composer` to show the paperclip button and staged-attachment chips. Staged files arrive in `onSubmit`'s second argument as `AIChatAttachment[]` — each one shares `AttachmentItem`'s shape (`id`, `fileName`, `mimeType`, `previewUrl`) plus the raw `file: File`:
+Set `attachments` on `AIChat.Composer` to show the paperclip button and staged-attachment chips — `true` for the defaults, or `{ accept, multiple }` to configure the picker. The options sit inside the prop they configure, so there is no way to set `accept` while attachments are off. Staged files arrive in `onSubmit`'s second argument as `AIChatAttachment[]` — each one shares `AttachmentItem`'s shape (`id`, `fileName`, `mimeType`, `previewUrl`) plus the raw `file: File`:
 
 ```tsx
 <AIChat.Composer
-  attachments
-  accept="image/*,application/pdf"
+  attachments={{ accept: "image/*,application/pdf" }}
   onSubmit={(message, attachments) => sendMessage(message, attachments)}
 />
 ```
+
+With `multiple: false`, picking a file **replaces** whatever was staged. The native input's `multiple` attribute only limits a single trip through the dialog, so appending would let a caller reopen the picker and stage several anyway.
 
 Staged files live in the composer until submit, then clear. For a persisted record's file list — initial items and buffered upload/delete operations flushed to a backend — use [`Attachment`](./attachment.md) instead.
 

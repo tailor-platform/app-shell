@@ -36,18 +36,38 @@ type AIChatComposerProps = {
    */
   submitOnEnter?: boolean;
   /**
-   * Show the attach-file button and staged-attachment chips.
+   * Show the attach-file button and staged-attachment chips. Pass an object
+   * to configure the picker — the options are scoped to the feature they
+   * configure, so there is no way to set them while attachments are off.
    * @default false
    */
-  attachments?: boolean;
-  /** Accepted file types for the hidden file input, when `attachments` is enabled. */
-  accept?: string;
-  /** @default true */
-  multiple?: boolean;
+  attachments?: boolean | AIChatAttachmentOptions;
   /** Open slot on the action row, left of the attach button — a visibility toggle, a model picker, a template select. */
   actions?: ReactNode;
   className?: string;
 };
+
+type AIChatAttachmentOptions = {
+  /** Accepted file types, passed to the hidden file input. */
+  accept?: string;
+  /**
+   * Allow more than one staged file. When `false`, picking a file replaces
+   * whatever was staged — the native input's `multiple` only limits a single
+   * trip through the dialog, so appending would let a caller reopen it and
+   * stage several anyway.
+   * @default true
+   */
+  multiple?: boolean;
+};
+
+/** `false` when attachments are off; otherwise the resolved picker options. */
+function resolveAttachments(
+  attachments: boolean | AIChatAttachmentOptions,
+): AIChatAttachmentOptions | null {
+  if (attachments === false) return null;
+  if (attachments === true) return {};
+  return attachments;
+}
 
 type SubmitControlProps = {
   busy: boolean;
@@ -113,14 +133,16 @@ function Composer({
   placeholder,
   disabled = false,
   submitOnEnter = true,
-  attachments: attachmentsEnabled = false,
-  accept,
-  multiple = true,
+  attachments = false,
   actions,
   className,
 }: AIChatComposerProps) {
   const { status } = useAIChatContext("AIChat.Composer");
   const t = useT();
+
+  const attachmentOptions = resolveAttachments(attachments);
+  const attachmentsEnabled = attachmentOptions !== null;
+  const allowMultiple = attachmentOptions?.multiple ?? true;
 
   const [internalValue, setInternalValue] = useState(defaultValue);
   const draft = value ?? internalValue;
@@ -148,7 +170,19 @@ function Composer({
   const canSubmit = !disabled && !busy && draft.trim().length > 0;
 
   const addFiles = (incoming: FileList | File[]) => {
-    setFiles((prev) => [...prev, ...Array.from(incoming).map(buildAttachment)]);
+    const incomingFiles = Array.from(incoming);
+    if (allowMultiple) {
+      setFiles((prev) => [...prev, ...incomingFiles.map(buildAttachment)]);
+      return;
+    }
+    // Single-file mode replaces rather than appends, and only the kept file
+    // gets an object URL. Revoking here rather than inside the updater keeps
+    // the side effect out of a function React may call twice.
+    const replacement = incomingFiles.slice(-1).map(buildAttachment);
+    for (const attachment of filesRef.current) {
+      if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+    }
+    setFiles(replacement);
   };
 
   const removeFile = (id: string) => {
@@ -207,8 +241,8 @@ function Composer({
         <input
           ref={fileInputRef}
           type="file"
-          accept={accept}
-          multiple={multiple}
+          accept={attachmentOptions?.accept}
+          multiple={allowMultiple}
           onChange={(event) => {
             if (event.currentTarget.files?.length) addFiles(event.currentTarget.files);
             event.currentTarget.value = "";
@@ -260,4 +294,4 @@ function Composer({
   );
 }
 
-export { Composer, type AIChatComposerProps };
+export { Composer, type AIChatComposerProps, type AIChatAttachmentOptions };

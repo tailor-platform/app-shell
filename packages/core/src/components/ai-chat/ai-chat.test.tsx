@@ -419,6 +419,28 @@ describe("AIChat", () => {
         expect(screen.queryByText("notes.txt")).toBeNull();
       });
 
+      it("replaces the staged file instead of appending when multiple is false", async () => {
+        const user = userEvent.setup();
+        const { onSubmit } = renderComposer({ attachments: { multiple: false } });
+        expect(fileInput().multiple).toBe(false);
+
+        // Two separate trips through the picker: the native `multiple`
+        // attribute only caps one, so appending would leave both staged.
+        await user.upload(fileInput(), new File(["a"], "first.txt", { type: "text/plain" }));
+        await user.upload(fileInput(), new File(["b"], "second.txt", { type: "text/plain" }));
+        expect(screen.queryByText("first.txt")).toBeNull();
+        expect(screen.getByText("second.txt")).toBeDefined();
+
+        await user.type(textbox(), "one file only");
+        await user.keyboard("{Enter}");
+        expect(onSubmit.mock.calls[0][1]).toHaveLength(1);
+      });
+
+      it("passes accept through from the attachments options", () => {
+        renderComposer({ attachments: { accept: "image/*" } });
+        expect(fileInput().getAttribute("accept")).toBe("image/*");
+      });
+
       it("removes the newest attachment on Backspace in an empty composer", async () => {
         const user = userEvent.setup();
         renderComposer({ attachments: true });

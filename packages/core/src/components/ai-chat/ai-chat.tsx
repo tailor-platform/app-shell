@@ -34,7 +34,13 @@ import { Suggestion, Suggestions } from "./suggestion";
 import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "./tool";
 
 type AIChatProps = Omit<ComponentProps<"div">, "children"> & {
-  /** `AIChat.Header`, `AIChat.Conversation`, and `AIChat.Composer`, in any order — the root places them. */
+  /**
+   * `AIChat.Header`, `AIChat.Conversation`, and `AIChat.Composer`, in any
+   * order — the root places them. They must be **direct** children: regions
+   * are matched by component identity, so one wrapped in your own component
+   * (`const AppComposer = () => <AIChat.Composer … />`) is not recognised and
+   * is dropped. To preset props, spread them onto the region instead.
+   */
   children: ReactNode;
   /** The chat's state. Plugs directly into `useAIChat()`'s `status`; `AIChat.Composer` reads it for its busy/Stop state. */
   status?: AIChatStatus;
@@ -240,7 +246,7 @@ const AIChat: AIChatComponent = Object.assign(AIChatRoot, {
 export { AIChat, type AIChatProps, type AIChatAttachment };
 export type { AIChatHeaderProps } from "./header";
 export type { AIChatConversationProps } from "./conversation";
-export type { AIChatComposerProps } from "./composer";
+export type { AIChatComposerProps, AIChatAttachmentOptions } from "./composer";
 export type { ToolState } from "./tool";
 export type { ChainOfThoughtStepStatus } from "./chain-of-thought";
 export type { ChatHistoryGroupData, ChatHistoryItemData } from "./chat-history";

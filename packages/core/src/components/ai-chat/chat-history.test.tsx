@@ -36,6 +36,19 @@ describe("ChatHistory", () => {
     expect(onDelete).toHaveBeenCalledWith("1");
   });
 
+  it("keeps the delete action focusable rather than hover-only", async () => {
+    const user = userEvent.setup();
+    render(<ChatHistory groups={GROUPS} onDelete={vi.fn()} />);
+    const del = screen.getByRole("button", { name: /Delete/ });
+
+    // `hidden` would drop it from the tab order and the a11y tree, making
+    // onDelete mouse-only; it is tucked away with opacity instead.
+    expect(del.className).not.toMatch(/\bastw:hidden\b/);
+    await user.tab();
+    await user.tab();
+    expect(document.activeElement).toBe(del);
+  });
+
   it("shows a delete action only when onDelete is provided", () => {
     const { rerender } = render(<ChatHistory groups={GROUPS} />);
     expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();

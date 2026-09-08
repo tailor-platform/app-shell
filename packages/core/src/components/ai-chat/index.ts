@@ -4,6 +4,7 @@ export {
   type AIChatHeaderProps,
   type AIChatConversationProps,
   type AIChatComposerProps,
+  type AIChatAttachmentOptions,
   type AIChatAttachment,
   type ToolState,
   type ChainOfThoughtStepStatus,

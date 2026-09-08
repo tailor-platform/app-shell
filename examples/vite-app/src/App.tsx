@@ -51,7 +51,6 @@ const App = () => {
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
-              <SidebarItem to="/dashboard/document-progress" />
             </SidebarGroup>
             <SidebarGroup title="Showcase">
               <SidebarItem to="/showcase/colors" />
@@ -65,6 +64,7 @@ const App = () => {
               <SidebarItem to="/showcase/layouts" />
               <SidebarItem to="/showcase/grid" />
               <SidebarItem to="/showcase/timeline" />
+              <SidebarItem to="/dashboard/document-progress" />
               <SidebarItem to="/date-picker" />
               <SidebarItem to="/data-table" />
               <SidebarItem to="/data-table-lab" />

@@ -14,6 +14,7 @@ import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
+import { isTemporalFilterType, isTemporalFilterValueValid } from "./filter-value-utils";
 import { useDataTableT } from "./i18n";
 import type {
   CollectionControl,
@@ -2119,10 +2120,6 @@ function toAddFilterSubmittedValue(
   return String(value).trim();
 }
 
-function isTemporalFilterType(type: FilterConfig["type"]): type is "datetime" | "date" | "time" {
-  return type === "datetime" || type === "date" || type === "time";
-}
-
 /**
  * Whether a "between" range's bounds are correctly ordered (min ≤ max). Numbers
  * compare numerically; temporal ISO strings compare lexicographically (which
@@ -2134,24 +2131,6 @@ function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): b
   if (type === "number") return Number(min) <= Number(max);
   if (isTemporalFilterType(type)) return min <= max;
   return true;
-}
-
-function isTemporalFilterValueValid(type: "datetime" | "date" | "time", value: string): boolean {
-  const trimmedValue = value.trim();
-  if (trimmedValue === "") return false;
-
-  switch (type) {
-    case "datetime":
-      // The datetime editor emits a local "YYYY-MM-DDTHH:mm:ss" (no zone); a
-      // trailing Z or ±hh:mm offset is still accepted for externally-set values.
-      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
-        trimmedValue,
-      );
-    case "date":
-      return /^\d{4}-\d{2}-\d{2}$/.test(trimmedValue);
-    case "time":
-      return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(trimmedValue);
-  }
 }
 
 function getTemporalInputProps(type: "datetime" | "date" | "time") {

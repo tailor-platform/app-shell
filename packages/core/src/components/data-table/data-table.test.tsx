@@ -34,6 +34,29 @@ const testData: DataTableData<TestRow> = {
   ],
 };
 
+function mockDate(local: {
+  year: number;
+  month: number;
+  day: number;
+  hours: number;
+  minutes: number;
+  seconds?: number;
+  iso: string;
+}) {
+  const value = new Date(local.iso);
+  Object.assign(value, {
+    getFullYear: () => local.year,
+    getMonth: () => local.month - 1,
+    getDate: () => local.day,
+    getHours: () => local.hours,
+    getMinutes: () => local.minutes,
+    getSeconds: () => local.seconds ?? 0,
+    getTime: () => 1,
+    toISOString: () => local.iso,
+  });
+  return value;
+}
+
 function makeControl(overrides?: Partial<CollectionControl>): CollectionControl {
   return {
     filters: [],
@@ -193,7 +216,7 @@ describe("DataTable", () => {
   });
 
   describe("header context menu", () => {
-    it("shows copy, pin, sort, and hide actions on right click", () => {
+    it("shows copy, pin, and sort actions on right click", () => {
       const control = makeControl();
 
       function Harness() {
@@ -224,7 +247,7 @@ describe("DataTable", () => {
       expect(screen.getByRole("menuitem", { name: "Copy label" })).toBeDefined();
       expect(screen.getByRole("menuitem", { name: "Pin column" })).toBeDefined();
       expect(screen.getByRole("menuitem", { name: "Sort column" })).toBeDefined();
-      expect(screen.getByRole("menuitem", { name: "Hide column" })).toBeDefined();
+      expect(screen.queryByRole("menuitem", { name: "Hide column" })).toBeNull();
     });
 
     it("copies the column label", async () => {
@@ -356,16 +379,6 @@ describe("DataTable", () => {
         expect(control.setSort).toHaveBeenCalledWith("name", undefined);
       });
     });
-
-    it("hides a column", () => {
-      const { container } = render(<TestDataTable />, { wrapper });
-
-      openHeaderContextMenu(container, "Name");
-      fireEvent.click(screen.getByRole("menuitem", { name: "Hide column" }));
-
-      expect(headByText(container, "Name")).toBeUndefined();
-      expect(headByText(container, "Status")).toBeDefined();
-    });
   });
 
   describe("cell context menu", () => {
@@ -466,6 +479,82 @@ describe("DataTable", () => {
       await user.click(await screen.findByRole("menuitem", { name: "contains" }));
 
       expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice");
+    });
+
+    it("normalizes local date filters from Date values", async () => {
+      const user = userEvent.setup();
+      const control = makeControl();
+      const value = mockDate({
+        year: 2026,
+        month: 9,
+        day: 8,
+        hours: 0,
+        minutes: 0,
+        iso: "2026-09-07T15:00:00.000Z",
+      });
+      type Row = { id: string; label: string };
+
+      function Harness() {
+        const table = useDataTable<Row>({
+          columns: [
+            {
+              id: "createdAt",
+              label: "Created At",
+              accessor: () => value,
+              render: (row) => row.label,
+              filter: { type: "date", field: "createdAt", operators: ["eq"] },
+            },
+          ],
+          data: { rows: [{ id: "1", label: "Sep 8, 2026" }] },
+          control,
+        });
+
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      const { container } = render(<Harness />, { wrapper });
+
+      openCellContextMenu(container, "Sep 8, 2026");
+      hoverMenuItem("Add filter");
+      await user.click(await screen.findByRole("menuitem", { name: "exact date" }));
+
+      expect(control.addFilter).toHaveBeenCalledWith("createdAt", "eq", "2026-09-08");
+    });
+
+    it("omits Add filter when a temporal value cannot be normalized", () => {
+      const control = makeControl();
+      type Row = { id: string; opensAt: string };
+
+      function Harness() {
+        const table = useDataTable<Row>({
+          columns: [
+            {
+              id: "opensAt",
+              label: "Opens At",
+              render: (row) => row.opensAt,
+              filter: { type: "time", field: "opensAt", operators: ["eq"] },
+            },
+          ],
+          data: { rows: [{ id: "1", opensAt: "not-a-time" }] },
+          control,
+        });
+
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      const { container } = render(<Harness />, { wrapper });
+
+      openCellContextMenu(container, "not-a-time");
+
+      expect(screen.queryByRole("menuitem", { name: "Add filter" })).toBeNull();
     });
   });
 

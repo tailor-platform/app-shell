@@ -34,6 +34,8 @@ import type {
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
+import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
+import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import {
   DataTableToolbar,
   DataTableFilters,
@@ -158,6 +160,9 @@ function toClipboardText(value: unknown): string | undefined {
 
 function toFilterValue(value: unknown, config: DataTableFilterConfig): unknown {
   if (value == null || value === "") return undefined;
+  if (isTemporalFilterType(config.type)) {
+    return normalizeTemporalFilterValue(config.type, value);
+  }
 
   switch (config.type) {
     case "number": {
@@ -175,30 +180,6 @@ function toFilterValue(value: unknown, config: DataTableFilterConfig): unknown {
         return values.length > 0 ? values : undefined;
       }
       return [String(value)];
-    }
-    case "date": {
-      if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? undefined : value.toISOString().slice(0, 10);
-      }
-      if (typeof value === "number") {
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
-      }
-      return String(value);
-    }
-    case "datetime":
-      if (value instanceof Date)
-        return Number.isNaN(value.getTime()) ? undefined : value.toISOString();
-      if (typeof value === "number") {
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-      }
-      return String(value);
-    case "time": {
-      if (value instanceof Date) {
-        return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
-      }
-      return String(value);
     }
     case "string":
     case "uuid":
@@ -686,7 +667,6 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
   setPin,
   sortDirection,
   onSortDirectionChange,
-  toggleColumn,
 }: {
   align: "left" | "right";
   children: ReactNode;
@@ -696,7 +676,6 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
   setPin: (key: string, side: "left" | "right" | "none" | null) => void;
   sortDirection?: "Asc" | "Desc";
   onSortDirectionChange?: (direction: "Asc" | "Desc" | undefined) => void;
-  toggleColumn: (fieldOrId: string) => void;
 }) {
   const t = useDataTableT();
   const label = column.label ?? columnKey;
@@ -808,12 +787,6 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
                 </ContextMenu.Portal>
               </ContextMenu.SubmenuRoot>
             )}
-            <ContextMenu.Item
-              className={HEADER_CONTEXT_MENU_ITEM_CLASS}
-              onClick={() => toggleColumn(columnKey)}
-            >
-              {t("hideColumn")}
-            </ContextMenu.Item>
           </ContextMenu.Popup>
         </ContextMenu.Positioner>
       </ContextMenu.Portal>
@@ -823,20 +796,23 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
 DataTableHeaderContextMenu.displayName = "DataTable.HeaderContextMenu";
 
 function DataTableCellContextMenu({
-  children,
-  copyText,
-  filterConfig,
-  filterValue,
-  headerAndValueText,
+  context,
+  open,
+  onOpenChange,
+  onCloseComplete,
 }: {
-  children: ReactNode;
-  copyText?: string;
-  filterConfig?: DataTableFilterConfig;
-  filterValue?: unknown;
-  headerAndValueText?: string;
+  context: CellContextMenuState | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCloseComplete: () => void;
 }) {
   const t = useDataTableT();
   const control = useCollectionControlOptional();
+  const filterConfig = context?.filterConfig;
+  const copyText = context ? toClipboardText(context.value) : undefined;
+  const headerAndValueText = copyText ? `${context?.headerLabel} ${copyText}` : undefined;
+  const filterValue =
+    filterConfig && context ? toFilterValue(context.value, filterConfig) : undefined;
   const filterOperators =
     control && filterConfig && filterValue !== undefined
       ? getVisibleFilterOperators(filterConfig).filter(supportsCellFilterOperator)
@@ -844,10 +820,13 @@ function DataTableCellContextMenu({
   const hasFilterMenu = !!filterConfig && filterValue !== undefined && filterOperators.length > 0;
 
   return (
-    <ContextMenu.Root>
-      {children}
+    <ContextMenu.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(nextOpen) => !nextOpen && onCloseComplete()}
+    >
       <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        <ContextMenu.Positioner className="astw:outline-hidden">
+        <ContextMenu.Positioner className="astw:outline-hidden" anchor={context?.anchor ?? null}>
           <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
             <ContextMenu.Item
               className={HEADER_CONTEXT_MENU_ITEM_CLASS}
@@ -923,7 +902,6 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     sortStates,
     onSort,
     rowActions,
-    toggleColumn,
     setPin,
     toggleRowSelection,
     selectAllRows,
@@ -1052,7 +1030,6 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 onSortDirectionChange={
                   isSortable ? (direction) => onSort(sortField, direction) : undefined
                 }
-                toggleColumn={toggleColumn}
               >
                 {content}
               </DataTableHeaderContextMenu>
@@ -1238,6 +1215,13 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   const baseId = useId();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  const {
+    contextMenu: cellContextMenu,
+    contextMenuOpen: cellContextMenuOpen,
+    handleContextMenuOpenChange: handleCellContextMenuOpenChange,
+    handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
+    getCellContextMenuHandlers,
+  } = useCellContextMenu();
 
   return (
     <>
@@ -1347,12 +1331,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               ) : (
                 content
               );
-
               const menuValue = getCellContextValue(row, col, content);
-              const copyText = toClipboardText(menuValue);
               const headerLabel = col.label ?? key;
-              const headerAndValueText = copyText ? `${headerLabel} ${copyText}` : undefined;
-              const filterValue = col.filter ? toFilterValue(menuValue, col.filter) : undefined;
 
               // Surface the full value on hover when the cell is truncated
               // and the resolved cell value is a stringifiable primitive.
@@ -1369,43 +1349,32 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 }
               }
 
-              const cellElement = (
-                <Table.Cell
-                  key={key}
-                  data-slot="data-table-cell"
-                  style={cellStyle}
-                  className={cellClassName}
-                />
-              );
+              const cellContextMenuHandlers = getCellContextMenuHandlers({
+                headerLabel,
+                value: menuValue,
+                filterConfig: col.filter,
+              });
+              const cellProps = {
+                "data-slot": "data-table-cell" as const,
+                style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
+                className: cellClassName,
+                ...cellContextMenuHandlers,
+              };
+              const cellElement = <Table.Cell {...cellProps} />;
 
-              const trigger =
-                tooltipLabel !== undefined ? (
-                  <Tooltip.Root>
-                    <Tooltip.Trigger
-                      render={
-                        <ContextMenu.Trigger data-cell-context-menu-trigger render={cellElement} />
-                      }
-                    >
-                      {cellBody}
-                    </Tooltip.Trigger>
+              if (tooltipLabel !== undefined) {
+                return (
+                  <Tooltip.Root key={key}>
+                    <Tooltip.Trigger render={cellElement}>{cellBody}</Tooltip.Trigger>
                     <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
                   </Tooltip.Root>
-                ) : (
-                  <ContextMenu.Trigger data-cell-context-menu-trigger render={cellElement}>
-                    {cellBody}
-                  </ContextMenu.Trigger>
                 );
+              }
 
               return (
-                <DataTableCellContextMenu
-                  key={key}
-                  copyText={copyText}
-                  filterConfig={col.filter}
-                  filterValue={filterValue}
-                  headerAndValueText={headerAndValueText}
-                >
-                  {trigger}
-                </DataTableCellContextMenu>
+                <Table.Cell key={key} {...cellProps}>
+                  {cellBody}
+                </Table.Cell>
               );
             })}
             {hasRowActions &&
@@ -1450,6 +1419,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
           </Fragment>
         );
       })}
+      <DataTableCellContextMenu
+        context={cellContextMenu}
+        open={cellContextMenuOpen}
+        onOpenChange={handleCellContextMenuOpenChange}
+        onCloseComplete={handleCellContextMenuCloseComplete}
+      />
     </>
   );
 }

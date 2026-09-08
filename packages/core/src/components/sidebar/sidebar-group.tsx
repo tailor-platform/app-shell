@@ -1,16 +1,14 @@
-import { type ReactNode, useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useContext, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
 import { Collapsible } from "@base-ui/react/collapsible";
 import {
-  SidebarContext,
   SidebarRailContext,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
-  useSidebar,
 } from "@/components/sidebar";
 import { useHasHover } from "@/hooks/use-has-hover";
 import { useT } from "@/i18n-labels";
@@ -75,7 +73,6 @@ const IconRailFlyout = ({
   title: string;
   children: ReactNode;
 }) => {
-  const ctx = useSidebar();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const flyoutRef = useRef<HTMLElement>(null);
@@ -100,13 +97,6 @@ const IconRailFlyout = ({
     cancelClose();
     closeTimer.current = setTimeout(() => setOpen(false), 150);
   };
-
-  // Inside the flyout the sidebar is neither collapsed nor an icon rail, so the
-  // child items show their labels and suppress their own icon-rail tooltips.
-  const flyoutCtx = useMemo(
-    () => ({ ...ctx, state: "expanded" as const, isMobile: false, isIconMode: false }),
-    [ctx],
-  );
 
   // Keep the flyout on screen: if a long menu (or one anchored low in the rail)
   // would spill past the viewport bottom, shift it up to fit.
@@ -139,9 +129,12 @@ const IconRailFlyout = ({
             <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
               {title}
             </div>
-            <SidebarContext.Provider value={flyoutCtx}>
+            {/* Inside the flyout the items are no longer in the icon rail: they
+                show their labels (the portal escapes the rail's icon-collapse
+                styling) and drop their own redundant icon-rail tooltips. */}
+            <SidebarRailContext.Provider value={false}>
               <ul className="astw:flex astw:min-w-0 astw:flex-col astw:gap-0.5">{children}</ul>
-            </SidebarContext.Provider>
+            </SidebarRailContext.Provider>
           </nav>,
           document.body,
         )}

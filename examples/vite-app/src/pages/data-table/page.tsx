@@ -12,7 +12,6 @@ import {
   type DataTableData,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
-import { Table2 } from "lucide-react";
 
 // ─── Dummy data ────────────────────────────────────────────────────────────────
 
@@ -398,7 +397,6 @@ const DataTablePage = () => {
 DataTablePage.appShellPageProps = {
   meta: {
     title: "DataTable + Filters",
-    icon: <Table2 size={16} />,
   },
 } satisfies AppShellPageProps;
 

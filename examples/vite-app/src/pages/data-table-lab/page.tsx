@@ -8,7 +8,6 @@ import {
   createColumnHelper,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
-import { FlaskConical } from "lucide-react";
 import { useMemo } from "react";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
@@ -593,7 +592,6 @@ const DataTableLabPage = () => {
 DataTableLabPage.appShellPageProps = {
   meta: {
     title: "DataTable Lab",
-    icon: <FlaskConical size={16} />,
   },
 } satisfies AppShellPageProps;
 

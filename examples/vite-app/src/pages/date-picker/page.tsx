@@ -16,7 +16,6 @@ import {
   type DateRange,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
-import { CalendarDays } from "lucide-react";
 
 type DemoFieldControlProps = {
   id?: string;
@@ -477,7 +476,6 @@ watch("period")?.start.toString(); // "2025-06-10"
 DatePickerPage.appShellPageProps = {
   meta: {
     title: "DatePicker",
-    icon: <CalendarDays size={16} />,
   },
 } satisfies AppShellPageProps;
 

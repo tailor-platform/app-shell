@@ -8,7 +8,7 @@ import {
   useNavigate,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
-import { ExternalLink, FileText, LayoutPanelTop, Receipt } from "lucide-react";
+import { ExternalLink, FileText, Receipt } from "lucide-react";
 
 const mockPurchaseOrder = {
   docNumber: "PO-10000041",
@@ -246,7 +246,6 @@ const LayoutsPage = () => {
 LayoutsPage.appShellPageProps = {
   meta: {
     title: "Layout Demos",
-    icon: <LayoutPanelTop size={16} />,
   },
 } satisfies AppShellPageProps;
 

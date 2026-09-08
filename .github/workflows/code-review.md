@@ -14,12 +14,21 @@ permissions:
   pull-requests: read
   issues: read
   copilot-requests: write
-engine:
-  id: copilot
-  model: claude-sonnet-5
 tools:
   github:
     toolsets: [default]
+network:
+  allowed:
+    - defaults
+    - node
+    - "base-ui.com"
+    - "react.dev"
+    - "reactrouter.com"
+    - "tailwindcss.com"
+    - "developer.mozilla.org"
+    - "whatwg.org"
+    - "w3.org"
+    - "web.dev"
 safe-outputs:
   report-failure-as-issue: false
   create-pull-request-review-comment:

@@ -165,6 +165,21 @@ const {
 } = Autocomplete.Parts;
 ```
 
+## Form submission
+
+Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —
+see [Form](./form.md). They matter for **native** submission: a plain `<form>`, `new FormData(form)`,
+or a server action.
+
+| Prop       | Type                          | Default | Description                                                                                       |
+| ---------- | ----------------------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `name`     | `string`                      | -       | Names the input for native submission. **Ignored inside a `Field.Root`** — the field's name wins. |
+| `form`     | `string`                      | -       | `id` of the owning form, when the control is rendered outside it.                                 |
+| `required` | `boolean`                     | `false` | Blocks submission until a value is chosen, surfacing the matching `Field.Error`.                  |
+| `inputRef` | `React.Ref<HTMLInputElement>` | -       | Ref to the underlying text input (use for React Hook Form's `field.ref`).                         |
+
+Autocomplete's value is the raw input string, so no value-serialisation hook is needed.
+
 ## Examples
 
 ### Controlled Autocomplete

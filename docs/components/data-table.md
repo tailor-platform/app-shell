@@ -196,9 +196,9 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 ### `DataTable.Pagination` Props
 
-| Prop              | Type       | Default | Description                                                                                                                                               |
-| ----------------- | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. First/Last buttons are shown only when the backend returns a `total` count. |
+| Prop              | Type       | Default | Description                                                                                                                                                                             |
+| ----------------- | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. The First button is always shown; the Last button is shown only when the backend returns a `total` count. |
 
 `DataTable.Pagination` automatically displays a row count and selection info text on the left side of the pagination bar based on context state:
 

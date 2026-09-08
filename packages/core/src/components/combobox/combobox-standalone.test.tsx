@@ -623,3 +623,93 @@ describe("Combobox (standalone, grouped)", () => {
     });
   });
 });
+
+// ============================================================================
+// Form participation — `name` renders a hidden input so the selected value is
+// read by native submission (`FormData`, plain `<form>`, server actions).
+// `Form`'s `onFormSubmit` is a separate path that reads registered `Field.Root`s.
+// ============================================================================
+
+describe("Combobox — form participation", () => {
+  it("renders a hidden input carrying name and value", () => {
+    const { container } = render(
+      <Combobox items={fruits} name="fruit" defaultValue="Banana" aria-label="Fruit" />,
+    );
+    const input = container.querySelector('input[name="fruit"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.value).toBe("Banana");
+  });
+
+  it("is picked up by native FormData", () => {
+    const { container } = render(
+      <form>
+        <Combobox items={fruits} name="fruit" defaultValue="Cherry" aria-label="Fruit" />
+      </form>,
+    );
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("fruit")).toBe("Cherry");
+  });
+
+  it("serialises arbitrary object items via itemToStringValue", () => {
+    const warehouses = [
+      { id: 7, name: "Warehouse A" },
+      { id: 9, name: "Warehouse B" },
+    ];
+    const { container } = render(
+      <form>
+        <Combobox
+          items={warehouses}
+          name="warehouse"
+          defaultValue={warehouses[0]}
+          mapItem={(item) => ({ label: item.name, key: String(item.id) })}
+          itemToStringValue={(item) => String(item.id)}
+          aria-label="Warehouse"
+        />
+      </form>,
+    );
+    const form = container.querySelector("form") as HTMLFormElement;
+    expect(new FormData(form).get("warehouse")).toBe("7");
+  });
+
+  it("associates the hidden input with an outer form via `form`", () => {
+    const { container } = render(
+      <div>
+        <form id="outer" />
+        <Combobox items={fruits} name="fruit" form="outer" aria-label="Fruit" />
+      </div>,
+    );
+    const input = container.querySelector('input[name="fruit"]') as HTMLInputElement;
+    expect(input.getAttribute("form")).toBe("outer");
+  });
+
+  it("exposes the hidden input through inputRef", () => {
+    const ref = { current: null } as React.RefObject<HTMLInputElement | null>;
+    render(<Combobox items={fruits} name="fruit" inputRef={ref} aria-label="Fruit" />);
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
+    expect(ref.current?.name).toBe("fruit");
+  });
+
+  it("Combobox.Async also renders the hidden input", async () => {
+    const fetcher = vi.fn().mockResolvedValue(fruits);
+    const { container } = render(
+      <Combobox.Async fetcher={fetcher} name="fruit" aria-label="Fruit" />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('input[name="fruit"]')).not.toBeNull();
+    });
+  });
+
+  it("forwards name on the creatable variant", () => {
+    const items = [{ id: "1", label: "Apple" }];
+    const { container } = render(
+      <Combobox
+        items={items}
+        name="fruit"
+        mapItem={(item) => ({ label: item.label, key: item.id })}
+        onCreateItem={(value) => ({ id: value, label: value })}
+        aria-label="Fruit"
+      />,
+    );
+    expect(container.querySelector('input[name="fruit"]')).not.toBeNull();
+  });
+});

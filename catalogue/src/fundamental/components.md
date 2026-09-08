@@ -619,13 +619,41 @@ const table = useDataTable({
 
 ## Forms
 
+> **Which form stack?** AppShell's `Form` / `Field` / `Fieldset` wrap Base UI primitives and are the
+> default — they need no extra dependency. They own **accessibility wiring and visual state only**
+> (`htmlFor`, `aria-describedby`, `data-invalid` / `data-dirty` / `data-touched`); they do **not** own
+> your values. React Hook Form is **optional** and consumer-installed — reach for it only when a form
+> genuinely needs cross-field validation, field arrays, or a Zod resolver. The two compose; they are
+> not alternatives. `react-hook-form` stopped being a runtime dependency in 1.4.0; it is a dev-only
+> dependency of the package today, used to test the RHF integration contracts — if you use it,
+> install it in your own app.
+
 ### `Form`
 
 > Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/form.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/form.md)
 
 **Import:** `import { Form } from '@tailor-platform/app-shell'`
-**Purpose:** Form root wired to react-hook-form. Use with `Field`, `Fieldset`, and Zod for validation.
-**API:** `FormProps` — `errors`, `actionsRef`, `validationMode`, `noValidate`, plus a namespace exposing form-related sub-helpers. Generic over `FormValues`.
+**Purpose:** Form root that wraps Base UI's form primitive. Provides shared validation context for
+child `Field.Root`s, consolidated error display, and server-error routing by field `name`.
+**API:** `FormProps` — `onFormSubmit`, `onSubmit`, `errors`, `actionsRef`, `validationMode`,
+`noValidate`, `id`. Generic over `FormValues`.
+**Actions outside the form:** give the `Form` an `id` and point a detached submit button at it with
+the native `form` attribute. This is how a page-header Save reaches a body form (1.13.0+):
+
+```tsx
+<Layout.Header
+  title="Create product"
+  actions={[<Button key="save" type="submit" form="product-form">Save</Button>]}
+/>
+<Form id="product-form" onFormSubmit={save}>…</Form>
+```
+
+**Submit:** use `onFormSubmit(values)` — it receives parsed form values and is the default. Use the
+low-level `onSubmit` **only** when handing the native event to React Hook Form's `handleSubmit`.
+**Never** hand-roll `<form onSubmit={e => new FormData(e.currentTarget)}>` — that skips validation
+and error routing.
+**Server errors:** pass `errors={{ fieldName: "message" }}`; they route to the matching
+`Field.Error` and clear when the user edits that field.
 **Example:** see `form/single-page.md`.
 **Used in patterns:** all `form/*`.
 
@@ -633,8 +661,70 @@ const table = useDataTable({
 
 **Import:** `import { Field } from '@tailor-platform/app-shell'`
 **Purpose:** Single form field with label + control + error message wiring.
-**API:** Compound. Wraps any input control (`Input`, `Select`, `Combobox`, etc.) and binds it to react-hook-form via `name`.
+**API:** Compound — `Field.Root`, `Field.Label`, `Field.Control`, `Field.Description`, `Field.Error`,
+`Field.Validity`. `Field.Root` establishes a context boundary; every Base UI-backed AppShell control
+placed inside it inherits label association, `aria-describedby`, `disabled`, and invalid state
+automatically.
+**`Field.Control` is already a styled input** — write `<Field.Control />`, not
+`<Field.Control render={<Input />} />`. `Input` and `Field.Control` share the same base classes, so
+the `render` form just double-wraps. Reach for `Input` directly when you need a control outside a
+`Field.Root`, or when the value is React-controlled.
+**RHF interop (optional):** `Field.Root` accepts `isTouched`, `isDirty`, `invalid`, and `error`,
+matching RHF's `fieldState` shape — so `<Field.Root {...fieldState}>` works with no adapter.
 **Used in patterns:** all `form/*`.
+
+### How values reach your submit handler
+
+There are three separate mechanisms. Picking the wrong mental model is the most common
+form mistake, so be explicit about which one a screen uses.
+
+**1. `Form` + `Field.Root` → `onFormSubmit` (the default).** `onFormSubmit` does **not** read
+`FormData`; it collects values from the `Field.Root`s registered inside the `Form`, keyed by each
+field's `name`. Every AppShell control works this way once wrapped in a `Field.Root name="…"` —
+including `Select`, `Combobox`, and `Autocomplete`. They need **no `name` of their own and no React
+state**:
+
+```tsx
+<Form onFormSubmit={(values) => save(values)}>
+  <Field.Root name="category">
+    <Field.Label>Category</Field.Label>
+    <Select items={CATEGORIES} placeholder="Select category" />
+  </Field.Root>
+</Form>
+```
+
+**2. Native submission** — a plain `<form>`, `new FormData(form)`, or a server action. This reads the
+DOM, so each control needs its own `name`. `Select`, `Combobox`, and `Autocomplete` gained `name`
+(plus `form`, `required`, `inputRef`) in 1.13.0; before that they contributed nothing to a native
+payload.
+
+**3. React Hook Form** — optional, consumer-installed. RHF owns the values; drive the control with
+`value` / `onValueChange` from a `Controller` and spread `fieldState` onto `Field.Root`. Warranted
+for cross-field validation, field arrays, or a Zod resolver — not for ordinary CRUD forms.
+
+#### Object items
+
+Under mechanism 1, a non-string item is serialised into the submitted value:
+
+| Item shape                             | Value in `onFormSubmit`              |
+| -------------------------------------- | ------------------------------------ |
+| `string`                               | the string                           |
+| `{ value, label }`                     | `value`, automatically               |
+| any other object                       | **JSON string** — usually not wanted |
+| any other object + `itemToStringValue` | whatever that function returns       |
+
+So for arbitrary objects, pass `itemToStringValue` to choose the submitted key. It is distinct from
+`mapItem`, which controls what the user sees:
+
+```tsx
+<Combobox
+  items={warehouses}
+  mapItem={(w) => ({ label: w.name, key: String(w.id) })}
+  itemToStringValue={(w) => String(w.id)}
+/>
+```
+
+Multi-select submits an array.
 
 ### `Fieldset`
 

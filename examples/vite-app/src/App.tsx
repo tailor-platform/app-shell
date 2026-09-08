@@ -53,6 +53,20 @@ const App = () => {
               <SidebarItem to="/dashboard/products" />
               <SidebarItem to="/dashboard/document-progress" />
             </SidebarGroup>
+            <SidebarGroup title="Showcase">
+              <SidebarItem to="/showcase" activeMatch="exact" />
+              <SidebarItem to="/showcase/colors" />
+              <SidebarItem to="/showcase/primitives" />
+              <SidebarItem to="/showcase/dropdown" />
+              <SidebarItem to="/showcase/forms" />
+              <SidebarItem to="/showcase/forms/zod-rhf" />
+              <SidebarItem to="/showcase/csv-importer" />
+              <SidebarItem to="/showcase/metric-card" />
+              <SidebarItem to="/showcase/activity-card" />
+              <SidebarItem to="/showcase/layouts" />
+              <SidebarItem to="/showcase/grid" />
+              <SidebarItem to="/showcase/timeline" />
+            </SidebarGroup>
             <SidebarItem to="/date-picker" />
             <SidebarItem to="/data-table" />
             <SidebarItem to="/data-table-lab" />

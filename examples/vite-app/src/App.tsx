@@ -70,7 +70,6 @@ const App = () => {
               <SidebarItem to="/data-table-lab" />
               <SidebarItem to="/alert-tokens" />
             </SidebarGroup>
-            <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>
         }
       />

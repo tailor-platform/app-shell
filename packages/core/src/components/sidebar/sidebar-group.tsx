@@ -1,16 +1,18 @@
-import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
 import { Collapsible } from "@base-ui/react/collapsible";
 import {
   SidebarContext,
+  SidebarRailContext,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
   useSidebar,
 } from "@/components/sidebar";
+import { useHasHover } from "@/hooks/use-has-hover";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
@@ -48,10 +50,13 @@ export type SidebarGroupProps = {
  * swaps its inline collapsible submenu for a hover flyout.
  */
 function useIsIconRail(): boolean {
-  // The sidebar is a narrow icon rail whenever it's the tablet rail (isIconMode)
-  // or a collapsed desktop rail. Mobile keeps the toggle-driven slide-in drawer.
-  const { state, isMobile, isIconMode } = useSidebar();
-  return !isMobile && (isIconMode || state === "collapsed");
+  // `SidebarRailContext` is true wherever the sidebar renders as a collapsed
+  // icon rail (any width). Gate the hover flyout on hover-capability so a narrow
+  // desktop window still gets it, while touch devices fall back to the
+  // toggle-driven slide-in drawer.
+  const isRail = useContext(SidebarRailContext);
+  const hasHover = useHasHover();
+  return isRail && hasHover;
 }
 
 /**

@@ -248,6 +248,35 @@ describe("DefaultSidebar opt-in props", () => {
     expect(within(flyout).getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(within(flyout).getByRole("link", { name: /products/i })).toBeDefined();
   });
+
+  it("reveals the group flyout on the mobile-width icon rail when hover-capable", async () => {
+    const user = userEvent.setup();
+    // A narrow (mobile-width) window but a hover-capable pointer — e.g. a
+    // desktop browser shrunk below the mobile breakpoint. The rail is icon-only,
+    // so the flyout should still open on hover.
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(500);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider>
+              <DefaultSidebar iconRail hideHeader>
+                <SidebarGroup title="Main" icon={<Home />}>
+                  <SidebarItem to="/dashboard" />
+                  <SidebarItem to="/products" />
+                </SidebarGroup>
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(document.querySelector('nav[aria-label="Main"]')).toBeNull();
+    await user.hover(screen.getByRole("button", { name: "Main" }));
+    expect(document.querySelector('nav[aria-label="Main"]')).not.toBeNull();
+  });
 });
 
 describe("DefaultSidebar auto-generation", () => {

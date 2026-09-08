@@ -33,6 +33,15 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
+/**
+ * True inside the part of the sidebar that is currently rendered as a collapsed
+ * icon rail (icon-only, labels hidden). Set by `Sidebar` on the rail's own
+ * subtree — not on the overlay/drawer copies, which show full labels — so
+ * descendants (tooltips, the group flyout) can tell "am I in the icon rail?"
+ * without reconstructing it from viewport state.
+ */
+const SidebarRailContext = React.createContext<boolean>(false);
+
 function useSidebar() {
   const context = React.useContext(SidebarContext);
   if (!context) {
@@ -263,7 +272,7 @@ function Sidebar({
               data-slot="sidebar-inner"
               className="astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:overflow-hidden astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm"
             >
-              {children}
+              <SidebarRailContext.Provider value={true}>{children}</SidebarRailContext.Provider>
             </div>
           </div>
         </div>
@@ -350,7 +359,9 @@ function Sidebar({
             data-slot="sidebar-inner"
             className="astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm"
           >
-            {children}
+            <SidebarRailContext.Provider value={dataCollapsible === "icon"}>
+              {children}
+            </SidebarRailContext.Provider>
           </div>
         </div>
       </div>
@@ -633,8 +644,8 @@ function SidebarMenuButton({
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof Tooltip.Content>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state, isIconMode, setOpenMobile, openIconMode, setOpenIconMode } =
-    useSidebar();
+  const { isMobile, setOpenMobile, openIconMode, setOpenIconMode } = useSidebar();
+  const isIconRail = React.useContext(SidebarRailContext);
 
   const handleClick = React.useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -679,9 +690,10 @@ function SidebarMenuButton({
       <Tooltip.Trigger render={button} />
       <Tooltip.Content
         position={{ side: "right", align: "center" }}
-        // Shown whenever the sidebar is a narrow icon rail (tablet rail or a
-        // collapsed desktop rail), never on mobile or an expanded sidebar.
-        hidden={isMobile || !(state === "collapsed" || isIconMode)}
+        // Shown only inside the collapsed icon rail, where the label is hidden.
+        // (Base UI only opens the tooltip on hover, so touch devices never see
+        // it.)
+        hidden={!isIconRail}
         {...tooltip}
       />
     </Tooltip.Root>
@@ -820,6 +832,7 @@ function SidebarMenuSubButton({
 
 export {
   SidebarContext,
+  SidebarRailContext,
   Sidebar,
   SidebarContent,
   SidebarFooter,

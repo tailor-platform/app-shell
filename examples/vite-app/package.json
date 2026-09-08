@@ -10,11 +10,14 @@
     "type-check": "tsc -b"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@tailor-platform/app-shell": "workspace:*",
     "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tailwindcss": "catalog:"
+    "react-hook-form": "^7.71.2",
+    "tailwindcss": "catalog:",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",

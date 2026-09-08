@@ -5,7 +5,7 @@
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "lint": "oxlint tests backend/tailor.config.ts playwright.config.ts",
+    "lint": "oxlint tests backend/tailor.config.ts playwright.config.ts --ignore-pattern tests/nextjs-smoke/app/.next/**",
     "type-check": "tsc --project tsconfig.json --noEmit",
     "deploy:backend": "cd backend && tailor deploy --workspace-id $TAILOR_PLATFORM_WORKSPACE_ID --yes"
   },
@@ -19,6 +19,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "dotenv": "16.6.1",
+    "next": "16.3.1",
     "react": "catalog:",
     "react-dom": "catalog:",
     "tailwindcss": "catalog:",

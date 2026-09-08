@@ -6,11 +6,20 @@ const suites = [
     root: "tests/real-auth",
     // Keep this aligned with e2e/backend/tailor.config.ts redirectURIs.
     port: 3100,
+    command: "pnpm exec vite --config tests/real-auth/app/vite.config.ts",
   },
   {
     name: "routing",
     root: "tests/routing",
     port: 3101,
+    command: "pnpm exec vite --config tests/routing/app/vite.config.ts",
+  },
+  {
+    name: "nextjs-smoke",
+    root: "tests/nextjs-smoke",
+    port: 3102,
+    command:
+      'sh -c "pnpm exec next build tests/nextjs-smoke/app && pnpm exec next start tests/nextjs-smoke/app --port 3102"',
   },
 ] as const;
 
@@ -28,7 +37,7 @@ export default defineConfig({
     },
   })),
   webServer: suites.map((suite) => ({
-    command: `pnpm exec vite --config ${suite.root}/app/vite.config.ts`,
+    command: suite.command,
     url: `http://localhost:${suite.port}`,
     name: suite.name,
     reuseExistingServer: !process.env.CI,

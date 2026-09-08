@@ -283,7 +283,7 @@ Theme tokens live in `packages/core/src/assets/themes/`. Copy `_template.css` to
 
 A palette is selected by CSS import, not by an AppShell prop. Import exactly one theme file after `@tailor-platform/app-shell/styles`; if you import none, the default palette from `styles` is used.
 
-Preview token values at `/custom-page/color` in the Next.js example app.
+Preview token values at `/showcase/colors` in the Vite example app.
 
 Or skip the local setup: **[theme.tailor.tech](https://theme.tailor.tech/playground)**
 takes a primary color, previews it on real AppShell components, and exports a

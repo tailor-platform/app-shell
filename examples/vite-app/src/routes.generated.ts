@@ -27,6 +27,18 @@ export type GeneratedRouteParams = {
   "/data-table-lab": {};
   "/date-picker": {};
   "/settings": {};
+  "/showcase": {};
+  "/showcase/activity-card": {};
+  "/showcase/colors": {};
+  "/showcase/csv-importer": {};
+  "/showcase/dropdown": {};
+  "/showcase/forms": {};
+  "/showcase/forms/zod-rhf": {};
+  "/showcase/grid": {};
+  "/showcase/layouts": {};
+  "/showcase/metric-card": {};
+  "/showcase/primitives": {};
+  "/showcase/timeline": {};
 };
 
 /**

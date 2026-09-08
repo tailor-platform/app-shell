@@ -1,4 +1,4 @@
-# @tailor-platform/app-shell-sdk-plugin
+# @tailor-platform/sdk-plugin-app-shell
 
 ## 0.1.1
 

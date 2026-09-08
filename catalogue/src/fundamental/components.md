@@ -433,7 +433,7 @@ const table = useDataTable({
 
 **Column alignment:** each `Column` accepts **`align`** (`"left" | "right"`) applied to both header and body cell. Numeric `type` columns (`"number"`, `"money"`) default to `"right"` automatically so digits align on the decimal place — pass `align="left"` to opt out; everything else defaults to `"left"`.
 
-**Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/app-shell-sdk-plugin` codegen) when available so enum/datetime/string filters bind to the right editors.
+**Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/sdk-plugin-app-shell` codegen) when available so enum/datetime/string filters bind to the right editors.
 
 **Bucket tabs / segmented UX:** AppShell defines **toolbar chips**, not lifecycle tabs. When design places **`Tabs`** (All / Draft / …) inside the card, compose them **above** `DataTable.Root` and synchronize tab-driven bucket state with **`useCollectionVariables`** (`variables.query` / filters)—see **`patterns/list/dense-scan.md`**.
 

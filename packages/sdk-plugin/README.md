@@ -1,4 +1,4 @@
-# @tailor-platform/app-shell-sdk-plugin
+# @tailor-platform/sdk-plugin-app-shell
 
 Tailor Platform SDK plugin that generates `tableMetadata` from TailorDB table definitions for use with `@tailor-platform/app-shell`'s `DataTable` component.
 
@@ -11,7 +11,7 @@ The metadata is generated at SDK generate time from your TailorDB table definiti
 ## Installation
 
 ```sh
-pnpm add -D @tailor-platform/app-shell-sdk-plugin
+pnpm add -D @tailor-platform/sdk-plugin-app-shell
 ```
 
 ## Setup
@@ -22,7 +22,7 @@ Register the plugin in `tailor.config.ts`:
 
 ```ts
 import { definePlugins } from "@tailor-platform/sdk";
-import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
 
 export const plugins = definePlugins(
   appShellPlugin({

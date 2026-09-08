@@ -1,5 +1,5 @@
 ---
-"@tailor-platform/app-shell-vite-plugin": patch
+"@tailor-platform/vite-plugin-app-shell": patch
 ---
 
 Fix typed routes generation to avoid a file existence check before reading or writing the generated output.

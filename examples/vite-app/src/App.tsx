@@ -54,7 +54,6 @@ const App = () => {
               <SidebarItem to="/dashboard/document-progress" />
             </SidebarGroup>
             <SidebarGroup title="Showcase">
-              <SidebarItem to="/showcase" activeMatch="exact" />
               <SidebarItem to="/showcase/colors" />
               <SidebarItem to="/showcase/primitives" />
               <SidebarItem to="/showcase/dropdown" />
@@ -66,11 +65,11 @@ const App = () => {
               <SidebarItem to="/showcase/layouts" />
               <SidebarItem to="/showcase/grid" />
               <SidebarItem to="/showcase/timeline" />
+              <SidebarItem to="/date-picker" />
+              <SidebarItem to="/data-table" />
+              <SidebarItem to="/data-table-lab" />
+              <SidebarItem to="/alert-tokens" />
             </SidebarGroup>
-            <SidebarItem to="/date-picker" />
-            <SidebarItem to="/data-table" />
-            <SidebarItem to="/data-table-lab" />
-            <SidebarItem to="/alert-tokens" />
             <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>
         }

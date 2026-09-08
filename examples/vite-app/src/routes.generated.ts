@@ -27,7 +27,6 @@ export type GeneratedRouteParams = {
   "/data-table-lab": {};
   "/date-picker": {};
   "/settings": {};
-  "/showcase": {};
   "/showcase/activity-card": {};
   "/showcase/colors": {};
   "/showcase/csv-importer": {};

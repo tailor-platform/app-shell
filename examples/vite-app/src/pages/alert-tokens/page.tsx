@@ -96,7 +96,6 @@ const AlertTokensPage = () => {
 AlertTokensPage.appShellPageProps = {
   meta: {
     title: "Alert tokens",
-    icon: <MegaphoneIcon size={16} />,
   },
 } satisfies AppShellPageProps;
 

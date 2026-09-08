@@ -152,7 +152,11 @@ type ConversationEmptyStateProps = ComponentProps<"div"> & {
   icon?: ReactNode;
 };
 
-/** Centered placeholder shown while the conversation has no turns yet. */
+/**
+ * Centered placeholder shown while the conversation has no turns yet. Stacks
+ * `icon`, then the `title`/`description` block, then `children` — so starter
+ * suggestions go in `children` alongside the text rather than replacing it.
+ */
 function ConversationEmptyState({
   className,
   title,
@@ -170,17 +174,16 @@ function ConversationEmptyState({
       )}
       {...props}
     >
-      {children ?? (
-        <>
-          {icon}
-          <div className="astw:space-y-1">
-            {title ? <h3 className="astw:text-sm astw:font-medium">{title}</h3> : null}
-            {description ? (
-              <p className="astw:text-sm astw:text-muted-foreground">{description}</p>
-            ) : null}
-          </div>
-        </>
+      {icon}
+      {title == null && description == null ? null : (
+        <div className="astw:space-y-1">
+          {title ? <h3 className="astw:text-sm astw:font-medium">{title}</h3> : null}
+          {description ? (
+            <p className="astw:text-sm astw:text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
       )}
+      {children}
     </div>
   );
 }

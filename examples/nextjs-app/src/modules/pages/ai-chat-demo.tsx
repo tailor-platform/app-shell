@@ -83,14 +83,11 @@ const AIChatDemoPage = () => {
             />
             <AIChat.Conversation>
               {messages.length === 0 ? (
-                <AIChat.EmptyState>
-                  <Sparkles className="astw:size-6 astw:text-primary" aria-hidden />
-                  <div className="astw:space-y-1">
-                    <h3 className="astw:text-sm astw:font-medium">Ask the assistant</h3>
-                    <p className="astw:text-sm astw:text-muted-foreground">
-                      Answers are grounded in your help articles. This demo runs on scripted data.
-                    </p>
-                  </div>
+                <AIChat.EmptyState
+                  icon={<Sparkles className="astw:size-6 astw:text-primary" aria-hidden />}
+                  title="Ask the assistant"
+                  description="Answers are grounded in your help articles. This demo runs on scripted data."
+                >
                   <AIChat.Suggestions>
                     {SUGGESTIONS.map((suggestion) => (
                       <AIChat.Suggestion

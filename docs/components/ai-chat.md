@@ -206,15 +206,14 @@ Renders the markdown subset a streamed LLM response actually emits — bold, inl
 
 ### EmptyState / Suggestions
 
-`children` on `AIChat.EmptyState` fully replaces its built-in `title`/`description` rendering — compose both text and suggestions manually when you want them together:
+`AIChat.EmptyState` stacks `icon`, then the `title`/`description` block, then `children` — so starter suggestions sit alongside the text rather than replacing it:
 
 ```tsx
-<AIChat.EmptyState>
-  <Sparkles className="astw:size-6 astw:text-primary" aria-hidden />
-  <div className="astw:space-y-1">
-    <h3 className="astw:text-sm astw:font-medium">Ask the assistant</h3>
-    <p className="astw:text-sm astw:text-muted-foreground">Grounded in your help articles.</p>
-  </div>
+<AIChat.EmptyState
+  icon={<Sparkles className="astw:size-6 astw:text-primary" aria-hidden />}
+  title="Ask the assistant"
+  description="Grounded in your help articles."
+>
   <AIChat.Suggestions>
     <AIChat.Suggestion suggestion="How do I create a purchase order?" onSelect={sendMessage} />
   </AIChat.Suggestions>

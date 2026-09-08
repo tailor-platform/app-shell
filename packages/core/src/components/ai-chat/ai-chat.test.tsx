@@ -294,12 +294,15 @@ describe("AIChat", () => {
       },
     );
 
-    it("disables the composer when disabled", async () => {
-      const user = userEvent.setup();
+    it("disables the composer when disabled", () => {
       const { onSubmit } = renderComposer({ disabled: true, defaultValue: "already typed" });
       expect(textbox().disabled).toBe(true);
       expect(sendButton().disabled).toBe(true);
-      await user.keyboard("{Enter}");
+
+      // A disabled textarea cannot take focus, so pressing Enter would prove
+      // nothing about the composer — the key would land on the body. Submit
+      // the form directly to exercise the handler's own guard.
+      textbox().form!.requestSubmit();
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
@@ -455,13 +458,16 @@ describe("AIChat", () => {
       expect(screen.getByText("Grounded in your help articles.")).toBeDefined();
     });
 
-    it("lets children replace the empty state's built-in text, and submits a clicked suggestion", async () => {
+    it("renders the empty state's text alongside children, and submits a clicked suggestion", async () => {
       const user = userEvent.setup();
       const onSelect = vi.fn();
       render(
         <AIChat>
           <AIChat.Conversation>
-            <AIChat.EmptyState title="Ask the assistant">
+            <AIChat.EmptyState
+              title="Ask the assistant"
+              description="Grounded in your help articles."
+            >
               <AIChat.Suggestions>
                 <AIChat.Suggestion
                   suggestion="How do I create a purchase order?"
@@ -472,7 +478,9 @@ describe("AIChat", () => {
           </AIChat.Conversation>
         </AIChat>,
       );
-      expect(screen.queryByText("Ask the assistant")).toBeNull();
+      // Passing children must not silently swallow the title/description.
+      expect(screen.getByText("Ask the assistant")).toBeDefined();
+      expect(screen.getByText("Grounded in your help articles.")).toBeDefined();
       await user.click(screen.getByText("How do I create a purchase order?"));
       expect(onSelect).toHaveBeenCalledWith("How do I create a purchase order?");
     });

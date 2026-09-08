@@ -1,8 +1,8 @@
 import {
   AppShell,
+  GlobalHeaderLayout,
   SidebarGroup,
   SidebarItem,
-  SidebarLayout,
   SidebarMenuButton,
   SidebarMenuItem,
   type SearchSource,
@@ -10,7 +10,7 @@ import {
 import { BellIcon, LayersIcon } from "lucide-react";
 import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
-import { GlobalTopBar, PanelsBody } from "./panels-body";
+import { headerActions, PanelsBody } from "./panels-body";
 import { AssistantProvider } from "./assistant-context";
 
 // Demonstrates multiple search sources in the command palette
@@ -30,23 +30,14 @@ const searchSources: SearchSource[] = [
 const AppInner = () => {
   return (
     <AppShell title="File-Based Routing Demo" searchSources={searchSources}>
-      <SidebarLayout
-        // A truly global top bar spanning above the primary sidebar and the
-        // content region.
-        topBar={<GlobalTopBar />}
+      {/* GlobalHeaderLayout bundles the "global header + icon rail" mode: an
+          app-wide top bar over the whole shell and a sidebar that collapses to a
+          persistent icon rail (toggle at the bottom-left). */}
+      <GlobalHeaderLayout
+        header={<GlobalHeaderLayout.DefaultHeader actions={headerActions} />}
         body={<PanelsBody />}
         sidebar={
-          // The org title lives in the top bar, so the sidebar drops its own
-          // header; its collapse toggle sits at the bottom-left instead.
-          <SidebarLayout.DefaultSidebar
-            hideHeader
-            iconRail
-            footer={
-              <div className="mt-auto p-2">
-                <SidebarLayout.Trigger />
-              </div>
-            }
-          >
+          <GlobalHeaderLayout.DefaultSidebar>
             {/* A custom sidebar action, composed from the low-level primitives
                 so it collapses to an icon (with tooltip) in icon-rail mode,
                 exactly like the built-in nav items. */}
@@ -72,7 +63,7 @@ const AppInner = () => {
             <SidebarItem to="/data-table" />
             <SidebarItem to="/data-table-lab" />
             <SidebarItem to="/settings" />
-          </SidebarLayout.DefaultSidebar>
+          </GlobalHeaderLayout.DefaultSidebar>
         }
       />
     </AppShell>

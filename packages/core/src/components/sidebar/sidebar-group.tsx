@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
@@ -73,6 +73,7 @@ const IconRailFlyout = ({
   const ctx = useSidebar();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const flyoutRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancelClose = () => {
@@ -102,12 +103,27 @@ const IconRailFlyout = ({
     [ctx],
   );
 
+  // Keep the flyout on screen: if a long menu (or one anchored low in the rail)
+  // would spill past the viewport bottom, shift it up to fit.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const el = flyoutRef.current;
+    if (!el) return;
+    const margin = 8;
+    const maxTop = window.innerHeight - el.offsetHeight - margin;
+    setPos((p) => {
+      const top = Math.max(margin, Math.min(p.top, maxTop));
+      return top === p.top ? p : { ...p, top };
+    });
+  }, [open]);
+
   return (
     <SidebarMenuItem onMouseEnter={(e) => openFrom(e.currentTarget)} onMouseLeave={scheduleClose}>
       {trigger}
       {open &&
         createPortal(
           <nav
+            ref={flyoutRef}
             data-slot="sidebar-group-flyout"
             aria-label={title}
             onMouseEnter={cancelClose}

@@ -1,5 +1,12 @@
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
+export {
+  GlobalHeaderLayout,
+  GlobalHeader,
+  type GlobalHeaderLayoutProps,
+  type GlobalHeaderProps,
+} from "./components/sidebar/index";
+export { DynamicBreadcrumb, usePathSegments } from "./components/dynamic-breadcrumb";
 export { CommandPalette } from "./components/command-palette";
 export {
   useOpenCommandPalette,

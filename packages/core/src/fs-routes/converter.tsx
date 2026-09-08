@@ -1,4 +1,4 @@
-import { parsePath } from "@tailor-platform/app-shell-vite-plugin/parser";
+import { parsePath } from "@tailor-platform/vite-plugin-app-shell/parser";
 import type { Module, Resource, Guard } from "@/resource";
 import { withGuardsLoader, titleFromPath } from "@/resource";
 import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";

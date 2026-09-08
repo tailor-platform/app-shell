@@ -45,6 +45,12 @@ const CATEGORIES = [
     templateKey: "FUNDAMENTAL_TABLE",
   },
   {
+    name: "page",
+    entryFile: "PAGE.md",
+    outputDir: "pages",
+    templateKey: "PAGES_TABLE",
+  },
+  {
     name: "pattern",
     entryFile: "PATTERN.md",
     outputDir: "patterns",
@@ -250,7 +256,11 @@ function generateEntryTable(entries, outputDir) {
 
   const grouped = new Map();
   for (const { meta } of [...entries].sort((a, b) => a.meta.slug.localeCompare(b.meta.slug))) {
-    const key = meta.subcategory || meta.category;
+    // Group by subcategory only. Without one the heading would just repeat
+    // the category (### page under "Available Pages"), so those entries
+    // render as a bare table — and a category can introduce subcategories
+    // later with no change here.
+    const key = meta.subcategory ?? null;
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(meta);
   }
@@ -270,7 +280,8 @@ function generateEntryTable(entries, outputDir) {
         }),
       ];
 
-      return `### ${group}\n\n${formatMarkdownTable(rows)}`;
+      const table = formatMarkdownTable(rows);
+      return group === null ? table : `### ${group}\n\n${table}`;
     })
     .join("\n\n");
 }

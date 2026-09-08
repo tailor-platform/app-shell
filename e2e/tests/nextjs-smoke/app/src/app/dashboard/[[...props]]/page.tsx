@@ -1,6 +1,6 @@
 "use client";
 
-import { NextjsSmokeApp } from "../../../modules/app-shell";
+import { NextjsSmokeApp } from "./app-shell";
 
 export default function Page() {
   return <NextjsSmokeApp />;

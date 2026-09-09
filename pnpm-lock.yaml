@@ -55,10 +55,6 @@ catalogs:
       specifier: ^4.1.10
       version: 4.1.11
 
-overrides:
-  brace-expansion: 5.0.9
-  '@microsoft/api-extractor>diff': 8.0.4
-
 importers:
 
   .:

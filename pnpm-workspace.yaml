@@ -49,6 +49,8 @@ minimumReleaseAgeExclude:
   # First-party package exemption is intentional and permanent: this matches the
   # package name, so every version is exempt from the maturity gate.
   - "@tailor-platform/auth-public-client"
+  # Renovate security update: vitest@4.1.11
+  - vitest@4.1.11
 
 overrides:
   # ReDoS / inefficient-regex-complexity in expand()

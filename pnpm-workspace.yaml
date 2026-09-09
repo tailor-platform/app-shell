@@ -81,7 +81,9 @@ allowBuilds:
   lefthook: false
 
 # Detect provenance or publisher trust downgrades in dependency updates
+# Clean up unnecessary entries in updating/adding packages (trustPolicyExcludePrune)
 trustPolicy: no-downgrade
+trustPolicyExcludePrune: true
 trustPolicyExclude:
   # @swc/core lost provenance from v1.5.19 due to a publishing workflow change (npm → yarn).
   # Fixed in v1.15.2+, but older versions in the range still lack provenance.

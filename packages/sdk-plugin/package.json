@@ -1,6 +1,6 @@
 {
   "name": "@tailor-platform/sdk-plugin-app-shell",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Tailor Platform SDK plugins for AppShell (metadata generator)",
   "keywords": [
     "app-shell",

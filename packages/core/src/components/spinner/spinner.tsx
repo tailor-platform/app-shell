@@ -34,6 +34,4 @@ function Spinner({ className, ...props }: SpinnerProps) {
     </svg>
   );
 }
-Spinner.displayName = "Spinner";
-
 export { Spinner };

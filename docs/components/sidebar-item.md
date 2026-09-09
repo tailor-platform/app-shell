@@ -317,13 +317,11 @@ import { Package } from "lucide-react";
 
 ### Active State
 
-Active items automatically receive the library's internal `astw:bg-sidebar-accent` background class. The colon needs escaping to write it as a CSS selector, and it is internal — prefer overriding the `--sidebar-accent` token:
+Active items pick up the sidebar accent background automatically. The class carrying it is internal to the library — don't target it. Override the token instead:
 
 ```css
-/* Active item styling (automatic) */
-.astw\:bg-sidebar-accent {
-  background: var(--sidebar-accent);
-  font-weight: 500;
+:root {
+  --sidebar-accent: oklch(0.95 0.02 260);
 }
 ```
 

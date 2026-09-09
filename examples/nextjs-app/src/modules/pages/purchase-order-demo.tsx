@@ -46,10 +46,9 @@ export const mockPurchaseOrder = {
 /**
  * Custom field renderer: a stacked bar no built-in field `type` can express.
  *
- * Colours come from the `--alert-*` design tokens directly rather than the
- * `bg-alert-*` utilities, because this example app's Tailwind build does
- * not process app-shell's theme - only utilities app-shell itself already
- * emits are present in its prebuilt stylesheet.
+ * The segment widths are percentages computed at runtime, so they have to be
+ * inline styles. The colours ride along with them rather than splitting one
+ * visual into a utility and a style attribute.
  */
 const ReceiptBar = ({ received, inTransit, pending }: Record<string, number>) => (
   <div className="flex flex-col gap-1">

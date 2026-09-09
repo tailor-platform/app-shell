@@ -217,7 +217,7 @@ function FilterPanel() {
       <Button variant="ghost" className="justify-start!">
         Duplicate
       </Button>
-      <Button variant="ghost" className="justify-start! text-destructive">
+      <Button variant="ghost" className="justify-start! text-destructive!">
         Delete
       </Button>
     </div>

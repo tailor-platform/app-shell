@@ -474,11 +474,13 @@ function OrderDetails() {
 
 The component uses container queries for responsive layouts:
 
-```tsx
-// Custom styling — the card sets no padding of its own, so this is an addition
-<DescriptionCard className="p-6" data={data} fields={fields} />
+`className` lands on the card root. The card already insets its own header and content by 24px, so adding padding here stacks on top of that rather than setting it.
 
-// Overriding a value the card does set needs a trailing `!`
+```tsx
+// Adding a property the root doesn't set
+<DescriptionCard className="max-w-3xl" data={data} fields={fields} />
+
+// Overriding a value the root does set needs a trailing `!`
 <DescriptionCard className="rounded-lg! shadow-md!" data={data} fields={fields} />
 ```
 

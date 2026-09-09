@@ -492,9 +492,7 @@ Add custom classes to individual columns:
 ```tsx
 <Layout>
   <Layout.Column className="bg-card shadow-sm">{/* Main content with background */}</Layout.Column>
-  <Layout.Column className="gap-6!">
-    {/* Sidebar with extra spacing (overrides the column's own gap-4) */}
-  </Layout.Column>
+  <Layout.Column className="space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
 </Layout>
 ```
 

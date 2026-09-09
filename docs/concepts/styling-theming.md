@@ -83,6 +83,7 @@ Write **plain Tailwind utilities** in your application code, including in the `c
 1. **Prefer a real prop** where the component exposes one. `Sheet.Content` takes `size`, `Table.Head` and `Table.Cell` take `align`, `Grid` takes `columns`. A prop is a supported contract; a utility class is not.
 2. **To add a property AppShell doesn't set** on that element, use a plain utility. `<Table.Root containerClassName="px-6">` works, because the table container sets no padding of its own.
 3. **To override a value AppShell does set**, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. `<Card.Content className="px-0!">` beats the component's own `px-6`; a plain `px-0` silently loses (see below).
+4. **A value AppShell sets under a state variant or on a descendant also counts as "set".** `Button`'s `ghost` variant sets no text color at rest but does set one on `hover:`, and a `:hover` rule outranks your plain utility on specificity, not just order — so a plain `text-destructive` on a ghost button is red until the pointer touches it. Likewise `Button` sizes its own child SVGs and `Layout` constrains its own columns. When in doubt, check the component source and use `!`.
 
 ```tsx
 // Prop where one exists
@@ -93,19 +94,22 @@ Write **plain Tailwind utilities** in your application code, including in the `c
 
 // Overriding an AppShell default
 <Card.Content className="px-0!" />
+
+// The default is set under `hover:`, so this still needs `!`
+<Button variant="ghost" className="text-destructive!">Delete</Button>
 ```
 
 ### Never write the `astw:` prefix in application code
 
-AppShell's own components are styled with utilities carrying an `astw:` prefix (AppShell TailWind). This exists because Tailwind generates classes at build time: AppShell's stylesheet is compiled and shipped before your application's is generated, and Tailwind cannot order two independently-generated stylesheets against each other. The prefix keeps the library's utilities from clashing with yours.
+AppShell's own components are styled with utilities carrying an `astw:` prefix (AppShell TailWind). This exists because Tailwind generates classes at build time: AppShell's stylesheet is compiled and published before your application's is generated, and Tailwind cannot reconcile two independently-generated stylesheets against each other. The prefix keeps the library's utilities from clashing with yours.
 
-The prefix is **internal to the library**. Your Tailwind build has no `astw` prefix configured, so it never generates `astw:*` classes — an `astw:` class written in application code only resolves if AppShell happens to already ship that exact utility for its own use. Roughly half of any given set does not, and Tailwind emits nothing for an unknown utility: no error, no warning, nothing in the console. The class lands in the DOM and does nothing.
+The prefix is **internal to the library**. Your Tailwind build has no `astw` prefix configured, so it never generates `astw:*` classes — an `astw:` class written in application code only resolves if AppShell happens to already ship that exact utility for its own use. Many do not — 17 of the 55 classes this documentation used to recommend are absent from the shipped stylesheet — and Tailwind emits nothing for an unknown utility: no error, no warning, nothing in the console. The class lands in the DOM and does nothing.
 
 Worse, one `className` string can be half-applied. AppShell merges class names with `tailwind-merge`, which is not configured with the `astw` prefix, so it strips a conflicting _internal_ class while leaving an unshipped `astw:` class in place — the element keeps a dead class and loses the style it had.
 
 ### Why an override needs `!`
 
-`tailwind-merge` groups `astw:px-6` and `px-0` separately — it reads the unknown `astw:` as a variant — so both survive on the element rather than the later one replacing the earlier. AppShell's precompiled stylesheet is imported before yours but at equal specificity, and its rule appears later in the cascade, so the library's value wins a plain conflict:
+`tailwind-merge` groups `astw:px-6` and `px-0` separately — it reads the unknown `astw:` as a variant — so both survive on the element rather than the later one replacing the earlier. Both land in the same `@layer utilities` at equal specificity, and in the import order above AppShell's precompiled sheet comes **after** your Tailwind output, so its rule is later in the cascade and the library's value wins a plain conflict:
 
 ```tsx
 // Element keeps both classes; padding stays at AppShell's 24px
@@ -114,6 +118,8 @@ Worse, one `className` string can be half-applied. AppShell merges class names w
 // `!` wins regardless of cascade order
 <Card.Content className="px-0!" />
 ```
+
+That ordering is why the [setup](#styling-and-theming) puts `@import "@tailor-platform/app-shell/styles"` **after** `@import "tailwindcss"`, in the same CSS entry. Import it the other way round — or from a JS module rather than your CSS entry — and which value wins changes with it. `!` is order-independent, so it holds either way.
 
 Reach for `!` only for the override case. Additions need nothing special, and a prop is better than either.
 

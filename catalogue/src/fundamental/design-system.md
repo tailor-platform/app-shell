@@ -327,7 +327,7 @@ Write **plain** Tailwind utilities everywhere — in your own markup and in the 
 
 Further rules:
 
-- Stick to **layout** utilities (`flex`, `grid`, `max-h-*`, `min-h-0`, `overflow-*`, widths). Reaching for `!` to paint over internal AppShell padding or colors is a smell — prefer an upstream prop or a composition change.
+- `!` is the sanctioned override mechanism where a component gives you no prop — the table-in-card insets in `components.md` (`Card.Content className="px-0!"`) are the canonical example. What is a smell is reaching for it to restyle a component's **colors** or **typography**: that is a token or upstream-prop problem, not a specificity one.
 - Steps like `p-4` still resolve through the scale — never arbitrary `p-[13px]`.
 
 ## 6. When AppShell doesn't have a component you need

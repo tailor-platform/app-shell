@@ -67,6 +67,9 @@ overrides:
   # GHSA-73rr-hh4g-fpgx. Force the smallest patched 8.0.x here so lockfile
   # refreshes keep the fix without widening this toolchain to diff@9.
   "@microsoft/api-extractor>diff": 8.0.4
+  # fast-uri is used transitively by API Extractor's Ajv dependencies. Pin the
+  # smallest patched version for GHSA-f65p-4m7j-42xc.
+  fast-uri: 3.1.6
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.

@@ -27,6 +27,7 @@ export type GeneratedRouteParams = {
   "/data-table-lab": {};
   "/date-picker": {};
   "/settings": {};
+  "/spinner": {};
 };
 
 /**

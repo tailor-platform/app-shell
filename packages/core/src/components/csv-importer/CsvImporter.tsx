@@ -233,7 +233,7 @@ function MappingStep({
                 <tr
                   key={col.key}
                   className={cn(
-                    "astw:border-b astw:border-border last:astw:border-b-0 astw:transition-colors",
+                    "astw:border-b astw:border-border astw:last:border-b-0 astw:transition-colors",
                     !isMapped && col.required && "astw:bg-destructive/5",
                   )}
                 >

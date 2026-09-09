@@ -65,7 +65,7 @@ Leave it empty and the buttons still sit correctly at the right; `justify-betwee
 ## Constraints
 
 - The body control is `Textarea`, never `Input` — `Input` is locked to `h-9` and clips prose to one 36px line.
-- Size the body with `rows` (3–5 is the usual range). Don't reach for an `astw:h-*` / `astw:min-h-*` override: `astw:` utilities only resolve if that exact class was compiled into the AppShell package CSS, so an arbitrary one written in a consuming app silently does nothing.
+- Size the body with `rows` (3–5 is the usual range), not a height utility. Never write the `astw:` prefix in app code — see `design-system.md` §5.
 - The `Textarea` needs an accessible name. There is usually no visible label in a composer, so pass `aria-label`; a placeholder is not a label.
 - One primary `Button` in the action row. Discard is `ghost`, and any left-side action is `ghost` too.
 - The action row is one row at every width — the left side shrinks, the buttons do not wrap under the body.

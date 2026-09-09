@@ -168,7 +168,7 @@ Place action buttons (e.g., save, edit) to the right of the title using the `act
     <Sheet.Header action={<Button size="sm">Save</Button>}>
       <Sheet.Title>Edit Customer</Sheet.Title>
     </Sheet.Header>
-    <div className="astw:p-4">
+    <div className="p-4">
       <Input placeholder="Customer name" />
     </div>
   </Sheet.Content>
@@ -187,7 +187,7 @@ function FilterPanel() {
           <Sheet.Title>Filter Orders</Sheet.Title>
           <Sheet.Description>Narrow down orders by criteria.</Sheet.Description>
         </Sheet.Header>
-        <div className="astw:p-4 astw:flex astw:flex-col astw:gap-4">
+        <div className="p-4 flex flex-col gap-4">
           <Input placeholder="Customer name" />
           <Input placeholder="Order number" />
         </div>
@@ -210,14 +210,14 @@ function FilterPanel() {
     <Sheet.Header>
       <Sheet.Title>Actions</Sheet.Title>
     </Sheet.Header>
-    <div className="astw:p-4 astw:flex astw:flex-col astw:gap-2">
-      <Button variant="ghost" className="astw:justify-start">
+    <div className="p-4 flex flex-col gap-2">
+      <Button variant="ghost" className="justify-start!">
         Edit
       </Button>
-      <Button variant="ghost" className="astw:justify-start">
+      <Button variant="ghost" className="justify-start!">
         Duplicate
       </Button>
-      <Button variant="ghost" className="astw:justify-start astw:text-destructive">
+      <Button variant="ghost" className="justify-start! text-destructive!">
         Delete
       </Button>
     </div>

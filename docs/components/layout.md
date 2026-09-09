@@ -260,10 +260,10 @@ Use `fill` for pages whose main content manages its own scrolling (typically a `
 
 ## Gap Spacing
 
-Use `className` to control the space between columns:
+Use `className` to control the space between columns. The root sets its own `gap-4`, so an override needs a trailing `!` ([why](../concepts/styling-theming.md#styling-appshell-components)):
 
 ```tsx
-<Layout className="astw:gap-6">
+<Layout className="gap-6!">
   <Layout.Column>{/* ... */}</Layout.Column>
   <Layout.Column>{/* ... */}</Layout.Column>
 </Layout>
@@ -481,20 +481,18 @@ The Layout component validates its children:
 
 ### Custom Styling
 
-Add custom classes to the layout container:
+Add custom classes to the layout container. `bg-*` and `rounded-*` are additions, so they need nothing special; `p-8` overrides the root's own vertical padding, so it takes a `!`:
 
 ```tsx
-<Layout className="astw:bg-gray-50 astw:p-8 astw:rounded-lg">{/* ... */}</Layout>
+<Layout className="bg-muted rounded-lg p-8!">{/* ... */}</Layout>
 ```
 
 Add custom classes to individual columns:
 
 ```tsx
 <Layout>
-  <Layout.Column className="astw:bg-white astw:shadow-sm">
-    {/* Main content with background */}
-  </Layout.Column>
-  <Layout.Column className="astw:space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
+  <Layout.Column className="bg-card shadow-sm">{/* Main content with background */}</Layout.Column>
+  <Layout.Column className="space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
 </Layout>
 ```
 

@@ -276,7 +276,7 @@ const ColorDemoPage = () => {
                 <p style={sectionTitle}>Menu hover (accent on popover)</p>
                 <Menu.Root modal={false}>
                   <Menu.Trigger render={<Button variant="outline" />}>Open menu</Menu.Trigger>
-                  <Menu.Content className="astw:min-w-[10rem]">
+                  <Menu.Content className="min-w-[10rem]!">
                     <Menu.Item>Default item</Menu.Item>
                     <Menu.Item>Hover me</Menu.Item>
                     <Menu.Item>Another item</Menu.Item>

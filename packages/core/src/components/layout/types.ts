@@ -31,8 +31,10 @@ export interface LayoutProps {
   /**
    * Gap between columns (default: 4 = 16px)
    *
-   * @deprecated Remove the `gap` prop and use `className` with the `astw:` prefix
-   * (e.g. `className="astw:gap-6"`) to override the default gap.
+   * @deprecated Remove the `gap` prop and use `className` with Tailwind's
+   * importance modifier (e.g. `className="gap-6!"`) to override the default gap.
+   * The `!` is required: the root sets its own `gap-4`, and a plain `gap-6`
+   * silently loses to it.
    */
   gap?: number;
   /** Header title - displayed at the top of the layout

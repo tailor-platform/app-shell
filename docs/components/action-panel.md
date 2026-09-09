@@ -135,14 +135,14 @@ This keeps `ActionPanel` simple and reusable across entity types.
 
 ## Styling
 
-The component uses Tailwind classes with the `astw:` prefix:
+The component is styled with the library's internal `astw:`-prefixed utilities:
 
-- Full width card (`astw:w-full`)
+- Full width card
 - Compact spacing for dense action lists
 - Fixed icon slot for stable alignment
 - Inline spinner for loading state
 
-Use `className` on `ActionPanel` to add or override card-level styles.
+Use `className` on `ActionPanel` to add card-level styles, with a trailing `!` to override one the component sets itself. Write **plain** utilities — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components).
 
 ## Examples in This Repo
 

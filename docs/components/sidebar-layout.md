@@ -198,23 +198,21 @@ The built-in header renders an [`AppearanceSwitcher`](./appearance-switcher.md) 
 import { SidebarLayout } from "@tailor-platform/app-shell";
 
 const CustomHeader = () => (
-  <div className="astw:bg-blue-500 astw:text-white astw:p-4">
+  <div className="bg-blue-500 text-white p-4">
     <h2>Welcome to My App</h2>
   </div>
 );
 
-const CustomFooter = () => (
-  <footer className="astw:p-4 astw:text-sm astw:text-gray-600">© 2026 My Company</footer>
-);
+const CustomFooter = () => <footer className="p-4 text-sm text-gray-600">© 2026 My Company</footer>;
 
 function App() {
   return (
     <AppShell modules={modules}>
       <SidebarLayout>
         {({ Outlet }) => (
-          <div className="astw:flex astw:flex-col astw:h-full">
+          <div className="flex flex-col h-full">
             <CustomHeader />
-            <main className="astw:flex-1 astw:overflow-auto">
+            <main className="flex-1 overflow-auto">
               <Outlet />
             </main>
             <CustomFooter />
@@ -275,7 +273,7 @@ function App() {
 ```tsx
 <SidebarLayout>
   {({ Outlet }) => (
-    <div className="astw:container astw:mx-auto astw:p-6 astw:max-w-7xl">
+    <div className="container mx-auto p-6 max-w-7xl">
       <Outlet />
     </div>
   )}
@@ -288,8 +286,8 @@ function App() {
 <SidebarLayout>
   {({ Outlet }) => (
     <>
-      <div className="astw:bg-yellow-100 astw:border-b astw:border-yellow-200 astw:p-3 astw:text-center">
-        <p className="astw:text-sm">🎉 New features available! Check out our latest updates.</p>
+      <div className="bg-yellow-100 border-b border-yellow-200 p-3 text-center">
+        <p className="text-sm">🎉 New features available! Check out our latest updates.</p>
       </div>
       <Outlet />
     </>
@@ -369,7 +367,7 @@ Notes:
 
 ## Styling
 
-The sidebar and layout use Tailwind CSS classes prefixed with `astw:` to avoid conflicts with your application styles.
+The sidebar and layout are styled with the library's internal `astw:`-prefixed utilities. Write **plain** Tailwind utilities in your own markup — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components).
 
 To customize the appearance, you can:
 

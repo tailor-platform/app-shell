@@ -92,7 +92,7 @@ function ActionRow({ action }: { action: ActionItem }) {
  *
  * Each row has an icon and label and is triggered by onClick. For navigation, use
  * useNavigate() inside the callback (e.g. onClick: () => navigate("/path")).
- * Use `astw:w-full` so the panel fills the width of its parent container.
+ * The panel already fills the width of its parent container.
  *
  * When an action has `loading: true`, the row shows a spinner in the icon slot and is
  * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).

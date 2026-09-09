@@ -1,6 +1,6 @@
 # Design System
 
-Authority for **visual-only** decisions — tokens, theme imports, breakpoints intent, the `astw:` prefix, and custom-component conformance. For **React component APIs** (imports, props, JSX composition), pair this file with `components.md`; that split avoids duplicating tables and lengthy examples across both docs.
+Authority for **visual-only** decisions — tokens, theme imports, breakpoints intent, how to style AppShell components, and custom-component conformance. For **React component APIs** (imports, props, JSX composition), pair this file with `components.md`; that split avoids duplicating tables and lengthy examples across both docs.
 
 `@tailor-platform/app-shell` ships an opinionated design system as CSS variables, bridged into Tailwind v4's token namespace. Use it whether you are consuming AppShell components (most cases) or building a custom component to fill a gap.
 
@@ -302,23 +302,33 @@ Stock Tailwind breakpoints — AppShell does not change them.
 
 Two-column **behavior** (right rail stacks under `lg`): respect AppShell defaults — do not force side-by-side grids on narrow viewports. The `Layout` column width table lives in `components.md` → Layout; reuse those numbers instead of guessing rem values here.
 
-## 5. The `astw:` prefix
+## 5. Styling AppShell components
 
-AppShell exposes **layout / sizing / overflow** escapes on some components via props like `containerClassName` and `className` on roots. Prefix those utilities with `astw:` so they apply to the wrapper AppShell controls.
+**Never write the `astw:` prefix.** It is internal to the library, and your Tailwind build has no `astw` prefix configured, so it never generates `astw:*` classes. An `astw:` class written in app code only resolves if AppShell happens to already ship that exact utility for its own use — roughly half do not, and Tailwind emits **no CSS at all** for an unknown utility. No error, no warning, nothing in the console. Worse, `tailwind-merge` is not configured with the prefix, so one `className` string can end up half-applied: the conflicting _internal_ class is stripped while the dead `astw:` class stays.
+
+Write **plain** Tailwind utilities everywhere — in your own markup and in the `className` / `*ClassName` props AppShell components expose. Three rules cover every case:
+
+1. **Prefer a real prop.** `Sheet.Content` takes `size`, `Table.Head` / `Table.Cell` take `align`, `Grid` takes `columns`. A prop is a supported contract; a utility class is not.
+2. **Adding** a property AppShell doesn't set on that element → plain utility.
+3. **Overriding** a value AppShell does set → plain utility with a trailing `!` (Tailwind's importance modifier). A plain utility silently loses: both classes survive the merge, and AppShell's precompiled rule wins at equal specificity.
+
+```tsx
+// Prop where one exists
+<Sheet.Content size="lg" />
+
+// Adding — the table container sets no padding of its own
+<Table.Root containerClassName="px-6 overflow-y-auto" />
+
+// Overriding — Card.Content sets px-6
+<Card.Content className="px-0!" />
+```
 
 **Do not duplicate full component trees here.** Typical patterns (full `DataTable` composition, `Sheet` + footer, `Table.Root` + card insets) live in `components.md` with JSX you can copy.
 
-Minimal illustration — the same rules apply to other `*ClassName` hooks:
+Further rules:
 
-```tsx
-<Table.Root containerClassName="astw:px-6 astw:overflow-y-auto" />
-```
-
-Rules:
-
-- `astw:` only on AppShell `*ClassName` / root `className` hooks each component exposes. Use **plain** Tailwind (`flex`, `gap-4`, `bg-background`, …) on **your** markup.
-- Stick to **layout** utilities (`flex`, `grid`, `max-h-*`, `min-h-0`, `overflow-*`, widths). Avoid painting over internal AppShell padding or colors via `astw:` — prefer an upstream prop or composition change.
-- Steps like `astw:p-4` still resolve through the scale — never arbitrary `astw:p-[13px]`.
+- `!` is the sanctioned override mechanism where a component gives you no prop — the table-in-card insets in `components.md` (`Card.Content className="px-0!"`) are the canonical example. What is a smell is reaching for it to restyle a component's **colors** or **typography**: that is a token or upstream-prop problem, not a specificity one.
+- Steps like `p-4` still resolve through the scale — never arbitrary `p-[13px]`.
 
 ## 6. When AppShell doesn't have a component you need
 
@@ -384,9 +394,9 @@ When a custom component proves reusable across 2+ apps, promote it upstream into
 | --------------------------------------------------- | ---------------------------------- |
 | Component imports, props, JSX composition           | **`components.md`**                |
 | Page / screen layout patterns                       | **`patterns/<type>/<slug>.md`**    |
-| Design tokens, `astw:` rules, custom UI conformance | **this file** (`design-system.md`) |
+| Design tokens, styling rules, custom UI conformance | **this file** (`design-system.md`) |
 
-**`components.md`** holds long JSX compositions (e.g. **`DataTable`**, **card + `Table`**). **Do not copy those trees into this file** — link back here only for tokens and `astw:` policy.
+**`components.md`** holds long JSX compositions (e.g. **`DataTable`**, **card + `Table`**). **Do not copy those trees into this file** — link back here only for tokens and styling policy.
 
 `patterns/` is organised by page type: `patterns/list/`, `patterns/detail/`, `patterns/form/`, `patterns/interaction/`. Pick the slug matching the screen you're building.
 

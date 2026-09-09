@@ -10,13 +10,9 @@ import {
   type GridProps,
 } from "@tailor-platform/app-shell";
 
-// Note: this demo styles itself with app-shell's shipped `astw:` utilities where
-// they exist, and falls back to inline `style` for demo-only values that the
-// library's compiled CSS does not include (e.g. large gaps, letter-spacing).
-
 const SectionTitle = ({ children }: { children: ReactNode }) => (
   <h2
-    className="astw:text-sm astw:font-semibold astw:text-muted-foreground"
+    className="text-sm font-semibold text-muted-foreground"
     style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}
   >
     {children}
@@ -74,7 +70,7 @@ const warehouses = [
 
 const GroupLabel = ({ children }: { children: ReactNode }) => (
   <span
-    className="astw:text-xs astw:font-semibold astw:text-muted-foreground"
+    className="text-xs font-semibold text-muted-foreground"
     style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}
   >
     {children}
@@ -104,15 +100,15 @@ function SliderControl({
   disabled?: boolean;
 }) {
   return (
-    <div className="astw:flex astw:flex-col astw:gap-1.5" style={{ opacity: disabled ? 0.4 : 1 }}>
-      <div className="astw:flex astw:items-center astw:justify-between">
-        <span className="astw:text-xs astw:font-medium">{label}</span>
-        <span className="astw:text-xs astw:font-medium astw:text-muted-foreground">
+    <div className="flex flex-col gap-1.5" style={{ opacity: disabled ? 0.4 : 1 }}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground">
           {value}
           {unit}
         </span>
       </div>
-      {hint && <span className="astw:text-xs astw:text-muted-foreground">{hint}</span>}
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
       <input
         type="range"
         aria-label={label}
@@ -143,12 +139,12 @@ function SegmentedControl<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="astw:flex astw:flex-col astw:gap-1.5">
-      <div className="astw:flex astw:flex-col">
-        <span className="astw:text-xs astw:font-medium">{label}</span>
-        {hint && <span className="astw:text-xs astw:text-muted-foreground">{hint}</span>}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col">
+        <span className="text-xs font-medium">{label}</span>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
       </div>
-      <div className="astw:flex astw:flex-wrap astw:gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => (
           <Button
             key={opt}
@@ -210,14 +206,14 @@ function GridPlayground() {
     .join("\n");
 
   const tileClass =
-    "astw:flex astw:items-center astw:justify-center astw:rounded-md astw:bg-muted astw:text-sm astw:font-medium astw:text-muted-foreground";
+    "flex items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground";
 
   return (
     <Grid columns={{ initial: 1, lg: 2 }} gap={6}>
       {/* Controls */}
       <Card.Root>
         <Card.Header title="Controls" description="Adjust props and watch the grid update" />
-        <Card.Content className="astw:flex astw:flex-col astw:gap-4">
+        <Card.Content className="flex flex-col gap-4">
           <GroupLabel>Grid props</GroupLabel>
           <SegmentedControl<SizingMode>
             label="Sizing mode"
@@ -282,7 +278,7 @@ function GridPlayground() {
             onChange={setJustify}
           />
 
-          <div className="astw:flex astw:flex-col astw:gap-4" style={{ marginTop: "0.5rem" }}>
+          <div className="mt-2 flex flex-col gap-4">
             <GroupLabel>Preview settings (demo only — not a Grid prop)</GroupLabel>
             <SliderControl
               label="preview tiles"
@@ -297,7 +293,7 @@ function GridPlayground() {
       </Card.Root>
 
       {/* Live preview + generated code */}
-      <div className="astw:flex astw:flex-col astw:gap-4">
+      <div className="flex flex-col gap-4">
         <Card.Root>
           <Card.Header title="Preview" />
           <Card.Content style={{ overflowX: "auto" }}>
@@ -317,7 +313,7 @@ function GridPlayground() {
           <Card.Header title="Generated JSX" />
           <Card.Content>
             <pre
-              className="astw:overflow-x-auto astw:rounded-md astw:bg-muted astw:p-4 astw:text-xs"
+              className="overflow-x-auto rounded-md bg-muted p-4 text-xs"
               style={{ lineHeight: 1.6 }}
             >
               <code>{code}</code>
@@ -330,10 +326,9 @@ function GridPlayground() {
 }
 
 // 🔽 Static, side-by-side illustration of what `flow` (grid-auto-flow) does.
-const flowCellBase =
-  "astw:flex astw:items-center astw:justify-center astw:rounded-md astw:text-xs astw:font-medium";
-const plainCell = `${flowCellBase} astw:bg-muted astw:text-muted-foreground`;
-const wideCell = `${flowCellBase} astw:bg-primary astw:text-primary-foreground`;
+const flowCellBase = "flex items-center justify-center rounded-md text-xs font-medium";
+const plainCell = `${flowCellBase} bg-muted text-muted-foreground`;
+const wideCell = `${flowCellBase} bg-primary text-primary-foreground`;
 const cellStyle = { minHeight: "2.25rem" };
 
 const plainTile = (n: number) => (
@@ -356,24 +351,24 @@ const FlowExample = ({
   caption: string;
   children: ReactNode;
 }) => (
-  <div className="astw:flex astw:flex-col astw:gap-2">
-    <span className="astw:text-xs astw:font-medium">{label}</span>
+  <div className="flex flex-col gap-2">
+    <span className="text-xs font-medium">{label}</span>
     {children}
-    <span className="astw:text-xs astw:text-muted-foreground">{caption}</span>
+    <span className="text-xs text-muted-foreground">{caption}</span>
   </div>
 );
 
 function FlowSection() {
   return (
-    <div className="astw:flex astw:flex-col astw:gap-6">
-      <p className="astw:text-sm astw:text-muted-foreground">
+    <div className="flex flex-col gap-6">
+      <p className="text-sm text-muted-foreground">
         <code>flow</code> (grid-auto-flow) controls two separate things: the{" "}
         <strong>direction</strong> items are placed, and whether gaps are{" "}
         <strong>backfilled</strong>. Most layouts never need it — the default <code>row</code> is
         almost always right.
       </p>
 
-      <div className="astw:flex astw:flex-col astw:gap-3">
+      <div className="flex flex-col gap-3">
         <GroupLabel>Direction — row vs. column</GroupLabel>
         <Grid columns={{ initial: 1, md: 2 }} gap={6}>
           <FlowExample
@@ -395,7 +390,7 @@ function FlowSection() {
         </Grid>
       </div>
 
-      <div className="astw:flex astw:flex-col astw:gap-3">
+      <div className="flex flex-col gap-3">
         <GroupLabel>Packing — row vs. row-dense (with spanning items)</GroupLabel>
         <Grid columns={{ initial: 1, md: 2 }} gap={6}>
           <FlowExample
@@ -428,14 +423,14 @@ const GridDemoPage = () => (
   <Layout>
     <Layout.Header title="Grid Demo" />
     <Layout.Column>
-      <p className="astw:text-sm astw:text-muted-foreground astw:mb-6">
+      <p className="text-sm text-muted-foreground mb-6">
         A generic CSS-Grid layout primitive: equal or custom-width columns, responsive reflow, gap
         control, auto-fit, and <code>Grid.Item</code> spanning.
       </p>
 
-      <div className="astw:flex astw:flex-col" style={{ gap: "4rem" }}>
+      <div className="flex flex-col gap-16">
         {/* 🔽 Responsive KPI grid — reflows 1 → 2 → 4 columns */}
-        <section className="astw:flex astw:flex-col astw:gap-3">
+        <section className="flex flex-col gap-3">
           <SectionTitle>Responsive columns · 1 → 2 → 4</SectionTitle>
           <Grid columns={{ initial: 1, sm: 2, lg: 4 }} gap={4}>
             {kpis.map((kpi) => (
@@ -451,14 +446,14 @@ const GridDemoPage = () => (
         </section>
 
         {/* 🔽 Auto-fit gallery — as many ≥240px cards as fit, no breakpoints */}
-        <section className="astw:flex astw:flex-col astw:gap-3">
+        <section className="flex flex-col gap-3">
           <SectionTitle>Auto-fit · minChildWidth={240}</SectionTitle>
           <Grid minChildWidth={240} gap={4}>
             {warehouses.map((wh) => (
               <Card.Root key={wh.id}>
                 <Card.Header title={wh.name} description={`${wh.id} · ${wh.region}`} />
-                <Card.Content className="astw:flex astw:items-center astw:justify-between">
-                  <span className="astw:text-sm astw:text-muted-foreground">
+                <Card.Content className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
                     Utilization {wh.utilization}
                   </span>
                   <Badge
@@ -473,18 +468,18 @@ const GridDemoPage = () => (
         </section>
 
         {/* 🔽 Custom column widths — fixed sidebar + fluid main */}
-        <section className="astw:flex astw:flex-col astw:gap-3">
+        <section className="flex flex-col gap-3">
           <SectionTitle>Custom widths · &quot;280px 1fr&quot;</SectionTitle>
           <Grid columns="280px 1fr" gap={6}>
             <Card.Root>
               <Card.Header title="Filters" description="Fixed 280px column" />
-              <Card.Content className="astw:text-sm astw:text-muted-foreground">
+              <Card.Content className="text-sm text-muted-foreground">
                 Region, status, and date-range controls would live here.
               </Card.Content>
             </Card.Root>
             <Card.Root>
               <Card.Header title="Results" description="Flexible 1fr column" />
-              <Card.Content className="astw:text-sm astw:text-muted-foreground">
+              <Card.Content className="text-sm text-muted-foreground">
                 The main content area expands to fill the remaining space.
               </Card.Content>
             </Card.Root>
@@ -492,30 +487,30 @@ const GridDemoPage = () => (
         </section>
 
         {/* 🔽 Spanning with Grid.Item */}
-        <section className="astw:flex astw:flex-col astw:gap-3">
+        <section className="flex flex-col gap-3">
           <SectionTitle>Spanning · Grid.Item colSpan / rowSpan</SectionTitle>
           <Grid columns={4} gap={4}>
             <Grid.Item colSpan={{ initial: "full", md: 2 }}>
-              <Card.Root className="astw:h-full">
+              <Card.Root className="h-full">
                 <Card.Header title="Featured" description="colSpan 2" />
-                <Card.Content className="astw:text-sm astw:text-muted-foreground">
+                <Card.Content className="text-sm text-muted-foreground">
                   Spans two columns from the md breakpoint.
                 </Card.Content>
               </Card.Root>
             </Grid.Item>
             <Card.Root>
-              <Card.Content className="astw:pt-6 astw:text-sm astw:text-muted-foreground">
+              <Card.Content className="pt-6 text-sm text-muted-foreground">
                 Single cell
               </Card.Content>
             </Card.Root>
             <Card.Root>
-              <Card.Content className="astw:pt-6 astw:text-sm astw:text-muted-foreground">
+              <Card.Content className="pt-6 text-sm text-muted-foreground">
                 Single cell
               </Card.Content>
             </Card.Root>
             <Grid.Item colSpan="full">
               <Card.Root>
-                <Card.Content className="astw:pt-6 astw:text-sm astw:text-muted-foreground">
+                <Card.Content className="pt-6 text-sm text-muted-foreground">
                   Full-width footer row (colSpan=&quot;full&quot;)
                 </Card.Content>
               </Card.Root>
@@ -524,15 +519,15 @@ const GridDemoPage = () => (
         </section>
 
         {/* 🔽 Understanding flow */}
-        <section className="astw:flex astw:flex-col astw:gap-4">
+        <section className="flex flex-col gap-4">
           <SectionTitle>Understanding flow (grid-auto-flow)</SectionTitle>
           <FlowSection />
         </section>
 
         {/* 🔽 Interactive playground */}
-        <section className="astw:flex astw:flex-col astw:gap-3">
+        <section className="flex flex-col gap-3">
           <SectionTitle>Interactive playground</SectionTitle>
-          <p className="astw:text-sm astw:text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Change any prop below and watch the grid react in real time. The generated JSX updates
             to match.
           </p>

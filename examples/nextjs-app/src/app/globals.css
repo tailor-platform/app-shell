@@ -1,1 +1,7 @@
+/* The app-shell imports belong in this file, not in a JS import: Tailwind only
+   sees the `@theme inline` token bridge if it is part of the same CSS entry, and
+   without it token utilities (`text-muted-foreground`, `bg-muted`, …) are never
+   generated for the app's own markup. See docs/concepts/styling-theming.md. */
 @import "tailwindcss";
+@import "@tailor-platform/app-shell/styles";
+@import "@tailor-platform/app-shell/themes/cream";

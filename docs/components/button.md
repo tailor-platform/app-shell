@@ -76,7 +76,7 @@ This is the Base UI render pattern — the button's class names and event handle
 ### Form Actions
 
 ```tsx
-<div className="astw:flex astw:gap-2 astw:justify-end">
+<div className="flex gap-2 justify-end">
   <Button variant="outline">Cancel</Button>
   <Button>Save Changes</Button>
 </div>

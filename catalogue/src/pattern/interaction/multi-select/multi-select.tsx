@@ -37,7 +37,7 @@ export default function MultiSelect({ orders, onArchive, onExport }: Props) {
       <Table.Root>
         <Table.Header>
           <Table.Row>
-            <Table.Head className="astw:w-10">
+            <Table.Head className="w-10">
               <input
                 type="checkbox"
                 checked={selectedIds.size === orders.length && orders.length > 0}

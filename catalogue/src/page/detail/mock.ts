@@ -57,6 +57,36 @@ export type PurchaseOrder = {
   sourceDocuments: SourceDocument[];
   goodsReceipts: GoodsReceipt[];
   activities: ActivityItem[];
+  holds: Hold[];
+  referenceDocuments: ReferenceDocument[];
+  /** Empty until the record is posted; the tab strip disappears with it. */
+  journalLines: JournalLine[];
+};
+
+/** An active block stopping the record from progressing. */
+export type Hold = {
+  id: string;
+  reason: string;
+  placedBy: string;
+  placedAt: string;
+};
+
+/** A file attached to the record. */
+export type ReferenceDocument = {
+  id: string;
+  name: string;
+  href: string;
+  uploadedAt: string;
+  sizeLabel: string;
+};
+
+/** One side of a general-ledger entry this record booked. */
+export type JournalLine = {
+  id: string;
+  account: string;
+  accountCode: string;
+  debit: number | null;
+  credit: number | null;
 };
 
 /** Present only when the record is mirrored in a third-party system. */
@@ -145,6 +175,34 @@ export const mockPurchaseOrder: PurchaseOrder = {
       receivedAt: "2026-05-02",
       qty: 3,
     },
+  ],
+  holds: [
+    {
+      id: "h-1",
+      reason: "Supplier bank details changed since the last payment",
+      placedBy: "Aiko Sato",
+      placedAt: "2026-05-03",
+    },
+  ],
+  referenceDocuments: [
+    {
+      id: "f-1",
+      name: "Signed order confirmation.pdf",
+      href: "/files/po-24118-confirmation.pdf",
+      uploadedAt: "2026-04-13",
+      sizeLabel: "148 KB",
+    },
+    {
+      id: "f-2",
+      name: "Supplier quote.pdf",
+      href: "/files/req-0912-quote.pdf",
+      uploadedAt: "2026-04-02",
+      sizeLabel: "92 KB",
+    },
+  ],
+  journalLines: [
+    { id: "j-1", account: "Inventory", accountCode: "1300", debit: 3400, credit: null },
+    { id: "j-2", account: "GRNI", accountCode: "2150", debit: null, credit: 3400 },
   ],
   activities: [
     {

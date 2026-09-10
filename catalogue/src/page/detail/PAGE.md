@@ -424,17 +424,27 @@ one card naming the system, linking to the record over there, and saying when it
 last synced. Omit the card entirely when there's no such link; never render it
 empty.
 
+A dedicated component for this is tracked as
+[tailor-inc/platform-planning#775 (Integration Card)](https://github.com/tailor-inc/platform-planning/issues/775),
+which covers the integration's identity and icon, its mapped fields, external
+links and status indicators. Until it lands, compose the card by hand as above.
+
 ### 3. History — last
 
 Revisions, or an audit trail of who changed what, as an `ActivityCard`. It's
 context, not content: someone who never opens it should still understand the
-record. Where the trail is long enough to dominate the column, move it behind a
-`Sheet` opened from the actions instead — read alongside the record, never
-instead of it.
+record without it.
+
+**One treatment, whatever the length.** A trail's length varies from record to
+record of the same type, so it can't decide the presentation — two records of
+one type showing history in two different places is worse than either choice on
+its own. `ActivityCard` caps itself: `maxVisible` (6 by default) bounds what it
+renders and the rest collapses behind an overflow label. Set the cap and leave
+it in the column.
 
 ## Optional cards
 
-None is expected; add one only when the record calls for it.
+Nothing additional is required; add one only when the record calls for it.
 
 - **Metric strip** — headline figures. Either lead the main column with `MetricCard`s in a `Grid` (`columns={{ initial: 1, md: 2, xl: 4 }}`, never one per row), or put a single number in the right-hand column above the actions. Not both.
 - **`DocumentProgressCard`** — a lifecycle or fulfilment breakdown. Derive `percent` and `segments` in the consumer.
@@ -463,13 +473,18 @@ top of the component, and not re-derived inline. Name them for what they permit
 (`lineItemsEditable`) or reveal (`showReceiptsCard`), so the JSX reads as intent
 rather than as a chain of status comparisons.
 
-In practice this means a draft is broadly editable in place, and a committed
-record still has a few fields that are: a delivery date, a note, a currency, a
-reference someone needs to correct without amending the whole record. Both
-client apps reviewed for this entry work this way — one edits notes in place
-behind a pencil, the other edits a range of header and line-item fields inline on
-draft and committed orders, with autosave and a save-status indicator in the line
-items card header.
+In practice a draft is broadly editable in place, and a committed record still
+has a few fields that are: a delivery date, a note, a currency, a reference
+someone needs to correct without amending the whole record.
+
+> **Team input needed — in-place editing versus an edit route.** The guidance
+> above prefers in-place, and separately describes `/edit` and `/amend`
+> sub-routes. The two pull in different directions: if fields toggle between
+> reading and editing where they sit, it isn't obvious what a whole-record edit
+> form is still for, or how someone chooses between them. Both exist in the
+> field today.
+>
+> - [ ] Decide where the boundary sits between editing in place and opening an edit route, and whether both should be offered on the same record
 
 A sub-route is an edit form with a URL of its own that opens as a dialog over
 this screen: `/edit` and `/amend` render the same record behind the form, so the
@@ -490,9 +505,9 @@ summary, its contents, its related records — belongs on that one column, and a
 tab strip is not a way to tidy it up. A strip is never an alternative view of
 data that belongs on the cards.
 
-There is exactly one case that qualifies for a second tab: **the record caused a
-separate accounting or inventory record, and that record is the subject of the
-tab.** Concretely, and this is the whole list:
+A second tab is warranted when **the record caused a separate accounting or
+inventory record, and that record is the subject of the tab.** The cases that
+come up in practice:
 
 | Second tab         | Holds                                                  |
 | ------------------ | ------------------------------------------------------ |
@@ -500,9 +515,10 @@ tab.** Concretely, and this is the whole list:
 | Journal / GL entry | The general-ledger entries posting this record booked  |
 
 Those qualify because the tab's subject is a _different record type_ with its
-own identity, its own posting date, and its own reasons to be wrong — not
-another facet of this one. If you cannot name the other record type the tab is
-about, there is no second tab.
+own identity and its own lifecycle — not another view of this one. Another case
+may meet the same test; if it does, it belongs here too. What settles it is
+whether you can name the other record type the tab is about. If you can't, there
+is no second tab.
 
 Explicitly not grounds for a strip:
 
@@ -511,29 +527,24 @@ Explicitly not grounds for a strip:
 - A group of fields feels like it deserves its own space
 - Someone would like a "details" tab and an "activity" tab
 
-Three rules come with a strip that does qualify:
+Two rules come with a strip that does qualify, and both follow from the same
+point: **the page's subject is the primary record, and a second tab shows
+records it produced.** Those are consequences, read-only here — to act on one,
+open its own page.
 
-1. Alerts stay **above** the strip — a terminal-state explanation is a property of the record, not of the tab being read.
-2. The `ActionPanel` stays **out** of the tabs. It is driven by the record's status, never by which tab is open.
-3. If the second tab's content goes away — nothing posted yet, so no journal — the strip goes with it. **A one-tab strip is worse than no tabs.**
+1. **Alerts stay above the strip.** An alert describes the primary record's state, and that doesn't change with the tab. Inside the strip it would read as describing whatever the open tab holds.
+2. **The `ActionPanel` stays out of the tabs**, in the right-hand column. Its actions apply to the primary record only. Inside the strip they would appear to act on the tab's records, which this screen never does.
 
-Where a long column genuinely needs wayfinding, the affordance is jump
-navigation that tracks scroll position, leaving every card on the page. AppShell
-ships no primitive for it, so treat it as a considered addition rather than a
-default.
+A third rule is practical: if the second tab's content goes away — nothing
+posted yet, so no journal — the strip goes with it. **A one-tab strip is worse
+than no tabs.**
 
-## Width on large screens
-
-**AppShell imposes no maximum width, and this pattern needs one.** The content
-area is a flex child with no `max-w-*`, and `Layout` is a full-width grid, so on
-a wide monitor the main column keeps stretching: the summary's three columns
-spread a short value across a third of a 2560px screen, and line-item tables
-pull their first and last columns to opposite edges.
-
-Cap the readable width at the application level — one wrapper around the shell's
-content, in the region of 1400px, is what a client app doing this already uses.
-Do it once for the app rather than per page, so every screen agrees. AppShell has
-no opinion here, which is a gap rather than a decision.
+Where a long column genuinely needs wayfinding, the affordance is still a strip
+of tabs across the top — but they scroll rather than switch. Every card stays on
+the one page; selecting a tab scrolls that card into view, and the active tab
+follows the reader's scroll position. It looks like a tab strip and behaves like
+a table of contents. AppShell ships no primitive for it, so treat it as a
+considered addition rather than a default.
 
 ## Links
 

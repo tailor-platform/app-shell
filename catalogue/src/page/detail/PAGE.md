@@ -32,7 +32,8 @@ dont:
 
 The screen for a **single record**. Two columns: the record itself on the left,
 and on the right the actions available on it plus the context that sits around
-it rather than inside it.
+it rather than inside it — where it is mirrored in another system, who has
+changed it.
 
 It is not only for documents. Orders, receipts and invoices use the fullest
 version of it; master-data records — a supplier, an item, a site — use the same
@@ -53,9 +54,9 @@ For example, a purchase order might carry prices and an approval chain where a
 goods receipt carries neither. What stays the same is the sequence someone works
 through when they open the page, and the layout follows that sequence:
 
-1. **What is this record, and is it still live?** → the alerts, then the summary
+1. **What is this record, and is it still in progress?** → the alerts, then the summary
 2. **What is in it?** → the line items
-3. **What is it connected to, and what has it caused?** → sources, related records, the journal
+3. **What is it connected to, and what has it caused?** → its sources, the records created from it, its accounting entries
 4. **What can I do about it?** → the actions in the right-hand column
 
 A record skips whichever of these it doesn't have. It never reorders the ones it
@@ -82,7 +83,7 @@ An example, with more cards filled in than most records will have:
 |  Card  Journal                   |  ActivityCard        |
 |  Card  Reference documents       |   History            |
 |                                  |                      |
-|  «extension seam»       last     |                      |
+|  «extension slot»       last     |                      |
 +----------------------------------+----------------------+
 ```
 
@@ -94,15 +95,15 @@ carries actions and surrounding context, not content.
 
 Cards in this order. Skip what doesn't apply; don't reorder what does.
 
-| Card                  | Appears when                                               | Job                                                |
-| --------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
-| Status alerts         | A terminal state, or one whose consequence is invisible    | Explain the missing actions before they're hunted  |
-| Summary               | Always                                                     | Identity and current state                         |
-| Upstream / exceptions | The line items can't be read without it; a block is active | Where the contents came from; what's holding it up |
-| Line items            | The record has contents                                    | The record's own content                           |
-| Related records       | The relationship is possible                               | What this record has caused                        |
-| Reference documents   | Files hang off the record                                  | Attachments, with a viewer link                    |
-| Extension seam        | A relationship exists this app can't render                | Mark where another module mounts                   |
+| Card                  | Appears when                                                 | Job                                                |
+| --------------------- | ------------------------------------------------------------ | -------------------------------------------------- |
+| Status alerts         | A terminal state, or one whose consequence is invisible      | Explain the missing actions before they're hunted  |
+| Summary               | Always                                                       | Identity and current state                         |
+| Upstream / exceptions | The line items only make sense in context; a block is active | Where the contents came from; what's holding it up |
+| Line items            | The record has contents                                      | The record's own content                           |
+| Related records       | The relationship is possible                                 | What this record has caused                        |
+| Reference documents   | Files hang off the record                                    | Attachments, with a viewer link                    |
+| Extension slot        | Another module owns content that belongs here                | Mark where that module mounts                      |
 
 The **summary is the only card that always appears.** Line items are on most
 documents but not on all records — a supplier or a site has no contents to list,
@@ -118,7 +119,7 @@ Write one alert per state, not a single generic "this record is closed":
 
 - **Settled / completed** → `success`. The work finished and the figures are frozen.
 - **Cancelled / voided** → `neutral`. Nothing happened; a new record is needed.
-- **Live but consequential** → `info`. The next action can't be undone, or a control someone expects genuinely doesn't exist.
+- **Still in progress, but the next step can't be undone** → `info`. Also for a control someone would expect that genuinely doesn't exist.
 - **Rejected back to draft** → `warning`. Without it, a bounced record is indistinguishable from a fresh one.
 
 These are **persistent, not dismissible**. The alert is derived from the
@@ -129,13 +130,6 @@ that state — don't pass `dismissible`. Transient feedback after an action is
 `Alert` is compound: `Alert.Root variant` wrapping `Alert.Title` and
 `Alert.Description`.
 
-> **Where this came from.** This is the newest and least-proven part of the
-> pattern. It comes from the erp-kit module templates, which annotate every
-> terminal state; the older composite `erp` app leaves them mostly unannotated,
-> and neither client app reviewed for this entry has them at all. The reasoning
-> is sound — a state that removes actions should explain itself — but treat it
-> as a recommendation rather than settled practice.
-
 ### 2. Summary — always first
 
 One `DescriptionCard`, `columns={3}`, titled for the record ("Purchase order
@@ -143,7 +137,7 @@ information"). Self-containing — never wrap it in a `Card.Root`. Field order:
 
 1. **Identity** — the document number or code first, `meta: { copyable: true }`, because it's the thing people paste into chat
 2. **Statuses** — the record's own, then any derived ones (see below)
-3. **The other party and place** — the supplier, customer or site the record is with, as a `type: "link"` with an `hrefKey` pointing at a pre-computed href, so an unresolvable id degrades to plain text rather than a dead link
+3. **The other party and place** — the supplier, customer or site the record is with, as a `type: "link"`. Point `hrefKey` at an href computed before render, so a record whose counterpart can't be resolved shows plain text rather than a dead link
 4. **A `{ type: "divider" }`**, then dates, commercial terms and external references
 
 > **Only fields the record can actually answer.** A goods receipt has no
@@ -167,10 +161,10 @@ filled semantic variant; the derived ones are `outline-*`, so the reader can see
 at a glance which status the record itself owns.
 
 > **Never put a control on a derived status.** Not a select, not a "mark as
-> received" action, not a row-level override. Those values are written by
-> whichever module owns receiving, or billing, or the integration — a control
-> here would claim an ownership this screen doesn't have. Render the value, and
-> put the records behind it in a related-records card.
+> received" action, not an override. Those values are written by whichever module
+> owns receiving, or billing, or the integration — a control here would claim an
+> ownership this screen doesn't have. Render the value, and put the records behind
+> it in a related-records card.
 
 #### Conditional and empty fields
 
@@ -195,27 +189,78 @@ or a different edit path from the first — system-derived versus operator-enter
 
 ### 3. Upstream sources and exceptions
 
-- **Upstream sources** go _above_ the line items when the items can't be read without them. Document number, status badge, link out.
-- **Exceptions and blocks** — an active hold, a failed validation — go directly under the summary, styled destructive, rendered only when non-empty. This is the one place a row-level action belongs outside the right-hand column: the row that names the block carries the control that clears it.
+**Upstream sources** are the documents this record was created from. They go
+_above_ the line items when the line items only make sense once you know where
+they came from. A goods receipt is the clearest case: each of its lines is a
+receipt _of_ a specific purchase-order line, so the quantities mean nothing until
+the reader can see which orders are being received against. Show each source
+with its document number, its status badge, and a link out.
+
+**Exceptions and blocks** are anything actively stopping the record from moving
+on — a payment hold, a failed validation. They go directly under the summary,
+given the destructive (red) treatment because they are a problem to clear rather
+than information to read, and rendered only when at least one is active. Each
+hold is listed as its own entry, and the control that releases it sits beside
+its reason. This is the one place an action belongs in the main column rather
+than in the right-hand column: releasing a hold is done _to the hold_, one at a
+time, and the record is unblocked only once every one is released.
 
 ### 4. Line items
 
 `Card.Root` → `Card.Header` (title, plus a one-line description where the
-columns need explaining) → `Card.Content className="px-0!"` → `Table.Root`. Use
-a plain `Table`, not a `DataTable`: these rows are bounded and already fetched,
-so a toolbar and pagination buy nothing.
+columns need explaining) → `Card.Content className="px-0!"` → `Table.Root`.
+
+Fetch the line items together with the record, with an explicit sort so the
+order is stable across reloads, and render them as a plain `Table`. That is what
+every implementation reviewed for this entry does on its read-only screens, and
+for the typical document — a handful to a few dozen lines — it is right: a
+toolbar and pagination would add controls with nothing to do.
+
+It is not right for every document type. Some can carry hundreds of lines, and
+the usual way of coping — a hard cap on the query, `lines(first: 1000)` — is a
+stopgap, not a design: one client app's edit form silently deleted every line
+beyond the cap when a large order was saved, and it now pages lines at 100 per
+page instead. So:
+
+- On the **read-only** screen, a plain `Table` over all lines is the default.
+- Where a document type is known to carry more than a page's worth, **page the lines** — 100 per page is what both implementations that hit this settled on — and say so in the card's description so the reader knows the table is not the whole set.
+- Never rely on a query cap to bound the table. If the cap can be reached, the page has to page.
+
+> **A shared line-items component is wanted.** Today every app builds this
+> table by hand, and the edit and read versions drift apart. The erp-kit
+> templates already carry the seed of one — a form-bound `LineItemsTable` with
+> optional client-side paging and a footer that mirrors `DataTable.Pagination` —
+> but nothing in AppShell yet covers reading and editing line items with paging
+> in one component. Until it exists, the guidance above is the interim answer.
 
 Columns, left to right:
 
 1. **Identity** — the item name, with the SKU beneath it in muted mono `text-xs`. Two facts, one column.
-2. **The record's own numbers** — quantity, unit of measure, unit price
-3. **Derived columns** — received, billed, fulfilled. These are the per-line counterpart of the derived statuses above, and they're what make a line table worth opening. Show the actual figure with a small muted delta beside it when it differs from target, rather than a separate variance column.
-4. **Subtotal**, derived, last
+2. **The record's own numbers** — quantity, unit of measure, unit price. Every document has these.
+3. **Numbers from related records**, where they exist and the reader needs them (see below).
+4. **Subtotal**, derived, last.
 
 Numeric columns take `align="right"` on **both** the head and the cell, and
-`tabular-nums` so digits line up. Fetch the items with an explicit sort so the
-order is stable across reloads. An empty table is an explicit muted paragraph
+`tabular-nums` so digits line up. An empty table is an explicit muted paragraph
 inside the card, never a bare header row.
+
+#### Numbers from related records
+
+Beyond its own numbers, a line can show figures that come from _other_
+documents. Which ones — if any — depends on where this record sits in the chain
+of documents it belongs to:
+
+- **A record that other documents fulfil** — a purchase order, a sales order — can show, per line, how much of what it asked for has happened: received and billed quantities on an order line, shipped quantity on a sales-order line. These come from the receipts, invoices and shipments created from it.
+- **A record that fulfils another** — a goods receipt, a shipment — can show, per line, what it was fulfilling _against_: the ordered quantity from the source line, how much other receipts have already taken, and how much remains open. These come from the source document and its other children.
+- **A record with neither** — a payment, a purchase bill in a simple flow — shows only its own numbers.
+
+Include these columns when the related records exist and the reader is trying
+to reconcile against them. They are not a fixed part of the table: one
+implementation shows received and billed on its purchase-order lines, another
+shows only the order's own numbers on the same document type, and both are
+correct for their users. Where a figure is shown against a target, show the
+actual figure with a small muted difference beside it rather than a separate
+variance column.
 
 > **A total row is a claim, not a decoration.** Add `Table.Footer` only where
 > the column genuinely sums. An order priced in one currency totals cleanly. A
@@ -228,16 +273,17 @@ inside the card, never a bare header row.
 ### 5. Related records — what this one caused
 
 One card per _type_ of related record: receipts against an order, invoices
-against a receipt, settlements, due schedules, the posted journal. Each is a
-small table of document number → status → date → the figure that matters, with
-the number linking to that record's own page.
+against a receipt, payments applied, the instalments still due, the accounting
+entries the record produced. Each is a small table of document number → status
+→ date → the figure that matters, with the number linking to that record's own
+page.
 
-- Each row's status badge is **that record's own status**, so it takes the filled semantic variant — the same treatment it gets on its own page. `outline-*` is for a record's derived statuses, and a pointer row has none.
-- Order the cards the way the work runs — goods before money
+- Each entry's status badge is **that record's own status**, so it takes the filled semantic variant — the same treatment it gets on its own page. `outline-*` is for a record's derived statuses, and an entry in a related-records table has none.
+- Order the cards the way the work runs — goods movements before money movements
 - The empty state names the relationship ("No goods receipts linked to this order"), so the reader learns the relationship exists and is simply unused
 - Hide a card entirely only while the relationship is _impossible_ — a draft can have no receipts yet. Once it is possible, show it empty rather than hiding it
 - Group by parent where the hierarchy is real — orders, then the receipts under each
-- These are pointers, not reports. If a related collection genuinely needs filtering and paging, that's `pattern/list/dense-scan` on its own route, linked from here
+- These tables point at records; they are not reports. If a related collection genuinely needs filtering and paging, that's `pattern/list/dense-scan` on its own route, linked from here
 
 #### When a relationship is a card, and when it is a field on the summary
 
@@ -245,35 +291,35 @@ Not every related record deserves a card. The question comes up for every
 relationship the record has, and the answer follows from how many records are on
 the other end:
 
-**A to-one relationship is a link field on the summary. A to-many relationship
-needs a card.**
+**A relationship to one record is a link field on the summary. A relationship to
+many records needs a card.**
 
 Typically, if the record has a parent it has only one, so the parent appears as
 a link on the summary description card. If it has child records there are many
 of them and their statuses matter, so they go in a table inside their own card —
 which is more than a field could carry.
 
-The exception worth knowing is a to-many _upstream_: a receipt consolidating
+The exception worth knowing is many records _upstream_: a receipt consolidating
 three orders, an invoice raised against several receipts. That is many records on
 the other end, so it takes a card of its own, placed above the line items. Count,
 not direction, is what decides.
 
-The other case for a card is a relationship the API cannot traverse. A
+The other case for a card is a relationship the API cannot follow. A
 polymorphic link — a `sourceType` / `sourceId` pair with no union type and no
-relation field on either side — cannot be followed in a GraphQL query in either
-direction, so it has to be resolved by the page or left to an extension seam. A
-field cannot express it.
+relation field on either side — cannot be traversed in a GraphQL query in either
+direction, so it has to be resolved by the page, or handed to another module
+through an extension slot. A field cannot express it.
 
 If you find yourself building a card to display a single supplier, that
 relationship belongs on the summary instead.
 
-#### The journal is a special case
+#### Accounting entries
 
-A record's accounting effect belongs on the record. Before posting it is a
-_preview_ computed from what the page already holds, and it must be labelled as
-one. After posting it is the real ledger, fetched by document number — and
-posting often books more than one entry, so fetch the whole set rather than the
-obvious one.
+A record that gets posted to the ledger produces accounting entries, and those
+belong on the record. Before posting they are a _preview_ computed from what the
+page already holds, and must be labelled as one. After posting they are the real
+entries, fetched by document number — and posting often books more than one, so
+fetch the whole set rather than the obvious one.
 
 #### Navigating out versus checking against
 
@@ -284,31 +330,31 @@ stay consistent within it.
 
 ### 6. Reference documents
 
-Files that hang off the record — a supplier's signed contract, a scanned or
-OCR'd delivery note, a photo of damaged goods. One card titled **Reference
+Files that hang off the record — a supplier's signed contract, a scanned
+delivery note, a photo of damaged goods. One card titled **Reference
 documents**, near the end of the main column, listing each file with a viewer
 link, and an upload control gated on the record's state.
 
 Cards are independent units, so this one can be composed as a sibling of the
 rest rather than nested inside whatever renders the record's own fields.
 
-### 7. Extension seam — always last
+### 7. Extension slot — always last
 
-Where a relationship exists but this app can't render it — a polymorphic link,
-or content another module owns — leave a registered seam rather than a missing
-card. It goes _after_ the record's own cards: borrowed content doesn't outrank
-what the reader came for. AppShell ships no slot primitive, so this is an
-app-level concern; whatever the mechanism, a seam must never reach an end user
-unfilled.
+Some content that belongs on this record is owned by another module — an
+integration's sync detail, a relationship the API can't follow. Rather than leave
+a gap or a missing card, define a slot the owning module can fill. It goes
+_after_ the record's own cards: borrowed content doesn't outrank what the reader
+came for. AppShell ships no slot primitive, so the mechanism is an app-level
+concern; whatever it is, an unfilled slot must never reach an end user.
 
 ## Secondary (right-hand) column
 
-Ordered most-actionable to most-ambient, because below 1024px this becomes the
-page's footer.
+Ordered from what the reader acts on to what they only consult, because below
+1024px this column becomes the page's footer.
 
 ### 1. `ActionPanel` — first, titled "Actions"
 
-Everything here does something _to_ this record: mutates it, moves it through its
+Everything here does something _to_ this record: changes it, moves it through its
 lifecycle, or creates the record that comes next in the workflow.
 
 A serviceable starting set, in order:
@@ -355,11 +401,11 @@ do to what they are looking at.
 
 Mechanics:
 
-- **Gate rows by spreading them in** against the record's own status, so the panel only ever offers what's legal now. A hidden row beats a disabled one.
-- **Bind `loading`** on any row that fires a mutation, from that mutation's own in-flight state; `variant="destructive"` for the destructive ones.
-- **Don't pre-compute a disabled state the server owns.** Some commands refuse on state the page can't see — cancelling once a line is billed, closing before every line settles. Leave the action enabled and let the failure surface the server's own sentence. A guessed disabled state drifts from the command and leaves a dead button with no explanation.
-- **Report both paths.** Success and failure both toast; no silent writes.
-- **An action needing input or confirmation** opens a dialog from the same place — see `pattern/interaction/confirm`. The confirm button mirrors the command's own condition chain and is **no stricter**: making a reason unconditionally required when the command only wants it in one branch blocks the clean path. Say in the dialog what the action does when the button doesn't make it obvious — that rejecting returns the record to draft, or that posting can't be undone.
+- **Include an action only when the record's status allows it** — in code, by spreading each status's actions into the array conditionally — so the panel only ever offers what's legal now. A hidden entry beats a disabled one.
+- **Bind `loading`** on any entry that fires a mutation, from that mutation's own in-flight state; `variant="destructive"` for the destructive ones.
+- **Don't pre-compute a disabled state the server owns.** Some commands refuse on state the page can't see — cancelling once a line is billed, closing before every line settles. Leave the action enabled and let the failure surface the server's own message. A guessed disabled state drifts from the command and leaves a dead button with no explanation.
+- **Report both outcomes.** Success and failure both toast; no silent writes.
+- **An action needing input or confirmation** opens a dialog from the same place — see `pattern/interaction/confirm`. The confirm button mirrors the command's own conditions and is **no stricter**: making a reason unconditionally required when the command only wants it in one case blocks the path the server would have accepted. Say in the dialog what the action does when the button doesn't make it obvious — that rejecting returns the record to draft, or that posting can't be undone.
 - **Export a predicate** (`hasOrderActions(status)`) alongside the panel, so the screen can decide whether it renders at all.
 - `ActionItem` isn't exported; annotate an actions array as `ActionPanelProps["actions"]`.
 
@@ -388,11 +434,11 @@ instead of it.
 
 ## Optional cards
 
-None is expected; add one only when the record earns it.
+None is expected; add one only when the record calls for it.
 
 - **Metric strip** — headline figures. Either lead the main column with `MetricCard`s in a `Grid` (`columns={{ initial: 1, md: 2, xl: 4 }}`, never one per row), or put a single number in the right-hand column above the actions. Not both.
 - **`DocumentProgressCard`** — a lifecycle or fulfilment breakdown. Derive `percent` and `segments` in the consumer.
-- **A card that measures against intent** — for records that are promises later fulfilled by other records, an ordered/received/billed grid. Hide it while there's nothing yet to reconcile: an empty reconciliation table is worse than none. One plain-English line under the title ("3 units still to receive") beats making the reader subtract.
+- **A reconciliation card** — for records that other records fulfil, an ordered / received / billed grid. Hide it while there's nothing yet to reconcile: an empty reconciliation table is worse than none. One plain-English line under the title ("3 units still to receive") beats making the reader subtract.
 
 ## Editing
 
@@ -407,7 +453,7 @@ at a time:
 
 | Scope                                                | Mechanism                                                   |
 | ---------------------------------------------------- | ----------------------------------------------------------- |
-| One field, or a handful independent of each other    | **In place**, on the summary or the line row                |
+| One field, or a handful independent of each other    | **In place**, on the summary or the line                    |
 | A coherent group that must validate or save together | A **dialog** opened from the actions                        |
 | The whole record and all its line items              | A **sub-route** rendering this screen with the form over it |
 
@@ -425,9 +471,10 @@ behind a pencil, the other edits a range of header and line-item fields inline o
 draft and committed orders, with autosave and a save-status indicator in the line
 items card header.
 
-A sub-route is a **route-addressable modal**: `/edit` and `/amend` render this
-same screen with a dialog over it, so the record stays visible behind the form
-and the URL stays shareable. Two things it has to get right:
+A sub-route is an edit form with a URL of its own that opens as a dialog over
+this screen: `/edit` and `/amend` render the same record behind the form, so the
+reader keeps their context and the URL stays shareable. Two things it has to get
+right:
 
 - **The status gate has to hold on a cold load.** A URL can be typed, bookmarked, or reloaded after someone else moved the record on. When the status no longer permits the form, redirect to the read-only screen and _replace_ the history entry, so Back doesn't bounce into the redirect.
 - **Every dismissal path funnels through one handler** — close, cancel, Escape, backdrop, and a successful save all return to the detail URL.
@@ -443,7 +490,7 @@ summary, its contents, its related records — belongs on that one column, and a
 tab strip is not a way to tidy it up. A strip is never an alternative view of
 data that belongs on the cards.
 
-There is exactly one case that earns a second tab: **the record caused a
+There is exactly one case that qualifies for a second tab: **the record caused a
 separate accounting or inventory record, and that record is the subject of the
 tab.** Concretely, and this is the whole list:
 
@@ -491,7 +538,7 @@ no opinion here, which is a gap rather than a decision.
 ## Links
 
 One treatment everywhere on the page — `DescriptionCard`'s own link fields, the
-document numbers in related-record rows, the external-system card:
+document numbers in related-record tables, the external-system card:
 
 **`text-primary` at rest, underline only on hover** — the primary colour is what
 says "clickable" without a hover, and the resting underline is noise. Add
@@ -517,10 +564,10 @@ The page decides the frame; these build what sits in it.
 ## Reference implementation
 
 A confirmed purchase order: terminal-state alerts, a summary with its own status
-plus two derived ones and a link to its source, a to-many upstream card above the
-line items, line items with derived columns and a total that legitimately sums, a
-related-records card, and a right-hand column of actions, external-system link
-and history.
+plus two derived ones and a link to its source, a many-upstream card above the
+line items, line items showing received quantities from the order's receipts and
+a total that legitimately sums, a related-records card, and a right-hand column
+of actions, external-system link and history.
 
 <!-- source: detail.tsx -->
 
@@ -532,26 +579,28 @@ and history.
 - **A table in a card needs ONE geometry change, not two.** Zero the card's padding (`Card.Content className="px-0!"`, or drop `Card.Content`) and leave the table container alone. `Table.Head` and `Table.Cell` already inset their own first and last cells by 24px; padding on the table container stacks on top of that and pushes the first column 24px right of the card title.
 - **Bare `YYYY-MM-DD` dates must not use `type: "date"`.** `DescriptionCard` hands the value to `new Date(...)`, which reads a date-only string as UTC midnight and renders the previous day west of Greenwich. Pre-format those as text via `render`. Real timestamps keep `type: "date"`, with `emptyBehavior: "hide"` when nullable.
 - **`ActionPanel` is workflow-only.** No navigation, no "view related record" — those are links in the cards that hold them.
+- **Never rely on a query cap to bound the line-items table.** If the cap can be reached, page the lines.
 - **A page-level Save belongs to a form, not here.** Edits commit per field, per group, or through a sub-route.
 - **Write plain, unprefixed Tailwind classes.** The `astw:` prefix is AppShell's own internal one; a consumer's Tailwind build never generates it, so an `astw:` class in application code silently does nothing unless AppShell happens to ship that exact utility. Three cases, in order of preference: use a real prop where the component has one (`Table.Head align`); to **add** a property AppShell doesn't set on that element, a plain utility works; to **override** one it does set, a plain utility loses the cascade — reach for the `!` importance modifier (`px-0!`). Zeroing the card's padding is the only override on this page.
-- **Handle all three states.** Loading, error with a retry, and not-found are part of the page. A supplementary query — a rollup, a cross-record aggregate — degrades its own card and must not take the page down with it.
+- **Handle all three states.** Loading, error with a retry, and not-found are part of the page. A secondary query — a total computed across other records — degrades its own card and must not take the page down with it.
 
 ## Anti-patterns
 
-- A "Back to …" row in the `ActionPanel`, or any back affordance in the screen's top-right — the breadcrumb owns navigation, top left.
+- A "Back to …" entry in the `ActionPanel`, or any back affordance in the screen's top-right — the breadcrumb owns navigation, top left.
 - An action panel that empties in a terminal state with nothing explaining why — or one kept alive by navigation entries so it doesn't look empty.
 - A control on a derived status — a select or "mark received" button over a value another module owns.
 - A field the schema can't answer, invented to fill the summary's grid.
 - Dropping an empty field from the middle of a summary section, so the fields after it shift position between one record and the next.
 - A `Table.Footer` total over quantities in mixed units, or a currency symbol on a record with no currency — fabrication that reads as polish.
+- A `lines(first: 1000)` cap standing in for pagination on a document type that can exceed it.
 - Padding on a table container inside a card (`containerClassName="px-6"`) — double-pads the first column.
 - `type: "date"` on a date-only string — renders a day early in negative-offset timezones.
 - Splitting a record's own sections across tab panels, or putting the actions beside tabs so they appear to apply to the open panel.
 - A card for a single parent record — one parent is a linked field, which says it more clearly.
 - Hiding a related-record card once the relationship is possible — an empty card with a named empty state is information; a missing card isn't.
 - Collapsing a record's own status and its derived ones into one field, or rendering all of them as filled badges.
-- A pre-computed disabled state over a refusal the server owns — a dead button with no sentence.
+- A pre-computed disabled state over a refusal the server owns — a dead button with no explanation.
 - A dialog stricter than the command behind it, blocking the path the server would have accepted.
-- A `DataTable` for a dozen already-fetched line items.
+- A `DataTable` with toolbar and pagination for a dozen line items that were fetched with the record.
 - Load-bearing content in the right-hand column, which becomes a footer below 1024px.
-- An extension seam, internal identifier, or "see docs/…" pointer visible to an end user.
+- An extension slot, internal identifier, or "see docs/…" pointer visible to an end user.

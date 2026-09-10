@@ -220,8 +220,10 @@ export default function PurchaseOrderDetailPage({
         </Card.Root>
 
         {/* The document's own content. Identity, then its own numbers, then the
-            projections other modules write, then the derived subtotal.
-            No container padding — the cells inset themselves. */}
+            received quantity that comes from this order's receipts, then the
+            derived subtotal. A plain Table: this order has a handful of lines,
+            fetched with the record — see the entry for when a line set is large
+            enough to page. No container padding; the cells inset themselves. */}
         <Card.Root>
           <Card.Header title="Line items" />
           <Card.Content className="px-0!">

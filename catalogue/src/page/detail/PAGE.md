@@ -208,28 +208,27 @@ time, and the record is unblocked only once every one is released.
 `Card.Root` → `Card.Header` (title, plus a one-line description where the
 columns need explaining) → `Card.Content className="px-0!"` → `Table.Root`.
 
-Fetch the line items together with the record, with an explicit sort so the
-order is stable across reloads, and render them as a plain `Table`. That is what
-every implementation reviewed for this entry does on its read-only screens, and
-for the typical document — a handful to a few dozen lines — it is right: a
-toolbar and pagination would add controls with nothing to do.
+Fetch the line items with the record, sorted explicitly so the order is stable
+across reloads, and render them as a plain `Table`. For the typical document —
+a handful to a few dozen lines — that is right: a toolbar and pagination would
+add controls with nothing to do.
 
-It is not right for every document type. Some can carry hundreds of lines, and
-the usual way of coping — a hard cap on the query, `lines(first: 1000)` — is a
-stopgap, not a design: one client app's edit form silently deleted every line
-beyond the cap when a large order was saved, and it now pages lines at 100 per
-page instead. So:
+Some document types carry far more, so size the table for the document type's
+realistic maximum rather than for the record in front of you. Where a line count
+can run to hundreds, bound the table: give it an internal scroll region so the
+card doesn't grow without limit, and page the lines where scrolling alone would
+be unwieldy. A query cap such as `lines(first: 1000)` bounds the query, not the
+table — a record that reaches it shows an incomplete set with nothing on screen
+saying so, and it is never a substitute for scrolling or paging.
 
-- On the **read-only** screen, a plain `Table` over all lines is the default.
-- Where a document type is known to carry more than a page's worth, **page the lines** — 100 per page is what both implementations that hit this settled on — and say so in the card's description so the reader knows the table is not the whole set.
-- Never rely on a query cap to bound the table. If the cap can be reached, the page has to page.
-
-> **A shared line-items component is wanted.** Today every app builds this
-> table by hand, and the edit and read versions drift apart. The erp-kit
-> templates already carry the seed of one — a form-bound `LineItemsTable` with
-> optional client-side paging and a footer that mirrors `DataTable.Pagination` —
-> but nothing in AppShell yet covers reading and editing line items with paging
-> in one component. Until it exists, the guidance above is the interim answer.
+> **Team input needed — a shared line-items component.** Every app builds this
+> table by hand today, and the read and edit versions drift apart. The erp-kit
+> templates carry the closest thing to a starting point: a form-bound
+> `LineItemsTable` with optional client-side paging and a footer that mirrors
+> `DataTable.Pagination`. Nothing in AppShell yet covers reading and editing
+> line items, with paging, in one component.
+>
+> - [ ] Decide whether AppShell should own a line-items component, and what it covers
 
 Columns, left to right:
 
@@ -244,21 +243,18 @@ inside the card, never a bare header row.
 
 #### Numbers from related records
 
-Beyond its own numbers, a line can show figures that come from _other_
-documents. Which ones — if any — depends on where this record sits in the chain
-of documents it belongs to:
+A line can also carry figures that come from _other_ documents. Which ones —
+if any — depends on where the record sits in its chain:
 
-- **A record that other documents fulfil** — a purchase order, a sales order — can show, per line, how much of what it asked for has happened: received and billed quantities on an order line, shipped quantity on a sales-order line. These come from the receipts, invoices and shipments created from it.
-- **A record that fulfils another** — a goods receipt, a shipment — can show, per line, what it was fulfilling _against_: the ordered quantity from the source line, how much other receipts have already taken, and how much remains open. These come from the source document and its other children.
-- **A record with neither** — a payment, a purchase bill in a simple flow — shows only its own numbers.
+- **A record that others fulfil** (an order) can show what has happened against each line: received, billed, shipped.
+- **A record that fulfils another** (a receipt, a shipment) can show what it is fulfilling against: the quantity originally ordered, what other siblings have already taken, what remains open.
+- **Many records show neither** and carry only their own numbers.
 
-Include these columns when the related records exist and the reader is trying
-to reconcile against them. They are not a fixed part of the table: one
-implementation shows received and billed on its purchase-order lines, another
-shows only the order's own numbers on the same document type, and both are
-correct for their users. Where a figure is shown against a target, show the
-actual figure with a small muted difference beside it rather than a separate
-variance column.
+These are not a fixed part of the table — implementations differ on the same
+document type — so include them only where those related records exist and the
+reader is reconciling against them. Where a figure is shown against a target,
+put the difference beside the actual figure as muted text rather than adding a
+separate variance column.
 
 > **A total row is a claim, not a decoration.** Add `Table.Footer` only where
 > the column genuinely sums. An order priced in one currency totals cleanly. A
@@ -276,12 +272,20 @@ entries the record produced. Each is a small table of document number → status
 → date → the figure that matters, with the number linking to that record's own
 page.
 
-- Each entry's status badge is **that record's own status**, so it takes the filled semantic variant — the same treatment it gets on its own page. `outline-*` is for a record's derived statuses, and an entry in a related-records table has none.
+- Each entry's status badge is **that record's own status**, so it takes the filled semantic variant — the same treatment it gets on its own page.
 - Order the cards the way the work runs — goods movements before money movements
 - The empty state names the relationship ("No goods receipts linked to this order"), so the reader learns the relationship exists and is simply unused
 - Hide a card entirely only while the relationship is _impossible_ — a draft can have no receipts yet. Once it is possible, show it empty rather than hiding it
 - Group by parent where the hierarchy is real — orders, then the receipts under each
-- These tables point at records; they are not reports. If a related collection genuinely needs filtering and paging, that's `pattern/list/dense-scan` on its own route, linked from here
+
+> **Team input needed — how much these tables should do.** They are written
+> here as pointers: identify the related record, link to it, stop. The
+> alternative is letting them carry enough columns to answer a question without
+> leaving the page, at the cost of a second place that reports on the same data.
+> Where a related collection genuinely needs filtering and paging, the fallback
+> is `pattern/list/dense-scan` on its own route, linked from here.
+>
+> - [ ] Decide how far a related-records table goes before it becomes its own screen
 
 #### When a relationship is a card, and when it is a field on the summary
 
@@ -289,8 +293,8 @@ Not every related record deserves a card. The question comes up for every
 relationship the record has, and the answer follows from how many records are on
 the other end:
 
-**A relationship to one record is a link field on the summary. A relationship to
-many records needs a card.**
+**A relationship to one other record is a link field on the summary. A
+relationship to many other records needs a card.**
 
 Typically, if the record has a parent it has only one, so the parent appears as
 a link on the summary description card. If it has child records there are many
@@ -318,20 +322,23 @@ page already holds, and must be labelled as one. After posting they are the real
 entries, fetched by document number — and posting often books more than one, so
 fetch the whole set rather than the obvious one.
 
-#### Opening a related record — flagged for team review
+#### Opening a related record
 
-A related record's document number links through to that record's own page. The
-unsettled case is cross-checking: someone matching an invoice against its
-receipts wants to glance at each receipt without losing their place on the
-invoice. The implementations reviewed disagree on what that glance should be:
+A related record's document number **links through** to that record's own page.
+That is the convention across every implementation reviewed, and the default
+here. Add an open-in-a-new-tab affordance on each entry — Omakase pins a
+new-tab control as a column and offers the same through a right-click menu — so
+someone comparing records can keep this one open.
 
-- **Link through** to the record's page, with an open-in-new-tab control on each entry — Larson
-- **A compact modal** over the current page — the erp-kit templates
-- **A Sheet** (right-hand slide-out) — Denim Tears, though for revision history rather than related records
-
-**To decide:** which the pattern endorses, and what should determine the choice
-— the depth of the record being opened, or whether the reader is comparing or
-leaving. Until then, link through, and use one treatment per card.
+> **Team input needed — the cross-checking case.** Someone matching an invoice
+> against its receipts wants to glance at each receipt without losing their
+> place. Link-through handles that only via a new tab. The alternatives seen are
+> a modal over the current page (the erp-kit journal entry — the sole exception
+> among 25 collection tables there, and that record has a detail route as well)
+> and a Sheet, which Denim Tears uses for revision history rather than for
+> related records.
+>
+> - [ ] Decide whether a modal or a Sheet is ever the right answer here, and what determines it — the depth of the record being opened, or whether the reader is comparing or leaving
 
 ### 6. Reference documents
 

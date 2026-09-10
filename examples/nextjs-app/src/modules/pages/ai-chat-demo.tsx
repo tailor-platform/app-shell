@@ -67,8 +67,8 @@ const AIChatDemoPage = () => {
       <Layout.Header title="AIChat Demo" />
       <Layout.Column>
         <p className="astw:text-sm astw:text-muted-foreground">
-          Runs on a scripted mock — no model is called. Streaming, Stop, attachments, and the
-          message actions all exercise the real component.
+          Runs on a scripted mock — no model is called. Streaming, Stop, and the message actions all
+          exercise the real component.
         </p>
         {/* `overflow-hidden` keeps the header rule inside the card's rounded corners. */}
         <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
@@ -122,7 +122,6 @@ const AIChatDemoPage = () => {
             <AIChat.Composer
               onSubmit={(message) => sendMessage(message)}
               onStop={stop}
-              attachments
               actions={<Checkbox label="Search the knowledge base" />}
               placeholder="Ask about your orders…"
             />

@@ -12,7 +12,6 @@ afterEach(() => {
 
 const textbox = () => screen.getByRole("textbox", { name: "Message" }) as HTMLTextAreaElement;
 const sendButton = () => screen.getByRole("button", { name: "Send" }) as HTMLButtonElement;
-const fileInput = () => document.querySelector('input[type="file"]') as HTMLInputElement;
 
 // A tree whose transcript changes per render, with one child the root rejects.
 const strayChildTree = (token: string) => (
@@ -240,7 +239,7 @@ describe("AIChat", () => {
       const { onSubmit } = renderComposer();
       await user.type(textbox(), "  hi there  ");
       await user.keyboard("{Enter}");
-      expect(onSubmit).toHaveBeenCalledWith("hi there", []);
+      expect(onSubmit).toHaveBeenCalledWith("hi there");
       expect(textbox().value).toBe("");
     });
 
@@ -349,7 +348,7 @@ describe("AIChat", () => {
       render(<Controlled />);
       await user.type(textbox(), "hi");
       await user.keyboard("{Enter}");
-      expect(onSubmit).toHaveBeenCalledWith("hi", []);
+      expect(onSubmit).toHaveBeenCalledWith("hi");
       expect(seen.at(-1)).toBe("");
       expect(textbox().value).toBe("");
     });
@@ -357,110 +356,6 @@ describe("AIChat", () => {
     it("renders actions in the action row", () => {
       renderComposer({ actions: <button type="button">Internal note</button> });
       expect(screen.getByRole("button", { name: "Internal note" })).toBeDefined();
-    });
-
-    describe("attachments", () => {
-      it("does not render the attach button by default", () => {
-        renderComposer();
-        expect(screen.queryByRole("button", { name: "Attach files" })).toBeNull();
-      });
-
-      it("shows the attach button and a chip for a staged file", async () => {
-        const user = userEvent.setup();
-        renderComposer({ attachments: true });
-        expect(screen.getByRole("button", { name: "Attach files" })).toBeDefined();
-        await user.upload(fileInput(), new File(["hello"], "notes.txt", { type: "text/plain" }));
-        expect(screen.getByText("notes.txt")).toBeDefined();
-      });
-
-      it("shows a thumbnail for a staged image", async () => {
-        const user = userEvent.setup();
-        renderComposer({ attachments: true });
-        await user.upload(fileInput(), new File(["x"], "shot.png", { type: "image/png" }));
-        expect(screen.getByRole("img", { name: "shot.png" }).getAttribute("src")).toMatch(
-          /^blob:|^data:/,
-        );
-      });
-
-      it("submits staged attachments alongside the message and clears them", async () => {
-        const user = userEvent.setup();
-        const { onSubmit } = renderComposer({ attachments: true });
-        await user.upload(fileInput(), new File(["hello"], "notes.txt", { type: "text/plain" }));
-        await user.type(textbox(), "see attached");
-        await user.keyboard("{Enter}");
-        const [message, attachments] = onSubmit.mock.calls[0];
-        expect(message).toBe("see attached");
-        expect(attachments).toHaveLength(1);
-        expect(attachments[0].fileName).toBe("notes.txt");
-        expect(screen.queryByText("notes.txt")).toBeNull();
-      });
-
-      it("revokes the object URLs it created when the message is sent", async () => {
-        const user = userEvent.setup();
-        const revoke = vi.spyOn(URL, "revokeObjectURL");
-        const { onSubmit } = renderComposer({ attachments: true });
-        await user.upload(fileInput(), new File(["x"], "shot.png", { type: "image/png" }));
-        const staged = screen.getByRole("img", { name: "shot.png" }).getAttribute("src")!;
-        revoke.mockClear();
-
-        await user.type(textbox(), "see attached");
-        await user.keyboard("{Enter}");
-
-        expect(revoke).toHaveBeenCalledWith(staged);
-        // The caller still gets the File, which is what a send handler needs.
-        expect(onSubmit.mock.calls[0][1][0].file).toBeInstanceOf(File);
-      });
-
-      it("removes a staged attachment from its chip", async () => {
-        const user = userEvent.setup();
-        renderComposer({ attachments: true });
-        await user.upload(fileInput(), new File(["x"], "notes.txt", { type: "text/plain" }));
-        await user.click(screen.getByRole("button", { name: "Remove notes.txt" }));
-        expect(screen.queryByText("notes.txt")).toBeNull();
-      });
-
-      it("replaces the staged file instead of appending when multiple is false", async () => {
-        const user = userEvent.setup();
-        const { onSubmit } = renderComposer({ attachments: { multiple: false } });
-        expect(fileInput().multiple).toBe(false);
-
-        // Two separate trips through the picker: the native `multiple`
-        // attribute only caps one, so appending would leave both staged.
-        await user.upload(fileInput(), new File(["a"], "first.txt", { type: "text/plain" }));
-        await user.upload(fileInput(), new File(["b"], "second.txt", { type: "text/plain" }));
-        expect(screen.queryByText("first.txt")).toBeNull();
-        expect(screen.getByText("second.txt")).toBeDefined();
-
-        await user.type(textbox(), "one file only");
-        await user.keyboard("{Enter}");
-        expect(onSubmit.mock.calls[0][1]).toHaveLength(1);
-      });
-
-      it("passes accept through from the attachments options", () => {
-        renderComposer({ attachments: { accept: "image/*" } });
-        expect(fileInput().getAttribute("accept")).toBe("image/*");
-      });
-
-      it("removes the newest attachment on Backspace in an empty composer", async () => {
-        const user = userEvent.setup();
-        renderComposer({ attachments: true });
-        await user.upload(fileInput(), [
-          new File(["a"], "first.txt", { type: "text/plain" }),
-          new File(["b"], "second.txt", { type: "text/plain" }),
-        ]);
-        await user.click(textbox());
-        await user.keyboard("{Backspace}");
-        expect(screen.queryByText("second.txt")).toBeNull();
-        expect(screen.getByText("first.txt")).toBeDefined();
-      });
-
-      it("opens the file picker from the attach button", async () => {
-        const user = userEvent.setup();
-        renderComposer({ attachments: true });
-        const click = vi.spyOn(fileInput(), "click").mockImplementation(() => {});
-        await user.click(screen.getByRole("button", { name: "Attach files" }));
-        expect(click).toHaveBeenCalledTimes(1);
-      });
     });
   });
 

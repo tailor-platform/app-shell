@@ -15,7 +15,6 @@ import type { ComponentProps, ReactNode } from "react";
 import { describe, it, expectTypeOf } from "vitest";
 import {
   AIChat,
-  type AIChatAttachment,
   type AIChatComposerProps,
   type AIChatHeaderProps,
   type AIChatProps,
@@ -32,10 +31,8 @@ describe("region ownership", () => {
     expectTypeOf<AIChatProps>().not.toHaveProperty("composerActions");
   });
 
-  it("types Composer's onSubmit as (message, attachments), not a DOM submit handler", () => {
-    expectTypeOf<AIChatComposerProps["onSubmit"]>().toEqualTypeOf<
-      (message: string, attachments: AIChatAttachment[]) => void
-    >();
+  it("types Composer's onSubmit as (message), not a DOM submit handler", () => {
+    expectTypeOf<AIChatComposerProps["onSubmit"]>().toEqualTypeOf<(message: string) => void>();
   });
 
   it("types Header's title as content", () => {

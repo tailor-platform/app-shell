@@ -1,7 +1,5 @@
-import { ArrowUp, Loader2, Paperclip, Square } from "lucide-react";
+import { ArrowUp, Loader2, Square } from "lucide-react";
 import {
-  useEffect,
-  useRef,
   useState,
   type ComponentProps,
   type FormEvent,
@@ -14,11 +12,10 @@ import { Textarea } from "@/components/textarea";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
 import { useAIChatContext } from "./ai-chat-context";
-import { AttachmentChip, type AIChatAttachment } from "./attachment-chip";
 
 type AIChatComposerProps = {
-  /** Called with the trimmed prompt and any staged attachments when the composer submits. */
-  onSubmit: (message: string, attachments: AIChatAttachment[]) => void;
+  /** Called with the trimmed prompt when the composer submits. */
+  onSubmit: (message: string) => void;
   /** Called from the Stop button while the chat's `status` is `"submitted"` or `"streaming"`. Omit to show a plain busy state with no Stop affordance. */
   onStop?: () => void;
   /** Controlled draft. Cleared (via `onValueChange("")`) after a successful submit. */
@@ -35,39 +32,10 @@ type AIChatComposerProps = {
    * @default true
    */
   submitOnEnter?: boolean;
-  /**
-   * Show the attach-file button and staged-attachment chips. Pass an object
-   * to configure the picker — the options are scoped to the feature they
-   * configure, so there is no way to set them while attachments are off.
-   * @default false
-   */
-  attachments?: boolean | AIChatAttachmentOptions;
-  /** Open slot on the action row, left of the attach button — a visibility toggle, a model picker, a template select. */
+  /** Open slot on the action row — a visibility toggle, a model picker, a template select. */
   actions?: ReactNode;
   className?: string;
 };
-
-type AIChatAttachmentOptions = {
-  /** Accepted file types, passed to the hidden file input. */
-  accept?: string;
-  /**
-   * Allow more than one staged file. When `false`, picking a file replaces
-   * whatever was staged — the native input's `multiple` only limits a single
-   * trip through the dialog, so appending would let a caller reopen it and
-   * stage several anyway.
-   * @default true
-   */
-  multiple?: boolean;
-};
-
-/** `false` when attachments are off; otherwise the resolved picker options. */
-function resolveAttachments(
-  attachments: boolean | AIChatAttachmentOptions,
-): AIChatAttachmentOptions | null {
-  if (attachments === false) return null;
-  if (attachments === true) return {};
-  return attachments;
-}
 
 type SubmitControlProps = {
   busy: boolean;
@@ -105,22 +73,12 @@ function SubmitControl({ busy, canSubmit, onStop }: SubmitControlProps) {
   );
 }
 
-function buildAttachment(file: File): AIChatAttachment {
-  return {
-    id: crypto.randomUUID(),
-    file,
-    fileName: file.name,
-    mimeType: file.type || "application/octet-stream",
-    previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
-  };
-}
-
 /**
  * The chat's fixed footer: a `Textarea` body over one action row, following
- * the `form/composer` pattern — left side open for `actions` (plus the attach
- * button, when enabled), right side fixed to a single submit control. Enter
- * submits and is IME-safe; Shift+Enter inserts a newline. The submit button
- * becomes Stop while the chat's `status` is busy.
+ * the `form/composer` pattern — left side open for `actions`, right side fixed
+ * to a single submit control. Enter submits and is IME-safe; Shift+Enter
+ * inserts a newline. The submit button becomes Stop while the chat's `status`
+ * is busy.
  *
  * Reads `status` from the surrounding `AIChat`.
  */
@@ -133,16 +91,11 @@ function Composer({
   placeholder,
   disabled = false,
   submitOnEnter = true,
-  attachments = false,
   actions,
   className,
 }: AIChatComposerProps) {
   const { status } = useAIChatContext("AIChat.Composer");
   const t = useT();
-
-  const attachmentOptions = resolveAttachments(attachments);
-  const attachmentsEnabled = attachmentOptions !== null;
-  const allowMultiple = attachmentOptions?.multiple ?? true;
 
   const [internalValue, setInternalValue] = useState(defaultValue);
   const draft = value ?? internalValue;
@@ -151,62 +104,14 @@ function Composer({
     onValueChange?.(next);
   };
 
-  const [files, setFiles] = useState<AIChatAttachment[]>([]);
-  const filesRef = useRef(files);
-  filesRef.current = files;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Revoke any remaining object URLs on unmount (e.g. the user attached a
-  // file and navigated away without sending).
-  useEffect(() => {
-    return () => {
-      for (const attachment of filesRef.current) {
-        if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
-      }
-    };
-  }, []);
-
   const busy = status === "submitted" || status === "streaming";
   const canSubmit = !disabled && !busy && draft.trim().length > 0;
-
-  const addFiles = (incoming: FileList | File[]) => {
-    const incomingFiles = Array.from(incoming);
-    if (allowMultiple) {
-      setFiles((prev) => [...prev, ...incomingFiles.map(buildAttachment)]);
-      return;
-    }
-    // Single-file mode replaces rather than appends, and only the kept file
-    // gets an object URL. Revoking here rather than inside the updater keeps
-    // the side effect out of a function React may call twice.
-    const replacement = incomingFiles.slice(-1).map(buildAttachment);
-    for (const attachment of filesRef.current) {
-      if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
-    }
-    setFiles(replacement);
-  };
-
-  const removeFile = (id: string) => {
-    setFiles((prev) => {
-      const found = prev.find((f) => f.id === id);
-      if (found?.previewUrl) URL.revokeObjectURL(found.previewUrl);
-      return prev.filter((f) => f.id !== id);
-    });
-  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSubmit) return;
-    const snapshot = files;
-    setFiles([]);
     setDraft("");
-    onSubmit(draft.trim(), snapshot);
-    // The composer revokes every URL it created, so sending an image does not
-    // leak one for the life of the page. `previewUrl` is therefore only valid
-    // while the file is staged; a caller that wants to show a sent image in
-    // the transcript makes its own URL from `attachment.file`, and owns it.
-    for (const attachment of snapshot) {
-      if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
-    }
+    onSubmit(draft.trim());
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -221,11 +126,6 @@ function Composer({
       event.preventDefault();
       event.currentTarget.form?.requestSubmit();
     }
-    if (event.key === "Backspace" && event.currentTarget.value === "" && files.length > 0) {
-      event.preventDefault();
-      const last = files.at(-1);
-      if (last) removeFile(last.id);
-    }
   };
 
   return (
@@ -237,28 +137,6 @@ function Composer({
         className,
       )}
     >
-      {attachmentsEnabled ? (
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={attachmentOptions?.accept}
-          multiple={allowMultiple}
-          onChange={(event) => {
-            if (event.currentTarget.files?.length) addFiles(event.currentTarget.files);
-            event.currentTarget.value = "";
-          }}
-          className="astw:hidden"
-          aria-hidden
-          tabIndex={-1}
-        />
-      ) : null}
-      {attachmentsEnabled && files.length > 0 ? (
-        <div className="astw:flex astw:flex-wrap astw:gap-1.5">
-          {files.map((attachment) => (
-            <AttachmentChip key={attachment.id} attachment={attachment} onRemove={removeFile} />
-          ))}
-        </div>
-      ) : null}
       <Textarea
         aria-label={t("aiChatMessage")}
         value={draft}
@@ -271,21 +149,7 @@ function Composer({
         disabled={disabled}
       />
       <div className="astw:flex astw:items-center astw:justify-between astw:gap-2">
-        <div className="astw:flex astw:min-w-0 astw:items-center astw:gap-2">
-          {attachmentsEnabled ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={t("aiChatAttachFiles")}
-              disabled={disabled}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Paperclip className="astw:size-4" aria-hidden />
-            </Button>
-          ) : null}
-          {actions}
-        </div>
+        <div className="astw:flex astw:min-w-0 astw:items-center astw:gap-2">{actions}</div>
         <div className="astw:shrink-0">
           <SubmitControl busy={busy} canSubmit={canSubmit} onStop={onStop} />
         </div>
@@ -294,4 +158,4 @@ function Composer({
   );
 }
 
-export { Composer, type AIChatComposerProps, type AIChatAttachmentOptions };
+export { Composer, type AIChatComposerProps };

@@ -13,7 +13,6 @@ import type { AIChatStatus } from "@/ai/use-ai-chat";
 import { cn } from "@/lib/utils";
 import { Action, Actions } from "./actions";
 import { AIChatContext } from "./ai-chat-context";
-import type { AIChatAttachment } from "./attachment-chip";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -243,10 +242,10 @@ const AIChat: AIChatComponent = Object.assign(AIChatRoot, {
   History: ChatHistory,
 });
 
-export { AIChat, type AIChatProps, type AIChatAttachment };
+export { AIChat, type AIChatProps };
 export type { AIChatHeaderProps } from "./header";
 export type { AIChatConversationProps } from "./conversation";
-export type { AIChatComposerProps, AIChatAttachmentOptions } from "./composer";
+export type { AIChatComposerProps } from "./composer";
 export type { ToolState } from "./tool";
 export type { ChainOfThoughtStepStatus } from "./chain-of-thought";
 export type { ChatHistoryGroupData, ChatHistoryItemData } from "./chat-history";

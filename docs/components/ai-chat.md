@@ -15,7 +15,6 @@ It renders no border or background of its own. Wrap it in [`Card`](./card.md), [
 
 ```tsx
 import { AIChat, useAIChat, createAIGatewayClient } from "@tailor-platform/app-shell";
-import type { AIChatAttachment } from "@tailor-platform/app-shell";
 ```
 
 ## Basic usage
@@ -87,19 +86,18 @@ Other props spread onto the region's outer `<div>`.
 
 ### `AIChat.Composer`
 
-| Prop            | Type                                                         | Default  | Description                                                                           |
-| --------------- | ------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------- |
-| `onSubmit`      | `(message: string, attachments: AIChatAttachment[]) => void` | required | Called with the trimmed prompt and any staged attachments.                            |
-| `onStop`        | `() => void`                                                 | -        | Called from the Stop button while the chat is busy. Omit for a plain busy state.      |
-| `value`         | `string`                                                     | -        | Controlled draft. Cleared via `onValueChange("")` after a successful submit.          |
-| `defaultValue`  | `string`                                                     | `""`     | Uncontrolled draft's initial value.                                                   |
-| `onValueChange` | `(value: string) => void`                                    | -        | Called on every draft change, including the post-submit clear.                        |
-| `placeholder`   | `string`                                                     | -        |                                                                                       |
-| `disabled`      | `boolean`                                                    | `false`  | Disables the composer — not the transcript above it.                                  |
-| `submitOnEnter` | `boolean`                                                    | `true`   | Enter submits (IME-safe); Shift+Enter always inserts a newline.                       |
-| `attachments`   | `boolean \| { accept?: string; multiple?: boolean }`         | `false`  | Show the attach-file button and staged chips. Pass an object to configure the picker. |
-| `actions`       | `ReactNode`                                                  | -        | Open slot on the action row — a visibility toggle, a model picker, a select.          |
-| `className`     | `string`                                                     | -        |                                                                                       |
+| Prop            | Type                        | Default  | Description                                                                      |
+| --------------- | --------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `onSubmit`      | `(message: string) => void` | required | Called with the trimmed prompt.                                                  |
+| `onStop`        | `() => void`                | -        | Called from the Stop button while the chat is busy. Omit for a plain busy state. |
+| `value`         | `string`                    | -        | Controlled draft. Cleared via `onValueChange("")` after a successful submit.     |
+| `defaultValue`  | `string`                    | `""`     | Uncontrolled draft's initial value.                                              |
+| `onValueChange` | `(value: string) => void`   | -        | Called on every draft change, including the post-submit clear.                   |
+| `placeholder`   | `string`                    | -        |                                                                                  |
+| `disabled`      | `boolean`                   | `false`  | Disables the composer — not the transcript above it.                             |
+| `submitOnEnter` | `boolean`                   | `true`   | Enter submits (IME-safe); Shift+Enter always inserts a newline.                  |
+| `actions`       | `ReactNode`                 | -        | Open slot on the action row — a visibility toggle, a model picker, a select.     |
+| `className`     | `string`                    | -        |                                                                                  |
 
 ## Prop pass-through
 
@@ -112,7 +110,7 @@ Most props stay inside their region. These `AIChat.Composer` props land on **ano
 | `disabled`    | [`Textarea`](./textarea.md) **and** the attach [`Button`](./button.md) | One prop, two components.               |
 | `onStop`      | [`Button`](./button.md) `onClick`                                      | Becomes the Stop button's handler.      |
 
-`accept` and `multiple` reach a plain hidden `<input type="file">`, not an AppShell component. `onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds the composer's own state and is never forwarded. Nothing on `AIChat`, `AIChat.Header`, or `AIChat.Conversation` reaches another AppShell component.
+`onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds the composer's own state and is never forwarded. Nothing on `AIChat`, `AIChat.Header`, or `AIChat.Conversation` reaches another AppShell component.
 
 Three attached parts wrap an AppShell component. They expose only the props the part's job needs rather than inheriting the wrapped component's surface, so its visual treatment is fixed and not yours to change:
 
@@ -307,28 +305,10 @@ Grouped list of past conversations for reopening an earlier chat. Layout-agnosti
 />
 ```
 
-## Attachments
-
-Set `attachments` on `AIChat.Composer` to show the paperclip button and staged-attachment chips — `true` for the defaults, or `{ accept, multiple }` to configure the picker. The options sit inside the prop they configure, so there is no way to set `accept` while attachments are off. Staged files arrive in `onSubmit`'s second argument as `AIChatAttachment[]` — each one shares `AttachmentItem`'s shape (`id`, `fileName`, `mimeType`, `previewUrl`) plus the raw `file: File`:
-
-```tsx
-<AIChat.Composer
-  attachments={{ accept: "image/*,application/pdf" }}
-  onSubmit={(message, attachments) => sendMessage(message, attachments)}
-/>
-```
-
-With `multiple: false`, picking a file **replaces** whatever was staged. The native input's `multiple` attribute only limits a single trip through the dialog, so appending would let a caller reopen the picker and stage several anyway.
-
-Staged files live in the composer until submit, then clear. For a persisted record's file list — initial items and buffered upload/delete operations flushed to a backend — use [`Attachment`](./attachment.md) instead.
-
-**`previewUrl` is only valid while the file is staged.** The composer creates those object URLs for the chip previews and revokes them on submit, so sending an image does not leak one for the life of the page. `onSubmit` still hands you `attachment.file`, which is what an upload needs; if you want to show a sent image in the transcript, create your own URL from that `File` and revoke it when you are done with it.
-
 ## Related components
 
 - [Layout](./layout.md) — the same children-placed-by-the-root shape
 - [Textarea](./textarea.md) — the composer's body control
-- [Attachment](./attachment.md) — for a persisted record's file list, a different lifecycle from the composer's own attachments
 - [Card](./card.md)
 - [Button](./button.md)
 - [useAIChat](../api/use-ai-chat.md)

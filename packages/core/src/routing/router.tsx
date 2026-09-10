@@ -26,6 +26,7 @@ const createRootRoute = (params: {
   const { loaderID, loader } = createNavItemsLoader({
     modules: configurations.modules,
     locale: configurations.locale,
+    basePath: configurations.basePath,
   });
 
   // --- Children: wrap with error boundary when configured ---

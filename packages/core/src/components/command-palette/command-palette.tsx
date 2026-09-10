@@ -7,7 +7,12 @@ import { Input } from "@/components/input";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
 import { filterRoutes, NavigatableRoute } from "@/routing/path";
-import { useNavItems, NavItem, NavItemResource } from "../../routing/navigation";
+import {
+  useNavItems,
+  useCommandPaletteRoutes,
+  NavItem,
+  NavItemResource,
+} from "../../routing/navigation";
 import {
   useCommandPaletteActions,
   useCommandPaletteState,
@@ -753,12 +758,27 @@ export function CommandPalette(): React.ReactNode {
  */
 export function BuiltInCommandPalette() {
   const navItems = useNavItems();
+  const currentPathAwareRoutes = useCommandPaletteRoutes();
   const appInfoRoute = useAppInfoPageRoute();
 
   return (
     <Suspense fallback={null}>
+      {/*
+        Keep these Await boundaries separate. Wrapping the root-loader promises in
+        Promise.all() looks equivalent, but it can leave route transitions stuck
+        in pending state when a page updates search params during navigation.
+      */}
       <Await resolve={navItems}>
-        {(items) => <CommandPaletteContent navItems={items ?? []} extraRoutes={[appInfoRoute]} />}
+        {(items) => (
+          <Await resolve={currentPathAwareRoutes}>
+            {(dynamicRoutes) => (
+              <CommandPaletteContent
+                navItems={items ?? []}
+                extraRoutes={[...(dynamicRoutes ?? []), appInfoRoute]}
+              />
+            )}
+          </Await>
+        )}
       </Await>
     </Suspense>
   );

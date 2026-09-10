@@ -582,17 +582,40 @@ of actions, external-system link and history.
 
 <!-- source: detail.tsx -->
 
+## Open questions
+
+Two placement rules from the earlier draft are held back for the team rather
+than stated as constraints. Both are defensible either way, and both would be
+enforced across every detail screen once settled.
+
+> **Team input needed — one home per action.** The draft said an action lives
+> in exactly one place: if "Create goods receipt" sits in the actions, it does
+> not also sit in the header of the goods-receipts card. The argument for is
+> that two homes make neither canonical. The argument against is that an action
+> is most discoverable next to the records it produces, and Denim Tears
+> deliberately puts it in both, on the grounds that "the action lives where its
+> results are listed".
+>
+> - [ ] Decide whether an action may appear both in the actions panel and in the card that lists its results
+
+> **Team input needed — what `Layout.Header` carries.** The draft said the
+> title and nothing else: no status badge, no buttons, with status in the
+> summary and every action in the right-hand column. That matches all three
+> implementations reviewed, none of which puts anything actionable in the
+> header. The open part is whether a record's primary status belongs in the
+> header for at-a-glance reading, and whether a single primary call to action
+> ever earns a place there.
+>
+> - [ ] Decide what may sit in `Layout.Header` besides the title — status badge, primary action, neither
+
 ## Constraints
 
-- **`Layout.Header` carries the title and nothing else.** No status badge, no buttons. The status belongs in the summary with the rest of the record's state; the actions belong in the right-hand column.
-- **Every action has exactly one home.** If "Create goods receipt" sits in the actions, it doesn't also sit in the goods-receipts card header. Either placement is defensible; both at once makes neither canonical.
 - **Every main-column section sits in a `Card.Root`** — except `DescriptionCard`, which contains itself, and `Alert`, which is a banner. No bare `<div>` sections.
 - **A table in a card needs ONE geometry change, not two.** Zero the card's padding (`Card.Content className="px-0!"`, or drop `Card.Content`) and leave the table container alone. `Table.Head` and `Table.Cell` already inset their own first and last cells by 24px; padding on the table container stacks on top of that and pushes the first column 24px right of the card title.
 - **Bare `YYYY-MM-DD` dates must not use `type: "date"`.** `DescriptionCard` hands the value to `new Date(...)`, which reads a date-only string as UTC midnight and renders the previous day west of Greenwich. Pre-format those as text via `render`. Real timestamps keep `type: "date"`, with `emptyBehavior: "hide"` when nullable.
 - **`ActionPanel` is workflow-only.** No navigation, no "view related record" — those are links in the cards that hold them.
 - **Never rely on a query cap to bound the line-items table.** If the cap can be reached, page the lines.
 - **A page-level Save belongs to a form, not here.** Edits commit per field, per group, or through a sub-route.
-- **Write plain, unprefixed Tailwind classes.** The `astw:` prefix is AppShell's own internal one; a consumer's Tailwind build never generates it, so an `astw:` class in application code silently does nothing unless AppShell happens to ship that exact utility. Three cases, in order of preference: use a real prop where the component has one (`Table.Head align`); to **add** a property AppShell doesn't set on that element, a plain utility works; to **override** one it does set, a plain utility loses the cascade — reach for the `!` importance modifier (`px-0!`). Zeroing the card's padding is the only override on this page.
 - **Handle all three states.** Loading, error with a retry, and not-found are part of the page. A secondary query — a total computed across other records — degrades its own card and must not take the page down with it.
 
 ## Anti-patterns

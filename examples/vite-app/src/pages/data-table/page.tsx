@@ -316,20 +316,21 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
   });
 
   const [data, setData] = useState<DataTableData<Invoice>>();
-  const [loading, setLoading] = useState(true);
   const requestId = useRef(0);
+  const variablesKey = JSON.stringify(variables);
+  const [resolvedVariablesKey, setResolvedVariablesKey] = useState("");
+  const loading = resolvedVariablesKey !== variablesKey;
 
   useEffect(() => {
     const id = ++requestId.current;
-    setLoading(true);
     queryInvoices(variables).then((result) => {
       // Ignore out-of-order responses from superseded requests.
       if (id === requestId.current) {
         setData(result);
-        setLoading(false);
+        setResolvedVariablesKey(variablesKey);
       }
     });
-  }, [variables]);
+  }, [variables, variablesKey]);
 
   const table = useDataTable({ columns, data, loading, control });
 

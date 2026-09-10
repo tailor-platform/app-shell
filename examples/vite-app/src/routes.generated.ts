@@ -25,6 +25,7 @@ export type GeneratedRouteParams = {
   "/dashboard/products": {};
   "/data-table": {};
   "/data-table-lab": {};
+  "/data-table-selection": {};
   "/date-picker": {};
   "/settings": {};
 };

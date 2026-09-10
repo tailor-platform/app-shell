@@ -6,7 +6,7 @@ Promote the detail-screen guidance in the bundled `app-shell-patterns` skill fro
 
 `detail/hero-with-actions` moves out of `src/pattern/` to become `page/detail`, the first entry in the `page` category. A detail screen is the shape of a whole route rather than one recipe used inside one, so it belongs at the page layer where an agent meets it before choosing anything else.
 
-The main column is now a fixed card order that a record skips into but never reorders: terminal-state alerts, the summary, upstream sources and blocks, line items, downstream documents and the journal, then an extension seam. The rail is actions, then external-system context, then history.
+The main column is now a fixed card order that a record skips into but never reorders: terminal-state alerts, the summary, upstream sources and blocks, line items, downstream documents and the journal. The rail is actions, then external-system context, then history.
 
 Points worth calling out:
 

@@ -83,7 +83,6 @@ An example, with more cards filled in than most records will have:
 |  Card  Journal                   |  ActivityCard        |
 |  Card  Reference documents       |   History            |
 |                                  |                      |
-|  «extension slot»       last     |                      |
 +----------------------------------+----------------------+
 ```
 
@@ -103,7 +102,6 @@ Cards in this order. Skip what doesn't apply; don't reorder what does.
 | Line items            | The record has contents                                      | The record's own content                           |
 | Related records       | The relationship is possible                                 | What this record has caused                        |
 | Reference documents   | Files hang off the record                                    | Attachments, with a viewer link                    |
-| Extension slot        | Another module owns content that belongs here                | Mark where that module mounts                      |
 
 The **summary is the only card that always appears.** Line items are on most
 documents but not on all records — a supplier or a site has no contents to list,
@@ -307,8 +305,7 @@ not direction, is what decides.
 The other case for a card is a relationship the API cannot follow. A
 polymorphic link — a `sourceType` / `sourceId` pair with no union type and no
 relation field on either side — cannot be traversed in a GraphQL query in either
-direction, so it has to be resolved by the page, or handed to another module
-through an extension slot. A field cannot express it.
+direction, so it has to be resolved by the page. A field cannot express it.
 
 If you find yourself building a card to display a single supplier, that
 relationship belongs on the summary instead.
@@ -321,12 +318,20 @@ page already holds, and must be labelled as one. After posting they are the real
 entries, fetched by document number — and posting often books more than one, so
 fetch the whole set rather than the obvious one.
 
-#### Navigating out versus checking against
+#### Opening a related record — flagged for team review
 
-A related record is normally a link. Where someone is cross-checking rather than
-leaving — matching an invoice against its receipts — the document number opens a
-compact modal instead, so their place survives the check. Pick one per card and
-stay consistent within it.
+A related record's document number links through to that record's own page. The
+unsettled case is cross-checking: someone matching an invoice against its
+receipts wants to glance at each receipt without losing their place on the
+invoice. The implementations reviewed disagree on what that glance should be:
+
+- **Link through** to the record's page, with an open-in-new-tab control on each entry — Larson
+- **A compact modal** over the current page — the erp-kit templates
+- **A Sheet** (right-hand slide-out) — Denim Tears, though for revision history rather than related records
+
+**To decide:** which the pattern endorses, and what should determine the choice
+— the depth of the record being opened, or whether the reader is comparing or
+leaving. Until then, link through, and use one treatment per card.
 
 ### 6. Reference documents
 
@@ -334,18 +339,6 @@ Files that hang off the record — a supplier's signed contract, a scanned
 delivery note, a photo of damaged goods. One card titled **Reference
 documents**, near the end of the main column, listing each file with a viewer
 link, and an upload control gated on the record's state.
-
-Cards are independent units, so this one can be composed as a sibling of the
-rest rather than nested inside whatever renders the record's own fields.
-
-### 7. Extension slot — always last
-
-Some content that belongs on this record is owned by another module — an
-integration's sync detail, a relationship the API can't follow. Rather than leave
-a gap or a missing card, define a slot the owning module can fill. It goes
-_after_ the record's own cards: borrowed content doesn't outrank what the reader
-came for. AppShell ships no slot primitive, so the mechanism is an app-level
-concern; whatever it is, an unfilled slot must never reach an end user.
 
 ## Secondary (right-hand) column
 
@@ -603,4 +596,4 @@ of actions, external-system link and history.
 - A dialog stricter than the command behind it, blocking the path the server would have accepted.
 - A `DataTable` with toolbar and pagination for a dozen line items that were fetched with the record.
 - Load-bearing content in the right-hand column, which becomes a footer below 1024px.
-- An extension slot, internal identifier, or "see docs/…" pointer visible to an end user.
+- An internal identifier or "see docs/…" pointer visible to an end user.

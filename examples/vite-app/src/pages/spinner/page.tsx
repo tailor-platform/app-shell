@@ -32,10 +32,10 @@ const SpinnerPage = () => {
             Sizes
           </h3>
           <div className="flex flex-wrap items-center gap-6 rounded-lg border p-4">
-            <Spinner aria-label="Loading small" className="size-3" />
+            <Spinner aria-label="Loading extra small" size="xs" />
+            <Spinner aria-label="Loading small" size="sm" />
             <Spinner aria-label="Loading default" />
-            <Spinner aria-label="Loading medium" className="size-5" />
-            <Spinner aria-label="Loading large" className="size-8" />
+            <Spinner aria-label="Loading large" size="lg" />
           </div>
         </section>
 
@@ -63,11 +63,11 @@ const SpinnerPage = () => {
           </h3>
           <div className="flex flex-wrap items-center gap-3 rounded-lg border p-4">
             <Button disabled>
-              <Spinner aria-hidden className="size-4" />
+              <Spinner aria-hidden />
               Saving
             </Button>
             <Button variant="outline" disabled>
-              <Spinner aria-hidden className="size-4" />
+              <Spinner aria-hidden />
               Syncing
             </Button>
           </div>

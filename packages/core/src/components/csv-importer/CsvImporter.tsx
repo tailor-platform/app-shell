@@ -374,7 +374,7 @@ function ReviewStep({
         )}
         {validating && (
           <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-muted-foreground">
-            <Spinner className="astw:size-3" />
+            <Spinner size="xs" />
             {t("reviewValidating")}
           </span>
         )}

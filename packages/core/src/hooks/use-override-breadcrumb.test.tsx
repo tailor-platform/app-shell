@@ -1,97 +1,82 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import { useEffect } from "react";
+import { type ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { BreadcrumbOverrideProvider, useBreadcrumbOverride } from "@/contexts/breadcrumb-context";
 import { useOverrideBreadcrumb } from "./use-override-breadcrumb";
 
-let contextSnapshot: Map<string, string> | undefined;
-
-const Spy = () => {
-  const overrides = useBreadcrumbOverride().overrides;
-  useEffect(() => {
-    contextSnapshot = overrides;
-  }, [overrides]);
-  return null;
-};
-
 const wrapper =
   (path: string) =>
-  ({ children }: { children: React.ReactNode }) => (
+  ({ children }: { children: ReactNode }) => (
     <MemoryRouter initialEntries={[path]}>
-      <BreadcrumbOverrideProvider>
-        {children}
-        <Spy />
-      </BreadcrumbOverrideProvider>
+      <BreadcrumbOverrideProvider>{children}</BreadcrumbOverrideProvider>
     </MemoryRouter>
+  );
+
+const renderOverride = (path: string, title: string | undefined) =>
+  renderHook(
+    ({ title: currentTitle }: { title: string | undefined }) => {
+      useOverrideBreadcrumb(currentTitle);
+      return useBreadcrumbOverride().overrides;
+    },
+    {
+      initialProps: { title },
+      wrapper: wrapper(path),
+    },
   );
 
 describe("useOverrideBreadcrumb", () => {
   it("registers an override when title is provided", async () => {
-    renderHook(() => useOverrideBreadcrumb("Order #123"), {
-      wrapper: wrapper("/orders/123"),
-    });
+    const { result } = renderOverride("/orders/123", "Order #123");
+
     await waitFor(() => {
-      expect(contextSnapshot?.get("/orders/123")).toBe("Order #123");
+      expect(result.current.get("/orders/123")).toBe("Order #123");
     });
   });
 
   it("does not register when title is undefined", async () => {
-    renderHook(() => useOverrideBreadcrumb(undefined), {
-      wrapper: wrapper("/orders/123"),
-    });
+    const { result } = renderOverride("/orders/123", undefined);
+
     await waitFor(() => {
-      expect(contextSnapshot?.has("/orders/123")).toBe(false);
+      expect(result.current.has("/orders/123")).toBe(false);
     });
   });
 
   it("updates override when title changes", async () => {
-    const { rerender } = renderHook(
-      ({ title }: { title: string | undefined }) => useOverrideBreadcrumb(title),
-      {
-        initialProps: { title: "Order #123" },
-        wrapper: wrapper("/orders/123"),
-      },
-    );
+    const { result, rerender } = renderOverride("/orders/123", "Order #123");
+
     await waitFor(() => {
-      expect(contextSnapshot?.get("/orders/123")).toBe("Order #123");
+      expect(result.current.get("/orders/123")).toBe("Order #123");
     });
 
     rerender({ title: "Order #456" });
     await waitFor(() => {
-      expect(contextSnapshot?.get("/orders/123")).toBe("Order #456");
+      expect(result.current.get("/orders/123")).toBe("Order #456");
     });
   });
 
   it("cleans up override on unmount", async () => {
-    const { unmount } = renderHook(() => useOverrideBreadcrumb("Order #123"), {
-      wrapper: wrapper("/orders/123"),
-    });
+    const { result, unmount } = renderOverride("/orders/123", "Order #123");
+
     await waitFor(() => {
-      expect(contextSnapshot?.get("/orders/123")).toBe("Order #123");
+      expect(result.current.get("/orders/123")).toBe("Order #123");
     });
 
-    // unmount tears down the entire tree (including the Spy), so we cannot
-    // observe the state change via contextSnapshot. Verifying that unmount
-    // completes without error confirms the cleanup effect ran.
+    // Unmount tears down the provider too, so the observable contract here is
+    // simply that cleanup completes without throwing.
     expect(() => unmount()).not.toThrow();
   });
 
   it("removes override when title changes from string to undefined", async () => {
-    const { rerender } = renderHook(
-      ({ title }: { title: string | undefined }) => useOverrideBreadcrumb(title),
-      {
-        initialProps: { title: "Order #123" as string | undefined },
-        wrapper: wrapper("/orders/123"),
-      },
-    );
+    const { result, rerender } = renderOverride("/orders/123", "Order #123");
+
     await waitFor(() => {
-      expect(contextSnapshot?.get("/orders/123")).toBe("Order #123");
+      expect(result.current.get("/orders/123")).toBe("Order #123");
     });
 
     rerender({ title: undefined });
     await waitFor(() => {
-      expect(contextSnapshot?.has("/orders/123")).toBe(false);
+      expect(result.current.has("/orders/123")).toBe(false);
     });
   });
 });

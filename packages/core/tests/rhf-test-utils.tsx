@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode } from "react";
-import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
+import { type ReactNode } from "react";
+import { render, renderHook, type RenderOptions, type RenderResult } from "@testing-library/react";
 import {
   Controller,
   useForm,
@@ -56,14 +56,11 @@ export function renderRHFForm<TFieldValues extends FieldValues, TName extends Pa
   render: renderControl,
   renderOptions,
 }: RenderRHFFormOptions<TFieldValues, TName>): RenderRHFFormResult<TFieldValues> {
-  let formApi!: RHFFormApi<TFieldValues>;
+  const formHook = renderHook(() => useForm<TFieldValues>({ defaultValues, mode }));
 
-  /** Owns `useForm()` and exposes common submit/reset controls for interaction tests. */
+  /** Renders the field against the real RHF instance created by the hook harness. */
   function Harness() {
-    const form = useForm<TFieldValues>({ defaultValues, mode });
-    useEffect(() => {
-      formApi = form;
-    }, [form]);
+    const form = formHook.result.current;
 
     return (
       <Form onSubmit={form.handleSubmit((values) => onSubmit?.(values))}>
@@ -85,6 +82,10 @@ export function renderRHFForm<TFieldValues extends FieldValues, TName extends Pa
 
   return {
     ...result,
-    form: () => formApi,
+    unmount: () => {
+      result.unmount();
+      formHook.unmount();
+    },
+    form: () => formHook.result.current,
   };
 }

@@ -450,6 +450,8 @@ export type UseDataTableOptions<
   /**
    * Legacy uncontrolled selection notification. Prefer `rowSelection` for new
    * code; when both are supplied, `rowSelection.onChange` takes precedence.
+   *
+   * @deprecated Use `rowSelection.onChange` instead.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**

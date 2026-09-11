@@ -139,16 +139,13 @@ export function CommandPaletteProvider({
   searchSources?: readonly SearchSource[];
 }) {
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
-  const displayedActionsRef = useRef<CommandPaletteAction[]>([]);
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
   const [open, setOpen] = useState(false);
   const [openRequest, setOpenRequest] = useState<OpenCommandPaletteOptions | null>(null);
 
   const updateActions = useCallback(() => {
     const next = registeredActions(registryRef.current);
-    if (actionDisplaysEqual(displayedActionsRef.current, next)) return;
-    displayedActionsRef.current = next;
-    setActions(next);
+    setActions((current) => (actionDisplaysEqual(current, next) ? current : next));
   }, []);
 
   const register = useCallback(

@@ -1,8 +1,16 @@
 import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  renderHook,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { StrictMode, useEffect, type ReactNode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
@@ -13,7 +21,6 @@ import type {
   RowAction,
   RowExpansionOptions,
   UseDataTableOptions,
-  UseDataTableReturn,
 } from "./types";
 
 afterEach(() => {
@@ -1782,63 +1789,43 @@ describe("DataTable", () => {
       // Every built-in affordance fires exactly one toggle per commit, so this
       // is only reachable through the public API.
       const onSelectionChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange,
-        });
-        useEffect(() => {
-          api = table;
-        }, [table]);
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowSelection?.(testData.rows[0]);
-        api.toggleRowSelection?.(testData.rows[1]);
+        result.current.toggleRowSelection?.(testData.rows[0]);
+        result.current.toggleRowSelection?.(testData.rows[1]);
       });
 
-      expect(api.selectedIds).toEqual(["1", "2"]);
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
       expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "2"]);
     });
 
     it("applies clearSelection before a toggle in the same commit", () => {
       const onSelectionChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange,
-        });
-        useEffect(() => {
-          api = table;
-        }, [table]);
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
-      act(() => api.selectAllRows?.());
-      expect(api.selectedIds).toEqual(["1", "2"]);
+      act(() => result.current.selectAllRows?.());
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
 
       // "replace the selection with just this row"
       act(() => {
-        api.clearSelection?.();
-        api.toggleRowSelection?.(testData.rows[1]);
+        result.current.clearSelection?.();
+        result.current.toggleRowSelection?.(testData.rows[1]);
       });
 
-      expect(api.selectedIds).toEqual(["2"]);
+      expect(result.current.selectedIds).toEqual(["2"]);
       expect(onSelectionChange).toHaveBeenLastCalledWith(["2"]);
     });
 
@@ -2392,26 +2379,29 @@ describe("DataTable", () => {
         );
       }
 
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange: vi.fn(),
           rowExpansion: { render: () => <NestedTable /> },
-        });
-        useEffect(() => {
-          api = table;
-        }, [table]);
-        return (
-          <DataTable.Root value={table}>
+        }),
+      );
+      const { container, rerender } = render(
+        <DataTable.Root value={result.current}>
+          <DataTable.Table />
+        </DataTable.Root>,
+        { wrapper },
+      );
+      const sync = () =>
+        rerender(
+          <DataTable.Root value={result.current}>
             <DataTable.Table />
-          </DataTable.Root>
+          </DataTable.Root>,
         );
-      }
-      const { container } = render(<Harness />, { wrapper });
 
       fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
+      sync();
       expect(container.querySelectorAll("table").length).toBeGreaterThan(1);
 
       // Guard the stub itself, so a future environment where it stops taking
@@ -2436,7 +2426,8 @@ describe("DataTable", () => {
 
       // Force the measure effect to re-run now that the nested table is mounted
       // (in a browser the ResizeObserver does this when the row expands).
-      act(() => api.toggleColumn("Status"));
+      act(() => result.current.toggleColumn("Status"));
+      sync();
 
       const left = container.querySelector<HTMLElement>(EXPAND_TH)?.style.left;
 
@@ -2509,63 +2500,43 @@ describe("DataTable", () => {
 
     it("composes several expansion toggles dispatched in one commit", () => {
       const onChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           rowExpansion: { render: detail, onChange },
-        });
-        useEffect(() => {
-          api = table;
-        }, [table]);
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowExpansion?.(testData.rows[0]);
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.toggleRowExpansion?.(testData.rows[0]);
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
-      expect(api.expandedIds).toEqual(["1", "2"]);
+      expect(result.current.expandedIds).toEqual(["1", "2"]);
       expect(onChange).toHaveBeenLastCalledWith(["1", "2"]);
     });
 
     it("applies collapseAllRows before a toggle in the same commit", () => {
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           rowExpansion: { render: detail },
-        });
-        useEffect(() => {
-          api = table;
-        }, [table]);
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowExpansion?.(testData.rows[0]);
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.toggleRowExpansion?.(testData.rows[0]);
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
       act(() => {
-        api.collapseAllRows?.();
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.collapseAllRows?.();
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
-      expect(api.expandedIds).toEqual(["2"]);
+      expect(result.current.expandedIds).toEqual(["2"]);
     });
 
     it("keeps toggleRowExpansion stable across an expansion", () => {
@@ -2693,19 +2664,21 @@ describe("DataTable", () => {
         { width: 100, render: (r) => r.b }, // no id, no label → definition key "1"
         { id: "c", label: "C", width: 100, render: (r) => r.c },
       ];
-      let api!: UseDataTableReturn<R>;
-      function Harness() {
-        const table = useDataTable<R>({ columns: cols, data: { rows: dataRows } });
-        useEffect(() => {
-          api = table;
-        }, [table]);
-        return (
-          <DataTable.Root value={table}>
+      const { result } = renderHook(() =>
+        useDataTable<R>({ columns: cols, data: { rows: dataRows } }),
+      );
+      const { container, rerender } = render(
+        <DataTable.Root value={result.current}>
+          <DataTable.Table />
+        </DataTable.Root>,
+        { wrapper },
+      );
+      const sync = () =>
+        rerender(
+          <DataTable.Root value={result.current}>
             <DataTable.Table />
-          </DataTable.Root>
+          </DataTable.Root>,
         );
-      }
-      const { container } = render(<Harness />, { wrapper });
       const keyless = () =>
         container.querySelector<HTMLElement>(
           '[data-slot="data-table-header"] th[data-col-key="1"]',
@@ -2713,12 +2686,14 @@ describe("DataTable", () => {
 
       // Renders under its definition-order key, then pin it (stored under "1").
       expect(keyless()).not.toBeNull();
-      act(() => api.setPin("1", "left"));
+      act(() => result.current.setPin("1", "left"));
+      sync();
       expect(keyless()?.style.position).toBe("sticky");
 
       // Hiding the column ahead of it must NOT re-key it to its new visible
       // index and drop the pin.
-      act(() => api.toggleColumn("a"));
+      act(() => result.current.toggleColumn("a"));
+      sync();
       expect(keyless()?.style.position).toBe("sticky");
     });
   });

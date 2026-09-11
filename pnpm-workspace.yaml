@@ -53,20 +53,6 @@ minimumReleaseAgeExclude:
   - vitest@4.1.11
 
 overrides:
-  # ReDoS / inefficient-regex-complexity in expand()
-  # (CVE-2025-5889 / GHSA-v6h2-p8h4-qcjw).
-  #
-  # The vulnerable copy arrived transitively through minimatch in several tool
-  # chains (for example via api-extractor, ts-morph, and
-  # @typescript-eslint/typescript-estree). Those parents semver-allow a patched
-  # 5.x, but an older lockfile resolution still held brace-expansion@5.0.5.
-  # Keep an explicit workspace override so lockfile refreshes continue to force
-  # 5.0.9 until the upstream graph converges on newer minimatch releases.
-  brace-expansion: 5.0.9
-  # api-extractor still resolves diff@8.0.2, which pnpm audit flags as
-  # GHSA-73rr-hh4g-fpgx. Force the smallest patched 8.0.x here so lockfile
-  # refreshes keep the fix without widening this toolchain to diff@9.
-  "@microsoft/api-extractor>diff": 8.0.4
   # API Extractor's TSDoc and Rushstack Ajv dependencies resolve the vulnerable
   # fast-uri@3.1.5. Pin the smallest patched version for GHSA-f65p-4m7j-42xc.
   ajv>fast-uri: 3.1.6

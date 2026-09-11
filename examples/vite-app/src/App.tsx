@@ -64,6 +64,7 @@ const App = () => {
               <SidebarItem to="/showcase/layouts" />
               <SidebarItem to="/showcase/grid" />
               <SidebarItem to="/showcase/timeline" />
+              <SidebarItem to="/showcase/ai-chat" />
               <SidebarItem to="/dashboard/document-progress" />
               <SidebarItem to="/date-picker" />
               <SidebarItem to="/data-table" />

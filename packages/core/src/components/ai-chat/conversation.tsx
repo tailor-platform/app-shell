@@ -119,14 +119,11 @@ function Conversation({
           role="log"
           className="astw:h-full astw:overflow-y-auto"
         >
-          {/* The scroll button escapes this box via absolute positioning
-              against the relative root above, so it stays pinned while
-              content scrolls underneath it. */}
           <div ref={contentRef} className="astw:flex astw:min-h-full astw:flex-col">
             <ConversationContent>{children}</ConversationContent>
-            <ConversationScrollButton />
           </div>
         </div>
+        <ConversationScrollButton />
       </div>
     </ConversationContext.Provider>
   );

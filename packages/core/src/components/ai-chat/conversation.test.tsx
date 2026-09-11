@@ -90,6 +90,20 @@ describe("Conversation", () => {
     expect(scrollButton()).toBeNull();
   });
 
+  it("renders the scroll button as a sibling of the scroll viewport", () => {
+    const { container, viewport } = renderConversation();
+
+    setScrollMetrics(viewport, { scrollHeight: 1000, clientHeight: 300, scrollTop: 500 });
+    setScrollMetrics(viewport, { scrollHeight: 1000, clientHeight: 300, scrollTop: 100 });
+
+    const button = scrollButton();
+    expect(button).not.toBeNull();
+    expect(button?.parentElement).toBe(
+      container.querySelector('[data-slot="ai-chat-conversation"]'),
+    );
+    expect(button?.parentElement).not.toBe(viewport.firstElementChild);
+  });
+
   it("follows content growth while pinned, and stops once autoScroll is off", () => {
     const observe = vi.fn();
     const disconnect = vi.fn();

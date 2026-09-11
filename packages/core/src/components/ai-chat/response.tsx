@@ -18,7 +18,7 @@ function isSafeHref(href: string): boolean {
 // an unbounded `[^x]+` scan that fails at each start position is quadratic in
 // the input length. The caps sit far above any real bold/code/link span, so a
 // longer one simply renders as literal text rather than costing a slow scan.
-const INLINE_PATTERN = /(\*\*[^*]{1,500}\*\*)|(`[^`]{1,500}`)|(\[[^\]]{1,500}\]\([^)]{1,2000}\))/;
+const INLINE_PATTERN = /(\*\*[^*]{1,500}\*\*)|(`[^`]{1,500}`)|(\[[^\]]{1,500}\]\([^)]{1,1200}\))/;
 
 function renderInline(text: string): ReactNode[] {
   // A fresh instance per call: the `g` flag carries `lastIndex` between
@@ -43,7 +43,7 @@ function renderInline(text: string): ReactNode[] {
         </code>,
       );
     } else {
-      const linkMatch = /^\[([^\]]{1,500})\]\(([^)]{1,2000})\)$/.exec(token);
+      const linkMatch = /^\[([^\]]{1,500})\]\(([^)]{1,1200})\)$/.exec(token);
       if (linkMatch && isSafeHref(linkMatch[2])) {
         tokens.push(
           <a

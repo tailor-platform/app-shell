@@ -25,6 +25,7 @@ import { dataTableDemoResource } from "./pages/data-table-demo";
 import { colorDemoResource } from "./pages/color-demo";
 import { gridDemoResource } from "./pages/grid-demo";
 import { timelineDemoResource } from "./pages/timeline-demo";
+import { aiChatDemoResource } from "./pages/ai-chat-demo";
 
 export const customPageModule = defineModule({
   path: "custom-page",
@@ -253,6 +254,17 @@ export const customPageModule = defineModule({
               Timeline Demo (task dependencies, job execution)
             </Link>
           </p>
+          <p>
+            <Link
+              to="/custom-page/ai-chat-demo"
+              style={{
+                color: "hsl(var(--primary))",
+                textDecoration: "underline",
+              }}
+            >
+              AIChat Demo (streaming conversation, reasoning, tool calls, attachments)
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -283,5 +295,6 @@ export const customPageModule = defineModule({
     dataTableDemoResource,
     gridDemoResource,
     timelineDemoResource,
+    aiChatDemoResource,
   ],
 });

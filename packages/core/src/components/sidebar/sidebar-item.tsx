@@ -123,6 +123,7 @@ export const SidebarItem = (props: SidebarItemProps) => {
               href={to}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={title}
               className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
             />
           }

@@ -753,7 +753,7 @@ function Viewport({
   );
   const bodyMarkers = (decorations?.markers ?? []).filter((marker) => marker.placement !== "axis");
   const backgroundLayouts = React.useMemo(
-    () => Array.from(rowBackgrounds.entries()).sort((a, b) => a[1].top - b[1].top),
+    () => Array.from(rowBackgrounds.entries()).toSorted((a, b) => a[1].top - b[1].top),
     [rowBackgrounds],
   );
   const guides = axis?.guides ?? [];

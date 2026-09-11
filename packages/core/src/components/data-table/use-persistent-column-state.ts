@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 /**
  * Per-user, per-table column layout persisted to `localStorage`.
@@ -59,6 +59,60 @@ function writeState(tableId: string, state: PersistedColumnState): void {
   }
 }
 
+type CachedState = {
+  raw: string | null;
+  defaults: PersistedColumnState;
+  state: PersistedColumnState;
+};
+
+const stateCache = new Map<string, CachedState>();
+const stateListeners = new Map<string, Set<() => void>>();
+
+function readCachedState(tableId: string, defaults: PersistedColumnState): PersistedColumnState {
+  if (typeof window === "undefined") return defaults;
+
+  let raw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(storageKey(tableId));
+  } catch {
+    // Keep the in-memory value when storage is unavailable.
+  }
+
+  const cached = stateCache.get(tableId);
+  if (cached && cached.raw === raw && (raw !== null || cached.defaults === defaults)) {
+    return cached.state;
+  }
+
+  const state = readState(tableId) ?? defaults;
+  stateCache.set(tableId, { raw, defaults, state });
+  return state;
+}
+
+function notifyStateListeners(tableId: string): void {
+  for (const listener of stateListeners.get(tableId) ?? []) listener();
+}
+
+function subscribeToState(tableId: string | undefined, listener: () => void): () => void {
+  if (!tableId || typeof window === "undefined") return () => {};
+
+  const listeners = stateListeners.get(tableId) ?? new Set<() => void>();
+  listeners.add(listener);
+  stateListeners.set(tableId, listeners);
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== storageKey(tableId)) return;
+    stateCache.delete(tableId);
+    listener();
+  };
+  window.addEventListener("storage", onStorage);
+
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) stateListeners.delete(tableId);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
 // Tracks currently-mounted `tableId`s (dev aid). Two tables sharing an id map
 // to the same localStorage key and clobber each other's layout, so warn.
 const mountedTableIds = new Map<string, number>();
@@ -66,24 +120,29 @@ const mountedTableIds = new Map<string, number>();
 /**
  * SSR-safe `localStorage`-backed column state.
  *
- * State initializes to `defaults` so server and first client render produce
- * identical markup (no hydration mismatch); the persisted value is applied in an
- * effect after mount. When `tableId` is `undefined` the hook is pure in-memory
- * state — it never reads from or writes to storage.
+ * `localStorage` is the source of truth for persistent tables. `useSyncExternalStore`
+ * supplies the server default during hydration, then subscribes to storage updates
+ * without mirroring the value through an effect. Without `tableId`, state remains
+ * local to this hook instance.
  */
 export function usePersistentColumnState(
   tableId: string | undefined,
   defaults: PersistedColumnState,
 ): [PersistedColumnState, (updater: (prev: PersistedColumnState) => PersistedColumnState) => void] {
-  const [state, setStateRaw] = useState<PersistedColumnState>(defaults);
-
-  // Keep the latest defaults available to the hydrate effect without making it a
-  // dependency — `defaults` is recomputed every render and would thrash it.
-  const defaultsRef = useRef(defaults);
-  defaultsRef.current = defaults;
+  const [memoryState, setMemoryState] = useState<PersistedColumnState>(defaults);
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeToState(tableId, listener),
+    [tableId],
+  );
+  const getSnapshot = useCallback(
+    () => (tableId ? readCachedState(tableId, defaults) : defaults),
+    [defaults, tableId],
+  );
+  const persistedState = useSyncExternalStore(subscribe, getSnapshot, () => defaults);
+  const state = tableId ? persistedState : memoryState;
 
   // Warn when two mounted tables share a `tableId` — they persist to the same
-  // storage key and overwrite each other. Counted so React StrictMode's
+  // localStorage key and overwrite each other. Counted so React StrictMode's
   // mount/unmount/remount doesn't trip a false positive.
   useEffect(() => {
     if (!tableId) return;
@@ -101,27 +160,23 @@ export function usePersistentColumnState(
     };
   }, [tableId]);
 
-  // Hydrate from storage on mount / when the table id changes. Falls back to the
-  // current defaults when there's nothing stored — and when `tableId` is cleared,
-  // reset to defaults (in-memory mode) rather than leaking the previous table's
-  // persisted layout. This read does NOT write back, so a stored value is never
-  // clobbered.
-  useEffect(() => {
-    setStateRaw(tableId ? (readState(tableId) ?? defaultsRef.current) : defaultsRef.current);
-  }, [tableId]);
-
-  // Write imperatively on each user-driven update — never from an effect that
-  // watches `state`, which would fire on mount with the pre-hydration default
-  // and overwrite the stored value.
   const setState = useCallback(
     (updater: (prev: PersistedColumnState) => PersistedColumnState) => {
-      setStateRaw((prev) => {
-        const next = updater(prev);
-        if (tableId) writeState(tableId, next);
-        return next;
+      if (!tableId) {
+        setMemoryState(updater);
+        return;
+      }
+
+      const next = updater(readCachedState(tableId, defaults));
+      writeState(tableId, next);
+      stateCache.set(tableId, {
+        raw: typeof window === "undefined" ? null : JSON.stringify(next),
+        defaults,
+        state: next,
       });
+      notifyStateListeners(tableId);
     },
-    [tableId],
+    [defaults, tableId],
   );
 
   return [state, setState];

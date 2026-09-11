@@ -381,6 +381,24 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
 );
 
 /**
+ * Controlled or uncontrolled row-selection configuration.
+ *
+ * `selectedIds` makes selection controlled and requires `onChange`. Otherwise
+ * the table owns selection state, optionally initialized by `defaultSelectedIds`.
+ */
+export type RowSelectionOptions =
+  | {
+      selectedIds: string[];
+      onChange: (ids: string[]) => void;
+      defaultSelectedIds?: never;
+    }
+  | {
+      selectedIds?: never;
+      defaultSelectedIds?: string[];
+      onChange?: (ids: string[]) => void;
+    };
+
+/**
  * Options for `useDataTable` hook.
  */
 export type UseDataTableOptions<
@@ -418,15 +436,20 @@ export type UseDataTableOptions<
    */
   rowActions?: RowAction<TRow>[];
   /**
-   * Called with the current array of selected row IDs whenever the selection
-   * changes. Providing this prop enables the checkbox selection column.
-   * Selection is ID-based (`row.id`) and persists across page changes.
+   * Controlled or uncontrolled row selection. Providing this prop enables the
+   * checkbox selection column. Selection is ID-based (`row.id`) and persists
+   * across page changes.
    *
    * **Requirement:** Each row must have a string or number `id` field.
    * Rows without `id` are excluded from selection.
    *
    * **Note:** `selectAllRows` (triggered by the header checkbox) selects only
    * the rows on the **current page**, not all pages.
+   */
+  rowSelection?: RowSelectionOptions;
+  /**
+   * Legacy uncontrolled selection notification. Prefer `rowSelection` for new
+   * code; when both are supplied, `rowSelection.onChange` takes precedence.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**

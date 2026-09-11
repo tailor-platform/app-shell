@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
+import { useEffect } from "react";
 import { MemoryRouter } from "react-router";
 import { BreadcrumbOverrideProvider, useBreadcrumbOverride } from "@/contexts/breadcrumb-context";
 import { useOverrideBreadcrumb } from "./use-override-breadcrumb";
@@ -7,7 +8,10 @@ import { useOverrideBreadcrumb } from "./use-override-breadcrumb";
 let contextSnapshot: Map<string, string> | undefined;
 
 const Spy = () => {
-  contextSnapshot = useBreadcrumbOverride().overrides;
+  const overrides = useBreadcrumbOverride().overrides;
+  useEffect(() => {
+    contextSnapshot = overrides;
+  }, [overrides]);
   return null;
 };
 

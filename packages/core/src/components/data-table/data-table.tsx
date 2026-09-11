@@ -1171,9 +1171,12 @@ function DataTableExpandedRow({
   // no transition, so the event would never fire and the row would never unmount.
   useEffect(() => {
     if (open || !present) return;
-    setEntered(false);
+    const frame = requestAnimationFrame(() => setEntered(false));
     const timer = setTimeout(() => setPresent(false), EXPAND_TRANSITION_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+    };
   }, [open, present]);
 
   if (!present) return null;
@@ -1363,10 +1366,10 @@ function DataTableTable({ className }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [widths, setWidths] = useState<ColumnWidths>({});
 
-  const visibleColumns = ctx?.visibleColumns;
   const pinnedColumns = ctx?.pinnedColumns;
   const currentPage = ctx?.currentPage;
   const pageSize = ctx?.pageSize;
+  const paginationKey = `${currentPage}-${pageSize}`;
 
   // Measure each column's *rendered* width from the (always-present) header row
   // and publish it via PinMeasureContext, so sticky offsets reflect real
@@ -1425,7 +1428,7 @@ function DataTableTable({ className }: { className?: string }) {
     const table = el.querySelector("table");
     if (table) observer.observe(table);
     return () => observer.disconnect();
-  }, [visibleColumns, pinnedColumns]);
+  }, [pinnedColumns]);
 
   // Reflect horizontal scroll position onto the container as data attributes so
   // the pinned-column freeze shadows show only while there is content scrolled
@@ -1450,20 +1453,15 @@ function DataTableTable({ className }: { className?: string }) {
       el.removeEventListener("scroll", update);
       observer.disconnect();
     };
-  }, [visibleColumns, pinnedColumns]);
+  }, []);
 
-  // Keep pagination-driven scroll reset local to the scroll owner. The scroll
-  // container lives here in `DataTable.Table`, while page changes can come from
-  // the built-in pagination or any custom consumer using the same context.
-  // Threading an imperative callback/event bus through `DataTable.Root` just to
-  // reach this ref would add API surface and create opt-in call sites; this
-  // effect stays as the single place that synchronizes page/page-size state to
-  // the DOM scroll position.
+  // Reset after the rendered table reflects a page-size or page change.
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    const table = el?.querySelector("table");
+    if (!el || table?.dataset.pagination !== paginationKey) return;
     el.scrollTop = 0;
-  }, [currentPage, pageSize]);
+  }, [paginationKey]);
 
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex
@@ -1473,6 +1471,7 @@ function DataTableTable({ className }: { className?: string }) {
     <PinMeasureContext.Provider value={widths}>
       <Table.Root
         data-slot="data-table-table"
+        data-pagination={paginationKey}
         containerRef={containerRef}
         containerClassName="astw:min-h-0 astw:overflow-auto"
         className={className}

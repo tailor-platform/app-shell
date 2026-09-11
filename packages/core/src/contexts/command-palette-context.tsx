@@ -79,7 +79,8 @@ export type OpenCommandPaletteOptions = {
 };
 
 type DispatchContextValue = {
-  register: (sourceId: string, actions: CommandPaletteAction[]) => () => void;
+  register: (sourceId: string, actions?: CommandPaletteAction[]) => () => void;
+  update: (sourceId: string, actions: CommandPaletteAction[]) => void;
 };
 
 type StateContextValue = {
@@ -94,6 +95,32 @@ type StateContextValue = {
 
 const CommandPaletteDispatchContext = createContext<DispatchContextValue | null>(null);
 const CommandPaletteStateContext = createContext<StateContextValue | null>(null);
+
+function actionDisplaysEqual(left: CommandPaletteAction[], right: CommandPaletteAction[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every(
+      (action, index) =>
+        action.key === right[index]?.key &&
+        action.label === right[index]?.label &&
+        action.icon === right[index]?.icon &&
+        action.group === right[index]?.group,
+    )
+  );
+}
+
+function registeredActions(registry: Map<string, CommandPaletteAction[]>): CommandPaletteAction[] {
+  return Array.from(registry.entries()).flatMap(([sourceId, sourceActions]) =>
+    sourceActions.map((action) => ({
+      ...action,
+      onSelect: () =>
+        registry
+          .get(sourceId)
+          ?.find((current) => current.key === action.key)
+          ?.onSelect(),
+    })),
+  );
+}
 
 /**
  * Provider that manages contextual actions and open state for the CommandPalette.
@@ -112,22 +139,34 @@ export function CommandPaletteProvider({
   searchSources?: readonly SearchSource[];
 }) {
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
+  const displayedActionsRef = useRef<CommandPaletteAction[]>([]);
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
   const [open, setOpen] = useState(false);
   const [openRequest, setOpenRequest] = useState<OpenCommandPaletteOptions | null>(null);
 
   const updateActions = useCallback(() => {
-    setActions(Array.from(registryRef.current.values()).flat());
+    const next = registeredActions(registryRef.current);
+    if (actionDisplaysEqual(displayedActionsRef.current, next)) return;
+    displayedActionsRef.current = next;
+    setActions(next);
   }, []);
 
   const register = useCallback(
-    (sourceId: string, newActions: CommandPaletteAction[]) => {
+    (sourceId: string, newActions: CommandPaletteAction[] = []) => {
       registryRef.current.set(sourceId, newActions);
       updateActions();
       return () => {
         registryRef.current.delete(sourceId);
         updateActions();
       };
+    },
+    [updateActions],
+  );
+
+  const update = useCallback(
+    (sourceId: string, newActions: CommandPaletteAction[]) => {
+      registryRef.current.set(sourceId, newActions);
+      updateActions();
     },
     [updateActions],
   );
@@ -153,7 +192,7 @@ export function CommandPaletteProvider({
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
 
-  const dispatchValue = useMemo(() => ({ register }), [register]);
+  const dispatchValue = useMemo(() => ({ register, update }), [register, update]);
   const stateValue = useMemo(
     () => ({
       actions,
@@ -197,9 +236,6 @@ export function useCommandPaletteDispatch(): DispatchContextValue {
  * automatically unregistered on unmount. Re-registering with new actions
  * replaces the previous set.
  *
- * Note: `icon` changes alone do not trigger re-registration. If you need
- * dynamic icons, also change the action's `key` or `label`.
- *
  * @example
  * ```tsx
  * import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
@@ -213,25 +249,16 @@ export function useCommandPaletteDispatch(): DispatchContextValue {
  */
 export function useRegisterCommandPaletteActions(group: string, actions: CommandPaletteAction[]) {
   const id = useId();
-  const { register } = useCommandPaletteDispatch();
+  const { register, update } = useCommandPaletteDispatch();
 
-  const actionsRef = useRef(actions);
-  actionsRef.current = actions;
-
-  // Derive a stable dependency from serialisable action properties.
-  // Callback identity changes are absorbed by the ref.
-  const depsKey = actions.map((a) => `${a.key}\0${a.label}`).join("\n");
+  useEffect(() => register(id), [id, register]);
 
   useEffect(() => {
-    return register(
+    update(
       id,
-      actionsRef.current.map((a) => ({
-        ...a,
-        group: a.group ?? group,
-        onSelect: () => actionsRef.current.find((c) => c.key === a.key)?.onSelect(),
-      })),
+      actions.map((action) => ({ ...action, group: action.group ?? group })),
     );
-  }, [id, register, depsKey, group]);
+  }, [actions, group, id, update]);
 }
 
 /**

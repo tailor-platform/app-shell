@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
 import {
   Controller,
@@ -61,7 +61,9 @@ export function renderRHFForm<TFieldValues extends FieldValues, TName extends Pa
   /** Owns `useForm()` and exposes common submit/reset controls for interaction tests. */
   function Harness() {
     const form = useForm<TFieldValues>({ defaultValues, mode });
-    formApi = form;
+    useEffect(() => {
+      formApi = form;
+    }, [form]);
 
     return (
       <Form onSubmit={form.handleSubmit((values) => onSubmit?.(values))}>

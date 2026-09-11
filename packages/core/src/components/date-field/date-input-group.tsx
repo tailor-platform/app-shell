@@ -353,6 +353,7 @@ export function DateInputGroup({
     <div
       ref={groupRef}
       role="group"
+      tabIndex={-1}
       data-slot="date-picker-group"
       aria-labelledby={ariaLabelledby}
       aria-label={ariaLabelledby ? undefined : ariaLabel}
@@ -361,10 +362,10 @@ export function DateInputGroup({
       data-disabled={isDisabled || undefined}
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, className)}
-      onFocus={(e) => {
+      onFocusCapture={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onGroupFocus?.();
       }}
-      onBlur={(e) => {
+      onBlurCapture={(e) => {
         // Leaving the year segment (to a sibling, the calendar icon, or out of
         // the field) expands a 1–2 digit year to the 2000s right away — the icon
         // is inside the group, so waiting for whole-group blur would leave "26"

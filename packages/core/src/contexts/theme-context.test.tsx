@@ -3,6 +3,11 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 
 import { ThemeProvider, useTheme } from "./theme-context";
 
+const TP = () => {
+  useTheme();
+  return null;
+};
+
 /** happy-dom / Node can omit a full `localStorage`; ThemeProvider persists via it. */
 function installLocalStorageStub() {
   const map = new Map<string, string>();
@@ -184,10 +189,6 @@ describe("ThemeProvider — system color theme resolution", () => {
 describe("provider guards", () => {
   it("throws when useTheme is called outside ThemeProvider", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const TP = () => {
-      useTheme();
-      return null;
-    };
     expect(() => render(<TP />)).toThrow(/useTheme must be used within a ThemeProvider/);
     spy.mockRestore();
   });

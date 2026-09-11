@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
 import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { StrictMode, type ReactNode } from "react";
+import { StrictMode, useEffect, type ReactNode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
@@ -32,6 +32,20 @@ const testData: DataTableData<TestRow> = {
     { id: "2", name: "Bob", status: "Inactive" },
   ],
 };
+
+const sortableHeaderColumns: Column<TestRow>[] = [
+  {
+    label: "Name",
+    sort: { field: "name", type: "string" },
+    header: (ctx) =>
+      ctx.sortable ? (
+        <button type="button" onClick={ctx.activateSort}>
+          {ctx.label} {ctx.sortDirection}
+        </button>
+      ) : null,
+    render: (row) => row.name,
+  },
+];
 
 function makeControl(overrides?: Partial<CollectionControl>): CollectionControl {
   return {
@@ -78,6 +92,20 @@ function TestDataTable(props: {
     error,
     onSelectionChange,
   });
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+function SortableHeaderHarness({ control }: { control: CollectionControl }) {
+  const table = useDataTable<TestRow>({
+    columns: sortableHeaderColumns,
+    data: testData,
+    control,
+  });
+
   return (
     <DataTable.Root value={table}>
       <DataTable.Table />
@@ -295,33 +323,7 @@ describe("DataTable", () => {
         sortStates: [{ field: "name", direction: "Asc" }],
       });
 
-      function Harness() {
-        const table = useDataTable<TestRow>({
-          columns: [
-            {
-              label: "Name",
-              sort: { field: "name", type: "string" },
-              header: (ctx) =>
-                ctx.sortable ? (
-                  <button type="button" onClick={ctx.activateSort}>
-                    {ctx.label} {ctx.sortDirection}
-                  </button>
-                ) : null,
-              render: (row) => row.name,
-            },
-          ],
-          data: testData,
-          control,
-        });
-
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-
-      render(<Harness />, { wrapper });
+      render(<SortableHeaderHarness control={control} />, { wrapper });
 
       fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
 
@@ -1369,7 +1371,9 @@ describe("DataTable", () => {
           data: testData,
           onSelectionChange,
         });
-        api = table;
+        useEffect(() => {
+          api = table;
+        }, [table]);
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -1396,7 +1400,9 @@ describe("DataTable", () => {
           data: testData,
           onSelectionChange,
         });
-        api = table;
+        useEffect(() => {
+          api = table;
+        }, [table]);
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -1976,7 +1982,9 @@ describe("DataTable", () => {
           onSelectionChange: vi.fn(),
           rowExpansion: { render: () => <NestedTable /> },
         });
-        api = table;
+        useEffect(() => {
+          api = table;
+        }, [table]);
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -2090,7 +2098,9 @@ describe("DataTable", () => {
           data: testData,
           rowExpansion: { render: detail, onChange },
         });
-        api = table;
+        useEffect(() => {
+          api = table;
+        }, [table]);
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -2116,7 +2126,9 @@ describe("DataTable", () => {
           data: testData,
           rowExpansion: { render: detail },
         });
-        api = table;
+        useEffect(() => {
+          api = table;
+        }, [table]);
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />
@@ -2266,7 +2278,9 @@ describe("DataTable", () => {
       let api!: UseDataTableReturn<R>;
       function Harness() {
         const table = useDataTable<R>({ columns: cols, data: { rows: dataRows } });
-        api = table;
+        useEffect(() => {
+          api = table;
+        }, [table]);
         return (
           <DataTable.Root value={table}>
             <DataTable.Table />

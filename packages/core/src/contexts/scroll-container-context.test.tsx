@@ -19,7 +19,9 @@ let captured: RefObject<HTMLElement | null> | null = null;
 
 function Probe() {
   const ref = useAppShellScrollContainer();
-  captured = ref;
+  useEffect(() => {
+    captured = ref;
+  }, [ref]);
   return <div data-testid="probe">probe</div>;
 }
 

@@ -375,20 +375,17 @@ export function useOrdersQuery(variables: CollectionVariables) {
   // Re-fetch on every variables change, exposing a `loading` window so the
   // DataTable's loading state is exercised (skeleton rows, disabled controls).
   const [data, setData] = useState<typeof result | null>(null);
-  const [loading, setLoading] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setLoading(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setData(result);
-      setLoading(false);
     }, MOCK_LATENCY_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [result]);
 
-  return { data, loading };
+  return { data, loading: data !== result };
 }

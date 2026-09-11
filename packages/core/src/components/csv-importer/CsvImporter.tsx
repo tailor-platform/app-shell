@@ -150,6 +150,7 @@ function UploadStep({
           ref={inputRef}
           type="file"
           accept=".csv,text/csv"
+          aria-label={t("uploadButton")}
           className="astw:hidden"
           onChange={handleInputChange}
         />
@@ -210,7 +211,7 @@ function MappingStep({
         <table className="astw:w-full astw:text-sm">
           <thead>
             <tr className="astw:border-b astw:border-border astw:bg-muted/50">
-              <th className="astw:w-10 astw:px-3 astw:py-2" />
+              <th className="astw:w-10 astw:px-3 astw:py-2" aria-label={t("mappingStatus")} />
               <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
                 {t("mappingExpectedField")}
               </th>
@@ -648,7 +649,7 @@ export function CsvImporter<T extends CsvSchema>({
     (col) => col.required && !mappings.some((m) => m.columnKey === col.key),
   );
 
-  const handleCheck = useCallback(async () => {
+  const handleCheck = async () => {
     setValidating(true);
     try {
       const { issues: clientIssues, parsedRows } = processRows(
@@ -668,9 +669,9 @@ export function CsvImporter<T extends CsvSchema>({
     } finally {
       setValidating(false);
     }
-  }, [rawRows, csvHeaders, mappings, schema, corrections, onValidate]);
+  };
 
-  const handleImport = useCallback(async () => {
+  const handleImport = async () => {
     if (!file) return;
 
     const warnings = issues.filter((i) => i.level === "warning");
@@ -691,7 +692,7 @@ export function CsvImporter<T extends CsvSchema>({
     } finally {
       setImporting(false);
     }
-  }, [file, mappings, corrections, issues, rawRows, onImport, schema]);
+  };
 
   const stepTitle: Record<CsvImporterStep, string> = {
     upload: t("uploadTitle"),

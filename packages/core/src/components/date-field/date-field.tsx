@@ -23,6 +23,7 @@ import { CalendarView } from "../calendar/calendar-view";
 import { DateInputGroup, DatePopover, DatePickerPopoverTrigger } from "./date-input-group";
 import { useDateFieldT } from "./i18n";
 import {
+  assignRef,
   invalidMessageKey,
   isTargetWithin,
   useControlledState,
@@ -75,6 +76,8 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
   timeZone?: string;
 };
 
+function noopStateChange(): void {}
+
 /**
  * A segmented date/time input field with no popover.
  *
@@ -116,13 +119,13 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   const resolvedReadOnly = !!isReadOnly;
   const groupRef = useRef<HTMLDivElement>(null);
   const t = useDateFieldT();
-  const handleStateChangeRef = useRef<(change: DateFieldStateChange) => void>(() => {});
+  let handleStateChange: (change: DateFieldStateChange) => void = noopStateChange;
 
   const state = useDateFieldState({
     value,
     defaultValue,
     onChange: onChange as (v: DateValue | null) => void,
-    onStateChange: (change) => handleStateChangeRef.current(change),
+    onStateChange: (change) => handleStateChange(change),
     granularity,
     locale: resolvedLocale,
     hourCycle,
@@ -153,14 +156,20 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     ariaLabel,
     onBlur,
     groupRef,
-    forwardedRef: ref,
   });
-  handleStateChangeRef.current = bindings.handleStateChange;
+  handleStateChange = bindings.handleStateChange;
+  const setProxyInput = useCallback(
+    (node: HTMLInputElement | null) => {
+      bindings.setProxyNode(node);
+      assignRef(ref, node);
+    },
+    [bindings, ref],
+  );
 
   return (
     <div data-slot="date-field" className={cn("astw:relative", className)}>
       <input
-        ref={bindings.proxyRef}
+        ref={setProxyInput}
         id={bindings.controlId}
         name={bindings.name}
         tabIndex={-1}
@@ -248,7 +257,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   const fieldRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const hasFocusWithinRef = useRef(false);
-  const handleStateChangeRef = useRef<(change: DateFieldStateChange) => void>(() => {});
+  let handleStateChange: (change: DateFieldStateChange) => void = noopStateChange;
   const [val, setVal] = useControlledState<DateValue | null>(
     value,
     defaultValue ?? null,
@@ -258,7 +267,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   const fieldState = useDateFieldState({
     value: val,
     onChange: setVal,
-    onStateChange: (change) => handleStateChangeRef.current(change),
+    onStateChange: (change) => handleStateChange(change),
     granularity,
     locale: resolvedLocale,
     timeZone: resolvedTz,
@@ -306,9 +315,15 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     ariaLabel,
     onBlur,
     groupRef: fieldRef,
-    forwardedRef: ref,
   });
-  handleStateChangeRef.current = bindings.handleStateChange;
+  handleStateChange = bindings.handleStateChange;
+  const setProxyInput = useCallback(
+    (node: HTMLInputElement | null) => {
+      bindings.setProxyNode(node);
+      assignRef(ref, node);
+    },
+    [bindings, ref],
+  );
 
   const handleCompositeFocus = useCallback(() => {
     hasFocusWithinRef.current = true;
@@ -345,7 +360,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   return (
     <div data-slot="date-picker" className={cn("astw:relative", className)}>
       <input
-        ref={bindings.proxyRef}
+        ref={setProxyInput}
         id={bindings.controlId}
         name={bindings.name}
         tabIndex={-1}

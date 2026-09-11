@@ -138,15 +138,14 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
 
   // Flush guard: prevents concurrent applyChanges calls from sending duplicate operations.
   const isApplyingRef = useRef(false);
-
-  // Used only by the useEffect cleanup on unmount to revoke any remaining blob URLs.
-  // A ref is needed here because the cleanup function captures the ref object (stable),
-  // not state.operations (which would be stale inside the effect's closure).
-  const operationsRef = useRef(state.operations);
-  operationsRef.current = state.operations;
+  // Own only the Blob URLs this hook creates; reducer state is not a resource registry.
+  const previewUrlsRef = useRef(new Set<string>());
 
   const onUpload = useCallback((files: File[]) => {
     const newItems = files.map(buildPendingItem);
+    for (const item of newItems) {
+      if (item.previewUrl?.startsWith("blob:")) previewUrlsRef.current.add(item.previewUrl);
+    }
     const newOps: OperationEntry[] = files.map((file, i) => ({
       type: "upload",
       file,
@@ -158,20 +157,17 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
 
   const onDelete = useCallback((item: AttachmentItem) => {
     releasePendingItem(item);
+    if (item.previewUrl) previewUrlsRef.current.delete(item.previewUrl);
     dispatch({ type: "DELETE", itemId: item.id });
   }, []);
 
-  // Revoke all blob URLs for pending image uploads on unmount to prevent memory leaks.
-  // onDelete handles revocation for items removed during the component's lifetime;
-  // this cleanup covers any remaining pending uploads when the component is unmounted
-  // (e.g. the user navigates away without submitting).
-  useEffect(() => {
-    return () => {
-      for (const op of operationsRef.current) {
-        if (op.type === "upload") releasePendingItem(op.item);
-      }
-    };
-  }, []);
+  // Revoke URLs created by this hook that remain visible when it unmounts.
+  useEffect(
+    () => () => {
+      for (const url of previewUrlsRef.current) URL.revokeObjectURL(url);
+    },
+    [],
+  );
 
   const applyChanges = useCallback(
     async (fn: (operations: AttachmentOperation[]) => Promise<void>) => {

@@ -9,10 +9,17 @@ layouts a screen could take and says when each applies ("what shape should this
 screen be?"). The test: if it owns a route and its value is choosing between
 variants, it is a page; if it is one way to build one thing, it is a pattern.
 
-**A page links, it does not restate.** Every variant a page compares should be a
-pattern entry the page cites by slug, never inlined. That is why pages and
-patterns are sibling categories rather than nested — the page carries the
-decision, the pattern carries the implementation.
+**A page links, it does not restate.** Where a page compares variants, each one
+should be a pattern entry cited by slug rather than inlined, and a page always
+cites patterns by slug for the parts that sit inside its frame. That is why
+pages and patterns are sibling categories rather than nested.
+
+A page whose shape is settled — one house layout, no competing variants — owns
+that layout itself and embeds its own reference implementation. `page/detail` is
+the case in point: it holds the two-column detail layout outright and cites
+patterns only for the pieces within it. What the rule forbids is the same
+implementation living in two entries at once, free to drift apart; a shape with
+a single home is not a restatement.
 
 ## Adding an entry
 
@@ -46,14 +53,14 @@ After adding an entry, run `pnpm build` from the repo root and add the newly
 generated `references/pages/<slug>.md` to `catalogue/expected-skills-files.txt`,
 which the catalogue's `test` script checks against the generated tree.
 
-## Planned entries
+## Entries
 
 Four pages were agreed for migration from the UI Catalogue on 2026-08-27
-(tailor-inc/platform-planning#1731). None are written up yet:
+(tailor-inc/platform-planning#1731).
 
-| Page         | Ticket                            | Patterns it will compare                                          |
-| ------------ | --------------------------------- | ----------------------------------------------------------------- |
-| Collection   | tailor-inc/platform-planning#1735 | `list/dense-scan`, plus inline-edit and grid/list-toggle variants |
-| Detail page  | tailor-inc/platform-planning#1736 | `detail/hero-with-actions`, plus a page-tabs variant              |
-| Master list  | tailor-inc/platform-planning#1737 | `form/modal`, plus a Sheet variant                                |
-| Form-as-page | tailor-inc/platform-planning#1742 | `form/single-page`, `form/sectioned`, `form/wizard`               |
+| Page         | Ticket                            | Status  | Patterns it cites for the parts inside it                         |
+| ------------ | --------------------------------- | ------- | ----------------------------------------------------------------- |
+| Collection   | tailor-inc/platform-planning#1735 | planned | `list/dense-scan`, plus inline-edit and grid/list-toggle variants |
+| Detail page  | tailor-inc/platform-planning#1736 | done    | `list/dense-scan`, `form/modal`, `interaction/confirm`            |
+| Master list  | tailor-inc/platform-planning#1737 | planned | `form/modal`, plus a Sheet variant                                |
+| Form-as-page | tailor-inc/platform-planning#1742 | planned | `form/single-page`, `form/sectioned`, `form/wizard`               |

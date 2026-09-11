@@ -78,7 +78,6 @@ interface DateFieldA11yLabelingOptions {
   labelledBy?: string;
   describedBy?: string;
   ariaLabel?: string;
-  proxyRef: RefObject<HTMLInputElement | null>;
 }
 
 interface DateFieldFieldBridgeOptions {
@@ -137,11 +136,10 @@ function useDateFieldA11yLabeling({
   labelledBy: labelledByProp,
   describedBy: describedByProp,
   ariaLabel,
-  proxyRef,
 }: DateFieldA11yLabelingOptions) {
   const fieldRoot = useFieldRootContext();
   const { labelId, messageIds } = useLabelableContext();
-  const controlId = useLabelableId({ id: idProp, controlRef: proxyRef });
+  const controlId = useLabelableId({ id: idProp });
   const name = fieldRoot.name ?? nameProp;
   const externalInvalid = fieldRoot.state.valid === false;
 
@@ -272,7 +270,6 @@ export function useDateFieldFieldBridge({
     labelledBy: labelledByProp,
     describedBy: describedByProp,
     ariaLabel,
-    proxyRef: proxyInput.proxyRef,
   });
 
   // The original Base UI validator is an imperative registry entry, not React state.

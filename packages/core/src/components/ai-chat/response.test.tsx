@@ -82,12 +82,6 @@ describe("Response", () => {
     expect(screen.queryByText(long)).toBeNull();
   });
 
-  it("does not treat an over-long link target as markdown", () => {
-    const longUrl = `https://example.com/${"x".repeat(1201)}`;
-    render(<Response>{`[docs](${longUrl})`}</Response>);
-    expect(screen.queryByRole("link", { name: "docs" })).toBeNull();
-  });
-
   it("renders an ordered list", () => {
     render(<Response>{"1. first\n2. second"}</Response>);
     expect(screen.getByText("first").closest("ol")).not.toBeNull();

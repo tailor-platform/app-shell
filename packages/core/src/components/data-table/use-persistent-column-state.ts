@@ -59,19 +59,20 @@ function writeState(tableId: string, state: PersistedColumnState): void {
   }
 }
 
-type CachedState = {
-  raw: string | null;
-  defaults: PersistedColumnState;
-  state: PersistedColumnState;
-};
-
 /**
  * Creates the module-scoped cache and subscription owner for persisted table
  * state. Its single instance shares snapshots between same-tab tables with the
  * same `tableId` and relays cross-tab `storage` updates.
  */
 function newCachedState() {
-  const cache = new Map<string, CachedState>();
+  const cache = new Map<
+    string,
+    {
+      raw: string | null;
+      defaults: PersistedColumnState;
+      state: PersistedColumnState;
+    }
+  >();
   const listeners = new Map<string, Set<() => void>>();
 
   function read(tableId: string, defaults: PersistedColumnState): PersistedColumnState {

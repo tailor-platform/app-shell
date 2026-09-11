@@ -183,8 +183,8 @@ catalogs:
       specifier: ^6.1.0
       version: 6.1.1
     lucide-react:
-      specifier: ^1.8.0
-      version: 1.41.0
+      specifier: 1.8.0
+      version: 1.8.0
     oxfmt:
       specifier: ^0.47.0
       version: 0.47.0
@@ -324,7 +324,7 @@ importers:
         version: link:../../packages/core
       lucide-react:
         specifier: 'catalog:'
-        version: 1.41.0(react@19.2.8)
+        version: 1.8.0(react@19.2.8)
       react:
         specifier: 'catalog:'
         version: 19.2.8
@@ -390,8 +390,8 @@ importers:
         specifier: ^2.2.0
         version: 2.3.0
       lucide-react:
-        specifier: ^1.8.0
-        version: 1.41.0(react@19.2.8)
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.8)
       openai:
         specifier: 6.45.0
         version: 6.45.0(ws@8.21.3)(zod@4.5.4)
@@ -3793,8 +3793,8 @@ packages:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
     engines: {node: '>=10'}
 
-  lucide-react@1.41.0:
-    resolution: {integrity: sha512-6lksP35l6KszDKUeRTi4LV7i6DEe0Yzl2ALJm9j4c5xEYN91GdW1xGsawGMOg2mgjF5GHBVX8pKX9kP+cWsP3Q==}
+  lucide-react@1.8.0:
+    resolution: {integrity: sha512-WuvlsjngSk7TnTBJ1hsCy3ql9V9VOdcPkd3PKcSmM34vJD8KG6molxz7m7zbYFgICwsanQWmJ13JlYs4Zp7Arw==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -7362,7 +7362,7 @@ snapshots:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
 
-  lucide-react@1.41.0(react@19.2.8):
+  lucide-react@1.8.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 

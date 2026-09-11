@@ -65,53 +65,74 @@ type CachedState = {
   state: PersistedColumnState;
 };
 
-const stateCache = new Map<string, CachedState>();
-const stateListeners = new Map<string, Set<() => void>>();
+function newCachedState() {
+  const cache = new Map<string, CachedState>();
+  const listeners = new Map<string, Set<() => void>>();
 
-function readCachedState(tableId: string, defaults: PersistedColumnState): PersistedColumnState {
-  if (typeof window === "undefined") return defaults;
+  function read(tableId: string, defaults: PersistedColumnState): PersistedColumnState {
+    if (typeof window === "undefined") return defaults;
 
-  let raw: string | null = null;
-  try {
-    raw = window.localStorage.getItem(storageKey(tableId));
-  } catch {
-    // Keep the in-memory value when storage is unavailable.
+    let raw: string | null = null;
+    try {
+      raw = window.localStorage.getItem(storageKey(tableId));
+    } catch {
+      // Keep the in-memory value when storage is unavailable.
+    }
+
+    const cached = cache.get(tableId);
+    if (cached && cached.raw === raw && (raw !== null || cached.defaults === defaults)) {
+      return cached.state;
+    }
+
+    const state = readState(tableId) ?? defaults;
+    cache.set(tableId, { raw, defaults, state });
+    return state;
   }
 
-  const cached = stateCache.get(tableId);
-  if (cached && cached.raw === raw && (raw !== null || cached.defaults === defaults)) {
-    return cached.state;
+  function notify(tableId: string): void {
+    for (const listener of listeners.get(tableId) ?? []) listener();
   }
 
-  const state = readState(tableId) ?? defaults;
-  stateCache.set(tableId, { raw, defaults, state });
-  return state;
+  function subscribe(tableId: string | undefined, listener: () => void): () => void {
+    if (!tableId || typeof window === "undefined") return () => {};
+
+    const tableListeners = listeners.get(tableId) ?? new Set<() => void>();
+    tableListeners.add(listener);
+    listeners.set(tableId, tableListeners);
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== storageKey(tableId)) return;
+      cache.delete(tableId);
+      listener();
+    };
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      tableListeners.delete(listener);
+      if (tableListeners.size === 0) listeners.delete(tableId);
+      window.removeEventListener("storage", onStorage);
+    };
+  }
+
+  function update(
+    tableId: string,
+    defaults: PersistedColumnState,
+    updater: (prev: PersistedColumnState) => PersistedColumnState,
+  ): void {
+    const state = updater(read(tableId, defaults));
+    writeState(tableId, state);
+    cache.set(tableId, {
+      raw: typeof window === "undefined" ? null : JSON.stringify(state),
+      defaults,
+      state,
+    });
+    notify(tableId);
+  }
+
+  return { read, subscribe, update };
 }
 
-function notifyStateListeners(tableId: string): void {
-  for (const listener of stateListeners.get(tableId) ?? []) listener();
-}
-
-function subscribeToState(tableId: string | undefined, listener: () => void): () => void {
-  if (!tableId || typeof window === "undefined") return () => {};
-
-  const listeners = stateListeners.get(tableId) ?? new Set<() => void>();
-  listeners.add(listener);
-  stateListeners.set(tableId, listeners);
-
-  const onStorage = (event: StorageEvent) => {
-    if (event.key !== storageKey(tableId)) return;
-    stateCache.delete(tableId);
-    listener();
-  };
-  window.addEventListener("storage", onStorage);
-
-  return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) stateListeners.delete(tableId);
-    window.removeEventListener("storage", onStorage);
-  };
-}
+const cachedState = newCachedState();
 
 // Tracks currently-mounted `tableId`s (dev aid). Two tables sharing an id map
 // to the same localStorage key and clobber each other's layout, so warn.
@@ -131,11 +152,11 @@ export function usePersistentColumnState(
 ): [PersistedColumnState, (updater: (prev: PersistedColumnState) => PersistedColumnState) => void] {
   const [memoryState, setMemoryState] = useState<PersistedColumnState>(defaults);
   const subscribe = useCallback(
-    (listener: () => void) => subscribeToState(tableId, listener),
+    (listener: () => void) => cachedState.subscribe(tableId, listener),
     [tableId],
   );
   const getSnapshot = useCallback(
-    () => (tableId ? readCachedState(tableId, defaults) : defaults),
+    () => (tableId ? cachedState.read(tableId, defaults) : defaults),
     [defaults, tableId],
   );
   const persistedState = useSyncExternalStore(subscribe, getSnapshot, () => defaults);
@@ -167,14 +188,7 @@ export function usePersistentColumnState(
         return;
       }
 
-      const next = updater(readCachedState(tableId, defaults));
-      writeState(tableId, next);
-      stateCache.set(tableId, {
-        raw: typeof window === "undefined" ? null : JSON.stringify(next),
-        defaults,
-        state: next,
-      });
-      notifyStateListeners(tableId);
+      cachedState.update(tableId, defaults, updater);
     },
     [defaults, tableId],
   );

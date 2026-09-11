@@ -8,13 +8,15 @@ import {
   useRoleSwitcher,
 } from "@/modules";
 
+const DashboardHome = () => <div>Dashboard Home (accessible at /dashboard)</div>;
+
 const App = () => {
   const { role } = useRoleSwitcher();
   const appShellConfig: AppShellProps = {
     title: "AppShell",
     basePath: "dashboard",
     modules: [customPageModule],
-    rootComponent: () => <div>Dashboard Home (accessible at /dashboard)</div>,
+    rootComponent: DashboardHome,
     settingsResources: [profileResource],
     contextData: {
       role,

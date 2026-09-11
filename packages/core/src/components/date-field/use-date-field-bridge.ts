@@ -95,14 +95,12 @@ interface DateFieldFieldBridgeOptions {
   ariaLabel?: string;
   onBlur?: () => void;
   groupRef: RefObject<HTMLDivElement | null>;
-  forwardedRef?: Ref<HTMLInputElement>;
 }
 
 interface DateFieldProxyInputOptions {
   inputValue: string;
   localValidationMessage?: string;
   groupRef: RefObject<HTMLDivElement | null>;
-  forwardedRef?: Ref<HTMLInputElement>;
   validationInputRef: RefObject<HTMLInputElement | null>;
 }
 
@@ -114,6 +112,8 @@ interface DateFieldProxyInputState {
 interface DateFieldBridgeState extends DateFieldProxyInputState {
   hasInput: boolean;
 }
+
+const dateFieldValidators = new WeakSet<() => void>();
 
 /**
  * Resolve the labeling/accessibility contract for the date widgets.
@@ -168,7 +168,6 @@ function useDateFieldProxyInput({
   inputValue,
   localValidationMessage,
   groupRef,
-  forwardedRef,
   validationInputRef,
 }: DateFieldProxyInputOptions) {
   const proxyRef = useRef<HTMLInputElement>(null);
@@ -200,9 +199,8 @@ function useDateFieldProxyInput({
       proxyRef.current = node;
       validationInputRef.current = node;
       syncProxyInput(undefined, node);
-      assignRef(forwardedRef, node);
     },
-    [forwardedRef, syncProxyInput, validationInputRef],
+    [syncProxyInput, validationInputRef],
   );
 
   const focusFirstSegment = useCallback(() => {
@@ -252,7 +250,6 @@ export function useDateFieldFieldBridge({
   ariaLabel,
   onBlur,
   groupRef,
-  forwardedRef,
 }: DateFieldFieldBridgeOptions) {
   const fieldRoot = useFieldRootContext();
   const { formRef, clearErrors } = useFormContext();
@@ -261,7 +258,6 @@ export function useDateFieldFieldBridge({
     inputValue,
     localValidationMessage,
     groupRef,
-    forwardedRef,
     validationInputRef: fieldRoot.validation.inputRef,
   });
   const a11y = useDateFieldA11yLabeling({
@@ -276,23 +272,8 @@ export function useDateFieldFieldBridge({
     ariaLabel,
   });
 
-  const bridgeRef = useRef({
-    fieldRoot,
-    fieldName: nameProp,
-    state: {
-      inputValue,
-      hasInput,
-      localValidationMessage,
-    } as DateFieldBridgeState,
-    nativeValidate: null as (() => void) | null,
-  });
-  bridgeRef.current.fieldRoot = fieldRoot;
-  bridgeRef.current.fieldName = nameProp;
-  bridgeRef.current.state = {
-    inputValue,
-    hasInput,
-    localValidationMessage,
-  };
+  // The original Base UI validator is an imperative registry entry, not React state.
+  const nativeValidateRef = useRef<(() => void) | null>(null);
 
   const updateRegisteredValidity = useCallback(
     (nextValidityData: FieldValidityData) => {
@@ -308,11 +289,16 @@ export function useDateFieldFieldBridge({
   );
 
   const commitLocalValidation = useCallback(
-    (snapshot: DateFieldBridgeState = bridgeRef.current.state) => {
+    (
+      snapshot: DateFieldBridgeState = {
+        inputValue,
+        hasInput,
+        localValidationMessage,
+      },
+    ) => {
       const message = snapshot.localValidationMessage;
       if (!message) return false;
 
-      const root = bridgeRef.current.fieldRoot;
       const nextValidityData: FieldValidityData = {
         value: snapshot.inputValue,
         state: {
@@ -322,25 +308,26 @@ export function useDateFieldFieldBridge({
         },
         error: message,
         errors: [message],
-        initialValue: root.validityData.initialValue,
+        initialValue: fieldRoot.validityData.initialValue,
       };
 
-      root.setValidityData(nextValidityData);
+      fieldRoot.setValidityData(nextValidityData);
       updateRegisteredValidity(nextValidityData);
       return true;
     },
-    [updateRegisteredValidity],
+    [fieldRoot, hasInput, inputValue, localValidationMessage, updateRegisteredValidity],
   );
 
-  const wrappedValidateRef = useRef<(() => void) | undefined>(undefined);
-  if (!wrappedValidateRef.current) {
-    wrappedValidateRef.current = () => {
-      const snapshot = bridgeRef.current.state;
-      proxyInput.syncProxyInput(snapshot);
-      if (commitLocalValidation(snapshot)) return;
-      bridgeRef.current.nativeValidate?.();
-    };
-  }
+  const wrappedValidate = useCallback(() => {
+    const snapshot = {
+      inputValue,
+      hasInput,
+      localValidationMessage,
+    } satisfies DateFieldBridgeState;
+    proxyInput.syncProxyInput(snapshot);
+    if (commitLocalValidation(snapshot)) return;
+    nativeValidateRef.current?.();
+  }, [commitLocalValidation, hasInput, inputValue, localValidationMessage, proxyInput]);
 
   useRegisterFieldControl(
     proxyInput.proxyRef,
@@ -357,21 +344,19 @@ export function useDateFieldFieldBridge({
 
     const field = formRef.current.fields.get(a11y.controlId);
     if (!field) return;
-    if (field.validate === wrappedValidateRef.current) return;
+    if (field.validate === wrappedValidate) return;
 
-    bridgeRef.current.nativeValidate = field.validate;
+    // Base UI can refresh the registry between renders. Keep its original
+    // validator rather than wrapping our previous wrapper recursively.
+    if (!dateFieldValidators.has(field.validate)) {
+      nativeValidateRef.current = field.validate;
+    }
+    dateFieldValidators.add(wrappedValidate);
     formRef.current.fields.set(a11y.controlId, {
       ...field,
-      validate: wrappedValidateRef.current!,
+      validate: wrappedValidate,
     });
-  }, [
-    a11y.controlId,
-    a11y.isDisabled,
-    fieldRoot.state.valid,
-    fieldRoot.validityData,
-    formRef,
-    inputValue,
-  ]);
+  });
 
   const handleStateChange = useCallback(
     ({
@@ -390,49 +375,48 @@ export function useDateFieldFieldBridge({
         hasInput: nextHasInput,
         localValidationMessage: message,
       } satisfies DateFieldBridgeState;
-      bridgeRef.current.state = snapshot;
       proxyInput.setProxyState(snapshot);
 
-      const root = bridgeRef.current.fieldRoot;
       const initialValue =
-        typeof root.validityData.initialValue === "string" ? root.validityData.initialValue : "";
+        typeof fieldRoot.validityData.initialValue === "string"
+          ? fieldRoot.validityData.initialValue
+          : "";
 
-      root.setFilled(snapshot.hasInput);
-      root.setDirty(
+      fieldRoot.setFilled(snapshot.hasInput);
+      fieldRoot.setDirty(
         snapshot.inputValue !== initialValue || (snapshot.hasInput && snapshot.inputValue === ""),
       );
 
       if (source === "external") return;
 
-      const fieldName = root.name ?? bridgeRef.current.fieldName;
+      const fieldName = fieldRoot.name ?? nameProp;
       if (fieldName) clearErrors(fieldName);
-      if (!root.shouldValidateOnChange()) return;
+      if (!fieldRoot.shouldValidateOnChange()) return;
       if (commitLocalValidation(snapshot)) return;
-      root.validation.commit(snapshot.inputValue);
+      fieldRoot.validation.commit(snapshot.inputValue);
     },
-    [clearErrors, commitLocalValidation, proxyInput, t],
+    [clearErrors, commitLocalValidation, fieldRoot, nameProp, proxyInput, t],
   );
 
   const handleGroupFocus = useCallback(() => {
-    bridgeRef.current.fieldRoot.setFocused(true);
-  }, []);
+    fieldRoot.setFocused(true);
+  }, [fieldRoot]);
 
   const handleGroupBlur = useCallback(() => {
-    const root = bridgeRef.current.fieldRoot;
-    root.setTouched(true);
-    root.setFocused(false);
+    fieldRoot.setTouched(true);
+    fieldRoot.setFocused(false);
     onBlur?.();
 
-    if (root.validationMode !== "onBlur") return;
+    if (fieldRoot.validationMode !== "onBlur") return;
     proxyInput.syncProxyInput();
     if (commitLocalValidation()) return;
-    root.validation.commit(bridgeRef.current.state.inputValue);
-  }, [commitLocalValidation, onBlur, proxyInput]);
+    fieldRoot.validation.commit(inputValue);
+  }, [commitLocalValidation, fieldRoot, inputValue, onBlur, proxyInput]);
 
   return {
     ...a11y,
     isInvalid: a11y.isInvalid || !!localValidationMessage,
-    proxyRef: proxyInput.setProxyRef,
+    setProxyNode: proxyInput.setProxyRef,
     focusFirstSegment: proxyInput.focusFirstSegment,
     handleGroupFocus,
     handleGroupBlur,

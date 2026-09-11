@@ -505,6 +505,42 @@ describe("useDataTable", () => {
       expect(result.current.isRowSelected(testData.rows[0])).toBe(false);
     });
 
+    it("initializes uncontrolled selection from defaultSelectedIds", () => {
+      const { result } = renderHook(() =>
+        useDataTable({
+          columns,
+          data: testData,
+          rowSelection: { defaultSelectedIds: ["2"] },
+        }),
+      );
+
+      expect(result.current.selectedIds).toEqual(["2"]);
+      expect(result.current.isRowSelected(testData.rows[1])).toBe(true);
+    });
+
+    it("delegates controlled selection changes to its owner", () => {
+      const onChange = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ selectedIds }: { selectedIds: string[] }) =>
+          useDataTable({
+            columns,
+            data: testData,
+            rowSelection: { selectedIds, onChange },
+          }),
+        { initialProps: { selectedIds: [] as string[] } },
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+
+      expect(onChange).toHaveBeenCalledWith(["1"]);
+      expect(result.current.selectedIds).toEqual([]);
+
+      rerender({ selectedIds: ["1"] });
+      expect(result.current.selectedIds).toEqual(["1"]);
+    });
+
     it("toggleRowSelection selects a row", () => {
       const onSelectionChange = vi.fn();
       const { result } = renderHook(() =>

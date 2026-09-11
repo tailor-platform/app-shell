@@ -50,6 +50,7 @@ const CUSTOMERS = [
   "Stark Industries",
 ];
 const STATUSES: InvoiceStatus[] = ["draft", "sent", "paid", "overdue"];
+const pad = (n: number) => String(n).padStart(2, "0");
 
 // Deterministic pseudo-random so the dataset is stable across renders/reloads.
 function makeInvoices(count: number): Invoice[] {
@@ -68,7 +69,6 @@ function makeInvoices(count: number): Invoice[] {
     const minute = Math.floor(rand() * 60);
     const dueMs = base + dayOffset * 86_400_000;
     const createdMs = dueMs + hour * 3_600_000 + minute * 60_000;
-    const pad = (n: number) => String(n).padStart(2, "0");
     rows.push({
       id: `INV-${String(1000 + i)}`,
       externalId: `${hex(8)}-${hex(4)}-${hex(4)}-${hex(4)}-${hex(12)}`,
@@ -145,7 +145,7 @@ async function queryInvoices(variables: CollectionVariables): Promise<DataTableD
   if (variables.order?.length) {
     const [{ field, direction }] = variables.order;
     const dir = direction === "Desc" ? -1 : 1;
-    rows = [...rows].sort((a, b) => {
+    rows = rows.toSorted((a, b) => {
       const av = a[field as keyof Invoice];
       const bv = b[field as keyof Invoice];
       if (av < bv) return -1 * dir;
@@ -308,6 +308,24 @@ function StatusTabs({ control }: { control: CollectionControl }) {
 
 // Reusable invoice table (own control + data). `toolbar` gets the collection
 // control so each example can arrange the preset tabs + Add filter differently.
+const tabbedToolbar = (control: CollectionControl) => (
+  <>
+    {/* gap-2 matches the toolbar's p-2 so the icon sits an even step from the tabs */}
+    <div className="flex items-center gap-2">
+      <DataTable.Filters slot="add" addIconOnly />
+      <StatusTabs control={control} />
+    </div>
+    <DataTable.Filters slot="chips" />
+  </>
+);
+
+const plainToolbar = () => (
+  <>
+    <DataTable.Filters slot="add" addIconOnly />
+    <DataTable.Filters slot="chips" />
+  </>
+);
+
 function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => ReactNode }) {
   const { variables, control } = useCollectionVariables({
     params: {
@@ -316,23 +334,26 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
     },
   });
 
-  const [data, setData] = useState<DataTableData<Invoice>>();
-  const [loading, setLoading] = useState(true);
+  const [response, setResponse] = useState<{
+    variables: CollectionVariables;
+    data: DataTableData<Invoice>;
+  }>();
   const requestId = useRef(0);
 
   useEffect(() => {
     const id = ++requestId.current;
-    setLoading(true);
-    queryInvoices(variables).then((result) => {
+    queryInvoices(variables).then((data) => {
       // Ignore out-of-order responses from superseded requests.
-      if (id === requestId.current) {
-        setData(result);
-        setLoading(false);
-      }
+      if (id === requestId.current) setResponse({ variables, data });
     });
   }, [variables]);
 
-  const table = useDataTable({ columns, data, loading, control });
+  const table = useDataTable({
+    columns,
+    data: response?.data,
+    loading: response?.variables !== variables,
+    control,
+  });
 
   return (
     <DataTable.Root value={table}>
@@ -364,31 +385,13 @@ const DataTablePage = () => {
         {/* With preset tabs */}
         <section className="mb-8">
           <h3 className="mb-2 text-sm font-semibold">With preset tabs</h3>
-          <InvoiceTable
-            toolbar={(control) => (
-              <>
-                {/* gap-2 matches the toolbar's p-2 so the icon sits an even step from the tabs */}
-                <div className="flex items-center gap-2">
-                  <DataTable.Filters slot="add" addIconOnly />
-                  <StatusTabs control={control} />
-                </div>
-                <DataTable.Filters slot="chips" />
-              </>
-            )}
-          />
+          <InvoiceTable toolbar={tabbedToolbar} />
         </section>
 
         {/* Without tabs */}
         <section className="mb-8">
           <h3 className="mb-2 text-sm font-semibold">Without tabs</h3>
-          <InvoiceTable
-            toolbar={() => (
-              <>
-                <DataTable.Filters slot="add" addIconOnly />
-                <DataTable.Filters slot="chips" />
-              </>
-            )}
-          />
+          <InvoiceTable toolbar={plainToolbar} />
         </section>
       </Layout.Column>
     </Layout>

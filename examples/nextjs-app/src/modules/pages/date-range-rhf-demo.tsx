@@ -10,7 +10,7 @@ import {
   type DateRange,
 } from "@tailor-platform/app-shell";
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -93,7 +93,6 @@ const DateRangeRHFPage = () => {
   const {
     control,
     handleSubmit,
-    watch,
     reset,
     setError,
     formState: { errors, isSubmitting },
@@ -103,7 +102,7 @@ const DateRangeRHFPage = () => {
   });
 
   // The live DateRange object (or null) — RHF's native, structured shape.
-  const period = watch("activePeriod");
+  const period = useWatch({ control, name: "activePeriod" });
 
   const onSubmit = async (data: PromoFormValues) => {
     const conflict = await checkPromotionOverlap(data.activePeriod);

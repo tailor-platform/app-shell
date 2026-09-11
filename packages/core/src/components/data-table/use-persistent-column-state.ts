@@ -65,6 +65,11 @@ type CachedState = {
   state: PersistedColumnState;
 };
 
+/**
+ * Creates the module-scoped cache and subscription owner for persisted table
+ * state. Its single instance shares snapshots between same-tab tables with the
+ * same `tableId` and relays cross-tab `storage` updates.
+ */
 function newCachedState() {
   const cache = new Map<string, CachedState>();
   const listeners = new Map<string, Set<() => void>>();

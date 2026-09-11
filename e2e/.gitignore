@@ -1,6 +1,7 @@
 node_modules/
 .env
 **/.env
+**/.next/
 test-results/
 playwright-report/
 blob-report/

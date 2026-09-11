@@ -1,8 +1,9 @@
-# E2E Tests for AuthProvider, Routing, and AI Gateway
+# E2E Tests for AuthProvider, Routing, Next.js, and AI Gateway
 
-Playwright-based E2E tests that cover two layers:
+Playwright-based E2E tests that cover three layers:
 
 - a routing smoke suite backed by a fake-auth fixture for AppShell + React Router integration
+- a minimal Next.js App Router smoke suite that keeps `defineModule()` / `defineResource()` compatibility covered
 - a real-auth suite that exercises the hosted Tailor Platform OAuth flow plus a minimal AI Gateway smoke check on separate `/auth` and `/ai` pages
 
 ## Setup
@@ -89,15 +90,16 @@ cd e2e && pnpm exec vite --config tests/real-auth/app/vite.config.ts
 
 ## Test Scenarios
 
-| Test                | Description                                                         |
-| ------------------- | ------------------------------------------------------------------- |
-| Routing deep link   | Protected nested route stays intact after fake-auth login           |
-| Routing navigation  | Covers `Link`, `useNavigate`, redirect guards, reload, and logout   |
-| Auth guard display  | Verifies unauthenticated users see the login UI                     |
-| Login flow          | Full OAuth redirect → IDP login → callback → authenticated state    |
-| Logout              | Verifies logout returns to auth guard                               |
-| Session persistence | Confirms page reload maintains authentication                       |
-| AI Gateway smoke    | Sends `PING` and checks the OpenAI-compatible reply contains `PONG` |
+| Test                | Description                                                                       |
+| ------------------- | --------------------------------------------------------------------------------- |
+| Routing deep link   | Protected nested route stays intact after fake-auth login                         |
+| Routing navigation  | Covers `Link`, `useNavigate`, redirect guards, reload, and logout                 |
+| Next.js smoke       | Direct URL, client navigation, reload, and redirect guard in App Router catch-all |
+| Auth guard display  | Verifies unauthenticated users see the login UI                                   |
+| Login flow          | Full OAuth redirect → IDP login → callback → authenticated state                  |
+| Logout              | Verifies logout returns to auth guard                                             |
+| Session persistence | Confirms page reload maintains authentication                                     |
+| AI Gateway smoke    | Sends `PING` and checks the OpenAI-compatible reply contains `PONG`               |
 
 ## Architecture
 
@@ -113,6 +115,12 @@ e2e/
     │   │       ├── App.tsx
     │   │       └── fake-auth-client.ts
     │   └── routing.spec.ts
+    ├── nextjs-smoke/
+    │   ├── app/                    # Minimal Next.js App Router fixture
+    │   │   └── src/
+    │   │       ├── app/
+    │   │       └── modules/
+    │   └── nextjs.spec.ts
     └── real-auth/
         ├── app/                    # Suite-specific Vite app for hosted OAuth / AI smoke tests
         │   └── src/

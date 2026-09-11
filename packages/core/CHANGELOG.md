@@ -1,5 +1,51 @@
 # @tailor-platform/app-shell
 
+## 1.15.0
+
+### Minor Changes
+
+- 16d0748: Add `AIChat`, a component for building an LLM assistant UI — a streaming conversation view over a composer. Migrates the UI Catalogue "AI chat" pattern (platform-planning#1748).
+  
+  `AIChat` places three regions in a fixed order — `AIChat.Header` (optional), `AIChat.Conversation`, `AIChat.Composer` (optional) — each carrying its own props, with the chat's `status` on the root. The transcript inside `AIChat.Conversation` is composed from attached parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning*`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, and `.History`. The composer's body is `Textarea`, following the `form/composer` pattern; `status` plugs directly into `useAIChat()`.
+  
+  ```tsx
+  import { AIChat, useAIChat, createAIGatewayClient } from "@tailor-platform/app-shell";
+  
+  function Assistant() {
+    const { messages, status, sendMessage, stop } = useAIChat({ client, model: "gpt-5" });
+  
+    return (
+      <AIChat status={status}>
+        <AIChat.Header title="Assistant" />
+        <AIChat.Conversation>
+          {messages.map((message) => (
+            <AIChat.Message key={message.id} from={message.role}>
+              <AIChat.Response>{message.content}</AIChat.Response>
+            </AIChat.Message>
+          ))}
+        </AIChat.Conversation>
+        <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
+      </AIChat>
+    );
+  }
+  ```
+- 05ad29f: Add right-click context menus to `DataTable` headers and cells for common column and value actions.
+  
+  Headers can copy labels, pin/unpin columns, sort ascending or descending, reset sort, and hide columns. Cells can copy values, copy `"[header] [value]"`, and add a single-value filter from the clicked cell.
+- 218936e: Add a reusable `Spinner` component and use it for built-in loading indicators such as `ActionPanel`, command palette search, and CSV import progress.
+  
+  ```tsx
+  import { Spinner } from "@tailor-platform/app-shell";
+  
+  <Spinner className="astw:size-3" aria-label="Loading" />;
+  ```
+
+### Patch Changes
+
+- 6e4f783: Update the bundled Base UI dependency to 1.8.0.
+  
+  This picks up upstream accessibility and behavior fixes across popup-backed controls while keeping the AppShell public API unchanged.
+
 ## 1.14.0
 
 ### Minor Changes

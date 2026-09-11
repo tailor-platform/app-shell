@@ -665,6 +665,7 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
   columnKey,
   pinnedColumns,
   setPin,
+  sortable,
   sortDirection,
   onSortDirectionChange,
 }: {
@@ -674,6 +675,7 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
   columnKey: string;
   pinnedColumns: Record<string, "left" | "right" | "none">;
   setPin: (key: string, side: "left" | "right" | "none" | null) => void;
+  sortable: boolean;
   sortDirection?: "Asc" | "Desc";
   onSortDirectionChange?: (direction: "Asc" | "Desc" | undefined) => void;
 }) {
@@ -745,7 +747,7 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
                 </ContextMenu.Positioner>
               </ContextMenu.Portal>
             </ContextMenu.SubmenuRoot>
-            {onSortDirectionChange && (
+            {sortable && onSortDirectionChange && (
               <ContextMenu.SubmenuRoot>
                 <ContextMenu.SubmenuTrigger
                   className={HEADER_CONTEXT_MENU_SUBMENU_TRIGGER_CLASS}
@@ -1026,6 +1028,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 columnKey={key}
                 pinnedColumns={pinnedColumns}
                 setPin={setPin}
+                sortable={isSortable}
                 sortDirection={currentSort?.direction}
                 onSortDirectionChange={
                   isSortable ? (direction) => onSort(sortField, direction) : undefined

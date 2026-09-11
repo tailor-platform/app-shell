@@ -277,6 +277,33 @@ describe("DataTable", () => {
       expect(screen.queryByRole("menuitem", { name: "Hide column" })).toBeNull();
     });
 
+    it("hides sort actions when no collection control is provided", () => {
+      function Harness() {
+        const table = useDataTable<TestRow>({
+          columns: [
+            {
+              label: "Name",
+              sort: { field: "name", type: "string" },
+              render: (row) => row.name,
+            },
+          ],
+          data: testData,
+        });
+
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+
+      const { container } = render(<Harness />, { wrapper });
+
+      openHeaderContextMenu(container, "Name");
+
+      expect(screen.queryByRole("menuitem", { name: "Sort column" })).toBeNull();
+    });
+
     it("copies the column label", async () => {
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, "clipboard", {

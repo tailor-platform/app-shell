@@ -26,6 +26,7 @@ export type GeneratedRouteParams = {
   "/data-table": {};
   "/data-table-lab": {};
   "/date-picker": {};
+  "/settings": {};
   "/showcase/activity-card": {};
   "/showcase/ai-chat": {};
   "/showcase/colors": {};
@@ -38,6 +39,7 @@ export type GeneratedRouteParams = {
   "/showcase/metric-card": {};
   "/showcase/primitives": {};
   "/showcase/timeline": {};
+  "/spinner": {};
 };
 
 /**

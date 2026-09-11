@@ -57,6 +57,7 @@ const App = () => {
             <SidebarItem to="/data-table" />
             <SidebarItem to="/data-table-lab" />
             <SidebarItem to="/alert-tokens" />
+            <SidebarItem to="/spinner" />
             <SidebarItem to="/settings" />
           </SidebarLayout.DefaultSidebar>
         }

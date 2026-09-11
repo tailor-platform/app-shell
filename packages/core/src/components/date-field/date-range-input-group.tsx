@@ -98,7 +98,6 @@ export function DateRangeInputGroup({
     <div
       ref={groupRef}
       role="group"
-      tabIndex={-1}
       data-slot="date-range-picker-group"
       aria-labelledby={ariaLabelledby}
       aria-label={ariaLabelledby ? undefined : ariaLabel}
@@ -107,10 +106,10 @@ export function DateRangeInputGroup({
       data-disabled={isDisabled || undefined}
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, "astw:min-w-[272px]", className)}
-      onFocusCapture={(e) => {
+      onFocus={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onGroupFocus?.();
       }}
-      onBlurCapture={handleBlur}
+      onBlur={handleBlur}
     >
       <DateFieldRow
         {...rowShared}

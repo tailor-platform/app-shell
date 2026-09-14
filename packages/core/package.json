@@ -65,7 +65,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "encoding-japanese": "^2.2.0",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "catalog:",
     "openai": "6.45.0",
     "papaparse": "^5.5.3",
     "react-router": "^8.3.0",

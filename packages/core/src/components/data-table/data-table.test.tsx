@@ -2562,6 +2562,30 @@ describe("DataTable", () => {
       expect(seen[seen.length - 1]).toBe(seen[0]);
     });
 
+    it("keeps controlled expansion actions stable across changes", () => {
+      const onChange = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ expandedIds }: { expandedIds: string[] }) =>
+          useDataTable<TestRow>({
+            columns: testColumns,
+            data: testData,
+            rowExpansion: { render: detail, expandedIds, onChange },
+          }),
+        { initialProps: { expandedIds: [] as string[] } },
+      );
+      const toggle = result.current.toggleRowExpansion;
+      const collapse = result.current.collapseAllRows;
+
+      act(() => toggle?.(testData.rows[0]));
+      expect(onChange).toHaveBeenCalledWith(["1"]);
+      rerender({ expandedIds: ["1"] });
+
+      expect(result.current.toggleRowExpansion).toBe(toggle);
+      expect(result.current.collapseAllRows).toBe(collapse);
+      act(() => collapse?.());
+      expect(onChange).toHaveBeenLastCalledWith([]);
+    });
+
     it("leaves --data-table-viewport unset when the scrollport measures zero", () => {
       // jsdom reports clientWidth 0, matching a table mounted inside a hidden
       // container. Writing `0px` would collapse every panel via min(100%, 0px).

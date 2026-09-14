@@ -49,13 +49,14 @@ function readState(tableId: string): PersistedColumnState | null {
   }
 }
 
-/** Best-effort write; silently ignores SSR / quota / privacy-mode errors. */
-function writeState(tableId: string, state: PersistedColumnState): void {
-  if (typeof window === "undefined") return;
+/** Best-effort write; returns whether storage was updated. */
+function writeState(tableId: string, state: PersistedColumnState): boolean {
+  if (typeof window === "undefined") return false;
   try {
     window.localStorage.setItem(storageKey(tableId), JSON.stringify(state));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }
 
@@ -126,9 +127,10 @@ function newCachedState() {
     updater: (prev: PersistedColumnState) => PersistedColumnState,
   ): void {
     const state = updater(read(tableId, defaults));
-    writeState(tableId, state);
+    const raw = cache.get(tableId)?.raw ?? null;
+    const written = writeState(tableId, state);
     cache.set(tableId, {
-      raw: typeof window === "undefined" ? null : JSON.stringify(state),
+      raw: written ? JSON.stringify(state) : raw,
       defaults,
       state,
     });

@@ -1732,6 +1732,7 @@ function DataTableTable({ className }: { className?: string }) {
   const [widths, setWidths] = useState<ColumnWidths>({});
 
   const pinnedColumns = ctx?.pinnedColumns;
+  const visibleColumns = ctx?.visibleColumns;
   const currentPage = ctx?.currentPage;
   const pageSize = ctx?.pageSize;
   const paginationKey = `${currentPage}-${pageSize}`;
@@ -1793,7 +1794,7 @@ function DataTableTable({ className }: { className?: string }) {
     const table = el.querySelector("table");
     if (table) observer.observe(table);
     return () => observer.disconnect();
-  }, [pinnedColumns]);
+  }, [pinnedColumns, visibleColumns]);
 
   // Reflect horizontal scroll position onto the container as data attributes so
   // the pinned-column freeze shadows show only while there is content scrolled

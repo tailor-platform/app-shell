@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
 import { usePageCounter } from "./use-page-counter";
 import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
@@ -397,6 +397,12 @@ export function useDataTable<
     [controlledExpandedIds, isExpansionControlled, uncontrolledExpandedIds],
   );
   const onExpandedChange = rowExpansion?.onChange;
+  const controlledExpandedIdsRef = useRef(controlledExpandedIds);
+  const onExpandedChangeRef = useRef(onExpandedChange);
+  useEffect(() => {
+    controlledExpandedIdsRef.current = controlledExpandedIds;
+    onExpandedChangeRef.current = onExpandedChange;
+  }, [controlledExpandedIds, onExpandedChange]);
 
   const isRowExpanded = useCallback(
     (row: TRow) => {
@@ -411,31 +417,27 @@ export function useDataTable<
       const id = getRowId(row);
       if (id === null) return;
       const next = new Set(
-        isExpansionControlled ? controlledExpandedIds : uncontrolledExpansionStore.getSnapshot(),
+        isExpansionControlled
+          ? controlledExpandedIdsRef.current
+          : uncontrolledExpansionStore.getSnapshot(),
       );
       if (next.has(id)) next.delete(id);
       else next.add(id);
       if (!isExpansionControlled) uncontrolledExpansionStore.set(next);
-      onExpandedChange?.([...next]);
+      onExpandedChangeRef.current?.([...next]);
     },
-    [
-      controlledExpandedIds,
-      getRowId,
-      isExpansionControlled,
-      onExpandedChange,
-      uncontrolledExpansionStore,
-    ],
+    [getRowId, isExpansionControlled, uncontrolledExpansionStore],
   );
 
   const collapseAllRowsImpl = useCallback(() => {
     const current = isExpansionControlled
-      ? new Set(controlledExpandedIds)
+      ? new Set(controlledExpandedIdsRef.current)
       : uncontrolledExpansionStore.getSnapshot();
     if (current.size === 0) return;
     const next = new Set<string>();
     if (!isExpansionControlled) uncontrolledExpansionStore.set(next);
-    onExpandedChange?.([]);
-  }, [controlledExpandedIds, isExpansionControlled, onExpandedChange, uncontrolledExpansionStore]);
+    onExpandedChangeRef.current?.([]);
+  }, [isExpansionControlled, uncontrolledExpansionStore]);
 
   const toggleRowExpansion = rowExpansion ? toggleRowExpansionImpl : undefined;
   const collapseAllRows = rowExpansion ? collapseAllRowsImpl : undefined;

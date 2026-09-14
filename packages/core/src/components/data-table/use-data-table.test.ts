@@ -354,6 +354,20 @@ describe("useDataTable", () => {
       expect(localStorage.length).toBe(0);
     });
 
+    it("keeps state in memory when localStorage writes fail", () => {
+      const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new Error("storage unavailable");
+      });
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+
+      act(() => {
+        result.current.toggleColumn("name");
+      });
+
+      expect(result.current.isColumnVisible("name")).toBe(false);
+      setItem.mockRestore();
+    });
+
     it("resets to defaults when tableId is cleared (no stale layout leak)", () => {
       const { result, rerender } = renderHook(
         ({ id }: { id?: string }) => useDataTable({ columns, data: testData, tableId: id }),

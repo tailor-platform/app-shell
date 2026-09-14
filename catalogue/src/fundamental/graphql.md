@@ -106,9 +106,9 @@ For `pnpm gql-tada:check` to pass, always destructure with optional chaining and
 
 ### Wiring to `DataTable` (sort, filters, pagination)
 
-For **standard list pages**, do not hand-roll only `first` / `after`. Compose AppShell **`DataTable`** + **`useCollectionVariables`** + **`useDataTable`**: derive query variables from `variables.pagination`, `variables.query`, `variables.order`, map `edges` / `pageInfo` / `total` into `useDataTable`’s `data`. See **`patterns/list/dense-scan.md`** and **`components.md` → DataTable**.
+For **standard list pages**, use a page-local table component with AppShell **`DataTable`** + **`useURLCollectionVariables`** + **`useDataTable`**. Derive query variables from `variables.pagination`, `variables.query`, and `variables.order`, then map `edges` / `pageInfo` / `total` into `useDataTable`’s `data`. Pass `data`, `loading`, and `error` to `useDataTable`; `DataTable` renders its built-in loading, error, and empty states. See **`patterns/list/dense-scan.md`** and **`components.md` → DataTable**.
 
-When `@tailor-platform/sdk-plugin-app-shell` codegen is enabled, pass generated **`tableMetadata`** into **`useCollectionVariables`** so `variables.query` / `variables.order` are typed against your Tailor GraphQL inputs (upstream **data-table.md** Typed query variables).
+When `@tailor-platform/sdk-plugin-app-shell` codegen is enabled, pass generated **`tableMetadata`** into **`useURLCollectionVariables`** so `variables.query` / `variables.order` are typed against your Tailor GraphQL inputs (upstream **data-table.md** Typed query variables).
 
 ## Mutations and cache invalidation
 
@@ -201,5 +201,5 @@ Every page component:
 | How do I add a field to a card?                | Add it to the component's fragment, not the page query                                                        |
 | Why isn't my list refreshing after a mutation? | Add `additionalTypenames: ['<Type>']` on both query and mutation                                              |
 | Connection vs array?                           | Always connection (`edges { node }`) for built-in `<entities>` queries; check the schema for custom resolvers |
-| Pagination / sort / toolbar filters together?  | `useCollectionVariables` + `DataTable`; see § **Wiring to `DataTable`** above                                 |
+| Pagination / sort / toolbar filters together?  | `useURLCollectionVariables` + `DataTable`; see § **Wiring to `DataTable`** above                              |
 | Where's the urql client configured?            | `App.tsx` — see `project-setup.md`                                                                            |

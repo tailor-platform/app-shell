@@ -8,10 +8,9 @@ requiredImports:
   [
     DataTable,
     useDataTable,
-    useCollectionVariables,
+    useURLCollectionVariables,
     createColumnHelper,
     Layout,
-    Card,
     Button,
     Badge,
     Link,
@@ -43,7 +42,11 @@ dont:
 
 ## Page Implementation
 
+New resource-list pages keep `page.tsx` to layout and navigation. The page-local table component owns `tableMetadata`, `useURLCollectionVariables`, the collection query, and `useDataTable`. Start from `app-shell-scaffold resource/list` when available.
+
 <!-- source: dense-scan.tsx -->
+
+<!-- source: orders-table.tsx -->
 
 ## Page Layout & Internal Scrolling
 
@@ -69,7 +72,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - Column count: 4-8 recommended
 - Must include pagination — never render unbounded lists
 - Table-first pages use `<Layout fill>` so title/toolbar/header/footer stay pinned and only rows scroll
-- Handle every state: `DataTable` renders the loading skeleton and error row; always provide a **labelled empty state** (what the list is + how to add the first record) rather than a bare empty table
+- Pass `data`, `loading`, and `error` to `useDataTable`; `DataTable` renders its built-in loading, error, and empty states. Do not replace an empty table with a custom `Card`.
 - Status Badge colors must use design system tokens (variant prop): the **primary** status column uses **filled** semantic variants; **secondary** status columns (delivery, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules)
 - Bulk actions toolbar appears only when ≥1 row is selected
 - Whole row is clickable via `onClickRow`; wrap the primary identifier cell in `<Link>` for keyboard/SR access. No per-row "View" / "Open" buttons
@@ -78,7 +81,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 
 ## Anti-patterns
 
-- Building a bespoke table + custom pagination instead of `DataTable` + `useCollectionVariables`
+- Building a bespoke table + custom pagination instead of `DataTable` + `useURLCollectionVariables`
 - Hand-rolled `max-height`/`overflow` wrappers around `DataTable` to contain scrolling — use `<Layout fill>` instead
 - Tabs that mutate only local UI state while pagination/filters assume the full server set
 - Using `<table>` directly instead of `<DataTable>` for live collections

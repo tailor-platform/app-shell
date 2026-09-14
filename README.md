@@ -15,10 +15,11 @@ AppShell is an opinionated React application framework for creating applications
 
 ## Examples
 
-| Example                               | Description                                            |
-| ------------------------------------- | ------------------------------------------------------ |
-| [`vite-app`](./examples/vite-app)     | Vite app with file-based routing using the vite-plugin |
-| [`nextjs-app`](./examples/nextjs-app) | Next.js App Router integration                         |
+| Example                           | Description                                                        |
+| --------------------------------- | ------------------------------------------------------------------ |
+| [`vite-app`](./examples/vite-app) | Vite app with file-based routing plus the consolidated UI showcase |
+
+Next.js App Router compatibility is covered by the minimal smoke fixture under [`e2e/tests/nextjs-smoke`](./e2e/tests/nextjs-smoke).
 
 ## Documentation
 

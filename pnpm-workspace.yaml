@@ -11,9 +11,9 @@ catalog:
   "@types/react": ^19
   "@types/react-dom": ^19
   "@vitejs/plugin-react": ^6.1.0
-  lucide-react: ^1.8.0
+  lucide-react: 1.8.0
   oxfmt: ^0.47.0
-  oxlint: ^1.64.0
+  oxlint: 1.64.0
   react: ^19.2.7
   react-dom: ^19.2.7
   tailwindcss: ^4.3.3
@@ -51,6 +51,8 @@ minimumReleaseAgeExclude:
   - "@tailor-platform/auth-public-client"
   # Renovate security update: vitest@4.1.11
   - vitest@4.1.11
+  # Renovate security update: next@16.3.3
+  - next@16.3.3
 
 overrides:
   # API Extractor's TSDoc and Rushstack Ajv dependencies resolve the vulnerable

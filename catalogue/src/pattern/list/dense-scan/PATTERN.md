@@ -46,6 +46,8 @@ New resource-list pages keep `page.tsx` to layout and navigation. The page-local
 
 <!-- source: dense-scan.tsx -->
 
+<!-- source: orders-table.tsx -->
+
 ## Page Layout & Internal Scrolling
 
 Table-first pages should pin their chrome and scroll only the rows region. Wrap the page in `<Layout fill>`:

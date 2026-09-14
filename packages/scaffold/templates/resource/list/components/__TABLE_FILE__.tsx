@@ -138,7 +138,7 @@ const columns = [
 
 export const ListTable = () => {
   const navigate = useNavigate();
-  const { variables, control } = useURLCollectionVariables({
+  const { variables: _variables, control } = useURLCollectionVariables({
     tableMetadata: tableMetadataForEntity,
     params: {
       pageSize: 25,

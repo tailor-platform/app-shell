@@ -16,19 +16,20 @@ import { createTypedPaths } from "@tailor-platform/app-shell";
  */
 export type GeneratedRouteParams = {
   "/": {};
-  "/alert-tokens": {};
   "/dashboard": {};
-  "/dashboard/document-progress": {};
   "/dashboard/long-content": {};
   "/dashboard/orders": {};
   "/dashboard/orders/:id": { id: string };
   "/dashboard/products": {};
-  "/data-table": {};
-  "/data-table-lab": {};
-  "/date-picker": {};
+  "/settings": {};
   "/showcase/activity-card": {};
+  "/showcase/alert-tokens": {};
   "/showcase/colors": {};
   "/showcase/csv-importer": {};
+  "/showcase/data-table": {};
+  "/showcase/data-table-lab": {};
+  "/showcase/date-picker": {};
+  "/showcase/document-progress": {};
   "/showcase/dropdown": {};
   "/showcase/forms": {};
   "/showcase/forms/zod-rhf": {};
@@ -36,8 +37,8 @@ export type GeneratedRouteParams = {
   "/showcase/layouts": {};
   "/showcase/metric-card": {};
   "/showcase/primitives": {};
+  "/showcase/spinner": {};
   "/showcase/timeline": {};
-  "/spinner": {};
 };
 
 /**

@@ -42,7 +42,8 @@ test("scaffoldPage creates a resource/list page bundle", () => {
     table,
     /TODO\(app-shell-scaffold\): Step 4 of 5\. Replace the placeholder data block/,
   );
-  assert.match(table, /TODO\(app-shell-scaffold\): Step 5 of 5\. Keep a labelled empty state/);
+  assert.doesNotMatch(table, /TODO\(app-shell-scaffold\): Step 5/);
+  assert.doesNotMatch(table, /Card\./);
   assert.match(table, /```ts/);
   assert.match(table, /const loading = fetching/);
   assert.match(table, /const tableData = data\?\./);
@@ -67,5 +68,5 @@ test("cli prints next steps after scaffolding", () => {
   assert.match(stdout, /3\. In .*GraphQL-generated node type/);
   assert.match(stdout, /4\. In .*metadataOutputPath is configurable/);
   assert.match(stdout, /app-shell-datatable\.generated\.ts/);
-  assert.match(stdout, /6\. Map edges -> rows/);
+  assert.match(stdout, /6\. Map edges -> rows.*DataTable handles its built-in states/);
 });

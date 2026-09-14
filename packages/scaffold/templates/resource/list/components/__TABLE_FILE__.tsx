@@ -1,6 +1,5 @@
 /* app-shell-scaffold: resource/list table scaffold banner. */
 import {
-  Card,
   DataTable,
   Link,
   createColumnHelper,
@@ -180,10 +179,6 @@ export const ListTable = () => {
     total: rows.length,
     pageInfo: emptyPageInfo,
   };
-  const emptyStateTitle = variables.query
-    ? "No matching __ENTITY_NAME_PLURAL_TITLE_LOWER__"
-    : "No __ENTITY_NAME_PLURAL_TITLE_LOWER__";
-
   const table = useDataTable({
     tableId: "__ENTITY_NAME_PLURAL_KEBAB__",
     columns,
@@ -193,23 +188,6 @@ export const ListTable = () => {
     error,
     onClickRow: (row) => void navigate(row.id),
   });
-
-  /*
-   * TODO(app-shell-scaffold): Step 5 of 5. Keep a labelled empty state after
-   * replacing the placeholder rows.
-   */
-  if (rows.length === 0) {
-    return (
-      <Card.Root>
-        <Card.Header title={emptyStateTitle} />
-        <Card.Content>
-          <p className="text-sm text-muted-foreground">
-            Replace placeholder rows with your query result, then keep a labelled empty state here.
-          </p>
-        </Card.Content>
-      </Card.Root>
-    );
-  }
 
   return (
     <DataTable.Root value={table}>

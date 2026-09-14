@@ -41,11 +41,10 @@ function printNextSteps(result: ScaffoldPageResult): void {
         "  5. Replace the placeholder rows / loading / error / tableData block using variables.pagination, variables.order, and variables.query.",
       );
       console.log(
-        "  6. Map edges -> rows and pass pageInfo / total / loading / error into useDataTable.",
+        "  6. Map edges -> rows and pass pageInfo / total / loading / error into useDataTable; DataTable handles its built-in states.",
       );
-      console.log("  7. Keep the labelled empty state after replacing the placeholder rows.");
       console.log(
-        "  8. Create a sibling create/page.tsx route if you keep the header Create action.",
+        "  7. Create a sibling create/page.tsx route if you keep the header Create action.",
       );
       return;
     }

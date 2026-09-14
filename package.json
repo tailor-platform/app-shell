@@ -14,7 +14,7 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@changesets/cli": "3.0.1",
+    "@changesets/cli": "3.0.2",
     "lefthook": "2.1.12",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

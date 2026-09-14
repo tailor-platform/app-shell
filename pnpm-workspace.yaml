@@ -7,7 +7,7 @@ packages:
 catalog:
   "@tailor-platform/sdk": ^2.7.0
   "@tailwindcss/postcss": ^4.3.3
-  "@types/node": ^25.9.5
+  "@types/node": ^25.9.6
   "@types/react": ^19
   "@types/react-dom": ^19
   "@vitejs/plugin-react": ^6.1.0

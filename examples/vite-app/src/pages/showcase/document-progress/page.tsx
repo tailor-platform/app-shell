@@ -4,6 +4,7 @@ import {
   DocumentProgressCard,
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
+import { GaugeIcon } from "lucide-react";
 
 /**
  * Purchase-order fulfilment, built on the generic DocumentProgressCard — the
@@ -131,6 +132,7 @@ const DocumentProgressPage = () => {
 DocumentProgressPage.appShellPageProps = {
   meta: {
     title: "Document Progress",
+    icon: <GaugeIcon />,
   },
 } satisfies AppShellPageProps;
 

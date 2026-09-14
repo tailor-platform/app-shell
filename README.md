@@ -11,14 +11,15 @@ AppShell is an opinionated React application framework for creating applications
 | Package                                                            | Version                                                                                                                                             | Description                                                   |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [`@tailor-platform/app-shell`](./packages/core)                    | [![npm](https://img.shields.io/npm/v/@tailor-platform/app-shell)](https://www.npmjs.com/package/@tailor-platform/app-shell)                         | Core library — components, hooks, layouts, and authentication |
-| [`@tailor-platform/app-shell-vite-plugin`](./packages/vite-plugin) | [![npm](https://img.shields.io/npm/v/@tailor-platform/app-shell-vite-plugin)](https://www.npmjs.com/package/@tailor-platform/app-shell-vite-plugin) | Vite plugin for file-based routing                            |
+| [`@tailor-platform/vite-plugin-app-shell`](./packages/vite-plugin) | [![npm](https://img.shields.io/npm/v/@tailor-platform/vite-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/vite-plugin-app-shell) | Vite plugin for file-based routing                            |
 
 ## Examples
 
-| Example                               | Description                                            |
-| ------------------------------------- | ------------------------------------------------------ |
-| [`vite-app`](./examples/vite-app)     | Vite app with file-based routing using the vite-plugin |
-| [`nextjs-app`](./examples/nextjs-app) | Next.js App Router integration                         |
+| Example                           | Description                                                        |
+| --------------------------------- | ------------------------------------------------------------------ |
+| [`vite-app`](./examples/vite-app) | Vite app with file-based routing plus the consolidated UI showcase |
+
+Next.js App Router compatibility is covered by the minimal smoke fixture under [`e2e/tests/nextjs-smoke`](./e2e/tests/nextjs-smoke).
 
 ## Documentation
 

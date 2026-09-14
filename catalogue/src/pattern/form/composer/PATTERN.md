@@ -11,7 +11,7 @@ do:
   - The prose IS the interaction; any other controls only qualify how the text is submitted
 dont:
   - The text is one field among many on a record form — use form/modal, form/single-page or form/sectioned with a Textarea field
-  - A chat input where Enter sends and there is no Discard — that is a different layout
+  - A chat input where Enter sends and there is no Discard — use the `AIChat` component instead
 ---
 
 # pattern/form/composer

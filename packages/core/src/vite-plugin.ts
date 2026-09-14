@@ -12,8 +12,8 @@
  * } from "@tailor-platform/app-shell/vite-plugin";
  * ```
  */
-export { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+export { appShellRoutes } from "@tailor-platform/vite-plugin-app-shell";
 export type {
   AppShellRoutesPluginOptions,
   TypedRoutesOptions,
-} from "@tailor-platform/app-shell-vite-plugin";
+} from "@tailor-platform/vite-plugin-app-shell";

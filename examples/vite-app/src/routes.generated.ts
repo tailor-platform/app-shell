@@ -20,6 +20,7 @@ export type GeneratedRouteParams = {
   "/dashboard/long-content": {};
   "/dashboard/orders": {};
   "/dashboard/orders/:id": { id: string };
+  "/dashboard/orders/:id/activity": { id: string };
   "/dashboard/products": {};
   "/settings": {};
   "/showcase/activity-card": {};

@@ -4,7 +4,7 @@ import { matchRoutes, useRouteLoaderData } from "react-router";
 import { Table } from "lucide-react";
 import { buildTitleResolver, LocalizedString } from "@/lib/i18n";
 import { createContentRoutes, type AppShellRouteHandle } from "@/routing/routes";
-import type { NavigatableRoute } from "@/routing/path";
+import { hasDynamicSegment, parseDynamicSegment, type NavigatableRoute } from "@/routing/path";
 
 // Nav items produced by the appshell root loader for sidebar rendering
 export type NavItem = {
@@ -81,7 +81,7 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
   const resolvedModules = await Promise.all(
     props.modules.map(async (module) => {
       // Skip param routes at module level
-      if (module.path.startsWith(":")) return null;
+      if (parseDynamicSegment(module.path) !== null) return null;
 
       const guardResult = await runGuards(module.guards);
       if (guardResult.type !== "pass") return null;
@@ -118,7 +118,7 @@ const filterVisibleResources = async (
   const results = await Promise.all(
     resources.map(async (resource) => {
       // Skip param routes (paths starting with ":")
-      if (resource.path.startsWith(":")) return null;
+      if (parseDynamicSegment(resource.path) !== null) return null;
 
       const guardResult = await runGuards(resource.guards);
       if (guardResult.type !== "pass") return null;
@@ -164,12 +164,12 @@ const resolveRelativePathSegments = (
   const resolvedSegments: Array<string> = [];
 
   for (const segment of segments) {
-    if (!segment.startsWith(":")) {
+    const paramName = parseDynamicSegment(segment);
+    if (paramName === null) {
       resolvedSegments.push(segment);
       continue;
     }
 
-    const paramName = segment.slice(1);
     const value = params[paramName];
     if (value === undefined) return null;
     resolvedSegments.push(value);
@@ -181,8 +181,14 @@ const resolveRelativePathSegments = (
 const routePathFromSegments = (segments: Array<string>) => segments.join("/") || "/";
 
 const displayPathSegments = (path: string) =>
-  splitPath(path).map((segment) => (segment.startsWith(":") ? "…" : segment));
+  splitPath(path).map((segment) => (parseDynamicSegment(segment) !== null ? "…" : segment));
 
+/**
+ * Build command-palette entries reachable below dynamic segments in the current URL.
+ *
+ * Resolved parameter values form the navigable path; dynamic segment nodes themselves
+ * are omitted because they describe the page already being viewed.
+ */
 const buildCurrentPathAwareRoutes = async ({
   modules,
   locale,
@@ -211,7 +217,7 @@ const buildCurrentPathAwareRoutes = async ({
     .filter((match) => match !== null);
 
   for (const [index, match] of nodeMatches.entries()) {
-    if (!match.node.path.includes(":")) continue;
+    if (!hasDynamicSegment(match.node.path)) continue;
 
     const breadcrumb = nodeMatches
       .slice(0, index + 1)
@@ -244,6 +250,11 @@ const buildCurrentPathAwareRoutes = async ({
   return [...routeMap.values()];
 };
 
+/**
+ * Traverse one matched dynamic branch, respecting guards and collecting only its
+ * navigable non-dynamic descendants. `baseSegments` keeps the real URL while
+ * `baseDisplaySegments` replaces parameter values with `…` for the palette label.
+ */
 const collectCurrentPathAwareRoutes = async ({
   node,
   params,
@@ -268,7 +279,7 @@ const collectCurrentPathAwareRoutes = async ({
 
   const isNavigable =
     "resources" in node ? node.meta.menuItemClickable : node.component !== undefined;
-  if (isNavigable && !node.path.includes(":")) {
+  if (isNavigable && !hasDynamicSegment(node.path)) {
     const path = routePathFromSegments(baseSegments);
     routeMap.set(path, {
       path,

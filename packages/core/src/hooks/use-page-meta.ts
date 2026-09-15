@@ -1,5 +1,6 @@
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
+import { parseDynamicSegment } from "@/routing/path";
 import type { Modules, Resource } from "@/resource";
 import type { ReactNode } from "react";
 
@@ -81,7 +82,9 @@ const matchesPath = (target: string, pattern: string): boolean => {
   const patternSegments = pattern.split("/");
   if (targetSegments.length !== patternSegments.length) return false;
 
-  return patternSegments.every((seg, i) => seg.startsWith(":") || seg === targetSegments[i]);
+  return patternSegments.every(
+    (seg, i) => parseDynamicSegment(seg) !== null || seg === targetSegments[i],
+  );
 };
 
 /**

@@ -127,6 +127,12 @@ function filterActions(
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * Root and `/_*` paths are AppShell utility routes rather than user-defined pages,
+ * so the command palette sorts them after regular page routes.
+ */
+const isSpecialPath = (path: string) => path === "/" || path.startsWith("/_");
+
 // ── Reducer State (discriminated union) ──
 
 type PaletteState =
@@ -303,8 +309,8 @@ export function useCommandPalette({
       activeSource
         ? []
         : filterRoutes(routes, search).toSorted((a, b) => {
-            const aIsSpecial = a.path === "/" || a.path.startsWith("/_");
-            const bIsSpecial = b.path === "/" || b.path.startsWith("/_");
+            const aIsSpecial = isSpecialPath(a.path);
+            const bIsSpecial = isSpecialPath(b.path);
             return Number(aIsSpecial) - Number(bIsSpecial) || a.path.localeCompare(b.path);
           }),
     [routes, search, activeSource],

@@ -21,6 +21,7 @@ export type NavItemResource = {
 };
 
 const loaderID = "appshell-root-nav";
+const commandPaletteLoaderID = "appshell-command-palette-routes";
 
 /**
  * Create a loader for navigation items from modules.
@@ -29,21 +30,15 @@ const loaderID = "appshell-root-nav";
 export const createNavItemsLoader = (props: BuildNavItemsProps) => {
   return {
     loaderID,
-    loader: async ({ request }: { request: Request }) => {
-      const pathname = new URL(request.url).pathname;
-      return {
-        navItems: buildNavItems(props),
-        commandPaletteRoutes: buildCurrentPathAwareRoutes({
-          ...props,
-          pathname,
-        }),
-      };
-    },
+    loader: async () => ({ navItems: buildNavItems(props) }),
   };
 };
 
 type NavItemsLoaderData = {
   navItems?: Promise<Array<NavItem>>;
+};
+
+type CommandPaletteRoutesLoaderData = {
   commandPaletteRoutes?: Promise<Array<NavigatableRoute>>;
 };
 
@@ -57,11 +52,13 @@ export const useNavItems = () => {
 };
 
 /**
- * Hook to get current-path-aware command palette routes from the root loader.
+ * Hook to get current-path-aware command palette routes from its dedicated loader.
  * Returns only routes whose dynamic params are already fixed by the current URL.
  */
 export const useCommandPaletteRoutes = () => {
-  const loaderData = useRouteLoaderData(loaderID) as NavItemsLoaderData | undefined;
+  const loaderData = useRouteLoaderData(commandPaletteLoaderID) as
+    | CommandPaletteRoutesLoaderData
+    | undefined;
   return loaderData?.commandPaletteRoutes;
 };
 
@@ -69,6 +66,22 @@ type BuildNavItemsProps = {
   modules: Modules;
   locale: string;
   basePath?: string;
+};
+
+/**
+ * Create a loader for routes reachable below dynamic segments in the current URL.
+ * This stays separate from navigation loading so path changes do not rerun all nav guards.
+ */
+export const createCommandPaletteRoutesLoader = (props: BuildNavItemsProps) => {
+  return {
+    loaderID: commandPaletteLoaderID,
+    loader: async ({ request }: { request: Request }) => {
+      const pathname = new URL(request.url).pathname;
+      return {
+        commandPaletteRoutes: buildCurrentPathAwareRoutes({ ...props, pathname }),
+      };
+    },
+  };
 };
 
 /**

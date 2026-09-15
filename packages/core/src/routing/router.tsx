@@ -4,7 +4,7 @@ import { RouterProvider } from "react-router/dom";
 import type { RouteObject } from "react-router";
 import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
-import { createNavItemsLoader } from "@/routing/navigation";
+import { createCommandPaletteRoutesLoader, createNavItemsLoader } from "@/routing/navigation";
 import { DocumentHead } from "./document-head";
 
 // ============================================================================
@@ -28,6 +28,12 @@ const createRootRoute = (params: {
     locale: configurations.locale,
     basePath: configurations.basePath,
   });
+  const { loaderID: commandPaletteLoaderID, loader: commandPaletteLoader } =
+    createCommandPaletteRoutesLoader({
+      modules: configurations.modules,
+      locale: configurations.locale,
+      basePath: configurations.basePath,
+    });
 
   // --- Children: wrap with error boundary when configured ---
   const globalErrorBoundary = configurations.errorBoundary;
@@ -44,15 +50,21 @@ const createRootRoute = (params: {
   return {
     id: loaderID,
     loader,
-    shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
-      defaultShouldRevalidate || currentUrl.pathname !== nextUrl.pathname,
     element: (
       <>
         <DocumentHead />
         {children}
       </>
     ),
-    children: routeChildren,
+    children: [
+      {
+        id: commandPaletteLoaderID,
+        loader: commandPaletteLoader,
+        shouldRevalidate: ({ currentUrl, nextUrl }) => currentUrl.pathname !== nextUrl.pathname,
+        element: <Outlet />,
+        children: routeChildren,
+      },
+    ],
     // Hydration fallback is unused in CSR-only usage of AppShell.
     // Return null to silence hydration warnings.
     HydrateFallback: () => null,

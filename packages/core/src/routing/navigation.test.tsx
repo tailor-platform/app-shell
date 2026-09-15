@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { useNavItems, useCommandPaletteRoutes } from "./navigation";
 import { useNavigate } from "react-router";
-import { defineModule, defineResource, hidden } from "@/resource";
+import { defineModule, defineResource, hidden, pass } from "@/resource";
 import {
   AppShellConfigContext,
   AppShellDataContext,
@@ -426,6 +426,44 @@ describe("useNavItems", () => {
     await waitFor(async () => {
       expect(await result.current!).toHaveLength(0);
     });
+  });
+
+  it("does not reload nav items on pathname changes", async () => {
+    const guard = vi.fn(() => pass());
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard" },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+        guards: [guard],
+      }),
+      defineModule({
+        path: "orders",
+        meta: { title: "Orders" },
+        component: () => <div>Orders</div>,
+        resources: [],
+      }),
+    ];
+    const { result } = renderWithNavigationLoader(
+      () => ({ navItems: useNavItems(), navigate: useNavigate() }),
+      modules,
+      "/dashboard",
+    );
+
+    await waitFor(() => {
+      expect(guard).toHaveBeenCalled();
+      expect(result.current).not.toBeNull();
+    });
+    const navItems = result.current!.navItems;
+    const callsBeforeNavigation = guard.mock.calls.length;
+
+    await act(async () => {
+      await result.current.navigate("/orders");
+    });
+
+    expect(result.current.navItems).toBe(navItems);
+    expect(guard).toHaveBeenCalledTimes(callsBeforeNavigation);
   });
 });
 

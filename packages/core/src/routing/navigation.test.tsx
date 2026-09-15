@@ -472,7 +472,7 @@ describe("useCommandPaletteRoutes", () => {
     );
 
     await waitFor(async () => {
-      expect(await result.current.routes!).toHaveLength(1);
+      expect(await result.current.routes!).toHaveLength(2);
     });
     await act(async () => {
       await result.current.navigate("/dashboard");
@@ -482,7 +482,7 @@ describe("useCommandPaletteRoutes", () => {
     });
   });
 
-  it("lists navigable descendants without the current dynamic segment", async () => {
+  it("includes the current dynamic page and its navigable descendants", async () => {
     const modules = [
       defineModule({
         path: "users",
@@ -511,21 +511,28 @@ describe("useCommandPaletteRoutes", () => {
     const { result } = renderWithNavigationLoader(
       () => useCommandPaletteRoutes(),
       modules,
-      "/users/42",
+      "/users/af0b8a32-e577-4e9c-9d44-4ab1832c578d",
     );
 
     await waitFor(async () => {
       expect(await result.current!).toEqual([
         {
-          path: "users/42/profile",
-          displayPath: "users/…/profile",
+          path: "users/af0b8a32-e577-4e9c-9d44-4ab1832c578d",
+          displayPath: "users/af0b8a32...",
+          title: "User Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail"],
+        },
+        {
+          path: "users/af0b8a32-e577-4e9c-9d44-4ab1832c578d/profile",
+          displayPath: "users/af0b8a32.../profile",
           title: "Profile",
           icon: expect.anything(),
           breadcrumb: ["Users", "User Detail", "Profile"],
         },
         {
-          path: "users/42/settings",
-          displayPath: "users/…/settings",
+          path: "users/af0b8a32-e577-4e9c-9d44-4ab1832c578d/settings",
+          displayPath: "users/af0b8a32.../settings",
           title: "Settings",
           icon: expect.anything(),
           breadcrumb: ["Users", "User Detail", "Settings"],
@@ -534,7 +541,7 @@ describe("useCommandPaletteRoutes", () => {
     });
   });
 
-  it("skips dynamic segments and hidden descendants", async () => {
+  it("includes the current dynamic page and skips hidden descendants", async () => {
     const modules = [
       defineModule({
         path: "users",
@@ -570,8 +577,15 @@ describe("useCommandPaletteRoutes", () => {
     await waitFor(async () => {
       expect(await result.current!).toEqual([
         {
+          path: "users/42",
+          displayPath: "users/42",
+          title: "User Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail"],
+        },
+        {
           path: "users/42/profile",
-          displayPath: "users/…/profile",
+          displayPath: "users/42/profile",
           title: "Profile",
           icon: expect.anything(),
           breadcrumb: ["Users", "User Detail", "Profile"],
@@ -611,7 +625,7 @@ describe("useCommandPaletteRoutes", () => {
       expect(await result.current!).toEqual([
         {
           path: "users/42/profile",
-          displayPath: "users/…/profile",
+          displayPath: "users/42/profile",
           title: "Profile",
           icon: expect.anything(),
           breadcrumb: ["Users", "User Detail", "Profile"],
@@ -671,15 +685,36 @@ describe("useCommandPaletteRoutes", () => {
     await waitFor(async () => {
       expect(await result.current!).toEqual([
         {
+          path: "orders/42",
+          displayPath: "orders/42",
+          title: "Order Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail"],
+        },
+        {
           path: "orders/42/items",
-          displayPath: "orders/…/items",
+          displayPath: "orders/42/items",
           title: "Items",
           icon: expect.anything(),
           breadcrumb: ["Orders", "Order Detail", "Items"],
         },
         {
+          path: "orders/42/items/7",
+          displayPath: "orders/42/items/7",
+          title: "Item Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail", "Items", "Item Detail"],
+        },
+        {
+          path: "orders/42/items/7/specs",
+          displayPath: "orders/42/items/7/specs",
+          title: "Tab",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail", "Items", "Item Detail", "Tab"],
+        },
+        {
           path: "orders/42/items/7/specs/history",
-          displayPath: "orders/…/items/…/…/history",
+          displayPath: "orders/42/items/7/specs/history",
           title: "History",
           icon: expect.anything(),
           breadcrumb: ["Orders", "Order Detail", "Items", "Item Detail", "Tab", "History"],
@@ -720,8 +755,15 @@ describe("useCommandPaletteRoutes", () => {
     await waitFor(async () => {
       expect(await result.current!).toEqual([
         {
+          path: "users/42",
+          displayPath: "users/42",
+          title: "User Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail"],
+        },
+        {
           path: "users/42/profile",
-          displayPath: "users/…/profile",
+          displayPath: "users/42/profile",
           title: "Profile",
           icon: expect.anything(),
           breadcrumb: ["Users", "User Detail", "Profile"],

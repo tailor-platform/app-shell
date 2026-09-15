@@ -180,14 +180,25 @@ const resolveRelativePathSegments = (
 
 const routePathFromSegments = (segments: Array<string>) => segments.join("/") || "/";
 
-const displayPathSegments = (path: string) =>
-  splitPath(path).map((segment) => (parseDynamicSegment(segment) !== null ? "…" : segment));
+// UUIDs are common route params: their eight-character first group identifies the record
+// without letting a 36-character value dominate a palette label.
+const maxDisplayParamLength = 8;
+
+const displayPathSegments = (path: string, params: Record<string, string | undefined>) =>
+  splitPath(path).map((segment) => {
+    const paramName = parseDynamicSegment(segment);
+    if (paramName === null) return segment;
+
+    const value = params[paramName] ?? "";
+    return value.length > maxDisplayParamLength
+      ? `${value.slice(0, maxDisplayParamLength)}...`
+      : value;
+  });
 
 /**
  * Build command-palette entries reachable below dynamic segments in the current URL.
  *
- * Resolved parameter values form the navigable path; dynamic segment nodes themselves
- * are omitted because they describe the page already being viewed.
+ * Resolved parameter values form navigable paths, including the current dynamic page.
  */
 const buildCurrentPathAwareRoutes = async ({
   modules,
@@ -240,7 +251,7 @@ const buildCurrentPathAwareRoutes = async ({
       baseSegments: splitPath(match.pathnameBase),
       baseDisplaySegments: nodeMatches
         .slice(0, index + 1)
-        .flatMap(({ node }) => displayPathSegments(node.path)),
+        .flatMap(({ node, params }) => displayPathSegments(node.path, params)),
       breadcrumb,
       resolveTitle,
       routeMap,
@@ -252,8 +263,8 @@ const buildCurrentPathAwareRoutes = async ({
 
 /**
  * Traverse one matched dynamic branch, respecting guards and collecting only its
- * navigable non-dynamic descendants. `baseSegments` keeps the real URL while
- * `baseDisplaySegments` replaces parameter values with `…` for the palette label.
+ * navigable descendants. `baseSegments` keeps the real URL while
+ * `baseDisplaySegments` abbreviates parameter values for the palette label.
  */
 const collectCurrentPathAwareRoutes = async ({
   node,
@@ -279,7 +290,7 @@ const collectCurrentPathAwareRoutes = async ({
 
   const isNavigable =
     "resources" in node ? node.meta.menuItemClickable : node.component !== undefined;
-  if (isNavigable && !hasDynamicSegment(node.path)) {
+  if (isNavigable) {
     const path = routePathFromSegments(baseSegments);
     routeMap.set(path, {
       path,
@@ -302,7 +313,7 @@ const collectCurrentPathAwareRoutes = async ({
       params,
       icon,
       baseSegments: [...baseSegments, ...childSegments],
-      baseDisplaySegments: [...baseDisplaySegments, ...displayPathSegments(child.path)],
+      baseDisplaySegments: [...baseDisplaySegments, ...displayPathSegments(child.path, params)],
       breadcrumb: [...breadcrumb, resolveTitle(child.meta.title, child.path)],
       resolveTitle,
       routeMap,

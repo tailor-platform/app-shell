@@ -1,6 +1,6 @@
-# Decision: `page` as a catalogue category
+# Decision: `page` as a skill category
 
-> Status: **Decided — `catalogue/src/page/` added as a sibling of `src/pattern/`. Machinery only; page entries land per ticket.**
+> Status: **Decided — `packages/core/skills-src/app-shell-patterns/page/` is a sibling of `pattern/`. Machinery only; page entries land per ticket.**
 > Scope: where page entries live and how they differ from patterns. Does not cover any individual page's content.
 
 ## Context
@@ -9,14 +9,14 @@ The UI Catalogue migration assessment (tailor-inc/platform-planning#1731) review
 
 Those four had no home. Two distinct things are easy to confuse here, so to be explicit:
 
-- **`catalogue/`** (this repo) generates the **`app-shell-patterns` agent skill** into `packages/core/skills/` — gitignored, produced by `pnpm build`, and shipped to consumers through core's `files: ["skills/**"]`. It is documentation for coding agents working inside a consumer app, where no `docs/` tree exists.
+- **`packages/core/skills-src/`** is the tracked source for the **`app-shell-patterns` agent skill**. Core generates `packages/core/skills/` only while packing, ships it through `files: ["skills/**"]`, then removes it. This gives coding agents in consumer apps documentation where no `docs/` tree exists, without leaving a generated tree for contributors to edit.
 - **The UI Catalogue at ui.tailor.tech** is a separate product living in `tailor-inc/app-web`. Nothing in this repo publishes to it; the only link is `.github/workflows/scripts/check-catalogue-links.sh`, which validates deep links out of `docs/components/*.md`.
 
-A page is neither a component API nor a concept, and `docs/` carries no pattern category at all — so the catalogue, which already owns the pattern vocabulary, is where a page belongs.
+A page is neither a component API nor a concept, and `docs/` carries no pattern category at all — so AppShell's skill source, which owns the pattern vocabulary, is where a page belongs.
 
 ## Decision
 
-**`catalogue/src/page/` is a sibling of `src/pattern/`, not a container for patterns.**
+**`skills-src/app-shell-patterns/page/` is a sibling of `pattern/`, not a container for patterns.**
 
 A page owns a route and its value is _choosing_ between the variants that could fill it. A pattern is one composition recipe used within a screen — a single recipe, not a choice between several. The test: if it owns a route and its value is choosing between variants, it is a page; if it is one way to build one thing, it is a pattern.
 
@@ -35,12 +35,12 @@ Without the link-don't-restate rule, each page entry would duplicate three patte
 
 ## Implementation
 
-`generate-skill.mjs` was built for this: its `CATEGORIES` list carries a comment saying a new category needs an entry there plus a matching `{{<templateKey>}}` in `SKILL.template.md`. Both were added — `{ name: "page", entryFile: "PAGE.md", outputDir: "pages", templateKey: "PAGES_TABLE" }` and an "Available Pages" section ahead of "Available Patterns", reflecting the outer-to-inner order in which the two are chosen. `slugToFilename` derives its category list from `CATEGORIES`, so `page/collection` → `pages/collection.md` needs no further wiring.
+`packages/core/scripts/generate-skills.mjs` carries the category definitions. A new category needs an entry there plus a matching `{{<templateKey>}}` in `skills-src/app-shell-patterns/SKILL.template.md`. `page` adds `{ name: "page", entryFile: "PAGE.md", outputDir: "pages", templateKey: "PAGES_TABLE" }` and an "Available Pages" section ahead of "Available Patterns", reflecting the outer-to-inner order in which the two are chosen. `slugToFilename` derives its category list from `CATEGORIES`, so `page/collection` → `pages/collection.md` needs no further wiring.
 
 ## Consequences and open questions
 
 - **The "Available Pages" section is empty until the first entry lands.** It renders as a heading plus the definition of the layer, which reads correctly on its own, but it is a section with no rows. The first page entry should also add a page step to the skill's "How to Use" list, which currently sends an agent straight to a pattern.
 - **Subcategories are optional.** Index tables group by `subcategory` only, so a page without one renders as a bare table rather than under a heading repeating its category. Pages can adopt subcategories later where they earn their keep — Collection and Master list are both list-shaped while Detail page is not — without any generator change.
-- **Page entries do not reach `docs/`.** The catalogue feeds the agent skill only. Closing that gap belongs to the documentation-management pipeline work, which intends `docs-kit` to subsume catalogue's generator; this taxonomy carries over to it unchanged, since the boundary is about authoring intent rather than how output is produced.
-- **`expected-skills-files.txt` must gain a row per page entry.** It is the committed manifest guarding the gitignored generated tree, and `catalogue`'s `test` script fails when the two disagree.
+- **Page entries do not reach `docs/`.** The skill source feeds the consumer skill only. Closing that gap belongs to future documentation-management work; this taxonomy carries over unchanged, since the boundary is about authoring intent rather than how output is produced.
+- **Generated skill files have no manifest.** The core package generator clears its output first, and the package test verifies the packed tarball rather than an untracked worktree tree.
 - **Two migration blockers are carried on their tickets**, not here: tailor-inc/platform-planning#1742 needs `Layout` to support a centered, width-constrained form column, and tailor-inc/platform-planning#1737's overlap with Collection still needs defining.

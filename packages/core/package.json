@@ -86,7 +86,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "4.1.10",
     "happy-dom": "20.9.0",
-    "postcss": "8.5.26",
+    "postcss": "8.5.28",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "7.71.2",

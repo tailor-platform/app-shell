@@ -51,6 +51,8 @@ minimumReleaseAgeExclude:
   - "@tailor-platform/auth-public-client"
   # Renovate security update: vitest@4.1.11
   - vitest@4.1.11
+  # Renovate security update: next@16.3.3
+  - next@16.3.3
 
 overrides:
   # API Extractor's TSDoc and Rushstack Ajv dependencies resolve the vulnerable

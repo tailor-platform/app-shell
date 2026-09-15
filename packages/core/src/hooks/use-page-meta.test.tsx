@@ -72,11 +72,11 @@ const testConfig: RootConfiguration = {
   errorBoundary: <DefaultErrorBoundary />,
 };
 
-const renderPageMeta = (path: string) => {
+const renderPageMeta = (path: string, configuration = testConfig) => {
   return renderHook(() => usePageMeta(path), {
     wrapper: ({ children }) => (
       <MemoryRouter initialEntries={["/dashboard/overview"]}>
-        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+        <AppShellConfigContext.Provider value={{ configurations: configuration }}>
           {children}
         </AppShellConfigContext.Provider>
       </MemoryRouter>
@@ -133,6 +133,38 @@ describe("usePageMeta", () => {
 
     expect(result.current).not.toBeNull();
     expect(result.current?.title).toBe("Order Detail");
+  });
+
+  it("prefers a static resource over an earlier dynamic sibling", () => {
+    const dynamicIcon = <Folder />;
+    const staticIcon = <Settings />;
+    const config: RootConfiguration = {
+      ...testConfig,
+      modules: [
+        defineModule({
+          path: "pickups",
+          meta: { title: "Pickups" },
+          component: () => <div>Pickups Root</div>,
+          resources: [
+            defineResource({
+              path: ":id",
+              meta: { title: "Pickup Detail", icon: dynamicIcon },
+              component: () => <div>Pickup Detail</div>,
+            }),
+            defineResource({
+              path: "create",
+              meta: { title: "Pickup Registration", icon: staticIcon },
+              component: () => <div>Pickup Registration</div>,
+            }),
+          ],
+        }),
+      ],
+    };
+
+    const { result } = renderPageMeta("/pickups/create", config);
+
+    expect(result.current?.title).toBe("Pickup Registration");
+    expect(result.current?.icon).toBe(staticIcon);
   });
 
   it("matches sub-resource under dynamic segment", () => {

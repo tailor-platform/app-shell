@@ -10,7 +10,7 @@ import {
 
 const MockIcon = () => <span data-testid="mock-icon">icon</span>;
 
-const PaletteProvider = ({ children }: { children: React.ReactNode }) => (
+const wrapper = ({ children }: { children: React.ReactNode }) => (
   <MemoryRouter>
     <CommandPaletteProvider>{children}</CommandPaletteProvider>
   </MemoryRouter>
@@ -21,11 +21,7 @@ afterEach(() => {
 });
 
 const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>) =>
-  render(
-    <PaletteProvider>
-      <ActionPanel {...props} />
-    </PaletteProvider>,
-  );
+  render(<ActionPanel {...props} />, { wrapper });
 
 describe("ActionPanel", () => {
   it("renders title", () => {
@@ -173,7 +169,7 @@ describe("ActionPanel context registration", () => {
     const onActions = vi.fn();
 
     render(
-      <PaletteProvider>
+      <>
         <ActionPanel
           title="My Panel"
           actions={[
@@ -192,7 +188,8 @@ describe("ActionPanel context registration", () => {
           ]}
         />
         <ActionsReader onActions={onActions} />
-      </PaletteProvider>,
+      </>,
+      { wrapper },
     );
 
     const lastCall = onActions.mock.calls[onActions.mock.calls.length - 1][0];
@@ -207,7 +204,7 @@ describe("ActionPanel context registration", () => {
     const onActions = vi.fn();
 
     render(
-      <PaletteProvider>
+      <>
         <ActionPanel
           title="Panel"
           actions={[
@@ -230,7 +227,8 @@ describe("ActionPanel context registration", () => {
           ]}
         />
         <ActionsReader onActions={onActions} />
-      </PaletteProvider>,
+      </>,
+      { wrapper },
     );
 
     const lastCall = onActions.mock.calls[onActions.mock.calls.length - 1][0];
@@ -243,7 +241,7 @@ describe("ActionPanel context registration", () => {
 
     // Use rerender so the same CommandPaletteProvider instance survives
     const { rerender } = render(
-      <PaletteProvider>
+      <>
         <ActionPanel
           title="Panel"
           actions={[
@@ -256,7 +254,8 @@ describe("ActionPanel context registration", () => {
           ]}
         />
         <ActionsReader onActions={onActions} />
-      </PaletteProvider>,
+      </>,
+      { wrapper },
     );
 
     // Actions registered
@@ -264,11 +263,7 @@ describe("ActionPanel context registration", () => {
     expect(beforeUnmount).toHaveLength(1);
 
     // Remove ActionPanel but keep the provider alive
-    rerender(
-      <PaletteProvider>
-        <ActionsReader onActions={onActions} />
-      </PaletteProvider>,
-    );
+    rerender(<ActionsReader onActions={onActions} />);
 
     const afterUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
     expect(afterUnmount).toHaveLength(0);

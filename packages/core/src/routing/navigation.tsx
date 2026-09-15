@@ -156,28 +156,6 @@ const normalizePathnameForRoutes = (pathname: string, basePath?: string) => {
   return segments.length > 0 ? `/${segments.join("/")}` : "/";
 };
 
-const resolveRelativePathSegments = (
-  path: string,
-  params: Record<string, string | undefined>,
-): Array<string> | null => {
-  const segments = splitPath(path);
-  const resolvedSegments: Array<string> = [];
-
-  for (const segment of segments) {
-    const paramName = parseDynamicSegment(segment);
-    if (paramName === null) {
-      resolvedSegments.push(segment);
-      continue;
-    }
-
-    const value = params[paramName];
-    if (value === undefined) return null;
-    resolvedSegments.push(value);
-  }
-
-  return resolvedSegments;
-};
-
 const routePathFromSegments = (segments: Array<string>) => segments.join("/") || "/";
 
 // UUIDs are common route params: their eight-character first group identifies the record
@@ -262,9 +240,9 @@ const buildCurrentPathAwareRoutes = async ({
 };
 
 /**
- * Traverse one matched dynamic branch, respecting guards and collecting only its
- * navigable descendants. `baseSegments` keeps the real URL while
- * `baseDisplaySegments` abbreviates parameter values for the palette label.
+ * Traverse static descendants of one matched dynamic node, respecting guards.
+ * `baseSegments` keeps the real URL while `baseDisplaySegments` abbreviates
+ * parameter values for the palette label.
  */
 const collectCurrentPathAwareRoutes = async ({
   node,
@@ -305,14 +283,15 @@ const collectCurrentPathAwareRoutes = async ({
   if (!children || children.length === 0) return;
 
   for (const child of children) {
-    const childSegments = resolveRelativePathSegments(child.path, params);
-    if (!childSegments) continue;
+    // Matched dynamic nodes are collected independently above. Entering an
+    // unmatched one would substitute current params into a sibling route.
+    if (hasDynamicSegment(child.path)) continue;
 
     await collectCurrentPathAwareRoutes({
       node: child,
       params,
       icon,
-      baseSegments: [...baseSegments, ...childSegments],
+      baseSegments: [...baseSegments, ...splitPath(child.path)],
       baseDisplaySegments: [...baseDisplaySegments, ...displayPathSegments(child.path, params)],
       breadcrumb: [...breadcrumb, resolveTitle(child.meta.title, child.path)],
       resolveTitle,

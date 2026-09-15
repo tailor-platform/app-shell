@@ -723,6 +723,70 @@ describe("useCommandPaletteRoutes", () => {
     });
   });
 
+  it("does not substitute a current param into a dynamic sibling", async () => {
+    const modules = [
+      defineModule({
+        path: "workspaces",
+        meta: { title: "Workspaces" },
+        component: () => <div>Workspaces</div>,
+        resources: [
+          defineResource({
+            path: ":workspaceId",
+            meta: { title: "Workspace" },
+            subResources: [
+              defineResource({
+                path: "services",
+                meta: { title: "Services" },
+                subResources: [
+                  defineResource({
+                    path: "ai-gateways",
+                    meta: { title: "AI Gateways" },
+                    subResources: [
+                      defineResource({
+                        path: ":name",
+                        meta: { title: "AI Gateway" },
+                        component: () => <div>AI Gateway</div>,
+                      }),
+                    ],
+                  }),
+                  defineResource({
+                    path: "applications",
+                    meta: { title: "Applications" },
+                    subResources: [
+                      defineResource({
+                        path: ":name",
+                        meta: { title: "Application" },
+                        component: () => <div>Application</div>,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/workspaces/w1/services/ai-gateways/g1",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "workspaces/w1/services/ai-gateways/g1",
+          displayPath: "workspaces/w1/services/ai-gateways/g1",
+          title: "AI Gateway",
+          icon: expect.anything(),
+          breadcrumb: ["Workspaces", "Workspace", "Services", "AI Gateways", "AI Gateway"],
+        },
+      ]);
+    });
+  });
+
   it("supports current-path-aware routes under a configured basePath", async () => {
     const modules = [
       defineModule({

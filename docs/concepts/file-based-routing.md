@@ -61,6 +61,17 @@ export default defineConfig({
 
 #### Plugin Options
 
+The canonical TypeScript import for the Vite plugin and its option types is the
+`@tailor-platform/app-shell/vite-plugin` subpath:
+
+```ts
+import {
+  appShellRoutes,
+  type AppShellRoutesPluginOptions,
+  type TypedRoutesOptions,
+} from "@tailor-platform/app-shell/vite-plugin";
+```
+
 | Option                | Type                            | Default       | Description                                                                          |
 | --------------------- | ------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
 | `pagesDir`            | `string`                        | `"src/pages"` | Directory containing page files                                                      |

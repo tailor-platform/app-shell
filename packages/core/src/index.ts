@@ -56,6 +56,17 @@ export {
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  AIChat,
+  type AIChatProps,
+  type AIChatHeaderProps,
+  type AIChatConversationProps,
+  type AIChatComposerProps,
+  type ToolState,
+  type ChainOfThoughtStepStatus,
+  type ChatHistoryGroupData,
+  type ChatHistoryItemData,
+} from "./components/ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";
@@ -164,6 +175,7 @@ export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
+export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Input, type InputProps } from "./components/input";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { Checkbox, type CheckboxProps } from "./components/checkbox";

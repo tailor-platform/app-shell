@@ -51,13 +51,28 @@ const App = () => {
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
-              <SidebarItem to="/dashboard/document-progress" />
+              <SidebarItem to="/settings" />
             </SidebarGroup>
-            <SidebarItem to="/date-picker" />
-            <SidebarItem to="/data-table" />
-            <SidebarItem to="/data-table-lab" />
-            <SidebarItem to="/alert-tokens" />
-            <SidebarItem to="/settings" />
+            <SidebarGroup title="Showcase">
+              <SidebarItem to="/showcase/colors" />
+              <SidebarItem to="/showcase/primitives" />
+              <SidebarItem to="/showcase/dropdown" />
+              <SidebarItem to="/showcase/forms" />
+              <SidebarItem to="/showcase/forms/zod-rhf" />
+              <SidebarItem to="/showcase/csv-importer" />
+              <SidebarItem to="/showcase/metric-card" />
+              <SidebarItem to="/showcase/activity-card" />
+              <SidebarItem to="/showcase/layouts" />
+              <SidebarItem to="/showcase/grid" />
+              <SidebarItem to="/showcase/timeline" />
+              <SidebarItem to="/showcase/ai-chat" />
+              <SidebarItem to="/showcase/document-progress" />
+              <SidebarItem to="/showcase/date-picker" />
+              <SidebarItem to="/showcase/data-table" />
+              <SidebarItem to="/showcase/data-table-lab" />
+              <SidebarItem to="/showcase/alert-tokens" />
+              <SidebarItem to="/showcase/spinner" />
+            </SidebarGroup>
           </SidebarLayout.DefaultSidebar>
         }
       />

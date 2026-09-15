@@ -433,7 +433,7 @@ const table = useDataTable({
 
 **Column alignment:** each `Column` accepts **`align`** (`"left" | "right"`) applied to both header and body cell. Numeric `type` columns (`"number"`, `"money"`) default to `"right"` automatically so digits align on the decimal place — pass `align="left"` to opt out; everything else defaults to `"left"`.
 
-**Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/app-shell-sdk-plugin` codegen) when available so enum/datetime/string filters bind to the right editors.
+**Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/sdk-plugin-app-shell` codegen) when available so enum/datetime/string filters bind to the right editors.
 
 **Bucket tabs / segmented UX:** AppShell defines **toolbar chips**, not lifecycle tabs. When design places **`Tabs`** (All / Draft / …) inside the card, compose them **above** `DataTable.Root` and synchronize tab-driven bucket state with **`useCollectionVariables`** (`variables.query` / filters)—see **`patterns/list/dense-scan.md`**.
 
@@ -801,6 +801,22 @@ Multi-select submits an array.
 **Purpose:** Free-text input with completion suggestions (multi-select capable).
 **API:** Compound. `AutocompleteAsyncFetcher<T>` for async suggestion sources. `ItemGroup<T>` for grouped suggestions.
 **Used in patterns:** `form/*` (tags, free-text + suggested values).
+
+---
+
+## AI
+
+### `AIChat`
+
+> Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md)
+
+**Import:** `import { AIChat } from '@tailor-platform/app-shell'`
+**Purpose:** Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts. The root places three regions in a fixed order, `Layout`-style: `AIChat.Header` (optional) over `AIChat.Conversation` over `AIChat.Composer` (optional). Each region carries its own props; the root carries `status`.
+**API:** Root (`status`) + regions — `AIChat.Header` (`title`, `icon`, `actions`), `AIChat.Conversation` (`autoScroll`, transcript as children), `AIChat.Composer` (`onSubmit`, `onStop`, `value`/`defaultValue`/`onValueChange`, `placeholder`, `disabled`, `submitOnEnter`, `actions`) — + transcript parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning`/`.ReasoningTrigger`/`.ReasoningContent`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, `.History`.
+**Composer:** Body is `Textarea` over one action row per `form/composer`'s layout. Enter submits (IME-safe), Shift+Enter newlines, and `status` from `useAIChat()` drives the busy/Stop state.
+**Header:** a 48px strip (graphic + `text-sm font-semibold` title + right action slot) closed by a full-width rule; renders only when `title` or `actions` is set.
+**Renders no chrome:** no border or background of its own — wrap in `Card`, `Sheet`, or a `Layout.Column`, with `overflow-hidden` so the header rule stays inside rounded corners.
+**Used in patterns:** none yet — a component, not a catalogue pattern (platform-planning#1748).
 
 ---
 

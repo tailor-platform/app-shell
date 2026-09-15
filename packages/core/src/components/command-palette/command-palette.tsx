@@ -1,9 +1,10 @@
 import { useReducer, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useNavigate, Await } from "react-router";
 import { useAppInfoPageRoute } from "@/components/internals/app-info";
-import { SearchIcon, LoaderCircleIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
+import { Spinner } from "@/components/spinner";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
 import { filterRoutes, NavigatableRoute } from "@/routing/path";
@@ -728,7 +729,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
           {/* Searching indicator */}
           {isSearching && (
             <div className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-sm astw:text-muted-foreground">
-              <LoaderCircleIcon className="astw:h-4 astw:w-4 astw:animate-spin" />
+              <Spinner />
               {t("commandPaletteSearching")}
             </div>
           )}

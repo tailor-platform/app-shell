@@ -44,6 +44,8 @@ const createRootRoute = (params: {
   return {
     id: loaderID,
     loader,
+    shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
+      defaultShouldRevalidate || currentUrl.pathname !== nextUrl.pathname,
     element: (
       <>
         <DocumentHead />

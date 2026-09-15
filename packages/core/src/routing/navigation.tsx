@@ -180,6 +180,9 @@ const resolveRelativePathSegments = (
 
 const routePathFromSegments = (segments: Array<string>) => segments.join("/") || "/";
 
+const displayPathSegments = (path: string) =>
+  splitPath(path).map((segment) => (segment.startsWith(":") ? "…" : segment));
+
 const buildCurrentPathAwareRoutes = async ({
   modules,
   locale,
@@ -229,6 +232,9 @@ const buildCurrentPathAwareRoutes = async ({
       params: match.params,
       icon,
       baseSegments: splitPath(match.pathnameBase),
+      baseDisplaySegments: nodeMatches
+        .slice(0, index + 1)
+        .flatMap(({ node }) => displayPathSegments(node.path)),
       breadcrumb,
       resolveTitle,
       routeMap,
@@ -243,6 +249,7 @@ const collectCurrentPathAwareRoutes = async ({
   params,
   icon,
   baseSegments,
+  baseDisplaySegments,
   breadcrumb,
   resolveTitle,
   routeMap,
@@ -251,6 +258,7 @@ const collectCurrentPathAwareRoutes = async ({
   params: Record<string, string | undefined>;
   icon: ReactNode;
   baseSegments: Array<string>;
+  baseDisplaySegments: Array<string>;
   breadcrumb: Array<string>;
   resolveTitle: (title: LocalizedString, path: string) => string;
   routeMap: Map<string, NavigatableRoute>;
@@ -260,10 +268,11 @@ const collectCurrentPathAwareRoutes = async ({
 
   const isNavigable =
     "resources" in node ? node.meta.menuItemClickable : node.component !== undefined;
-  if (isNavigable) {
+  if (isNavigable && !node.path.includes(":")) {
     const path = routePathFromSegments(baseSegments);
     routeMap.set(path, {
       path,
+      displayPath: routePathFromSegments(baseDisplaySegments),
       title: resolveTitle(node.meta.title, node.path),
       icon,
       breadcrumb,
@@ -282,6 +291,7 @@ const collectCurrentPathAwareRoutes = async ({
       params,
       icon,
       baseSegments: [...baseSegments, ...childSegments],
+      baseDisplaySegments: [...baseDisplaySegments, ...displayPathSegments(child.path)],
       breadcrumb: [...breadcrumb, resolveTitle(child.meta.title, child.path)],
       resolveTitle,
       routeMap,

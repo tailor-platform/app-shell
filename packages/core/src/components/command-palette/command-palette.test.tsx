@@ -19,6 +19,7 @@ import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import type { Resource } from "@/resource";
 import type { NavItem } from "../../routing/navigation";
+import type { NavigatableRoute } from "@/routing/path";
 
 // Mock NavItems for testing
 const mockNavItems: NavItem[] = [
@@ -55,10 +56,12 @@ const ProgrammaticOpenButton = ({ search }: { search?: string }) => {
 
 const TestCommandPalette = ({
   navItems = mockNavItems,
+  extraRoutes,
   searchSources,
   opener,
 }: {
   navItems?: NavItem[];
+  extraRoutes?: NavigatableRoute[];
   searchSources?: readonly SearchSource[];
   opener?: ReactNode;
 }) => {
@@ -76,7 +79,7 @@ const TestCommandPalette = ({
         <CommandPaletteProvider searchSources={searchSources}>
           <MemoryRouter>
             {opener}
-            <CommandPaletteContent navItems={navItems} />
+            <CommandPaletteContent navItems={navItems} extraRoutes={extraRoutes} />
           </MemoryRouter>
         </CommandPaletteProvider>
       </AppShellDataContext.Provider>
@@ -87,6 +90,7 @@ const TestCommandPalette = ({
 const renderCommandPaletteContent = (
   props: {
     navItems?: NavItem[];
+    extraRoutes?: NavigatableRoute[];
     searchSources?: readonly SearchSource[];
     opener?: ReactNode;
   } = {},
@@ -256,6 +260,31 @@ describe("CommandPaletteContent Integration", () => {
   });
 
   describe("UI state", () => {
+    it("sorts normal and extra pages by path", async () => {
+      renderCommandPaletteContent({
+        extraRoutes: [
+          {
+            path: "dashboard/orders/42/activity",
+            displayPath: "dashboard/orders/…/activity",
+            title: "Activity",
+            breadcrumb: ["Orders", "Order Detail", "Activity"],
+          },
+        ],
+      });
+
+      fireEvent.keyDown(document, { key: "k", metaKey: true });
+      await screen.findByPlaceholderText("Search pages...");
+
+      expect(screen.getByText("/dashboard/orders/…/activity")).toBeDefined();
+      expect(screen.getByText("Pages")).toBeDefined();
+      const activity = screen.getByText("Orders > Order Detail > Activity").closest("button")!;
+      const analytics = screen.getByText("Dashboard > Analytics").closest("button")!;
+      const reports = screen.getByText("Dashboard > Reports").closest("button")!;
+      expect(analytics.dataset.index).toBe("0");
+      expect(activity.dataset.index).toBe("1");
+      expect(reports.dataset.index).toBe("2");
+    });
+
     it("displays routes with breadcrumb hierarchy", async () => {
       renderCommandPaletteContent();
 

@@ -4,6 +4,8 @@ import { buildTitleResolver } from "@/lib/i18n";
 
 export type NavigatableRoute = {
   path: string;
+  /** Display-only path; keeps static child segments visible when params are long. */
+  displayPath?: string;
   title: string;
   icon?: ReactNode;
   /**

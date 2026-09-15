@@ -299,7 +299,14 @@ export function useCommandPalette({
     [contextualActions, search, activeSource],
   );
   const filteredRoutes = useMemo(
-    () => (activeSource ? [] : filterRoutes(routes, search)),
+    () =>
+      activeSource
+        ? []
+        : filterRoutes(routes, search).toSorted((a, b) => {
+            const aIsSpecial = a.path === "/" || a.path.startsWith("/_");
+            const bIsSpecial = b.path === "/" || b.path.startsWith("/_");
+            return Number(aIsSpecial) - Number(bIsSpecial) || a.path.localeCompare(b.path);
+          }),
     [routes, search, activeSource],
   );
 
@@ -559,7 +566,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
   return (
     <Dialog.Root open={paletteOpen} onOpenChange={handleOpenChange}>
       <Dialog.Content
-        className="astw:p-0 astw:gap-0 astw:sm:max-w-2xl astw:overflow-hidden astw:top-[30%] astw:translate-y-[-30%]"
+        className="astw:p-0 astw:gap-0 astw:sm:max-w-2xl astw:lg:max-w-4xl astw:overflow-hidden astw:top-[30%] astw:translate-y-[-30%]"
         onKeyDown={handleKeyDown}
         aria-describedby={undefined}
       >
@@ -667,6 +674,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
                   </div>
                   {filteredRoutes.map((route, index) => {
                     const globalIndex = routeIndexOffset + index;
+                    const displayPath = route.displayPath ?? route.path;
                     return (
                       <button
                         key={route.path}
@@ -682,7 +690,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
                           {route.breadcrumb.join(" > ")}
                         </span>
                         <span className="astw:text-[11px] astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
-                          {route.path.startsWith("/") ? route.path : `/${route.path}`}
+                          {displayPath.startsWith("/") ? displayPath : `/${displayPath}`}
                         </span>
                       </button>
                     );

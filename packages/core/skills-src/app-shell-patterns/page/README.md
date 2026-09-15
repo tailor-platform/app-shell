@@ -23,11 +23,11 @@ a single home is not a restatement.
 
 ## Adding an entry
 
-Mirror `src/pattern/`: one directory per page, holding a `PAGE.md` plus the
+Mirror `pattern/`: one directory per page, holding a `PAGE.md` plus the
 `.tsx` files it embeds.
 
 ```
-src/page/<name>/
+page/<name>/
   PAGE.md          ← frontmatter + prose; the generator's entry marker
   <name>.tsx       ← reference implementation, embedded via a source marker
 ```
@@ -49,9 +49,9 @@ Embed source with `<!-- source: collection.tsx -->`; the generator replaces the
 marker with a fenced code block. Anything not named `PAGE.md` — this file
 included — is ignored by the generator.
 
-After adding an entry, run `pnpm build` from the repo root and add the newly
-generated `references/pages/<slug>.md` to `catalogue/expected-skills-files.txt`,
-which the catalogue's `test` script checks against the generated tree.
+After adding an entry, run `pnpm --filter @tailor-platform/app-shell test`.
+The package test packs the generated skill and verifies the files that consumers
+receive; do not create or edit `packages/core/skills/` directly.
 
 ## Entries
 

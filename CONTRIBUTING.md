@@ -26,7 +26,7 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 2. Branch from main
   │
-  ├─ 3. Develop ................... .agents/skills/code-review, catalogue/ (app-shell-patterns source)
+  ├─ 3. Develop ................... .agents/skills/code-review, packages/core/skills-src/ (app-shell-patterns source)
   │
   ├─ 4. Quality-check locally ..... .agents/skills/quality-check
   │
@@ -63,17 +63,17 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 
 ### Repository layout
 
-| Path                   | What it is                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| `packages/core`        | `@tailor-platform/app-shell` — the published library (components, hooks, layouts) |
-| `packages/vite-plugin` | `@tailor-platform/vite-plugin-app-shell` — file-based routing                     |
-| `packages/sdk-plugin`  | `@tailor-platform/sdk-plugin-app-shell` — Tailor SDK plugin                       |
-| `examples/`            | `vite-app` reference app and consolidated showcase (what `pnpm dev` runs)         |
-| `e2e/`                 | Playwright suite + a real Tailor backend definition                               |
-| `catalogue/`           | Pattern catalogue — source for the generated `app-shell-patterns` skill           |
-| `docs/`                | User-facing documentation (kept in sync by the docs-update bot)                   |
-| `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work           |
-| `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                |
+| Path                        | What it is                                                                        |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `packages/core`             | `@tailor-platform/app-shell` — the published library (components, hooks, layouts) |
+| `packages/vite-plugin`      | `@tailor-platform/vite-plugin-app-shell` — file-based routing                     |
+| `packages/sdk-plugin`       | `@tailor-platform/sdk-plugin-app-shell` — Tailor SDK plugin                       |
+| `examples/`                 | `vite-app` reference app and consolidated showcase (what `pnpm dev` runs)         |
+| `e2e/`                      | Playwright suite + a real Tailor backend definition                               |
+| `packages/core/skills-src/` | Source for the generated `app-shell-patterns` skill bundled with core             |
+| `docs/`                     | User-facing documentation (kept in sync by the docs-update bot)                   |
+| `.agents/skills/`           | **Contributor procedures** — the source of truth for how to do the work           |
+| `.github/`                  | Agents, prompts, and workflows (CI + agentic bots)                                |
 
 ---
 
@@ -108,13 +108,11 @@ Conventions are encoded as skills under **`.agents/skills/`**. Read the relevant
 this guide won't restate their rules (they'd only go stale here).
 
 - **Changing implementation under `packages/**`** → `.agents/skills/code-review/SKILL.md` (the code review skill routes you to the shared cross-cutting and area references for the change).
-- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
-  **generated** from the `catalogue/` package (`catalogue/src/**` is the source) into
-  `packages/core/skills/app-shell-patterns/`, which is gitignored and shipped to consumers via
-  the npm package. **Edit the source in `catalogue/` and regenerate with `pnpm build`** (see
-  [`catalogue/README.md`](./catalogue/README.md)) — never hand-edit the generated skill. CI's
-  `check-generated-skills` test fails if the two drift, so if you change a public API,
-  design tokens, or a pattern, update the catalogue source too.
+- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. Its tracked
+  source is `packages/core/skills-src/`; `packages/core/skills/` is generated only while
+  packing `@tailor-platform/app-shell`, shipped to consumers, then deleted. **Edit the source,
+  never `skills/`**. The core package test packs the skill and verifies the consumer artifact,
+  so update the agent guidance when a public API, design token, or pattern changes.
 
 ---
 
@@ -181,8 +179,8 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
 
 - **`.agents/skills/`** — contributor procedures, primarily `code-review`, `quality-check`, and
   `create-changeset`.
-- **`catalogue/`** — source for the `app-shell-patterns` skill shipped to consumers; generated
-  into `packages/core/skills/` (gitignored) via `pnpm build`.
+- **`packages/core/skills-src/`** — tracked source for the `app-shell-patterns` skill.
+  `packages/core/skills/` exists only while core is packed for consumers.
 - **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.
 - **`.github/workflows/`** — CI and gh-aw agentic workflows (source `.md` files are compiled to
   `*.lock.yml` via `gh aw compile`; never hand-edit `*.lock.yml`).

@@ -1,22 +1,17 @@
 /**
- * generate-skill.mjs
- *
- * Reads catalogue entry files, resolves <!-- source: file.tsx --> markers
- * by embedding the referenced file content as fenced code blocks,
- * and outputs:
- *   - skills/app-shell-patterns/SKILL.md (index table)
- *   - skills/app-shell-patterns/references/<category>/<slug>.md (per-entry docs)
+ * Builds the AppShell skill source into the skill bundled by the
+ * package. This script is only run while packing; `skills/` is not source.
  */
 
-import { readdir, readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
+import { readdir, readFile, writeFile, mkdir, copyFile, rm } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "./frontmatter.mjs";
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const catalogueRoot = join(__dirname, "..");
-const repoRoot = join(catalogueRoot, "..");
-const skillsDir = join(repoRoot, "packages", "core", "skills", "app-shell-patterns");
+const coreRoot = fileURLToPath(new URL("..", import.meta.url));
+const repoRoot = join(coreRoot, "..", "..");
+const skillSourceRoot = join(coreRoot, "skills-src", "app-shell-patterns");
+const skillsDir = join(coreRoot, "skills", "app-shell-patterns");
 const referencesDir = join(skillsDir, "references");
 
 /**
@@ -104,7 +99,7 @@ async function findEntryFiles(dir, filename) {
     return results;
   }
 
-  const sortedEntries = [...entries].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedEntries = entries.toSorted((a, b) => a.name.localeCompare(b.name));
   for (const entry of sortedEntries) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -138,7 +133,7 @@ function slugToFilename(slug) {
  * When sourceFile is null, all .md files in the category dir are copied as-is.
  */
 async function processCategory(category) {
-  const categoryDir = join(catalogueRoot, "src", category.name);
+  const categoryDir = join(skillSourceRoot, category.name);
   const outputDir = join(referencesDir, category.outputDir);
   await mkdir(outputDir, { recursive: true });
 
@@ -213,6 +208,8 @@ async function processMigrations() {
 }
 
 async function main() {
+  await rm(skillsDir, { recursive: true, force: true });
+
   // Process all categories
   const results = [];
   for (const category of CATEGORIES) {
@@ -255,7 +252,7 @@ function generateEntryTable(entries, outputDir) {
   if (entries.length === 0) return "";
 
   const grouped = new Map();
-  for (const { meta } of [...entries].sort((a, b) => a.meta.slug.localeCompare(b.meta.slug))) {
+  for (const { meta } of entries.toSorted((a, b) => a.meta.slug.localeCompare(b.meta.slug))) {
     // Group by subcategory only. Without one the heading would just repeat
     // the category (### page under "Available Pages"), so those entries
     // render as a bare table — and a category can introduce subcategories
@@ -294,7 +291,7 @@ function generateCopiedTable(files, outputDir) {
 
   const rows = [
     ["File", "Description"],
-    ...[...files].sort().map((filePath) => {
+    ...files.toSorted().map((filePath) => {
       const filename = filePath.split("/").pop();
       const name = filename.replace(".md", "");
       return [`[${filename}](references/${outputDir}/${filename})`, `${name} reference`];
@@ -312,7 +309,7 @@ async function findMarkdownFiles(dir) {
   } catch {
     return results;
   }
-  for (const entry of [...entries].sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const entry of entries.toSorted((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory() && entry.name.endsWith(".md")) {
       results.push(join(dir, entry.name));
     }
@@ -328,7 +325,7 @@ function generateTable(result) {
 }
 
 async function generateSkillIndex(results) {
-  const templatePath = join(__dirname, "SKILL.template.md");
+  const templatePath = join(skillSourceRoot, "SKILL.template.md");
   let template = await readFile(templatePath, "utf-8");
 
   for (const result of results) {

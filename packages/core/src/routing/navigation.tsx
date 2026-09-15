@@ -20,16 +20,19 @@ export type NavItemResource = {
   items?: Array<NavItemResource>;
 };
 
-const loaderID = "appshell-root-nav";
+const navItemsLoaderID = "appshell-root-nav";
 const commandPaletteLoaderID = "appshell-command-palette-routes";
 
 /**
- * Create a loader for navigation items from modules.
- * These navigation items can be loaded using the `useNavItems` hook.
+ * Load the guard-filtered items rendered by the sidebar on every page.
+ *
+ * This is kept on the root route because `useNavItems()` is consumed outside the
+ * content route tree. It intentionally does not revalidate on pathname changes:
+ * evaluating every module and resource guard can involve remote permission checks.
  */
 export const createNavItemsLoader = (props: BuildNavItemsProps) => {
   return {
-    loaderID,
+    loaderID: navItemsLoaderID,
     loader: async () => ({ navItems: buildNavItems(props) }),
   };
 };
@@ -47,7 +50,7 @@ type CommandPaletteRoutesLoaderData = {
  * Returns undefined if the loader data is not available (e.g., in test environments).
  */
 export const useNavItems = () => {
-  const loaderData = useRouteLoaderData(loaderID) as NavItemsLoaderData | undefined;
+  const loaderData = useRouteLoaderData(navItemsLoaderID) as NavItemsLoaderData | undefined;
   return loaderData?.navItems;
 };
 
@@ -69,8 +72,11 @@ type BuildNavItemsProps = {
 };
 
 /**
- * Create a loader for routes reachable below dynamic segments in the current URL.
- * This stays separate from navigation loading so path changes do not rerun all nav guards.
+ * Load palette routes reachable below dynamic segments fixed by the current URL.
+ *
+ * This loader is mounted on a pathless content-route wrapper and revalidates only
+ * when the pathname changes. That keeps dynamic routes current without rerunning
+ * the root loader's navigation-wide guard evaluation.
  */
 export const createCommandPaletteRoutesLoader = (props: BuildNavItemsProps) => {
   return {

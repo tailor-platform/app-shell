@@ -22,12 +22,16 @@ const createRootRoute = (params: {
 }): RouteObject => {
   const { configurations, contentRoutes, children } = params;
 
-  // --- Loader: load navigation items ---
-  const { loaderID, loader } = createNavItemsLoader({
+  // The root loader supplies sidebar items to every page. It must stay separate
+  // from pathname-sensitive palette routes so navigation does not rerun all guards.
+  const { loaderID: navItemsLoaderID, loader: navItemsLoader } = createNavItemsLoader({
     modules: configurations.modules,
     locale: configurations.locale,
     basePath: configurations.basePath,
   });
+  // This dedicated loader follows the active pathname and resolves only routes
+  // below its dynamic segments. The palette awaits its data before rendering,
+  // avoiding an intermediate state without those routes.
   const { loaderID: commandPaletteLoaderID, loader: commandPaletteLoader } =
     createCommandPaletteRoutesLoader({
       modules: configurations.modules,
@@ -48,8 +52,8 @@ const createRootRoute = (params: {
     : contentRoutes;
 
   return {
-    id: loaderID,
-    loader,
+    id: navItemsLoaderID,
+    loader: navItemsLoader,
     element: (
       <>
         <DocumentHead />
@@ -58,6 +62,8 @@ const createRootRoute = (params: {
     ),
     children: [
       {
+        // A pathless wrapper lets palette data follow content navigation without
+        // turning the root sidebar loader into a pathname-revalidating loader.
         id: commandPaletteLoaderID,
         loader: commandPaletteLoader,
         shouldRevalidate: ({ currentUrl, nextUrl }) => currentUrl.pathname !== nextUrl.pathname,

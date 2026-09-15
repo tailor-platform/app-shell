@@ -34,11 +34,11 @@ const createMinimalModules = () => [
 ];
 
 /**
- * Stub window.innerWidth so useIsMobile() returns false (desktop mode).
+ * Stub a width outside the mobile and tablet ranges (desktop mode).
  * This is needed because happy-dom defaults to innerWidth=0 which triggers mobile mode.
  */
 const stubDesktopViewport = () => {
-  vi.spyOn(window, "innerWidth", "get").mockReturnValue(1024);
+  vi.spyOn(window, "innerWidth", "get").mockReturnValue(1200);
   window.dispatchEvent(new Event("resize"));
 };
 

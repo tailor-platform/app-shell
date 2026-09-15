@@ -39,6 +39,29 @@ function getEnabledCalendarCells() {
   );
 }
 
+function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+  const [v, setV] = useState<CalendarDate | null>(null);
+  return (
+    <>
+      <DateField
+        aria-label="Date"
+        value={v}
+        onChange={(nv) => {
+          setV(nv as CalendarDate | null);
+          onChange(nv);
+        }}
+      />
+      <button type="button">elsewhere</button>
+    </>
+  );
+}
+
+async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
+  });
+}
+
 // ─── Snapshots ──────────────────────────────────────────────────────────────
 // Visual-structure snapshots per the add-component convention. Inputs are
 // pinned (fixed `defaultValue`, no live "today" in view) so output is stable.
@@ -293,23 +316,6 @@ describe("DateField", () => {
   // A controlled field round-trips every emit through the parent's `value`, so
   // these guard the clamp against external-sync interference (the uncontrolled
   // cases above don't exercise that path).
-  function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
-    const [v, setV] = useState<CalendarDate | null>(null);
-    return (
-      <>
-        <DateField
-          aria-label="Date"
-          value={v}
-          onChange={(nv) => {
-            setV(nv as CalendarDate | null);
-            onChange(nv);
-          }}
-        />
-        <button type="button">elsewhere</button>
-      </>
-    );
-  }
-
   it("clamps an impossible day on blur even when controlled (29/02/2026)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -489,12 +495,6 @@ describe("DateField", () => {
 // derive from that same basis. Locale here is "en" (weeks start Sunday).
 
 describe("DateField keyboard shortcuts", () => {
-  async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
-    await waitFor(() => {
-      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
-    });
-  }
-
   it("'t' jumps to today (case-insensitive)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

@@ -27,6 +27,21 @@ afterEach(() => {
   cleanup();
 });
 
+const mockMobileViewport = () => {
+  vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+    matches: query.includes("max-width"),
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+
+  vi.stubGlobal("innerWidth", 375);
+};
+
 const createTestModules = () => [
   defineModule({
     path: "",
@@ -277,21 +292,6 @@ describe("Mobile sidebar", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
-  const mockMobileViewport = () => {
-    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
-      matches: query.includes("max-width"),
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-
-    vi.stubGlobal("innerWidth", 375);
-  };
 
   const renderMobileSidebar = (sidebarContent: React.ReactNode, initialPath = "/") => {
     mockMobileViewport();

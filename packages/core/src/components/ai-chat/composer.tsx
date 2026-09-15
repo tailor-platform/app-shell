@@ -1,4 +1,4 @@
-import { ArrowUp, Loader2, Square } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 import {
   useState,
   type ComponentProps,
@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/button";
+import { Spinner } from "@/components/spinner";
 import { Textarea } from "@/components/textarea";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
@@ -67,7 +68,7 @@ function SubmitControl({ busy, canSubmit, onStop }: SubmitControlProps) {
 
   return (
     <Button type="button" disabled>
-      <Loader2 className="astw:size-4 astw:animate-spin" aria-hidden />
+      <Spinner aria-hidden />
       {t("aiChatSending")}
     </Button>
   );

@@ -98,6 +98,12 @@ export interface UseAsyncItemsOptions<T> {
   onFetchError?: (error: unknown) => void;
 }
 
+type PendingRequest = {
+  id: number;
+  query: string | null;
+  debounce: boolean;
+};
+
 export interface UseAsyncItemsReturn<T> {
   /** Fetched items — pass to the Root `items` prop */
   items: T[];
@@ -128,118 +134,97 @@ export function useAsyncItems<T>({
 }: UseAsyncItemsOptions<T>): UseAsyncItemsReturn<T> {
   const { fn: fetcherFn, debounceMs } = resolveAsyncFetcher(fetcher);
   const [items, setItems] = useState<T[]>([]);
-  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<unknown>(undefined);
+  const [request, setRequest] = useState<PendingRequest | null>(null);
+  const [lastFetchQuery, setLastFetchQuery] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Keep fetcher/callback in refs so the callback identity stays stable
-  const fetcherRef = useRef(fetcherFn);
-  fetcherRef.current = fetcherFn;
-  const onFetchErrorRef = useRef(onFetchError);
-  onFetchErrorRef.current = onFetchError;
-
-  // The last query fetched, so a Retry can re-run the same request.
-  const lastFetchQueryRef = useRef<string | null>(null);
+  const activeRequestIdRef = useRef<number | null>(null);
+  const nextRequestIdRef = useRef(0);
   // Whether we are currently in an error state, so onFetchError fires once per
   // outage (on the failing->error transition) rather than per failed keystroke.
   const inErrorStateRef = useRef(false);
+  const hasFetchedOnOpenRef = useRef(false);
 
-  const doFetch = useCallback(
-    (fetchQuery: string | null, debounce: boolean) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
+  const scheduleFetch = useCallback((fetchQuery: string | null, debounce: boolean) => {
+    abortControllerRef.current?.abort();
+    setLastFetchQuery(fetchQuery);
+    setRequest({ id: ++nextRequestIdRef.current, query: fetchQuery, debounce });
+  }, []);
 
-      lastFetchQueryRef.current = fetchQuery;
-      setLoading(true);
+  // The request descriptor is React state; this effect owns its timer/network
+  // lifecycle. A changed fetcher restarts only a still-debouncing request.
+  useEffect(() => {
+    if (!request || activeRequestIdRef.current === request.id) return;
 
-      const run = async () => {
-        abortControllerRef.current?.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
+    const run = async () => {
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      activeRequestIdRef.current = request.id;
 
-        try {
-          const result = await fetcherRef.current(fetchQuery, {
-            signal: controller.signal,
-          });
-          if (!controller.signal.aborted) {
-            setItems(result);
-            setError(undefined);
-            inErrorStateRef.current = false;
-          }
-        } catch (e) {
-          if (e instanceof DOMException && e.name === "AbortError") return;
-          if (!controller.signal.aborted) {
-            setItems([]);
-            setError(e);
-            // Announce the outage only on the transition into the error state.
-            if (!inErrorStateRef.current) {
-              inErrorStateRef.current = true;
-              onFetchErrorRef.current?.(e);
-            }
-          }
-        } finally {
-          if (!controller.signal.aborted) {
-            setLoading(false);
-          }
+      try {
+        const result = await fetcherFn(request.query, { signal: controller.signal });
+        if (controller.signal.aborted || activeRequestIdRef.current !== request.id) return;
+        setItems(result);
+        setError(undefined);
+        inErrorStateRef.current = false;
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        if (controller.signal.aborted || activeRequestIdRef.current !== request.id) return;
+        setItems([]);
+        setError(caught);
+        // Announce the outage only on the transition into the error state.
+        if (!inErrorStateRef.current) {
+          inErrorStateRef.current = true;
+          onFetchError?.(caught);
         }
-      };
-
-      if (debounce) {
-        debounceTimerRef.current = setTimeout(run, debounceMs);
-      } else {
-        run();
+      } finally {
+        if (activeRequestIdRef.current === request.id) {
+          activeRequestIdRef.current = null;
+          setRequest((current) => (current?.id === request.id ? null : current));
+        }
       }
-    },
-    [debounceMs],
-  );
+    };
+
+    const timer = request.debounce ? setTimeout(run, debounceMs) : undefined;
+    if (!timer) void run();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [debounceMs, fetcherFn, onFetchError, request]);
 
   const retry = useCallback(() => {
-    doFetch(lastFetchQueryRef.current, false);
-  }, [doFetch]);
+    scheduleFetch(lastFetchQuery, false);
+  }, [lastFetchQuery, scheduleFetch]);
 
   const onInputValueChange = useCallback(
     (value: string) => {
       setQuery(value);
-
-      if (value.trim().length === 0) {
-        abortControllerRef.current?.abort();
-        abortControllerRef.current = null;
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-          debounceTimerRef.current = null;
-        }
-        doFetch(null, false);
-        return;
-      }
-
-      doFetch(value.trim(), true);
+      scheduleFetch(value.trim() || null, value.trim().length > 0);
     },
-    [doFetch],
+    [scheduleFetch],
   );
-
-  const hasFetchedOnOpenRef = useRef(false);
 
   const onOpenChange = useCallback(
     (open: boolean) => {
       if (open && !hasFetchedOnOpenRef.current) {
         hasFetchedOnOpenRef.current = true;
-        doFetch(null, false);
+        scheduleFetch(null, false);
       }
     },
-    [doFetch],
+    [scheduleFetch],
   );
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      abortControllerRef.current?.abort();
-    };
-  }, []);
+  // Cleanup the active external request on unmount.
+  useEffect(() => () => abortControllerRef.current?.abort(), []);
 
-  return { items, loading, query, error, retry, onInputValueChange, onOpenChange };
+  return {
+    items,
+    loading: request !== null,
+    query,
+    error,
+    retry,
+    onInputValueChange,
+    onOpenChange,
+  };
 }

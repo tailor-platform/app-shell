@@ -38,6 +38,7 @@ async function typeDate(user: ReturnType<typeof userEvent.setup>, field: Field, 
 }
 
 const normalizeIds = (html: string) => html.replace(/id="base-ui-[^"]+"/g, 'id="base-ui-ID"');
+const gridCell = (labelPart: RegExp) => screen.getByRole("button", { name: labelPart });
 
 // ─── Snapshot ─────────────────────────────────────────────────────────────────
 
@@ -410,7 +411,6 @@ describe("DateRangePicker form validation", () => {
 
 describe("DateRangePicker popover", () => {
   const defaultRange = { start: d("2025-03-05"), end: d("2025-03-08") };
-  const gridCell = (labelPart: RegExp) => screen.getByRole("button", { name: labelPart });
 
   it("stays open after the first pick and closes when the range completes", async () => {
     const user = userEvent.setup();

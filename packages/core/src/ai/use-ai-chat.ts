@@ -57,105 +57,102 @@ export function useAIChat(config: { client: AIGatewayClient; model: string }): {
     };
   }, []);
 
-  const sendMessage = useCallback(
-    async (message: string) => {
-      if (activeRequestRef.current) {
-        return false;
-      }
+  const sendMessage = async (message: string) => {
+    if (activeRequestRef.current) {
+      return false;
+    }
 
-      const text = message.trim();
-      if (!text) {
-        return false;
-      }
+    const text = message.trim();
+    if (!text) {
+      return false;
+    }
 
-      const userMessage: AIChatMessage = {
-        id: crypto.randomUUID(),
-        role: "user",
-        content: text,
-      };
+    const userMessage: AIChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: text,
+    };
 
-      const nextMessages = [...messagesRef.current, userMessage];
-      messagesRef.current = nextMessages;
-      setMessages(nextMessages);
-      setError(undefined);
-      setStatus("submitted");
+    const nextMessages = [...messagesRef.current, userMessage];
+    messagesRef.current = nextMessages;
+    setMessages(nextMessages);
+    setError(undefined);
+    setStatus("submitted");
 
-      const controller = new AbortController();
-      const requestId = Symbol();
-      activeRequestRef.current = requestId;
-      abortControllerRef.current = controller;
-      let assistantMessageId: string | null = null;
-      const isActive = () => activeRequestRef.current === requestId;
+    const controller = new AbortController();
+    const requestId = Symbol();
+    activeRequestRef.current = requestId;
+    abortControllerRef.current = controller;
+    let assistantMessageId: string | null = null;
+    const isActive = () => activeRequestRef.current === requestId;
 
-      try {
-        for await (const event of config.client.streamChatCompletion({
-          model: config.model,
-          messages: nextMessages.map(toGatewayMessage),
-          signal: controller.signal,
-        })) {
-          if (!isActive()) {
-            return false;
-          }
-
-          if (event.type !== "text-delta" || !event.text) {
-            continue;
-          }
-
-          setStatus("streaming");
-
-          if (!assistantMessageId) {
-            assistantMessageId = crypto.randomUUID();
-            updateMessages((previous) => [
-              ...previous,
-              {
-                id: assistantMessageId!,
-                role: "assistant",
-                content: event.text,
-              },
-            ]);
-            continue;
-          }
-
-          updateMessages((previous) =>
-            previous.map((entry) =>
-              entry.id === assistantMessageId
-                ? { ...entry, content: `${entry.content}${event.text}` }
-                : entry,
-            ),
-          );
-        }
-
+    try {
+      for await (const event of config.client.streamChatCompletion({
+        model: config.model,
+        messages: nextMessages.map(toGatewayMessage),
+        signal: controller.signal,
+      })) {
         if (!isActive()) {
           return false;
         }
 
+        if (event.type !== "text-delta" || !event.text) {
+          continue;
+        }
+
+        setStatus("streaming");
+
+        if (!assistantMessageId) {
+          assistantMessageId = crypto.randomUUID();
+          updateMessages((previous) => [
+            ...previous,
+            {
+              id: assistantMessageId!,
+              role: "assistant",
+              content: event.text,
+            },
+          ]);
+          continue;
+        }
+
+        updateMessages((previous) =>
+          previous.map((entry) =>
+            entry.id === assistantMessageId
+              ? { ...entry, content: `${entry.content}${event.text}` }
+              : entry,
+          ),
+        );
+      }
+
+      if (!isActive()) {
+        return false;
+      }
+
+      setStatus("ready");
+      return true;
+    } catch (caughtError) {
+      if (!isActive()) {
+        return false;
+      }
+
+      if (isAbortError(caughtError)) {
         setStatus("ready");
-        return true;
-      } catch (caughtError) {
-        if (!isActive()) {
-          return false;
-        }
-
-        if (isAbortError(caughtError)) {
-          setStatus("ready");
-          return false;
-        }
-
-        setError(toError(caughtError));
-        setStatus("error");
         return false;
-      } finally {
-        if (activeRequestRef.current === requestId) {
-          activeRequestRef.current = null;
-        }
-
-        if (abortControllerRef.current === controller) {
-          abortControllerRef.current = null;
-        }
       }
-    },
-    [config.client, config.model, updateMessages],
-  );
+
+      setError(toError(caughtError));
+      setStatus("error");
+      return false;
+    } finally {
+      if (activeRequestRef.current === requestId) {
+        activeRequestRef.current = null;
+      }
+
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
+    }
+  };
 
   return {
     messages,

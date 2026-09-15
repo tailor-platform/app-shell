@@ -55,7 +55,7 @@ const SearchEntry = () => {
   return (
     <SidebarMenuItem className="astw:mt-1 astw:pb-2">
       <SidebarMenuButton
-        render={<button type="button" />}
+        render={<button type="button" aria-label={tooltipLabel} />}
         tooltip={tooltipLabel}
         aria-label={tooltipLabel}
         onClick={() => openCommandPalette()}

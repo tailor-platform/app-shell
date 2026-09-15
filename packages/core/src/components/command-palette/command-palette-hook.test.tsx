@@ -45,6 +45,19 @@ vi.mock("react-router", async (importOriginal) => {
 // Wrapper for hooks that need router context
 const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
 
+const createMixedSources = (): Array<SearchSource> => [
+  {
+    prefix: "ORD",
+    title: "Orders",
+    search: vi.fn().mockResolvedValue([]),
+  },
+  {
+    prefix: "CU",
+    title: "Customers",
+    search: vi.fn().mockResolvedValue([]),
+  },
+];
+
 describe("useCommandPalette", () => {
   const renderCommandPaletteHook = (routes = createTestRoutes()) => {
     return renderHook(
@@ -899,19 +912,6 @@ describe("useCommandPalette with actions, routes, and searchSources combined", (
       label: "Export CSV",
       group: "Actions",
       onSelect: vi.fn(),
-    },
-  ];
-
-  const createMixedSources = (): Array<SearchSource> => [
-    {
-      prefix: "ORD",
-      title: "Orders",
-      search: vi.fn().mockResolvedValue([]),
-    },
-    {
-      prefix: "CU",
-      title: "Customers",
-      search: vi.fn().mockResolvedValue([]),
     },
   ];
 

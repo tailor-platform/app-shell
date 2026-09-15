@@ -155,13 +155,13 @@ describe("ActionPanel", () => {
   });
 });
 
-describe("ActionPanel context registration", () => {
-  const ActionsReader = ({ onActions }: { onActions: (a: unknown[]) => void }) => {
-    const actions = useCommandPaletteActions();
-    onActions(actions);
-    return null;
-  };
+const ActionsReader = ({ onActions }: { onActions: (a: unknown[]) => void }) => {
+  const actions = useCommandPaletteActions();
+  onActions(actions);
+  return null;
+};
 
+describe("ActionPanel context registration", () => {
   it("registers actions to CommandPaletteContext on mount", () => {
     const onActions = vi.fn();
 

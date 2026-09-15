@@ -9,7 +9,7 @@
     "oxlint",
     "tailor-platform"
   ],
-  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/eslint-plugin-app-shell#readme",
+  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/eslint-plugin#readme",
   "bugs": {
     "url": "https://github.com/tailor-platform/app-shell"
   },
@@ -17,7 +17,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/tailor-platform/app-shell",
-    "directory": "packages/eslint-plugin-app-shell"
+    "directory": "packages/eslint-plugin"
   },
   "files": [
     "dist/**"

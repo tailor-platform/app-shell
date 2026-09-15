@@ -17,10 +17,13 @@ describe("recommended", () => {
     expect(lint("test/fixture/valid.ts").status).toBe(0);
   });
 
-  it("enables no-react-router-imports", () => {
-    const result = lint("test/fixture/invalid.ts");
+  it.each([
+    ["test/fixture/astw-prefix-invalid.tsx", "no-astw-prefix"],
+    ["test/fixture/invalid.ts", "no-react-router-imports"],
+  ])("enables %s", (file, rule) => {
+    const result = lint(file);
 
     expect(result.status).toBe(1);
-    expect(result.stdout).toContain("@tailor-platform/app-shell(no-react-router-imports)");
+    expect(result.stdout).toContain(`@tailor-platform/app-shell(${rule})`);
   });
 });

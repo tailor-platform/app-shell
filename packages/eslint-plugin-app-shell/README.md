@@ -11,4 +11,7 @@ import { defineConfig } from "oxlint";
 export default defineConfig({ extends: [recommended] });
 ```
 
-`recommended` enables `@tailor-platform/app-shell/no-react-router-imports`, which requires routing APIs to be imported from `@tailor-platform/app-shell` rather than `react-router` or `react-router-dom`.
+`recommended` enables:
+
+- `@tailor-platform/app-shell/no-react-router-imports` — requires routing APIs to be imported from `@tailor-platform/app-shell` rather than `react-router` or `react-router-dom`.
+- `@tailor-platform/app-shell/no-astw-prefix` — prevents applications from depending on AppShell's internal `astw:` CSS prefix.

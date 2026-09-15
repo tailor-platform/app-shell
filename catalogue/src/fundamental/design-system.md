@@ -1,6 +1,6 @@
 # Design System
 
-Authority for **visual-only** decisions — tokens, theme imports, breakpoints intent, the `astw:` prefix, and custom-component conformance. For **React component APIs** (imports, props, JSX composition), pair this file with `components.md`; that split avoids duplicating tables and lengthy examples across both docs.
+Authority for **visual-only** decisions — tokens, theme imports, breakpoints intent, and custom-component conformance. For **React component APIs** (imports, props, JSX composition), pair this file with `components.md`; that split avoids duplicating tables and lengthy examples across both docs.
 
 `@tailor-platform/app-shell` ships an opinionated design system as CSS variables, bridged into Tailwind v4's token namespace. Use it whether you are consuming AppShell components (most cases) or building a custom component to fill a gap.
 
@@ -302,23 +302,17 @@ Stock Tailwind breakpoints — AppShell does not change them.
 
 Two-column **behavior** (right rail stacks under `lg`): respect AppShell defaults — do not force side-by-side grids on narrow viewports. The `Layout` column width table lives in `components.md` → Layout; reuse those numbers instead of guessing rem values here.
 
-## 5. The `astw:` prefix
+## 5. AppShell styling boundary
 
-AppShell exposes **layout / sizing / overflow** escapes on some components via props like `containerClassName` and `className` on roots. Prefix those utilities with `astw:` so they apply to the wrapper AppShell controls.
+`astw:` is AppShell's internal compiled CSS prefix. **Never write it in an application.** It is not a consumer customization API and arbitrary prefixed utilities may not exist in the shipped CSS.
 
-**Do not duplicate full component trees here.** Typical patterns (full `DataTable` composition, `Sheet` + footer, `Table.Root` + card insets) live in `components.md` with JSX you can copy.
-
-Minimal illustration — the same rules apply to other `*ClassName` hooks:
+Use ordinary Tailwind utilities on your own markup. An explicitly documented layout hook, such as `Table.Root`'s `containerClassName`, also accepts ordinary utilities from the application's Tailwind build:
 
 ```tsx
-<Table.Root containerClassName="astw:px-6 astw:overflow-y-auto" />
+<Table.Root containerClassName="px-6 overflow-y-auto" />
 ```
 
-Rules:
-
-- `astw:` only on AppShell `*ClassName` / root `className` hooks each component exposes. Use **plain** Tailwind (`flex`, `gap-4`, `bg-background`, …) on **your** markup.
-- Stick to **layout** utilities (`flex`, `grid`, `max-h-*`, `min-h-0`, `overflow-*`, widths). Avoid painting over internal AppShell padding or colors via `astw:` — prefer an upstream prop or composition change.
-- Steps like `astw:p-4` still resolve through the scale — never arbitrary `astw:p-[13px]`.
+For an AppShell component's appearance, use its documented props, variants, or composition instead of styling over its internals.
 
 ## 6. When AppShell doesn't have a component you need
 
@@ -380,13 +374,13 @@ When a custom component proves reusable across 2+ apps, promote it upstream into
 
 ### Where to look
 
-| Concern                                             | File                               |
-| --------------------------------------------------- | ---------------------------------- |
-| Component imports, props, JSX composition           | **`components.md`**                |
-| Page / screen layout patterns                       | **`patterns/<type>/<slug>.md`**    |
-| Design tokens, `astw:` rules, custom UI conformance | **this file** (`design-system.md`) |
+| Concern                                                         | File                               |
+| --------------------------------------------------------------- | ---------------------------------- |
+| Component imports, props, JSX composition                       | **`components.md`**                |
+| Page / screen layout patterns                                   | **`patterns/<type>/<slug>.md`**    |
+| Design tokens, AppShell styling boundary, custom UI conformance | **this file** (`design-system.md`) |
 
-**`components.md`** holds long JSX compositions (e.g. **`DataTable`**, **card + `Table`**). **Do not copy those trees into this file** — link back here only for tokens and `astw:` policy.
+**`components.md`** holds long JSX compositions (e.g. **`DataTable`**, **card + `Table`**). **Do not copy those trees into this file** — link back here only for tokens and the AppShell styling boundary.
 
 `patterns/` is organised by page type: `patterns/list/`, `patterns/detail/`, `patterns/form/`, `patterns/interaction/`. Pick the slug matching the screen you're building.
 

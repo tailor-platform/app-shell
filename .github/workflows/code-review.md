@@ -14,6 +14,7 @@ permissions:
   pull-requests: read
   issues: read
   copilot-requests: write
+model: gpt-5.4
 tools:
   github:
     toolsets: [default]

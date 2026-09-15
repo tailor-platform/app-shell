@@ -580,7 +580,7 @@ line items, line items showing received quantities from the order's receipts and
 a total that legitimately sums, a related-records card, and a right-hand column
 of actions, external-system link and history.
 
-<!-- source: detail.tsx -->
+<!-- source: example.tsx -->
 
 ## Open questions
 

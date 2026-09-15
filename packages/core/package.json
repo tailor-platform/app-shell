@@ -55,7 +55,7 @@
     "vendor:fonts": "node scripts/sync-noto-fonts.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run && node scripts/check-skills-package.mjs",
-    "type-check": "tsc --incremental"
+    "type-check": "tsc --incremental && tsc -p tsconfig.skills.json --incremental"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",

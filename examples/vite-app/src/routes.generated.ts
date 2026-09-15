@@ -24,6 +24,7 @@ export type GeneratedRouteParams = {
   "/dashboard/products": {};
   "/settings": {};
   "/showcase/activity-card": {};
+  "/showcase/ai-chat": {};
   "/showcase/alert-tokens": {};
   "/showcase/colors": {};
   "/showcase/csv-importer": {};

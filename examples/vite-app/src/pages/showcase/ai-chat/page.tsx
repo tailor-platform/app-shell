@@ -4,11 +4,11 @@ import {
   AIChat,
   Card,
   Checkbox,
-  defineResource,
   Layout,
   useAIChat,
   type AIChatCompletionEvent,
   type AIGatewayClient,
+  type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 
 // No AI Gateway is reachable from this example app, so the demo scripts a
@@ -58,7 +58,7 @@ const AIChatDemoPage = () => {
   const { messages, status, sendMessage, stop } = useAIChat({ client, model: "demo-model" });
 
   const retryLastQuestion = () => {
-    const lastUserTurn = messages.findLast((message) => message.role === "user");
+    const lastUserTurn = [...messages].reverse().find((message) => message.role === "user");
     if (lastUserTurn) void sendMessage(lastUserTurn.content);
   };
 
@@ -132,8 +132,8 @@ const AIChatDemoPage = () => {
   );
 };
 
-export const aiChatDemoResource = defineResource({
-  path: "ai-chat-demo",
+AIChatDemoPage.appShellPageProps = {
   meta: { title: "AIChat Demo" },
-  component: AIChatDemoPage,
-});
+} satisfies AppShellPageProps;
+
+export default AIChatDemoPage;

@@ -1,4 +1,9 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.json" }, { "path": "./tsconfig.skills.json" }]
+  "references": [
+    // AppShell browser runtime source.
+    { "path": "./tsconfig.json" },
+    // Skill examples use the public AppShell API but must type-check before dist exists.
+    { "path": "./tsconfig.skills.json" }
+  ]
 }

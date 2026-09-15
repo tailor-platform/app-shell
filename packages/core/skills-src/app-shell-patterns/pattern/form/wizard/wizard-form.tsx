@@ -14,6 +14,12 @@ import {
 const OWNERS = ["Tanaka", "Sato", "Suzuki", "Yamada"];
 const STEPS = ["Basic info", "Assignment", "Schedule", "Review"] as const;
 
+function stepBadgeVariant(index: number, currentStep: number) {
+  if (index === currentStep) return "default";
+  if (index < currentStep) return "success";
+  return "neutral";
+}
+
 type Draft = {
   title: string;
   description: string;
@@ -67,10 +73,7 @@ export default function WizardForm({ onComplete, onCancel }: Props) {
           <Card.Content>
             <div className="flex items-center gap-2">
               {STEPS.map((label, i) => (
-                <Badge
-                  key={label}
-                  variant={i === step ? "default" : i < step ? "success" : "neutral"}
-                >
+                <Badge key={label} variant={stepBadgeVariant(i, step)}>
                   {i + 1}. {label}
                 </Badge>
               ))}

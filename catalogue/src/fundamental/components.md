@@ -9,7 +9,7 @@
 | This file (`components.md`)                                                                                       | `design-system.md`                                                                                |
 | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | **Imports**, compound structure, hooks, canonical **composition** (`Card` + `Table`, `DataTable`, `Dialog`, etc.) | **Tokens**, theme imports, typography/spacing/radius/elevation **tables**, breakpoints **intent** |
-| JSX examples tied to ERP patterns (`patterns/*`)                                                                  | **`astw:`** rules — only on AppShell `*ClassName` props; plain utilities on **your** elements     |
+| JSX examples tied to ERP patterns (`patterns/*`)                                                                  | **AppShell styling boundary** — plain utilities and no internal `astw:` prefix                    |
 | Prop summaries + links to upstream `docs/components/*.md`                                                         | **Visual conformance**: no magic colors/px on custom markup, motion, dark mode                    |
 
 **Rule of thumb:** “Which component / prop?” → **here.** “Which token / spacing step / elevation?” → **`design-system.md`** §§4–6.
@@ -105,7 +105,7 @@ import { Button, Layout, Tabs } from "@tailor-platform/app-shell";
 </Layout>
 ```
 
-**Notes:** Children that aren't `Layout.Header` or `Layout.Column` are filtered out. Column gap overrides (`<Layout className="astw:gap-6" />`) → **`design-system.md`** §5 (`astw:` rules).
+**Notes:** Children that aren't `Layout.Header` or `Layout.Column` are filtered out. Set column gaps with `<Layout gap={6} />` (supported steps: 4, 6, 8).
 
 **Used in patterns:** every page pattern (`list/*`, `detail/*`, `form/*`).
 
@@ -257,7 +257,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
 
 **Used in patterns:** `list/*` (filter sheet variant).
 
-**Notes:** Size the panel with `Sheet.Content`'s **`size`** prop (`"sm" | "md" | "lg" | "xl" | "full"`, default `"sm"`) — not a width utility. `astw:` rules → **`design-system.md`** §5.
+**Notes:** Size the panel with `Sheet.Content`'s **`size`** prop (`"sm" | "md" | "lg" | "xl" | "full"`, default `"sm"`) — not a width utility.
 
 ### `Menu`
 
@@ -355,7 +355,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Import:** `import { Table } from '@tailor-platform/app-shell'`
 **Purpose:** Semantic data table with scrollable container.
-**API:** Compound — `Table.Root`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`. `Table.Root` accepts `containerClassName` for the outer wrapper, `className` for the inner `<table>`. `Table.Head` and `Table.Cell` accept **`align`** (`"left" | "center" | "right"`, default `"left"`) — prefer this over ad-hoc `className="astw:text-right"` and pair the same alignment on the head and its column's cells (right for numeric/money, center for compact status/icon columns).
+**API:** Compound — `Table.Root`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`. `Table.Root` accepts `containerClassName` for the outer wrapper, `className` for the inner `<table>`. `Table.Head` and `Table.Cell` accept **`align`** (`"left" | "center" | "right"`, default `"left"`) — prefer this over ad-hoc `className="text-right"` and pair the same alignment on the head and its column's cells (right for numeric/money, center for compact status/icon columns).
 **Example:**
 
 ```tsx
@@ -385,8 +385,8 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Notes:**
 
-- **Inside a card?** Pass `containerClassName="astw:px-6"` on `Table.Root` for the horizontal inset, and either drop `Card.Content` (bare list form) or pass `Card.Content className="astw:px-0"` (header+content form). Skipping the `containerClassName` lands the first column flush against the card edge. See the `Card` entry for the two canonical forms and a DON'T example. Dense cell typography (**`text-sm`**, **`tabular-nums`** for figures, **`font-mono`** for identifiers) → **`design-system.md`** §4 Typography.
-- **Whole row is clickable.** Use `<Table.Row onClick={() => navigate(detailPath)} className="astw:cursor-pointer">`. For keyboard and screen-reader users, also wrap the primary identifier cell content in `<Link>` (so the row is reachable via Tab; `Table.Row` is a `<tr>` and cannot itself be a Link — wrapping a `<tr>` in `<a>` is invalid HTML). **No per-row "View" / "Open" / "→" buttons.** Per-row `Menu` (overflow `…`) is the only allowed per-row action surface and is reserved for non-navigation actions like Archive, Duplicate.
+- **Inside a card?** Pass `containerClassName="px-6"` on `Table.Root` for the horizontal inset. When the card has a header, render `Table.Root` directly after it and add `pb-6` to the container classes. Skipping the horizontal inset lands the first column flush against the card edge. See the `Card` entry for the canonical forms and a DON'T example. Dense cell typography (**`text-sm`**, **`tabular-nums`** for figures, **`font-mono`** for identifiers) → **`design-system.md`** §4 Typography.
+- **Whole row is clickable.** Use `<Table.Row onClick={() => navigate(detailPath)} className="cursor-pointer">`. For keyboard and screen-reader users, also wrap the primary identifier cell content in `<Link>` (so the row is reachable via Tab; `Table.Row` is a `<tr>` and cannot itself be a Link — wrapping a `<tr>` in `<a>` is invalid HTML). **No per-row "View" / "Open" / "→" buttons.** Per-row `Menu` (overflow `…`) is the only allowed per-row action surface and is reserved for non-navigation actions like Archive, Duplicate.
 
 ### `DataTable`
 
@@ -461,13 +461,13 @@ const table = useDataTable({
 
 **Notes:**
 
-- **Tables inside a card need TWO co-requisite geometry changes** (token-backed spacing rationale → **`design-system.md`** §4 Spacing): (a) Card stops imposing horizontal padding — drop `Card.Content` for the bare form, or pass `Card.Content className="astw:px-0"` for the header+content form. (b) `Table.Root` provides the inset itself via `containerClassName="astw:px-6"`. Skipping (b) lands the first column flush against the card edge — `Table.Cell`'s intrinsic `astw:first:pl-6` does NOT render reliably in this composition.
+- **Tables inside a card need a container inset** (token-backed spacing rationale → **`design-system.md`** §4 Spacing): `Table.Root` provides it via `containerClassName="px-6"`. When a card header precedes the table, render the table directly after it and add `pb-6` to preserve the card's bottom inset. Skipping the horizontal inset lands the first column flush against the card edge.
 
 **Bare table-in-card (list pages, no card-level title):**
 
 ```tsx
 <Card.Root>
-  <Table.Root containerClassName="astw:px-6">{/* … */}</Table.Root>
+  <Table.Root containerClassName="px-6">{/* … */}</Table.Root>
 </Card.Root>
 ```
 
@@ -476,9 +476,7 @@ const table = useDataTable({
 ```tsx
 <Card.Root>
   <Card.Header title="Line items" />
-  <Card.Content className="astw:px-0">
-    <Table.Root containerClassName="astw:px-6">{/* … */}</Table.Root>
-  </Card.Content>
+  <Table.Root containerClassName="px-6 pb-6">{/* … */}</Table.Root>
 </Card.Root>
 ```
 
@@ -486,9 +484,8 @@ const table = useDataTable({
 
 ```tsx
 <Card.Root>
-  <Card.Content className="astw:px-0">
-    <Table.Root>{/* missing containerClassName="astw:px-6" */}</Table.Root>
-  </Card.Content>
+  <Card.Header title="Line items" />
+  <Table.Root>{/* missing containerClassName="px-6" */}</Table.Root>
 </Card.Root>
 ```
 
@@ -747,7 +744,7 @@ Multi-select submits an array.
 **Import:** `import { Textarea } from '@tailor-platform/app-shell'`
 **Purpose:** Multi-line text input. Maps to spec field types: `text`, long-form `string`. Use instead of `Input` whenever the value is prose (notes, descriptions, replies, reasons).
 **API:** `TextareaProps` — Base UI's field control (`value`, `defaultValue`, `onChange`, `onValueChange`, `disabled`, `required`, `readOnly`, `name`, aria-\*) rendered as a `<textarea>`, plus `rows`. `cols` / `wrap` are not accepted — the control is `w-full`, so neither can take effect.
-**Sizing:** no fixed height — `rows` sets the visible line count and the user can drag it taller. `min-h-16` is a hard floor, so `rows` only takes effect from 3 up. Width is the parent's job: the control is `w-full`, and `cols` is not accepted because it could never win against that. Do **not** reach for `Input` and a height override; `Input` is locked to `h-9`, and an `astw:h-*` override from a consuming app resolves to nothing unless that exact utility was compiled into the package CSS.
+**Sizing:** no fixed height — `rows` sets the visible line count and the user can drag it taller. `min-h-16` is a hard floor, so `rows` only takes effect from 3 up. Width is the parent's job: the control is `w-full`, and `cols` is not accepted because it could never win against that. Do **not** reach for `Input` and a height override; `Input` is locked to `h-9`, and an application must not use AppShell's internal `astw:` classes.
 **Field integration:** drops straight into `Field.Root` for label/description/error wiring exactly like `Input` and `Checkbox` — no bespoke `error` prop.
 **Example:**
 

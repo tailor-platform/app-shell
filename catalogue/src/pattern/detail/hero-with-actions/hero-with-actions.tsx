@@ -48,26 +48,24 @@ export default function HeroWithActionsDetail({ order, onApprove, onCancel }: Pr
         />
         <Card.Root>
           <Card.Header title="Line items" />
-          <Card.Content className="astw:px-0">
-            <Table.Root containerClassName="astw:px-6">
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>SKU</Table.Head>
-                  <Table.Head align="right">Qty</Table.Head>
-                  <Table.Head align="right">Total</Table.Head>
+          <Table.Root containerClassName="px-6 pb-6">
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>SKU</Table.Head>
+                <Table.Head align="right">Qty</Table.Head>
+                <Table.Head align="right">Total</Table.Head>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {order.lineItems.map((item) => (
+                <Table.Row key={item.id}>
+                  <Table.Cell>{item.sku}</Table.Cell>
+                  <Table.Cell align="right">{item.qty}</Table.Cell>
+                  <Table.Cell align="right">${item.total.toLocaleString()}</Table.Cell>
                 </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {order.lineItems.map((item) => (
-                  <Table.Row key={item.id}>
-                    <Table.Cell>{item.sku}</Table.Cell>
-                    <Table.Cell align="right">{item.qty}</Table.Cell>
-                    <Table.Cell align="right">${item.total.toLocaleString()}</Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          </Card.Content>
+              ))}
+            </Table.Body>
+          </Table.Root>
         </Card.Root>
       </Layout.Column>
       <Layout.Column area="right">

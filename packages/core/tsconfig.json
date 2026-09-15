@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      // Type-check skill examples against the public source before dist exists.
-      "@tailor-platform/app-shell": ["./src/index.ts"]
+      "@/*": ["./src/*"]
     },
     "target": "ES2023",
     "lib": ["ES2023", "DOM"],
@@ -24,5 +22,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["."]
+  "include": ["."],
+  "exclude": ["skills-src"]
 }

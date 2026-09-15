@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tailor-platform/app-shell": ["./src/index.ts"]
+    }
+  },
+  "include": ["skills-src"],
+  "exclude": []
+}

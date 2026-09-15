@@ -76,12 +76,12 @@ const TestCommandPalette = ({
   return (
     <AppShellConfigContext.Provider value={{ configurations }}>
       <AppShellDataContext.Provider value={{ contextData: {} }}>
-        <CommandPaletteProvider searchSources={searchSources}>
-          <MemoryRouter>
+        <MemoryRouter>
+          <CommandPaletteProvider searchSources={searchSources}>
             {opener}
             <CommandPaletteContent navItems={navItems} extraRoutes={extraRoutes} />
-          </MemoryRouter>
-        </CommandPaletteProvider>
+          </CommandPaletteProvider>
+        </MemoryRouter>
       </AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>
   );

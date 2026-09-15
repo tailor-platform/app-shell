@@ -4,7 +4,7 @@ import { RouterProvider } from "react-router/dom";
 import type { RouteObject } from "react-router";
 import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
-import { createCommandPaletteRoutesLoader, createNavItemsLoader } from "@/routing/navigation";
+import { createNavItemsLoader } from "@/routing/navigation";
 import { DocumentHead } from "./document-head";
 
 // ============================================================================
@@ -29,16 +29,6 @@ const createRootRoute = (params: {
     locale: configurations.locale,
     basePath: configurations.basePath,
   });
-  // This dedicated loader follows the active pathname and resolves only routes
-  // below its dynamic segments. The palette awaits its data before rendering,
-  // avoiding an intermediate state without those routes.
-  const { loaderID: commandPaletteLoaderID, loader: commandPaletteLoader } =
-    createCommandPaletteRoutesLoader({
-      modules: configurations.modules,
-      locale: configurations.locale,
-      basePath: configurations.basePath,
-    });
-
   // --- Children: wrap with error boundary when configured ---
   const globalErrorBoundary = configurations.errorBoundary;
   const routeChildren = globalErrorBoundary
@@ -60,17 +50,7 @@ const createRootRoute = (params: {
         {children}
       </>
     ),
-    children: [
-      {
-        // A pathless wrapper lets palette data follow content navigation without
-        // turning the root sidebar loader into a pathname-revalidating loader.
-        id: commandPaletteLoaderID,
-        loader: commandPaletteLoader,
-        shouldRevalidate: ({ currentUrl, nextUrl }) => currentUrl.pathname !== nextUrl.pathname,
-        element: <Outlet />,
-        children: routeChildren,
-      },
-    ],
+    children: routeChildren,
     // Hydration fallback is unused in CSR-only usage of AppShell.
     // Return null to silence hydration warnings.
     HydrateFallback: () => null,

@@ -8,12 +8,7 @@ import { Spinner } from "@/components/spinner";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
 import { filterRoutes, NavigatableRoute } from "@/routing/path";
-import {
-  useNavItems,
-  useCommandPaletteRoutes,
-  NavItem,
-  NavItemResource,
-} from "../../routing/navigation";
+import { useNavItems, NavItem, NavItemResource } from "../../routing/navigation";
 import {
   useCommandPaletteActions,
   useCommandPaletteState,
@@ -526,10 +521,18 @@ type CommandPaletteContentProps = {
 export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPaletteContentProps) {
   const t = useT();
   const contextualActions = useCommandPaletteActions();
-  const { searchSources, open, setOpen, openRequest, clearOpenRequest } = useCommandPaletteState();
+  const {
+    searchSources,
+    open,
+    setOpen,
+    openRequest,
+    clearOpenRequest,
+    dynamicRoutes,
+    isLoadingDynamicRoutes,
+  } = useCommandPaletteState();
   const routes = useMemo(
-    () => [...navItemsToRoutes(navItems), ...extraRoutes],
-    [extraRoutes, navItems],
+    () => [...navItemsToRoutes(navItems), ...extraRoutes, ...dynamicRoutes],
+    [dynamicRoutes, extraRoutes, navItems],
   );
   const {
     open: paletteOpen,
@@ -597,12 +600,18 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
           ref={listRef}
           className="astw:max-h-[50vh] astw:overflow-y-auto astw:overflow-x-hidden"
         >
-          {selectableItems.length === 0 && !isSearching ? (
+          {selectableItems.length === 0 && !isSearching && !isLoadingDynamicRoutes ? (
             <div className="astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground">
               {t("commandPaletteNoResults")}
             </div>
           ) : (
             <div className="astw:p-1">
+              {isLoadingDynamicRoutes && (
+                <output className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-sm astw:text-muted-foreground">
+                  <Spinner aria-label={t("commandPaletteLoadingRoutes")} />
+                  {t("commandPaletteLoadingRoutes")}
+                </output>
+              )}
               {/* Search mode entries (default mode, filtered by search) */}
               {searchModesCount > 0 && (
                 <>
@@ -773,22 +782,12 @@ export function CommandPalette(): React.ReactNode {
  */
 export function BuiltInCommandPalette() {
   const navItems = useNavItems();
-  const currentPathAwareRoutes = useCommandPaletteRoutes();
   const appInfoRoute = useAppInfoPageRoute();
 
   return (
     <Suspense fallback={null}>
       <Await resolve={navItems}>
-        {(items) => (
-          <Await resolve={currentPathAwareRoutes}>
-            {(dynamicRoutes) => (
-              <CommandPaletteContent
-                navItems={items ?? []}
-                extraRoutes={[...(dynamicRoutes ?? []), appInfoRoute]}
-              />
-            )}
-          </Await>
-        )}
+        {(items) => <CommandPaletteContent navItems={items ?? []} extraRoutes={[appInfoRoute]} />}
       </Await>
     </Suspense>
   );

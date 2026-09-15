@@ -21,7 +21,6 @@ export type NavItemResource = {
 };
 
 const navItemsLoaderID = "appshell-root-nav";
-const commandPaletteLoaderID = "appshell-command-palette-routes";
 
 /**
  * Load the guard-filtered items rendered by the sidebar on every page.
@@ -41,10 +40,6 @@ type NavItemsLoaderData = {
   navItems?: Promise<Array<NavItem>>;
 };
 
-type CommandPaletteRoutesLoaderData = {
-  commandPaletteRoutes?: Promise<Array<NavigatableRoute>>;
-};
-
 /**
  * Hook to get navigation items from the loader created by `createNavItemsLoader`.
  * Returns undefined if the loader data is not available (e.g., in test environments).
@@ -54,40 +49,10 @@ export const useNavItems = () => {
   return loaderData?.navItems;
 };
 
-/**
- * Hook to get current-path-aware command palette routes from its dedicated loader.
- * Returns only routes whose dynamic params are already fixed by the current URL.
- */
-export const useCommandPaletteRoutes = () => {
-  const loaderData = useRouteLoaderData(commandPaletteLoaderID) as
-    | CommandPaletteRoutesLoaderData
-    | undefined;
-  return loaderData?.commandPaletteRoutes;
-};
-
 type BuildNavItemsProps = {
   modules: Modules;
   locale: string;
   basePath?: string;
-};
-
-/**
- * Load palette routes reachable below dynamic segments fixed by the current URL.
- *
- * This loader is mounted on a pathless content-route wrapper and revalidates only
- * when the pathname changes. That keeps dynamic routes current without rerunning
- * the root loader's navigation-wide guard evaluation.
- */
-export const createCommandPaletteRoutesLoader = (props: BuildNavItemsProps) => {
-  return {
-    loaderID: commandPaletteLoaderID,
-    loader: async ({ request }: { request: Request }) => {
-      const pathname = new URL(request.url).pathname;
-      return {
-        commandPaletteRoutes: buildCurrentPathAwareRoutes({ ...props, pathname }),
-      };
-    },
-  };
 };
 
 /**
@@ -195,9 +160,12 @@ const displayPathSegments = (path: string, params: Record<string, string | undef
 /**
  * Build command-palette entries reachable below dynamic segments in the current URL.
  *
- * Resolved parameter values form navigable paths, including the current dynamic page.
+ * This intentionally evaluates guards only when the palette opens. Resolved parameter
+ * values form navigable paths, including the current dynamic page.
+ *
+ * @internal
  */
-const buildCurrentPathAwareRoutes = async ({
+export const buildCurrentPathAwareRoutes = async ({
   modules,
   locale,
   basePath,

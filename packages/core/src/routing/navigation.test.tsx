@@ -1,12 +1,14 @@
 import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
+import { useMemo } from "react";
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { useNavItems, useCommandPaletteRoutes } from "./navigation";
-import { useNavigate } from "react-router";
+import { useNavItems, buildCurrentPathAwareRoutes } from "./navigation";
+import { useLocation, useNavigate } from "react-router";
 import { defineModule, defineResource, hidden, pass } from "@/resource";
 import {
   AppShellConfigContext,
   AppShellDataContext,
   buildConfigurations,
+  useAppShellConfig,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
 
@@ -39,6 +41,22 @@ const renderNavItems = (
   modules: Array<ReturnType<typeof defineModule>>,
   path = "/dashboard/overview",
 ) => renderWithNavigationLoader(() => useNavItems(), modules, path);
+
+const useCommandPaletteRoutes = () => {
+  const { pathname } = useLocation();
+  const { configurations } = useAppShellConfig();
+
+  return useMemo(
+    () =>
+      buildCurrentPathAwareRoutes({
+        modules: configurations.modules,
+        locale: configurations.locale,
+        basePath: configurations.basePath,
+        pathname,
+      }),
+    [configurations.basePath, configurations.locale, configurations.modules, pathname],
+  );
+};
 
 afterEach(() => {
   cleanup();

@@ -1,0 +1,50 @@
+{
+  "name": "@tailor-platform/eslint-plugin-app-shell",
+  "version": "0.0.0",
+  "description": "AppShell lint rules for Oxlint",
+  "keywords": [
+    "app-shell",
+    "eslint",
+    "lint",
+    "oxlint",
+    "tailor-platform"
+  ],
+  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/eslint-plugin-app-shell#readme",
+  "bugs": {
+    "url": "https://github.com/tailor-platform/app-shell"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tailor-platform/app-shell",
+    "directory": "packages/eslint-plugin-app-shell"
+  },
+  "files": [
+    "dist/**"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "oxlint -c .oxlintrc.jsonc",
+    "test": "pnpm build && vitest run",
+    "type-check": "tsc --incremental"
+  },
+  "devDependencies": {
+    "oxlint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "oxlint": ">=1.64.0"
+  }
+}

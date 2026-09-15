@@ -49,10 +49,12 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build",
+    "prepack": "node scripts/generate-skills.mjs",
+    "postpack": "node scripts/remove-generated-skills.mjs",
     "check-dts": "node scripts/check-dts.mjs",
     "vendor:fonts": "node scripts/sync-noto-fonts.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
-    "test": "vitest run",
+    "test": "vitest run && node scripts/check-skills-package.mjs",
     "type-check": "tsc --incremental"
   },
   "dependencies": {
@@ -95,7 +97,8 @@
     "typescript": "5.9.3",
     "vite": "catalog:",
     "vite-plugin-dts": "5.0.3",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "yaml": "2.9.0"
   },
   "peerDependencies": {
     "react": ">=19.2.7",

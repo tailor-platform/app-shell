@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import packageJson from "../../../../package.json";
 import { BuiltInCommandPalette } from "@/components/command-palette";
@@ -40,12 +40,12 @@ const renderAppShell = (initialEntries: string[]) =>
     >
       <AppShellDataContext.Provider value={{ contextData: {} }}>
         <BreadcrumbOverrideProvider>
-          <CommandPaletteProvider>
-            <RouterContainer memory initialEntries={initialEntries}>
+          <RouterContainer memory initialEntries={initialEntries}>
+            <CommandPaletteProvider>
               <Outlet />
               <BuiltInCommandPalette />
-            </RouterContainer>
-          </CommandPaletteProvider>
+            </CommandPaletteProvider>
+          </RouterContainer>
         </BreadcrumbOverrideProvider>
       </AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>,
@@ -60,6 +60,7 @@ describe("App info", () => {
     });
 
     renderAppShell(["/"]);
+    await act(async () => {});
 
     fireEvent.keyDown(document, { key: "k", metaKey: true });
 

@@ -10,6 +10,7 @@ export type {
   FieldConfig,
   FieldDefinition,
   FieldDivider,
+  FieldRender,
   FieldType,
   FieldMeta,
   Columns,

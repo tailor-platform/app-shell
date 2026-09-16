@@ -23,13 +23,13 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 ### Monorepo Structure
 
 - **packages/core**: Main library (@tailor-platform/app-shell) - React components with shadcn/ui, built with Vite
-- **examples/**: Next.js and Vite example implementations
+- **examples/**: Vite example implementation plus consolidated UI showcase
 
 ### Essential Concepts for Code Navigation
 
 - **Module System**: `defineModule()` creates top-level nav items, `defineResource()` creates pages/sub-pages
-- **Routing**: Uses react-router v7 (not Next.js file-based routing)
-- **Redirects**: Use `redirectToResource()` helper instead of deprecated `defaultResourceRedirectPath`
+- **Routing**: Uses react-router v8 (not Next.js file-based routing)
+- **Redirects**: Use a guard returning `redirectTo("/path")`. The older `defaultResourceRedirectPath` prop and `redirectToResource()` helper were both removed (in 0.13.0 and 0.24.0 respectively) and no longer exist
 - **Core Components**: `AppShell` (root provider), `SidebarLayout` (default layout)
 - **Context**: Access via `useAppShell()` hook
 
@@ -55,6 +55,6 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 **📋 For changeset creation procedures, see:** [Create Changeset Skill](./.agents/skills/create-changeset/SKILL.md)
 
-## API Design & Component Styling
+## Package Design & Review
 
-**📋 For component export patterns, styling rules, and implementation procedures, see:** [Add Component Skill](./.agents/skills/add-component/SKILL.md)
+**📋 For public API patterns, styling/export rules, implementation procedures, and package review guidance, use:** [Code Review Skill](./.agents/skills/code-review/SKILL.md)

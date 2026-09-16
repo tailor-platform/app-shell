@@ -141,6 +141,100 @@ describe("DataTable.Toolbar columnSettings", () => {
     expect(alphaHead?.style.position).toBe("");
   });
 
+  it("search filters visible columns and shows an empty state for no matches", () => {
+    render(<SettingsHarness />, { wrapper });
+    fireEvent.click(screen.getByRole("button", { name: /columns/i }));
+
+    const panel = document.querySelector<HTMLElement>(
+      '[data-slot="data-table-column-settings-popup"]',
+    )!;
+    const search = within(panel).getByPlaceholderText("Search columns");
+
+    fireEvent.change(search, { target: { value: "brav" } });
+    expect(within(panel).getByText("Bravo")).toBeTruthy();
+    expect(within(panel).queryByText("Alpha")).toBeNull();
+    expect(within(panel).queryByText("Charlie")).toBeNull();
+
+    fireEvent.change(search, { target: { value: "zzz" } });
+    expect(within(panel).getByText(/no columns match/i)).toBeTruthy();
+
+    // Clearing the query restores every column.
+    fireEvent.change(search, { target: { value: "" } });
+    expect(within(panel).getByText("Alpha")).toBeTruthy();
+    expect(within(panel).getByText("Bravo")).toBeTruthy();
+    expect(within(panel).getByText("Charlie")).toBeTruthy();
+  });
+
+  it("search filters only the Scrollable list — pinned zones stay in full", () => {
+    // "Alpha" is pinned left; the search must never hide it.
+    const pinnedColumns: Column<Row>[] = columns.map((c) =>
+      c.id === "a" ? { ...c, pin: "left" as const } : c,
+    );
+    function Harness() {
+      const table = useDataTable<Row>({ columns: pinnedColumns, data });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Toolbar columnSettings />
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+    render(<Harness />, { wrapper });
+    fireEvent.click(screen.getByRole("button", { name: /columns/i }));
+
+    const panel = document.querySelector<HTMLElement>(
+      '[data-slot="data-table-column-settings-popup"]',
+    )!;
+    const search = within(panel).getByPlaceholderText("Search columns");
+    fireEvent.change(search, { target: { value: "brav" } });
+
+    const left = panel.querySelector<HTMLElement>('[data-section="left"]')!;
+    const scrollable = panel.querySelector<HTMLElement>('[data-section="scrollable"]')!;
+    // Pinned-left zone is unaffected by the query.
+    expect(within(left).getByText("Alpha")).toBeTruthy();
+    // Scrollable zone is filtered to the match.
+    expect(within(scrollable).getByText("Bravo")).toBeTruthy();
+    expect(within(scrollable).queryByText("Charlie")).toBeNull();
+  });
+
+  it("keeps rows draggable while searching", () => {
+    render(<SettingsHarness />, { wrapper });
+    fireEvent.click(screen.getByRole("button", { name: /columns/i }));
+
+    const panel = document.querySelector<HTMLElement>(
+      '[data-slot="data-table-column-settings-popup"]',
+    )!;
+    const search = within(panel).getByPlaceholderText("Search columns");
+    fireEvent.change(search, { target: { value: "brav" } });
+
+    const bravoRow = within(panel).getByText("Bravo").closest('[draggable="true"]');
+    expect(bravoRow).not.toBeNull();
+  });
+
+  it("dragging a filtered row into a pinned zone still works while searching", () => {
+    const { container } = render(<SettingsHarness />, { wrapper });
+    fireEvent.click(screen.getByRole("button", { name: /columns/i }));
+
+    const panel = document.querySelector<HTMLElement>(
+      '[data-slot="data-table-column-settings-popup"]',
+    )!;
+    // Filter the Scrollable list down to just "Charlie", then drag it left.
+    const search = within(panel).getByPlaceholderText("Search columns");
+    fireEvent.change(search, { target: { value: "charl" } });
+
+    const charlieRow = within(panel).getByText("Charlie").closest('[draggable="true"]')!;
+    const leftZone = panel.querySelector<HTMLElement>('[data-section="left"]')!;
+    fireEvent.dragStart(charlieRow);
+    fireEvent.dragOver(leftZone);
+    fireEvent.drop(leftZone);
+
+    const charlieHead = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-slot="data-table-header"] th'),
+    ).find((th) => th.textContent?.trim() === "Charlie");
+    expect(charlieHead?.style.position).toBe("sticky");
+    expect(charlieHead?.style.left).toBe("0px");
+  });
+
   it("show all / hide all toggle every column", () => {
     const { container } = render(<SettingsHarness />, { wrapper });
     fireEvent.click(screen.getByRole("button", { name: /columns/i }));

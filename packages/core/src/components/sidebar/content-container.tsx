@@ -1,5 +1,5 @@
 import { useRef, type RefObject } from "react";
-import { SidebarInset } from "@/components/sidebar";
+import { SidebarInset } from "./primitives";
 import { AppShellScrollContainerProvider } from "@/contexts/scroll-container-context";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ export type ContentContainerProps = {
  * />
  * ```
  */
-export function ContentContainer({ header, className, children }: ContentContainerProps) {
+export const ContentContainer = ({ header, className, children }: ContentContainerProps) => {
   // Handle to the content scroll region, exposed to pages via
   // `useAppShellScrollContainer()`. The shell is viewport-bounded, so this is
   // the element that scrolls page content (what `window` used to be).
@@ -93,5 +93,5 @@ export function ContentContainer({ header, className, children }: ContentContain
       </AppShellScrollContainerProvider>
     </SidebarInset>
   );
-}
+};
 ContentContainer.displayName = "SidebarLayout.ContentContainer";

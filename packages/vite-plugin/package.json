@@ -1,6 +1,6 @@
 {
-  "name": "@tailor-platform/app-shell-vite-plugin",
-  "version": "0.2.3",
+  "name": "@tailor-platform/vite-plugin-app-shell",
+  "version": "0.3.0",
   "description": "Vite plugin for file-based routing in AppShell applications",
   "keywords": [
     "app-shell",
@@ -49,11 +49,11 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "^5.9.3",
+    "typescript": "5.9.3",
     "vite": "catalog:",
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "vite": ">= 7.3.5"
+    "vite": ">= 7.3.6"
   }
 }

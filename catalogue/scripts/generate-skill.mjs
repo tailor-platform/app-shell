@@ -11,13 +11,24 @@
 import { readdir, readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
+import { parseFrontmatter } from "./frontmatter.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const catalogueRoot = join(__dirname, "..");
 const repoRoot = join(catalogueRoot, "..");
 const skillsDir = join(repoRoot, "packages", "core", "skills", "app-shell-patterns");
 const referencesDir = join(skillsDir, "references");
+
+/**
+ * docs/migrations.md is authored for GitHub but has to reach consumers too:
+ * the published package contains only dist/** and skills/**, so a consumer
+ * app has no docs/ tree and no CHANGELOG.md to read. Copying it into the
+ * skill is the only channel that puts migration steps in node_modules, where
+ * coding agents working in a consumer app can actually find them.
+ */
+const migrationsSource = join(repoRoot, "docs", "migrations.md");
+const migrationsOutput = join(referencesDir, "migrations.md");
+const repoBlobUrl = "https://github.com/tailor-platform/app-shell/blob/main";
 
 /**
  * Category definitions. To add a new category, append an entry here
@@ -32,6 +43,12 @@ const CATEGORIES = [
     entryFile: null,
     outputDir: "fundamental",
     templateKey: "FUNDAMENTAL_TABLE",
+  },
+  {
+    name: "page",
+    entryFile: "PAGE.md",
+    outputDir: "pages",
+    templateKey: "PAGES_TABLE",
   },
   {
     name: "pattern",
@@ -148,7 +165,7 @@ async function processEntryCategory(category, categoryDir, outputDir) {
 
   for (const filePath of entryFiles) {
     const content = await readFile(filePath, "utf-8");
-    const { data: meta, content: body, matter: rawFrontmatter } = matter(content);
+    const { data: meta, content: body, matter: rawFrontmatter } = parseFrontmatter(content);
     if (!meta.slug) {
       console.warn(`Warning: No slug in frontmatter of ${filePath}`);
       continue;
@@ -171,6 +188,30 @@ async function processEntryCategory(category, categoryDir, outputDir) {
   return { category, entries };
 }
 
+/**
+ * Copy docs/migrations.md to references/migrations.md.
+ *
+ * Two transforms are needed because the source is written for GitHub:
+ * relative links resolve against docs/, which does not exist in the package,
+ * so they become absolute repo URLs; and the frontmatter is dropped to match
+ * the other copied reference files.
+ */
+async function processMigrations() {
+  const raw = await readFile(migrationsSource, "utf-8");
+  const { content } = parseFrontmatter(raw);
+
+  const body = content
+    .trim()
+    .replace(
+      /\]\((\.{1,2}\/[^)\s]+)\)/g,
+      (_match, target) => `](${repoBlobUrl}/${join("docs", target)})`,
+    );
+
+  await mkdir(referencesDir, { recursive: true });
+  await writeFile(migrationsOutput, `${body}\n`);
+  console.log("  Generated references/migrations.md");
+}
+
 async function main() {
   // Process all categories
   const results = [];
@@ -178,6 +219,8 @@ async function main() {
     const result = await processCategory(category);
     results.push(result);
   }
+
+  await processMigrations();
 
   // Generate SKILL.md index
   const skillMd = await generateSkillIndex(results);
@@ -213,7 +256,11 @@ function generateEntryTable(entries, outputDir) {
 
   const grouped = new Map();
   for (const { meta } of [...entries].sort((a, b) => a.meta.slug.localeCompare(b.meta.slug))) {
-    const key = meta.subcategory || meta.category;
+    // Group by subcategory only. Without one the heading would just repeat
+    // the category (### page under "Available Pages"), so those entries
+    // render as a bare table — and a category can introduce subcategories
+    // later with no change here.
+    const key = meta.subcategory ?? null;
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(meta);
   }
@@ -233,7 +280,8 @@ function generateEntryTable(entries, outputDir) {
         }),
       ];
 
-      return `### ${group}\n\n${formatMarkdownTable(rows)}`;
+      const table = formatMarkdownTable(rows);
+      return group === null ? table : `### ${group}\n\n${table}`;
     })
     .join("\n\n");
 }

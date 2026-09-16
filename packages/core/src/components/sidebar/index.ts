@@ -1,3 +1,5 @@
+// Low-level primitives re-exported for composing custom sidebar entries.
+export { SidebarMenuItem, SidebarMenuButton } from "./primitives";
 export { SidebarItem, type SidebarItemProps, type SidebarItemRenderProps } from "./sidebar-item";
 export { SidebarGroup, type SidebarGroupProps } from "./sidebar-group";
 export { SidebarSeparator } from "./sidebar-separator";

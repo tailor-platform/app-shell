@@ -4,6 +4,7 @@ import type {
   CollectionControl,
   Filter,
   FilterConfig,
+  OperatorForFilterType,
   PageInfo,
   SortConfig,
   SortState,
@@ -106,6 +107,64 @@ interface SortableHeaderRenderContext {
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
+type DataTableStringFilterOperator = Extract<
+  OperatorForFilterType["string"],
+  "eq" | "ne" | "contains" | "notContains" | "hasPrefix" | "hasSuffix"
+>;
+type DataTableNumericTemporalFilterOperator = Extract<
+  OperatorForFilterType["number"],
+  "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "between"
+>;
+type DataTableDateFilterOperator = Extract<
+  OperatorForFilterType["date"],
+  "eq" | "gte" | "lte" | "between"
+>;
+type DataTableEnumFilterOperator = Extract<OperatorForFilterType["enum"], "in">;
+type DataTableBooleanFilterOperator = OperatorForFilterType["boolean"];
+type DataTableUuidFilterOperator = Extract<OperatorForFilterType["uuid"], "eq">;
+type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
+
+type DataTableUiFilterOperatorByType = {
+  string: DataTableStringFilterOperator;
+  number: DataTableNumericTemporalFilterOperator;
+  datetime: DataTableNumericTemporalFilterOperator;
+  date: DataTableDateFilterOperator;
+  time: DataTableNumericTemporalFilterOperator;
+  enum: DataTableEnumFilterOperator;
+  boolean: DataTableBooleanFilterOperator;
+  uuid: DataTableUuidFilterOperator;
+};
+
+export type DataTableFilterConfig =
+  | (Extract<FilterConfig, { type: "string" }> & {
+      /**
+       * Allowlist of operators shown by `DataTable.Filters` for this column.
+       * Order controls both the menu order and the default operator.
+       */
+      operators?: NonEmptyReadonlyArray<DataTableStringFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "number" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "datetime" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "date" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableDateFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "time" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "enum" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableEnumFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "boolean" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableBooleanFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "uuid" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableUuidFilterOperator>;
+    });
+
 /**
  * Fields shared by every `Column` regardless of `type`. Prefer `Column<TRow>`
  * in most cases; this is exported so consumers can compose more specific
@@ -123,6 +182,13 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * `type` is set). Always wins over the built-in renderer when both are
    * present.
    *
+   * `render` is a **presentation** hook. Built-in behaviors that need the raw
+   * cell value — such as truncation tooltips, cell context-menu copy/filter
+   * actions, and typed renderers — still resolve that value from `accessor`
+   * first, then `row[col.id]`. When neither exists, those behaviors fall back
+   * to the return value of `render(row)` only if it is a primitive
+   * (`string`/`number`/`boolean`/`bigint`).
+   *
    * Kept on the base (not per-branch) so callback contextual typing works
    * across spread-then-override patterns like `column({ ...inferred, render })`.
    */
@@ -130,17 +196,21 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /**
    * Custom header renderer.
    *
-   * When omitted, the built-in header renders `label` and, for sortable
-   * columns, owns the sort button and indicator. When provided, the return
-   * value replaces the built-in header entirely. Sortable custom headers
-   * receive `sortDirection` and `activateSort()` and must render their own
-   * click surface and sort indicator.
+   * `header` is a **presentation** hook. When omitted, the built-in header
+   * renders `label` and, for sortable columns, owns the sort button and
+   * indicator. When provided, the return value replaces the built-in header
+   * entirely. Sortable custom headers receive `sortDirection` and
+   * `activateSort()` and must render their own click surface and sort
+   * indicator for left-click sorting; built-in header context-menu actions are
+   * still driven by `label`, `sort`, and other column metadata.
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
-   * Stable identifier used for column visibility toggling and as the React key.
-   * Falls back to `label` when omitted. Set this explicitly when `label` is
-   * absent or not unique.
+   * Stable identifier used for column visibility toggling, persisted layout
+   * state, raw-value fallback (`row[col.id]`), and as the React key. Falls
+   * back to `label` when omitted. Set this explicitly when `label` is absent,
+   * not unique, or when a custom-rendered column should still participate in
+   * built-in cell behaviors that need a raw value.
    */
   id?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
@@ -165,9 +235,8 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   align?: "left" | "right";
   /**
    * When `true`, the cell content is truncated with an ellipsis when it
-   * overflows. A `<Tooltip>` is wired up automatically when `accessor`
-   * returns a string or number, so hovering the cell reveals the full
-   * value.
+   * overflows. A `<Tooltip>` is wired up automatically when the resolved raw
+   * value is a string or number (`accessor` first, then `row[col.id]`).
    *
    * Truncation requires the cell to be shrinkable — the body cell sets
    * `max-w-0`, which collapses unless another column anchors the row width.
@@ -176,17 +245,28 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   truncate?: boolean;
   /**
-   * Sort configuration. When set, the column header becomes clickable and
-   * cycles through `Asc → Desc → undefined`.
+   * Sort configuration. When set, the column participates in built-in sort
+   * behaviors such as the default clickable header and the header context-menu
+   * sort submenu. Left-click sorting from a custom `header` still requires that
+   * renderer to call `ctx.activateSort()`.
+   *
    * Use `fieldTypeToSortConfig` or `inferColumns` to derive this automatically.
    */
   sort?: SortConfig;
   /**
    * Filter configuration. When set, this column appears as an option in
-   * `DataTable.Filters`.
+   * `DataTable.Filters` and, when collection `control` is available, can also
+   * drive the built-in cell context-menu filter actions.
+   *
+   * `operators` optionally narrows the conditions exposed by the built-in
+   * filter UI for this column. Order controls both the menu order and the
+   * default operator. This affects the DataTable UI only — collection control
+   * APIs and persisted filter state still accept the full backend operator set.
+   * The cell context-menu narrows this further to single-value operators only.
+   *
    * Use `fieldTypeToFilterConfig` or `inferColumns` to derive this automatically.
    */
-  filter?: FilterConfig;
+  filter?: DataTableFilterConfig;
 }
 
 /**
@@ -197,11 +277,13 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * - `type: "text"` rejects `typeOptions` entirely.
  *
  * `accessor` lives on each branch (rather than `ColumnBase`) so the built-in
- * renderers can constrain what a column produces. Returning an array or a
- * non-Date object is a compile error on a typed branch, instead of silently
- * rendering `[object Object]`. Untyped columns (`type?: undefined`) still
- * accept `unknown` — they're rendered by an explicit `render`. `null` and
- * `undefined` are always allowed: every built-in renderer maps them to the
+ * renderers can constrain what a column produces. It is also the primary
+ * source of truth for built-in cell behaviors that need the raw value
+ * (truncate tooltip, cell context-menu copy/filter actions). Returning an
+ * array or a non-Date object is a compile error on a typed branch, instead of
+ * silently rendering `[object Object]`. Untyped columns (`type?: undefined`)
+ * still accept `unknown` — they're rendered by an explicit `render`. `null`
+ * and `undefined` are always allowed: every built-in renderer maps them to the
  * `—` placeholder.
  *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
@@ -265,6 +347,57 @@ export interface DataTableData<TRow> {
 }
 
 /**
+ * Expandable-row configuration for `useDataTable`.
+ *
+ * The union is what makes an invalid setup unrepresentable: pass `expandedIds`
+ * and you must pass `onChange` with it (controlled), or pass neither and let
+ * the hook own the state. `onChange` alone is still allowed — in uncontrolled
+ * mode it is a notification.
+ */
+export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
+  /** Renders the detail panel for an expanded row. */
+  render: (row: TRow) => ReactNode;
+  /**
+   * Decides whether a row can be expanded. Rows returning `false` render an
+   * empty cell in place of the chevron. Defaults to `true` for rows with an
+   * `id`. Gates the panel in both directions: an id in `expandedIds` never
+   * opens a panel for a row this rejects.
+   */
+  canExpand?: (row: TRow) => boolean;
+  /**
+   * The row's record identity — a **bare identifier** such as `"INV-1001"`, not
+   * a sentence. The built-in i18n labels compose it into the accessible names of
+   * the chevron ("Expand row INV-1001") and the panel ("INV-1001 details").
+   * Without it, the generic "Expand row" / "Row details" fallbacks are used.
+   */
+  getLabel?: (row: TRow) => string;
+} & (
+  | {
+      /**
+       * Ids of the expanded rows. Passing this switches expansion to
+       * **controlled** mode: internal state is never written and you update this
+       * array from `onChange`.
+       *
+       * **Batching caveat:** each toggle derives the next array from this
+       * value, so two toggles dispatched before your state commits share a base
+       * and the first is lost. Relevant behind an async store (a debounced URL
+       * sync, `startTransition`) or when looping the toggle over many rows.
+       */
+      expandedIds: string[];
+      /** Called with the full array of expanded ids. Fires once per toggle. */
+      onChange: (ids: string[]) => void;
+    }
+  | {
+      expandedIds?: never;
+      /**
+       * Optional notification in uncontrolled mode, called with the full array
+       * of expanded ids. Fires once per toggle, including under StrictMode.
+       */
+      onChange?: (ids: string[]) => void;
+    }
+);
+
+/**
  * Options for `useDataTable` hook.
  */
 export type UseDataTableOptions<
@@ -313,6 +446,22 @@ export type UseDataTableOptions<
    * the rows on the **current page**, not all pages.
    */
   onSelectionChange?: (ids: string[]) => void;
+  /**
+   * Expandable detail rows. Providing this enables the whole feature: a chevron
+   * column is added at the left edge (auto-pinned left, after the selection
+   * column) and `render`'s output appears in a full-width row beneath its parent.
+   *
+   * Grouped rather than flat so the parts can't be configured in a broken
+   * combination — a label or predicate without a renderer, or `expandedIds`
+   * without `onChange`, are all compile errors.
+   *
+   * **Requirement:** Each row must have a string or number `id` field.
+   * Expansion is keyed by `id`, so rows without one render no chevron.
+   *
+   * **Note:** Expansion is **not** cleared on page change — ids of rows no
+   * longer on the page simply do not render. Call `collapseAllRows()` to reset.
+   */
+  rowExpansion?: RowExpansionOptions<TRow>;
   /**
    * Sort behaviour configuration.
    *
@@ -423,16 +572,32 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   clearSelection?: () => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
+
+  // Row expansion
+  /** Ids of the currently expanded rows. */
+  expandedIds: string[];
+  /** Whether `row` is currently expanded. Always `false` for rows without an `id`. */
+  isRowExpanded: (row: TRow) => boolean;
+  /** Toggle `row`'s detail panel. Undefined when `rowExpansion` is not provided. */
+  toggleRowExpansion?: (row: TRow) => void;
+  /** Collapse every expanded row. Undefined when `rowExpansion` is not provided. */
+  collapseAllRows?: () => void;
+  /** Expansion config (passthrough for `DataTable.Root`). */
+  rowExpansion?: RowExpansionOptions<TRow>;
 }
 
 // =============================================================================
 // Metadata-based Column Inference Types (DataTable specific)
 // =============================================================================
 
+type MetadataFieldFilterOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
+  operators?: NonEmptyReadonlyArray<DataTableUiFilterOperatorByType[TType]>;
+};
+
 /**
  * Options for metadata-based single field inference.
  */
-export interface MetadataFieldOptions {
+export type MetadataFieldOptions<TType extends FilterConfig["type"] = FilterConfig["type"]> = {
   /** Override the column header text. Defaults to the field's `description` or `name` from metadata. */
   label?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
@@ -443,8 +608,14 @@ export interface MetadataFieldOptions {
    */
   sort?: boolean;
   /**
-   * Set to `false` to suppress the auto-generated filter config for this field.
-   * Defaults to `true` (filter is enabled when the field type supports it).
+   * Set to `false` to suppress the auto-generated filter config for this field,
+   * or pass `operators` to narrow the DataTable filter conditions exposed for
+   * this field.
+   *
+   * When used through `inferColumns()` with specific table metadata, operator
+   * literals are narrowed to the inferred field type. If the metadata has
+   * already widened to `TableMetadata`, mismatched operators are still filtered
+   * out at runtime.
    */
-  filter?: boolean;
-}
+  filter?: boolean | MetadataFieldFilterOptions<TType>;
+};

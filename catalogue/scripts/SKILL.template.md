@@ -1,6 +1,6 @@
 ---
 name: app-shell-patterns
-description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — or when choosing the right AppShell component, layout, or design token for a UI."
+description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — when choosing the right AppShell component, layout, or design token for a UI — or when upgrading @tailor-platform/app-shell, or diagnosing styling, theming, or dark-mode breakage that appeared after a version bump."
 ---
 
 # App-Shell Patterns
@@ -15,6 +15,18 @@ These are the foundational rules that underpin all patterns. All patterns build 
 
 {{FUNDAMENTAL_TABLE}}
 
+## Migrations
+
+[`migrations.md`](references/migrations.md) lists every change that requires editing the consuming app, newest first — what breaks, how to detect it, and what to change.
+
+Read it when upgrading `@tailor-platform/app-shell`, and whenever styling, theming, or dark mode looks wrong after a version bump. These breakages are silent: the build succeeds and nothing warns, so the cause is not discoverable from the error output. The package ships no CHANGELOG, so this file is the only migration record available locally.
+
+## Available Pages
+
+A page is the shape of a whole screen — the outer choice, made before picking patterns for the parts inside it. Where a pattern is one recipe, a page fixes the layout of a whole screen and says what belongs in each part of it. Match the screen first, then use the patterns the entry cites for the pieces within it.
+
+{{PAGES_TABLE}}
+
 ## Available Patterns
 
 {{PATTERNS_TABLE}}
@@ -22,16 +34,17 @@ These are the foundational rules that underpin all patterns. All patterns build 
 ## How to Use
 
 1. Identify the user's intent (list, detail, form, interaction, screen composition, recipe)
-2. Match constraints to an entry slug from the tables above
-3. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
-4. Read fundamental references for component APIs, design tokens, and GraphQL conventions: `references/fundamental/`
-5. Implement using ONLY the imports listed in the entry's `requiredImports`
+2. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
+3. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
+4. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
+5. Read fundamental references for component APIs, design tokens, and GraphQL conventions: `references/fundamental/`
+6. Implement using ONLY the imports listed in the entry's `requiredImports` — for a page, the `requiredImports` of the pattern it sent you to
 
 ## Rules
 
 - ALWAYS cite the entry slug in a comment at the top of the file:
-  `/* pattern: list/dense-scan */`
-- NEVER mix patterns in a single page component
+  `/* pattern: list/dense-scan */`. Cite the pattern you implemented, even when a page entry sent you to it.
+- NEVER mix two patterns that solve the same problem in one component — one part, one recipe. Composing patterns for _different_ parts of a screen is expected, and the screen's page entry says which.
 - ALWAYS use AppShell components — do NOT use raw HTML or third-party UI libraries
 - If no entry matches, compose directly from fundamental references
 
@@ -45,4 +58,5 @@ Full rationale in [`design-system.md`](references/fundamental/design-system.md) 
 - **Action placement:** primary CTA + status in `Layout.Header`; workflow actions in `ActionPanel`; back/navigation in the breadcrumb — never in `ActionPanel`.
 - **Metric tiles always go in a `Grid`** (`columns={{ initial: 1, md: 2, xl: 4 }}`) — never one-per-row.
 - **Forms default to `form/modal`** — only build a routed full-page form when the design explicitly calls for one.
+- **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`components.md`](references/fundamental/components.md) → Forms.
 - **Handle every state:** loading (skeleton), empty (labelled empty state), and error (inline + retry) — never ship only the happy path.

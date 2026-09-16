@@ -1,26 +1,32 @@
-# @tailor-platform/app-shell-sdk-plugin
+# @tailor-platform/sdk-plugin-app-shell
 
-Tailor Platform SDK plugin that generates `tableMetadata` from TailorDB type definitions for use with `@tailor-platform/app-shell`'s `DataTable` component.
+[![npm version](https://img.shields.io/npm/v/@tailor-platform/sdk-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/sdk-plugin-app-shell)
+[![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/sdk-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/sdk-plugin-app-shell)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/tailor-platform/app-shell/blob/main/LICENSE.md)
+
+Tailor Platform SDK plugin that generates `tableMetadata` from TailorDB table definitions for use with `@tailor-platform/app-shell`'s `DataTable` component.
 
 ## What it does
 
 `tableMetadata` bridges your TailorDB schema to the DataTable. It tells `inferColumns` how to render and filter each field — for example, which fields get a date picker, which get an enum dropdown (and with what options), and which are numeric. Without it, you would need to declare all of this manually per column.
 
-The metadata is generated at SDK code-gen time from your TailorDB type definitions, so it stays in sync with your schema automatically.
+The metadata is generated at SDK generate time from your TailorDB table definitions, so it stays in sync with your schema automatically.
 
 ## Installation
 
 ```sh
-pnpm add -D @tailor-platform/app-shell-sdk-plugin
+pnpm add -D @tailor-platform/sdk-plugin-app-shell
 ```
 
 ## Setup
+
+Supports `@tailor-platform/sdk` `^1 || ^2`. The examples below use the v2 CLI and TailorDB table API.
 
 Register the plugin in `tailor.config.ts`:
 
 ```ts
 import { definePlugins } from "@tailor-platform/sdk";
-import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
 
 export const plugins = definePlugins(
   appShellPlugin({
@@ -31,7 +37,7 @@ export const plugins = definePlugins(
 );
 ```
 
-Then run `tailor-sdk generate` to produce the metadata file.
+Then run `tailor generate` to produce the metadata file.
 
 ## Usage
 
@@ -50,5 +56,13 @@ const columns = [
   column(infer("createdAt")), // datetime column  → date picker filter
 ];
 ```
+
+You can still override per-column defaults when needed. For example, pass a non-empty `filter.operators` allowlist to narrow the built-in DataTable filter UI for one field:
+
+```ts
+const columns = [column(infer("title", { filter: { operators: ["contains", "eq"] } }))];
+```
+
+`operators` only affects the built-in DataTable filter UI. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still use the broader backend operator set.
 
 For full `DataTable` usage, see [`@tailor-platform/app-shell`](../core/README.md).

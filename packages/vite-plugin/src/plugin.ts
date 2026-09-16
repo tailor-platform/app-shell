@@ -87,7 +87,7 @@ function createPluginContext(userOptions: AppShellRoutesPluginOptions): PluginCo
  * // vite.config.ts
  * import { defineConfig } from 'vite';
  * import react from '@vitejs/plugin-react';
- * import { appShellRoutes } from '@tailor-platform/app-shell-vite-plugin';
+ * import { appShellRoutes } from '@tailor-platform/app-shell/vite-plugin';
  *
  * export default defineConfig({
  *   plugins: [

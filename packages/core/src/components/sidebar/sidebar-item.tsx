@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useLocation, Link } from "react-router";
 import { ExternalLink } from "lucide-react";
-import { SidebarMenuItem, SidebarMenuButton } from "@/components/sidebar";
+import { SidebarMenuItem, SidebarMenuButton } from "./primitives";
 import { usePageMeta } from "@/hooks/use-page-meta";
 
 export type SidebarItemRenderProps = {

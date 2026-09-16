@@ -4,8 +4,6 @@
  *
  * Grouping Positioner-specific props under a `position` namespace prevents
  * name collisions with the Popup's own props and keeps the type surface clean.
- *
- * @internal — not exported from the public API.
  */
 export interface PositionProps {
   /** Which side of the anchor element to position against. */

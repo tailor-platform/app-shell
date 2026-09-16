@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
-} from "@/components/sidebar";
+} from "./primitives";
 import { useHasHover } from "@/hooks/use-has-hover";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";

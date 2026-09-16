@@ -1,21 +1,30 @@
-import { renderHook, waitFor, cleanup } from "@testing-library/react";
-import { describe, it, expect, afterEach } from "vitest";
-import { useNavItems } from "./navigation";
-import { defineModule, defineResource, hidden } from "@/resource";
+import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
+import { useMemo } from "react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { useNavItems, buildCurrentPathAwareRoutes } from "./navigation";
+import { useLocation, useNavigate } from "react-router";
+import { defineModule, defineResource, hidden, pass } from "@/resource";
 import {
   AppShellConfigContext,
   AppShellDataContext,
   buildConfigurations,
+  useAppShellConfig,
 } from "@/contexts/appshell-context";
 import { RouterContainer } from "@/routing/router";
 
-const renderNavItems = (
+const renderWithNavigationLoader = <T,>(
+  hook: () => T,
   modules: Array<ReturnType<typeof defineModule>>,
   path = "/dashboard/overview",
+  options: { basePath?: string } = {},
 ) => {
-  const configurations = buildConfigurations({ modules, locale: "en" });
+  const configurations = buildConfigurations({
+    modules,
+    locale: "en",
+    ...(options.basePath ? { basePath: options.basePath } : {}),
+  });
 
-  return renderHook(() => useNavItems(), {
+  return renderHook(hook, {
     wrapper: ({ children }) => (
       <AppShellConfigContext.Provider value={{ configurations }}>
         <AppShellDataContext.Provider value={{ contextData: {} }}>
@@ -28,11 +37,32 @@ const renderNavItems = (
   });
 };
 
-describe("useNavItems", () => {
-  afterEach(() => {
-    cleanup();
-  });
+const renderNavItems = (
+  modules: Array<ReturnType<typeof defineModule>>,
+  path = "/dashboard/overview",
+) => renderWithNavigationLoader(() => useNavItems(), modules, path);
 
+const useCommandPaletteRoutes = () => {
+  const { pathname } = useLocation();
+  const { configurations } = useAppShellConfig();
+
+  return useMemo(
+    () =>
+      buildCurrentPathAwareRoutes({
+        modules: configurations.modules,
+        locale: configurations.locale,
+        basePath: configurations.basePath,
+        pathname,
+      }),
+    [configurations.basePath, configurations.locale, configurations.modules, pathname],
+  );
+};
+
+afterEach(() => {
+  cleanup();
+});
+
+describe("useNavItems", () => {
   it("builds nav items for visible modules and resources", async () => {
     const modules = [
       defineModule({
@@ -413,6 +443,489 @@ describe("useNavItems", () => {
 
     await waitFor(async () => {
       expect(await result.current!).toHaveLength(0);
+    });
+  });
+
+  it("does not reload nav items on pathname changes", async () => {
+    const guard = vi.fn(() => pass());
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard" },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+        guards: [guard],
+      }),
+      defineModule({
+        path: "orders",
+        meta: { title: "Orders" },
+        component: () => <div>Orders</div>,
+        resources: [],
+      }),
+    ];
+    const { result } = renderWithNavigationLoader(
+      () => ({ navItems: useNavItems(), navigate: useNavigate() }),
+      modules,
+      "/dashboard",
+    );
+
+    await waitFor(() => {
+      expect(guard).toHaveBeenCalled();
+      expect(result.current).not.toBeNull();
+    });
+    const navItems = result.current!.navItems;
+    const callsBeforeNavigation = guard.mock.calls.length;
+
+    await act(async () => {
+      await result.current.navigate("/orders");
+    });
+
+    expect(result.current.navItems).toBe(navItems);
+    expect(guard).toHaveBeenCalledTimes(callsBeforeNavigation);
+  });
+});
+
+describe("useCommandPaletteRoutes", () => {
+  it("returns an empty list on a not-found path", async () => {
+    const { result } = renderWithNavigationLoader(() => useCommandPaletteRoutes(), [], "/missing");
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([]);
+    });
+  });
+
+  it("refreshes routes after navigating away from a dynamic segment", async () => {
+    const modules = [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => <div>Users</div>,
+        resources: [
+          defineResource({
+            path: ":id",
+            meta: { title: "User Detail" },
+            component: () => <div>User Detail</div>,
+            subResources: [
+              defineResource({
+                path: "profile",
+                component: () => <div>Profile</div>,
+              }),
+            ],
+          }),
+        ],
+      }),
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard" },
+        component: () => <div>Dashboard</div>,
+        resources: [],
+      }),
+    ];
+    const { result } = renderWithNavigationLoader(
+      () => ({ routes: useCommandPaletteRoutes(), navigate: useNavigate() }),
+      modules,
+      "/users/42",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current.routes!).toHaveLength(2);
+    });
+    await act(async () => {
+      await result.current.navigate("/dashboard");
+    });
+    await waitFor(async () => {
+      expect(await result.current.routes!).toEqual([]);
+    });
+  });
+
+  it("includes the current dynamic page and its navigable descendants", async () => {
+    const modules = [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => <div>Users</div>,
+        resources: [
+          defineResource({
+            path: ":id",
+            meta: { title: "User Detail" },
+            component: () => <div>User Detail</div>,
+            subResources: [
+              defineResource({
+                path: "profile",
+                component: () => <div>Profile</div>,
+              }),
+              defineResource({
+                path: "settings",
+                component: () => <div>Settings</div>,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/users/af0b8a32-e577-4e9c-9d44-4ab1832c578d",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "users/af0b8a32-e577-4e9c-9d44-4ab1832c578d",
+          displayPath: "users/af0b8a32...",
+          title: "User Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail"],
+        },
+        {
+          path: "users/af0b8a32-e577-4e9c-9d44-4ab1832c578d/profile",
+          displayPath: "users/af0b8a32.../profile",
+          title: "Profile",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail", "Profile"],
+        },
+        {
+          path: "users/af0b8a32-e577-4e9c-9d44-4ab1832c578d/settings",
+          displayPath: "users/af0b8a32.../settings",
+          title: "Settings",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail", "Settings"],
+        },
+      ]);
+    });
+  });
+
+  it("includes the current dynamic page and skips hidden descendants", async () => {
+    const modules = [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => <div>Users</div>,
+        resources: [
+          defineResource({
+            path: ":id",
+            meta: { title: "User Detail" },
+            component: () => <div>User Detail</div>,
+            subResources: [
+              defineResource({
+                path: "profile",
+                component: () => <div>Profile</div>,
+              }),
+              defineResource({
+                path: "secret",
+                component: () => <div>Secret</div>,
+                guards: [() => hidden()],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/users/42",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "users/42",
+          displayPath: "users/42",
+          title: "User Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail"],
+        },
+        {
+          path: "users/42/profile",
+          displayPath: "users/42/profile",
+          title: "Profile",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail", "Profile"],
+        },
+      ]);
+    });
+  });
+
+  it("keeps traversing through a non-navigable dynamic namespace", async () => {
+    const modules = [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => <div>Users</div>,
+        resources: [
+          defineResource({
+            path: ":id",
+            meta: { title: "User Detail" },
+            subResources: [
+              defineResource({
+                path: "profile",
+                component: () => <div>Profile</div>,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/users/42/profile",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "users/42/profile",
+          displayPath: "users/42/profile",
+          title: "Profile",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail", "Profile"],
+        },
+      ]);
+    });
+  });
+
+  it("resolves nested dynamic child segments from the current match", async () => {
+    const modules = [
+      defineModule({
+        path: "orders",
+        meta: { title: "Orders" },
+        component: () => <div>Orders</div>,
+        resources: [
+          defineResource({
+            path: ":orderId",
+            meta: { title: "Order Detail" },
+            component: () => <div>Order Detail</div>,
+            subResources: [
+              defineResource({
+                path: "items",
+                component: () => <div>Items</div>,
+                subResources: [
+                  defineResource({
+                    path: ":itemId",
+                    meta: { title: "Item Detail" },
+                    component: () => <div>Item Detail</div>,
+                    subResources: [
+                      defineResource({
+                        path: ":tab",
+                        meta: { title: "Tab" },
+                        component: () => <div>Tab</div>,
+                        subResources: [
+                          defineResource({
+                            path: "history",
+                            component: () => <div>History</div>,
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/orders/42/items/7/specs",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "orders/42",
+          displayPath: "orders/42",
+          title: "Order Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail"],
+        },
+        {
+          path: "orders/42/items",
+          displayPath: "orders/42/items",
+          title: "Items",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail", "Items"],
+        },
+        {
+          path: "orders/42/items/7",
+          displayPath: "orders/42/items/7",
+          title: "Item Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail", "Items", "Item Detail"],
+        },
+        {
+          path: "orders/42/items/7/specs",
+          displayPath: "orders/42/items/7/specs",
+          title: "Tab",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail", "Items", "Item Detail", "Tab"],
+        },
+        {
+          path: "orders/42/items/7/specs/history",
+          displayPath: "orders/42/items/7/specs/history",
+          title: "History",
+          icon: expect.anything(),
+          breadcrumb: ["Orders", "Order Detail", "Items", "Item Detail", "Tab", "History"],
+        },
+      ]);
+    });
+  });
+
+  it("does not substitute a current param into a dynamic sibling", async () => {
+    const modules = [
+      defineModule({
+        path: "workspaces",
+        meta: { title: "Workspaces" },
+        component: () => <div>Workspaces</div>,
+        resources: [
+          defineResource({
+            path: ":workspaceId",
+            meta: { title: "Workspace" },
+            subResources: [
+              defineResource({
+                path: "services",
+                meta: { title: "Services" },
+                subResources: [
+                  defineResource({
+                    path: "ai-gateways",
+                    meta: { title: "AI Gateways" },
+                    subResources: [
+                      defineResource({
+                        path: ":name",
+                        meta: { title: "AI Gateway" },
+                        component: () => <div>AI Gateway</div>,
+                      }),
+                    ],
+                  }),
+                  defineResource({
+                    path: "applications",
+                    meta: { title: "Applications" },
+                    subResources: [
+                      defineResource({
+                        path: ":name",
+                        meta: { title: "Application" },
+                        component: () => <div>Application</div>,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/workspaces/w1/services/ai-gateways/g1",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "workspaces/w1/services/ai-gateways/g1",
+          displayPath: "workspaces/w1/services/ai-gateways/g1",
+          title: "AI Gateway",
+          icon: expect.anything(),
+          breadcrumb: ["Workspaces", "Workspace", "Services", "AI Gateways", "AI Gateway"],
+        },
+      ]);
+    });
+  });
+
+  it("supports current-path-aware routes under a configured basePath", async () => {
+    const modules = [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => <div>Users</div>,
+        resources: [
+          defineResource({
+            path: ":id",
+            meta: { title: "User Detail" },
+            component: () => <div>User Detail</div>,
+            subResources: [
+              defineResource({
+                path: "profile",
+                component: () => <div>Profile</div>,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/app/users/42",
+      { basePath: "app" },
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([
+        {
+          path: "users/42",
+          displayPath: "users/42",
+          title: "User Detail",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail"],
+        },
+        {
+          path: "users/42/profile",
+          displayPath: "users/42/profile",
+          title: "Profile",
+          icon: expect.anything(),
+          breadcrumb: ["Users", "User Detail", "Profile"],
+        },
+      ]);
+    });
+  });
+
+  it("does not infer param routes from a static sibling path", async () => {
+    const modules = [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => <div>Users</div>,
+        resources: [
+          defineResource({
+            path: "list",
+            component: () => <div>User List</div>,
+          }),
+          defineResource({
+            path: ":id",
+            meta: { title: "User Detail" },
+            component: () => <div>User Detail</div>,
+            subResources: [
+              defineResource({
+                path: "profile",
+                component: () => <div>Profile</div>,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    const { result } = renderWithNavigationLoader(
+      () => useCommandPaletteRoutes(),
+      modules,
+      "/users/list",
+    );
+
+    await waitFor(async () => {
+      expect(await result.current!).toEqual([]);
     });
   });
 });

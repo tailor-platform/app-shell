@@ -3,12 +3,13 @@ import { cva } from "class-variance-authority";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCalendarT } from "./i18n";
-import type { CalendarDay, useCalendarState } from "./use-calendar-state";
+import type { CalendarDay, CalendarViewState } from "./use-calendar-base-state";
 
 /**
  * Calendar-grid presentation — the APG date-grid markup, driven by our own
- * `useCalendarState` engine. Shared by the standalone `Calendar` and the
- * `DatePicker` popover. Not exported from the package.
+ * calendar state engines (`useCalendarState` / `useRangeCalendarState`).
+ * Shared by the standalone `Calendar`/`RangeCalendar` and the
+ * `DatePicker`/`DateRangePicker` popovers. Not exported from the package.
  *
  * Styling mirrors the rest of the library (`astw:` tokens, dark mode).
  */
@@ -36,14 +37,24 @@ const calendarCellVariants = cva(
           "astw:data-[outside-month]:pointer-events-none astw:data-[outside-month]:opacity-40",
           "astw:data-[unavailable]:pointer-events-none astw:data-[unavailable]:text-muted-foreground astw:data-[unavailable]:line-through",
           "astw:data-[disabled]:pointer-events-none astw:data-[disabled]:opacity-50",
-          // Range states — wired now so a future DateRangePicker is purely additive
+          // Range states: endpoints keep the selected pill; the days in between
+          // read from the band painted on the <td> underneath.
           "astw:data-[selection-start]:rounded-l-md astw:data-[selection-end]:rounded-r-md",
+          "astw:data-[in-range]:text-accent-foreground astw:data-[in-range]:data-[selected]:text-primary-foreground",
           "astw:data-[today]:font-semibold astw:data-[today]:underline astw:data-[today]:underline-offset-2",
         ],
       },
     },
     defaultVariants: { state: "base" },
   },
+);
+
+// The continuous range band, painted on the <td> so it runs edge-to-edge
+// between the rounded endpoint pills (the buttons stay `size-9 rounded-md`).
+const cellTdClasses = cn(
+  "astw:p-0",
+  "astw:data-[in-range]:bg-accent",
+  "astw:data-[selection-start]:rounded-l-md astw:data-[selection-end]:rounded-r-md",
 );
 
 // Keyboard focus ring — the same `ring` treatment used by Button / inputs.
@@ -55,10 +66,8 @@ const navButtonClasses = cn(
   "astw:disabled:pointer-events-none astw:disabled:opacity-50",
 );
 
-type CalendarState = ReturnType<typeof useCalendarState>;
-
 interface CalendarViewProps {
-  state: CalendarState;
+  state: CalendarViewState;
   ariaLabel?: string;
   ariaLabelledBy?: string;
   className?: string;
@@ -80,6 +89,7 @@ export function CalendarView({
 }: CalendarViewProps) {
   const t = useCalendarT();
   const headingId = React.useId();
+  const rangePromptId = React.useId();
   const cellRefs = React.useRef<Map<string, HTMLButtonElement | null>>(new Map());
   const prevBtnRef = React.useRef<HTMLButtonElement>(null);
   const nextBtnRef = React.useRef<HTMLButtonElement>(null);
@@ -109,7 +119,14 @@ export function CalendarView({
   // Contain Tab within the prev → next → grid loop while in the popover.
   const handleContainerKeyDown = (e: React.KeyboardEvent) => {
     if (!inPopover || e.key !== "Tab") return;
-    const gridCell = cellRefs.current.get(state.focusedDate.toString()) ?? null;
+    // The grid stop is whichever cell actually holds DOM focus — it can lag
+    // the roving focusedDate (e.g. a click that didn't focus the button, as
+    // Safari's do) and Tab must still cycle rather than escape the dialog.
+    const active = document.activeElement as HTMLButtonElement | null;
+    const activeIsCell = active != null && [...cellRefs.current.values()].includes(active);
+    const gridCell = activeIsCell
+      ? active
+      : (cellRefs.current.get(state.focusedDate.toString()) ?? null);
     const stops = [
       state.prevDisabled ? null : prevBtnRef.current,
       state.nextDisabled ? null : nextBtnRef.current,
@@ -163,12 +180,20 @@ export function CalendarView({
           <ChevronRightIcon className="astw:size-4" />
         </button>
       </header>
+      {/* Announced from the focused cell in range mode: tells the user whether
+          the next confirm starts or finishes the range selection. */}
+      {state.isRange && (
+        <span id={rangePromptId} hidden>
+          {state.hasAnchor ? t("finishRangePrompt") : t("startRangePrompt")}
+        </span>
+      )}
       {/* APG calendar-grid pattern: role="grid" upgrades the table's cell/row
           semantics so arrow-key navigation is announced correctly. */}
       <table
         role="grid"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy ?? (ariaLabel ? undefined : headingId)}
+        aria-multiselectable={state.isRange || undefined}
         className="astw:border-collapse"
       >
         <thead>
@@ -193,8 +218,10 @@ export function CalendarView({
                   key={day.date.toString()}
                   day={day}
                   label={state.cellLabel(day.date)}
+                  describedById={state.isRange && day.isFocused ? rangePromptId : undefined}
                   onSelect={() => state.selectDate(day.date)}
                   onKeyDown={(e) => state.onCellKeyDown(e, day.date)}
+                  onHover={state.onCellHover}
                   registerRef={(el) => cellRefs.current.set(day.date.toString(), el)}
                   onFocus={() => {
                     state.isFocusedRef.current = true;
@@ -212,8 +239,10 @@ export function CalendarView({
 interface CalendarCellProps {
   day: CalendarDay;
   label: string;
+  describedById?: string;
   onSelect: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
+  onHover?: (date: CalendarDay["date"]) => void;
   registerRef: (el: HTMLButtonElement | null) => void;
   onFocus: () => void;
 }
@@ -221,8 +250,10 @@ interface CalendarCellProps {
 function CalendarCell({
   day,
   label,
+  describedById,
   onSelect,
   onKeyDown,
+  onHover,
   registerRef,
   onFocus,
 }: CalendarCellProps) {
@@ -235,20 +266,31 @@ function CalendarCell({
   const focusable = !day.isOutsideMonth;
   // `<td>` inside `role="grid"` is implicitly a gridcell — no explicit role needed.
   return (
-    <td aria-selected={day.isSelected || undefined} className="astw:p-0">
+    <td
+      aria-selected={day.isSelected || day.isInRange || undefined}
+      data-in-range={day.isInRange || undefined}
+      data-selection-start={day.isSelectionStart || undefined}
+      data-selection-end={day.isSelectionEnd || undefined}
+      className={cellTdClasses}
+    >
       <button
         type="button"
         ref={registerRef}
         aria-label={label}
+        aria-describedby={interactive ? describedById : undefined}
         aria-disabled={day.isDisabled || day.isUnavailable || undefined}
         tabIndex={day.isFocused && !day.isOutsideMonth ? 0 : -1}
         data-selected={day.isSelected || undefined}
+        data-in-range={day.isInRange || undefined}
+        data-selection-start={day.isSelectionStart || undefined}
+        data-selection-end={day.isSelectionEnd || undefined}
         data-disabled={day.isDisabled || undefined}
         data-unavailable={day.isUnavailable || undefined}
         data-outside-month={day.isOutsideMonth || undefined}
         data-today={day.isToday || undefined}
         onClick={interactive ? onSelect : undefined}
         onKeyDown={focusable ? onKeyDown : undefined}
+        onPointerEnter={interactive && onHover ? () => onHover(day.date) : undefined}
         onFocus={onFocus}
         className={calendarCellVariants()}
       >

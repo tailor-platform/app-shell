@@ -1,6 +1,6 @@
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/button";
-import { Select } from "@/components/select-standalone";
+import { Select } from "@/components/select";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 
@@ -72,17 +72,15 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
             {t("paginationPage")} {currentPage} / {totalPages}
           </span>
         )}
-        {totalPages !== null && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToFirstPage}
-            disabled={!hasPrevPage}
-            aria-label={t("paginationFirst")}
-          >
-            <ChevronsLeft className="astw:size-4" />
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={goToFirstPage}
+          disabled={!hasPrevPage}
+          aria-label={t("paginationFirst")}
+        >
+          <ChevronsLeft className="astw:size-4" />
+        </Button>
         <Button
           variant="outline"
           size="icon"

@@ -191,6 +191,25 @@ const booleanColumn: Column<TestRow> = {
   filter: { type: "boolean", field: "enabled" },
 };
 
+const stringContainsOnlyColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: { type: "string", field: "name", operators: ["contains"] },
+};
+
+const stringEqOnlyColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: { type: "string", field: "name", operators: ["eq"] },
+};
+
+const stringInvalidOperatorColumn: Column<TestRow> = {
+  ...stringColumn,
+  filter: {
+    type: "string",
+    field: "name",
+    operators: ["gt"] as unknown as ["contains"],
+  },
+};
+
 // ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
 // ---------------------------------------------------------------------------
@@ -224,7 +243,7 @@ describe("DataTable.Filters", () => {
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,
     });
-    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add filter" })).toBeDefined();
   });
 
   it("still renders the add filter button when all filterable columns are active", () => {
@@ -237,7 +256,7 @@ describe("DataTable.Filters", () => {
     render(<TestFilters control={control} columns={[stringColumn]} />, {
       wrapper,
     });
-    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add filter" })).toBeDefined();
   });
 
   it("returns null when there are no filterable columns", () => {
@@ -259,7 +278,7 @@ describe("DataTable.Filters", () => {
       filters: [{ field: "name", operator: "contains", value: "Alice" }],
     });
     render(<TestFilters control={control} columns={[stringColumn]} slot="add" />, { wrapper });
-    expect(screen.getByText("Add filter")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Add filter" })).toBeDefined();
     expect(document.querySelector('[data-slot="data-table-filter-chip"]')).toBeNull();
   });
 
@@ -269,7 +288,7 @@ describe("DataTable.Filters", () => {
     });
     render(<TestFilters control={control} columns={[stringColumn]} slot="chips" />, { wrapper });
     expect(document.querySelector('[data-slot="data-table-filter-chip"]')).not.toBeNull();
-    expect(screen.queryByText("Add filter")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add filter" })).toBeNull();
   });
 
   it("slot='chips' renders nothing when there are no active filters", () => {
@@ -281,14 +300,24 @@ describe("DataTable.Filters", () => {
     expect(container.querySelector('[data-slot="data-table-filters"]')).toBeNull();
   });
 
-  it("addIconOnly renders an icon-only trigger (label kept as aria-label)", () => {
+  it("renders an icon-only trigger by default (label kept as aria-label)", () => {
     const control = makeControl({ filters: [] });
-    render(<TestFilters control={control} columns={[stringColumn]} slot="add" addIconOnly />, {
+    render(<TestFilters control={control} columns={[stringColumn]} slot="add" />, {
       wrapper,
     });
     // Reachable by its accessible name, but the label text is not rendered.
     const trigger = screen.getByRole("button", { name: "Add filter" });
     expect(trigger.textContent).toBe("");
+  });
+
+  it("addIconOnly={false} renders the visible 'Add filter' text label", () => {
+    const control = makeControl({ filters: [] });
+    render(
+      <TestFilters control={control} columns={[stringColumn]} slot="add" addIconOnly={false} />,
+      { wrapper },
+    );
+    const trigger = screen.getByRole("button", { name: "Add filter" });
+    expect(trigger.textContent).toContain("Add filter");
   });
 });
 
@@ -313,6 +342,45 @@ describe("AddFilterPanel", () => {
     expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
   });
 
+  it("the field search filters the field list and shows an empty state", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    const search = await screen.findByPlaceholderText("Search fields");
+
+    fireEvent.change(search, { target: { value: "coun" } });
+    expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
+    expect(screen.queryByRole("button", { name: /^Name$/ })).toBeNull();
+
+    fireEvent.change(search, { target: { value: "zzz" } });
+    expect(screen.getByText(/no fields match/i)).toBeDefined();
+
+    fireEvent.change(search, { target: { value: "" } });
+    expect(screen.getByRole("button", { name: /^Name$/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^Count$/ })).toBeDefined();
+  });
+
+  it("advances the selection when the search filters out the active field", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn, numberColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    // Select the numeric "Count" field — its editor has no "contains" operator.
+    await user.click(await screen.findByRole("button", { name: /^Count$/ }));
+    expect(screen.queryByRole("button", { name: "contains" })).toBeNull();
+
+    // Searching "na" filters the list to "Name" only, filtering out the active
+    // "Count" field. Selection must advance to "Name" so the list and the editor
+    // stay in sync — the string editor's "contains" operator now appears.
+    fireEvent.change(screen.getByPlaceholderText("Search fields"), { target: { value: "na" } });
+    expect(await screen.findByRole("button", { name: "contains" })).toBeDefined();
+  });
+
   it("selecting a field shows the value editor with an Apply button", async () => {
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });
@@ -324,6 +392,61 @@ describe("AddFilterPanel", () => {
     await user.click(await screen.findByRole("button", { name: /^Count$/ }));
 
     // Amount/Count is numeric → condition column + a value input + Apply.
+    expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
+  });
+
+  it("uses contains as the default operator for an unconfigured string column", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const textboxes = within(panel as HTMLElement).getAllByRole("textbox");
+    await user.type(textboxes[textboxes.length - 1] as HTMLInputElement, "Bob");
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseSensitive: false,
+    });
+  });
+
+  it("does not widen an invalid runtime string allowlist back to every operator", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringInvalidOperatorColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(screen.queryByRole("button", { name: /^contains$/ })).toBeNull();
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const textboxes = within(panel as HTMLElement).getAllByRole("textbox");
+    await user.type(textboxes[textboxes.length - 1] as HTMLInputElement, "Bob");
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Bob", {
+      caseSensitive: false,
+    });
+  });
+
+  it("hides the condition column when a column restricts filters to one operator", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({ filters: [] });
+    render(<TestFilters control={control} columns={[stringContainsOnlyColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    expect(screen.queryByRole("button", { name: /^contains$/ })).toBeNull();
     expect(await screen.findByRole("button", { name: /^Apply$/ })).toBeDefined();
   });
 
@@ -361,6 +484,44 @@ describe("AddFilterPanel", () => {
     });
   });
 
+  it("preserves an active operator even when the column now restricts the allowlist", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringEqOnlyColumn]} />, { wrapper });
+
+    expect(screen.getByRole("button", { name: "contains" })).toBeDefined();
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice", {
+      caseSensitive: false,
+    });
+  });
+
+  it("does not surface legacy numeric-only operators in the date condition list", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "createdAt", operator: "gt", value: "2025-01-01" }],
+    });
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+
+    const panel = document.querySelector(
+      '[data-slot="data-table-filter-panel"]',
+    ) as HTMLElement | null;
+    expect(panel).not.toBeNull();
+
+    const panelQueries = within(panel as HTMLElement);
+    expect(panelQueries.queryByRole("button", { name: "greater than" })).toBeNull();
+    expect(panelQueries.getByRole("button", { name: "exact date" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "after" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "before" })).toBeDefined();
+  });
+
   it("disables the commit button when the between range is reversed (min > max)", async () => {
     const user = userEvent.setup();
     const control = makeControl({ filters: [] });
@@ -396,6 +557,21 @@ describe("AddFilterPanel", () => {
 // ---------------------------------------------------------------------------
 
 describe("FilterChip", () => {
+  it("focuses the operator search input when the operator popover opens", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "name", operator: "contains", value: "Alice" }],
+    });
+    render(<TestFilters control={control} columns={[stringColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "contains" }));
+
+    const input = await screen.findByPlaceholderText("Search...");
+    expect(document.activeElement).toBe(input);
+  });
+
   it("calls removeFilter when the remove button is clicked", async () => {
     const user = userEvent.setup();
     const control = makeControl({

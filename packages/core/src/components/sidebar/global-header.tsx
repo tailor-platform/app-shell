@@ -1,5 +1,5 @@
 import { AppearanceSwitcher } from "@/components/appearance-switcher";
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
+import { DynamicBreadcrumb } from "@/components/sidebar/dynamic-breadcrumb";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 
 export type GlobalHeaderProps = {

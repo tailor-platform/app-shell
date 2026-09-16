@@ -9,7 +9,7 @@
 | This file (`components.md`)                                                                                       | `design-system.md`                                                                                |
 | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | **Imports**, compound structure, hooks, canonical **composition** (`Card` + `Table`, `DataTable`, `Dialog`, etc.) | **Tokens**, theme imports, typography/spacing/radius/elevation **tables**, breakpoints **intent** |
-| JSX examples tied to ERP patterns (`patterns/*`)                                                                  | **`astw:`** rules — only on AppShell `*ClassName` props; plain utilities on **your** elements     |
+| JSX examples tied to ERP patterns (`patterns/*`)                                                                  | **AppShell styling boundary** — plain utilities and no internal `astw:` prefix                    |
 | Prop summaries + links to upstream `docs/components/*.md`                                                         | **Visual conformance**: no magic colors/px on custom markup, motion, dark mode                    |
 
 **Rule of thumb:** “Which component / prop?” → **here.** “Which token / spacing step / elevation?” → **`design-system.md`** §§4–6.
@@ -105,7 +105,7 @@ import { Button, Layout, Tabs } from "@tailor-platform/app-shell";
 </Layout>
 ```
 
-**Notes:** Children that aren't `Layout.Header` or `Layout.Column` are filtered out. Column gap overrides (`<Layout className="astw:gap-6" />`) → **`design-system.md`** §5 (`astw:` rules).
+**Notes:** Children that aren't `Layout.Header` or `Layout.Column` are filtered out. Set column gaps with `<Layout gap={6} />` (supported steps: 4, 6, 8).
 
 **Used in patterns:** every page pattern (`list/*`, `detail/*`, `form/*`).
 
@@ -194,6 +194,13 @@ import { Button, Link } from '@tailor-platform/app-shell';
 **API:** `to`, `replace`, `state`, etc. — same as `react-router`.
 **Used in patterns:** all (navigation).
 
+### `NavLink`
+
+**Import:** `import { NavLink } from '@tailor-platform/app-shell'`
+**Purpose:** `Link` that knows when it is active — for nav menus and tab bars.
+**API:** `to`, plus `className` / `style` / `children` as render functions receiving `{ isActive, isPending }`.
+**Used in patterns:** navigation shells.
+
 ### `Dialog`
 
 > Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/dialog.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/dialog.md)
@@ -250,7 +257,7 @@ import { Button, Link } from '@tailor-platform/app-shell';
 
 **Used in patterns:** `list/*` (filter sheet variant).
 
-**Notes:** Size the panel with **`contentClassName`** (often `astw:*` utilities). Rules → **`design-system.md`** §5.
+**Notes:** Size the panel with `Sheet.Content`'s **`size`** prop (`"sm" | "md" | "lg" | "xl" | "full"`, default `"sm"`) — not a width utility.
 
 ### `Menu`
 
@@ -348,7 +355,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Import:** `import { Table } from '@tailor-platform/app-shell'`
 **Purpose:** Semantic data table with scrollable container.
-**API:** Compound — `Table.Root`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`. `Table.Root` accepts `containerClassName` for the outer wrapper, `className` for the inner `<table>`. `Table.Head` and `Table.Cell` accept **`align`** (`"left" | "center" | "right"`, default `"left"`) — prefer this over ad-hoc `className="astw:text-right"` and pair the same alignment on the head and its column's cells (right for numeric/money, center for compact status/icon columns).
+**API:** Compound — `Table.Root`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.Head`, `Table.Cell`, `Table.Caption`. `Table.Root` accepts `containerClassName` for the outer wrapper, `className` for the inner `<table>`. `Table.Head` and `Table.Cell` accept **`align`** (`"left" | "center" | "right"`, default `"left"`) — prefer this over ad-hoc `className="text-right"` and pair the same alignment on the head and its column's cells (right for numeric/money, center for compact status/icon columns).
 **Example:**
 
 ```tsx
@@ -378,8 +385,8 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Notes:**
 
-- **Inside a card?** Pass `containerClassName="astw:px-6"` on `Table.Root` for the horizontal inset, and either drop `Card.Content` (bare list form) or pass `Card.Content className="astw:px-0"` (header+content form). Skipping the `containerClassName` lands the first column flush against the card edge. See the `Card` entry for the two canonical forms and a DON'T example. Dense cell typography (**`text-body-sm`**, **`text-mono`**) → **`design-system.md`** §4 Typography.
-- **Whole row is clickable.** Use `<Table.Row onClick={() => navigate(detailPath)} className="astw:cursor-pointer">`. For keyboard and screen-reader users, also wrap the primary identifier cell content in `<Link>` (so the row is reachable via Tab; `Table.Row` is a `<tr>` and cannot itself be a Link — wrapping a `<tr>` in `<a>` is invalid HTML). **No per-row "View" / "Open" / "→" buttons.** Per-row `Menu` (overflow `…`) is the only allowed per-row action surface and is reserved for non-navigation actions like Archive, Duplicate.
+- **Inside a card?** Zero the card's horizontal padding — drop `Card.Content` (bare list form) or pass `Card.Content className="px-0!"` (header+content form) — and leave the table container's padding alone. `Table.Head` / `Table.Cell` carry their own `first:pl-6` / `last:pr-6`, so a `containerClassName="px-6"` double-pads and the first column lands 24px right of the card title. See the `Card` entry for the two canonical forms and a DON'T example. Dense cell typography (**`text-sm`**, **`tabular-nums`** for figures, **`font-mono`** for identifiers) → **`design-system.md`** §4 Typography.
+- **Whole row is clickable.** Use `<Table.Row onClick={() => navigate(detailPath)} className="cursor-pointer">`. For keyboard and screen-reader users, also wrap the primary identifier cell content in `<Link>` (so the row is reachable via Tab; `Table.Row` is a `<tr>` and cannot itself be a Link — wrapping a `<tr>` in `<a>` is invalid HTML). **No per-row "View" / "Open" / "→" buttons.** Per-row `Menu` (overflow `…`) is the only allowed per-row action surface and is reserved for non-navigation actions like Archive, Duplicate.
 
 ### `DataTable`
 
@@ -387,7 +394,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Import:** compound namespace + helpers from `'@tailor-platform/app-shell'`, e.g. `DataTable`, `useDataTable`, `useCollectionVariables`, `createColumnHelper`, and types such as `Column`, `UseDataTableReturn`.
 
-**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **column pinning** (`pin: "left" | "right"`) and built-in **column settings** (`<DataTable.Toolbar columnSettings>` — user show/hide + reorder + pin, persisted per-user via **`tableId`**).
+**Purpose:** Production list screens over GraphQL **connections**. Owns toolbar filter chips (**`DataTable.Filters`** from column `filter` configs), header sort, **`DataTable.Pagination`** (cursor-first; First/Last when `total` is provided), loading skeleton/error row, **`onClickRow`**, **`rowActions`** (kebab column), **`onSelectionChange`** (checkbox column), **expandable rows** (**`rowExpansion`** — a chevron column plus a full-width detail panel per row; `render` with optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` for controlled mode), **column pinning** (`pin: "left" | "right"`) and built-in **column settings** (`<DataTable.Toolbar columnSettings>` — user show/hide + reorder + pin, persisted per-user via **`tableId`**).
 
 **Primitives:** Builds on low-level **`Table`**; do not reinvent pagination/filters manually unless the dataset is trivial.
 
@@ -426,7 +433,7 @@ const table = useDataTable({
 
 **Column alignment:** each `Column` accepts **`align`** (`"left" | "right"`) applied to both header and body cell. Numeric `type` columns (`"number"`, `"money"`) default to `"right"` automatically so digits align on the decimal place — pass `align="left"` to opt out; everything else defaults to `"left"`.
 
-**Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/app-shell-sdk-plugin` codegen) when available so enum/datetime/string filters bind to the right editors.
+**Metadata path:** Prefer `createColumnHelper` + `inferColumns(tableMetadata.order)` (`@tailor-platform/sdk-plugin-app-shell` codegen) when available so enum/datetime/string filters bind to the right editors.
 
 **Bucket tabs / segmented UX:** AppShell defines **toolbar chips**, not lifecycle tabs. When design places **`Tabs`** (All / Draft / …) inside the card, compose them **above** `DataTable.Root` and synchronize tab-driven bucket state with **`useCollectionVariables`** (`variables.query` / filters)—see **`patterns/list/dense-scan.md`**.
 
@@ -454,13 +461,13 @@ const table = useDataTable({
 
 **Notes:**
 
-- **Tables inside a card need TWO co-requisite geometry changes** (token-backed spacing rationale → **`design-system.md`** §4 Spacing): (a) Card stops imposing horizontal padding — drop `Card.Content` for the bare form, or pass `Card.Content className="astw:px-0"` for the header+content form. (b) `Table.Root` provides the inset itself via `containerClassName="astw:px-6"`. Skipping (b) lands the first column flush against the card edge — `Table.Cell`'s intrinsic `astw:first:pl-6` does NOT render reliably in this composition.
+- **A table inside a card needs ONE geometry change, not two** (token-backed spacing rationale → **`design-system.md`** §4 Spacing): the card stops imposing horizontal padding. Drop `Card.Content` for the bare form, or pass `Card.Content className="px-0!"` for the header+content form. That is all. `Table.Head` and `Table.Cell` already carry an intrinsic `first:pl-6` / `last:pr-6`, which supplies the inset on its own — so the table container must add **none**. Padding on the container stacks on top of the cell's own and pushes the first column 24px past the card title.
 
 **Bare table-in-card (list pages, no card-level title):**
 
 ```tsx
 <Card.Root>
-  <Table.Root containerClassName="astw:px-6">{/* … */}</Table.Root>
+  <Table.Root>{/* … */}</Table.Root>
 </Card.Root>
 ```
 
@@ -469,18 +476,19 @@ const table = useDataTable({
 ```tsx
 <Card.Root>
   <Card.Header title="Line items" />
-  <Card.Content className="astw:px-0">
-    <Table.Root containerClassName="astw:px-6">{/* … */}</Table.Root>
+  <Card.Content className="px-0!">
+    <Table.Root>{/* … */}</Table.Root>
   </Card.Content>
 </Card.Root>
 ```
 
-**DON'T — first column lands flush against the card edge:**
+**DON'T — the first column sits 24px right of the card title:**
 
 ```tsx
 <Card.Root>
-  <Card.Content className="astw:px-0">
-    <Table.Root>{/* missing containerClassName="astw:px-6" */}</Table.Root>
+  <Card.Content className="px-0!">
+    {/* double-pads: the container's 24px adds to the cell's own first:pl-6 */}
+    <Table.Root containerClassName="px-6">{/* … */}</Table.Root>
   </Card.Content>
 </Card.Root>
 ```
@@ -558,26 +566,37 @@ const table = useDataTable({
 />
 ```
 
-**Used in patterns:** `detail/hero-with-actions` (body sections).
+**Used in:** `page/detail` (body sections).
 
 ### `ActionPanel`
 
 **Import:** `import { ActionPanel } from '@tailor-platform/app-shell'`
 **Purpose:** Right-rail panel listing workflow actions for a detail page (approve, reject, archive, etc.).
-**API:** `ActionPanelProps` — `title`, `actions` (array of `{ label, onSelect, variant?, disabled?, hidden? }`), `className`.
+**API:** `ActionPanelProps` — `title`, `actions`, `className`. Each action is `{ key, label, icon, onClick?, disabled?, loading?, variant? }`; `key`, `label` and `icon` are all **required**, the handler is `onClick` (not `onSelect`), and `variant` is `"default" | "destructive"`. There is no `hidden` — omit a row by not spreading it in. The row type is not exported on its own; annotate an array as `ActionPanelProps["actions"]`.
 **Example:**
 
 ```tsx
 <ActionPanel
   title="Actions"
   actions={[
-    { label: "Approve", variant: "default", onSelect: handleApprove },
-    { label: "Reject", variant: "destructive", onSelect: handleReject, disabled: !canReject },
+    { key: "approve", label: "Approve", icon: <Check />, onClick: handleApprove },
+    ...(canReject
+      ? [
+          {
+            key: "reject",
+            label: "Reject",
+            icon: <X />,
+            onClick: handleReject,
+            variant: "destructive" as const,
+            loading: rejecting,
+          },
+        ]
+      : []),
   ]}
 />
 ```
 
-**Used in patterns:** `detail/hero-with-actions`.
+**Used in:** `page/detail`.
 
 **Notes:**
 
@@ -588,7 +607,7 @@ const table = useDataTable({
 **Import:** `import { ActivityCard } from '@tailor-platform/app-shell'`
 **Purpose:** Timeline of events on a record (audit log, status changes, comments).
 **API:** Compound — `ActivityCard.Root`, `ActivityCard.Items` (generic over item type), plus `ActivityCardProps`, `ActivityCardItem`, `ActivityCardItemProps`. Items render with timestamp + actor + description.
-**Used in patterns:** `detail/hero-with-actions` (right column or bottom section).
+**Used in:** `page/detail` (right column, for revision history / audit trail).
 
 ### `Alert`
 
@@ -612,13 +631,41 @@ const table = useDataTable({
 
 ## Forms
 
+> **Which form stack?** AppShell's `Form` / `Field` / `Fieldset` wrap Base UI primitives and are the
+> default — they need no extra dependency. They own **accessibility wiring and visual state only**
+> (`htmlFor`, `aria-describedby`, `data-invalid` / `data-dirty` / `data-touched`); they do **not** own
+> your values. React Hook Form is **optional** and consumer-installed — reach for it only when a form
+> genuinely needs cross-field validation, field arrays, or a Zod resolver. The two compose; they are
+> not alternatives. `react-hook-form` stopped being a runtime dependency in 1.4.0; it is a dev-only
+> dependency of the package today, used to test the RHF integration contracts — if you use it,
+> install it in your own app.
+
 ### `Form`
 
 > Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/form.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/form.md)
 
 **Import:** `import { Form } from '@tailor-platform/app-shell'`
-**Purpose:** Form root wired to react-hook-form. Use with `Field`, `Fieldset`, and Zod for validation.
-**API:** `FormProps` — `errors`, `actionsRef`, `validationMode`, `noValidate`, plus a namespace exposing form-related sub-helpers. Generic over `FormValues`.
+**Purpose:** Form root that wraps Base UI's form primitive. Provides shared validation context for
+child `Field.Root`s, consolidated error display, and server-error routing by field `name`.
+**API:** `FormProps` — `onFormSubmit`, `onSubmit`, `errors`, `actionsRef`, `validationMode`,
+`noValidate`, `id`. Generic over `FormValues`.
+**Actions outside the form:** give the `Form` an `id` and point a detached submit button at it with
+the native `form` attribute. This is how a page-header Save reaches a body form (1.13.0+):
+
+```tsx
+<Layout.Header
+  title="Create product"
+  actions={[<Button key="save" type="submit" form="product-form">Save</Button>]}
+/>
+<Form id="product-form" onFormSubmit={save}>…</Form>
+```
+
+**Submit:** use `onFormSubmit(values)` — it receives parsed form values and is the default. Use the
+low-level `onSubmit` **only** when handing the native event to React Hook Form's `handleSubmit`.
+**Never** hand-roll `<form onSubmit={e => new FormData(e.currentTarget)}>` — that skips validation
+and error routing.
+**Server errors:** pass `errors={{ fieldName: "message" }}`; they route to the matching
+`Field.Error` and clear when the user edits that field.
 **Example:** see `form/single-page.md`.
 **Used in patterns:** all `form/*`.
 
@@ -626,8 +673,70 @@ const table = useDataTable({
 
 **Import:** `import { Field } from '@tailor-platform/app-shell'`
 **Purpose:** Single form field with label + control + error message wiring.
-**API:** Compound. Wraps any input control (`Input`, `Select`, `Combobox`, etc.) and binds it to react-hook-form via `name`.
+**API:** Compound — `Field.Root`, `Field.Label`, `Field.Control`, `Field.Description`, `Field.Error`,
+`Field.Validity`. `Field.Root` establishes a context boundary; every Base UI-backed AppShell control
+placed inside it inherits label association, `aria-describedby`, `disabled`, and invalid state
+automatically.
+**`Field.Control` is already a styled input** — write `<Field.Control />`, not
+`<Field.Control render={<Input />} />`. `Input` and `Field.Control` share the same base classes, so
+the `render` form just double-wraps. Reach for `Input` directly when you need a control outside a
+`Field.Root`, or when the value is React-controlled.
+**RHF interop (optional):** `Field.Root` accepts `isTouched`, `isDirty`, `invalid`, and `error`,
+matching RHF's `fieldState` shape — so `<Field.Root {...fieldState}>` works with no adapter.
 **Used in patterns:** all `form/*`.
+
+### How values reach your submit handler
+
+There are three separate mechanisms. Picking the wrong mental model is the most common
+form mistake, so be explicit about which one a screen uses.
+
+**1. `Form` + `Field.Root` → `onFormSubmit` (the default).** `onFormSubmit` does **not** read
+`FormData`; it collects values from the `Field.Root`s registered inside the `Form`, keyed by each
+field's `name`. Every AppShell control works this way once wrapped in a `Field.Root name="…"` —
+including `Select`, `Combobox`, and `Autocomplete`. They need **no `name` of their own and no React
+state**:
+
+```tsx
+<Form onFormSubmit={(values) => save(values)}>
+  <Field.Root name="category">
+    <Field.Label>Category</Field.Label>
+    <Select items={CATEGORIES} placeholder="Select category" />
+  </Field.Root>
+</Form>
+```
+
+**2. Native submission** — a plain `<form>`, `new FormData(form)`, or a server action. This reads the
+DOM, so each control needs its own `name`. `Select`, `Combobox`, and `Autocomplete` gained `name`
+(plus `form`, `required`, `inputRef`) in 1.13.0; before that they contributed nothing to a native
+payload.
+
+**3. React Hook Form** — optional, consumer-installed. RHF owns the values; drive the control with
+`value` / `onValueChange` from a `Controller` and spread `fieldState` onto `Field.Root`. Warranted
+for cross-field validation, field arrays, or a Zod resolver — not for ordinary CRUD forms.
+
+#### Object items
+
+Under mechanism 1, a non-string item is serialised into the submitted value:
+
+| Item shape                             | Value in `onFormSubmit`              |
+| -------------------------------------- | ------------------------------------ |
+| `string`                               | the string                           |
+| `{ value, label }`                     | `value`, automatically               |
+| any other object                       | **JSON string** — usually not wanted |
+| any other object + `itemToStringValue` | whatever that function returns       |
+
+So for arbitrary objects, pass `itemToStringValue` to choose the submitted key. It is distinct from
+`mapItem`, which controls what the user sees:
+
+```tsx
+<Combobox
+  items={warehouses}
+  mapItem={(w) => ({ label: w.name, key: String(w.id) })}
+  itemToStringValue={(w) => String(w.id)}
+/>
+```
+
+Multi-select submits an array.
 
 ### `Fieldset`
 
@@ -642,6 +751,26 @@ const table = useDataTable({
 **Purpose:** Text input. Maps to spec field types: `string`, `email`, `number`, `password`, `tel`, `url`.
 **API:** `InputProps` — extends native `<input>` props.
 **Used in patterns:** all `form/*`.
+
+### `Textarea`
+
+> Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/textarea.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/textarea.md)
+
+**Import:** `import { Textarea } from '@tailor-platform/app-shell'`
+**Purpose:** Multi-line text input. Maps to spec field types: `text`, long-form `string`. Use instead of `Input` whenever the value is prose (notes, descriptions, replies, reasons).
+**API:** `TextareaProps` — Base UI's field control (`value`, `defaultValue`, `onChange`, `onValueChange`, `disabled`, `required`, `readOnly`, `name`, aria-\*) rendered as a `<textarea>`, plus `rows`. `cols` / `wrap` are not accepted — the control is `w-full`, so neither can take effect.
+**Sizing:** no fixed height — `rows` sets the visible line count and the user can drag it taller. `min-h-16` is a hard floor, so `rows` only takes effect from 3 up. Width is the parent's job: the control is `w-full`, and `cols` is not accepted because it could never win against that. Do **not** reach for `Input` and a height override; `Input` is locked to `h-9`, and an application must not use AppShell's internal `astw:` classes.
+**Field integration:** drops straight into `Field.Root` for label/description/error wiring exactly like `Input` and `Checkbox` — no bespoke `error` prop.
+**Example:**
+
+```tsx
+<Field.Root name="reason">
+  <Field.Label>Reason</Field.Label>
+  <Textarea rows={4} placeholder="Why is this being rejected?" />
+</Field.Root>
+```
+
+**Used in patterns:** `form/composer`, `form/*` (long-text fields).
 
 ### `Checkbox`
 
@@ -672,6 +801,22 @@ const table = useDataTable({
 **Purpose:** Free-text input with completion suggestions (multi-select capable).
 **API:** Compound. `AutocompleteAsyncFetcher<T>` for async suggestion sources. `ItemGroup<T>` for grouped suggestions.
 **Used in patterns:** `form/*` (tags, free-text + suggested values).
+
+---
+
+## AI
+
+### `AIChat`
+
+> Full API: [https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md](https://raw.githubusercontent.com/tailor-platform/app-shell/refs/heads/main/docs/components/ai-chat.md)
+
+**Import:** `import { AIChat } from '@tailor-platform/app-shell'`
+**Purpose:** Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts. The root places three regions in a fixed order, `Layout`-style: `AIChat.Header` (optional) over `AIChat.Conversation` over `AIChat.Composer` (optional). Each region carries its own props; the root carries `status`.
+**API:** Root (`status`) + regions — `AIChat.Header` (`title`, `icon`, `actions`), `AIChat.Conversation` (`autoScroll`, transcript as children), `AIChat.Composer` (`onSubmit`, `onStop`, `value`/`defaultValue`/`onValueChange`, `placeholder`, `disabled`, `submitOnEnter`, `actions`) — + transcript parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning`/`.ReasoningTrigger`/`.ReasoningContent`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, `.History`.
+**Composer:** Body is `Textarea` over one action row per `form/composer`'s layout. Enter submits (IME-safe), Shift+Enter newlines, and `status` from `useAIChat()` drives the busy/Stop state.
+**Header:** a 48px strip (graphic + `text-sm font-semibold` title + right action slot) closed by a full-width rule; renders only when `title` or `actions` is set.
+**Renders no chrome:** no border or background of its own — wrap in `Card`, `Sheet`, or a `Layout.Column`, with `overflow-hidden` so the header rule stays inside rounded corners.
+**Used in patterns:** none yet — a component, not a catalogue pattern (platform-planning#1748).
 
 ---
 
@@ -729,6 +874,32 @@ Types for authoring guard functions used by `WithGuard` and `appShellPageProps.g
 **Import:** `import { useNavigate, useParams, useSearchParams, useLocation, useRouteError } from '@tailor-platform/app-shell'`
 **Purpose:** Re-exported from `react-router`. Use the AppShell barrel — never import from `react-router` directly.
 **Used in patterns:** all (navigation, route params, query state).
+
+### `useMatch`, `useResolvedPath`, `useNavigation`
+
+**Import:** `import { useMatch, useResolvedPath, useNavigation } from '@tailor-platform/app-shell'`
+**Purpose:** `useMatch` tests a pattern against the current location (active states); `useResolvedPath` resolves a relative path; `useNavigation` exposes the in-flight navigation for pending UI.
+**Used in patterns:** navigation shells, list→detail transitions.
+
+### `useBlocker`, `useBeforeUnload`
+
+**Import:** `import { useBlocker, useBeforeUnload } from '@tailor-platform/app-shell'`
+**Purpose:** Guard navigation away from unsaved work — `useBlocker` for in-app navigation, `useBeforeUnload` for closing or reloading the tab.
+**Used in patterns:** form-heavy screens.
+
+### Types
+
+**Import:** `import type { Location, NavigateFunction, NavigateOptions, To, Params, PathMatch, LinkProps, NavLinkProps, Navigation, Blocker, BlockerFunction } from '@tailor-platform/app-shell'`
+**Purpose:** The React Router types that go with the hooks above, so app code never imports types from `react-router` either.
+
+### Not exported
+
+`createBrowserRouter`, `RouterProvider`, `MemoryRouter`, `Routes`, `Route` — AppShell builds the router; a second one nested inside it breaks navigation. `useLoaderData`, `Form`, `useSubmit`, `useFetcher`, `useActionData` — AppShell does not wire up React Router's data layer. Load data in the page component or the app's data layer.
+
+### Testing
+
+**Import:** `import { AppShell, TestRouter } from '@tailor-platform/app-shell/testing'`
+**Purpose:** Test routing without a `react-router` dependency. `AppShell` from this entry also accepts `memory` / `initialEntries`, for mounting a page at a fixed URL; `TestRouter` gives a single component router context, and takes `path` when that component reads the route (`useParams` is `{}` without it).
 
 ### `createTypedPaths`
 

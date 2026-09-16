@@ -1,4 +1,30 @@
-# @tailor-platform/app-shell-sdk-plugin
+# @tailor-platform/sdk-plugin-app-shell
+
+## 0.2.0
+
+### Minor Changes
+
+- 23cfd1f: Rename the AppShell SDK plugin package to `@tailor-platform/sdk-plugin-app-shell`.
+  
+  Before:
+  
+  ```ts
+  import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+  ```
+  
+  After:
+  
+  ```ts
+  import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
+  ```
+
+## 0.1.1
+
+### Patch Changes
+
+- ad41ce3: Fix `appShellPlugin()` compatibility with `@tailor-platform/sdk` v2 generation hooks while keeping v1 backward compatibility.
+  
+  The plugin now treats SDK v2 as the primary shape, reads TailorDB schema data from both the legacy `tailordb[].types` shape and the v2 `tailordb[].tables` shape, accepts v2 relation metadata that uses `rawRelation.toward.table`, and narrows the peer dependency to supported SDK majors only (`^1 || ^2`).
 
 ## 0.1.0
 

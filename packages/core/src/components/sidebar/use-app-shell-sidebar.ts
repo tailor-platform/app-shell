@@ -1,5 +1,5 @@
 import * as React from "react";
-import { SidebarContext } from "@/components/sidebar";
+import { SidebarContext } from "./primitives";
 
 export type AppShellSidebarState = {
   /**

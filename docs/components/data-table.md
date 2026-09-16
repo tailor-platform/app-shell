@@ -196,9 +196,9 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 ### `DataTable.Pagination` Props
 
-| Prop              | Type       | Default | Description                                                                                                                                               |
-| ----------------- | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. First/Last buttons are shown only when the backend returns a `total` count. |
+| Prop              | Type       | Default | Description                                                                                                                                                                                                                  |
+| ----------------- | ---------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pageSizeOptions` | `number[]` | —       | Available page-size options. When provided, a page-size switcher is rendered. The First button is always shown, even when the backend omits `total`; the Last button is shown only when the backend returns a `total` count. |
 
 `DataTable.Pagination` automatically displays a row count and selection info text on the left side of the pagination bar based on context state:
 
@@ -211,9 +211,11 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`.
 
+When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
+
 ## Column pinning, visibility & ordering
 
-- **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection column auto-pins left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
+- **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection and expand columns auto-pin left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
 - **Column settings.** Pass `columnSettings` to `DataTable.Toolbar` to render a built-in "Columns" control — a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. It's a toolbar prop (not a composed sub-component) because the control always sits in the same top-right position.
 - **Persistence.** Pass a stable, **unique** `tableId` to persist each user's column layout (visibility, order, pinning) to `localStorage` (key `as:data-table:v1:<tableId>`). This is a per-user preference — it is deliberately **not** stored in the URL like filters/sort/pagination, so it survives reloads and isn't reset by shared/filtered links. Omit `tableId` for in-memory-only layout (state simply isn't persisted). Two tables mounted with the same `tableId` share one storage key and overwrite each other — use a unique id per table (e.g. `<route>:<entity>`); a dev-mode warning fires on duplicates.
 
@@ -230,6 +232,122 @@ const table = useDataTable<Order>({
 </DataTable.Root>;
 ```
 
+## Context menus
+
+`DataTable.Table` adds right-click context menus to both headers and cells:
+
+- **Headers** can copy the label, pin/unpin, sort, reset sort, and hide the column.
+- **Cells** can copy the value, copy `"[header] [value]"`, and add a filter from that cell's value.
+
+### Behavior contract
+
+`DataTable` treats column configuration as two layers:
+
+- **Presentation** — `column.header` and `column.render` control what is rendered.
+- **Behavior/data** — `column.label`, `column.id`, `column.accessor`, `column.sort`, `column.filter`, and collection `control` drive built-in behavior such as sorting, truncation tooltips, persistence, and context-menu actions.
+
+This means built-in interactions do **not** infer meaning from rendered DOM content. If a custom-rendered column should still participate in built-in copy/filter/tooltip behavior, give it an `id` or `accessor` that exposes the raw value.
+
+### Custom headers
+
+Header context menus still work when `column.header` is custom, because the menu wraps the rendered header content from the outside.
+
+When a column is sortable (`column.sort` is set and collection `control` is available), the **Sort column** submenu still appears in the context menu. However, left-click sorting remains the custom header's responsibility: call `ctx.activateSort()` from your custom header if you want click-to-sort behavior in the header itself.
+
+### Custom cell renderers
+
+Cell context menus need a raw value for copy and filter actions. They resolve it in this order:
+
+1. `column.accessor(row)`
+2. `row[column.id]`
+3. the return value of `column.render(row)`, **only when it is a primitive** (`string`, `number`, `boolean`, or `bigint`)
+
+If a custom cell renderer only returns JSX and does not provide `id` or `accessor`, the table cannot recover the underlying value. In that case:
+
+- **Copy value** is disabled
+- **Copy header and value** is disabled
+- **Add filter** is omitted
+
+For custom-rendered columns that should participate in copy/filter actions, set `id` or `accessor` explicitly.
+
+### Filter behavior
+
+The cell **Add filter** submenu reuses the same collection `control` as `DataTable.Filters`, so new filters flow through the existing chips, query variables, URL sync, and persistence you already have.
+
+The submenu is intentionally narrower than the full filter editor:
+
+- it only appears when the column has `filter` config and `useDataTable` received a `control`
+- it only offers **single-value** operators from that column's configured operator list
+- multi-value operators such as `between` are excluded
+- enum filters use the **raw enum value**, not the rendered label
+
+## Expandable rows
+
+Pass `rowExpansion` to `useDataTable` and each row gets a chevron that reveals a detail panel beneath it. Providing the option is what enables the feature — a dedicated chevron column is added at the left edge (auto-pinned left, after the selection column) and the detail row renders automatically. There is nothing new to compose in JSX.
+
+The parts are grouped rather than flat so the type system rejects incoherent setups: a `getLabel` or `canExpand` with no `render`, or `expandedIds` without `onChange`, are compile errors rather than silently inert configurations.
+
+```tsx
+const table = useDataTable<Order>({
+  columns,
+  data,
+  control,
+  rowExpansion: {
+    render: (row) => <OrderLineItems orderId={row.id} />,
+    canExpand: (row) => row.lineItemCount > 0,
+    getLabel: (row) => row.orderNumber,
+  },
+});
+```
+
+- **Rows must have an `id`.** Expansion is keyed by `row.id`, the same constraint as row selection. Rows without one render **no chevron** (not a disabled one) — a row must never be un-toggleable.
+- **`canExpand`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. The predicate gates the panel in **both** directions: a row whose result flips to `false` while open closes immediately, and an id sitting in `expandedIds` never opens a panel for a row the predicate rejects. That matters when restoring `expandedIds` from a URL or storage — the excluded row may have no detail data to render at all. Its id stays in `expandedIds` but is inert; `collapseAllRows()` clears it.
+- **`getLabel`** returns a **bare identifier** — `"INV-1001"`, not `"Expand row INV-1001"`. The built-in i18n labels compose it into the trigger's accessible name (`"Expand row INV-1001"`) and the panel's (`"INV-1001 details"`), so English and Japanese word order both stay correct. Without it, the generic "Expand row" / "Row details" strings are used — set it on any table with more than a couple of rows.
+- **`onClickRow` is unaffected.** The chevron lives in its own column and stops click propagation, so row-level navigation keeps working.
+- **Expansion survives page changes.** Ids of rows that are no longer on the page simply don't render. Call `collapseAllRows()` to reset.
+- **Multiple rows can be open at once.** There is no accordion / single-open mode.
+
+### Controlled mode
+
+Pass `expandedIds` to own the state yourself; internal state is then never written and you update the array from `onChange`. The two must be passed together — the type rejects either alone.
+
+```tsx
+const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+const table = useDataTable<Order>({
+  columns,
+  data,
+  rowExpansion: {
+    render: (row) => <OrderLineItems orderId={row.id} />,
+    expandedIds,
+    onChange: setExpandedIds,
+  },
+});
+```
+
+`useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `rowExpansion` is not provided, and both keep a stable identity across renders, so they are safe to list in an effect's dependency array:
+
+```tsx
+// Collapse everything when the page changes.
+useEffect(() => {
+  collapseAllRows?.();
+}, [collapseAllRows, currentPage]);
+```
+
+`collapseAllRows()` is a no-op when nothing is open — it neither writes state nor fires `onExpandedChange`.
+
+**Batching caveat.** Each toggle derives the next array from the current value of `expandedIds`, not from a functional update. Two toggles dispatched before your state commits both read the same base, so the first is lost. This matters when `expandedIds` lives behind an async store (Redux/Zustand middleware, a debounced URL sync, a `startTransition`), or when looping `toggleRowExpansion` over many rows to build an "expand all". Compute such updates yourself and set `expandedIds` directly rather than driving them through repeated toggles.
+
+In uncontrolled mode `onChange` is still allowed on its own, as a notification.
+
+### Accessibility
+
+The trigger is a native `<button>`, so Enter/Space activation and the focus ring come for free, and it carries `aria-expanded` — that is what announces the state change on activation. The panel is a `role="region"` with an accessible name, and it sits immediately after its trigger in DOM order, so forward-tabbing reaches it next. Collapsing while focus is inside the panel hands focus back to the trigger rather than dropping it to `<body>`. The chevron's rotation and the panel's reveal both respect `prefers-reduced-motion`. Panel content wider than the viewport scrolls horizontally within the panel, and on a horizontally scrolled table the panel stays pinned to the left edge of the scrollport.
+
+**Expand/collapse is animated** — the panel reveals by transitioning `grid-template-rows` from `0fr` to `1fr`, so it animates to its exact natural height whatever you render, with no height cap to clip tall content. One consequence worth knowing when writing tests against a table: `aria-expanded` flips immediately, but the detail row stays mounted for the ~300ms collapse (marked `data-state="closed"` meanwhile) before it is removed. Assert its removal with `waitFor` rather than synchronously. Under `prefers-reduced-motion` the transition is skipped, but the unmount is still deferred by the same interval.
+
+**Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
+
 ## `useDataTable`
 
 Creates the table state object to pass to `DataTable.Root`.
@@ -245,18 +363,19 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                          |
-| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                        |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                        |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                             |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                     |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                    |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload. |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                              |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                    |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).            |
+| Option              | Type                               | Description                                                                                                                                                                     |
+| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                   |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                   |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                        |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                           |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
+| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                               |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
 
 ### `DataTableData`
 
@@ -272,19 +391,19 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 
 ### Shared fields
 
-| Property   | Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ---------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `label`    | `string`                                  | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `header`   | `(ctx: HeaderRenderContext) => ReactNode` | Custom header renderer. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface.                                                                                                                                                                                  |
-| `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Optional — overrides the built-in `type` renderer when set.                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `id`       | `string`                                  | Stable identifier for column visibility and React key. Falls back to `label` when omitted.                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's `columnSettings` control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection column auto-pins left and the row-actions column auto-pins right.                                                                                    |
-| `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                          |
-| `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved cell value is a string or number — resolved via `accessor` first, then `row[col.id]` as a fallback — so hovering the cell reveals the full value. With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions). |
-| `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.                                                                                                                                                                        |
-| `sort`     | `SortConfig`                              | Sort configuration. When set, the column header becomes clickable (Asc → Desc → off).                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `filter`   | `FilterConfig`                            | Filter configuration. When set, the column appears as an option in `DataTable.Filters`.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Property   | Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`    | `string`                                  | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `header`   | `(ctx: HeaderRenderContext) => ReactNode` | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                      |
+| `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Presentation only. Optional — overrides the built-in `type` renderer when set. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`).                                                                                                      |
+| `id`       | `string`                                  | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                             |
+| `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's `columnSettings` control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pins right.                                                                                       |
+| `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                        |
+| `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                    |
+| `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed. |
+| `sort`     | `SortConfig`                              | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                         |
+| `filter`   | `FilterConfig`                            | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                   |
 
 ### `type`-specific fields
 
@@ -501,7 +620,7 @@ column({
 
 ### Combining `type` with `inferColumns`
 
-`inferColumns` (from `@tailor-platform/app-shell-sdk-plugin`) derives `label`, `sort`, `filter`, and `id` from TailorDB metadata. You can layer a `type` on top to get a built-in renderer without losing the inferred sort/filter config:
+`inferColumns` (from `@tailor-platform/sdk-plugin-app-shell`) derives `label`, `sort`, `filter`, and `id` from TailorDB metadata. You can layer a `type` on top to get a built-in renderer without losing the inferred sort/filter config:
 
 ```tsx
 const infer = inferColumns(tableMetadata.order);
@@ -534,13 +653,16 @@ When you spread `...infer("field")`, add `accessor` when you want a typed render
 
 ## `FilterConfig`
 
-The `filter` property on a column accepts a `FilterConfig` object. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
+The `filter` property on a column accepts the same base shape as `FilterConfig`, plus a DataTable-only `operators` allowlist. When set, the column becomes filterable in `DataTable.Filters` — available in the **Add filter** panel, and rendered as a segmented chip once active.
 
-| Property  | Type             | Description                                                  |
-| --------- | ---------------- | ------------------------------------------------------------ |
-| `field`   | `string`         | API field name used in the generated query input.            |
-| `type`    | `FilterType`     | Filter editor type (see table below).                        |
-| `options` | `SelectOption[]` | Required when `type` is `"enum"`. List of selectable values. |
+| Property    | Type                                             | Description                                                                                                    |
+| ----------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `field`     | `string`                                         | API field name used in the generated query input.                                                              |
+| `type`      | `FilterType`                                     | Filter editor type (see table below).                                                                          |
+| `options`   | `SelectOption[]`                                 | Required when `type` is `"enum"`. List of selectable values.                                                   |
+| `operators` | `readonly [FilterOperator, ...FilterOperator[]]` | Optional non-empty DataTable UI allowlist. Order controls menu order and, when provided, the default operator. |
+
+`operators` only narrows what the built-in DataTable filter UI shows. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still use the broader backend operator set. When `operators` is omitted, the built-in UI keeps the normal default for that field type (for example, string fields still default to `contains`).
 
 ### Adding and editing filters
 
@@ -629,7 +751,7 @@ column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> });
 
 ### `inferColumns(tableMetadata)`
 
-Binds table metadata and returns a per-field column factory. The factory derives `label`, `sort`, `filter` config, and `id` automatically from the field's metadata. `id` is always pinned to the metadata field name — this stabilizes the React key / column-visibility identifier and enables the `truncate` tooltip without an explicit `accessor`. Requires metadata generated by `@tailor-platform/app-shell-sdk-plugin`.
+Binds table metadata and returns a per-field column factory. The factory derives `label`, `sort`, `filter` config, and `id` automatically from the field's metadata. `id` is always pinned to the metadata field name — this stabilizes the React key / column-visibility identifier and enables the `truncate` tooltip without an explicit `accessor`. Requires metadata generated by `@tailor-platform/sdk-plugin-app-shell`.
 
 ```tsx
 const infer = inferColumns(tableMetadata.order);
@@ -643,12 +765,14 @@ const columns = [
 
 The factory accepts an optional second argument to override per-column defaults:
 
-| Option   | Type      | Default                                     | Description                                                  |
-| -------- | --------- | ------------------------------------------- | ------------------------------------------------------------ |
-| `label`  | `string`  | Field `description` or `name` from metadata | Override the column header text.                             |
-| `width`  | `number`  | —                                           | Fixed column width in pixels.                                |
-| `sort`   | `boolean` | `true`                                      | Set to `false` to suppress the auto-generated sort config.   |
-| `filter` | `boolean` | `true`                                      | Set to `false` to suppress the auto-generated filter config. |
+| Option   | Type                                                                        | Default                                     | Description                                                                                                                              |
+| -------- | --------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`  | `string`                                                                    | Field `description` or `name` from metadata | Override the column header text.                                                                                                         |
+| `width`  | `number`                                                                    | —                                           | Fixed column width in pixels.                                                                                                            |
+| `sort`   | `boolean`                                                                   | `true`                                      | Set to `false` to suppress the auto-generated sort config.                                                                               |
+| `filter` | `boolean \| { operators?: readonly [FilterOperator, ...FilterOperator[]] }` | `true`                                      | Set to `false` to suppress the auto-generated filter config, or pass a non-empty `operators` allowlist to narrow the built-in filter UI. |
+
+Like `column.filter`, `operators` only affects the built-in DataTable UI. Order controls menu order and, when provided, the default operator. Programmatic `CollectionControl.addFilter(...)`, URL state, and saved/persisted filters still accept the broader backend operator set.
 
 ## `useCollectionVariables`
 
@@ -768,15 +892,15 @@ function MyCustomPagination() {
 }
 ```
 
-## SDK Plugin (`@tailor-platform/app-shell-sdk-plugin`)
+## SDK Plugin (`@tailor-platform/sdk-plugin-app-shell`)
 
-The SDK plugin generates `tableMetadata` from TailorDB type definitions at code-gen time. This metadata bridges your schema to the DataTable — it specifies how each field should be rendered and filtered (e.g. date pickers for datetime fields, dropdown for enum fields).
+The SDK plugin generates `tableMetadata` from TailorDB table definitions at generate time. This metadata bridges your schema to the DataTable — it specifies how each field should be rendered and filtered (e.g. date pickers for datetime fields, dropdown for enum fields).
 
-Register the plugin in `tailor.config.ts` and run `tailor-sdk generate`:
+Register the plugin in `tailor.config.ts` and run `tailor generate`:
 
 ```ts
 import { definePlugins } from "@tailor-platform/sdk";
-import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
 
 export const plugins = definePlugins(
   appShellPlugin({

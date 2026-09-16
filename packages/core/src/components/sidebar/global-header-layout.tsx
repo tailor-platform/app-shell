@@ -1,5 +1,5 @@
-import { AppShellOutlet } from "@/components/content";
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
+import { AppShellOutlet } from "@/routing/content";
+import { DynamicBreadcrumb } from "@/components/sidebar/dynamic-breadcrumb";
 import { SidebarLayout } from "./sidebar-layout";
 import { DefaultSidebar, type DefaultSidebarProps } from "./default-sidebar";
 import { ContentContainer } from "./content-container";

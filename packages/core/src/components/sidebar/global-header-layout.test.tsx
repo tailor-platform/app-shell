@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { GlobalHeaderLayout } from "./global-header-layout";
 import { GlobalHeader } from "./global-header";
 import { ContentContainer } from "./content-container";
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
+import { DynamicBreadcrumb } from "@/components/sidebar/dynamic-breadcrumb";
 import { AppShell } from "@/components/appshell";
 import { defineModule } from "@/resource";
 import { Home } from "lucide-react";

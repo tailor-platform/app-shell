@@ -13,7 +13,7 @@ AppShell is an opinionated React application framework for creating applications
 | [`@tailor-platform/app-shell`](./packages/core)                        | [![npm](https://img.shields.io/npm/v/@tailor-platform/app-shell)](https://www.npmjs.com/package/@tailor-platform/app-shell)                             | Core library — components, hooks, layouts, and authentication |
 | [`@tailor-platform/vite-plugin-app-shell`](./packages/vite-plugin)     | [![npm](https://img.shields.io/npm/v/@tailor-platform/vite-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/vite-plugin-app-shell)     | Vite plugin for file-based routing                            |
 | [`@tailor-platform/sdk-plugin-app-shell`](./packages/sdk-plugin)       | [![npm](https://img.shields.io/npm/v/@tailor-platform/sdk-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/sdk-plugin-app-shell)       | SDK plugin that generates AppShell metadata                   |
-| [`@tailor-platform/eslint-plugin-app-shell`](./packages/eslint-plugin) | [![npm](https://img.shields.io/npm/v/@tailor-platform/eslint-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/eslint-plugin-app-shell) | Oxlint rules for AppShell applications                        |
+| [`@tailor-platform/eslint-plugin-app-shell`](./packages/eslint-plugin) | [![npm](https://img.shields.io/npm/v/@tailor-platform/eslint-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/eslint-plugin-app-shell) | ESLint v9 and Oxlint rules for AppShell applications          |
 
 ## Examples
 

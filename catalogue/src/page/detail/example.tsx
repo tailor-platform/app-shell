@@ -470,7 +470,7 @@ export default function PurchaseOrderDetailPage({
             </Tabs.Panel>
           </Tabs.Root>
         ) : (
-          <div className="flex flex-col gap-4">{recordContent}</div>
+          recordContent
         )}
       </Layout.Column>
 

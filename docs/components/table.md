@@ -160,7 +160,7 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
 ### Constrained Height with Scroll
 
 ```tsx
-<Table.Root containerClassName="astw:max-h-64 astw:overflow-y-auto">
+<Table.Root containerClassName="max-h-64 overflow-y-auto">
   <Table.Header>
     <Table.Row>
       <Table.Head>Name</Table.Head>

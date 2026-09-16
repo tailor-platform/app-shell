@@ -1,96 +1,144 @@
 import {
-  Link,
-  Button,
+  DataTable,
   Layout,
-  Table,
-  Badge,
+  useDataTable,
+  useNavigate,
+  useURLCollectionVariables,
+  createColumnHelper,
   type AppShellPageProps,
+  type RowAction,
 } from "@tailor-platform/app-shell";
+import { ReceiptText } from "lucide-react";
 import { paths } from "../../../routes.generated";
 import { labels } from "../../../i18n-labels";
-import { ReceiptText } from "lucide-react";
+import { type Order, useOrdersQuery } from "../../../mock-orders";
 
-const statusVariant = (status: string) => {
-  switch (status) {
-    case "Shipped":
-      return "outline-info" as const;
-    case "Processing":
-      return "outline-warning" as const;
-    case "Delivered":
-      return "success" as const;
-    default:
-      return "neutral" as const;
-  }
-};
+const orderMetadata = {
+  name: "order",
+  pluralForm: "orders",
+  fields: [
+    { name: "id", type: "uuid", required: true },
+    { name: "customer", type: "string", required: true },
+    {
+      name: "status",
+      type: "enum",
+      required: true,
+      enumValues: ["Processing", "Shipped", "Delivered", "Cancelled"],
+    },
+    {
+      name: "channel",
+      type: "enum",
+      required: true,
+      enumValues: ["Web", "Retail", "Phone"],
+    },
+    { name: "items", type: "number", required: true },
+    { name: "total", type: "number", required: true },
+    { name: "placedOn", type: "date", required: true },
+  ],
+} as const;
+
+const { column, inferColumns } = createColumnHelper<Order>();
+const infer = inferColumns(orderMetadata);
+
+const columns = [
+  column({
+    ...infer("id"),
+    label: "Order",
+    render: (row) => <span className="font-mono text-xs">{row.id}</span>,
+  }),
+  column({
+    ...infer("customer"),
+    label: "Customer",
+    render: (row) => <span className="font-medium">{row.customer}</span>,
+  }),
+  column({
+    ...infer("status"),
+    label: "Status",
+    type: "badge",
+    typeOptions: {
+      badgeVariantMap: {
+        Processing: "outline-warning",
+        Shipped: "outline-info",
+        Delivered: "success",
+        Cancelled: "neutral",
+      },
+    },
+  }),
+  column({ ...infer("channel"), label: "Channel" }),
+  column({ ...infer("items"), label: "Items", type: "number" }),
+  column({ ...infer("total"), label: "Total", type: "money" }),
+  // `type: "date"` → the filter panel renders a single-calendar range editor
+  // for "between". Try Status → in, or Placed on → between.
+  column({
+    ...infer("placedOn"),
+    label: "Placed on",
+    type: "date",
+    typeOptions: { dateFormat: "long" },
+  }),
+];
 
 const OrdersPage = () => {
-  const orders = [
+  const navigate = useNavigate();
+
+  // Filter/sort/pagination state persists to the URL and seeds the initial
+  // fetch synchronously — bookmarkable and back-button friendly.
+  const { variables, control } = useURLCollectionVariables({
+    params: { pageSize: 5 },
+    tableMetadata: orderMetadata,
+  });
+
+  const { data, loading } = useOrdersQuery(variables);
+
+  const rowActions: RowAction<Order>[] = [
     {
-      id: "order-001",
-      name: "Office Supplies",
-      status: "Shipped",
-      amount: "$1,200.00",
+      id: "view",
+      label: "View details",
+      onClick: (row) => navigate(paths.for("/dashboard/orders/:id", { id: row.id })),
     },
     {
-      id: "order-002",
-      name: "Electronics",
-      status: "Processing",
-      amount: "$3,450.00",
-    },
-    {
-      id: "order-003",
-      name: "Furniture",
-      status: "Delivered",
-      amount: "$8,900.00",
+      id: "cancel",
+      label: "Cancel order",
+      variant: "destructive",
+      isDisabled: (row) => row.status === "Delivered" || row.status === "Cancelled",
+      onClick: (row) => alert(`Cancel ${row.id}`),
     },
   ];
+
+  const table = useDataTable({
+    columns,
+    data: data
+      ? {
+          rows: data.edges.map((e) => e.node),
+          pageInfo: data.pageInfo,
+          total: data.total,
+        }
+      : undefined,
+    loading,
+    control,
+    rowActions,
+    onClickRow: (row) => navigate(paths.for("/dashboard/orders/:id", { id: row.id })),
+  });
 
   return (
     <Layout>
       <Layout.Header title="Orders" />
       <Layout.Column>
-        <p className="mb-4 text-muted-foreground">
-          This page is at{" "}
-          <code className="bg-muted px-2 py-0.5 rounded">src/pages/dashboard/orders/page.tsx</code>
+        <p className="mb-4 text-sm text-muted-foreground">
+          DataTable backed by a mock remote query (
+          <code className="bg-muted rounded px-1">useOrdersQuery</code>, ~800 ms latency) with
+          filters, sorting, and pagination synced to the URL. Every fetch shows a loading state.
+          Filter <strong>Placed on</strong> with the <em>between</em> operator to use the range
+          calendar. Click a row to open the order.
         </p>
-        <Table.Root>
-          <Table.Header>
-            <Table.Row>
-              <Table.Head>Order ID</Table.Head>
-              <Table.Head>Name</Table.Head>
-              <Table.Head>Status</Table.Head>
-              <Table.Head>Amount</Table.Head>
-              <Table.Head />
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {orders.map((order) => (
-              <Table.Row key={order.id}>
-                <Table.Cell>{order.id}</Table.Cell>
-                <Table.Cell>{order.name}</Table.Cell>
-                <Table.Cell>
-                  <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
-                </Table.Cell>
-                <Table.Cell>{order.amount}</Table.Cell>
-                <Table.Cell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    render={
-                      <Link
-                        to={paths.for("/dashboard/orders/:id", {
-                          id: order.id,
-                        })}
-                      />
-                    }
-                  >
-                    View →
-                  </Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
+        <DataTable.Root value={table}>
+          <DataTable.Toolbar>
+            <DataTable.Filters />
+          </DataTable.Toolbar>
+          <DataTable.Table />
+          <DataTable.Footer>
+            <DataTable.Pagination pageSizeOptions={[5, 10, 20]} />
+          </DataTable.Footer>
+        </DataTable.Root>
       </Layout.Column>
     </Layout>
   );

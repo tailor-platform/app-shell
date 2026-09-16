@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
 import { usePageCounter } from "./use-page-counter";
 import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
@@ -75,6 +75,7 @@ export function useDataTable<
     onClickRow,
     rowActions,
     onSelectionChange,
+    rowExpansion,
     sort: sortOption,
   } = options;
 
@@ -285,6 +286,13 @@ export function useDataTable<
   }, []);
 
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  // Mirrors the state so the toggle can compute the next set outside an updater.
+  // Every writer below must also assign it: this render-time sync only catches
+  // up on commit, so without an eager write two dispatches in the same commit
+  // both read the same base and the first is lost. A functional updater got
+  // this for free from `prev`; computing outside one makes it our job.
+  const selectedRowIdsRef = useRef(selectedRowIds);
+  selectedRowIdsRef.current = selectedRowIds;
 
   const isRowSelected = useCallback(
     (row: TRow) => {
@@ -295,20 +303,22 @@ export function useDataTable<
     [selectedRowIds, getRowId],
   );
 
+  // Computed outside the updater: updaters must be pure, and StrictMode
+  // double-invokes them, so dispatching from inside fired `onSelectionChange`
+  // twice per toggle in dev. Matches `selectAllRows` / `clearSelection`.
   const toggleRowSelection = onSelectionChange
     ? (row: TRow) => {
         const id = getRowId(row);
         if (id === null) return;
-        setSelectedRowIds((prev) => {
-          const next = new Set(prev);
-          if (next.has(id)) {
-            next.delete(id);
-          } else {
-            next.add(id);
-          }
-          onSelectionChange([...next]);
-          return next;
-        });
+        const next = new Set(selectedRowIdsRef.current);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        selectedRowIdsRef.current = next;
+        setSelectedRowIds(next);
+        onSelectionChange([...next]);
       }
     : undefined;
 
@@ -317,6 +327,7 @@ export function useDataTable<
         const allIds = new Set(
           rows.map((r) => getRowId(r)).filter((id): id is string => id !== null),
         );
+        selectedRowIdsRef.current = allIds;
         setSelectedRowIds(allIds);
         onSelectionChange([...allIds]);
       }
@@ -324,7 +335,9 @@ export function useDataTable<
 
   const clearSelection = onSelectionChange
     ? () => {
-        setSelectedRowIds(new Set());
+        const empty = new Set<string>();
+        selectedRowIdsRef.current = empty;
+        setSelectedRowIds(empty);
         onSelectionChange([]);
       }
     : undefined;
@@ -340,6 +353,80 @@ export function useDataTable<
       return id === null || selectedRowIds.has(id);
     });
   const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
+
+  // ---------------------------------------------------------------------------
+  // Row expansion
+  // ---------------------------------------------------------------------------
+  // Keyed by the same `getRowId` as selection — there is one row-id convention.
+  const [uncontrolledExpandedIds, setUncontrolledExpandedIds] = useState<Set<string>>(new Set());
+
+  // Controlled when the caller passes `expandedIds`; internal state is then never written.
+  const controlledExpandedIds = rowExpansion?.expandedIds;
+  const isExpansionControlled = controlledExpandedIds !== undefined;
+
+  const expandedRowIds = useMemo(
+    () => (isExpansionControlled ? new Set(controlledExpandedIds) : uncontrolledExpandedIds),
+    [isExpansionControlled, controlledExpandedIds, uncontrolledExpandedIds],
+  );
+
+  const isRowExpanded = useCallback(
+    (row: TRow) => {
+      const id = getRowId(row);
+      return id !== null && expandedRowIds.has(id);
+    },
+    [expandedRowIds, getRowId],
+  );
+
+  // Refs keep `toggleRowExpansion` / `collapseAllRows` identity-stable: the
+  // callback is usually an inline arrow and `expandedRowIds` is a fresh Set on
+  // every change, so depending on either directly re-fired the documented
+  // "collapse on page change" effect and shut the row the user just opened.
+  const onExpandedChangeRef = useRef(rowExpansion?.onChange);
+  onExpandedChangeRef.current = rowExpansion?.onChange;
+  const expandedRowIdsRef = useRef(expandedRowIds);
+  expandedRowIdsRef.current = expandedRowIds;
+
+  const toggleRowExpansionImpl = useCallback(
+    (row: TRow) => {
+      const id = getRowId(row);
+      if (id === null) return;
+      // Computed outside the updater, as in `toggleRowSelection`. Uncontrolled
+      // composes correctly because the ref is written eagerly below; controlled
+      // mode still reads the caller's prop, so repeated toggles before their
+      // state commits share a base — see the `expandedIds` TSDoc.
+      const next = new Set(expandedRowIdsRef.current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      // Controlled callers own the state; internal state is never written then,
+      // and the ref must keep mirroring their prop rather than our guess.
+      if (!isExpansionControlled) {
+        expandedRowIdsRef.current = next;
+        setUncontrolledExpandedIds(next);
+      }
+      onExpandedChangeRef.current?.([...next]);
+    },
+    [getRowId, isExpansionControlled],
+  );
+
+  const collapseAllRowsImpl = useCallback(() => {
+    // Nothing open — skip the state write and the callback entirely, so calling
+    // this from an effect can't drive an endless render loop.
+    if (expandedRowIdsRef.current.size === 0) return;
+    if (!isExpansionControlled) {
+      const empty = new Set<string>();
+      expandedRowIdsRef.current = empty;
+      setUncontrolledExpandedIds(empty);
+    }
+    onExpandedChangeRef.current?.([]);
+  }, [isExpansionControlled]);
+
+  const toggleRowExpansion = rowExpansion ? toggleRowExpansionImpl : undefined;
+  const collapseAllRows = rowExpansion ? collapseAllRowsImpl : undefined;
+
+  const expandedIdsList = useMemo(() => [...expandedRowIds], [expandedRowIds]);
 
   // ---------------------------------------------------------------------------
   // Return
@@ -383,5 +470,10 @@ export function useDataTable<
     clearSelection,
     isAllSelected,
     isIndeterminate,
+    expandedIds: expandedIdsList,
+    isRowExpanded,
+    toggleRowExpansion,
+    collapseAllRows,
+    rowExpansion,
   };
 }

@@ -1,6 +1,7 @@
 @import "tailwindcss" prefix(astw);
 @import "tw-animate-css";
 @import "./assets/fonts/inter.css";
+@import "./assets/fonts/noto-sans-jp.css";
 @import "./assets/theme.bridge.css";
 
 /*

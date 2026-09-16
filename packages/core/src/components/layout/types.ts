@@ -28,12 +28,7 @@ export interface LayoutProps {
   className?: string;
   /** Inline styles */
   style?: CSSProperties;
-  /**
-   * Gap between columns (default: 4 = 16px)
-   *
-   * @deprecated Remove the `gap` prop and use `className` with the `astw:` prefix
-   * (e.g. `className="astw:gap-6"`) to override the default gap.
-   */
+  /** Gap between columns (default: 4 = 16px; supported steps: 4, 6, and 8). */
   gap?: number;
   /** Header title - displayed at the top of the layout
    *

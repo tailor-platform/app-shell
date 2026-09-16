@@ -1,5 +1,387 @@
 # @tailor-platform/app-shell
 
+## 1.14.0
+
+### Minor Changes
+
+- 6bcbd51: Let forms be driven natively: `Form` now accepts `id`, and `Select`, `Combobox`, and `Autocomplete` accept `name`, `form`, `required`, and `inputRef` (plus `itemToStringValue` on `Select` and `Combobox`). These props were already supported by the underlying Base UI roots but were filtered out by the wrapper `Pick<>` types, so there was no way to reach them.
+  
+  **`Form` `id`** — a submit button rendered outside the form can now target it with the native `form` attribute, which is what the common "Save in the page header, fields in the body" layout needs:
+  
+  ```tsx
+  <Layout.Header
+    title="Create product"
+    actions={[<Button key="save" type="submit" form="product-form">Save</Button>]}
+  />
+  <Form id="product-form" onFormSubmit={save}>…</Form>
+  ```
+  
+  **`name` on the dropdowns** — Base UI renders a hidden input under that name, so the selected value is now visible to native submission: `new FormData(form)`, an uncontrolled `<form>`, and server actions. Previously these controls contributed nothing to the DOM payload, so a native form silently submitted without them.
+  
+  For non-string items, `itemToStringValue` controls serialisation (items shaped `{ value, label }` use `value` automatically). It is not available on `Combobox`'s creatable variants, which derive it internally so the pending-item sentinel serialises correctly.
+  
+  Note this is a _separate_ mechanism from `Form`'s `onFormSubmit`, which collects values from registered `Field.Root`s keyed by the field's `name` — that path already worked without `name` on the control and is unchanged. Consequently, **inside a `Field.Root` the field's `name` wins and the control's own `name` is ignored**; set it only when the control is used outside a `Field.Root`.
+- 483a501: Re-export `AppShellRoutesPluginOptions` and `TypedRoutesOptions` from `@tailor-platform/app-shell/vite-plugin` so the subpath can be used as the canonical TypeScript entrypoint.
+  
+  Update the file-based routing docs and examples to consistently import the Vite plugin from the `@tailor-platform/app-shell/vite-plugin` subpath.
+
+### Patch Changes
+
+- ecc3f93: Show the DataTable first-page button even when the backend does not return a total count.
+  
+  This keeps cursor-based pagination usable for datasets that support going back to the first page but do not know the last page.
+- 7639516: Add `page` as a catalogue category, so the bundled `app-shell-patterns` skill can carry screen-level guidance alongside its patterns.
+  
+  A page is the shape of a whole screen — the outer choice, made before picking patterns for the parts inside it. Where a pattern is one recipe ("how do I build this bit?"), a page compares the layouts a screen could take and says when each applies. The two are siblings rather than nested: a page cites the pattern entries that implement each variant instead of inlining them, so an implementation has exactly one home.
+  
+  This adds the machinery only — the generator category, the `PAGE.md` entry convention, and an "Available Pages" section in the skill ahead of "Available Patterns". No page entries are written yet, so the section currently carries the definition of the layer and no rows.
+- 58de8b1: Fix `DataTable` to reset its internal scroll position to the top when pagination changes page or page size.
+- 6bcbd51: Fix the bundled `app-shell-patterns` skill, whose form guidance contradicted the package. `components.md` described `Form` as "wired to react-hook-form" and `Field` as binding "to react-hook-form via `name`" — neither is true. `Form`/`Field`/`Fieldset` wrap Base UI and own accessibility wiring and visual state only; `react-hook-form` stopped being a runtime dependency in 1.4.0. Meanwhile every `form/*` reference implementation ignored `Form` entirely and hand-rolled `<form onSubmit>` + `new FormData(...)`, which skips validation and server-error routing — while the skill's own rules say to use AppShell components over raw HTML.
+  
+  The four `form/*` patterns now use `Form` with `onFormSubmit`, and document the model they implement: `onFormSubmit` collects values from registered `Field.Root`s rather than reading `FormData`, so **every** control — `Select`, `Combobox` and `Autocomplete` included — participates simply by being wrapped in a `Field.Root name="…"`. No `name` on the control, no `useState`, no merging in the submit handler.
+  
+  Documents two things that were previously undiscoverable: an object-valued dropdown submits as a JSON string unless `itemToStringValue` is supplied (items shaped `{ value, label }` use `value` automatically), and a page-header Save reaches a body form by matching `Form`'s `id` with a detached `<Button type="submit" form="…">`.
+  
+  Also corrects `docs/components/form.md`, which built its `Select` example from `Select.Trigger` / `Select.Popup` / `Select.Item`. That code could never have compiled: `Select` is the pre-assembled standalone component and its low-level sub-components live under `Select.Parts.*` by design, while `Select.Popup` has never existed at all — AppShell's is `Select.Content`.
+- Updated dependencies [b624df2]
+- Updated dependencies [387efec]
+  - @tailor-platform/vite-plugin-app-shell@0.3.0
+
+## 1.13.0
+
+### Minor Changes
+
+- 41ae0e3: Add `filter.operators` on DataTable columns to narrow which conditions the built-in filter UI exposes.
+  
+  ```tsx
+  column({
+    label: "Customer",
+    filter: { field: "customer", type: "string", operators: ["contains", "eq"] },
+  });
+  ```
+  
+  `inferColumns()` now also accepts `filter: { operators: [...] }` so metadata-derived columns can use the same restriction.
+- fdf7e6a: Bundle Noto Sans JP so `font-medium` is a real weight in Japanese text.
+  
+  Inter carries no CJK glyphs, so Japanese fell through to the system font. On Windows that is Yu Gothic UI, which ships only Light/Semilight/Regular/Semibold/Bold — no 500 — so CSS weight matching resolved `font-weight: 500` down to Regular and `font-medium`, the weight behind most labels, table cells and card titles, was indistinguishable from body copy. Current macOS was unaffected, since it ships Hiragino Sans W5. Bundling a variable font makes the weight scale hold on every platform instead of depending on what the OS installs.
+  
+  `@tailor-platform/app-shell/styles` now ships Noto Sans JP Variable (continuous 100–900 axis) alongside Inter, metric-harmonised against it so mixed Japanese/Latin strings read at one optical size and a line containing Japanese is exactly as tall as one without. No import change is needed.
+  
+  **This changes how Japanese text renders.** Japanese previously drew from the OS font (Hiragino Sans on macOS, Yu Gothic UI on Windows) and now draws from Noto Sans JP. Japanese runs measure about 6% narrower, which can relieve truncation and wrapping but not cause it; Latin is unaffected. Layouts pinned to the old Japanese metrics may need a look.
+  
+  It also adds roughly 4.8 MB of woff2 subsets to your build output even if your app renders no Japanese, and takes the stylesheet from about 98 KB to 200 KB uncompressed (15 KB to 45 KB gzipped). The faces are restricted to Japanese codepoint blocks, so users download only the subsets their content touches — nothing at all for an app with no Japanese, ~910 KB for a typical first Japanese screen — and weight costs nothing extra, since every weight shares one file.
+  
+  To opt out, or to use a brand font, set the new `--app-shell-font-sans` on `:root` after importing the styles:
+  
+  ```css
+  @import "@tailor-platform/app-shell/styles";
+  
+  :root {
+    --app-shell-font-sans: "Your Brand Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+  ```
+  
+  Naming no Japanese family opts out of the download entirely, since each face carries a `unicode-range`. A replacement should be a variable font, or otherwise supply real 400/500/600/700 faces — the weight scale assumes all four exist.
+  
+  See [Typography and Fonts](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/styling-theming.md#typography-and-fonts).
+- 891a253: Fix the published type declarations, which referenced types they never declared.
+  
+  `dist/app-shell.d.ts` shipped with nine errors inside our own package. Consumers who compile with `skipLibCheck: false` saw all nine attributed to `@tailor-platform/app-shell`, not to their own code. We never noticed because `packages/core/tsconfig.json` sets `skipLibCheck: true`, so neither `pnpm type-check` nor CI ever looked at the declarations we emit.
+  
+  Three defects, all now fixed at the source:
+  
+  - **`PositionProps` was referenced but never declared.** It is the type of the `position` prop on `Menu.Content` and `Tooltip.Content`, but it was tagged `@internal`, so the declaration rollup stripped it while keeping five references to it. It is now **exported from the package root**, which is the additive change that makes this release a minor: consumers can finally name the type they are required to pass.
+  
+    ```tsx
+    import { Menu, type PositionProps } from "@tailor-platform/app-shell";
+  
+    const dropdown: PositionProps = { side: "bottom", align: "start", sideOffset: 8 };
+    <Menu.Content position={dropdown} />;
+    ```
+  
+  - **`Form` emitted a broken merged declaration** (TS2395). A `function` declaration carrying an expando `displayName` is emitted as a function/namespace merge, and the rollup duplicated the namespace — once exported, once local. `Form` is now a const with an explicit component type, following the same idiom already used by `Select`, `Combobox`, and `Autocomplete`. Its generic is unchanged, so `<Form<MyValues>>` still infers callback values.
+  
+  - **`Layout.Header` was emitted as a type instead of a value** (TS2709). `Layout.Header = Header` emitted `var Header: typeof import("./Layout").Header`, which the rollup rewrote to a bare `Header` — a namespace, not a type. `Layout` now uses the explicit `Object.assign` idiom, like `Grid`.
+  
+  The public runtime API is unchanged: the built bundle exports exactly the same 100 names as before, and `PositionProps` is a type-only export.
+  
+  A `check-dts` gate now runs in CI to keep this from returning. It builds, packs the tarball, installs it into a scratch project, and type-checks every entry point that publishes `types` with `skipLibCheck: false` — the same thing a consumer does. Entry points are read from `package.json`, so new ones are covered as soon as they are added.
+- 7e1a1e3: Expand the re-exported React Router surface so an app never needs `react-router` as a direct
+  dependency, and add `memory` routing to `AppShell` for tests.
+  
+  AppShell owns the router — it builds the route tree, constructs the router, and renders the
+  `RouterProvider`. An app that also resolves its own copy of `react-router` ends up with two
+  copies in the bundle and two unrelated router contexts: AppShell's navigation keeps working
+  while the app's own `useNavigate` / `useLocation` / `<Link>` throw
+  `may be used only in the context of a <Router> component`, with nothing for TypeScript to catch.
+  Apps were reaching for a direct dependency because the re-exported surface was incomplete. This
+  closes those gaps.
+  
+  **Newly available from `@tailor-platform/app-shell`:**
+  
+  - `useMatch`, `useResolvedPath` — route matching, for active states and relative paths
+  - `useNavigation` — the in-flight navigation, for pending UI
+  - `NavLink` — a link that knows when it is active
+  - `useBlocker`, `useBeforeUnload` — guard navigation away from unsaved changes
+  - Types: `Location`, `NavigateFunction`, `NavigateOptions`, `To`, `Params`, `PathMatch`,
+    `LinkProps`, `NavLinkProps`, `Navigation`, `Blocker`, `BlockerFunction`
+  
+  **New `@tailor-platform/app-shell/testing` entry point**, so tests need no `react-router` either:
+  
+  - `AppShell` — the same shell, additionally accepting `memory` / `initialEntries` to mount at a
+    fixed URL without touching `window.location`. For page and integration tests.
+  - `TestRouter` — a minimal router context for unit-testing a single component that uses
+    `useNavigate` or renders a `<Link>`, without booting the whole shell. Pass `path` when the
+    component reads the route (`useParams`, `useMatch`), so the location matches something.
+  
+  ```tsx
+  import { AppShell, TestRouter } from "@tailor-platform/app-shell/testing";
+  
+  render(
+    <AppShell memory initialEntries={["/orders/A42"]} modules={modules}>
+      <SidebarLayout />
+    </AppShell>,
+  );
+  ```
+  
+  Memory routing is reachable only from `/testing`. The production `AppShell` pins it off, so it
+  holds for JS callers and `any` spreads as well as typed ones.
+  
+  Router construction (`createBrowserRouter`, `RouterProvider`, `MemoryRouter`, `Routes`, `Route`)
+  and the data-router APIs (`useLoaderData`, `useSubmit`, `useFetcher`, `useActionData`) remain
+  deliberately unexported: AppShell owns the former and does not wire up the latter. If something
+  you need is missing, ask for it rather than adding a direct `react-router` dependency.
+- 719ba91: Add standalone `Textarea` component
+  
+  - New `Textarea` — a styled multi-line text control wrapping Base UI's field control rendered as a `<textarea>`. Integrates with `Field` and React Hook Form for label association, `aria-describedby`, `disabled`, and invalid/error state exactly like `Input`/`Checkbox` (no bespoke `error` prop), and works standalone outside a `Field.Root`. The invalid state is styled off both `data-invalid` (AppShell `Field.Root`) and `aria-invalid` (shadcn-style `FormControl`), so it fits either form stack.
+  - Unlike `Input`, it has no fixed height: `rows` sets the visible line count, `min-h-16` is the floor, and `resize-y` lets the user drag it taller. Previously the only multi-line route was `<Field.Control render={<textarea />} />`, which inherited the single-line `h-9` and clipped the box to 36px.
+  - `cols` and `wrap` are not accepted: the control is always `w-full`, so `cols` can never affect its width, and per the HTML spec every `wrap` value depends on `cols` being set. `className` is typed as `string` rather than Base UI's `string | ((state) => string | undefined)`, because it is merged through `cn()`, which silently drops a function.
+  - Internal: `inputBaseClasses` now composes from a shared `controlBaseClasses` so `Input` and `Textarea` keep the same border/focus/placeholder treatment while owning their own height and padding. The emitted class list for `Input` and `Field.Control` is unchanged apart from ordering.
+
+### Patch Changes
+
+- 7b08250: Fix sessions hanging permanently after the server rejects the grant, by raising `@tailor-platform/auth-public-client` to `^0.6.1`. The new floor also picks up 0.6.1's callback-URL cleanup: a failed OAuth callback no longer leaves `?code=` / `?error=` in the URL, and cleanup on every outcome preserves unrelated query parameters, the hash, and the router's history state.
+  
+  When a refresh token expired or was revoked, the auth client kept `isAuthenticated` true and reattached the dead token to every request, so apps sat in a permanent `{"errors":[{"message":"unauthorized","type":"Gateway"}]}` loop that only a manual IndexedDB clear recovered from. Any token-endpoint rejection now ends the session (`use_dpop_nonce` excepted), emitting `logout` and `auth_state_changed`. `AuthProvider` responds as it already does for a signed-out user: `guardComponent` renders, and with `autoLogin` the app redirects to sign-in. A timeout, a network failure, and a plain 5xx still leave the session intact. Note that the boundary is the response shape rather than the underlying cause: any 4xx carrying an `error` code ends the session, so a token endpoint that reports overload as `400 {"error":"server_error"}` will sign users out.
+  
+  One behaviour change worth checking even though this is a patch: `fetch` and `getAuthHeaders` no longer throw `Error("No valid access token")` when a refresh is rejected — they throw the underlying error. If your app detects dead sessions by matching that message, it has stopped detecting them; listen for `logout` / `auth_state_changed` instead, which fire on exactly that condition. Grepping the installed package for the string will not tell you whether you are affected, because the throw still exists for the genuinely-no-token case — check your own error handling.
+- 17a03fe: Fix `autoLogin` being permanently disabled after a failed OAuth callback.
+  
+  `@tailor-platform/auth-public-client` cleans the callback parameters out of the URL only when the code exchange succeeds; every failure path leaves `?code=` or `?error=` in the query string (tailor-platform/auth-public-client#139). `AuthProvider` decided whether a callback was in progress by reading that URL, so after any failed callback it treated the page as a live callback forever: auto-login never fired again, the app sat on `guardComponent`, and reloading only replayed the same failing callback.
+  
+  Auto-login now decides from the callback's status rather than the URL — which is what the check meant all along: "is an exchange in flight", not "has this page ever been a callback". The URL is still the authority when no callback has been claimed at all, where redirecting away from unconsumed parameters would be unsafe.
+  
+  It will not loop, either. A recoverable failure is retried once per tab; beyond that, and for any refusal the authorization server issues explicitly, AppShell stops rather than redirecting the user back for the same answer. The outcome is classified from the resulting auth state rather than from whether the callback threw, because two failure paths — a server `error` and a state mismatch — return normally after recording the error.
+  
+  That makes `guardComponent` where a failed sign-in becomes visible: a guard that only renders a spinner will spin indefinitely, so render `useAuth().error` and offer a retry. See the authentication guide.
+  
+  The stale parameters themselves remain in the URL after a failure until the cleanup is fixed upstream (tailor-platform/auth-public-client#139) — app-shell no longer misbehaves because of them, but deliberately does not reimplement the library's URL cleanup.
+
+## 1.12.0
+
+### Minor Changes
+
+- 6171c84: Add a `render` escape hatch to `DescriptionCard` fields, so custom rendering no longer requires a new built-in field type.
+
+  ```tsx
+  <DescriptionCard
+    data={orderData}
+    title="Order"
+    fields={[
+      { key: "orderNumber", label: "Order Number" }, // default text
+      { key: "status", label: "Status", type: "badge" }, // preset
+      {
+        key: "deliveryBreakdown",
+        label: "Delivery",
+        render: (data) => <PieChart data={data.deliveryBreakdown} />,
+      },
+    ]}
+  />
+  ```
+
+  `render` receives the whole `data` object — the same shape as `render` on DataTable's `Column`, which takes the whole row. Destructure the keys you need, and a field can be derived from several at once:
+
+  ```tsx
+  {
+    key: "total",
+    label: "Balance Due",
+    render: ({ total, amountPaid, currency }) => (
+      <Money amount={total - amountPaid} currency={currency} />
+    ),
+  }
+  ```
+
+  Semantics match DataTable's `render`: it always wins over `type`, and its return value replaces the built-in output entirely (so `meta` — copy button, truncation, badge maps, the `–` placeholder — is not applied). `key` is still required; it identifies the field and is what `emptyBehavior` tests, but it is not resolved into a value for `render`. A custom renderer still runs when the value at `key` is empty; `emptyBehavior: "hide"` is checked first.
+
+  `DescriptionCard` is now generic over the shape of `data`, inferred from the `data` prop, so everything `render` reaches for keeps its declared type. This is backward compatible — `DescriptionCardProps` defaults to `Record<string, unknown>`. To declare a fields array separately, parameterise it so `render` callbacks stay typed:
+
+  ```tsx
+  const fields: DescriptionCardProps<Order>["fields"] = [...];
+  ```
+
+- 08c29d6: Add expandable detail rows to `DataTable`. Pass `rowExpansion` to `useDataTable` and each row gets a chevron column (auto-pinned to the left edge, after the selection column) that reveals a full-width detail panel beneath the row — nothing new to compose in JSX.
+
+  ```tsx
+  const table = useDataTable<Order>({
+    columns,
+    data,
+    control,
+    rowExpansion: {
+      render: (row) => <OrderLineItems orderId={row.id} />,
+      canExpand: (row) => row.lineItemCount > 0,
+      getLabel: (row) => row.orderNumber, // → "Expand row INV-1001"
+    },
+  });
+  ```
+
+  Rows must have a string or number `id` (the same constraint as row selection); rows without one render no chevron. Several rows can be open at once, and expansion survives page changes — `collapseAllRows()` resets it. Pass `expandedIds` + `onChange` inside `rowExpansion` to control expansion yourself; the type requires them together, so a half-configured controlled table is a compile error rather than inert chevrons.
+
+  Also fixes `onSelectionChange` firing twice per toggle under React StrictMode. It was dispatched from inside a state updater, which StrictMode intentionally double-invokes to surface impurity, so handlers doing real work (fetches, analytics, history entries) ran twice in development. It is now dispatched from the event handler and fires exactly once. No signature change; if you added your own de-duplication to work around this, it is no longer needed.
+
+- b5289fc: Re-export react-router's `Navigate`, so apps no longer need `react-router` as a direct dependency for declarative redirects.
+
+  ```tsx
+  import { Navigate } from "@tailor-platform/app-shell";
+
+  if (!allowed) return <Navigate to="/dashboard" replace />;
+  ```
+
+  See [Declarative Redirects](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/routing-navigation.md#declarative-redirects) for when to prefer the route-level `redirectTo()` guard instead.
+
+- fd2f4bc: Refactor `DateField` / `DatePicker` to follow the same composition model as `Field`, `Select`, `Combobox`, and `Autocomplete`.
+
+  The date controls are now **control-first**: field chrome moved out of the control props and into `Field.Root` composition. They also interoperate correctly with `Form` / `Field.Root` label wiring, `onFormSubmit` value collection, and submit-time validation for required and out-of-range default values.
+
+  Breaking changes:
+
+  - `label`, `description`, and `errorMessage` were removed from `DateField` / `DatePicker`; compose them with `Field.Root`, `Field.Label`, `Field.Description`, and `Field.Error` instead.
+  - `hideTimeZone` was removed; it was previously accepted by the prop types but had no effect.
+
+  `isInvalid` still remains a top-level prop for externally-controlled invalid styling, and the semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and aligned with `Calendar`.
+
+  Before:
+
+  ```tsx
+  <DatePicker
+    label="Delivery date"
+    description="When should we ship your order?"
+    minValue={today(getLocalTimeZone())}
+    errorMessage={error}
+    isInvalid={!!error}
+  />
+  ```
+
+  After:
+
+  ```tsx
+  <Field.Root invalid={!!error}>
+    <Field.Label>Delivery date</Field.Label>
+    <DatePicker
+      aria-label="Delivery date"
+      minValue={today(getLocalTimeZone())}
+    />
+    <Field.Description>When should we ship your order?</Field.Description>
+    <Field.Error match={!!error}>{error}</Field.Error>
+  </Field.Root>
+  ```
+
+  Standalone usage still works with accessible naming:
+
+  ```tsx
+  <DateField aria-label="Invoice date" />
+  ```
+
+- fa587b2: Bridge `--alert-*` tokens into Tailwind's theme as `--color-alert-*`
+
+  The `--alert-*` design tokens (`neutral` / `success` / `warning` / `error` / `info` × `background` / `foreground` / `foreground-muted` / `border`) are now exposed through `@theme inline`, matching how `--status-*` is already bridged.
+
+  Application code can now use ordinary color utilities for callouts, banners, and status-highlighted rows:
+
+  ```tsx
+  // Before — arbitrary values, no autocomplete, silent failure on a typo
+  <div className="bg-[color:var(--alert-info-background)] text-[color:var(--alert-info-foreground)]" />
+
+  // After
+  <div className="bg-alert-info-background text-alert-info-foreground" />
+  ```
+
+  This is purely additive — existing arbitrary-value usage keeps working, and the generated CSS is unchanged.
+
+- 1a768e1: Add `DateRangePicker` and `RangeCalendar` components with a `{ start, end }` range value (exported as `DateRange`). Selection follows the react-aria model: the first calendar pick anchors the range and keeps the popover open, the highlight live-extends to the hovered/focused day, and the second pick completes it — picking backwards swaps the endpoints, while a range typed in reverse is flagged invalid instead of swapped.
+
+  Like `DateField` / `DatePicker`, they are standalone composite controls that also compose inside `Field.Root` (label / description / error / form validation). A single combined proxy input is registered as the one Field control (empty until both ends are complete, so `isRequired` blocks a partial range); `name` gives that combined input a name for native POST (`start/end`, with a wrapping `Field.Root` name taking precedence), while `startName` / `endName` emit two plain hidden inputs for classic form POST.
+
+  ```tsx
+  import {
+    DateRangePicker,
+    Field,
+    type DateRange,
+  } from "@tailor-platform/app-shell";
+
+  const [range, setRange] = useState<DateRange | null>(null);
+
+  // standalone
+  <DateRangePicker
+    aria-label="Billing period"
+    value={range}
+    onChange={setRange}
+  />;
+
+  // composed
+  <Field.Root name="period">
+    <Field.Label>Billing period</Field.Label>
+    <DateRangePicker />
+    <Field.Error match="customError" />
+  </Field.Root>;
+  ```
+
+### Patch Changes
+
+- 8b72b55: Document how to remove the `@theme` bridge workaround, which silently breaks dark mode on 1.7+.
+
+  Apps that pasted the `@theme inline` block, `@custom-variant dark (&:is(.dark *))`, and a copy of the palette into their entry CSS (the workaround while `styles` shipped without the bridge, 1.5.0–1.6.1) keep those definitions winning over AppShell's own palette, because the default palette is imported inside `layer(theme.defaults)` and consumer CSS is unlayered. The build succeeds with no warning, but surfaces added since the copy render light-mode colours in dark mode.
+
+  Adds `docs/migrations.md`, a curated list of breaking changes and the steps each one requires, newest first — separate from the changelog so upgraders and AI agents have one narrow place to look. The first entry covers detecting and removing this workaround, including the requirement to be on 1.7.0 or later first, since the workaround is load-bearing before that.
+
+  That page now ships with the package. The published tarball contains only `dist/**` and `skills/**` — no `docs/`, no `CHANGELOG.md` — so a consumer app previously had no migration record available locally at all. `docs/migrations.md` is generated into the bundled `app-shell-patterns` skill as `references/migrations.md` (with relative links rewritten to repo URLs), and the skill now names upgrades and post-version-bump styling breakage among its triggers, so coding agents reach it from `node_modules`. `packages/core/README.md` links it for the human path, since the README is the only human-readable file npm publishes.
+
+  `docs/concepts/styling-theming.md` and the bundled `app-shell-patterns` skill now document `:root` / `:root.dark` as the override form to use. A bare `.dark` override silently loses against the branded palettes (`cream`, `bloom`), which are imported unlayered and define their dark values on `:root.dark`.
+
+- 2a3f5e6: Polish the built-in sidebar search entry so it looks more like a compact text field.
+
+  The search affordance now shows the platform-specific keyboard shortcut (`⌘K` on Apple platforms, `Ctrl+K` elsewhere) and uses subtler spacing and typography.
+
+- 45218cc: Fix the bundled `app-shell-patterns` skill, whose `design-system.md` documented a token system that does not exist in the package. Agents read it as canonical and emitted classes like `bg-surface-1`, `text-fg-default`, and `bg-danger`, which produce no CSS at all — a silent failure with no error or warning.
+
+  Tokens, dark mode (`.dark` on `<html>`), elevation, z-index, and the `styles` import now match the shipped CSS, and the fabricated spacing, typography, motion, and icon scales are gone in favour of stock Tailwind. Also drops references to `Icon` and `Stat`, which aren't exported, and to a `Sheet` `contentClassName` prop that doesn't exist.
+
+  Documentation only — no runtime or CSS changes.
+
+## 1.11.0
+
+### Minor Changes
+
+- af7bd0f: Make `Sheet` omit its backdrop automatically when `modal={false}` so non-modal sheets no longer dim or block the page.
+
+  ```tsx
+  <Sheet.Root modal={false}>
+    <Sheet.Content>...</Sheet.Content>
+  </Sheet.Root>
+  ```
+
+### Patch Changes
+
+- 8cdb5cd: DataTable filter and column UI fixes:
+
+  - **Filter placement & style**: `DataTable.Filters` now renders the **Add filter** trigger on the **left** by default (was right-aligned), with active chips flowing to its right, and the trigger is **icon-only by default** (the label is kept as an `aria-label`). Pass `addIconOnly={false}` to show the "Add filter" text label. The add-filter popover now anchors to the left edge of the trigger.
+  - **Pinned columns**: closed a sub-pixel gap between adjacent frozen columns where scrolling rows could bleed through — column offsets are now measured with fractional widths so pinned columns sit flush.
+  - **Column settings popup**: added a search box at the top that filters the **Scrollable** column list by name, and that list now scrolls within a height cap while the **Fixed left** / **Fixed right** zones and the Show/Hide-all footer stay pinned and always fully visible — so the popup stays within the viewport even with many columns. Drag-to-reorder and drag-between-zones keep working while searching. The popup width is capped so long column names truncate.
+  - **Add-filter panel**: the field picker now has a **search box** to quickly find a field, and the field column hugs the field-name width (up to a cap) so names aren't needlessly truncated while the value editor keeps its width.
+  - **Truncated names**: long field/column names in the add-filter and column-settings pickers carry a native `title` so the full text shows on hover.
+
+- 492c2bb: Upgrade AppShell to React Router v8 and raise the minimum supported `react` / `react-dom` version to `19.2.7`.
+- 09fcaa8: Update the internal Base UI dependency to v1.6.0.
+
 ## 1.10.1
 
 ### Patch Changes

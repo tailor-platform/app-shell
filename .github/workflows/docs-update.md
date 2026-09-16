@@ -17,10 +17,26 @@ permissions:
 tools:
   github:
     toolsets: [default]
+network:
+  allowed:
+    - defaults
+    - node
+    - "base-ui.com"
+    - "react.dev"
+    - "reactrouter.com"
+    - "tailwindcss.com"
+    - "developer.mozilla.org"
+    - "whatwg.org"
+    - "w3.org"
+    - "web.dev"
 safe-outputs:
+  report-failure-as-issue: false
   create-pull-request:
     max: 1
+  report-incomplete:
+    create-issue: false
   noop:
+    report-as-issue: false
 ---
 
 # Documentation Updater

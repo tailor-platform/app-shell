@@ -1,4 +1,4 @@
-import { SidebarSeparator as ShadcnSidebarSeparator } from "@/components/sidebar";
+import { SidebarSeparator as ShadcnSidebarSeparator } from "./primitives";
 
 /**
  * A visual divider for sidebar navigation.

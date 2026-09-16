@@ -1,5 +1,5 @@
 export { AppShell, type AppShellProps } from "./components/appshell";
-export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar/index";
+export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar";
 export { CommandPalette } from "./components/command-palette";
 export {
   useOpenCommandPalette,
@@ -21,11 +21,11 @@ export {
   type DefaultSidebarProps,
   type DefaultHeaderProps,
   type ContentContainerProps,
-} from "./components/sidebar/index";
+} from "./components/sidebar";
 
 // Sidebar collapse state — the supported alternative to observing
 // `[data-slot="sidebar"][data-state]` or clicking the trigger via the DOM.
-export { useAppShellSidebar, type AppShellSidebarState } from "./components/sidebar/index";
+export { useAppShellSidebar, type AppShellSidebarState } from "./components/sidebar";
 
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
@@ -61,6 +61,17 @@ export {
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  AIChat,
+  type AIChatProps,
+  type AIChatHeaderProps,
+  type AIChatConversationProps,
+  type AIChatComposerProps,
+  type ToolState,
+  type ChainOfThoughtStepStatus,
+  type ChatHistoryGroupData,
+  type ChatHistoryItemData,
+} from "./components/ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";
@@ -85,14 +96,43 @@ export {
   type ErrorBoundaryComponent,
 } from "./resource";
 
-// Re-exports react-router hooks
+// React Router surface. AppShell owns the router, so apps consume it from here
+// and never depend on `react-router` directly — a second copy is a second,
+// disjoint router context.
+//
+// Withheld: router construction (`createBrowserRouter`, `RouterProvider`,
+// `MemoryRouter`, `Routes`, `Route`), available for tests from
+// `@tailor-platform/app-shell/testing`; and the data-router APIs
+// (`useLoaderData`, `Form`, `useSubmit`, `useFetcher`), which AppShell does not
+// wire up. Missing something? Add it here rather than in an app's dependencies.
 export {
   useLocation,
-  useNavigate,
   useParams,
   useSearchParams,
-  useRouteError,
+  useMatch,
+  useResolvedPath,
+  useNavigate,
+  useNavigation,
   Link,
+  NavLink,
+  Navigate,
+  useBlocker,
+  useBeforeUnload,
+  useRouteError,
+} from "react-router";
+
+export type {
+  Blocker,
+  BlockerFunction,
+  LinkProps,
+  Location,
+  NavLinkProps,
+  NavigateFunction,
+  NavigateOptions,
+  Navigation,
+  Params,
+  PathMatch,
+  To,
 } from "react-router";
 
 // File-based routing types
@@ -136,11 +176,13 @@ export {
   DocumentProgressCard,
   type DocumentProgressCardProps,
 } from "./components/document-progress-card";
-export { Layout, type LayoutProps } from "./components/layout/Layout";
+export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
+export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Input, type InputProps } from "./components/input";
+export { Textarea, type TextareaProps } from "./components/textarea";
 export { Checkbox, type CheckboxProps } from "./components/checkbox";
 export { Table } from "./components/table";
 export { Card } from "./components/card";
@@ -149,19 +191,29 @@ export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";
 export { Form, type FormProps } from "./components/form";
 export { Menu } from "./components/menu";
+// Shared by the `position` prop on `Menu.Content` and `Tooltip.Content`.
+export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Tooltip } from "./components/tooltip";
-export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
-export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";
-export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete-standalone";
+export { Select, type SelectAsyncFetcher } from "./components/select";
+export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";
+export { Autocomplete, type AutocompleteAsyncFetcher } from "./components/autocomplete";
 export {
   DateField,
   DatePicker,
+  DateRangePicker,
   type DateFieldProps,
   type DatePickerProps,
+  type DateRangePickerProps,
 } from "./components/date-field";
-export { Calendar, type CalendarProps } from "./components/calendar";
+export {
+  Calendar,
+  RangeCalendar,
+  type CalendarProps,
+  type RangeCalendarProps,
+  type DateRange,
+} from "./components/calendar";
 
 // @internationalized/date re-exports — consumers import date helpers/types from
 // app-shell and install no extra packages. The long tail is available via direct
@@ -235,6 +287,7 @@ export {
   type DataTableRootProps,
   type Column,
   type DataTableData,
+  type DataTableFilterConfig,
   type HeaderRenderContext,
   type RowAction,
   type UseDataTableOptions,

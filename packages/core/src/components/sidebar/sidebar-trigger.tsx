@@ -1,4 +1,4 @@
-import { SidebarTrigger as SidebarTriggerPrimitive } from "@/components/sidebar";
+import { SidebarTrigger as SidebarTriggerPrimitive } from "./primitives";
 
 export type TriggerProps = {
   /** Extra classes for the trigger button. */

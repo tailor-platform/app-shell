@@ -1,34 +1,10 @@
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
+import { Spinner } from "../spinner";
 import { useRegisterCommandPaletteActions } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
 
-// ============================================================================
-// SPINNER (loading indicator for icon slot)
-// ============================================================================
-
 const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
-
-const ActionSpinner = () => (
-  <svg
-    className="astw:size-4 astw:animate-spin"
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    data-testid="action-panel-spinner"
-  >
-    <circle
-      cx="8"
-      cy="8"
-      r="6"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeDasharray="24 24"
-      strokeDashoffset="8"
-    />
-  </svg>
-);
 
 // ============================================================================
 // ACTION ROW
@@ -55,7 +31,7 @@ function ActionRow({ action }: { action: ActionItem }) {
   const content = (
     <>
       <span className={iconSlotClasses} aria-hidden>
-        {loading ? <ActionSpinner /> : icon}
+        {loading ? <Spinner data-testid="action-panel-spinner" /> : icon}
       </span>
       <span className="astw:min-w-0 astw:truncate">{label}</span>
     </>

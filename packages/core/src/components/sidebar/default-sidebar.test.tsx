@@ -1,7 +1,8 @@
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, afterEach, assert } from "vitest";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, afterEach, assert, vi } from "vitest";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider } from "@/components/sidebar";
+import { SidebarProvider } from "./primitives";
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { CommandPaletteProvider } from "@/contexts/command-palette-context";
 import { DefaultSidebar } from "./default-sidebar";
@@ -11,11 +12,17 @@ import { SidebarGroup } from "./sidebar-group";
 import { SidebarSeparator } from "./sidebar-separator";
 import { defineModule, defineResource } from "@/resource";
 import { AppShell } from "@/components/appshell";
+import { useURLCollectionVariables } from "@/lib/collection-url-state";
+import { useEffect } from "react";
 import { Home, Package } from "lucide-react";
-import { DefaultErrorBoundary } from "@/components/default-error-boundary";
+import { DefaultErrorBoundary } from "@/components/internals/default-error-boundary";
+
+const mockNavigatorPlatform = (platform: string) =>
+  vi.spyOn(window.navigator, "platform", "get").mockReturnValue(platform);
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 const createTestModules = () => [
@@ -69,7 +76,56 @@ const renderDefaultSidebar = (children: React.ReactNode, initialPath = "/dashboa
   );
 };
 
+const QuerySyncedOrdersPage = () => {
+  const { control } = useURLCollectionVariables({ params: { pageSize: 20 } });
+
+  useEffect(() => {
+    control.setPageSize(5);
+    // one-time seed for the regression; re-running would just re-set the same page size
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <div>Orders Page</div>;
+};
+
 describe("DefaultSidebar", () => {
+  it("renders an input-like search entry with mac shortcut hint, spacing, and opens the palette", async () => {
+    const user = userEvent.setup();
+    mockNavigatorPlatform("MacIntel");
+
+    render(
+      <AppShell title="Test" modules={createTestModules()}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    const searchButton = await screen.findByRole("button", { name: /search/i });
+    expect(searchButton.textContent).toContain("Search pages...");
+    expect(searchButton.textContent).toContain("⌘K");
+    expect(searchButton.textContent).not.toContain("Ctrl+K");
+    expect(searchButton.className).toContain("astw:h-8");
+    expect(searchButton.className).toContain("astw:text-xs");
+    expect(searchButton.closest("li")?.className).toContain("astw:pb-2");
+
+    await user.click(searchButton);
+
+    expect(await screen.findByPlaceholderText("Search pages...")).toBeDefined();
+  });
+
+  it("renders windows shortcut hint on non-mac platforms", async () => {
+    mockNavigatorPlatform("Win32");
+
+    render(
+      <AppShell title="Test" modules={createTestModules()}>
+        <SidebarLayout />
+      </AppShell>,
+    );
+
+    const searchButton = await screen.findByRole("button", { name: /search/i });
+    expect(searchButton.textContent).toContain("Ctrl+K");
+    expect(searchButton.textContent).not.toContain("⌘K");
+  });
+
   it("renders children instead of auto-generated nav", () => {
     renderDefaultSidebar(
       <>
@@ -100,6 +156,58 @@ describe("DefaultSidebar", () => {
     expect(screen.getByText("Settings")).toBeDefined();
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /products/i })).toBeDefined();
+  });
+
+  it("keeps explicit sidebar navigation working after a page writes search params", async () => {
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard Root</div>,
+        resources: [
+          defineResource({
+            path: "orders",
+            meta: { title: "Orders" },
+            component: QuerySyncedOrdersPage,
+          }),
+        ],
+      }),
+    ];
+
+    window.history.pushState({}, "", "/dashboard/orders");
+    render(
+      <AppShell title="Test" modules={modules}>
+        <SidebarLayout
+          sidebar={
+            <SidebarLayout.DefaultSidebar>
+              <SidebarGroup title="Main">
+                <SidebarItem to="/dashboard" activeMatch="exact" />
+                <SidebarItem to="/dashboard/orders" />
+              </SidebarGroup>
+            </SidebarLayout.DefaultSidebar>
+          }
+        />
+      </AppShell>,
+    );
+
+    expect(await screen.findByText("Orders Page")).toBeDefined();
+    await waitFor(() => {
+      expect(window.location.search).toBe("?p=5");
+    });
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    assert(sidebar);
+    const dashboardLink = Array.from(sidebar.querySelectorAll("a")).find(
+      (link) => link.textContent === "Dashboard",
+    );
+    assert(dashboardLink, "Expected Dashboard link in the sidebar");
+
+    fireEvent.click(dashboardLink);
+
+    expect(await screen.findByText("Dashboard Root")).toBeDefined();
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/dashboard");
+    });
   });
 });
 

@@ -143,46 +143,8 @@ const POSITION_TEMPLATES: Record<number, string> = {
   3: "320px 1fr 280px",
 };
 
-/**
- * Layout – Responsive grid layout component
- *
- * Uses CSS Grid for responsive column layouts. On mobile, all columns
- * stack vertically (`grid-cols-1`). At `lg` (2-column) or `xl` (3+ column)
- * breakpoints, columns display side by side with widths determined by
- * position or the `area` prop on each `Layout.Column`.
- *
- * ### Child filtering
- *
- * Only `Layout.Header` and `Layout.Column` are recognized as children;
- * any other elements are silently ignored and will not be rendered.
- * If multiple `Layout.Header` children are provided, only the first one
- * is rendered.
- *
- * ### Grid template
- *
- * Column widths are controlled via a `--layout-cols` CSS custom property
- * set on the root `<div>`, consumed by `grid-cols-[var(--layout-cols)]`.
- * The value is computed from position (see `Layout.Column`) or `area` props.
- * For a single column, no custom property is set and the grid remains
- * `grid-cols-1`.
- *
- * @example
- * ```tsx
- * // With Layout.Header
- * <Layout>
- *   <Layout.Header title="Page Title" actions={[<Button key="save">Save</Button>]} />
- *   <Layout.Column>Main content</Layout.Column>
- *   <Layout.Column>Side panel</Layout.Column>
- * </Layout>
- *
- * // With area prop
- * <Layout>
- *   <Layout.Column area="left">Sidebar</Layout.Column>
- *   <Layout.Column area="main">Content</Layout.Column>
- * </Layout>
- * ```
- */
-export function Layout({
+/** Implementation for {@link Layout}; exported below with its sub-components attached. */
+function LayoutRoot({
   columns,
   className,
   style,
@@ -289,8 +251,55 @@ export function Layout({
   );
 }
 
-// Attach sub-components
-Layout.Column = Column;
-Layout.Header = Header;
+/**
+ * Typed explicitly rather than assigning onto a `function Layout`: that form emits
+ * `var Header: typeof import("./Layout").Header`, which the declaration rollup
+ * rewrites to a bare `Header` — a namespace, not a type (TS2709). See `check-dts`.
+ */
+type LayoutComponent = typeof LayoutRoot & {
+  Column: typeof Column;
+  Header: typeof Header;
+};
+
+/**
+ * Layout – Responsive grid layout component
+ *
+ * Uses CSS Grid for responsive column layouts. On mobile, all columns
+ * stack vertically (`grid-cols-1`). At `lg` (2-column) or `xl` (3+ column)
+ * breakpoints, columns display side by side with widths determined by
+ * position or the `area` prop on each `Layout.Column`.
+ *
+ * ### Child filtering
+ *
+ * Only `Layout.Header` and `Layout.Column` are recognized as children;
+ * any other elements are silently ignored and will not be rendered.
+ * If multiple `Layout.Header` children are provided, only the first one
+ * is rendered.
+ *
+ * ### Grid template
+ *
+ * Column widths are controlled via a `--layout-cols` CSS custom property
+ * set on the root `<div>`, consumed by `grid-cols-[var(--layout-cols)]`.
+ * The value is computed from position (see `Layout.Column`) or `area` props.
+ * For a single column, no custom property is set and the grid remains
+ * `grid-cols-1`.
+ *
+ * @example
+ * ```tsx
+ * // With Layout.Header
+ * <Layout>
+ *   <Layout.Header title="Page Title" actions={[<Button key="save">Save</Button>]} />
+ *   <Layout.Column>Main content</Layout.Column>
+ *   <Layout.Column>Side panel</Layout.Column>
+ * </Layout>
+ *
+ * // With area prop
+ * <Layout>
+ *   <Layout.Column area="left">Sidebar</Layout.Column>
+ *   <Layout.Column area="main">Content</Layout.Column>
+ * </Layout>
+ * ```
+ */
+export const Layout: LayoutComponent = Object.assign(LayoutRoot, { Column, Header });
 
 export type { LayoutProps } from "./types";

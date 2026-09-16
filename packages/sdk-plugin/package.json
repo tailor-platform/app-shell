@@ -1,6 +1,6 @@
 {
-  "name": "@tailor-platform/app-shell-sdk-plugin",
-  "version": "0.1.0",
+  "name": "@tailor-platform/sdk-plugin-app-shell",
+  "version": "0.2.0",
   "description": "Tailor Platform SDK plugins for AppShell (metadata generator)",
   "keywords": [
     "app-shell",
@@ -8,7 +8,7 @@
     "sdk-plugin",
     "tailor-platform"
   ],
-  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/sdk-plugins#readme",
+  "homepage": "https://github.com/tailor-platform/app-shell/tree/main/packages/sdk-plugin#readme",
   "bugs": {
     "url": "https://github.com/tailor-platform"
   },
@@ -16,7 +16,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/tailor-platform/app-shell",
-    "directory": "packages/sdk-plugins"
+    "directory": "packages/sdk-plugin"
   },
   "files": [
     "dist/**"
@@ -41,13 +41,14 @@
   "dependencies": {},
   "devDependencies": {
     "@tailor-platform/app-shell": "workspace:*",
-    "@tailor-platform/sdk": "^1.45.1",
+    "@tailor-platform/sdk": "catalog:",
+    "@tailor-platform/sdk-v1": "npm:@tailor-platform/sdk@1.85.1",
     "oxlint": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "^5.9.3",
+    "typescript": "5.9.3",
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@tailor-platform/sdk": ">= 1.0.0"
+    "@tailor-platform/sdk": "^1.0.0 || ^2.0.0"
   }
 }

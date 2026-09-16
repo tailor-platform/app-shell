@@ -1,11 +1,16 @@
 /* pattern: form/modal (route-driven variant) */
-import { Button, Dialog, Input, Layout, Field } from "@tailor-platform/app-shell";
+import { useState } from "react";
+import { Button, Dialog, Field, Form, Layout } from "@tailor-platform/app-shell";
+
+type ProductDraft = {
+  name: string;
+};
 
 type Props = {
   isCreateOpen: boolean;
   onNavigateToCreate: () => void;
   onNavigateToList: () => void;
-  onSave: (data: { name: string }) => void;
+  onSave: (data: ProductDraft) => Promise<{ errors?: Record<string, string> }>;
 };
 
 /**
@@ -19,6 +24,21 @@ export default function ModalFormRouted({
   onNavigateToList,
   onSave,
 }: Props) {
+  // Server-side validation errors, keyed by field `name`. `Form` routes each
+  // one to the matching `Field.Error` and clears it when the user edits that
+  // field — so failures never need their own alert banner.
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = async (values: ProductDraft) => {
+    const result = await onSave(values);
+    if (result.errors) {
+      setErrors(result.errors);
+      return;
+    }
+    setErrors({});
+    onNavigateToList();
+  };
+
   return (
     <Layout>
       <Layout.Header
@@ -41,26 +61,23 @@ export default function ModalFormRouted({
           <Dialog.Header>
             <Dialog.Title>Create product</Dialog.Title>
           </Dialog.Header>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              onSave({ name: formData.get("name") as string });
-            }}
-          >
+          <Form<ProductDraft> noValidate errors={errors} onFormSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <Field.Root name="name">
                 <Field.Label>Name</Field.Label>
-                <Field.Control render={<Input />} />
+                <Field.Control required />
+                {/* Catch-all: renders the native message, a `match` message, or
+                    the server error routed in via the `errors` prop above. */}
+                <Field.Error />
               </Field.Root>
             </div>
             <Dialog.Footer>
-              <Button variant="ghost" onClick={onNavigateToList}>
+              <Button type="button" variant="ghost" onClick={onNavigateToList}>
                 Cancel
               </Button>
               <Button type="submit">Save</Button>
             </Dialog.Footer>
-          </form>
+          </Form>
         </Dialog.Content>
       </Dialog.Root>
     </Layout>

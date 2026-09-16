@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,7 @@ import { useCollectionControlOptional } from "@/contexts/collection-control-cont
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Checkbox } from "@/components/checkbox";
-import { Select } from "@/components/select-standalone";
+import { Select } from "@/components/select";
 import { DatePicker } from "@/components/date-field";
 import { Calendar } from "@/components/calendar";
 import { Tooltip } from "@/components/tooltip";
@@ -14,6 +14,7 @@ import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
+import { isTemporalFilterType, isTemporalFilterValueValid } from "./filter-value-utils";
 import { useDataTableT } from "./i18n";
 import type {
   CollectionControl,
@@ -22,7 +23,7 @@ import type {
   FilterOperator,
   SelectOption,
 } from "@/types/collection";
-import type { Column } from "./types";
+import type { Column, DataTableFilterConfig } from "./types";
 
 // =============================================================================
 // DataTable.Toolbar
@@ -114,22 +115,86 @@ function resolveTemporalOperator(
       initial: current as NumericTemporalOperator,
     };
   }
-  return { items: standard, initial: "eq" };
+  return { items: standard, initial: standard[0] ?? "eq" };
 }
 
 /** String operators available in the operator selector. */
 const STRING_OPERATORS = ["eq", "ne", "contains", "notContains", "hasPrefix", "hasSuffix"] as const;
 type StringOperator = (typeof STRING_OPERATORS)[number];
 type FilterableColumn = Column<Record<string, unknown>> & {
-  filter: FilterConfig;
+  filter: DataTableFilterConfig;
 };
 type AddFilterDraftValue = string | string[];
+
+function getDefaultFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
+  switch (type) {
+    case "string":
+      return [...STRING_OPERATORS];
+    case "date":
+      return [...DATE_OPERATORS];
+    case "number":
+    case "datetime":
+    case "time":
+      return [...NUMERIC_TEMPORAL_OPERATORS];
+    case "enum":
+      return ["in"];
+    case "boolean":
+      return [...BOOLEAN_OPERATORS];
+    case "uuid":
+      return ["eq"];
+  }
+}
+
+function isUiOperatorAllowedForType(type: FilterConfig["type"], operator: FilterOperator): boolean {
+  switch (type) {
+    case "string":
+      return (STRING_OPERATORS as readonly string[]).includes(operator);
+    case "date":
+      return (DATE_OPERATORS as readonly string[]).includes(operator);
+    case "number":
+    case "datetime":
+    case "time":
+      return (NUMERIC_TEMPORAL_OPERATORS as readonly string[]).includes(operator);
+    case "enum":
+      return operator === "in";
+    case "boolean":
+      return (BOOLEAN_OPERATORS as readonly string[]).includes(operator);
+    case "uuid":
+      return operator === "eq";
+  }
+}
+
+function getConfiguredFilterOperators(config: DataTableFilterConfig): FilterOperator[] | undefined {
+  const configured = config.operators as readonly FilterOperator[] | undefined;
+  if (!configured) return undefined;
+
+  const defaults = getDefaultFilterOperators(config.type);
+  const operators = configured.filter(
+    (operator, index) => defaults.includes(operator) && configured.indexOf(operator) === index,
+  );
+  return operators.length > 0 ? [...operators] : [DEFAULT_OPERATOR[config.type]];
+}
+
+export function getVisibleFilterOperators(
+  config: DataTableFilterConfig,
+  current?: FilterOperator,
+): FilterOperator[] {
+  const operators = getConfiguredFilterOperators(config) ?? getDefaultFilterOperators(config.type);
+  if (current && !operators.includes(current) && isUiOperatorAllowedForType(config.type, current)) {
+    return [...operators, current];
+  }
+  return operators;
+}
+
+function getDefaultFilterOperator(config: DataTableFilterConfig): FilterOperator {
+  return getConfiguredFilterOperators(config)?.[0] ?? DEFAULT_OPERATOR[config.type];
+}
 
 /** Use `DataTable.Filters` instead of calling this directly. */
 function DataTableFilters({
   className,
   slot = "all",
-  addIconOnly = false,
+  addIconOnly = true,
 }: {
   className?: string;
   /**
@@ -142,7 +207,10 @@ function DataTableFilters({
    * different rows (e.g. the trigger in a header row, chips on the row below).
    */
   slot?: "all" | "chips" | "add";
-  /** Render the **Add filter** trigger as an icon-only button (label → `aria-label`). */
+  /**
+   * Render the **Add filter** trigger as an icon-only button (label → `aria-label`).
+   * Defaults to `true`; pass `addIconOnly={false}` to show the "Add filter" text label.
+   */
   addIconOnly?: boolean;
 }) {
   const ctx = useDataTableContext();
@@ -194,17 +262,18 @@ function DataTableFilters({
     );
   }
 
-  // Default: chips (grow to fill) + the right-aligned Add filter trigger.
+  // Default: the left-aligned Add filter trigger + chips (grow to fill) to its right.
   return (
     <div
       data-slot="data-table-filters"
       className={cn("astw:flex astw:items-start astw:gap-2", className)}
     >
+      {/* Trigger comes first so it stays pinned left and doesn't shift as chips are
+          added — the chips grow to its right inside their own flex-1 container. */}
+      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
       <div className="astw:flex astw:flex-1 astw:flex-wrap astw:items-center astw:gap-2">
         {chips}
       </div>
-      {/* Trigger stays pinned right so it doesn't shift as chips are added. */}
-      <AddFilterPanel columns={filterableColumns} control={control} iconOnly={addIconOnly} />
     </div>
   );
 }
@@ -240,9 +309,9 @@ function seedPanelOperator(
 ): FilterOperator {
   if (!col) return "eq";
   const active = control.filters.find((f) => f.field === col.filter.field);
-  const ops = getAddFilterOperators(col.filter.type);
-  if (active && ops.includes(active.operator)) return active.operator;
-  return DEFAULT_OPERATOR[col.filter.type];
+  const operators = getVisibleFilterOperators(col.filter, active?.operator);
+  if (active && operators.includes(active.operator)) return active.operator;
+  return getDefaultFilterOperator(col.filter);
 }
 
 function AddFilterPanel({
@@ -258,10 +327,18 @@ function AddFilterPanel({
   const t = useDataTableT();
   const [open, setOpen] = useState(false);
   const [fieldName, setFieldName] = useState<string>(columns[0]?.filter.field ?? "");
+  // Field search: enterprise tables can have many filterable fields, so the
+  // panel always offers a search box over the field list.
+  const [fieldQuery, setFieldQuery] = useState("");
+  const fq = fieldQuery.trim().toLowerCase();
+  const visibleFieldColumns = fq
+    ? columns.filter((c) => (c.label ?? c.filter.field).toLowerCase().includes(fq))
+    : columns;
 
   const selectedColumn = columns.find((c) => c.filter.field === fieldName) ?? columns[0];
   const config = selectedColumn?.filter;
-  const operators = config ? getAddFilterOperators(config.type) : [];
+  const activeFilter = control.filters.find((f) => f.field === fieldName);
+  const operators = config ? getVisibleFilterOperators(config, activeFilter?.operator) : [];
   // Show the condition column for any field that has more than one operator
   // (single-operator types like enum/uuid go straight field ▸ value).
   const showConditions = operators.length > 1;
@@ -276,17 +353,36 @@ function AddFilterPanel({
     if (col) setOperator(seedPanelOperator(control, col));
   };
 
+  const handleFieldQueryChange = (value: string) => {
+    setFieldQuery(value);
+
+    const nextQuery = value.trim().toLowerCase();
+    if (!nextQuery) return;
+
+    const nextVisible = columns.filter((c) =>
+      (c.label ?? c.filter.field).toLowerCase().includes(nextQuery),
+    );
+    if (nextVisible.length === 0) return;
+    if (nextVisible.some((c) => c.filter.field === fieldName)) return;
+
+    const first = nextVisible[0];
+    setFieldName(first.filter.field);
+    setOperator(seedPanelOperator(control, first));
+  };
+
   // Always reopen on the first field rather than wherever the user last was.
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (next) selectField(columns[0]?.filter.field ?? "");
+    if (next) {
+      setFieldQuery("");
+      selectField(columns[0]?.filter.field ?? "");
+    }
   };
 
   const activeFields = new Set(control.filters.map((f) => f.field));
-  const activeFilter = control.filters.find((f) => f.field === fieldName);
   let effectiveOperator: FilterOperator | undefined;
   if (config) {
-    effectiveOperator = showConditions ? operator : DEFAULT_OPERATOR[config.type];
+    effectiveOperator = showConditions ? operator : getDefaultFilterOperator(config);
   }
 
   return (
@@ -302,53 +398,74 @@ function AddFilterPanel({
         }
       />
       <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        {/* align="end" anchors the panel's right edge to the (right-aligned) trigger
+        {/* align="start" anchors the panel's left edge to the (left-aligned) trigger
             so it grows/shrinks toward the right as columns appear/disappear. We keep
             anchor tracking on (no disableAnchorTracking) so the positioner re-aligns
-            the right edge when the width changes; the trigger itself no longer moves
+            the left edge when the width changes; the trigger itself no longer moves
             when chips are added (they live in a separate flex-1 container), so there's
-            nothing to jump away from. */}
-        <Popover.Positioner sideOffset={4} side="bottom" align="end">
+            nothing to jump away from. base-ui still shifts the panel to stay on-screen. */}
+        <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup
             data-slot="data-table-filter-panel"
             className={cn(
-              // Fixed height + width so switching field/condition never resizes the
-              // popup: the width stays constant whether the condition column (2 vs 3
-              // columns) is shown — column 3 flexes to absorb the difference — so the
-              // panel and its left column never shift under the cursor. The width is
-              // sized so column 3 fits the inline calendar (~290px) even in 3-column
-              // mode (col1 11rem + col2 12rem + ~19.5rem for the value editor).
-              // Height fits the tallest editor: the datetime range (From/To tabs +
-              // inline calendar + "Choose time" picker) without the time being clipped.
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:w-[42.5rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              // The panel hugs its columns (no fixed width): column 1 hugs the field
+              // names (up to a cap), column 2 (conditions) is fixed, and column 3 (the
+              // value editor) is a fixed 260px. So a wider field column grows the panel
+              // rightward (it's anchored left) instead of squeezing the value editor.
+              // Fixed height fits the tallest editor (datetime range: From/To tabs +
+              // calendar + "Choose time").
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >
-            {/* Column 1 — fields (scrolls), with a sticky "Clear all" footer */}
-            <div className="astw:flex astw:w-44 astw:flex-col">
-              <div className="astw:flex-1 astw:overflow-y-auto astw:p-1">
-                {columns.map((col) => {
-                  const isSelected = col.filter.field === fieldName;
-                  return (
-                    <button
-                      key={col.filter.field}
-                      type="button"
-                      onClick={() => selectField(col.filter.field)}
-                      className={cn(
-                        PANEL_COLUMN_ROW,
-                        isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
-                      )}
-                    >
-                      <span className="astw:truncate">{col.label ?? col.filter.field}</span>
-                      {activeFields.has(col.filter.field) && (
-                        <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
-                      )}
-                    </button>
-                  );
-                })}
+            {/* Column 1 — fields (scrolls), with a search header and a sticky
+                "Clear all" footer. Hugs the field-name width up to a cap so long
+                names aren't needlessly truncated. */}
+            <div className="astw:flex astw:min-w-44 astw:max-w-[22.5rem] astw:flex-col astw:p-1">
+              {/* Field search — spacing/style mirrors the ColumnSettings search. */}
+              <div className="astw:relative astw:mb-1">
+                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={fieldQuery}
+                  onChange={(e) => handleFieldQueryChange(e.target.value)}
+                  placeholder={t("searchFields")}
+                  aria-label={t("searchFields")}
+                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                />
+              </div>
+              <div className="astw:flex-1 astw:overflow-y-auto">
+                {visibleFieldColumns.length === 0 ? (
+                  <div className="astw:px-2 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+                    {t("noFieldsMatch")}
+                  </div>
+                ) : (
+                  visibleFieldColumns.map((col) => {
+                    const isSelected = col.filter.field === fieldName;
+                    return (
+                      <button
+                        key={col.filter.field}
+                        type="button"
+                        onClick={() => selectField(col.filter.field)}
+                        title={col.label ?? col.filter.field}
+                        className={cn(
+                          PANEL_COLUMN_ROW,
+                          isSelected ? PANEL_ROW_SELECTED : PANEL_ROW_HOVER,
+                        )}
+                      >
+                        <span className="astw:min-w-0 astw:flex-1 astw:truncate">
+                          {col.label ?? col.filter.field}
+                        </span>
+                        {activeFields.has(col.filter.field) && (
+                          <span className="astw:ml-auto astw:size-1.5 astw:shrink-0 astw:rounded-full astw:bg-primary" />
+                        )}
+                      </button>
+                    );
+                  })
+                )}
               </div>
               {control.filters.length > 0 && (
-                <div className="astw:border-t astw:border-border astw:p-1">
+                <div className="astw:mt-1 astw:border-t astw:border-border astw:pt-1">
                   <Button
                     variant="ghost"
                     size="xs"
@@ -383,9 +500,9 @@ function AddFilterPanel({
               </div>
             )}
 
-            {/* Column 3 — value editor; flex-1 so it absorbs the width freed when
-                the condition column is hidden, keeping the popup width constant. */}
-            <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:border-l astw:border-border">
+            {/* Column 3 — value editor; fixed width so it never shrinks when column 1
+                (fields) grows wider. */}
+            <div className="astw:flex astw:w-[260px] astw:min-w-0 astw:flex-col astw:border-l astw:border-border">
               {selectedColumn && effectiveOperator && (
                 <PanelValueEditor
                   key={`${fieldName}:${effectiveOperator}`}
@@ -1018,7 +1135,7 @@ function FilterChip({
   filter,
   control,
 }: {
-  column: Column<Record<string, unknown>> & { filter: FilterConfig };
+  column: Column<Record<string, unknown>> & { filter: DataTableFilterConfig };
   filter: Filter;
   control: CollectionControl;
 }) {
@@ -1076,7 +1193,7 @@ function FilterChip({
     [control, config.field, config.type, filter.operator, filter.value, filter.caseSensitive],
   );
 
-  const operators = getAddFilterOperators(config.type);
+  const operators = getVisibleFilterOperators(config, filter.operator);
   const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
   const valueLabel = formatFilterValue(filter, config, t, locale, label);
 
@@ -1208,12 +1325,6 @@ function OperatorList({
 }) {
   const t = useDataTableT();
   const [query, setQuery] = useState("");
-  const ref = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => ref.current?.focus());
-    return () => cancelAnimationFrame(id);
-  }, []);
 
   const q = query.trim().toLowerCase();
   const items = operators
@@ -1224,8 +1335,10 @@ function OperatorList({
     <div className="astw:flex astw:flex-col">
       <div className="astw:flex astw:items-center astw:gap-2 astw:border-b astw:border-border astw:px-2.5">
         <Search className="astw:size-3.5 astw:text-muted-foreground" />
+        {/* Base UI's Popover.Popup moves initial focus to the first tabbable
+            element by default, which is this input. On touch it focuses the
+            popup instead so the virtual keyboard doesn't jump open. */}
         <input
-          ref={ref}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("filterOperatorSearchPlaceholder")}
@@ -1269,7 +1382,7 @@ function FilterPopoverContent({
   onClose,
   hideOperator = false,
 }: {
-  column: Column<Record<string, unknown>> & { filter: FilterConfig };
+  column: Column<Record<string, unknown>> & { filter: DataTableFilterConfig };
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1380,7 +1493,7 @@ function EnumFilterEditor({
   filter,
   control,
 }: {
-  config: Extract<FilterConfig, { type: "enum" }>;
+  config: Extract<DataTableFilterConfig, { type: "enum" }>;
   filter: Filter;
   control: CollectionControl;
 }) {
@@ -1426,17 +1539,21 @@ function BooleanFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "boolean" }>;
+  config: Extract<DataTableFilterConfig, { type: "boolean" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const operatorItems = getVisibleFilterOperators(config, filter.operator).filter(
+    (operator): operator is BooleanOperator =>
+      BOOLEAN_OPERATORS.includes(operator as BooleanOperator),
+  );
   const [localOp, setLocalOp] = useState<BooleanOperator>(
-    BOOLEAN_OPERATORS.includes(filter.operator as BooleanOperator)
+    operatorItems.includes(filter.operator as BooleanOperator)
       ? (filter.operator as BooleanOperator)
-      : "eq",
+      : (operatorItems[0] ?? "eq"),
   );
   const [localValue, setLocalValue] = useState(
     typeof filter.value === "boolean" ? String(filter.value) : "true",
@@ -1454,7 +1571,7 @@ function BooleanFilterEditor({
     >
       {!hideOperator && (
         <Select
-          items={[...BOOLEAN_OPERATORS]}
+          items={[...operatorItems]}
           value={localOp}
           onValueChange={(v) => {
             if (v) setLocalOp(v as BooleanOperator);
@@ -1493,17 +1610,20 @@ function StringFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "string" }>;
+  config: Extract<DataTableFilterConfig, { type: "string" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const operatorItems = getVisibleFilterOperators(config, filter.operator).filter(
+    (operator): operator is StringOperator => STRING_OPERATORS.includes(operator as StringOperator),
+  );
   const [localOp, setLocalOp] = useState<StringOperator>(
-    STRING_OPERATORS.includes(filter.operator as StringOperator)
+    operatorItems.includes(filter.operator as StringOperator)
       ? (filter.operator as StringOperator)
-      : "contains",
+      : (DEFAULT_OPERATOR.string as StringOperator),
   );
   const [localValue, setLocalValue] = useState(String(filter.value ?? ""));
   const [localCaseSensitive, setLocalCaseSensitive] = useState(filter.caseSensitive ?? false);
@@ -1526,10 +1646,10 @@ function StringFilterEditor({
     >
       {!hideOperator && (
         <Select
-          items={[...STRING_OPERATORS]}
+          items={[...operatorItems]}
           value={localOp}
           onValueChange={(v) => {
-            if (v) setLocalOp(v);
+            if (v) setLocalOp(v as StringOperator);
           }}
           mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
           className="astw:h-8 astw:text-sm"
@@ -1568,7 +1688,7 @@ function UuidFilterEditor({
   control,
   onClose,
 }: {
-  config: Extract<FilterConfig, { type: "uuid" }>;
+  config: Extract<DataTableFilterConfig, { type: "uuid" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1615,7 +1735,7 @@ function NumericFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "number" }>;
+  config: Extract<DataTableFilterConfig, { type: "number" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1623,7 +1743,10 @@ function NumericFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    temporalOperatorsFor(config.type),
+    getVisibleFilterOperators(config, filter.operator).filter(
+      (operator): operator is NumericTemporalOperator =>
+        temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
+    ),
     filter.operator,
   );
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
@@ -1750,7 +1873,7 @@ function TemporalFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<FilterConfig, { type: "datetime" | "date" | "time" }>;
+  config: Extract<DataTableFilterConfig, { type: "datetime" | "date" | "time" }>;
   /** The column's visible label — used for the date picker's accessible name. */
   label: string;
   filter: Filter;
@@ -1760,7 +1883,10 @@ function TemporalFilterEditor({
 }) {
   const t = useDataTableT();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
-    temporalOperatorsFor(config.type),
+    getVisibleFilterOperators(config, filter.operator).filter(
+      (operator): operator is NumericTemporalOperator =>
+        temporalOperatorsFor(config.type).includes(operator as NumericTemporalOperator),
+    ),
     filter.operator,
   );
   const [localOp, setLocalOp] = useState<NumericTemporalOperator>(initialOp);
@@ -1917,25 +2043,6 @@ function TemporalFilterEditor({
 // Helpers
 // =============================================================================
 
-function getAddFilterOperators(type: FilterConfig["type"]): FilterOperator[] {
-  switch (type) {
-    case "string":
-      return [...STRING_OPERATORS];
-    case "date":
-      return [...DATE_OPERATORS];
-    case "number":
-    case "datetime":
-    case "time":
-      return [...NUMERIC_TEMPORAL_OPERATORS];
-    case "enum":
-      return ["in"];
-    case "boolean":
-      return [...BOOLEAN_OPERATORS];
-    case "uuid":
-      return ["eq"];
-  }
-}
-
 function isAddFilterDraftValueValid(
   type: FilterConfig["type"],
   operator: FilterOperator,
@@ -2013,10 +2120,6 @@ function toAddFilterSubmittedValue(
   return String(value).trim();
 }
 
-function isTemporalFilterType(type: FilterConfig["type"]): type is "datetime" | "date" | "time" {
-  return type === "datetime" || type === "date" || type === "time";
-}
-
 /**
  * Whether a "between" range's bounds are correctly ordered (min ≤ max). Numbers
  * compare numerically; temporal ISO strings compare lexicographically (which
@@ -2028,24 +2131,6 @@ function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): b
   if (type === "number") return Number(min) <= Number(max);
   if (isTemporalFilterType(type)) return min <= max;
   return true;
-}
-
-function isTemporalFilterValueValid(type: "datetime" | "date" | "time", value: string): boolean {
-  const trimmedValue = value.trim();
-  if (trimmedValue === "") return false;
-
-  switch (type) {
-    case "datetime":
-      // The datetime editor emits a local "YYYY-MM-DDTHH:mm:ss" (no zone); a
-      // trailing Z or ±hh:mm offset is still accepted for externally-set values.
-      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
-        trimmedValue,
-      );
-    case "date":
-      return /^\d{4}-\d{2}-\d{2}$/.test(trimmedValue);
-    case "time":
-      return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(trimmedValue);
-  }
 }
 
 function getTemporalInputProps(type: "datetime" | "date" | "time") {
@@ -2067,7 +2152,7 @@ function getTemporalInputProps(type: "datetime" | "date" | "time") {
   }
 }
 
-function getOperatorLabel(
+export function getOperatorLabel(
   operator: FilterOperator,
   t: ReturnType<typeof useDataTableT>,
   type?: FilterConfig["type"],

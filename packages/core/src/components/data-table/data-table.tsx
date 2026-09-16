@@ -1,7 +1,9 @@
 import {
   createContext,
+  Fragment,
   useContext,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -9,19 +11,37 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { Ellipsis } from "lucide-react";
+import { ContextMenu } from "@base-ui/react/context-menu";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CollectionControlProvider } from "@/contexts/collection-control-context";
+import {
+  CollectionControlProvider,
+  useCollectionControlOptional,
+} from "@/contexts/collection-control-context";
 import { Table } from "@/components/table";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
-import type { Column, HeaderRenderContext, RowAction, UseDataTableReturn } from "./types";
+import type {
+  Column,
+  DataTableFilterConfig,
+  HeaderRenderContext,
+  RowAction,
+  RowExpansionOptions,
+  UseDataTableReturn,
+} from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
-import { DataTableToolbar, DataTableFilters } from "./toolbar";
+import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
+import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
+import {
+  DataTableToolbar,
+  DataTableFilters,
+  getOperatorLabel,
+  getVisibleFilterOperators,
+} from "./toolbar";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
 
@@ -75,6 +95,103 @@ function renderDefaultHeader(
   );
 }
 
+const HEADER_CONTEXT_MENU_POPUP_CLASS = cn(
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-[10rem] astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:p-1 astw:shadow-md",
+  "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
+);
+const HEADER_CONTEXT_MENU_ITEM_CLASS = cn(
+  "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm astw:outline-hidden",
+  "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
+  "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
+);
+const HEADER_CONTEXT_MENU_SUBMENU_TRIGGER_CLASS = cn(
+  HEADER_CONTEXT_MENU_ITEM_CLASS,
+  "astw:justify-between astw:gap-4",
+  "astw:data-popup-open:bg-accent astw:data-popup-open:text-accent-foreground",
+);
+const HEADER_CONTEXT_MENU_SEPARATOR_CLASS = "astw:bg-border astw:-mx-1 astw:my-1 astw:h-px";
+
+function copyTextToClipboard(text: string) {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) return;
+  void navigator.clipboard.writeText(text).catch(() => {
+    // Silently fail if clipboard access is denied.
+  });
+}
+
+function primitiveCellContentValue(content: ReactNode): unknown {
+  if (
+    typeof content === "string" ||
+    typeof content === "number" ||
+    typeof content === "boolean" ||
+    typeof content === "bigint"
+  ) {
+    return content;
+  }
+  return undefined;
+}
+
+function getCellContextValue<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: Column<TRow>,
+  content: ReactNode,
+): unknown {
+  const raw = getCellValue(row, col);
+  return raw !== undefined ? raw : primitiveCellContentValue(content);
+}
+
+function toClipboardText(value: unknown): string | undefined {
+  if (value == null || value === "") return undefined;
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => toClipboardText(item))
+      .filter((item) => item != null && item !== "");
+    return items.length > 0 ? items.join(", ") : undefined;
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+}
+
+function toFilterValue(value: unknown, config: DataTableFilterConfig): unknown {
+  if (value == null || value === "") return undefined;
+  if (isTemporalFilterType(config.type)) {
+    return normalizeTemporalFilterValue(config.type, value);
+  }
+
+  switch (config.type) {
+    case "number": {
+      const parsed = typeof value === "number" ? value : Number(value);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    }
+    case "boolean": {
+      if (typeof value === "boolean") return value;
+      if (value === "true" || value === "false") return value === "true";
+      return undefined;
+    }
+    case "enum": {
+      if (Array.isArray(value)) {
+        const values = value.map((item) => String(item)).filter((item) => item !== "");
+        return values.length > 0 ? values : undefined;
+      }
+      return [String(value)];
+    }
+    case "string":
+    case "uuid":
+    default:
+      return String(value);
+  }
+}
+
+function supportsCellFilterOperator(operator: string): boolean {
+  return operator !== "between";
+}
+
 // =============================================================================
 // Column pinning (sticky columns)
 // =============================================================================
@@ -83,9 +200,15 @@ function renderDefaultHeader(
 // innermost anchors before the real widths are measured.
 const SELECTION_WIDTH = 52;
 const ACTIONS_WIDTH = 50;
+const EXPAND_WIDTH = 44;
 // Keys for the built-in selection / row-actions columns in the measured-width map.
 const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
+const EXPAND_KEY = "__datatable_expand__";
+
+// Drives both the CSS transition and how long the detail row stays mounted while
+// collapsing, so the two cannot drift apart.
+const EXPAND_TRANSITION_MS = 300;
 
 type PinSide = "left" | "right";
 type ColumnWidths = Record<string, number>;
@@ -118,6 +241,8 @@ interface PinLayout<TRow extends Record<string, unknown>> {
   placements: Map<Column<TRow>, PinPlacement>;
   /** Placement for the built-in selection column, when pinned. */
   selection?: PinPlacement;
+  /** Placement for the built-in expand column, when present. */
+  expand?: PinPlacement;
   /** Placement for the built-in row-actions column, when pinned. */
   actions?: PinPlacement;
 }
@@ -176,9 +301,9 @@ function buildColumnKeys<TRow extends Record<string, unknown>>(
 
 /**
  * Group the visible columns by pin side and compute cumulative sticky offsets.
- * The selection column (if present) auto-pins to the left edge and row-actions
- * (if present) auto-pins to the right edge, with user-pinned columns stacking
- * outward from them.
+ * The selection and expand columns (when present) auto-pin to the left edge and
+ * row-actions (if present) auto-pins to the right edge, with user-pinned columns
+ * stacking outward from them.
  *
  * `columnKeys` is the definition-order key map (see {@link buildColumnKeys});
  * `columns` here is the visible/reordered subset, so keys are resolved by
@@ -189,12 +314,13 @@ function computePinLayout<TRow extends Record<string, unknown>>(
   pinnedColumns: Record<string, "left" | "right" | "none">,
   opts: {
     hasSelection: boolean;
+    hasExpand: boolean;
     hasRowActions: boolean;
     widths: ColumnWidths;
     columnKeys: Map<Column<TRow>, string>;
   },
 ): PinLayout<TRow> {
-  const { hasSelection, hasRowActions, widths, columnKeys } = opts;
+  const { hasSelection, hasExpand, hasRowActions, widths, columnKeys } = opts;
 
   const keyOf = (col: Column<TRow>): string => columnKeys.get(col) as string;
 
@@ -214,13 +340,20 @@ function computePinLayout<TRow extends Record<string, unknown>>(
 
   const placements = new Map<Column<TRow>, PinPlacement>();
 
-  // Left group, visually [selection?, ...left]; offsets accumulate rightward
-  // using the measured (or declared) width of each preceding pinned column.
+  // Left group, visually [selection?, expand?, ...left]; offsets accumulate
+  // rightward using the measured (or declared) width of each preceding pinned
+  // column. `isBoundary` marks the outermost cell of the group — the one that
+  // draws the freeze seam — so it moves to `expand` as soon as that column exists.
   let leftOffset = 0;
   let selection: PinPlacement | undefined;
+  let expand: PinPlacement | undefined;
   if (hasSelection) {
-    selection = { side: "left", offset: 0, isBoundary: left.length === 0 };
+    selection = { side: "left", offset: 0, isBoundary: !hasExpand && left.length === 0 };
     leftOffset = resolveWidth(SELECTION_KEY, SELECTION_WIDTH, widths);
+  }
+  if (hasExpand) {
+    expand = { side: "left", offset: leftOffset, isBoundary: left.length === 0 };
+    leftOffset += resolveWidth(EXPAND_KEY, EXPAND_WIDTH, widths);
   }
   left.forEach((col, i) => {
     placements.set(col, { side: "left", offset: leftOffset, isBoundary: i === left.length - 1 });
@@ -240,7 +373,7 @@ function computePinLayout<TRow extends Record<string, unknown>>(
     rightOffset += resolveWidth(keys.get(col) as string, col.width, widths);
   }
 
-  return { ordered: [...left, ...middle, ...right], keys, placements, selection, actions };
+  return { ordered: [...left, ...middle, ...right], keys, placements, selection, expand, actions };
 }
 
 /**
@@ -301,6 +434,7 @@ interface DataTableLoaderRowsProps<TRow extends Record<string, unknown>> {
   rowCount: number;
   pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
+  hasExpand: boolean;
   hasRowActions: boolean;
 }
 
@@ -312,9 +446,10 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   rowCount,
   pinLayout,
   hasSelection,
+  hasExpand,
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
-  const { ordered: columns, keys, placements, selection, actions } = pinLayout;
+  const { ordered: columns, keys, placements, selection, expand, actions } = pinLayout;
   // No fixed row height: each cell's placeholder matches the height of the
   // real content it stands in for (text line, badge, icon button), so the
   // skeleton rows resolve to exactly the same row height as loaded rows and
@@ -333,6 +468,23 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
               return (
                 <Table.Cell style={style} className={className}>
                   <div className="astw:size-4 astw:rounded-xs astw:bg-muted astw:animate-pulse" />
+                </Table.Cell>
+              );
+            })()}
+          {hasExpand &&
+            (() => {
+              const { style, className } = pinCellProps(
+                expand,
+                { style: { width: EXPAND_WIDTH } },
+                "body",
+              );
+              return (
+                <Table.Cell style={style} className={className}>
+                  {/* size-9 box = the real chevron Button's footprint, so the
+                      skeleton row resolves to the same height as a loaded row */}
+                  <div className="astw:mx-auto astw:flex astw:size-9 astw:items-center astw:justify-center">
+                    <div className="astw:size-4 astw:rounded astw:bg-muted astw:animate-pulse" />
+                  </div>
                 </Table.Cell>
               );
             })()}
@@ -467,6 +619,11 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     clearSelection: value.clearSelection,
     isAllSelected: value.isAllSelected,
     isIndeterminate: value.isIndeterminate,
+    expandedIds: value.expandedIds,
+    isRowExpanded: value.isRowExpanded,
+    toggleRowExpansion: value.toggleRowExpansion,
+    collapseAllRows: value.collapseAllRows,
+    rowExpansion: value.rowExpansion,
   };
 
   const controlValue = value.control ?? null;
@@ -501,6 +658,233 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
 }
 DataTableRoot.displayName = "DataTable.Root";
 
+function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
+  align,
+  children,
+  column,
+  columnKey,
+  pinnedColumns,
+  setPin,
+  sortDirection,
+  onSortDirectionChange,
+}: {
+  align: "left" | "right";
+  children: ReactNode;
+  column: Column<TRow>;
+  columnKey: string;
+  pinnedColumns: Record<string, "left" | "right" | "none">;
+  setPin: (key: string, side: "left" | "right" | "none" | null) => void;
+  sortDirection?: "Asc" | "Desc";
+  onSortDirectionChange?: (direction: "Asc" | "Desc" | undefined) => void;
+}) {
+  const t = useDataTableT();
+  const label = column.label ?? columnKey;
+  const pin = resolvePin(pinnedColumns[columnKey], column.pin);
+
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger
+        data-slot="data-table-header-context-menu-trigger"
+        className={cn(
+          "astw:flex astw:h-full astw:w-full astw:items-center",
+          align === "right" ? "astw:justify-end astw:text-right" : "astw:text-left",
+        )}
+      >
+        {children}
+      </ContextMenu.Trigger>
+      <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+        <ContextMenu.Positioner className="astw:outline-hidden">
+          <ContextMenu.Popup
+            data-slot="data-table-header-context-menu"
+            className={HEADER_CONTEXT_MENU_POPUP_CLASS}
+          >
+            <ContextMenu.Item
+              className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+              onClick={() => copyTextToClipboard(label)}
+            >
+              {t("copyColumnLabel")}
+            </ContextMenu.Item>
+            <ContextMenu.Separator className={HEADER_CONTEXT_MENU_SEPARATOR_CLASS} />
+            <ContextMenu.SubmenuRoot>
+              <ContextMenu.SubmenuTrigger
+                className={HEADER_CONTEXT_MENU_SUBMENU_TRIGGER_CLASS}
+                delay={0}
+              >
+                {t("pinColumn")}
+                <ChevronRight className="astw:size-4" />
+              </ContextMenu.SubmenuTrigger>
+              <ContextMenu.Portal>
+                <ContextMenu.Positioner
+                  className="astw:outline-hidden"
+                  sideOffset={-4}
+                  alignOffset={-4}
+                >
+                  <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
+                    <ContextMenu.Item
+                      className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                      disabled={pin === "left"}
+                      onClick={() => setPin(columnKey, "left")}
+                    >
+                      {t("pinColumnLeft")}
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                      disabled={pin === "right"}
+                      onClick={() => setPin(columnKey, "right")}
+                    >
+                      {t("pinColumnRight")}
+                    </ContextMenu.Item>
+                    <ContextMenu.Item
+                      className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                      disabled={pin == null}
+                      onClick={() => setPin(columnKey, "none")}
+                    >
+                      {t("unpinColumn")}
+                    </ContextMenu.Item>
+                  </ContextMenu.Popup>
+                </ContextMenu.Positioner>
+              </ContextMenu.Portal>
+            </ContextMenu.SubmenuRoot>
+            {onSortDirectionChange && (
+              <ContextMenu.SubmenuRoot>
+                <ContextMenu.SubmenuTrigger
+                  className={HEADER_CONTEXT_MENU_SUBMENU_TRIGGER_CLASS}
+                  delay={0}
+                >
+                  {t("sortColumn")}
+                  <ChevronRight className="astw:size-4" />
+                </ContextMenu.SubmenuTrigger>
+                <ContextMenu.Portal>
+                  <ContextMenu.Positioner
+                    className="astw:outline-hidden"
+                    sideOffset={-4}
+                    alignOffset={-4}
+                  >
+                    <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
+                      <ContextMenu.Item
+                        className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                        disabled={sortDirection === "Asc"}
+                        onClick={() => onSortDirectionChange("Asc")}
+                      >
+                        {t("sortColumnAsc")}
+                      </ContextMenu.Item>
+                      <ContextMenu.Item
+                        className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                        disabled={sortDirection === "Desc"}
+                        onClick={() => onSortDirectionChange("Desc")}
+                      >
+                        {t("sortColumnDesc")}
+                      </ContextMenu.Item>
+                      <ContextMenu.Item
+                        className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                        disabled={sortDirection == null}
+                        onClick={() => onSortDirectionChange(undefined)}
+                      >
+                        {t("sortColumnReset")}
+                      </ContextMenu.Item>
+                    </ContextMenu.Popup>
+                  </ContextMenu.Positioner>
+                </ContextMenu.Portal>
+              </ContextMenu.SubmenuRoot>
+            )}
+          </ContextMenu.Popup>
+        </ContextMenu.Positioner>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}
+DataTableHeaderContextMenu.displayName = "DataTable.HeaderContextMenu";
+
+function DataTableCellContextMenu({
+  context,
+  open,
+  onOpenChange,
+  onCloseComplete,
+}: {
+  context: CellContextMenuState | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCloseComplete: () => void;
+}) {
+  const t = useDataTableT();
+  const control = useCollectionControlOptional();
+  const filterConfig = context?.filterConfig;
+  const copyText = context ? toClipboardText(context.value) : undefined;
+  const headerAndValueText = copyText ? `${context?.headerLabel} ${copyText}` : undefined;
+  const filterValue =
+    filterConfig && context ? toFilterValue(context.value, filterConfig) : undefined;
+  const filterOperators =
+    control && filterConfig && filterValue !== undefined
+      ? getVisibleFilterOperators(filterConfig).filter(supportsCellFilterOperator)
+      : [];
+  const hasFilterMenu = !!filterConfig && filterValue !== undefined && filterOperators.length > 0;
+
+  return (
+    <ContextMenu.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(nextOpen) => !nextOpen && onCloseComplete()}
+    >
+      <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+        <ContextMenu.Positioner className="astw:outline-hidden" anchor={context?.anchor ?? null}>
+          <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
+            <ContextMenu.Item
+              className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+              disabled={copyText == null}
+              onClick={() => copyText && copyTextToClipboard(copyText)}
+            >
+              {t("copyCellValue")}
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+              disabled={headerAndValueText == null}
+              onClick={() => headerAndValueText && copyTextToClipboard(headerAndValueText)}
+            >
+              {t("copyCellHeaderValue")}
+            </ContextMenu.Item>
+            {hasFilterMenu && control && filterConfig && (
+              <>
+                <ContextMenu.Separator className={HEADER_CONTEXT_MENU_SEPARATOR_CLASS} />
+                <ContextMenu.SubmenuRoot>
+                  <ContextMenu.SubmenuTrigger
+                    className={HEADER_CONTEXT_MENU_SUBMENU_TRIGGER_CLASS}
+                    delay={0}
+                  >
+                    {t("addFilter")}
+                    <ChevronRight className="astw:size-4" />
+                  </ContextMenu.SubmenuTrigger>
+                  <ContextMenu.Portal>
+                    <ContextMenu.Positioner
+                      className="astw:outline-hidden"
+                      sideOffset={-4}
+                      alignOffset={-4}
+                    >
+                      <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
+                        {filterOperators.map((operator) => (
+                          <ContextMenu.Item
+                            key={operator}
+                            className={HEADER_CONTEXT_MENU_ITEM_CLASS}
+                            onClick={() =>
+                              control.addFilter(filterConfig.field, operator, filterValue)
+                            }
+                          >
+                            {getOperatorLabel(operator, t, filterConfig.type)}
+                          </ContextMenu.Item>
+                        ))}
+                      </ContextMenu.Popup>
+                    </ContextMenu.Positioner>
+                  </ContextMenu.Portal>
+                </ContextMenu.SubmenuRoot>
+              </>
+            )}
+          </ContextMenu.Popup>
+        </ContextMenu.Positioner>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}
+DataTableCellContextMenu.displayName = "DataTable.CellContextMenu";
+
 // =============================================================================
 // DataTable.Headers
 // =============================================================================
@@ -518,21 +902,30 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     sortStates,
     onSort,
     rowActions,
+    setPin,
     toggleRowSelection,
     selectAllRows,
     clearSelection,
     isAllSelected,
     isIndeterminate,
+    rowExpansion,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection;
+  const hasExpand = !!rowExpansion;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
-  const { ordered, keys, placements, selection, actions } = useMemo(
+  const { ordered, keys, placements, selection, expand, actions } = useMemo(
     () =>
-      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
-    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
+      computePinLayout(columns, pinnedColumns, {
+        hasSelection,
+        hasExpand,
+        hasRowActions,
+        widths,
+        columnKeys,
+      }),
+    [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
 
   return (
@@ -573,6 +966,19 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               </Table.Head>
             );
           })()}
+        {hasExpand &&
+          (() => {
+            const { style, className } = pinCellProps(
+              expand,
+              { style: { width: EXPAND_WIDTH } },
+              "header",
+            );
+            return (
+              <Table.Head data-col-key={EXPAND_KEY} style={style} className={className}>
+                <span className="astw:sr-only">{t("expandColumnHeader")}</span>
+              </Table.Head>
+            );
+          })()}
         {ordered?.map((col, index) => {
           const key = keys.get(col) as string;
           const label = col.label;
@@ -600,7 +1006,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const content = col.header
             ? col.header(headerContext)
             : renderDefaultHeader(label, headerContext, align, {
-                bleedLeft: !hasSelection && index === 0,
+                bleedLeft: !hasSelection && !hasExpand && index === 0,
                 bleedRight: !hasRowActions && index === ordered.length - 1,
               });
 
@@ -614,7 +1020,19 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           );
           return (
             <Table.Head key={key} data-col-key={key} style={style} className={className}>
-              {content}
+              <DataTableHeaderContextMenu
+                align={align}
+                column={col}
+                columnKey={key}
+                pinnedColumns={pinnedColumns}
+                setPin={setPin}
+                sortDirection={currentSort?.direction}
+                onSortDirectionChange={
+                  isSortable ? (direction) => onSort(sortField, direction) : undefined
+                }
+              >
+                {content}
+              </DataTableHeaderContextMenu>
             </Table.Head>
           );
         })}
@@ -672,18 +1090,29 @@ function DataTableBody({ className }: { className?: string }) {
     isRowSelected,
     toggleRowSelection,
     pageSize,
+    rowExpansion,
+    isRowExpanded,
+    toggleRowExpansion,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   const hasSelection = !!toggleRowSelection;
-  const totalColSpan = (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0);
+  const hasExpand = !!rowExpansion;
+  const totalColSpan =
+    (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const pinLayout = useMemo(
     () =>
-      computePinLayout(columns, pinnedColumns, { hasSelection, hasRowActions, widths, columnKeys }),
-    [columns, pinnedColumns, hasSelection, hasRowActions, widths, columnKeys],
+      computePinLayout(columns, pinnedColumns, {
+        hasSelection,
+        hasExpand,
+        hasRowActions,
+        widths,
+        columnKeys,
+      }),
+    [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
   const tableBodyProps = {
     "data-slot": "data-table-body",
@@ -697,6 +1126,7 @@ function DataTableBody({ className }: { className?: string }) {
           rowCount={rowCount}
           pinLayout={pinLayout}
           hasSelection={hasSelection}
+          hasExpand={hasExpand}
           hasRowActions={hasRowActions}
         />
       </Table.Body>
@@ -736,6 +1166,10 @@ function DataTableBody({ className }: { className?: string }) {
         toggleRowSelection={toggleRowSelection}
         rowActions={rowActions}
         onClickRow={onClickRow}
+        totalColSpan={totalColSpan}
+        rowExpansion={rowExpansion}
+        isRowExpanded={isRowExpanded}
+        toggleRowExpansion={toggleRowExpansion}
       />
     </Table.Body>
   );
@@ -755,6 +1189,11 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   toggleRowSelection?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
   onClickRow?: (row: TRow) => void;
+  totalColSpan: number;
+  rowExpansion?: RowExpansionOptions<TRow>;
+  /** Optional — `DataTableContextValue` may be hand-constructed without it. */
+  isRowExpanded?: (row: TRow) => boolean;
+  toggleRowExpansion?: (row: TRow) => void;
 }
 
 /** @internal */
@@ -767,18 +1206,46 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   toggleRowSelection,
   rowActions,
   onClickRow,
+  totalColSpan,
+  rowExpansion,
+  isRowExpanded,
+  toggleRowExpansion,
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
-  const { ordered, keys, placements, selection, actions } = pinLayout;
+  const baseId = useId();
+  const hasExpand = !!rowExpansion;
+  const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  const {
+    contextMenu: cellContextMenu,
+    contextMenuOpen: cellContextMenuOpen,
+    handleContextMenuOpenChange: handleCellContextMenuOpenChange,
+    handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
+    getCellContextMenuHandlers,
+  } = useCellContextMenu();
 
   return (
     <>
       {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
-        return (
+        // Namespaced so an id-less row's index fallback can't collide with a real
+        // id of the same digits — React reconciles duplicate keys by position,
+        // pairing a detail panel with the wrong row.
+        const rowKey = rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+        // Expansion is keyed by id, so a row without one gets no chevron at all
+        // rather than a disabled one — it must never be un-toggleable (D5).
+        const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
+        // Gated on `canExpand` in both directions, so a stale id (restored from
+        // a URL, say) can't open a panel for a row the consumer excluded. Such an
+        // id stays in `expandedIds` inert until `collapseAllRows()`.
+        const expanded = expandable && (isRowExpanded?.(row) ?? false);
+        // `aria-controls` is an IDREF *list*, so whitespace in a row id would split
+        // it into dead references (and make the `id` itself invalid).
+        const domKey = rowKey.replace(/\s+/g, "_");
+        const panelId = `${baseId}-panel-${domKey}`;
+        const triggerId = `${baseId}-trigger-${domKey}`;
+        const dataRow = (
           <Table.Row
-            key={rowId != null ? String(rowId) : rowIndex}
             data-slot="data-table-row"
             aria-selected={hasSelection ? selected : undefined}
             // `Table.Row` styles the selected background off `data-[state=selected]`,
@@ -811,6 +1278,34 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                   </Table.Cell>
                 );
               })()}
+            {hasExpand &&
+              (() => {
+                const { style, className } = pinCellProps(
+                  expand,
+                  { style: { width: EXPAND_WIDTH } },
+                  "body",
+                );
+                return (
+                  // `stopPropagation` so using the chevron never fires `onClickRow`
+                  // (the selection cell does the same). Non-expandable rows still
+                  // render the cell — empty — so the column count stays consistent.
+                  <Table.Cell
+                    style={style}
+                    className={className}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {expandable && toggleRowExpansion && (
+                      <RowExpandToggle
+                        id={triggerId}
+                        expanded={expanded}
+                        label={rowExpansion?.getLabel?.(row)}
+                        panelId={panelId}
+                        onToggle={() => toggleRowExpansion(row)}
+                      />
+                    )}
+                  </Table.Cell>
+                );
+              })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
               const content = col.render ? col.render(row) : renderTypedCell(row, col);
@@ -836,6 +1331,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               ) : (
                 content
               );
+              const menuValue = getCellContextValue(row, col, content);
+              const headerLabel = col.label ?? key;
 
               // Surface the full value on hover when the cell is truncated
               // and the resolved cell value is a stringifiable primitive.
@@ -852,32 +1349,30 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 }
               }
 
+              const cellContextMenuHandlers = getCellContextMenuHandlers({
+                headerLabel,
+                value: menuValue,
+                filterConfig: col.filter,
+              });
+              const cellProps = {
+                "data-slot": "data-table-cell" as const,
+                style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
+                className: cellClassName,
+                ...cellContextMenuHandlers,
+              };
+              const cellElement = <Table.Cell {...cellProps} />;
+
               if (tooltipLabel !== undefined) {
                 return (
                   <Tooltip.Root key={key}>
-                    <Tooltip.Trigger
-                      render={
-                        <Table.Cell
-                          data-slot="data-table-cell"
-                          style={cellStyle}
-                          className={cellClassName}
-                        />
-                      }
-                    >
-                      {cellBody}
-                    </Tooltip.Trigger>
+                    <Tooltip.Trigger render={cellElement}>{cellBody}</Tooltip.Trigger>
                     <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
                   </Tooltip.Root>
                 );
               }
 
               return (
-                <Table.Cell
-                  key={key}
-                  data-slot="data-table-cell"
-                  style={cellStyle}
-                  className={cellClassName}
-                >
+                <Table.Cell key={key} {...cellProps}>
                   {cellBody}
                 </Table.Cell>
               );
@@ -902,8 +1397,273 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
           </Table.Row>
         );
+
+        // `expanded` is always false without `rowExpansion`, so a table
+        // that doesn't use the feature renders exactly the rows it did before.
+        return (
+          <Fragment key={rowKey}>
+            {dataRow}
+            {expandable && rowExpansion && (
+              // Mounted whenever the row could be open, not only while it is —
+              // the component owns the open/closed transition and renders
+              // nothing until there is something to show.
+              <DataTableExpandedRow
+                open={expanded}
+                totalColSpan={totalColSpan}
+                panelId={panelId}
+                triggerId={triggerId}
+                label={rowExpansion.getLabel?.(row)}
+                render={() => rowExpansion.render(row)}
+              />
+            )}
+          </Fragment>
+        );
       })}
+      <DataTableCellContextMenu
+        context={cellContextMenu}
+        open={cellContextMenuOpen}
+        onOpenChange={handleCellContextMenuOpenChange}
+        onCloseComplete={handleCellContextMenuCloseComplete}
+      />
     </>
+  );
+}
+
+// =============================================================================
+// RowExpandToggle (internal)
+// =============================================================================
+
+interface RowExpandToggleProps {
+  id: string;
+  expanded: boolean;
+  label: string | undefined;
+  panelId: string;
+  onToggle: () => void;
+}
+
+/**
+ * The chevron trigger. A native `<button>` (via app-shell's `Button`), so
+ * Enter/Space activation and the focus ring come for free — no custom key
+ * handling. `aria-expanded` is what announces the state change on activation.
+ *
+ * @internal
+ */
+function RowExpandToggle({ id, expanded, label, panelId, onToggle }: RowExpandToggleProps) {
+  const t = useDataTableT();
+  // A contextual name ("Expand row INV-1001") — "Expand row" repeated down the
+  // column conveys nothing. The locale owns word order and the unnamed fallback.
+  const name = t(expanded ? "collapseRow" : "expandRow", { label });
+
+  return (
+    <Button
+      id={id}
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-expanded={expanded}
+      // Only while expanded — it must never point at an id absent from the DOM.
+      aria-controls={expanded ? panelId : undefined}
+      aria-label={name}
+      onClick={onToggle}
+    >
+      <ChevronRight
+        className={cn(
+          "astw:size-4 astw:transition-transform astw:motion-reduce:transition-none",
+          expanded && "astw:rotate-90",
+        )}
+      />
+    </Button>
+  );
+}
+
+// =============================================================================
+// DataTableExpandedRow (internal)
+// =============================================================================
+
+interface DataTableExpandedRowProps {
+  open: boolean;
+  totalColSpan: number;
+  panelId: string;
+  triggerId: string;
+  label: string | undefined;
+  render: () => ReactNode;
+}
+
+/**
+ * The detail row: one full-width `<tr>` with a single `colSpan` cell, rendered
+ * immediately after its parent row so forward-tabbing reaches the panel next.
+ *
+ * Mounted for every expandable row (returning `null` while closed) so the
+ * collapse has something to animate. `render` is a thunk, not `children`, so
+ * `rowExpansion.render` only runs while the panel is on screen.
+ *
+ * @internal
+ */
+function DataTableExpandedRow({
+  open,
+  totalColSpan,
+  panelId,
+  triggerId,
+  label,
+  render,
+}: DataTableExpandedRowProps) {
+  // `present` is DOM presence, `entered` the visual state. Opening must mount
+  // collapsed so the transition has a "from" value; closing must stay mounted
+  // until it has played out.
+  const [present, setPresent] = useState(open);
+  const [entered, setEntered] = useState(false);
+
+  useIsomorphicLayoutEffect(() => {
+    if (open) setPresent(true);
+  }, [open]);
+
+  // One frame after mounting, so `0fr → 1fr` is a transition, not an initial value.
+  useIsomorphicLayoutEffect(() => {
+    if (!open || !present) return;
+    if (typeof requestAnimationFrame !== "function") {
+      // No frame scheduler — reveal immediately rather than stay stuck collapsed.
+      setEntered(true);
+      return;
+    }
+    const frame = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, [open, present]);
+
+  // A timer rather than `transitionend`: under `prefers-reduced-motion` there is
+  // no transition, so the event would never fire and the row would never unmount.
+  useEffect(() => {
+    if (open || !present) return;
+    setEntered(false);
+    const timer = setTimeout(() => setPresent(false), EXPAND_TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [open, present]);
+
+  if (!present) return null;
+
+  return (
+    <ExpandedRowContent
+      open={open}
+      entered={entered}
+      totalColSpan={totalColSpan}
+      panelId={panelId}
+      triggerId={triggerId}
+      label={label}
+      render={render}
+    />
+  );
+}
+
+interface ExpandedRowContentProps extends DataTableExpandedRowProps {
+  entered: boolean;
+}
+
+/**
+ * The rendered detail row. Split from the presence owner above so that it truly
+ * unmounts when the collapse finishes: the focus handoff runs from a layout
+ * effect's cleanup, which only fires before React detaches the nodes when the
+ * component itself is removed. Keeping it in the always-mounted parent would run
+ * the cleanup after the panel had already left the DOM, by which point
+ * `document.activeElement` has fallen back to `<body>` and the handoff is a
+ * no-op — the exact bug it exists to prevent.
+ *
+ * @internal
+ */
+function ExpandedRowContent({
+  open,
+  entered,
+  totalColSpan,
+  panelId,
+  triggerId,
+  label,
+  render,
+}: ExpandedRowContentProps) {
+  const t = useDataTableT();
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Hand focus back when the collapse starts, before the panel goes `inert`
+  // below — making an element inert while it holds focus drops focus to <body>.
+  useIsomorphicLayoutEffect(() => {
+    if (open) return;
+    const panel = panelRef.current;
+    if (!panel || !panel.contains(document.activeElement)) return;
+    document.getElementById(triggerId)?.focus();
+  }, [open, triggerId]);
+
+  // Safety net for the row unmounting outright (refetch, filter, pagination).
+  // Both targets are resolved at setup, while still in the document; by cleanup
+  // the trigger may be gone too, so the scroll container is the fallback.
+  useIsomorphicLayoutEffect(() => {
+    const panel = panelRef.current;
+    const trigger = document.getElementById(triggerId);
+    const container = panel?.closest<HTMLElement>("[data-slot='table-container']") ?? null;
+    return () => {
+      if (!panel || !panel.contains(document.activeElement)) return;
+      if (trigger?.isConnected) {
+        trigger.focus();
+        return;
+      }
+      if (container?.isConnected) {
+        // Borrow `tabindex` only for the focus call: a scrollable div is tabbable
+        // by default *unless* the author sets one, and this container is shared
+        // by every `Table.Root` consumer.
+        const hadTabIndex = container.hasAttribute("tabindex");
+        if (!hadTabIndex) container.setAttribute("tabindex", "-1");
+        container.focus();
+        if (!hadTabIndex) container.removeAttribute("tabindex");
+      }
+    };
+  }, [triggerId]);
+
+  return (
+    <Table.Row
+      data-slot="data-table-expanded-row"
+      data-state={open ? "open" : "closed"}
+      className="astw:bg-muted/30 astw:hover:bg-transparent"
+    >
+      {/* `p-0!` — this cell is both first and last, and `Table.Cell`'s
+          `first:pl-6 last:pr-6` outranks a plain `p-0` on specificity, insetting
+          the sticky panel by 24px. */}
+      <Table.Cell colSpan={totalColSpan} className="astw:p-0!">
+        {/* The colSpan cell spans the whole table, so pin the panel to the left
+            edge of the scrollport or it sits off-screen once scrolled. The
+            `min(100%, …)` makes this a no-op when the table already fits. */}
+        <div
+          className="astw:sticky astw:left-0"
+          style={{ width: "min(100%, var(--data-table-viewport, 100%))" }}
+        >
+          {/* `0fr → 1fr` resolves to the panel's exact natural height, so consumer
+              content of any size is neither clipped nor left with dead time at the
+              end. The `<tr>`/`<td>` are left alone — rows size to their content,
+              and animating row heights under `border-collapse` is unreliable. */}
+          <div
+            className="astw:grid astw:transition-[grid-template-rows,opacity] astw:ease-out astw:motion-reduce:transition-none"
+            style={{
+              gridTemplateRows: entered ? "1fr" : "0fr",
+              opacity: entered ? 1 : 0,
+              transitionDuration: `${EXPAND_TRANSITION_MS}ms`,
+            }}
+          >
+            {/* `min-h-0` — grid items default to `min-height: auto` and would
+                refuse to collapse. `overflow-y-hidden` clips mid-reveal;
+                `overflow-x-auto` keeps wide content reachable. */}
+            <div className="astw:min-h-0 astw:overflow-x-auto astw:overflow-y-hidden">
+              {/* A named `<section>` maps to `role="region"`. `inert` covers the
+                  closing window — zero height and opacity still leave descendants
+                  focusable and announced. */}
+              <section
+                ref={panelRef}
+                id={panelId}
+                inert={open ? undefined : true}
+                aria-label={t("expandedDetails", { label })}
+                className="astw:px-6 astw:py-3"
+              >
+                {render()}
+              </section>
+            </div>
+          </div>
+        </div>
+      </Table.Cell>
+    </Table.Row>
   );
 }
 
@@ -967,6 +1727,8 @@ function DataTableTable({ className }: { className?: string }) {
 
   const visibleColumns = ctx?.visibleColumns;
   const pinnedColumns = ctx?.pinnedColumns;
+  const currentPage = ctx?.currentPage;
+  const pageSize = ctx?.pageSize;
 
   // Measure each column's *rendered* width from the (always-present) header row
   // and publish it via PinMeasureContext, so sticky offsets reflect real
@@ -977,16 +1739,46 @@ function DataTableTable({ className }: { className?: string }) {
   useIsomorphicLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    // The observer fires on every frame of a detail row's reveal, which is a pure
+    // height change. Without this guard each toggle re-ran the whole scan dozens
+    // of times.
+    let lastWidth = -1;
+    let lastTableWidth = -1;
+
     const measure = () => {
+      // Own table only: `rowExpansion.render` can nest a DataTable, and the built-in
+      // column keys are module constants, so an unscoped query would let an inner
+      // header overwrite these widths. `querySelector` is pre-order.
+      const ownTable = el.querySelector("table");
+      const width = el.clientWidth;
+      const tableWidth = ownTable?.offsetWidth ?? 0;
+      if (width === lastWidth && tableWidth === lastTableWidth) return;
+      lastWidth = width;
+      lastTableWidth = tableWidth;
       const cells = el.querySelectorAll<HTMLElement>(
         "[data-slot='data-table-header'] [data-col-key]",
       );
       const next: ColumnWidths = {};
       cells.forEach((cell) => {
+        if (cell.closest("table") !== ownTable) return;
         const key = cell.dataset.colKey;
-        if (key) next[key] = cell.offsetWidth;
+        // Fractional width (not the integer-rounded offsetWidth) so accumulated
+        // sticky offsets land exactly on each column's real edge — otherwise the
+        // rounding drift opens a sub-pixel gap between adjacent pinned columns
+        // where scrolling rows bleed through.
+        if (key) next[key] = cell.getBoundingClientRect().width;
       });
       setWidths((prev) => (sameWidths(prev, next) ? prev : next));
+      // Publish the scrollport width for an expanded row's sticky panel to cap
+      // itself to. Skipping zero keeps a hidden-tab mount from collapsing every
+      // panel via `min(100%, 0px)`; writing only on change keeps this mutation
+      // from feeding back into the ResizeObserver.
+      if (width > 0) {
+        const value = `${width}px`;
+        if (el.style.getPropertyValue("--data-table-viewport") !== value) {
+          el.style.setProperty("--data-table-viewport", value);
+        }
+      }
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
@@ -1021,6 +1813,19 @@ function DataTableTable({ className }: { className?: string }) {
       observer.disconnect();
     };
   }, [visibleColumns, pinnedColumns]);
+
+  // Keep pagination-driven scroll reset local to the scroll owner. The scroll
+  // container lives here in `DataTable.Table`, while page changes can come from
+  // the built-in pagination or any custom consumer using the same context.
+  // Threading an imperative callback/event bus through `DataTable.Root` just to
+  // reach this ref would add API surface and create opt-in call sites; this
+  // effect stays as the single place that synchronizes page/page-size state to
+  // the DOM scroll position.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+  }, [currentPage, pageSize]);
 
   return (
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex
@@ -1101,9 +1906,9 @@ export const DataTable = {
    * **Requires `control`** — `useDataTable()` must receive `control` from
    * `useCollectionVariables()`, otherwise this component throws at render time.
    *
-   * **Go-to-first / go-to-last buttons** — Rendered only when `totalPages` is
-   * non-null (i.e. the backend returns a total count). When `totalPages` is
-   * `null`, these buttons and the page counter are omitted.
+   * **Go-to-first / go-to-last buttons** — The first-page button is always
+   * rendered. The last-page button and page counter are rendered only when
+   * `totalPages` is non-null (i.e. the backend returns a `total` count).
    */
   Pagination: DataTablePagination,
 } as const;

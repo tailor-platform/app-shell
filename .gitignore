@@ -6,3 +6,4 @@ dist
 .cursor/
 .claude/
 .pnpm-store
+coverage

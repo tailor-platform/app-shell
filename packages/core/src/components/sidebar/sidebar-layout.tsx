@@ -1,5 +1,5 @@
-import { SidebarProvider } from "@/components/sidebar";
-import { AppShellOutlet } from "@/components/content";
+import { SidebarProvider } from "./primitives";
+import { AppShellOutlet } from "@/routing/content";
 import { DefaultSidebar } from "./default-sidebar";
 import { DefaultHeader } from "./default-header";
 import { ContentContainer } from "./content-container";

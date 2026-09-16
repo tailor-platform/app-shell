@@ -16,6 +16,17 @@ export const dataTableLabels = defineI18nLabels({
     // Column settings (DataTable.Toolbar columnSettings)
     columns: "Columns",
     columnSettings: "Column settings",
+    copyColumnLabel: "Copy label",
+    copyCellValue: "Copy value",
+    copyCellHeaderValue: "Copy header and value",
+    pinColumn: "Pin column",
+    pinColumnLeft: "Pin to left",
+    pinColumnRight: "Pin to right",
+    unpinColumn: "Unpin",
+    sortColumn: "Sort column",
+    sortColumnAsc: "Ascending",
+    sortColumnDesc: "Descending",
+    sortColumnReset: "Reset sort",
     showAllColumns: "Show all",
     hideAllColumns: "Hide all",
     dragToReorder: "Drag to reorder",
@@ -25,10 +36,25 @@ export const dataTableLabels = defineI18nLabels({
     dropColumnsHere: "Drag columns here",
     showColumn: "Show column",
     hideColumn: "Hide column",
+    searchColumns: "Search columns",
+    noColumnsMatch: "No columns match",
+    searchFields: "Search fields",
+    noFieldsMatch: "No fields match",
 
     // Row selection
     selectAll: "Select all rows",
     selectRow: "Select row",
+
+    // Row expansion. `label` is a bare record identity from
+    // `rowExpansion.getLabel` (e.g. "INV-1001"); each locale owns the word
+    // order, and the unnamed fallback, so the accessible name reads naturally.
+    expandColumnHeader: "Expand",
+    expandRow: (props: { label?: string }) =>
+      props.label ? `Expand row ${props.label}` : "Expand row",
+    collapseRow: (props: { label?: string }) =>
+      props.label ? `Collapse row ${props.label}` : "Collapse row",
+    expandedDetails: (props: { label?: string }) =>
+      props.label ? `${props.label} details` : "Row details",
 
     // Pagination
     paginationFirst: "First page",
@@ -102,6 +128,17 @@ export const dataTableLabels = defineI18nLabels({
     // Column settings
     columns: "列",
     columnSettings: "列の設定",
+    copyColumnLabel: "ラベルをコピー",
+    copyCellValue: "値をコピー",
+    copyCellHeaderValue: "ヘッダと値をコピー",
+    pinColumn: "列を固定",
+    pinColumnLeft: "左に固定",
+    pinColumnRight: "右に固定",
+    unpinColumn: "固定を解除",
+    sortColumn: "列をソート",
+    sortColumnAsc: "昇順",
+    sortColumnDesc: "降順",
+    sortColumnReset: "ソートをリセット",
     showAllColumns: "すべて表示",
     hideAllColumns: "すべて非表示",
     dragToReorder: "ドラッグして並び替え",
@@ -111,9 +148,23 @@ export const dataTableLabels = defineI18nLabels({
     dropColumnsHere: "ここに列をドラッグ",
     showColumn: "列を表示",
     hideColumn: "列を非表示",
+    searchColumns: "列を検索",
+    noColumnsMatch: "一致する列がありません",
+    searchFields: "フィールドを検索",
+    noFieldsMatch: "一致するフィールドがありません",
 
     selectAll: "全行を選択",
     selectRow: "行を選択",
+
+    // Row expansion
+    expandColumnHeader: "展開",
+    expandRow: (props: { label?: string }) =>
+      props.label ? `${props.label}の行を展開` : "行を展開",
+    collapseRow: (props: { label?: string }) =>
+      props.label ? `${props.label}の行を折りたたむ` : "行を折りたたむ",
+    expandedDetails: (props: { label?: string }) =>
+      props.label ? `${props.label}の詳細` : "行の詳細",
+
     paginationFirst: "最初のページ",
     paginationPrevious: "前のページ",
     paginationNext: "次のページ",
@@ -126,7 +177,7 @@ export const dataTableLabels = defineI18nLabels({
     paginationSelectedRows: (props: { selected: number }) => `${props.selected} 行を選択中`,
 
     // Filters
-    addFilter: "フィルタを追加",
+    addFilter: "フィルタに追加",
     applyFilter: "適用",
     updateFilter: "更新",
     removeFilter: "フィルタを削除",
@@ -153,7 +204,7 @@ export const dataTableLabels = defineI18nLabels({
     filterOperator_notHasPrefix: "で始まらない",
     filterOperator_notHasSuffix: "で終わらない",
     filterOperator_between: "の範囲内",
-    filterOperator_in: "次のいずれか",
+    filterOperator_in: "含む",
     filterOperator_nin: "次のいずれでもない",
     filterDateOperator_eq: "指定日",
     filterDateOperator_gte: "以降",

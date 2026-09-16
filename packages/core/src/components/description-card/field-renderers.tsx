@@ -499,9 +499,13 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
 // ============================================================================
 
 /**
- * Render a field based on its type
+ * Render a field using its custom `render` when present, otherwise its `type`
  */
 export function renderField(field: ResolvedField): React.ReactNode {
+  // A custom renderer always wins and owns its own presentation - no empty
+  // placeholder, no copy button, no truncation wrapper.
+  if (field.render) return field.render();
+
   switch (field.type) {
     case "text":
       return <TextFieldRenderer field={field} />;

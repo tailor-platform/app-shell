@@ -1,4 +1,10 @@
-import type { FilterConfig, SortConfig, TableFieldName, TableMetadata } from "@/types/collection";
+import type {
+  FieldTypeToFilterConfigType,
+  FilterConfig,
+  SortConfig,
+  TableFieldName,
+  TableMetadata,
+} from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
 import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
 
@@ -20,19 +26,40 @@ export function column<TRow extends Record<string, unknown>>(options: Column<TRo
 // inferColumns() — metadata-driven column defaults
 // =============================================================================
 
+type InferredFieldFilterType<
+  TTable extends TableMetadata,
+  TFieldName extends TableFieldName<TTable>,
+> =
+  Extract<TTable["fields"][number], { readonly name: TFieldName }> extends {
+    readonly type: infer TType;
+  }
+    ? TType extends keyof FieldTypeToFilterConfigType
+      ? FieldTypeToFilterConfigType[TType]
+      : never
+    : never;
+
+type MetadataFieldOptionsForField<
+  TTable extends TableMetadata,
+  TFieldName extends TableFieldName<TTable>,
+> = MetadataFieldOptions<
+  [InferredFieldFilterType<TTable, TFieldName>] extends [never]
+    ? FilterConfig["type"]
+    : InferredFieldFilterType<TTable, TFieldName>
+>;
+
 /**
  * Return a function that produces `Column` from metadata field names.
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
  */
-export function inferColumns<
+function inferColumns<
   TRow extends Record<string, unknown>,
   const TTable extends TableMetadata = TableMetadata,
 >(tableMetadata: TTable): ColumnInferFn<TRow, TTable> {
   const fields = tableMetadata.fields;
 
-  return (
-    dataKey: TableFieldName<TTable>,
-    columnOptions?: MetadataFieldOptions,
+  return <TFieldName extends TableFieldName<TTable>>(
+    dataKey: TFieldName,
+    columnOptions?: MetadataFieldOptionsForField<TTable, NoInfer<TFieldName>>,
   ): InferredColumn<TRow> => {
     const fieldName = dataKey as string;
     const fieldMeta = fields.find((f) => f.name === fieldName);
@@ -45,9 +72,13 @@ export function inferColumns<
       sort = fieldTypeToSortConfig(fieldName, fieldMeta.type);
     }
 
-    let filter: FilterConfig | undefined;
-    if (columnOptions?.filter !== false) {
-      filter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
+    let filter: ColumnBase<TRow>["filter"];
+    const filterOption = columnOptions?.filter;
+    if (filterOption !== false) {
+      const baseFilter = fieldTypeToFilterConfig(fieldName, fieldMeta.type, fieldMeta.enumValues);
+      if (baseFilter) {
+        filter = typeof filterOption === "object" ? { ...baseFilter, ...filterOption } : baseFilter;
+      }
     }
 
     const label = columnOptions?.label ?? fieldMeta.description ?? fieldMeta.name;
@@ -85,7 +116,7 @@ export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TR
  * Per-field column factory returned by `inferColumns(tableMetadata)`.
  *
  * Derives label, sort config, and filter config from the field's metadata.
- * Sort and filter can be suppressed per call via `options`.
+ * Sort can be suppressed and filter can be suppressed or narrowed per call via `options`.
  *
  * @param dataKey - A field name from the bound table metadata.
  * @param options - Optional per-column overrides (label, width, sort, filter).
@@ -94,7 +125,10 @@ export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TR
 export type ColumnInferFn<
   TRow extends Record<string, unknown>,
   TTable extends TableMetadata = TableMetadata,
-> = (dataKey: TableFieldName<TTable>, options?: MetadataFieldOptions) => InferredColumn<TRow>;
+> = <TFieldName extends TableFieldName<TTable>>(
+  dataKey: TFieldName,
+  options?: MetadataFieldOptionsForField<TTable, NoInfer<TFieldName>>,
+) => InferredColumn<TRow>;
 
 /**
  * Object returned by `createColumnHelper`.

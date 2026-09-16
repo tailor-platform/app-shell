@@ -138,6 +138,34 @@ describe("Calendar", () => {
     );
   });
 
+  it("keeps focus on the nav button after keyboard nav clamped at minValue", async () => {
+    const user = userEvent.setup();
+    render(
+      <Calendar
+        aria-label="Select date"
+        defaultFocusedValue={parseDate("2025-06-11") as CalendarDate}
+        minValue={parseDate("2025-06-10")}
+      />,
+    );
+    const tabbable = () => getCalendarCells().find((c) => c.getAttribute("tabindex") === "0")!;
+
+    // Arrow to the boundary, then once more (clamped no-op). The clamped press
+    // must not leave a stale one-shot focus flag behind.
+    tabbable().focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(tabbable().textContent).toBe("10");
+    await user.keyboard("{ArrowLeft}");
+    expect(tabbable().textContent).toBe("10");
+
+    // A later month-nav click must keep focus on the button — a stale flag
+    // would yank it into the grid.
+    const nextBtn = screen
+      .getAllByRole("button")
+      .find((b) => b.getAttribute("aria-label") === "Next month")!;
+    await user.click(nextBtn);
+    expect(document.activeElement).toBe(nextBtn);
+  });
+
   it("lets arrow keys traverse through unavailable dates without getting stuck", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

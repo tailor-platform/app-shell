@@ -7,7 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
-} from "@/components/sidebar";
+} from "./primitives";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";

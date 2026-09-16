@@ -17,5 +17,8 @@ runs:
       shell: bash
     - run: pnpm fmt:check
       shell: bash
-    - run: pnpm exec turbo run lint test type-check
+    # `check-dts` type-checks the .d.ts we actually publish, from a packed
+    # tarball with `skipLibCheck: false`. `type-check` cannot catch that: it
+    # sets skipLibCheck: true and never looks at the emitted declarations.
+    - run: pnpm exec turbo run lint test type-check check-dts
       shell: bash

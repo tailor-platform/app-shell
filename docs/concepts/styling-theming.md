@@ -101,7 +101,18 @@ Write **plain Tailwind utilities** in your application code. Three rules cover e
 </div>
 ```
 
-If you find yourself wanting to override something a component sets and there is no prop for it, that is usually a composition problem rather than a styling one. A table inside a card, for instance, renders `Table.Root` directly after `Card.Header` rather than wrapping it in `Card.Content` and fighting that padding — the cells carry their own horizontal inset, so the container only needs `containerClassName="pb-6"`. If no composition works either, the gap is ours: please open an issue.
+When no prop exists and you genuinely have to override a value a component sets, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. It is the last resort, not the first: a plain utility silently loses (see below), and `!` is what the pattern catalogue uses for the one documented case, zeroing a card's padding so a table can sit flush inside it:
+
+```tsx
+<Card.Root>
+  <Card.Header title="Line items" />
+  <Card.Content className="px-0!">
+    <Table.Root>{/* … */}</Table.Root>
+  </Card.Content>
+</Card.Root>
+```
+
+Note the table container adds **no** horizontal padding of its own there: `Table.Head` and `Table.Cell` already carry `first:pl-6` / `last:pr-6`, so a `containerClassName="px-6"` would stack on top and push the first column 24px past the card title.
 
 ### Never write the `astw:` prefix in application code
 
@@ -122,7 +133,7 @@ This is the reason rule 3 sends you to props rather than to a more specific clas
 <Card.Content className="px-0" />
 ```
 
-State variants make it worse rather than better: `Button`'s `ghost` variant sets a hover color, and a `:hover` rule outranks an unprefixed utility on **specificity**, not merely order — so a plain `text-destructive` on a ghost button is red only until the pointer reaches it. `variant="destructive"` is the supported way to express that.
+State variants make it worse rather than better: `Button`'s `ghost` variant sets a hover color, and a `:hover` rule outranks an unprefixed utility on **specificity**, not merely order — so a plain `text-destructive` on a ghost button is red only until the pointer reaches it. `variant="destructive"` is the supported way to express that; where no such prop exists, `!` wins in every state because importance beats specificity.
 
 ## Color Themes (Light / Dark / System)
 

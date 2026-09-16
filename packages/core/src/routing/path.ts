@@ -2,8 +2,24 @@ import { ReactNode } from "react";
 import { Resource, Module } from "@/resource";
 import { buildTitleResolver } from "@/lib/i18n";
 
+/**
+ * Parse a dynamic route segment and return its parameter name, or `null` for a static segment.
+ */
+export const parseDynamicSegment = (segment: string): string | null =>
+  segment.startsWith(":") ? segment.slice(1) : null;
+
+/** Return whether a path contains at least one dynamic route segment. */
+export const hasDynamicSegment = (path: string): boolean =>
+  path.split("/").some((segment) => parseDynamicSegment(segment) !== null);
+
 export type NavigatableRoute = {
+  /** Actual route path used for navigation and filtering. */
   path: string;
+  /**
+   * Display-only path. Dynamic parameter values may be replaced with `…` so
+   * static child segments remain visible. Falls back to `path` when omitted.
+   */
+  displayPath?: string;
   title: string;
   icon?: ReactNode;
   /**
@@ -124,7 +140,7 @@ export function processPathSegments(
         // Replace ":variable" segments with a regex pattern to match any non-slash sequence
         const regexPattern = path
           .split("/")
-          .map((part) => (part.startsWith(":") ? "[^/]+" : part))
+          .map((part) => (parseDynamicSegment(part) !== null ? "[^/]+" : part))
           .join("/");
         const regex = new RegExp(`^${regexPattern}$`);
         return regex.test(currentPath);

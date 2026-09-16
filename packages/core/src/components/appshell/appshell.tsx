@@ -394,14 +394,14 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
     <AppShellConfigContext.Provider value={configValue}>
       <AppShellDataContext.Provider value={dataValue}>
         <BreadcrumbOverrideProvider>
-          <CommandPaletteProvider searchSources={props.searchSources}>
-            <ThemeProvider defaultColorTheme={props.defaultColorTheme}>
-              <RouterContainer {...routingMode}>
+          <ThemeProvider defaultColorTheme={props.defaultColorTheme}>
+            <RouterContainer {...routingMode}>
+              <CommandPaletteProvider searchSources={props.searchSources}>
                 {props.children}
                 <BuiltInCommandPalette />
-              </RouterContainer>
-            </ThemeProvider>
-          </CommandPaletteProvider>
+              </CommandPaletteProvider>
+            </RouterContainer>
+          </ThemeProvider>
         </BreadcrumbOverrideProvider>
       </AppShellDataContext.Provider>
     </AppShellConfigContext.Provider>

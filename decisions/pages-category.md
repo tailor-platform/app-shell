@@ -31,6 +31,12 @@ That rule is doing real work, because all four agreed pages sit directly on top 
 | Master list (tailor-inc/platform-planning#1737)  | `form/modal`, plus a Sheet variant                                |
 | Form-as-page (tailor-inc/platform-planning#1742) | `form/single-page`, `form/sectioned`, `form/wizard`               |
 
+> **Amended by the first entry.** Detail page did not land as a comparison. A
+> review of two client implementations found no tabbed detail screens in the
+> field, so the tabbed variant was dropped and `detail/hero-with-actions`
+> — already the house shape — moved wholesale out of `src/pattern/` to become
+> `page/detail`. See "A page with one shape" below.
+
 Without the link-don't-restate rule, each page entry would duplicate three pattern implementations and drift from them.
 
 ## Implementation
@@ -39,7 +45,9 @@ Without the link-don't-restate rule, each page entry would duplicate three patte
 
 ## Consequences and open questions
 
-- **The "Available Pages" section is empty until the first entry lands.** It renders as a heading plus the definition of the layer, which reads correctly on its own, but it is a section with no rows. The first page entry should also add a page step to the skill's "How to Use" list, which currently sends an agent straight to a pattern.
+- ~~**The "Available Pages" section is empty until the first entry lands.**~~ Resolved by the first entry, `page/detail` (tailor-inc/platform-planning#1736), which also added the page step to the skill's "How to Use" list and scoped the "NEVER mix patterns" rule so that composing patterns for different parts of one screen — which a page entry exists to direct — is no longer read as forbidden.
+- **A page with one shape owns its layout.** The link-don't-restate rule was written for pages that compare variants sitting on patterns that already exist, and it holds there. It does not force a page whose shape is settled to invent a pattern to point at: `page/detail` embeds the two-column detail layout directly, having absorbed the pattern that used to hold it, and cites patterns only for the pieces inside its frame. The rule's purpose is preventing one implementation from living in two entries and drifting; a move satisfies that where a copy would not. `catalogue/src/page/README.md` carries the same clarification for authors.
+- **`src/pattern/detail/` no longer exists.** Its sole entry became `page/detail`. Three `Used in patterns:` references in `fundamental/components.md` (`DescriptionCard`, `ActionPanel`, `ActivityCard`) were re-pointed at the page; anything else citing `detail/hero-with-actions` is stale.
 - **Subcategories are optional.** Index tables group by `subcategory` only, so a page without one renders as a bare table rather than under a heading repeating its category. Pages can adopt subcategories later where they earn their keep — Collection and Master list are both list-shaped while Detail page is not — without any generator change.
 - **Page entries do not reach `docs/`.** The catalogue feeds the agent skill only. Closing that gap belongs to the documentation-management pipeline work, which intends `docs-kit` to subsume catalogue's generator; this taxonomy carries over to it unchanged, since the boundary is about authoring intent rather than how output is produced.
 - **`expected-skills-files.txt` must gain a row per page entry.** It is the committed manifest guarding the gitignored generated tree, and `catalogue`'s `test` script fails when the two disagree.

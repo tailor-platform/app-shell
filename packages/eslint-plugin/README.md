@@ -1,5 +1,9 @@
 # @tailor-platform/eslint-plugin-app-shell
 
+[![npm version](https://img.shields.io/npm/v/@tailor-platform/eslint-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/eslint-plugin-app-shell)
+[![npm downloads](https://img.shields.io/npm/dm/@tailor-platform/eslint-plugin-app-shell)](https://www.npmjs.com/package/@tailor-platform/eslint-plugin-app-shell)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/tailor-platform/app-shell/blob/main/LICENSE.md)
+
 AppShell usage rules for Oxlint.
 
 ## Oxlint

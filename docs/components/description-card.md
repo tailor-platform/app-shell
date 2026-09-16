@@ -474,14 +474,13 @@ function OrderDetails() {
 
 The component uses container queries for responsive layouts:
 
+`className` lands on the card root, for properties the card doesn't set itself — sizing and placement rather than surface. It manages its own background, radius, elevation and 24px content inset.
+
 ```tsx
-// Custom styling
-<DescriptionCard
-  className="astw:bg-white astw:p-6 astw:rounded-lg astw:shadow"
-  data={data}
-  fields={fields}
-/>
+<DescriptionCard className="max-w-3xl" data={data} fields={fields} />
 ```
+
+Write **plain** Tailwind utilities here — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components).
 
 ## Accessibility
 

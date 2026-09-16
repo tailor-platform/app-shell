@@ -5,11 +5,11 @@ const MetricCardDemoPage = () => (
   <Layout>
     <Layout.Header title="MetricCard Demo" />
     <Layout.Column>
-      <p className="astw:text-sm astw:text-muted-foreground astw:mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Dashboard KPI cards: title, value, optional trend and description.
       </p>
-      <div className="astw:flex astw:flex-row astw:flex-wrap astw:gap-4">
-        <div className="astw:min-w-[200px] astw:flex-1">
+      <div className="flex flex-row flex-wrap gap-4">
+        <div className="min-w-[200px] flex-1">
           <MetricCard
             title="Net total"
             value="$1,500.00"
@@ -17,7 +17,7 @@ const MetricCardDemoPage = () => (
             description="vs last month"
           />
         </div>
-        <div className="astw:min-w-[200px] astw:flex-1">
+        <div className="min-w-[200px] flex-1">
           <MetricCard
             title="Discount total"
             value="$120.00"
@@ -25,7 +25,7 @@ const MetricCardDemoPage = () => (
             description="vs last month"
           />
         </div>
-        <div className="astw:min-w-[200px] astw:flex-1">
+        <div className="min-w-[200px] flex-1">
           <MetricCard
             title="Orders"
             value="42"
@@ -34,7 +34,7 @@ const MetricCardDemoPage = () => (
             icon={<ZapIcon size={14} />}
           />
         </div>
-        <div className="astw:min-w-[200px] astw:flex-1">
+        <div className="min-w-[200px] flex-1">
           <MetricCard title="Revenue (MTD)" value="$8,200" description="vs last month" />
         </div>
       </div>

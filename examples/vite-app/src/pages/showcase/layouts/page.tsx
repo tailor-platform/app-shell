@@ -53,11 +53,11 @@ const activityItems = [
 
 const Placeholder = ({ columnNumber }: { columnNumber: number }) => (
   <div
-    className="astw:rounded-md astw:border astw:border-border astw:bg-muted astw:flex astw:items-center astw:justify-center astw:relative astw:overflow-hidden"
+    className="rounded-md border border-border bg-muted flex items-center justify-center relative overflow-hidden"
     style={{ minHeight: 260, height: 260 }}
   >
     <div
-      className="astw:absolute astw:inset-0 astw:opacity-30 dark:astw:opacity-20"
+      className="absolute inset-0 opacity-30 dark:opacity-20"
       style={{
         backgroundImage: `repeating-linear-gradient(
           135deg,
@@ -69,7 +69,7 @@ const Placeholder = ({ columnNumber }: { columnNumber: number }) => (
       }}
     />
     <div
-      className="astw:absolute astw:inset-0 astw:opacity-0 dark:astw:opacity-20"
+      className="absolute inset-0 opacity-0 dark:opacity-20"
       style={{
         backgroundImage: `repeating-linear-gradient(
           135deg,
@@ -80,9 +80,7 @@ const Placeholder = ({ columnNumber }: { columnNumber: number }) => (
         )`,
       }}
     />
-    <span className="astw:text-4xl astw:font-bold astw:text-muted-foreground astw:relative astw:z-10">
-      {columnNumber}
-    </span>
+    <span className="text-4xl font-bold text-muted-foreground relative z-10">{columnNumber}</span>
   </div>
 );
 

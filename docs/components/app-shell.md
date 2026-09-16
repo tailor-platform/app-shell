@@ -237,9 +237,9 @@ import { useRouteError } from "@tailor-platform/app-shell";
 const GlobalErrorBoundary = () => {
   const error = useRouteError() as Error;
   return (
-    <div className="astw:p-8">
-      <h1 className="astw:text-xl astw:font-bold astw:mb-4">Something went wrong</h1>
-      <p className="astw:text-red-600">{error.message}</p>
+    <div className="p-8">
+      <h1 className="text-xl font-bold mb-4">Something went wrong</h1>
+      <p className="text-red-600">{error.message}</p>
     </div>
   );
 };
@@ -449,8 +449,8 @@ declare module "@tailor-platform/app-shell" {
 const ErrorBoundary = () => {
   const error = useRouteError() as Error;
   return (
-    <div className="astw:p-8">
-      <h1 className="astw:text-xl astw:font-bold">Error</h1>
+    <div className="p-8">
+      <h1 className="text-xl font-bold">Error</h1>
       <p>{error.message}</p>
     </div>
   );

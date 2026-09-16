@@ -260,10 +260,10 @@ Use `fill` for pages whose main content manages its own scrolling (typically a `
 
 ## Gap Spacing
 
-Use `className` to control the space between columns:
+Use the `gap` prop to control the space between columns. Supported steps are `4`, `6` and `8`:
 
 ```tsx
-<Layout className="astw:gap-6">
+<Layout gap={6}>
   <Layout.Column>{/* ... */}</Layout.Column>
   <Layout.Column>{/* ... */}</Layout.Column>
 </Layout>
@@ -481,20 +481,18 @@ The Layout component validates its children:
 
 ### Custom Styling
 
-Add custom classes to the layout container:
+Add custom classes to the layout container. Keep to properties the layout doesn't set itself — it manages its own vertical padding and column gap (`gap`):
 
 ```tsx
-<Layout className="astw:bg-gray-50 astw:p-8 astw:rounded-lg">{/* ... */}</Layout>
+<Layout className="bg-muted rounded-lg">{/* ... */}</Layout>
 ```
 
 Add custom classes to individual columns:
 
 ```tsx
 <Layout>
-  <Layout.Column className="astw:bg-white astw:shadow-sm">
-    {/* Main content with background */}
-  </Layout.Column>
-  <Layout.Column className="astw:space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
+  <Layout.Column className="bg-card shadow-sm">{/* Main content with background */}</Layout.Column>
+  <Layout.Column className="space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
 </Layout>
 ```
 

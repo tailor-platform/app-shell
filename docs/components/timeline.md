@@ -286,14 +286,14 @@ Use `decorations` to add background highlights and vertical marker lines:
         start: freezeStart,
         end: freezeEnd,
         color: "var(--destructive/10)",
-        className: "astw:border-x astw:border-destructive/30",
+        className: "border-x border-destructive/30",
       },
     ],
     markers: [
       {
         at: today,
         color: "var(--primary)",
-        label: <span className="astw:text-xs astw:text-primary">Today</span>,
+        label: <span className="text-xs text-primary">Today</span>,
       },
     ],
   }}

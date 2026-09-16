@@ -285,7 +285,7 @@ export default function PurchaseOrderDetailPage({
                       {line.received}
                       {line.received !== line.qty && (
                         <span className="ml-1 text-xs text-muted-foreground">
-                          ({line.received - line.qty})
+                          ({line.qty - line.received})
                         </span>
                       )}
                     </Table.Cell>

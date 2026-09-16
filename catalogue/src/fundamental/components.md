@@ -385,7 +385,7 @@ Plus `badgeVariants` CVA for custom-styled siblings.
 
 **Notes:**
 
-- **Inside a card?** Pass `containerClassName="px-6"` on `Table.Root` for the horizontal inset. When the card has a header, render `Table.Root` directly after it and add `pb-6` to the container classes. Skipping the horizontal inset lands the first column flush against the card edge. See the `Card` entry for the canonical forms and a DON'T example. Dense cell typography (**`text-sm`**, **`tabular-nums`** for figures, **`font-mono`** for identifiers) → **`design-system.md`** §4 Typography.
+- **Inside a card?** Zero the card's horizontal padding — drop `Card.Content` (bare list form) or pass `Card.Content className="px-0!"` (header+content form) — and leave the table container's padding alone. `Table.Head` / `Table.Cell` carry their own `first:pl-6` / `last:pr-6`, so a `containerClassName="px-6"` double-pads and the first column lands 24px right of the card title. See the `Card` entry for the two canonical forms and a DON'T example. Dense cell typography (**`text-sm`**, **`tabular-nums`** for figures, **`font-mono`** for identifiers) → **`design-system.md`** §4 Typography.
 - **Whole row is clickable.** Use `<Table.Row onClick={() => navigate(detailPath)} className="cursor-pointer">`. For keyboard and screen-reader users, also wrap the primary identifier cell content in `<Link>` (so the row is reachable via Tab; `Table.Row` is a `<tr>` and cannot itself be a Link — wrapping a `<tr>` in `<a>` is invalid HTML). **No per-row "View" / "Open" / "→" buttons.** Per-row `Menu` (overflow `…`) is the only allowed per-row action surface and is reserved for non-navigation actions like Archive, Duplicate.
 
 ### `DataTable`
@@ -461,13 +461,13 @@ const table = useDataTable({
 
 **Notes:**
 
-- **Tables inside a card need a container inset** (token-backed spacing rationale → **`design-system.md`** §4 Spacing): `Table.Root` provides it via `containerClassName="px-6"`. When a card header precedes the table, render the table directly after it and add `pb-6` to preserve the card's bottom inset. Skipping the horizontal inset lands the first column flush against the card edge.
+- **A table inside a card needs ONE geometry change, not two** (token-backed spacing rationale → **`design-system.md`** §4 Spacing): the card stops imposing horizontal padding. Drop `Card.Content` for the bare form, or pass `Card.Content className="px-0!"` for the header+content form. That is all. `Table.Head` and `Table.Cell` already carry an intrinsic `first:pl-6` / `last:pr-6`, which supplies the inset on its own — so the table container must add **none**. Padding on the container stacks on top of the cell's own and pushes the first column 24px past the card title.
 
 **Bare table-in-card (list pages, no card-level title):**
 
 ```tsx
 <Card.Root>
-  <Table.Root containerClassName="px-6">{/* … */}</Table.Root>
+  <Table.Root>{/* … */}</Table.Root>
 </Card.Root>
 ```
 
@@ -476,16 +476,20 @@ const table = useDataTable({
 ```tsx
 <Card.Root>
   <Card.Header title="Line items" />
-  <Table.Root containerClassName="px-6 pb-6">{/* … */}</Table.Root>
+  <Card.Content className="px-0!">
+    <Table.Root>{/* … */}</Table.Root>
+  </Card.Content>
 </Card.Root>
 ```
 
-**DON'T — first column lands flush against the card edge:**
+**DON'T — the first column sits 24px right of the card title:**
 
 ```tsx
 <Card.Root>
-  <Card.Header title="Line items" />
-  <Table.Root>{/* missing containerClassName="px-6" */}</Table.Root>
+  <Card.Content className="px-0!">
+    {/* double-pads: the container's 24px adds to the cell's own first:pl-6 */}
+    <Table.Root containerClassName="px-6">{/* … */}</Table.Root>
+  </Card.Content>
 </Card.Root>
 ```
 
@@ -562,26 +566,37 @@ const table = useDataTable({
 />
 ```
 
-**Used in patterns:** `detail/hero-with-actions` (body sections).
+**Used in:** `page/detail` (body sections).
 
 ### `ActionPanel`
 
 **Import:** `import { ActionPanel } from '@tailor-platform/app-shell'`
 **Purpose:** Right-rail panel listing workflow actions for a detail page (approve, reject, archive, etc.).
-**API:** `ActionPanelProps` — `title`, `actions` (array of `{ label, onSelect, variant?, disabled?, hidden? }`), `className`.
+**API:** `ActionPanelProps` — `title`, `actions`, `className`. Each action is `{ key, label, icon, onClick?, disabled?, loading?, variant? }`; `key`, `label` and `icon` are all **required**, the handler is `onClick` (not `onSelect`), and `variant` is `"default" | "destructive"`. There is no `hidden` — omit a row by not spreading it in. The row type is not exported on its own; annotate an array as `ActionPanelProps["actions"]`.
 **Example:**
 
 ```tsx
 <ActionPanel
   title="Actions"
   actions={[
-    { label: "Approve", variant: "default", onSelect: handleApprove },
-    { label: "Reject", variant: "destructive", onSelect: handleReject, disabled: !canReject },
+    { key: "approve", label: "Approve", icon: <Check />, onClick: handleApprove },
+    ...(canReject
+      ? [
+          {
+            key: "reject",
+            label: "Reject",
+            icon: <X />,
+            onClick: handleReject,
+            variant: "destructive" as const,
+            loading: rejecting,
+          },
+        ]
+      : []),
   ]}
 />
 ```
 
-**Used in patterns:** `detail/hero-with-actions`.
+**Used in:** `page/detail`.
 
 **Notes:**
 
@@ -592,7 +607,7 @@ const table = useDataTable({
 **Import:** `import { ActivityCard } from '@tailor-platform/app-shell'`
 **Purpose:** Timeline of events on a record (audit log, status changes, comments).
 **API:** Compound — `ActivityCard.Root`, `ActivityCard.Items` (generic over item type), plus `ActivityCardProps`, `ActivityCardItem`, `ActivityCardItemProps`. Items render with timestamp + actor + description.
-**Used in patterns:** `detail/hero-with-actions` (right column or bottom section).
+**Used in:** `page/detail` (right column, for revision history / audit trail).
 
 ### `Alert`
 

@@ -66,25 +66,25 @@ const AIChatDemoPage = () => {
     <Layout fill>
       <Layout.Header title="AIChat Demo" />
       <Layout.Column>
-        <p className="astw:text-sm astw:text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Runs on a scripted mock — no model is called. Streaming, Stop, and the message actions all
           exercise the real component.
         </p>
         {/* `overflow-hidden` keeps the header rule inside the card's rounded corners. */}
-        <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
+        <Card.Root className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <AIChat status={status}>
             <AIChat.Header
               title="Assistant"
               actions={
                 <AIChat.Action label="Clear conversation" onClick={() => window.location.reload()}>
-                  <Eraser className="astw:size-3.5" aria-hidden />
+                  <Eraser className="size-3.5" aria-hidden />
                 </AIChat.Action>
               }
             />
             <AIChat.Conversation>
               {messages.length === 0 ? (
                 <AIChat.EmptyState
-                  icon={<Sparkles className="astw:size-6 astw:text-primary" aria-hidden />}
+                  icon={<Sparkles className="size-6 text-primary" aria-hidden />}
                   title="Ask the assistant"
                   description="Answers are grounded in your help articles. This demo runs on scripted data."
                 >
@@ -103,15 +103,15 @@ const AIChatDemoPage = () => {
                   <AIChat.Message key={message.id} from={message.role}>
                     <AIChat.Response>{message.content}</AIChat.Response>
                     {message.role === "assistant" && status === "ready" && message.content ? (
-                      <AIChat.Actions className="astw:-ml-1.5">
+                      <AIChat.Actions className="-ml-1.5">
                         <AIChat.Action
                           label="Copy"
                           onClick={() => void navigator.clipboard?.writeText(message.content)}
                         >
-                          <Copy className="astw:size-3.5" aria-hidden />
+                          <Copy className="size-3.5" aria-hidden />
                         </AIChat.Action>
                         <AIChat.Action label="Retry" onClick={retryLastQuestion}>
-                          <RefreshCw className="astw:size-3.5" aria-hidden />
+                          <RefreshCw className="size-3.5" aria-hidden />
                         </AIChat.Action>
                       </AIChat.Actions>
                     ) : null}

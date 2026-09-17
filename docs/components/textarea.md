@@ -59,7 +59,7 @@ const [note, setNote] = useState("");
 <Textarea rows={8} placeholder="Paste the incident log…" />
 ```
 
-> The box does not auto-grow as you type. `field-sizing: content` would do that, but the browser then ignores `rows` — leaving height settable only through a `min-h-*` utility, which a consuming app can't rely on because `astw:` utilities exist only if they were compiled into this package's CSS.
+> The box does not auto-grow as you type. `field-sizing: content` would do that, but the browser then ignores `rows` — leaving height settable only through a `min-h-*` utility. Use `rows` instead.
 
 ### Disabled
 

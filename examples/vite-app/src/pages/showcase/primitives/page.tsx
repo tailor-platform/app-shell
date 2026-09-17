@@ -496,7 +496,9 @@ const PrimitiveComponentsDemoPage = () => {
                       <Menu.Separator />
                       <Menu.Item
                         onClick={() => alert("Delete clicked")}
-                        className="astw:text-destructive"
+                        // Menu has no destructive variant, and a utility class
+                        // loses to `data-highlighted:text-accent-foreground`.
+                        style={{ color: "var(--destructive)" }}
                       >
                         Delete
                       </Menu.Item>

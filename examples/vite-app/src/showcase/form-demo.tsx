@@ -300,8 +300,7 @@ export const FormComponentsDemoPage = () => {
               <div style={{ display: "flex", gap: "1.5rem" }}>
                 <Field.Root
                   name="fruit-select"
-                  style={{ flex: 1 }}
-                  className="astw:items-stretch"
+                  style={{ flex: 1, alignItems: "stretch" }}
                   validate={(value) => {
                     const v = value as FruitOption | null;
                     if (v?.name !== "Mango") {
@@ -323,8 +322,7 @@ export const FormComponentsDemoPage = () => {
 
                 <Field.Root
                   name="fruit-combobox"
-                  style={{ flex: 1 }}
-                  className="astw:items-stretch"
+                  style={{ flex: 1, alignItems: "stretch" }}
                   validate={(value) => {
                     const v = value as string[] | undefined;
                     if (!v || v.length === 0) {
@@ -342,8 +340,7 @@ export const FormComponentsDemoPage = () => {
 
                 <Field.Root
                   name="fruit-autocomplete"
-                  style={{ flex: 1 }}
-                  className="astw:items-stretch"
+                  style={{ flex: 1, alignItems: "stretch" }}
                   validate={(value) => {
                     const v = String(value ?? "");
                     if (v !== "" && v !== "Cherry") {

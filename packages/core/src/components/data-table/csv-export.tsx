@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
@@ -29,10 +29,6 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
   const progress =
     total != null && total > 0 ? Math.min(100, (exporter.progress.completed / total) * 100) : null;
 
-  useEffect(() => {
-    if (exporter.phase === "success") setOpen(false);
-  }, [exporter.phase]);
-
   const onOpenChange = (nextOpen: boolean) => {
     if (nextOpen && !isExporting) {
       setFilename(exporter.defaultFilename);
@@ -41,13 +37,13 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
     setOpen(nextOpen);
   };
 
-  const startExport = () => {
+  const startExport = async () => {
     if (!filename.trim()) {
       setFilenameError(t("invalidFilename"));
       return;
     }
     setFilenameError(null);
-    void exporter.exportCsv(filename);
+    if (await exporter.exportCsv(filename)) setOpen(false);
   };
 
   return (
@@ -82,7 +78,7 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
             className="astw:flex astw:flex-col astw:gap-2"
             onSubmit={(event) => {
               event.preventDefault();
-              startExport();
+              void startExport();
             }}
           >
             <label className="astw:text-sm astw:font-medium" htmlFor={filenameId}>
@@ -123,7 +119,7 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
           ) : (
             <>
               <Dialog.Close render={<Button variant="outline" />}>{t("cancel")}</Dialog.Close>
-              <Button onClick={startExport}>
+              <Button onClick={() => void startExport()}>
                 {exporter.phase === "error" ? t("retry") : t("download")}
               </Button>
             </>

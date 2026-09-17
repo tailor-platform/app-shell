@@ -110,7 +110,7 @@ describe("useCsvExporter", () => {
       { wrapper },
     );
 
-    let exportPromise!: Promise<void>;
+    let exportPromise!: Promise<boolean>;
     act(() => {
       exportPromise = result.current.exportCsv();
     });

@@ -15,7 +15,7 @@ afterEach(() => {
 describe("DataTable.CSVExport", () => {
   const idleExporter: CsvExporter = {
     defaultFilename: "products.csv",
-    exportCsv: vi.fn().mockResolvedValue(undefined),
+    exportCsv: vi.fn().mockResolvedValue(true),
     cancel: vi.fn(),
     phase: "idle",
     progress: { completed: 0, total: null },
@@ -57,7 +57,7 @@ describe("DataTable.CSVExport", () => {
     const user = userEvent.setup();
     const exporter: CsvExporter = {
       ...idleExporter,
-      exportCsv: vi.fn().mockResolvedValue(undefined),
+      exportCsv: vi.fn().mockResolvedValue(true),
     };
 
     render(<DataTableCSVExport exporter={exporter} />, { wrapper });

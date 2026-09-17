@@ -62,7 +62,8 @@ export interface UseCsvExporterOptions<TRow extends Record<string, unknown>> {
 
 export interface CsvExporter {
   defaultFilename: string;
-  exportCsv: (filename?: string) => Promise<void>;
+  /** Resolves true when the export completed (including an empty result). */
+  exportCsv: (filename?: string) => Promise<boolean>;
   cancel: () => void;
   phase: CsvExportPhase;
   progress: {

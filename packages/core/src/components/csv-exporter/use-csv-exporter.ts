@@ -101,7 +101,7 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
 
   const exportCsv = useCallback(
     async (requestedFilename = defaultFilename) => {
-      if (abortControllerRef.current) return;
+      if (abortControllerRef.current) return false;
 
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -141,7 +141,7 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
         if (rows.length === 0) {
           setPhase("success");
           toast.info(t("noRows"));
-          return;
+          return true;
         }
 
         setPhase("serializing");
@@ -158,6 +158,7 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
         downloadCsv(csv, filename);
         setPhase("success");
         toast.success(t("exportComplete", { count: rows.length }));
+        return true;
       } catch (caught) {
         if (
           abortController.signal.aborted ||
@@ -171,6 +172,7 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
           setPhase("error");
           toast.error(t("exportFailed"));
         }
+        return false;
       } finally {
         abortControllerRef.current = null;
       }

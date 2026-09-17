@@ -90,13 +90,13 @@ A labelled DataTable column must provide `accessor` or `id`; otherwise TypeScrip
 
 ## Return value
 
-| Property               | Type                                                                                            | Description                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `defaultFilename`      | `string`                                                                                        | Suggested download name.                                        |
-| `exportCsv(filename?)` | `(filename?: string) => Promise<void>`                                                          | Starts an export. Uses `defaultFilename` when no name is given. |
-| `cancel()`             | `() => void`                                                                                    | Aborts the in-flight fetcher request.                           |
-| `phase`                | `"idle" \| "fetching" \| "serializing" \| "downloading" \| "success" \| "error" \| "cancelled"` | Current export phase.                                           |
-| `progress`             | `{ completed: number; total: number \| null }`                                                  | Fetched row count and optional total.                           |
-| `error`                | `Error \| null`                                                                                 | Last export error.                                              |
+| Property               | Type                                                                                            | Description                                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `defaultFilename`      | `string`                                                                                        | Suggested download name.                                                                             |
+| `exportCsv(filename?)` | `(filename?: string) => Promise<boolean>`                                                       | Starts an export. Resolves `true` after completion and uses `defaultFilename` when no name is given. |
+| `cancel()`             | `() => void`                                                                                    | Aborts the in-flight fetcher request.                                                                |
+| `phase`                | `"idle" \| "fetching" \| "serializing" \| "downloading" \| "success" \| "error" \| "cancelled"` | Current export phase.                                                                                |
+| `progress`             | `{ completed: number; total: number \| null }`                                                  | Fetched row count and optional total.                                                                |
+| `error`                | `Error \| null`                                                                                 | Last export error.                                                                                   |
 
 CSV cells are escaped using RFC 4180-compatible quoting, UTF-8 BOM is included for spreadsheet compatibility, and formula-like cell values are escaped before download.

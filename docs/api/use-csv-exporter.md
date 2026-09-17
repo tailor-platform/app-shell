@@ -86,13 +86,7 @@ const exporter = useCsvExporter({
 });
 ```
 
-A labelled column resolves each CSV value in this order:
-
-1. `accessor(row)`
-2. `row[id]`
-3. a primitive (`string`, `number`, `boolean`, or `bigint`) returned by `render(row)`
-
-Columns without a `label`, such as action columns, are excluded. Dates are exported as ISO strings and primitive arrays are joined with `, `. Use explicit `CsvExportColumn[]` definitions when CSV values need a different format from the table.
+A labelled DataTable column must provide `accessor` or `id`; otherwise TypeScript rejects it as a CSV column source. The exporter resolves values from `accessor(row)` first, then `row[id]`. Columns without a `label`, such as action columns, are excluded. Dates are exported as ISO strings and primitive arrays are joined with `, `. Use explicit `CsvExportColumn[]` definitions when CSV values need a different format from the table.
 
 ## Return value
 

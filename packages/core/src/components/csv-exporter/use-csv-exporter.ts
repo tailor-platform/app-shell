@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { unparse } from "papaparse";
 import { getCellValue } from "@/components/data-table/cell-renderers";
 import type { Column } from "@/components/data-table/types";
@@ -14,15 +14,6 @@ import type {
 } from "./types";
 
 const DEFAULT_PAGE_SIZE = 1000;
-
-function primitiveRenderedValue(value: ReactNode): CsvExportCell {
-  return typeof value === "string" ||
-    typeof value === "number" ||
-    typeof value === "boolean" ||
-    typeof value === "bigint"
-    ? value
-    : undefined;
-}
 
 function toCsvCell(value: unknown): CsvExportCell {
   if (
@@ -61,8 +52,7 @@ function resolveColumns<TRow extends Record<string, unknown>>(
     return {
       header: column.label,
       value: (row: TRow) => {
-        const raw = getCellValue(row, column);
-        return toCsvCell(raw !== undefined ? raw : primitiveRenderedValue(column.render?.(row)));
+        return toCsvCell(getCellValue(row, column));
       },
     };
   });

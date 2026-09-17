@@ -25,9 +25,20 @@ export type CsvCursorFetcher<TRow> = (pagination: {
   signal: AbortSignal;
 }) => Promise<CsvCursorConnection<TRow> | null | undefined>;
 
+type CsvExportableDataTableColumn<TRow extends Record<string, unknown>> =
+  | (Column<TRow> & { label?: undefined })
+  | (Column<TRow> & {
+      label: string;
+      id: string;
+    })
+  | (Column<TRow> & {
+      label: string;
+      accessor: (row: TRow) => unknown;
+    });
+
 export type CsvExportColumnSource<TRow extends Record<string, unknown>> =
   | readonly CsvExportColumn<TRow>[]
-  | readonly Column<TRow>[];
+  | readonly CsvExportableDataTableColumn<TRow>[];
 
 export type CsvExportPhase =
   | "idle"

@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
-import type { Column } from "@/components/data-table/types";
+import { createColumnHelper } from "@/components/data-table/field-helpers";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { useCsvExporter } from "./use-csv-exporter";
+import type { CsvCursorFetcher, UseCsvExporterOptions } from "./types";
 
 const wrapper = createAppShellWrapper("en");
+
+type ExportTypeTestRow = { name: string };
+const emptyExportTypeTestFetcher: CsvCursorFetcher<ExportTypeTestRow> = async () => null;
 
 afterEach(() => {
   cleanup();
@@ -13,12 +17,31 @@ afterEach(() => {
 });
 
 describe("useCsvExporter", () => {
+  it("requires a raw value source for labelled DataTable columns", () => {
+    const { column } = createColumnHelper<ExportTypeTestRow>();
+    const valid: UseCsvExporterOptions<ExportTypeTestRow> = {
+      defaultFilename: "rows.csv",
+      columns: [column({ id: "name", label: "Name", render: (row) => row.name })],
+      fetcher: emptyExportTypeTestFetcher,
+    };
+    expect(valid.columns).toHaveLength(1);
+
+    const invalid: UseCsvExporterOptions<ExportTypeTestRow> = {
+      defaultFilename: "rows.csv",
+      // @ts-expect-error Labelled DataTable columns need `id` or `accessor` for CSV export.
+      columns: [column({ label: "Name", render: (row) => row.name })],
+      fetcher: emptyExportTypeTestFetcher,
+    };
+    expect(invalid).toBeDefined();
+  });
+
   it("fetches every cursor page and derives CSV columns from DataTable columns", async () => {
     type Row = { id: string; name: string; formula: string };
-    const columns: Column<Row>[] = [
-      { label: "Name", render: (row) => row.name },
-      { id: "formula", label: "Formula", render: (row) => row.formula },
-      { id: "actions", render: () => <button>View</button> },
+    const { column } = createColumnHelper<Row>();
+    const columns = [
+      column({ id: "name", label: "Name", render: (row) => row.name }),
+      column({ id: "formula", label: "Formula", render: (row) => row.formula }),
+      column({ render: () => <button>View</button> }),
     ];
     const fetcher = vi
       .fn()

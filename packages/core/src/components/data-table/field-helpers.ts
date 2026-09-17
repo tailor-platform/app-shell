@@ -110,7 +110,10 @@ function inferColumns<
  * `column({ ...infer("stock"), type: "number" })` type-safe without
  * requiring an explicit accessor cast.
  */
-export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TRow>;
+export type InferredColumn<TRow extends Record<string, unknown>> = ColumnBase<TRow> & {
+  id: string;
+  label: string;
+};
 
 /**
  * Per-field column factory returned by `inferColumns(tableMetadata)`.
@@ -143,7 +146,7 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
    * column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> })
    * ```
    */
-  column: (options: Column<TRow>) => Column<TRow>;
+  column: <const TColumn extends Column<TRow>>(options: TColumn) => TColumn;
   /**
    * Bind table metadata once and return a per-field column factory.
    *
@@ -190,7 +193,7 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
  */
 export function createColumnHelper<TRow extends Record<string, unknown>>(): ColumnHelper<TRow> {
   return {
-    column: (options: Column<TRow>) => column<TRow>(options),
+    column: <const TColumn extends Column<TRow>>(options: TColumn) => ({ ...options }),
     inferColumns: <const TTable extends TableMetadata = TableMetadata>(tableMetadata: TTable) =>
       inferColumns<TRow, TTable>(tableMetadata),
   };

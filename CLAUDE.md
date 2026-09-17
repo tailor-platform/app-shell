@@ -14,9 +14,24 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 **📋 For development commands and setup, see:** [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-## Documentation
+## Documentation Index
 
-**📖 For component and API documentation, see:** [`docs/`](./docs/)
+All files under [`docs/`](./docs/) are user-facing documentation for library consumers. The tree is
+convention-based rather than hand-listed, so a new page needs no edit here — place it by its kind:
+
+| Path                        | Holds                                                                                                                             |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/introduction.md`      | What AppShell is and when to reach for it                                                                                         |
+| `docs/quickstart.md`        | The shortest path from an empty app to a running one                                                                              |
+| `docs/design-philosophy.md` | The reasoning behind the opinionated defaults                                                                                     |
+| `docs/migrations.md`        | Version-to-version upgrade notes, one row per release that needs consumer action                                                  |
+| `docs/concepts/`            | Cross-cutting guides — authentication, routing, styling, sidebar navigation                                                       |
+| `docs/components/`          | One page per exported component, named for its kebab-cased export (`DataTable` → `data-table.md`)                                 |
+| `docs/api/`                 | One page per exported hook or function (`useAppShell` → `use-app-shell.md`), with `guards/` and `router/` grouping those families |
+
+Routing a change: a component's props or behavior belongs in its `docs/components/` page; a hook or
+function in its `docs/api/` page; anything spanning several exports in `docs/concepts/`. A new export
+gets a new page in the matching directory rather than a section appended to a neighbour.
 
 ## Key Architecture Points (LLM Orientation)
 

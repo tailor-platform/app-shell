@@ -403,7 +403,7 @@ When a control is not a thin Base UI wrapper and instead bridges one field acros
 
 Review whether component styling remains self-contained and consistent:
 
-- Tailwind classes use the `astw:` prefix
+- Tailwind classes use the `astw:` prefix, written as the **first** segment of the class — `astw:hover:opacity-100`, never `hover:astw:opacity-100`
 - `cn()` and `data-slot` conventions remain intact when relevant
 - component-specific styling does not silently escape into global CSS without a clear reason
 - avoid CSS injection or ad-hoc style hacks when utility classes or existing structure would do
@@ -414,6 +414,11 @@ Review whether component styling remains self-contained and consistent:
 ```tsx
 // Good
 <div data-slot="component" className={cn("astw:flex astw:items-center", className)} />
+```
+
+```tsx
+// Bad: prefix after the variant — Tailwind emits no CSS for this, silently
+<div className={cn("hover:astw:bg-accent", className)} />
 ```
 
 ```tsx

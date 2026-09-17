@@ -30,6 +30,7 @@ The CommandPalette will automatically:
 - ✅ Index all navigatable routes from your modules
 - ✅ Provide fuzzy search functionality
 - ✅ Show breadcrumb paths for context
+- ✅ Resolve dynamic params on the current route branch into real paths
 - ✅ Display module icons
 - ✅ Respect access control (hidden routes won't appear)
 
@@ -76,6 +77,10 @@ Each result shows its full navigation path for context:
 📦 Products > Categories > Electronics
 📋 Orders > History > 2024
 ```
+
+When the current URL already fixes a dynamic segment, the palette keeps routes on that branch navigable and displays those resolved values in the path. It only substitutes params on the current route branch, not into sibling routes.
+
+For example, on `/users/42` the palette can include `/users/42` and `/users/42/profile`, and does **not** incorrectly rewrite sibling routes like `/users/new`.
 
 ### Access Control Integration
 
@@ -231,46 +236,15 @@ User types: ORD: alice
   → search(" alice", { signal })  — leading space preserved
 ```
 
-## Customization
+## Extending the built-in palette
 
-### Custom Palette (Advanced)
+The supported extension points are:
 
-If you need to customize the CommandPalette behavior, you can use the `useCommandPalette` hook:
+- `searchSources` on `AppShell` for async, prefix-activated search modes
+- [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) for page-level actions
+- [`ActionPanel`](./action-panel.md), whose enabled rows are registered automatically
 
-```tsx
-import { useCommandPalette, navItemsToRoutes } from "@tailor-platform/app-shell";
-
-function CustomPalette() {
-  const navItems = useNavItems(); // Get navigation items
-  const routes = navItemsToRoutes(navItems);
-
-  const { open, handleOpenChange, search, setSearch, filteredRoutes, handleSelect, handleKeyDown } =
-    useCommandPalette({ routes });
-
-  // Custom UI implementation
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Search pages..."
-      />
-      {filteredRoutes.map((route) => (
-        <button key={route.path} onClick={() => handleSelect(route)}>
-          {route.icon}
-          {route.title}
-          <span>{route.breadcrumb.join(" > ")}</span>
-        </button>
-      ))}
-    </Dialog>
-  );
-}
-```
-
-### Disabling CommandPalette
-
-Currently, the CommandPalette is always enabled with `SidebarLayout`. To disable it, you would need to create a custom layout without the CommandPalette component.
+`CommandPalette` itself is built into `AppShell`; there is no separate public hook for rebuilding the palette UI from scratch.
 
 ## Examples
 

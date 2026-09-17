@@ -1,6 +1,6 @@
 {
   "name": "@tailor-platform/eslint-plugin-app-shell",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "AppShell lint rules for Oxlint",
   "keywords": [
     "app-shell",

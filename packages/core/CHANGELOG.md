@@ -1,5 +1,164 @@
 # @tailor-platform/app-shell
 
+## 1.15.0
+
+### Minor Changes
+
+- 16d0748: Add `AIChat`, a component for building an LLM assistant UI — a streaming conversation view over a composer. Migrates the UI Catalogue "AI chat" pattern (platform-planning#1748).
+  
+  `AIChat` places three regions in a fixed order — `AIChat.Header` (optional), `AIChat.Conversation`, `AIChat.Composer` (optional) — each carrying its own props, with the chat's `status` on the root. The transcript inside `AIChat.Conversation` is composed from attached parts: `AIChat.Message`, `.Response`, `.EmptyState`, `.Suggestions`/`.Suggestion`, `.Actions`/`.Action`, `.Reasoning*`, `.ChainOfThought*`, `.Tool*`, `.Sources*`, and `.History`. The composer's body is `Textarea`, following the `form/composer` pattern; `status` plugs directly into `useAIChat()`.
+  
+  ```tsx
+  import { AIChat, useAIChat, createAIGatewayClient } from "@tailor-platform/app-shell";
+  
+  function Assistant() {
+    const { messages, status, sendMessage, stop } = useAIChat({ client, model: "gpt-5" });
+  
+    return (
+      <AIChat status={status}>
+        <AIChat.Header title="Assistant" />
+        <AIChat.Conversation>
+          {messages.map((message) => (
+            <AIChat.Message key={message.id} from={message.role}>
+              <AIChat.Response>{message.content}</AIChat.Response>
+            </AIChat.Message>
+          ))}
+        </AIChat.Conversation>
+        <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
+      </AIChat>
+    );
+  }
+  ```
+- 05ad29f: Add right-click context menus to `DataTable` headers and cells for common column and value actions.
+  
+  Headers can copy labels, pin/unpin columns, sort ascending or descending, reset sort, and hide columns. Cells can copy values, copy `"[header] [value]"`, and add a single-value filter from the clicked cell.
+- 218936e: Add a reusable `Spinner` component and use it for built-in loading indicators such as `ActionPanel`, command palette search, and CSV import progress. Size it with the `size` prop (`xs`, `sm`, `default`, `lg`).
+  
+  ```tsx
+  import { Spinner } from "@tailor-platform/app-shell";
+  
+  <Spinner size="xs" aria-label="Loading" />;
+  ```
+- c9c0d54: Add a `body` slot to `SidebarLayout` for laying out your own columns beside the sidebar — a table-of-contents rail, an assistant panel docked flush against the viewport edge — without overriding AppShell internals. Whatever you pass becomes a flex row alongside the sidebar, so it widens and narrows with the sidebar automatically.
+  
+  Compose it from the namespaced building blocks rather than rebuilding them. `SidebarLayout.ContentContainer` is the stock content column (inset padding, pinned header slot, scroll region, and `useAppShellScrollContainer()`), so the main column keeps its normal chrome while you add columns around it.
+  
+  ```tsx
+  <SidebarLayout
+    body={
+      <>
+        <aside className="w-64 shrink-0 overflow-y-auto border-r">
+          <TableOfContents />
+        </aside>
+        <SidebarLayout.ContentContainer header={<SidebarLayout.DefaultHeader />}>
+          <SidebarLayout.Outlet />
+        </SidebarLayout.ContentContainer>
+        <aside className="w-96 shrink-0 overflow-y-auto border-l">
+          <AssistantPanel />
+        </aside>
+      </>
+    }
+  />
+  ```
+  
+  `body` replaces the region that `header` and `children` describe, so the three are mutually exclusive: passing `body` alongside either is a type error, and you place the header yourself via `ContentContainer`. Existing `header` / `children` / `sidebar` usage is unaffected.
+  
+  Also adds `useAppShellSidebar()` for reading and controlling the sidebar's collapsed state, replacing workarounds that observed `[data-slot="sidebar"][data-state]` with a `MutationObserver` or clicked the trigger through the DOM. `SidebarLayout.Trigger` exposes that toggle for custom headers.
+  
+  ```tsx
+  const { open, isMobile, setOpen, toggle } = useAppShellSidebar();
+  ```
+- 956d728: Add `GlobalHeaderLayout` — an opinionated app-shell layout with an app-wide header above the whole shell and a sidebar that collapses to a persistent icon rail. It is a thin wrapper over `SidebarLayout` that wires the whole mode so consumers get the intended experience without reconstructing it from individual props; reach for `SidebarLayout` directly when you need the flexible primitive.
+  
+  ```tsx
+  <GlobalHeaderLayout
+    header={<GlobalHeaderLayout.DefaultHeader actions={[<AppearanceSwitcher key="a" />]} />}
+    sidebar={
+      <GlobalHeaderLayout.DefaultSidebar>
+        <SidebarItem to="/" />
+        <SidebarGroup title="Main" icon={<LayersIcon />}>
+          <SidebarItem to="/dashboard" />
+          <SidebarItem to="/orders" />
+        </SidebarGroup>
+      </GlobalHeaderLayout.DefaultSidebar>
+    }
+  >
+    {({ Outlet }) => <Outlet />}
+  </GlobalHeaderLayout>
+  ```
+  
+  - `GlobalHeaderLayout` namespaces `.DefaultHeader` (the new `GlobalHeader` — app title + route breadcrumb + an `actions` cluster), `.DefaultSidebar` (drops its own header and turns on the icon rail, with the collapse toggle at the bottom-left), `.ContentContainer`, `.Outlet`, `.Trigger`, and `.Breadcrumb`.
+  - The route-driven **`DynamicBreadcrumb`** is now exported (with the `usePathSegments` hook) — no need to hand-roll a breadcrumb.
+  
+  It's built on these `SidebarLayout` additions, which are also public for the primitive/escape-hatch path (all opt-in and backward compatible):
+  
+  - `SidebarLayout` gains a `topBar` slot — a full-width bar above the sidebar + content row; the fixed sidebar is offset to start beneath it (via `--appshell-topbar-h`, `0px` when there is no `topBar`). The bar should be `3.5rem` tall.
+  - `SidebarLayout.DefaultSidebar` gains `hideHeader`, `hideSearch`, and `iconRail`. `iconRail` collapses to a persistent icon rail that stays visible at every width — including mobile, where the rail stays put and its toggle opens the full sidebar as a slide-in drawer — instead of sliding off-canvas.
+  - In the icon rail, hovering a `SidebarGroup`'s icon reveals its child pages in a flyout popover (portaled so it escapes the rail's clipping, and kept within the viewport); items without children show their name in a tooltip.
+  - The low-level `SidebarMenuItem` and `SidebarMenuButton` primitives are now exported, for composing custom sidebar entries (e.g. a notifications action) that behave in the icon rail like the built-ins.
+
+### Patch Changes
+
+- 7748583: Remove the `astw:` prefix advice from the public docs under `docs/`, applying the same styling boundary the bundled skill now states: ordinary Tailwind utilities on application markup and documented layout hooks, and component props, variants, or composition for a component's own appearance.
+  
+  Seventeen of the 55 classes these pages used to recommend (`astw:p-8`, `astw:mb-4`, `astw:max-h-96`, `astw:container`, `astw:max-w-7xl`, …) are absent from the shipped stylesheet, so they emitted no CSS at all — silently, with no error or warning. `docs/concepts/styling-theming.md` now explains the boundary and why a plain utility cannot override an AppShell default, and the component pages link to it.
+  
+  Also corrects `ActionPanel`'s JSDoc, which ships in the published `.d.ts` and told consumers to write the prefix. The Vite showcase's own demo pages were converted to plain utilities too.
+- 7748583: Fix 14 utility classes in `Alert`, `MetricCard`, `AppearanceSwitcher` and `CsvImporter` that were written as `<variant>:astw:<utility>` instead of `astw:<variant>:<utility>`.
+  
+  Tailwind v4 requires a configured prefix to be the first segment of a class name, so none of these classes were recognised and no CSS was emitted for them — silently, with no error or warning. The styles their authors intended now apply:
+  
+  - `Alert` — description text uses the muted variant foreground rather than the full-strength one; `[&_p]` descriptions get relaxed line-height; the dismiss button gets its hover feedback and, more importantly, a visible focus ring (previously there was no focus indicator at all).
+  - `MetricCard` — dark-mode trend colors apply instead of the light-mode `text-green-600` / `text-red-600` persisting in dark mode.
+  - `AppearanceSwitcher` — the menu radio-item indicator is hidden as intended.
+  - `CsvImporter` — the trailing border is removed from the last mapping row.
+- ee90145: Stop documenting the `astw:` prefix as an application customization API. It is an internal prefix for AppShell's precompiled CSS, so consumer-authored utilities may be absent from the shipped stylesheet and couple applications to component internals.
+  
+  Use ordinary Tailwind utilities on application markup and documented layout hooks instead. For example, use `containerClassName="px-6"` on `Table.Root` and `gap={6}` on `Layout`; use component props, variants, or composition for appearance changes.
+- 297f7e0: Fix the built-in Command Palette so routes under dynamic segments stay navigable when the current URL already fixes those params, including the current dynamic page. Only resolve dynamic segments on the current route branch, rather than substituting their values into sibling routes. Display resolved parameter values in palette paths, abbreviating values over eight characters with `...`.
+  
+  For example, when the app is on `/users/42`, the palette can include `/users/42` and `/users/42/profile` instead of dropping the `:id` branch entirely.
+- a86d37c: Promote the detail-screen guidance in the bundled `app-shell-patterns` skill from a pattern to a page, rebuild it around how three real implementations structure these screens, and fix two pieces of composition advice that were wrong.
+  
+  `detail/hero-with-actions` moves out of `src/pattern/` to become `page/detail`, the first entry in the `page` category. A detail screen is the shape of a whole route rather than one recipe used inside one, so it belongs at the page layer where an agent meets it before choosing anything else.
+  
+  The main column is now a fixed card order that a record skips into but never reorders: terminal-state alerts, the summary, upstream sources and blocks, line items, downstream documents and the journal. The rail is actions, then external-system context, then history.
+  
+  Points worth calling out:
+  
+  - **Card or field is decided by cardinality, not direction.** A to-one relationship is a link field on the summary; a to-many one — or one the API can't traverse — earns a card. A record with several upstream sources gets an upstream card, above the lines.
+  - **Every status axis gets its own badge, and derived axes get no control.** A lifecycle status is filled, progress statuses are `outline-*`, and a select or "mark received" button over a value another module owns claims an ownership the screen doesn't have.
+  - **A total row is a claim.** `Table.Footer` only where the column genuinely sums — quantities in mixed units don't, and a currency symbol on a record with no currency reads as fabrication.
+  - **Only fields the schema can answer.** Deriving one from loaded data is fine; inventing one is how a page ships broken.
+  - **No back button in the rail, or anywhere in a screen's top-right.** Navigation is not an action on the record, and the top-right is not where anyone looks to go back — that is the breadcrumb's job, top left. In a terminal state the rail is omitted entirely rather than padded with navigation to avoid looking empty.
+  - **No pre-computed disabled state over a refusal the server owns**, and no confirm dialog stricter than the command behind it.
+  - **One scrolling column, with a single specified exception for tabs.** A second tab is earned only when the record posted a separate accounting or inventory record — a stock movement or a GL entry — and that record is the tab's subject. Column length, card count and "a details tab and an activity tab" are all explicitly not grounds for one.
+  
+  Consumer-facing examples use plain, unprefixed Tailwind classes, per the measured rule on tailor-inc/platform-planning#1651: a real prop where one exists, a plain utility to add a property AppShell doesn't set, and the `!` importance modifier to override one it does. `astw:` stays where it belongs — on AppShell's own internal classes.
+  
+  The entry takes a firm position on **editing**: prefer editing in place. Where a field is editable in the record's current state, it swaps to an input where it already sits, so someone learns one screen position per field rather than two and the page doesn't rearrange itself around the act of editing. A dialog is for a group that must validate together; a sub-route only for a whole-record edit. Both client apps reviewed already work this way. A **reference documents** card covers attachments, and a note on **width** records that AppShell imposes no maximum — apps must cap the content width themselves, which is a gap rather than a decision.
+  
+  It also documents a `DescriptionCard` layout trap: fields lay out as a grid in DOM order, so dropping an empty field shifts every field after it into the vacated slot, and two records of the same type then present the same information in different positions. Default to the em dash; remove a field only where its absence is itself meaningful; and group conditional fields at the end of their section, since `{ type: "divider" }` starts a new grid and bounds the shift.
+  
+  On **line items**, the entry no longer presents them as always few and fully fetched. A plain `Table` over lines fetched with the record is the default and covers the typical document; where a document type can run to hundreds of lines the table bounds itself with an internal scroll region and paging, and a query cap is called out as bounding the query rather than the table. Columns drawn from related records are documented as depending on where the record sits in its document chain, not as a fixed part of the table.
+  
+  Six questions are marked **Team input needed** with a checkbox each, to be resolved before merge: whether AppShell should own a line-items component, how far a related-records table goes before it becomes its own screen, whether a modal or Sheet is ever right for cross-checking a related record, where the boundary sits between editing in place and opening an edit route, whether an action may appear both in the actions panel and in the card listing its results, and what `Layout.Header` carries besides the title.
+  
+  Two other things settle rather than open. **History gets one treatment whatever its length** — an `ActivityCard` with `maxVisible` set — because a trail's length varies between records of the same type and so can't decide its presentation. And the **external-system card** now points at tailor-inc/platform-planning#775 (Integration Card), the component tracked to replace it.
+  
+  Two conventions that were implicit are now written down. **Links**: `text-primary` at rest, underline only on hover, app-shell's `Link` for internal routes, and `<a target="_blank" rel="noopener noreferrer">` plus a lucide `ExternalLink` for external ones — the treatment `DescriptionCard` already applies and two client apps independently converged on, added as `design-system.md` §4b. **Rail icons**: one lucide glyph per verb (`Pencil` edit, `FileEdit` amend, `Copy` duplicate, `Send` submit/post, `Check` approve, `Ban` reject, `XCircle` cancel/close, `PackagePlus` create receipt, `History` revisions, …), drawn from the icons a client codebase actually ships so the rail reads the same on every document.
+  
+  Two corrections to `fundamental/components.md`, both verified against the built stylesheet and a rendered page rather than inferred:
+  
+  - **A table inside a card needs one geometry change, not two.** The docs said to zero `Card.Content`'s padding _and_ pass `containerClassName="astw:px-6"` on `Table.Root`, claiming the cell's intrinsic `first:pl-6` "does NOT render reliably". It does — `.astw\:first\:pl-6:first-child` is in the shipped CSS — so the container's padding stacks on top of it and pushes the first column 24px right of the card title. The recipe, the two canonical examples and the DON'T example were all inverted.
+  - **`ActionPanel`'s `actions` was documented as `{ label, onSelect, variant?, disabled?, hidden? }`.** The real row requires `key`, `label` and `icon`, the handler is `onClick`, and there is no `hidden` — the documented example could not compile. The row type isn't exported separately, so an actions array annotates as `ActionPanelProps["actions"]`.
+  
+  Also recorded: `DescriptionCard`'s `type: "date"` parses a date-only `"YYYY-MM-DD"` string with `new Date(...)`, i.e. as UTC midnight, so it renders the previous day in negative-offset timezones. Date-only fields should be pre-formatted through `render`; real timestamps keep `type: "date"`.
+- 6e4f783: Update the bundled Base UI dependency to 1.8.0.
+  
+  This picks up upstream accessibility and behavior fixes across popup-backed controls while keeping the AppShell public API unchanged.
+- 821bb49: Prefer literal route metadata when resolving `SidebarItem` labels and icons, even when a dynamic sibling route was registered first.
+
 ## 1.14.0
 
 ### Minor Changes

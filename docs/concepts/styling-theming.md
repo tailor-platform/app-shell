@@ -76,15 +76,64 @@ These are the tokens the [`Alert`](../components/alert.md) component uses intern
 
 Note that the `background` and `border` slots are already semi-transparent (a ~10% and ~20% tint respectively). An opacity modifier therefore compounds rather than replaces: `bg-alert-info-background/50` yields roughly 5% alpha, not 50%. Set the background with an unmodified utility, or reach for the underlying accent color if you need a specific opacity.
 
-## A note on AppShell component class names
+## Styling AppShell components
 
-AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.
+Write **plain Tailwind utilities** in your application code. Three rules cover every case:
 
-In CSS, the order of style-definition affects the final styles which are computed for an element. Tailwind takes this into account when generating its stylesheet, however because it does not know that there's already a Tailwind-generated stylesheet included in the browser (AppShell's styles), there would be incorrect ordering of style definitions, and clashes can (though do not always) occur.
+1. **Your own markup** — ordinary utilities, exactly as in any Tailwind app.
+2. **A documented layout hook** — props like `Table.Root`'s `containerClassName` also take ordinary utilities from your Tailwind build:
 
-To avoid this situation, and to ensure correct style resolution, AppShell components use a class prefix "astw" (AppShell TailWind) to avoid clashes.
+   ```tsx
+   <Table.Root containerClassName="max-h-96 overflow-y-auto" />
+   ```
 
-This is important to note for developing in AppShell.
+3. **An AppShell component's own appearance** — reach for its documented props, variants, or composition rather than styling over its internals. `Sheet.Content` takes `size`, `Table.Head` and `Table.Cell` take `align`, `Grid` takes `columns`, `Layout` takes `gap`, `Button` takes `variant`. A prop is a supported contract; a utility class aimed at a component's internals is not.
+
+```tsx
+// Props, not utilities, for a component's own appearance
+<Sheet.Content size="lg" />
+<Layout gap={6} />
+<Button variant="destructive">Delete</Button>
+
+// Ordinary utilities on your own markup and on documented hooks
+<div className="flex flex-col gap-4">
+  <Table.Root containerClassName="max-h-96 overflow-y-auto" />
+</div>
+```
+
+When no prop exists and you genuinely have to override a value a component sets, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. It is the last resort, not the first: a plain utility silently loses (see below), and `!` is what the pattern catalogue uses for the one documented case, zeroing a card's padding so a table can sit flush inside it:
+
+```tsx
+<Card.Root>
+  <Card.Header title="Line items" />
+  <Card.Content className="px-0!">
+    <Table.Root>{/* … */}</Table.Root>
+  </Card.Content>
+</Card.Root>
+```
+
+Note the table container adds **no** horizontal padding of its own there: `Table.Head` and `Table.Cell` already carry `first:pl-6` / `last:pr-6`, so a `containerClassName="px-6"` would stack on top and push the first column 24px past the card title.
+
+### Never write the `astw:` prefix in application code
+
+AppShell's own components are styled with utilities carrying an `astw:` prefix (AppShell TailWind). This exists because Tailwind generates classes at build time: AppShell's stylesheet is compiled and published before your application's is generated, and Tailwind cannot reconcile two independently-generated stylesheets against each other. The prefix keeps the library's utilities from clashing with yours.
+
+The prefix is **internal to the library**, and it is not a customization API. Your Tailwind build has no `astw` prefix configured, so it never generates `astw:*` classes — an `astw:` class written in application code only resolves if AppShell happens to already ship that exact utility for its own use. Many do not — 17 of the 55 classes this documentation used to recommend are absent from the shipped stylesheet — and Tailwind emits nothing for an unknown utility: no error, no warning, nothing in the console. The class lands in the DOM and does nothing.
+
+Worse, one `className` string can be half-applied. AppShell merges class names with `tailwind-merge`, which is not configured with the `astw` prefix, so it strips a conflicting _internal_ class while leaving an unshipped `astw:` class in place — the element keeps a dead class and loses the style it had.
+
+`@tailor-platform/eslint-plugin-app-shell` ships a `no-astw-prefix` rule that catches this in your own source. Enable it via the `recommended` preset in your `oxlint.config.ts`.
+
+### Why a plain utility can't override an AppShell default
+
+This is the reason rule 3 sends you to props rather than to a more specific class. `tailwind-merge` groups `astw:px-6` and `px-0` separately — it reads the unknown `astw:` as a variant — so both survive on the element rather than the later one replacing the earlier. Both land in the same `@layer utilities` at equal specificity, and AppShell's precompiled sheet is imported after your Tailwind output, so its rule is later in the cascade and the library's value wins:
+
+```tsx
+// Element keeps both classes; padding stays at AppShell's 24px
+<Card.Content className="px-0" />
+```
+
+State variants make it worse rather than better: `Button`'s `ghost` variant sets a hover color, and a `:hover` rule outranks an unprefixed utility on **specificity**, not merely order — so a plain `text-destructive` on a ghost button is red only until the pointer reaches it. `variant="destructive"` is the supported way to express that; where no such prop exists, `!` wins in every state because importance beats specificity.
 
 ## Color Themes (Light / Dark / System)
 

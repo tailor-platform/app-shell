@@ -79,7 +79,6 @@ export {
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
 export {
   defineAIChatTool,
-  aiToolSchema,
   aiProviderTool,
   type AIChatConfiguredTool,
   type AIChatToolContext,

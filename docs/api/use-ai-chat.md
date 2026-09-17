@@ -67,7 +67,7 @@ interface AIChatSource {
 
 Register tools under a single object:
 
-- local tools created with `defineAIChatTool(...)`
+- local tools created with `defineAIChatTool(...)`; their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4)
 - provider tools such as `aiProviderTool.openai.webSearch(...)`
 
 ## Usage
@@ -75,12 +75,12 @@ Register tools under a single object:
 ```tsx
 import {
   aiProviderTool,
-  aiToolSchema,
   createAuthClient,
   createAIGatewayClient,
   defineAIChatTool,
   useAIChat,
 } from "@tailor-platform/app-shell";
+import { z } from "zod/v4";
 
 const authClient = createAuthClient({
   clientId: "your-client-id",
@@ -94,8 +94,8 @@ const aiClient = createAIGatewayClient({
 
 const lookupCustomer = defineAIChatTool({
   description: "Look up a customer in the current workspace",
-  schema: aiToolSchema.object({
-    customerId: aiToolSchema.string(),
+  schema: z.object({
+    customerId: z.string(),
   }),
   async execute({ customerId }) {
     return { customerId, name: "Acme Corp" };

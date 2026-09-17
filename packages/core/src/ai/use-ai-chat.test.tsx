@@ -1,8 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod/v4";
 import { useAIChat } from "./use-ai-chat";
 import type { AIGatewayClient, AIChatCompletionEvent } from "./client";
-import { aiProviderTool, aiToolSchema, defineAIChatTool } from "./tools";
+import { aiProviderTool, defineAIChatTool } from "./tools";
 
 function createAbortError(): Error {
   if (typeof DOMException !== "undefined") {
@@ -254,8 +255,8 @@ describe("useAIChat", () => {
   it("executes local tools and continues the conversation", async () => {
     const lookupCustomer = defineAIChatTool({
       description: "Look up a customer",
-      schema: aiToolSchema.object({
-        customerId: aiToolSchema.string(),
+      schema: z.object({
+        customerId: z.string(),
       }),
       async execute({ customerId }) {
         return { customerId, name: "Acme Corp" };
@@ -274,12 +275,12 @@ describe("useAIChat", () => {
                 name: "lookupCustomer",
                 description: "Look up a customer",
                 parameters: {
+                  $schema: "http://json-schema.org/draft-07/schema#",
                   type: "object",
                   properties: {
                     customerId: { type: "string" },
                   },
                   required: ["customerId"],
-                  additionalProperties: false,
                 },
               },
             },
@@ -347,8 +348,8 @@ describe("useAIChat", () => {
   it("fails after too many tool rounds", async () => {
     const loop = defineAIChatTool({
       description: "Loop forever",
-      schema: aiToolSchema.object({
-        value: aiToolSchema.string(),
+      schema: z.object({
+        value: z.string(),
       }),
       async execute({ value }) {
         return { value };

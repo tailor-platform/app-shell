@@ -11,13 +11,14 @@ You can now register **local tools** and **provider tools** via the `tools` opti
 Define tools that run inside AppShell using `defineAIChatTool`. The model decides when to call them, AppShell validates arguments with the schema, executes the handler, and feeds results back into the next model turn automatically.
 
 ```ts
-import { defineAIChatTool, aiToolSchema } from "@tailor-platform/app-shell";
+import { defineAIChatTool } from "@tailor-platform/app-shell";
+import { z } from "zod/v4";
 
 const lookupCustomer = defineAIChatTool({
   description: "Look up a customer by ID and return their profile",
-  schema: aiToolSchema.object({
-    customerId: aiToolSchema.string({ description: "Customer ID" }),
-    includeInactive: aiToolSchema.optional(aiToolSchema.boolean()),
+  schema: z.object({
+    customerId: z.string().describe("Customer ID"),
+    includeInactive: z.boolean().optional(),
   }),
   async execute({ customerId, includeInactive }, { signal }) {
     const res = await fetch(`/api/customers/${customerId}?inactive=${includeInactive ?? false}`, {
@@ -28,17 +29,7 @@ const lookupCustomer = defineAIChatTool({
 });
 ```
 
-### Schema primitives (`aiToolSchema`)
-
-| Helper                                  | Description                                                     |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `aiToolSchema.string(opts?)`            | String input (supports `minLength`, `maxLength`, `description`) |
-| `aiToolSchema.number(opts?)`            | Numeric input (supports `minimum`, `maximum`, `integer`)        |
-| `aiToolSchema.boolean(opts?)`           | Boolean input                                                   |
-| `aiToolSchema.enum(values, opts?)`      | Fixed set of string literals                                    |
-| `aiToolSchema.array(itemSchema, opts?)` | Array of a given schema                                         |
-| `aiToolSchema.object(shape)`            | Object with named fields                                        |
-| `aiToolSchema.optional(schema)`         | Marks a field as optional                                       |
+Tool schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation; Zod 4 does this directly.
 
 ### Tool context
 
@@ -73,17 +64,13 @@ const webSearch = aiProviderTool.openai.webSearch({
 Pass tools as a record to the `tools` option. The key becomes the tool name sent to the model.
 
 ```tsx
-import {
-  useAIChat,
-  defineAIChatTool,
-  aiToolSchema,
-  aiProviderTool,
-} from "@tailor-platform/app-shell";
+import { useAIChat, defineAIChatTool, aiProviderTool } from "@tailor-platform/app-shell";
+import { z } from "zod/v4";
 
 const lookupCustomer = defineAIChatTool({
   description: "Look up a customer by ID",
-  schema: aiToolSchema.object({
-    customerId: aiToolSchema.string(),
+  schema: z.object({
+    customerId: z.string(),
   }),
   async execute({ customerId }) {
     return { customerId, name: "Acme Corp", plan: "enterprise" };

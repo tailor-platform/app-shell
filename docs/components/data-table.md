@@ -677,7 +677,7 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 | ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `string`   | Text                      | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
 | `number`   | Number                    | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `datetime` | Datetime-local            | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | **DatePicker + time**     | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `date`     | **Calendar / DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
 | `time`     | Time                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `enum`     | Dropdown                  | `eq`, `ne`, `in`, `nin`                                                                                      |
@@ -697,7 +697,7 @@ When the `between` operator is selected on a `number`, `datetime`, `date`, or `t
 | `lte`     | _before_     | on or before (inclusive)   |
 | `between` | _between_    | inclusive min–max range    |
 
-`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set and native inputs.)
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. `datetime` keeps the full numeric operator set and combines a DatePicker with a native time input; it serializes the selected local date and time as an RFC 3339 instant. `time` keeps the full numeric operator set and its native time input.
 
 ### String Filter Case Sensitivity
 

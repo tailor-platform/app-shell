@@ -2,7 +2,6 @@ import type { FilterConfig } from "@/types/collection";
 
 export type TemporalFilterType = Extract<FilterConfig["type"], "datetime" | "date" | "time">;
 
-const LOCAL_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const TIME_WITH_SECONDS_RE = /^((?:[01]\d|2[0-3]):[0-5]\d)(?::[0-5]\d(?:\.\d+)?)?$/;
@@ -17,10 +16,6 @@ function formatLocalDate(value: Date): string {
 
 function formatLocalTime(value: Date): string {
   return `${pad2(value.getHours())}:${pad2(value.getMinutes())}`;
-}
-
-function formatLocalDateTime(value: Date): string {
-  return `${formatLocalDate(value)}T${formatLocalTime(value)}:${pad2(value.getSeconds())}`;
 }
 
 function toValidDate(value: unknown): Date | null {
@@ -46,10 +41,12 @@ export function isTemporalFilterValueValid(type: TemporalFilterType, value: stri
 
   switch (type) {
     case "datetime":
-      // The datetime editor emits a local "YYYY-MM-DDTHH:mm:ss" (no zone); a
-      // trailing Z or ±hh:mm offset is still accepted for externally-set values.
-      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
-        trimmedValue,
+      // Legacy filters may be local datetimes; DataTable editors serialize new
+      // values as RFC 3339 instants.
+      return (
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
+          trimmedValue,
+        ) && toValidDate(trimmedValue) != null
       );
     case "date":
       return DATE_RE.test(trimmedValue);
@@ -75,9 +72,8 @@ export function normalizeTemporalFilterValue(
         return date ? formatLocalDate(date) : undefined;
       }
       case "datetime": {
-        if (LOCAL_DATETIME_RE.test(trimmed)) return trimmed;
         const date = toValidDate(trimmed);
-        return date ? formatLocalDateTime(date) : undefined;
+        return date ? date.toISOString() : undefined;
       }
       case "time": {
         if (TIME_RE.test(trimmed)) return trimmed;
@@ -96,8 +92,16 @@ export function normalizeTemporalFilterValue(
     case "date":
       return formatLocalDate(date);
     case "datetime":
-      return formatLocalDateTime(date);
+      return date.toISOString();
     case "time":
       return formatLocalTime(date);
   }
+}
+
+/** Convert a datetime value to the local date/time parts displayed by its picker. */
+export function localDateTimeParts(value: string): { date: string; time: string } {
+  const datetime = toValidDate(value);
+  return datetime
+    ? { date: formatLocalDate(datetime), time: formatLocalTime(datetime) }
+    : { date: "", time: "" };
 }

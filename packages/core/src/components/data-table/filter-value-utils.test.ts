@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isTemporalFilterType,
   isTemporalFilterValueValid,
+  localDateTimeParts,
   normalizeTemporalFilterValue,
 } from "./filter-value-utils";
 
@@ -39,6 +40,7 @@ describe("filter-value-utils", () => {
   it("validates canonical temporal values", () => {
     expect(isTemporalFilterValueValid("date", "2026-09-08")).toBe(true);
     expect(isTemporalFilterValueValid("datetime", "2026-09-08T09:30:45")).toBe(true);
+    expect(isTemporalFilterValueValid("datetime", "2026-99-08T09:30:45")).toBe(false);
     expect(isTemporalFilterValueValid("time", "09:30")).toBe(true);
     expect(isTemporalFilterValueValid("time", "09:30:00")).toBe(false);
   });
@@ -56,7 +58,7 @@ describe("filter-value-utils", () => {
     expect(normalizeTemporalFilterValue("date", value)).toBe("2026-09-08");
   });
 
-  it("normalizes datetime values from local date/time parts", () => {
+  it("normalizes datetime values to RFC 3339 instants", () => {
     const value = mockDate({
       year: 2026,
       month: 9,
@@ -67,7 +69,21 @@ describe("filter-value-utils", () => {
       iso: "2026-09-08T00:30:45.000Z",
     });
 
-    expect(normalizeTemporalFilterValue("datetime", value)).toBe("2026-09-08T09:30:45");
+    expect(normalizeTemporalFilterValue("datetime", value)).toBe("2026-09-08T00:30:45.000Z");
+  });
+
+  it("converts legacy local datetime strings to RFC 3339", () => {
+    const value = "2026-09-08T09:30:45";
+    expect(normalizeTemporalFilterValue("datetime", value)).toBe(new Date(value).toISOString());
+  });
+
+  it("derives picker values in the local timezone from an RFC 3339 datetime", () => {
+    const value = "2026-09-08T00:30:45.000Z";
+    const date = new Date(value);
+    expect(localDateTimeParts(value)).toEqual({
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+      time: `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`,
+    });
   });
 
   it("normalizes time strings with seconds to the editable HH:mm format", () => {

@@ -484,6 +484,24 @@ describe("AddFilterPanel", () => {
     });
   });
 
+  it("normalizes a legacy local datetime when re-applying it from the panel", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith(
+      "publishedAt",
+      "eq",
+      new Date(2025, 0, 1, 10, 30).toISOString(),
+      undefined,
+    );
+  });
+
   it("preserves an active operator even when the column now restricts the allowlist", async () => {
     const user = userEvent.setup();
     const control = makeControl({
@@ -977,10 +995,13 @@ describe("DateFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("TemporalFilterEditor", () => {
-  it("renders a date picker + time box for datetime (seeded, no raw ISO textbox)", async () => {
+  it("hydrates the date picker + time box from an RFC 3339 datetime", async () => {
     const user = userEvent.setup();
+    const value = "2025-01-01T10:30:00Z";
+    const date = new Date(value);
+    const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
     const control = makeControl({
-      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+      filters: [{ field: "publishedAt", operator: "eq", value }],
     });
     render(<TestFilters control={control} columns={[datetimeColumn]} />, {
       wrapper,
@@ -989,15 +1010,15 @@ describe("TemporalFilterEditor", () => {
     await openValueEditor(user);
 
     // Date part is a segmented picker (a group), time part a native time box
-    // seeded from the value — no free-text ISO field.
+    // seeded from the RFC 3339 instant in the user's local timezone.
     expect(await screen.findByRole("group")).toBeDefined();
-    expect(screen.getByDisplayValue("10:30")).toBeDefined();
+    expect(screen.getByDisplayValue(time)).toBeDefined();
   });
 
-  it("combines the date + time box into an ISO datetime on Apply", async () => {
+  it("serializes the selected local datetime as an RFC 3339 instant on Apply", async () => {
     const user = userEvent.setup();
     const control = makeControl({
-      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
     });
     render(<TestFilters control={control} columns={[datetimeColumn]} />, {
       wrapper,
@@ -1008,8 +1029,36 @@ describe("TemporalFilterEditor", () => {
     fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    // Date kept, time replaced, seconds defaulted → local ISO (no zone).
-    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "eq", "2025-01-01T08:45:00");
+    expect(control.addFilter).toHaveBeenCalledWith(
+      "publishedAt",
+      "eq",
+      new Date(2025, 0, 1, 8, 45).toISOString(),
+    );
+  });
+
+  it("serializes both datetime between bounds as RFC 3339 instants", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        {
+          field: "publishedAt",
+          operator: "between",
+          value: { min: "2025-01-01T10:30:00", max: "2025-01-02T11:30:00" },
+        },
+      ],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, { wrapper });
+
+    await openValueEditor(user);
+
+    fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
+    fireEvent.change(screen.getByDisplayValue("11:30"), { target: { value: "09:15" } });
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
+      min: new Date(2025, 0, 1, 8, 45).toISOString(),
+      max: new Date(2025, 0, 2, 9, 15).toISOString(),
+    });
   });
 
   it("Apply button calls addFilter with an HH:MM time", async () => {

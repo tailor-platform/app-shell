@@ -14,7 +14,12 @@ import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
-import { isTemporalFilterType, isTemporalFilterValueValid } from "./filter-value-utils";
+import {
+  isTemporalFilterType,
+  isTemporalFilterValueValid,
+  localDateTimeParts,
+  normalizeTemporalFilterValue,
+} from "./filter-value-utils";
 import { useDataTableT } from "./i18n";
 import type {
   CollectionControl,
@@ -569,9 +574,8 @@ function PanelDateInput({
 
 /**
  * Single-datetime editor for the panel: the inline `Calendar` up front with a
- * labelled time picker beneath it, bridging a local ISO `"YYYY-MM-DDTHH:mm:ss"`
- * string. (The chip and the "between" range keep the compact date-picker + time
- * box to stay short.)
+ * labelled time picker beneath it, bridging an RFC 3339 instant. (The chip and
+ * the "between" range keep the compact date-picker + time box to stay short.)
  */
 function PanelDateTimeInput({
   ariaLabel,
@@ -583,12 +587,14 @@ function PanelDateTimeInput({
   onChange: (value: string) => void;
 }) {
   const t = useDataTableT();
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
-  const datePart = match?.[1] ?? "";
-  const timePart = match?.[2] ?? "";
-  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+  const { date: datePart, time: timePart } = localDateTimeParts(value);
+  const calValue = datePart ? parseDate(datePart) : null;
   const emit = (nextDate: string, nextTime: string) => {
-    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+    onChange(
+      nextDate
+        ? (normalizeTemporalFilterValue("datetime", `${nextDate}T${nextTime || "00:00"}:00`) ?? "")
+        : "",
+    );
   };
   return (
     <div className="astw:flex astw:flex-col astw:gap-3">
@@ -1082,10 +1088,9 @@ function DateFilterPicker({
 
 /**
  * Datetime filter input: the app-shell date `DatePicker` (calendar) paired with a
- * native time box, bridging an ISO `"YYYY-MM-DDTHH:mm:ss"` string. Entering a full
- * datetime by hand is awkward, so the date and time are picked separately and
- * combined. This is a stopgap — it's replaced 1:1 once a dedicated DateTime picker
- * component lands.
+ * native time box, bridging an RFC 3339 instant. Entering a full datetime by hand
+ * is awkward, so the date and time are picked separately and combined. This is a
+ * stopgap — it's replaced 1:1 once a dedicated DateTime picker component lands.
  */
 function DateTimeFilterInput({
   ariaLabel,
@@ -1096,15 +1101,16 @@ function DateTimeFilterInput({
   value: string;
   onChange: (value: string) => void;
 }) {
-  // Split "YYYY-MM-DDTHH:mm[:ss][Z]" into its date and "HH:mm" parts.
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
-  const datePart = match?.[1] ?? "";
-  const timePart = match?.[2] ?? "";
-  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+  const { date: datePart, time: timePart } = localDateTimeParts(value);
+  const calValue = datePart ? parseDate(datePart) : null;
 
-  // Emit a combined value only once a date is chosen; time defaults to midnight.
+  // Emit an RFC 3339 instant only once a date is chosen; time defaults to midnight.
   const emit = (nextDate: string, nextTime: string) => {
-    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+    onChange(
+      nextDate
+        ? (normalizeTemporalFilterValue("datetime", `${nextDate}T${nextTime || "00:00"}:00`) ?? "")
+        : "",
+    );
   };
 
   return (
@@ -1932,8 +1938,14 @@ function TemporalFilterEditor({
         if (!minValid || !maxValid) return;
         if (!isRangeOrdered(config.type, localValue, localValueMax)) return;
         control.addFilter(config.field, localOp, {
-          min: localValue,
-          max: localValueMax,
+          min:
+            config.type === "datetime"
+              ? normalizeTemporalFilterValue("datetime", localValue)
+              : localValue,
+          max:
+            config.type === "datetime"
+              ? normalizeTemporalFilterValue("datetime", localValueMax)
+              : localValueMax,
         });
       } else {
         return;
@@ -1942,7 +1954,13 @@ function TemporalFilterEditor({
       if (localValue.trim() === "") {
         control.removeFilter(config.field);
       } else if (isTemporalFilterValueValid(config.type, localValue)) {
-        control.addFilter(config.field, localOp, localValue);
+        control.addFilter(
+          config.field,
+          localOp,
+          config.type === "datetime"
+            ? normalizeTemporalFilterValue("datetime", localValue)
+            : localValue,
+        );
       } else {
         return;
       }
@@ -2110,25 +2128,28 @@ function toAddFilterSubmittedValue(
 
     if (trimmedMin === "" || trimmedMax === "") return undefined;
 
-    // temporal types
-    return { min: trimmedMin, max: trimmedMax };
+    return {
+      min: type === "datetime" ? normalizeTemporalFilterValue("datetime", trimmedMin) : trimmedMin,
+      max: type === "datetime" ? normalizeTemporalFilterValue("datetime", trimmedMax) : trimmedMax,
+    };
   }
 
   if (type === "number") {
     return Number(value);
   }
-  return String(value).trim();
+  const trimmed = String(value).trim();
+  return type === "datetime" ? normalizeTemporalFilterValue("datetime", trimmed) : trimmed;
 }
 
 /**
  * Whether a "between" range's bounds are correctly ordered (min ≤ max). Numbers
- * compare numerically; temporal ISO strings compare lexicographically (which
- * matches chronological order for our `YYYY-MM-DD`, `HH:MM`, and RFC datetime
- * formats). `min === max` is allowed — a valid single-point inclusive range.
+ * compare numerically; dates and times lexicographically; and datetime instants
+ * chronologically. `min === max` is allowed — a valid single-point inclusive range.
  * Assumes both bounds are already individually valid and non-empty.
  */
 function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): boolean {
   if (type === "number") return Number(min) <= Number(max);
+  if (type === "datetime") return new Date(min).getTime() <= new Date(max).getTime();
   if (isTemporalFilterType(type)) return min <= max;
   return true;
 }
@@ -2228,11 +2249,10 @@ function formatDateRange(minIso: string, maxIso: string, locale: string): string
     .join(" – ");
 }
 
-/** Format a local "YYYY-MM-DDTHH:mm[:ss]" as a locale medium date + short time. */
+/** Format an RFC 3339 datetime as a locale medium date + short time. */
 function formatDateTimeValue(iso: string, locale: string): string {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  if (!m) return iso;
-  const [, y, mo, d, h, min] = m;
+  const datetime = new Date(iso);
+  if (Number.isNaN(datetime.getTime())) return iso;
   try {
     return new DateFormatter(locale, {
       year: "numeric",
@@ -2240,7 +2260,7 @@ function formatDateTimeValue(iso: string, locale: string): string {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min)));
+    }).format(datetime);
   } catch {
     return iso;
   }

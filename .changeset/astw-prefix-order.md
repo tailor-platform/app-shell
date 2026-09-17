@@ -10,5 +10,3 @@ Tailwind v4 requires a configured prefix to be the first segment of a class name
 - `MetricCard` — dark-mode trend colors apply instead of the light-mode `text-green-600` / `text-red-600` persisting in dark mode.
 - `AppearanceSwitcher` — the menu radio-item indicator is hidden as intended.
 - `CsvImporter` — the trailing border is removed from the last mapping row.
-
-Adds a test that scans the package source for the misordered form, since the failure mode is invisible in snapshots (they record class names, not resolved CSS).

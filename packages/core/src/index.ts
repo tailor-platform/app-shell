@@ -256,13 +256,15 @@ export {
   type InferCsvRow,
 } from "./components/csv-importer";
 export {
+  CsvExporter,
   useCsvExporter,
   type CsvCursorConnection,
   type CsvCursorFetcher,
   type CsvExportCell,
   type CsvExportColumn,
   type CsvExportPhase,
-  type CsvExporter,
+  type CsvExporterState,
+  type CsvExporterProps,
   type UseCsvExporterOptions,
 } from "./components/csv-exporter";
 

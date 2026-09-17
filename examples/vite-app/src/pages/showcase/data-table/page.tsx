@@ -343,7 +343,7 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
   }, [variables, variablesKey]);
 
   const table = useDataTable({ columns, data, loading, control });
-  const exporter = useCsvExporter({
+  const { props: exporter } = useCsvExporter({
     defaultFilename: "invoices.csv",
     columns,
     pageSize: 10,
@@ -368,7 +368,7 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
     <DataTable.Root value={table}>
       <DataTable.Toolbar>
         {toolbar(control)}
-        <DataTable.CSVExporter exporter={exporter} />
+        <DataTable.CSVExporter {...exporter} />
       </DataTable.Toolbar>
       <DataTable.Table />
       <DataTable.Footer>

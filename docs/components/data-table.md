@@ -198,9 +198,11 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 ### `DataTable.CSVExporter` Props
 
-| Prop       | Type          | Description                                                                 |
-| ---------- | ------------- | --------------------------------------------------------------------------- |
-| `exporter` | `CsvExporter` | Return value from [`useCsvExporter`](../api/use-csv-exporter.md). Required. |
+| Prop           | Type                      | Description                                                                   |
+| -------------- | ------------------------- | ----------------------------------------------------------------------------- |
+| `open`         | `boolean`                 | Whether the exporter dialog is open.                                          |
+| `onOpenChange` | `(open: boolean) => void` | Called when the dialog opens or closes.                                       |
+| `exporter`     | `CsvExporterState`        | Export state and actions from [`useCsvExporter`](../api/use-csv-exporter.md). |
 
 `DataTable.CSVExporter` opens a dialog where the user can change the filename before downloading. During the export it shows the fetched row count and a percentage when the connection returns `total`; it also provides a cancel action. When `useCsvExporter` receives DataTable columns, the current visible columns and their user-defined order are exported. Explicit `CsvExportColumn[]` definitions keep their own order and ignore column visibility. Compose the toolbar layout normally when it should sit immediately before the built-in Columns control:
 
@@ -208,7 +210,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 <DataTable.Toolbar columnSettings>
   <div className="flex min-w-0 items-start gap-2">
     <DataTable.Filters className="flex-1" />
-    <DataTable.CSVExporter exporter={exporter} />
+    <DataTable.CSVExporter {...props} />
   </div>
 </DataTable.Toolbar>
 ```

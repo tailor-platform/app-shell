@@ -1,3 +1,4 @@
+export { CsvExporter } from "./csv-exporter";
 export { useCsvExporter } from "./use-csv-exporter";
 export type {
   CsvCursorConnection,
@@ -5,6 +6,7 @@ export type {
   CsvExportCell,
   CsvExportColumn,
   CsvExportPhase,
-  CsvExporter,
+  CsvExporterState,
+  CsvExporterProps,
   UseCsvExporterOptions,
 } from "./types";

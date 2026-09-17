@@ -8,7 +8,8 @@ import type {
   CsvCursorConnection,
   CsvExportCell,
   CsvExportColumn,
-  CsvExporter,
+  CsvExporterState,
+  CsvExporterProps,
   UseCsvExporterOptions,
 } from "./types";
 
@@ -76,22 +77,47 @@ function downloadCsv(csv: string, filename: string) {
 }
 
 /**
- * Fetch every cursor page, serialize its rows as CSV, and expose progress for
- * a UI such as `DataTable.CSVExporter`. The data client stays outside this hook:
- * `fetcher` only needs to return a Relay-style cursor connection.
+ * Fetch every cursor page, serialize its rows as CSV, and expose progress and
+ * cancellation actions. The data client stays outside this hook: `fetcher`
+ * only needs to return a Relay-style cursor connection.
+ *
+ * @example
+ * ```tsx
+ * const { props } = useCsvExporter({
+ *   defaultFilename: "products.csv",
+ *   columns,
+ *   fetcher: async ({ first, after, signal }) => {
+ *     const result = await client.listProducts({ first, after, signal });
+ *     return result.connection;
+ *   },
+ * });
+ *
+ * <DataTable.CSVExporter {...props} />;
+ * ```
+ *
+ * When `columns` is a DataTable column array, `DataTable.CSVExporter` exports
+ * its current visible columns in the user's selected order. Explicit
+ * `CsvExportColumn[]` definitions remain a fixed report schema instead.
  */
 export function useCsvExporter<TRow extends Record<string, unknown>>({
   defaultFilename,
   columns: columnSource,
   fetcher,
   pageSize = DEFAULT_PAGE_SIZE,
-}: UseCsvExporterOptions<TRow>): CsvExporter<TRow> {
+}: UseCsvExporterOptions<TRow>) {
   const toast = useToast();
   const t = useCsvExporterT();
   const usesDataTableColumns = columnSource.length > 0 && !isCsvExportColumn(columnSource[0]);
+  const [isOpen, setIsOpen] = useState(false);
+  const open = useCallback(() => {
+    setIsOpen(true);
+  }, []);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const [phase, setPhase] = useState<CsvExporter["phase"]>("idle");
-  const [progress, setProgress] = useState<CsvExporter["progress"]>({ completed: 0, total: null });
+  const [phase, setPhase] = useState<CsvExporterState["phase"]>("idle");
+  const [progress, setProgress] = useState<CsvExporterState["progress"]>({
+    completed: 0,
+    total: null,
+  });
   const [error, setError] = useState<Error | null>(null);
 
   const cancel = useCallback(() => {
@@ -185,7 +211,17 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
     [columnSource, defaultFilename, fetcher, pageSize, t, toast, usesDataTableColumns],
   );
 
-  return { defaultFilename, exportCsv, cancel, phase, progress, error };
+  const exporter: CsvExporterState<TRow> = {
+    defaultFilename,
+    exportCsv,
+    cancel,
+    phase,
+    progress,
+    error,
+  };
+  const props: CsvExporterProps<TRow> = { open: isOpen, onOpenChange: setIsOpen, exporter };
+
+  return { open, props };
 }
 
 export type { CsvCursorConnection };

@@ -1913,8 +1913,15 @@ export const DataTable = {
    */
   Pagination: DataTablePagination,
   /**
-   * Standard CSV export button and progress dialog. Pass the result of
-   * `useCsvExporter()` through its `exporter` prop.
+   * Standard CSV export button, filename dialog, and progress UI.
+   *
+   * Place inside `DataTable.Root`, usually in `DataTable.Toolbar`, and spread
+   * the `props` value returned from `useCsvExporter()`.
+   *
+   * @example
+   * ```tsx
+   * <DataTable.CSVExporter {...props} />
+   * ```
    */
   CSVExporter: DataTableCSVExporter,
 } as const;

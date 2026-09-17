@@ -11,6 +11,7 @@ description: Fetch all cursor-paginated rows and download them as a CSV file wit
 
 ```tsx
 import {
+  CsvExporter,
   useCsvExporter,
   type CsvCursorConnection,
   type CsvExportColumn,
@@ -20,7 +21,7 @@ import {
 ## Usage
 
 ```tsx
-const exporter = useCsvExporter({
+const { props } = useCsvExporter({
   defaultFilename: "products.csv",
   columns,
   fetcher: async ({ first, after, signal }) => {
@@ -40,7 +41,7 @@ const exporter = useCsvExporter({
   },
 });
 
-<DataTable.CSVExporter exporter={exporter} />;
+<DataTable.CSVExporter {...props} />;
 ```
 
 The fetcher receives the cursor parameters for one page. The hook follows `pageInfo.endCursor` until `hasNextPage` is false, then serializes and downloads every fetched row. It passes an `AbortSignal`; pass it to the client request when the client supports cancellation.
@@ -90,13 +91,9 @@ A labelled DataTable column must provide `accessor` or `id`; otherwise TypeScrip
 
 ## Return value
 
-| Property               | Type                                                                                            | Description                                                                                          |
-| ---------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `defaultFilename`      | `string`                                                                                        | Suggested download name.                                                                             |
-| `exportCsv(filename?)` | `(filename?: string) => Promise<boolean>`                                                       | Starts an export. Resolves `true` after completion and uses `defaultFilename` when no name is given. |
-| `cancel()`             | `() => void`                                                                                    | Aborts the in-flight fetcher request.                                                                |
-| `phase`                | `"idle" \| "fetching" \| "serializing" \| "downloading" \| "success" \| "error" \| "cancelled"` | Current export phase.                                                                                |
-| `progress`             | `{ completed: number; total: number \| null }`                                                  | Fetched row count and optional total.                                                                |
-| `error`                | `Error \| null`                                                                                 | Last export error.                                                                                   |
+| Property | Type                     | Description                                                                                  |
+| -------- | ------------------------ | -------------------------------------------------------------------------------------------- |
+| `open()` | `() => void`             | Opens the standard exporter UI.                                                              |
+| `props`  | `CsvExporterProps<TRow>` | Spread directly onto `<CsvExporter {...props} />` or `<DataTable.CSVExporter {...props} />`. |
 
 CSV cells are escaped using RFC 4180-compatible quoting, UTF-8 BOM is included for spreadsheet compatibility, and formula-like cell values are escaped before download.

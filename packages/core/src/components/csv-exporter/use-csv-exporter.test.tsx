@@ -17,6 +17,24 @@ afterEach(() => {
 });
 
 describe("useCsvExporter", () => {
+  it("returns controlled component props and an open action", () => {
+    const { result } = renderHook(
+      () =>
+        useCsvExporter({
+          defaultFilename: "products.csv",
+          columns: [{ header: "Name", value: () => "Alice" }],
+          fetcher: async () => null,
+        }),
+      { wrapper },
+    );
+
+    expect(result.current.props.open).toBe(false);
+    act(() => result.current.open());
+    expect(result.current.props.open).toBe(true);
+    act(() => result.current.props.onOpenChange(false));
+    expect(result.current.props.open).toBe(false);
+  });
+
   it("requires a raw value source for labelled DataTable columns", () => {
     const { column } = createColumnHelper<ExportTypeTestRow>();
     const valid: UseCsvExporterOptions<ExportTypeTestRow> = {
@@ -73,7 +91,7 @@ describe("useCsvExporter", () => {
       { wrapper },
     );
 
-    await act(() => result.current.exportCsv());
+    await act(() => result.current.props.exporter.exportCsv());
 
     expect(fetcher).toHaveBeenNthCalledWith(1, {
       first: 1000,
@@ -85,8 +103,8 @@ describe("useCsvExporter", () => {
       after: "cursor-1",
       signal: expect.any(AbortSignal),
     });
-    expect(result.current.phase).toBe("success");
-    expect(result.current.progress).toEqual({ completed: 2, total: 2 });
+    expect(result.current.props.exporter.phase).toBe("success");
+    expect(result.current.props.exporter.progress).toEqual({ completed: 2, total: 2 });
 
     expect(await downloaded[0]!.text()).toBe(
       '\uFEFFName,Formula\r\nAlice,"\'=SUM(A1:A2)"\r\nBob,safe',
@@ -112,15 +130,15 @@ describe("useCsvExporter", () => {
 
     let exportPromise!: Promise<boolean>;
     act(() => {
-      exportPromise = result.current.exportCsv();
+      exportPromise = result.current.props.exporter.exportCsv();
     });
-    act(() => result.current.cancel());
+    act(() => result.current.props.exporter.cancel());
     await act(async () => {
       await exportPromise;
     });
 
     await waitFor(() => {
-      expect(result.current.phase).toBe("cancelled");
+      expect(result.current.props.exporter.phase).toBe("cancelled");
     });
   });
 });

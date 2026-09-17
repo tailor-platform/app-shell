@@ -1,17 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useEffect, useState } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
-import { useEffect } from "react";
 import { DataTable } from "./data-table";
 import { DataTableCSVExporter } from "./csv-exporter";
 import { useDataTable } from "./use-data-table";
-import type { CsvExporter } from "@/components/csv-exporter";
+import type { CsvExporterState } from "@/components/csv-exporter";
 
 const wrapper = createAppShellWrapper("en");
 type Row = { name: string };
 
-function TestCSVExporter({ exporter }: { exporter: CsvExporter<Row> }) {
+function TestCSVExporter({ exporter }: { exporter: CsvExporterState<Row> }) {
+  const [open, setOpen] = useState(false);
   const table = useDataTable<Row>({
     columns: [
       { id: "name", label: "Name", render: (row) => row.name },
@@ -27,7 +28,7 @@ function TestCSVExporter({ exporter }: { exporter: CsvExporter<Row> }) {
 
   return (
     <DataTable.Root value={table}>
-      <DataTableCSVExporter exporter={exporter} />
+      <DataTableCSVExporter open={open} onOpenChange={setOpen} exporter={exporter} />
     </DataTable.Root>
   );
 }
@@ -37,7 +38,7 @@ afterEach(() => {
 });
 
 describe("DataTable.CSVExporter", () => {
-  const idleExporter: CsvExporter<Row> = {
+  const idleExporter: CsvExporterState<Row> = {
     defaultFilename: "products.csv",
     exportCsv: vi.fn().mockResolvedValue(true),
     cancel: vi.fn(),
@@ -48,7 +49,7 @@ describe("DataTable.CSVExporter", () => {
 
   it("can reopen an in-progress export dialog", async () => {
     const user = userEvent.setup();
-    const exporter: CsvExporter<Row> = { ...idleExporter, phase: "fetching" };
+    const exporter: CsvExporterState<Row> = { ...idleExporter, phase: "fetching" };
 
     render(<TestCSVExporter exporter={exporter} />, { wrapper });
 
@@ -64,7 +65,7 @@ describe("DataTable.CSVExporter", () => {
 
   it("uses the dialog filename and visible columns when starting an export", async () => {
     const user = userEvent.setup();
-    const exporter: CsvExporter<Row> = {
+    const exporter: CsvExporterState<Row> = {
       ...idleExporter,
       exportCsv: vi.fn().mockResolvedValue(true),
     };

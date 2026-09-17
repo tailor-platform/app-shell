@@ -519,7 +519,7 @@ const DataTableLabPage = () => {
     rowActions,
   });
 
-  const exporter = useCsvExporter({
+  const { props: exporter } = useCsvExporter({
     defaultFilename: "invoices.csv",
     columns: baseColumns,
     fetcher: async () => ({
@@ -573,7 +573,7 @@ const DataTableLabPage = () => {
             <DataTable.Toolbar columnSettings>
               <div className="flex min-w-0 items-start gap-2">
                 <DataTable.Filters className="flex-1" />
-                <DataTable.CSVExporter exporter={exporter} />
+                <DataTable.CSVExporter {...exporter} />
               </div>
             </DataTable.Toolbar>
             <DataTable.Table />

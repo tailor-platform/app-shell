@@ -156,7 +156,9 @@ const [country, setCountry] = React.useState<string | null>(null);
 `onFormSubmit` does **not** read `FormData`. It collects values from the `Field.Root`s registered
 inside the `Form`, keyed by each field's `name`. Every AppShell control works this way once wrapped
 in a `Field.Root` — `Select`, `Combobox`, and `Autocomplete` included. They need no `name` of their
-own and no React state.
+own and usually no React state. Mirroring a field into `useState` just to submit it is normally an
+anti-pattern; the exception is a value the component must read during render, such as a composer body
+that gates the submit button or swaps its placeholder.
 
 Non-string items are serialised into the submitted value:
 
@@ -179,6 +181,62 @@ submitted — it is distinct from `mapItem`, which controls what the user sees:
     itemToStringValue={(w) => String(w.id)}
   />
 </Field.Root>
+```
+
+### Composer-style textareas
+
+Most forms should let `Field.Root` own the submitted value. A composer is the notable exception:
+the current draft is often read during render to disable Send on whitespace-only input, swap the
+placeholder, or show live UI around the text. In that case, keep the `Textarea` controlled, but
+still make it a real field inside `Form` so validation and server errors land beside the draft.
+
+Use a visually hidden `Field.Label` rather than only `aria-label` so the field keeps the same
+label, description, and error wiring as any other form control. If the submit can fail, route the
+server rejection through `Form`'s `errors` prop and clear the draft only after success.
+
+```tsx
+function ReplyComposer() {
+  const [body, setBody] = React.useState("");
+  const [internal, setInternal] = React.useState(false);
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  async function handleSubmit() {
+    const result = await saveReply({ body, internal });
+    if (result?.error) {
+      setErrors({ body: result.error });
+      return;
+    }
+
+    setErrors({});
+    setBody("");
+  }
+
+  return (
+    <Form noValidate errors={errors} onFormSubmit={handleSubmit}>
+      <Field.Root name="body">
+        <Field.Label className="sr-only">Reply</Field.Label>
+        <Textarea
+          required
+          rows={4}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder={internal ? "Internal context for teammates..." : "Reply to customer..."}
+        />
+        <Field.Error />
+      </Field.Root>
+
+      <Checkbox
+        label="Internal note (not sent to customer)"
+        checked={internal}
+        onCheckedChange={setInternal}
+      />
+
+      <Button type="submit" disabled={body.trim().length === 0}>
+        Send
+      </Button>
+    </Form>
+  );
+}
 ```
 
 ### Native form submission

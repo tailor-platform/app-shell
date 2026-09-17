@@ -7,16 +7,21 @@ import { Form } from "@/components/form";
 import { Spinner } from "@/components/spinner";
 import { useCsvExporterT } from "@/components/csv-exporter/i18n";
 import type { CsvExporter } from "@/components/csv-exporter";
+import { useDataTableContext } from "./data-table-context";
 
-export interface DataTableCSVExportProps {
-  exporter: CsvExporter;
+export interface DataTableCSVExporterProps<TRow extends Record<string, unknown>> {
+  exporter: CsvExporter<TRow>;
 }
 
 /**
  * Standard CSV export button and progress dialog. Supply the stateful value
- * returned by `useCsvExporter` through `exporter`.
+ * returned by `useCsvExporter` through `exporter`. Visible DataTable columns
+ * are used in their current order when the exporter was configured from columns.
  */
-export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
+export function DataTableCSVExporter<TRow extends Record<string, unknown>>({
+  exporter,
+}: DataTableCSVExporterProps<TRow>) {
+  const { visibleColumns } = useDataTableContext<TRow>();
   const t = useCsvExporterT();
   const formId = useId();
   const [open, setOpen] = useState(false);
@@ -37,7 +42,7 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
   };
 
   const startExport = async ({ filename: exportFilename }: { filename: string }) => {
-    if (await exporter.exportCsv(exportFilename)) setOpen(false);
+    if (await exporter.exportCsv(exportFilename, visibleColumns)) setOpen(false);
   };
 
   return (
@@ -45,7 +50,7 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
       <div className="astw:w-fit">
         <Dialog.Trigger render={<Button variant="outline" size="xs" />}>
           <Download className="astw:size-3" />
-          {t("csvExport")}
+          {t("csvExporter")}
         </Dialog.Trigger>
       </div>
       <Dialog.Content>

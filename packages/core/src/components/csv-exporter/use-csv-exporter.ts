@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { unparse } from "papaparse";
 import { getCellValue } from "@/components/data-table/cell-renderers";
 import type { Column } from "@/components/data-table/types";
@@ -8,7 +8,6 @@ import type {
   CsvCursorConnection,
   CsvExportCell,
   CsvExportColumn,
-  CsvExportColumnSource,
   CsvExporter,
   UseCsvExporterOptions,
 } from "./types";
@@ -41,7 +40,7 @@ function isCsvExportColumn<TRow extends Record<string, unknown>>(
 }
 
 function resolveColumns<TRow extends Record<string, unknown>>(
-  columns: CsvExportColumnSource<TRow>,
+  columns: readonly CsvExportColumn<TRow>[] | readonly Column<TRow>[],
 ): CsvExportColumn<TRow>[] {
   if (columns.length === 0 || isCsvExportColumn(columns[0])) {
     return columns as CsvExportColumn<TRow>[];
@@ -78,7 +77,7 @@ function downloadCsv(csv: string, filename: string) {
 
 /**
  * Fetch every cursor page, serialize its rows as CSV, and expose progress for
- * a UI such as `DataTable.CSVExport`. The data client stays outside this hook:
+ * a UI such as `DataTable.CSVExporter`. The data client stays outside this hook:
  * `fetcher` only needs to return a Relay-style cursor connection.
  */
 export function useCsvExporter<TRow extends Record<string, unknown>>({
@@ -86,10 +85,10 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
   columns: columnSource,
   fetcher,
   pageSize = DEFAULT_PAGE_SIZE,
-}: UseCsvExporterOptions<TRow>): CsvExporter {
+}: UseCsvExporterOptions<TRow>): CsvExporter<TRow> {
   const toast = useToast();
   const t = useCsvExporterT();
-  const columns = useMemo(() => resolveColumns(columnSource), [columnSource]);
+  const usesDataTableColumns = columnSource.length > 0 && !isCsvExportColumn(columnSource[0]);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [phase, setPhase] = useState<CsvExporter["phase"]>("idle");
   const [progress, setProgress] = useState<CsvExporter["progress"]>({ completed: 0, total: null });
@@ -100,7 +99,10 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
   }, []);
 
   const exportCsv = useCallback(
-    async (requestedFilename = defaultFilename) => {
+    async (
+      requestedFilename = defaultFilename,
+      columnOverride?: readonly CsvExportColumn<TRow>[] | readonly Column<TRow>[],
+    ) => {
       if (abortControllerRef.current) return false;
 
       const abortController = new AbortController();
@@ -111,6 +113,9 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
 
       try {
         const filename = normalizeFilename(requestedFilename);
+        const columns = resolveColumns(
+          columnOverride && usesDataTableColumns ? columnOverride : columnSource,
+        );
         const rows: TRow[] = [];
         const seenCursors = new Set<string>();
         let after: string | null = null;
@@ -177,7 +182,7 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
         abortControllerRef.current = null;
       }
     },
-    [columns, defaultFilename, fetcher, pageSize, t, toast],
+    [columnSource, defaultFilename, fetcher, pageSize, t, toast, usesDataTableColumns],
   );
 
   return { defaultFilename, exportCsv, cancel, phase, progress, error };

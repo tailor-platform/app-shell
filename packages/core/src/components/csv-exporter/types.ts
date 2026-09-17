@@ -40,6 +40,10 @@ export type CsvExportColumnSource<TRow extends Record<string, unknown>> =
   | readonly CsvExportColumn<TRow>[]
   | readonly CsvExportableDataTableColumn<TRow>[];
 
+type CsvExportColumnOverride<TRow extends Record<string, unknown>> =
+  | readonly CsvExportColumn<TRow>[]
+  | readonly Column<TRow>[];
+
 export type CsvExportPhase =
   | "idle"
   | "fetching"
@@ -60,10 +64,10 @@ export interface UseCsvExporterOptions<TRow extends Record<string, unknown>> {
   pageSize?: number;
 }
 
-export interface CsvExporter {
+export interface CsvExporter<TRow extends Record<string, unknown> = Record<string, unknown>> {
   defaultFilename: string;
   /** Resolves true when the export completed (including an empty result). */
-  exportCsv: (filename?: string) => Promise<boolean>;
+  exportCsv: (filename?: string, columns?: CsvExportColumnOverride<TRow>) => Promise<boolean>;
   cancel: () => void;
   phase: CsvExportPhase;
   progress: {

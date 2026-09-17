@@ -9,7 +9,7 @@ export const csvExporterLabels = defineI18nLabels({
     dialogTitle: "Download CSV",
     filename: "File name",
     download: "Download",
-    csvExport: "CSV Export",
+    csvExporter: "CSV Export",
     exporting: "Exporting CSV",
     fetchingRows: (props: { completed: number; total: number | null }) =>
       props.total == null
@@ -29,7 +29,7 @@ export const csvExporterLabels = defineI18nLabels({
     dialogTitle: "CSV をダウンロード",
     filename: "ファイル名",
     download: "ダウンロード",
-    csvExport: "CSVエクスポート",
+    csvExporter: "CSVエクスポート",
     exporting: "CSV をエクスポート中",
     fetchingRows: (props: { completed: number; total: number | null }) =>
       props.total == null

@@ -43,7 +43,7 @@ import {
   getVisibleFilterOperators,
 } from "./toolbar";
 import { DataTablePagination } from "./pagination";
-import { DataTableCSVExport } from "./csv-export";
+import { DataTableCSVExporter } from "./csv-exporter";
 export type { DataTablePaginationProps } from "./pagination";
 
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
@@ -1916,5 +1916,5 @@ export const DataTable = {
    * Standard CSV export button and progress dialog. Pass the result of
    * `useCsvExporter()` through its `exporter` prop.
    */
-  CSVExport: DataTableCSVExport,
+  CSVExporter: DataTableCSVExporter,
 } as const;

@@ -368,7 +368,7 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
     <DataTable.Root value={table}>
       <DataTable.Toolbar>
         {toolbar(control)}
-        <DataTable.CSVExport exporter={exporter} />
+        <DataTable.CSVExporter exporter={exporter} />
       </DataTable.Toolbar>
       <DataTable.Table />
       <DataTable.Footer>

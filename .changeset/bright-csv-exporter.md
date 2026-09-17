@@ -6,7 +6,7 @@ Add `useCsvExporter` for client-side, cursor-paginated CSV downloads with progre
 
 ```tsx
 const exporter = useCsvExporter({ defaultFilename: "products.csv", columns, fetcher });
-<DataTable.CSVExport exporter={exporter} />;
+<DataTable.CSVExporter exporter={exporter} />;
 ```
 
-`DataTable.CSVExport` provides a filename dialog and export progress UI.
+`DataTable.CSVExporter` provides a filename dialog and export progress UI.

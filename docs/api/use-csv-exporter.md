@@ -5,7 +5,7 @@ description: Fetch all cursor-paginated rows and download them as a CSV file wit
 
 # useCsvExporter
 
-`useCsvExporter` fetches every page from a Relay-style cursor connection, creates a UTF-8 CSV, and returns an exporter value for [`DataTable.CSVExport`](../components/data-table.md#csv-export). It is client-agnostic: the calling application implements the `fetcher` with its own data client.
+`useCsvExporter` fetches every page from a Relay-style cursor connection, creates a UTF-8 CSV, and returns an exporter value for [`DataTable.CSVExporter`](../components/data-table.md#datatablecsvexporter). It is client-agnostic: the calling application implements the `fetcher` with its own data client.
 
 ## Import
 
@@ -40,7 +40,7 @@ const exporter = useCsvExporter({
   },
 });
 
-<DataTable.CSVExport exporter={exporter} />;
+<DataTable.CSVExporter exporter={exporter} />;
 ```
 
 The fetcher receives the cursor parameters for one page. The hook follows `pageInfo.endCursor` until `hasNextPage` is false, then serializes and downloads every fetched row. It passes an `AbortSignal`; pass it to the client request when the client supports cancellation.
@@ -86,7 +86,7 @@ const exporter = useCsvExporter({
 });
 ```
 
-A labelled DataTable column must provide `accessor` or `id`; otherwise TypeScript rejects it as a CSV column source. The exporter resolves values from `accessor(row)` first, then `row[id]`. Columns without a `label`, such as action columns, are excluded. Dates are exported as ISO strings and primitive arrays are joined with `, `. Use explicit `CsvExportColumn[]` definitions when CSV values need a different format from the table.
+A labelled DataTable column must provide `accessor` or `id`; otherwise TypeScript rejects it as a CSV column source. The exporter resolves values from `accessor(row)` first, then `row[id]`. Columns without a `label`, such as action columns, are excluded. Dates are exported as ISO strings and primitive arrays are joined with `, `. When the exporter is passed to `DataTable.CSVExporter`, the current visible DataTable columns and their user-defined order are used. Use explicit `CsvExportColumn[]` definitions when CSV values need a different format from the table or must ignore user column settings.
 
 ## Return value
 

@@ -1,6 +1,6 @@
 // DataTable compound component
 export { DataTable, type DataTablePaginationProps, type DataTableRootProps } from "./data-table";
-export { type DataTableCSVExportProps } from "./csv-export";
+export { type DataTableCSVExporterProps } from "./csv-exporter";
 
 export { useDataTable } from "./use-data-table";
 export { useDataTableContext, type DataTableContextValue } from "./data-table-context";

@@ -315,7 +315,7 @@ export {
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
-  type DataTableCSVExportProps,
+  type DataTableCSVExporterProps,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

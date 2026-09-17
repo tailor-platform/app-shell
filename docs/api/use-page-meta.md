@@ -26,7 +26,7 @@ const usePageMeta: (path: string) => {
 
 ## Return Value
 
-Returns an object with `title` and optional `icon`, or `null` if path not found.
+Returns an object with `title` and optional `icon`, or `null` when the path is external or does not match any AppShell route.
 
 ## Usage
 
@@ -84,8 +84,9 @@ function Breadcrumb({ paths }: { paths: string[] }) {
 ## Notes
 
 - Used internally by `SidebarItem` to auto-resolve titles and icons
-- Returns `null` if the path doesn't match any defined route
+- Returns `null` for external URLs (`http://...` / `https://...`) and for paths that do not match any defined route
 - Resolves from module and resource `meta` properties
+- Prefers literal routes before dynamic siblings, so `/users/new` resolves that route's metadata instead of `/users/:id`
 
 ## Related
 

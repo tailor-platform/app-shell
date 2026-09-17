@@ -2,7 +2,8 @@ import { useId, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
-import { Input } from "@/components/input";
+import { Field } from "@/components/field";
+import { Form } from "@/components/form";
 import { Spinner } from "@/components/spinner";
 import { useCsvExporterT } from "@/components/csv-exporter/i18n";
 import type { CsvExporter } from "@/components/csv-exporter";
@@ -17,10 +18,9 @@ export interface DataTableCSVExportProps {
  */
 export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
   const t = useCsvExporterT();
-  const filenameId = useId();
+  const formId = useId();
   const [open, setOpen] = useState(false);
   const [filename, setFilename] = useState(exporter.defaultFilename);
-  const [filenameError, setFilenameError] = useState<string | null>(null);
   const isExporting =
     exporter.phase === "fetching" ||
     exporter.phase === "serializing" ||
@@ -32,18 +32,12 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
   const onOpenChange = (nextOpen: boolean) => {
     if (nextOpen && !isExporting) {
       setFilename(exporter.defaultFilename);
-      setFilenameError(null);
     }
     setOpen(nextOpen);
   };
 
-  const startExport = async () => {
-    if (!filename.trim()) {
-      setFilenameError(t("invalidFilename"));
-      return;
-    }
-    setFilenameError(null);
-    if (await exporter.exportCsv(filename)) setOpen(false);
+  const startExport = async ({ filename: exportFilename }: { filename: string }) => {
+    if (await exporter.exportCsv(exportFilename)) setOpen(false);
   };
 
   return (
@@ -74,41 +68,32 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
             )}
           </div>
         ) : (
-          <form
+          <Form<{ filename: string }>
+            id={formId}
             className="astw:flex astw:flex-col astw:gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void startExport();
-            }}
+            noValidate
+            onFormSubmit={startExport}
           >
-            <label className="astw:text-sm astw:font-medium" htmlFor={filenameId}>
-              {t("filename")}
-            </label>
-            <Input
-              id={filenameId}
-              value={filename}
-              onChange={(event) => {
-                setFilename(event.target.value);
-                setFilenameError(null);
-              }}
-              aria-invalid={filenameError != null}
-              aria-describedby={filenameError ? `${filenameId}-error` : undefined}
-            />
-            {filenameError && (
-              <p
-                id={`${filenameId}-error`}
-                className="astw:text-sm astw:text-destructive"
-                role="alert"
-              >
-                {filenameError}
-              </p>
-            )}
+            <Field.Root
+              name="filename"
+              validate={(value) =>
+                typeof value === "string" && value.trim() ? undefined : t("invalidFilename")
+              }
+            >
+              <Field.Label>{t("filename")}</Field.Label>
+              <Field.Control
+                required
+                value={filename}
+                onChange={(event) => setFilename(event.target.value)}
+              />
+              <Field.Error />
+            </Field.Root>
             {exporter.error && (
               <p className="astw:text-sm astw:text-destructive" role="alert">
                 {exporter.error.message}
               </p>
             )}
-          </form>
+          </Form>
         )}
 
         <Dialog.Footer>
@@ -119,7 +104,7 @@ export function DataTableCSVExport({ exporter }: DataTableCSVExportProps) {
           ) : (
             <>
               <Dialog.Close render={<Button variant="outline" />}>{t("cancel")}</Dialog.Close>
-              <Button onClick={() => void startExport()}>
+              <Button type="submit" form={formId}>
                 {exporter.phase === "error" ? t("retry") : t("download")}
               </Button>
             </>

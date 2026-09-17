@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { Children, isValidElement, useCallback, useMemo, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { Tooltip } from "@/components/tooltip";
 import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
+import { DataTableCSVExport } from "./csv-export";
 import { useDataTableContext } from "./data-table-context";
 import { isTemporalFilterType, isTemporalFilterValueValid } from "./filter-value-utils";
 import { useDataTableT } from "./i18n";
@@ -45,6 +46,14 @@ function DataTableToolbar({
   columnSettings?: boolean;
   className?: string;
 }) {
+  const toolbarChildren = Children.toArray(children);
+  const csvExports = toolbarChildren.filter(
+    (child) => isValidElement(child) && child.type === DataTableCSVExport,
+  );
+  const content = toolbarChildren.filter(
+    (child) => !isValidElement(child) || child.type !== DataTableCSVExport,
+  );
+
   return (
     <div
       data-slot="data-table-toolbar"
@@ -54,9 +63,15 @@ function DataTableToolbar({
       )}
     >
       {/* Left group keeps children in their original vertical stack (so existing
-          toolbars are visually unchanged); the settings button sits top-right. */}
-      <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-2">{children}</div>
-      {columnSettings && <DataTableColumnSettings />}
+          toolbars are visually unchanged). Direct CSV exports are controls, not
+          content, so they sit beside the fixed column-settings control. */}
+      <div className="astw:flex astw:min-w-0 astw:flex-1 astw:flex-col astw:gap-2">{content}</div>
+      {(csvExports.length > 0 || columnSettings) && (
+        <div className="astw:flex astw:shrink-0 astw:items-start astw:gap-2">
+          {csvExports}
+          {columnSettings && <DataTableColumnSettings />}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   DataTable,
   useDataTable,
   useDataTableContext,
+  useCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type Column,
@@ -152,6 +153,7 @@ function JournalsPage() {
 | `DataTable.Filters`    | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                  |
 | `DataTable.Footer`     | Footer container for pagination and other footer content. Optional.                                                                                                                   |
 | `DataTable.Pagination` | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                          |
+| `DataTable.CSVExport`  | Standard CSV download button and filename/progress dialog. Pass an exporter from [`useCsvExporter`](../api/use-csv-exporter.md) through `exporter`.                                   |
 
 ### `DataTable.Root` Props
 
@@ -191,6 +193,21 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
     <DataTable.Filters slot="add" />
   </div>
   <DataTable.Filters slot="chips" />
+</DataTable.Toolbar>
+```
+
+### `DataTable.CSVExport` Props
+
+| Prop       | Type          | Description                                                                 |
+| ---------- | ------------- | --------------------------------------------------------------------------- |
+| `exporter` | `CsvExporter` | Return value from [`useCsvExporter`](../api/use-csv-exporter.md). Required. |
+
+`DataTable.CSVExport` opens a dialog where the user can change the filename before downloading. During the export it shows the fetched row count and a percentage when the connection returns `total`; it also provides a cancel action. Place it as a direct `DataTable.Toolbar` child to render it immediately before the built-in Columns control:
+
+```tsx
+<DataTable.Toolbar columnSettings>
+  <DataTable.Filters />
+  <DataTable.CSVExport exporter={exporter} />
 </DataTable.Toolbar>
 ```
 

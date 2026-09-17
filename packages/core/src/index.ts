@@ -255,6 +255,16 @@ export {
   type ParsedRow,
   type InferCsvRow,
 } from "./components/csv-importer";
+export {
+  useCsvExporter,
+  type CsvCursorConnection,
+  type CsvCursorFetcher,
+  type CsvExportCell,
+  type CsvExportColumn,
+  type CsvExportPhase,
+  type CsvExporter,
+  type UseCsvExporterOptions,
+} from "./components/csv-exporter";
 
 // Collection (shared across DataTable, Kanban, Gantt, etc.)
 export {
@@ -305,6 +315,7 @@ export {
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
+  type DataTableCSVExportProps,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

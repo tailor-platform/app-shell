@@ -43,6 +43,7 @@ import {
   getVisibleFilterOperators,
 } from "./toolbar";
 import { DataTablePagination } from "./pagination";
+import { DataTableCSVExport } from "./csv-export";
 export type { DataTablePaginationProps } from "./pagination";
 
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
@@ -1880,7 +1881,8 @@ export const DataTable = {
   /**
    * Container for toolbar content (filters, search, etc.). Place inside
    * `DataTable.Root`, before `DataTable.Table`. Pass `columnSettings` to render
-   * the built-in "Columns" control (show/hide, reorder, pin) at the top-right.
+   * the built-in Columns control at the top-right. A direct `CSVExport` child
+   * is rendered immediately before it.
    */
   Toolbar: DataTableToolbar,
   /**
@@ -1911,4 +1913,9 @@ export const DataTable = {
    * `totalPages` is non-null (i.e. the backend returns a `total` count).
    */
   Pagination: DataTablePagination,
+  /**
+   * Standard CSV export button and progress dialog. Pass the result of
+   * `useCsvExporter()` through its `exporter` prop.
+   */
+  CSVExport: DataTableCSVExport,
 } as const;

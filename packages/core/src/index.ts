@@ -1,5 +1,12 @@
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar";
+export {
+  GlobalHeaderLayout,
+  GlobalHeader,
+  type GlobalHeaderLayoutProps,
+  type GlobalHeaderProps,
+} from "./components/sidebar/index";
+export { DynamicBreadcrumb, usePathSegments } from "./components/sidebar/dynamic-breadcrumb";
 export { CommandPalette } from "./components/command-palette";
 export {
   useOpenCommandPalette,
@@ -9,6 +16,10 @@ export {
   type OpenCommandPaletteOptions,
   type SearchSource,
 } from "./contexts/command-palette-context";
+
+// Low-level sidebar primitives — for composing custom sidebar entries
+// (e.g. an action button) that behave in icon-rail mode like the built-ins.
+export { SidebarMenuItem, SidebarMenuButton } from "./components/sidebar";
 
 // Sidebar navigation components
 export {
@@ -20,7 +31,12 @@ export {
   type SidebarLayoutProps,
   type DefaultSidebarProps,
   type DefaultHeaderProps,
+  type ContentContainerProps,
 } from "./components/sidebar";
+
+// Sidebar collapse state — the supported alternative to observing
+// `[data-slot="sidebar"][data-state]` or clicking the trigger via the DOM.
+export { useAppShellSidebar, type AppShellSidebarState } from "./components/sidebar";
 
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";

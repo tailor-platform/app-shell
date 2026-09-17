@@ -7,6 +7,8 @@
     "type-check": "turbo type-check",
     "lint": "turbo lint",
     "test": "turbo test",
+    "docs:sync": "node packages/docs-kit/dist/cli.mjs sync --root .",
+    "docs:check": "node packages/docs-kit/dist/cli.mjs check --root .",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",

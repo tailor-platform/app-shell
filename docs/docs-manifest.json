@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "units": {
+    "button": {
+      "slug": "button",
+      "kind": "code-backed",
+      "outline": "docs-src/components/button.docs.outline.md",
+      "output": "docs/components/button.md",
+      "examples": "docs-src/components/button.docs.examples.tsx",
+      "sources": ["packages/core/src/components/button/**"],
+      "claims": [],
+      "symbols": ["Button", "ButtonProps", "buttonVariants"],
+      "hashes": {
+        "typeSurface": "16df9927f8394548",
+        "outline": "79c4f96f89ad382f",
+        "snapshot": "d607a315ffce3abc",
+        "outputMd": "4558c236d89cefd2",
+        "examples": "1ee01b1e27764cd2"
+      }
+    }
+  }
+}

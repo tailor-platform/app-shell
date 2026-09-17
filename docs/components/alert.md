@@ -172,16 +172,15 @@ function OrderForm() {
 
 ## Styling
 
-Alerts use Tailwind CSS classes prefixed with `astw:`. Customize appearance using:
+Customize alerts using:
 
 1. **Using `className`** on `Alert.Root` for additional styles
 2. **Using `alertVariants`** utility to apply variant classes to custom elements
 
 ```tsx
 import { alertVariants } from "@tailor-platform/app-shell";
-import { cn } from "@/lib/utils";
 
-<div className={cn(alertVariants({ variant: "info" }), "astw:my-4")}>Custom alert container</div>;
+<div className={`${alertVariants({ variant: "info" })} my-4`}>Custom alert container</div>;
 ```
 
 ## Related Components

@@ -263,7 +263,7 @@ Use `fill` for pages whose main content manages its own scrolling (typically a `
 Use `className` to control the space between columns:
 
 ```tsx
-<Layout className="astw:gap-6">
+<Layout className="gap-6">
   <Layout.Column>{/* ... */}</Layout.Column>
   <Layout.Column>{/* ... */}</Layout.Column>
 </Layout>
@@ -484,17 +484,17 @@ The Layout component validates its children:
 Add custom classes to the layout container:
 
 ```tsx
-<Layout className="astw:bg-gray-50 astw:p-8 astw:rounded-lg">{/* ... */}</Layout>
+<Layout className="rounded-lg bg-gray-50 p-8">{/* ... */}</Layout>
 ```
 
 Add custom classes to individual columns:
 
 ```tsx
 <Layout>
-  <Layout.Column className="astw:bg-white astw:shadow-sm">
+  <Layout.Column className="bg-white shadow-sm">
     {/* Main content with background */}
   </Layout.Column>
-  <Layout.Column className="astw:space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
+  <Layout.Column className="space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
 </Layout>
 ```
 

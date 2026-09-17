@@ -134,7 +134,7 @@ const priorities = [
   { label: "Critical", variant = "error" },
 ];
 
-<div className="astw:flex astw:gap-2">
+<div className="flex gap-2">
   {priorities.map((p) => (
     <Badge key={p.label} variant={p.variant}>
       {p.label}
@@ -148,17 +148,17 @@ const priorities = [
 ```tsx
 import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
 
-<div className="astw:flex astw:gap-2">
+<div className="flex gap-2">
   <Badge variant="success">
-    <CheckCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+    <CheckCircle className="mr-1 h-3 w-3" />
     Verified
   </Badge>
   <Badge variant="warning">
-    <AlertCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+    <AlertCircle className="mr-1 h-3 w-3" />
     Review
   </Badge>
   <Badge variant="error">
-    <XCircle className="astw:w-3 astw:h-3 astw:mr-1" />
+    <XCircle className="mr-1 h-3 w-3" />
     Blocked
   </Badge>
 </div>;
@@ -188,7 +188,7 @@ function ProductBadge({ product }: { product: Product }) {
 ### Custom Styling
 
 ```tsx
-<Badge variant="success" className="astw:text-xs astw:px-3 astw:py-1 astw:uppercase">
+<Badge variant="success" className="px-3 py-1 text-xs uppercase">
   Premium
 </Badge>
 ```
@@ -279,7 +279,7 @@ import { DescriptionCard } from "@tailor-platform/app-shell";
 
 ## Styling
 
-Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
+Customize badges by:
 
 1. **Using className prop** for additional styles
 2. **Overriding CSS variables** in your theme
@@ -287,7 +287,6 @@ Badges use Tailwind CSS classes prefixed with `astw:`. Customize appearance by:
 
 ```tsx
 import { badgeVariants } from "@tailor-platform/app-shell";
-import { cn } from "@/lib/utils";
 
-<div className={cn(badgeVariants({ variant: "success" }), "astw:text-lg")}>Custom Badge</div>;
+<div className={`${badgeVariants({ variant: "success" })} text-lg`}>Custom Badge</div>;
 ```

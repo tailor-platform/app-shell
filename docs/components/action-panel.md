@@ -135,14 +135,7 @@ This keeps `ActionPanel` simple and reusable across entity types.
 
 ## Styling
 
-The component uses Tailwind classes with the `astw:` prefix:
-
-- Full width card (`astw:w-full`)
-- Compact spacing for dense action lists
-- Fixed icon slot for stable alignment
-- Inline spinner for loading state
-
-Use `className` on `ActionPanel` to add or override card-level styles.
+Use `className` on `ActionPanel` to adjust the outer card. The row layout, fixed icon slot, and inline loading spinner are part of the built-in treatment.
 
 ## Examples in This Repo
 

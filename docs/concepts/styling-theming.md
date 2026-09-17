@@ -78,13 +78,22 @@ Note that the `background` and `border` slots are already semi-transparent (a ~1
 
 ## A note on AppShell component class names
 
-AppShell components use Tailwind utility classes for their styling. Tailwind classes are generated at build-time, so stylesheet for AppShell components is already built and is separate to the Tailwind stylesheet generated for your application.
+AppShell's own compiled CSS uses the `astw:` prefix internally to avoid collisions with an application's Tailwind output. Treat that prefix as an implementation detail, not as an application styling API.
 
-In CSS, the order of style-definition affects the final styles which are computed for an element. Tailwind takes this into account when generating its stylesheet, however because it does not know that there's already a Tailwind-generated stylesheet included in the browser (AppShell's styles), there would be incorrect ordering of style definitions, and clashes can (though do not always) occur.
+For application-authored markup, use ordinary Tailwind utilities:
 
-To avoid this situation, and to ensure correct style resolution, AppShell components use a class prefix "astw" (AppShell TailWind) to avoid clashes.
+```tsx
+<div className="rounded-lg border bg-background p-6 shadow-sm" />
+```
 
-This is important to note for developing in AppShell.
+For AppShell components, prefer documented props and composition points over reaching for internal classes:
+
+```tsx
+<Table.Root containerClassName="px-6" />
+<Layout className="gap-6" />
+```
+
+If you need to change behavior or structure, use the public escape hatches — such as `SidebarLayout` slots, `className` props, or component variants — rather than targeting AppShell's internal selectors.
 
 ## Color Themes (Light / Dark / System)
 

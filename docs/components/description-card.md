@@ -477,7 +477,7 @@ The component uses container queries for responsive layouts:
 ```tsx
 // Custom styling
 <DescriptionCard
-  className="astw:bg-white astw:p-6 astw:rounded-lg astw:shadow"
+  className="rounded-lg bg-white p-6 shadow"
   data={data}
   fields={fields}
 />

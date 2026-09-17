@@ -325,22 +325,14 @@ When a child item is active, the group:
 ### Custom Icon Styling
 
 ```tsx
-<SidebarGroup title="Products" icon={<Package className="astw:text-blue-500" />}>
+<SidebarGroup title="Products" icon={<Package className="text-blue-500" />}>
   {/* ... */}
 </SidebarGroup>
 ```
 
 ### Group Title Styling
 
-The title styling is controlled by AppShell's theme. You can customize via CSS:
-
-```css
-/* Custom group header styling */
-.astw:sidebar-group-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-```
+The built-in title styling is part of the component's theme. If you need a materially different title treatment, compose your own grouping UI instead of targeting AppShell's internal selectors.
 
 ## Accessibility
 

@@ -27,6 +27,8 @@ import { DefaultSidebar, SidebarItem } from "@tailor-platform/app-shell";
 
 When you only provide `to`, the title and icon are automatically resolved from the matching resource's `meta` property.
 
+Literal routes win over dynamic siblings during auto-resolution. For example, if your app has both `/users/new` and `/users/:id`, then `<SidebarItem to="/users/new" />` resolves the literal route's title and icon even if the dynamic route was registered first.
+
 ## Props
 
 | Prop          | Type                   | Default       | Description                                    |
@@ -178,7 +180,7 @@ For full control, use the `render` prop:
 <SidebarItem
   to="/notifications"
   render={({ title, icon, isActive }) => (
-    <div className="astw:flex astw:items-center astw:gap-2">
+    <div className="flex items-center gap-2">
       {icon}
       <span>{title}</span>
       {isActive && <Badge>New</Badge>}
@@ -264,8 +266,8 @@ import { HelpCircle, FileText, ExternalLink } from "lucide-react";
   render={({ title, icon, isActive }) => (
     <>
       {icon}
-      <span className={isActive ? "astw:font-bold" : undefined}>{title}</span>
-      {isActive && <span className="astw:ml-auto">•</span>}
+      <span className={isActive ? "font-bold" : undefined}>{title}</span>
+      {isActive && <span className="ml-auto">•</span>}
     </>
   )}
 />
@@ -317,15 +319,7 @@ import { Package } from "lucide-react";
 
 ### Active State
 
-Active items automatically receive the `astw:bg-sidebar-accent` background class:
-
-```css
-/* Active item styling (automatic) */
-.astw:bg-sidebar-accent {
-  background: var(--sidebar-accent);
-  font-weight: 500;
-}
-```
+Active items automatically receive the sidebar accent treatment and medium font weight.
 
 ### Custom Styling
 
@@ -336,10 +330,7 @@ Add custom classes via the `render` prop:
   to="/special"
   render={({ title, icon, isActive }) => (
     <div
-      className={cn(
-        "astw:flex astw:items-center astw:gap-2",
-        isActive && "astw:border-l-4 astw:border-primary",
-      )}
+      className={`flex items-center gap-2 ${isActive ? "border-l-4 border-primary" : ""}`}
     >
       {icon}
       {title}

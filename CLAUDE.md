@@ -18,6 +18,18 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 **📖 For component and API documentation, see:** [`docs/`](./docs/)
 
+### Documentation Index
+
+- `docs/components/sidebar-layout.md` — default layout slots, `body`, `topBar`, and sidebar composition
+- `docs/components/global-header-layout.md` — opinionated app-wide header layout built on `SidebarLayout`
+- `docs/components/default-sidebar.md` — built-in sidebar modes, search entry, and icon-rail behavior
+- `docs/components/command-palette.md` — built-in navigation palette and search-source integration
+- `docs/components/ai-chat.md` — assistant UI component surface
+- `docs/components/spinner.md` — reusable loading indicator
+- `docs/api/use-page-meta.md` — route metadata lookup
+- `docs/concepts/sidebar-navigation.md` — sidebar composition guidance
+- `docs/concepts/styling-theming.md` — styling rules and theme setup
+
 ## Key Architecture Points (LLM Orientation)
 
 ### Monorepo Structure

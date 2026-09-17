@@ -26,7 +26,7 @@ function Assistant() {
 
   return (
     // `overflow-hidden` keeps the header rule inside the card's rounded corners.
-    <Card.Root className="astw:flex astw:h-full astw:flex-col astw:overflow-hidden">
+    <Card.Root className="flex h-full flex-col overflow-hidden">
       <AIChat status={status}>
         <AIChat.Header title="Assistant" />
         <AIChat.Conversation>
@@ -122,7 +122,7 @@ Three attached parts wrap an AppShell component. They expose only the props the 
 
 `variant` stays open on `ChainOfThoughtSearchResult` because conveying status is what a `Badge` is for. `AIChat.Action`'s `label` becomes both the accessible name and the tooltip text.
 
-One thing to know about `className` on these: it is merged with `cn()`, which is not configured for the `astw:` prefix, so it cannot reliably override a base utility from the wrapped component. If an override appears to do nothing, that is why.
+One thing to know about `className` on these: it is merged onto a wrapped AppShell primitive whose core treatment is fixed. Additive styling works well; conflicting utilities may not fully replace the built-in treatment. If you need a materially different control, compose your own button or badge instead.
 
 ## Filling the page
 
@@ -134,7 +134,7 @@ Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card take
 <Layout fill>
   <Layout.Header title="Assistant" />
   <Layout.Column>
-    <Card.Root className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:overflow-hidden">
+    <Card.Root className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <AIChat status={status}>
         <AIChat.Header title="Assistant" />
         <AIChat.Conversation>{/* … */}</AIChat.Conversation>
@@ -145,7 +145,7 @@ Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card take
 </Layout>
 ```
 
-`min-h-0` is what lets the card shrink below its content's natural height so the transcript scrolls instead of pushing the composer off-screen. In a docked panel or `Sheet` whose height is already fixed, `astw:h-full` on the card is enough.
+`min-h-0` is what lets the card shrink below its content's natural height so the transcript scrolls instead of pushing the composer off-screen. In a docked panel or `Sheet` whose height is already fixed, `h-full` on the card is enough.
 
 ## Header
 
@@ -157,10 +157,10 @@ A 48px strip above the transcript: leading graphic, title, and an open action sl
   actions={
     <>
       <AIChat.Action label="Conversation history" onClick={openHistory}>
-        <History className="astw:size-3.5" aria-hidden />
+        <History className="size-3.5" aria-hidden />
       </AIChat.Action>
       <AIChat.Action label="Clear conversation" onClick={clear}>
-        <Eraser className="astw:size-3.5" aria-hidden />
+        <Eraser className="size-3.5" aria-hidden />
       </AIChat.Action>
     </>
   }
@@ -174,7 +174,7 @@ For a docked right panel, put the collapse control in `icon` so it takes the lea
   title="Assistant"
   icon={
     <AIChat.Action label="Collapse panel" onClick={onClose}>
-      <ChevronsRight className="astw:size-3.5" aria-hidden />
+      <ChevronsRight className="size-3.5" aria-hidden />
     </AIChat.Action>
   }
 />
@@ -206,7 +206,7 @@ Renders the markdown subset a streamed LLM response actually emits — bold, inl
 
 ```tsx
 <AIChat.EmptyState
-  icon={<Sparkles className="astw:size-6 astw:text-primary" aria-hidden />}
+  icon={<Sparkles className="size-6 text-primary" aria-hidden />}
   title="Ask the assistant"
   description="Grounded in your help articles."
 >
@@ -225,7 +225,7 @@ Icon-button row under a finished assistant turn — copy, retry, feedback. Rende
 ```tsx
 <AIChat.Actions>
   <AIChat.Action label="Copy" onClick={() => navigator.clipboard.writeText(message.content)}>
-    <Copy className="astw:size-3.5" aria-hidden />
+    <Copy className="size-3.5" aria-hidden />
   </AIChat.Action>
 </AIChat.Actions>
 ```

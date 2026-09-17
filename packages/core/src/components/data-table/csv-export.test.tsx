@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
-import { DataTable } from "./data-table";
 import { DataTableCSVExport } from "./csv-export";
 import type { CsvExporter } from "@/components/csv-exporter";
 
@@ -21,21 +20,6 @@ describe("DataTable.CSVExport", () => {
     progress: { completed: 0, total: null },
     error: null,
   };
-
-  it("moves a direct toolbar child beside column controls", () => {
-    const { container } = render(
-      <DataTable.Toolbar>
-        <span>Filters</span>
-        <DataTable.CSVExport exporter={idleExporter} />
-      </DataTable.Toolbar>,
-      { wrapper },
-    );
-
-    const toolbar = container.querySelector('[data-slot="data-table-toolbar"]')!;
-    expect(toolbar.children).toHaveLength(2);
-    expect(toolbar.children[0]?.textContent).toContain("Filters");
-    expect(toolbar.children[1]?.textContent).toContain("CSV Export");
-  });
 
   it("can reopen an in-progress export dialog", async () => {
     const user = userEvent.setup();

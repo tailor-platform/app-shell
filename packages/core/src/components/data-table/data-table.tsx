@@ -1881,8 +1881,7 @@ export const DataTable = {
   /**
    * Container for toolbar content (filters, search, etc.). Place inside
    * `DataTable.Root`, before `DataTable.Table`. Pass `columnSettings` to render
-   * the built-in Columns control at the top-right. A direct `CSVExport` child
-   * is rendered immediately before it.
+   * the built-in "Columns" control (show/hide, reorder, pin) at the top-right.
    */
   Toolbar: DataTableToolbar,
   /**

@@ -12,6 +12,19 @@ import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
 // column() helper
 // =============================================================================
 
+type ColumnWithCsvMetadata<
+  TRow extends Record<string, unknown>,
+  TColumn extends Column<TRow>,
+> = Column<TRow> &
+  (TColumn extends { label: infer TLabel extends string }
+    ? { label: TLabel }
+    : { label?: undefined }) &
+  (TColumn extends { id: infer TId extends string }
+    ? { id: TId }
+    : TColumn extends { accessor: infer TAccessor }
+      ? { accessor: TAccessor }
+      : {});
+
 /**
  * Define a column with explicit render and optional sort/filter/accessor.
  * Prefer {@link createColumnHelper} to bind `TRow` once at the helper level.
@@ -146,7 +159,9 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
    * column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> })
    * ```
    */
-  column: <const TColumn extends Column<TRow>>(options: TColumn) => TColumn;
+  column: <const TColumn extends Column<TRow>>(
+    options: TColumn,
+  ) => ColumnWithCsvMetadata<TRow, TColumn>;
   /**
    * Bind table metadata once and return a per-field column factory.
    *
@@ -193,7 +208,8 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
  */
 export function createColumnHelper<TRow extends Record<string, unknown>>(): ColumnHelper<TRow> {
   return {
-    column: <const TColumn extends Column<TRow>>(options: TColumn) => ({ ...options }),
+    column: <const TColumn extends Column<TRow>>(options: TColumn) =>
+      ({ ...options }) as ColumnWithCsvMetadata<TRow, TColumn>,
     inferColumns: <const TTable extends TableMetadata = TableMetadata>(tableMetadata: TTable) =>
       inferColumns<TRow, TTable>(tableMetadata),
   };

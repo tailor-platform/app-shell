@@ -202,12 +202,14 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | ---------- | ------------- | --------------------------------------------------------------------------- |
 | `exporter` | `CsvExporter` | Return value from [`useCsvExporter`](../api/use-csv-exporter.md). Required. |
 
-`DataTable.CSVExport` opens a dialog where the user can change the filename before downloading. During the export it shows the fetched row count and a percentage when the connection returns `total`; it also provides a cancel action. Place it as a direct `DataTable.Toolbar` child to render it immediately before the built-in Columns control:
+`DataTable.CSVExport` opens a dialog where the user can change the filename before downloading. During the export it shows the fetched row count and a percentage when the connection returns `total`; it also provides a cancel action. Compose the toolbar layout normally when it should sit immediately before the built-in Columns control:
 
 ```tsx
 <DataTable.Toolbar columnSettings>
-  <DataTable.Filters />
-  <DataTable.CSVExport exporter={exporter} />
+  <div className="flex min-w-0 items-start gap-2">
+    <DataTable.Filters className="flex-1" />
+    <DataTable.CSVExport exporter={exporter} />
+  </div>
 </DataTable.Toolbar>
 ```
 

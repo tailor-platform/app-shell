@@ -20,7 +20,12 @@ export {
   type SidebarLayoutProps,
   type DefaultSidebarProps,
   type DefaultHeaderProps,
+  type ContentContainerProps,
 } from "./components/sidebar";
+
+// Sidebar collapse state — the supported alternative to observing
+// `[data-slot="sidebar"][data-state]` or clicking the trigger via the DOM.
+export { useAppShellSidebar, type AppShellSidebarState } from "./components/sidebar";
 
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";

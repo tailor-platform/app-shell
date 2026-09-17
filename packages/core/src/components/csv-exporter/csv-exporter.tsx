@@ -1,5 +1,4 @@
 import { useId, useState } from "react";
-import { Download } from "lucide-react";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
 import { Field } from "@/components/field";
@@ -42,12 +41,6 @@ export function CsvExporterView<TRow extends Record<string, unknown>>({
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <div className="astw:w-fit">
-        <Dialog.Trigger render={<Button variant="outline" size="xs" />}>
-          <Download className="astw:size-3" />
-          {t("csvExporter")}
-        </Dialog.Trigger>
-      </div>
       <Dialog.Content>
         <Dialog.Header>
           <Dialog.Title>{isExporting ? t("exporting") : t("dialogTitle")}</Dialog.Title>

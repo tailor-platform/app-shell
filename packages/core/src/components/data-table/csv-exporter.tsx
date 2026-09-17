@@ -1,4 +1,7 @@
+import { Download } from "lucide-react";
+import { Button } from "@/components/button";
 import { CsvExporterView } from "@/components/csv-exporter/csv-exporter";
+import { useCsvExporterT } from "@/components/csv-exporter/i18n";
 import type { CsvExporterProps } from "@/components/csv-exporter";
 import { useDataTableContext } from "./data-table-context";
 
@@ -22,8 +25,19 @@ export function DataTableCSVExporter<TRow extends Record<string, unknown>>(
   props: CsvExporterProps<TRow>,
 ) {
   const { visibleColumns } = useDataTableContext<TRow>();
+  const t = useCsvExporterT();
 
-  return <CsvExporterView {...props} columnOverride={visibleColumns} />;
+  return (
+    <>
+      <div className="astw:w-fit">
+        <Button variant="outline" size="xs" onClick={() => props.onOpenChange(true)}>
+          <Download className="astw:size-3" />
+          {t("csvExporter")}
+        </Button>
+      </div>
+      <CsvExporterView {...props} columnOverride={visibleColumns} />
+    </>
+  );
 }
 
 export type DataTableCSVExporterProps<TRow extends Record<string, unknown>> =

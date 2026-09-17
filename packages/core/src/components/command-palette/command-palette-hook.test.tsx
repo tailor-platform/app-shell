@@ -94,6 +94,20 @@ describe("useCommandPalette", () => {
       // Module (test) + 3 resources = 4 routes
       expect(result.current.filteredRoutes).toHaveLength(4);
     });
+
+    it("sorts root and internal paths last", () => {
+      const { result } = renderCommandPaletteHook([
+        { path: "/", title: "Root", breadcrumb: ["Root"] },
+        { path: "/__appinfo", title: "App info", breadcrumb: ["App info"] },
+        { path: "dashboard", title: "Dashboard", breadcrumb: ["Dashboard"] },
+      ]);
+
+      expect(result.current.filteredRoutes.map((route) => route.path)).toEqual([
+        "dashboard",
+        "/",
+        "/__appinfo",
+      ]);
+    });
   });
 
   describe("open/close", () => {
@@ -209,10 +223,10 @@ describe("useCommandPalette", () => {
     it("should navigate to selected route", () => {
       const { result } = renderCommandPaletteHook();
       act(() => {
-        // filteredRoutes[0] is module, [1] is dashboard, [2] is users
+        // Routes are sorted by path, so users is at index 3.
         result.current.handleSelectItem({
           type: "route",
-          route: result.current.filteredRoutes[2],
+          route: result.current.filteredRoutes[3],
         });
       });
       expect(mockNavigate).toHaveBeenCalledWith("test/users");

@@ -25,6 +25,8 @@ import { Link } from "react-router";
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const mockMobileViewport = () => {
@@ -40,6 +42,24 @@ const mockMobileViewport = () => {
   }));
 
   vi.stubGlobal("innerWidth", 375);
+};
+
+/**
+ * Force a desktop viewport (not the env's default tablet width) so groups render
+ * their inline collapsible submenu rather than the icon-rail hover flyout.
+ */
+const stubDesktopViewport = () => {
+  vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+  vi.stubGlobal("innerWidth", 1280);
 };
 
 const createTestModules = () => [
@@ -86,6 +106,7 @@ const testConfig: RootConfiguration = {
  * Wrapper to render sidebar components with all required providers.
  */
 const renderWithProviders = (ui: React.ReactNode, initialPath = "/dashboard/overview") => {
+  stubDesktopViewport();
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <AppShellConfigContext.Provider value={{ configurations: testConfig }}>

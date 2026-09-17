@@ -1,5 +1,6 @@
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
+import { parseDynamicSegment } from "@/routing/path";
 import type { Modules, Resource } from "@/resource";
 import type { ReactNode } from "react";
 
@@ -43,22 +44,31 @@ const findPageMeta = (targetPath: string, modules: Modules, locale: string): Pag
   // Normalize target path (ensure leading slash, remove trailing slash)
   const normalizedTarget = normalizePath(targetPath);
 
-  for (const module of modules) {
-    // Normalize module path (add leading slash if not present)
-    const modulePath = normalizePath(module.path);
+  // Prefer literal routes before dynamic ones, regardless of registration order.
+  for (const matches of [matchesExactly, matchesPath]) {
+    for (const module of modules) {
+      // Normalize module path (add leading slash if not present)
+      const modulePath = normalizePath(module.path);
 
-    // Check if target matches module path
-    if (matchesPath(normalizedTarget, modulePath)) {
-      return {
-        title: resolve(module.meta.title, module.path),
-        icon: module.meta.icon,
-      };
-    }
+      // Check if target matches module path
+      if (matches(normalizedTarget, modulePath)) {
+        return {
+          title: resolve(module.meta.title, module.path),
+          icon: module.meta.icon,
+        };
+      }
 
-    // Search in module's resources
-    const pageMeta = findInResources(normalizedTarget, modulePath, module.resources, resolve);
-    if (pageMeta) {
-      return pageMeta;
+      // Search in module's resources
+      const pageMeta = findInResources(
+        normalizedTarget,
+        modulePath,
+        module.resources,
+        resolve,
+        matches,
+      );
+      if (pageMeta) {
+        return pageMeta;
+      }
     }
   }
 
@@ -74,14 +84,18 @@ const findPageMeta = (targetPath: string, modules: Modules, locale: string): Pag
  * matchesPath("/orders/123", "/orders/456") // false
  * matchesPath("/orders", "/orders")         // true
  */
+const matchesExactly = (target: string, pattern: string): boolean => target === pattern;
+
 const matchesPath = (target: string, pattern: string): boolean => {
-  if (target === pattern) return true;
+  if (matchesExactly(target, pattern)) return true;
 
   const targetSegments = target.split("/");
   const patternSegments = pattern.split("/");
   if (targetSegments.length !== patternSegments.length) return false;
 
-  return patternSegments.every((seg, i) => seg.startsWith(":") || seg === targetSegments[i]);
+  return patternSegments.every(
+    (seg, i) => parseDynamicSegment(seg) !== null || seg === targetSegments[i],
+  );
 };
 
 /**
@@ -106,11 +120,12 @@ const findInResources = (
   basePath: string,
   resources: Array<Resource>,
   resolve: (value: LocalizedString | undefined, fallback: string) => string,
+  matches: (target: string, pattern: string) => boolean,
 ): PageMeta | null => {
   for (const resource of resources) {
     const resourcePath = `${basePath}/${resource.path}`;
 
-    if (matchesPath(targetPath, resourcePath)) {
+    if (matches(targetPath, resourcePath)) {
       return {
         title: resolve(resource.meta.title, resource.path),
         icon: resource.meta.icon,
@@ -119,7 +134,13 @@ const findInResources = (
 
     // Search in sub-resources
     if (resource.subResources) {
-      const subMeta = findInResources(targetPath, resourcePath, resource.subResources, resolve);
+      const subMeta = findInResources(
+        targetPath,
+        resourcePath,
+        resource.subResources,
+        resolve,
+        matches,
+      );
       if (subMeta) {
         return subMeta;
       }

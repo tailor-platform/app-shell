@@ -6,7 +6,7 @@ import { Project } from "ts-morph";
 import type { Surface } from "./project";
 import type { Outline, UnitKind } from "./types";
 
-const EXAMPLE_TOKEN = /<!--\s*example:\s*([\w-]+)\s*(?:\|[^]*?)?-->/g;
+const EXAMPLE_TOKEN = /<!--\s*example:\s*([\w-]+)\s*(?:\|(?:[^-]|-(?!->))*)?-->/g;
 
 function titleCase(slug: string): string {
   return slug
@@ -56,7 +56,7 @@ const KIND_LABEL: Record<string, string> = {
 /** Escape a value for a single markdown table cell: collapse whitespace and
  * escape pipes so union types like `"a" | "b"` don't break the table. */
 function cell(text: string): string {
-  return text.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
+  return text.replace(/\s+/g, " ").replace(/\\/g, "\\\\").replace(/\|/g, "\\|").trim();
 }
 
 function renderApi(surface: Surface, owned: string[], kind: UnitKind, upstream?: string): string {

@@ -25,7 +25,7 @@ export function pagePathFor(outline: Outline, config: DocsConfig): string | null
  * on every run and it must never be hand-edited. `DocPage` lives at
  * `<pagesDir>/../_lib/DocPage`, so the relative import depth follows the
  * category AND slug nesting (a slug may contain a `/` sub-group). */
-function renderPageStub(outline: Outline, config: DocsConfig): string {
+function renderPageStub(outline: Outline): string {
   const category = outline.outDir.replace(/^docs\//, "");
   const toLib =
     "../".repeat(category.split("/").length + outline.slug.split("/").length + 1) + "_lib/DocPage";
@@ -53,6 +53,6 @@ export function writePageStub(
   if (!rel) return null;
   const abs = join(repoRoot, rel);
   mkdirSync(dirname(abs), { recursive: true });
-  writeFileSync(abs, renderPageStub(outline, config), "utf8");
+  writeFileSync(abs, renderPageStub(outline), "utf8");
   return rel;
 }

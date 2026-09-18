@@ -18,7 +18,7 @@ export function ownedSymbols(surface: Surface, sources: string[]): string[] {
     if (sym.external) continue;
     if (matchers.some((m) => m(sym.file))) owned.push(sym.name);
   }
-  return owned.sort();
+  return owned.toSorted();
 }
 
 /** Reconcile the public surface against all outlines, both directions. */
@@ -76,7 +76,7 @@ export function reconcile(
       message:
         `${uncovered.length} public export(s) undocumented` +
         `${config.enforceCoverage ? "" : " (coverage not yet enforced)"}: ` +
-        uncovered.sort().join(", "),
+        uncovered.toSorted().join(", "),
     });
   }
 

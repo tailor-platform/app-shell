@@ -59,10 +59,19 @@ function frontmatterTitle(md: string): string | null {
  * react-markdown would otherwise show them as literal text — and drop the
  * leading H1 (the page header renders the title instead, so keeping it would
  * duplicate it). */
+/** Remove HTML comments, repeating until the string stops changing so an
+ * overlapping or nested `<!--` can't leave a residual comment opener behind. */
+function stripHtmlComments(s: string): string {
+  let prev: string;
+  do {
+    prev = s;
+    s = s.replace(/<!--[\s\S]*?-->/g, "");
+  } while (s !== prev);
+  return s;
+}
+
 function cleanMarkdown(md: string): string {
-  return md
-    .replace(/^---\n[\s\S]*?\n---\n/, "")
-    .replace(/<!--[\s\S]*?-->/g, "")
+  return stripHtmlComments(md.replace(/^---\n[\s\S]*?\n---\n/, ""))
     .trim()
     .replace(/^#\s+[^\n]*\r?\n+/, "")
     .trim();

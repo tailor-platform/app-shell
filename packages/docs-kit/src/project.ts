@@ -71,7 +71,7 @@ function collectDefaults(decl: Node): Map<string, string> {
  * DOM attributes from `React.ComponentProps<"button">`), so only the props this
  * component actually adds (variants, render, etc.) surface in the table. */
 function extractProps(name: string, decl: Node): PropRow[] | null {
-  if (!/Props$/.test(name)) return null;
+  if (!name.endsWith("Props")) return null;
   if (!(Node.isInterfaceDeclaration(decl) || Node.isTypeAliasDeclaration(decl))) return null;
   let properties;
   try {
@@ -196,13 +196,10 @@ export function loadSurface(repoRoot: string, config: DocsConfig): Surface {
     symbols,
     hashSymbols(names: string[]): string | null {
       if (names.length === 0) return null;
-      const parts = names
-        .slice()
-        .sort()
-        .map((n) => {
-          const s = symbols.get(n);
-          return `${n}::${s ? s.typeText : "<missing>"}`;
-        });
+      const parts = names.toSorted().map((n) => {
+        const s = symbols.get(n);
+        return `${n}::${s ? s.typeText : "<missing>"}`;
+      });
       return hash(normalizeText(parts.join("\n")));
     },
   };
@@ -224,10 +221,10 @@ export function snapshotHashForSlug(
   if (!config.snapshotDir) return null;
   const dir = join(repoRoot, config.snapshotDir);
   if (!existsSync(dir)) return null;
-  const token = slug.replace(/-/g, "-");
+  const token = slug;
   const matched = readdirSync(dir)
     .filter((f) => f.endsWith(".snap") && f.includes(token))
-    .sort();
+    .toSorted();
   if (matched.length === 0) return null;
   const contents = matched.map((f) => readFileSync(join(dir, f), "utf8")).join("\n");
   return hash(normalizeText(contents));

@@ -1,0 +1,309 @@
+---
+group: combobox
+title: Combobox
+description: Searchable combobox with single/multi selection, built-in filtering, async data fetching, and user-creatable items
+sources:
+  - packages/core/src/components/combobox/**
+---
+
+# Combobox
+
+The `Combobox` component provides a searchable combobox with built-in filtering. Pass `items` and get a ready-to-use combobox out of the box. For async data fetching use `Combobox.Async`. For user-created items add an `onCreateItem` prop. For custom compositions use `Combobox.Parts`.
+
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/combobox)
+
+## Import
+
+```tsx
+import { Combobox } from "@tailor-platform/app-shell";
+```
+
+## Basic Usage
+
+<!-- example: basic-usage -->
+
+## Props
+
+### Combobox Props
+
+| Prop                | Type                                                                       | Default                      | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------- |
+| `items`             | `I[]`                                                                      | -                            | Items to display. May be a flat array or an array of `ItemGroup<T>`        |
+| `placeholder`       | `string`                                                                   | -                            | Placeholder text for the input                                             |
+| `emptyText`         | `string`                                                                   | `"No results."`              | Text shown when no items match                                             |
+| `multiple`          | `true \| false \| undefined`                                               | `false`                      | Enables multi-select mode                                                  |
+| `value`             | `T \| null` (single) or `T[]` (multiple)                                   | -                            | Controlled value                                                           |
+| `defaultValue`      | `T \| null` (single) or `T[]` (multiple)                                   | -                            | Initial value (uncontrolled)                                               |
+| `onValueChange`     | `(value: T \| null) => void` (single) or `(value: T[]) => void` (multiple) | -                            | Called when the selected value changes                                     |
+| `mapItem`           | `(item: T) => MappedItem`                                                  | -                            | Map each item to its label, key, and optional custom render                |
+| `className`         | `string`                                                                   | -                            | Additional CSS classes for the root container                              |
+| `disabled`          | `boolean`                                                                  | `false`                      | Disables the combobox                                                      |
+| `aria-label`        | `string`                                                                   | -                            | Accessible name for the input. Use when there is no visible label          |
+| `aria-labelledby`   | `string`                                                                   | -                            | ID of the element(s) that label the input                                  |
+| `id`                | `string`                                                                   | -                            | ID applied to the combobox input element                                   |
+| `onCreateItem`      | `(value: string) => T \| false \| Promise<T \| false>`                     | -                            | Enable user-created items (requires `mapItem`; `T` must be an object type) |
+| `formatCreateLabel` | `(value: string) => string`                                                | `` (v) => `Create "${v}"` `` | Format the label for the "create" option                                   |
+
+### MappedItem
+
+```ts
+interface MappedItem {
+  label: string; // Display text, used for filtering and a11y
+  key?: string; // React key. Defaults to label
+  render?: React.ReactNode; // Custom JSX to render in the dropdown
+}
+```
+
+### ItemGroup
+
+```ts
+interface ItemGroup<T> {
+  label: string;
+  items: T[];
+}
+```
+
+## Grouped Items
+
+```tsx
+const fruits = [
+  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
+  { label: "Berries", items: ["Strawberry", "Blueberry"] },
+];
+
+<Combobox items={fruits} placeholder="Search fruits..." />;
+```
+
+## Multi-select
+
+In multi-select mode, selected items are displayed as chips inside the input:
+
+```tsx
+<Combobox
+  items={["Red", "Green", "Blue"]}
+  multiple
+  placeholder="Pick colors"
+  onValueChange={(colors) => console.log(colors)}
+/>
+```
+
+## Creatable Items
+
+Add `onCreateItem` to let users create new items on-the-fly. `T` must be an object type:
+
+```tsx
+type Tag = { id: string; name: string };
+
+const [tags, setTags] = useState<Tag[]>([
+  { id: "1", name: "Bug" },
+  { id: "2", name: "Feature" },
+]);
+
+<Combobox
+  items={tags}
+  mapItem={(tag) => ({ label: tag.name, key: tag.id })}
+  onCreateItem={(value) => {
+    const newTag: Tag = { id: crypto.randomUUID(), name: value };
+    setTags((prev) => [...prev, newTag]);
+    return newTag; // return the new item to add it to the selection
+  }}
+  placeholder="Search or create a tag..."
+/>;
+```
+
+`onCreateItem` may return:
+
+- `T` — accept the item and add it to the selection
+- `false` — cancel the creation
+- `Promise<T | false>` — for async workflows
+
+## Async Loading
+
+Use `Combobox.Async` to load items from an API. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default items for `null`, or return an empty array to show nothing until the user starts typing.
+
+```tsx
+import { type ComboboxAsyncFetcher } from "@tailor-platform/app-shell";
+
+const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
+  const res = await fetch(`/api/users?q=${query ?? ""}`, { signal });
+  return res.json();
+};
+
+<Combobox.Async
+  fetcher={fetcher}
+  mapItem={(user) => ({ label: user.name, key: user.id })}
+  placeholder="Search users..."
+  onValueChange={(user) => console.log(user)}
+/>;
+```
+
+`Combobox.Async` also supports `onCreateItem` for creatable async comboboxes.
+
+### Combobox.Async Props
+
+Accepts all the same props as `Combobox` except `items`, plus:
+
+| Prop           | Type                       | Default                    | Description                                                        |
+| -------------- | -------------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `fetcher`      | `ComboboxAsyncFetcher<T>`  | -                          | Fetcher called on each keystroke (debounced by default)            |
+| `loadingText`  | `string`                   | `"Loading..."`             | Text shown while loading                                           |
+| `errorText`    | `string`                   | `"Couldn't load results."` | Message shown in the popover when the fetcher fails (with Retry)   |
+| `retryText`    | `string`                   | `"Retry"`                  | Label for the retry button in the error state                      |
+| `onFetchError` | `(error: unknown) => void` | -                          | Called once per outage when a fetch fails (logging/error tracking) |
+
+### ComboboxAsyncFetcher
+
+```ts
+type ComboboxAsyncFetcher<T> =
+  | ((query: string | null, options: { signal: AbortSignal }) => Promise<T[]>)
+  | {
+      fn: (query: string | null, options: { signal: AbortSignal }) => Promise<T[]>;
+      debounceMs: number;
+    };
+```
+
+`query` is `null` when the user has not typed anything (e.g. the dropdown was just opened or the input was cleared). Pass `{ fn, debounceMs }` to customize the debounce delay.
+
+### Error handling
+
+If the fetcher throws or rejects, `Combobox.Async` renders a built-in inline error state in the popover — the `errorText` message plus a **Retry** button that re-runs the last fetch — instead of the misleading "No results." empty state. Aborted/superseded requests (a keystroke replaced by a newer one) are ignored, and the component de-dupes per outage so typing during an outage doesn't stack repeated announcements.
+
+To run a side effect on failure (log to error tracking, show a toast), pass `onFetchError` — it fires **once per outage** (on the transition into the error state) and re-arms after the next successful fetch. The inline error state is shown regardless.
+
+```tsx
+<Combobox.Async
+  fetcher={fetcher}
+  errorText="Couldn't load users."
+  retryText="Try again"
+  onFetchError={(error) => reportError(error)}
+/>
+```
+
+## Low-level Primitives
+
+`Combobox.Parts` exposes styled sub-components and hooks for fully custom compositions:
+
+```tsx
+const {
+  Root,
+  InputGroup,
+  Input,
+  Trigger,
+  Content,
+  List,
+  Item,
+  Empty,
+  Group,
+  GroupLabel,
+  Clear,
+  Chips,
+  Chip,
+  ChipRemove,
+  Value,
+  Collection,
+  Status,
+} = Combobox.Parts;
+```
+
+## Form submission
+
+Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —
+see [Form](./form.md). They matter for **native** submission: a plain `<form>`, `new FormData(form)`,
+or a server action.
+
+| Prop                | Type                          | Default | Description                                                                                                                                                            |
+| ------------------- | ----------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`              | `string`                      | -       | Names the hidden input for native submission. **Ignored inside a `Field.Root`** — the field's name wins.                                                               |
+| `form`              | `string`                      | -       | `id` of the owning form, when the control is rendered outside it.                                                                                                      |
+| `required`          | `boolean`                     | `false` | Blocks submission until a value is chosen, surfacing the matching `Field.Error`.                                                                                       |
+| `inputRef`          | `React.Ref<HTMLInputElement>` | -       | Ref to the hidden input (use for React Hook Form's `field.ref`).                                                                                                       |
+| `itemToStringValue` | `(item: T) => string`         | -       | Serialises a non-string item for submission. Items shaped `{ value, label }` use `value` automatically. Not available on the creatable variant, which derives its own. |
+
+`itemToStringValue` is not accepted on the creatable variant (`onCreateItem`): `Combobox` derives
+its own there so the pending-item sentinel serialises correctly. A creatable combobox over object
+items therefore cannot customise the submitted value — use the non-creatable variant, or map the
+value in your submit handler.
+
+## Examples
+
+### Controlled Combobox
+
+```tsx
+const [selected, setSelected] = useState<User | null>(null);
+
+<Combobox
+  items={users}
+  mapItem={(u) => ({ label: u.name, key: u.id })}
+  value={selected}
+  onValueChange={setSelected}
+  placeholder="Select a user"
+/>;
+```
+
+### Async with Parts (custom composition)
+
+Combine `Combobox.useAsync` with `Combobox.Parts` for full control over layout and rendering:
+
+`Combobox.useAsync` accepts the same options as `Combobox.Async` (including `onFetchError`) and returns:
+
+| Property  | Type         | Description                                             |
+| --------- | ------------ | ------------------------------------------------------- |
+| `items`   | `T[]`        | Currently loaded items                                  |
+| `loading` | `boolean`    | Whether a fetch is in progress                          |
+| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
+| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+
+```tsx
+type Country = { code: string; name: string };
+
+const countries = Combobox.useAsync({
+  fetcher: async (query, { signal }) => {
+    const res = await fetch(`/api/countries?q=${query ?? ""}`, { signal });
+    if (!res.ok) return [];
+    return res.json() as Promise<Country[]>;
+  },
+  onFetchError: (error) => reportError(error),
+});
+
+<Combobox.Parts.Root {...countries} filter={null} itemToStringLabel={(c) => c.name}>
+  <Combobox.Parts.InputGroup>
+    <Combobox.Parts.Input placeholder="Search countries..." />
+    <Combobox.Parts.Clear />
+    <Combobox.Parts.Trigger />
+  </Combobox.Parts.InputGroup>
+  <Combobox.Parts.Content>
+    <Combobox.Parts.List>
+      {countries.items.map((c) => (
+        <Combobox.Parts.Item key={c.code} value={c}>
+          {c.name}
+        </Combobox.Parts.Item>
+      ))}
+      <Combobox.Parts.Empty>
+        {countries.error ? (
+          <button onClick={countries.retry}>Couldn't load. Retry</button>
+        ) : countries.loading ? (
+          "Loading..."
+        ) : (
+          "No results."
+        )}
+      </Combobox.Parts.Empty>
+    </Combobox.Parts.List>
+  </Combobox.Parts.Content>
+</Combobox.Parts.Root>;
+```
+
+## Accessibility
+
+- Input is keyboard accessible with arrow key navigation
+- Pressing `Escape` closes the dropdown
+- Multi-select chips have `aria-label` set from the item label
+- When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
+
+```tsx
+<Combobox items={items} aria-label="Fruit filter" />
+```
+
+## Related Components
+
+- [Select](./select.md) - Non-searchable dropdown
+- [Autocomplete](./autocomplete.md) - Free-text input with suggestions

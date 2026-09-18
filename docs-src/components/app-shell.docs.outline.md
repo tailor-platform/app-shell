@@ -1,0 +1,533 @@
+---
+group: app-shell
+title: AppShell
+description: The root component that provides routing, navigation, and theming for your application
+sources:
+  - packages/core/src/components/appshell/**
+---
+
+# AppShell
+
+`AppShell` is the root component that wires together routing, navigation, authentication, and theming for your AppShell application. It should wrap your entire application layout.
+
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/app-shell)
+
+## Import
+
+```tsx
+import { AppShell } from "@tailor-platform/app-shell";
+```
+
+## Basic Usage
+
+```tsx
+import { AppShell, SidebarLayout, defineModule } from "@tailor-platform/app-shell";
+
+const modules = [
+  defineModule({
+    path: "dashboard",
+    component: DashboardPage,
+    meta: { title: "Dashboard" },
+  }),
+];
+
+function App() {
+  return (
+    <AppShell title="My ERP App" basePath="/app" modules={modules}>
+      <SidebarLayout />
+    </AppShell>
+  );
+}
+```
+
+## Props
+
+### title
+
+- **Type:** `string` (optional)
+- **Description:** Application title displayed in the sidebar header. Also used as the browser tab title suffix — AppShell keeps `document.title` in sync with the active route as `"<page> · <title>"`, where `<page>` is the current breadcrumb leaf (including any [`useOverrideBreadcrumb`](../api/use-override-breadcrumb.md) override). When omitted, the tab shows just the page name.
+
+```tsx
+<AppShell title="My ERP App" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+### icon
+
+- **Type:** `React.ReactNode` (optional)
+- **Description:** Application icon displayed in the sidebar header
+
+```tsx
+import { Building } from "lucide-react";
+
+<AppShell title="My App" icon={<Building />} modules={modules}>
+  {/* ... */}
+</AppShell>;
+```
+
+### favicon
+
+- **Type:** `string` (optional)
+- **Default:** Bundled default favicon set
+- **Description:** Browser-tab favicon href. Accepts any value valid for `<link rel="icon">` — a public-path URL (e.g. `/favicon.ico`) or a data URI. When provided, AppShell renders a single `<link rel="icon">` with this href, replacing the default favicon set.
+
+When `favicon` is omitted and the host page declares no `<link rel="icon">`, AppShell automatically injects a small default favicon set as embedded data URIs (no asset-copy step required):
+
+- 16×16 PNG tab icon
+- 32×32 PNG tab icon
+- 180×180 Apple touch icon (covers "Add to Home Screen" on iOS and Android)
+
+If the host page already declares a `<link rel="icon">`, AppShell leaves it untouched.
+
+```tsx
+<AppShell favicon="/favicon.ico" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+### basePath
+
+- **Type:** `string` (optional)
+- **Default:** `""`
+- **Description:** Base path prefix for all routes
+
+```tsx
+// Routes will be /app/dashboard, /app/products, etc.
+<AppShell basePath="/app" modules={modules}>
+  {/* ... */}
+</AppShell>
+
+// Routes will be /dashboard, /products, etc.
+<AppShell basePath="" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+### modules
+
+- **Type:** `Module[]` (required when not using file-based routing)
+- **Description:** Array of module definitions that define your application structure
+
+```tsx
+import { defineModule, defineResource } from "@tailor-platform/app-shell";
+
+const modules = [
+  defineModule({
+    path: "products",
+    component: ProductsListPage,
+    meta: { title: "Products" },
+    resources: [
+      defineResource({
+        path: ":id",
+        component: ProductDetailPage,
+        meta: { title: "Product Details" },
+      }),
+    ],
+  }),
+];
+
+<AppShell modules={modules}>{/* ... */}</AppShell>;
+```
+
+[Learn more about Modules and Resources →](../concepts/modules-and-resources.md)
+
+### rootComponent
+
+- **Type:** `() => React.ReactNode` (optional)
+- **Description:** Component to render at the root path (e.g., `/app/`)
+
+```tsx
+<AppShell basePath="/app" modules={modules} rootComponent={() => <HomePage />}>
+  {/* ... */}
+</AppShell>
+```
+
+When `rootComponent` is set, the root page is treated as a first-class navigation item: it appears in `DefaultSidebar` and `CommandPalette` just like any other module. The title defaults to the localized `"Home"` / `"ホーム"` if no explicit title is provided.
+
+> **Tip:** For redirects from the root, use a guard with `redirectTo()` instead
+
+```tsx
+import { redirectTo } from "@tailor-platform/app-shell";
+
+<AppShell basePath="/app" modules={modules} rootComponent={() => redirectTo("/app/dashboard")}>
+  {/* ... */}
+</AppShell>;
+```
+
+> **Note:** If a module with `path: ""` is present in `modules`, it takes precedence over `rootComponent`.
+
+### settingsResources
+
+- **Type:** `Resource[]` (optional)
+- **Description:** Resources to include in the settings menu dropdown
+
+```tsx
+import { defineResource } from "@tailor-platform/app-shell";
+
+const settingsResources = [
+  defineResource({
+    path: "profile",
+    component: ProfileSettingsPage,
+    meta: { title: "Profile" },
+  }),
+  defineResource({
+    path: "billing",
+    component: BillingSettingsPage,
+    meta: { title: "Billing" },
+  }),
+];
+
+<AppShell modules={modules} settingsResources={settingsResources}>
+  {/* ... */}
+</AppShell>;
+```
+
+Settings appear in a dropdown menu in the sidebar header, accessible via the settings icon.
+
+### defaultColorTheme
+
+- **Type:** `"light" | "dark" | "system"` (optional)
+- **Default:** `"system"`
+- **Description:** Initial color mode applied before any value is loaded from `localStorage`. Does not override a stored user preference. `"system"` follows the OS light/dark setting.
+
+```tsx
+<AppShell defaultColorTheme="light" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+The end user's selection (via [`AppearanceSwitcher`](./appearance-switcher.md) or a custom toggle using [`useTheme`](../api/use-theme.md)) is persisted automatically and takes precedence over this prop on subsequent visits.
+
+### locale
+
+- **Type:** `string` (optional)
+- **Default:** Auto-detected from browser, falls back to `"en"`
+- **Description:** Locale code for built-in UI strings
+
+```tsx
+<AppShell locale="ja" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+Supported locales: `en`, `ja`
+
+[Learn more about Internationalization →](../api/define-i18n-labels.md)
+
+### timeZone
+
+- **Type:** `string` (optional)
+- **Default:** User's local timezone
+- **Description:** IANA timezone (e.g. `"America/Los_Angeles"`) used by date/time components as the default for resolving "today" and for `ZonedDateTime` values. When omitted, date/time components fall back to the user's local timezone.
+
+```tsx
+<AppShell timeZone="America/Los_Angeles" modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+Access the configured timezone in components using [`useTimeZone`](../api/use-time-zone.md).
+
+### errorBoundary
+
+- **Type:** `ErrorBoundaryComponent` (optional)
+- **Description:** Global error boundary component applied to all routes
+
+```tsx
+import { useRouteError } from "@tailor-platform/app-shell";
+
+const GlobalErrorBoundary = () => {
+  const error = useRouteError() as Error;
+  return (
+    <div className="p-8">
+      <h1 className="text-xl font-bold mb-4">Something went wrong</h1>
+      <p className="text-red-600">{error.message}</p>
+    </div>
+  );
+};
+
+<AppShell modules={modules} errorBoundary={GlobalErrorBoundary}>
+  {/* ... */}
+</AppShell>;
+```
+
+> **Note:** Module and resource-level error boundaries take precedence over the global error boundary.
+
+### contextData
+
+- **Type:** `ContextData` (optional)
+- **Description:** Custom context data accessible from guards and components via `useAppShell()`
+
+First, define your context data type using module augmentation:
+
+```typescript
+// types.d.ts
+declare module "@tailor-platform/app-shell" {
+  interface AppShellRegister {
+    contextData: {
+      apiClient: ApiClient;
+      currentUser: User | null;
+      tenantId: string;
+    };
+  }
+}
+```
+
+Then pass the data to AppShell:
+
+```tsx
+// App.tsx
+<AppShell
+  modules={modules}
+  contextData={{
+    apiClient,
+    currentUser,
+    tenantId: "tenant-123",
+  }}
+>
+  {/* ... */}
+</AppShell>
+```
+
+Access the context data in your components:
+
+```tsx
+import { useAppShell } from "@tailor-platform/app-shell";
+
+function MyComponent() {
+  const { context } = useAppShell();
+
+  // Fully typed!
+  const user = context.currentUser;
+  const client = context.apiClient;
+
+  return <div>Welcome, {user?.name}</div>;
+}
+```
+
+Or in guards:
+
+```tsx
+import { pass, hidden } from "@tailor-platform/app-shell";
+
+const requireAuth: Guard = ({ context }) => {
+  if (!context.currentUser) {
+    return redirectTo("/login");
+  }
+  return pass();
+};
+```
+
+### searchSources
+
+- **Type:** `readonly SearchSource[]` (optional)
+- **Description:** Async search sources wired into the built-in CommandPalette. Each source is activated by typing its `prefix` followed by `:` in the palette. When active, the Actions and Pages sections are hidden and only results from that source are shown. The empty-input state of the palette lists all registered sources in a **Search Modes** section so users can discover them with a single click.
+
+```tsx
+import { AppShell, type SearchSource } from "@tailor-platform/app-shell";
+
+const searchSources: readonly SearchSource[] = [
+  {
+    prefix: "ORD",
+    title: "Orders",
+    search: async (query, { signal }) => {
+      const results = await api.searchOrders(query, { signal });
+      return results.map((o) => ({
+        key: o.id,
+        label: o.number,
+        path: `/orders/${o.id}`,
+      }));
+    },
+  },
+];
+
+<AppShell modules={modules} searchSources={searchSources}>
+  <SidebarLayout sidebar={<DefaultSidebar />} />
+</AppShell>;
+```
+
+See [`SearchSource`](./command-palette.md#searchsource) for the full type reference.
+
+> **Note:** `DefaultSidebar` always renders a **Search** entry that opens the palette regardless of whether `searchSources` is configured. The `Cmd+K` / `Ctrl+K` shortcut also works globally.
+
+### appInfo
+
+- **Type:** `AppInfo` (optional)
+- **Description:** Configuration for the built-in `/__appinfo` page, which exposes app metadata and the current AppShell version. The page is excluded from sidebar navigation but appears in the Command Palette as a page entry and includes a copy button for the rendered information.
+
+`AppInfo` has the following shape:
+
+| Property   | Type                      | Description                                    |
+| ---------- | ------------------------- | ---------------------------------------------- |
+| `metadata` | `readonly AppInfoEntry[]` | Additional rows shown on the `/__appinfo` page |
+
+Each `AppInfoEntry` has:
+
+| Property | Type                                               | Description                     |
+| -------- | -------------------------------------------------- | ------------------------------- |
+| `label`  | `string`                                           | Display label shown on the page |
+| `value`  | `string \| number \| boolean \| null \| undefined` | Value rendered as text          |
+
+```tsx
+<AppShell
+  title="My App"
+  appInfo={{
+    metadata: [
+      { label: "Environment", value: "staging" },
+      { label: "Release", value: "2026.07.16" },
+    ],
+  }}
+  modules={modules}
+>
+  {/* ... */}
+</AppShell>
+```
+
+### children
+
+- **Type:** `React.ReactNode` (required)
+- **Description:** Layout component that renders your application content
+
+Typically, you'll use `SidebarLayout`:
+
+```tsx
+import { SidebarLayout } from "@tailor-platform/app-shell";
+
+<AppShell modules={modules}>
+  <SidebarLayout />
+</AppShell>;
+```
+
+Or create a custom layout:
+
+```tsx
+<AppShell modules={modules}>
+  <CustomLayout />
+</AppShell>
+```
+
+## File-Based Routing Mode
+
+When using the Vite plugin for file-based routing, use `AppShell` exactly as you would without the plugin — no `modules` prop required. The plugin intercepts the `@tailor-platform/app-shell` import and wraps `AppShell` with pages pre-configured via `AppShell.WithPages()` internally.
+
+```tsx
+// App.tsx
+import { AppShell, SidebarLayout, DefaultSidebar } from "@tailor-platform/app-shell";
+
+// No modules prop needed — the plugin injects pages automatically
+<AppShell title="My App">
+  <SidebarLayout sidebar={<DefaultSidebar />} />
+</AppShell>;
+```
+
+> **Note:** `AppShell.WithPages` is an internal method used by the Vite plugin. Do not call it directly in application code.
+
+[Learn more about File-Based Routing →](../concepts/file-based-routing.md)
+
+## Complete Example
+
+Here's a complete example with all common features:
+
+```tsx
+import {
+  AppShell,
+  SidebarLayout,
+  defineModule,
+  defineResource,
+  useRouteError,
+} from "@tailor-platform/app-shell";
+import { Building } from "lucide-react";
+
+// Define context data type
+declare module "@tailor-platform/app-shell" {
+  interface AppShellRegister {
+    contextData: {
+      currentUser: User | null;
+    };
+  }
+}
+
+// Error boundary
+const ErrorBoundary = () => {
+  const error = useRouteError() as Error;
+  return (
+    <div className="p-8">
+      <h1 className="text-xl font-bold">Error</h1>
+      <p>{error.message}</p>
+    </div>
+  );
+};
+
+// Modules
+const modules = [
+  defineModule({
+    path: "dashboard",
+    component: DashboardPage,
+    meta: { title: "Dashboard" },
+  }),
+  defineModule({
+    path: "products",
+    component: ProductsPage,
+    meta: { title: "Products" },
+    resources: [
+      defineResource({
+        path: ":id",
+        component: ProductDetailPage,
+      }),
+    ],
+  }),
+];
+
+// Settings
+const settingsResources = [
+  defineResource({
+    path: "profile",
+    component: ProfilePage,
+    meta: { title: "Profile" },
+  }),
+];
+
+// App
+function App() {
+  const currentUser = useCurrentUser();
+
+  return (
+    <AppShell
+      title="My ERP App"
+      icon={<Building />}
+      favicon="/favicon.ico"
+      basePath="/app"
+      modules={modules}
+      settingsResources={settingsResources}
+      locale="en"
+      defaultColorTheme="system"
+      errorBoundary={ErrorBoundary}
+      contextData={{ currentUser }}
+    >
+      <SidebarLayout />
+    </AppShell>
+  );
+}
+
+export default App;
+```
+
+## Related Components
+
+- [SidebarLayout](./sidebar-layout.md) - Default layout with sidebar navigation
+- [CommandPalette](./command-palette.md) - Keyboard-driven navigation
+
+## Related Concepts
+
+- [Modules and Resources](../concepts/modules-and-resources.md) - Application structure
+- [Authentication](../concepts/authentication.md) - User authentication setup
+- [Routing and Navigation](../concepts/routing-navigation.md) - Navigation between pages
+
+## API Reference
+
+- [defineModule](../api/define-module.md) - Define a top-level module
+- [defineResource](../api/define-resource.md) - Define a nested resource
+- [useAppShell](../api/use-app-shell.md) - Access AppShell context
+- [useResolvedLocale](../api/use-resolved-locale.md) - Access the full BCP-47 locale and language code
+- [useTimeZone](../api/use-time-zone.md) - Access the configured IANA timezone

@@ -8,6 +8,7 @@ const buttonVariants = cva(
   "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:gap-2 astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:shrink-0 astw:[&_svg]:shrink-0 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:aria-invalid:ring-destructive/20 astw:dark:aria-invalid:ring-destructive/40 astw:aria-invalid:border-destructive",
   {
     variants: {
+      /** Visual style variant */
       variant: {
         default:
           "astw:bg-primary astw:text-primary-foreground astw:shadow-xs astw:hover:bg-primary/90",
@@ -21,6 +22,7 @@ const buttonVariants = cva(
           "astw:hover:bg-accent astw:hover:text-accent-foreground astw:dark:hover:bg-accent/50",
         link: "astw:text-primary astw:underline-offset-4 astw:hover:underline",
       },
+      /** Button size */
       size: {
         default: "astw:h-9 astw:px-4 astw:py-2 astw:has-[>svg]:px-3",
         xs: "astw:h-7 astw:rounded-md astw:gap-1 astw:px-2.5 astw:text-xs astw:has-[>svg]:px-1.5",
@@ -38,6 +40,7 @@ const buttonVariants = cva(
 
 type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
+    /** Custom element to render as (Base UI render prop) */
     render?: React.ReactElement;
   };
 

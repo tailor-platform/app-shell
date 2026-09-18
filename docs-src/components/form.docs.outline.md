@@ -1,0 +1,381 @@
+---
+group: form
+title: Form, Field, and Fieldset
+description: Components for building validated forms with automatic accessibility wiring, validation state management, and optional React Hook Form integration
+sources:
+  - packages/core/src/components/form/**
+---
+
+# Form, Field, and Fieldset
+
+`Form`, `Field`, and `Fieldset` are compound components for building accessible, validated forms. They handle label association, `aria-describedby`, validation state, and external error routing automatically.
+
+[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/form)
+
+## Import
+
+```tsx
+import { Form, Field, Fieldset } from "@tailor-platform/app-shell";
+```
+
+## Basic Usage
+
+```tsx
+<Form onFormSubmit={(values) => save(values)}>
+  <Field.Root name="email">
+    <Field.Label>Email</Field.Label>
+    <Field.Control type="email" required />
+    <Field.Description>We'll never share your email.</Field.Description>
+    <Field.Error match="valueMissing">Email is required.</Field.Error>
+    <Field.Error match="typeMismatch">Enter a valid email address.</Field.Error>
+  </Field.Root>
+  <button type="submit">Save</button>
+</Form>
+```
+
+---
+
+## Form
+
+A form element with consolidated error handling and validation. Wraps every child `Field.Root` in a shared validation context.
+
+### Form Props
+
+| Prop             | Type                                                            | Default      | Description                                                                                                                         |
+| ---------------- | --------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `children`       | `React.ReactNode`                                               | **Required** | Form contents                                                                                                                       |
+| `onFormSubmit`   | `(values: FormValues, details: FormSubmitEventDetails) => void` | -            | Called after successful validation with parsed form values. Prefer this for simple forms. Use a type argument for type-safe values. |
+| `onSubmit`       | `React.FormEventHandler`                                        | -            | Low-level native submit handler. Use when integrating with React Hook Form's `handleSubmit`.                                        |
+| `errors`         | `Record<string, string>`                                        | -            | External errors keyed by field `name` (e.g. from an API response). Automatically routed to matching `Field.Error` components.       |
+| `validationMode` | `"onSubmit" \| "onBlur" \| "onChange"`                          | `"onSubmit"` | Controls when field validation fires.                                                                                               |
+| `noValidate`     | `boolean`                                                       | -            | Disables native browser validation UI (recommended — AppShell renders its own).                                                     |
+| `actionsRef`     | `React.Ref<{ validate: () => void }>`                           | -            | Ref to imperatively trigger validation from outside the submit flow.                                                                |
+| `id`             | `string`                                                        | -            | Applied to the `<form>` element. Lets a submit button outside the form target it via the native `form` attribute.                   |
+| `className`      | `string`                                                        | -            | Additional CSS classes for the `<form>` element.                                                                                    |
+
+### External Errors
+
+Feed API validation errors back into the form via the `errors` prop. Errors are keyed by field `name` and cleared automatically when the user edits the corresponding field.
+
+```tsx
+const [errors, setErrors] = React.useState({});
+
+async function handleSubmit(values) {
+  const res = await api.save(values);
+  if (res.errors) setErrors(res.errors);
+}
+
+<Form errors={errors} onFormSubmit={handleSubmit}>
+  <Field.Root name="url">
+    <Field.Label>Homepage</Field.Label>
+    <Field.Control type="url" required />
+    <Field.Error />
+  </Field.Root>
+  <button type="submit">Submit</button>
+</Form>;
+```
+
+### Programmatic Validation
+
+Use `actionsRef` to imperatively trigger validation (e.g. in a multi-step wizard).
+
+```tsx
+const actions = React.useRef(null);
+
+<Form actionsRef={actions}>
+  <Field.Root name="name">
+    <Field.Label>Name</Field.Label>
+    <Field.Control required />
+    <Field.Error>Name is required.</Field.Error>
+  </Field.Root>
+</Form>;
+
+<button onClick={() => actions.current?.validate()}>Check</button>;
+```
+
+---
+
+## Field
+
+A compound component that groups all parts of a form field and manages its validation state.
+
+`Field.Root` creates a context boundary. All child sub-components and any Base UI-backed AppShell component (e.g. `Select`, `Combobox`, `Autocomplete`) placed inside `Field.Root` automatically connect to this context — inheriting label association (`htmlFor`), `aria-describedby`, `disabled` state, and validation state.
+
+### Sub-components
+
+| Sub-component       | Description                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `Field.Root`        | Context boundary for a single field. Manages validation state.                                |
+| `Field.Label`       | Accessible label; `htmlFor` is resolved automatically via context.                            |
+| `Field.Control`     | Styled `<input>`. Can be omitted when using a Base UI-backed AppShell component as the input. |
+| `Field.Description` | Supplementary help text; automatically linked via `aria-describedby`.                         |
+| `Field.Error`       | Validation error message. Use `match` to target specific validity states.                     |
+| `Field.Validity`    | Render-prop access to the field's `ValidityState` for fully custom validation UI.             |
+
+### Field.Root Props
+
+| Prop                     | Type                                     | Default | Description                                                                                         |
+| ------------------------ | ---------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `name`                   | `string`                                 | -       | Field name; used for form value extraction and error routing.                                       |
+| `children`               | `React.ReactNode`                        | -       | Field sub-components and input controls.                                                            |
+| `disabled`               | `boolean`                                | -       | Disables all controls within the field.                                                             |
+| `isTouched`              | `boolean`                                | -       | Whether the field has been blurred. Maps to React Hook Form's `fieldState.isTouched`.               |
+| `isDirty`                | `boolean`                                | -       | Whether the field value differs from its default. Maps to React Hook Form's `fieldState.isDirty`.   |
+| `invalid`                | `boolean`                                | -       | Marks the field as invalid (shows error styling).                                                   |
+| `error`                  | `{ message?: string }`                   | -       | Error object from React Hook Form's `fieldState.error`. Sets `invalid` automatically when provided. |
+| `validate`               | `(value: string) => string \| undefined` | -       | Custom validation function; return an error message string to mark the field invalid.               |
+| `validationMode`         | `"onSubmit" \| "onBlur" \| "onChange"`   | -       | Overrides the parent Form's `validationMode` for this field.                                        |
+| `validationDebounceTime` | `number`                                 | -       | Debounce delay (ms) for `"onChange"` validation mode.                                               |
+| `className`              | `string`                                 | -       | Additional CSS classes for the field wrapper.                                                       |
+
+### Field.Error Props
+
+| Prop       | Type                                                             | Default | Description                                                                                                |
+| ---------- | ---------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
+| `match`    | `keyof ValidityState \| boolean \| ((value: string) => boolean)` | -       | Validity state key to match (e.g. `"valueMissing"`, `"typeMismatch"`). Omit for a catch-all error message. |
+| `children` | `React.ReactNode`                                                | -       | Error message content. If omitted, the browser's native validation message is shown.                       |
+
+### Using Another AppShell Component as the Control
+
+`Field.Control` can be omitted when using a Base UI-backed AppShell component (e.g. `Select`, `Combobox`). The component registers itself with the `Field` context automatically, inheriting label association and validation state.
+
+```tsx
+const [country, setCountry] = React.useState<string | null>(null);
+
+<Field.Root name="country">
+  <Field.Label>Country</Field.Label>
+  <Select
+    items={["Japan", "United States"]}
+    value={country}
+    onValueChange={setCountry}
+    placeholder="Select a country"
+  />
+  <Field.Error>Please select a country.</Field.Error>
+</Field.Root>;
+```
+
+### How values reach `onFormSubmit`
+
+`onFormSubmit` does **not** read `FormData`. It collects values from the `Field.Root`s registered
+inside the `Form`, keyed by each field's `name`. Every AppShell control works this way once wrapped
+in a `Field.Root` — `Select`, `Combobox`, and `Autocomplete` included. They need no `name` of their
+own and usually no React state. Mirroring a field into `useState` just to submit it is normally an
+anti-pattern; the exception is a value the component must read during render, such as a composer body
+that gates the submit button or swaps its placeholder.
+
+Non-string items are serialised into the submitted value:
+
+| Item shape                             | Value in `onFormSubmit`              |
+| -------------------------------------- | ------------------------------------ |
+| `string`                               | the string                           |
+| `{ value, label }`                     | `value`, automatically               |
+| any other object                       | **JSON string** — usually not wanted |
+| any other object + `itemToStringValue` | whatever that function returns       |
+
+Multi-select submits an array. For arbitrary objects, pass `itemToStringValue` to choose what gets
+submitted — it is distinct from `mapItem`, which controls what the user sees:
+
+```tsx
+<Field.Root name="warehouse">
+  <Field.Label>Warehouse</Field.Label>
+  <Combobox
+    items={warehouses}
+    mapItem={(w) => ({ label: w.name, key: String(w.id) })}
+    itemToStringValue={(w) => String(w.id)}
+  />
+</Field.Root>
+```
+
+### Composer-style textareas
+
+Most forms should let `Field.Root` own the submitted value. A composer is the notable exception:
+the current draft is often read during render to disable Send on whitespace-only input, swap the
+placeholder, or show live UI around the text. In that case, keep the `Textarea` controlled, but
+still make it a real field inside `Form` so validation and server errors land beside the draft.
+
+Use a visually hidden `Field.Label` rather than only `aria-label` so the field keeps the same
+label, description, and error wiring as any other form control. If the submit can fail, route the
+server rejection through `Form`'s `errors` prop and clear the draft only after success.
+
+```tsx
+function ReplyComposer() {
+  const [body, setBody] = React.useState("");
+  const [internal, setInternal] = React.useState(false);
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  async function handleSubmit() {
+    const result = await saveReply({ body, internal });
+    if (result?.error) {
+      setErrors({ body: result.error });
+      return;
+    }
+
+    setErrors({});
+    setBody("");
+  }
+
+  return (
+    <Form noValidate errors={errors} onFormSubmit={handleSubmit}>
+      <Field.Root name="body">
+        <Field.Label className="sr-only">Reply</Field.Label>
+        <Textarea
+          required
+          rows={4}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder={internal ? "Internal context for teammates..." : "Reply to customer..."}
+        />
+        <Field.Error />
+      </Field.Root>
+
+      <Checkbox
+        label="Internal note (not sent to customer)"
+        checked={internal}
+        onCheckedChange={setInternal}
+      />
+
+      <Button type="submit" disabled={body.trim().length === 0}>
+        Send
+      </Button>
+    </Form>
+  );
+}
+```
+
+### Native form submission
+
+Separately from `onFormSubmit`, controls can participate in **native** submission — a plain
+`<form>`, `new FormData(form)`, or a server action. That path reads the DOM, so each control needs
+its own `name`. `Select`, `Combobox`, and `Autocomplete` accept `name` (plus `form`, `required`,
+`inputRef`) from 1.13.0; before that they contributed nothing to a native payload.
+
+### Submitting from outside the form
+
+Give the `Form` an `id` and point a detached submit button at it with the native `form` attribute —
+this is how a page-header Save reaches a form in the page body (1.13.0+).
+
+```tsx
+<Layout.Header
+  title="Create product"
+  actions={[
+    <Button key="save" type="submit" form="product-form">
+      Save
+    </Button>,
+  ]}
+/>
+<Form id="product-form" onFormSubmit={(values) => save(values)}>
+  {/* … */}
+</Form>
+```
+
+### Custom Validation UI with Field.Validity
+
+`Field.Validity` exposes the field's `ValidityState` via a render callback, enabling fully custom validation UI.
+
+```tsx
+<Field.Root name="password">
+  <Field.Label>Password</Field.Label>
+  <Field.Control type="password" required minLength={8} />
+  <Field.Validity>
+    {(state) => (
+      <ul>
+        <li>{state.validity.valueMissing ? "❌" : "✅"} Required</li>
+        <li>{state.validity.tooShort ? "❌" : "✅"} At least 8 characters</li>
+      </ul>
+    )}
+  </Field.Validity>
+</Field.Root>
+```
+
+---
+
+## Fieldset
+
+A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related fields with a shared legend for accessible form sectioning.
+
+### Sub-components
+
+| Sub-component     | Description                                                    |
+| ----------------- | -------------------------------------------------------------- |
+| `Fieldset.Root`   | Renders a `<fieldset>`. Propagates `disabled` to all children. |
+| `Fieldset.Legend` | Accessible `<legend>` for the group.                           |
+
+### Fieldset.Root Props
+
+| Prop        | Type              | Default | Description                                |
+| ----------- | ----------------- | ------- | ------------------------------------------ |
+| `children`  | `React.ReactNode` | -       | Field components to group.                 |
+| `disabled`  | `boolean`         | -       | Disables all controls within the fieldset. |
+| `className` | `string`          | -       | Additional CSS classes.                    |
+
+### Example
+
+```tsx
+<Fieldset.Root>
+  <Fieldset.Legend>Billing details</Fieldset.Legend>
+  <Field.Root name="company">
+    <Field.Label>Company</Field.Label>
+    <Field.Control />
+  </Field.Root>
+  <Field.Root name="taxId">
+    <Field.Label>Tax ID</Field.Label>
+    <Field.Control />
+  </Field.Root>
+</Fieldset.Root>
+```
+
+---
+
+## React Hook Form Integration
+
+React Hook Form is **optional and not an AppShell dependency** — install it in your own app. `Form` +
+`Field` is the default stack and covers most forms via `onFormSubmit`. Reach for RHF only when a form
+genuinely needs cross-field validation, field arrays, or a schema resolver (Zod). The two compose
+rather than compete: `Field` handles accessibility wiring and visual state, RHF handles values and
+the validation lifecycle.
+
+`Field.Root` accepts `isTouched`, `isDirty`, `invalid`, and `error` props that align with React Hook Form's `fieldState` shape, so you can spread `fieldState` directly. Use `Form`'s `onSubmit` prop to connect RHF's `handleSubmit`.
+
+```tsx
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const schema = z.object({ email: z.string().email() });
+
+function MyForm() {
+  const { control, handleSubmit } = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  return (
+    <Form onSubmit={handleSubmit((data) => save(data))}>
+      <Controller
+        name="email"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field.Root {...fieldState}>
+            <Field.Label>Email</Field.Label>
+            <Field.Control {...field} type="email" />
+            <Field.Error>{fieldState.error?.message}</Field.Error>
+          </Field.Root>
+        )}
+      />
+      <button type="submit">Save</button>
+    </Form>
+  );
+}
+```
+
+The `Field` context handles only accessibility wiring (`htmlFor`, `aria-describedby`) and visual state (`data-invalid`, `data-dirty`, `data-touched`) — it does not interfere with RHF's value management or validation lifecycle.
+
+---
+
+## Related
+
+- [Input](./input.md) — Standalone styled input, useful outside of forms.
+- [Textarea](./textarea.md) — Multi-line text control that integrates automatically with `Field`.
+- [Checkbox](./checkbox.md) — Boolean control that integrates automatically with `Field`.
+- [Select](./select.md) — Dropdown that integrates automatically with `Field`.
+- [Combobox](./combobox.md) — Searchable combobox that integrates automatically with `Field`.
+- [Autocomplete](./autocomplete.md) — Free-text input with suggestions that integrates automatically with `Field`.

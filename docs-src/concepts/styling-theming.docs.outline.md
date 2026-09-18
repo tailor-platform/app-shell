@@ -1,5 +1,5 @@
 ---
-group: styling
+group: styling-theming
 title: Styling and Theming
 description: Learn how to style your AppShell application using Tailwind CSS v4 and customize the theme
 ---

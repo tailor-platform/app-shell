@@ -1154,20 +1154,20 @@
         "examples": "19131f441efe232f"
       }
     },
-    "styling": {
-      "slug": "styling",
+    "styling-theming": {
+      "slug": "styling-theming",
       "kind": "prose",
-      "outline": "docs-src/concepts/styling.docs.outline.md",
-      "output": "docs/concepts/styling.md",
-      "examples": "docs-src/concepts/styling.docs.examples.tsx",
+      "outline": "docs-src/concepts/styling-theming.docs.outline.md",
+      "output": "docs/concepts/styling-theming.md",
+      "examples": "docs-src/concepts/styling-theming.docs.examples.tsx",
       "sources": [],
       "claims": [],
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "30c75c8d261d064e",
+        "outline": "b11947614f0bab00",
         "snapshot": null,
-        "outputMd": "95520457698489f3",
+        "outputMd": "e32f71e1ab567751",
         "examples": "d3cca347b055a503"
       }
     },

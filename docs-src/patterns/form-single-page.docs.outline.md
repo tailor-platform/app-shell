@@ -1,6 +1,8 @@
 ---
 slug: pattern/form/single-page
 name: Single Page Form
+group: form-single-page
+title: Single Page Form
 category: pattern
 subcategory: form
 description: Routed full-page form for moderate field count (6-15) without natural sectioning
@@ -23,6 +25,8 @@ dont:
 - Moderate field count (roughly 6–15) without natural sectioning, completed in one pass
 
 ## Page Implementation
+
+<!-- example: form-single-page -->
 
 <!-- source: single-page-form.tsx -->
 

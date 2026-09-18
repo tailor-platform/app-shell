@@ -1,6 +1,8 @@
 ---
 slug: pattern/form/wizard
 name: Wizard Form
+group: form-wizard
+title: Wizard Form
 category: pattern
 subcategory: form
 description: Multi-stage create flow with 3-7 steps and per-step validation gates
@@ -28,6 +30,8 @@ For CSV/spreadsheet import specifically, use the `CsvImporter` component — it 
 the upload → map → validate → confirm flow. Don't rebuild it here.
 
 ## Page Implementation
+
+<!-- example: form-wizard -->
 
 <!-- source: wizard-form.tsx -->
 

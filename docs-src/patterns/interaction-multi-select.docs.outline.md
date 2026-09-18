@@ -1,6 +1,8 @@
 ---
 slug: pattern/interaction/multi-select
 name: Multi Select
+group: interaction-multi-select
+title: Multi Select
 category: pattern
 subcategory: interaction
 description: Floating bottom action bar for bulk operations on selected list rows
@@ -46,6 +48,8 @@ Floating action bar appears the moment selection count goes from 0 → 1, anchor
 ```
 
 ## Page Implementation
+
+<!-- example: interaction-multi-select -->
 
 <!-- source: multi-select.tsx -->
 

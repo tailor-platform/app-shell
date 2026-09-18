@@ -387,6 +387,57 @@
         "examples": "2fe2a4cb5c97a16b"
       }
     },
+    "form-sectioned": {
+      "slug": "form-sectioned",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-sectioned.docs.outline.md",
+      "output": "docs/patterns/form-sectioned.md",
+      "examples": "docs-src/patterns/form-sectioned.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "2ab211edf28ae471",
+        "snapshot": null,
+        "outputMd": "d31cd3ae6ad0790c",
+        "examples": "e66de48697da4786"
+      }
+    },
+    "form-single-page": {
+      "slug": "form-single-page",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-single-page.docs.outline.md",
+      "output": "docs/patterns/form-single-page.md",
+      "examples": "docs-src/patterns/form-single-page.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "97ce9dbaafd02515",
+        "snapshot": null,
+        "outputMd": "10a0f4d91a120752",
+        "examples": "c160f4883aff98f3"
+      }
+    },
+    "form-wizard": {
+      "slug": "form-wizard",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-wizard.docs.outline.md",
+      "output": "docs/patterns/form-wizard.md",
+      "examples": "docs-src/patterns/form-wizard.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "9de6d1d51ed5bbd3",
+        "snapshot": null,
+        "outputMd": "851afb4672da6673",
+        "examples": "157ff03dc999d3d3"
+      }
+    },
     "grid": {
       "slug": "grid",
       "kind": "code-backed",
@@ -436,6 +487,23 @@
         "snapshot": null,
         "outputMd": "2db70f423c6fdf97",
         "examples": "c76447e12f161a81"
+      }
+    },
+    "interaction-multi-select": {
+      "slug": "interaction-multi-select",
+      "kind": "prose",
+      "outline": "docs-src/patterns/interaction-multi-select.docs.outline.md",
+      "output": "docs/patterns/interaction-multi-select.md",
+      "examples": "docs-src/patterns/interaction-multi-select.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "010b8c7b517688f5",
+        "snapshot": null,
+        "outputMd": "09e99e5035da6e81",
+        "examples": "48e0d4327812dfde"
       }
     },
     "interaction-toast": {

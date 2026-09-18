@@ -1,6 +1,8 @@
 ---
 slug: pattern/form/sectioned
 name: Sectioned Form
+group: form-sectioned
+title: Sectioned Form
 category: pattern
 subcategory: form
 description: Complex form with 15+ fields organized into named fieldset sections
@@ -23,6 +25,8 @@ dont:
 - Configure-style settings pages with named boundaries
 
 ## Page Implementation
+
+<!-- example: form-sectioned -->
 
 <!-- source: sectioned-form.tsx -->
 

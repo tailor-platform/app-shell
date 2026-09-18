@@ -2190,15 +2190,17 @@ function toAddFilterSubmittedValue(
 
     if (trimmedMin === "" || trimmedMax === "") return undefined;
 
+    if (type === "datetime") {
+      const normalizedMin = normalizeTemporalFilterValue("datetime", trimmedMin, timeZone);
+      const normalizedMax = normalizeTemporalFilterValue("datetime", trimmedMax, timeZone);
+      return normalizedMin && normalizedMax
+        ? { min: normalizedMin, max: normalizedMax }
+        : undefined;
+    }
+
     return {
-      min:
-        type === "datetime"
-          ? normalizeTemporalFilterValue("datetime", trimmedMin, timeZone)
-          : trimmedMin,
-      max:
-        type === "datetime"
-          ? normalizeTemporalFilterValue("datetime", trimmedMax, timeZone)
-          : trimmedMax,
+      min: trimmedMin,
+      max: trimmedMax,
     };
   }
 

@@ -1989,15 +1989,17 @@ function TemporalFilterEditor({
         const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
         if (!minValid || !maxValid) return;
         if (!isRangeOrdered(config.type, localValue, localValueMax)) return;
+        if (config.type === "datetime") {
+          const min = normalizeTemporalFilterValue("datetime", localValue, shellTz.value);
+          const max = normalizeTemporalFilterValue("datetime", localValueMax, shellTz.value);
+          if (!min || !max) return;
+          control.addFilter(config.field, localOp, { min, max });
+          onClose();
+          return;
+        }
         control.addFilter(config.field, localOp, {
-          min:
-            config.type === "datetime"
-              ? normalizeTemporalFilterValue("datetime", localValue, shellTz.value)
-              : localValue,
-          max:
-            config.type === "datetime"
-              ? normalizeTemporalFilterValue("datetime", localValueMax, shellTz.value)
-              : localValueMax,
+          min: localValue,
+          max: localValueMax,
         });
       } else {
         return;
@@ -2006,13 +2008,14 @@ function TemporalFilterEditor({
       if (localValue.trim() === "") {
         control.removeFilter(config.field);
       } else if (isTemporalFilterValueValid(config.type, localValue)) {
-        control.addFilter(
-          config.field,
-          localOp,
-          config.type === "datetime"
-            ? normalizeTemporalFilterValue("datetime", localValue, shellTz.value)
-            : localValue,
-        );
+        if (config.type === "datetime") {
+          const value = normalizeTemporalFilterValue("datetime", localValue, shellTz.value);
+          if (!value) return;
+          control.addFilter(config.field, localOp, value);
+          onClose();
+          return;
+        }
+        control.addFilter(config.field, localOp, localValue);
       } else {
         return;
       }

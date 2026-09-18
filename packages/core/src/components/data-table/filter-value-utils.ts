@@ -54,7 +54,11 @@ export function isTemporalFilterType(type: FilterConfig["type"]): type is Tempor
   return type === "datetime" || type === "date" || type === "time";
 }
 
-export function isTemporalFilterValueValid(type: TemporalFilterType, value: string): boolean {
+export function isTemporalFilterValueValid(
+  type: TemporalFilterType,
+  value: string,
+  timeZone = getLocalTimeZone(),
+): boolean {
   const trimmedValue = value.trim();
   if (trimmedValue === "") return false;
 
@@ -62,7 +66,7 @@ export function isTemporalFilterValueValid(type: TemporalFilterType, value: stri
     case "datetime":
       // Legacy filters may be local datetimes; DataTable editors serialize new
       // values as RFC 3339 instants.
-      return toValidDateTime(trimmedValue, getLocalTimeZone()) != null;
+      return toValidDateTime(trimmedValue, timeZone) != null;
     case "date":
       return DATE_RE.test(trimmedValue);
     case "time":

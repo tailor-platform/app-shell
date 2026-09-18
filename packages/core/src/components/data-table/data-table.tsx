@@ -30,6 +30,7 @@ import { DataTableContext, type DataTableContextValue } from "./data-table-conte
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { DataTableToolbar, DataTableFilters } from "./toolbar";
+import { DataTableColumnSettings } from "./column-settings";
 import { DataTablePagination } from "./pagination";
 export type { DataTablePaginationProps } from "./pagination";
 
@@ -531,7 +532,10 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
         <div
           data-slot="data-table"
           className={cn(
-            "astw:flex astw:flex-col astw:min-h-0 astw:border astw:border-border astw:rounded-md astw:bg-card",
+            "astw:flex astw:flex-col astw:min-h-0 astw:overflow-hidden astw:border astw:border-border astw:rounded-md astw:bg-card",
+            // A generic Toolbar becomes the table's top edge: preserve its top
+            // corners, but retain only the divider beneath it.
+            "astw:[&>[data-slot=toolbar]]:rounded-b-none astw:[&>[data-slot=toolbar]]:border-x-0 astw:[&>[data-slot=toolbar]]:border-t-0",
             className,
           )}
         >
@@ -1513,6 +1517,8 @@ export const DataTable = {
    * `useCollectionVariables()`, otherwise this component throws at render time.
    */
   Filters: DataTableFilters,
+  /** Built-in column visibility, ordering, and pinning controls. */
+  ColumnSettings: DataTableColumnSettings,
   /**
    * Renders `<table>` with built-in `Headers` and `Body`.
    * Place inside `DataTable.Root`.

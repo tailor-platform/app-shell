@@ -147,6 +147,7 @@ export { Form, type FormProps } from "./components/form";
 export { Menu } from "./components/menu";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
+export { Toolbar, type ToolbarProps } from "./components/toolbar";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select-standalone";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox-standalone";

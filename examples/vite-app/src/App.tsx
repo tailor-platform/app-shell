@@ -54,6 +54,7 @@ const App = () => {
               <SidebarItem to="/dashboard/document-progress" />
             </SidebarGroup>
             <SidebarItem to="/date-picker" />
+            <SidebarItem to="/toolbar" />
             <SidebarItem to="/data-table" />
             <SidebarItem to="/data-table-lab" />
             <SidebarItem to="/alert-tokens" />

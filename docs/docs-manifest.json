@@ -277,6 +277,23 @@
         "examples": "c0a2bd60e8a04474"
       }
     },
+    "menu": {
+      "slug": "menu",
+      "kind": "code-backed",
+      "outline": "docs-src/components/menu.docs.outline.md",
+      "output": "docs/components/menu.md",
+      "examples": "docs-src/components/menu.docs.examples.tsx",
+      "sources": ["packages/core/src/components/menu/**"],
+      "claims": [],
+      "symbols": ["Menu"],
+      "hashes": {
+        "typeSurface": "943616def28cafb0",
+        "outline": "04a68fe8de3b4e6e",
+        "snapshot": "02dfd02003105939",
+        "outputMd": "18d2fee5a2841e13",
+        "examples": "cff0508bb5520ae6"
+      }
+    },
     "select": {
       "slug": "select",
       "kind": "code-backed",
@@ -292,6 +309,23 @@
         "snapshot": "f6fcbd73e127f2f4",
         "outputMd": "3e62ffc324fd7d43",
         "examples": "1ce89cec30045466"
+      }
+    },
+    "sheet": {
+      "slug": "sheet",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sheet.docs.outline.md",
+      "output": "docs/components/sheet.md",
+      "examples": "docs-src/components/sheet.docs.examples.tsx",
+      "sources": ["packages/core/src/components/sheet/**"],
+      "claims": [],
+      "symbols": ["Sheet"],
+      "hashes": {
+        "typeSurface": "e760949efcbe4c38",
+        "outline": "1ba21594233228ba",
+        "snapshot": "12c20fc6f44d1b4c",
+        "outputMd": "60347c9a794bf66d",
+        "examples": "b0eebb8c5e2219dc"
       }
     },
     "styling": {
@@ -311,6 +345,40 @@
         "examples": "d3cca347b055a503"
       }
     },
+    "table": {
+      "slug": "table",
+      "kind": "code-backed",
+      "outline": "docs-src/components/table.docs.outline.md",
+      "output": "docs/components/table.md",
+      "examples": "docs-src/components/table.docs.examples.tsx",
+      "sources": ["packages/core/src/components/table/**"],
+      "claims": [],
+      "symbols": ["Table"],
+      "hashes": {
+        "typeSurface": "bc60676f880b485b",
+        "outline": "d3e76ea2aee8c763",
+        "snapshot": "54e27fa3789afbd2",
+        "outputMd": "175c7da8048996c2",
+        "examples": "2b9d94065f2f77b7"
+      }
+    },
+    "tabs": {
+      "slug": "tabs",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tabs.docs.outline.md",
+      "output": "docs/components/tabs.md",
+      "examples": "docs-src/components/tabs.docs.examples.tsx",
+      "sources": ["packages/core/src/components/tabs/**"],
+      "claims": [],
+      "symbols": ["Tabs"],
+      "hashes": {
+        "typeSurface": "f6795191b952e110",
+        "outline": "72dd5214d4fd8d9d",
+        "snapshot": "925b704a05df1333",
+        "outputMd": "d266a1c0140d1bfb",
+        "examples": "b07f258088e81cac"
+      }
+    },
     "textarea": {
       "slug": "textarea",
       "kind": "code-backed",
@@ -326,6 +394,23 @@
         "snapshot": "40f4b39567ab051b",
         "outputMd": "c940bc01cd573334",
         "examples": "0712ee03ad6ce259"
+      }
+    },
+    "tooltip": {
+      "slug": "tooltip",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tooltip.docs.outline.md",
+      "output": "docs/components/tooltip.md",
+      "examples": "docs-src/components/tooltip.docs.examples.tsx",
+      "sources": ["packages/core/src/components/tooltip/**"],
+      "claims": [],
+      "symbols": ["Tooltip"],
+      "hashes": {
+        "typeSurface": "d652b740db9471c7",
+        "outline": "b031e1a4a140f009",
+        "snapshot": "13ed55385962bf3a",
+        "outputMd": "05417e4cbf16f415",
+        "examples": "87b93974e65d3a07"
       }
     }
   }

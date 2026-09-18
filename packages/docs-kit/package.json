@@ -1,0 +1,35 @@
+{
+  "name": "@tailor-platform/app-shell-docs-kit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal tooling for the app-shell docs pipeline: type-surface extraction, drift detection, and deterministic markdown assembly. Never published.",
+  "bin": {
+    "docs-kit": "./dist/cli.mjs"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "oxlint -c .oxlintrc.jsonc",
+    "test": "vitest run",
+    "type-check": "tsc --incremental"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "picomatch": "^4.0.2",
+    "ts-morph": "^28.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/picomatch": "^4.0.0",
+    "tsdown": "catalog:",
+    "typescript": "^5",
+    "vitest": "catalog:"
+  }
+}

@@ -43,6 +43,33 @@
         "examples": "eb7ab46dc420129f"
       }
     },
+    "ai-chat": {
+      "slug": "ai-chat",
+      "kind": "code-backed",
+      "outline": "docs-src/components/ai-chat.docs.outline.md",
+      "output": "docs/components/ai-chat.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/ai-chat/**"],
+      "claims": [],
+      "symbols": [
+        "AIChat",
+        "AIChatComposerProps",
+        "AIChatConversationProps",
+        "AIChatHeaderProps",
+        "AIChatProps",
+        "ChainOfThoughtStepStatus",
+        "ChatHistoryGroupData",
+        "ChatHistoryItemData",
+        "ToolState"
+      ],
+      "hashes": {
+        "typeSurface": "7cb8a34c1c36eb02",
+        "outline": "a207e95918c857e0",
+        "snapshot": "791be2c6087af41c",
+        "outputMd": "6879f7ce65a18463",
+        "examples": null
+      }
+    },
     "alert": {
       "slug": "alert",
       "kind": "code-backed",
@@ -75,6 +102,30 @@
         "snapshot": null,
         "outputMd": "b55f1d538651d467",
         "examples": "5628b20a03385bdf"
+      }
+    },
+    "attachment": {
+      "slug": "attachment",
+      "kind": "code-backed",
+      "outline": "docs-src/components/attachment.docs.outline.md",
+      "output": "docs/components/attachment.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/attachment/**"],
+      "claims": [],
+      "symbols": [
+        "Attachment",
+        "AttachmentItem",
+        "AttachmentOperation",
+        "AttachmentProps",
+        "UseAttachmentOptions",
+        "useAttachment"
+      ],
+      "hashes": {
+        "typeSurface": "0a9f0c3f82e57e02",
+        "outline": "9c7d18f6acb6f635",
+        "snapshot": "4cc22ecbb5ea4434",
+        "outputMd": "eaf8b8035d40fbe8",
+        "examples": null
       }
     },
     "autocomplete": {
@@ -196,6 +247,52 @@
         "examples": "4c96b71b68808c66"
       }
     },
+    "command-palette": {
+      "slug": "command-palette",
+      "kind": "code-backed",
+      "outline": "docs-src/components/command-palette.docs.outline.md",
+      "output": "docs/components/command-palette.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/command-palette/**"],
+      "claims": [],
+      "symbols": ["CommandPalette"],
+      "hashes": {
+        "typeSurface": "818f6808b94f8041",
+        "outline": "b80ebd5ddac3605b",
+        "snapshot": null,
+        "outputMd": "8b89145ba0e6640d",
+        "examples": null
+      }
+    },
+    "csv-importer": {
+      "slug": "csv-importer",
+      "kind": "code-backed",
+      "outline": "docs-src/components/csv-importer.docs.outline.md",
+      "output": "docs/components/csv-importer.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/csv-importer/**"],
+      "claims": [],
+      "symbols": [
+        "CsvCellIssue",
+        "CsvColumn",
+        "CsvColumnMapping",
+        "CsvCorrection",
+        "CsvImportEvent",
+        "CsvImporter",
+        "CsvSchema",
+        "InferCsvRow",
+        "ParsedRow",
+        "csv",
+        "useCsvImporter"
+      ],
+      "hashes": {
+        "typeSurface": "b4f7e0dc7b95af55",
+        "outline": "a9000e3b1b6170fe",
+        "snapshot": null,
+        "outputMd": "aee90f383768243a",
+        "examples": null
+      }
+    },
     "data-table": {
       "slug": "data-table",
       "kind": "code-backed",
@@ -265,6 +362,30 @@
         "outline": "a206d320b37e7e54",
         "snapshot": null,
         "outputMd": "5ed331026ad4b2e5",
+        "examples": null
+      }
+    },
+    "date-picker": {
+      "slug": "date-picker",
+      "kind": "code-backed",
+      "outline": "docs-src/components/date-picker.docs.outline.md",
+      "output": "docs/components/date-picker.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/date-field/**"],
+      "claims": [],
+      "symbols": [
+        "DateField",
+        "DateFieldProps",
+        "DatePicker",
+        "DatePickerProps",
+        "DateRangePicker",
+        "DateRangePickerProps"
+      ],
+      "hashes": {
+        "typeSurface": "6b07d4169fa991df",
+        "outline": "6601cb2c13b920ba",
+        "snapshot": null,
+        "outputMd": "5bc9504434572595",
         "examples": null
       }
     },
@@ -353,6 +474,23 @@
         "examples": "6962c6f28d09eb0a"
       }
     },
+    "form": {
+      "slug": "form",
+      "kind": "code-backed",
+      "outline": "docs-src/components/form.docs.outline.md",
+      "output": "docs/components/form.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/form/**"],
+      "claims": [],
+      "symbols": ["Form", "FormProps"],
+      "hashes": {
+        "typeSurface": "7b374d45d53d4535",
+        "outline": "665b67161b66e0fc",
+        "snapshot": "4287a03df2854f9a",
+        "outputMd": "50176425b1ce6a23",
+        "examples": null
+      }
+    },
     "form-composer": {
       "slug": "form-composer",
       "kind": "prose",
@@ -436,6 +574,23 @@
         "snapshot": null,
         "outputMd": "851afb4672da6673",
         "examples": "157ff03dc999d3d3"
+      }
+    },
+    "global-header-layout": {
+      "slug": "global-header-layout",
+      "kind": "code-backed",
+      "outline": "docs-src/components/global-header-layout.docs.outline.md",
+      "output": "docs/components/global-header-layout.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/global-header-layout.tsx"],
+      "claims": [],
+      "symbols": ["GlobalHeaderLayout", "GlobalHeaderLayoutProps"],
+      "hashes": {
+        "typeSurface": "70edbc7c68dcc7aa",
+        "outline": "d122133b72ace22f",
+        "snapshot": null,
+        "outputMd": "dd2b0da3702cf8d9",
+        "examples": null
       }
     },
     "grid": {
@@ -759,6 +914,40 @@
         "snapshot": "40f4b39567ab051b",
         "outputMd": "c940bc01cd573334",
         "examples": "0712ee03ad6ce259"
+      }
+    },
+    "timeline": {
+      "slug": "timeline",
+      "kind": "code-backed",
+      "outline": "docs-src/components/timeline.docs.outline.md",
+      "output": "docs/components/timeline.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/timeline/**"],
+      "claims": [],
+      "symbols": [
+        "Timeline",
+        "TimelineAxis",
+        "TimelineAxisLevel",
+        "TimelineAxisSpan",
+        "TimelineAxisTick",
+        "TimelineBand",
+        "TimelineDecorations",
+        "TimelineGuide",
+        "TimelineIntervalProps",
+        "TimelineLinkDefaults",
+        "TimelineLinkProps",
+        "TimelineMarker",
+        "TimelineRootProps",
+        "TimelineRowBackground",
+        "TimelineRowProps",
+        "TimelineViewportProps"
+      ],
+      "hashes": {
+        "typeSurface": "f1d9ac66cafae3d5",
+        "outline": "07f1d81af8dc3a6d",
+        "snapshot": null,
+        "outputMd": "699249c9452485ab",
+        "examples": null
       }
     },
     "tooltip": {

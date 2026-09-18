@@ -1,6 +1,57 @@
 {
   "version": 1,
   "units": {
+    "alert": {
+      "slug": "alert",
+      "kind": "code-backed",
+      "outline": "docs-src/components/alert.docs.outline.md",
+      "output": "docs/components/alert.md",
+      "examples": "docs-src/components/alert.docs.examples.tsx",
+      "sources": ["packages/core/src/components/alert/**"],
+      "claims": [],
+      "symbols": ["Alert", "AlertProps", "alertVariants"],
+      "hashes": {
+        "typeSurface": "f28bf34ae1466912",
+        "outline": "25272e4e9ef96c23",
+        "snapshot": "e83317f5eef937e5",
+        "outputMd": "113c73a6b61f814e",
+        "examples": "65d5fc73550e395a"
+      }
+    },
+    "avatar": {
+      "slug": "avatar",
+      "kind": "code-backed",
+      "outline": "docs-src/components/avatar.docs.outline.md",
+      "output": "docs/components/avatar.md",
+      "examples": "docs-src/components/avatar.docs.examples.tsx",
+      "sources": ["packages/core/src/components/avatar/**"],
+      "claims": [],
+      "symbols": ["Avatar", "AvatarProps", "avatarVariants"],
+      "hashes": {
+        "typeSurface": "d6ee5e809e0f0590",
+        "outline": "3645479e4f751a7d",
+        "snapshot": "b70ad798aec94bc9",
+        "outputMd": "530b700f11080c24",
+        "examples": "009005eeac70961d"
+      }
+    },
+    "badge": {
+      "slug": "badge",
+      "kind": "code-backed",
+      "outline": "docs-src/components/badge.docs.outline.md",
+      "output": "docs/components/badge.md",
+      "examples": "docs-src/components/badge.docs.examples.tsx",
+      "sources": ["packages/core/src/components/badge/**"],
+      "claims": [],
+      "symbols": ["Badge", "BadgeProps", "badgeVariants"],
+      "hashes": {
+        "typeSurface": "86af3a3088ed46c4",
+        "outline": "0d6bbae142c53817",
+        "snapshot": null,
+        "outputMd": "1505b13668b87678",
+        "examples": "edd9868442daa0b0"
+      }
+    },
     "button": {
       "slug": "button",
       "kind": "code-backed",
@@ -18,15 +69,63 @@
         "examples": "1ee01b1e27764cd2"
       }
     },
+    "card": {
+      "slug": "card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/card.docs.outline.md",
+      "output": "docs/components/card.md",
+      "examples": "docs-src/components/card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/card/**"],
+      "claims": [],
+      "symbols": ["Card"],
+      "hashes": {
+        "typeSurface": "6ce6f0fdf2450cec",
+        "outline": "983a069d195d8764",
+        "snapshot": "98e09e5019fa1368",
+        "outputMd": "2c0b4dfb6e4ab565",
+        "examples": "b7b2d28f20fe0a18"
+      }
+    },
+    "checkbox": {
+      "slug": "checkbox",
+      "kind": "code-backed",
+      "outline": "docs-src/components/checkbox.docs.outline.md",
+      "output": "docs/components/checkbox.md",
+      "examples": "docs-src/components/checkbox.docs.examples.tsx",
+      "sources": ["packages/core/src/components/checkbox/**"],
+      "claims": [],
+      "symbols": ["Checkbox", "CheckboxProps"],
+      "hashes": {
+        "typeSurface": "3886bf7012f24283",
+        "outline": "b99f553b85155e55",
+        "snapshot": "5df639bf40a2bdd7",
+        "outputMd": "14f7ba23f441df38",
+        "examples": "e8f09fba5acb116f"
+      }
+    },
     "data-table": {
       "slug": "data-table",
       "kind": "code-backed",
       "outline": "docs-src/components/data-table.docs.outline.md",
       "output": "docs/components/data-table.md",
       "examples": null,
-      "sources": ["packages/core/src/components/data-table/**"],
+      "sources": [
+        "packages/core/src/components/data-table/**",
+        "packages/core/src/hooks/use-collection-variables.ts",
+        "packages/core/src/lib/collection-url-state.ts",
+        "packages/core/src/contexts/collection-control-context.tsx",
+        "packages/core/src/types/collection.ts"
+      ],
       "claims": [],
       "symbols": [
+        "BuildQueryVariables",
+        "CollectionControl",
+        "CollectionControlProvider",
+        "CollectionInitialState",
+        "CollectionParams",
+        "CollectionPersistedState",
+        "CollectionResult",
+        "CollectionVariables",
         "Column",
         "DataTable",
         "DataTableContextValue",
@@ -34,18 +133,43 @@
         "DataTableFilterConfig",
         "DataTablePaginationProps",
         "DataTableRootProps",
+        "FieldMetadata",
+        "FieldType",
+        "Filter",
+        "FilterConfig",
+        "FilterOperator",
         "HeaderRenderContext",
         "MetadataFieldOptions",
+        "NodeType",
+        "OPERATORS_BY_FILTER_TYPE",
+        "PageInfo",
+        "PaginationVariables",
         "RowAction",
+        "SelectOption",
+        "SortConfig",
+        "SortState",
+        "TableFieldName",
+        "TableMetadata",
+        "TableMetadataFilter",
+        "TableMetadataMap",
+        "TableOrderableFieldName",
+        "UseCollectionOptions",
+        "UseCollectionReturn",
         "UseDataTableOptions",
         "UseDataTableReturn",
         "createColumnHelper",
+        "fieldTypeToFilterConfig",
+        "fieldTypeToSortConfig",
+        "useCollectionControl",
+        "useCollectionVariables",
         "useDataTable",
-        "useDataTableContext"
+        "useDataTableContext",
+        "useURLCollectionVariables",
+        "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "322f6b806203cebe",
-        "outline": "80a6cfa343360186",
+        "typeSurface": "199f1cb9d06e3c15",
+        "outline": "a206d320b37e7e54",
         "snapshot": null,
         "outputMd": "5ed331026ad4b2e5",
         "examples": null

@@ -1,6 +1,48 @@
 {
   "version": 1,
   "units": {
+    "action-panel": {
+      "slug": "action-panel",
+      "kind": "code-backed",
+      "outline": "docs-src/components/action-panel.docs.outline.md",
+      "output": "docs/components/action-panel.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/action-panel/**"],
+      "claims": [],
+      "symbols": ["ActionPanel", "ActionPanelProps"],
+      "hashes": {
+        "typeSurface": "f497e4e3021d029a",
+        "outline": "c9f5680bff2438b5",
+        "snapshot": null,
+        "outputMd": "edd8f331f6529431",
+        "examples": null
+      }
+    },
+    "activity-card": {
+      "slug": "activity-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/activity-card.docs.outline.md",
+      "output": "docs/components/activity-card.md",
+      "examples": "docs-src/components/activity-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/activity-card/**"],
+      "claims": [],
+      "symbols": [
+        "ActivityCard",
+        "ActivityCardBaseItem",
+        "ActivityCardItem",
+        "ActivityCardItemProps",
+        "ActivityCardItemsProps",
+        "ActivityCardProps",
+        "ActivityCardRootProps"
+      ],
+      "hashes": {
+        "typeSurface": "8aa0f940fced61be",
+        "outline": "ddb6c6ee8f48939d",
+        "snapshot": null,
+        "outputMd": "b333ad0f1179256a",
+        "examples": "eb7ab46dc420129f"
+      }
+    },
     "alert": {
       "slug": "alert",
       "kind": "code-backed",
@@ -16,6 +58,23 @@
         "snapshot": "e83317f5eef937e5",
         "outputMd": "fa18b6637360eced",
         "examples": "65d5fc73550e395a"
+      }
+    },
+    "appearance-switcher": {
+      "slug": "appearance-switcher",
+      "kind": "code-backed",
+      "outline": "docs-src/components/appearance-switcher.docs.outline.md",
+      "output": "docs/components/appearance-switcher.md",
+      "examples": "docs-src/components/appearance-switcher.docs.examples.tsx",
+      "sources": ["packages/core/src/components/appearance-switcher/**"],
+      "claims": [],
+      "symbols": ["AppearanceSwitcher"],
+      "hashes": {
+        "typeSurface": "d57359491532c037",
+        "outline": "5cffe0b99d45ffc8",
+        "snapshot": null,
+        "outputMd": "b55f1d538651d467",
+        "examples": "5628b20a03385bdf"
       }
     },
     "autocomplete": {
@@ -241,6 +300,23 @@
         "snapshot": "d4fa33f2da19d5ee",
         "outputMd": "b67a5a9c2a287e17",
         "examples": "934c52d4e8761404"
+      }
+    },
+    "document-progress-card": {
+      "slug": "document-progress-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/document-progress-card.docs.outline.md",
+      "output": "docs/components/document-progress-card.md",
+      "examples": "docs-src/components/document-progress-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/document-progress-card/**"],
+      "claims": [],
+      "symbols": ["DocumentProgressCard", "DocumentProgressCardProps"],
+      "hashes": {
+        "typeSurface": "306ea2ad2a256b8d",
+        "outline": "a37df46240e12915",
+        "snapshot": "57f1bbb52b30d78b",
+        "outputMd": "d0fb940f685f8869",
+        "examples": "6962c6f28d09eb0a"
       }
     },
     "form-modal": {
@@ -496,6 +572,23 @@
         "snapshot": "13ed55385962bf3a",
         "outputMd": "05417e4cbf16f415",
         "examples": "87b93974e65d3a07"
+      }
+    },
+    "with-guard": {
+      "slug": "with-guard",
+      "kind": "code-backed",
+      "outline": "docs-src/components/with-guard.docs.outline.md",
+      "output": "docs/components/with-guard.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/with-guard/**"],
+      "claims": [],
+      "symbols": ["WithGuard", "WithGuardProps"],
+      "hashes": {
+        "typeSurface": "82ec0e51747a308b",
+        "outline": "a62ac041c72410cd",
+        "snapshot": null,
+        "outputMd": "2735d2a1a80cb5b1",
+        "examples": null
       }
     }
   }

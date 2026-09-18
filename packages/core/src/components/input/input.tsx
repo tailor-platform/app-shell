@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
+import { mergeRefs, useToolbarItem } from "@/components/toolbar";
 
 type InputProps = React.ComponentProps<"input">;
 
@@ -16,9 +17,13 @@ type InputProps = React.ComponentProps<"input">;
  * <Input type="email" disabled />
  * ```
  */
-function Input({ className, type, ...props }: InputProps) {
+function Input({ className, type, ref: forwardedRef, ...props }: InputProps) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  useToolbarItem(ref, { handlesDirectionalKeys: true });
+
   return (
     <input
+      ref={mergeRefs(ref, forwardedRef)}
       type={type}
       data-slot="input"
       className={cn(

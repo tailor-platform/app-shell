@@ -3,6 +3,7 @@ import { defineI18nLabels } from "@/hooks/i18n";
 export const csvExporterLabels = defineI18nLabels({
   en: {
     noRows: "No data to export",
+    noColumns: "Select at least one column to export",
     exportComplete: (props: { count: number }) => `${props.count.toLocaleString()} rows exported`,
     exportFailed: "Failed to export CSV",
     exportCancelled: "CSV export cancelled",
@@ -22,6 +23,7 @@ export const csvExporterLabels = defineI18nLabels({
   },
   ja: {
     noRows: "エクスポートするデータがありません",
+    noColumns: "エクスポートする列を1つ以上選択してください",
     exportComplete: (props: { count: number }) =>
       `${props.count.toLocaleString()} 行をエクスポートしました`,
     exportFailed: "CSV のエクスポートに失敗しました",

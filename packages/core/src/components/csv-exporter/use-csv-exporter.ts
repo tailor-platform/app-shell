@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { unparse } from "papaparse";
 import { getCellValue } from "@/components/data-table/cell-renderers";
 import type { Column } from "@/components/data-table/types";
@@ -113,6 +113,13 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
     setIsOpen(true);
   }, []);
   const abortControllerRef = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    },
+    [],
+  );
   const [phase, setPhase] = useState<CsvExporterState["phase"]>("idle");
   const [progress, setProgress] = useState<CsvExporterState["progress"]>({
     completed: 0,
@@ -142,6 +149,13 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
         const columns = resolveColumns(
           columnOverride && usesDataTableColumns ? columnOverride : columnSource,
         );
+        if (usesDataTableColumns && columns.length === 0) {
+          const exportError = new Error(t("noColumns"));
+          setError(exportError);
+          setPhase("error");
+          toast.error(exportError.message);
+          return false;
+        }
         const rows: TRow[] = [];
         const seenCursors = new Set<string>();
         let after: string | null = null;
@@ -191,6 +205,7 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
         toast.success(t("exportComplete", { count: rows.length }));
         return true;
       } catch (caught) {
+        if (abortControllerRef.current !== abortController) return false;
         if (
           abortController.signal.aborted ||
           (caught instanceof DOMException && caught.name === "AbortError")

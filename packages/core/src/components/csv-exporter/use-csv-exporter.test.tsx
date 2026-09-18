@@ -111,6 +111,30 @@ describe("useCsvExporter", () => {
     );
   });
 
+  it("rejects an empty DataTable column override before fetching", async () => {
+    const { column } = createColumnHelper<ExportTypeTestRow>();
+    const fetcher = vi.fn();
+    const { result } = renderHook(
+      () =>
+        useCsvExporter({
+          defaultFilename: "products.csv",
+          columns: [column({ id: "name", label: "Name", render: (row) => row.name })],
+          fetcher,
+        }),
+      { wrapper },
+    );
+
+    await act(async () => {
+      await expect(result.current.props.exporter.exportCsv(undefined, [])).resolves.toBe(false);
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.current.props.exporter.phase).toBe("error");
+    expect(result.current.props.exporter.error?.message).toBe(
+      "Select at least one column to export",
+    );
+  });
+
   it("cancels an in-flight fetch", async () => {
     const fetcher = vi.fn(
       ({ signal }: { signal: AbortSignal }) =>
@@ -140,5 +164,46 @@ describe("useCsvExporter", () => {
     await waitFor(() => {
       expect(result.current.props.exporter.phase).toBe("cancelled");
     });
+  });
+
+  it("aborts an in-flight export when unmounted", async () => {
+    let resolveFetch!: (connection: {
+      edges: { node: { name: string } }[];
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    }) => void;
+    let signal!: AbortSignal;
+    const fetcher = vi.fn(({ signal: nextSignal }: { signal: AbortSignal }) => {
+      signal = nextSignal;
+      return new Promise<{
+        edges: { node: { name: string } }[];
+        pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      }>((resolve) => {
+        resolveFetch = resolve;
+      });
+    });
+    const download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const { result, unmount } = renderHook(
+      () =>
+        useCsvExporter({
+          defaultFilename: "products.csv",
+          columns: [{ header: "Name", value: (row: { name: string }) => row.name }],
+          fetcher,
+        }),
+      { wrapper },
+    );
+
+    let exportPromise!: Promise<boolean>;
+    act(() => {
+      exportPromise = result.current.props.exporter.exportCsv();
+    });
+    unmount();
+    resolveFetch({
+      edges: [{ node: { name: "Alice" } }],
+      pageInfo: { hasNextPage: false, endCursor: null },
+    });
+
+    await expect(exportPromise).resolves.toBe(false);
+    expect(signal.aborted).toBe(true);
+    expect(download).not.toHaveBeenCalled();
   });
 });

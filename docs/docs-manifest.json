@@ -298,6 +298,40 @@
         "examples": null
       }
     },
+    "create-ai-gateway-client": {
+      "slug": "create-ai-gateway-client",
+      "kind": "prose",
+      "outline": "docs-src/hooks/create-ai-gateway-client.docs.outline.md",
+      "output": "docs/api/create-ai-gateway-client.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "3534cf5e06984b77",
+        "snapshot": null,
+        "outputMd": "7eaff97521a14ab0",
+        "examples": null
+      }
+    },
+    "create-typed-paths": {
+      "slug": "create-typed-paths",
+      "kind": "prose",
+      "outline": "docs-src/hooks/create-typed-paths.docs.outline.md",
+      "output": "docs/api/create-typed-paths.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "b2c0650dcde08cd2",
+        "snapshot": null,
+        "outputMd": "4c3a858d3eb02a2a",
+        "examples": null
+      }
+    },
     "csv-importer": {
       "slug": "csv-importer",
       "kind": "code-backed",
@@ -454,6 +488,57 @@
         "outline": "cba9bb9f532af98a",
         "snapshot": null,
         "outputMd": "3422388a0cc78571",
+        "examples": null
+      }
+    },
+    "define-i18n-labels": {
+      "slug": "define-i18n-labels",
+      "kind": "prose",
+      "outline": "docs-src/hooks/define-i18n-labels.docs.outline.md",
+      "output": "docs/api/define-i18n-labels.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "805c2935ec960e10",
+        "snapshot": null,
+        "outputMd": "f5a392adf633adfc",
+        "examples": null
+      }
+    },
+    "define-module": {
+      "slug": "define-module",
+      "kind": "prose",
+      "outline": "docs-src/hooks/define-module.docs.outline.md",
+      "output": "docs/api/define-module.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "077b5a42568db46d",
+        "snapshot": null,
+        "outputMd": "ce6b48d7ae55cea8",
+        "examples": null
+      }
+    },
+    "define-resource": {
+      "slug": "define-resource",
+      "kind": "prose",
+      "outline": "docs-src/hooks/define-resource.docs.outline.md",
+      "output": "docs/api/define-resource.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "6f4a8fd254ff276c",
+        "snapshot": null,
+        "outputMd": "d31b32b7336fa006",
         "examples": null
       }
     },
@@ -661,6 +746,74 @@
         "examples": "90bc8a3e4816a82c"
       }
     },
+    "guards/hidden": {
+      "slug": "guards/hidden",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/hidden.docs.outline.md",
+      "output": "docs/api/guards/hidden.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "6ca7d7b8d3bedf7e",
+        "snapshot": null,
+        "outputMd": "dda25877f7e40b82",
+        "examples": null
+      }
+    },
+    "guards/overview": {
+      "slug": "guards/overview",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/overview.docs.outline.md",
+      "output": "docs/api/guards/overview.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "780199db9d5029d8",
+        "snapshot": null,
+        "outputMd": "bc694f0965c1d049",
+        "examples": null
+      }
+    },
+    "guards/pass": {
+      "slug": "guards/pass",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/pass.docs.outline.md",
+      "output": "docs/api/guards/pass.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "cc6be1471281c0c7",
+        "snapshot": null,
+        "outputMd": "3363ac1c6a7905f8",
+        "examples": null
+      }
+    },
+    "guards/redirect-to": {
+      "slug": "guards/redirect-to",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/redirect-to.docs.outline.md",
+      "output": "docs/api/guards/redirect-to.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "adfb9dc01a962489",
+        "snapshot": null,
+        "outputMd": "1b08b8aa0d013dc7",
+        "examples": null
+      }
+    },
     "input": {
       "slug": "input",
       "kind": "code-backed",
@@ -811,6 +964,57 @@
         "outline": "01c11ba917667dd6",
         "snapshot": null,
         "outputMd": "bf15b5460f22d165",
+        "examples": null
+      }
+    },
+    "router/use-location": {
+      "slug": "router/use-location",
+      "kind": "prose",
+      "outline": "docs-src/hooks/router/use-location.docs.outline.md",
+      "output": "docs/api/router/use-location.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "ecdee8a3d230cc59",
+        "snapshot": null,
+        "outputMd": "ddb44cc51af636cc",
+        "examples": null
+      }
+    },
+    "router/use-navigate": {
+      "slug": "router/use-navigate",
+      "kind": "prose",
+      "outline": "docs-src/hooks/router/use-navigate.docs.outline.md",
+      "output": "docs/api/router/use-navigate.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "709c35015e810b1d",
+        "snapshot": null,
+        "outputMd": "d018cb13a7ddc38b",
+        "examples": null
+      }
+    },
+    "router/use-params": {
+      "slug": "router/use-params",
+      "kind": "prose",
+      "outline": "docs-src/hooks/router/use-params.docs.outline.md",
+      "output": "docs/api/router/use-params.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "31bee1dd616facf9",
+        "snapshot": null,
+        "outputMd": "535f701e77dfc4e6",
         "examples": null
       }
     },
@@ -1067,6 +1271,227 @@
         "snapshot": "13ed55385962bf3a",
         "outputMd": "05417e4cbf16f415",
         "examples": "87b93974e65d3a07"
+      }
+    },
+    "use-ai-chat": {
+      "slug": "use-ai-chat",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-ai-chat.docs.outline.md",
+      "output": "docs/api/use-ai-chat.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "d137677b42176e7b",
+        "snapshot": null,
+        "outputMd": "f4a88f636000fd60",
+        "examples": null
+      }
+    },
+    "use-app-shell": {
+      "slug": "use-app-shell",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-app-shell.docs.outline.md",
+      "output": "docs/api/use-app-shell.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "7fc434a69b66b3bc",
+        "snapshot": null,
+        "outputMd": "866e5e30c1e13d9a",
+        "examples": null
+      }
+    },
+    "use-app-shell-config": {
+      "slug": "use-app-shell-config",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-app-shell-config.docs.outline.md",
+      "output": "docs/api/use-app-shell-config.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c0808c72f61819ea",
+        "snapshot": null,
+        "outputMd": "36ada5565b21c577",
+        "examples": null
+      }
+    },
+    "use-app-shell-data": {
+      "slug": "use-app-shell-data",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-app-shell-data.docs.outline.md",
+      "output": "docs/api/use-app-shell-data.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "105fadc391e37e8e",
+        "snapshot": null,
+        "outputMd": "fad92e84dbbb8a86",
+        "examples": null
+      }
+    },
+    "use-auth": {
+      "slug": "use-auth",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-auth.docs.outline.md",
+      "output": "docs/api/use-auth.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "b33aad6576ab0a75",
+        "snapshot": null,
+        "outputMd": "a7d907ac79d24944",
+        "examples": null
+      }
+    },
+    "use-override-breadcrumb": {
+      "slug": "use-override-breadcrumb",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-override-breadcrumb.docs.outline.md",
+      "output": "docs/api/use-override-breadcrumb.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "6cfc3dd4b1ce8d95",
+        "snapshot": null,
+        "outputMd": "6ec55fc3dfd8c21d",
+        "examples": null
+      }
+    },
+    "use-page-meta": {
+      "slug": "use-page-meta",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-page-meta.docs.outline.md",
+      "output": "docs/api/use-page-meta.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "30733b2e1122aa8e",
+        "snapshot": null,
+        "outputMd": "f988bdc0fb180f0c",
+        "examples": null
+      }
+    },
+    "use-register-command-palette-actions": {
+      "slug": "use-register-command-palette-actions",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-register-command-palette-actions.docs.outline.md",
+      "output": "docs/api/use-register-command-palette-actions.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "7038e2c165a21481",
+        "snapshot": null,
+        "outputMd": "7144ae3dc68aa65b",
+        "examples": null
+      }
+    },
+    "use-resolved-locale": {
+      "slug": "use-resolved-locale",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-resolved-locale.docs.outline.md",
+      "output": "docs/api/use-resolved-locale.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "32d7fab7f43cda9b",
+        "snapshot": null,
+        "outputMd": "d0eb9f125c314d85",
+        "examples": null
+      }
+    },
+    "use-route-error": {
+      "slug": "use-route-error",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-route-error.docs.outline.md",
+      "output": "docs/api/use-route-error.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a36d403319039ecc",
+        "snapshot": null,
+        "outputMd": "068fa5e47296467b",
+        "examples": null
+      }
+    },
+    "use-theme": {
+      "slug": "use-theme",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-theme.docs.outline.md",
+      "output": "docs/api/use-theme.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a113544aa74451c0",
+        "snapshot": null,
+        "outputMd": "c338022de386d5e4",
+        "examples": null
+      }
+    },
+    "use-time-zone": {
+      "slug": "use-time-zone",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-time-zone.docs.outline.md",
+      "output": "docs/api/use-time-zone.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "23d9b959711a3937",
+        "snapshot": null,
+        "outputMd": "30c15545ab3c4954",
+        "examples": null
+      }
+    },
+    "use-toast": {
+      "slug": "use-toast",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-toast.docs.outline.md",
+      "output": "docs/api/use-toast.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "7ab3aa2f6b40cfbf",
+        "snapshot": null,
+        "outputMd": "e1c8fe2df6e8bee8",
+        "examples": null
       }
     },
     "with-guard": {

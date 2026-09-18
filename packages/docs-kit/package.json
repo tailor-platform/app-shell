@@ -17,7 +17,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "lint": "oxlint -c .oxlintrc.jsonc",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "type-check": "tsc --incremental"
   },
   "dependencies": {

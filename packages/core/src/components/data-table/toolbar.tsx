@@ -11,7 +11,7 @@ import { DatePicker } from "@/components/date-field";
 import { Calendar } from "@/components/calendar";
 import { Tooltip } from "@/components/tooltip";
 import { parseDate, DateFormatter } from "@internationalized/date";
-import { useResolvedLocale } from "@/contexts/appshell-context";
+import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
 import {
@@ -587,12 +587,17 @@ function PanelDateTimeInput({
   onChange: (value: string) => void;
 }) {
   const t = useDataTableT();
-  const { date: datePart, time: timePart } = localDateTimeParts(value);
+  const shellTz = useTimeZone();
+  const { date: datePart, time: timePart } = localDateTimeParts(value, shellTz.value);
   const calValue = datePart ? parseDate(datePart) : null;
   const emit = (nextDate: string, nextTime: string) => {
     onChange(
       nextDate
-        ? (normalizeTemporalFilterValue("datetime", `${nextDate}T${nextTime || "00:00"}:00`) ?? "")
+        ? (normalizeTemporalFilterValue(
+            "datetime",
+            `${nextDate}T${nextTime || "00:00"}:00`,
+            shellTz.value,
+          ) ?? "")
         : "",
     );
   };
@@ -647,11 +652,12 @@ function PanelDateRangeInput({
 }) {
   const t = useDataTableT();
   const { locale } = useResolvedLocale();
+  const shellTz = useTimeZone();
   const [active, setActive] = useState<"from" | "to">("from");
 
   const fmt = (v: string) => {
     if (!v) return "—";
-    return withTime ? formatDateTimeValue(v, locale) : formatDateValue(v, locale);
+    return withTime ? formatDateTimeValue(v, locale, shellTz.value) : formatDateValue(v, locale);
   };
   const bounds = [
     { key: "from" as const, label: t("filterBetweenFrom"), value: min, onChange: onChangeMin },
@@ -731,6 +737,7 @@ function PanelValueEditor({
   control: CollectionControl;
 }) {
   const t = useDataTableT();
+  const shellTz = useTimeZone();
   const config = column.filter;
   const field = config.field;
   const label = column.label ?? field;
@@ -769,7 +776,11 @@ function PanelValueEditor({
       const draft: AddFilterDraftValue = [min, max];
       if (!isAddFilterDraftValueValid(type, "between", draft)) return;
       if (!isRangeOrdered(type, min, max)) return;
-      control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
+      control.addFilter(
+        field,
+        "between",
+        toAddFilterSubmittedValue(type, "between", draft, shellTz.value),
+      );
       return;
     }
     if (text.trim() === "") {
@@ -780,7 +791,7 @@ function PanelValueEditor({
     control.addFilter(
       field,
       operator,
-      toAddFilterSubmittedValue(type, operator, text),
+      toAddFilterSubmittedValue(type, operator, text, shellTz.value),
       // Preserve the existing filter's case-sensitivity (the panel has no toggle;
       // the chip's string editor owns it) instead of silently clearing it.
       type === "string" ? { caseSensitive: filter?.caseSensitive ?? false } : undefined,
@@ -1101,14 +1112,19 @@ function DateTimeFilterInput({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const { date: datePart, time: timePart } = localDateTimeParts(value);
+  const shellTz = useTimeZone();
+  const { date: datePart, time: timePart } = localDateTimeParts(value, shellTz.value);
   const calValue = datePart ? parseDate(datePart) : null;
 
   // Emit an RFC 3339 instant only once a date is chosen; time defaults to midnight.
   const emit = (nextDate: string, nextTime: string) => {
     onChange(
       nextDate
-        ? (normalizeTemporalFilterValue("datetime", `${nextDate}T${nextTime || "00:00"}:00`) ?? "")
+        ? (normalizeTemporalFilterValue(
+            "datetime",
+            `${nextDate}T${nextTime || "00:00"}:00`,
+            shellTz.value,
+          ) ?? "")
         : "",
     );
   };
@@ -1147,6 +1163,7 @@ function FilterChip({
 }) {
   const t = useDataTableT();
   const { locale } = useResolvedLocale();
+  const shellTz = useTimeZone();
   const config = column.filter;
   const label = column.label ?? config.field;
 
@@ -1168,12 +1185,27 @@ function FilterChip({
         const n = Number(v);
         return Number.isFinite(n) ? n : 0;
       };
+      const toDateTime = (v: unknown) => normalizeTemporalFilterValue("datetime", v, shellTz.value);
+      const toDateTimeRange = (v: unknown) => {
+        const range = (v ?? {}) as { min?: unknown; max?: unknown };
+        const min = toDateTime(range.min);
+        const max = toDateTime(range.max);
+        return min && max ? { min, max } : null;
+      };
       const arity = (op: FilterOperator) => (op === "between" ? 2 : 1);
       if (arity(nextOp) === arity(filter.operator)) {
+        let value = filter.value;
+        if (config.type === "datetime") {
+          value =
+            filter.operator === "between"
+              ? toDateTimeRange(filter.value)
+              : toDateTime(filter.value);
+        }
+        if (config.type === "datetime" && value == null) return;
         control.addFilter(
           config.field,
           nextOp,
-          filter.value,
+          value,
           config.type === "string" && filter.caseSensitive ? { caseSensitive: true } : undefined,
         );
       } else if (nextOp === "between") {
@@ -1181,6 +1213,10 @@ function FilterChip({
         if (config.type === "number") {
           const n = toNum(v);
           control.addFilter(config.field, nextOp, { min: n, max: n });
+        } else if (config.type === "datetime") {
+          const s = toDateTime(v);
+          if (!s) return;
+          control.addFilter(config.field, nextOp, { min: s, max: s });
         } else {
           const s = v == null ? "" : String(v);
           control.addFilter(config.field, nextOp, { min: s, max: s });
@@ -1188,6 +1224,13 @@ function FilterChip({
       } else {
         const range = (filter.value ?? {}) as { min?: unknown; max?: unknown };
         const lower = range.min ?? range.max ?? "";
+        if (config.type === "datetime") {
+          const normalized = toDateTime(lower);
+          if (!normalized) return;
+          control.addFilter(config.field, nextOp, normalized);
+          setOpOpen(false);
+          return;
+        }
         control.addFilter(
           config.field,
           nextOp,
@@ -1196,12 +1239,20 @@ function FilterChip({
       }
       setOpOpen(false);
     },
-    [control, config.field, config.type, filter.operator, filter.value, filter.caseSensitive],
+    [
+      control,
+      config.field,
+      config.type,
+      filter.operator,
+      filter.value,
+      filter.caseSensitive,
+      shellTz.value,
+    ],
   );
 
   const operators = getVisibleFilterOperators(config, filter.operator);
   const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
-  const valueLabel = formatFilterValue(filter, config, t, locale, label);
+  const valueLabel = formatFilterValue(filter, config, t, locale, shellTz.value, label);
 
   const segment =
     "astw:flex astw:items-center astw:h-6 astw:px-2 astw:text-xs astw:whitespace-nowrap astw:outline-hidden";
@@ -1888,6 +1939,7 @@ function TemporalFilterEditor({
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const shellTz = useTimeZone();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
     getVisibleFilterOperators(config, filter.operator).filter(
       (operator): operator is NumericTemporalOperator =>
@@ -1940,11 +1992,11 @@ function TemporalFilterEditor({
         control.addFilter(config.field, localOp, {
           min:
             config.type === "datetime"
-              ? normalizeTemporalFilterValue("datetime", localValue)
+              ? normalizeTemporalFilterValue("datetime", localValue, shellTz.value)
               : localValue,
           max:
             config.type === "datetime"
-              ? normalizeTemporalFilterValue("datetime", localValueMax)
+              ? normalizeTemporalFilterValue("datetime", localValueMax, shellTz.value)
               : localValueMax,
         });
       } else {
@@ -1958,7 +2010,7 @@ function TemporalFilterEditor({
           config.field,
           localOp,
           config.type === "datetime"
-            ? normalizeTemporalFilterValue("datetime", localValue)
+            ? normalizeTemporalFilterValue("datetime", localValue, shellTz.value)
             : localValue,
         );
       } else {
@@ -1966,7 +2018,16 @@ function TemporalFilterEditor({
       }
     }
     onClose();
-  }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
+  }, [
+    localValue,
+    localValueMax,
+    localOp,
+    control,
+    config.field,
+    config.type,
+    onClose,
+    shellTz.value,
+  ]);
 
   const isDate = config.type === "date";
   const isDateTime = config.type === "datetime";
@@ -2103,6 +2164,7 @@ function toAddFilterSubmittedValue(
   type: FilterConfig["type"],
   operator: FilterOperator,
   value: AddFilterDraftValue,
+  timeZone?: string,
 ): unknown {
   if (type === "enum") {
     return Array.isArray(value) ? (value as string[]) : [];
@@ -2129,8 +2191,14 @@ function toAddFilterSubmittedValue(
     if (trimmedMin === "" || trimmedMax === "") return undefined;
 
     return {
-      min: type === "datetime" ? normalizeTemporalFilterValue("datetime", trimmedMin) : trimmedMin,
-      max: type === "datetime" ? normalizeTemporalFilterValue("datetime", trimmedMax) : trimmedMax,
+      min:
+        type === "datetime"
+          ? normalizeTemporalFilterValue("datetime", trimmedMin, timeZone)
+          : trimmedMin,
+      max:
+        type === "datetime"
+          ? normalizeTemporalFilterValue("datetime", trimmedMax, timeZone)
+          : trimmedMax,
     };
   }
 
@@ -2138,7 +2206,9 @@ function toAddFilterSubmittedValue(
     return Number(value);
   }
   const trimmed = String(value).trim();
-  return type === "datetime" ? normalizeTemporalFilterValue("datetime", trimmed) : trimmed;
+  return type === "datetime"
+    ? normalizeTemporalFilterValue("datetime", trimmed, timeZone)
+    : trimmed;
 }
 
 /**
@@ -2250,9 +2320,9 @@ function formatDateRange(minIso: string, maxIso: string, locale: string): string
 }
 
 /** Format an RFC 3339 datetime as a locale medium date + short time. */
-function formatDateTimeValue(iso: string, locale: string): string {
-  const datetime = new Date(iso);
-  if (Number.isNaN(datetime.getTime())) return iso;
+function formatDateTimeValue(iso: string, locale: string, timeZone: string): string {
+  const normalized = normalizeTemporalFilterValue("datetime", iso, timeZone);
+  if (!normalized) return iso;
   try {
     return new DateFormatter(locale, {
       year: "numeric",
@@ -2260,7 +2330,8 @@ function formatDateTimeValue(iso: string, locale: string): string {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(datetime);
+      timeZone,
+    }).format(new Date(normalized));
   } catch {
     return iso;
   }
@@ -2271,6 +2342,7 @@ function formatFilterValue(
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
   locale: string,
+  timeZone: string,
   /** Column label — used to summarize multi-select enums as "N labels". */
   label?: string,
 ): string {
@@ -2313,12 +2385,12 @@ function formatFilterValue(
     if (filter.operator === "between") {
       const range = filter.value as { min?: unknown; max?: unknown } | null;
       if (!range || typeof range !== "object") return "";
-      const min = range.min != null ? formatDateTimeValue(String(range.min), locale) : "";
-      const max = range.max != null ? formatDateTimeValue(String(range.max), locale) : "";
+      const min = range.min != null ? formatDateTimeValue(String(range.min), locale, timeZone) : "";
+      const max = range.max != null ? formatDateTimeValue(String(range.max), locale, timeZone) : "";
       return [min, max].filter(Boolean).join(" – ");
     }
     if (filter.value == null || filter.value === "") return "";
-    return formatDateTimeValue(String(filter.value), locale);
+    return formatDateTimeValue(String(filter.value), locale, timeZone);
   }
 
   if (isTemporalFilterType(config.type) && filter.operator === "between") {

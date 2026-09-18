@@ -209,6 +209,23 @@
         "examples": null
       }
     },
+    "description-card": {
+      "slug": "description-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/description-card.docs.outline.md",
+      "output": "docs/components/description-card.md",
+      "examples": "docs-src/components/description-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/description-card/**"],
+      "claims": [],
+      "symbols": ["DescriptionCard", "DescriptionCardProps"],
+      "hashes": {
+        "typeSurface": "04d576b0cf725dfe",
+        "outline": "8c92b8c629222b7e",
+        "snapshot": null,
+        "outputMd": "07aa514d8336ee5e",
+        "examples": "8e45ff2d2e3cd59b"
+      }
+    },
     "dialog": {
       "slug": "dialog",
       "kind": "code-backed",
@@ -243,6 +260,23 @@
         "examples": "2fe2a4cb5c97a16b"
       }
     },
+    "grid": {
+      "slug": "grid",
+      "kind": "code-backed",
+      "outline": "docs-src/components/grid.docs.outline.md",
+      "output": "docs/components/grid.md",
+      "examples": "docs-src/components/grid.docs.examples.tsx",
+      "sources": ["packages/core/src/components/grid/**"],
+      "claims": [],
+      "symbols": ["Grid", "GridItemProps", "GridProps"],
+      "hashes": {
+        "typeSurface": "e14ecb0505a2a8bf",
+        "outline": "b01f18b2264a1b14",
+        "snapshot": "40fca09bec6804cf",
+        "outputMd": "9051eb53dde4179f",
+        "examples": "90bc8a3e4816a82c"
+      }
+    },
     "input": {
       "slug": "input",
       "kind": "code-backed",
@@ -258,6 +292,23 @@
         "snapshot": "7e0ed658f518fd9a",
         "outputMd": "0437e441e343245f",
         "examples": "fc036f7af21b9dd4"
+      }
+    },
+    "layout": {
+      "slug": "layout",
+      "kind": "code-backed",
+      "outline": "docs-src/components/layout.docs.outline.md",
+      "output": "docs/components/layout.md",
+      "examples": "docs-src/components/layout.docs.examples.tsx",
+      "sources": ["packages/core/src/components/layout/**"],
+      "claims": [],
+      "symbols": ["Layout", "LayoutProps"],
+      "hashes": {
+        "typeSurface": "c7e8fec79020d657",
+        "outline": "4b117580e801c7b1",
+        "snapshot": "2510afae99b97375",
+        "outputMd": "be6e65d3051c90b5",
+        "examples": "2a4aa694c4d48324"
       }
     },
     "list-dense-scan": {
@@ -294,6 +345,23 @@
         "examples": "cff0508bb5520ae6"
       }
     },
+    "metric-card": {
+      "slug": "metric-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/metric-card.docs.outline.md",
+      "output": "docs/components/metric-card.md",
+      "examples": "docs-src/components/metric-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/metric-card/**"],
+      "claims": [],
+      "symbols": ["MetricCard", "MetricCardProps"],
+      "hashes": {
+        "typeSurface": "a9cb24cc83f42bad",
+        "outline": "2d7e0277dd891aaf",
+        "snapshot": null,
+        "outputMd": "88d62aa7232818c5",
+        "examples": "22b876f43b26922c"
+      }
+    },
     "select": {
       "slug": "select",
       "kind": "code-backed",
@@ -326,6 +394,23 @@
         "snapshot": "12c20fc6f44d1b4c",
         "outputMd": "60347c9a794bf66d",
         "examples": "b0eebb8c5e2219dc"
+      }
+    },
+    "spinner": {
+      "slug": "spinner",
+      "kind": "code-backed",
+      "outline": "docs-src/components/spinner.docs.outline.md",
+      "output": "docs/components/spinner.md",
+      "examples": "docs-src/components/spinner.docs.examples.tsx",
+      "sources": ["packages/core/src/components/spinner/**"],
+      "claims": [],
+      "symbols": ["Spinner", "SpinnerProps"],
+      "hashes": {
+        "typeSurface": "cdc89a612071486c",
+        "outline": "58bc2c2f6a7f8a3c",
+        "snapshot": null,
+        "outputMd": "e05d94ba9c3d17da",
+        "examples": "19131f441efe232f"
       }
     },
     "styling": {

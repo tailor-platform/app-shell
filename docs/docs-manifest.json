@@ -145,6 +145,23 @@
         "examples": null
       }
     },
+    "authentication": {
+      "slug": "authentication",
+      "kind": "prose",
+      "outline": "docs-src/concepts/authentication.docs.outline.md",
+      "output": "docs/concepts/authentication.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "ef04af259fc8c55c",
+        "snapshot": null,
+        "outputMd": "ce27a191becaca3a",
+        "examples": null
+      }
+    },
     "autocomplete": {
       "slug": "autocomplete",
       "kind": "code-backed",
@@ -491,6 +508,23 @@
         "examples": "6962c6f28d09eb0a"
       }
     },
+    "file-based-routing": {
+      "slug": "file-based-routing",
+      "kind": "prose",
+      "outline": "docs-src/concepts/file-based-routing.docs.outline.md",
+      "output": "docs/concepts/file-based-routing.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "7e002fb1d328dfdd",
+        "snapshot": null,
+        "outputMd": "caa1ea6264d3b543",
+        "examples": null
+      }
+    },
     "form": {
       "slug": "form",
       "kind": "code-backed",
@@ -763,6 +797,40 @@
         "examples": "22b876f43b26922c"
       }
     },
+    "modules-and-resources": {
+      "slug": "modules-and-resources",
+      "kind": "prose",
+      "outline": "docs-src/concepts/modules-and-resources.docs.outline.md",
+      "output": "docs/concepts/modules-and-resources.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "01c11ba917667dd6",
+        "snapshot": null,
+        "outputMd": "bf15b5460f22d165",
+        "examples": null
+      }
+    },
+    "routing-navigation": {
+      "slug": "routing-navigation",
+      "kind": "prose",
+      "outline": "docs-src/concepts/routing-navigation.docs.outline.md",
+      "output": "docs/concepts/routing-navigation.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "ab74b0ac0c1ab6de",
+        "snapshot": null,
+        "outputMd": "2f3ff3f095c2b1cc",
+        "examples": null
+      }
+    },
     "select": {
       "slug": "select",
       "kind": "code-backed",
@@ -845,6 +913,23 @@
         "outline": "ebfaaeb22b29d5df",
         "snapshot": null,
         "outputMd": "e50b2d649289d772",
+        "examples": null
+      }
+    },
+    "sidebar-navigation": {
+      "slug": "sidebar-navigation",
+      "kind": "prose",
+      "outline": "docs-src/concepts/sidebar-navigation.docs.outline.md",
+      "output": "docs/concepts/sidebar-navigation.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c851ea2aaa185b09",
+        "snapshot": null,
+        "outputMd": "96f1cf893c231861",
         "examples": null
       }
     },

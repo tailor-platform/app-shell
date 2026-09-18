@@ -43,7 +43,7 @@ const AppInner = () => {
                 exactly like the built-in nav items. */}
             <SidebarMenuItem>
               <SidebarMenuButton
-                render={<button type="button" />}
+                render={<button type="button" aria-label="Notifications" />}
                 tooltip="Notifications"
                 onClick={() => alert("Notifications")}
               >

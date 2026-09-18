@@ -1,3 +1,4 @@
+import { Progress } from "@base-ui/react/progress";
 import { useId, useState } from "react";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
@@ -26,10 +27,6 @@ export function CsvExporterView<TRow extends Record<string, unknown>>({
     exporter.phase === "fetching" ||
     exporter.phase === "serializing" ||
     exporter.phase === "downloading";
-  const total = exporter.progress.total;
-  const progress =
-    total != null && total > 0 ? Math.min(100, (exporter.progress.completed / total) * 100) : null;
-
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) setFilename(exporter.defaultFilename);
     onOpenChange(nextOpen);
@@ -51,7 +48,10 @@ export function CsvExporterView<TRow extends Record<string, unknown>>({
             {exporter.phase === "fetching" ? (
               <>
                 <p className="astw:text-sm">{t("fetchingRows", exporter.progress)}</p>
-                <CsvExportProgress label={t("fetchingRows", exporter.progress)} value={progress} />
+                <CsvExportProgress
+                  label={t("fetchingRows", exporter.progress)}
+                  {...exporter.progress}
+                />
               </>
             ) : (
               <div className="astw:flex astw:items-center astw:gap-2 astw:text-sm">
@@ -130,25 +130,34 @@ export function CsvExporter<TRow extends Record<string, unknown>>(props: CsvExpo
   return <CsvExporterView {...props} />;
 }
 
-function CsvExportProgress({ label, value }: { label: string; value: number | null }) {
-  if (value == null) {
-    return (
-      <div
-        aria-hidden
-        className="astw:bg-muted astw:flex astw:h-2 astw:w-full astw:overflow-hidden astw:rounded-full"
-      >
-        <div className="astw:h-full astw:w-1/3 astw:animate-pulse astw:rounded-full astw:bg-primary astw:motion-reduce:animate-none" />
-      </div>
-    );
-  }
+function CsvExportProgress({
+  label,
+  completed,
+  total,
+}: {
+  label: string;
+  completed: number;
+  total: number | null;
+}) {
+  const isIndeterminate = total == null || total <= 0;
 
   return (
-    <progress
+    <Progress.Root
       aria-label={label}
       aria-valuetext={label}
-      className="astw:h-2 astw:w-full astw:appearance-none astw:overflow-hidden astw:rounded-full astw:[&::-moz-progress-bar]:rounded-full astw:[&::-moz-progress-bar]:bg-primary astw:[&::-webkit-progress-bar]:rounded-full astw:[&::-webkit-progress-bar]:bg-muted astw:[&::-webkit-progress-value]:rounded-full astw:[&::-webkit-progress-value]:bg-primary"
-      max={100}
-      value={value}
-    />
+      className="astw:w-full"
+      max={isIndeterminate ? 100 : total}
+      value={isIndeterminate ? null : completed}
+    >
+      <Progress.Track className="astw:h-2 astw:w-full astw:overflow-hidden astw:rounded-full astw:bg-muted">
+        <Progress.Indicator
+          className={
+            isIndeterminate
+              ? "astw:h-full astw:w-1/3 astw:animate-pulse astw:rounded-full astw:bg-primary astw:motion-reduce:animate-none"
+              : "astw:h-full astw:rounded-full astw:bg-primary"
+          }
+        />
+      </Progress.Track>
+    </Progress.Root>
   );
 }

@@ -47,6 +47,31 @@ describe("DataTable.CSVExporter", () => {
     error: null,
   };
 
+  it("reports indeterminate and determinate export progress", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <TestCSVExporter exporter={{ ...idleExporter, phase: "fetching" }} />,
+      { wrapper },
+    );
+
+    await user.click(screen.getByRole("button", { name: "CSV Export" }));
+    expect(
+      screen
+        .getByRole("progressbar", { name: "0 rows fetched" })
+        .hasAttribute("data-indeterminate"),
+    ).toBe(true);
+
+    rerender(
+      <TestCSVExporter
+        exporter={{ ...idleExporter, phase: "fetching", progress: { completed: 1, total: 2 } }}
+      />,
+    );
+
+    const progress = screen.getByRole("progressbar", { name: "1 / 2 rows fetched" });
+    expect(progress.getAttribute("aria-valuenow")).toBe("1");
+    expect(progress.getAttribute("aria-valuemax")).toBe("2");
+  });
+
   it("can reopen an in-progress export dialog", async () => {
     const user = userEvent.setup();
     const exporter: CsvExporterState<Row> = { ...idleExporter, phase: "fetching" };

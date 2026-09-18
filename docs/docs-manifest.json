@@ -87,6 +87,23 @@
         "examples": "65d5fc73550e395a"
       }
     },
+    "app-shell": {
+      "slug": "app-shell",
+      "kind": "code-backed",
+      "outline": "docs-src/components/app-shell.docs.outline.md",
+      "output": "docs/components/app-shell.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/appshell/**"],
+      "claims": [],
+      "symbols": ["AppShell", "AppShellProps"],
+      "hashes": {
+        "typeSurface": "51313066e142afc2",
+        "outline": "5184f574b80667d5",
+        "snapshot": null,
+        "outputMd": "1c35b28e1bfec2d0",
+        "examples": null
+      }
+    },
     "appearance-switcher": {
       "slug": "appearance-switcher",
       "kind": "code-backed",

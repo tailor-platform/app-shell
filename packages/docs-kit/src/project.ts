@@ -104,14 +104,30 @@ function extractProps(name: string, decl: Node): PropRow[] | null {
       }
     }
     if (!description) description = variantDocs.get(prop.getName()) ?? "";
+    // Prefer the DECLARED type annotation (syntactic) so authored aliases like
+    // `React.ReactNode`, `BadgeVariant`, `() => void` survive instead of the
+    // fully-expanded resolved type. Fall back to the resolved type for computed
+    // props (e.g. cva `VariantProps`) that carry no annotation.
     let typeText = "unknown";
-    try {
-      typeText = prop.getTypeAtLocation(decl).getText(decl);
-    } catch {
-      /* keep fallback */
+    const typeNode =
+      d0 && (Node.isPropertySignature(d0) || Node.isPropertyDeclaration(d0))
+        ? d0.getTypeNode()
+        : undefined;
+    if (typeNode) {
+      typeText = typeNode.getText();
+    } else {
+      try {
+        typeText = prop.getTypeAtLocation(decl).getText(decl);
+      } catch {
+        /* keep fallback */
+      }
     }
     // `?` already conveys optionality — drop the trailing `| undefined` noise.
     typeText = typeText.replace(/\s*\|\s*undefined\s*$/, "");
+    // Safety net: collapse the giant resolved React.ReactNode union when a
+    // computed prop resolves to it (no annotation to preserve).
+    if (/React\.ReactPortal/.test(typeText) && /Iterable<React\.ReactNode>/.test(typeText))
+      typeText = "React.ReactNode";
     rows.push({
       name: prop.getName(),
       type: typeText,

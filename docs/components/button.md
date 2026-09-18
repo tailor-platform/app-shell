@@ -41,7 +41,7 @@ _Generated from the type surface — first-party props only._
 
 | Prop       | Type                                                                                  | Default     | Description                                       |
 | ---------- | ------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------- |
-| `render?`  | `React.ReactElement<unknown, string \| React.JSXElementConstructor<any>>`             | -           | Custom element to render as (Base UI render prop) |
+| `render?`  | `React.ReactElement`                                                                  | -           | Custom element to render as (Base UI render prop) |
 | `size?`    | `"default" \| "sm" \| "lg" \| "xs" \| "icon" \| null`                                 | `"default"` | Button size                                       |
 | `variant?` | `"link" \| "default" \| "destructive" \| "outline" \| "secondary" \| "ghost" \| null` | `"default"` | Visual style variant                              |
 

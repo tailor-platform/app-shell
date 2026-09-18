@@ -6,6 +6,7 @@ import {
   type AIChatAssistantTurnResult,
   type AssistantLoopEvent,
 } from "./assistant-loop";
+import type { AIChatMCPServerConfig } from "./mcp";
 import type { AIChatConfiguredTool } from "./tools";
 
 /** Public chat message shape exposed by `useAIChat()`. */
@@ -67,7 +68,7 @@ class ChatRequestContext {
 }
 
 /**
- * React hook for AI Gateway chat with optional local and provider tools.
+ * React hook for AI Gateway chat with optional local, provider, and MCP tools.
  *
  * Public state stays user/assistant text-first while tool-call and tool-result
  * protocol messages remain internal to the hook.
@@ -76,6 +77,7 @@ export function useAIChat(config: {
   client: AIGatewayClient;
   model: string;
   tools?: Record<string, AIChatConfiguredTool>;
+  mcpServers?: Record<string, AIChatMCPServerConfig>;
 }): {
   messages: AIChatMessage[];
   status: AIChatStatus;
@@ -143,6 +145,7 @@ export function useAIChat(config: {
           client: config.client,
           model: config.model,
           tools: config.tools,
+          mcpServers: config.mcpServers,
           transcript: ctx.transcript,
           signal: controller.signal,
         })) {
@@ -171,7 +174,7 @@ export function useAIChat(config: {
         return false;
       }
     },
-    [config.client, config.model, config.tools, updateMessages],
+    [config.client, config.mcpServers, config.model, config.tools, updateMessages],
   );
 
   return { messages, status, error, sendMessage, stop };

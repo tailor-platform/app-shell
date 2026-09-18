@@ -78,6 +78,15 @@ export {
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
 export {
+  tailorMCP,
+  type AIChatMCPServer,
+  type AIChatMCPConnection,
+  type AIChatMCPTool,
+  type AIChatMCPToolResult,
+  type AIChatMCPServerConfig,
+  type TailorMCPOptions,
+} from "./ai/mcp";
+export {
   defineAIChatTool,
   aiProviderTool,
   type AIChatConfiguredTool,

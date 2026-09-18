@@ -345,6 +345,80 @@ describe("useAIChat", () => {
     expect(client.streamChatCompletion).toHaveBeenCalledTimes(2);
   });
 
+  it("executes allowed MCP tools and closes their session", async () => {
+    const connection = {
+      listTools: vi.fn().mockResolvedValue([
+        {
+          name: "query",
+          description: "Run a read-only query",
+          inputSchema: { type: "object", properties: { query: { type: "string" } } },
+        },
+      ]),
+      callTool: vi.fn().mockResolvedValue({
+        content: [{ type: "text", text: '{"customer":"Acme Corp"}' }],
+      }),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    const server = {
+      connect: vi.fn().mockResolvedValue(connection),
+    };
+    const client = {
+      streamChatCompletion: vi.fn(async function* ({ messages, tools }) {
+        if (messages.at(-1)?.role === "user") {
+          expect(tools).toEqual([
+            {
+              type: "function",
+              function: {
+                name: "tailor__query",
+                description: "Run a read-only query",
+                parameters: { type: "object", properties: { query: { type: "string" } } },
+              },
+            },
+          ]);
+          yield {
+            type: "tool-call",
+            toolCallId: "call-1",
+            toolName: "tailor__query",
+            argumentsText: '{"query":"query { customer { name } }"}',
+          } as const;
+          yield { type: "done", finishReason: "tool_calls" } as const;
+          return;
+        }
+
+        expect(messages.at(-1)).toEqual({
+          role: "tool",
+          toolCallId: "call-1",
+          content: '{"content":[{"type":"text","text":"{\\"customer\\":\\"Acme Corp\\"}"}]}',
+        });
+        yield { type: "text-delta", text: "Customer: Acme Corp" } as const;
+        yield { type: "done", finishReason: "stop" } as const;
+      }),
+    } satisfies AIGatewayClient;
+
+    const { result } = renderHook(() =>
+      useAIChat({
+        client,
+        model: "gpt-5-mini",
+        mcpServers: {
+          tailor: { server, allowedTools: ["query"] },
+        },
+      }),
+    );
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Find customer")).resolves.toBe(true);
+    });
+
+    expect(server.connect).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) });
+    expect(connection.listTools).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) });
+    expect(connection.callTool).toHaveBeenCalledWith({
+      name: "query",
+      arguments: { query: "query { customer { name } }" },
+      signal: expect.any(AbortSignal),
+    });
+    expect(connection.close).toHaveBeenCalledTimes(1);
+  });
+
   it("fails after too many tool rounds", async () => {
     const loop = defineAIChatTool({
       description: "Loop forever",

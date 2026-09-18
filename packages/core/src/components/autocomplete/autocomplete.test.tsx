@@ -9,6 +9,13 @@ afterEach(() => {
 
 const suggestions = ["Apple", "Banana", "Cherry", "Date", "Elderberry"];
 
+/** Advance timers and flush microtasks. */
+async function advanceAndFlush(ms: number) {
+  await act(async () => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
 function SimpleAutocomplete(props: {
   onValueChange?: (value: string, event: unknown) => void;
   defaultValue?: string;
@@ -205,13 +212,6 @@ describe("useAsync", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
-
-  /** Advance timers and flush microtasks. */
-  async function advanceAndFlush(ms: number) {
-    await act(async () => {
-      vi.advanceTimersByTime(ms);
-    });
-  }
 
   it("returns correct shape with mapped property names", () => {
     const fetcher = vi.fn(async () => []);

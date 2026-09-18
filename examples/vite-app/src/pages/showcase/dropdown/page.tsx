@@ -27,6 +27,16 @@ const fruits: Fruit[] = [
   { id: "strawberry", name: "Strawberry", emoji: "🍓" },
 ];
 
+const mapFruitWithEmoji = (fruit: Fruit) => ({
+  label: fruit.name,
+  key: fruit.id,
+  render: (
+    <span>
+      {fruit.emoji} {fruit.name}
+    </span>
+  ),
+});
+
 const groupedFruits = [
   {
     label: "Tropical",
@@ -215,19 +225,7 @@ const DropdownComponentsDemoPage = () => {
               {/* Custom render */}
               <div style={sectionStyle}>
                 <div style={subHeadingStyle}>Custom render</div>
-                <Select
-                  items={fruits}
-                  mapItem={(f) => ({
-                    label: f.name,
-                    key: f.id,
-                    render: (
-                      <span>
-                        {f.emoji} {f.name}
-                      </span>
-                    ),
-                  })}
-                  placeholder="With emoji"
-                />
+                <Select items={fruits} mapItem={mapFruitWithEmoji} placeholder="With emoji" />
               </div>
 
               {/* Multiple selection */}
@@ -274,15 +272,7 @@ const DropdownComponentsDemoPage = () => {
                     await new Promise((r) => setTimeout(r, 800));
                     return fruits;
                   }}
-                  mapItem={(f) => ({
-                    label: f.name,
-                    key: f.id,
-                    render: (
-                      <span>
-                        {f.emoji} {f.name}
-                      </span>
-                    ),
-                  })}
+                  mapItem={mapFruitWithEmoji}
                   placeholder="Async select..."
                   loadingText="Loading fruits..."
                 />
@@ -334,19 +324,7 @@ const DropdownComponentsDemoPage = () => {
               {/* Custom render */}
               <div style={sectionStyle}>
                 <div style={subHeadingStyle}>Custom render</div>
-                <Combobox
-                  items={fruits}
-                  mapItem={(f) => ({
-                    label: f.name,
-                    key: f.id,
-                    render: (
-                      <span>
-                        {f.emoji} {f.name}
-                      </span>
-                    ),
-                  })}
-                  placeholder="With emoji"
-                />
+                <Combobox items={fruits} mapItem={mapFruitWithEmoji} placeholder="With emoji" />
               </div>
 
               {/* Multiple */}
@@ -490,19 +468,7 @@ const DropdownComponentsDemoPage = () => {
               {/* Custom render */}
               <div style={sectionStyle}>
                 <div style={subHeadingStyle}>Custom render</div>
-                <Autocomplete
-                  items={fruits}
-                  mapItem={(f) => ({
-                    label: f.name,
-                    key: f.id,
-                    render: (
-                      <span>
-                        {f.emoji} {f.name}
-                      </span>
-                    ),
-                  })}
-                  placeholder="With emoji"
-                />
+                <Autocomplete items={fruits} mapItem={mapFruitWithEmoji} placeholder="With emoji" />
               </div>
 
               {/* Grouped */}

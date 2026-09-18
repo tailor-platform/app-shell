@@ -124,8 +124,8 @@ const IconRailFlyout = ({
             ref={flyoutRef}
             data-slot="sidebar-group-flyout"
             aria-label={title}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
+            onPointerEnter={cancelClose}
+            onPointerLeave={scheduleClose}
             style={{ top: pos.top, left: pos.left }}
             className="astw:fixed astw:z-(--z-popup) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md"
           >

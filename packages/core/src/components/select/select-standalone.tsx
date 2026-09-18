@@ -318,11 +318,6 @@ function useAsync<T>({ fetcher, onFetchError }: UseSelectAsyncOptions<T>): UseSe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(undefined);
 
-  const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
-  const onFetchErrorRef = useRef(onFetchError);
-  onFetchErrorRef.current = onFetchError;
-
   const abortControllerRef = useRef<AbortController | null>(null);
   // Whether we are currently in an error state, so onFetchError fires once per
   // outage (on the transition into the error state) rather than on every re-open.
@@ -334,8 +329,7 @@ function useAsync<T>({ fetcher, onFetchError }: UseSelectAsyncOptions<T>): UseSe
     abortControllerRef.current = controller;
     setLoading(true);
 
-    fetcherRef
-      .current({ signal: controller.signal })
+    fetcher({ signal: controller.signal })
       .then((result) => {
         if (!controller.signal.aborted) {
           setItems(result);
@@ -351,7 +345,7 @@ function useAsync<T>({ fetcher, onFetchError }: UseSelectAsyncOptions<T>): UseSe
           // Announce the outage only on the transition into the error state.
           if (!inErrorStateRef.current) {
             inErrorStateRef.current = true;
-            onFetchErrorRef.current?.(e);
+            onFetchError?.(e);
           }
         }
       })
@@ -360,7 +354,7 @@ function useAsync<T>({ fetcher, onFetchError }: UseSelectAsyncOptions<T>): UseSe
           setLoading(false);
         }
       });
-  }, []);
+  }, [fetcher, onFetchError]);
 
   const onOpenChange = React.useCallback(
     (open: boolean) => {

@@ -63,6 +63,19 @@ describe("useAttachment", () => {
     createObjectUrlSpy.mockRestore();
   });
 
+  it("revokes remaining preview URLs on unmount", () => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview-url");
+    const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const { result, unmount } = renderHook(() => useAttachment());
+
+    act(() => {
+      result.current.props.onUpload?.([new File(["img"], "photo.jpg", { type: "image/jpeg" })]);
+    });
+    unmount();
+
+    expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:preview-url");
+  });
+
   it("removes item when onDelete is called for a pending upload", () => {
     const { result } = renderHook(() => useAttachment());
     const file = new File(["hello"], "invoice.pdf", {

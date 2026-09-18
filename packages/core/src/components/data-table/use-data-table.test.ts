@@ -354,6 +354,20 @@ describe("useDataTable", () => {
       expect(localStorage.length).toBe(0);
     });
 
+    it("keeps state in memory when localStorage writes fail", () => {
+      const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new Error("storage unavailable");
+      });
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, tableId: "t1" }));
+
+      act(() => {
+        result.current.toggleColumn("name");
+      });
+
+      expect(result.current.isColumnVisible("name")).toBe(false);
+      setItem.mockRestore();
+    });
+
     it("resets to defaults when tableId is cleared (no stale layout leak)", () => {
       const { result, rerender } = renderHook(
         ({ id }: { id?: string }) => useDataTable({ columns, data: testData, tableId: id }),
@@ -503,6 +517,42 @@ describe("useDataTable", () => {
         useDataTable({ columns, data: testData, onSelectionChange: vi.fn() }),
       );
       expect(result.current.isRowSelected(testData.rows[0])).toBe(false);
+    });
+
+    it("initializes uncontrolled selection from defaultSelectedIds", () => {
+      const { result } = renderHook(() =>
+        useDataTable({
+          columns,
+          data: testData,
+          rowSelection: { defaultSelectedIds: ["2"] },
+        }),
+      );
+
+      expect(result.current.selectedIds).toEqual(["2"]);
+      expect(result.current.isRowSelected(testData.rows[1])).toBe(true);
+    });
+
+    it("delegates controlled selection changes to its owner", () => {
+      const onChange = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ selectedIds }: { selectedIds: string[] }) =>
+          useDataTable({
+            columns,
+            data: testData,
+            rowSelection: { selectedIds, onChange },
+          }),
+        { initialProps: { selectedIds: [] as string[] } },
+      );
+
+      act(() => {
+        result.current.toggleRowSelection!(testData.rows[0]);
+      });
+
+      expect(onChange).toHaveBeenCalledWith(["1"]);
+      expect(result.current.selectedIds).toEqual([]);
+
+      rerender({ selectedIds: ["1"] });
+      expect(result.current.selectedIds).toEqual(["1"]);
     });
 
     it("toggleRowSelection selects a row", () => {

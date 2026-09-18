@@ -14,6 +14,9 @@ type ToolbarItemContextValue = {
   updateItem: (element: HTMLElement, options: ToolbarItemOptions) => void;
 };
 
+// Base UI's Toolbar registers only its own Button/Input/Link parts. Keep the
+// registry here so existing AppShell controls can join a Toolbar.Row without
+// consumer wrappers while retaining their own ARIA and composite-key behavior.
 const ToolbarItemContext = React.createContext<ToolbarItemContextValue | null>(null);
 const useIsomorphicLayoutEffect =
   typeof document === "undefined" ? React.useEffect : React.useLayoutEffect;

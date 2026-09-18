@@ -148,7 +148,7 @@ function JournalsPage() {
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `DataTable.Root`           | Context provider. Wraps all other sub-components. Required.                                                                                                  |
 | `DataTable.Table`          | Renders the `<table>` with headers and body. Required.                                                                                                       |
-| `DataTable.Toolbar`        | Legacy container for toolbar content. Optional; pass `columnSettings` for the built-in Columns control.                                                      |
+| `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                      |
 | `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                 |
 | `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                         |
 | `DataTable.Footer`         | Footer container for pagination and other footer content. Optional.                                                                                          |
@@ -225,7 +225,7 @@ Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The
 ## Column pinning, visibility & ordering
 
 - **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection and expand columns auto-pin left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
-- **Column settings.** `DataTable.ColumnSettings` renders a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. Place it in a generic [`Toolbar`](./toolbar.md); pass `columnSettings` to the legacy `DataTable.Toolbar` only for its fixed top-right placement.
+- **Column settings.** `DataTable.ColumnSettings` renders a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. Place it in a generic [`Toolbar`](./toolbar.md), or pass `columnSettings` to `DataTable.Toolbar` for its fixed top-right placement.
 - **Persistence.** Pass a stable, **unique** `tableId` to persist each user's column layout (visibility, order, pinning) to `localStorage` (key `as:data-table:v1:<tableId>`). This is a per-user preference — it is deliberately **not** stored in the URL like filters/sort/pagination, so it survives reloads and isn't reset by shared/filtered links. Omit `tableId` for in-memory-only layout (state simply isn't persisted). Two tables mounted with the same `tableId` share one storage key and overwrite each other — use a unique id per table (e.g. `<route>:<entity>`); a dev-mode warning fires on duplicates.
 
 ```tsx

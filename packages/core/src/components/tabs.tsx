@@ -2,6 +2,7 @@ import * as React from "react";
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 
 import { cn } from "@/lib/utils";
+import { mergeRefs, useToolbarItem } from "./toolbar";
 
 type TabsVariant = "default" | "line" | "capsule";
 type TabsSize = "xs" | "sm" | "default" | "lg";
@@ -104,11 +105,20 @@ function List({ className, children, ...props }: React.ComponentProps<typeof Bas
 List.displayName = "Tabs.List";
 
 /** An individual interactive tab button that toggles the corresponding panel. */
-function Tab({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.Tab>) {
+function Tab({
+  className,
+  children,
+  ref: forwardedRef,
+  ...props
+}: React.ComponentProps<typeof BaseTabs.Tab>) {
   const variant = React.useContext(TabsVariantContext);
   const size = React.useContext(TabsSizeContext);
+  const ref = React.useRef<HTMLButtonElement>(null);
+  useToolbarItem(ref, { handlesDirectionalKeys: true });
+
   return (
     <BaseTabs.Tab
+      ref={mergeRefs(ref, forwardedRef)}
       data-slot="tabs-tab"
       className={cn(
         "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:whitespace-nowrap astw:text-sm astw:font-medium astw:transition-[color,box-shadow] astw:duration-200",

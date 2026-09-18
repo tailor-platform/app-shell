@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, it, expect } from "vitest";
 import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
+import { Toolbar } from "../toolbar";
 import { useDataTable } from "./use-data-table";
 import type { Column, DataTableData } from "./types";
 
@@ -35,6 +36,22 @@ function SettingsHarness() {
   );
 }
 
+function ComposedSettingsHarness() {
+  const table = useDataTable<Row>({ columns, data });
+  return (
+    <DataTable.Root value={table}>
+      <Toolbar.Root>
+        <Toolbar.Row justify="between" aria-label="Table controls">
+          <Toolbar.Group>
+            <DataTable.ColumnSettings />
+          </Toolbar.Group>
+        </Toolbar.Row>
+      </Toolbar.Root>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
 const headerLabels = (container: HTMLElement) =>
   Array.from(container.querySelectorAll('[data-slot="data-table-header"] th'))
     .map((th) => th.textContent?.trim())
@@ -57,6 +74,15 @@ describe("DataTable.Toolbar columnSettings", () => {
     cleanup();
     render(<SettingsHarness />, { wrapper });
     expect(screen.getByRole("button", { name: /columns/i })).toBeTruthy();
+  });
+
+  it("can be composed inside a generic Toolbar", () => {
+    const { container } = render(<ComposedSettingsHarness />, { wrapper });
+
+    expect(screen.getByRole("button", { name: /columns/i })).toBeTruthy();
+    expect(container.querySelector('[data-slot="data-table"]')?.className).toContain(
+      "astw:[&>[data-slot=toolbar]]:border-t-0",
+    );
   });
 
   it("renders a checkbox per column and toggling hides it from the header", () => {

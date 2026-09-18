@@ -3,6 +3,7 @@ import { Select as BaseSelect } from "@base-ui/react/select";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { mergeRefs, useToolbarItem } from "./toolbar";
 
 // Only the props relevant to the Select abstraction are picked from BaseSelect.Root.
 // Base UI-internal props are intentionally excluded so that
@@ -31,10 +32,15 @@ SelectRoot.displayName = "Select.Root";
 function SelectTrigger({
   className,
   children,
+  ref: forwardedRef,
   ...props
 }: React.ComponentProps<typeof BaseSelect.Trigger>) {
+  const ref = React.useRef<HTMLButtonElement>(null);
+  useToolbarItem(ref, { handlesDirectionalKeys: true });
+
   return (
     <BaseSelect.Trigger
+      ref={mergeRefs(ref, forwardedRef)}
       data-slot="select-trigger"
       className={cn(
         "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:flex astw:h-9 astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-md astw:border astw:px-3 astw:py-2 astw:text-sm astw:shadow-xs astw:outline-none astw:transition-colors",

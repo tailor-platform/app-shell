@@ -18,6 +18,23 @@
         "examples": "65d5fc73550e395a"
       }
     },
+    "autocomplete": {
+      "slug": "autocomplete",
+      "kind": "code-backed",
+      "outline": "docs-src/components/autocomplete.docs.outline.md",
+      "output": "docs/components/autocomplete.md",
+      "examples": "docs-src/components/autocomplete.docs.examples.tsx",
+      "sources": ["packages/core/src/components/autocomplete/**"],
+      "claims": [],
+      "symbols": ["Autocomplete", "AutocompleteAsyncFetcher"],
+      "hashes": {
+        "typeSurface": "81040ce8342602bc",
+        "outline": "dc4455d86db4f5e0",
+        "snapshot": "50d3d862d073187f",
+        "outputMd": "a9d1221e04713aba",
+        "examples": "63e2a53825a527a4"
+      }
+    },
     "avatar": {
       "slug": "avatar",
       "kind": "code-backed",
@@ -101,6 +118,23 @@
         "snapshot": "5df639bf40a2bdd7",
         "outputMd": "14f7ba23f441df38",
         "examples": "e8f09fba5acb116f"
+      }
+    },
+    "combobox": {
+      "slug": "combobox",
+      "kind": "code-backed",
+      "outline": "docs-src/components/combobox.docs.outline.md",
+      "output": "docs/components/combobox.md",
+      "examples": "docs-src/components/combobox.docs.examples.tsx",
+      "sources": ["packages/core/src/components/combobox/**"],
+      "claims": [],
+      "symbols": ["Combobox", "ComboboxAsyncFetcher"],
+      "hashes": {
+        "typeSurface": "74ec02220321c626",
+        "outline": "9a5b39a3db9ad373",
+        "snapshot": "f716f0435209820f",
+        "outputMd": "1cfbceb7db7b8920",
+        "examples": "4c96b71b68808c66"
       }
     },
     "data-table": {
@@ -209,6 +243,23 @@
         "examples": "2fe2a4cb5c97a16b"
       }
     },
+    "input": {
+      "slug": "input",
+      "kind": "code-backed",
+      "outline": "docs-src/components/input.docs.outline.md",
+      "output": "docs/components/input.md",
+      "examples": "docs-src/components/input.docs.examples.tsx",
+      "sources": ["packages/core/src/components/input/**"],
+      "claims": [],
+      "symbols": ["Input", "InputProps"],
+      "hashes": {
+        "typeSurface": "7c5b64c579f508ee",
+        "outline": "f3ad63749f3eb99e",
+        "snapshot": "7e0ed658f518fd9a",
+        "outputMd": "0437e441e343245f",
+        "examples": "fc036f7af21b9dd4"
+      }
+    },
     "list-dense-scan": {
       "slug": "list-dense-scan",
       "kind": "prose",
@@ -226,6 +277,23 @@
         "examples": "c0a2bd60e8a04474"
       }
     },
+    "select": {
+      "slug": "select",
+      "kind": "code-backed",
+      "outline": "docs-src/components/select.docs.outline.md",
+      "output": "docs/components/select.md",
+      "examples": "docs-src/components/select.docs.examples.tsx",
+      "sources": ["packages/core/src/components/select/**"],
+      "claims": [],
+      "symbols": ["Select", "SelectAsyncFetcher"],
+      "hashes": {
+        "typeSurface": "429710973dfa912b",
+        "outline": "6e0d1a33651abe26",
+        "snapshot": "f6fcbd73e127f2f4",
+        "outputMd": "3e62ffc324fd7d43",
+        "examples": "1ce89cec30045466"
+      }
+    },
     "styling": {
       "slug": "styling",
       "kind": "prose",
@@ -241,6 +309,23 @@
         "snapshot": null,
         "outputMd": "95520457698489f3",
         "examples": "d3cca347b055a503"
+      }
+    },
+    "textarea": {
+      "slug": "textarea",
+      "kind": "code-backed",
+      "outline": "docs-src/components/textarea.docs.outline.md",
+      "output": "docs/components/textarea.md",
+      "examples": "docs-src/components/textarea.docs.examples.tsx",
+      "sources": ["packages/core/src/components/textarea/**"],
+      "claims": [],
+      "symbols": ["Textarea", "TextareaProps"],
+      "hashes": {
+        "typeSurface": "3d9225f7356a29b2",
+        "outline": "a489f00d48f43028",
+        "snapshot": "40f4b39567ab051b",
+        "outputMd": "c940bc01cd573334",
+        "examples": "0712ee03ad6ce259"
       }
     }
   }

@@ -102,5 +102,10 @@ export function sync(repoRoot: string): SyncResult {
 
   const manifest: Manifest = { version: 1, units };
   writeManifest(repoRoot, config.manifestFile, manifest);
+  // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the
+  // manifest's hashes are over the OUTPUT files, never over the manifest text
+  // itself, so this reformatting is safe and only prevents the pre-commit oxfmt
+  // hook from later collapsing its arrays into a whitespace-only diff.
+  formatFiles(repoRoot, [join(repoRoot, config.manifestFile)]);
   return { manifest, findings, written };
 }

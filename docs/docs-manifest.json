@@ -268,6 +268,40 @@
         "examples": null
       }
     },
+    "default-header": {
+      "slug": "default-header",
+      "kind": "code-backed",
+      "outline": "docs-src/components/default-header.docs.outline.md",
+      "output": "docs/components/default-header.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/default-header.tsx"],
+      "claims": [],
+      "symbols": ["DefaultHeader", "DefaultHeaderProps"],
+      "hashes": {
+        "typeSurface": "dfc505929b8ef505",
+        "outline": "8277ec857a25ddfa",
+        "snapshot": null,
+        "outputMd": "375e55f4b12fa2be",
+        "examples": null
+      }
+    },
+    "default-sidebar": {
+      "slug": "default-sidebar",
+      "kind": "code-backed",
+      "outline": "docs-src/components/default-sidebar.docs.outline.md",
+      "output": "docs/components/default-sidebar.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/default-sidebar.tsx"],
+      "claims": [],
+      "symbols": ["DefaultSidebar", "DefaultSidebarProps"],
+      "hashes": {
+        "typeSurface": "48705640a924a509",
+        "outline": "cba9bb9f532af98a",
+        "snapshot": null,
+        "outputMd": "3422388a0cc78571",
+        "examples": null
+      }
+    },
     "description-card": {
       "slug": "description-card",
       "kind": "code-backed",
@@ -470,6 +504,57 @@
         "snapshot": "12c20fc6f44d1b4c",
         "outputMd": "60347c9a794bf66d",
         "examples": "b0eebb8c5e2219dc"
+      }
+    },
+    "sidebar-group": {
+      "slug": "sidebar-group",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-group.docs.outline.md",
+      "output": "docs/components/sidebar-group.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-group.tsx"],
+      "claims": [],
+      "symbols": ["SidebarGroup", "SidebarGroupProps"],
+      "hashes": {
+        "typeSurface": "cc25e488e6896569",
+        "outline": "af099ba1eaeac1d4",
+        "snapshot": null,
+        "outputMd": "7288fdf8bb5c19b9",
+        "examples": null
+      }
+    },
+    "sidebar-item": {
+      "slug": "sidebar-item",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-item.docs.outline.md",
+      "output": "docs/components/sidebar-item.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-item.tsx"],
+      "claims": [],
+      "symbols": ["SidebarItem", "SidebarItemProps"],
+      "hashes": {
+        "typeSurface": "7be21739c231ede3",
+        "outline": "80d4c4ce8721596c",
+        "snapshot": null,
+        "outputMd": "d55d38352040ef2c",
+        "examples": null
+      }
+    },
+    "sidebar-layout": {
+      "slug": "sidebar-layout",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-layout.docs.outline.md",
+      "output": "docs/components/sidebar-layout.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-layout.tsx"],
+      "claims": [],
+      "symbols": ["SidebarLayout", "SidebarLayoutProps"],
+      "hashes": {
+        "typeSurface": "bbc777033634cea5",
+        "outline": "ebfaaeb22b29d5df",
+        "snapshot": null,
+        "outputMd": "e50b2d649289d772",
+        "examples": null
       }
     },
     "spinner": {

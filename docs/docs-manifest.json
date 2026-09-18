@@ -17,6 +17,107 @@
         "outputMd": "4558c236d89cefd2",
         "examples": "1ee01b1e27764cd2"
       }
+    },
+    "data-table": {
+      "slug": "data-table",
+      "kind": "code-backed",
+      "outline": "docs-src/components/data-table.docs.outline.md",
+      "output": "docs/components/data-table.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/data-table/**"],
+      "claims": [],
+      "symbols": [
+        "Column",
+        "DataTable",
+        "DataTableContextValue",
+        "DataTableData",
+        "DataTableFilterConfig",
+        "DataTablePaginationProps",
+        "DataTableRootProps",
+        "HeaderRenderContext",
+        "MetadataFieldOptions",
+        "RowAction",
+        "UseDataTableOptions",
+        "UseDataTableReturn",
+        "createColumnHelper",
+        "useDataTable",
+        "useDataTableContext"
+      ],
+      "hashes": {
+        "typeSurface": "322f6b806203cebe",
+        "outline": "80a6cfa343360186",
+        "snapshot": null,
+        "outputMd": "5ed331026ad4b2e5",
+        "examples": null
+      }
+    },
+    "dialog": {
+      "slug": "dialog",
+      "kind": "code-backed",
+      "outline": "docs-src/components/dialog.docs.outline.md",
+      "output": "docs/components/dialog.md",
+      "examples": "docs-src/components/dialog.docs.examples.tsx",
+      "sources": ["packages/core/src/components/dialog/**"],
+      "claims": [],
+      "symbols": ["Dialog"],
+      "hashes": {
+        "typeSurface": "b1614970f950ceb6",
+        "outline": "9d7fbebe34933c09",
+        "snapshot": "d4fa33f2da19d5ee",
+        "outputMd": "b67a5a9c2a287e17",
+        "examples": "934c52d4e8761404"
+      }
+    },
+    "form-modal": {
+      "slug": "form-modal",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-modal.docs.outline.md",
+      "output": "docs/patterns/form-modal.md",
+      "examples": "docs-src/patterns/form-modal.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a84d512fb609018e",
+        "snapshot": null,
+        "outputMd": "850e620f5cc222fa",
+        "examples": "2fe2a4cb5c97a16b"
+      }
+    },
+    "list-dense-scan": {
+      "slug": "list-dense-scan",
+      "kind": "prose",
+      "outline": "docs-src/patterns/list-dense-scan.docs.outline.md",
+      "output": "docs/patterns/list-dense-scan.md",
+      "examples": "docs-src/patterns/list-dense-scan.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "3025ac6274b38bbb",
+        "snapshot": null,
+        "outputMd": "8062ea0df9403fbb",
+        "examples": "c0a2bd60e8a04474"
+      }
+    },
+    "styling": {
+      "slug": "styling",
+      "kind": "prose",
+      "outline": "docs-src/concepts/styling.docs.outline.md",
+      "output": "docs/concepts/styling.md",
+      "examples": "docs-src/concepts/styling.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "30c75c8d261d064e",
+        "snapshot": null,
+        "outputMd": "95520457698489f3",
+        "examples": "d3cca347b055a503"
+      }
     }
   }
 }

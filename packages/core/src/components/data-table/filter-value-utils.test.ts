@@ -41,6 +41,8 @@ describe("filter-value-utils", () => {
     expect(isTemporalFilterValueValid("date", "2026-09-08")).toBe(true);
     expect(isTemporalFilterValueValid("datetime", "2026-09-08T09:30:45")).toBe(true);
     expect(isTemporalFilterValueValid("datetime", "2026-99-08T09:30:45")).toBe(false);
+    expect(isTemporalFilterValueValid("datetime", "2026-02-30T09:30:45Z")).toBe(false);
+    expect(isTemporalFilterValueValid("datetime", "2026-01-01T24:00:00Z")).toBe(false);
     expect(isTemporalFilterValueValid("time", "09:30")).toBe(true);
     expect(isTemporalFilterValueValid("time", "09:30:00")).toBe(false);
   });
@@ -72,17 +74,17 @@ describe("filter-value-utils", () => {
     expect(normalizeTemporalFilterValue("datetime", value)).toBe("2026-09-08T00:30:45.000Z");
   });
 
-  it("converts legacy local datetime strings to RFC 3339", () => {
+  it("converts legacy local datetime strings to RFC 3339 in the configured timezone", () => {
     const value = "2026-09-08T09:30:45";
-    expect(normalizeTemporalFilterValue("datetime", value)).toBe(new Date(value).toISOString());
+    expect(normalizeTemporalFilterValue("datetime", value, "America/Los_Angeles")).toBe(
+      "2026-09-08T16:30:45.000Z",
+    );
   });
 
-  it("derives picker values in the local timezone from an RFC 3339 datetime", () => {
-    const value = "2026-09-08T00:30:45.000Z";
-    const date = new Date(value);
-    expect(localDateTimeParts(value)).toEqual({
-      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
-      time: `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`,
+  it("derives picker values in the configured timezone from an RFC 3339 datetime", () => {
+    expect(localDateTimeParts("2026-09-08T16:30:45.000Z", "America/Los_Angeles")).toEqual({
+      date: "2026-09-08",
+      time: "09:30",
     });
   });
 

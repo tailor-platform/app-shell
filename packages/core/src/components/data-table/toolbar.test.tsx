@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import type { CollectionControl } from "@/types/collection";
@@ -9,6 +11,7 @@ import type { Column } from "./types";
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
 });
 
 type TestRow = Record<string, unknown>;
@@ -63,6 +66,19 @@ function TestFilters({
 }
 
 const wrapper = createAppShellWrapper("en");
+const timeZoneWrapper = ({ children }: { children: ReactNode }) => (
+  <AppShellConfigContext.Provider
+    value={{
+      configurations: buildConfigurations({
+        modules: [],
+        locale: "en",
+        timeZone: "America/Los_Angeles",
+      }),
+    }}
+  >
+    {children}
+  </AppShellConfigContext.Provider>
+);
 
 // ---------------------------------------------------------------------------
 // Filter chip segment helpers
@@ -486,10 +502,13 @@ describe("AddFilterPanel", () => {
 
   it("normalizes a legacy local datetime when re-applying it from the panel", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
     });
-    render(<TestFilters control={control} columns={[datetimeColumn]} />, { wrapper });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
 
     await user.click(screen.getByRole("button", { name: /Add filter/ }));
     await user.click(await screen.findByRole("button", { name: /^Update$/ }));
@@ -497,7 +516,7 @@ describe("AddFilterPanel", () => {
     expect(control.addFilter).toHaveBeenCalledWith(
       "publishedAt",
       "eq",
-      new Date(2025, 0, 1, 10, 30).toISOString(),
+      "2025-01-01T18:30:00.000Z",
       undefined,
     );
   });
@@ -602,6 +621,68 @@ describe("FilterChip", () => {
     await user.click(screen.getByRole("button", { name: "Remove filter" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("name");
+  });
+
+  it("normalizes legacy datetime values when switching between single-value operators", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is" }));
+    await user.click(await screen.findByRole("button", { name: "greater than" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith(
+      "publishedAt",
+      "gt",
+      "2025-01-01T18:30:00.000Z",
+      undefined,
+    );
+  });
+
+  it("normalizes legacy datetime values when switching from single-value to between", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is" }));
+    await user.click(await screen.findByRole("button", { name: "is between" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
+      min: "2025-01-01T18:30:00.000Z",
+      max: "2025-01-01T18:30:00.000Z",
+    });
+  });
+
+  it("normalizes legacy datetime values when switching from between to single-value", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [
+        {
+          field: "publishedAt",
+          operator: "between",
+          value: { min: "2025-01-01T10:30:00", max: "2025-01-02T11:30:00" },
+        },
+      ],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is between" }));
+    await user.click(await screen.findByRole("button", { name: "less than" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "lt", "2025-01-01T18:30:00.000Z");
   });
 });
 
@@ -997,31 +1078,31 @@ describe("DateFilterEditor", () => {
 describe("TemporalFilterEditor", () => {
   it("hydrates the date picker + time box from an RFC 3339 datetime", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
     const value = "2025-01-01T10:30:00Z";
-    const date = new Date(value);
-    const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value }],
     });
     render(<TestFilters control={control} columns={[datetimeColumn]} />, {
-      wrapper,
+      wrapper: timeZoneWrapper,
     });
 
     await openValueEditor(user);
 
     // Date part is a segmented picker (a group), time part a native time box
-    // seeded from the RFC 3339 instant in the user's local timezone.
+    // seeded from the RFC 3339 instant in the configured AppShell timezone.
     expect(await screen.findByRole("group")).toBeDefined();
-    expect(screen.getByDisplayValue(time)).toBeDefined();
+    expect(screen.getByDisplayValue("02:30")).toBeDefined();
   });
 
   it("serializes the selected local datetime as an RFC 3339 instant on Apply", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
     const control = makeControl({
       filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
     });
     render(<TestFilters control={control} columns={[datetimeColumn]} />, {
-      wrapper,
+      wrapper: timeZoneWrapper,
     });
 
     await openValueEditor(user);
@@ -1029,15 +1110,12 @@ describe("TemporalFilterEditor", () => {
     fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(control.addFilter).toHaveBeenCalledWith(
-      "publishedAt",
-      "eq",
-      new Date(2025, 0, 1, 8, 45).toISOString(),
-    );
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "eq", "2025-01-01T16:45:00.000Z");
   });
 
   it("serializes both datetime between bounds as RFC 3339 instants", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
     const control = makeControl({
       filters: [
         {
@@ -1047,7 +1125,9 @@ describe("TemporalFilterEditor", () => {
         },
       ],
     });
-    render(<TestFilters control={control} columns={[datetimeColumn]} />, { wrapper });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
 
     await openValueEditor(user);
 
@@ -1056,11 +1136,30 @@ describe("TemporalFilterEditor", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
-      min: new Date(2025, 0, 1, 8, 45).toISOString(),
-      max: new Date(2025, 0, 2, 9, 15).toISOString(),
+      min: "2025-01-01T16:45:00.000Z",
+      max: "2025-01-02T17:15:00.000Z",
     });
   });
 
+  it("formats datetime chip values in the configured AppShell timezone", () => {
+    vi.stubEnv("TZ", "UTC");
+    const expected = new Intl.DateTimeFormat("en", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Los_Angeles",
+    }).format(new Date("2025-01-01T10:30:00Z"));
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    expect(screen.getByText(expected)).toBeDefined();
+  });
   it("Apply button calls addFilter with an HH:MM time", async () => {
     const user = userEvent.setup();
     const control = makeControl({

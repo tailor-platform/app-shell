@@ -178,6 +178,105 @@ describe("createAIGatewayClient", () => {
     });
   });
 
+  it("emits tool calls from streaming responses", async () => {
+    const authClient = createMockAuthClient(
+      new Response(
+        createSSEStream([
+          'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookupCustomer","arguments":"{\\"customerId\\":\\""}}]}}]}\n\n',
+          'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"cust-1\\"}"}}]}}]}\n\n',
+          'data: {"choices":[{"finish_reason":"tool_calls"}]}\n\n',
+          "data: [DONE]\n\n",
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "text/event-stream" },
+        },
+      ),
+    );
+    const client = createAIGatewayClient({
+      gatewayUri: "https://gateway.example.com",
+      authClient,
+    });
+
+    await expect(
+      collectEvents(
+        client,
+        createRequest({
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "lookupCustomer",
+                parameters: { type: "object", properties: { customerId: { type: "string" } } },
+              },
+            },
+          ],
+        }),
+      ),
+    ).resolves.toEqual([
+      {
+        type: "tool-call",
+        toolCallId: "call_1",
+        toolName: "lookupCustomer",
+        argumentsText: '{"customerId":"cust-1"}',
+      },
+      { type: "done", finishReason: "tool_calls" },
+    ]);
+
+    const [input, init] = getRequestCall(authClient);
+    expect(JSON.parse(String(await readRequestBody(input, init)))).toEqual({
+      model: "gpt-5-mini",
+      messages: [{ role: "user", content: "Hello" }],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "lookupCustomer",
+            parameters: { type: "object", properties: { customerId: { type: "string" } } },
+          },
+        },
+      ],
+      stream: true,
+    });
+  });
+
+  it("emits sources from json responses", async () => {
+    const authClient = createMockAuthClient(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: "Grounded answer",
+                sources: [{ type: "url", url: "https://example.com", title: "Example" }],
+              },
+              finish_reason: "stop",
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+    const client = createAIGatewayClient({
+      gatewayUri: "https://gateway.example.com",
+      authClient,
+    });
+
+    await expect(
+      collectEvents(client, createRequest({ model: "gemini-2.5-flash" })),
+    ).resolves.toEqual([
+      { type: "text-delta", text: "Grounded answer" },
+      {
+        type: "done",
+        finishReason: "stop",
+        sources: [{ type: "url", url: "https://example.com", title: "Example" }],
+      },
+    ]);
+  });
+
   it("emits done even when json responses do not include assistant text", async () => {
     const authClient = createMockAuthClient(
       new Response(

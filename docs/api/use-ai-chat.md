@@ -1,16 +1,21 @@
 ---
 title: useAIChat
-description: Simple text-only chat hook for AI Gateway
+description: AI Gateway chat hook with optional local, provider, and MCP tools
 ---
 
 # useAIChat
 
-React hook for simple text-only chat on top of `createAIGatewayClient`.
+React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local, provider, and remote MCP tool support.
 
 ## Signature
 
 ```typescript
-const useAIChat: (config: { client: AIGatewayClient; model: string }) => {
+const useAIChat: (config: {
+  client: AIGatewayClient;
+  model: string;
+  tools?: Record<string, AIChatConfiguredTool>;
+  mcpServers?: Record<string, AIChatMCPServerConfig>;
+}) => {
   messages: AIChatMessage[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
@@ -28,6 +33,13 @@ interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: AIChatSource[];
+}
+
+interface AIChatSource {
+  type: "url";
+  url: string;
+  title?: string;
 }
 ```
 
@@ -52,10 +64,29 @@ interface AIChatMessage {
 - **Type:** `() => void`
 - **Description:** Aborts the current request if one is in progress
 
+### `tools`
+
+Register tools under a single object:
+
+- local tools created with `defineAIChatTool(...)`; their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4)
+- provider tools such as `aiProviderTool.openai.webSearch(...)`
+
+### `mcpServers`
+
+Register remote MCP servers separately from `tools`, since one MCP server discovers and exposes multiple tools. Each entry requires an explicit `allowedTools` list. Use `tailorMCP({ authClient })` for the current Tailor Platform application's `/mcp` endpoint.
+
 ## Usage
 
 ```tsx
-import { createAuthClient, createAIGatewayClient, useAIChat } from "@tailor-platform/app-shell";
+import {
+  aiProviderTool,
+  createAuthClient,
+  createAIGatewayClient,
+  defineAIChatTool,
+  tailorMCP,
+  useAIChat,
+} from "@tailor-platform/app-shell";
+import { z } from "zod/v4";
 
 const authClient = createAuthClient({
   clientId: "your-client-id",
@@ -67,10 +98,30 @@ const aiClient = createAIGatewayClient({
   authClient,
 });
 
+const lookupCustomer = defineAIChatTool({
+  description: "Look up a customer in the current workspace",
+  schema: z.object({
+    customerId: z.string(),
+  }),
+  async execute({ customerId }) {
+    return { customerId, name: "Acme Corp" };
+  },
+});
+
 export function ChatScreen() {
   const { messages, sendMessage, status, stop, error } = useAIChat({
     client: aiClient,
     model: "gpt-5-mini",
+    tools: {
+      lookupCustomer,
+      web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
+    },
+    mcpServers: {
+      tailor: {
+        server: tailorMCP({ authClient }),
+        allowedTools: ["query"],
+      },
+    },
   });
 
   return (
@@ -99,7 +150,9 @@ export function ChatScreen() {
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- The hook is intentionally text-only
+- Public messages stay user/assistant text-first; internal tool messages remain private to the hook
+- Provider tools can attach optional `sources` to assistant messages
+- MCP server entries must list every tool they expose; start with read-only tools until your application has an explicit approval flow for mutations
 - System prompts and custom history shaping should use the low-level client directly
 - `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request
 

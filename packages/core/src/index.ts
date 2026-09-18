@@ -69,9 +69,33 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIGatewayTool,
+  type AIGatewayToolCall,
+  type AIGatewayFunctionTool,
+  type AIGatewayProviderTool,
   type AIChatCompletionEvent,
+  type AIChatSource,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  tailorMCP,
+  type AIChatMCPServer,
+  type AIChatMCPConnection,
+  type AIChatMCPTool,
+  type AIChatMCPToolResult,
+  type AIChatMCPServerConfig,
+  type TailorMCPOptions,
+} from "./ai/mcp";
+export {
+  defineAIChatTool,
+  aiProviderTool,
+  type AIChatConfiguredTool,
+  type AIChatToolContext,
+  type AIChatToolSchema,
+  type AILocalTool,
+  type AIOpenAIWebSearchTool,
+  type OpenAIWebSearchToolOptions,
+} from "./ai/tools";
 export {
   AIChat,
   type AIChatProps,

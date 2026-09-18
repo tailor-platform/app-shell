@@ -1,6 +1,8 @@
 ---
 slug: pattern/interaction/toast
 name: Toast
+group: interaction-toast
+title: Toast
 category: pattern
 subcategory: interaction
 description: Lightweight feedback after mutations — success or error notifications
@@ -24,6 +26,8 @@ dont:
 - Confirming work the user just initiated
 
 ## Page Implementation
+
+<!-- example: interaction-toast -->
 
 <!-- source: toast-example.tsx -->
 

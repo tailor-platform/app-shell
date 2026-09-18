@@ -353,6 +353,23 @@
         "examples": "6962c6f28d09eb0a"
       }
     },
+    "form-composer": {
+      "slug": "form-composer",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-composer.docs.outline.md",
+      "output": "docs/patterns/form-composer.md",
+      "examples": "docs-src/patterns/form-composer.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a5a0c41fc7e7ca1d",
+        "snapshot": null,
+        "outputMd": "ed187ac3a0773d3d",
+        "examples": "abd682c0980d1e21"
+      }
+    },
     "form-modal": {
       "slug": "form-modal",
       "kind": "prose",
@@ -402,6 +419,40 @@
         "snapshot": "7e0ed658f518fd9a",
         "outputMd": "0437e441e343245f",
         "examples": "fc036f7af21b9dd4"
+      }
+    },
+    "interaction-confirm": {
+      "slug": "interaction-confirm",
+      "kind": "prose",
+      "outline": "docs-src/patterns/interaction-confirm.docs.outline.md",
+      "output": "docs/patterns/interaction-confirm.md",
+      "examples": "docs-src/patterns/interaction-confirm.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "e925eaf16b91747a",
+        "snapshot": null,
+        "outputMd": "2db70f423c6fdf97",
+        "examples": "c76447e12f161a81"
+      }
+    },
+    "interaction-toast": {
+      "slug": "interaction-toast",
+      "kind": "prose",
+      "outline": "docs-src/patterns/interaction-toast.docs.outline.md",
+      "output": "docs/patterns/interaction-toast.md",
+      "examples": "docs-src/patterns/interaction-toast.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "d3aefc3c8bb7bc26",
+        "snapshot": null,
+        "outputMd": "f68bdab855730f48",
+        "examples": "7089e7331b95df31"
       }
     },
     "layout": {

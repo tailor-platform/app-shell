@@ -1,6 +1,8 @@
 ---
 slug: pattern/interaction/confirm
 name: Confirm
+group: interaction-confirm
+title: Confirm
 category: pattern
 subcategory: interaction
 description: Confirmation dialog before destructive or irreversible actions
@@ -24,6 +26,8 @@ dont:
 - When the action's consequence isn't obvious from the trigger
 
 ## Page Implementation
+
+<!-- example: interaction-confirm -->
 
 <!-- source: confirm.tsx -->
 

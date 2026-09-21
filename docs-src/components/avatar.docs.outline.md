@@ -10,8 +10,6 @@ sources:
 
 The `Avatar` component wraps [Base UI Avatar](https://base-ui.com/react/components/avatar): a root container with an optional image and fallback content (typically initials) when the image is missing or fails to load.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/avatar)
-
 ## Import
 
 ```tsx

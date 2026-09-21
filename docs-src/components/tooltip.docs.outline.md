@@ -10,8 +10,6 @@ sources:
 
 The `Tooltip` component displays contextual information on hover or focus. It is backed by Base UI's Tooltip primitive.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/tooltip)
-
 ## Import
 
 ```tsx

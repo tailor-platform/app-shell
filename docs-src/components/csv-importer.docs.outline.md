@@ -10,8 +10,6 @@ sources:
 
 The `CsvImporter` component provides a guided, multi-step CSV import flow rendered inside a drawer. It handles drag-and-drop file upload, interactive column mapping, Standard Schema validation, inline cell editing, and async server-side validation.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/csv-importer)
-
 ## Import
 
 ```tsx

@@ -9,8 +9,6 @@ description: Accessible date input components (@internationalized/date + Base UI
 
 Three related components for date input — a segmented field, a field with a calendar popover, and a standalone calendar grid. Built on [`@internationalized/date`](https://react-spectrum.adobe.com/internationalized/date/) and Base UI.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/date-picker)
-
 ## Import
 
 ```tsx

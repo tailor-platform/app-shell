@@ -10,8 +10,6 @@ sources:
 
 The `Alert` component is a compound component for displaying contextual status messages. It automatically renders a matching icon for each variant and supports optional action buttons and dismiss behavior.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/alert)
-
 ## Import
 
 ```tsx

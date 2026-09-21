@@ -10,8 +10,6 @@ sources:
 
 The `Menu` component provides a dropdown menu with a compound component API. It is backed by Base UI's Menu primitive.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/menu)
-
 ## Import
 
 ```tsx

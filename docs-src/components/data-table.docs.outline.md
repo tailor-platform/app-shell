@@ -14,8 +14,6 @@ sources:
 
 `DataTable` is a compound component for displaying collections of records. It integrates with the collection variable hooks (`useCollectionVariables`) to drive sorting, filtering, and cursor-based pagination through a GraphQL API.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/data-table)
-
 ## Import
 
 ```tsx

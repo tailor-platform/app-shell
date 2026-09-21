@@ -10,8 +10,6 @@ sources:
 
 The `Select` component provides a fully assembled single or multi-select dropdown. Pass `items` and get a ready-to-use select out of the box. For async data fetching use `Select.Async`. For custom compositions use `Select.Parts`.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/select)
-
 ## Import
 
 ```tsx

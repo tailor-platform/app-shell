@@ -10,8 +10,6 @@ sources:
 
 The `Sheet` component is a slide-in panel that appears from any edge of the screen. It is backed by Base UI's Drawer primitive and includes native swipe-to-dismiss gesture support on touch devices.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/sheet)
-
 ## Import
 
 ```tsx

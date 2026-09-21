@@ -10,8 +10,6 @@ sources:
 
 The `Badge` component displays status indicators, labels, and tags with multiple style variants. It's commonly used to show document status, priority levels, or categorical information.
 
-[Live preview in the UI Catalogue →](https://ui.tailor.tech/components/badge)
-
 ## Import
 
 ```tsx

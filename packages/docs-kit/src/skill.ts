@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import type { DocsConfig, Outline } from "./types";
@@ -10,6 +10,7 @@ function toPosix(p: string): string {
 /** Generated-doc output dir → skill reference section. Concepts/references are
  * intentionally excluded — the skill covers building UI, not framework prose. */
 const SECTION_BY_OUTDIR: Record<string, string> = {
+  "docs/concepts": "concepts",
   "docs/components": "components",
   "docs/api": "api",
   "docs/patterns": "patterns",
@@ -70,18 +71,8 @@ function entryTable(list: Outline[], dir: string): string {
   return blocks.join("\n\n");
 }
 
-function fundamentalTable(files: string[]): string {
-  if (files.length === 0) return "";
-  const rows: string[][] = [["File", "Description"]];
-  for (const f of files) {
-    rows.push([`[${f}](references/fundamental/${f})`, `${f.replace(/\.md$/, "")} reference`]);
-  }
-  return mdTable(rows);
-}
-
 /** Compute the whole consumer skill as a map of repo-relative path → content.
- * Pure: reads only committed inputs (the generated docs, the SKILL template, the
- * authored fundamentals, and the migrations doc) and writes nothing — so `sync`
+ * Pure: reads only committed inputs (the generated docs incl. concepts, the SKILL template, and the migrations doc) and writes nothing — so `sync`
  * can emit it and `check` can recompute and validate it without the (gitignored)
  * output needing to exist. */
 export function computeSkill(
@@ -95,6 +86,7 @@ export function computeSkill(
   const rel = (abs: string): string => toPosix(relative(repoRoot, abs));
 
   const sections: Record<string, Outline[]> = {
+    concepts: [],
     components: [],
     api: [],
     patterns: [],
@@ -116,18 +108,6 @@ export function computeSkill(
     }
   }
 
-  // Fundamentals: authored guidance, copied verbatim.
-  const fundAbs = join(repoRoot, skill.fundamentalDir);
-  const fundFiles = existsSync(fundAbs)
-    ? readdirSync(fundAbs)
-        .filter((f) => f.endsWith(".md"))
-        .toSorted()
-    : [];
-  for (const f of fundFiles) {
-    const destAbs = join(repoRoot, skill.outDir, "references", "fundamental", f);
-    files.set(rel(destAbs), readFileSync(join(fundAbs, f), "utf8"));
-  }
-
   // Migrations: copy with relative links rewritten to absolute repo URLs, since
   // the consuming app has no docs/ tree to resolve them against.
   const migAbs = join(repoRoot, skill.migrationsSource);
@@ -144,7 +124,7 @@ export function computeSkill(
   // SKILL.md: fill the template's category tables.
   const template = readFileSync(join(repoRoot, skill.templatePath), "utf8");
   const skillMd = template
-    .replace("{{FUNDAMENTAL_TABLE}}", fundamentalTable(fundFiles))
+    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts"))
     .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components"))
     .replace("{{API_TABLE}}", simpleTable(sections.api, "api"))
     .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages"))

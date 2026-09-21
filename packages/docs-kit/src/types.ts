@@ -100,8 +100,6 @@ export interface SkillConfig {
   outDir: string;
   /** Repo-relative SKILL.md template with {{CATEGORY_TABLE}} placeholders. */
   templatePath: string;
-  /** Repo-relative dir of authored fundamental guidance copied verbatim. */
-  fundamentalDir: string;
   /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
   migrationsSource: string;
   /** Base blob URL for rewriting the migrations doc's relative links. */

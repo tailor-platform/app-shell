@@ -361,6 +361,23 @@
         "examples": null
       }
     },
+    "custom-components": {
+      "slug": "custom-components",
+      "kind": "prose",
+      "outline": "docs-src/concepts/custom-components.docs.outline.md",
+      "output": "docs/concepts/custom-components.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "33796a2dd22b5c0d",
+        "snapshot": null,
+        "outputMd": "551e04b1abbfa101",
+        "examples": null
+      }
+    },
     "data-table": {
       "slug": "data-table",
       "kind": "code-backed",
@@ -743,6 +760,23 @@
         "outline": "f921a854181d6d1c",
         "snapshot": null,
         "outputMd": "dd2b0da3702cf8d9",
+        "examples": null
+      }
+    },
+    "graphql": {
+      "slug": "graphql",
+      "kind": "prose",
+      "outline": "docs-src/concepts/graphql.docs.outline.md",
+      "output": "docs/concepts/graphql.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c75d2a9a871756e6",
+        "snapshot": null,
+        "outputMd": "ba5107604e4f42e8",
         "examples": null
       }
     },
@@ -1182,9 +1216,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "f42b45bd1861119d",
+        "outline": "96d4bfc1c2681154",
         "snapshot": null,
-        "outputMd": "e32f71e1ab567751",
+        "outputMd": "0133fdae405f467c",
         "examples": "d3cca347b055a503"
       }
     },
@@ -1530,6 +1564,14 @@
     }
   },
   "skill": {
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "ce27a191becaca3a",
+    "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "551e04b1abbfa101",
+    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
+    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
+    "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
+    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2f3ff3f095c2b1cc",
+    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "96f1cf893c231861",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "0133fdae405f467c",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1607,10 +1649,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
-    "packages/core/skills/app-shell-patterns/references/fundamental/components.md": "dc2e675e9c7abcf6",
-    "packages/core/skills/app-shell-patterns/references/fundamental/design-system.md": "79bc37da5d216155",
-    "packages/core/skills/app-shell-patterns/references/fundamental/graphql.md": "436539e8fcf2df0f",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "799fd5010635b2c2",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "334fdc0072368322"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "165761adda4fbfc0"
   }
 }

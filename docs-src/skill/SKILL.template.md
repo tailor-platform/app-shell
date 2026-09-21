@@ -9,11 +9,11 @@ description: "Best-practice UI patterns and correct component usage for building
 
 Select and implement the correct UI pattern using @tailor-platform/app-shell components.
 
-## Fundamental References
+## Concepts
 
-These are the foundational rules that underpin all patterns. All patterns build on top of these references.
+Cross-cutting guides that underpin every screen — styling & theming and the token system, GraphQL data access, building custom components, plus auth and routing. Patterns and components build on these.
 
-{{FUNDAMENTAL_TABLE}}
+{{CONCEPTS_TABLE}}
 
 ## Migrations
 
@@ -49,7 +49,7 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 2. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
 3. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
 4. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
-5. Read fundamental references for component APIs, design tokens, and GraphQL conventions: `references/fundamental/`
+5. Read the concept references for styling, design tokens, GraphQL, and custom components: `references/concepts/`; component and hook APIs live in `references/components/` and `references/api/`
 6. Implement using ONLY the imports listed in the entry's `requiredImports` — for a page, the `requiredImports` of the pattern it sent you to
 
 ## Rules
@@ -58,11 +58,11 @@ A page is the shape of a whole screen — the outer choice, made before picking 
   `/* pattern: list/dense-scan */`. Cite the pattern you implemented, even when a page entry sent you to it.
 - NEVER mix two patterns that solve the same problem in one component — one part, one recipe. Composing patterns for _different_ parts of a screen is expected, and the screen's page entry says which.
 - ALWAYS use AppShell components — do NOT use raw HTML or third-party UI libraries
-- If no entry matches, compose directly from fundamental references
+- If no entry matches, compose directly from the concept references and component docs
 
 ### Cross-cutting UX rules (apply to every screen)
 
-Full rationale in [`design-system.md`](references/fundamental/design-system.md) → Composition & emphasis rules.
+Full rationale in [`styling-theming`](references/concepts/styling-theming.md) → Composition & emphasis rules.
 
 - **One primary action per view:** at most one primary/filled `Button`; everything else is `outline`/`secondary`/`ghost`.
 - **Status badges by semantic color:** a **filled** semantic variant for the record's primary/lifecycle status, **`outline-*`** for secondary statuses, **`subtle-*`** for tags; reserve brand `default` for non-status emphasis.
@@ -70,5 +70,5 @@ Full rationale in [`design-system.md`](references/fundamental/design-system.md) 
 - **Action placement:** primary CTA + status in `Layout.Header`; workflow actions in `ActionPanel`; back/navigation in the breadcrumb — never in `ActionPanel`.
 - **Metric tiles always go in a `Grid`** (`columns={{ initial: 1, md: 2, xl: 4 }}`) — never one-per-row.
 - **Forms default to `form/modal`** — only build a routed full-page form when the design explicitly calls for one.
-- **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`components.md`](references/fundamental/components.md) → Forms.
+- **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`Form`](references/components/form.md) and the `form/*` patterns.
 - **Handle every state:** loading (skeleton), empty (labelled empty state), and error (inline + retry) — never ship only the happy path.

@@ -26,7 +26,7 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 2. Branch from main
   │
-  ├─ 3. Develop ................... .agents/skills/code-review, catalogue/ (app-shell-patterns source)
+  ├─ 3. Develop ................... .agents/skills/code-review, docs-src/ (docs + skill source)
   │
   ├─ 4. Quality-check locally ..... .agents/skills/quality-check
   │
@@ -70,8 +70,9 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 | `packages/sdk-plugin`  | `@tailor-platform/sdk-plugin-app-shell` — Tailor SDK plugin                       |
 | `examples/`            | `vite-app` reference app and consolidated showcase (what `pnpm dev` runs)         |
 | `e2e/`                 | Playwright suite + a real Tailor backend definition                               |
-| `catalogue/`           | Pattern catalogue — source for the generated `app-shell-patterns` skill           |
-| `docs/`                | User-facing documentation (kept in sync by the docs-update bot)                   |
+| `docs-src/`            | Authored doc sources — outlines + runnable examples (the only hand-edited docs)   |
+| `docs/`                | **Generated** user-facing documentation — never hand-edited (`pnpm docs:sync`)    |
+| `docs-browser/`        | AppShell app that renders `docs/` with live examples                              |
 | `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work           |
 | `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                |
 
@@ -109,12 +110,15 @@ this guide won't restate their rules (they'd only go stale here).
 
 - **Changing implementation under `packages/**`** → `.agents/skills/code-review/SKILL.md` (the code review skill routes you to the shared cross-cutting and area references for the change).
 - **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
-  **generated** from the `catalogue/` package (`catalogue/src/**` is the source) into
-  `packages/core/skills/app-shell-patterns/`, which is gitignored and shipped to consumers via
-  the npm package. **Edit the source in `catalogue/` and regenerate with `pnpm build`** (see
-  [`catalogue/README.md`](./catalogue/README.md)) — never hand-edit the generated skill. CI's
-  `check-generated-skills` test fails if the two drift, so if you change a public API,
-  design tokens, or a pattern, update the catalogue source too.
+  **generated** by `docs-kit` from `docs-src/` into `packages/core/skills/app-shell-patterns/`,
+  which is gitignored and shipped to consumers via the npm package. **Edit the source under
+  `docs-src/` and regenerate with `pnpm docs:sync`** — never hand-edit the generated skill.
+  `pnpm docs:check` blocks in CI if the two drift, so if you change a public API, design tokens,
+  or a pattern, update the `docs-src/` source too.
+- **Changing documentation** → `.agents/skills/resync-docs/SKILL.md`. Everything under `docs/` is
+  generated; edit the `*.docs.outline.md` (prose) and `*.docs.examples.tsx` (runnable examples)
+  under `docs-src/`, then run `pnpm docs:sync`. Outline frontmatter is a closed schema — see
+  [`decisions/documentation-management-overhaul.md`](./decisions/documentation-management-overhaul.md).
 
 ---
 
@@ -181,8 +185,9 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
 
 - **`.agents/skills/`** — contributor procedures, primarily `code-review`, `quality-check`, and
   `create-changeset`.
-- **`catalogue/`** — source for the `app-shell-patterns` skill shipped to consumers; generated
-  into `packages/core/skills/` (gitignored) via `pnpm build`.
+- **`docs-src/`** — authored source for `docs/` and for the `app-shell-patterns` skill shipped to
+  consumers; both generated via `pnpm docs:sync` (the skill into `packages/core/skills/`,
+  gitignored).
 - **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.
 - **`.github/workflows/`** — CI and gh-aw agentic workflows (source `.md` files are compiled to
   `*.lock.yml` via `gh aw compile`; never hand-edit `*.lock.yml`).

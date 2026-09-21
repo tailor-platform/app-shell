@@ -77,7 +77,7 @@
       ]
     },
     {
-      "description": "tsdown depends on rolldown — bundler for the vite-plugin and catalogue builds.",
+      "description": "tsdown depends on rolldown — bundler for the vite-plugin and docs-kit builds.",
       "groupName": "rolldown",
       "matchPackageNames": ["rolldown", "tsdown"]
     },

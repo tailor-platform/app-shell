@@ -14,24 +14,29 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 **📋 For development commands and setup, see:** [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-## Documentation Index
+## Documentation
 
-All files under [`docs/`](./docs/) are user-facing documentation for library consumers. The tree is
-convention-based rather than hand-listed, so a new page needs no edit here — place it by its kind:
+Everything under [`docs/`](./docs/) is **generated** by the `docs-kit` pipeline and must **never be
+hand-edited** — the pre-commit hook warns and `pnpm docs:check` in CI blocks on any hand edit or
+drift. See [decisions/documentation-management-overhaul.md](./decisions/documentation-management-overhaul.md)
+and the [`resync-docs`](./.agents/skills/resync-docs/SKILL.md) skill.
 
-| Path                        | Holds                                                                                                                             |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/introduction.md`      | What AppShell is and when to reach for it                                                                                         |
-| `docs/quickstart.md`        | The shortest path from an empty app to a running one                                                                              |
-| `docs/design-philosophy.md` | The reasoning behind the opinionated defaults                                                                                     |
-| `docs/migrations.md`        | Version-to-version upgrade notes, one row per release that needs consumer action                                                  |
-| `docs/concepts/`            | Cross-cutting guides — authentication, routing, styling, sidebar navigation                                                       |
-| `docs/components/`          | One page per exported component, named for its kebab-cased export (`DataTable` → `data-table.md`)                                 |
-| `docs/api/`                 | One page per exported hook or function (`useAppShell` → `use-app-shell.md`), with `guards/` and `router/` grouping those families |
+To change or add a doc, edit the authored **source** under `docs-src/`, then run `pnpm docs:sync`:
 
-Routing a change: a component's props or behavior belongs in its `docs/components/` page; a hook or
-function in its `docs/api/` page; anything spanning several exports in `docs/concepts/`. A new export
-gets a new page in the matching directory rather than a section appended to a neighbour.
+| To document…                                  | Edit (authored source)                                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| a component / hook / pattern / page / concept | `docs-src/<kind>/<slug>.docs.outline.md` (prose) + optional `<slug>.docs.examples.tsx` (runnable example) |
+| the consumer `app-shell-patterns` skill       | emitted from `docs-src/` by `docs:sync` — never edit `packages/core/skills/`                              |
+
+`docs-src/<kind>/` maps to `docs/<kind>/` (components→components, hooks→api, plus concepts, patterns,
+pages). Every outline declares `kind: code-backed` or `kind: prose` in its frontmatter — code-backed
+units also declare a `sources:` glob binding them to the exports they document, and `docs:check`
+reconciles that against `index.ts` both ways. Frontmatter is a closed schema: an unrecognised key is
+an error, not a silent no-op.
+
+The only hand-authored files under `docs/` are the four root guides — `introduction.md`,
+`quickstart.md`, `design-philosophy.md`, `migrations.md` — which have no `docs-src/` source and are
+edited in place (`migrations.md` is also copied into the generated skill).
 
 ## Key Architecture Points (LLM Orientation)
 

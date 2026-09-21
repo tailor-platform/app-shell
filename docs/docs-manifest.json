@@ -1,0 +1,1655 @@
+{
+  "version": 1,
+  "units": {
+    "action-panel": {
+      "slug": "action-panel",
+      "kind": "code-backed",
+      "outline": "docs-src/components/action-panel.docs.outline.md",
+      "output": "docs/components/action-panel.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/action-panel/**"],
+      "claims": [],
+      "symbols": ["ActionPanel", "ActionPanelProps"],
+      "hashes": {
+        "typeSurface": "f497e4e3021d029a",
+        "outline": "a2d7daced73b465e",
+        "snapshot": null,
+        "outputMd": "71794d4b561e4d4b",
+        "examples": null
+      }
+    },
+    "activity-card": {
+      "slug": "activity-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/activity-card.docs.outline.md",
+      "output": "docs/components/activity-card.md",
+      "examples": "docs-src/components/activity-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/activity-card/**"],
+      "claims": [],
+      "symbols": [
+        "ActivityCard",
+        "ActivityCardBaseItem",
+        "ActivityCardItem",
+        "ActivityCardItemProps",
+        "ActivityCardItemsProps",
+        "ActivityCardProps",
+        "ActivityCardRootProps"
+      ],
+      "hashes": {
+        "typeSurface": "8aa0f940fced61be",
+        "outline": "bd4705d18ae410cb",
+        "snapshot": null,
+        "outputMd": "4f386e49380fb0b0",
+        "examples": "eb7ab46dc420129f"
+      }
+    },
+    "ai-chat": {
+      "slug": "ai-chat",
+      "kind": "code-backed",
+      "outline": "docs-src/components/ai-chat.docs.outline.md",
+      "output": "docs/components/ai-chat.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/ai-chat/**"],
+      "claims": [],
+      "symbols": [
+        "AIChat",
+        "AIChatComposerProps",
+        "AIChatConversationProps",
+        "AIChatHeaderProps",
+        "AIChatProps",
+        "ChainOfThoughtStepStatus",
+        "ChatHistoryGroupData",
+        "ChatHistoryItemData",
+        "ToolState"
+      ],
+      "hashes": {
+        "typeSurface": "7cb8a34c1c36eb02",
+        "outline": "797e012e34847b80",
+        "snapshot": "791be2c6087af41c",
+        "outputMd": "824d1aa36bb7f194",
+        "examples": null
+      }
+    },
+    "alert": {
+      "slug": "alert",
+      "kind": "code-backed",
+      "outline": "docs-src/components/alert.docs.outline.md",
+      "output": "docs/components/alert.md",
+      "examples": "docs-src/components/alert.docs.examples.tsx",
+      "sources": ["packages/core/src/components/alert/**"],
+      "claims": [],
+      "symbols": ["Alert", "AlertProps", "alertVariants"],
+      "hashes": {
+        "typeSurface": "f28bf34ae1466912",
+        "outline": "6138eac23571e177",
+        "snapshot": "e83317f5eef937e5",
+        "outputMd": "db2c4388ca783a75",
+        "examples": "65d5fc73550e395a"
+      }
+    },
+    "app-shell": {
+      "slug": "app-shell",
+      "kind": "code-backed",
+      "outline": "docs-src/components/app-shell.docs.outline.md",
+      "output": "docs/components/app-shell.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/appshell/**"],
+      "claims": [],
+      "symbols": ["AppShell", "AppShellProps"],
+      "hashes": {
+        "typeSurface": "51313066e142afc2",
+        "outline": "740b41d779b579ea",
+        "snapshot": null,
+        "outputMd": "c4a7bf5560678bdf",
+        "examples": null
+      }
+    },
+    "appearance-switcher": {
+      "slug": "appearance-switcher",
+      "kind": "code-backed",
+      "outline": "docs-src/components/appearance-switcher.docs.outline.md",
+      "output": "docs/components/appearance-switcher.md",
+      "examples": "docs-src/components/appearance-switcher.docs.examples.tsx",
+      "sources": ["packages/core/src/components/appearance-switcher/**"],
+      "claims": [],
+      "symbols": ["AppearanceSwitcher"],
+      "hashes": {
+        "typeSurface": "d57359491532c037",
+        "outline": "926d9f911b8b1140",
+        "snapshot": null,
+        "outputMd": "b55f1d538651d467",
+        "examples": "5628b20a03385bdf"
+      }
+    },
+    "attachment": {
+      "slug": "attachment",
+      "kind": "code-backed",
+      "outline": "docs-src/components/attachment.docs.outline.md",
+      "output": "docs/components/attachment.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/attachment/**"],
+      "claims": [],
+      "symbols": [
+        "Attachment",
+        "AttachmentItem",
+        "AttachmentOperation",
+        "AttachmentProps",
+        "UseAttachmentOptions",
+        "useAttachment"
+      ],
+      "hashes": {
+        "typeSurface": "0a9f0c3f82e57e02",
+        "outline": "66aaf22c5067aef1",
+        "snapshot": "4cc22ecbb5ea4434",
+        "outputMd": "35bebce540d6ac28",
+        "examples": null
+      }
+    },
+    "authentication": {
+      "slug": "authentication",
+      "kind": "prose",
+      "outline": "docs-src/concepts/authentication.docs.outline.md",
+      "output": "docs/concepts/authentication.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "3b92ce72609132dd",
+        "snapshot": null,
+        "outputMd": "ce27a191becaca3a",
+        "examples": null
+      }
+    },
+    "autocomplete": {
+      "slug": "autocomplete",
+      "kind": "code-backed",
+      "outline": "docs-src/components/autocomplete.docs.outline.md",
+      "output": "docs/components/autocomplete.md",
+      "examples": "docs-src/components/autocomplete.docs.examples.tsx",
+      "sources": ["packages/core/src/components/autocomplete/**"],
+      "claims": [],
+      "symbols": ["Autocomplete", "AutocompleteAsyncFetcher"],
+      "hashes": {
+        "typeSurface": "81040ce8342602bc",
+        "outline": "b8d3f69b4adc4f13",
+        "snapshot": "50d3d862d073187f",
+        "outputMd": "bd6ae01bf39d1ad6",
+        "examples": "63e2a53825a527a4"
+      }
+    },
+    "avatar": {
+      "slug": "avatar",
+      "kind": "code-backed",
+      "outline": "docs-src/components/avatar.docs.outline.md",
+      "output": "docs/components/avatar.md",
+      "examples": "docs-src/components/avatar.docs.examples.tsx",
+      "sources": ["packages/core/src/components/avatar/**"],
+      "claims": [],
+      "symbols": ["Avatar", "AvatarProps", "avatarVariants"],
+      "hashes": {
+        "typeSurface": "d6ee5e809e0f0590",
+        "outline": "e368c9ff0db15bb3",
+        "snapshot": "b70ad798aec94bc9",
+        "outputMd": "a874b74c176bcb47",
+        "examples": "009005eeac70961d"
+      }
+    },
+    "badge": {
+      "slug": "badge",
+      "kind": "code-backed",
+      "outline": "docs-src/components/badge.docs.outline.md",
+      "output": "docs/components/badge.md",
+      "examples": "docs-src/components/badge.docs.examples.tsx",
+      "sources": ["packages/core/src/components/badge/**"],
+      "claims": [],
+      "symbols": ["Badge", "BadgeProps", "badgeVariants"],
+      "hashes": {
+        "typeSurface": "86af3a3088ed46c4",
+        "outline": "c3273f9810b6dd91",
+        "snapshot": null,
+        "outputMd": "0cb27fbce6f76e2e",
+        "examples": "edd9868442daa0b0"
+      }
+    },
+    "button": {
+      "slug": "button",
+      "kind": "code-backed",
+      "outline": "docs-src/components/button.docs.outline.md",
+      "output": "docs/components/button.md",
+      "examples": "docs-src/components/button.docs.examples.tsx",
+      "sources": ["packages/core/src/components/button/**"],
+      "claims": [],
+      "symbols": ["Button", "ButtonProps", "buttonVariants"],
+      "hashes": {
+        "typeSurface": "16df9927f8394548",
+        "outline": "200f12eb4bec959a",
+        "snapshot": "d607a315ffce3abc",
+        "outputMd": "bce0e2fada1d1638",
+        "examples": "1ee01b1e27764cd2"
+      }
+    },
+    "card": {
+      "slug": "card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/card.docs.outline.md",
+      "output": "docs/components/card.md",
+      "examples": "docs-src/components/card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/card/**"],
+      "claims": [],
+      "symbols": ["Card"],
+      "hashes": {
+        "typeSurface": "6ce6f0fdf2450cec",
+        "outline": "794fbe3b6440047a",
+        "snapshot": "98e09e5019fa1368",
+        "outputMd": "29b147ccc0c5ab88",
+        "examples": "b7b2d28f20fe0a18"
+      }
+    },
+    "checkbox": {
+      "slug": "checkbox",
+      "kind": "code-backed",
+      "outline": "docs-src/components/checkbox.docs.outline.md",
+      "output": "docs/components/checkbox.md",
+      "examples": "docs-src/components/checkbox.docs.examples.tsx",
+      "sources": ["packages/core/src/components/checkbox/**"],
+      "claims": [],
+      "symbols": ["Checkbox", "CheckboxProps"],
+      "hashes": {
+        "typeSurface": "3886bf7012f24283",
+        "outline": "916645fe8e5baf10",
+        "snapshot": "5df639bf40a2bdd7",
+        "outputMd": "14f7ba23f441df38",
+        "examples": "e8f09fba5acb116f"
+      }
+    },
+    "combobox": {
+      "slug": "combobox",
+      "kind": "code-backed",
+      "outline": "docs-src/components/combobox.docs.outline.md",
+      "output": "docs/components/combobox.md",
+      "examples": "docs-src/components/combobox.docs.examples.tsx",
+      "sources": ["packages/core/src/components/combobox/**"],
+      "claims": [],
+      "symbols": ["Combobox", "ComboboxAsyncFetcher"],
+      "hashes": {
+        "typeSurface": "74ec02220321c626",
+        "outline": "d56abfe9595252ba",
+        "snapshot": "f716f0435209820f",
+        "outputMd": "dfb775c7c4307409",
+        "examples": "4c96b71b68808c66"
+      }
+    },
+    "command-palette": {
+      "slug": "command-palette",
+      "kind": "code-backed",
+      "outline": "docs-src/components/command-palette.docs.outline.md",
+      "output": "docs/components/command-palette.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/command-palette/**"],
+      "claims": [],
+      "symbols": ["CommandPalette"],
+      "hashes": {
+        "typeSurface": "818f6808b94f8041",
+        "outline": "92145a0043e61c29",
+        "snapshot": null,
+        "outputMd": "7e5bc675a593791a",
+        "examples": null
+      }
+    },
+    "create-ai-gateway-client": {
+      "slug": "create-ai-gateway-client",
+      "kind": "prose",
+      "outline": "docs-src/hooks/create-ai-gateway-client.docs.outline.md",
+      "output": "docs/api/create-ai-gateway-client.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "171ba8a5b6eda15b",
+        "snapshot": null,
+        "outputMd": "7eaff97521a14ab0",
+        "examples": null
+      }
+    },
+    "create-typed-paths": {
+      "slug": "create-typed-paths",
+      "kind": "prose",
+      "outline": "docs-src/hooks/create-typed-paths.docs.outline.md",
+      "output": "docs/api/create-typed-paths.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a0e902f7bd84c957",
+        "snapshot": null,
+        "outputMd": "4c3a858d3eb02a2a",
+        "examples": null
+      }
+    },
+    "csv-importer": {
+      "slug": "csv-importer",
+      "kind": "code-backed",
+      "outline": "docs-src/components/csv-importer.docs.outline.md",
+      "output": "docs/components/csv-importer.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/csv-importer/**"],
+      "claims": [],
+      "symbols": [
+        "CsvCellIssue",
+        "CsvColumn",
+        "CsvColumnMapping",
+        "CsvCorrection",
+        "CsvImportEvent",
+        "CsvImporter",
+        "CsvSchema",
+        "InferCsvRow",
+        "ParsedRow",
+        "csv",
+        "useCsvImporter"
+      ],
+      "hashes": {
+        "typeSurface": "b4f7e0dc7b95af55",
+        "outline": "ee6b6aaae126c832",
+        "snapshot": null,
+        "outputMd": "53d3c795ca21b9dc",
+        "examples": null
+      }
+    },
+    "custom-components": {
+      "slug": "custom-components",
+      "kind": "prose",
+      "outline": "docs-src/concepts/custom-components.docs.outline.md",
+      "output": "docs/concepts/custom-components.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "33796a2dd22b5c0d",
+        "snapshot": null,
+        "outputMd": "551e04b1abbfa101",
+        "examples": null
+      }
+    },
+    "data-table": {
+      "slug": "data-table",
+      "kind": "code-backed",
+      "outline": "docs-src/components/data-table.docs.outline.md",
+      "output": "docs/components/data-table.md",
+      "examples": null,
+      "sources": [
+        "packages/core/src/components/data-table/**",
+        "packages/core/src/hooks/use-collection-variables.ts",
+        "packages/core/src/lib/collection-url-state.ts",
+        "packages/core/src/contexts/collection-control-context.tsx",
+        "packages/core/src/types/collection.ts"
+      ],
+      "claims": [],
+      "symbols": [
+        "BuildQueryVariables",
+        "CollectionControl",
+        "CollectionControlProvider",
+        "CollectionInitialState",
+        "CollectionParams",
+        "CollectionPersistedState",
+        "CollectionResult",
+        "CollectionVariables",
+        "Column",
+        "DataTable",
+        "DataTableContextValue",
+        "DataTableData",
+        "DataTableFilterConfig",
+        "DataTablePaginationProps",
+        "DataTableRootProps",
+        "FieldMetadata",
+        "FieldType",
+        "Filter",
+        "FilterConfig",
+        "FilterOperator",
+        "HeaderRenderContext",
+        "MetadataFieldOptions",
+        "NodeType",
+        "OPERATORS_BY_FILTER_TYPE",
+        "PageInfo",
+        "PaginationVariables",
+        "RowAction",
+        "SelectOption",
+        "SortConfig",
+        "SortState",
+        "TableFieldName",
+        "TableMetadata",
+        "TableMetadataFilter",
+        "TableMetadataMap",
+        "TableOrderableFieldName",
+        "UseCollectionOptions",
+        "UseCollectionReturn",
+        "UseDataTableOptions",
+        "UseDataTableReturn",
+        "createColumnHelper",
+        "fieldTypeToFilterConfig",
+        "fieldTypeToSortConfig",
+        "useCollectionControl",
+        "useCollectionVariables",
+        "useDataTable",
+        "useDataTableContext",
+        "useURLCollectionVariables",
+        "withURLCollectionState"
+      ],
+      "hashes": {
+        "typeSurface": "199f1cb9d06e3c15",
+        "outline": "2458512deac6c312",
+        "snapshot": null,
+        "outputMd": "d4212ff859cfb879",
+        "examples": null
+      }
+    },
+    "date-picker": {
+      "slug": "date-picker",
+      "kind": "code-backed",
+      "outline": "docs-src/components/date-picker.docs.outline.md",
+      "output": "docs/components/date-picker.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/date-field/**"],
+      "claims": [],
+      "symbols": [
+        "DateField",
+        "DateFieldProps",
+        "DatePicker",
+        "DatePickerProps",
+        "DateRangePicker",
+        "DateRangePickerProps"
+      ],
+      "hashes": {
+        "typeSurface": "6b07d4169fa991df",
+        "outline": "85b4b50ff4dbc265",
+        "snapshot": null,
+        "outputMd": "33902be121ff69db",
+        "examples": null
+      }
+    },
+    "default-header": {
+      "slug": "default-header",
+      "kind": "code-backed",
+      "outline": "docs-src/components/default-header.docs.outline.md",
+      "output": "docs/components/default-header.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/default-header.tsx"],
+      "claims": [],
+      "symbols": ["DefaultHeader", "DefaultHeaderProps"],
+      "hashes": {
+        "typeSurface": "dfc505929b8ef505",
+        "outline": "efdd10f3fe946e62",
+        "snapshot": null,
+        "outputMd": "375e55f4b12fa2be",
+        "examples": null
+      }
+    },
+    "default-sidebar": {
+      "slug": "default-sidebar",
+      "kind": "code-backed",
+      "outline": "docs-src/components/default-sidebar.docs.outline.md",
+      "output": "docs/components/default-sidebar.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/default-sidebar.tsx"],
+      "claims": [],
+      "symbols": ["DefaultSidebar", "DefaultSidebarProps"],
+      "hashes": {
+        "typeSurface": "48705640a924a509",
+        "outline": "4b3d7147c6b24de8",
+        "snapshot": null,
+        "outputMd": "3422388a0cc78571",
+        "examples": null
+      }
+    },
+    "define-i18n-labels": {
+      "slug": "define-i18n-labels",
+      "kind": "prose",
+      "outline": "docs-src/hooks/define-i18n-labels.docs.outline.md",
+      "output": "docs/api/define-i18n-labels.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "7bf7a8bea04c7abe",
+        "snapshot": null,
+        "outputMd": "f5a392adf633adfc",
+        "examples": null
+      }
+    },
+    "define-module": {
+      "slug": "define-module",
+      "kind": "prose",
+      "outline": "docs-src/hooks/define-module.docs.outline.md",
+      "output": "docs/api/define-module.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "7fa967f666ec9a42",
+        "snapshot": null,
+        "outputMd": "ce6b48d7ae55cea8",
+        "examples": null
+      }
+    },
+    "define-resource": {
+      "slug": "define-resource",
+      "kind": "prose",
+      "outline": "docs-src/hooks/define-resource.docs.outline.md",
+      "output": "docs/api/define-resource.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "b86f2162ee6f01cb",
+        "snapshot": null,
+        "outputMd": "d31b32b7336fa006",
+        "examples": null
+      }
+    },
+    "description-card": {
+      "slug": "description-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/description-card.docs.outline.md",
+      "output": "docs/components/description-card.md",
+      "examples": "docs-src/components/description-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/description-card/**"],
+      "claims": [],
+      "symbols": ["DescriptionCard", "DescriptionCardProps"],
+      "hashes": {
+        "typeSurface": "04d576b0cf725dfe",
+        "outline": "6cae471c2f101ff5",
+        "snapshot": null,
+        "outputMd": "a347fd1f4ccd433e",
+        "examples": "8e45ff2d2e3cd59b"
+      }
+    },
+    "dialog": {
+      "slug": "dialog",
+      "kind": "code-backed",
+      "outline": "docs-src/components/dialog.docs.outline.md",
+      "output": "docs/components/dialog.md",
+      "examples": "docs-src/components/dialog.docs.examples.tsx",
+      "sources": ["packages/core/src/components/dialog/**"],
+      "claims": [],
+      "symbols": ["Dialog"],
+      "hashes": {
+        "typeSurface": "b1614970f950ceb6",
+        "outline": "bda40376d6e3e008",
+        "snapshot": "d4fa33f2da19d5ee",
+        "outputMd": "ec6a0ac098d1d87a",
+        "examples": "934c52d4e8761404"
+      }
+    },
+    "document-detail": {
+      "slug": "document-detail",
+      "kind": "prose",
+      "outline": "docs-src/pages/document-detail.docs.outline.md",
+      "output": "docs/pages/document-detail.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "41d9abcae59b27b4",
+        "snapshot": null,
+        "outputMd": "c3fb2588a0699c26",
+        "examples": null
+      }
+    },
+    "document-progress-card": {
+      "slug": "document-progress-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/document-progress-card.docs.outline.md",
+      "output": "docs/components/document-progress-card.md",
+      "examples": "docs-src/components/document-progress-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/document-progress-card/**"],
+      "claims": [],
+      "symbols": ["DocumentProgressCard", "DocumentProgressCardProps"],
+      "hashes": {
+        "typeSurface": "306ea2ad2a256b8d",
+        "outline": "c1448e17cc81a142",
+        "snapshot": "57f1bbb52b30d78b",
+        "outputMd": "d0fb940f685f8869",
+        "examples": "6962c6f28d09eb0a"
+      }
+    },
+    "file-based-routing": {
+      "slug": "file-based-routing",
+      "kind": "prose",
+      "outline": "docs-src/concepts/file-based-routing.docs.outline.md",
+      "output": "docs/concepts/file-based-routing.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "5f2301d504082a60",
+        "snapshot": null,
+        "outputMd": "caa1ea6264d3b543",
+        "examples": null
+      }
+    },
+    "form": {
+      "slug": "form",
+      "kind": "code-backed",
+      "outline": "docs-src/components/form.docs.outline.md",
+      "output": "docs/components/form.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/form/**"],
+      "claims": [],
+      "symbols": ["Form", "FormProps"],
+      "hashes": {
+        "typeSurface": "7b374d45d53d4535",
+        "outline": "79c9b0f08ca38027",
+        "snapshot": "4287a03df2854f9a",
+        "outputMd": "91d901b17aed7781",
+        "examples": null
+      }
+    },
+    "form-composer": {
+      "slug": "form-composer",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-composer.docs.outline.md",
+      "output": "docs/patterns/form-composer.md",
+      "examples": "docs-src/patterns/form-composer.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "89deaf65c35cc3d9",
+        "snapshot": null,
+        "outputMd": "ed187ac3a0773d3d",
+        "examples": "abd682c0980d1e21"
+      }
+    },
+    "form-modal": {
+      "slug": "form-modal",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-modal.docs.outline.md",
+      "output": "docs/patterns/form-modal.md",
+      "examples": "docs-src/patterns/form-modal.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "33acfc8e4b23ac15",
+        "snapshot": null,
+        "outputMd": "850e620f5cc222fa",
+        "examples": "2fe2a4cb5c97a16b"
+      }
+    },
+    "form-sectioned": {
+      "slug": "form-sectioned",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-sectioned.docs.outline.md",
+      "output": "docs/patterns/form-sectioned.md",
+      "examples": "docs-src/patterns/form-sectioned.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "af8e73b07f01cef4",
+        "snapshot": null,
+        "outputMd": "d31cd3ae6ad0790c",
+        "examples": "e66de48697da4786"
+      }
+    },
+    "form-single-page": {
+      "slug": "form-single-page",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-single-page.docs.outline.md",
+      "output": "docs/patterns/form-single-page.md",
+      "examples": "docs-src/patterns/form-single-page.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "828493750c9e7dbf",
+        "snapshot": null,
+        "outputMd": "10a0f4d91a120752",
+        "examples": "c160f4883aff98f3"
+      }
+    },
+    "form-wizard": {
+      "slug": "form-wizard",
+      "kind": "prose",
+      "outline": "docs-src/patterns/form-wizard.docs.outline.md",
+      "output": "docs/patterns/form-wizard.md",
+      "examples": "docs-src/patterns/form-wizard.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "fbc09ef9994494cb",
+        "snapshot": null,
+        "outputMd": "851afb4672da6673",
+        "examples": "157ff03dc999d3d3"
+      }
+    },
+    "global-header-layout": {
+      "slug": "global-header-layout",
+      "kind": "code-backed",
+      "outline": "docs-src/components/global-header-layout.docs.outline.md",
+      "output": "docs/components/global-header-layout.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/global-header-layout.tsx"],
+      "claims": [],
+      "symbols": ["GlobalHeaderLayout", "GlobalHeaderLayoutProps"],
+      "hashes": {
+        "typeSurface": "70edbc7c68dcc7aa",
+        "outline": "f921a854181d6d1c",
+        "snapshot": null,
+        "outputMd": "dd2b0da3702cf8d9",
+        "examples": null
+      }
+    },
+    "graphql": {
+      "slug": "graphql",
+      "kind": "prose",
+      "outline": "docs-src/concepts/graphql.docs.outline.md",
+      "output": "docs/concepts/graphql.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c75d2a9a871756e6",
+        "snapshot": null,
+        "outputMd": "ba5107604e4f42e8",
+        "examples": null
+      }
+    },
+    "grid": {
+      "slug": "grid",
+      "kind": "code-backed",
+      "outline": "docs-src/components/grid.docs.outline.md",
+      "output": "docs/components/grid.md",
+      "examples": "docs-src/components/grid.docs.examples.tsx",
+      "sources": ["packages/core/src/components/grid/**"],
+      "claims": [],
+      "symbols": ["Grid", "GridItemProps", "GridProps"],
+      "hashes": {
+        "typeSurface": "e14ecb0505a2a8bf",
+        "outline": "c7befb0148d5851d",
+        "snapshot": "40fca09bec6804cf",
+        "outputMd": "9051eb53dde4179f",
+        "examples": "90bc8a3e4816a82c"
+      }
+    },
+    "guards/hidden": {
+      "slug": "guards/hidden",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/hidden.docs.outline.md",
+      "output": "docs/api/guards/hidden.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "3407c9f64b8818d0",
+        "snapshot": null,
+        "outputMd": "dda25877f7e40b82",
+        "examples": null
+      }
+    },
+    "guards/overview": {
+      "slug": "guards/overview",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/overview.docs.outline.md",
+      "output": "docs/api/guards/overview.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "190b6fddf62a7214",
+        "snapshot": null,
+        "outputMd": "bc694f0965c1d049",
+        "examples": null
+      }
+    },
+    "guards/pass": {
+      "slug": "guards/pass",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/pass.docs.outline.md",
+      "output": "docs/api/guards/pass.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "346484ce0f450c7a",
+        "snapshot": null,
+        "outputMd": "3363ac1c6a7905f8",
+        "examples": null
+      }
+    },
+    "guards/redirect-to": {
+      "slug": "guards/redirect-to",
+      "kind": "prose",
+      "outline": "docs-src/hooks/guards/redirect-to.docs.outline.md",
+      "output": "docs/api/guards/redirect-to.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "ff7a089596252e7a",
+        "snapshot": null,
+        "outputMd": "1b08b8aa0d013dc7",
+        "examples": null
+      }
+    },
+    "input": {
+      "slug": "input",
+      "kind": "code-backed",
+      "outline": "docs-src/components/input.docs.outline.md",
+      "output": "docs/components/input.md",
+      "examples": "docs-src/components/input.docs.examples.tsx",
+      "sources": ["packages/core/src/components/input/**"],
+      "claims": [],
+      "symbols": ["Input", "InputProps"],
+      "hashes": {
+        "typeSurface": "7c5b64c579f508ee",
+        "outline": "9b273bc9e509f1fe",
+        "snapshot": "7e0ed658f518fd9a",
+        "outputMd": "a3a6c9679af99d37",
+        "examples": "fc036f7af21b9dd4"
+      }
+    },
+    "interaction-confirm": {
+      "slug": "interaction-confirm",
+      "kind": "prose",
+      "outline": "docs-src/patterns/interaction-confirm.docs.outline.md",
+      "output": "docs/patterns/interaction-confirm.md",
+      "examples": "docs-src/patterns/interaction-confirm.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "fde428fd7f16663d",
+        "snapshot": null,
+        "outputMd": "2db70f423c6fdf97",
+        "examples": "c76447e12f161a81"
+      }
+    },
+    "interaction-multi-select": {
+      "slug": "interaction-multi-select",
+      "kind": "prose",
+      "outline": "docs-src/patterns/interaction-multi-select.docs.outline.md",
+      "output": "docs/patterns/interaction-multi-select.md",
+      "examples": "docs-src/patterns/interaction-multi-select.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "cf74b5f060b145d1",
+        "snapshot": null,
+        "outputMd": "09e99e5035da6e81",
+        "examples": "48e0d4327812dfde"
+      }
+    },
+    "interaction-toast": {
+      "slug": "interaction-toast",
+      "kind": "prose",
+      "outline": "docs-src/patterns/interaction-toast.docs.outline.md",
+      "output": "docs/patterns/interaction-toast.md",
+      "examples": "docs-src/patterns/interaction-toast.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "45b23abe90e466b2",
+        "snapshot": null,
+        "outputMd": "f68bdab855730f48",
+        "examples": "7089e7331b95df31"
+      }
+    },
+    "layout": {
+      "slug": "layout",
+      "kind": "code-backed",
+      "outline": "docs-src/components/layout.docs.outline.md",
+      "output": "docs/components/layout.md",
+      "examples": "docs-src/components/layout.docs.examples.tsx",
+      "sources": ["packages/core/src/components/layout/**"],
+      "claims": [],
+      "symbols": ["Layout", "LayoutProps"],
+      "hashes": {
+        "typeSurface": "c7e8fec79020d657",
+        "outline": "02ed5081ea465edf",
+        "snapshot": "2510afae99b97375",
+        "outputMd": "66696139a46fabb0",
+        "examples": "2a4aa694c4d48324"
+      }
+    },
+    "list-dense-scan": {
+      "slug": "list-dense-scan",
+      "kind": "prose",
+      "outline": "docs-src/patterns/list-dense-scan.docs.outline.md",
+      "output": "docs/patterns/list-dense-scan.md",
+      "examples": "docs-src/patterns/list-dense-scan.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "165e45ba5f128d96",
+        "snapshot": null,
+        "outputMd": "8062ea0df9403fbb",
+        "examples": "c0a2bd60e8a04474"
+      }
+    },
+    "menu": {
+      "slug": "menu",
+      "kind": "code-backed",
+      "outline": "docs-src/components/menu.docs.outline.md",
+      "output": "docs/components/menu.md",
+      "examples": "docs-src/components/menu.docs.examples.tsx",
+      "sources": ["packages/core/src/components/menu/**"],
+      "claims": [],
+      "symbols": ["Menu"],
+      "hashes": {
+        "typeSurface": "943616def28cafb0",
+        "outline": "8f06df28129676c8",
+        "snapshot": "02dfd02003105939",
+        "outputMd": "ceb4a05822538d20",
+        "examples": "cff0508bb5520ae6"
+      }
+    },
+    "metric-card": {
+      "slug": "metric-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/metric-card.docs.outline.md",
+      "output": "docs/components/metric-card.md",
+      "examples": "docs-src/components/metric-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/metric-card/**"],
+      "claims": [],
+      "symbols": ["MetricCard", "MetricCardProps"],
+      "hashes": {
+        "typeSurface": "a9cb24cc83f42bad",
+        "outline": "6e57749a9a03ca4f",
+        "snapshot": null,
+        "outputMd": "5a1c557768c6590f",
+        "examples": "22b876f43b26922c"
+      }
+    },
+    "modules-and-resources": {
+      "slug": "modules-and-resources",
+      "kind": "prose",
+      "outline": "docs-src/concepts/modules-and-resources.docs.outline.md",
+      "output": "docs/concepts/modules-and-resources.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "5dc437fe5f4c9975",
+        "snapshot": null,
+        "outputMd": "bf15b5460f22d165",
+        "examples": null
+      }
+    },
+    "router/use-location": {
+      "slug": "router/use-location",
+      "kind": "prose",
+      "outline": "docs-src/hooks/router/use-location.docs.outline.md",
+      "output": "docs/api/router/use-location.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c0e437bdb7348d8e",
+        "snapshot": null,
+        "outputMd": "ddb44cc51af636cc",
+        "examples": null
+      }
+    },
+    "router/use-navigate": {
+      "slug": "router/use-navigate",
+      "kind": "prose",
+      "outline": "docs-src/hooks/router/use-navigate.docs.outline.md",
+      "output": "docs/api/router/use-navigate.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "8c562701aea79262",
+        "snapshot": null,
+        "outputMd": "d018cb13a7ddc38b",
+        "examples": null
+      }
+    },
+    "router/use-params": {
+      "slug": "router/use-params",
+      "kind": "prose",
+      "outline": "docs-src/hooks/router/use-params.docs.outline.md",
+      "output": "docs/api/router/use-params.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "cb4706483ef26152",
+        "snapshot": null,
+        "outputMd": "535f701e77dfc4e6",
+        "examples": null
+      }
+    },
+    "routing-navigation": {
+      "slug": "routing-navigation",
+      "kind": "prose",
+      "outline": "docs-src/concepts/routing-navigation.docs.outline.md",
+      "output": "docs/concepts/routing-navigation.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a83f594603627967",
+        "snapshot": null,
+        "outputMd": "2f3ff3f095c2b1cc",
+        "examples": null
+      }
+    },
+    "select": {
+      "slug": "select",
+      "kind": "code-backed",
+      "outline": "docs-src/components/select.docs.outline.md",
+      "output": "docs/components/select.md",
+      "examples": "docs-src/components/select.docs.examples.tsx",
+      "sources": ["packages/core/src/components/select/**"],
+      "claims": [],
+      "symbols": ["Select", "SelectAsyncFetcher"],
+      "hashes": {
+        "typeSurface": "429710973dfa912b",
+        "outline": "721e8995f53f0e8f",
+        "snapshot": "f6fcbd73e127f2f4",
+        "outputMd": "ae287e2bb5abc1c6",
+        "examples": "1ce89cec30045466"
+      }
+    },
+    "sheet": {
+      "slug": "sheet",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sheet.docs.outline.md",
+      "output": "docs/components/sheet.md",
+      "examples": "docs-src/components/sheet.docs.examples.tsx",
+      "sources": ["packages/core/src/components/sheet/**"],
+      "claims": [],
+      "symbols": ["Sheet"],
+      "hashes": {
+        "typeSurface": "e760949efcbe4c38",
+        "outline": "464d91acc48f7c9d",
+        "snapshot": "12c20fc6f44d1b4c",
+        "outputMd": "1f81ebd562c50371",
+        "examples": "b0eebb8c5e2219dc"
+      }
+    },
+    "sidebar-group": {
+      "slug": "sidebar-group",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-group.docs.outline.md",
+      "output": "docs/components/sidebar-group.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-group.tsx"],
+      "claims": [],
+      "symbols": ["SidebarGroup", "SidebarGroupProps"],
+      "hashes": {
+        "typeSurface": "cc25e488e6896569",
+        "outline": "97f5f584d13b992e",
+        "snapshot": null,
+        "outputMd": "7288fdf8bb5c19b9",
+        "examples": null
+      }
+    },
+    "sidebar-item": {
+      "slug": "sidebar-item",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-item.docs.outline.md",
+      "output": "docs/components/sidebar-item.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-item.tsx"],
+      "claims": [],
+      "symbols": ["SidebarItem", "SidebarItemProps"],
+      "hashes": {
+        "typeSurface": "7be21739c231ede3",
+        "outline": "1cc674b956d09fab",
+        "snapshot": null,
+        "outputMd": "d55d38352040ef2c",
+        "examples": null
+      }
+    },
+    "sidebar-layout": {
+      "slug": "sidebar-layout",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-layout.docs.outline.md",
+      "output": "docs/components/sidebar-layout.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-layout.tsx"],
+      "claims": [],
+      "symbols": ["SidebarLayout", "SidebarLayoutProps"],
+      "hashes": {
+        "typeSurface": "bbc777033634cea5",
+        "outline": "25ad69b3d94bffc9",
+        "snapshot": null,
+        "outputMd": "e50b2d649289d772",
+        "examples": null
+      }
+    },
+    "sidebar-navigation": {
+      "slug": "sidebar-navigation",
+      "kind": "prose",
+      "outline": "docs-src/concepts/sidebar-navigation.docs.outline.md",
+      "output": "docs/concepts/sidebar-navigation.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "74f353988f15c82b",
+        "snapshot": null,
+        "outputMd": "96f1cf893c231861",
+        "examples": null
+      }
+    },
+    "spinner": {
+      "slug": "spinner",
+      "kind": "code-backed",
+      "outline": "docs-src/components/spinner.docs.outline.md",
+      "output": "docs/components/spinner.md",
+      "examples": "docs-src/components/spinner.docs.examples.tsx",
+      "sources": ["packages/core/src/components/spinner/**"],
+      "claims": [],
+      "symbols": ["Spinner", "SpinnerProps"],
+      "hashes": {
+        "typeSurface": "cdc89a612071486c",
+        "outline": "4cef63f21a8c5851",
+        "snapshot": null,
+        "outputMd": "e05d94ba9c3d17da",
+        "examples": "19131f441efe232f"
+      }
+    },
+    "styling-theming": {
+      "slug": "styling-theming",
+      "kind": "prose",
+      "outline": "docs-src/concepts/styling-theming.docs.outline.md",
+      "output": "docs/concepts/styling-theming.md",
+      "examples": "docs-src/concepts/styling-theming.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "96d4bfc1c2681154",
+        "snapshot": null,
+        "outputMd": "0133fdae405f467c",
+        "examples": "d3cca347b055a503"
+      }
+    },
+    "table": {
+      "slug": "table",
+      "kind": "code-backed",
+      "outline": "docs-src/components/table.docs.outline.md",
+      "output": "docs/components/table.md",
+      "examples": "docs-src/components/table.docs.examples.tsx",
+      "sources": ["packages/core/src/components/table/**"],
+      "claims": [],
+      "symbols": ["Table"],
+      "hashes": {
+        "typeSurface": "bc60676f880b485b",
+        "outline": "9381eff2f7987a0e",
+        "snapshot": "54e27fa3789afbd2",
+        "outputMd": "f85ec64ceb7f4acf",
+        "examples": "2b9d94065f2f77b7"
+      }
+    },
+    "tabs": {
+      "slug": "tabs",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tabs.docs.outline.md",
+      "output": "docs/components/tabs.md",
+      "examples": "docs-src/components/tabs.docs.examples.tsx",
+      "sources": ["packages/core/src/components/tabs/**"],
+      "claims": [],
+      "symbols": ["Tabs"],
+      "hashes": {
+        "typeSurface": "f6795191b952e110",
+        "outline": "b73ba87ed529e09d",
+        "snapshot": "925b704a05df1333",
+        "outputMd": "30bb32e57fc78bd9",
+        "examples": "b07f258088e81cac"
+      }
+    },
+    "textarea": {
+      "slug": "textarea",
+      "kind": "code-backed",
+      "outline": "docs-src/components/textarea.docs.outline.md",
+      "output": "docs/components/textarea.md",
+      "examples": "docs-src/components/textarea.docs.examples.tsx",
+      "sources": ["packages/core/src/components/textarea/**"],
+      "claims": [],
+      "symbols": ["Textarea", "TextareaProps"],
+      "hashes": {
+        "typeSurface": "3d9225f7356a29b2",
+        "outline": "40952524e46c333e",
+        "snapshot": "40f4b39567ab051b",
+        "outputMd": "c940bc01cd573334",
+        "examples": "0712ee03ad6ce259"
+      }
+    },
+    "timeline": {
+      "slug": "timeline",
+      "kind": "code-backed",
+      "outline": "docs-src/components/timeline.docs.outline.md",
+      "output": "docs/components/timeline.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/timeline/**"],
+      "claims": [],
+      "symbols": [
+        "Timeline",
+        "TimelineAxis",
+        "TimelineAxisLevel",
+        "TimelineAxisSpan",
+        "TimelineAxisTick",
+        "TimelineBand",
+        "TimelineDecorations",
+        "TimelineGuide",
+        "TimelineIntervalProps",
+        "TimelineLinkDefaults",
+        "TimelineLinkProps",
+        "TimelineMarker",
+        "TimelineRootProps",
+        "TimelineRowBackground",
+        "TimelineRowProps",
+        "TimelineViewportProps"
+      ],
+      "hashes": {
+        "typeSurface": "f1d9ac66cafae3d5",
+        "outline": "6d4342c4015a7f33",
+        "snapshot": null,
+        "outputMd": "699249c9452485ab",
+        "examples": null
+      }
+    },
+    "tooltip": {
+      "slug": "tooltip",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tooltip.docs.outline.md",
+      "output": "docs/components/tooltip.md",
+      "examples": "docs-src/components/tooltip.docs.examples.tsx",
+      "sources": ["packages/core/src/components/tooltip/**"],
+      "claims": [],
+      "symbols": ["Tooltip"],
+      "hashes": {
+        "typeSurface": "d652b740db9471c7",
+        "outline": "eea5aed5cf4c8f33",
+        "snapshot": "13ed55385962bf3a",
+        "outputMd": "113c95b2995917ed",
+        "examples": "87b93974e65d3a07"
+      }
+    },
+    "use-ai-chat": {
+      "slug": "use-ai-chat",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-ai-chat.docs.outline.md",
+      "output": "docs/api/use-ai-chat.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "4cf294ec6ae1492f",
+        "snapshot": null,
+        "outputMd": "f4a88f636000fd60",
+        "examples": null
+      }
+    },
+    "use-app-shell": {
+      "slug": "use-app-shell",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-app-shell.docs.outline.md",
+      "output": "docs/api/use-app-shell.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "8702d65d908fad18",
+        "snapshot": null,
+        "outputMd": "866e5e30c1e13d9a",
+        "examples": null
+      }
+    },
+    "use-app-shell-config": {
+      "slug": "use-app-shell-config",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-app-shell-config.docs.outline.md",
+      "output": "docs/api/use-app-shell-config.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "53d3ffda68e0ad52",
+        "snapshot": null,
+        "outputMd": "36ada5565b21c577",
+        "examples": null
+      }
+    },
+    "use-app-shell-data": {
+      "slug": "use-app-shell-data",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-app-shell-data.docs.outline.md",
+      "output": "docs/api/use-app-shell-data.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "0ed37e033aa9546a",
+        "snapshot": null,
+        "outputMd": "fad92e84dbbb8a86",
+        "examples": null
+      }
+    },
+    "use-auth": {
+      "slug": "use-auth",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-auth.docs.outline.md",
+      "output": "docs/api/use-auth.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c8a21332f8463f2f",
+        "snapshot": null,
+        "outputMd": "a7d907ac79d24944",
+        "examples": null
+      }
+    },
+    "use-override-breadcrumb": {
+      "slug": "use-override-breadcrumb",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-override-breadcrumb.docs.outline.md",
+      "output": "docs/api/use-override-breadcrumb.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "829cc2f578187e08",
+        "snapshot": null,
+        "outputMd": "6ec55fc3dfd8c21d",
+        "examples": null
+      }
+    },
+    "use-page-meta": {
+      "slug": "use-page-meta",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-page-meta.docs.outline.md",
+      "output": "docs/api/use-page-meta.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "534c9034e7016fc6",
+        "snapshot": null,
+        "outputMd": "f988bdc0fb180f0c",
+        "examples": null
+      }
+    },
+    "use-register-command-palette-actions": {
+      "slug": "use-register-command-palette-actions",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-register-command-palette-actions.docs.outline.md",
+      "output": "docs/api/use-register-command-palette-actions.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "990b894284c803c2",
+        "snapshot": null,
+        "outputMd": "7144ae3dc68aa65b",
+        "examples": null
+      }
+    },
+    "use-resolved-locale": {
+      "slug": "use-resolved-locale",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-resolved-locale.docs.outline.md",
+      "output": "docs/api/use-resolved-locale.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "d27723b34eaeb8f1",
+        "snapshot": null,
+        "outputMd": "d0eb9f125c314d85",
+        "examples": null
+      }
+    },
+    "use-route-error": {
+      "slug": "use-route-error",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-route-error.docs.outline.md",
+      "output": "docs/api/use-route-error.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "c1c9cd5650f614e1",
+        "snapshot": null,
+        "outputMd": "068fa5e47296467b",
+        "examples": null
+      }
+    },
+    "use-theme": {
+      "slug": "use-theme",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-theme.docs.outline.md",
+      "output": "docs/api/use-theme.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "764717d219c6a9fc",
+        "snapshot": null,
+        "outputMd": "c338022de386d5e4",
+        "examples": null
+      }
+    },
+    "use-time-zone": {
+      "slug": "use-time-zone",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-time-zone.docs.outline.md",
+      "output": "docs/api/use-time-zone.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "0453e622960d3c3a",
+        "snapshot": null,
+        "outputMd": "30c15545ab3c4954",
+        "examples": null
+      }
+    },
+    "use-toast": {
+      "slug": "use-toast",
+      "kind": "prose",
+      "outline": "docs-src/hooks/use-toast.docs.outline.md",
+      "output": "docs/api/use-toast.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a26de991c44944f2",
+        "snapshot": null,
+        "outputMd": "e1c8fe2df6e8bee8",
+        "examples": null
+      }
+    },
+    "with-guard": {
+      "slug": "with-guard",
+      "kind": "code-backed",
+      "outline": "docs-src/components/with-guard.docs.outline.md",
+      "output": "docs/components/with-guard.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/with-guard/**"],
+      "claims": [],
+      "symbols": ["WithGuard", "WithGuardProps"],
+      "hashes": {
+        "typeSurface": "82ec0e51747a308b",
+        "outline": "bd0a93da4ee5e548",
+        "snapshot": null,
+        "outputMd": "d79aaf40cb97073f",
+        "examples": null
+      }
+    }
+  },
+  "skill": {
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "ce27a191becaca3a",
+    "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "551e04b1abbfa101",
+    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
+    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
+    "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
+    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2f3ff3f095c2b1cc",
+    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "96f1cf893c231861",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "0133fdae405f467c",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
+    "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
+    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
+    "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
+    "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "c4a7bf5560678bdf",
+    "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
+    "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
+    "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
+    "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
+    "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
+    "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
+    "packages/core/skills/app-shell-patterns/references/components/card.md": "29b147ccc0c5ab88",
+    "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
+    "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
+    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
+    "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "d4212ff859cfb879",
+    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "33902be121ff69db",
+    "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
+    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
+    "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
+    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
+    "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "91d901b17aed7781",
+    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
+    "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
+    "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
+    "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
+    "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
+    "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
+    "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "7288fdf8bb5c19b9",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "d55d38352040ef2c",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
+    "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
+    "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
+    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
+    "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
+    "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
+    "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
+    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
+    "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
+    "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
+    "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "f5a392adf633adfc",
+    "packages/core/skills/app-shell-patterns/references/api/define-module.md": "ce6b48d7ae55cea8",
+    "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "d31b32b7336fa006",
+    "packages/core/skills/app-shell-patterns/references/api/guards/hidden.md": "dda25877f7e40b82",
+    "packages/core/skills/app-shell-patterns/references/api/guards/overview.md": "bc694f0965c1d049",
+    "packages/core/skills/app-shell-patterns/references/api/guards/pass.md": "3363ac1c6a7905f8",
+    "packages/core/skills/app-shell-patterns/references/api/guards/redirect-to.md": "1b08b8aa0d013dc7",
+    "packages/core/skills/app-shell-patterns/references/api/router/use-location.md": "ddb44cc51af636cc",
+    "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
+    "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "535f701e77dfc4e6",
+    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "f4a88f636000fd60",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "866e5e30c1e13d9a",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "36ada5565b21c577",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "fad92e84dbbb8a86",
+    "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
+    "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
+    "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
+    "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "7144ae3dc68aa65b",
+    "packages/core/skills/app-shell-patterns/references/api/use-resolved-locale.md": "d0eb9f125c314d85",
+    "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "068fa5e47296467b",
+    "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
+    "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
+    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "e1c8fe2df6e8bee8",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "850e620f5cc222fa",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
+    "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
+    "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "09e99e5035da6e81",
+    "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
+    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "799fd5010635b2c2",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "165761adda4fbfc0"
+  }
+}

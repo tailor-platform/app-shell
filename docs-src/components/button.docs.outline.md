@@ -1,0 +1,107 @@
+---
+kind: code-backed
+group: button
+title: Button
+description: Styled button with multiple variants and sizes
+sources:
+  - packages/core/src/components/button/**
+---
+
+# Button
+
+The `Button` component is a styled button with multiple visual variants and sizes. It supports rendering as a custom element via the `render` prop (Base UI render pattern).
+
+## Import
+
+```tsx
+import { Button } from "@tailor-platform/app-shell";
+```
+
+## Basic Usage
+
+<!-- example: basic-usage -->
+
+<!-- api -->
+
+All standard HTML `<button>` props are also accepted.
+
+## Variants
+
+<!-- example: variants -->
+
+## Sizes
+
+<!-- example: sizes -->
+
+## Render Prop
+
+The `render` prop lets you use the button's styles on a custom element:
+
+```tsx
+import { Button } from "@tailor-platform/app-shell";
+import { Link } from "@tailor-platform/app-shell";
+
+<Button render={<Link to="/orders" />} variant="outline">
+  View Orders
+</Button>;
+```
+
+This is the Base UI render pattern — the button's class names and event handlers are applied to the rendered element.
+
+## Examples
+
+### Form Actions
+
+```tsx
+<div className="flex gap-2 justify-end">
+  <Button variant="outline">Cancel</Button>
+  <Button>Save Changes</Button>
+</div>
+```
+
+### Destructive Confirmation
+
+```tsx
+<Button variant="destructive" onClick={handleDelete}>
+  Delete Order
+</Button>
+```
+
+### Icon Button
+
+```tsx
+import { PlusIcon } from "lucide-react";
+
+<Button size="icon" variant="outline">
+  <PlusIcon />
+</Button>;
+```
+
+## TypeScript
+
+```typescript
+import { type ButtonProps } from "@tailor-platform/app-shell";
+```
+
+## Styling
+
+Use `buttonVariants` to apply button styles to non-button elements:
+
+```tsx
+import { buttonVariants } from "@tailor-platform/app-shell";
+
+<a href="/orders" className={buttonVariants({ variant: "outline", size: "sm" })}>
+  View Orders
+</a>;
+```
+
+## Accessibility
+
+- Buttons render with `cursor: pointer` to signal interactivity consistently across all variants and sizes.
+- Disabled buttons suppress the pointer cursor via `pointer-events-none`, so they do not signal clickability.
+
+## Related Components
+
+- [Dialog](./dialog.md) - Use buttons as dialog triggers and actions
+- [Sheet](./sheet.md) - Use buttons as sheet triggers
+- [Layout](./layout.md) - Use buttons in page header actions

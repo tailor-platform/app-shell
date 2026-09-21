@@ -12,8 +12,6 @@ sources:
 
 It renders no border or background of its own. Wrap it in [`Card`](./card.md), [`Sheet`](./sheet.md), or a `Layout.Column` for the surrounding surface.
 
-> **Not a mirror of the catalogue pattern.** `AIChat` was migrated from the UI Catalogue's [AI chat pattern](https://ui.tailor.tech/patterns/ai-chat), which is a design reference built on its own primitives — not a preview of this component. The API differs, and several behaviours were changed deliberately to fit AppShell (see [Prop pass-through](#prop-pass-through) and the notes throughout). Read that page for the intent; read this one for the contract.
-
 ## Import
 
 ```tsx

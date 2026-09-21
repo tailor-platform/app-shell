@@ -64,9 +64,9 @@
       ],
       "hashes": {
         "typeSurface": "7cb8a34c1c36eb02",
-        "outline": "a207e95918c857e0",
+        "outline": "7bbc0ee5cabeca0f",
         "snapshot": "791be2c6087af41c",
-        "outputMd": "6879f7ce65a18463",
+        "outputMd": "824d1aa36bb7f194",
         "examples": null
       }
     },
@@ -1532,7 +1532,7 @@
   "skill": {
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
-    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "6879f7ce65a18463",
+    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "c4a7bf5560678bdf",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",

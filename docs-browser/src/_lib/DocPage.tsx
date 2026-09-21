@@ -3,9 +3,21 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
-import { Layout, Table, Tabs } from "@tailor-platform/app-shell";
+import { Layout, Link, Table, Tabs } from "@tailor-platform/app-shell";
 
 import { units } from "../docs";
+
+/** Rewrite a relative `*.md` doc link to its docs-browser route, resolved
+ * against the current unit's route (`/<category>/<slug>`). Returns null for
+ * external links, in-page anchors, and non-`.md` targets — left untouched — so
+ * the raw `.md` files stay browsable on GitHub while the app routes correctly. */
+function mdHrefToRoute(href: string, category: string, slug: string): string | null {
+  if (/^(https?:|mailto:|#)/.test(href)) return null;
+  const [path, hash] = href.split("#");
+  if (!/\.md$/.test(path)) return null;
+  const resolved = new URL(path, `http://x/${category}/${slug}`).pathname.replace(/\.md$/, "");
+  return hash ? `${resolved}#${hash}` : resolved;
+}
 
 function pascalCase(key: string): string {
   return key
@@ -178,14 +190,42 @@ export function DocPage({ slug }: { slug: string }) {
     // arrives as inline `style`, which Table.Head/Cell honor) so it doesn't
     // clash with Table's typed `align`.
     th: ({ node, align, ...props }: ComponentProps<"th"> & { node?: unknown }) => (
-      <Table.Head {...props} />
+      <Table.Head className="whitespace-normal! align-top" {...props} />
     ),
     td: ({ node, align, ...props }: ComponentProps<"td"> & { node?: unknown }) => (
-      <Table.Cell {...props} />
+      <Table.Cell className="whitespace-normal! align-top break-words" {...props} />
     ),
     caption: ({ node, ...props }: ComponentProps<"caption"> & { node?: unknown }) => (
       <Table.Caption {...props} />
     ),
+
+    // Blockquotes as light callout panels — the docs use `> **Note:** …` /
+    // `> ⚠️ **Warning** …` as pseudo-admonitions, which Preflight leaves flat.
+    blockquote: ({ node, ...props }: ComponentProps<"blockquote"> & { node?: unknown }) => (
+      <blockquote
+        className="border-primary/60 bg-muted/40 text-foreground my-4 rounded-r-md border-l-2 py-2 pr-3 pl-4 [&>p]:my-1.5 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+        {...props}
+      />
+    ),
+
+    // Lists — Preflight strips markers + indent and there is no prose wrapper,
+    // so restore discs / decimals and indentation explicitly.
+    ul: ({ node, ...props }: ComponentProps<"ul"> & { node?: unknown }) => (
+      <ul className="my-3 list-disc space-y-1 pl-6 [&_ul]:my-1 [&_ol]:my-1" {...props} />
+    ),
+    ol: ({ node, ...props }: ComponentProps<"ol"> & { node?: unknown }) => (
+      <ol className="my-3 list-decimal space-y-1 pl-6 [&_ul]:my-1 [&_ol]:my-1" {...props} />
+    ),
+    li: ({ node, ...props }: ComponentProps<"li"> & { node?: unknown }) => (
+      <li className="leading-relaxed" {...props} />
+    ),
+
+    // Cross-doc links target the source `.md` files; rewrite to browser routes
+    // at render time (external links + in-page anchors pass through unchanged).
+    a: ({ node, href, ...props }: ComponentProps<"a"> & { node?: unknown }) => {
+      const to = href ? mdHrefToRoute(href, unit.category, unit.slug) : null;
+      return to ? <Link to={to} {...props} /> : <a href={href} {...props} />;
+    },
   } as Components;
 
   return (

@@ -1,6 +1,8 @@
 # Decision: `page` as a catalogue category
 
 > Status: **Decided — `catalogue/src/page/` added as a sibling of `src/pattern/`. Machinery only; page entries land per ticket.**
+>
+> Superseded in part by [documentation-management-overhaul.md](./documentation-management-overhaul.md): the `catalogue/` package was retired and its entries moved to `docs-src/pages/` and `docs-src/patterns/`. The category reasoning below still holds; the paths it names do not.
 > Scope: where page entries live and how they differ from patterns. Does not cover any individual page's content.
 
 ## Context
@@ -10,7 +12,7 @@ The UI Catalogue migration assessment (tailor-inc/platform-planning#1731) review
 Those four had no home. Two distinct things are easy to confuse here, so to be explicit:
 
 - **`catalogue/`** (this repo) generates the **`app-shell-patterns` agent skill** into `packages/core/skills/` — gitignored, produced by `pnpm build`, and shipped to consumers through core's `files: ["skills/**"]`. It is documentation for coding agents working inside a consumer app, where no `docs/` tree exists.
-- **The UI Catalogue at ui.tailor.tech** is a separate product living in `tailor-inc/app-web`. Nothing in this repo publishes to it; the only link is `.github/workflows/scripts/check-catalogue-links.sh`, which validates deep links out of `docs/components/*.md`.
+- **The UI Catalogue at ui.tailor.tech** is a separate product living in `tailor-inc/app-web`. Nothing in this repo publishes to it, and nothing links into it beyond the homepage references in `README.md` and `docs/introduction.md`.
 
 A page is neither a component API nor a concept, and `docs/` carries no pattern category at all — so the catalogue, which already owns the pattern vocabulary, is where a page belongs.
 

@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - "docs/**/*.md"
-      - ".github/workflows/scripts/check-catalogue-links.sh"
       - "aqua.yaml"
   workflow_dispatch:
 
@@ -30,9 +29,3 @@ jobs:
           # tailor-inc/platform-planning is a private repo, so unauthenticated
           # lychee gets 404 on its issue links — exclude it (cannot be validated).
           find docs -type f -name '*.md' -print0 | xargs -0 lychee --no-progress --exclude 'mailto:' --exclude 'tailor-inc/platform-planning'
-
-      # lychee cannot validate UI Catalogue deep links: the catalogue is a
-      # client-side-routed SPA, so an unknown /components/<slug> still answers
-      # HTTP 200 and only renders "404 Not Found" after hydration.
-      - name: Check UI Catalogue deep links
-        run: ./.github/workflows/scripts/check-catalogue-links.sh

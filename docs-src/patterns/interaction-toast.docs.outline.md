@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/interaction/toast
 name: Toast
 group: interaction-toast

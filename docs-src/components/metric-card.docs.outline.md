@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: metric-card
 title: MetricCard
 description: Compact card for dashboard KPI summaries with title, value, optional trend and description

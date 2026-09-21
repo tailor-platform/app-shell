@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: select
 title: Select
 description: Single or multi-select dropdown with optional async data fetching

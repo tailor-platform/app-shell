@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: router/use-location
 title: useLocation
 description: Hook to access current location object with pathname, search, and state

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: menu
 title: Menu
 description: Dropdown menu with a compound component API, supporting checkbox/radio items, groups, separators, and nested sub-menus

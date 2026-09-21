@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: modules-and-resources
 title: Modules and Resources
 description: Learn how to structure your AppShell application using modules and resources for automatic routing, navigation, and breadcrumbs

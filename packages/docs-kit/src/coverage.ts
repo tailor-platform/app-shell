@@ -32,35 +32,47 @@ export function reconcile(
   const claimed = new Set<string>();
 
   for (const o of outlines) {
-    if (o.kind === "code-backed") {
-      const owned = ownedSymbols(surface, o.frontmatter.sources ?? []);
-      ownedBySlug.set(o.slug, owned);
-      owned.forEach((n) => claimed.add(n));
-      // Reverse check (the "timeline" class of bug): a documented unit that
-      // resolves to zero public exports is documenting something unshipped.
-      if (owned.length === 0) {
+    const owned =
+      o.kind === "code-backed" ? ownedSymbols(surface, o.frontmatter.sources ?? []) : [];
+
+    // Reverse check (the timeline-class bug): a code-backed unit that resolves
+    // to zero public exports is documenting something unshipped.
+    if (o.kind === "code-backed" && owned.length === 0) {
+      findings.push({
+        level: "block",
+        slug: o.slug,
+        message: `"${o.slug}" is a code-backed unit but its \`sources\` own no export from index.ts — is it exported?`,
+      });
+    }
+
+    // `claims` is orthogonal to kind: a code-backed unit may hash what its
+    // sources own AND claim the re-exports its prose covers.
+    const claims = o.frontmatter.claims ?? [];
+    for (const name of claims) {
+      const symbol = surface.symbols.get(name);
+      if (!symbol) {
         findings.push({
           level: "block",
           slug: o.slug,
-          message: `"${o.slug}" is a code-backed unit but its \`sources\` own no export from index.ts — is it exported?`,
+          message: `claims "${name}", which is not exported from index.ts`,
+        });
+        continue;
+      }
+      if (!symbol.external) {
+        findings.push({
+          level: "warn",
+          slug: o.slug,
+          message: `claims "${name}" by name, but it is first-party — a \`sources\` glob would keep it type-surface gated.`,
         });
       }
-    } else if (o.kind === "reference") {
-      const claims = o.frontmatter.claims ?? [];
-      ownedBySlug.set(o.slug, claims);
-      for (const name of claims) {
-        claimed.add(name);
-        if (!surface.symbols.has(name)) {
-          findings.push({
-            level: "block",
-            slug: o.slug,
-            message: `reference unit "${o.slug}" claims "${name}", which is not exported from index.ts`,
-          });
-        }
-      }
-    } else {
-      ownedBySlug.set(o.slug, []);
     }
+
+    // `ownedBySlug` stays first-party only: it feeds the type-surface hash and
+    // the generated prop tables, and hashing a node_modules signature would
+    // make every dependency bump look like documentation drift.
+    ownedBySlug.set(o.slug, owned);
+    owned.forEach((n) => claimed.add(n));
+    claims.forEach((n) => claimed.add(n));
   }
 
   // Forward check: every public export must be claimed or excluded.

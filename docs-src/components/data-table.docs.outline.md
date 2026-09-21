@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: data-table
 title: DataTable
 description: Compound data table component with sortable columns, filter chips, cursor-based pagination, row actions, and multi-row selection

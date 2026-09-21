@@ -43,7 +43,12 @@ function formatFiles(repoRoot: string, paths: string[]): void {
  * formatter, then rewrite the manifest with hashes of the FORMATTED files. */
 export function sync(repoRoot: string): SyncResult {
   const config = loadConfig(repoRoot);
-  const outlines = discoverOutlines(repoRoot, config);
+  const { outlines, findings: schemaFindings } = discoverOutlines(repoRoot, config);
+  if (schemaFindings.length > 0) {
+    const detail = schemaFindings.map((f) => `  ${f.slug}: ${f.message}`).join("\n");
+    throw new Error(`docs-kit sync: outline schema violations — nothing written.\n${detail}`);
+  }
+
   const surface = loadSurface(repoRoot, config);
   const { findings, ownedBySlug } = reconcile(surface, outlines, config);
 
@@ -87,7 +92,7 @@ export function sync(repoRoot: string): SyncResult {
       examples: hasExamples ? outline.examplesPath : null,
       sources: outline.frontmatter.sources ?? [],
       claims: outline.frontmatter.claims ?? [],
-      symbols: owned,
+      symbols: [...new Set([...owned, ...(outline.frontmatter.claims ?? [])])].toSorted(),
       hashes: {
         typeSurface: outline.kind === "code-backed" ? surface.hashSymbols(owned) : null,
         outline: hash(normalizeText(readFileSync(outline.outlinePath, "utf8"))),

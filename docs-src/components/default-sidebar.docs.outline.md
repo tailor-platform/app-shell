@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: default-sidebar
 title: DefaultSidebar
 description: Built-in sidebar component for auto-generated or composed navigation, with optional search suppression and icon-rail mode

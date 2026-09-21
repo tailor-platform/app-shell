@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: guards/hidden
 title: hidden
 description: Guard function that denies access and returns 404 Not Found

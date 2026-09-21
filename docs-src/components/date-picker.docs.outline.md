@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: date-picker
 title: DatePicker
 description: Accessible date input components (@internationalized/date + Base UI)

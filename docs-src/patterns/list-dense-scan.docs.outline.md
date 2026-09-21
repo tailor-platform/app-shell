@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/list/dense-scan
 name: Dense Scan List
 title: Dense Scan List

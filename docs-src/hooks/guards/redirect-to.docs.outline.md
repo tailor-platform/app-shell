@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: guards/redirect-to
 title: redirectTo
 description: Guard function that redirects to another page

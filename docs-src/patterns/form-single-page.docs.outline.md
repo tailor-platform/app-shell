@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/form/single-page
 name: Single Page Form
 group: form-single-page

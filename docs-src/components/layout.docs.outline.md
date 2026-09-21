@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: layout
 title: Layout
 description: Responsive column layout component for organizing page content in 1, 2, or 3 columns

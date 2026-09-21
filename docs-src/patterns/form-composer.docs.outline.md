@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/form/composer
 name: Composer
 group: form-composer

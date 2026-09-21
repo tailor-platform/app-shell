@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/interaction/confirm
 name: Confirm
 group: interaction-confirm

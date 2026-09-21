@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: create-typed-paths
 title: createTypedPaths
 description: Generate type-safe route paths from file-based routing

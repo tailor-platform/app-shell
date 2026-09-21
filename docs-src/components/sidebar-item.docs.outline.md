@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: sidebar-item
 title: SidebarItem
 description: Individual navigation item for customizing sidebar with icons, active states, and external links

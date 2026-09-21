@@ -1,18 +1,43 @@
-/** A documentable unit is code-backed (owns exported symbols), a reference to
- * re-exported third-party API, or free prose (concepts / patterns). */
-export type UnitKind = "code-backed" | "reference" | "prose";
+/** A documentable unit either owns exported symbols (and therefore has a
+ * hashable type surface) or it does not. Declared in frontmatter, never
+ * inferred — see decisions/documentation-management-overhaul.md. */
+export type UnitKind = "code-backed" | "prose";
 
+/** The closed frontmatter schema. Every key a unit's behaviour depends on is
+ * declared here; `OUTLINE_KEYS` in outline.ts is derived from it and any key
+ * outside that set is a blocking error rather than a silent no-op. */
 export interface OutlineFrontmatter {
-  /** Slug override; defaults to the filename minus `.docs-outline.md`. */
-  group?: string;
-  title?: string;
-  description?: string;
-  /** Code-backed units: globs (repo-relative) whose exported symbols this unit owns. */
+  /** REQUIRED. Whether this unit owns exported symbols. Never inferred. */
+  kind: UnitKind;
+  /** REQUIRED. Slug — output is `<category>/<group>.md`. */
+  group: string;
+  /** REQUIRED. */
+  title: string;
+  /** REQUIRED. One line; feeds the route stub and the consumer skill. */
+  description: string;
+  /** Required iff `kind` is "code-backed", forbidden otherwise: globs
+   * (repo-relative) whose exported symbols this unit owns. */
   sources?: string[];
-  /** Reference units: names of re-exported symbols this unit documents. */
+  /** Optional on either kind: names of re-exported symbols this unit documents.
+   * Orthogonal to `kind` — a code-backed unit may hash what its `sources` own
+   * AND claim the re-exports its prose covers. */
   claims?: string[];
-  /** Reference units: upstream docs URL. */
+  /** Upstream docs URL for claimed symbols. */
   upstream?: string;
+
+  // Presentation metadata for pattern and page units — consumed by the
+  // generated `app-shell-patterns` skill (see skill.ts).
+  /** Catalogue-era display path, e.g. `pattern/form/composer`. */
+  slug?: string;
+  /** Display name in the skill's pattern table. */
+  name?: string;
+  category?: string;
+  /** Groups rows within the skill's pattern/page tables. */
+  subcategory?: string;
+  requiredImports?: string[];
+  tags?: string[];
+  do?: string[];
+  dont?: string[];
 }
 
 export interface Outline {
@@ -34,7 +59,7 @@ export interface Outline {
 }
 
 export interface UnitHashes {
-  /** Resolved type-surface hash — null for reference/prose units. */
+  /** Resolved type-surface hash — null for prose units. */
   typeSurface: string | null;
   outline: string;
   /** Advisory only. */
@@ -51,7 +76,7 @@ export interface ManifestEntry {
   examples: string | null;
   sources: string[];
   claims: string[];
-  /** Resolved public export names this unit owns (code-backed) or claims (reference). */
+  /** Resolved public export names this unit owns via `sources`, plus its `claims`. */
   symbols: string[];
   hashes: UnitHashes;
 }

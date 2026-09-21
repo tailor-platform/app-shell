@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: define-resource
 title: defineResource
 description: Define a nested resource (page) within a module

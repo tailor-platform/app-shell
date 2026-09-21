@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: sheet
 title: Sheet
 description: Slide-in panel backed by a Drawer with native swipe-to-dismiss support

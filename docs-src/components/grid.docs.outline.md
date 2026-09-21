@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: grid
 title: Grid
 description: Generic CSS-Grid layout primitive for equal or custom-width columns with responsive reflow, auto-fit, and spanning

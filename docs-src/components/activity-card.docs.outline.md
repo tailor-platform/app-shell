@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: activity-card
 title: ActivityCard
 description: Timeline of recent document activities with avatars and overflow dialog

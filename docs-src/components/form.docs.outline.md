@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: form
 title: Form, Field, and Fieldset
 description: Components for building validated forms with automatic accessibility wiring, validation state management, and optional React Hook Form integration

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: sidebar-group
 title: SidebarGroup
 description: Collapsible group component for organizing sidebar navigation items with icons and nested structure

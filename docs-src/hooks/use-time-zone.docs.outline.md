@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-time-zone
 title: useTimeZone
 description: Hook to access the configured IANA timezone from AppShell context

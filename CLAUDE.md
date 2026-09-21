@@ -29,8 +29,10 @@ To change or add a doc, edit the authored **source** under `docs-src/`, then run
 | the consumer `app-shell-patterns` skill       | emitted from `docs-src/` by `docs:sync` — never edit `packages/core/skills/`                              |
 
 `docs-src/<kind>/` maps to `docs/<kind>/` (components→components, hooks→api, plus concepts, patterns,
-pages). A `sources:` glob in a code-backed outline binds it to the exports it documents; `docs:check`
-reconciles that against `index.ts` both ways.
+pages). Every outline declares `kind: code-backed` or `kind: prose` in its frontmatter — code-backed
+units also declare a `sources:` glob binding them to the exports they document, and `docs:check`
+reconciles that against `index.ts` both ways. Frontmatter is a closed schema: an unrecognised key is
+an error, not a silent no-op.
 
 The only hand-authored files under `docs/` are the four root guides — `introduction.md`,
 `quickstart.md`, `design-philosophy.md`, `migrations.md` — which have no `docs-src/` source and are

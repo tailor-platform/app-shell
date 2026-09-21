@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-app-shell-data
 title: useAppShellData
 description: Hook to access custom context data passed to AppShell

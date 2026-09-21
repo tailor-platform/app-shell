@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: sidebar-navigation
 title: Sidebar Navigation
 description: Learn how to customize sidebar navigation with auto-generation or composition mode

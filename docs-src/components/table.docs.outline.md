@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: table
 title: Table
 description: Semantic HTML table with pre-styled sub-components

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: description-card
 title: DescriptionCard
 description: Display structured key-value information in a responsive grid layout with automatic field rendering

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: spinner
 title: Spinner
 description: Lightweight loading indicator component with accessible defaults and preset sizes

@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/interaction/multi-select
 name: Multi Select
 group: interaction-multi-select

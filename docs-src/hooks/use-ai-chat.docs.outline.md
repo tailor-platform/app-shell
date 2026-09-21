@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-ai-chat
 title: useAIChat
 description: Simple text-only chat hook for AI Gateway

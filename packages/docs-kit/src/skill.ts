@@ -16,14 +16,6 @@ const SECTION_BY_OUTDIR: Record<string, string> = {
   "docs/pages": "pages",
 };
 
-type FM = Record<string, unknown>;
-function fmOf(o: Outline): FM {
-  return o.frontmatter as unknown as FM;
-}
-function str(v: unknown, fallback = ""): string {
-  return typeof v === "string" ? v : fallback;
-}
-
 function mdTable(rows: string[][]): string {
   const widths = rows[0].map((_, c) => Math.max(...rows.map((r) => r[c].length)));
   const render = (r: string[]): string =>
@@ -45,8 +37,8 @@ function simpleTable(list: Outline[], dir: string): string {
   if (list.length === 0) return "";
   const rows: string[][] = [["Name", "Description"]];
   for (const o of list.toSorted((a, b) => a.slug.localeCompare(b.slug))) {
-    const f = fmOf(o);
-    rows.push([`[${str(f.title, o.slug)}](references/${dir}/${o.slug}.md)`, str(f.description)]);
+    const { title, description } = o.frontmatter;
+    rows.push([`[${title}](references/${dir}/${o.slug}.md)`, description]);
   }
   return mdTable(rows);
 }
@@ -56,7 +48,7 @@ function entryTable(list: Outline[], dir: string): string {
   if (list.length === 0) return "";
   const groups = new Map<string | null, Outline[]>();
   for (const o of list.toSorted((a, b) => a.slug.localeCompare(b.slug))) {
-    const key = str(fmOf(o).subcategory) || null;
+    const key = o.frontmatter.subcategory ?? null;
     const arr = groups.get(key) ?? [];
     arr.push(o);
     groups.set(key, arr);
@@ -65,12 +57,12 @@ function entryTable(list: Outline[], dir: string): string {
   for (const [group, items] of groups) {
     const rows: string[][] = [["Slug", "Name", "Description"]];
     for (const o of items) {
-      const f = fmOf(o);
-      const displaySlug = str(f.slug, o.slug).replace(/^[^/]+\//, "");
+      const { slug, name, description } = o.frontmatter;
+      const displaySlug = (slug ?? o.slug).replace(/^[^/]+\//, "");
       rows.push([
         `[\`${displaySlug}\`](references/${dir}/${o.slug}.md)`,
-        str(f.name, o.slug),
-        str(f.description),
+        name ?? o.slug,
+        description,
       ]);
     }
     blocks.push(group === null ? mdTable(rows) : `### ${group}\n\n${mdTable(rows)}`);

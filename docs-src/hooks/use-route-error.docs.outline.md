@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-route-error
 title: useRouteError
 description: Hook to access error details in custom error boundaries

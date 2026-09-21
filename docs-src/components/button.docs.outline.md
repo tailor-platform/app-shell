@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: button
 title: Button
 description: Styled button with multiple variants and sizes

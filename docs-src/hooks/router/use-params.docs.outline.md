@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: router/use-params
 title: useParams
 description: Hook to access dynamic route parameters

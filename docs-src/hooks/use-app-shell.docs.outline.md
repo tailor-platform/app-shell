@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-app-shell
 title: useAppShell
 description: Hook to access AppShell context data and configuration

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: ai-chat
 title: AIChat
 description: Building blocks for an LLM assistant UI — a streaming conversation view over a composer, plus reasoning, tool-call, and citation parts

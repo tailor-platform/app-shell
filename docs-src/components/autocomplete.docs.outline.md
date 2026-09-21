@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: autocomplete
 title: Autocomplete
 description: Text input with a suggestion list — value is the raw input string, not a discrete item selection

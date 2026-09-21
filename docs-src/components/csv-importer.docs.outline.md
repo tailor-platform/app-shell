@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: csv-importer
 title: CsvImporter
 description: Guided multi-step CSV import flow with drag-and-drop upload, column mapping, validation, and inline error correction

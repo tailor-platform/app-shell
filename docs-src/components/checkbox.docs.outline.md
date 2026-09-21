@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: checkbox
 title: Checkbox
 description: Styled checkbox for boolean form fields, with indeterminate state and automatic Field / React Hook Form integration

@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: document-detail
 title: Document Detail Page
 slug: page/document-detail

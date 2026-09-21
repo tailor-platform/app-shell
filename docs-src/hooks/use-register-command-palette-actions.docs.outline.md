@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-register-command-palette-actions
 title: useRegisterCommandPaletteActions
 description: Hook for registering contextual page actions into the CommandPalette

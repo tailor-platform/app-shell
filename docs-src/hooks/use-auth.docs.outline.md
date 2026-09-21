@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-auth
 title: useAuth
 description: Hook for accessing authentication state and methods

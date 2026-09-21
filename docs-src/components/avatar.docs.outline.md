@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: avatar
 title: Avatar
 description: User avatar with image and fallback (Base UI)

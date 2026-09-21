@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/form/sectioned
 name: Sectioned Form
 group: form-sectioned

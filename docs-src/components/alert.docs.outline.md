@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: alert
 title: Alert
 description: Contextual status messages with automatic variant icons

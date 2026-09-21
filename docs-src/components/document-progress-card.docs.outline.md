@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: document-progress-card
 title: DocumentProgressCard
 description: Generic card visualising a document's lifecycle state — optional percentage, stacked progress bar, and status legend

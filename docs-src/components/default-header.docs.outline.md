@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: default-header
 title: DefaultHeader
 description: The built-in SidebarLayout top bar, extensible via an actions slot

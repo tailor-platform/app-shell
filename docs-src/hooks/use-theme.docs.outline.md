@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-theme
 title: useTheme
 description: Hook for accessing and controlling theme (light/dark mode)

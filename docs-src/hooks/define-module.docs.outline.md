@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: define-module
 title: defineModule
 description: Define a top-level module that appears in the main navigation

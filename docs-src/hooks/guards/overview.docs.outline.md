@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: guards/overview
 title: Guards Overview
 description: Access control system for routes and components using guard functions

@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: router/use-navigate
 title: useNavigate
 description: Hook for programmatic navigation between routes

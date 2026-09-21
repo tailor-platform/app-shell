@@ -13,4 +13,6 @@ pre-commit:
       # source / config change; never fails the commit (the `|| echo` keeps exit
       # 0) — `pnpm docs:check` in CI is the blocking gate.
       glob: "{docs-src/**,packages/core/src/**,docs.config.json,docs/**}"
-      run: pnpm docs:check || echo "⚠  docs/skill drift — run 'pnpm docs:sync' before pushing (CI blocks on this)"
+      # Skipped silently when docs-kit hasn't been built (fresh clone/worktree),
+      # so the warning always means real drift rather than a missing dist/.
+      run: test -f packages/docs-kit/dist/cli.mjs && { pnpm docs:check || echo "⚠  docs/skill drift — run 'pnpm docs:sync' before pushing (CI blocks on this)"; } || true

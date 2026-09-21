@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: routing-navigation
 title: Routing and Navigation
 description: Learn how to navigate between pages using React Router hooks and components re-exported from AppShell

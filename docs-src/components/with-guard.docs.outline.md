@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: with-guard
 title: WithGuard
 description: Conditionally render UI elements based on guard evaluation with support for async permissions checks

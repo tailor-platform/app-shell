@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: appearance-switcher
 title: AppearanceSwitcher
 description: Pre-built dropdown for toggling the application color theme

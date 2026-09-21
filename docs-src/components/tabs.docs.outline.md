@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: tabs
 title: Tabs
 description: Tab navigation with a compound component API

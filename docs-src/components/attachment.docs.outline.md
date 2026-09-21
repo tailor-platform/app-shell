@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: attachment
 title: Attachment
 description: Attachment list with upload, previews, and per-item actions; compose with Card for titles and surface styling

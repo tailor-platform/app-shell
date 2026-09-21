@@ -17,7 +17,11 @@ export interface CheckResult {
 /** Deterministic drift gate. No LLM, no writes. Exit non-zero on any block. */
 export function check(repoRoot: string): CheckResult {
   const config = loadConfig(repoRoot);
-  const outlines = discoverOutlines(repoRoot, config);
+  const { outlines, findings: schemaFindings } = discoverOutlines(repoRoot, config);
+  // Schema first: hashes computed from a malformed outline would report as
+  // downstream drift instead of naming the actual problem.
+  if (schemaFindings.length > 0) return { findings: schemaFindings, ok: false };
+
   const surface = loadSurface(repoRoot, config);
   const { findings: reconcileFindings, ownedBySlug } = reconcile(surface, outlines, config);
   const findings: Finding[] = [...reconcileFindings];

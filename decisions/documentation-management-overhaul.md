@@ -62,7 +62,7 @@ upstream: https://react-spectrum.adobe.com/internationalized/date/ # OPTIONAL �
 
 **`claims` is orthogonal to `kind`, not an alternative to it.** A code-backed unit hashes the first-party symbols its `sources` own _and_ claims the re-exports its prose covers — `date-picker` documents `DateField`/`DatePicker`/`DateRangePicker` from source and `CalendarDate`/`parseDate`/`DateValue` by name, because you cannot use the component without them. Splitting that across two pages to satisfy the reconciler would duplicate guidance the one page already gives. A claims-only prose unit is what the `docs-src/references/` pages are; they are not a distinct kind.
 
-Pattern and page units additionally declare the presentation metadata the generated `app-shell-patterns` skill groups on — `subcategory`, `requiredImports`, `tags`, `do`, `dont`. These are part of the schema and read through typed fields, not an untyped `Record<string, unknown>` escape hatch.
+Pattern and page units additionally declare the presentation metadata the generated `app-shell-patterns` skill reads — `slug` (its catalogue display path), `name`, `category`, `subcategory`, `requiredImports`, `tags`, `do`, `dont`. These are part of the schema and read through typed fields, not an untyped `Record<string, unknown>` escape hatch.
 
 **Validation (all blocking unless noted):**
 

@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-toast
 title: useToast
 description: Hook for displaying toast notifications

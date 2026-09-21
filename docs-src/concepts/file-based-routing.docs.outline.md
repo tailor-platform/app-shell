@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: file-based-routing
 title: File-Based Routing
 description: Define pages via directory structure using the Vite plugin instead of explicit module configuration

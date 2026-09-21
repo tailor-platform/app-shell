@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: dialog
 title: Dialog
 description: Modal dialog with a compound component API

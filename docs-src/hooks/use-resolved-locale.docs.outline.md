@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-resolved-locale
 title: useResolvedLocale
 description: Hook to access the full BCP-47 locale and language code from AppShell context

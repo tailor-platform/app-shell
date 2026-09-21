@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: app-shell
 title: AppShell
 description: The root component that provides routing, navigation, and theming for your application

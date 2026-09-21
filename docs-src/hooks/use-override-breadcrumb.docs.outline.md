@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-override-breadcrumb
 title: useOverrideBreadcrumb
 description: Hook for dynamically overriding breadcrumb titles from within page components

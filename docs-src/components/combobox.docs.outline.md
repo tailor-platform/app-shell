@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: combobox
 title: Combobox
 description: Searchable combobox with single/multi selection, built-in filtering, async data fetching, and user-creatable items

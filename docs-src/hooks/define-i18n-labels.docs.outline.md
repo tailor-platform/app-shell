@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: define-i18n-labels
 title: defineI18nLabels
 description: Define internationalized labels for multi-language support

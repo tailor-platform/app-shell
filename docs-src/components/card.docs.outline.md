@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: card
 title: Card
 description: General-purpose container with consistent styling using a compound component API

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: sidebar-layout
 title: SidebarLayout
 description: Default AppShell layout with a built-in sidebar, content header, optional app-wide top bar, and an escape-hatch body slot

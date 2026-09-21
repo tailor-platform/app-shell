@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: create-ai-gateway-client
 title: createAIGatewayClient
 description: Create a low-level AI Gateway client that reuses AppShell authentication

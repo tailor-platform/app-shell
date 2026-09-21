@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: guards/pass
 title: pass
 description: Guard function that allows access and continues to the next guard

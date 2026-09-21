@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: command-palette
 title: CommandPalette
 description: Keyboard-driven quick navigation with fuzzy search for all routes in your application

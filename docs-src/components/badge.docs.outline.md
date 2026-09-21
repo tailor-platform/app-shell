@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: badge
 title: Badge
 description: Display status, labels, and tags with customizable variants

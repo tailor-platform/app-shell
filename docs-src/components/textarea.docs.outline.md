@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: textarea
 title: Textarea
 description: Styled multi-line text input sized by rows, with automatic Field / React Hook Form integration

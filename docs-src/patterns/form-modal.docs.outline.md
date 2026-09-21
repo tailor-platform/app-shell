@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/form/modal
 name: Modal Form
 title: Modal Form

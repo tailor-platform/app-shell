@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: authentication
 title: Authentication
 description: Set up OAuth2/OIDC authentication with Tailor Platform's Auth service using the AuthProvider component

@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: global-header-layout
 title: GlobalHeaderLayout
 description: Opinionated layout with an app-wide header above the whole shell and a sidebar that collapses to a persistent icon rail

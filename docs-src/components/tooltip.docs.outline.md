@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: tooltip
 title: Tooltip
 description: Hover/focus tooltip with configurable placement and shared delay via Tooltip.Provider

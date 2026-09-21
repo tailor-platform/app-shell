@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: input
 title: Input
 description: Styled text input with consistent theming

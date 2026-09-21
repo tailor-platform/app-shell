@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: action-panel
 title: ActionPanel
 description: Display a title and a vertical list of actions with per-row loading and disabled states

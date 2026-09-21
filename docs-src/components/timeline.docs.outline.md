@@ -1,4 +1,5 @@
 ---
+kind: code-backed
 group: timeline
 title: Timeline
 description: Composable primitives for building time-based layouts with axis guides, row backgrounds, intervals, and dependency links

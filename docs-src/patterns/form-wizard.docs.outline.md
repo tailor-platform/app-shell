@@ -1,4 +1,5 @@
 ---
+kind: prose
 slug: pattern/form/wizard
 name: Wizard Form
 group: form-wizard

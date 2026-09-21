@@ -1,4 +1,5 @@
 ---
+kind: prose
 group: use-page-meta
 title: usePageMeta
 description: Hook to resolve page metadata from route path

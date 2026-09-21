@@ -27,7 +27,9 @@ jobs:
       - name: Check links in docs
         run: |
           set -euo pipefail
-          find docs -type f -name '*.md' -print0 | xargs -0 lychee --no-progress --exclude 'mailto:'
+          # tailor-inc/platform-planning is a private repo, so unauthenticated
+          # lychee gets 404 on its issue links — exclude it (cannot be validated).
+          find docs -type f -name '*.md' -print0 | xargs -0 lychee --no-progress --exclude 'mailto:' --exclude 'tailor-inc/platform-planning'
 
       # lychee cannot validate UI Catalogue deep links: the catalogue is a
       # client-side-routed SPA, so an unknown /components/<slug> still answers

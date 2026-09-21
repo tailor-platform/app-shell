@@ -8,3 +8,9 @@ pre-commit:
       # matches them. Without this flag, oxfmt exits with code 2 when no files remain.
       run: pnpm exec oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
+    docs-check:
+      # "Pre-commit warns, CI blocks." Runs only when docs sources / component
+      # source / config change; never fails the commit (the `|| echo` keeps exit
+      # 0) — `pnpm docs:check` in CI is the blocking gate.
+      glob: "{docs-src/**,packages/core/src/**,docs.config.json,docs/**}"
+      run: pnpm docs:check || echo "⚠  docs/skill drift — run 'pnpm docs:sync' before pushing (CI blocks on this)"

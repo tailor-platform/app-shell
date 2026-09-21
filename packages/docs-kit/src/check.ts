@@ -90,6 +90,22 @@ export function check(repoRoot: string): CheckResult {
     }
   }
 
+  // Reverse check: a manifest entry with no live outline means its outline was
+  // deleted but the generated .md (and its manifest entry) were left behind. The
+  // orphaned output passes every forward check silently, so flag it here.
+  if (manifest) {
+    const liveSlugs = new Set(outlines.map((o) => o.slug));
+    for (const slug of Object.keys(manifest.units)) {
+      if (!liveSlugs.has(slug)) {
+        findings.push({
+          level: "block",
+          slug,
+          message: `orphaned output ${manifest.units[slug].output} — its outline was removed; delete the generated file and run sync.`,
+        });
+      }
+    }
+  }
+
   if (config.skill) {
     const expected = manifest?.skill ?? {};
     const actual = new Map(

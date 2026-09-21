@@ -239,34 +239,6 @@ importers:
         specifier: 2.9.14
         version: 2.9.14
 
-  catalogue:
-    dependencies:
-      '@tailor-platform/app-shell':
-        specifier: workspace:*
-        version: link:../packages/core
-      react:
-        specifier: ^19.0.0
-        version: 19.2.8
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.2.8(react@19.2.8)
-      yaml:
-        specifier: ^2.9.0
-        version: 2.9.0
-    devDependencies:
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.13
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.2.3(@types/react@19.2.13)
-      lucide-react:
-        specifier: 'catalog:'
-        version: 1.8.0(react@19.2.8)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
   docs-browser:
     dependencies:
       '@tailor-platform/app-shell':

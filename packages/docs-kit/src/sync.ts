@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { assembleMarkdown } from "./assemble";
@@ -9,6 +9,7 @@ import { hash, normalizeText } from "./hash";
 import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { writePageStub } from "./pages";
+import { computeSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import type { Manifest, ManifestEntry } from "./types";
 
@@ -100,7 +101,22 @@ export function sync(repoRoot: string): SyncResult {
     };
   }
 
-  const manifest: Manifest = { version: 1, units };
+  // Phase 4 — emit the consumer skill (gitignored output) from the generated
+  // docs + authored guidance, and hash each file so `check` can validate it.
+  let skill: Record<string, string> | undefined;
+  if (config.skill) {
+    rmSync(join(repoRoot, config.skill.outDir), { recursive: true, force: true });
+    skill = {};
+    for (const [skillRel, content] of computeSkill(repoRoot, config, outlines)) {
+      const abs = join(repoRoot, skillRel);
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, content, "utf8");
+      skill[skillRel] = hash(normalizeText(content));
+      written.push(skillRel);
+    }
+  }
+
+  const manifest: Manifest = { version: 1, units, ...(skill ? { skill } : {}) };
   writeManifest(repoRoot, config.manifestFile, manifest);
   // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the
   // manifest's hashes are over the OUTPUT files, never over the manifest text

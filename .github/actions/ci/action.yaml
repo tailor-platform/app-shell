@@ -22,3 +22,7 @@ runs:
     # sets skipLibCheck: true and never looks at the emitted declarations.
     - run: pnpm exec turbo run lint test type-check check-dts
       shell: bash
+    # Deterministic docs + generated-skill drift gate (no LLM). Runs uncached
+    # so a docs/ change always re-validates the manifest and consumer skill.
+    - run: pnpm docs:check
+      shell: bash

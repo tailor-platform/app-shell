@@ -7,6 +7,7 @@ import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
+import { computeSkill } from "./skill";
 
 export interface CheckResult {
   findings: Finding[];
@@ -84,6 +85,37 @@ export function check(repoRoot: string): CheckResult {
           level: "block",
           slug,
           message: `${outline.examplesPath} changed since last sync — its .md code fences are stale; run sync.`,
+        });
+      }
+    }
+  }
+
+  if (config.skill) {
+    const expected = manifest?.skill ?? {};
+    const actual = new Map(
+      [...computeSkill(repoRoot, config, outlines)].map(([p, c]) => [p, hash(normalizeText(c))]),
+    );
+    for (const [p, h] of actual) {
+      if (expected[p] === undefined) {
+        findings.push({
+          level: "block",
+          slug: "skill",
+          message: `skill file ${p} is new — run sync.`,
+        });
+      } else if (expected[p] !== h) {
+        findings.push({
+          level: "block",
+          slug: "skill",
+          message: `skill file ${p} drifted — run sync.`,
+        });
+      }
+    }
+    for (const p of Object.keys(expected)) {
+      if (!actual.has(p)) {
+        findings.push({
+          level: "block",
+          slug: "skill",
+          message: `skill file ${p} removed — run sync.`,
         });
       }
     }

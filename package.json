@@ -12,7 +12,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
-    "changeset:publish": "pnpm build && changeset publish",
+    "changeset:publish": "pnpm build && pnpm docs:sync && changeset publish",
     "prepare": "lefthook install"
   },
   "devDependencies": {

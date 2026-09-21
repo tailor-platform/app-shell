@@ -59,6 +59,8 @@ export interface ManifestEntry {
 export interface Manifest {
   version: number;
   units: Record<string, ManifestEntry>;
+  /** Generated skill file (repo-relative) -> content hash. Absent when no skill is configured. */
+  skill?: Record<string, string>;
 }
 
 export interface CategoryRule {
@@ -66,6 +68,19 @@ export interface CategoryRule {
   match: string;
   /** Repo-relative output directory for matching outlines. */
   outDir: string;
+}
+
+export interface SkillConfig {
+  /** Repo-relative output dir for the generated consumer skill. */
+  outDir: string;
+  /** Repo-relative SKILL.md template with {{CATEGORY_TABLE}} placeholders. */
+  templatePath: string;
+  /** Repo-relative dir of authored fundamental guidance copied verbatim. */
+  fundamentalDir: string;
+  /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
+  migrationsSource: string;
+  /** Base blob URL for rewriting the migrations doc's relative links. */
+  repoBlobUrl: string;
 }
 
 export interface DocsConfig {
@@ -88,4 +103,6 @@ export interface DocsConfig {
    * generates a per-unit `<category>/<slug>/page.tsx` route stub here so new
    * units appear in the browser with zero manual wiring. */
   pagesDir?: string;
+  /** Consumer-skill generation. When set, sync emits it and check validates it. */
+  skill?: SkillConfig;
 }

@@ -17,5 +17,6 @@ export function loadConfig(repoRoot: string): DocsConfig {
     exclusions: parsed.exclusions ?? [],
     snapshotDir: parsed.snapshotDir,
     pagesDir: parsed.pagesDir,
+    skill: parsed.skill,
   };
 }

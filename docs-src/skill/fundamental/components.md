@@ -566,7 +566,7 @@ const table = useDataTable({
 />
 ```
 
-**Used in:** `page/detail` (body sections).
+**Used in:** `page/document-detail` (body sections).
 
 ### `ActionPanel`
 
@@ -596,7 +596,7 @@ const table = useDataTable({
 />
 ```
 
-**Used in:** `page/detail`.
+**Used in:** `page/document-detail`.
 
 **Notes:**
 
@@ -607,7 +607,7 @@ const table = useDataTable({
 **Import:** `import { ActivityCard } from '@tailor-platform/app-shell'`
 **Purpose:** Timeline of events on a record (audit log, status changes, comments).
 **API:** Compound — `ActivityCard.Root`, `ActivityCard.Items` (generic over item type), plus `ActivityCardProps`, `ActivityCardItem`, `ActivityCardItemProps`. Items render with timestamp + actor + description.
-**Used in:** `page/detail` (right column, for revision history / audit trail).
+**Used in:** `page/document-detail` (right column, for revision history / audit trail).
 
 ### `Alert`
 

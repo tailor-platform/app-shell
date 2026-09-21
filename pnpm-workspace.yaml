@@ -1,5 +1,4 @@
 packages:
-  - catalogue
   - docs-browser
   - e2e
   - examples/**

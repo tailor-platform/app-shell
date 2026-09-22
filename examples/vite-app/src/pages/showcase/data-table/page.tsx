@@ -3,6 +3,8 @@ import {
   Layout,
   Badge,
   DataTable,
+  Tabs,
+  Toolbar,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
@@ -287,22 +289,15 @@ function StatusTabs({ control }: { control: CollectionControl }) {
   const select = (key: string) =>
     key === "all" ? control.removeFilter("status") : control.addFilter("status", "in", [key]);
   return (
-    <div className="flex items-center gap-1">
-      {STATUS_TABS.map((tab) => (
-        <button
-          key={tab.key}
-          type="button"
-          onClick={() => select(tab.key)}
-          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-            active === tab.key
-              ? "bg-accent text-accent-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
+    <Tabs.Root value={active} onValueChange={select} variant="capsule" size="sm">
+      <Tabs.List aria-label="Invoice status">
+        {STATUS_TABS.map((tab) => (
+          <Tabs.Tab key={tab.key} value={tab.key}>
+            {tab.label}
+          </Tabs.Tab>
+        ))}
+      </Tabs.List>
+    </Tabs.Root>
   );
 }
 
@@ -337,7 +332,7 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
 
   return (
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>{toolbar(control)}</DataTable.Toolbar>
+      {toolbar(control)}
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
@@ -367,14 +362,22 @@ const DataTablePage = () => {
           <h3 className="mb-2 text-sm font-semibold">With preset tabs</h3>
           <InvoiceTable
             toolbar={(control) => (
-              <>
-                {/* gap-2 matches the toolbar's p-2 so the icon sits an even step from the tabs */}
-                <div className="flex items-center gap-2">
-                  <DataTable.Filters slot="add" addIconOnly />
-                  <StatusTabs control={control} />
-                </div>
-                <DataTable.Filters slot="chips" />
-              </>
+              <Toolbar.Root>
+                <Toolbar.Row justify="between" aria-label="Invoice table controls">
+                  <Toolbar.Group>
+                    <DataTable.Filters slot="add" addIconOnly />
+                    <StatusTabs control={control} />
+                  </Toolbar.Group>
+                  <Toolbar.Group>
+                    <DataTable.ColumnSettings />
+                  </Toolbar.Group>
+                </Toolbar.Row>
+                <Toolbar.Row aria-label="Active invoice filters">
+                  <Toolbar.Group>
+                    <DataTable.Filters slot="chips" />
+                  </Toolbar.Group>
+                </Toolbar.Row>
+              </Toolbar.Root>
             )}
           />
         </section>
@@ -384,10 +387,18 @@ const DataTablePage = () => {
           <h3 className="mb-2 text-sm font-semibold">Without tabs</h3>
           <InvoiceTable
             toolbar={() => (
-              <>
-                <DataTable.Filters slot="add" addIconOnly />
-                <DataTable.Filters slot="chips" />
-              </>
+              <Toolbar.Root>
+                <Toolbar.Row aria-label="Invoice table controls">
+                  <Toolbar.Group>
+                    <DataTable.Filters slot="add" addIconOnly />
+                  </Toolbar.Group>
+                </Toolbar.Row>
+                <Toolbar.Row aria-label="Active invoice filters">
+                  <Toolbar.Group>
+                    <DataTable.Filters slot="chips" />
+                  </Toolbar.Group>
+                </Toolbar.Row>
+              </Toolbar.Root>
             )}
           />
         </section>

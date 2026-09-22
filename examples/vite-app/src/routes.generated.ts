@@ -42,6 +42,7 @@ export type GeneratedRouteParams = {
   "/showcase/primitives": {};
   "/showcase/spinner": {};
   "/showcase/timeline": {};
+  "/showcase/toolbar": {};
 };
 
 /**

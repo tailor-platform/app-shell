@@ -4,6 +4,7 @@ import {
   Badge,
   DataTable,
   useDataTable,
+  useCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type CollectionControl,
@@ -206,26 +207,30 @@ const statusVariant = (status: InvoiceStatus) =>
         : ("neutral" as const);
 
 const columns = [
-  column({ label: "Invoice", render: (row) => row.id }),
+  column({ id: "id", label: "Invoice", render: (row) => row.id }),
   // uuid → text input, eq only.
   column({
+    id: "externalId",
     label: "Ref",
     render: (row) => <span className="font-mono text-xs">{row.externalId.slice(0, 8)}…</span>,
     filter: { field: "externalId", type: "uuid" },
   }),
   column({
+    id: "customer",
     label: "Customer",
     render: (row) => row.customer,
     sort: { field: "customer", type: "string" },
     filter: { field: "customer", type: "string" },
   }),
   column({
+    id: "amount",
     label: "Amount",
     render: (row) => moneyFormatter.format(row.amount),
     sort: { field: "amount", type: "number" },
     filter: { field: "amount", type: "number" },
   }),
   column({
+    id: "status",
     label: "Status",
     render: (row) => <Badge variant={statusVariant(row.status)}>{row.status}</Badge>,
     filter: {
@@ -236,6 +241,7 @@ const columns = [
   }),
   // boolean → is / is not, True/False picker.
   column({
+    id: "recurring",
     label: "Recurring",
     render: (row) => (
       <Badge variant={row.recurring ? "info" : "outline-neutral"}>
@@ -245,6 +251,7 @@ const columns = [
     filter: { field: "recurring", type: "boolean" },
   }),
   column({
+    id: "dueDate",
     label: "Due date",
     render: (row) => dateFormatter.format(new Date(`${row.dueDate}T00:00:00`)),
     sort: { field: "dueDate", type: "date" },
@@ -254,6 +261,7 @@ const columns = [
   }),
   // datetime → full numeric operator set; value is a strict ISO datetime string.
   column({
+    id: "createdAt",
     label: "Created",
     render: (row) => dateTimeFormatter.format(new Date(row.createdAt)),
     sort: { field: "createdAt", type: "date" },
@@ -261,6 +269,7 @@ const columns = [
   }),
   // time → native time input, "HH:mm".
   column({
+    id: "reminderAt",
     label: "Reminder",
     render: (row) => row.reminderAt,
     filter: { field: "reminderAt", type: "time" },
@@ -334,10 +343,33 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
   }, [variables, variablesKey]);
 
   const table = useDataTable({ columns, data, loading, control });
+  const { props: exporter } = useCsvExporter({
+    defaultFilename: "invoices.csv",
+    columns,
+    pageSize: 10,
+    fetcher: async ({ first, after }) => {
+      const page = await queryInvoices({
+        query: variables.query,
+        order: variables.order,
+        pagination: { first, after },
+      });
+      return {
+        edges: page.rows.map((node) => ({ node })),
+        pageInfo: page.pageInfo ?? {
+          hasNextPage: false,
+          endCursor: null,
+        },
+        total: page.total ?? null,
+      };
+    },
+  });
 
   return (
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>{toolbar(control)}</DataTable.Toolbar>
+      <DataTable.Toolbar>
+        {toolbar(control)}
+        <DataTable.CSVExporter {...exporter} />
+      </DataTable.Toolbar>
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />

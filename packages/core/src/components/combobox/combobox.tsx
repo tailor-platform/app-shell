@@ -4,6 +4,7 @@ import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import type { ComboboxFilter, ComboboxFilterOptions } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { mergeRefs, useToolbarItem } from "@/components/toolbar";
 import { useAsyncItems } from "@/hooks/use-async-items";
 import type { UseAsyncItemsOptions, UseAsyncItemsReturn } from "@/hooks/use-async-items";
 
@@ -43,9 +44,17 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false>(
 }
 ComboboxRoot.displayName = "Combobox.Root";
 
-function ComboboxInput({ className, ...props }: React.ComponentProps<typeof BaseCombobox.Input>) {
+function ComboboxInput({
+  className,
+  ref: forwardedRef,
+  ...props
+}: React.ComponentProps<typeof BaseCombobox.Input>) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  useToolbarItem(ref, { handlesDirectionalKeys: true });
+
   return (
     <BaseCombobox.Input
+      ref={mergeRefs(ref, forwardedRef)}
       data-slot="combobox-input"
       className={cn(
         "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-sm astw:shadow-xs astw:outline-none astw:transition-colors",

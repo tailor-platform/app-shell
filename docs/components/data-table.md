@@ -144,14 +144,15 @@ function JournalsPage() {
 
 `DataTable` is a namespace object. All sub-components read state from `DataTable.Root` via context.
 
-| Sub-component          | Description                                                                                                                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DataTable.Root`       | Context provider. Wraps all other sub-components. Required.                                                                                                                           |
-| `DataTable.Table`      | Renders the `<table>` with headers and body. Required.                                                                                                                                |
-| `DataTable.Toolbar`    | Container for toolbar content (e.g. filters). Optional. Pass `columnSettings` to render the built-in "Columns" control (show/hide + reorder + pin) at the top-right. See props below. |
-| `DataTable.Filters`    | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                  |
-| `DataTable.Footer`     | Footer container for pagination and other footer content. Optional.                                                                                                                   |
-| `DataTable.Pagination` | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                          |
+| Sub-component              | Description                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DataTable.Root`           | Context provider. Wraps all other sub-components. Required.                                                                                                  |
+| `DataTable.Table`          | Renders the `<table>` with headers and body. Required.                                                                                                       |
+| `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                      |
+| `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                 |
+| `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                         |
+| `DataTable.Footer`         | Footer container for pagination and other footer content. Optional.                                                                                          |
+| `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`. |
 
 ### `DataTable.Root` Props
 
@@ -163,18 +164,20 @@ function JournalsPage() {
 
 ### `DataTable.Toolbar` Props
 
-| Prop             | Type        | Default | Description                                                                                                                                         |
-| ---------------- | ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`       | `ReactNode` | —       | Toolbar content (e.g. `DataTable.Filters`), laid out on the left.                                                                                   |
-| `columnSettings` | `boolean`   | `false` | Render the built-in "Columns" control (show/hide + reorder + pin) anchored to the top-right. Persists per-user when `useDataTable` has a `tableId`. |
-| `className`      | `string`    | —       | Additional CSS class for the toolbar container.                                                                                                     |
+| Prop             | Type        | Default | Description                                                                                                                                 |
+| ---------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `children`       | `ReactNode` | —       | Toolbar content, stacked on the left.                                                                                                       |
+| `columnSettings` | `boolean`   | `false` | Render the built-in Columns control at the top-right. Use [`Toolbar`](./toolbar.md) with `DataTable.ColumnSettings` for new custom layouts. |
+| `className`      | `string`    | —       | Additional CSS class for the toolbar container.                                                                                             |
+
+For new layouts, use the generic [`Toolbar`](./toolbar.md).
 
 ### `DataTable.Filters` Props
 
 | Prop          | Type                        | Default | Description                                                                                    |
 | ------------- | --------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
 | `slot`        | `"all" \| "chips" \| "add"` | `"all"` | Which part to render (see below).                                                              |
-| `addIconOnly` | `boolean`                   | `false` | Render the **Add filter** trigger as an icon-only button (the label becomes its `aria-label`). |
+| `addIconOnly` | `boolean`                   | `true`  | Render the **Add filter** trigger as an icon-only button (the label becomes its `aria-label`). |
 | `className`   | `string`                    | —       | Additional CSS class for the filters container.                                                |
 
 By default `DataTable.Filters` renders the active filter chips plus the **Add filter** trigger together. The `slot` prop lets you split them across a custom toolbar layout:
@@ -185,13 +188,21 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 ```tsx
 // Add filter in a header row (with tabs, etc.); chips on the row below.
-<DataTable.Toolbar>
-  <div className="flex items-center justify-between">
-    <MyViewTabs />
-    <DataTable.Filters slot="add" />
-  </div>
-  <DataTable.Filters slot="chips" />
-</DataTable.Toolbar>
+<Toolbar.Root>
+  <Toolbar.Row justify="between" aria-label="List controls">
+    <Toolbar.Group>
+      <MyViewTabs />
+    </Toolbar.Group>
+    <Toolbar.Group>
+      <DataTable.Filters slot="add" />
+    </Toolbar.Group>
+  </Toolbar.Row>
+  <Toolbar.Row aria-label="Active filters">
+    <Toolbar.Group>
+      <DataTable.Filters slot="chips" />
+    </Toolbar.Group>
+  </Toolbar.Row>
+</Toolbar.Root>
 ```
 
 ### `DataTable.Pagination` Props
@@ -216,7 +227,7 @@ When pagination changes page or page size, `DataTable.Table` resets its own scro
 ## Column pinning, visibility & ordering
 
 - **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection and expand columns auto-pin left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
-- **Column settings.** Pass `columnSettings` to `DataTable.Toolbar` to render a built-in "Columns" control — a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. It's a toolbar prop (not a composed sub-component) because the control always sits in the same top-right position.
+- **Column settings.** `DataTable.ColumnSettings` renders a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. Place it in a generic [`Toolbar`](./toolbar.md), or pass `columnSettings` to `DataTable.Toolbar` for its fixed top-right placement.
 - **Persistence.** Pass a stable, **unique** `tableId` to persist each user's column layout (visibility, order, pinning) to `localStorage` (key `as:data-table:v1:<tableId>`). This is a per-user preference — it is deliberately **not** stored in the URL like filters/sort/pagination, so it survives reloads and isn't reset by shared/filtered links. Omit `tableId` for in-memory-only layout (state simply isn't persisted). Two tables mounted with the same `tableId` share one storage key and overwrite each other — use a unique id per table (e.g. `<route>:<entity>`); a dev-mode warning fires on duplicates.
 
 ```tsx
@@ -227,7 +238,16 @@ const table = useDataTable<Order>({
 });
 
 <DataTable.Root value={table}>
-  <DataTable.Toolbar columnSettings />
+  <Toolbar.Root>
+    <Toolbar.Row justify="between" aria-label="Order table controls">
+      <Toolbar.Group>
+        <DataTable.Filters />
+      </Toolbar.Group>
+      <Toolbar.Group>
+        <DataTable.ColumnSettings />
+      </Toolbar.Group>
+    </Toolbar.Row>
+  </Toolbar.Root>
   <DataTable.Table />
 </DataTable.Root>;
 ```
@@ -398,7 +418,7 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Presentation only. Optional — overrides the built-in `type` renderer when set. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`).                                                                                                      |
 | `id`       | `string`                                  | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                             |
 | `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's `columnSettings` control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pins right.                                                                                       |
+| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pins right.                                                                                        |
 | `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                        |
 | `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                    |
 | `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed. |

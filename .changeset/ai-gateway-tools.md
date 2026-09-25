@@ -93,24 +93,3 @@ function ChatPanel({ client }) {
 ```
 
 The hook runs up to 8 tool rounds per user message. If the model keeps requesting tools beyond that limit, the request fails with an error.
-
-## Tailor remote MCP
-
-Connect the current Tailor Platform application's remote MCP server with `tailorMCP(...)`. The MCP session runs in the browser through the existing authenticated fetch path; no MCP SDK dependency is added to AppShell.
-
-```tsx
-import { tailorMCP, useAIChat } from "@tailor-platform/app-shell";
-
-const chat = useAIChat({
-  client,
-  model: "gpt-5-mini",
-  mcpServers: {
-    tailor: {
-      server: tailorMCP({ authClient }),
-      allowedTools: ["query"],
-    },
-  },
-});
-```
-
-`allowedTools` is required. Start by exposing read-only tools; mutation tools need an explicit approval flow in your application.

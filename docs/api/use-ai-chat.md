@@ -1,11 +1,11 @@
 ---
 title: useAIChat
-description: AI Gateway chat hook with optional local, provider, and MCP tools
+description: AI Gateway chat hook with optional local and provider tools
 ---
 
 # useAIChat
 
-React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local, provider, and remote MCP tool support.
+React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local and provider tool support.
 
 ## Signature
 
@@ -14,7 +14,6 @@ const useAIChat: (config: {
   client: AIGatewayClient;
   model: string;
   tools?: Record<string, AIChatConfiguredTool>;
-  mcpServers?: Record<string, AIChatMCPServerConfig>;
 }) => {
   messages: AIChatMessage[];
   status: "ready" | "submitted" | "streaming" | "error";
@@ -71,10 +70,6 @@ Register tools under a single object:
 - local tools created with `defineAIChatTool(...)`; their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4)
 - provider tools such as `aiProviderTool.openai.webSearch(...)`
 
-### `mcpServers`
-
-Register remote MCP servers separately from `tools`, since one MCP server discovers and exposes multiple tools. Each entry requires an explicit `allowedTools` list. Use `tailorMCP({ authClient })` for the current Tailor Platform application's `/mcp` endpoint.
-
 ## Usage
 
 ```tsx
@@ -83,7 +78,6 @@ import {
   createAuthClient,
   createAIGatewayClient,
   defineAIChatTool,
-  tailorMCP,
   useAIChat,
 } from "@tailor-platform/app-shell";
 import { z } from "zod/v4";
@@ -116,12 +110,6 @@ export function ChatScreen() {
       lookupCustomer,
       web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
     },
-    mcpServers: {
-      tailor: {
-        server: tailorMCP({ authClient }),
-        allowedTools: ["query"],
-      },
-    },
   });
 
   return (
@@ -152,7 +140,6 @@ export function ChatScreen() {
 - AppShell chooses the appropriate AI Gateway transport automatically
 - Public messages stay user/assistant text-first; internal tool messages remain private to the hook
 - Provider tools can attach optional `sources` to assistant messages
-- MCP server entries must list every tool they expose; start with read-only tools until your application has an explicit approval flow for mutations
 - System prompts and custom history shaping should use the low-level client directly
 - `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request
 

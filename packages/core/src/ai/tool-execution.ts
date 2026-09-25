@@ -1,19 +1,14 @@
 import type { AIGatewayChatMessage, AIGatewayToolCall } from "./client";
 import type { AIChatMessage } from "./use-ai-chat";
-import type { AIChatMCPConnection } from "./mcp";
 import type { AIChatToolContext, AILocalTool } from "./tools";
 
 /**
  * Executes requested local tools in call order and converts their outputs into
  * internal `role: "tool"` transcript messages for the next model round.
  */
-export type AIChatToolExecutor =
-  | { kind: "local"; tool: AILocalTool }
-  | { kind: "mcp"; connection: AIChatMCPConnection; name: string };
-
 export async function resolveToolCalls(input: {
   toolCalls: AIGatewayToolCall[];
-  tools: Map<string, AIChatToolExecutor>;
+  localTools: Map<string, AILocalTool>;
   signal: AbortSignal;
   visibleMessages: AIChatToolContext["messages"];
 }): Promise<Extract<AIGatewayChatMessage, { role: "tool" }>[]> {
@@ -27,7 +22,7 @@ export async function resolveToolCalls(input: {
     messages.push(
       await resolveToolCall({
         toolCall,
-        tools: input.tools,
+        localTools: input.localTools,
         context: {
           signal: input.signal,
           messages: input.visibleMessages,
@@ -47,55 +42,43 @@ export async function resolveToolCalls(input: {
  */
 async function resolveToolCall(input: {
   toolCall: AIGatewayToolCall;
-  tools: Map<string, AIChatToolExecutor>;
+  localTools: Map<string, AILocalTool>;
   context: AIChatToolContext;
 }): Promise<Extract<AIGatewayChatMessage, { role: "tool" }>> {
-  const executor = input.tools.get(input.toolCall.name);
+  const tool = input.localTools.get(input.toolCall.name);
 
-  if (!executor) {
-    return toolError(input.toolCall.id, `Unknown tool: ${input.toolCall.name}`);
+  if (!tool) {
+    return {
+      role: "tool",
+      toolCallId: input.toolCall.id,
+      content: JSON.stringify({ error: `Unknown tool: ${input.toolCall.name}` }),
+    };
   }
 
   try {
     const rawArguments = parseToolArguments(input.toolCall.argumentsText);
+    const result = await tool.schema["~standard"].validate(rawArguments);
 
-    if (executor.kind === "mcp") {
-      if (!isRecord(rawArguments)) {
-        return toolError(input.toolCall.id, "MCP tool arguments must be a JSON object.");
-      }
-
-      const result = await executor.connection.callTool({
-        name: executor.name,
-        arguments: rawArguments,
-        signal: input.context.signal,
-      });
+    if (result.issues) {
       return {
         role: "tool",
         toolCallId: input.toolCall.id,
-        content: JSON.stringify({
-          content: result.content,
-          ...(result.structuredContent !== undefined
-            ? { structuredContent: result.structuredContent }
-            : {}),
-          ...(result.isError ? { isError: true } : {}),
-        }),
+        content: JSON.stringify({ error: result.issues.map((issue) => issue.message).join("; ") }),
       };
     }
 
-    const result = await executor.tool.schema["~standard"].validate(rawArguments);
-
-    if (result.issues) {
-      return toolError(input.toolCall.id, result.issues.map((issue) => issue.message).join("; "));
-    }
-
-    const output = await executor.tool.execute(result.value, input.context);
+    const output = await tool.execute(result.value, input.context);
     return {
       role: "tool",
       toolCallId: input.toolCall.id,
       content: stringifyToolResult(output),
     };
   } catch (error) {
-    return toolError(input.toolCall.id, error instanceof Error ? error.message : String(error));
+    return {
+      role: "tool",
+      toolCallId: input.toolCall.id,
+      content: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+    };
   }
 }
 
@@ -118,24 +101,9 @@ export function deriveVisibleMessages(transcript: AIGatewayChatMessage[]): AICha
   return result;
 }
 
-function toolError(
-  toolCallId: string,
-  error: string,
-): Extract<AIGatewayChatMessage, { role: "tool" }> {
-  return {
-    role: "tool",
-    toolCallId,
-    content: JSON.stringify({ error }),
-  };
-}
-
 function parseToolArguments(argumentsText: string): unknown {
   const text = argumentsText.trim();
   return text ? JSON.parse(text) : {};
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function stringifyToolResult(value: unknown): string {

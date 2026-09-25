@@ -1,9 +1,16 @@
+import {
+  fromDate,
+  getLocalTimeZone,
+  parseAbsolute,
+  parseDateTime,
+  toZoned,
+} from "@internationalized/date";
 import type { FilterConfig } from "@/types/collection";
 
 export type TemporalFilterType = Extract<FilterConfig["type"], "datetime" | "date" | "time">;
 
-const LOCAL_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
 const TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const TIME_WITH_SECONDS_RE = /^((?:[01]\d|2[0-3]):[0-5]\d)(?::[0-5]\d(?:\.\d+)?)?$/;
 
@@ -19,10 +26,6 @@ function formatLocalTime(value: Date): string {
   return `${pad2(value.getHours())}:${pad2(value.getMinutes())}`;
 }
 
-function formatLocalDateTime(value: Date): string {
-  return `${formatLocalDate(value)}T${formatLocalTime(value)}:${pad2(value.getSeconds())}`;
-}
-
 function toValidDate(value: unknown): Date | null {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value;
@@ -36,21 +39,34 @@ function toValidDate(value: unknown): Date | null {
   return null;
 }
 
+function toValidDateTime(value: string, timeZone: string) {
+  if (!DATETIME_RE.test(value)) return null;
+  try {
+    return /(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+      ? parseAbsolute(value, timeZone)
+      : toZoned(parseDateTime(value), timeZone);
+  } catch {
+    return null;
+  }
+}
+
 export function isTemporalFilterType(type: FilterConfig["type"]): type is TemporalFilterType {
   return type === "datetime" || type === "date" || type === "time";
 }
 
-export function isTemporalFilterValueValid(type: TemporalFilterType, value: string): boolean {
+export function isTemporalFilterValueValid(
+  type: TemporalFilterType,
+  value: string,
+  timeZone = getLocalTimeZone(),
+): boolean {
   const trimmedValue = value.trim();
   if (trimmedValue === "") return false;
 
   switch (type) {
     case "datetime":
-      // The datetime editor emits a local "YYYY-MM-DDTHH:mm:ss" (no zone); a
-      // trailing Z or ±hh:mm offset is still accepted for externally-set values.
-      return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(
-        trimmedValue,
-      );
+      // Legacy filters may be local datetimes; DataTable editors serialize new
+      // values as RFC 3339 instants.
+      return toValidDateTime(trimmedValue, timeZone) != null;
     case "date":
       return DATE_RE.test(trimmedValue);
     case "time":
@@ -61,6 +77,7 @@ export function isTemporalFilterValueValid(type: TemporalFilterType, value: stri
 export function normalizeTemporalFilterValue(
   type: TemporalFilterType,
   value: unknown,
+  timeZone = getLocalTimeZone(),
 ): string | undefined {
   if (value == null || value === "") return undefined;
 
@@ -75,9 +92,11 @@ export function normalizeTemporalFilterValue(
         return date ? formatLocalDate(date) : undefined;
       }
       case "datetime": {
-        if (LOCAL_DATETIME_RE.test(trimmed)) return trimmed;
+        const datetime = toValidDateTime(trimmed, timeZone);
+        if (datetime) return datetime.toDate().toISOString();
+        if (DATETIME_RE.test(trimmed)) return undefined;
         const date = toValidDate(trimmed);
-        return date ? formatLocalDateTime(date) : undefined;
+        return date ? date.toISOString() : undefined;
       }
       case "time": {
         if (TIME_RE.test(trimmed)) return trimmed;
@@ -96,8 +115,29 @@ export function normalizeTemporalFilterValue(
     case "date":
       return formatLocalDate(date);
     case "datetime":
-      return formatLocalDateTime(date);
+      return date.toISOString();
     case "time":
       return formatLocalTime(date);
   }
+}
+
+/** Convert a datetime value to the local date/time parts displayed by its picker. */
+export function localDateTimeParts(
+  value: string,
+  timeZone = getLocalTimeZone(),
+): { date: string; time: string } {
+  const datetime =
+    toValidDateTime(value, timeZone) ??
+    (!DATETIME_RE.test(value)
+      ? (() => {
+          const date = toValidDate(value);
+          return date ? fromDate(date, timeZone) : null;
+        })()
+      : null);
+  return datetime
+    ? {
+        date: `${datetime.year}-${pad2(datetime.month)}-${pad2(datetime.day)}`,
+        time: `${pad2(datetime.hour)}:${pad2(datetime.minute)}`,
+      }
+    : { date: "", time: "" };
 }

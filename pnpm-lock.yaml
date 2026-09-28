@@ -223,6 +223,9 @@ importers:
       '@changesets/cli':
         specifier: 3.0.2
         version: 3.0.2
+      '@tailor-platform/app-shell-docs-kit':
+        specifier: workspace:*
+        version: link:packages/docs-kit
       lefthook:
         specifier: 2.1.12
         version: 2.1.12

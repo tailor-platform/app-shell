@@ -7,8 +7,8 @@
     "type-check": "turbo type-check",
     "lint": "turbo lint",
     "test": "turbo test",
-    "docs:sync": "node packages/docs-kit/dist/cli.mjs sync --root .",
-    "docs:check": "node packages/docs-kit/dist/cli.mjs check --root .",
+    "docs:sync": "turbo run build --filter=@tailor-platform/app-shell-docs-kit && docs-kit sync",
+    "docs:check": "turbo run build --filter=@tailor-platform/app-shell-docs-kit && docs-kit check",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "3.0.2",
+    "@tailor-platform/app-shell-docs-kit": "workspace:*",
     "lefthook": "2.1.12",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

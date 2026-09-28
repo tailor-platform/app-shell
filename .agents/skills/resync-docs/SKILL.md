@@ -24,7 +24,7 @@ For each drifting unit:
 1. **Identify what changed.** Run the gate and read the finding:
 
    ```bash
-   node packages/docs-kit/dist/cli.mjs check --root .
+   pnpm docs:check
    ```
 
    - `interface (type surface) drifted` → the exported API changed. Re-read the unit's `sources` and update the outline prose + `*.docs.examples.tsx` so they still match. Check whether any example now uses a removed/renamed prop.
@@ -38,7 +38,7 @@ For each drifting unit:
 3. **Regenerate deterministically** (no hand-editing of `.md`):
 
    ```bash
-   node packages/docs-kit/dist/cli.mjs sync --root .
+   pnpm docs:sync
    ```
 
    This rewrites the `.md`, extracts fences from `*.docs.examples.tsx`, refreshes the API section, updates `docs-manifest.json` hashes, and (re)generates each unit's docs-browser route stub under `docs-browser/src/pages/<category>/<slug>/page.tsx` — so a brand-new unit appears in the browser with no manual wiring.
@@ -46,7 +46,7 @@ For each drifting unit:
 4. **Verify green:**
 
    ```bash
-   node packages/docs-kit/dist/cli.mjs check --root .   # expect exit 0
+   pnpm docs:check   # expect exit 0
    ```
 
 5. **Review the diff.** Confirm prose reads well, examples are idiomatic, and the manifest changes are limited to the units you touched.

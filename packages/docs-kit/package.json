@@ -1,6 +1,5 @@
 {
   "name": "@tailor-platform/app-shell-docs-kit",
-  "version": "0.0.0",
   "private": true,
   "description": "Internal tooling for the app-shell docs pipeline: type-surface extraction, drift detection, and deterministic markdown assembly. Never published.",
   "bin": {

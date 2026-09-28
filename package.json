@@ -16,9 +16,9 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@changesets/cli": "3.0.2",
+    "@changesets/cli": "3.0.3",
     "@tailor-platform/app-shell-docs-kit": "workspace:*",
-    "lefthook": "2.1.12",
+    "lefthook": "2.1.14",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "pkg-pr-new": "0.0.88",

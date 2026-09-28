@@ -11,7 +11,7 @@ export function loadConfig(repoRoot: string): DocsConfig {
     roots: parsed.roots ?? ["packages/core/src", "docs-src"],
     tsconfig: parsed.tsconfig ?? "packages/core/tsconfig.json",
     indexFile: parsed.indexFile ?? "packages/core/src/index.ts",
-    manifestFile: parsed.manifestFile ?? "docs/docs-manifest.json",
+    manifestFile: parsed.manifestFile ?? "docs-manifest.json",
     categories: parsed.categories ?? [],
     enforceCoverage: parsed.enforceCoverage ?? false,
     exclusions: parsed.exclusions ?? [],

@@ -41,7 +41,7 @@ For each drifting unit:
    node packages/docs-kit/dist/cli.mjs sync --root .
    ```
 
-   This rewrites the `.md`, extracts fences from `*.docs.examples.tsx`, refreshes the API section, updates `docs/docs-manifest.json` hashes, and (re)generates each unit's docs-browser route stub under `docs-browser/src/pages/<category>/<slug>/page.tsx` — so a brand-new unit appears in the browser with no manual wiring.
+   This rewrites the `.md`, extracts fences from `*.docs.examples.tsx`, refreshes the API section, updates `docs-manifest.json` hashes, and (re)generates each unit's docs-browser route stub under `docs-browser/src/pages/<category>/<slug>/page.tsx` — so a brand-new unit appears in the browser with no manual wiring.
 
 4. **Verify green:**
 

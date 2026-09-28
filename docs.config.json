@@ -3,7 +3,7 @@
   "roots": ["docs-src"],
   "tsconfig": "packages/core/tsconfig.json",
   "indexFile": "packages/core/src/index.ts",
-  "manifestFile": "docs/docs-manifest.json",
+  "manifestFile": "docs-manifest.json",
   "categories": [
     {
       "match": "docs-src/components/**",

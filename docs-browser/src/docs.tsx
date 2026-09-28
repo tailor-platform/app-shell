@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import manifestJson from "../../docs/docs-manifest.json";
+import manifestJson from "../../docs-manifest.json";
 
 // Glob the generated docs IN PLACE (repo-root docs/, outside this app). Vite
 // resolves these at build time; in dev they are served straight from source.

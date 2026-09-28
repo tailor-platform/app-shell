@@ -20,7 +20,6 @@
       ]
     },
     "manifest": "docs-manifest.json",
-    "routeStubs": { "dir": "docs-browser/src/pages" },
     "skill": {
       "outDir": "packages/core/skills/app-shell-patterns",
       "templatePath": "docs-src/skill/SKILL.template.md",

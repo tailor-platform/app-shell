@@ -8,7 +8,6 @@ import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
 import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
-import { writePageStub } from "./pages";
 import { computeSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import type { Manifest, ManifestEntry } from "./types";
@@ -66,11 +65,6 @@ export function sync(repoRoot: string): SyncResult {
     toFormat.push(mdAbs, outline.outlinePath);
     const examplesAbs = join(repoRoot, outline.examplesPath);
     if (existsSync(examplesAbs)) toFormat.push(examplesAbs);
-    const pageRel = writePageStub(repoRoot, outline, config);
-    if (pageRel) {
-      written.push(pageRel);
-      toFormat.push(join(repoRoot, pageRel));
-    }
   }
 
   // Phase 2 — format outputs + sources so the committed bytes match the hashes.

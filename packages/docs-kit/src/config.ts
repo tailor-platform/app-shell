@@ -14,7 +14,6 @@ interface RawConfig {
   outputs?: {
     documents?: { mappings?: Array<{ match: string; dir: string }> };
     manifest?: string;
-    routeStubs?: { dir?: string };
     skill?: SkillConfig;
   };
   policy?: { coverage?: { enforce?: boolean; exclusions?: string[] } };
@@ -37,7 +36,6 @@ export function loadConfig(repoRoot: string): DocsConfig {
     enforceCoverage: c.policy?.coverage?.enforce ?? false,
     exclusions: c.policy?.coverage?.exclusions ?? [],
     snapshotDir: c.inputs?.snapshots?.dir,
-    pagesDir: c.outputs?.routeStubs?.dir,
     skill: c.outputs?.skill,
   };
 }

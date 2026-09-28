@@ -87,7 +87,7 @@ const rehypePlugins = [rehypeRaw, rehypePairExamples] as ComponentProps<
 // Shared renderer for a single documented unit: prose (markdown) with each live
 // example rendered IN PLACE — as a Preview/Code tab pair — at the
 // `<example-preview>` anchor, and every markdown table rendered via the AppShell
-// Table. Lives under _lib/ so file-based routing does not treat it as a page.
+// Table. Mounted per unit by the declarative route tree in App.tsx.
 export function DocPage({ slug }: { slug: string }) {
   const unit = units.find((u) => u.slug === slug);
 

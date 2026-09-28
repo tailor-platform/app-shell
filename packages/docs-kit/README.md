@@ -10,7 +10,7 @@ skill — deterministically, with no LLM.
 - **Extract** the public type surface from `index.ts` (ts-morph) and hash it, so a
   doc can be tied to the exports it documents and drift is detectable.
 - **Reconcile coverage** against `index.ts` both ways: an exported symbol no unit
-  covers (advisory while `enforceCoverage` is off), and a unit that owns no export
+  covers (advisory while `policy.coverage.enforce` is off), and a unit that owns no export
   or documents a non-exported symbol (always blocks).
 - **Assemble** each unit's Markdown from its outline (prose verbatim), extracted
   example fences, and opt-in auto prop tables (`<!-- api -->`).

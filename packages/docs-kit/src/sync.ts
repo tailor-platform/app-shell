@@ -51,8 +51,8 @@ export function sync(repoRoot: string): SyncResult {
   const surface = loadSurface(repoRoot, config);
   const { findings, ownedBySlug } = reconcile(surface, outlines, config);
 
-  // Phase 1 — assemble + write every markdown output, plus the per-unit route
-  // stub that mounts it in the docs-browser (so new units need zero wiring).
+  // Phase 1 — assemble + write every markdown output. (No browser route stubs:
+  // docs-browser derives its routes from the manifest at runtime.)
   const written: string[] = [];
   const toFormat: string[] = [];
   for (const outline of outlines) {

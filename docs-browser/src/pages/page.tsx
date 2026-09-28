@@ -1,4 +1,4 @@
-import { type AppShellPageProps, Layout } from "@tailor-platform/app-shell";
+import { Layout } from "@tailor-platform/app-shell";
 
 const HomePage = () => {
   return (
@@ -14,9 +14,5 @@ const HomePage = () => {
     </Layout>
   );
 };
-
-HomePage.appShellPageProps = {
-  meta: { title: "Home" },
-} satisfies AppShellPageProps;
 
 export default HomePage;

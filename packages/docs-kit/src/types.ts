@@ -13,7 +13,7 @@ export interface OutlineFrontmatter {
   group: string;
   /** REQUIRED. */
   title: string;
-  /** REQUIRED. One line; feeds the route stub and the consumer skill. */
+  /** REQUIRED. One line; feeds the generated frontmatter and the consumer skill. */
   description: string;
   /** Required iff `kind` is "code-backed", forbidden otherwise: globs
    * (repo-relative) whose exported symbols this unit owns. */

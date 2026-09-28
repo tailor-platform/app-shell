@@ -61,4 +61,4 @@ For each drifting unit:
 ## Related
 
 - `packages/docs-kit` — the extractor / gate / assembler.
-- `docs.config.json` — roots, categories, coverage enforcement, exclusions.
+- `docs-kit.config.json` — inputs (outline roots, API tsconfig/entrypoint, snapshots), outputs (document mappings, manifest, skill), policy (coverage).

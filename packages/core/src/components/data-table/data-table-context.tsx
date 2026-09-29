@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Column, RowAction, RowExpansionOptions } from "./types";
+import type { Column, RowAction, RowExpansionOptions, SelectionAction } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 
 /**
@@ -60,12 +60,19 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   // Row interaction
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  /** Bulk actions `DataTable.Footer` shows while rows are selected. */
+  selectionActions?: SelectionAction<TRow>[];
 
   // Row selection
   // toggleRowSelection / selectAllRows / deselectAllRows / clearSelection are undefined
-  // when onSelectionChange is not provided. New members are optional for the
-  // hand-constructible reason noted under Row expansion.
+  // when selection is not enabled (neither onSelectionChange nor selectionActions given).
+  // New members are optional for the hand-constructible reason noted under Row expansion.
   selectedIds: string[];
+  /**
+   * The selected rows, in selection order. Rows on the current page are their
+   * latest version; rows selected on other pages are the version last loaded.
+   */
+  selectedRows?: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /**

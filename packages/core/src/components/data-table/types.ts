@@ -436,8 +436,9 @@ export type UseDataTableOptions<
   rowActions?: RowAction<TRow>[];
   /**
    * Called with the current array of selected row IDs whenever the selection
-   * changes. Providing this prop enables the checkbox selection column.
-   * Selection is ID-based (`row.id`) and persists across page changes.
+   * changes. Providing this prop — or a non-empty `selectionActions` — enables
+   * the checkbox selection column. Selection is ID-based (`row.id`) and persists
+   * across page changes.
    *
    * **Requirement:** Each row must have a string or number `id` field.
    * Rows without `id` are excluded from selection.
@@ -447,6 +448,17 @@ export type UseDataTableOptions<
    * selected on other pages are kept.
    */
   onSelectionChange?: (ids: string[]) => void;
+  /**
+   * Bulk actions for the selected rows. While at least one row is selected,
+   * `DataTable.Footer` turns into an action bar: the selection count, these
+   * actions, and a Clear button, with the pagination controls kept alongside.
+   * The bar is omitted when this array is empty or not provided.
+   *
+   * Providing a non-empty array also enables row selection, so
+   * `onSelectionChange` is optional. The first three actions render as buttons;
+   * the rest collapse into a "More actions" menu.
+   */
+  selectionActions?: SelectionAction<TRow>[];
   /**
    * Expandable detail rows. Providing this enables the whole feature: a chevron
    * column is added at the left edge (auto-pinned left, after the selection
@@ -487,6 +499,30 @@ export interface RowAction<TRow extends Record<string, unknown>> {
   variant?: "default" | "destructive";
   isDisabled?: (row: TRow) => boolean;
   onClick: (row: TRow) => void;
+}
+
+/**
+ * A bulk action for the selected rows, shown in `DataTable.Footer` while a
+ * selection is open. See `UseDataTableOptions.selectionActions`.
+ */
+export interface SelectionAction<TRow extends Record<string, unknown>> {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  variant?: "default" | "destructive";
+  /**
+   * Narrows the action to the selected rows it applies to — e.g. "Activate"
+   * only for inactive rows. When set, the button shows how many selected rows
+   * qualify ("Activate (6)"), is disabled when none do, and `onClick` receives
+   * only those rows. Omit it for actions that apply to every selected row.
+   */
+  appliesTo?: (row: TRow) => boolean;
+  /**
+   * Called with the selected rows the action applies to, including rows
+   * selected on other pages (as they were last loaded). Call `clearSelection`
+   * once the action has done its work.
+   */
+  onClick: (rows: TRow[], helpers: { clearSelection: () => void }) => void;
 }
 
 /**
@@ -564,9 +600,15 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  selectionActions?: SelectionAction<TRow>[];
 
   // Row selection
   selectedIds: string[];
+  /**
+   * The selected rows, in selection order. Rows on the current page are their
+   * latest version; rows selected on other pages are the version last loaded.
+   */
+  selectedRows: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /** Adds every row on the current page to the selection. */

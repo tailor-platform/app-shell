@@ -1827,6 +1827,31 @@ describe("DataTable", () => {
         container.querySelectorAll('[data-slot="data-table-row"][data-state="selected"]'),
       ).toHaveLength(1);
     });
+
+    it("the header checkbox adds and removes only the current page's rows", () => {
+      const onSelectionChange = vi.fn();
+      const pageB: DataTableData<TestRow> = {
+        rows: [
+          { id: "3", name: "Carol", status: "Active" },
+          { id: "4", name: "Dave", status: "Inactive" },
+        ],
+      };
+      const { rerender } = render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper,
+      });
+
+      // Pick Alice on the first page, then move to the second.
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+      rerender(<TestDataTable data={pageB} onSelectionChange={onSelectionChange} />);
+
+      // Checking the header adds this page without dropping Alice…
+      fireEvent.click(screen.getByLabelText("Select all rows"));
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "3", "4"]);
+
+      // …and unchecking it removes only this page's rows.
+      fireEvent.click(screen.getByLabelText("Select all rows"));
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1"]);
+    });
   });
 
   // -------------------------------------------------------------------------

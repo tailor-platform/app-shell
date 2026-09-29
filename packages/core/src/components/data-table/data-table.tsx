@@ -617,6 +617,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     isRowSelected: value.isRowSelected,
     toggleRowSelection: value.toggleRowSelection,
     selectAllRows: value.selectAllRows,
+    deselectAllRows: value.deselectAllRows,
     clearSelection: value.clearSelection,
     isAllSelected: value.isAllSelected,
     isIndeterminate: value.isIndeterminate,
@@ -909,6 +910,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     setPin,
     toggleRowSelection,
     selectAllRows,
+    deselectAllRows,
     clearSelection,
     isAllSelected,
     isIndeterminate,
@@ -962,7 +964,9 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                     if (checked) {
                       selectAllRows?.();
                     } else {
-                      clearSelection?.();
+                      // Page-scoped, so rows selected on other pages survive.
+                      // Hand-built contexts that predate it fall back to clearing.
+                      (deselectAllRows ?? clearSelection)?.();
                     }
                   }}
                   aria-label={t("selectAll")}

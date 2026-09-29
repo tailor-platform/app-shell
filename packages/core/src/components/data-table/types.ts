@@ -442,8 +442,9 @@ export type UseDataTableOptions<
    * **Requirement:** Each row must have a string or number `id` field.
    * Rows without `id` are excluded from selection.
    *
-   * **Note:** `selectAllRows` (triggered by the header checkbox) selects only
-   * the rows on the **current page**, not all pages.
+   * **Note:** The header checkbox acts on the **current page**: checking it adds
+   * the page's rows to the selection and unchecking it removes them. Rows
+   * selected on other pages are kept.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
@@ -568,7 +569,11 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   selectedIds: string[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
+  /** Adds every row on the current page to the selection. */
   selectAllRows?: () => void;
+  /** Removes the current page's rows from the selection; other pages' rows stay selected. */
+  deselectAllRows?: () => void;
+  /** Empties the selection across all pages. */
   clearSelection?: () => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;

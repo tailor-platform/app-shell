@@ -62,15 +62,23 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   rowActions?: RowAction<TRow>[];
 
   // Row selection
-  // toggleRowSelection / selectAllRows / clearSelection are undefined when onSelectionChange is not provided
+  // toggleRowSelection / selectAllRows / deselectAllRows / clearSelection are undefined
+  // when onSelectionChange is not provided. New members are optional for the
+  // hand-constructible reason noted under Row expansion.
   selectedIds: string[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /**
-   * Selects all rows on the **current page** only. Cross-page selection is not supported.
-   * Undefined when `onSelectionChange` is not provided.
+   * Adds every row on the **current page** to the selection; rows selected on
+   * other pages are kept.
    */
   selectAllRows?: () => void;
+  /**
+   * Removes the **current page's** rows from the selection; rows selected on
+   * other pages stay selected.
+   */
+  deselectAllRows?: () => void;
+  /** Empties the selection across all pages. */
   clearSelection?: () => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;

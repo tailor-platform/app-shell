@@ -615,7 +615,64 @@ describe("useDataTable", () => {
 
       expect(result.current.toggleRowSelection).toBeUndefined();
       expect(result.current.selectAllRows).toBeUndefined();
+      expect(result.current.deselectAllRows).toBeUndefined();
       expect(result.current.clearSelection).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Selection across pages
+  // -------------------------------------------------------------------------
+  describe("selection across pages", () => {
+    const pageB: DataTableData<TestRow> = {
+      rows: [
+        { id: "3", name: "Carol", value: 30 },
+        { id: "4", name: "Dave", value: 40 },
+      ],
+    };
+
+    function renderPaged(onSelectionChange = vi.fn()) {
+      return renderHook(
+        ({ data }: { data: DataTableData<TestRow> }) =>
+          useDataTable({ columns, data, onSelectionChange }),
+        { initialProps: { data: testData } },
+      );
+    }
+
+    it("selectAllRows adds the current page to rows selected on other pages", () => {
+      const onSelectionChange = vi.fn();
+      const { result, rerender } = renderPaged(onSelectionChange);
+
+      act(() => result.current.toggleRowSelection!(testData.rows[0]));
+      rerender({ data: pageB });
+      act(() => result.current.selectAllRows!());
+
+      expect(result.current.selectedIds).toEqual(["1", "3", "4"]);
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "3", "4"]);
+    });
+
+    it("deselectAllRows removes only the current page's rows", () => {
+      const onSelectionChange = vi.fn();
+      const { result, rerender } = renderPaged(onSelectionChange);
+
+      act(() => result.current.toggleRowSelection!(testData.rows[0]));
+      rerender({ data: pageB });
+      act(() => result.current.selectAllRows!());
+      act(() => result.current.deselectAllRows!());
+
+      expect(result.current.selectedIds).toEqual(["1"]);
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1"]);
+    });
+
+    it("clearSelection still empties every page", () => {
+      const { result, rerender } = renderPaged();
+
+      act(() => result.current.toggleRowSelection!(testData.rows[0]));
+      rerender({ data: pageB });
+      act(() => result.current.selectAllRows!());
+      act(() => result.current.clearSelection!());
+
+      expect(result.current.selectedIds).toEqual([]);
     });
   });
 

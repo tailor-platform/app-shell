@@ -322,14 +322,31 @@ export function useDataTable<
       }
     : undefined;
 
+  // Page-scoped on purpose: rows selected on other pages are left alone, so the
+  // header checkbox never silently drops part of a cross-page selection.
   const selectAllRows = onSelectionChange
     ? () => {
-        const allIds = new Set(
-          rows.map((r) => getRowId(r)).filter((id): id is string => id !== null),
-        );
-        selectedRowIdsRef.current = allIds;
-        setSelectedRowIds(allIds);
-        onSelectionChange([...allIds]);
+        const next = new Set(selectedRowIdsRef.current);
+        for (const row of rows) {
+          const id = getRowId(row);
+          if (id !== null) next.add(id);
+        }
+        selectedRowIdsRef.current = next;
+        setSelectedRowIds(next);
+        onSelectionChange([...next]);
+      }
+    : undefined;
+
+  const deselectAllRows = onSelectionChange
+    ? () => {
+        const next = new Set(selectedRowIdsRef.current);
+        for (const row of rows) {
+          const id = getRowId(row);
+          if (id !== null) next.delete(id);
+        }
+        selectedRowIdsRef.current = next;
+        setSelectedRowIds(next);
+        onSelectionChange([...next]);
       }
     : undefined;
 
@@ -467,6 +484,7 @@ export function useDataTable<
     isRowSelected,
     toggleRowSelection,
     selectAllRows,
+    deselectAllRows,
     clearSelection,
     isAllSelected,
     isIndeterminate,

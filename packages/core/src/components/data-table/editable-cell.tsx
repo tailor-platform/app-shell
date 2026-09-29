@@ -97,6 +97,33 @@ export function isEditableColumn<TRow extends Record<string, unknown>>(
   return col.type !== "badge" || (columnChoices(col)?.length ?? 0) > 0;
 }
 
+/**
+ * Whether an editable column edits through a dropdown or calendar (the same
+ * split `DataTableEditableCell` makes), whose cells keep their right edge free
+ * for the icon.
+ *
+ * @internal
+ */
+export function hasPickerEditor<TRow extends Record<string, unknown>>(
+  col: EditableColumn<TRow>,
+): boolean {
+  return (
+    col.type === "date" ||
+    col.type === "badge" ||
+    ((col.type === "text" || col.type === "link") && Boolean(col.edit?.options))
+  );
+}
+
+/**
+ * Room for the dropdown / calendar icon (16px plus a gap), so a value ends — or
+ * truncates — before it instead of running underneath. Read-only cells of the
+ * same column keep it too, so the column's width doesn't change as rows become
+ * editable or not.
+ *
+ * @internal
+ */
+export const ICON_SPACE_CLASS_NAME = "astw:pr-5";
+
 // Editors cover the whole cell, end to end, instead of taking part in layout,
 // so a cell becoming editable — or being edited — never changes row height or
 // column width. They inherit the cell's padding (they're its direct children),
@@ -121,7 +148,8 @@ const INPUT_CLASS_NAME = cn(
 
 // Dropdown and calendar cells: a transparent button over the cell's own display
 // (labels, badges, dates) with a pointer cursor. Like a spreadsheet's dropdown
-// arrow, the chevron / calendar icon appears only on hover, focus or while open.
+// arrow, the chevron / calendar icon appears only on hover, focus or while open,
+// in the space the cell's display leaves free for it (`withIcon`).
 const TRIGGER_CLASS_NAME = cn(
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,
@@ -206,6 +234,7 @@ function EditableCellFrame({
   display,
   truncate,
   hideDisplay,
+  withIcon,
   errorId,
   description,
   children,
@@ -215,6 +244,8 @@ function EditableCellFrame({
   truncate?: boolean;
   /** Typing cells hide the display while the input shows the raw value. */
   hideDisplay?: "focused" | "forced-colors";
+  /** Dropdown and date cells keep the cell's right edge free for their icon. */
+  withIcon?: boolean;
   errorId: string;
   description: string | undefined;
   children: ReactNode;
@@ -234,6 +265,7 @@ function EditableCellFrame({
         className={cn(
           "astw:block",
           truncate && "astw:truncate",
+          withIcon && ICON_SPACE_CLASS_NAME,
           // Transparent input text is forced visible in forced-colors mode;
           // hide the display instead so the two don't overlap.
           hideDisplay && "astw:forced-colors:invisible",
@@ -650,6 +682,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={display}
       truncate={col.truncate}
+      withIcon
       errorId={errorId}
       description={message}
     >
@@ -783,6 +816,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={display}
       truncate={col.truncate}
+      withIcon
       errorId={errorId}
       description={message}
     >

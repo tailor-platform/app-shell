@@ -37,7 +37,12 @@ import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import { useCellEditNavigation } from "./use-cell-edit-navigation";
-import { DataTableEditableCell, isEditableColumn } from "./editable-cell";
+import {
+  DataTableEditableCell,
+  hasPickerEditor,
+  ICON_SPACE_CLASS_NAME,
+  isEditableColumn,
+} from "./editable-cell";
 import {
   DataTableToolbar,
   DataTableFilters,
@@ -1360,11 +1365,23 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 "body",
               );
               // Truncate via an inner element so the cell's overflow stays visible.
-              const cellBody = col.truncate ? (
-                <span className="astw:block astw:truncate">{content}</span>
-              ) : (
-                content
-              );
+              // A read-only cell of a dropdown / date column keeps the icon's
+              // space like its editable neighbours.
+              const iconSpace = editableColumn && hasPickerEditor(col);
+              const cellBody =
+                col.truncate || iconSpace ? (
+                  <span
+                    className={cn(
+                      "astw:block",
+                      col.truncate && "astw:truncate",
+                      iconSpace && ICON_SPACE_CLASS_NAME,
+                    )}
+                  >
+                    {content}
+                  </span>
+                ) : (
+                  content
+                );
               const menuValue = getCellContextValue(row, col, content);
               const headerLabel = col.label ?? key;
 

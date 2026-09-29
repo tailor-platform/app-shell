@@ -126,6 +126,10 @@ function receivedColumn(
 const blocked = (cell: Element | null | undefined) =>
   cell?.className.includes("astw:cursor-not-allowed") ?? false;
 
+// Whether a cell's content leaves the right edge free for a dropdown / date icon.
+const hasIconSpace = (cell: Element | undefined) =>
+  cell?.querySelector(":scope > span")?.className.includes("astw:pr-5") ?? false;
+
 const errorText = (input: HTMLElement) =>
   document.getElementById(input.getAttribute("aria-describedby") ?? "")?.textContent;
 
@@ -696,6 +700,32 @@ describe("DataTable inline editing", () => {
         "Globex",
         "Globex",
       ]);
+    });
+
+    it("keeps the icon's space on read-only rows too, so the column's width never shifts", () => {
+      renderTable(
+        <Harness
+          rows={rowsWith("globex")}
+          columns={() => [
+            skuColumn,
+            column({
+              id: "supplier",
+              label: "Supplier",
+              type: "text",
+              edit: { options: SUPPLIERS, canEdit: (row) => row.id === "1", onCommit: noop },
+            }),
+          ]}
+        />,
+      );
+      const rows = screen.getAllByRole("row").slice(1);
+      // Row 1 is editable and rows 2 and 3 are read-only: all three keep the space.
+      expect(rows.map((row) => hasIconSpace(row.querySelectorAll("td")[1]))).toEqual([
+        true,
+        true,
+        true,
+      ]);
+      // A column without a dropdown or calendar doesn't.
+      expect(hasIconSpace(rows[1].querySelectorAll("td")[0])).toBe(false);
     });
 
     it("offers a badge column's labelled values as badges", async () => {

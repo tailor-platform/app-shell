@@ -38,7 +38,7 @@ Build inline editing into DataTable and configure it per column.
 2. **Show what's editable — spreadsheet-style.**
    - Editable cells look like the rest of the table: no input boxes, and the whole cell is the click target.
    - The cursor tells cells apart: a text cursor for typing cells, a pointer for dropdown and date cells, and "not allowed" for cells that can't be edited.
-   - The cell being edited outlines its edges; dropdown and date icons appear on hover and focus.
+   - The cell being edited outlines its edges; dropdown and date icons appear on hover and focus, in a space kept free at the right edge so they never cover the value.
    - Row height and column width don't shift when a row becomes editable.
 3. **Block impossible input as it's typed.**
    - With "no negatives" there's no minus sign. With "whole numbers" there's no decimal point. With "2 decimals" there's no third decimal digit.

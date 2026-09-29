@@ -1,63 +1,66 @@
-# DataTable — multi-select bulk actions in the footer
+# Decision: DataTable bulk actions live in the footer, built into the component
 
-**Status:** open — for a team call. No decision taken here.
-**Prototype:** `examples/vite-app/src/pages/data-table-selection/page.tsx` (`/data-table-selection` in the vite example). Nothing under `packages/**` or `catalogue/` changes.
+> Status: **Decided — built into DataTable as `selectionActions` (Option A below). Implemented by PR #496.**
+> Scope: where multi-select bulk actions render, and the `useDataTable` API that declares them. Ticket: tailor-inc/platform-planning#1738.
 
-Multi-select already works: passing `onSelectionChange` to `useDataTable` adds the checkbox column, and the footer already reads "N of M row(s) selected". What AppShell has no settled answer for is **where the bulk actions go** once rows are selected.
+## Context
 
-Sean suggested putting them in the **footer**, next to the selection count that already lives there, instead of a bar floating over the table. The prototype builds that out so we can look at it:
+Multi-select already worked: `onSelectionChange` added the checkbox column, and the footer read "N of M row(s) selected". AppShell had no settled answer for **where the bulk actions go** once rows are selected. The `interaction/multi-select` pattern prescribed a floating bottom bar built on raw `Table.Root` with native checkboxes, which predated DataTable's own selection.
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────────┐
-│  ☑  V2016   Globex K.K.   Raw material   D. Alvarez   LATAM   Active   US$355,974.26 │
-├──────────────────────────────────────────────────────────────────────────────────────┤
-│ 20 of 240 selected │ ▷ Activate (6)  ⏸ Deactivate (14)  🗑 Delete (0) │ Clear        │
-│                                            Rows per page 25   Page 1/10   « ‹ › »    │
-└──────────────────────────────────────────────────────────────────────────────────────┘
-```
+Sean suggested the **footer** instead, next to the count that already lives there. #496 started as a prototype of that plus an open question: build it into DataTable (A), or keep it a documented pattern composed from `useDataTableContext()` (B).
 
-Why the footer: the selection count already lives there, its middle is empty in every table we ship, it never covers rows, it needs no overlay or z-index, and in `<Layout fill>` it is already pinned on screen.
+- **Placement:** the footer was agreed at the App-Shell board planning session on 2026-09-18. Its middle is empty in every table we ship, it never covers rows, and in `<Layout fill>` it is the only strip that stays on screen. The top toolbar is where apps compose search, filters, column settings and export (#559), and bulk actions would crowd it.
+- **Component, not pattern:** Sean's review of the prototype (#pf-app-shell, 2026-09-04):
+  - row selection is already a built-in concept, so this should be an opinionated treatment in core;
+  - the consumer controls which actions appear;
+  - add a pop-out while the footer is off-screen;
+  - use a softer tone than the neutral bar, which glared in dark mode — maybe `accent`.
 
-## What already exists, and conflicts
+## Decision
 
-`catalogue/src/pattern/interaction/multi-select` — shipped to agents as part of the `app-shell-patterns` skill — specifies the **floating bottom bar**: `position: fixed`, centered, elevated, appearing when the count goes 0 → 1. Its anti-patterns say bulk actions belong _only_ in that floating bar, and its reference implementation is built on raw `Table.Root` with native checkboxes, predating DataTable's own selection. `pattern/list/dense-scan` points DataTable users at it ("combine with `interaction/multi-select`").
+**`selectionActions` on `useDataTable`, rendered by `DataTable.Footer`.**
 
-So this pattern needs rewriting either way. The question is what it should point at.
-
-## The question: component or pattern?
-
-### Option A — build it into DataTable
-
-Actions are declared once and the footer renders the bar:
+The option mirrors `rowActions`: a declarative array on the hook that makes the component render a whole affordance. It is opt-in, and tables without it render exactly as before. A non-empty array also enables selection.
 
 ```tsx
 const table = useDataTable({
   columns,
   data,
   control,
-  onSelectionChange: setSelectedIds,
   selectionActions: [
-    { id: "activate", label: "Activate", icon: <Play />, count: 6, onClick: (ids) => … },
-    { id: "delete", label: "Delete", icon: <Trash2 />, variant: "destructive", count: 0, onClick: (ids) => … },
+    {
+      id: "activate",
+      label: "Activate",
+      icon: <Play />,
+      appliesTo: (v) => v.status === "inactive", // "Activate (6)", disabled at 0
+      onClick: (rows, { clearSelection }) => { … },  // only the eligible rows
+    },
   ],
 });
 ```
 
-`interaction/multi-select` then becomes a thin pattern that says "use `selectionActions`".
+**What changed from the sketch the team first saw:**
 
-- Mirrors `rowActions` — a declarative array on the hook that makes the component render a whole affordance (the kebab column). Same shape, same place.
-- Existing tables opt in with one option; wording, spacing, disable-at-zero and responsive behaviour are decided once, for every app, and can be tested.
-- Costs: more presentation config on the hook, one opinionated bar, and adoption needs a version bump.
+- **`appliesTo(row)` replaces a consumer-supplied `count`.** Selection spans pages, and an app with server pagination can't count rows selected on other pages without keeping its own id→row cache. The table already sees every row the user selects, so it remembers them (`selectedRows`, each row as last loaded, with the current page's copy winning) and does the counting.
+- **`onClick(rows, { clearSelection })` replaces `onClick(ids)`.** Rows carry what an action needs. The helper clears the selection without the action reaching back to `table` from inside its own options object.
+- **The tone is `accent`, not primary or an inverted neutral.** It stays soft in all three themes and both modes, and matches the tint of selected rows. Primary is near-white in the default theme's dark mode, which brings back the glare Sean flagged.
 
-### Option B — keep it a pattern
+**How the bar behaves:**
 
-Ship nothing in `packages/**`; rewrite `interaction/multi-select` around the footer, composed from `useDataTableContext()` inside `DataTable.Footer`.
+- **Layout:** built on the generic `Toolbar` (#559). The bar is a `Toolbar.Row` (role `toolbar`, Arrow/Home/End navigation) containing count · actions · Clear. Pagination stays alongside and hides its own count while the bar is up.
+- **Overflow:** three actions render inline and the rest go into a "More actions" menu, as the old pattern already required.
+- **Pop-out:** the footer is `position: sticky; bottom: 0` while the bar is open, so on a page-scrolling table it rides the bottom of the viewport and settles back at the table's end. For this, the DataTable root uses `overflow: clip`. #559 had introduced `overflow: hidden` to clip the toolbar to the rounded frame, and that made the root a scroll container, which pinned the sticky footer inside the table.
+- **Accessibility:** a persistent polite live region announces the count from the first tick. When the bar closes with focus inside it, focus returns to the header checkbox.
+- **Header checkbox:** it is page-scoped in both directions. It previously replaced the selection and cleared every page, which the bar's cross-page count made visible.
 
-- No API surface, no version bump — apps and agents pick it up as soon as the skill regenerates.
-- Patterns are already how AppShell ships interaction guidance, and agents consume them directly.
-- Costs: each app carries the code, so consistency depends on the pattern being followed; behaviour can't be tested in this repo.
+## Consequences
 
-## For the call
+- **`interaction/multi-select` is rewritten** around `selectionActions`. The floating bar is retired: the sticky footer covers the "keep it on screen" need, and lists that want bulk actions should be DataTables.
+- **#525 interaction:** if it lands controlled/default `rowSelection`, ids selected outside the UI have no remembered row until their page loads. `appliesTo` counts cover loaded rows only, and this is documented. Whichever of #525 and this lands second adapts the other: the row memory is written wherever selection is written.
+- **Toasts vs. the bar:** bulk actions naturally end in a toast, and the default bottom-right toast sits over the footer's pagination for a few seconds. That is tolerable, but worth revisiting when toast placement is next touched.
 
-- Component (A) or pattern (B)?
-- Either way: who rewrites `interaction/multi-select`, and does the floating bar stay as a documented alternative for non-DataTable lists (its current implementation is `Table.Root`-based)?
+## Not in this decision (follow-ups)
+
+- "Select all N" across pages (needs server-side semantics).
+- A placeable `DataTable.SelectionActions` for custom placement, e.g. an in-toolbar variant. This follows the "option = default placement, sub-component = custom placement" rule from tailor-inc/platform-planning#1699; add it when a consumer needs it.
+- A pending/loading state on an action, tooltips explaining a disabled action, and Escape to clear.

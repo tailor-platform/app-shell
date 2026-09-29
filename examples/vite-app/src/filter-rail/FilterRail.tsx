@@ -24,8 +24,7 @@ import {
   applyRailLayout,
   assertRailCoherent,
   railFields,
-  sameFilters,
-  type SavedFilter,
+  type SavedView,
   type CheckboxSection,
   type FacetOption,
   type FilterRailProps,
@@ -317,19 +316,21 @@ const CheckboxControl = ({
   );
 };
 
-// ─── Saved filters ───────────────────────────────────────────────────────────
+// ─── Saved views ─────────────────────────────────────────────────────────────
 
 /** The dropdown at the top of the rail. Always visible, like everything else. */
-const SavedFilterPicker = ({
+const SavedViewPicker = ({
   items,
   appliedId,
   onApply,
   onDelete,
+  describe,
 }: {
-  items: readonly SavedFilter[];
+  items: readonly SavedView[];
   appliedId: string | null;
-  onApply: (item: SavedFilter) => void;
-  onDelete: (item: SavedFilter) => void;
+  onApply: (item: SavedView) => void;
+  onDelete: (item: SavedView) => void;
+  describe?: (item: SavedView) => string;
 }) => {
   const applied = items.find((item) => item.id === appliedId) ?? null;
   return (
@@ -341,7 +342,7 @@ const SavedFilterPicker = ({
           // relabels the element `menu-trigger`. Raised with the app-shell team.
           <Button variant="outline" size="xs" className="w-full justify-start" data-slot="button">
             <Bookmark className="size-3.5 shrink-0" aria-hidden />
-            <span className="truncate">{applied ? applied.name : "Saved filters"}</span>
+            <span className="truncate">{applied ? applied.name : "Saved views"}</span>
             {!applied && items.length > 0 && (
               <span className="shrink-0 text-muted-foreground">({items.length})</span>
             )}
@@ -365,7 +366,7 @@ const SavedFilterPicker = ({
           still push it wider. */}
       <Menu.Content style={{ minWidth: "var(--anchor-width)" }}>
         {items.length === 0 ? (
-          <Menu.Item disabled>Nothing saved yet</Menu.Item>
+          <Menu.Item disabled>No saved views yet</Menu.Item>
         ) : (
           <Menu.Group>
             {items.map((item) => (
@@ -374,7 +375,16 @@ const SavedFilterPicker = ({
                   <span className="w-3.5 shrink-0">
                     {item.id === appliedId && <Check className="size-3.5" aria-hidden />}
                   </span>
-                  <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate">{item.name}</span>
+                    {/* What the view actually restores. Without it a list of
+                        names says nothing about why you would pick one. */}
+                    {describe && (
+                      <span className="truncate text-[11px] text-muted-foreground">
+                        {describe(item)}
+                      </span>
+                    )}
+                  </span>
                   <span
                     role="button"
                     tabIndex={0}
@@ -490,28 +500,18 @@ export const FilterRail = <TField extends string = string>({
     onFilterChange?.(next, [...owned]);
   };
 
-  // ── Saved filters
+  // ── Saved views
   //
-  // Only the rail's own fields are captured or replaced. A page can hold filters
-  // the rail does not own, and a saved set that silently restored those would be
-  // restoring state the user never chose.
-  const railOnly = useMemo(
-    () => control.filters.filter((filter) => owned.has(filter.field as TField)),
-    [control.filters, owned],
-  );
-  const applied = saved?.items.find((item) => sameFilters(item.filters, railOnly)) ?? null;
-
-  const applySaved = (item: SavedFilter) => {
-    const others = control.filters.filter((filter) => !owned.has(filter.field as TField));
-    const next = [...others, ...(item.filters as Filter<TField>[])];
-    control.setFilters(next);
-    onFilterChange?.(next, [...owned]);
-  };
-
+  // A view is filters PLUS the table's presentation — column visibility, order,
+  // pinning, sort, page size. The rail cannot capture that itself: it sits
+  // outside `DataTable.Root` and never sees the table. So the consumer owns
+  // capture, restore and the "is the current state saved / has it drifted"
+  // comparison, and hands back `activeId` and `dirty`. `useSavedViews` does all
+  // three.
   const commitName = () => {
     const name = draftName.trim();
     if (!name || !saved) return;
-    saved.onSave(name, railOnly as Filter[]);
+    saved.onSave(name);
     setNaming(false);
     setDraftName("");
   };
@@ -552,10 +552,11 @@ export const FilterRail = <TField extends string = string>({
 
       {saved && (
         <div className="shrink-0 border-b border-border px-3 py-2">
-          <SavedFilterPicker
+          <SavedViewPicker
             items={saved.items}
-            appliedId={applied?.id ?? null}
-            onApply={applySaved}
+            appliedId={saved.activeId}
+            describe={saved.describe}
+            onApply={saved.onApply}
             onDelete={saved.onDelete}
           />
         </div>
@@ -690,7 +691,7 @@ export const FilterRail = <TField extends string = string>({
         a no-op. When the current set already *is* a saved filter it is hidden
         too, since there is nothing to save.
       */}
-      {saved && activeCount > 0 && !applied && (
+      {saved?.dirty && (
         <div className="shrink-0 border-t border-border p-2">
           <Button
             variant="outline"
@@ -703,7 +704,7 @@ export const FilterRail = <TField extends string = string>({
             }}
           >
             <Bookmark className="size-3.5" aria-hidden />
-            Save this filter
+            Save this view
           </Button>
         </div>
       )}
@@ -711,15 +712,20 @@ export const FilterRail = <TField extends string = string>({
       <Dialog.Root open={naming} onOpenChange={setNaming}>
         <Dialog.Content className="sm:max-w-md">
           <Dialog.Header>
-            <Dialog.Title>Save this filter</Dialog.Title>
+            <Dialog.Title>Save this view</Dialog.Title>
+            {/* Say what a view actually carries. "3 filters will be saved"
+                was true of saved filters and is now a lie by omission — the
+                column layout goes with it, and someone who does not expect
+                that will be surprised when applying a view rearranges their
+                table. */}
             <Dialog.Description>
-              {activeCount} filter{activeCount === 1 ? "" : "s"} will be saved under this name.
+              Filters, sort, and the column layout will be saved under this name.
             </Dialog.Description>
           </Dialog.Header>
           <div className="py-2">
             <Input
               autoFocus
-              placeholder="e.g. Denim, in stock"
+              placeholder="e.g. Low stock, wide view"
               value={draftName}
               onChange={(event) => setDraftName(event.target.value)}
               onKeyDown={(event) => {

@@ -28,7 +28,12 @@
 // `CollectionControlProvider` docstring already names this case: "a sibling
 // filter panel".
 
-import type { CollectionControl, Filter, SelectOption } from "@tailor-platform/app-shell";
+import type {
+  CollectionControl,
+  Filter,
+  SelectOption,
+  SortState,
+} from "@tailor-platform/app-shell";
 import type { ReactNode } from "react";
 
 // ─── Options ─────────────────────────────────────────────────────────────────
@@ -265,55 +270,71 @@ export type FacetCounts = {
   withoutSection?: Record<string, number>;
 };
 
-// ─── Saved filters ───────────────────────────────────────────────────────────
+// ─── Saved views ─────────────────────────────────────────────────────────────
 
 /**
- * A named set of the rail's own filters.
+ * Everything that makes a view a view.
  *
- * Only the rail's fields — never the whole collection state. A page can hold
- * filters the rail does not own (a level scope, a separate search box), and
- * capturing those into something the user named "Low stock AW26" would restore
- * state they never chose.
+ * A saved view is a **bundle of state the table already has** — not a new
+ * concept the component invents. Every field here is readable and writable
+ * through the existing `useDataTable` return value and `CollectionControl`:
  *
- * Deliberately *not* a saved **view**: no column visibility, order, pinning or
- * page size. Those belong to the table, are already persisted per `tableId`,
- * and folding them in here would mean applying a filter silently rearranged
- * the columns.
+ *   read                        write
+ *   ──────────────────────────  ────────────────────────────
+ *   control.filters             control.setFilters()
+ *   table.sortStates            control.clearSort() / setSort()
+ *   table.pageSize              control.setPageSize()
+ *   table.columnOrder           table.setColumnOrder()
+ *   table.isColumnVisible(id)   table.toggleColumn(id)
+ *   table.pinnedColumns         table.setPin(id, side)
+ *
+ * Filters alone would be a saved *filter*, and that is the weaker thing: the
+ * question people actually ask is "put this screen back the way I had it",
+ * which includes which columns were showing and in what order.
  */
-export type SavedFilter = {
+export type ViewState = {
+  filters: Filter[];
+  sort: SortState[];
+  pageSize: number;
+  /** Column ids, in display order. */
+  columnOrder: string[];
+  /** Column ids the user has hidden. */
+  hidden: string[];
+  /** Column id → the edge it is frozen to. */
+  pinned: Record<string, "left" | "right" | "none">;
+};
+
+export type SavedView = {
   id: string;
   name: string;
   createdAt: string;
-  filters: Filter[];
+  state: ViewState;
 };
 
 /**
- * Storage is the consumer's, like counts.
+ * Storage is the consumer's, exactly like counts and layout.
  *
- * localStorage is private to one browser; a backend table is shared with the
- * team and follows you across devices. That is an application decision, not a
- * component one — `useSavedFilters` ships alongside for the simple case.
+ * This is the load-bearing seam. localStorage is private to one browser; a
+ * backend table is shared with the team and follows you across devices — and a
+ * *default view every user gets on first open* is only expressible in the
+ * second. Which one an app picks is a product decision, not a component one,
+ * so the component takes a binding and never touches storage.
+ *
+ * `onSave` takes only a name: capture belongs to the consumer, because the
+ * rail sits outside `DataTable.Root` and never sees the table. `useSavedViews`
+ * ships alongside and does both.
  */
-export type SavedFilterBinding = {
-  items: readonly SavedFilter[];
-  onSave: (name: string, filters: Filter[]) => void;
-  onDelete: (item: SavedFilter) => void;
-};
-
-/** True when two filter sets mean the same thing, regardless of order. */
-export const sameFilters = (a: readonly Filter[], b: readonly Filter[]): boolean => {
-  const key = (list: readonly Filter[]) =>
-    JSON.stringify(
-      [...list]
-        .map((f) => ({
-          field: f.field,
-          operator: f.operator,
-          // An `in` array is a set — ["A","B"] and ["B","A"] are one filter.
-          value: Array.isArray(f.value) ? [...f.value].map(String).sort() : f.value,
-        }))
-        .sort((x, y) => `${x.field}:${x.operator}`.localeCompare(`${y.field}:${y.operator}`)),
-    );
-  return key(a) === key(b);
+export type SavedViewBinding = {
+  items: readonly SavedView[];
+  /** The view the current state matches, or `null`. Consumer-computed. */
+  activeId: string | null;
+  /** Whether the current state differs from every saved view — drives Save. */
+  dirty: boolean;
+  onSave: (name: string) => void;
+  onApply: (view: SavedView) => void;
+  onDelete: (view: SavedView) => void;
+  /** One-line summary under each name — "3 filters · 2 hidden · 25/page". */
+  describe?: (view: SavedView) => string;
 };
 
 // ─── Layout: the part of the rail the USER controls ──────────────────────────
@@ -445,7 +466,7 @@ export type FilterRailProps<TField extends string = string> = {
    * filter set is not worth naming, and a permanently-visible Save is a button
    * that is usually a no-op.
    */
-  saved?: SavedFilterBinding;
+  saved?: SavedViewBinding;
   /**
    * User control over section order, visibility and option sort.
    *

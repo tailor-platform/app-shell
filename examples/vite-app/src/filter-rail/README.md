@@ -37,17 +37,56 @@ it can never be a descendant of `DataTable.Root`.
 
 ## Files
 
-|                                              |                                                                     |
-| -------------------------------------------- | ------------------------------------------------------------------- |
-| `types.ts`                                   | the proposed public API, and the reasoning for each decision        |
-| `FilterRail.tsx`                             | the component                                                       |
-| `controls.tsx`                               | date / date-range / number-range / boolean controls                 |
-| `internals.tsx`                              | primitives app-shell lacks — checkbox group, radio group, show-more |
-| `RailSettings.tsx`                           | user control over section order, visibility and option sort         |
-| `responsive.tsx`                             | below `lg` the rail becomes a left sheet behind a toolbar button    |
-| `facet-counts.ts`                            | companion — in-memory counts; a backend would aggregate             |
-| `use-rail-layout.ts`, `use-saved-filters.ts` | companions — localStorage bindings                                  |
-| `operators.ts`                               | demo scaffolding only, so the example can filter in memory          |
+|                      |                                                                     |
+| -------------------- | ------------------------------------------------------------------- |
+| `types.ts`           | the proposed public API, and the reasoning for each decision        |
+| `FilterRail.tsx`     | the component                                                       |
+| `controls.tsx`       | date / date-range / number-range / boolean controls                 |
+| `internals.tsx`      | primitives app-shell lacks — checkbox group, radio group, show-more |
+| `RailSettings.tsx`   | user control over section order, visibility and option sort         |
+| `responsive.tsx`     | below `lg` the rail becomes a left sheet behind a toolbar button    |
+| `facet-counts.ts`    | companion — in-memory counts; a backend would aggregate             |
+| `use-saved-views.ts` | companion — capture / restore / persist a whole view                |
+| `use-rail-layout.ts` | companion — section order, visibility and option sort               |
+| `operators.ts`       | demo scaffolding only, so the example can filter in memory          |
+
+## Saved views, not saved filters
+
+The dropdown at the top of the rail saves a **view**: filters _plus_ the table's
+presentation — column visibility, order, pinning, sort and page size. "Put this
+screen back the way I had it" is the question people actually ask, and filters
+alone do not answer it.
+
+Nothing here needs an app-shell change. A view is a bundle of state the table
+already exposes:
+
+| read                        | write                               |
+| --------------------------- | ----------------------------------- |
+| `control.filters`           | `control.setFilters()`              |
+| `table.sortStates`          | `control.clearSort()` / `setSort()` |
+| `table.pageSize`            | `control.setPageSize()`             |
+| `table.columnOrder`         | `table.setColumnOrder()`            |
+| `table.isColumnVisible(id)` | `table.toggleColumn(id)`            |
+| `table.pinnedColumns`       | `table.setPin(id, side)`            |
+
+What app-shell does **not** provide is the bundle, the name, the list, or the
+storage. `tableId` persists one unnamed column layout to localStorage; saved
+views are the named, multiple version of the same state, and they live in
+`use-saved-views.ts`.
+
+Capture and restore sit with the **consumer**, not the rail — the rail is in a
+different `Layout.Column` and never sees the table. It takes `activeId` and
+`dirty` from the binding and renders the picker.
+
+Restore order matters, and getting it wrong yields a view that looks restored
+and is not: sort is cleared before re-applying so a multi-sort keeps its primary
+key; `toggleColumn` is a flip rather than a setter, so it is called only where
+visibility differs; a saved column order is filtered to columns that still
+exist, with new ones appended.
+
+**Storage is the load-bearing decision.** localStorage is one browser, one
+person. Team-shared views — and a _default view every user gets on first open_ —
+need a backend store. Swapping it touches nothing else.
 
 ## What app-shell would need to absorb it
 

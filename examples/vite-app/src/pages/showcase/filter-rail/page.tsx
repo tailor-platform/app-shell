@@ -17,7 +17,7 @@ import { useLocalFacetCounts } from "../../../filter-rail/facet-counts";
 import { applyOperator } from "../../../filter-rail/operators";
 import { FilterRailSheet, FilterRailTrigger, useIsCompact } from "../../../filter-rail/responsive";
 import { useRailLayout } from "../../../filter-rail/use-rail-layout";
-import { useSavedFilters } from "../../../filter-rail/use-saved-filters";
+import { useSavedViews } from "../../../filter-rail/use-saved-views";
 import { railFields, type FilterRailSection } from "../../../filter-rail/types";
 import { allProducts, type Product } from "../../../mock-products";
 
@@ -134,6 +134,10 @@ const showDate = (value: string) =>
   });
 
 const { column } = createColumnHelper<Row>();
+
+/** Every column id, in declaration order — a view records visibility and
+ *  pinning per column, so it needs the full set, not just the visible ones. */
+const COLUMN_IDS = ["name", "category", "status", "price", "stock", "publishedOn", "availableOn"];
 
 const COLUMNS = [
   column({
@@ -279,7 +283,6 @@ const FilterRailPage = () => {
   const { variables, control } = useURLCollectionVariables({ params: { pageSize: 25 } });
 
   const counts = useLocalFacetCounts(ROWS, SECTIONS, control.filters, { baseline: true });
-  const saved = useSavedFilters("example:filter-rail:saved-filters");
   const layout = useRailLayout("example:filter-rail:layout");
   const data = useMemo(() => queryProducts(variables), [variables]);
 
@@ -287,8 +290,17 @@ const FilterRailPage = () => {
     columns: COLUMNS,
     data,
     control,
+    // Without a `tableId` the column layout is in-memory only and resets on
+    // reload. app-shell persists it to localStorage under this key — that is
+    // one implicit, unnamed view. Saved views below are the named, multiple,
+    // shareable version of the same state.
     tableId: "filter-rail:products",
   });
+
+  // A saved view is filters PLUS presentation — column visibility, order,
+  // pinning, sort, page size. It has to live here rather than inside the rail
+  // because only this scope sees both `control` and `table`.
+  const saved = useSavedViews("example:filter-rail:saved-views", table as never, COLUMN_IDS);
 
   // Below `lg` the rail moves into a sheet behind a toolbar button — a fixed
   // 320px column stacked above the table would push every row off the fold.

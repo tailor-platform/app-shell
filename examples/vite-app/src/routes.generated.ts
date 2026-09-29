@@ -28,7 +28,7 @@ export type GeneratedRouteParams = {
   "/showcase/ai-chat": {};
   "/showcase/alert-tokens": {};
   "/showcase/colors": {};
-  "/showcase/csv-importer": {};
+  "/showcase/csv-features": {};
   "/showcase/data-table": {};
   "/showcase/data-table-lab": {};
   "/showcase/date-picker": {};

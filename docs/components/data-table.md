@@ -16,6 +16,7 @@ import {
   DataTable,
   useDataTable,
   useDataTableContext,
+  useCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type Column,
@@ -144,14 +145,15 @@ function JournalsPage() {
 
 `DataTable` is a namespace object. All sub-components read state from `DataTable.Root` via context.
 
-| Sub-component          | Description                                                                                                                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DataTable.Root`       | Context provider. Wraps all other sub-components. Required.                                                                                                                           |
-| `DataTable.Table`      | Renders the `<table>` with headers and body. Required.                                                                                                                                |
-| `DataTable.Toolbar`    | Container for toolbar content (e.g. filters). Optional. Pass `columnSettings` to render the built-in "Columns" control (show/hide + reorder + pin) at the top-right. See props below. |
-| `DataTable.Filters`    | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                  |
-| `DataTable.Footer`     | Footer container for pagination and other footer content. Optional.                                                                                                                   |
-| `DataTable.Pagination` | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                          |
+| Sub-component           | Description                                                                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DataTable.Root`        | Context provider. Wraps all other sub-components. Required.                                                                                                                           |
+| `DataTable.Table`       | Renders the `<table>` with headers and body. Required.                                                                                                                                |
+| `DataTable.Toolbar`     | Container for toolbar content (e.g. filters). Optional. Pass `columnSettings` to render the built-in "Columns" control (show/hide + reorder + pin) at the top-right. See props below. |
+| `DataTable.Filters`     | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                  |
+| `DataTable.Footer`      | Footer container for pagination and other footer content. Optional.                                                                                                                   |
+| `DataTable.Pagination`  | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                          |
+| `DataTable.CSVExporter` | Standard CSV download button and filename/progress dialog. Pass an exporter from [`useCsvExporter`](../api/use-csv-exporter.md) through `exporter`.                                   |
 
 ### `DataTable.Root` Props
 
@@ -191,6 +193,25 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
     <DataTable.Filters slot="add" />
   </div>
   <DataTable.Filters slot="chips" />
+</DataTable.Toolbar>
+```
+
+### `DataTable.CSVExporter` Props
+
+| Prop           | Type                      | Description                                                                   |
+| -------------- | ------------------------- | ----------------------------------------------------------------------------- |
+| `open`         | `boolean`                 | Whether the exporter dialog is open.                                          |
+| `onOpenChange` | `(open: boolean) => void` | Called when the dialog opens or closes.                                       |
+| `exporter`     | `CsvExporterState`        | Export state and actions from [`useCsvExporter`](../api/use-csv-exporter.md). |
+
+`DataTable.CSVExporter` opens a dialog where the user can change the filename before downloading. During the export it shows the fetched row count and a percentage when the connection returns `total`; it also provides a cancel action. When `useCsvExporter` receives DataTable columns, the current visible columns and their user-defined order are exported. Explicit `CsvExportColumn[]` definitions keep their own order and ignore column visibility. Compose the toolbar layout normally when it should sit immediately before the built-in Columns control:
+
+```tsx
+<DataTable.Toolbar columnSettings>
+  <div className="flex min-w-0 items-start gap-2">
+    <DataTable.Filters className="flex-1" />
+    <DataTable.CSVExporter {...props} />
+  </div>
 </DataTable.Toolbar>
 ```
 
